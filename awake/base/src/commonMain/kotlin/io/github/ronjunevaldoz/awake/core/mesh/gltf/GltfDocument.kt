@@ -1,0 +1,178 @@
+// Copyright (c) Ron June Valdoz
+// SPDX-License-Identifier: Apache-2.0
+package io.github.ronjunevaldoz.awake.core.mesh.gltf
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+/**
+ * The subset of the glTF 2.0 JSON schema (https://registry.khronos.org/glTF/specs/2.0/
+ * glTF-2.0.html) this parser actually reads: enough to pull mesh vertex attributes/indices,
+ * a node hierarchy, skeletal skinning/animation, and a base color texture out of a `.gltf`
+ * file with embedded (base64 data-URI) buffers -- see [GltfParser]'s doc comment for exactly
+ * which parts of [materials]/[textures]/[images] are read (base color only, no other PBR
+ * channels) and which are deliberately still out of scope (external buffer/image files,
+ * multi-primitive meshes).
+ */
+@Serializable
+data class GltfDocument(
+    val buffers: List<GltfBuffer> = emptyList(),
+    val bufferViews: List<GltfBufferView> = emptyList(),
+    val accessors: List<GltfAccessor> = emptyList(),
+    val meshes: List<GltfMeshDef> = emptyList(),
+    /** Index into [scenes] of the scene to load when none is explicitly requested -- glTF
+     * default is `0` when the document has any scenes at all. */
+    val scene: Int? = null,
+    val scenes: List<GltfScene> = emptyList(),
+    val nodes: List<GltfNode> = emptyList(),
+    val skins: List<GltfSkin> = emptyList(),
+    val animations: List<GltfAnimation> = emptyList(),
+    val materials: List<GltfMaterial> = emptyList(),
+    val textures: List<GltfTexture> = emptyList(),
+    val images: List<GltfImage> = emptyList(),
+)
+
+@Serializable
+data class GltfMaterial(
+    val name: String? = null,
+    val pbrMetallicRoughness: GltfPbrMetallicRoughness? = null,
+)
+
+@Serializable
+data class GltfPbrMetallicRoughness(
+    val baseColorTexture: GltfTextureRef? = null,
+)
+
+@Serializable
+data class GltfTextureRef(
+    val index: Int,
+    @SerialName("texCoord") val texCoordSet: Int = 0,
+)
+
+@Serializable
+data class GltfTexture(
+    val source: Int? = null,
+    val sampler: Int? = null,
+)
+
+@Serializable
+data class GltfImage(
+    /** A `data:image/png;base64,...` (or `image/jpeg`) data URI -- external image file
+     * references are not supported, same "embedded buffers only" scope [GltfBuffer] already
+     * has. */
+    val uri: String? = null,
+    val mimeType: String? = null,
+)
+
+@Serializable
+data class GltfSkin(
+    val inverseBindMatrices: Int? = null,
+    val joints: List<Int> = emptyList(),
+    val skeleton: Int? = null,
+)
+
+@Serializable
+data class GltfAnimation(
+    val channels: List<GltfAnimationChannel> = emptyList(),
+    val samplers: List<GltfAnimationSampler> = emptyList(),
+    val name: String? = null,
+)
+
+@Serializable
+data class GltfAnimationChannel(
+    val sampler: Int,
+    val target: GltfAnimationTarget,
+)
+
+@Serializable
+data class GltfAnimationTarget(
+    val node: Int? = null,
+    /** `"translation"`, `"rotation"`, `"scale"`, or `"weights"` -- only the first three are
+     * handled ([GltfParser]'s skinning path has no morph-target support). */
+    val path: String,
+)
+
+@Serializable
+data class GltfAnimationSampler(
+    val input: Int,
+    val output: Int,
+    /** `"LINEAR"`, `"STEP"`, or `"CUBICSPLINE"` -- only `LINEAR` (nlerp/lerp) is sampled;
+     * every channel in the reference CesiumMan clip this parser targets is `LINEAR`. */
+    val interpolation: String = "LINEAR",
+)
+
+@Serializable
+data class GltfScene(
+    val nodes: List<Int> = emptyList(),
+)
+
+@Serializable
+data class GltfNode(
+    val name: String? = null,
+    val mesh: Int? = null,
+    /** Index into [GltfDocument.skins] -- present on the node that carries a skinned mesh. */
+    val skin: Int? = null,
+    /** 16 column-major floats -- mutually exclusive with [translation]/[rotation]/[scale]
+     * per the glTF 2.0 spec; when absent, TRS is composed instead. */
+    val matrix: List<Float>? = null,
+    val translation: List<Float>? = null,
+    /** Quaternion `[x, y, z, w]`. */
+    val rotation: List<Float>? = null,
+    val scale: List<Float>? = null,
+    val children: List<Int> = emptyList(),
+)
+
+@Serializable
+data class GltfBuffer(
+    /** A `data:application/octet-stream;base64,...` (or similar) data URI -- external
+     * file URIs (a relative path to a sibling `.bin`) are not supported by this parser;
+     * see [GltfParser]'s doc comment. */
+    val uri: String? = null,
+    val byteLength: Int = 0,
+)
+
+@Serializable
+data class GltfBufferView(
+    val buffer: Int,
+    val byteOffset: Int = 0,
+    val byteLength: Int = 0,
+    val byteStride: Int? = null,
+)
+
+@Serializable
+data class GltfAccessor(
+    val bufferView: Int? = null,
+    val byteOffset: Int = 0,
+    /** glTF's numeric component type constants -- `5120` BYTE, `5121` UNSIGNED_BYTE,
+     * `5122` SHORT, `5123` UNSIGNED_SHORT, `5125` UNSIGNED_INT, `5126` FLOAT. Only
+     * FLOAT (vertex attributes) and the three unsigned integer types (indices) are
+     * actually handled -- see [GltfComponentType]. */
+    val componentType: Int,
+    val count: Int,
+    /** `"SCALAR"`, `"VEC2"`, `"VEC3"`, or `"VEC4"` -- determines how many [componentType]
+     * values make up one element. */
+    val type: String,
+)
+
+@Serializable
+data class GltfPrimitiveAttributes(
+    @SerialName("POSITION") val position: Int? = null,
+    @SerialName("NORMAL") val normal: Int? = null,
+    @SerialName("COLOR_0") val color0: Int? = null,
+    @SerialName("TEXCOORD_0") val texCoord0: Int? = null,
+    @SerialName("JOINTS_0") val joints0: Int? = null,
+    @SerialName("WEIGHTS_0") val weights0: Int? = null,
+)
+
+@Serializable
+data class GltfPrimitive(
+    val attributes: GltfPrimitiveAttributes,
+    val indices: Int? = null,
+    val material: Int? = null,
+)
+
+@Serializable
+data class GltfMeshDef(
+    val name: String? = null,
+    val primitives: List<GltfPrimitive> = emptyList(),
+)

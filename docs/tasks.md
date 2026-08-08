@@ -1,0 +1,98 @@
+# Tasks
+
+## Current Objective
+
+Stabilize Awake's public API boundaries before the next core/scene split. The current focus
+is separating core APIs, reusable helpers, and authoring sugar so future module moves do not
+just spread unclear ownership across more folders.
+
+## Active Phase
+
+- 2026-08-05: API layering plan added. Use
+  [docs/reference/api-layering.md](reference/api-layering.md) as the stable rule and
+  [docs/tasks/2026-08-05-api-layering-plan.md](tasks/2026-08-05-api-layering-plan.md) as
+  the active ECS/scene cleanup plan.
+- 2026-08-05: Phase 2 ECS/scene API classification audit recorded in the API layering
+  plan. Demo navmesh bootstrap moved out of `awake:scene`; authored gameplay systems moved
+  to the scene3d sample. The scene module split proposal is now tracked in
+  [docs/tasks/2026-08-05-scene-module-split-proposal.md](tasks/2026-08-05-scene-module-split-proposal.md).
+- 2026-08-05: First scene split slice landed behind the `awake-scene` facade:
+  `:awake:scene:core` owns `Transform`/`Name`, and `:awake:scene:rendering` owns
+  render-facing scene components plus `RenderSystem`.
+- 2026-08-05: Physics scene leaf split landed behind the `awake-scene` facade:
+  `:awake:scene:physics` owns `PhysicsBody`/`PhysicsSystem`.
+- 2026-08-05: Controls scene leaf split landed behind the `awake-scene` facade:
+  `:awake:scene:controls` owns `OrbitControl`/`FreeFlyControl`/`FollowControl`/
+  `MovementControl` plus their camera systems. `PlayerControlSystem` stays in
+  `:awake:scene` (depends on `ui-core`).
+- 2026-08-05: Runtime scene split landed behind the `awake-scene` facade:
+  `:awake:scene:runtime` owns `SceneGameRuntime`/`SceneGameSpec`/`SceneRouterSpec`, the
+  scene document model, and `SceneAssetLibrary` (moved as one unit -- `SceneGameSpec`
+  couples them directly). The deprecated `SceneRuntime` bootstrap stays in `:awake:scene`
+  (depends on `TransformSystem`, which hasn't split out yet).
+- 2026-08-05: Scene module split Phase 5 (DSL dependency tightening) landed:
+  `TransformSystem` moved to `:awake:scene:core`, `PlayerControlSystem` moved into
+  `:awake:scene-dsl` directly (needs `ui-core`). `:awake:scene-dsl` now depends on the
+  specific `:awake:scene:*` leaf modules it uses instead of the whole `:awake:scene`
+  facade -- this completes the module list the split proposal sketched, leaving only
+  `NavMesh` and the deprecated `SceneRuntime` bootstrap in `:awake:scene` itself.
+- 2026-08-06: `:awake:scene:core` gained `SpinControl`/`SpinSystem` (generic entity
+  rotation) and `:awake:scene:controls` gained `LookAtControl`/`LookAtCameraSystem` plus
+  `PrimaryOrbitCamera` (a plain lifecycle helper, not an ECS `System`, for a UI-driven
+  debug camera entity) -- extracted from duplicated demo boilerplate, following the same
+  component+System convention the existing camera controls already use.
+- 2026-07-10: `VulkanApplication` now loads `scene.json` through `SceneRuntimeHost`; next
+  we peel shared code into smaller modules, starting with math/runtime/utils.
+- 2026-08-06: The above core split is done -- confirmed complete via
+  [docs/reference/decision-log.md](reference/decision-log.md) D11-D13 and the current
+  `settings.gradle.kts` (no `awake:core` module exists anymore): `awake-core` split into
+  dependency-free `:awake:base` (math/input/glTF/utils), `:awake:backend:opengl`, and
+  `:awake:engine:render-api`; the Vulkan/WebGPU backends physically split into
+  `:awake:backend:vulkan`/`:awake:backend:webgpu`. This entry and the matching Open
+  Questions/Fix Lanes bullets below were stale, written before D11-D13 landed.
+- 2026-08-06: `RotatingCubeDemo` gained a "Camera mode" toggle (Orbit/Follow/Look at),
+  wiring the previously-unused `FollowControl`/`LookAtControl` + `FollowCameraSystem`/
+  `LookAtCameraSystem` (built 2026-08-06, never attached to any entity until now) onto
+  `PrimaryOrbitCamera`'s camera entity -- `PrimaryOrbitCamera.entity` is now a public
+  read-only property so a demo can attach extra components to that same entity instead of
+  spawning a second camera.
+
+## Open Questions
+
+- Which ECS/scene APIs are true core, which are reusable helpers, and which are only
+  authoring sugar?
+- Should `SceneGameRuntime` remain renderer/UI aware, or should those concerns move behind
+  smaller runtime interfaces during the scene split?
+- Do we split `physics` now, or leave it until the scene/runtime shape is settled?
+- Should Awake v1 use one universal `Style`, or separate style types immediately for
+  text/button/panel families?
+- Which properties stay in `UiModifier`, and which must move into the new `Style` layer?
+- Should the first UI DSL slice target inspector panels only, or should it also cover
+  HUD/menu composition in the same pass?
+- Do we want `animate { }` support in the first style pass, or only after the static style
+  property model settles?
+
+## Fix Lanes
+
+- Dev: Core split (complete -- see
+  [docs/reference/decision-log.md](reference/decision-log.md) D11-D13)
+- Dev: ECS/scene API layering and classification
+- Dev: Scene module split (complete -- see
+  [docs/tasks/2026-08-05-scene-module-split-proposal.md](tasks/2026-08-05-scene-module-split-proposal.md))
+- Dev: UI DSL and style audit
+- Beta: None yet
+- Stable: Refresh runtime docs after the module split lands
+
+## Task Log
+
+- [2026-07-09-decouple-world](tasks/2026-07-09-decouple-world.md)
+- [2026-07-10-scene-runtime](tasks/2026-07-10-scene-runtime.md)
+- [2026-07-14-ui-dsl-audit](tasks/2026-07-14-ui-dsl-audit.md)
+- [2026-07-14-ui-module-split](tasks/2026-07-14-ui-module-split.md)
+- [2026-07-17-ui-api-simplification](tasks/2026-07-17-ui-api-simplification.md)
+- [2026-08-05-api-layering-plan](tasks/2026-08-05-api-layering-plan.md)
+- [2026-08-05-scene-module-split-proposal](tasks/2026-08-05-scene-module-split-proposal.md)
+
+## Archive Index
+
+- None yet

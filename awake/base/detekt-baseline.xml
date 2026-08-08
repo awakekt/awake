@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MagicNumber:Bitmap.kt$16</ID>
+    <ID>MagicNumber:Bitmap.kt$24</ID>
+    <ID>MagicNumber:Bitmap.kt$3</ID>
+    <ID>MagicNumber:Bitmap.kt$4</ID>
+    <ID>MagicNumber:Bitmap.kt$8</ID>
+    <ID>MagicNumber:Color.kt$Color$3</ID>
+    <ID>MagicNumber:Color.kt$Color.Companion$16</ID>
+    <ID>MagicNumber:Color.kt$Color.Companion$255f</ID>
+    <ID>MagicNumber:Color.kt$Color.Companion$3</ID>
+    <ID>MagicNumber:Color.kt$Color.Companion$4</ID>
+    <ID>MagicNumber:Color.kt$Color.Companion$6</ID>
+    <ID>MagicNumber:Color.kt$Color.Companion$8</ID>
+    <ID>MagicNumber:EngineConfig.kt$EngineConfig$30.0</ID>
+    <ID>MagicNumber:Frustum.kt$Frustum$3</ID>
+    <ID>MagicNumber:Frustum.kt$Frustum$4</ID>
+    <ID>MagicNumber:Frustum.kt$Frustum$5</ID>
+    <ID>MagicNumber:Frustum.kt$Frustum$6</ID>
+    <ID>MagicNumber:Frustum.kt$Frustum$7</ID>
+    <ID>MagicNumber:GltfMesh.kt$GltfMesh$10</ID>
+    <ID>MagicNumber:GltfMesh.kt$GltfMesh$13</ID>
+    <ID>MagicNumber:GltfMesh.kt$GltfMesh$3</ID>
+    <ID>MagicNumber:GltfMesh.kt$GltfMesh$4</ID>
+    <ID>MagicNumber:GltfMesh.kt$GltfMesh$5</ID>
+    <ID>MagicNumber:GltfMesh.kt$GltfMesh$6</ID>
+    <ID>MagicNumber:GltfMesh.kt$GltfMesh$7</ID>
+    <ID>MagicNumber:GltfMesh.kt$GltfMesh$8</ID>
+    <ID>MagicNumber:GltfMesh.kt$GltfMesh$9</ID>
+    <ID>MagicNumber:GltfParser.kt$GltfParser$0xFF</ID>
+    <ID>MagicNumber:GltfParser.kt$GltfParser$16</ID>
+    <ID>MagicNumber:GltfParser.kt$GltfParser$24</ID>
+    <ID>MagicNumber:GltfParser.kt$GltfParser$3</ID>
+    <ID>MagicNumber:GltfParser.kt$GltfParser$4</ID>
+    <ID>MagicNumber:GltfParser.kt$GltfParser$8</ID>
+    <ID>MagicNumber:PixelProbe.kt$4</ID>
+    <ID>MagicNumber:Pixmap.kt$4</ID>
+    <ID>MagicNumber:Pixmap.kt$Pixmap$0xFF</ID>
+    <ID>MagicNumber:Pixmap.kt$Pixmap$16</ID>
+    <ID>MagicNumber:Pixmap.kt$Pixmap$24</ID>
+    <ID>MagicNumber:Pixmap.kt$Pixmap$8</ID>
+    <ID>MagicNumber:SkinnedAnimationPlayer.kt$SkinnedAnimationPlayer$16</ID>
+    <ID>MagicNumber:SkinnedAnimationPlayer.kt$SkinnedAnimationPlayer$3</ID>
+    <ID>MagicNumber:SkinnedAnimationPlayer.kt$SkinnedAnimationPlayer$4</ID>
+    <ID>MagicNumber:gameloop.android.kt$AndroidGameLoop$1000</ID>
+    <ID>MagicNumber:gameloop.android.kt$AndroidGameLoop$1_000_000</ID>
+    <ID>MagicNumber:gameloop.android.kt$AndroidGameLoop$1e9</ID>
+    <ID>MagicNumber:gameloop.desktop.kt$DesktopGameLoop$1000</ID>
+    <ID>MagicNumber:gameloop.desktop.kt$DesktopGameLoop$1_000_000</ID>
+    <ID>MagicNumber:gameloop.desktop.kt$DesktopGameLoop$1e9</ID>
+    <ID>MagicNumber:gameloop.ios.kt$IOSGameLoop$1_000L</ID>
+    <ID>MagicNumber:gameloop.ios.kt$IOSGameLoop$1_000_000L</ID>
+    <ID>MagicNumber:gameloop.ios.kt$IOSGameLoop$1_000_000_000L</ID>
+    <ID>MagicNumber:gameloop.ios.kt$IOSGameLoop$1e9</ID>
+    <ID>MagicNumber:matrix.kt$16</ID>
+    <ID>MagicNumber:matrix.kt$4</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$10</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$11</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$12</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$13</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$14</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$15</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$16</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$3</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$4</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$5</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$6</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$7</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$8</ID>
+    <ID>MagicNumber:matrix.kt$Mat4$9</ID>
+    <ID>MagicNumber:matrix.kt$Mat4.Companion$2.0f</ID>
+    <ID>MagicNumber:matrix.kt$Mat4.Companion$2f</ID>
+    <ID>MagicNumber:matrix.kt$Mat4.Companion$4</ID>
+    <ID>MagicNumber:vector.kt$Vec4$0.5f</ID>
+    <ID>MatchingDeclarationName:Bitmap.kt$AppleBitmap : Bitmap</ID>
+    <ID>MatchingDeclarationName:Platform.android.kt$AndroidPlatform : Platform</ID>
+    <ID>MatchingDeclarationName:Platform.desktop.kt$DesktopPlatform : Platform</ID>
+    <ID>MatchingDeclarationName:Platform.ios.kt$IOSPlatform : Platform</ID>
+    <ID>MatchingDeclarationName:Platform.wasmJs.kt$WasmJsPlatform : Platform</ID>
+    <ID>MatchingDeclarationName:gameloop.android.kt$AndroidGameLoop : GameLoop</ID>
+    <ID>MatchingDeclarationName:gameloop.desktop.kt$DesktopGameLoop : GameLoop</ID>
+    <ID>MatchingDeclarationName:gameloop.ios.kt$IOSGameLoop : GameLoop</ID>
+    <ID>MatchingDeclarationName:gameloop.kt$GameLoop</ID>
+    <ID>MatchingDeclarationName:matrix.kt$Mat4</ID>
+    <ID>ReturnCount:AndroidInputBridge.kt$fun MotionEvent.syncAwakePointerInput(input: Input): Boolean</ID>
+    <ID>ReturnCount:SkinnedAnimationPlayer.kt$SkinnedAnimationPlayer$private fun sampleChannel(sampler: LoadedAnimationSampler, timeSeconds: Float): FloatArray</ID>
+    <ID>TooManyFunctions:GltfParser.kt$GltfParser</ID>
+    <ID>TooManyFunctions:vector.kt$Vec3</ID>
+    <ID>UnusedPrivateProperty:Bitmap.kt$val bytesPerRow = CGImageGetBytesPerRow(cgImage)</ID>
+  </CurrentIssues>
+</SmellBaseline>

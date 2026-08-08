@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LoopWithTooManyJumpStatements:DebugControlServer.kt$WebSocketDebugTransport$for</ID>
+    <ID>MatchingDeclarationName:DebugControlServer.kt$WebSocketDebugTransport&lt;TCommand, TResponse> : DebugTransport</ID>
+    <ID>TooGenericExceptionCaught:DebugControlLoop.kt$t: Throwable</ID>
+  </CurrentIssues>
+</SmellBaseline>

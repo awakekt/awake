@@ -19,33 +19,42 @@
 
 rootProject.name = "Awake"
 
-include(":awake-demo:androidApp")
-include(":awake-demo:shared")
-include(":awake-demo:desktopApp")
-include(":awake-core")
-include(":awake-vulkan")
-include(":awake-vulkan-generator")
+include(":awake:base")
+include(":awake:backend:opengl")
+include(":awake:ecs")
+include(":awake:ecs:benchmark")
+include(":awake:scene")
+include(":awake:scene:core")
+include(":awake:scene:controls")
+include(":awake:scene:physics")
+include(":awake:scene:rendering")
+include(":awake:scene:runtime")
+include(":awake:scene-dsl")
+include(":awake:engine:render-api")
+include(":awake:engine:ui:ui-core")
+include(":awake:engine:ui:ui-headless")
+include(":awake:engine:ui:ui-designsystem")
+include(":awake:engine:ui:ui-testing")
+include(":awake:engine:game")
+include(":awake:engine:game-dsl")
+include(":awake:backend:vulkan")
+include(":awake:backend:vulkan:android-native")
+include(":awake:backend:webgpu")
+include(":awake:backend:vulkan-generator")
+include(":awake:physics:api")
+include(":awake:backend:jolt")
+include(":samples:ui-showcase")
+include(":samples:scene3d-playground")
+include(":samples:studio")
+include(":samples:server")
 
 
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         gradlePluginPortal()
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         google()
-    }
-
-    plugins {
-        val kotlinVersion = extra["kotlin.version"] as String
-        val agpVersion = extra["agp.version"] as String
-        val composeVersion = extra["compose.version"] as String
-
-        kotlin("jvm").version(kotlinVersion)
-        kotlin("multiplatform").version(kotlinVersion)
-        kotlin("android").version(kotlinVersion)
-
-        id("com.android.application").version(agpVersion)
-        id("com.android.library").version(agpVersion)
-        id("org.jetbrains.compose").version(composeVersion)
     }
 }
 
@@ -57,5 +66,9 @@ dependencyResolutionManagement {
         maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         maven("https://oss.sonatype.org/content/repositories/snapshots/")
         maven("https://s01.oss.sonatype.org/content/repositories/snapshots")
+        // wgpu4k (Phase 2.5 spike, see docs/MVP_PLAN.md) has no stable release yet (last tag
+        // v0.1.1, June 2025) -- only snapshots via Sonatype's current Central Portal
+        // snapshot repo (not the legacy oss.sonatype.org ones above).
+        maven("https://central.sonatype.com/repository/maven-snapshots/")
     }
 }
