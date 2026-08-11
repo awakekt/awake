@@ -9,12 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known issues
 
-- **Glyphs render at roughly 0.6x their own metrics.** An `H` at 14px emits a correct
-  7.53 x 9.95 quad but renders 3 x 7 of ink, so text reads as thin and spindly. Packed
-  metrics, quad emission, atlas glyph placement, the UV rect and the rasterizer's UV mapping
-  are each verified correct by measurement; the defect is in coverage resolution. Full
-  investigation, including four hypotheses disproved by measurement, in
-  `docs/tasks/2026-08-10-glyph-scale-regression.md`. **Top open issue.**
+- **Glyph stem weight varies with sub-pixel phase.** The same character repeated on one line
+  renders 1px and 2px stems in alternation (`'i' @14px: [1,1,1,2,1,2,1,2,...]`), which reads as
+  "some characters thin, some not". MTSDF was expected to close this and did not: the field
+  resolves an edge analytically, but each quad still lands at a different sub-pixel phase as
+  fractional advances accumulate. Recorded as `knownStemWidthSpread = 1` in
+  `GlyphStemWeightTest` -- which is currently `@Ignore`d, because its probe cannot isolate
+  individual stems (a repeated 'i' at 12px collapses into one run at every threshold tried).
+  Disabled deliberately rather than left green and lying. **Top open issue.**
+- **`rasterize()` silently draws a placeholder when `font` is null.** A frame full of glyphs
+  rendered without a font produces placeholder rects rather than failing, which cost a full
+  investigation and produced a confident but wrong "glyphs render at 0.6x" report (now retracted
+  in `docs/tasks/2026-08-10-glyph-scale-regression.md`). It should require the font, or make the
+  placeholder obviously not a glyph.
 - **Studio shows no custom cursor.** `SceneGameRuntime` has the cursor in its frame effects
   and discards it, unlike `GameUiRuntime`, and no service registration exposes the runtime to
   an entry point. `runVulkanDesktopGame`'s `cursor` defaults to null, so every request is
@@ -31,13 +38,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   separate grab margin was tried and reverted: it re-proportioned every panel, and because it
   required hit-testing outside `interact()` it killed the hover state the resize cursor reads.
   Closing this needs `interact()` to accept a hit rect distinct from its layout rect.
-- **`FontBaselineFidelityTest` records three drift entries** (`roundvsflat-14`,
-  `roundvsflat-16`, `email-12`) against the Chromium reference, recorded as measured rather
-  than force-closed.
 - **`popup()` cannot take min/max bounds**, so `max-w-*` is unportable for every popup-based
   component; `shadcnAlertDialog` is parked at 320dp because of it.
 - **`docs/reference/ui-status.md` is stale** — it predates the MTSDF work, the resizable fix
-  and the scale regression.
+  and the MTSDF/resizable work.
+- **Studio viewport canvas padding is wrong.** Reported, not yet diagnosed.
+- **Studio's vertical pill toolbar may not be the right pattern.** Its use case has not been
+  validated against how established editors (Unity, Godot, Unreal, Blender) place tool rails, and
+  no comparison has been done. Open design question, not a defect.
+- **Studio has no UI audit.** Component placement and dead action buttons have not been
+  inventoried.
+
+### Fixed
+
+- **Glyph ink rendered at ~0.90x of its own metrics** (sub-pixel at 12-14px, past a pixel from
+  16px up): the font-atlas generator sized render quads to the glyph outline but UV rects to
+  outline + crop bleed + a texel snap, squeezing the padded atlas region into an outline-sized
+  quad. Quads are now derived from the snapped sample rect (quad and UV cover the same texels
+  1:1) and outline-true `inkMetricsEm` ships separately so `capHeightEm`/baseline/advance
+  metrics stay ink-exact. The per-glyph snap slack was also what scattered baselines; the
+  Chromium baseline-fidelity drift map is re-measured with an honest probe (transparent
+  background, alpha-channel coverage, degenerate-run guard) and every text-bearing snapshot
+  signature is re-recorded. `GlyphAbsoluteSizeTest` now gates absolute ink size against
+  `capHeightEm * size` -- the external-truth check this repo never had.
 
 ### Added
 
