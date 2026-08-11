@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known issues
 
+- **A `shadcnToggleGroup` in the same panel stops a popup opening.** Bisected: studio's viewport
+  panel passes with an empty header row, and fails as soon as one toggle group is added -- the
+  icon rail's camera button is still found and clicked, the dropdown never appears. Not a layout
+  or nesting problem (that half was fixed in `d3f270c7`). **Blocks the viewport header**, and
+  matters more widely because the design pairs toggle groups with popups in several places.
+  Suspects and the next step are in `docs/tasks/2026-08-11-studio-layout-design.md`.
+
 - **Glyph stem weight varies with sub-pixel phase.** The same character repeated on one line
   renders 1px and 2px stems in alternation (`'i' @14px: [1,1,1,2,1,2,1,2,...]`), which reads as
   "some characters thin, some not". MTSDF was expected to close this and did not: the field
@@ -17,11 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `GlyphStemWeightTest` -- which is currently `@Ignore`d, because its probe cannot isolate
   individual stems (a repeated 'i' at 12px collapses into one run at every threshold tried).
   Disabled deliberately rather than left green and lying. **Top open issue.**
-- **`rasterize()` silently draws a placeholder when `font` is null.** A frame full of glyphs
-  rendered without a font produces placeholder rects rather than failing, which cost a full
-  investigation and produced a confident but wrong "glyphs render at 0.6x" report (now retracted
-  in `docs/tasks/2026-08-10-glyph-scale-regression.md`). It should require the font, or make the
-  placeholder obviously not a glyph.
 - **Studio shows no custom cursor.** `SceneGameRuntime` has the cursor in its frame effects
   and discards it, unlike `GameUiRuntime`, and no service registration exposes the runtime to
   an entry point. `runVulkanDesktopGame`'s `cursor` defaults to null, so every request is
@@ -38,29 +40,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   separate grab margin was tried and reverted: it re-proportioned every panel, and because it
   required hit-testing outside `interact()` it killed the hover state the resize cursor reads.
   Closing this needs `interact()` to accept a hit rect distinct from its layout rect.
-- **`popup()` cannot take min/max bounds**, so `max-w-*` is unportable for every popup-based
-  component; `shadcnAlertDialog` is parked at 320dp because of it.
-- **`docs/reference/ui-status.md` is stale** — it predates the MTSDF work, the resizable fix
-  and the MTSDF/resizable work.
+- **`docs/reference/ui-status.md` is stale** — it predates the MTSDF and resizable work.
 - **Studio viewport canvas padding is wrong.** Reported, not yet diagnosed.
-- **Studio's vertical pill toolbar may not be the right pattern.** Its use case has not been
-  validated against how established editors (Unity, Godot, Unreal, Blender) place tool rails, and
-  no comparison has been done. Open design question, not a defect.
-- **Studio has no UI audit.** Component placement and dead action buttons have not been
-  inventoried.
-
-### Fixed
-
-- **Glyph ink rendered at ~0.90x of its own metrics** (sub-pixel at 12-14px, past a pixel from
-  16px up): the font-atlas generator sized render quads to the glyph outline but UV rects to
-  outline + crop bleed + a texel snap, squeezing the padded atlas region into an outline-sized
-  quad. Quads are now derived from the snapped sample rect (quad and UV cover the same texels
-  1:1) and outline-true `inkMetricsEm` ships separately so `capHeightEm`/baseline/advance
-  metrics stay ink-exact. The per-glyph snap slack was also what scattered baselines; the
-  Chromium baseline-fidelity drift map is re-measured with an honest probe (transparent
-  background, alpha-channel coverage, degenerate-run guard) and every text-bearing snapshot
-  signature is re-recorded. `GlyphAbsoluteSizeTest` now gates absolute ink size against
-  `capHeightEm * size` -- the external-truth check this repo never had.
+- **Studio's tool rail is inert.** All five buttons (Layers, Grid, Environment, History, Panels)
+  dispatch `SelectTool` and update the store, and `activeTool` is then read only by `IconRail`
+  itself to decide which button looks pressed. Nothing else reads it. Its PLACEMENT is fine --
+  Blender and Unity both float tools at the viewport edge -- the wiring is what is missing. See
+  `docs/tasks/2026-08-11-studio-layout-audit.md`.
+- **Studio entity selection is inert.** `InspectorState.selectedEntityId` is written by the store
+  and read by nothing; `InspectorPanel` lists every named entity regardless. There is no UI to
+  select from, which is what the hierarchy dock is for.
+- **`StudioShellLayoutTest.panelsDockFlushToEveryFrameEdge` fails.** Pre-existing, confirmed
+  against clean `main` with all local changes stashed. Never diagnosed.
 
 ### Added
 
@@ -211,7 +202,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dark-theme `card` and `sidebar` colors corrected to oklch lightness 0.205, matching the
   published shadcn spec (they were 0.168 and 0.158).
 
-## [1.0.0-SNAPSHOT] - YYYY-MM-DD
+## [0.1.0-dev.4] - 2026-08-11
+
+UI correctness and the first piece of the studio layout redesign. Ships the general fix for a
+bug class that had produced three separate shipped defects.
+
+### Fixed
+
+- **Widget-state writes made during a measuring pass are dropped.** `column()` re-executes its
+  content against a scratch context sharing the real, persisted `WidgetState` but with blank
+  input, so anything writing state from that pass corrupted what the real pass read moments
+  later in the same frame. It had shipped three times: the resizable handle's drag anchor was
+  deleted every frame so dragging did nothing, `animatedHeight` kept a stale height across a
+  collapse, and a popup nested one container deeper would not open. The first two were fixed
+  per-widget, which left every other stateful widget exposed. Guarding `UiStateValue`'s setter
+  covers every hook at once, so a new widget cannot reintroduce it by forgetting to guard itself.
+- **Studio's display toggles moved to a viewport-edge pill.** Wireframe and shadows sat in the
+  top bar, which was a scoping error -- they govern how one viewport draws, not the document.
+  Kept out of the tool rail deliberately: that rail is modal, these are independent booleans.
+- **`popup()` honours `Modifier.widthIn()`/`heightIn()`**, so `max-w-*` is expressible for
+  popup-based components instead of hard-coded. `maxWidth` applies before measurement as well as
+  after, so wrapped content reflows within the cap rather than being clipped.
+
+### Added
+
+- Studio layout audit, target design and an SVG wireframe --
+  `docs/tasks/2026-08-11-studio-layout-audit.md`, `-design.md` and `-layout.svg`. The audit found
+  three inert controls; the design maps every region to components that already exist and
+  sequences the work in independently shippable phases.
+
+## [0.1.0-dev.3] - 2026-08-11
+
+Font rendering: the atlas moved to MTSDF and the verification gaps that let font bugs ship were
+closed. Text rendering is NOT finished at this tag -- stem weight still varies with sub-pixel
+phase, tracked under Unreleased / Known issues.
+
+### Fixed
+
+- **`rasterize()`'s missing-font placeholder is no longer glyph-shaped.** It drew a filled rect
+  in the glyph's own colour, inset 25%, which reads as a blob of text and -- worse -- measures as
+  one: probes scanning for ink found placeholder geometry and reported it as glyph metrics. That
+  produced a confident but wrong "glyphs render at 0.6x their metrics" investigation and left two
+  font gates green while they measured placeholders. Now a solid magenta box over the glyph's
+  full bounds, so neither a reader nor a pixel measurement can mistake it for text, and the
+  `font` parameter documents that it is required whenever a frame contains glyphs.
+
+- **Glyph ink rendered at ~0.90x of its own metrics** (sub-pixel at 12-14px, past a pixel from
+  16px up): the font-atlas generator sized render quads to the glyph outline but UV rects to
+  outline + crop bleed + a texel snap, squeezing the padded atlas region into an outline-sized
+  quad. Quads are now derived from the snapped sample rect (quad and UV cover the same texels
+  1:1) and outline-true `inkMetricsEm` ships separately so `capHeightEm`/baseline/advance
+  metrics stay ink-exact. The per-glyph snap slack was also what scattered baselines; the
+  Chromium baseline-fidelity drift map is re-measured with an honest probe (transparent
+  background, alpha-channel coverage, degenerate-run guard) and every text-bearing snapshot
+  signature is re-recorded. `GlyphAbsoluteSizeTest` now gates absolute ink size against
+  `capHeightEm * size` -- the external-truth check this repo never had.
+
+  Verified on screen by Ron June Valdoz, 2026-08-11. That confirms this fix specifically, not
+  text rendering overall -- stem weight still varies with sub-pixel phase, see Known issues.
+
+## [1.0.0-SNAPSHOT] - not released
+
+Placeholder retained from the Keep a Changelog template. It was never filled in, which is why
+every entry above accumulated in Unreleased instead of being cut into a section at tag time --
+`v0.1.0-dev.1` through `dev.3` all shipped without one. Sections are cut at tag time from here
+on.
 
 ### TODO
 
