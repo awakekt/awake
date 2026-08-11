@@ -14,16 +14,16 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            api(project(":awake:scene:core"))
+            api(project(":awake:scene:scene-core"))
             api(project(":awake:scene:rendering"))
-            api(project(":awake:base"))
+            api(project(":awake:core"))
             api(project(":awake:ecs"))
             api(project(":awake:engine:game"))
             api(project(":awake:engine:ui:ui-core"))
             // Needed by SceneGameFrame.kt's frameStats() -- textLayoutCacheStats() lives in
             // ui-headless, not ui-core.
-            implementation(project(":awake:engine:ui:ui-headless"))
-            api(project(":awake:engine:render-api"))
+            implementation(project(":awake:engine:ui:headless"))
+            api(project(":awake:engine:render:contract"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {

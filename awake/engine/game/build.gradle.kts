@@ -30,19 +30,19 @@ kotlin {
         namespace = "io.github.ronjunevaldoz.awake.engine.application"
     }
 
-    // GenericGameApplication.kt: the backend-neutral render bootstrap that
+    // GameApplication.kt: the backend-neutral render bootstrap that
     // VulkanGameApplication (awake-backend-vulkan) and WebGpuGameApplication
     // (awake-backend-webgpu) both extend, plus the Game interface a game implements and
     // injects into it -- deliberately has zero ECS/scene-graph/UI knowledge (see
-    // docs/MVP_PLAN.md's decision log, "GenericGameApplication a standalone render
+    // docs/MVP_PLAN.md's decision log, "GameApplication a standalone render
     // bootstrap").
     sourceSets {
         commonMain.dependencies {
             // Application, FixedTimestepLoop (via awake-base transitively).
-            api(project(":awake:base"))
+            api(project(":awake:core"))
             // Renderer/LineSegment -- Game.ready(renderer)'s parameter type and
             // drawDebugLines()'s plumbing, nothing scene/ECS-specific.
-            api(project(":awake:engine:render-api"))
+            api(project(":awake:engine:render:contract"))
             implementation(libs.kotlinx.coroutines.core)
         }
         named("androidMain") {

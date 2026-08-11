@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Known issues
+
+- **Glyphs render at roughly 0.6x their own metrics.** An `H` at 14px emits a correct
+  7.53 x 9.95 quad but renders 3 x 7 of ink, so text reads as thin and spindly. Packed
+  metrics, quad emission, atlas glyph placement, the UV rect and the rasterizer's UV mapping
+  are each verified correct by measurement; the defect is in coverage resolution. Full
+  investigation, including four hypotheses disproved by measurement, in
+  `docs/tasks/2026-08-10-glyph-scale-regression.md`. **Top open issue.**
+- **Studio shows no custom cursor.** `SceneGameRuntime` has the cursor in its frame effects
+  and discards it, unlike `GameUiRuntime`, and no service registration exposes the runtime to
+  an entry point. `runVulkanDesktopGame`'s `cursor` defaults to null, so every request is
+  dropped.
+- **Studio does not use the engine's camera system.** `awake:scene:controls` provides
+  `CameraMode` (FirstPerson, ThirdPerson, Cinematic, TopDown) with `CameraInputSystem`
+  handling drag and scroll per mode, and `scene3d-playground` uses it. Studio defines a
+  parallel `CameraPresetMode` (Orbit, Front, Top) with hand-rolled preset math and drag that
+  only responds in Orbit, so Cinematic and TopDown are unreachable from studio and the
+  viewport is not draggable in the other modes.
+- **The resizable handle's geometry does not match upstream shadcn.** Real shadcn is a `w-px`
+  in-flow Separator whose grab area is an absolutely positioned pseudo-element, plus
+  react-resizable-panels' `hitAreaMargins`. Splitting ours into a 1dp layout cost and a
+  separate grab margin was tried and reverted: it re-proportioned every panel, and because it
+  required hit-testing outside `interact()` it killed the hover state the resize cursor reads.
+  Closing this needs `interact()` to accept a hit rect distinct from its layout rect.
+- **`FontBaselineFidelityTest` records three drift entries** (`roundvsflat-14`,
+  `roundvsflat-16`, `email-12`) against the Chromium reference, recorded as measured rather
+  than force-closed.
+- **`popup()` cannot take min/max bounds**, so `max-w-*` is unportable for every popup-based
+  component; `shadcnAlertDialog` is parked at 320dp because of it.
+- **`docs/reference/ui-status.md` is stale** — it predates the MTSDF work, the resizable fix
+  and the scale regression.
+
 ### Added
 
 - GPU-based 3D Camera System: a single `CameraComponent` carrying a `CameraMode` enum
@@ -35,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`GltfMesh.baseColorImageBytes`, `toInterleavedPositionNormalColorUv()`),
   `VertexFormat.PositionNormalColorUv`, and `Renderer.drawTexturedMesh(mesh, material,
   model)` — same separate staged-draw pattern as GPU skinning.
-- `:awake:scene:core` gained `SpinControl`/`SpinSystem` (generic entity rotation) and
+- `:awake:scene:scene-core` gained `SpinControl`/`SpinSystem` (generic entity rotation) and
   `:awake:scene:controls` gained `LookAtControl`/`LookAtCameraSystem` (rotation-only
   tracking) plus `PrimaryOrbitCamera` (a plain lifecycle helper, not an ECS `System`, for
   a UI-driven debug camera entity) — extracted from boilerplate duplicated across
@@ -103,13 +135,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   be reusable behavior; sample/game-specific systems belong with the authored gameplay that
   owns their rules.
 - Scene internals started splitting behind the published `awake-scene` facade:
-  `:awake:scene:core` now owns `Transform`/`Name`, and `:awake:scene:rendering` owns
+  `:awake:scene:scene-core` now owns `Transform`/`Name`, and `:awake:scene:rendering` owns
   `Camera`/`Light`/`MeshRenderer` plus `RenderSystem`. `:awake:scene:physics` now owns
   `PhysicsBody`/`PhysicsSystem`, `:awake:scene:controls` now owns
   `OrbitControl`/`FreeFlyControl`/`FollowControl`/`MovementControl` plus their camera
   systems, and `:awake:scene:runtime` now owns `SceneGameRuntime`, `SceneGameSpec`, the
   scene document model, and `SceneAssetLibrary`. `TransformSystem` moved to
-  `:awake:scene:core`; `PlayerControlSystem` moved into `:awake:scene-dsl` (it needs
+  `:awake:scene:scene-core`; `PlayerControlSystem` moved into `:awake:scene-dsl` (it needs
   `ui-core`). `:awake:scene-dsl` now depends on the specific scene leaf modules it uses
   instead of the whole `:awake:scene` facade. Public package names stay stable.
 - **Maven Central publishing migrated off Sonatype's legacy OSSRH staging API**
@@ -183,11 +215,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GlslValidator plugin for pre-compiling glsl to spv in the demo project.
 
 ### Known Issues
- 
+
 - Possible memory leak when using Vulkan.
 - Incomplete text rendering.
 - Desktop OpenGL texture rendering is leaking.
 
-[unreleased]: https://github.com/ronjunevaldoz/awake/compare/v1.0.0...HEAD
+[unreleased]: https://github.com/awake-lab/awake/compare/v1.0.0...HEAD
 
-[1.0.0-SNAPSHOT]: https://github.com/ronjunevaldoz/awake/compare/v0.0.1...v0.0.2
+[1.0.0-SNAPSHOT]: https://github.com/awake-lab/awake/compare/v0.0.1...v0.0.2

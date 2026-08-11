@@ -30,23 +30,49 @@ plugins {
     alias(libs.plugins.vanniktech.publish) apply false
 }
 
+// Version comes from the latest v* git tag, so publishing is "tag + push" and the
+// number can never drift from the tag:
+//   HEAD exactly on v0.1.0-dev.1  ->  0.1.0-dev.1          (publishable, immutable)
+//   3 commits after that tag      ->  0.1.0-dev.2-SNAPSHOT (local/CI only, never released)
+//   no tag reachable              ->  0.1.0-dev.0-SNAPSHOT
+val gitDerivedVersion: String = run {
+    val describe = runCatching {
+        providers.exec {
+            commandLine("git", "describe", "--tags", "--match", "v*")
+        }.standardOutput.asText.get().trim()
+    }.getOrDefault("")
+    val exact = Regex("""^v(.+?)-(\d+)-g[0-9a-f]+$""").find(describe)
+    when {
+        describe.isEmpty() -> "0.1.0-dev.0-SNAPSHOT"
+        exact == null -> describe.removePrefix("v")
+        else -> {
+            val base = exact.groupValues[1]
+            val bumped = Regex("""(\d+)$""").replace(base) { (it.value.toInt() + 1).toString() }
+            "$bumped-SNAPSHOT"
+        }
+    }
+}
+
 allprojects {
-    group = "io.github.ronjunevaldoz"
-    version = "0.1.0-SNAPSHOT"
+    // Maven namespace: verified through the awake-lab GitHub org, no domain dependency.
+    // Packages keep io.github.ronjunevaldoz until the one pre-publish rename pass (they
+    // become io.github.awakelab.* -- hyphens are legal in a groupId, illegal in a package).
+    group = "io.github.awake-lab"
+    version = gitDerivedVersion
 }
 
 tasks.register("developerDocs") {
     group = "documentation"
     description = "Build developer-facing API references and tutorial artifacts."
     dependsOn(
-        ":awake:base:dokkaGeneratePublicationHtml",
+        ":awake:core:dokkaGeneratePublicationHtml",
         ":awake:ecs:dokkaGeneratePublicationHtml",
         ":awake:engine:game:dokkaGeneratePublicationHtml",
-        ":awake:engine:game-dsl:dokkaGeneratePublicationHtml",
-        ":awake:engine:game-dsl:desktopTest",
-        ":awake:engine:game-dsl:gameDslTutorialDocsReport",
-        ":awake:engine:game-dsl:uiDslTutorialDocsReport",
-        ":awake:engine:render-api:dokkaGeneratePublicationHtml",
+        ":awake:engine:game-authoring:dokkaGeneratePublicationHtml",
+        ":awake:engine:game-authoring:desktopTest",
+        ":awake:engine:game-authoring:gameDslTutorialDocsReport",
+        ":awake:engine:game-authoring:uiDslTutorialDocsReport",
+        ":awake:engine:render:contract:dokkaGeneratePublicationHtml",
         ":awake:engine:ui:ui-core:dokkaGeneratePublicationHtml",
         ":awake:engine:ui:ui-designsystem:dokkaGeneratePublicationHtml",
         ":awake:engine:ui:ui-headless:dokkaGeneratePublicationHtml",
@@ -78,14 +104,17 @@ tasks.register<Exec>("syncFigma") {
 // existing report tasks untouched.
 tasks.register("uiComponentLookupReport") {
     group = "documentation"
-    description = "Generate one searchable HTML component lookup across the ui-showcase preview gallery and the ui-headless snapshot gallery."
+    description =
+        "Generate one searchable HTML component lookup across the ui-showcase preview gallery and the ui-headless snapshot gallery."
     mustRunAfter(
         ":samples:ui-showcase:uiShowcasePreviewReport",
         ":awake:engine:ui:ui-headless:uiSnapshotReport"
     )
-    val previewManifestFile = project(":samples:ui-showcase").layout.buildDirectory.file("ui-previews/previews.tsv")
+    val previewManifestFile =
+        project(":samples:ui-showcase").layout.buildDirectory.file("ui-previews/previews.tsv")
     val previewImagesDir = project(":samples:ui-showcase").layout.buildDirectory.dir("ui-previews")
-    val snapshotImagesDir = project(":awake:engine:ui:ui-headless").layout.buildDirectory.dir("ui-snapshots")
+    val snapshotImagesDir =
+        project(":awake:engine:ui:headless").layout.buildDirectory.dir("ui-snapshots")
     val reportFile = layout.buildDirectory.file("reports/ui-component-lookup/index.html")
     doLast {
         // Rows use the same plain List<String> shape ([id, title, group, summary, source,
@@ -180,15 +209,30 @@ tasks.register("uiComponentLookupReport") {
             val cards = groupEntries.joinToString("\n") { entry ->
                 val image = File(entry[imagePathIdx])
                 val base64 = java.util.Base64.getEncoder().encodeToString(image.readBytes())
-                val search = "${entry[idIdx]} ${entry[titleIdx]} ${entry[groupIdx]} ${entry[sourceIdx]}".lowercase()
+                val search =
+                    "${entry[idIdx]} ${entry[titleIdx]} ${entry[groupIdx]} ${entry[sourceIdx]}".lowercase()
                 val summary = entry[summaryIdx]
                 """
                 <article class="lookup-card" data-search="${escapeHtml(search)}" style="display:grid;gap:0.75rem;margin:0 0 1.25rem 0;padding:1.1rem;border:1px solid #262626;border-radius:14px;background:#09090b">
                     <div>
-                        <p style="margin:0 0 0.3rem 0;color:#a1a1aa;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em">${escapeHtml(entry[sourceIdx])}</p>
+                        <p style="margin:0 0 0.3rem 0;color:#a1a1aa;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em">${
+                    escapeHtml(
+                        entry[sourceIdx]
+                    )
+                }</p>
                         <h3 style="margin:0 0 0.4rem 0">${escapeHtml(entry[titleIdx])}</h3>
-                        ${if (summary.isNotBlank()) """<p style="margin:0 0 0.4rem 0;color:#d4d4d8;font-size:0.9rem">${escapeHtml(summary)}</p>""" else ""}
-                        <p style="margin:0;color:#71717a;font-size:0.82rem">${entry[widthIdx]}x${entry[heightIdx]} &middot; ${escapeHtml(entry[idIdx])}</p>
+                        ${
+                    if (summary.isNotBlank()) """<p style="margin:0 0 0.4rem 0;color:#d4d4d8;font-size:0.9rem">${
+                        escapeHtml(
+                            summary
+                        )
+                    }</p>""" else ""
+                }
+                        <p style="margin:0;color:#71717a;font-size:0.82rem">${entry[widthIdx]}x${entry[heightIdx]} &middot; ${
+                    escapeHtml(
+                        entry[idIdx]
+                    )
+                }</p>
                     </div>
                     <img src="data:image/png;base64,$base64" alt="${escapeHtml(entry[titleIdx])}" style="display:block;border:1px solid #2f2f2f;border-radius:10px;max-width:100%;height:auto" />
                 </article>

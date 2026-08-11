@@ -1,6 +1,5 @@
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
-import org.gradle.api.tasks.JavaExec
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -34,9 +33,10 @@ kotlin {
         ),
         "iosSimulatorArm64" to project(":awake:backend:vulkan").file(
             "ios-native/MoltenVK/Package/Release/MoltenVK/static/MoltenVK.xcframework/" +
-                "ios-arm64_x86_64-simulator"
+                    "ios-arm64_x86_64-simulator"
         ),
     )
+
     fun moltenVkLinkerOpts(targetName: String) = listOf(
         "-L${moltenVkStaticDir.getValue(targetName).path}", "-lMoltenVK", "-lc++",
         "-framework", "Metal",
@@ -70,7 +70,8 @@ kotlin {
             // Fixed dev-server ports, freed up by hello-cube/starter-game's retirement -- keep
             // in sync with .claude/launch.json and docs/reference/developer-docs.md's port table.
             commonWebpackConfig {
-                val port = if (mode == org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode.PRODUCTION) 8085 else 8081
+                val port =
+                    if (mode == org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode.PRODUCTION) 8085 else 8081
                 devServer = devServer?.copy(port = port)
             }
         }
@@ -79,19 +80,19 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":awake:engine:game-dsl"))
-            implementation(project(":awake:engine:render-api"))
-            implementation(project(":awake:base"))
+            implementation(project(":awake:engine:game-authoring"))
+            implementation(project(":awake:engine:render:contract"))
+            implementation(project(":awake:core"))
             implementation(project(":awake:ecs"))
             implementation(project(":awake:scene"))
-            implementation(project(":awake:scene-dsl"))
+            implementation(project(":awake:scene:authoring"))
             implementation(project(":awake:engine:ui:ui-core"))
-            implementation(project(":awake:engine:ui:ui-designsystem"))
+            implementation(project(":awake:engine:ui:designsystem"))
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation(project(":awake:engine:ui:ui-testing"))
+            implementation(project(":awake:engine:ui:testing"))
             implementation(libs.kotlinx.coroutines.test)
         }
 
@@ -99,7 +100,7 @@ kotlin {
             dependsOn(commonMain.get())
         }
         appMain.dependencies {
-            implementation(project(":awake:base"))
+            implementation(project(":awake:core"))
             implementation(project(":awake:backend:vulkan"))
         }
 
@@ -114,7 +115,7 @@ kotlin {
         named("androidMain") {
             dependsOn(appMain)
             dependencies {
-                api(project(":awake:base"))
+                api(project(":awake:core"))
                 api(project(":awake:backend:vulkan"))
                 implementation(libs.recast4j.recast)
                 implementation(libs.recast4j.detour)
@@ -144,7 +145,7 @@ kotlin {
 
         named("wasmJsMain") {
             dependencies {
-                implementation(project(":awake:base"))
+                implementation(project(":awake:core"))
                 implementation(project(":awake:backend:webgpu"))
                 implementation(libs.kotlinx.browser)
             }
@@ -163,10 +164,12 @@ tasks.named<UiPreviewReportTask>("uiPreviewReport") {
     reportTitle.set("Scene3D Playground Previews")
 }
 
-val desktopNativeLibDir = project(":awake:backend:vulkan").layout.buildDirectory.dir("desktop-native-libs")
-val moltenVkIcdPath = fileTree("/opt/homebrew/Cellar/molten-vk") { include("*/etc/vulkan/icd.d/MoltenVK_icd.json") }
-    .plus(fileTree("/usr/local/Cellar/molten-vk") { include("*/etc/vulkan/icd.d/MoltenVK_icd.json") })
-    .files.firstOrNull()?.absolutePath
+val desktopNativeLibDir =
+    project(":awake:backend:vulkan:bindings").layout.buildDirectory.dir("desktop-native-libs")
+val moltenVkIcdPath =
+    fileTree("/opt/homebrew/Cellar/molten-vk") { include("*/etc/vulkan/icd.d/MoltenVK_icd.json") }
+        .plus(fileTree("/usr/local/Cellar/molten-vk") { include("*/etc/vulkan/icd.d/MoltenVK_icd.json") })
+        .files.firstOrNull()?.absolutePath
 val dyldFallbackLibraryPath = "/opt/homebrew/opt/vulkan-loader/lib:/opt/homebrew/lib:/usr/local/lib"
 
 tasks.register<JavaExec>("run") {
@@ -183,7 +186,8 @@ tasks.register<JavaExec>("run") {
         environment("VK_ICD_FILENAMES", moltenVkIcdPath)
     }
     environment("DYLD_FALLBACK_LIBRARY_PATH", dyldFallbackLibraryPath)
-    val jvmArgsList = mutableListOf("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
+    val jvmArgsList =
+        mutableListOf("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
     if (System.getProperty("os.name").lowercase().contains("mac")) {
         jvmArgsList += "-XstartOnFirstThread"
     }
@@ -211,14 +215,18 @@ tasks.named<Test>("desktopTest") {
     forkEvery = 1
 }
 
+// appMain holds compiled Vulkan SPIR-V; commonMain holds hand-authored assets (models, scene
+// documents) every target loads. Both need serving to iosSimulatorArm64Test/wasmJsBrowserTest
+// the same way the real app gets them -- Kotlin's own resource merging reaches the compiled
+// app bundle, but not karma's test server or a Kotlin/Native test binary's working directory.
 awakeTestResources {
     roots.from(layout.projectDirectory.dir("src/appMain/resources"))
+    roots.from(layout.projectDirectory.dir("src/commonMain/resources"))
 }
 
 // appMain/resources also holds syncAwakeShaders' generated SPIR-V output, so the convention's
 // copy consumes that task's output and must order after it.
-tasks.named("copyIosSimulatorTestResources") { dependsOn("syncAwakeShaders") }
-tasks.named("generateAwakeKarmaTestResources") { dependsOn("syncAwakeShaders") }
+// Ordering now handled centrally by awake.shader-pipeline-convention.
 
 // The playground shell test preloads GltfViewerDemo, whose android actual decodes textures via
 // BitmapFactory -- on the host JVM that's android.jar's stub, which throws "not mocked" (and

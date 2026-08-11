@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.runtime
 
-import io.github.ronjunevaldoz.awake.engine.application.GameModule
-import io.github.ronjunevaldoz.awake.engine.application.GameSpecBuilder
+import io.github.ronjunevaldoz.awake.ecs.System
+import io.github.ronjunevaldoz.awake.engine.game.GameModule
+import io.github.ronjunevaldoz.awake.engine.game.GameSpecBuilder
 import kotlin.reflect.KClass
 
 class SceneGameSpec(
@@ -18,6 +19,12 @@ class SceneGameSpec(
     val onReadyBlock: SceneReadyBlock,
     val onDisposeBlock: SceneDisposeBlock,
     internal val serviceRegistrations: List<SceneServiceRegistration<*>>,
+    // Mandatory, not user-configurable data (every scene needs transform resolution + a draw
+    // pass) -- pluggable so a game can swap the render backend, but defaults to the standard
+    // pair so `authoring` never has to import RenderSystem just to get one running. See
+    // defaultInfrastructureSystems() in SceneGameRuntime.kt.
+    val infrastructureSystemsFactory: SceneGameRuntime.() -> List<System> =
+        SceneGameRuntime::defaultInfrastructureSystems,
 ) : GameModule {
     override fun install(into: GameSpecBuilder) {
         installInto(into)
@@ -31,7 +38,13 @@ class SceneGameSpec(
             registration.install(into, runtime)
         }
         into.ready { renderer -> runtime.ready(renderer) }
-        into.render { delta, viewportWidth, viewportHeight -> runtime.render(delta, viewportWidth, viewportHeight) }
+        into.render { delta, viewportWidth, viewportHeight ->
+            runtime.render(
+                delta,
+                viewportWidth,
+                viewportHeight,
+            )
+        }
         into.resize { width, height -> runtime.resize(width, height) }
         into.pause { runtime.pause() }
         into.resume { runtime.resume() }

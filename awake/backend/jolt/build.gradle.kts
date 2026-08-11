@@ -24,6 +24,11 @@ plugins {
     id("awake.spotless-convention")
 }
 
+// Locates ccache without relying on it being on PATH at Gradle's own launch time --
+// homebrew's two standard prefixes cover both Apple Silicon and Intel Macs.
+fun findCcache(): String? =
+    listOf("/opt/homebrew/bin/ccache", "/usr/local/bin/ccache").firstOrNull { File(it).exists() }
+
 kotlin {
     android {
         namespace = "io.github.ronjunevaldoz.awake.physics.jolt"
@@ -48,7 +53,8 @@ kotlin {
     val joltCDir = file("ios-native/JoltC")
     val joltCBuildDir = mapOf(
         "iosArm64" to layout.buildDirectory.dir("joltc-native/iosArm64").get().asFile,
-        "iosSimulatorArm64" to layout.buildDirectory.dir("joltc-native/iosSimulatorArm64").get().asFile,
+        "iosSimulatorArm64" to layout.buildDirectory.dir("joltc-native/iosSimulatorArm64")
+            .get().asFile,
     )
     // CMAKE_OSX_SYSROOT per target -- device builds against the iphoneos SDK, the
     // Apple-Silicon simulator against iphonesimulator; CMake's iOS cross-compile support
@@ -66,36 +72,54 @@ kotlin {
         val nativeBuildDir = joltCBuildDir.getValue(targetName)
         val sysroot = joltCSysroot.getValue(targetName)
         val capitalizedTargetName = targetName.replaceFirstChar { it.uppercase() }
-        val target = kotlin.targets.getByName(targetName) as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
+        val target =
+            kotlin.targets.getByName(targetName) as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
         val configureTask = tasks.register<Exec>("configureJoltC$capitalizedTargetName") {
             group = "native"
             description = "Configure the JoltC iOS ($targetName) native build (CMake) -- " +
-                "run after any JoltC/JoltPhysics source change."
+                    "run after any JoltC/JoltPhysics source change."
             doFirst { nativeBuildDir.mkdirs() }
             commandLine(
-                "cmake",
-                "-S", joltCDir.absolutePath,
-                "-B", nativeBuildDir.absolutePath,
-                "-DCMAKE_SYSTEM_NAME=iOS",
-                "-DCMAKE_OSX_SYSROOT=$sysroot",
-                "-DCMAKE_OSX_ARCHITECTURES=arm64",
-                "-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0",
-                "-DCMAKE_BUILD_TYPE=Release",
-                "-DUSE_ASSERTS=OFF",
+                buildList {
+                    add("cmake")
+                    add("-S"); add(joltCDir.absolutePath)
+                    add("-B"); add(nativeBuildDir.absolutePath)
+                    add("-DCMAKE_SYSTEM_NAME=iOS")
+                    add("-DCMAKE_OSX_SYSROOT=$sysroot")
+                    add("-DCMAKE_OSX_ARCHITECTURES=arm64")
+                    add("-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0")
+                    add("-DCMAKE_BUILD_TYPE=Release")
+                    add("-DUSE_ASSERTS=OFF")
+                    // JoltPhysics is the slow part of a full rebuild (see buildJoltC's own doc
+                    // comment) -- ccache caches object files by source+flags hash, so a clean
+                    // rebuild restores from cache instead of recompiling the whole engine.
+                    // Falls back to no launcher if ccache isn't installed locally.
+                    findCcache()?.let {
+                        add("-DCMAKE_C_COMPILER_LAUNCHER=$it")
+                        add("-DCMAKE_CXX_COMPILER_LAUNCHER=$it")
+                    }
+                }
             )
         }
 
         tasks.register<Exec>("buildJoltC$capitalizedTargetName") {
             group = "native"
-            description = "Build the JoltC + JoltPhysics static libraries for iOS ($targetName) -- " +
-                "manual/on-demand, like desktop-native's buildDesktopNative: CMake configure+build " +
-                "is too slow to run on every Kotlin edit, and these libraries only change when the " +
-                "vendored JoltC/JoltPhysics C++ sources themselves change."
+            description =
+                "Build the JoltC + JoltPhysics static libraries for iOS ($targetName) -- " +
+                        "manual/on-demand, like desktop-native's buildDesktopNative: CMake configure+build " +
+                        "is too slow to run on every Kotlin edit, and these libraries only change when the " +
+                        "vendored JoltC/JoltPhysics C++ sources themselves change."
             dependsOn(configureTask)
             commandLine(
-                "cmake", "--build", nativeBuildDir.absolutePath,
-                "--target", "joltc", "--", "-j", Runtime.getRuntime().availableProcessors().toString()
+                "cmake",
+                "--build",
+                nativeBuildDir.absolutePath,
+                "--target",
+                "joltc",
+                "--",
+                "-j",
+                Runtime.getRuntime().availableProcessors().toString()
             )
         }
 
@@ -110,7 +134,8 @@ kotlin {
         // MoltenVK's own generated .def doesn't need the xcframework to exist yet either.
         val joltcLibDir = nativeBuildDir
         val joltLibDir = nativeBuildDir.resolve("JoltPhysics/Build")
-        val generatedDefFile = layout.buildDirectory.file("cinterop/JoltC-$targetName.def").get().asFile
+        val generatedDefFile =
+            layout.buildDirectory.file("cinterop/JoltC-$targetName.def").get().asFile
         generatedDefFile.parentFile.mkdirs()
         val joltCLinkerOpts = listOf(
             "-L${joltcLibDir.path}", "-ljoltc",
@@ -119,7 +144,7 @@ kotlin {
         ).joinToString(" ")
         generatedDefFile.writeText(
             project.file("src/nativeInterop/cinterop/JoltC.def").readText() +
-                "\nlinkerOpts = $joltCLinkerOpts\n"
+                    "\nlinkerOpts = $joltCLinkerOpts\n"
         )
         target.compilations.getByName("main") {
             cinterops {
@@ -142,7 +167,7 @@ kotlin {
         commonMain.dependencies {
             api(project(":awake:physics:api"))
             // QuatEuler.kt's pure quaternion-to-Euler conversion takes/returns Vec3.
-            implementation(project(":awake:base"))
+            implementation(project(":awake:core"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
