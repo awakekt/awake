@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.webgpu.pipeline
 
+import io.github.ronjunevaldoz.awake.render.mesh.GpuDataShape
+import io.github.ronjunevaldoz.awake.render.mesh.VertexFormat
 import io.github.ronjunevaldoz.awake.webgpu.WebGpuHandles
 import io.github.ronjunevaldoz.awake.webgpu.device.GraphicsDevice
 import io.github.ronjunevaldoz.awake.webgpu.handles.DescriptorSetLayoutHandle
@@ -15,6 +17,7 @@ import io.ygdrasil.webgpu.GPUFrontFace
 import io.ygdrasil.webgpu.GPUPrimitiveTopology
 import io.ygdrasil.webgpu.GPUTextureFormat
 import io.ygdrasil.webgpu.GPUVertexFormat
+import io.ygdrasil.webgpu.GPUVertexStepMode
 import io.ygdrasil.webgpu.PrimitiveState
 import io.ygdrasil.webgpu.RenderPipelineDescriptor
 import io.ygdrasil.webgpu.ShaderModuleDescriptor
@@ -33,6 +36,10 @@ import io.ygdrasil.webgpu.VertexState
  * combined source already has both stages). [renderPass]/[pipelineCache] have no WebGPU
  * equivalent and stay 0.
  *
+ * The vertex buffer layout is derived from [vertexFormat]'s own attributes/offsets (rather
+ * than a hardcoded three-attribute table plus a bare stride), so any format -- including
+ * `PositionNormalColorUv`'s four attributes -- maps without editing this class.
+ *
  * [topology] defaults to `TriangleList`; a `LineList` companion pipeline (built with the same
  * shader/vertex layout, just this one field different) is how `Renderer.wireframe` is
  * implemented on this backend -- see `webgpu.renderer.Renderer`'s own doc comment for why
@@ -44,10 +51,17 @@ class RenderPipeline(
     descriptorSetLayout: DescriptorSetLayoutHandle,
     vertShaderCode: ByteArray,
     fragShaderCode: ByteArray,
-    vertexStride: Int,
+    val vertexFormat: VertexFormat,
     vertexEntryPoint: String = DEFAULT_VERTEX_ENTRY_POINT,
     fragmentEntryPoint: String = DEFAULT_FRAGMENT_ENTRY_POINT,
     topology: GPUPrimitiveTopology = GPUPrimitiveTopology.TriangleList,
+    /** Adds a SECOND, `GPUVertexStepMode.Instance` vertex buffer layout (stride 64) carrying one
+     * `mat4` model matrix per instance as 4 `Float32x4` attributes -- see `instanced.wgsl`, which
+     * declares exactly those. Purely additive: buffer 0 and [vertexFormat]'s own attributes are
+     * untouched, so a `false` (default) pipeline is identical to the one this class always built.
+     * The 4 locations continue past [vertexFormat]'s own highest one, so no format needs
+     * renumbering. Mirrors Vulkan's `RenderPipeline.instanced`. */
+    instanced: Boolean = false,
 ) {
     var renderPass: Long = 0
     var pipelineLayout: Long = 0
@@ -59,33 +73,39 @@ class RenderPipeline(
         val wgslSource = vertShaderCode.decodeToString()
         val shaderModule = device.createShaderModule(ShaderModuleDescriptor(code = wgslSource))
 
+        val vertexBuffers = mutableListOf(
+            VertexBufferLayout(
+                arrayStride = vertexFormat.strideBytes.toULong(),
+                attributes = vertexFormat.entries.map { (attribute, offsetBytes) ->
+                    VertexAttribute(
+                        shaderLocation = attribute.location.toUInt(),
+                        offset = offsetBytes.toULong(),
+                        format = attribute.format.toGpuVertexFormat(),
+                    )
+                },
+            ),
+        )
+        if (instanced) {
+            val firstLocation = vertexFormat.attributes.maxOf { it.location } + 1
+            vertexBuffers += VertexBufferLayout(
+                arrayStride = INSTANCE_MATRIX_BYTES.toULong(),
+                stepMode = GPUVertexStepMode.Instance,
+                attributes = (0 until MATRIX_ROWS).map { row ->
+                    VertexAttribute(
+                        shaderLocation = (firstLocation + row).toUInt(),
+                        offset = (row * VEC4_BYTES).toULong(),
+                        format = GPUVertexFormat.Float32x4,
+                    )
+                },
+            )
+        }
+
         val pipeline = device.createRenderPipeline(
             RenderPipelineDescriptor(
                 vertex = VertexState(
                     module = shaderModule,
                     entryPoint = vertexEntryPoint,
-                    buffers = listOf(
-                        VertexBufferLayout(
-                            arrayStride = vertexStride.toULong(),
-                            attributes = listOf(
-                                VertexAttribute(
-                                    shaderLocation = 0u,
-                                    offset = 0uL,
-                                    format = GPUVertexFormat.Float32x3,
-                                ),
-                                VertexAttribute(
-                                    shaderLocation = 1u,
-                                    offset = (3 * Float.SIZE_BYTES).toULong(),
-                                    format = GPUVertexFormat.Float32x3,
-                                ),
-                                VertexAttribute(
-                                    shaderLocation = 2u,
-                                    offset = (6 * Float.SIZE_BYTES).toULong(),
-                                    format = GPUVertexFormat.Float32x2,
-                                ),
-                            ),
-                        ),
-                    ),
+                    buffers = vertexBuffers,
                 ),
                 fragment = FragmentState(
                     module = shaderModule,
@@ -122,5 +142,19 @@ class RenderPipeline(
     private companion object {
         const val DEFAULT_VERTEX_ENTRY_POINT = "vertexMain"
         const val DEFAULT_FRAGMENT_ENTRY_POINT = "fragmentMain"
+
+        /** See the `instanced` constructor parameter -- one `mat4` = 4 `vec4` rows = 64 bytes. */
+        const val MATRIX_ROWS = 4
+        const val VEC4_BYTES = 16
+        const val INSTANCE_MATRIX_BYTES = MATRIX_ROWS * VEC4_BYTES
     }
+}
+
+private fun GpuDataShape.toGpuVertexFormat(): GPUVertexFormat = when (this) {
+    GpuDataShape.Float -> GPUVertexFormat.Float32
+    GpuDataShape.Vec2 -> GPUVertexFormat.Float32x2
+    GpuDataShape.Vec3 -> GPUVertexFormat.Float32x3
+    GpuDataShape.Vec4 -> GPUVertexFormat.Float32x4
+    GpuDataShape.UInt4 -> GPUVertexFormat.Uint32x4
+    GpuDataShape.Mat4 -> error("Mat4 is not a valid vertex-attribute format.")
 }

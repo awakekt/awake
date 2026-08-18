@@ -6,9 +6,17 @@ import io.github.ronjunevaldoz.awake.core.math.Camera
 import io.github.ronjunevaldoz.awake.core.math.Mat4
 import io.github.ronjunevaldoz.awake.core.math.Vec3
 import io.github.ronjunevaldoz.awake.core.math.times
+import io.github.ronjunevaldoz.awake.render.mesh.VertexFormat
 import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.LineSegment
+import io.github.ronjunevaldoz.awake.render.renderer.RenderViewport
+import io.github.ronjunevaldoz.awake.render.renderer.SHADOW_FAR
+import io.github.ronjunevaldoz.awake.render.renderer.SHADOW_NEAR
+import io.github.ronjunevaldoz.awake.render.renderer.SHADOW_ORTHO_HALF_SIZE
 import io.github.ronjunevaldoz.awake.render.renderer.SceneLight
+import io.github.ronjunevaldoz.awake.render.renderer.UniformFields
+import io.github.ronjunevaldoz.awake.render.renderer.directionalShadowBox
+import io.github.ronjunevaldoz.awake.render.renderer.skyboxUniformFloats
 import io.github.ronjunevaldoz.awake.vulkan.Vulkan
 import io.github.ronjunevaldoz.awake.vulkan.debug.LineMesh
 import io.github.ronjunevaldoz.awake.vulkan.enums.VkCommandBufferLevel
@@ -17,6 +25,8 @@ import io.github.ronjunevaldoz.awake.vulkan.enums.VkSubpassContents
 import io.github.ronjunevaldoz.awake.vulkan.enums.flags.VkCommandBufferUsageFlagBits
 import io.github.ronjunevaldoz.awake.vulkan.enums.flags.VkPipelineStageFlagBits
 import io.github.ronjunevaldoz.awake.vulkan.material.Material
+import io.github.ronjunevaldoz.awake.vulkan.mesh.InstanceBuffer
+import io.github.ronjunevaldoz.awake.vulkan.mesh.SkinnedInstanceBuffer
 import io.github.ronjunevaldoz.awake.vulkan.models.VkExtent2D
 import io.github.ronjunevaldoz.awake.vulkan.models.VkOffset2D
 import io.github.ronjunevaldoz.awake.vulkan.models.VkRect2D
@@ -29,7 +39,7 @@ import io.github.ronjunevaldoz.awake.vulkan.models.info.VkRenderPassBeginInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkSubmitInfo
 import io.github.ronjunevaldoz.awake.vulkan.pipeline.RenderPipeline
 import io.github.ronjunevaldoz.awake.vulkan.utils.VkResultException
-import kotlin.math.abs
+import kotlin.math.ceil
 import io.github.ronjunevaldoz.awake.render.material.Material as RenderMaterial
 
 /** The 3D frame path -- [Renderer.draw]'s whole-frame orchestration (wait/acquire -> update
@@ -57,11 +67,16 @@ internal fun Renderer.performDraw(camera: Camera, drawCalls: List<DrawCall>, lig
     val currentFrame = swapchainManager.currentFrame
     val imageIndex = acquireSwapchainImage(currentFrame) ?: return
 
-    val aspect = swapchainManager.extent.width.toFloat() / swapchainManager.extent.height.toFloat()
+    val aspect = resolvedSceneViewport()?.aspect
+        ?: (swapchainManager.extent.width.toFloat() / swapchainManager.extent.height.toFloat())
     val viewProjection = camera.viewProjectionMatrix(aspect, clipSpace)
     // Debug lines are already in world space (no per-line model matrix), so their MVP
     // is exactly this frame's viewProjection.
     lineRenderPipeline.writeMvp(currentFrame, viewProjection.data)
+    // Reuses this frame's already-built viewProjection: the sky needs its inverse to turn each
+    // pixel back into a world-space ray. Written before recording, like every other uniform.
+    skyboxUniforms(viewProjection, camera.eye, light)
+        ?.let { skyboxRenderPipeline?.writeUniforms(currentFrame, it) }
     val lightViewProjection = if (shadowMap != null) lightViewProjection(light) else null
     val materialUsage = mutableMapOf<RenderMaterial, Int>()
     val preparedDrawCalls =
@@ -94,7 +109,11 @@ internal fun Renderer.performDraw(camera: Camera, drawCalls: List<DrawCall>, lig
         pSignalSemaphores = signalSemaphores,
     )
 
-    Vulkan.vkQueueSubmit(graphicsQueue, arrayOf(submitInfo), swapchainManager.inFlightFences[currentFrame])
+    Vulkan.vkQueueSubmit(
+        graphicsQueue,
+        arrayOf(submitInfo),
+        swapchainManager.inFlightFences[currentFrame]
+    )
 
     val presentInfo = VkPresentInfoKHR(
         pWaitSemaphores = signalSemaphores,
@@ -120,6 +139,23 @@ internal fun Renderer.performDraw(camera: Camera, drawCalls: List<DrawCall>, lig
  * and binds each group's pipeline before calling this) and [Renderer.renderToTexture] (an
  * offscreen frame, which only ever resolves the primary pipeline, already bound before this
  * is called there), so neither duplicates this loop. */
+/** [Renderer.sceneViewport] trimmed to this frame's swapchain extent -- see
+ * [RenderViewport.clampedTo] for why a caller's rect can outlive the surface it was measured
+ * against. */
+internal fun Renderer.resolvedSceneViewport(): RenderViewport? = sceneViewport?.clampedTo(
+    swapchainManager.extent.width.toFloat(),
+    swapchainManager.extent.height.toFloat(),
+)
+
+internal fun RenderViewport.toVkViewport(): VkViewport =
+    VkViewport(x = x, y = y, width = width, height = height)
+
+internal fun RenderViewport.toVkScissor(): VkRect2D = VkRect2D(
+    offset = VkOffset2D(x.toInt(), y.toInt()),
+    // Rounded up so a fractional edge does not scissor away the viewport's last column/row.
+    extent = VkExtent2D(ceil(width).toInt(), ceil(height).toInt()),
+)
+
 internal fun Renderer.recordDrawCalls(commandBuffer: Long, drawCalls: List<PreparedDrawCall>) {
     var drawIndex = 0
     val drawCount = drawCalls.size
@@ -132,7 +168,21 @@ internal fun Renderer.recordDrawCalls(commandBuffer: Long, drawCalls: List<Prepa
             prepared.frameIndex,
             prepared.uniformSlotIndex,
         )
-        prepared.drawCall.mesh.draw(commandBuffer)
+        val instanceBuffer = prepared.instanceBuffer
+        if (instanceBuffer != null) {
+            // Binding 1, alongside the mesh's own binding-0 vertex buffer bound just above.
+            instanceBuffer.bind(prepared.frameIndex, commandBuffer)
+            // Descriptor set 1 (the material bound set 0 just above) -- only for the animated
+            // variant; a static instanced draw has no palettes.
+            prepared.jointPaletteBuffer?.bind(
+                prepared.frameIndex,
+                commandBuffer,
+                prepared.pipeline.pipelineLayout,
+            )
+            prepared.drawCall.mesh.drawInstanced(commandBuffer, prepared.instanceCount)
+        } else {
+            prepared.drawCall.mesh.draw(commandBuffer)
+        }
         drawIndex += 1
     }
 }
@@ -169,15 +219,29 @@ internal fun Renderer.recordCommandBuffer(
     val groupedDrawCalls = drawCalls.groupBy { it.pipeline }
     val primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline
     primaryPipeline.bind(commandBuffer)
+    // Full-surface pair: what the UI pass below restores, and what the 3D pass uses when no
+    // scene viewport is set.
     val viewport = VkViewport(
         width = swapchainManager.extent.width.toFloat(),
         height = swapchainManager.extent.height.toFloat(),
     )
-    Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(viewport))
     val scissor = VkRect2D(
         extent = swapchainManager.extent,
     )
-    Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(scissor))
+    // Set once for the whole 3D pass -- debug lines and the non-primary format groups recorded
+    // further down share it, since they are scene content too.
+    val sceneRect = resolvedSceneViewport()
+    Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(sceneRect?.toVkViewport() ?: viewport))
+    Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(sceneRect?.toVkScissor() ?: scissor))
+
+    // The sky goes FIRST, before any geometry, with depth test/write off -- see
+    // SkyboxRenderPipeline's own doc comment. Rebinds the primary pipeline afterwards, since
+    // the draw-call loop below assumes the bind above is still in effect.
+    val skybox = skyboxRenderPipeline
+    if (showEnvironment && skybox != null) {
+        skybox.draw(commandBuffer, frameIndex)
+        primaryPipeline.bind(commandBuffer)
+    }
     recordDrawCalls(commandBuffer, groupedDrawCalls[primaryPipeline] ?: emptyList())
 
     // Debug lines (e.g. a frustum wireframe), same render pass/depth attachment as
@@ -205,7 +269,11 @@ internal fun Renderer.recordCommandBuffer(
             framebuffer = uiFramebuffers[acquiredImageIndex],
             renderArea = VkRect2D(extent = swapchainManager.extent),
         )
-        Vulkan.vkCmdBeginRenderPass(commandBuffer, uiRenderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE)
+        Vulkan.vkCmdBeginRenderPass(
+            commandBuffer,
+            uiRenderPassInfo,
+            VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE
+        )
         Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(viewport))
         Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(scissor))
 
@@ -224,6 +292,7 @@ internal fun Renderer.recordCommandBuffer(
                     run.mesh.bind(frameIndex, commandBuffer)
                     run.mesh.draw(frameIndex, commandBuffer)
                 }
+
                 is Renderer.UiRun.RoundedQuadRun -> {
                     if (roundedQuadPipeline != null) {
                         roundedQuadPipeline.bind(commandBuffer)
@@ -231,6 +300,7 @@ internal fun Renderer.recordCommandBuffer(
                         run.mesh.draw(frameIndex, commandBuffer)
                     }
                 }
+
                 is Renderer.UiRun.GlyphRun -> {
                     if (glyphPipeline != null) {
                         glyphPipeline.bind(commandBuffer)
@@ -238,6 +308,7 @@ internal fun Renderer.recordCommandBuffer(
                         run.mesh.draw(frameIndex, commandBuffer)
                     }
                 }
+
                 is Renderer.UiRun.ClipRun -> {
                     // Clamped to the swapchain's own extent: nested scroll/clip regions can
                     // accumulate a few px of floating-point rounding past the frame edge.
@@ -257,6 +328,7 @@ internal fun Renderer.recordCommandBuffer(
                     )
                     Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(scissor))
                 }
+
                 is Renderer.UiRun.TextureRun -> {
                     // Render-target-backed textured quads (e.g. a minimap), one draw
                     // call per primitive. Each primitive gets a distinct per-frame mesh
@@ -321,6 +393,13 @@ internal data class PreparedDrawCall(
     val material: Material,
     val frameIndex: Int,
     val uniformSlotIndex: Int,
+    /** Non-null only for a [DrawCall.instanceModels] draw resolved to an instanced pipeline --
+     * [recordDrawCalls] then binds it and issues one `drawInstanced` instead of `draw`. */
+    val instanceBuffer: InstanceBuffer? = null,
+    val instanceCount: Int = 0,
+    /** Non-null only for an ANIMATED instanced draw ([DrawCall.instanceJointPalettes]), where it
+     * accompanies [instanceBuffer] -- per-instance model matrices still come through that. */
+    val jointPaletteBuffer: SkinnedInstanceBuffer? = null,
 )
 
 /** Resolves each [drawCalls] entry against [Renderer.pipelinesByFormat] by its
@@ -333,10 +412,11 @@ internal data class PreparedDrawCall(
  * silently misinterpret the vertex buffer (wrong attribute count/offsets), which is worse
  * than not drawing it.
  *
- * [light] only reaches [drawCall]s resolved to [Renderer.renderPipeline] itself (the primary/
- * lit format) -- every other resolved pipeline gets [DrawCall.extraUniformFloats] instead
- * (e.g. a skinned mesh's joint palette), exactly matching what each format's own shader
- * expects (`triangle.wgsl` reads light; `textured.wgsl`/`skinned.wgsl` don't).
+ * [light] reaches [drawCall]s resolved to [Renderer.renderPipeline] itself (the primary/lit
+ * format) and to the `PositionNormalColorUv` (textured/PBR) format; every other resolved
+ * pipeline gets [DrawCall.extraUniformFloats] instead (e.g. a skinned mesh's joint palette),
+ * exactly matching what each format's own shader expects (`triangle.wgsl`/`textured.wgsl`
+ * read light, `skinned.wgsl` doesn't).
  *
  * [lightViewProjection] is `null` for every [Renderer] not built with shadow support (see
  * [Renderer.shadowMap]'s doc comment) -- in that case the written uniform buffer is byte-for-
@@ -368,8 +448,32 @@ internal fun Renderer.prepareDrawCalls(
         0f,
     )
     var drawIndex = 0
+    var instancedIndex = 0
     while (drawIndex < drawCalls.size) {
         val drawCall = drawCalls[drawIndex]
+        val instanceModels = drawCall.instanceModels
+        if (instanceModels != null) {
+            // A separate path entirely: one uniform write and one GPU call for every transform,
+            // instead of this loop's per-draw-call MVP. Null (no instanced pipeline for this
+            // format, or nothing to draw) skips the call, same as an unresolved format below.
+            val instanced = prepareInstancedDrawCall(
+                drawCall, frameIndex, instancedIndex,
+                viewProjection.data + lightFloats, materialUsage,
+            )
+            if (instanced != null) {
+                prepared += instanced
+                instancedIndex += 1
+            } else if (debugMode) {
+                val animated = drawCall.instanceJointPalettes != null
+                println(
+                    "Awake (Vulkan): instanced DrawCall skipped -- no ${if (animated) "skinned-" else ""}" +
+                            "instanced pipeline registered for mesh format ${drawCall.mesh.format}, " +
+                            "or instanceModels was empty.",
+                )
+            }
+            drawIndex += 1
+            continue
+        }
         // pipelineFor, not a direct pipelinesByFormat lookup: swaps in this format's
         // VK_POLYGON_MODE_LINE variant when Renderer.wireframe is on and one was built for
         // it (see that function's doc comment) -- an unregistered format still resolves to
@@ -389,22 +493,100 @@ internal fun Renderer.prepareDrawCalls(
                     if (lightViewProjection != null) {
                         // Order matches lit_shadow.wgsl's Uniforms field order exactly.
                         lightFloats +
-                            (drawCall.model * lightViewProjection).data +
-                            drawCall.model.data +
-                            floatArrayOf(cameraPosition.x, cameraPosition.y, cameraPosition.z, 0f) +
-                            pbrMaterialFloats(drawCall)
+                                (drawCall.model * lightViewProjection).data +
+                                drawCall.model.data +
+                                floatArrayOf(
+                                    cameraPosition.x,
+                                    cameraPosition.y,
+                                    cameraPosition.z,
+                                    0f
+                                ) +
+                                pbrMaterialFloats(drawCall) +
+                                fogFloats()
                     } else {
                         lightFloats
                     }
+                } else if (drawCall.mesh.format == VertexFormat.PositionNormalColorUv) {
+                    // textured.wgsl's Uniforms: light, then model + cameraPosition (its PBR
+                    // specular needs a world-space position and view vector), then the glTF
+                    // material factors. Keyed by format rather than by pipeline identity for
+                    // the same reason the branch above is.
+                    lightFloats +
+                            drawCall.model.data +
+                            floatArrayOf(cameraPosition.x, cameraPosition.y, cameraPosition.z, 0f) +
+                            pbrTexturedMaterialFloats(drawCall) +
+                            fogFloats()
                 } else {
                     drawCall.extraUniformFloats
                 }
             material.updateUniformBuffer(frameIndex, uniformSlotIndex, mvp.data + extraFloats)
             prepared += PreparedDrawCall(drawCall, pipeline, material, frameIndex, uniformSlotIndex)
+        } else if (debugMode) {
+            println(
+                "Awake (Vulkan): DrawCall skipped -- no pipeline registered for mesh format " +
+                        "${drawCall.mesh.format}.",
+            )
         }
         drawIndex += 1
     }
     return prepared
+}
+
+/** One [DrawCall] carrying [instanceModels] resolved against
+ * [Renderer.instancedPipelinesByFormat], or `null` when this format has no instanced pipeline
+ * (or there is nothing to draw) -- see that field's own doc comment for why an unresolved
+ * format is skipped rather than force-drawn.
+ *
+ * The uniform write is what genuinely differs from the non-instanced path: `instanced.wgsl`'s
+ * `Uniforms` holds `viewProjection` + light, NOT a per-draw `mvp`, since one call covers many
+ * model matrices and none of them can be folded in on the CPU. It's still written into
+ * [DrawCall.material]'s own frame/draw slot (not a pipeline-owned buffer): the block is the same
+ * 24 floats the non-shadow lit path already writes there, so no second uniform/descriptor scheme
+ * is needed for it.
+ *
+ * A call that also carries [DrawCall.instanceJointPalettes] resolves against
+ * [Renderer.skinnedInstancedPipelinesByFormat] instead and also
+ * fills a [SkinnedInstanceBuffer] with this call's per-instance joint palettes -- everything
+ * else (uniform block, model-matrix instance buffer, draw call) is identical, which is why
+ * this stayed one function rather than a near-duplicate second one. */
+private fun Renderer.prepareInstancedDrawCall(
+    drawCall: DrawCall,
+    frameIndex: Int,
+    instancedIndex: Int,
+    /** Already `viewProjection.data + lightFloats` -- assembled by the caller, which has both. */
+    uniformFloats: FloatArray,
+    materialUsage: MutableMap<RenderMaterial, Int>,
+): PreparedDrawCall? {
+    val animated = drawCall.instanceJointPalettes != null
+    val pipeline = if (animated) {
+        skinnedInstancedPipelinesByFormat[drawCall.mesh.format]
+    } else {
+        instancedPipelinesByFormat[drawCall.mesh.format]
+    }
+    val instanceModels = drawCall.instanceModels.orEmpty()
+    if (pipeline == null || instanceModels.isEmpty()) return null
+    val material = drawCall.material as Material
+    val uniformSlotIndex = materialUsage.nextSlot(drawCall.material)
+    val instanceBuffer = instanceBufferForRun(instancedIndex)
+    instanceBuffer.update(frameIndex, instanceModels)
+    val jointPaletteBuffer = if (animated) {
+        skinnedInstanceBufferForRun(instancedIndex).also {
+            it.update(frameIndex, drawCall.instanceJointPalettes.orEmpty())
+        }
+    } else {
+        null
+    }
+    material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
+    return PreparedDrawCall(
+        drawCall = drawCall,
+        pipeline = pipeline,
+        material = material,
+        frameIndex = frameIndex,
+        uniformSlotIndex = uniformSlotIndex,
+        instanceBuffer = instanceBuffer,
+        instanceCount = instanceModels.size,
+        jointPaletteBuffer = jointPaletteBuffer,
+    )
 }
 
 /** The NDC depth one shadow-map texel of lateral travel spans on a 45-degree surface --
@@ -418,6 +600,7 @@ private fun Renderer.shadowTexelDepthScale(): Float {
     return (2f * SHADOW_ORTHO_HALF_SIZE / map.size) / (SHADOW_FAR - SHADOW_NEAR)
 }
 
+
 /** `[metallic, roughness, 0, 0]`, reusing [DrawCall.extraUniformFloats] -- the primary lit
  * format otherwise ignores that field, and a dedicated pair of DrawCall properties would have
  * to be threaded through every backend for two floats. Defaults to a fully dielectric,
@@ -428,9 +611,44 @@ private fun pbrMaterialFloats(drawCall: DrawCall): FloatArray {
     return floatArrayOf(DEFAULT_METALLIC, DEFAULT_ROUGHNESS, 0f, 0f)
 }
 
+/** This frame's `skybox.wgsl` uniform block, or `null` when the sky isn't being drawn (nothing
+ * opted in, or no skybox pipeline was built) or [viewProjection] can't be inverted. */
+private fun Renderer.skyboxUniforms(viewProjection: Mat4, cameraEye: Vec3, light: SceneLight): FloatArray? {
+    if (!showEnvironment || skyboxRenderPipeline == null) return null
+    return skyboxUniformFloats(viewProjection, cameraEye, light.direction, horizonColor, zenithColor)
+}
+
+/** `[fogColor.rgb, fogDensity]` -- density rides in the 4th component, matching both lit
+ * shaders' `fogColor : vec4f` (see [UniformFields.FogColor]). Scene-wide, so it comes off the
+ * [Renderer] rather than off a [DrawCall]. */
+private fun Renderer.fogFloats(): FloatArray =
+    floatArrayOf(fogColor[0], fogColor[1], fogColor[2], fogDensity)
+
 private const val PBR_MATERIAL_FLOATS = 4
 private const val DEFAULT_METALLIC = 0f
 private const val DEFAULT_ROUGHNESS = 0.5f
+
+/** `[metallic, roughness, pad, pad, baseColorFactor.rgba, emissiveFactor.rgb, pad]` -- the
+ * textured/glTF pipeline's factor multipliers (see `textured.wgsl`'s Uniforms). Defaults to
+ * factor = 1 / emissive = 0 (a no-op multiply), matching this pipeline's behavior before these
+ * fields existed: metallic/roughness came from the texture alone, base color/emissive were
+ * never scaled. [RenderSystem]'s `PbrMaterial` packing supplies real values at the same offsets
+ * [pbrMaterialFloats] reads its first 4 from -- one packing serves both pipelines. */
+private fun pbrTexturedMaterialFloats(drawCall: DrawCall): FloatArray {
+    val supplied = drawCall.extraUniformFloats
+    if (supplied.size >= PBR_TEXTURED_MATERIAL_FLOATS) return supplied.copyOf(
+        PBR_TEXTURED_MATERIAL_FLOATS
+    )
+    return floatArrayOf(
+        DEFAULT_METALLIC_FACTOR, DEFAULT_ROUGHNESS_FACTOR, 0f, 0f,
+        1f, 1f, 1f, 1f,
+        0f, 0f, 0f, 0f,
+    )
+}
+
+private const val PBR_TEXTURED_MATERIAL_FLOATS = 12
+private const val DEFAULT_METALLIC_FACTOR = 1f
+private const val DEFAULT_ROUGHNESS_FACTOR = 1f
 
 private fun MutableMap<RenderMaterial, Int>.nextSlot(material: RenderMaterial): Int {
     val slot = this[material] ?: 0
@@ -445,23 +663,8 @@ private fun MutableMap<RenderMaterial, Int>.nextSlot(material: RenderMaterial): 
  * world origin, not derived from actual scene bounds or the active camera's frustum.
  * ponytail: fixed shadow-box centered at the origin, not scene/camera-fit; upgrade path is a
  * per-frame bounding-box (or camera-frustum) fit once a demo's content moves far from origin. */
-internal fun Renderer.lightViewProjection(light: SceneLight): Mat4 {
-    val direction = light.direction.normalized()
-    val eye = direction * SHADOW_LIGHT_DISTANCE
-    val up = if (abs(direction.y) > 0.99f) Vec3(0f, 0f, 1f) else Vec3(0f, 1f, 0f)
-    val view = Mat4.setLookAt(eye = eye, center = Vec3.ZERO, up = up)
-    val projection = Mat4.orthographic(
-        left = -SHADOW_ORTHO_HALF_SIZE,
-        right = SHADOW_ORTHO_HALF_SIZE,
-        bottom = -SHADOW_ORTHO_HALF_SIZE,
-        top = SHADOW_ORTHO_HALF_SIZE,
-        near = SHADOW_NEAR,
-        far = SHADOW_FAR,
-        clipSpace = clipSpace,
-    )
-    if (clipSpace.flipY) projection.m11 *= -1f
-    return view * projection
-}
+internal fun Renderer.lightViewProjection(light: SceneLight): Mat4 =
+    directionalShadowBox(light.direction, clipSpace).viewProjection
 
 /** The shadow depth pre-pass -- renders every [drawCalls] entry resolved to
  * [Renderer.renderPipeline] (the primary/lit format; nothing else casts a shadow today) from
@@ -485,7 +688,11 @@ internal fun Renderer.performShadowPass(drawCalls: List<PreparedDrawCall>) {
             renderArea = VkRect2D(extent = VkExtent2D(map.size, map.size)),
             pClearValues = arrayOf(Renderer.clearDepthValue),
         )
-        Vulkan.vkCmdBeginRenderPass(commandBuffer, renderPassInfo, VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE)
+        Vulkan.vkCmdBeginRenderPass(
+            commandBuffer,
+            renderPassInfo,
+            VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE
+        )
         pipeline.bind(commandBuffer)
         val viewport = VkViewport(width = map.size.toFloat(), height = map.size.toFloat())
         Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(viewport))
@@ -496,7 +703,12 @@ internal fun Renderer.performShadowPass(drawCalls: List<PreparedDrawCall>) {
             val prepared = drawCalls[drawIndex]
             if (prepared.pipeline === renderPipeline) {
                 prepared.drawCall.mesh.bind(commandBuffer)
-                prepared.material.bind(commandBuffer, pipeline.pipelineLayout, prepared.frameIndex, prepared.uniformSlotIndex)
+                prepared.material.bind(
+                    commandBuffer,
+                    pipeline.pipelineLayout,
+                    prepared.frameIndex,
+                    prepared.uniformSlotIndex
+                )
                 prepared.drawCall.mesh.draw(commandBuffer)
             }
             drawIndex += 1
@@ -504,11 +716,6 @@ internal fun Renderer.performShadowPass(drawCalls: List<PreparedDrawCall>) {
         Vulkan.vkCmdEndRenderPass(commandBuffer)
     }
 }
-
-private const val SHADOW_LIGHT_DISTANCE = 15f
-private const val SHADOW_ORTHO_HALF_SIZE = 12f
-private const val SHADOW_NEAR = 0.1f
-private const val SHADOW_FAR = 40f
 
 /** [Renderer.renderToTexture]/[Renderer.readPixels]'s own one-time-command runner -- see
  * [Renderer.offscreenCommandBuffer]'s doc comment for why this doesn't use

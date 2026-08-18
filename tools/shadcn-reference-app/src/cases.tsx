@@ -2,7 +2,9 @@ import type { ReactNode } from "react"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Checkbox } from "./ui/checkbox"
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group"
 import { Switch } from "./ui/switch"
+import { Progress } from "./ui/progress"
 import { Input } from "./ui/input"
 import { Tabs, TabsList, TabsTrigger } from "./ui/tabs"
 import { Slider } from "./ui/slider"
@@ -13,6 +15,16 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "./ui/dialog"
+import { Textarea } from "./ui/textarea"
+import { Toggle } from "./ui/toggle"
+import { Alert, AlertTitle, AlertDescription } from "./ui/alert"
+import { Avatar, AvatarFallback } from "./ui/avatar"
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "./ui/breadcrumb"
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collapsible"
+import { Kbd } from "./ui/kbd"
+import { Skeleton } from "./ui/skeleton"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu"
+import { Popover, PopoverContent } from "./ui/popover"
 
 /**
  * The reference cases. Each id is the single source of truth shared with the Awake side:
@@ -26,12 +38,12 @@ export const CASES: Record<string, { render: () => ReactNode }> = {
   "button-variants": {
     render: () => (
       <div className="flex items-center gap-2">
-        <Button>Default</Button>
-        <Button variant="secondary">Secondary</Button>
-        <Button variant="outline">Outline</Button>
-        <Button variant="ghost">Ghost</Button>
-        <Button variant="destructive">Destructive</Button>
-        <Button variant="link">Link</Button>
+        <Button data-parity-id="parity-default">Default</Button>
+        <Button data-parity-id="parity-secondary" variant="secondary">Secondary</Button>
+        <Button data-parity-id="parity-outline" variant="outline">Outline</Button>
+        <Button data-parity-id="parity-ghost" variant="ghost">Ghost</Button>
+        <Button data-parity-id="parity-destructive" variant="destructive">Destructive</Button>
+        <Button data-parity-id="parity-link" variant="link">Link</Button>
       </div>
     ),
   },
@@ -56,51 +68,75 @@ export const CASES: Record<string, { render: () => ReactNode }> = {
   "checkbox-states": {
     render: () => (
       <div className="flex items-center gap-4">
-        <Checkbox />
-        <Checkbox defaultChecked />
-        <Checkbox disabled />
+        <Checkbox data-parity-id="parity-checkbox-unchecked" />
+        <Checkbox data-parity-id="parity-checkbox-checked" defaultChecked />
+        <Checkbox data-parity-id="parity-checkbox-disabled" disabled />
+      </div>
+    ),
+  },
+  "radio-group-states": {
+    render: () => (
+      <RadioGroup defaultValue="comfortable">
+        {[
+          ["default", "Default"],
+          ["comfortable", "Comfortable"],
+          ["compact", "Compact"],
+        ].map(([value, label], idx) => (
+          <div className="flex items-center gap-2" key={value}>
+            <RadioGroupItem value={value} id={`radio-${value}`} data-parity-id={`parity-radio.${idx}`} />
+            <Label htmlFor={`radio-${value}`} data-parity-id={`parity-radio.${idx}.label`}>{label}</Label>
+          </div>
+        ))}
+      </RadioGroup>
+    ),
+  },
+  "progress-states": {
+    render: () => (
+      <div className="flex w-[212px] flex-col gap-4">
+        <Progress value={25} data-parity-id="parity-progress-1" />
+        <Progress value={65} data-parity-id="parity-progress-2" />
       </div>
     ),
   },
   "switch-states": {
     render: () => (
       <div className="flex items-center gap-4">
-        <Switch />
-        <Switch defaultChecked />
-        <Switch disabled />
+        <Switch data-parity-id="parity-switch-off" />
+        <Switch data-parity-id="parity-switch-on" defaultChecked />
+        <Switch data-parity-id="parity-switch-disabled" disabled />
       </div>
     ),
   },
   "input-states": {
     render: () => (
       <div className="flex flex-col gap-3 w-64">
-        <Input placeholder="Placeholder" />
-        <Input defaultValue="Typed text" />
-        <Input placeholder="Disabled" disabled />
+        <Input data-parity-id="parity-field-1" placeholder="Placeholder" />
+        <Input data-parity-id="parity-field-2" defaultValue="Typed text" />
+        <Input data-parity-id="parity-field-3" placeholder="Disabled" disabled />
       </div>
     ),
   },
   "tabs-states": {
     render: () => (
       <Tabs defaultValue="account">
-        <TabsList>
-          <TabsTrigger value="account">Account</TabsTrigger>
-          <TabsTrigger value="password">Password</TabsTrigger>
+        <TabsList data-parity-id="parity-tabs.track">
+          <TabsTrigger value="account" data-parity-id="parity-tabs.Account">Account</TabsTrigger>
+          <TabsTrigger value="password" data-parity-id="parity-tabs.Password">Password</TabsTrigger>
         </TabsList>
       </Tabs>
     ),
   },
   "slider-states": {
     render: () => (
-      <div className="w-64">
-        <Slider defaultValue={[50]} max={100} step={1} />
+      <div className="w-[300px]">
+        <Slider defaultValue={[50]} max={100} step={1} data-parity-id="parity-slider" />
       </div>
     ),
   },
   "select-closed": {
     render: () => (
       <Select>
-        <SelectTrigger className="w-[172px]">
+        <SelectTrigger className="w-[172px]" data-parity-id="parity-select">
           <SelectValue placeholder="Select a fruit" />
         </SelectTrigger>
         <SelectContent>
@@ -133,7 +169,7 @@ export const CASES: Record<string, { render: () => ReactNode }> = {
       <TooltipProvider>
         <Tooltip defaultOpen>
           <TooltipTrigger asChild>
-            <Button variant="outline">Hover</Button>
+            <Button variant="outline" className="w-[110px]" data-parity-id="parity-tooltip-trigger">Hover me</Button>
           </TooltipTrigger>
           <TooltipContent side="bottom">Add to library</TooltipContent>
         </Tooltip>
@@ -143,7 +179,7 @@ export const CASES: Record<string, { render: () => ReactNode }> = {
   "dialog-open": {
     render: () => (
       <Dialog open>
-        <DialogContent showCloseButton={false} className="w-[320px]">
+        <DialogContent showCloseButton={false} className="w-[320px]" data-parity-id="parity-dialog">
           <DialogHeader>
             <DialogTitle>Edit profile</DialogTitle>
             <DialogDescription>
@@ -151,7 +187,7 @@ export const CASES: Record<string, { render: () => ReactNode }> = {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button>Save changes</Button>
+            <Button data-parity-id="parity-dialog-save">Save changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -160,11 +196,122 @@ export const CASES: Record<string, { render: () => ReactNode }> = {
   "badge-variants": {
     render: () => (
       <div className="flex items-center gap-2">
-        <Badge>Default</Badge>
-        <Badge variant="secondary">Secondary</Badge>
-        <Badge variant="destructive">Destructive</Badge>
-        <Badge variant="outline">Outline</Badge>
+        {/* data-parity-id maps this element to the Awake semantic node of the same id, so the
+            capture can export its box and a test can compare numbers instead of pixels. */}
+        <Badge data-parity-id="badge.Default">Default</Badge>
+        <Badge data-parity-id="badge.Secondary" variant="secondary">Secondary</Badge>
+        <Badge data-parity-id="badge.Destructive" variant="destructive">Destructive</Badge>
+        <Badge data-parity-id="badge.Outline" variant="outline">Outline</Badge>
       </div>
+    ),
+  },
+  "textarea-states": {
+    render: () => (
+      <div className="flex flex-col gap-4 w-[272px]">
+        <Textarea data-parity-id="parity-textarea-1" placeholder="Default textarea" />
+        <Textarea data-parity-id="parity-textarea-2" defaultValue={"Line 1\nLine 2\nLine 3"} />
+        <Textarea data-parity-id="parity-textarea-3" placeholder="Disabled textarea" disabled />
+      </div>
+    ),
+  },
+  "toggle-button-variants": {
+    render: () => (
+      <div className="flex items-center gap-[10px] h-[40px]">
+        <Toggle data-parity-id="parity-toggle-off" className="w-[40px] h-[40px]">B</Toggle>
+        <Toggle data-parity-id="parity-toggle-on" defaultPressed className="w-[40px] h-[40px]">B</Toggle>
+        <Toggle data-parity-id="parity-toggle-disabled" disabled className="w-[40px] h-[40px]">B</Toggle>
+      </div>
+    ),
+  },
+  "alert-variants": {
+    render: () => (
+      <div className="flex flex-col gap-4 w-[272px]">
+        <Alert data-parity-id="parity-alert-default">
+          <AlertTitle>You can add components</AlertTitle>
+          <AlertDescription>Use the CLI to add components to your project.</AlertDescription>
+        </Alert>
+        <Alert data-parity-id="parity-alert-destructive" variant="destructive">
+          <AlertTitle>Unable to process your payment.</AlertTitle>
+          <AlertDescription>Please verify your billing information and try again.</AlertDescription>
+        </Alert>
+      </div>
+    ),
+  },
+  "avatar-states": {
+    render: () => (
+      <div className="flex items-center gap-3 h-[48px]">
+        <Avatar data-parity-id="avatar.1">
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+        <Avatar data-parity-id="avatar.2" className="size-10">
+          <AvatarFallback>RV</AvatarFallback>
+        </Avatar>
+      </div>
+    ),
+  },
+  "breadcrumb-states": {
+    render: () => (
+      <Breadcrumb data-parity-id="breadcrumb-parity-test">
+        <BreadcrumbList>
+          <BreadcrumbItem><BreadcrumbLink href="#">Home</BreadcrumbLink></BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem><BreadcrumbLink href="#">Components</BreadcrumbLink></BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem><BreadcrumbPage>Breadcrumb</BreadcrumbPage></BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    ),
+  },
+  "collapsible-states": {
+    render: () => (
+      <Collapsible open className="w-[280px]">
+        <CollapsibleTrigger data-parity-id="parity-collapsible.trigger" className="w-[280px] h-[36px] flex items-center justify-between font-semibold text-sm">Can I use this in my project?</CollapsibleTrigger>
+        <CollapsibleContent className="text-sm text-muted-foreground mt-2">
+          Yes. Free to use for personal and commercial projects.
+        </CollapsibleContent>
+      </Collapsible>
+    ),
+  },
+  "kbd-states": {
+    render: () => (
+      <div className="flex items-center gap-[6px] h-[24px]">
+        <Kbd data-parity-id="kbd.ctrl">Ctrl</Kbd>
+        <Kbd data-parity-id="kbd.k">K</Kbd>
+      </div>
+    ),
+  },
+  "skeleton-states": {
+    render: () => (
+      <div className="flex flex-col gap-[10px] w-[192px]">
+        <Skeleton data-parity-id="parity-skeleton-1" className="w-[192px] h-[16px]" />
+        <Skeleton data-parity-id="parity-skeleton-2" className="w-[140px] h-[16px]" />
+      </div>
+    ),
+  },
+  "spinner-states": {
+    render: () => (
+      <div data-parity-id="parity-spinner" className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+    ),
+  },
+  "dropdown-menu-states": {
+    render: () => (
+      <DropdownMenu open>
+        <DropdownMenuContent open className="w-[160px]">
+          <DropdownMenuItem data-parity-id="parity-dropdown.item.0">My Account</DropdownMenuItem>
+          <DropdownMenuItem data-parity-id="parity-dropdown.item.1">Edit</DropdownMenuItem>
+          <DropdownMenuItem data-parity-id="parity-dropdown.item.2">Duplicate</DropdownMenuItem>
+          <DropdownMenuItem data-parity-id="parity-dropdown.item.3" className="text-destructive">Delete</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  },
+  "popover-states": {
+    render: () => (
+      <Popover open>
+        <PopoverContent open className="w-[260px]" data-parity-id="parity-popover.content">
+          <p className="text-sm">Place content for the popover here.</p>
+        </PopoverContent>
+      </Popover>
     ),
   },
 }

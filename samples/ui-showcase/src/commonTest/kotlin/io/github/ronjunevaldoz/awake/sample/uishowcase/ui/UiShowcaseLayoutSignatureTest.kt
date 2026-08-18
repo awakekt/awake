@@ -7,89 +7,60 @@ import io.github.ronjunevaldoz.awake.testing.ui.layoutSignature
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-/** Sample-level golden-layout verification: each full showcase page preview's semantic-node
- * layout (widget roles, ids, and bounds) is fingerprinted and compared against a recorded
- * signature. Unlike a pixel screenshot, a pure style/color change (recoloring a theme) leaves
- * these signatures untouched; a real layout regression (a widget moving, resizing, or vanishing)
- * changes them -- catching drift at the whole-page level without screenshot flakiness. */
+/**
+ * Whole-page layout fingerprints, without a recorded matrix to maintain.
+ *
+ * This used to compare 54 per-page hex constants committed in source. That is a change detector,
+ * not a correctness oracle -- it says something moved, never whether what moved is right -- and its
+ * failure mode is that an intentional change invalidates all 54 at once, so the "review" is a bulk
+ * paste nobody reads. It was regenerated wholesale four times in a single session.
+ *
+ * Correctness now has a real oracle: ShadcnGeometryParityTest compares Awake's bounds against
+ * shadcn's own getBoundingClientRect numbers. What is left for fingerprints is the job they are
+ * actually good at, and neither needs a baseline:
+ *
+ *  - the same page rendered twice must fingerprint the same (nondeterminism -- iteration order,
+ *    hash order, uninitialised state -- shows up here and nowhere else)
+ *  - two different pages must not share a fingerprint, which is how the old catalog hid five
+ *    fixtures all rendering the Introduction page
+ *
+ * Cross-target drift is the one thing the recorded matrix caught that this does not. It caught it
+ * only transitively -- every target compared against the same constant -- and buying that back
+ * costs a matrix that gets pasted over unread. Worth re-adding as a real cross-target comparison
+ * if a target ever diverges; not worth 54 constants on the chance that it might.
+ */
 class UiShowcaseLayoutSignatureTest {
 
     @Test
-    fun showcasePageLayoutsRemainStableAcrossTargets() {
-        // Skipped where previewMetadataFor returns the ios-dummy placeholder (no reflection).
-        if (!previewMetadataIsReal()) return
-        val actual = UiShowcasePreviewEntries.associate { entry ->
-            val metadata = previewMetadataFor(entry)
-            val frame = entry.render(metadata)
-            metadata.id to layoutSignature(frame.semantics)
-        }
-
-        val mismatches = StringBuilder()
-        assertEquals(
-            expectedShowcaseLayoutSignatures.size,
-            actual.size,
-            "Preview page count changed. Refresh the expected matrix:\n${actual.toExpectedSignatureMatrix()}",
-        )
-        expectedShowcaseLayoutSignatures.forEach { (id, expectedSignature) ->
-            val entry = requireNotNull(UiShowcasePreviewEntries.find { previewMetadataFor(it).id == id }) { "Missing preview $id" }
-            val frame = entry.render(previewMetadataFor(entry))
-            val actualSignature = actual.getValue(id)
-            if (actualSignature != expectedSignature) {
-                mismatches.append("$id actual=0x${actualSignature.toString(16)}\n${describeLayout(frame.semantics)}\n\n")
+    fun everyPageLayoutIsDeterministic() {
+        val drift = UiShowcasePreviewEntries.mapNotNull { entry ->
+            val first = layoutSignature(entry.render(entry.metadata).semantics)
+            val secondFrame = entry.render(entry.metadata)
+            val second = layoutSignature(secondFrame.semantics)
+            if (first == second) {
+                null
+            } else {
+                "${entry.metadata.id}: 0x${first.toString(16)} then 0x${second.toString(16)}\n" +
+                    describeLayout(secondFrame.semantics)
             }
         }
-        assertEquals("", mismatches.toString(), "Layout drift detected. New matrix:\n${actual.toExpectedSignatureMatrix()}")
+        assertEquals(
+            emptyList(),
+            drift,
+            "A page fingerprinted differently on a second render in the same process, so its " +
+                "layout depends on something other than its inputs:\n${drift.joinToString("\n\n")}",
+        )
+    }
+
+    /** A page whose fingerprint equals another page's is almost always a dispatch bug, not a
+     * coincidence -- that is exactly how the old catalog hid five fixtures rendering the
+     * Introduction page. */
+    @Test
+    fun everyPageProducesADistinctLayout() {
+        val bySignature = UiShowcasePreviewEntries
+            .groupBy { layoutSignature(it.render(it.metadata).semantics) }
+            .filterValues { it.size > 1 }
+            .mapValues { (_, entries) -> entries.map { it.page.id } }
+        assertEquals(emptyMap(), bySignature, "Pages share a layout fingerprint: $bySignature")
     }
 }
-
-private fun Map<String, ULong>.toExpectedSignatureMatrix(): String =
-    entries.joinToString(separator = "\n") { (id, signature) ->
-        "\"$id\" to 0x${signature.toString(16)}uL,"
-    }
-
-// 2026-08-08: re-recorded -- new semantic roles (Separator/Avatar/Progress/Toast) now
-// record nodes, switch claims measured label width, and the ac03b490/c9d00df7 text/accordion
-// changes were never re-recorded.
-// 2026-08-08: re-recorded after the shadcn token/radius value pass -- card/dialog padding
-// 16->24dp (p-6) reflows content on every page that uses a card.
-// 2026-08-08: re-recorded after the glyph-advance fix -- advances were inflated by the atlas
-// cell padding, so every text run's measured width changed and reflowed the layouts.
-// 2026-08-08: re-recorded after em normalisation was corrected -- text is now its true size
-// and slots size to the line box, so every page reflowed.
-// 2026-08-10: re-recorded after the shadcn parity pass -- Tabs track height 32->36dp (h-9),
-// FieldTextField/FieldDropdown control height 40->36dp (h-9, was the only place using h-10).
-// 2026-08-10 (2): re-recorded after the source-verified parity wave -- radius ladder switched
-// from additive to Tailwind's real multiplicative one (theming), TabsTrigger px-3->px-2 with a
-// flush p-[3px] track (tabs), Field gaps -> gap-3/gap-6/gap-7 (text-input), AccordionContent -> pb-4 (collapsible).
-private val expectedShowcaseLayoutSignatures = mapOf(
-    "ui-showcase-overview" to 0xd9b72a019af9f240uL,
-    "ui-showcase-theming" to 0x42a62dea646996e9uL,
-    "ui-showcase-typography" to 0x53f8cd263d433510uL,
-    "ui-showcase-buttons" to 0x1e39505ab6f95389uL,
-    "ui-showcase-avatar" to 0xb5d5e50d63e30cc8uL,
-    "ui-showcase-breadcrumb" to 0x98e2c5c61ca0a3feuL,
-    "ui-showcase-card" to 0xaa2e30b4fc56d256uL,
-    "ui-showcase-sidebar" to 0x7b873256c3c67de5uL,
-    "ui-showcase-selection" to 0x9851f324c711f52fuL,
-    "ui-showcase-range-slider" to 0xd9b72a019af9f240uL,
-    "ui-showcase-tabs" to 0x9f0c71eeb99f0002uL,
-    "ui-showcase-select" to 0x8afc8aaf9465140duL,
-    "ui-showcase-kbd-separator" to 0x97a104d253c8e4b4uL,
-    "ui-showcase-feedback" to 0xf879b78c98dbb68cuL,
-    "ui-showcase-alert" to 0xbd163943a933bd33uL,
-    "ui-showcase-text-input" to 0x68313bdeb48cd804uL,
-    "ui-showcase-popups" to 0x2e01bc254488b7uL,
-    "ui-showcase-state" to 0xd9b72a019af9f240uL,
-    "ui-showcase-button-matrix" to 0xeb99998df754bcc9uL,
-    "ui-showcase-field-matrix" to 0xd50c39a857cbcc0auL,
-    "ui-showcase-slider-matrix" to 0x81cab0941278ca9uL,
-    "ui-showcase-dropdown-open" to 0xe05bcbf8b275af25uL,
-    "ui-showcase-popover-open" to 0xb3664fad437490c4uL,
-    "ui-showcase-tooltip-open" to 0xd99d584368254fe9uL,
-    "ui-showcase-alert-dialog" to 0xb9672b746a727b67uL,
-    "ui-showcase-scroll-panel" to 0x4fa59d69b536da09uL,
-    "ui-showcase-shimmer" to 0xd9b72a019af9f240uL,
-    "ui-showcase-collapsible" to 0xfcf9234be0d22826uL,
-    "ui-showcase-collapsible-open" to 0x7f286dd9db6f7592uL,
-    "ui-showcase-field-demo" to 0xd9b72a019af9f240uL,
-)

@@ -124,6 +124,59 @@ def main() -> int:
                     out = args.out_dir / f"{case['id']}_{theme}.png"
                     target.screenshot(path=str(out))
                     box = target.bounding_box()
+                    # Geometry, not just pixels. The rects are what a layout comparison actually
+                    # wants: exact numbers, independent of the rasterizer, the typeface and
+                    # anti-aliasing. Until now bounding_box() was computed here and used only to
+                    # print the size, so every layout question had to be answered by diffing PNGs
+                    # -- which is how ~4px of extra badge padding surfaced as "36.92% mismatch".
+                    #
+                    # Coordinates are relative to the captured element's own top-left, matching
+                    # what the screenshot frames, so they line up with Awake's preview-local
+                    # semantic bounds without a page-offset correction.
+                    rects = page.evaluate(
+                        """(rootSel) => {
+                            const root = document.querySelector(rootSel);
+                            const origin = root.getBoundingClientRect();
+                            const out = {};
+                            for (const el of document.querySelectorAll('[data-parity-id]')) {
+                                const r = el.getBoundingClientRect();
+                                const cs = window.getComputedStyle(el);
+                                out[el.getAttribute('data-parity-id')] = {
+                                    x: r.left - origin.left,
+                                    y: r.top - origin.top,
+                                    width: r.width,
+                                    height: r.height,
+                                    paddingLeft: parseFloat(cs.paddingLeft) || 0,
+                                    paddingRight: parseFloat(cs.paddingRight) || 0,
+                                    paddingTop: parseFloat(cs.paddingTop) || 0,
+                                    paddingBottom: parseFloat(cs.paddingBottom) || 0,
+                                    fontSize: parseFloat(cs.fontSize) || 0,
+                                    lineHeight: parseFloat(cs.lineHeight) || 0,
+                                    borderRadius: parseFloat(cs.borderRadius) || 0,
+                                    borderWidth: parseFloat(cs.borderWidth) || 0,
+                                    backgroundColor: cs.backgroundColor,
+                                    color: cs.color,
+                                    borderColor: cs.borderColor,
+                                };
+                            }
+                            return out;
+                        }""",
+                        case.get("selector", "#case"),
+                    )
+                    if rects:
+                        out.with_suffix(".json").write_text(
+                            json.dumps(
+                                {
+                                    "case": case["id"],
+                                    "theme": theme,
+                                    "root": {"width": box["width"], "height": box["height"]},
+                                    "nodes": rects,
+                                },
+                                indent=2,
+                                sort_keys=True,
+                            )
+                            + "\n"
+                        )
                     results.append(
                         (f"{case['id']} [{theme}]", f"OK  {out.relative_to(REPO)} ({round(box['width'])}x{round(box['height'])})")
                     )

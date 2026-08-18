@@ -50,6 +50,26 @@ component, extend ui-designsystem.
 
 ---
 
+## Mandatory Rule: Proof of Official Reference for Every Style Recipe
+
+Every visual style in `awake:ui:designsystem` (colors, borders, paddings, corner radii, alignments) **MUST HAVE PROOF** originating directly from official React `shadcn/ui`. Agents and developers are strictly forbidden from hand-guessing or inventing arbitrary padding/radius values.
+
+### How Proof Is Captured & Verified:
+
+1. **Official Browser Capture (`tools/capture_shadcn_local.py`)**:
+   Playwright renders official React `shadcn/ui` components and dumps computed DOM style metrics (`getBoundingClientRect` & `getComputedStyle`) to:
+   `docs/reference/shadcn-previews-local/<component>_<theme>.json`
+
+2. **Automated CI Parity Gating (`ShadcnStyleParityTest.kt` & `ShadcnGeometryParityTest.kt`)**:
+   Every component recipe must be registered in the automated Parity Test Suite:
+   - `ShadcnGeometryParityTest`: Verifies width, height, and padding against DOM bounds.
+   - `ShadcnStyleParityTest`: Verifies actual drawn `RoundedQuad` corner radius and fill/border colors against computed CSS metrics.
+   - `ShadcnBehaviorParityTest`: Verifies state changes (hover, active, expanded, selected, disabled).
+
+**If a component style lacks a corresponding reference JSON or fails parity assertions, IT CANNOT BE MERGED.**
+
+---
+
 ## `Style.then` merges by concatenating rules, not replacing whole state blocks
 
 ```kotlin
@@ -64,8 +84,8 @@ infix fun then(other: Style): Style = when {
 runs its own property-setters on top of an earlier `hovered { }` block's -- only the specific
 properties the later rule sets get overridden, not the whole state.
 
-**The trap this caused:** `shadcnButton(variant = Ghost, style = Style { ... })` composes as
-`ShadcnStyles.button(theme, Ghost) then style` -- Ghost's own `hovered { background(accent);
+**The trap this caused:** an earlier internal ghost-button composition appended `Style { ... }`
+after its resolved Ghost style. Ghost's own `hovered { background(accent);
 foreground(accentForeground) }` runs first, so wrapping a `shadcnButton` as a card's clickable
 header trigger painted a full rounded accent-color fill on hover, reading as "a button", not "part
 of the card" (real shadcn's card-collapsible header has no such fill). The fix is NOT avoiding
@@ -73,14 +93,14 @@ of the card" (real shadcn's card-collapsible header has no such fill). The fix i
 in the caller's own `style` block, which composes *after* the variant and therefore wins:
 
 ```kotlin
-style = Style {
-    foreground(shadcnTheme.colors.foreground)
-    hovered { background(ShadcnTransparent); foreground(shadcnTheme.colors.foreground) }
-    active { background(ShadcnTransparent); foreground(shadcnTheme.colors.foreground) }
+val triggerStyle = Style {
+    foreground(themeValues.colors.foreground)
+    hovered { background(ShadcnTransparent); foreground(themeValues.colors.foreground) }
+    active { background(ShadcnTransparent); foreground(themeValues.colors.foreground) }
 }
 ```
 
-Setting only `background` in the override and expecting `foreground` to fall back to the
+Setting only `background` in an internal override and expecting `foreground` to fall back to the
 non-hover value does NOT happen -- once Ghost's `hovered` rule sets `foreground`, it stays set for
 that state unless a *later* `hovered` rule also sets it.
 
@@ -97,8 +117,8 @@ actual edge the way real shadcn's card-collapsible reference has it. Zero the ca
 and let the composing component own 100% of the spacing:
 
 ```kotlin
-shadcnCard(id = "$id.card", modifier = modifier.fillMaxWidth(), style = Style { contentPadding(0f.dp) }) { _ ->
-    // trigger row and content both apply their own shadcnTheme.spacing.sm inset here
+surface(id = "$id.card", modifier = modifier.fillMaxWidth(), style = Style { contentPadding(0f.dp) }) { _ ->
+    // Private recipe composition; public shadcnCard has no Style escape hatch.
 }
 ```
 
@@ -140,6 +160,33 @@ function (`shadcnCollapsibleCard`) that composes `shadcnCard` (visual) with `ani
 primitive ends up knowing the other exists. When a request sounds like "component A styled like
 component B," check whether A already exposes its own headless/primary form before adding B's
 styling logic into A's own file.
+
+## Core is infrastructure; Headless is the component boundary
+
+`ui-designsystem` may use `ui-core` internally for `Style`, scoped-theme providers, and local
+mechanics. Do not leak Core types in public recipe APIs. A `shadcn*` recipe must call Headless for
+widget behavior; it must not directly claim slots, draw, hit-test, record semantics, or invoke
+Core controls/layout. Repeated recipe boilerplate is evidence that Headless needs a generic slot
+or behavior API.
+
+Within a recipe, read the design-system-local `shadcnTheme` value for branded metrics; read
+`themeValues` only for the neutral Core color, shape, and typography
+contracts. `UiScope.shadcnTheme { }` provides one complete `ShadcnThemeValues` object to the
+subtree, analogous to a Compose theme local. `shadcnThemeValues(...)` builds that complete,
+unscoped design-system value before a `UiScope` exists. It is the only value accepted by
+`shadcnTheme(theme = ...)`; generic Core values cannot be adapted into a Shadcn scope. A recipe
+invoked without that scope fails immediately rather than silently acquiring fallback metrics or
+palette roles.
+
+---
+
+## Every component MUST own its dedicated visual style recipe -- do NOT over-share generic `*Visuals` functions
+
+When building `ui-designsystem` recipes, avoid creating a single generic `fieldVisuals` or `buttonVisuals` shared across distinct control types.
+
+- **The trap**: `shadcnInput` and `shadcnTextarea` used to both call `fieldVisuals`, which hardcoded single-line input padding (`px-3 py-1` = 12px horizontal, 4px vertical). `shadcnTextarea` received 4px vertical padding instead of shadcn's official multi-line `px-3 py-2` (8px vertical padding).
+- **Rule**: Every distinct component type MUST have its own explicit visual resolver function (e.g. `textFieldVisuals` vs `textareaVisuals`, `selectOptionVisuals`, `badgeVisuals`, `buttonVisuals`).
+- **Check**: When adding a new component or variant, verify its inner paddings, borders, and typography against upstream `getComputedStyle` reference outputs rather than reusing another component's `Style` helper.
 
 ---
 
@@ -213,12 +260,32 @@ step 0.25), and `0.5`/`1.5`/`2.5`/`3.5` are half-steps (2/6/10/14px). `Tw.Spacin
 all of this -- `Tw.Spacing.s9`, `Tw.Spacing.px`, `Tw.Spacing.s1_5` -- so never do the arithmetic by
 hand, just read the step number off the class and use the matching constant.
 
-| Tailwind class | Means | This codebase |
+## Using Tailwind Helpers (`Tw`, `TwLayout`, `Number.tw`, `UiInsets.tw`) — Pragmatic Guidance
+
+Use Tailwind helpers when porting Tailwind utility strings from official React `shadcn/ui` or when translating layout intentions. They keep ports 1-to-1 legible. **Do not force helper wrappers where native Awake primitives (`UiAlignment.Vertical.Center`, `Arrangement.Center`) or theme tokens (`themeValues.shapes.md`) are already idiomatic and clean.**
+
+1. **Spacing Steps (`Tw.Spacing.s*` or `Int.tw`)**:
+   - Ideal when translating `p-2` / `gap-2` $\rightarrow$ `Tw.Spacing.s2` or `2.tw` ($8\text{dp}$)
+   - Ideal when translating `p-4` / `gap-4` $\rightarrow$ `Tw.Spacing.s4` or `4.tw` ($16\text{dp}$)
+
+2. **Padding Insets (`UiInsets.tw`)**:
+   - Ideal when translating `px-4 py-2` $\rightarrow$ `UiInsets.tw(px = 4, py = 2)`
+
+3. **Flex & Alignment (`TwLayout`)**:
+   - Use `TwLayout` constants (`TwLayout.itemsCenterRow`, `TwLayout.justifyCenterColumn`) as a helpful alignment translation guide when mapping flexbox concepts, alongside standard Awake layout primitives (`UiAlignment.Vertical.Center`, `Arrangement.Center`).
+
+---
+
+| Tailwind Class | Concept | Awake Primitive or `Tw` Equivalent |
 |---|---|---|
-| `h-9` / `w-9` | height/width, scale step 9 | `.height(Tw.Spacing.s9)` / `.width(...)` |
-| `size-9` | height AND width both | both modifiers, same constant |
-| `p-4` / `px-3` / `py-2` | padding all / horizontal / vertical | `contentPadding(...)` or `.padding(...)` |
-| `gap-2` | flex/grid gap between children | `Arrangement.spacedBy(Tw.Spacing.s2)` |
+| `w-9 h-9` | fixed square icon-button | `Modifier.size(9.tw)` or `Modifier.size(Tw.Spacing.s9)` |
+| `p-4` / `px-3` / `py-2` | padding all / horizontal / vertical | `contentPadding(UiInsets.tw(px = 3, py = 2))` or `3.tw` / `2.tw` |
+| `gap-2` | flex/grid gap between children | `Arrangement.spacedBy(Tw.Spacing.s2)` or `Arrangement.spacedBy(2.tw)` |
+| `items-center` (Row) | cross-axis centering in row | `verticalAlignment = UiAlignment.Vertical.Center` or `TwLayout.itemsCenterRow` |
+| `items-center` (Column/Surface) | cross-axis centering in column | `horizontalAlignment = UiAlignment.Horizontal.Center` or `TwLayout.itemsCenterColumn` |
+| `justify-center` (Row) | main-axis centering in row | `horizontalArrangement = Arrangement.Center` or `TwLayout.justifyCenterRow` |
+| `justify-center` (Column/Surface) | main-axis centering in column | `verticalArrangement = Arrangement.Center` or `TwLayout.justifyCenterColumn` |
+| `inline-flex items-center justify-center` | dual-axis centering for pills/badges/kbd | `verticalArrangement = TwLayout.justifyCenterColumn` + `text(centered = true)` |
 | `rounded-md` | border radius, *named* not numbered | `theme.radii.md` -- NOT `Tw`, radius is theme-relative here |
 | `w-[100px]` | arbitrary value, escapes the scale | plain `100f.dp` literal, `Tw` has no step for it |
 | `w-3/4` | fraction of parent | no direct equivalent -- see below |
@@ -314,7 +381,7 @@ changing a size constant, not against how it looks in this engine's own preview.
 "looks about right" and one that's actually `h-9` both compile and both render -- only one of them
 stays correct when a sibling component is built next to it using the real number.
 
-**`Tw.Spacing` (`ui-core`, generated by `:awake:engine:ui:tailwind-generator`) has the numbers --
+**`Tw.Spacing` (`ui-core`, generated by `:awake:ui:tailwind-generator`) has the numbers --
 mapping which shadcn class applies to which component role is still a manual step, not a tool.**
 `Tw.Spacing.s9` is Tailwind's `9` step (36px/dp) -- correct by construction, no arithmetic to get
 wrong. What `Tw` does NOT do is read shadcn's real source for you: no scraper exists that reads
@@ -341,32 +408,41 @@ own doc comment.
 
 ## There is already parity tooling -- use it before eyeballing a diff
 
-`tools/` ships a full perceptual-parity pipeline that predates any manual audit:
+As of 2026-08-15, "does this look right vs shadcn" splits into two oracles that answer different
+parts of it. Read `docs/reference/ui-validation.md`'s component coverage matrix before trusting
+either in isolation -- most components (16 of 23) have neither.
 
-- `fetch_shadcn_reference.sh` / `capture_shadcn_local.py` / `tools/shadcn-reference-app` -- capture
-  real shadcn/ui component PNGs.
-- `compare_parity.py` -- trims both images to their own content bbox, crops to the intersection,
-  and reports mismatch %, max/mean channel delta, plus a red/blue heatmap PNG. Explicitly a
-  *perceptual fidelity signal*, not a golden-image lock.
-- `shadcn_parity_baseline.json` + `ShadcnReferenceComparisonTest` -- gates **regression** (a pair
-  getting worse than its accepted mismatch %), deliberately NOT absolute fidelity, which stays
-  informational in `shadcn_parity_thresholds.json`.
-- `ShadcnParityScreenshotTest` -- the separate golden-image lock, re-recorded with
-  `-DAWAKE_RECORD_SNAPSHOTS=true`.
+- **Layout (size, position, spacing) -- `ShadcnGeometryParityTest`.** Compares Awake's semantic
+  bounds against the reference app's own `getBoundingClientRect`, both sides exact numbers, no
+  rasterizer or font dependency. This is the first stop for a padding/width/spacing question, not
+  the pixel diff below -- three real bugs (a mis-framed reference, an unset reference font, a
+  reference rendering every weight as 400) were found *in* the pixel instrument before this
+  existed, against one real component bug found *by* it. `tools/shadcn-reference-app/src/cases.tsx`
+  tags each reference element with `data-parity-id`; `tools/capture_shadcn_local.py` exports the
+  rects alongside the PNG.
+- **Colour, border, shadow -- `ShadcnReferenceComparisonTest` (demoted, not removed).** Still the
+  only oracle for this dimension. `compare_parity.py` / `shadcn_parity_baseline.json` /
+  `shadcn_parity_thresholds.json` are its supporting tooling, same as before -- what changed is
+  that its mismatch% is no longer where a layout question gets decided, and it will never reach 0%
+  even for a pixel-perfect layout (different rasterizer, different font hinting).
+- **Behavior, motion -- no oracle.** Not built yet.
+- `ShadcnParityScreenshotTest` -- the separate golden-image regression lock (Awake vs Awake's own
+  prior render), re-recorded with `-DAWAKE_RECORD_SNAPSHOTS=true`. Unrelated to either oracle
+  above; it proves nothing changed by accident, not that anything is correct.
 
-So: for "does this component look right vs real shadcn," run the comparison and read the heatmap
-rather than squinting at a screenshot. For "did my change move something," the layout-signature and
-golden-image tests already answer it. Reach for a manual source-reading audit (the previous two
-sections) for *numeric* spec questions -- `h-9` vs `h-10` -- which pixel diffing can suggest but
-never name.
+For "did my change move something," the layout-signature and golden-image tests answer it. Reach
+for a manual source-reading audit (the previous two sections) for *numeric* spec questions --
+`h-9` vs `h-10` -- which neither oracle names on its own; geometry will tell you the number is
+wrong, not which Tailwind class it should have matched.
 
 ---
 
 ## Fidelity tests run a different font than the real app -- vertical-centering bugs can survive them
 
 `UiFonts.default()` resolves to `PackedUiFont(RobotoRegularUiFontData)` -- a **generated** atlas
-(`:awake:engine:ui:font-atlas-generator`'s `generateFontAtlas` task, ~6.5k lines of packed
-per-glyph quad metrics) that overrides
+(`:awake:ui:font-atlas-generator`'s `generateFontAtlas` task, ~8.8k lines of packed
+per-glyph quad metrics, instantiated from `tools/fonts/Roboto[wdth,wght].ttf` -- Roboto 3.015,
+not the 2011 static this atlas shipped with before 2026-08-15) that overrides
 `visibleTopEm`/`visibleBottomEm` with values computed from real glyph ink, and reports
 `lineHeightEm = 1.1875`.
 
@@ -381,7 +457,7 @@ real asymmetric band do not center identically, so **a test asserting text is ce
 for `BitmapFont`, not for what ships**. When a text-alignment bug is reported against the running
 app but every test is green, this divergence is the first thing to check -- and when the metrics
 themselves look wrong, remember they are generated: fix
-`:awake:engine:ui:font-atlas-generator`'s `Main.kt` and re-run its `generateFontAtlas` task,
+`:awake:ui:font-atlas-generator`'s `Main.kt` and re-run its `generateFontAtlas` task,
 never hand-edit `RobotoRegularUiFontData.kt`.
 
 ---

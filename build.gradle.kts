@@ -73,25 +73,18 @@ tasks.register("developerDocs") {
         ":awake:engine:game-authoring:gameDslTutorialDocsReport",
         ":awake:engine:game-authoring:uiDslTutorialDocsReport",
         ":awake:engine:render:contract:dokkaGeneratePublicationHtml",
-        ":awake:engine:ui:ui-core:dokkaGeneratePublicationHtml",
-        ":awake:engine:ui:ui-designsystem:dokkaGeneratePublicationHtml",
-        ":awake:engine:ui:ui-headless:dokkaGeneratePublicationHtml",
+        ":awake:ui:ui-core:dokkaGeneratePublicationHtml",
+        ":awake:ui:ui-designsystem:dokkaGeneratePublicationHtml",
+        ":awake:ui:ui-headless:dokkaGeneratePublicationHtml",
         ":awake:physics:api:dokkaGeneratePublicationHtml",
         ":awake:scene:dokkaGeneratePublicationHtml",
-        ":awake:engine:ui:ui-headless:desktopTest",
-        ":awake:engine:ui:ui-headless:uiSnapshotReport",
-        ":awake:engine:ui:ui-headless:uiTutorialDocsReport",
+        ":awake:ui:ui-headless:desktopTest",
+        ":awake:ui:ui-headless:uiSnapshotReport",
+        ":awake:ui:ui-headless:uiTutorialDocsReport",
         ":samples:ui-showcase:desktopTest",
         ":samples:ui-showcase:uiShowcasePreviewReport",
-        "uiComponentLookupReport",
-        "syncFigma"
+        "uiComponentLookupReport"
     )
-}
-
-tasks.register<Exec>("syncFigma") {
-    group = "design"
-    description = "Sync design tokens from Figma using the sync-figma-variables.py script."
-    commandLine("python3", "scripts/sync-figma-variables.py")
 }
 
 // A single, searchable component lookup that merges the ui-showcase page-level preview
@@ -108,13 +101,13 @@ tasks.register("uiComponentLookupReport") {
         "Generate one searchable HTML component lookup across the ui-showcase preview gallery and the ui-headless snapshot gallery."
     mustRunAfter(
         ":samples:ui-showcase:uiShowcasePreviewReport",
-        ":awake:engine:ui:ui-headless:uiSnapshotReport"
+        ":awake:ui:ui-headless:uiSnapshotReport"
     )
     val previewManifestFile =
         project(":samples:ui-showcase").layout.buildDirectory.file("ui-previews/previews.tsv")
     val previewImagesDir = project(":samples:ui-showcase").layout.buildDirectory.dir("ui-previews")
     val snapshotImagesDir =
-        project(":awake:engine:ui:headless").layout.buildDirectory.dir("ui-snapshots")
+        project(":awake:ui:headless").layout.buildDirectory.dir("ui-snapshots")
     val reportFile = layout.buildDirectory.file("reports/ui-component-lookup/index.html")
     doLast {
         // Rows use the same plain List<String> shape ([id, title, group, summary, source,
@@ -249,7 +242,7 @@ tasks.register("uiComponentLookupReport") {
         val body = if (entries.isEmpty()) {
             """
             <p>No components recorded yet.</p>
-            <p>Run <code>./gradlew :samples:ui-showcase:desktopTest :awake:engine:ui:ui-headless:desktopTest uiComponentLookupReport</code> to regenerate.</p>
+            <p>Run <code>./gradlew :samples:ui-showcase:desktopTest :awake:ui:ui-headless:desktopTest uiComponentLookupReport</code> to regenerate.</p>
             """.trimIndent()
         } else {
             sections

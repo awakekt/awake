@@ -1,0 +1,190 @@
+// Copyright (c) Ron June Valdoz
+// SPDX-License-Identifier: Apache-2.0
+package io.github.ronjunevaldoz.awake.ui.snapshot
+
+import io.github.ronjunevaldoz.awake.core.utils.summarizePixels
+import io.github.ronjunevaldoz.awake.testing.ui.inspectUiFrame
+import io.github.ronjunevaldoz.awake.testing.ui.rasterize
+import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class UiSnapshotSignatureTest {
+
+    @Test
+    fun reviewSnapshotsRemainStableAcrossTargets() {
+        assertSnapshotSignatures(reviewSnapshotScenes(), expectedReviewSnapshotSignatures)
+    }
+
+    @Test
+    fun tutorialSnapshotsRemainStableAcrossTargets() {
+        assertSnapshotSignatures(tutorialSnapshotScenes(), expectedTutorialSnapshotSignatures)
+    }
+}
+
+private fun assertSnapshotSignatures(
+    scenes: List<UiSnapshotScene>,
+    expected: Map<String, ULong>,
+) {
+    val actual = scenes.associate { scene ->
+        scene.name to scene.snapshotSignature().also { signature ->
+            println("ui-snapshot-signature ${scene.name}=${signature.toHexString()}")
+        }
+    }
+
+    assertEquals(expected.size, actual.size, "Snapshot scene count changed. Refresh the expected matrix.")
+    expected.keys.forEach { name ->
+        assertEquals(true, actual.containsKey(name), "Missing snapshot scene $name in actual results.")
+    }
+
+    scenes.forEach { scene ->
+        val inspection = inspectUiFrame(
+            primitives = scene.primitives,
+            frame = UiBounds(0f, 0f, scene.width.toFloat(), scene.height.toFloat()),
+            font = scene.font,
+        )
+        assertEquals(true, inspection.isClean, "UI inspection failed for ${scene.name}:\n${inspection.summary()}")
+        val pixels = scene.primitives.rasterize(scene.width, scene.height, scene.background, scene.font)
+        val summary = summarizePixels(pixels, scene.width, scene.height)
+        val actualSignature = actual.getValue(scene.name)
+        assertEquals(
+            expected.getValue(scene.name),
+            actualSignature,
+            "Snapshot drift for ${scene.name}: actual=${actualSignature.toHexString()}, size=${scene.width}x${scene.height}, " +
+                "center=${summary.center}, topLeft=${summary.topLeft}, topRight=${summary.topRight}, " +
+                "bottomLeft=${summary.bottomLeft}, bottomRight=${summary.bottomRight}",
+        )
+    }
+}
+
+private fun UiSnapshotScene.snapshotSignature(): ULong {
+    val pixels = primitives.rasterize(width, height, background, font)
+    var hash = 0xcbf29ce484222325uL
+    for (byte in pixels) {
+        hash = hash xor (byte.toInt() and 0xFF).toULong()
+        hash *= 0x100000001b3uL
+    }
+    return hash
+}
+
+// 2026-08-03: PackedUiFont.advanceFor() now clamps the pen step to the glyph's own quad right
+// edge (see PackedUiFont.kt) -- the embedded Roboto data declared several letters' advances up
+// to 42% narrower than their own ink, which rendered as adjacent glyphs visibly touching/merging
+// at real UI text sizes. Every text-bearing scene's rasterized pixels shifted as a result, so
+// every signature below was re-recorded against the fixed, non-overlapping glyph spacing.
+// 2026-08-08: re-recorded for two stacked intended changes: (1) text()'s verticallyCentered
+// default flipped to true in ac03b490 without a re-record at the time; (2) the AA fringe now
+// centers on the true path boundary (interior insets by fringe/2) instead of dilating outward,
+// so every filled-path edge crisped by ~0.5px.
+// 2026-08-08: re-recorded after em normalisation was corrected. Glyph metrics were divided by
+// the line-height cell (19) rather than the render font size (16), so every advance and quad was
+// 16/19 = 0.842x too small and all text rendered ~19% narrow. Text is now its true size, and
+// slots size to the line box (lineHeightEm) instead of the font size so they can contain it.
+// 2026-08-10 (5): re-recorded after UiRasterizer was made numerically equivalent to the real
+// glyph shaders -- it had applied no stem darkening on either branch and resolved a distance
+// field with a size-derived smoothstep instead of the shaders' screenPxRange. Until now these
+// signatures described a renderer nobody ships.
+// 2026-08-10 (4): pxrange 4 -> 2. A distance field cannot encode a feature thinner than its
+// own spread, and at 4 (with an em spanning 32 texels) 'i'/'l' stems were narrower than the
+// range and rendered eroded next to rounder glyphs.
+// 2026-08-10 (3): re-recorded after the atlas became MTSDF -- msdfgen-generated, 4-channel,
+// sampled via median3 instead of coverage alpha. Every glyph's pixels are now resolved from a
+// distance field rather than a resampled bitmap, so all of them changed.
+// 2026-08-10 (2): re-recorded again after the atlas moved to TTF outline geometry
+// (:awake:ui:font-atlas-generator) and BasicText switched to snapping a line's pen
+// origin once with exact per-glyph sizes. Every glyph's position and size changed.
+// 2026-08-10: re-recorded after BasicText switched from rounding each glyph's origin and size
+// independently to rounding its right/bottom edges from one unrounded origin -- the "wavy text"
+// fix. Every text-bearing scene moved by up to a pixel per glyph.
+// 2026-08-16: review fixtures now render through renderUiComponent and install Shadcn through
+// rootProvider. The changed scenes previously depended on Core defaults; existing Shadcn scenes
+// remain byte-identical.
+// 2026-08-17 (2): `ui-panel-controls` re-recorded after the shadcnField* helpers were fixed to
+// wrap label+widget in the shadcnField{} container instead of emitting loose siblings into the
+// caller's scope (package 3 / F7 in docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md).
+// Every field group in the scene shifts down; render reviewed by eye before re-pinning.
+// 2026-08-17: re-recorded after UiComponentStyles/theme.components was retired (the ambient
+// theme-fallback registry ui-headless used to read for its own "default style" -- see
+// docs/audits/ for the full removal). `toggle-unchecked`/`toggle-checked`/`button-filled`/
+// `button-outline`/`button-ghost`/`theme-dark`/`theme-light`/`panel-with-children` all call the
+// bare Headless primitive (`toggle()`/`button()`/`checkbox()`) directly with no `style`, exactly
+// the ambient-fallback-reliant shape this removal targeted -- they now render with no color at
+// all (several button variants are now pixel-identical, having lost their only differentiator),
+// which is the CORRECT, intended consequence: ui-headless no longer supplies one, and these
+// fixtures never asked a design-system layer (shadcnButton/shadcnToggle/shadcnCheckbox) to. Every
+// real branded (shadcn*) scene is unaffected (its recipe's Style was already complete).
+// `shadcn-field-error` is untouched.
+private val expectedReviewSnapshotSignatures = mapOf(
+    "toggle-unchecked" to 0x7ce00b0d014d12a3uL,
+    "toggle-checked" to 0x40bd692f48964ffcuL,
+    "button-filled" to 0x7fc33cce03403ef9uL,
+    "button-outline" to 0x43c2d3e7b6428919uL,
+    "button-ghost" to 0x7fc33cce03403ef9uL,
+    "theme-dark" to 0x7fc33cce03403ef9uL,
+    "theme-light" to 0x03d4c72d17b9808fuL,
+    "panel-with-children" to 0xbff05d211a1e91cfuL,
+    "shadcn-field-error" to 0x105ac00923155246uL,
+)
+
+// 2026-08-03: quads/rounded-quads/borders (surface fills, buttons, dialogs, separators) now
+// pixel-snap their emitted position/size the same way BasicText.kt's glyph emission already
+// did (see ShapePainter.kt/BorderPrimitives.kt/Separator.kt) -- previously only glyphs snapped
+// to whole device pixels, so a bordered/panel-shaped widget at a sub-pixel layout position
+// rendered a visibly softer/antialiased edge than the crisp text sitting right next to it.
+// Every scene with a border/panel/button shifted its rasterized pixels by sub-pixel rounding as
+// a result; re-recorded against the now-pixel-snapped primitives.
+// 2026-08-08: re-recorded again after the shadcn token/radius value pass (base radius 6->10dp,
+// additive radius scale, button/input rounded-md, accent/muted/sidebar-primary colors) -- every
+// tutorial scene renders through ShadcnTheme, so all of them shifted.
+// 2026-08-08: re-recorded once more after the glyph-advance coordinate-space fix -- advances
+// were inflated by the atlas cell padding by a per-glyph-varying 6-29%, so every glyph in every
+// text-bearing scene moved.
+// 2026-08-08: ui-component-state-matrix only -- the checkbox corner moved off radii.md (8dp on a
+// 16dp box, i.e. a circle) to shadcn's literal rounded-[4px]. It is the one scene with a checkbox.
+// 2026-08-08: ui-component-state-matrix again -- the slider knob shrank 20dp -> 16dp with a 1dp
+// border, shadcn v4's size-4 thumb. It is also the one scene with a slider.
+// 2026-08-11: re-recorded (both maps) after glyph render quads were widened to cover their full
+// UV sample rect (outline + crop bleed + texel snap, see PackedUiFontData.quadMetricsEm). Ink
+// previously rendered at ~0.90x of its own metrics because the padded atlas region was squeezed
+// into an outline-sized quad; every text-bearing scene's pixels moved when that closed.
+// 2026-08-12: re-recorded after the tutorial/review fixture migrated its public component scenes
+// from the temporary Core-receiver compatibility bridge to the Compose-style Headless facade.
+// 2026-08-13: re-recorded after supportingText unified with shadcnMuted typography token.
+// 2026-08-15: ui-component-state-matrix only -- focused text fields now border in
+// theme.colors.ring instead of reusing the unfocused border color at a thicker width, matching
+// upstream's focus-visible:border-ring. It is the one scene with a focused field.
+// 2026-08-16: ui-component-state-matrix only -- Headless controls now apply generic Style
+// directly after the legacy visual-data contract removal. The fixture deliberately calls the
+// unskinned Headless controls, so it no longer inherits the old Core component visual fallback.
+// 2026-08-17: re-recorded after UiComponentStyles/theme.components was retired -- see the
+// matching review-map comment above for the full reasoning. `ui-component-state-matrix` calls
+// bare `toggle()`/`checkbox()`/`slider()`/`textField()` with no `style`, so it loses their
+// ambient-fallback coloring the same way the review scenes do. `ui-shaped-panel` calls the raw
+// `surface()` primitive with a style that sets shape/border/contentPadding but not background --
+// it used to inherit Shadcn's own card background/foreground for the unset fields from the
+// ambient default; ui-core's replacement default is deliberately theme-neutral (see
+// `neutralSurfaceDefaults`'s doc in `layouts/Surface.kt` -- ui-core cannot reach into
+// ui-designsystem for a themed color), so this one scene now renders Core's neutral gray instead
+// of Shadcn's card color where it left a field unset. Every scene built from shadcn* recipes
+// (ui-button-variants/ui-panel-controls/ui-alert-dialog/ui-rounded-clip-vector/
+// ui-awake-shadcn-showcase) is unaffected, having always supplied a complete Style.
+private val expectedTutorialSnapshotSignatures = mapOf(
+    "ui-button-variants" to 0x6a983a490866bb5buL,
+    "ui-shaped-panel" to 0xc53d9ba3cc72f320uL,
+    "ui-panel-controls" to 0x1db3974a628bbe07uL,
+    "ui-alert-dialog" to 0x7e805d3ddbe20949uL,
+    "ui-component-state-matrix" to 0x9d720517432f7dfeuL,
+    "ui-rounded-clip-vector" to 0x0627d9a01bb6098buL,
+    "ui-awake-shadcn-showcase" to 0x9900cb4fb67ecb53uL,
+)
+
+private fun ULong.toHexString(): String {
+    val digits = CharArray(16)
+    var value = this
+    for (index in 15 downTo 0) {
+        val nibble = (value and 0xFu).toInt()
+        digits[index] = "0123456789abcdef"[nibble]
+        value = value shr 4
+    }
+    return digits.concatToString()
+}

@@ -1,0 +1,61 @@
+{
+  "case": "toggle-button-variants",
+  "nodes": {
+    "parity-toggle-disabled": {
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "borderColor": "oklch(1 0 0 / 0.1)",
+      "borderRadius": 8,
+      "borderWidth": 0,
+      "color": "oklch(0.985 0 0)",
+      "fontSize": 14,
+      "height": 40,
+      "lineHeight": 20,
+      "paddingBottom": 0,
+      "paddingLeft": 12,
+      "paddingRight": 12,
+      "paddingTop": 0,
+      "width": 40,
+      "x": 100,
+      "y": 0
+    },
+    "parity-toggle-off": {
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "borderColor": "oklch(1 0 0 / 0.1)",
+      "borderRadius": 8,
+      "borderWidth": 0,
+      "color": "oklch(0.985 0 0)",
+      "fontSize": 14,
+      "height": 40,
+      "lineHeight": 20,
+      "paddingBottom": 0,
+      "paddingLeft": 12,
+      "paddingRight": 12,
+      "paddingTop": 0,
+      "width": 40,
+      "x": 0,
+      "y": 0
+    },
+    "parity-toggle-on": {
+      "backgroundColor": "oklch(0.371 0 0)",
+      "borderColor": "oklch(1 0 0 / 0.1)",
+      "borderRadius": 8,
+      "borderWidth": 0,
+      "color": "oklch(0.985 0 0)",
+      "fontSize": 14,
+      "height": 40,
+      "lineHeight": 20,
+      "paddingBottom": 0,
+      "paddingLeft": 12,
+      "paddingRight": 12,
+      "paddingTop": 0,
+      "width": 40,
+      "x": 50,
+      "y": 0
+    }
+  },
+  "root": {
+    "height": 40,
+    "width": 140
+  },
+  "theme": "dark"
+}

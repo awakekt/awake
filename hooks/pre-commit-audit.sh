@@ -9,7 +9,62 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 AUDIT_SCRIPT="$REPO_ROOT/.claude/skills/kmp-audit/scripts/audit_project.py"
 
+
+# CLAUDE.md / AGENTS.md / GEMINI.md are per-tool profile stubs that must share one body
+# (only the "### <Tool> Project Profile" title line differs) -- they point every tool at
+# the same real content, .claude/AGENTS.md. Found drifted 2026-08-18: GEMINI.md had fallen
+# out of sync with the other two and nothing caught it. Warn (not block, matching this
+# hook's existing policy) whenever one of the three is staged and its body has diverged.
+ROOT_PROFILES=(CLAUDE.md AGENTS.md GEMINI.md)
+STAGED_PROFILES="$(git diff --cached --name-only | grep -E '^(CLAUDE|AGENTS|GEMINI)\.md$' || true)"
+if [[ -n "$STAGED_PROFILES" ]]; then
+  echo "Checking CLAUDE.md/AGENTS.md/GEMINI.md body parity..."
+  REFERENCE="$REPO_ROOT/CLAUDE.md"
+  for f in "${ROOT_PROFILES[@]}"; do
+    path="$REPO_ROOT/$f"
+    [[ -f "$path" ]] || continue
+    if ! diff -q <(tail -n +2 "$REFERENCE") <(tail -n +2 "$path") > /dev/null 2>&1; then
+      echo "  WARNING: $f's body has diverged from CLAUDE.md (only the title line should differ)."
+      echo "  Run: diff <(tail -n +2 CLAUDE.md) <(tail -n +2 $f)"
+    fi
+  done
+fi
+
+
+# Cheap per-commit summary: file/area counts only, mechanically derived from the staged
+# diff -- no new scan, no judgment calls. "Pointers" is deliberately a short, hand-maintained
+# list (below), not auto-derived -- "what's currently open" is exactly the kind of fact that
+# goes stale silently if computed instead of maintained (see this repo's own ui-validation.md
+# incident, 2026-08-17: two tables disagreeing because nobody had to touch both by hand).
+STAGED_ALL="$(git diff --cached --name-only || true)"
+if [[ -n "$STAGED_ALL" ]]; then
+  FILE_COUNT="$(echo "$STAGED_ALL" | wc -l | tr -d ' ')"
+  STAT_TAIL="$(git diff --cached --shortstat | cut -d',' -f2- | sed 's/^ *//')"
+  AREAS="$(echo "$STAGED_ALL" | xargs -n1 dirname | cut -d/ -f1-2 | sort | uniq -c \
+    | sort -rn | awk '{printf "%s (%s), ", $2, $1}' | sed 's/, $//')"
+  echo ""
+  echo "Commit summary"
+  echo "  $FILE_COUNT files changed${STAT_TAIL:+, }$STAT_TAIL"
+  echo "  by area: $AREAS"
+  echo ""
+  echo "  Open pointers (update this list by hand when something opens/closes):"
+  echo "    - docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md (package 6 pending)"
+  echo "    - github.com/ronjunevaldoz/kmp-agent-skills#6 (docs-hygiene consumer-project gap, open)"
+fi
+
 STAGED_KT="$(git diff --cached --name-only | grep -E '\.(kt|kts)$' || true)"
+
+# Nudge (not block) when a commit changes real, non-test Kotlin source but CHANGELOG.md
+# isn't staged alongside it. Skips test-source and generated files -- those don't usually
+# warrant a changelog entry, and false-positiving on every test-only commit would train
+# people to ignore the warning. CHANGELOG.md already exists and is actively maintained
+# (Keep a Changelog format, real [Unreleased] content) -- this just reminds, doesn't enforce.
+NON_TEST_KT="$(echo "$STAGED_KT" | grep -vE '(Test|Tests)\.kts?$|/(commonTest|desktopTest|androidTest|iosTest|jvmTest|wasmJsTest)/|/build/|/generator/' || true)"
+if [[ -n "$NON_TEST_KT" ]] && ! echo "$STAGED_ALL" | grep -qx "CHANGELOG.md"; then
+  echo ""
+  echo "Reminder: this commit touches non-test Kotlin source but not CHANGELOG.md."
+  echo "  If this is user-visible behavior, add an entry under [Unreleased]."
+fi
 
 if [[ -z "$STAGED_KT" ]]; then
   exit 0
@@ -21,9 +76,11 @@ if [[ ! -f "$AUDIT_SCRIPT" ]]; then
 fi
 
 echo "Running architecture audit on staged Kotlin files..."
-if ! python3 "$AUDIT_SCRIPT" "$REPO_ROOT"; then
+# audit_project.py only accepts a project root, so this is a full-repo scan; cap it so a
+# slow scan can never hang the commit (perl alarm because macOS has no coreutils timeout).
+if ! perl -e 'alarm 20; exec @ARGV' python3 "$AUDIT_SCRIPT" "$REPO_ROOT"; then
   echo ""
-  echo "Architecture audit found issues (warn-only — not blocking this commit)."
+  echo "Architecture audit found issues or timed out (warn-only — not blocking this commit)."
   echo "Run: python3 .claude/skills/kmp-audit/scripts/audit_project.py ."
   # ponytail: warn-only until the pre-existing findings backlog is cleared,
   # then drop this line so a non-zero audit blocks the commit again.

@@ -42,6 +42,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":awake:core"))
+            // WebGPU consumes the raw UI render stream, not headless/design-system widgets.
+            // Declare its core and value-contract dependencies directly instead of inheriting
+            // them through render-contract.
+            implementation(project(":awake:ui:ui-core"))
             // Mesh/Material/Renderer implement the same narrow backend-neutral interfaces
             // awake-backend-vulkan's do -- see awake-engine-render-api's module doc.
             api(project(":awake:engine:render:contract"))

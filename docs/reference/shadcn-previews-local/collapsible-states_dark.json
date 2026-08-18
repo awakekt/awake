@@ -1,0 +1,27 @@
+{
+  "case": "collapsible-states",
+  "nodes": {
+    "parity-collapsible.trigger": {
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "borderColor": "oklch(1 0 0 / 0.1)",
+      "borderRadius": 0,
+      "borderWidth": 0,
+      "color": "oklch(0.985 0 0)",
+      "fontSize": 14,
+      "height": 36,
+      "lineHeight": 20,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "width": 280,
+      "x": 0,
+      "y": 0
+    }
+  },
+  "root": {
+    "height": 84,
+    "width": 280
+  },
+  "theme": "dark"
+}

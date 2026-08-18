@@ -6,19 +6,21 @@ import io.github.ronjunevaldoz.awake.core.input.Input
 import io.github.ronjunevaldoz.awake.sample.uishowcase.state.UiShowcaseRuntimeState
 import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
+import io.github.ronjunevaldoz.awake.ui.api.dp
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
-import io.github.ronjunevaldoz.awake.ui.dp
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
-import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
-import io.github.ronjunevaldoz.awake.ui.layouts.column
-import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
-import io.github.ronjunevaldoz.awake.ui.modifier.height
-import io.github.ronjunevaldoz.awake.ui.modifier.offset
-import io.github.ronjunevaldoz.awake.ui.modifier.width
+import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
+import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.column
+import io.github.ronjunevaldoz.awake.ui.headless.height
+import io.github.ronjunevaldoz.awake.ui.headless.offset
+import io.github.ronjunevaldoz.awake.ui.headless.width
 import io.github.ronjunevaldoz.awake.ui.toUiInputState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
+import io.github.ronjunevaldoz.awake.ui.context.LocalFont
 
 class UiShowcaseTextareaIntegrationTest {
 
@@ -35,24 +37,25 @@ class UiShowcaseTextareaIntegrationTest {
 
         fun frame(pointerDown: Boolean, x: Float, y: Float): List<UiDrawPrimitive> {
             input.setPointer(down = pointerDown, x = x, y = y)
-            ui.beginFrame(width, height, input.updateSnapshot().toUiInputState())
-            ui.pushFont(font)
-            ui.pushTheme(theme)
-            ui.column(
-                modifier = Modifier
-                    .offset(24f.dp, 24f.dp)
-                    .width((width - 48f).dp)
-                    .height((height - 48f).dp),
-                verticalArrangement = Arrangement.spacedBy(10f.dp),
-            ) {
-                renderUiShowcasePagePreview(page, state)
+            ui.beginFrame(UiFrameInput(viewportWidth = width, viewportHeight = height, input = input.updateSnapshot().toUiInputState()))
+            ui.pushLocal(LocalFont, font)
+            ui.showcaseRoot(theme = theme) {
+                column(
+                    modifier = Modifier
+                        .offset(24f.dp, 24f.dp)
+                        .width((width - 48f).dp)
+                        .height((height - 48f).dp),
+                    verticalArrangement = Arrangement.spacedBy(10f.dp),
+                ) {
+                    renderUiShowcasePagePreview(page, state)
+                }
             }
-            return ui.endFrame()
+            return ui.finishFrame().primitives
         }
 
         // Frame 1: locate the textarea via its recorded semantics
         frame(pointerDown = false, x = -100f, y = -100f)
-        val bioField = ui.semanticNodes()
+        val bioField = ui.finishFrame().semantics
             .firstOrNull { it.role == UiSemanticRole.Text && it.id == "showcase-bio" }
         requireNotNull(bioField) { "showcase-bio textarea must be present in the real page's semantics" }
         val clickX = bioField.bounds.x + bioField.bounds.width / 2f
@@ -61,7 +64,7 @@ class UiShowcaseTextareaIntegrationTest {
         // Frame 2: click into the field
         frame(pointerDown = true, x = clickX, y = clickY)
         assertTrue(
-            ui.isFocused("showcase-bio"),
+            ui.isFocusedInternal("showcase-bio"),
             "clicking the real page's textarea must grant it focus",
         )
 
@@ -72,7 +75,7 @@ class UiShowcaseTextareaIntegrationTest {
         val glyphCount = primitives.filterIsInstance<UiDrawPrimitive.Glyph>().size
         assertTrue(glyphCount > 0, "typed text must actually render as glyph primitives")
 
-        val bioLabel = ui.semanticNodes()
+        val bioLabel = ui.finishFrame().semantics
             .firstOrNull { it.role == UiSemanticRole.Text && it.id == "showcase-bio" }?.label
         assertEquals(
             "Hello World\nLine 2",
@@ -96,22 +99,23 @@ class UiShowcaseTextareaIntegrationTest {
 
         fun frame(pointerDown: Boolean, x: Float, y: Float): List<UiDrawPrimitive> {
             input.setPointer(down = pointerDown, x = x, y = y)
-            ui.beginFrame(width, height, input.updateSnapshot().toUiInputState())
-            ui.pushFont(font)
-            ui.pushTheme(theme)
-            ui.column(
-                modifier = Modifier.offset(24f.dp, 24f.dp).width((width - 48f).dp)
-                    .height((height - 48f).dp),
-                verticalArrangement = Arrangement.spacedBy(10f.dp),
-            ) {
-                renderUiShowcasePagePreview(page, state)
+            ui.beginFrame(UiFrameInput(viewportWidth = width, viewportHeight = height, input = input.updateSnapshot().toUiInputState()))
+            ui.pushLocal(LocalFont, font)
+            ui.showcaseRoot(theme = theme) {
+                column(
+                    modifier = Modifier.offset(24f.dp, 24f.dp).width((width - 48f).dp)
+                        .height((height - 48f).dp),
+                    verticalArrangement = Arrangement.spacedBy(10f.dp),
+                ) {
+                    renderUiShowcasePagePreview(page, state)
+                }
             }
-            return ui.endFrame()
+            return ui.finishFrame().primitives
         }
 
         // Frame 1: locate the real page textarea.
         frame(pointerDown = false, x = -100f, y = -100f)
-        val initialBioNode = ui.semanticNodes()
+        val initialBioNode = ui.finishFrame().semantics
             .firstOrNull { it.role == UiSemanticRole.Text && it.id == "showcase-bio" }
         requireNotNull(initialBioNode) { "showcase-bio textarea must be present in the real page's semantics" }
         val clickX = initialBioNode.bounds.x + initialBioNode.bounds.width / 2f
@@ -125,7 +129,7 @@ class UiShowcaseTextareaIntegrationTest {
         input.pushTypedText(longWord)
         frame(pointerDown = false, x = clickX, y = clickY)
 
-        val bioNode = ui.semanticNodes()
+        val bioNode = ui.finishFrame().semantics
             .firstOrNull { it.role == UiSemanticRole.Text && it.id == "showcase-bio" }
         requireNotNull(bioNode)
 

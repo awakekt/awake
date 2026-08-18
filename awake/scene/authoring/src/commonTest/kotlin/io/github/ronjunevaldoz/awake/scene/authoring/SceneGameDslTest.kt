@@ -19,6 +19,7 @@ import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.LineSegment
 import io.github.ronjunevaldoz.awake.render.renderer.Renderer
 import io.github.ronjunevaldoz.awake.render.renderer.SceneLight
+import io.github.ronjunevaldoz.awake.render.texture.PbrTextureSet
 import io.github.ronjunevaldoz.awake.render.texture.RenderTarget
 import io.github.ronjunevaldoz.awake.render.texture.TextureAsset
 import io.github.ronjunevaldoz.awake.scene.authoring.blueprints.cameraEntity
@@ -31,12 +32,12 @@ import io.github.ronjunevaldoz.awake.scene.controls.systems.CameraSystem
 import io.github.ronjunevaldoz.awake.scene.runtime.SceneGameRuntime
 import io.github.ronjunevaldoz.awake.scene.runtime.frame
 import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.dp
+import io.github.ronjunevaldoz.awake.ui.api.dp
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
+import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.offset
 import io.github.ronjunevaldoz.awake.ui.modifier.size
-import io.github.ronjunevaldoz.awake.ui.unstyled.input.text.text
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -274,6 +275,7 @@ private class RecordingRenderer : Renderer {
         texture: TextureAsset?,
         renderTarget: RenderTarget?,
         uniformFloatCount: Int,
+        pbrTextures: PbrTextureSet?,
     ): Material {
         materialCreateCount += 1
         return object : Material {

@@ -1,0 +1,27 @@
+{
+  "case": "spinner-states",
+  "nodes": {
+    "parity-spinner": {
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "borderColor": "rgba(0, 0, 0, 0) oklch(0.922 0 0) oklch(0.922 0 0)",
+      "borderRadius": 33554400,
+      "borderWidth": 2,
+      "color": "oklch(0.985 0 0)",
+      "fontSize": 16,
+      "height": 24,
+      "lineHeight": 24,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "width": 24,
+      "x": 0,
+      "y": 0
+    }
+  },
+  "root": {
+    "height": 24,
+    "width": 24
+  },
+  "theme": "dark"
+}

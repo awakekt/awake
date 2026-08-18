@@ -15,6 +15,9 @@ private val Scene3DPlaygroundShaders = gameShaderSet("lit_shadow")
 private val Scene3DPlaygroundSkinnedShaders = gameShaderSet("skinned")
 private val Scene3DPlaygroundTexturedShaders = gameShaderSet("textured")
 private val Scene3DPlaygroundShadowShaders = gameShaderSet("shadow_depth")
+private val Scene3DPlaygroundInstancedShaders = gameShaderSet("instanced")
+private val Scene3DPlaygroundSkinnedInstancedShaders = gameShaderSet("skinned_instanced")
+private val Scene3DPlaygroundSkyboxShaders = gameShaderSet("skybox")
 
 fun createScene3DPlaygroundVulkanApplication(
     game: AwakeGame = scene3DPlayground(),
@@ -28,4 +31,11 @@ fun createScene3DPlaygroundVulkanApplication(
     ),
     wireframeSupport = true,
     shadowShaderSet = Scene3DPlaygroundShadowShaders,
+    // Powers InstancedCubesDemo; without it that demo's single DrawCall is skipped entirely.
+    instancedShaderSet = Scene3DPlaygroundInstancedShaders,
+    // Powers InstancedSkinnedDemo; without it that demo's single DrawCall is skipped entirely.
+    skinnedInstancedShaderSet = Scene3DPlaygroundSkinnedInstancedShaders,
+    // Powers Renderer.showEnvironment; without it that flag draws nothing (no skybox
+    // pipeline built).
+    skyboxShaderSet = Scene3DPlaygroundSkyboxShaders,
 )

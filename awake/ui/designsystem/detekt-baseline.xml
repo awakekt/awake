@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:ShadcnTheme.kt$private fun createPalette(config: ShadcnThemeConfig): ShadcnPalette</ID>
+    <ID>CyclomaticComplexMethod:ShadcnTypography.kt$fun UiScope.shadcnText( label: String, style: ShadcnTextStyle = ShadcnTextStyle.P, modifier: Modifier = Modifier, centered: Boolean = false, muted: Boolean = false, visuals: SurfaceStyle = SurfaceStyle(), maxLines: Int = Int.MAX_VALUE, wrap: UiTextWrap = UiTextWrap.Word, overflow: UiTextOverflow = UiTextOverflow.Ellipsis, ): UiBounds</ID>
+    <ID>LongMethod:ShadcnButtonStyles.kt$fun ShadcnButtonVariant.visuals( theme: UiThemeValues, size: ShadcnButtonSize, ): SurfaceVisuals</ID>
+    <ID>LongMethod:ShadcnSidebarRecipes.kt$fun UiScope.shadcnSidebarFooterButton( id: String, name: String, email: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}, ): Boolean</ID>
+    <ID>LongMethod:ShadcnSidebarRecipes.kt$fun UiScope.shadcnSidebarHeaderButton( id: String, title: String, subtitle: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}, ): Boolean</ID>
+    <ID>LongMethod:ShadcnTheme.kt$private fun createPalette(config: ShadcnThemeConfig): ShadcnPalette</ID>
+    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.145f</ID>
+    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.205f</ID>
+    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.245f</ID>
+    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.556f</ID>
+    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.577f</ID>
+    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.922f</ID>
+    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.97f</ID>
+    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.985f</ID>
+    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$27.325f</ID>
+    <ID>MagicNumber:ShadcnCardStyles.kt$0.16f</ID>
+    <ID>MagicNumber:ShadcnNavigationRecipes.kt$0.12f</ID>
+    <ID>MagicNumber:ShadcnNavigationRecipes.kt$0.6f</ID>
+    <ID>MagicNumber:ShadcnStatusRecipes.kt$0.1f</ID>
+    <ID>MagicNumber:ShadcnStatusRecipes.kt$0.2f</ID>
+    <ID>MagicNumber:ShadcnSurfaceRecipes.kt$24f</ID>
+    <ID>MagicNumber:ShadcnVariants.kt$ShadcnCardSize.Default$4f</ID>
+    <ID>MatchingDeclarationName:ShadcnTypography.kt$ShadcnTextStyle</ID>
+    <ID>NestedBlockDepth:ShadcnStylePresetVerificationTest.kt$ShadcnStylePresetVerificationTest$@Test fun everyPresetResolvesACompleteThemeAcrossEveryBaseColorAndMode()</ID>
+    <ID>TooManyFunctions:ShadcnTypography.kt$io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnTypography.kt</ID>
+  </CurrentIssues>
+</SmellBaseline>

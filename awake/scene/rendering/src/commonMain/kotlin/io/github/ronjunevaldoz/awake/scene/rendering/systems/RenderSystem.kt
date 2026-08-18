@@ -2,6 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.rendering.systems
 
+import io.github.ronjunevaldoz.awake.core.math.Frustum
+import io.github.ronjunevaldoz.awake.core.math.Mat4
+import io.github.ronjunevaldoz.awake.core.math.ScreenBounds
+import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.intersects
+import io.github.ronjunevaldoz.awake.core.math.isOccludedBy
+import io.github.ronjunevaldoz.awake.core.math.screenBounds
 import io.github.ronjunevaldoz.awake.ecs.System
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.render.renderer.DEFAULT_SCENE_LIGHT
@@ -10,8 +17,13 @@ import io.github.ronjunevaldoz.awake.render.renderer.Renderer
 import io.github.ronjunevaldoz.awake.render.renderer.SceneLight
 import io.github.ronjunevaldoz.awake.scene.core.components.Transform
 import io.github.ronjunevaldoz.awake.scene.rendering.components.Camera
+import io.github.ronjunevaldoz.awake.scene.rendering.components.InstancedMeshRenderer
+import io.github.ronjunevaldoz.awake.scene.rendering.components.InstancedSkinnedMeshRenderer
 import io.github.ronjunevaldoz.awake.scene.rendering.components.Light
+import io.github.ronjunevaldoz.awake.scene.rendering.components.LodGroup
+import io.github.ronjunevaldoz.awake.scene.rendering.components.MeshBounds
 import io.github.ronjunevaldoz.awake.scene.rendering.components.MeshRenderer
+import io.github.ronjunevaldoz.awake.scene.rendering.components.Occluder
 import io.github.ronjunevaldoz.awake.scene.rendering.components.PbrMaterial
 import io.github.ronjunevaldoz.awake.scene.rendering.components.SkinnedPose
 
@@ -19,10 +31,36 @@ class RenderSystem(
     private val renderer: Renderer,
 ) : System {
     private val drawCalls = ArrayList<DrawCall>()
+    private val occluderBounds = ArrayList<ScreenBounds>()
+
+    /** How many entities occlusion culling actually excluded last frame -- zero when no
+     * [Occluder] entities exist, or when none of them fully cover anything. Exists purely so a
+     * demo/debug panel or a test can observe "did this actually cull anything" without pixel-
+     * level verification, same reasoning [io.github.ronjunevaldoz.awake.scene.rendering.components.WorldDebugSettings]'s
+     * toggles get a live readout for. */
+    var lastOccludedCount: Int = 0
+        private set
 
     override fun update(world: World, delta: Float) {
         val camera = primaryCamera(world) ?: return
         drawCalls.clear()
+        occluderBounds.clear()
+        lastOccludedCount = 0
+        // Gated on occluderFamily.size, not built unconditionally: a scene with zero Occluder
+        // entities (the common case) pays one extra family-cache lookup, not a view-projection
+        // matrix build, per frame. See Occluder's own doc comment for why occlusion is an
+        // independent opt-in from MeshBounds.
+        val occluderFamily = world.family<Transform, Occluder>()
+        val occlusionViewProjection: Mat4? = if (occluderFamily.size > 0) {
+            val viewProjection = camera.camera.viewProjectionMatrix(CONSERVATIVE_ASPECT, renderer.clipSpace)
+            occluderFamily.forEach { _, transform, occluder ->
+                val worldBounds = occluder.localBounds.transformed(transform.worldMatrix)
+                camera.camera.screenBounds(worldBounds, viewProjection)?.let { occluderBounds.add(it) }
+            }
+            viewProjection
+        } else {
+            null
+        }
         world.family<Transform, MeshRenderer>().forEach { entity, transform, meshRenderer ->
             // An entity's mesh format decides which pipeline draws it (see Renderer
             // .pipelinesByFormat) -- extraUniformFloats only matters for a format whose
@@ -32,8 +70,27 @@ class RenderSystem(
             val pbr = world.get<PbrMaterial>(entity)
             val extras = when {
                 pose != null -> pose.jointPalette
-                pbr != null -> floatArrayOf(pbr.metallic, pbr.roughness, 0f, 0f)
+                // [metallic, roughness, pad, pad, baseColorFactor.rgba, emissiveFactor.rgb,
+                // pad] -- the primary lit pipeline only reads the first 4 (see
+                // RendererDraw3D.pbrMaterialFloats), the textured/glTF pipeline reads all 12
+                // (see that backend's own pbr-factor helper). One packing serves both since
+                // which pipeline a given mesh format resolves to is a backend concern, not
+                // this system's.
+                pbr != null -> floatArrayOf(
+                    pbr.metallic, pbr.roughness, 0f, 0f,
+                    pbr.baseColorFactor[0], pbr.baseColorFactor[1], pbr.baseColorFactor[2], pbr.baseColorFactor[3],
+                    pbr.emissiveFactor[0], pbr.emissiveFactor[1], pbr.emissiveFactor[2], 0f,
+                )
                 else -> EMPTY_EXTRAS
+            }
+            val bounds = world.get<MeshBounds>(entity)
+            if (bounds != null) {
+                val worldBounds = bounds.localBounds.transformed(transform.worldMatrix)
+                if (!Frustum.intersects(camera.camera, CONSERVATIVE_ASPECT, worldBounds)) return@forEach
+                if (isOccluded(camera.camera, worldBounds, occlusionViewProjection)) {
+                    lastOccludedCount++
+                    return@forEach
+                }
             }
             drawCalls.add(
                 DrawCall(
@@ -44,22 +101,69 @@ class RenderSystem(
                 ),
             )
         }
+        // One DrawCall per entity here too, but instanceModels (not model) carries every
+        // copy's transform -- a backend with an instanced pipeline for this mesh's format
+        // draws all of them in one GPU call. See InstancedMeshRenderer's own doc comment for
+        // why this is a separate opt-in component/query rather than folding into the
+        // MeshRenderer loop above.
+        world.family<InstancedMeshRenderer>().forEach { _, instanced ->
+            drawCalls.add(
+                DrawCall(
+                    mesh = instanced.mesh,
+                    material = instanced.material,
+                    instanceModels = instanced.transforms,
+                ),
+            )
+        }
+        // Animated counterpart to the InstancedMeshRenderer loop above -- instanceModels AND
+        // instanceJointPalettes both carry one entry per instance, index-for-index. See
+        // InstancedSkinnedMeshRenderer's own doc comment for why this is a separate component
+        // rather than folding into InstancedMeshRenderer.
+        world.family<InstancedSkinnedMeshRenderer>().forEach { _, instanced ->
+            drawCalls.add(
+                DrawCall(
+                    mesh = instanced.mesh,
+                    material = instanced.material,
+                    instanceModels = instanced.instances.map { it.transform },
+                    instanceJointPalettes = instanced.instances.map { it.jointPalette },
+                ),
+            )
+        }
+        // LodGroup picks ONE level's mesh/material by distance to the camera eye -- see that
+        // component's own doc comment for why an entity carries this instead of MeshRenderer,
+        // not both. LOD selects detail, it doesn't cull -- MeshBounds/frustum culling still
+        // applies on top when present.
+        world.family<Transform, LodGroup>().forEach { entity, transform, lodGroup ->
+            val worldPosition = Vec3(transform.worldMatrix.m03, transform.worldMatrix.m13, transform.worldMatrix.m23)
+            val distance = (worldPosition - camera.camera.eye).length3()
+            val level = lodGroup.levels.firstOrNull { distance <= it.maxDistance } ?: lodGroup.levels.last()
+
+            val bounds = world.get<MeshBounds>(entity)
+            if (bounds != null) {
+                val worldBounds = bounds.localBounds.transformed(transform.worldMatrix)
+                if (!Frustum.intersects(camera.camera, CONSERVATIVE_ASPECT, worldBounds)) return@forEach
+                if (isOccluded(camera.camera, worldBounds, occlusionViewProjection)) {
+                    lastOccludedCount++
+                    return@forEach
+                }
+            }
+            drawCalls.add(DrawCall(mesh = level.mesh, material = level.material, model = transform.worldMatrix))
+        }
         renderer.draw(camera.camera, drawCalls, sceneLight(world))
     }
 
-    private fun primaryCamera(world: World): Camera? {
-        val family = world.family<Camera>()
-        val cameras = family.components()
-        var index = 0
-        val count = family.size
-        while (index < count) {
-            val camera = cameras[index]
-            if (camera.isPrimary) {
-                return camera
-            }
-            index += 1
-        }
-        return null
+    /** `false` when [occlusionViewProjection] is `null` (no [Occluder] entities exist this
+     * frame) or [worldBounds] straddles the near plane (see [io.github.ronjunevaldoz.awake.core.math.screenBounds]'s
+     * own doc comment) -- both are "can't tell, so don't cull" cases, same conservative bias
+     * [Frustum.intersects] already keeps. */
+    private fun isOccluded(
+        camera: io.github.ronjunevaldoz.awake.core.math.Camera,
+        worldBounds: io.github.ronjunevaldoz.awake.core.math.Aabb,
+        occlusionViewProjection: Mat4?,
+    ): Boolean {
+        if (occlusionViewProjection == null || occluderBounds.isEmpty()) return false
+        val candidateBounds = camera.screenBounds(worldBounds, occlusionViewProjection) ?: return false
+        return occluderBounds.any { isOccludedBy(candidateBounds, it) }
     }
 
     /** The first [Light] entity in the world, converted to render-api's backend-neutral

@@ -32,10 +32,11 @@ flowchart TD
     gameDsl["awake:engine:game-authoring"]
     physicsApi["awake:physics:api"]
     jolt["awake:backend:jolt"]
-    uiCore["awake:engine:ui:ui-core"]
-    uiWidgets["awake:engine:ui:ui-headless"]
+    uiApi["awake:engine:ui:ui-api"]
+    uiCore["awake:engine:ui:ui-core<br/>runtime mechanics"]
+    uiWidgets["awake:engine:ui:ui-headless<br/>generic behavior + neutral visuals"]
     ui["awake:engine:ui"]
-    uiDs["awake:engine:ui:ui-designsystem"]
+    uiDs["awake:engine:ui:ui-designsystem<br/>branded recipes + variants"]
     vulkan["awake:backend:vulkan"]
     webgpu["awake:backend:webgpu"]
     samples["samples:*"]
@@ -56,6 +57,7 @@ flowchart TD
     sceneRendering --> sceneRuntime
     render --> sceneRuntime
     game --> sceneRuntime
+    uiApi --> uiCore
     uiCore --> sceneRuntime
     render --> sceneRendering
     physicsApi --> scenePhysics
@@ -74,8 +76,10 @@ flowchart TD
     game --> gameDsl
     sceneDsl --> gameDsl
     physicsApi --> jolt
+    uiApi --> uiWidgets
     uiCore --> uiWidgets
     uiWidgets --> ui
+    uiApi --> uiDs
     ui --> uiDs
     game --> samples
     render --> vulkan
@@ -105,10 +109,12 @@ flowchart TD
 | `:awake-engine:render-api` | Renderer-facing abstractions and draw orchestration | not published |
 | `:awake-physics:api` | Backend-agnostic physics contracts: `PhysicsWorld`, `BodyHandle`, `BodyTransform`, `PhysicsShape`, `MotionType`, `RaycastHit` | not published |
 | `:awake-backend:jolt` | Jolt Physics binding (JNI on desktop/Android via `jolt-jni`, JoltC cinterop on iOS) implementing `awake:physics:api` | not published |
-| `:awake-engine:ui:ui-core` | Foundational UI drawing and layout primitives | not published |
-| `:awake-engine:ui:ui-headless` | Reusable widget-level primitives built on `ui-core` | not published |
+| `:awake-engine:ui:ui-api` | Stable runtime-free values: `UiBounds`, dimensions/units, and color/shape/typography contracts | not published |
+| `:awake-engine:ui:ui-core` | UI runtime mechanics: layout/drawing/input/state and neutral fallback resolution; no component recipes or variants | not published |
+| `:awake-engine:ui:ui-headless` | Reusable widget behavior and neutral visual-state contracts built on Core | not published |
+| `:awake-engine:ui:ui-dsl` | Focused neutral composition layer for property rows, inspector scaffolds, and tooling shells when production composition warrants it | not published |
 | `:awake-engine:ui` | Style-agnostic UI composition templates and DSL surfaces | not published |
-| `:awake-engine:ui:ui-designsystem` | Branded or strongly opinionated UI recipes | not published |
+| `:awake-engine:ui:ui-designsystem` | Branded themes, named variants, and recipes that map to Headless neutral visual states | not published |
 | `:samples:*` | Sample applications and demos | sample-only |
 
 ## Stable Rules

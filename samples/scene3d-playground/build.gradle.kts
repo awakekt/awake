@@ -13,6 +13,18 @@ plugins {
     id("awake.ui-preview-report-convention")
 }
 
+// Shared shaders (skinned/instanced/shadow_depth/skinned_instanced/textured) live in
+// awake:asset:shaders, not duplicated here -- see that module's own build.gradle.kts doc
+// comment. A static directory reference, not a project dependency: that module produces no
+// artifact this one consumes.
+val sharedShaderDirectory = project(":awake:asset:shaders").layout.projectDirectory.dir("src/commonMain/resources/shaders")
+tasks.named<SyncWgslShaderPipelineTask>("syncAwakeShaders") {
+    additionalSourceDirectories.from(sharedShaderDirectory)
+}
+tasks.named<ValidateWgslShadersTask>("validateAwakeShaders") {
+    additionalSourceDirectories.from(sharedShaderDirectory)
+}
+
 kotlin {
     jvmToolchain(17)
     applyDefaultHierarchyTemplate()
@@ -83,16 +95,21 @@ kotlin {
             implementation(project(":awake:engine:game-authoring"))
             implementation(project(":awake:engine:render:contract"))
             implementation(project(":awake:core"))
+            implementation(project(":awake:core:animation"))
+            implementation(project(":awake:asset:gltf"))
+            // TexturedUniformLayout/LitShadowUniformLayout -- code, not just the shared shader
+            // text this module's syncAwakeShaders already references as a static file path.
+            implementation(project(":awake:asset:shaders"))
             implementation(project(":awake:ecs"))
             implementation(project(":awake:scene"))
             implementation(project(":awake:scene:authoring"))
-            implementation(project(":awake:engine:ui:ui-core"))
-            implementation(project(":awake:engine:ui:designsystem"))
+            implementation(project(":awake:ui:ui-core"))
+            implementation(project(":awake:ui:designsystem"))
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation(project(":awake:engine:ui:testing"))
+            implementation(project(":awake:ui:testing"))
             implementation(libs.kotlinx.coroutines.test)
         }
 
@@ -140,6 +157,7 @@ kotlin {
         named("desktopTest") {
             dependencies {
                 implementation(project(":awake:backend:vulkan"))
+                implementation(project(":awake:asset:gltf"))
             }
         }
 

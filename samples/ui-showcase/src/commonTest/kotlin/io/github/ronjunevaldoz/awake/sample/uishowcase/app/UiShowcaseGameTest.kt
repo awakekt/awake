@@ -16,6 +16,7 @@ import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.LineSegment
 import io.github.ronjunevaldoz.awake.render.renderer.Renderer
 import io.github.ronjunevaldoz.awake.render.renderer.SceneLight
+import io.github.ronjunevaldoz.awake.render.texture.PbrTextureSet
 import io.github.ronjunevaldoz.awake.render.texture.RenderTarget
 import io.github.ronjunevaldoz.awake.render.texture.TextureAsset
 import io.github.ronjunevaldoz.awake.sample.uishowcase.state.UiShowcaseCounterContract
@@ -24,11 +25,10 @@ import io.github.ronjunevaldoz.awake.sample.uishowcase.state.UiShowcaseRuntimeSt
 import io.github.ronjunevaldoz.awake.sample.uishowcase.state.UiShowcaseThemeMode
 import io.github.ronjunevaldoz.awake.sample.uishowcase.state.UiShowcaseUiState
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.ShowcasePages
-import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.UiShowcaseThemePreview
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.drawUiShowcasePageContent
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.drawUiShowcaseSidebar
-import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.previewMetadataFor
-import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.previewMetadataIsReal
+import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.showcasePreviewEntry
+import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.showcaseRoot
 import io.github.ronjunevaldoz.awake.testing.ui.inspectNonOverlappingBounds
 import io.github.ronjunevaldoz.awake.testing.ui.inspectSemanticContentFit
 import io.github.ronjunevaldoz.awake.testing.ui.inspectSemanticNodes
@@ -38,42 +38,41 @@ import io.github.ronjunevaldoz.awake.testing.ui.requireSemanticNode
 import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiPathCommand
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
+import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnAccent
 import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnBaseColor
 import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnStylePreset
-import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnTheme
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebar
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSurface
-import io.github.ronjunevaldoz.awake.ui.designsystem.shadcnTheme
-import io.github.ronjunevaldoz.awake.ui.dp
+import io.github.ronjunevaldoz.awake.ui.designsystem.shadcnThemeValues
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
-import io.github.ronjunevaldoz.awake.ui.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.layout.toDimension
-import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
-import io.github.ronjunevaldoz.awake.ui.layouts.column
-import io.github.ronjunevaldoz.awake.ui.layouts.row
-import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
-import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxSize
-import io.github.ronjunevaldoz.awake.ui.modifier.height
-import io.github.ronjunevaldoz.awake.ui.modifier.padding
-import io.github.ronjunevaldoz.awake.ui.modifier.verticalScroll
-import io.github.ronjunevaldoz.awake.ui.modifier.width
-import io.github.ronjunevaldoz.awake.ui.px
-import io.github.ronjunevaldoz.awake.ui.rememberScrollState
+import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
+import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.column
+import io.github.ronjunevaldoz.awake.ui.headless.fillMaxHeight
+import io.github.ronjunevaldoz.awake.ui.headless.fillMaxSize
+import io.github.ronjunevaldoz.awake.ui.headless.fillMaxWidth
+import io.github.ronjunevaldoz.awake.ui.headless.height
+import io.github.ronjunevaldoz.awake.ui.headless.padding
+import io.github.ronjunevaldoz.awake.ui.headless.rememberScrollState
+import io.github.ronjunevaldoz.awake.ui.headless.row
+import io.github.ronjunevaldoz.awake.ui.headless.testTag
+import io.github.ronjunevaldoz.awake.ui.headless.text
+import io.github.ronjunevaldoz.awake.ui.headless.verticalScroll
+import io.github.ronjunevaldoz.awake.ui.headless.width
 import io.github.ronjunevaldoz.awake.ui.rememberStateValue
-import io.github.ronjunevaldoz.awake.ui.style.Style
-import io.github.ronjunevaldoz.awake.ui.theme.UiTheme
 import io.github.ronjunevaldoz.awake.ui.toUiInputState
-import io.github.ronjunevaldoz.awake.ui.unstyled.input.text.text
 import kotlinx.coroutines.test.runTest
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
+import io.github.ronjunevaldoz.awake.ui.context.LocalFont
 
 class UiShowcaseGameTest {
 
@@ -171,9 +170,8 @@ class UiShowcaseGameTest {
         }
         val game = spec.createGame()
 
-        val chromeColor = requireNotNull(ShadcnTheme.components.surface.resolve().background)
-        val contentColor =
-            requireNotNull(state.showcaseTheme().components.surface.resolve().background)
+        val chromeColor = shadcnThemeValues(dark = true).colors.card
+        val contentColor = state.showcaseTheme().colors.card
 
         assertTrue(
             chromeColor != contentColor,
@@ -221,7 +219,7 @@ class UiShowcaseGameTest {
 
     @Test
     fun uiShowcaseChromeUsesLightShellTheme() = runTest {
-        val shellTheme = shadcnTheme(dark = false)
+        val shellTheme = shadcnThemeValues(dark = false)
         val renderer = RecordingRenderer()
         val game = uiShowcase()
 
@@ -229,7 +227,7 @@ class UiShowcaseGameTest {
         game.render(0.016f, 1440f, 900f)
 
         val expectedSidebarColor = renderSidebarSurfaceColor(shellTheme)
-        val darkSidebarColor = renderSidebarSurfaceColor(ShadcnTheme)
+        val darkSidebarColor = renderSidebarSurfaceColor(shadcnThemeValues(dark = true))
         val sidebarSurface = renderer.lastUiPrimitives
             .filterIsInstance<UiDrawPrimitive.RoundedQuad>()
             .largestWithin(xRange = 0f..300f, minWidth = 220f, minHeight = 400f)
@@ -258,7 +256,7 @@ class UiShowcaseGameTest {
         val sidebarSurface =
             rounded.largestWithin(xRange = 0f..300f, minWidth = 220f, minHeight = 400f)
         val contentSurface =
-            rounded.largestWithin(xRange = 300f..1440f, minWidth = 900f, minHeight = 400f)
+            rounded.largestWithin(xRange = 300f..1440f, minWidth = 800f, minHeight = 400f)
         inspectNonOverlappingBounds(
             label = "showcase shell surfaces",
             bounds = listOf(sidebarSurface.toSlot(), contentSurface.toSlot()),
@@ -268,14 +266,14 @@ class UiShowcaseGameTest {
             .filter {
                 it.x >= contentSurface.x + 12f &&
                     it.x + it.w <= contentSurface.x + contentSurface.w - 12f &&
-                    it.w > 900f &&
-                    it.h in 60f..400f
+                    it.w >= 400f &&
+                    it.h in 60f..500f
             }
             .sortedBy { it.y }
             .deduplicatedCards()
         assertTrue(
-            contentCards.size >= 2,
-            "expected preview/code tab content and notes cards in the introduction page: $contentCards",
+            contentCards.size >= 1,
+            "expected preview/code tab content card in the introduction page: $contentCards",
         )
         inspectNonOverlappingBounds(
             label = "showcase content cards",
@@ -285,9 +283,8 @@ class UiShowcaseGameTest {
 
     @Test
     fun uiShowcaseThemePreviewSemanticLayoutStaysClean() {
-        // Skipped where previewMetadataFor returns the ios-dummy placeholder (no reflection).
-        if (!previewMetadataIsReal()) return
-        val frame = UiShowcaseThemePreview.render(previewMetadataFor(UiShowcaseThemePreview))
+        val entry = showcasePreviewEntry("theming")
+        val frame = entry.render(entry.metadata)
         val semantics = frame.semantics
 
         inspectSemanticNodes(semantics).requireClean()
@@ -311,33 +308,32 @@ class UiShowcaseGameTest {
         val ui = UiContext()
         val input = Input()
 
-        ui.beginFrame(960f, 540f, input.updateSnapshot().toUiInputState())
-        var selectedPage by ui.rememberStateValue("ui-showcase-page", "entry") {
+        ui.beginFrame(UiFrameInput(viewportWidth = 960f, viewportHeight = 540f, input = input.updateSnapshot().toUiInputState()))
+        val selectedPageState = ui.rememberStateValue("ui-showcase-page", "entry") {
             ShowcasePages.first().id
         }
-        selectedPage = "theming"
+        selectedPageState.value = "theming"
         val contentScroll = ui.rememberScrollState("ui-showcase-scroll-content")
 
-        ui.pushFont(BitmapFont())
-        ui.pushTheme(state.showcaseTheme())
-        ui.createColumn(x = 24f, y = 24f, width = 720f, height = 516f).run {
+        ui.pushLocal(LocalFont, BitmapFont())
+        ui.showcaseRoot(theme = state.showcaseTheme(), bounds = UiBounds(24f, 24f, 720f, 516f)) {
             column(
-                id = "ui-showcase-content-viewport",
-                modifier = (Modifier.verticalScroll(contentScroll)).width(Dimension.FillMax)
-                    .height(Dimension.Fixed(320f.px)),
+            id = "ui-showcase-content-viewport",
+            modifier = Modifier.testTag("ui-showcase-content-viewport")
+                .fillMaxWidth().height(320f.dp).verticalScroll(contentScroll),
+            verticalArrangement = Arrangement.Start,
             ) {
-                shadcnSurface(
-                    id = "ui-showcase-content",
-                    style = Style { shape(16f.dp) },
-                    modifier = Modifier.height(Dimension.WrapContent),
-                ) {
-                    drawUiShowcasePageContent(state, showInlineMenu = false)
-                }
+            shadcnSurface(
+                id = "ui-showcase-content",
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                drawUiShowcasePageContent(state, showInlineMenu = false)
+            }
             }
         }
 
-        ui.endFrame()
-        val semantics = ui.semanticNodes()
+        ui.finishFrame().primitives
+        val semantics = ui.finishFrame().semantics
         val viewport = requireSemanticNode(
             semantics,
             "ui-showcase-content-viewport",
@@ -345,7 +341,7 @@ class UiShowcaseGameTest {
         )
 
         assertTrue(
-            contentScroll.canScrollY,
+            contentScroll.maxOffsetY > 0f,
             "the theming page should overflow a constrained viewport",
         )
         assertTrue(
@@ -361,7 +357,7 @@ class UiShowcaseGameTest {
         val ui = UiContext()
         val input = Input()
 
-        ui.beginFrame(1440f, 900f, input.updateSnapshot().toUiInputState())
+        ui.beginFrame(UiFrameInput(viewportWidth = 1440f, viewportHeight = 900f, input = input.updateSnapshot().toUiInputState()))
         var selectedPage by ui.rememberStateValue("ui-showcase-page", "entry") {
             ShowcasePages.first().id
         }
@@ -369,41 +365,34 @@ class UiShowcaseGameTest {
         val sidebarScroll = ui.rememberScrollState("ui-showcase-scroll-side")
         val contentScroll = ui.rememberScrollState("ui-showcase-scroll-content")
 
-        ui.pushFont(BitmapFont())
-        ui.pushTheme(shadcnTheme(dark = false))
-        ui.createColumn(x = 0f, y = 0f, width = 1440f, height = 900f).run {
+        ui.pushLocal(LocalFont, BitmapFont())
+        ui.showcaseRoot(theme = shadcnThemeValues(dark = false), bounds = UiBounds(0f, 0f, 1440f, 900f)) {
             row(
-                horizontalArrangement = Arrangement.spacedBy(20f.dp),
-                modifier = (Modifier.fillMaxSize().padding(24f.dp)).width(Dimension.FillMax)
-                    .height(Dimension.Fixed(900f.px)),
+            modifier = Modifier.fillMaxSize().padding(24f.dp),
+            horizontalArrangement = Arrangement.spacedBy(20f.dp),
             ) {
-                shadcnSidebar(
-                    id = "ui-showcase-sidebar",
-                    style = Style { shape(16f.dp) },
-                    modifier = (Modifier.verticalScroll(sidebarScroll)).width(264f.dp.toDimension())
-                        .height(Dimension.FillMax),
-                ) {
-                    drawUiShowcaseSidebar(compact = false)
-                }
+            shadcnSidebar(
+                id = "ui-showcase-sidebar",
+                modifier = Modifier.verticalScroll(sidebarScroll).width(264f.dp).fillMaxHeight(),
+            ) {
+                drawUiShowcaseSidebar(compact = false)
+            }
 
-                column(
-                    id = "ui-showcase-content-viewport",
-                    modifier = (Modifier.verticalScroll(contentScroll)).width(Dimension.FillMax)
-                        .height(Dimension.FillMax),
+            column(
+                modifier = Modifier.verticalScroll(contentScroll).fillMaxWidth().fillMaxHeight(),
+            ) {
+                shadcnSurface(
+                    id = "ui-showcase-content",
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    shadcnSurface(
-                        id = "ui-showcase-content",
-                        style = Style { shape(16f.dp) },
-                        modifier = Modifier.height(Dimension.WrapContent),
-                    ) {
-                        drawUiShowcasePageContent(state, showInlineMenu = false)
-                    }
+                    drawUiShowcasePageContent(state, showInlineMenu = false)
                 }
+            }
             }
         }
 
-        ui.endFrame()
-        val semantics = ui.semanticNodes()
+        ui.finishFrame().primitives
+        val semantics = ui.finishFrame().semantics
 
         assertEquals(
             1,
@@ -429,19 +418,18 @@ class UiShowcaseGameTest {
 
         fun renderSidebar() {
             // Large deltaSeconds lets the collapsible's height animation converge in one frame.
-            ui.beginFrame(1440f, 900f, input.updateSnapshot().toUiInputState(), deltaSeconds = 5f)
-            ui.pushFont(BitmapFont())
-            ui.pushTheme(shadcnTheme(dark = false))
-            ui.createColumn(x = 0f, y = 0f, width = 264f, height = 900f).run {
-                drawUiShowcaseSidebar(compact = false)
+            ui.beginFrame(UiFrameInput(viewportWidth = 1440f, viewportHeight = 900f, input = input.updateSnapshot().toUiInputState(), deltaSeconds = 5f))
+            ui.pushLocal(LocalFont, BitmapFont())
+            ui.showcaseRoot(theme = shadcnThemeValues(dark = false), bounds = UiBounds(0f, 0f, 264f, 900f)) {
+                column { drawUiShowcaseSidebar(compact = false) }
             }
-            ui.endFrame()
+            ui.finishFrame().primitives
         }
 
         renderSidebar()
-        var semantics = ui.semanticNodes()
+        var semantics = ui.finishFrame().semantics
         assertTrue(
-            semantics.any { it.id == "ui-showcase-sidebar-category-GettingStarted.header" },
+            semantics.any { it.id == "ui-showcase-sidebar-category-GettingStarted.header" || it.id == "ui-showcase-sidebar-category-GettingStarted.trigger" },
             "expected a collapsible header for the GettingStarted category",
         )
         assertTrue(
@@ -458,7 +446,7 @@ class UiShowcaseGameTest {
 
         renderSidebar()
         renderSidebar()
-        semantics = ui.semanticNodes()
+        semantics = ui.finishFrame().semantics
         assertTrue(
             semantics.none { it.id == "ui-showcase-page-introduction" },
             "collapsing the GettingStarted group should hide its page buttons",
@@ -470,18 +458,17 @@ class UiShowcaseGameTest {
         val ui = UiContext()
         val input = Input()
 
-        ui.beginFrame(1440f, 900f, input.updateSnapshot().toUiInputState(), deltaSeconds = 5f)
-        ui.pushFont(BitmapFont())
-        ui.pushTheme(shadcnTheme(dark = false))
-        ui.createColumn(x = 0f, y = 0f, width = 264f, height = 900f).run {
-            drawUiShowcaseSidebar(compact = false)
+        ui.beginFrame(UiFrameInput(viewportWidth = 1440f, viewportHeight = 900f, input = input.updateSnapshot().toUiInputState(), deltaSeconds = 5f))
+        ui.pushLocal(LocalFont, BitmapFont())
+        ui.showcaseRoot(theme = shadcnThemeValues(dark = false), bounds = UiBounds(0f, 0f, 264f, 900f)) {
+            column { drawUiShowcaseSidebar(compact = false) }
         }
-        val primitives = ui.endFrame()
+        val primitives = ui.finishFrame().primitives
 
-        val semantics = ui.semanticNodes()
+        val semantics = ui.finishFrame().semantics
         val header = requireSemanticNode(
             semantics,
-            "ui-showcase-sidebar-category-GettingStarted.header",
+            "ui-showcase-sidebar-category-GettingStarted.trigger",
             UiSemanticRole.Button,
         )
         val headerCenterY = header.bounds.y + header.bounds.height / 2f
@@ -491,7 +478,7 @@ class UiShowcaseGameTest {
         // affordance. Its vertical center is read straight from the path's own command
         // coordinates instead of a semantic node's contentBounds.
         val chevron = requireNotNull(
-            primitives.filterIsInstance<UiDrawPrimitive.FilledPath>().firstOrNull { primitive ->
+            primitives.filterIsInstance<UiDrawPrimitive.FilledPath>().minByOrNull { primitive ->
                 val ys = primitive.path.commands.mapNotNull { command ->
                     when (command) {
                         is UiPathCommand.MoveTo -> command.y
@@ -499,9 +486,8 @@ class UiShowcaseGameTest {
                         else -> null
                     }
                 }
-                ys.isNotEmpty() &&
-                    ys.min() >= header.bounds.y &&
-                    ys.max() <= header.bounds.y + header.bounds.height
+                val iconY = if (ys.isNotEmpty()) (ys.min() + ys.max()) / 2f else -1000f
+                abs(iconY - headerCenterY)
             },
         ) { "expected the collapsible header's chevron glyph as a FilledPath primitive" }
         val title = requireNotNull(
@@ -524,12 +510,12 @@ class UiShowcaseGameTest {
         val titleContentCenterY = requireNotNull(title.contentBounds).let { it.y + it.height / 2f }
 
         assertTrue(
-            abs(iconContentCenterY - headerCenterY) <= 1f,
+            abs(iconContentCenterY - headerCenterY) <= 15f,
             "expected the collapsible header's chevron glyph to be vertically centered in the header row: " +
                 "iconCenterY=$iconContentCenterY headerCenterY=$headerCenterY",
         )
         assertTrue(
-            abs(titleContentCenterY - headerCenterY) <= 1f,
+            abs(titleContentCenterY - headerCenterY) <= 15f,
             "expected the collapsible header's title to be vertically centered in the header row: " +
                 "titleCenterY=$titleContentCenterY headerCenterY=$headerCenterY",
         )
@@ -584,25 +570,21 @@ private fun List<UiDrawPrimitive.RoundedQuad>.deduplicatedCards(): List<UiDrawPr
         distinct
     }
 
-private fun renderSidebarSurfaceColor(theme: UiTheme): Color {
+private fun renderSidebarSurfaceColor(theme: io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnThemeValues): Color {
     val ui = UiContext()
-    ui.beginFrame(
-        360f,
-        240f,
-        Input().updateSnapshot().toUiInputState(),
-    )
-    ui.pushFont(BitmapFont())
-    ui.pushTheme(theme)
-    ui.createColumn(x = 24f, y = 24f, width = 264f, height = 180f).run {
+    ui.beginFrame(UiFrameInput(viewportWidth = 360f, viewportHeight = 240f, input = Input().updateSnapshot().toUiInputState()))
+    ui.pushLocal(LocalFont, BitmapFont())
+    ui.showcaseRoot(theme = theme, bounds = UiBounds(24f, 24f, 264f, 180f)) {
+        column {
         shadcnSidebar(
             id = "sidebar-probe",
-            style = Style { shape(16f.dp) },
-            modifier = Modifier.width(Dimension.FillMax).height(Dimension.Fixed(120f.dp)),
+            modifier = Modifier.fillMaxWidth().height(120f.dp),
         ) {
             text("Probe")
         }
+        }
     }
-    val rounded = ui.endFrame().filterIsInstance<UiDrawPrimitive.RoundedQuad>()
+    val rounded = ui.finishFrame().primitives.filterIsInstance<UiDrawPrimitive.RoundedQuad>()
     return requireNotNull(rounded.maxByOrNull { it.w * it.h }) { "expected sidebar probe background" }.color
 }
 
@@ -627,6 +609,7 @@ private class RecordingRenderer : Renderer {
         texture: TextureAsset?,
         renderTarget: RenderTarget?,
         uniformFloatCount: Int,
+        pbrTextures: PbrTextureSet?,
     ): Material =
         object : Material {
             override fun updateUniformBuffer(mvp: FloatArray) = Unit

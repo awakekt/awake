@@ -1,0 +1,45 @@
+// Copyright (c) Ron June Valdoz
+// SPDX-License-Identifier: Apache-2.0
+@file:Suppress("ktlint:standard:function-naming", "FunctionNaming")
+
+package io.github.ronjunevaldoz.awake.ui
+
+import io.github.ronjunevaldoz.awake.ui.context.UiLocal
+import io.github.ronjunevaldoz.awake.ui.context.LocalTextStyle
+import io.github.ronjunevaldoz.awake.ui.context.LocalTheme
+import io.github.ronjunevaldoz.awake.ui.context.LocalFont
+import io.github.ronjunevaldoz.awake.ui.font.UiFont
+import io.github.ronjunevaldoz.awake.ui.theme.TextStyle
+import io.github.ronjunevaldoz.awake.ui.theme.UiTheme
+
+// Every provider pops in a finally. Without it, content that throws leaves its value on the stack
+// for the rest of the frame, and every later widget renders with a theme or text style it never
+// asked for -- a failure that surfaces nowhere near the throw. Scope is the whole point of these
+// helpers, so it has to hold on the failing path too.
+
+/**
+ * Scopes any [UiLocal] to [content] -- the general form the three below are now instances of.
+ *
+ * Declare the local at file scope with `uiLocalOf(...)`, provide it here, read it anywhere beneath
+ * with `context.current(local)`.
+ */
+fun <T> UiPrimitiveScope.Provide(local: UiLocal<T>, value: T, content: UiPrimitiveScope.() -> Unit) {
+    context.pushLocal(local, value)
+    try {
+        this.content()
+    } finally {
+        context.popLocal(local)
+    }
+}
+
+fun UiPrimitiveScope.provideTextStyle(style: TextStyle, content: UiPrimitiveScope.() -> Unit) {
+    Provide(LocalTextStyle, style, content)
+}
+
+fun UiPrimitiveScope.provideTheme(theme: UiTheme, content: UiPrimitiveScope.() -> Unit) {
+    Provide(LocalTheme, theme, content)
+}
+
+fun UiPrimitiveScope.provideFont(font: UiFont, content: UiPrimitiveScope.() -> Unit) {
+    Provide(LocalFont, font, content)
+}

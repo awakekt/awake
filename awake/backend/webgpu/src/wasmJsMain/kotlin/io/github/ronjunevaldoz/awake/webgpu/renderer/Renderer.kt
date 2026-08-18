@@ -7,26 +7,34 @@ import io.github.ronjunevaldoz.awake.core.math.ClipSpace
 import io.github.ronjunevaldoz.awake.core.math.times
 import io.github.ronjunevaldoz.awake.render.mesh.MeshGeometry
 import io.github.ronjunevaldoz.awake.render.mesh.VertexFormat
+import io.github.ronjunevaldoz.awake.render.renderer.DEFAULT_FOG_COLOR
+import io.github.ronjunevaldoz.awake.render.renderer.DEFAULT_HORIZON_COLOR
 import io.github.ronjunevaldoz.awake.render.renderer.DEFAULT_SCENE_LIGHT
+import io.github.ronjunevaldoz.awake.render.renderer.DEFAULT_ZENITH_COLOR
 import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.LineSegment
 import io.github.ronjunevaldoz.awake.render.renderer.SceneLight
+import io.github.ronjunevaldoz.awake.render.texture.PbrTextureSet
 import io.github.ronjunevaldoz.awake.render.texture.RenderTarget
 import io.github.ronjunevaldoz.awake.render.texture.TextureAsset
 import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
-import io.github.ronjunevaldoz.awake.ui.layout.UiBounds
 import io.github.ronjunevaldoz.awake.webgpu.WebGpuHandles
 import io.github.ronjunevaldoz.awake.webgpu.debug.LineMesh
 import io.github.ronjunevaldoz.awake.webgpu.debug.LineRenderPipeline
+import io.github.ronjunevaldoz.awake.webgpu.debug.SkyboxRenderPipeline
 import io.github.ronjunevaldoz.awake.webgpu.device.GraphicsDevice
 import io.github.ronjunevaldoz.awake.webgpu.fastArrayBufferOf
 import io.github.ronjunevaldoz.awake.webgpu.material.Material
+import io.github.ronjunevaldoz.awake.webgpu.mesh.InstanceBuffer
+import io.github.ronjunevaldoz.awake.webgpu.mesh.SkinnedInstanceBuffer
 import io.github.ronjunevaldoz.awake.webgpu.mesh.Mesh
 import io.github.ronjunevaldoz.awake.webgpu.mesh.meshIndexFormat
 import io.github.ronjunevaldoz.awake.webgpu.pipeline.RenderPipeline
 import io.github.ronjunevaldoz.awake.webgpu.swapchain.SwapchainManager
 import io.github.ronjunevaldoz.awake.webgpu.texture.OffscreenRenderTarget
+import io.github.ronjunevaldoz.awake.webgpu.texture.Texture
 import io.github.ronjunevaldoz.awake.webgpu.ui.DynamicMesh
 import io.github.ronjunevaldoz.awake.webgpu.ui.UiGlyphRenderPipeline
 import io.github.ronjunevaldoz.awake.webgpu.ui.UiRenderPipeline
@@ -59,15 +67,15 @@ import io.ygdrasil.webgpu.Color as GpuColor
  * single triangle/cube draw. No fences/semaphores/frame-in-flight bookkeeping -- the
  * browser's own frame pacing replaces what `SwapchainManager`'s Vulkan sync fields are for.
  *
- * [DrawCall.material] is deliberately **not** touched here -- `Material`'s wasmJs actual is
- * still `TODO()` (out of scope for this slice, see docs/MVP_PLAN.md). Instead this class
- * owns one small uniform buffer + bind group directly per [RenderPipeline] (matching how
- * wgpu4k's own example scenes manage their uniform buffer, with no separate "Material"
- * abstraction), rewritten via `queue.writeBuffer` before each draw call. This only actually
- * works correctly for a single draw call per frame today -- multiple draw calls sharing one
- * uniform buffer within one render pass would clobber each other's MVP matrix, since
- * `queue.writeBuffer` is a queue-scheduled op, not something that interleaves mid-encoder.
- * Real per-draw-call (or per-Material) uniform buffers are Material's job once it's real.
+ * For the primary pipeline, [DrawCall.material] is not consulted at all: this class owns one
+ * small uniform buffer + bind group directly per [RenderPipeline] (matching how wgpu4k's own
+ * example scenes manage their uniform buffer), rewritten via `queue.writeBuffer` before each
+ * draw call. This only actually works correctly for a single draw call per frame -- multiple
+ * draw calls sharing one uniform buffer within one render pass clobber each other's MVP
+ * matrix, since `queue.writeBuffer` is a queue-scheduled op, not something that interleaves
+ * mid-encoder. A draw call resolved to [additionalPipelines] instead uses its own
+ * [Material]'s uniform buffer + texture bind group, so it only hits that ceiling when two
+ * draw calls share ONE material.
  *
  * This class is deliberately just the class body (fields, constructor, the 3D resource API,
  * and [destroy]) -- the rest of its behavior lives in sibling files as `internal` extension
@@ -82,12 +90,11 @@ class Renderer(
     graphicsDevice: GraphicsDevice,
     swapchainManager: SwapchainManager,
     renderPipeline: RenderPipeline,
-    /** The one [io.github.ronjunevaldoz.awake.render.mesh.VertexFormat] [renderPipeline] was
-     * built for -- this backend only ever has the one 3D pipeline (see this class's own doc
-     * comment), so a [DrawCall] whose mesh uses any other format is skipped rather than drawn
-     * through a pipeline that expects a different vertex layout (see [performDraw]'s doc
-     * comment). Mirrors Vulkan's `Renderer.pipelinesByFormat`, minus the "more than one
-     * pipeline" part -- no format table needed when there's only ever one entry. */
+    /** The [io.github.ronjunevaldoz.awake.render.mesh.VertexFormat] [renderPipeline] was built
+     * for. A [DrawCall] whose mesh uses any other format draws through [additionalPipelines]'
+     * entry for it, or is skipped when there is none -- rendering one format's vertex data
+     * through another's pipeline would silently misread the vertex buffer. Together the two
+     * are this backend's equivalent of Vulkan's `Renderer.pipelinesByFormat`. */
     internal val primaryVertexFormat: VertexFormat = VertexFormat.PositionColorUv,
     internal val lineRenderPipeline: LineRenderPipeline,
     internal val uiShaderCode: ByteArray,
@@ -102,6 +109,32 @@ class Renderer(
      * comment for the "why LineList, not a barycentric shader" rationale. `null` (default)
      * for every game that doesn't opt into `WebGpuGameApplication`'s `wireframeSupport`. */
     internal val wireframeRenderPipeline: RenderPipeline? = null,
+    /** Extra 3D pipelines keyed by the vertex format each one draws (today: `textured.wgsl`
+     * for `PositionNormalColorUv`), mirroring Vulkan's `Renderer.pipelinesByFormat`. A
+     * [DrawCall] whose mesh format has an entry here draws through it, binding its own
+     * [Material]'s texture bind group instead of this class's shared uniform bind group --
+     * see [performDraw]. Empty (default) for a game with only the primary pipeline. */
+    internal val additionalPipelines: Map<VertexFormat, RenderPipeline> = emptyMap(),
+    /** Instanced companions keyed by vertex format, mirroring Vulkan's
+     * `Renderer.instancedPipelinesByFormat` -- built with `RenderPipeline(instanced = true)` and
+     * a shader whose uniform block holds `viewProjection` rather than a per-draw `mvp` (see
+     * `instanced.wgsl`). A [DrawCall] with non-null `instanceModels` whose format has an entry
+     * here draws every transform in one call; a format with no entry is skipped, same as any
+     * other unmatched format. Empty (default) for a game that never instances. */
+    internal val instancedPipelines: Map<VertexFormat, RenderPipeline> = emptyMap(),
+    /** Animated companions of [instancedPipelines], mirroring Vulkan's
+     * `Renderer.skinnedInstancedPipelinesByFormat` -- built from `skinned_instanced.wgsl`,
+     * which reads its per-instance joint palettes from a `@group(1)` storage buffer. A
+     * [DrawCall] carrying BOTH `instanceModels` and `instanceJointPalettes` resolves here
+     * instead of [instancedPipelines]; a format with no entry is skipped. Empty (default) for
+     * a game that never animates instances. */
+    internal val skinnedInstancedPipelines: Map<VertexFormat, RenderPipeline> = emptyMap(),
+    /** Non-null only when the app's bootstrap opted into a skybox shader set (see
+     * `WebGpuGameApplication.skyboxShaderSet`) -- `null` (default) makes [showEnvironment] an
+     * inert flag, same "nothing to switch to, keep rendering as before" posture as
+     * [wireframe] with no [wireframeRenderPipeline]. Appended last so existing positional call
+     * sites are unaffected. */
+    internal val skyboxRenderPipeline: SkyboxRenderPipeline? = null,
 ) : RenderRenderer {
     // WebGPU's NDC has +Y up -- confirmed by this module's own ui_quad.wgsl comment
     // ("pixel-space is Y-down, NDC is Y-up") -- so unlike Vulkan (+Y down NDC) no flip is
@@ -122,10 +155,24 @@ class Renderer(
      * carry a per-vertex barycentric attribute. */
     override var wireframe: Boolean = false
 
+    /** Real storage overriding the interface's no-op defaults -- see the interface's own doc
+     * comments. [showEnvironment] additionally needs [skyboxRenderPipeline] to be non-null
+     * (the app's bootstrap must have opted into a skybox shader set); with none built it stays
+     * a no-op flag, same shape as [wireframe] with no [wireframeRenderPipeline]. */
+    override var showEnvironment: Boolean = false
+    override var horizonColor: FloatArray = DEFAULT_HORIZON_COLOR.copyOf()
+    override var zenithColor: FloatArray = DEFAULT_ZENITH_COLOR.copyOf()
+    override var fogColor: FloatArray = DEFAULT_FOG_COLOR.copyOf()
+    override var fogDensity: Float = 0f
+
     // This backend has no shadow-map implementation yet (see docs/MVP_PLAN.md) -- a stored,
     // otherwise-unused property purely to satisfy the shared interface, same "compile-only
     // stub" posture as this file's own Material.
     override var shadowsEnabled: Boolean = true
+
+    /** Real storage overriding the interface's no-op default -- see the interface's own doc
+     * comment. */
+    override var debugMode: Boolean = false
 
     /** [clearColor] converted to this backend's clear-value type -- see the Vulkan `Renderer`'s
      * own `clearColorValue` for why this is a fresh-read `get()`, not a cached field. */
@@ -147,6 +194,41 @@ class Renderer(
      * comment ([RendererUiPipelines.kt]). */
     internal var wireframeUniformBuffer: GPUBuffer? = null
     internal var wireframeUniformBindGroup: GPUBindGroup? = null
+
+    /** [instancedPipelines]' own uniform buffer/bind group -- separate from
+     * [uniformBuffer]/[uniformBindGroup] for the same "auto" pipeline-layout reason the
+     * wireframe pair above is (see [ensureInstancedUniformResources]). Unlike those two, ONE
+     * pair is genuinely enough for any number of instanced draw calls per frame: their uniform
+     * content (`viewProjection` + light) is identical across all of them, since the per-copy
+     * model matrices live in the instance buffer instead. */
+    internal var instancedUniformBuffer: GPUBuffer? = null
+    internal var instancedUniformBindGroup: GPUBindGroup? = null
+
+    /** [skinnedInstancedPipelines]' own pair of the above -- see
+     * [ensureSkinnedInstancedUniformResources] for why it can't share the instanced one. */
+    internal var skinnedInstancedUniformBuffer: GPUBuffer? = null
+    internal var skinnedInstancedUniformBindGroup: GPUBindGroup? = null
+
+    // One InstanceBuffer per instanced draw call in a frame, grown on demand and reused every
+    // frame -- same pool shape as the UI mesh pools below. The uniform buffer above can be
+    // shared across instanced calls, but their transform lists can't be.
+    private val instanceBufferPool = mutableListOf<InstanceBuffer>()
+
+    internal fun instanceBufferForRun(index: Int): InstanceBuffer {
+        while (instanceBufferPool.size <= index) instanceBufferPool += InstanceBuffer(graphicsDevice)
+        return instanceBufferPool[index]
+    }
+
+    // Same pool shape, for the joint palettes an ANIMATED instanced draw call also needs (it
+    // uses both pools: model matrices above, poses here).
+    private val skinnedInstanceBufferPool = mutableListOf<SkinnedInstanceBuffer>()
+
+    internal fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer {
+        while (skinnedInstanceBufferPool.size <= index) {
+            skinnedInstanceBufferPool += SkinnedInstanceBuffer(graphicsDevice)
+        }
+        return skinnedInstanceBufferPool[index]
+    }
 
     // Lazily built on the first drawUi() call of any kind (uiRenderPipeline) and on the
     // first call that passes a non-null font (uiGlyphRenderPipeline) -- see
@@ -226,18 +308,51 @@ class Renderer(
     override fun createMesh(geometry: MeshGeometry): RenderMesh =
         Mesh(graphicsDevice, {}, geometry.vertices, geometry.indices, geometry.format)
 
-    /** Builds a [Material]; `texture` is accepted for interface parity with the Vulkan backend
-     * but is otherwise unused since this backend's `Material` is still a compile-only stub. */
-    override fun createMaterial(texture: TextureAsset?, renderTarget: RenderTarget?, uniformFloatCount: Int): RenderMaterial {
+    /** Builds a [Material] -- see [RenderRenderer.createMaterial]'s doc comment. A `texture`
+     * is uploaded into a real [Texture] the material then binds through `textured.wgsl` (see
+     * [additionalPipelines]); a material with neither `texture` nor `renderTarget` carries no
+     * GPU resources at all, since the primary pipeline's uniforms live on this class. */
+    override fun createMaterial(
+        texture: TextureAsset?,
+        renderTarget: RenderTarget?,
+        uniformFloatCount: Int,
+        pbrTextures: PbrTextureSet?,
+    ): RenderMaterial {
         require(texture == null || renderTarget == null) { "Pass at most one of texture/renderTarget." }
         val material = Material(graphicsDevice, uniformFloatCount)
         if (renderTarget != null) {
             val offscreen = renderTarget as OffscreenRenderTarget
             val sampler = graphicsDevice.wgpuContext.device.createSampler(SamplerDescriptor())
             material.createResourcesFromRenderTarget(offscreen.colorView, sampler)
+        } else if (texture != null) {
+            material.createResources(
+                uploadTexture(texture),
+                listOf(
+                    pbrTextures?.metallicRoughness to NEUTRAL_METALLIC_ROUGHNESS,
+                    pbrTextures?.normal to NEUTRAL_NORMAL,
+                    pbrTextures?.occlusion to NEUTRAL_OCCLUSION,
+                    pbrTextures?.emissive to NEUTRAL_EMISSIVE,
+                ).map { (asset, neutral) ->
+                    // `textured.wgsl` samples bindings 5-8 unconditionally, so a channel this
+                    // material doesn't have still needs a real (neutral) view bound. The
+                    // neutral 1x1s are uploaded once and shared, still tracked in
+                    // createdTextures for teardown.
+                    asset?.let(::uploadTexture) ?: neutralPbrTextures.getOrPut(neutral) { uploadTexture(neutral) }
+                },
+            )
         }
         return material
     }
+
+    // runOneTimeCommands is unused by this backend's Texture (see its doc comment).
+    private fun uploadTexture(asset: TextureAsset): Texture =
+        Texture(graphicsDevice, {}, asset.data, asset.width, asset.height).also { createdTextures += it }
+
+    private val neutralPbrTextures = mutableMapOf<TextureAsset, Texture>()
+
+    // Textures created on demand by createMaterial() -- Renderer (not Material) owns their
+    // teardown, mirroring Vulkan's Renderer.createdTextures.
+    private val createdTextures = mutableListOf<Texture>()
 
     // RenderTargets created on demand by createRenderTarget() -- same ownership pattern as
     // Vulkan's Renderer.createdRenderTargets.
@@ -382,10 +497,20 @@ class Renderer(
         wireframeUniformBuffer?.close()
         wireframeUniformBuffer = null
         wireframeUniformBindGroup = null
+        instancedUniformBuffer?.close()
+        instancedUniformBuffer = null
+        instancedUniformBindGroup = null
+        skinnedInstancedUniformBuffer?.close()
+        skinnedInstancedUniformBuffer = null
+        skinnedInstancedUniformBindGroup = null
+        skinnedInstanceBufferPool.forEach { it.destroy() }
+        skinnedInstanceBufferPool.clear()
+        instanceBufferPool.forEach { it.destroy() }
         uiRenderPipeline?.destroy()
         uiGlyphRenderPipeline?.destroy()
         uiTextureRenderPipeline?.destroy()
         uiRoundedQuadRenderPipeline?.destroy()
+        createdTextures.forEach { it.destroy() }
         createdRenderTargets.forEach { it.destroy() }
         uiQuadMeshPool.forEach { it.destroy() }
         uiGlyphMeshPool.forEach { it.destroy() }
@@ -398,5 +523,14 @@ class Renderer(
         internal const val MAX_UI_QUADS = 256
         internal const val MAX_DEBUG_LINES = 64
         internal val WHITE_RGBA = AwakeColor.White
+
+        /** 1x1 "this channel is absent" stand-ins for `textured.wgsl`'s bindings 5-8, each
+         * chosen so sampling it is a no-op: G=0.5 roughness/B=0 metalness, a flat (0,0,1)
+         * tangent-space normal, full ambient visibility, no emission. Same values as Vulkan's
+         * Renderer -- bytes are signed, -1 is 255 and -128 is 128. */
+        private val NEUTRAL_METALLIC_ROUGHNESS = TextureAsset(byteArrayOf(0, -128, 0, -1), 1, 1)
+        private val NEUTRAL_NORMAL = TextureAsset(byteArrayOf(-128, -128, -1, -1), 1, 1)
+        private val NEUTRAL_OCCLUSION = TextureAsset(byteArrayOf(-1, -1, -1, -1), 1, 1)
+        private val NEUTRAL_EMISSIVE = TextureAsset(byteArrayOf(0, 0, 0, -1), 1, 1)
     }
 }

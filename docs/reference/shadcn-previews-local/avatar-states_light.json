@@ -1,0 +1,44 @@
+{
+  "case": "avatar-states",
+  "nodes": {
+    "avatar.1": {
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "borderColor": "oklch(0.922 0 0)",
+      "borderRadius": 33554400,
+      "borderWidth": 0,
+      "color": "oklch(0 0 0)",
+      "fontSize": 16,
+      "height": 32,
+      "lineHeight": 24,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "width": 32,
+      "x": 0,
+      "y": 8
+    },
+    "avatar.2": {
+      "backgroundColor": "rgba(0, 0, 0, 0)",
+      "borderColor": "oklch(0.922 0 0)",
+      "borderRadius": 33554400,
+      "borderWidth": 0,
+      "color": "oklch(0 0 0)",
+      "fontSize": 16,
+      "height": 40,
+      "lineHeight": 24,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "width": 40,
+      "x": 44,
+      "y": 4
+    }
+  },
+  "root": {
+    "height": 48,
+    "width": 84
+  },
+  "theme": "light"
+}

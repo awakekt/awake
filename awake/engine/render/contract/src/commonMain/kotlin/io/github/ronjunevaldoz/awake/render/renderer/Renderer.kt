@@ -8,6 +8,7 @@ import io.github.ronjunevaldoz.awake.core.math.Vec3
 import io.github.ronjunevaldoz.awake.render.material.Material
 import io.github.ronjunevaldoz.awake.render.mesh.Mesh
 import io.github.ronjunevaldoz.awake.render.mesh.MeshGeometry
+import io.github.ronjunevaldoz.awake.render.texture.PbrTextureSet
 import io.github.ronjunevaldoz.awake.render.texture.RenderTarget
 import io.github.ronjunevaldoz.awake.render.texture.TextureAsset
 import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
@@ -24,6 +25,19 @@ val DEFAULT_SCENE_LIGHT = SceneLight(
     direction = Vec3(DEFAULT_LIGHT_DIRECTION_X, DEFAULT_LIGHT_DIRECTION_Y, DEFAULT_LIGHT_DIRECTION_Z),
     color = Vec3(1f, 1f, 1f),
 )
+
+/** Defaults for [Renderer.horizonColor]/[Renderer.zenithColor]/[Renderer.fogColor] -- a plain
+ * daytime sky (warm, light blue-white at the horizon, deeper blue overhead) and a neutral
+ * gray-blue haze. Read-only in practice: a backend overriding these with real storage hands
+ * out its own arrays. */
+@Suppress("MagicNumber") // Colour components; naming each channel would not clarify anything.
+val DEFAULT_HORIZON_COLOR = floatArrayOf(0.72f, 0.80f, 0.88f, 1f)
+
+@Suppress("MagicNumber")
+val DEFAULT_ZENITH_COLOR = floatArrayOf(0.20f, 0.38f, 0.68f, 1f)
+
+@Suppress("MagicNumber")
+val DEFAULT_FOG_COLOR = floatArrayOf(0.55f, 0.62f, 0.70f, 1f)
 
 /**
  * Module restructuring slice 1 (see docs/MVP_PLAN.md): the one real cross-backend entry
@@ -76,6 +90,86 @@ interface Renderer {
      * to enable. */
     var shadowsEnabled: Boolean
 
+    /**
+     * When `true`, a backend prints a warning whenever it silently drops a [DrawCall] because
+     * [DrawCall.mesh]'s format has no matching pipeline registered (the intentional but
+     * previously-silent "unmatched format, skip" behavior every backend already had -- this
+     * only makes it observable, it changes no rendering decision). `false` by default with a
+     * no-op setter here, same "ignore unless a real backend overrides it with actual storage"
+     * pattern [sceneViewport] already uses -- a backend/test double that never opts in keeps
+     * behaving exactly as it always did, and every existing `object : Renderer` test fake needs
+     * no change to keep compiling.
+     */
+    var debugMode: Boolean
+        get() = false
+        set(_) {}
+
+    /**
+     * When `true`, the 3D pass draws a procedural sky (horizon-to-zenith gradient plus a sun
+     * disc at the frame's `SceneLight.direction` and a moon disc opposite it) behind all scene
+     * geometry, instead of leaving [clearColor] visible. `false` by default, so nothing changes
+     * appearance until a game opts in.
+     *
+     * Accessors default to "ignore" rather than being abstract, same as [debugMode]: a backend
+     * whose bootstrap never built a skybox pipeline, and every test double, keeps rendering
+     * exactly as it always did. Both real backends override this with real storage.
+     */
+    var showEnvironment: Boolean
+        get() = false
+
+        @Suppress("UNUSED_PARAMETER")
+        set(value) = Unit
+
+    /** RGB(A) the sky gradient blends from at the horizon ([showEnvironment] only). */
+    var horizonColor: FloatArray
+        get() = DEFAULT_HORIZON_COLOR
+
+        @Suppress("UNUSED_PARAMETER")
+        set(value) = Unit
+
+    /** RGB(A) the sky gradient blends to straight overhead ([showEnvironment] only). */
+    var zenithColor: FloatArray
+        get() = DEFAULT_ZENITH_COLOR
+
+        @Suppress("UNUSED_PARAMETER")
+        set(value) = Unit
+
+    /** RGB(A) distant geometry blends toward on the two PBR-capable lit paths
+     * (`textured.wgsl`/`lit_shadow.wgsl`). Only visible once [fogDensity] is non-zero. */
+    var fogColor: FloatArray
+        get() = DEFAULT_FOG_COLOR
+
+        @Suppress("UNUSED_PARAMETER")
+        set(value) = Unit
+
+    /** Exponential fog density -- `0f` (default) is "no fog", which is what every scene got
+     * before this existed. Unlike [showEnvironment] this needs no pipeline support: it is one
+     * more uniform field the existing lit shaders read, so it works on any backend. */
+    var fogDensity: Float
+        get() = 0f
+
+        @Suppress("UNUSED_PARAMETER")
+        set(value) = Unit
+
+    /**
+     * The sub-rect of the surface [draw]'s 3D pass renders into, and the aspect ratio its
+     * projection is built for -- `null` (the default) means the whole surface, which is what
+     * every game that never sets this always got.
+     *
+     * An editor sets this so the scene stays inside its viewport panel instead of filling the
+     * window behind the surrounding chrome. Only the 3D pass is confined: [drawUi] still covers
+     * the full surface, since the chrome is what defines the rect in the first place.
+     *
+     * Accessors default to "ignore" rather than being abstract: a backend that has no way to
+     * scissor a pass, and every test double, keeps rendering full-surface unchanged. A backend
+     * that supports it overrides this with real storage.
+     */
+    var sceneViewport: RenderViewport?
+        get() = null
+
+        @Suppress("UNUSED_PARAMETER")
+        set(value) = Unit
+
     /** Uploads [geometry] as a GPU mesh, on demand -- a game calls this itself for whatever
      * assets it wants, whenever it wants (not something the render bootstrap decides upfront
      * from a constructor-supplied asset list). */
@@ -93,11 +187,17 @@ interface Renderer {
      * pass (`prepareDrawCalls` always writes MVP + either light or [DrawCall
      * .extraUniformFloats], unconditionally -- a smaller buffer here would be a real
      * out-of-bounds write, not just wasted space); a skinned material passes `16 + 16 *
-     * jointCount` instead (MVP + joint palette via [DrawCall.extraUniformFloats], no light). */
+     * jointCount` instead (MVP + joint palette via [DrawCall.extraUniformFloats], no light).
+     * [pbrTextures] is the rest of a glTF metallic-roughness material's channels alongside
+     * [texture] (base color) -- `null` (default) keeps every existing caller building a
+     * base-color-only (or untextured) material exactly as it always did; a backend with no
+     * PBR sampling support is free to ignore it, same as [texture] itself on a backend with
+     * no texture support at all. */
     fun createMaterial(
         texture: TextureAsset? = null,
         renderTarget: RenderTarget? = null,
         uniformFloatCount: Int = 24,
+        pbrTextures: PbrTextureSet? = null,
     ): Material
 
     /** Creates an offscreen [width]x[height] color+depth render destination, on demand -- see

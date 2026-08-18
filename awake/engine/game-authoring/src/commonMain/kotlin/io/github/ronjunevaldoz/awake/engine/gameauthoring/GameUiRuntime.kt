@@ -16,15 +16,17 @@ import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.Renderer
 import io.github.ronjunevaldoz.awake.ui.AwakeUiDsl
 import io.github.ronjunevaldoz.awake.ui.UiBoxConstraints
+import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
+import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
+import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.context.UiCursor
 import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
 import io.github.ronjunevaldoz.awake.ui.context.UiMeasureTrialStats
 import io.github.ronjunevaldoz.awake.ui.debugOverlayPrimitives
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
-import io.github.ronjunevaldoz.awake.ui.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.layout.UiBounds
+import io.github.ronjunevaldoz.awake.ui.headless.UiScope
+import io.github.ronjunevaldoz.awake.ui.headless.createUiScope
 import io.github.ronjunevaldoz.awake.ui.layout.place
 import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
 import io.github.ronjunevaldoz.awake.ui.layouts.BoxScope
@@ -208,9 +210,9 @@ class GameUiRuntime(
     /**
      * Opens a root-level column directly from the runtime.
      *
-     * Keep this distinct from nested [io.github.ronjunevaldoz.awake.ui.UiScope] `column(...)`
-     * helpers so Kotlin does not silently bind nested layout calls back to the runtime
-     * receiver instead of the current parent scope.
+     * Keep this distinct from nested [io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope]
+     * `column(...)` helpers so Kotlin does not silently bind nested layout calls back to the
+     * runtime receiver instead of the current parent scope.
      */
     fun rootColumn(
         modifier: UiModifier = Modifier,
@@ -325,4 +327,12 @@ fun GameUiRuntime.frame(
             maxHeightPx = viewportHeight,
         ),
     )
+}
+
+/** Public Headless entry point for ordinary app/sample component trees. */
+fun GameUiRuntime.headlessFrame(
+    block: UiScope.() -> Unit,
+) {
+    val rootSlot = UiBounds(0f, 0f, viewportWidth, viewportHeight)
+    uiContext.createUiScope(rootSlot).block()
 }

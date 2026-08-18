@@ -110,3 +110,52 @@ internal fun Renderer.ensureWireframeUniformResources(pipeline: GPURenderPipelin
         ),
     )
 }
+
+/** [Renderer.instancedPipelines]' own uniform buffer/bind group -- a third near-duplicate, for
+ * the exact "auto" pipeline-layout reason spelled out above [ensureWireframeUniformResources].
+ * One pair serves every instanced pipeline/draw call: they all write the same `viewProjection` +
+ * light block (see `instanced.wgsl`), so unlike the per-draw `mvp` this class writes elsewhere
+ * there is nothing here for a second instanced call to clobber. */
+internal fun Renderer.ensureInstancedUniformResources(pipeline: GPURenderPipeline) {
+    if (instancedUniformBuffer != null) return
+    val device = graphicsDevice.wgpuContext.device
+    val buffer = device.createBuffer(
+        BufferDescriptor(
+            size = (UNIFORM_FLOAT_COUNT * Float.SIZE_BYTES).toULong(),
+            usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
+        ),
+    )
+    instancedUniformBuffer = buffer
+    instancedUniformBindGroup = device.createBindGroup(
+        BindGroupDescriptor(
+            layout = pipeline.getBindGroupLayout(0u),
+            entries = listOf(
+                BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
+            ),
+        ),
+    )
+}
+
+/** [Renderer.skinnedInstancedPipelines]' own pair of the same -- a separate one from
+ * [ensureInstancedUniformResources]' despite writing an identical uniform block, because a bind
+ * group is only valid against the pipeline layout it was derived from and this is a different
+ * pipeline object (the same reason wireframe needs its own pair). */
+internal fun Renderer.ensureSkinnedInstancedUniformResources(pipeline: GPURenderPipeline) {
+    if (skinnedInstancedUniformBuffer != null) return
+    val device = graphicsDevice.wgpuContext.device
+    val buffer = device.createBuffer(
+        BufferDescriptor(
+            size = (UNIFORM_FLOAT_COUNT * Float.SIZE_BYTES).toULong(),
+            usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
+        ),
+    )
+    skinnedInstancedUniformBuffer = buffer
+    skinnedInstancedUniformBindGroup = device.createBindGroup(
+        BindGroupDescriptor(
+            layout = pipeline.getBindGroupLayout(0u),
+            entries = listOf(
+                BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
+            ),
+        ),
+    )
+}

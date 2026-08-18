@@ -1,0 +1,44 @@
+{
+  "case": "progress-states",
+  "nodes": {
+    "parity-progress-1": {
+      "backgroundColor": "oklab(0.922 0 0 / 0.2)",
+      "borderColor": "oklch(1 0 0 / 0.1)",
+      "borderRadius": 33554400,
+      "borderWidth": 0,
+      "color": "oklch(0.985 0 0)",
+      "fontSize": 16,
+      "height": 8,
+      "lineHeight": 24,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "width": 212,
+      "x": 0,
+      "y": 0
+    },
+    "parity-progress-2": {
+      "backgroundColor": "oklab(0.922 0 0 / 0.2)",
+      "borderColor": "oklch(1 0 0 / 0.1)",
+      "borderRadius": 33554400,
+      "borderWidth": 0,
+      "color": "oklch(0.985 0 0)",
+      "fontSize": 16,
+      "height": 8,
+      "lineHeight": 24,
+      "paddingBottom": 0,
+      "paddingLeft": 0,
+      "paddingRight": 0,
+      "paddingTop": 0,
+      "width": 212,
+      "x": 0,
+      "y": 24
+    }
+  },
+  "root": {
+    "height": 32,
+    "width": 212
+  },
+  "theme": "dark"
+}

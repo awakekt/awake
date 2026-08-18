@@ -16,15 +16,16 @@ import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.LineSegment
 import io.github.ronjunevaldoz.awake.render.renderer.Renderer
 import io.github.ronjunevaldoz.awake.render.renderer.SceneLight
+import io.github.ronjunevaldoz.awake.render.texture.PbrTextureSet
 import io.github.ronjunevaldoz.awake.render.texture.RenderTarget
 import io.github.ronjunevaldoz.awake.render.texture.TextureAsset
 import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiInputState
-import io.github.ronjunevaldoz.awake.ui.dp
+import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
+import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
-import io.github.ronjunevaldoz.awake.ui.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.layout.UiBounds
 import io.github.ronjunevaldoz.awake.ui.layout.toDimension
 import io.github.ronjunevaldoz.awake.ui.layouts.column
 import io.github.ronjunevaldoz.awake.ui.layouts.surface
@@ -43,6 +44,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
 
 class GameUiDslTest {
 
@@ -210,7 +212,7 @@ class GameUiDslTest {
         val panelColor = Color(0.15f, 0.32f, 0.62f, 1f)
         val markerColor = Color(0.92f, 0.28f, 0.24f, 1f)
 
-        runtime.uiContext.beginFrame(240f, 160f, UiInputState())
+        runtime.uiContext.beginFrame(UiFrameInput(viewportWidth = 240f, viewportHeight = 160f, input = UiInputState()))
         with(runtime) {
             uiContext.createBox(
                 slot = UiBounds(0f, 0f, 240f, 160f),
@@ -239,7 +241,7 @@ class GameUiDslTest {
             }
         }
 
-        val primitives = runtime.uiContext.endFrame()
+        val primitives = runtime.uiContext.finishFrame().primitives
         val panelIndex = primitives.indexOfFirst { primitive ->
             primitive is UiDrawPrimitive.RoundedQuad && primitive.color == panelColor
         }
@@ -316,6 +318,7 @@ private class RecordingUiRenderer : Renderer {
         texture: TextureAsset?,
         renderTarget: RenderTarget?,
         uniformFloatCount: Int,
+        pbrTextures: PbrTextureSet?,
     ): Material = object : Material {
         override fun updateUniformBuffer(mvp: FloatArray) = Unit
         override fun bind(commandBuffer: Long, pipelineLayout: Long) = Unit

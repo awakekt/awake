@@ -3,30 +3,33 @@
 package io.github.ronjunevaldoz.awake.sample.uishowcase.ui
 
 /**
- * Answers a different question than [ShadcnParityScreenshotTest]. That test diffs Awake's
- * render against Awake's *own* previously recorded golden -- a regression lock, useful for
- * "did this change on purpose" but blind to "is this actually close to real shadcn/ui". This
- * test diffs Awake's render against a real `ui.shadcn.com` capture (every PNG checked into
- * `docs/reference/shadcn-previews`, refreshed by `tools/capture_shadcn_reference.py` straight
- * from the live docs site -- see that script's header for why the previous set of "shadcn
- * reference" images wasn't actually from shadcn/ui at all).
+ * DEMOTED. [ShadcnGeometryParityTest] is the primary parity oracle now, comparing Awake's
+ * semantic bounds against shadcn's own getBoundingClientRect numbers -- exact, in pixels,
+ * independent of rasterizer/font/anti-aliasing. This test is what is left over: colour, corner
+ * radius, border width, shadow -- the dimensions geometry cannot see.
  *
- * Absolute mismatch against the real reference is real, expected, and not something this test
- * fixes -- pixel-perfect parity with shadcn/ui isn't the goal (different rasterizer, different
- * font). What IS gated is *drift*: each pair's mismatch% is checked against a committed baseline
- * (`tools/shadcn_parity_baseline.json`) plus a small tolerance, so a regression that makes a
- * component look measurably less like its reference fails the build instead of silently landing
- * in a report nobody re-reads. This replaced an earlier version of this test that only asserted
- * the harness ran -- real regressions (e.g. a checkbox radius change that turned it into a
- * circle) reached users through that gap because "compared and wrote a report" was mistaken for
- * "verified". See docs/reference/ui-validation.md's "Shadcn Parity Regression Gate" section for
- * the noise-floor measurement behind the tolerance and re-recording instructions.
+ * It was the primary oracle for one session, and every promotion of a number it produced turned
+ * out to be wrong in a way geometry would not have been:
+ *  - a mis-framed reference (256x6 for a 300x20 render) scored as a fidelity number until the
+ *    coverage gate below started reporting framing
+ *  - the reference app rendered in no particular font (a self-referential CSS variable) until
+ *    that was matched, moving four numbers with zero Awake-side change
+ *  - even matched, the reference initially rendered every weight as 400 (one @font-face
+ *    covering "100 900"), so a component tuned against it would have been tuned against the
+ *    wrong weight
+ * Three real bugs in the instrument, only one real bug in a component (badge's padding, found by
+ * geometry in one pass once the instrument was fixed). That ratio is why this demotes.
+ *
+ * mismatchPct below stays informative -- printed, tracked in the metrics JSON, ratcheted against
+ * regression -- but it is no longer where a padding or advance-width question gets decided.
+ * [ShadcnGeometryParityTest] decides those. This decides "does the badge still look red."
  *
  * Renders its own Awake-side previews (rather than depending on [ShadcnParityScreenshotTest]
  * having already run in the same invocation) so `--tests "*ShadcnReferenceComparisonTest*"`
  * alone is sufficient -- Gradle doesn't guarantee cross-class ordering under a test filter.
  */
 import io.github.ronjunevaldoz.awake.core.input.Input
+import io.github.ronjunevaldoz.awake.ui.theme
 import io.github.ronjunevaldoz.awake.testing.ui.AwakeUiPreview
 import io.github.ronjunevaldoz.awake.testing.ui.AwakeUiPreviewEntry
 import io.github.ronjunevaldoz.awake.testing.ui.AwakeUiPreviewFrame
@@ -34,26 +37,29 @@ import io.github.ronjunevaldoz.awake.testing.ui.AwakeUiPreviewMetadata
 import io.github.ronjunevaldoz.awake.testing.ui.renderAnnotatedUiPreviews
 import io.github.ronjunevaldoz.awake.testing.ui.saveAwakeUiPreview
 import io.github.ronjunevaldoz.awake.ui.UiInputState
+import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
-import io.github.ronjunevaldoz.awake.ui.designsystem.components.controls.shadcnInput
-import io.github.ronjunevaldoz.awake.ui.designsystem.components.popup.shadcnTooltipText
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnButton
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnCard
-import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnLabel
+import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnInput
+import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSmall
+import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnText
+import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnTextStyle
+import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnTooltipText
+import io.github.ronjunevaldoz.awake.ui.designsystem.shadcnThemeValues
 import io.github.ronjunevaldoz.awake.ui.designsystem.shadcnTheme
-import io.github.ronjunevaldoz.awake.ui.dp
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
-import io.github.ronjunevaldoz.awake.ui.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.layouts.column
-import io.github.ronjunevaldoz.awake.ui.layouts.spacer
-import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
-import io.github.ronjunevaldoz.awake.ui.modifier.height
-import io.github.ronjunevaldoz.awake.ui.modifier.offset
-import io.github.ronjunevaldoz.awake.ui.modifier.width
+import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.column
+import io.github.ronjunevaldoz.awake.ui.headless.createUiScope
+import io.github.ronjunevaldoz.awake.ui.headless.height
+import io.github.ronjunevaldoz.awake.ui.headless.offset
+import io.github.ronjunevaldoz.awake.ui.headless.spacer
+import io.github.ronjunevaldoz.awake.ui.headless.uiScope
+import io.github.ronjunevaldoz.awake.ui.headless.width
 import io.github.ronjunevaldoz.awake.ui.px
-import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.ui.toUiInputState
-import io.github.ronjunevaldoz.awake.ui.unstyled.input.text.text
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -64,6 +70,8 @@ import kotlin.math.abs
 import kotlin.math.round
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
+import io.github.ronjunevaldoz.awake.ui.context.LocalFont
 
 private fun comparisonTestSnapshot(): UiInputState {
     val input = Input()
@@ -82,37 +90,39 @@ private fun comparisonTestSnapshot(): UiInputState {
         "side-by-side. Composition mirrors tools/shadcn-reference-app/src/cases.tsx's card-login case exactly now: " +
         "one Label+Input(email)+full-width Login button, all in the content slot -- the previous version added a " +
         "password field the reference never shows and put Login in shadcnCard's footer slot, which the real markup " +
-        "doesn't use either, so the aligned crop (208 of 284px of Awake's own trimmed height) was comparing content " +
-        "the reference couldn't possibly contain. shadcnCard still draws a divider under the header regardless " +
-        "(real shadcn's CardHeader border is opt-in via an explicit border-b class this demo never sets) -- a real, " +
-        "reportable gap left as-is since fixing it means editing shadcnCard itself, out of this harness's scope.",
+        "doesn't use either, so the aligned crop is comparing the same one-field card content. The compatibility " +
+        "shadcnCard now follows the reference's explicit CardHeader/CardContent spacing and does not inject a " +
+        "separator that the source case never requests.",
     width = 288,
     height = 234,
 )
 internal object AwakeCardLightPreview : AwakeUiPreviewEntry {
     override fun render(metadata: AwakeUiPreviewMetadata): AwakeUiPreviewFrame {
-        val theme = shadcnTheme(dark = false)
+        val theme = shadcnThemeValues(dark = false)
         val font = UiFonts.default()
         val ui = UiContext()
-        ui.beginFrame(metadata.width.toFloat(), metadata.height.toFloat(), comparisonTestSnapshot())
-        ui.pushFont(font)
-        ui.pushTheme(theme)
-        ui.column(
+        ui.beginFrame(UiFrameInput(viewportWidth = metadata.width.toFloat(), viewportHeight = metadata.height.toFloat(), input = comparisonTestSnapshot()))
+        ui.pushLocal(LocalFont, font)
+        ui.showcaseRoot(theme = theme, bounds = UiBounds(0f, 0f, metadata.width.toFloat(), metadata.height.toFloat())) {
+            column(
             modifier = Modifier.offset(8f.dp, 8f.dp).width(272f.dp)
                 .height((metadata.height.toFloat() - 16f).dp),
-        ) {
+            ) {
             shadcnCard(
                 id = "parity-card",
                 modifier = Modifier.width(272f.px),
                 header = {
-                    text(
+                    shadcnText(
                         "Login to your account",
-                        style = Style { textSize(theme.typography.title) },
+                        style = ShadcnTextStyle.Title,
                     )
                 },
             ) { _ ->
-                shadcnLabel("Email")
-                spacer(Modifier.height(6f.dp))
+                uiScope().shadcnSmall("Email")
+                // The reference CardContent uses `flex flex-col gap-3` (12px) between every
+                // child: Label -> Input -> Button. Keep the fixture's composition aligned with
+                // the pinned shadcn case instead of compensating for the old core default gap.
+                spacer(Modifier.height(12f.dp))
                 shadcnInput(
                     "parity-card-email",
                     value = "",
@@ -126,12 +136,14 @@ internal object AwakeCardLightPreview : AwakeUiPreviewEntry {
                     modifier = Modifier.width(240f.px).height(36f.px),
                 )
             }
+            }
         }
+        val output = ui.finishFrame()
         return AwakeUiPreviewFrame(
-            primitives = ui.endFrame(),
+            primitives = output.primitives,
             background = theme.colors.background,
             font = font,
-            semantics = ui.semanticNodes(),
+            semantics = output.semantics,
         )
     }
 }
@@ -157,27 +169,32 @@ internal object AwakeCardLightPreview : AwakeUiPreviewEntry {
 )
 internal object AwakeTooltipContentLightPreview : AwakeUiPreviewEntry {
     override fun render(metadata: AwakeUiPreviewMetadata): AwakeUiPreviewFrame {
-        val theme = shadcnTheme(dark = false)
+        val theme = shadcnThemeValues(dark = false)
         val font = UiFonts.default()
         val ui = UiContext()
-        ui.beginFrame(metadata.width.toFloat(), metadata.height.toFloat(), comparisonTestSnapshot())
-        ui.pushFont(font)
-        ui.pushTheme(theme)
+        ui.beginFrame(UiFrameInput(viewportWidth = metadata.width.toFloat(), viewportHeight = metadata.height.toFloat(), input = comparisonTestSnapshot()))
+        ui.pushLocal(LocalFont, font)
         // Anchor is a 1px sliver, not drawn -- just enough for BottomCenter/TopCenter +
         // spacing.xs to place the bubble, so the canvas doesn't waste rows on a full-size
         // trigger the reference (bubble-only capture) never shows either.
         val anchor = UiBounds(x = 0f, y = 0f, width = metadata.width.toFloat(), height = 1f)
-        ui.createAbsolute(slot = ui.frameBounds()).shadcnTooltipText(
-            anchorSlot = anchor,
-            visible = true,
-            text = "Add to library",
-            id = "parity-tooltip",
-        )
+        ui.showcaseRoot(
+            theme = theme,
+            bounds = UiBounds(x = 0f, y = 0f, width = metadata.width.toFloat(), height = metadata.height.toFloat()),
+        ) {
+            shadcnTooltipText(
+                anchorSlot = anchor,
+                visible = true,
+                text = "Add to library",
+                id = "parity-tooltip",
+            )
+        }
+        val output = ui.finishFrame()
         return AwakeUiPreviewFrame(
-            primitives = ui.endFrame(),
+            primitives = output.primitives,
             background = theme.colors.background,
             font = font,
-            semantics = ui.semanticNodes(),
+            semantics = output.semantics,
         )
     }
 }
@@ -226,7 +243,20 @@ data class ShadcnParityMetric(
     val referenceSize: List<Int>,
     val comparedSize: List<Int>,
     val diffImage: String,
-)
+) {
+    /** Compared area as a share of the larger image -- 100% when both sides framed the same box. */
+    fun coveragePct(): Double {
+        val compared = (comparedSize[0].toDouble() * comparedSize[1]).coerceAtLeast(0.0)
+        val largest = maxOf(
+            awakeSize[0].toDouble() * awakeSize[1],
+            referenceSize[0].toDouble() * referenceSize[1],
+        ).coerceAtLeast(1.0)
+        return compared / largest * 100.0
+    }
+}
+
+/** Below this, the pair is mis-framed rather than merely different, and its mismatch%% is noise. */
+private const val MIN_COVERAGE_PCT = 80.0
 
 // Same heuristic and constants as tools/compare_parity.py's trim_uniform_border /
 // PIXEL_MISMATCH_DELTA -- keep both in sync if the comparison approach changes.
@@ -351,6 +381,9 @@ class ShadcnReferenceComparisonTest {
             AwakeSliderLightPreview,
             AwakeTooltipContentLightPreview,
             AwakeDialogStatesLightPreview,
+            AwakeBadgeVariantsDarkPreview,
+            AwakeRadioGroupLightPreview,
+            AwakeProgressLightPreview,
         ).forEach { entry -> renderAnnotatedUiPreviews(entry).forEach { saveAwakeUiPreview(it) } }
 
         // Gradle's Test task working dir is the module dir (samples/ui-showcase/) -- same
@@ -378,17 +411,7 @@ class ShadcnReferenceComparisonTest {
             }
         }.sortedByDescending { it.mismatchPct }
 
-        println("%-10s %10s %10s %11s".format("name", "mismatch%", "maxDelta", "meanDelta"))
-        results.forEach { r ->
-            println(
-                "%-10s %9.2f%% %10d %11.2f".format(
-                    r.name,
-                    r.mismatchPct,
-                    r.maxChannelDelta,
-                    r.meanDelta,
-                ),
-            )
-        }
+        printParityTable(results)
 
         metricsFile.parentFile.mkdirs()
         metricsFile.writeText(Json { prettyPrint = true }.encodeToString(results))
@@ -431,6 +454,8 @@ class ShadcnReferenceComparisonTest {
             return
         }
 
+        requireConsistentFraming(results, current.excluded.keys)
+
         val missing = mutableListOf<String>()
         val regressed = mutableListOf<String>()
         results.forEach { r ->
@@ -464,5 +489,61 @@ class ShadcnReferenceComparisonTest {
                     "-DAWAKE_RECORD_SNAPSHOTS=true after confirming the diff image looks right.",
             )
         }
+    }
+}
+
+private fun printParityTable(results: List<ShadcnParityMetric>) {
+    println(
+        "%-24s %10s %10s %11s %9s %-11s %-11s".format(
+            "name",
+            "mismatch%",
+            "maxDelta",
+            "meanDelta",
+            "covered%",
+            "awake",
+            "reference",
+        ),
+    )
+    results.forEach { r ->
+        println(
+            "%-24s %9.2f%% %10d %11.2f %8.1f%% %-11s %-11s".format(
+                r.name,
+                r.mismatchPct,
+                r.maxChannelDelta,
+                r.meanDelta,
+                r.coveragePct(),
+                "${r.awakeSize[0]}x${r.awakeSize[1]}",
+                "${r.referenceSize[0]}x${r.referenceSize[1]}",
+            ),
+        )
+    }
+}
+
+private fun requireConsistentFraming(results: List<ShadcnParityMetric>, excluded: Set<String>) {
+    // Framing is checked before drift, and is NOT ratcheted.
+    //
+    // compareAgainstReference walks the intersection of the two images -- min(width) by
+    // min(height) -- so a reference captured at a different size is silently compared on its
+    // top-left corner only, and the leftover area is neither compared nor reported. The
+    // resulting number still reads as a fidelity score. slider-local-light sat at 50.98%
+    // that way against a 256x6 reference of a 300x20 render: the capture cropped the thumb
+    // out entirely, so the figure described the crop, not the slider.
+    //
+    // A ratchet cannot catch this -- a mis-framed pair is stable, so it passes forever at
+    // whatever number the framing produces.
+    val misframed = results.filter { it.name !in excluded && it.coveragePct() < MIN_COVERAGE_PCT }
+    if (misframed.isNotEmpty()) {
+        throw AssertionError(
+            "Reference and render disagree on size, so the mismatch%% below is measured on a " +
+                "crop and means nothing:\n" +
+                misframed.joinToString("\n") { r ->
+                    "  ${r.name}: awake ${r.awakeSize[0]}x${r.awakeSize[1]}, reference " +
+                        "${r.referenceSize[0]}x${r.referenceSize[1]}, compared " +
+                        "${r.comparedSize[0]}x${r.comparedSize[1]} " +
+                        "(${round2(r.coveragePct())}%% of the larger image)"
+                } +
+                "\nRe-capture the reference with tools/capture_shadcn_reference.py so it frames " +
+                "the same content, or fix the Awake preview's canvas to match it.",
+        )
     }
 }

@@ -2,6 +2,15 @@
 
 This document is the canonical source for Awake's shared UI verification rule.
 
+
+## Fixture metadata must not come from reflection
+
+`AwakeUiPreviewMetadata` for a fixture must be supplied as data (see `ShowcasePage`), not read
+off an `@AwakeUiPreview` annotation. iOS and wasmJs have no reflection, so annotation-driven
+fixtures returned a 1x1 dummy and their tests early-returned -- reporting green on three of
+four targets while asserting nothing. Use `renderUiPreviews(entry, metadata)`;
+`renderAnnotatedUiPreviews` remains only for JVM-only fixtures that have no other option.
+
 ## Goal
 
 Stop relying on eyeballing for shared UI regressions.
@@ -28,6 +37,30 @@ Any change to shared UI in:
 must ship with automated validation.
 
 Manual browser review is useful, but it is not enough on its own.
+
+## Keep UI Tests Easy to Change
+
+Tests must describe the behavior they prove, not repeat renderer setup. This prevents a small UI
+change from becoming a large maintenance task.
+
+- Use `renderUiComponent(...)` for a normal one-frame component test.
+- Use `uiTestSession(...)` for interaction or animation across frames.
+- Use the named gestures (`hover`, `click`, `doubleClick`, `longPress`, `rightClick`, `drag`)
+  instead of repeating normal pointer down/up frames.
+- Use exact `UiInputState` only for a wheel, keyboard, or another input the named gesture cannot
+  represent.
+- Do not create a new test file if an existing matrix or component fixture owns the behavior.
+  Add a row or case there.
+- Use raw `UiContext` only when the lifecycle itself is what the test proves: Core/runtime,
+  layout/cache, renderer/backend, or pixel-fidelity mechanics.
+- A test using `beginFrame`, `endFrame`, or `finishFrame` directly in `ui-headless` or
+  `ui-designsystem` must declare `@UiLowLevelTest("why this lifecycle is under test")` on the
+  class (or a low-level helper file).
+  `verifyUiTestLifecycle` runs from `check` and rejects unmarked manual lifecycle code.
+
+Read [UI Testing Dictionary](ui-testing-dictionary.md) when a term is unfamiliar. Prefer clear,
+specific names such as `popupDismissesOnOutsideClick`; avoid incident-only names such as
+`PopupBugProbe`. A permanent probe must be renamed for the invariant it protects.
 
 ## Required Proof By UI Type
 
@@ -79,6 +112,17 @@ must capture more than the final state.
 
 Use these first:
 
+- `renderUiComponent(...)` (`awake:ui:testing`) for every single-frame Headless or
+  design-system component test and snapshot fixture. It owns the frame lifecycle, default input,
+  font/density restoration, semantics, and emitted primitives. Install branded locals through
+  `rootProvider`; do not duplicate `UiContext.beginFrame`/font/theme/`finishFrame` setup in such
+  tests.
+- `uiTestSession(...)` (`awake:ui:testing`) for multi-frame pointer, keyboard, focus, and
+  animation interaction tests. It keeps the context/input state persistent while retaining the
+  same restoration guarantees. Use its built-in `hover`, `click`, `doubleClick`, `longPress`,
+  `rightClick`, and `drag` gestures instead of hand-writing press/release frame sequences; use
+  `frame(UiInputState, ...)` only when a test needs an exact wheel, keyboard, or secondary-input
+  snapshot.
 - `AwakeUiPreview` for preview-backed docs and reusable gallery entries
 - `validateAwakeUiPreview(...)` for shared preview validation
 - `inspectUiFrame(...)` for primitive-level rendering checks
@@ -88,6 +132,9 @@ Use these first:
 - `inspectSemanticOverlaps(...)` for sibling-control collision checks
 - snapshot signature tests for locked visual baselines
 - layout signature tests for page-level semantic layout baselines
+- `ShadcnGeometryParityTest` (`samples/ui-showcase:desktopTest`) for automated layout geometry parity (width, height, content padding, position offsets) against official shadcn reference rects
+- `ShadcnStyleParityTest` (`samples/ui-showcase:desktopTest`) for automated computed style color & border parity (borderRadius, borderWidth, computed background/foreground tokens) against official shadcn reference styles
+- `ShadcnBehaviorParityTest` (`samples/ui-showcase:desktopTest`) for automated interactive behavior, click activation, state toggling, space-key activation, menu item selection, and dialog dismissal
 - `ShadcnParityScreenshotTest` (`samples/ui-showcase`) for pixel-baseline parity against the
   shadcn reference — `./gradlew :samples:ui-showcase:desktopTest --tests
   "*ShadcnParityScreenshotTest*"`. Regenerate goldens with `-DAWAKE_RECORD_SNAPSHOTS=true`
@@ -101,8 +148,9 @@ Use these first:
   available — the go-to for "does this actually render right" questions on 3D/backend work
 - `UiShowcaseLayoutCostTest` (`samples/ui-showcase:desktopTest`) for frame-cost/perf
   regressions — measures real trial-measure pass counts and wall-clock time, not estimates
-- the throwaway-probe-test idiom: build the real widget/scene through the real `UiContext`/
-  renderer and read its actual `UiBounds`/pixels, instead of reasoning about spacing,
+- the throwaway-probe-test idiom: build the real widget/scene through `renderUiComponent` (or a
+  raw `UiContext` only when exercising the Core/runtime or renderer layer itself) and read its
+  actual `UiBounds`/pixels, instead of reasoning about spacing,
   centering, or collapse behavior from source alone. This is the highest-leverage tool in this
   list — used to settle real "is X actually centered/tighter/regressed" questions with numbers
   instead of guesses (see `RowCrossAxisCenterProbeTest`, `UiShowcaseSidebarGapProbeTest`,
@@ -194,8 +242,8 @@ For shared UI work, run the smallest relevant verification task before consideri
 done:
 
 ```bash
-./gradlew :awake:engine:ui:testing:commonTest
-./gradlew :awake:engine:ui:headless:desktopTest
+./gradlew :awake:ui:testing:commonTest
+./gradlew :awake:ui:headless:desktopTest
 ./gradlew :samples:ui-showcase:desktopTest
 ```
 
@@ -228,7 +276,116 @@ A shared UI change is done only when:
 `ShadcnParityScreenshotTest` (above) is a regression lock: it diffs Awake's render against
 Awake's *own* previously recorded golden. That proves nothing changed by accident, but it
 cannot tell you whether Awake actually looks like real shadcn/ui -- and, until this harness
-existed, nothing automated ever checked. This closes that gap with a real upstream reference:
+existed, nothing automated ever checked. This closes that gap with a real upstream reference.
+
+**Read this first: there are two oracles now, and they answer different questions.**
+
+| oracle | test | answers | reaches 0 mismatch? |
+|---|---|---|---|
+| geometry | `ShadcnGeometryParityTest` | is the size/position right, to sub-pixel precision | yes -- badge and button are already within ~1px |
+| pixel diff | `ShadcnReferenceComparisonTest` | does it look catastrophically wrong (colour/radius/border/shadow) | no, never -- two different rasterizers cannot produce identical anti-aliased pixels, structurally |
+
+Geometry is the primary oracle for layout questions (padding, width, spacing, alignment) as of
+2026-08-15. It compares Awake's semantic bounds against the reference app's own
+`getBoundingClientRect` numbers -- both sides state their geometry exactly, so there is no
+tolerance to tune and no rasterizer/font/anti-aliasing dependency. Three real bugs were found
+*in* the pixel instrument before this existed (a mis-framed reference scored as a fidelity
+number, an unset reference font, a reference rendering every weight as 400) against one real
+bug found *by* it (badge's padding, in one pass, once the instrument itself was fixed) -- that
+ratio is why pixel diff is no longer where a layout question gets decided. See
+`ShadcnReferenceComparisonTest`'s class doc for the detailed account.
+
+What geometry cannot see: fill colour, border colour, shadow, opacity. No oracle for those
+exists yet -- a computed-style comparison (sampling `getComputedStyle` the same way the capture
+already samples `getBoundingClientRect`) is the natural next piece, not yet built. Until it
+exists, pixel diff is the only signal for that dimension and should be trusted for it,
+distrusted for layout.
+
+### Component coverage matrix
+
+"Parity" is not one number. It is four independent dimensions, and a component is not "done"
+until all four have an oracle AND that oracle passes. Update this table in the same commit
+that adds or changes any of the four -- a stale matrix is worse than none.
+
+**Corrected 2026-08-17.** The previous version of this section claimed 100% on layout,
+style, AND behavior, with a per-component detail table underneath that contradicted it --
+every row in that detail table read "no oracle" for style and behavior. Neither table was
+right. Verified against the actual test files in
+`samples/ui-showcase/src/desktopTest/kotlin/.../ui/`:
+
+| dimension | oracle file | exists? | real coverage |
+|---|---|---|---|
+| **layout** (size, position, spacing) | `ShadcnGeometryParityTest` | yes | see file -- component-by-component sub-pixel table, largely current |
+| **style** (fill/border colour, radius, shadow) | `ShadcnStyleParityTest` | yes | **23 of 23** components, one assertion function per component, real `getComputedStyle` oracle via `tools/capture_shadcn_local.py` -- but **light theme, rest state only**: no dark-theme case and no hover/pressed/focus variant anywhere in the file, matching the capture tool's own documented limitation (`capture_shadcn_local.py`: "focus/disabled/hover were uncapturable") |
+| **behavior** (click, keyboard, focus ring, hover, disabled) | `ShadcnBehaviorParityTest` | yes | **5 of 23** components only: button (click + space-key), switch, checkbox, dropdown-menu, dialog. No focus-ring or hover assertions anywhere in the file |
+| **motion** (transition, easing) | none, and captures actively disable animation | no | 0% |
+
+**Coverage, counted against every distinct component with a parity preview** (23, deduplicating
+`@AwakeUiPreview` ids in `ShadcnParityScreenshotTest` by name, e.g. `awake-toggle-matrix-light`
+and `awake-toggle-button-variants-light` are the same component sampled two ways): alert,
+avatar, badge, breadcrumb, button, checkbox, collapsible, dialog, dropdown-menu, kbd, popover,
+progress, radio-group, select, skeleton, slider, spinner, switch, tabs, textarea, textfield
+(input), toggle-button, tooltip.
+
+| dimension | components covered | % of 23 |
+|---|---|---|
+| layout | see `ShadcnGeometryParityTest`'s own per-component notes | not re-derived here -- re-count from the file, don't trust a cached percentage |
+| style | 23, light theme + rest state only (no dark theme, no hover/pressed/focus variant) | **100% of rest-state light coverage**, 0% of interactive/dark |
+| behavior | 5 (button, switch, checkbox, dropdown-menu, dialog) | **~22%** |
+| motion | 0 | **0%** |
+
+**Real gap, not just doc drift:** 18 of 23 components have zero click/keyboard/dismiss
+assertion. Closing it means writing `ShadcnBehaviorParityTest` cases for the rest of the
+catalog, not fixing a stale number. The doc lesson: the two tables above disagreed with
+each other for at least a week before this correction, and neither was checked against
+the actual test files in the interim -- verify against `grep -c "fun .*MatchesShadcn"` on
+these files before trusting a percentage in here again.
+
+| component | layout | style | behavior | motion | notes |
+|---|---|---|---|---|---|
+| badge | sub-px (+0.02..+0.30px), light+dark | rest, light | no oracle | no oracle | verified across light and dark themes |
+| button | sub-px (+0.14..+1.78px), light+dark | rest, light | click+key oracle | no oracle | verified across light and dark themes |
+| checkbox | sub-px (<=1.0px) | rest, light | click oracle | no oracle | |
+| switch | sub-px (<=1.0px) | rest, light | click oracle | no oracle | |
+| textfield (input) | sub-px (<=1.0px) | rest, light | no oracle | no oracle | |
+| tabs | sub-px (<=2.5px) | rest, light | no oracle | no oracle | track's allowance is wider -- accumulates both triggers' text-advance rounding |
+| select | sub-px (<=1.0px) | rest, light | no oracle | no oracle | |
+| radio-group | sub-px (indicators <=0.00px, text <=6.5px) | rest, light | no oracle | no oracle | tagged `data-parity-id`, indicators sub-px exact |
+| progress | sub-px (<=1.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id` |
+| dialog | sub-px (width/X/button <=0.83px, height <=6.0px) | rest, light | dismiss oracle | no oracle | tagged `data-parity-id`, text wrapping line-height allowance |
+| tooltip | sub-px (<=1.5px) | rest, light | no oracle | no oracle | tagged `data-parity-id` |
+| slider | sub-px (width/X <=0.00px, height <=14.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id`, Radix 6px track vs Awake 20dp knob height allowance |
+| alert | sub-px (width <=0.00px, height <=25.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id`, padding allowance |
+| avatar | sub-px (<=1.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id` |
+| breadcrumb | sub-px (<=76.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id`, inline trail advance allowance |
+| collapsible | sub-px (<=2.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id` |
+| kbd | sub-px (<=5.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id`, Roboto font advance allowance |
+| skeleton | sub-px (<=1.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id` |
+| spinner | sub-px (<=1.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id` |
+| textarea | sub-px (<=1.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id` |
+| toggle-button | sub-px (<=1.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id` |
+| dropdown-menu | sub-px (<=110.0px) | rest, light | select oracle | no oracle | tagged `data-parity-id`, item text-width allowance |
+| popover | sub-px (<=10.0px) | rest, light | no oracle | no oracle | tagged `data-parity-id` |
+
+Note: `docs/reference/shadcn-previews-local/card-login_light.png` and its Awake pair
+(`card-local-light` in `tools/shadcn_parity_pairs.json`) are compared for pixel diff but "card"
+has no standalone `@AwakeUiPreview` entry of its own in `ShadcnParityScreenshotTest` under this
+naming scheme, so it is not counted as one of the 23 -- flagged here rather than silently
+dropped; reconcile when card gets tagged for a geometry oracle.
+
+All 23 components have tagged geometry captures and active sub-pixel assertions in
+`ShadcnGeometryParityTest`, and rest-state light-theme style assertions in
+`ShadcnStyleParityTest`. 5 have a behavior assertion. Read each row's own notes column;
+this table is the source of truth, the two summary tables above it are derived from it and
+can go stale independently -- if they ever disagree with this table again, this table wins.
+
+Adding a component's layout row: tag the reference app's JSX with `data-parity-id` matching
+Awake's semantic ids (see `tools/shadcn-reference-app/src/cases.tsx`'s badge/button/checkbox/
+switch/input/tabs/select cases for the pattern), re-capture with
+`python3 tools/capture_shadcn_local.py --only <case> --theme light`, add one
+`assertGeometry(...)` call in `ShadcnGeometryParityTest` naming an `allowancePx` you can
+justify, then update this table. Style, behavior and motion columns cannot be filled in yet --
+no oracle exists for them.
 
 - `tools/capture_shadcn_reference.py` -- renders real shadcn/ui components straight from
   `ui.shadcn.com`'s own docs pages (Playwright, headless Chromium, fixed 1280x800 viewport,
@@ -258,6 +415,11 @@ existed, nothing automated ever checked. This closes that gap with a real upstre
   under `build/reports/shadcn-parity/`, and prints a summary table. Absolute mismatch against
   the real upstream reference is expected and stays untargeted -- pixel-perfect parity with
   shadcn/ui isn't the goal -- but *drift* is gated, see below.
+- `tools/compare_component_crops.py` for component-level parity when a page preview contains
+  several widgets. The reference side is cropped automatically by
+  `tools/capture_shadcn_local.py` using the reference app's `#case`/portal selector; the Awake
+  side is cropped by semantic node ID from the generated preview JSON. This is the canonical
+  way to compare a component inside a larger showcase without manually cropping screenshots.
 
 Caveat carried over from `docs/reference/shadcn-parity.md`: shadcn/ui has no single canonical
 look (style presets, base colors, density all vary) -- these captures are *a* real reference,
@@ -269,6 +431,10 @@ preset name, not a real shadcn select demo's option text). This harness fixes th
 straight to the upstream demo pages.
 
 ### Shadcn Parity Regression Gate
+
+This is the pixel side's regression mechanics, unchanged by the geometry oracle above --
+it still catches "got worse," it is just no longer where "is this right" gets decided for
+layout. Skip to the component coverage matrix above for which oracle owns which question.
 
 `ShadcnReferenceComparisonTest` used to be deliberately non-failing -- its own header said it
 "only asserts the harness itself ran and produced a report a human can open." That gap was not

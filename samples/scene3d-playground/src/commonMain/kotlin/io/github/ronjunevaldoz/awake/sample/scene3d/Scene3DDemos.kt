@@ -4,10 +4,12 @@ package io.github.ronjunevaldoz.awake.sample.scene3d
 
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.sample.scene3d.demos.GltfViewerDemo
+import io.github.ronjunevaldoz.awake.sample.scene3d.demos.InstancedCubesDemo
+import io.github.ronjunevaldoz.awake.sample.scene3d.demos.InstancedSkinnedDemo
 import io.github.ronjunevaldoz.awake.sample.scene3d.demos.RotatingCubeDemo
 import io.github.ronjunevaldoz.awake.sample.scene3d.demos.SkinnedMeshDemo
 import io.github.ronjunevaldoz.awake.scene.runtime.SceneGameRuntime
-import io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope
+import io.github.ronjunevaldoz.awake.ui.headless.ColumnScope
 
 /** Menu entry + viewport/controls renderers for one entry in the 3D playground (see
  * [Scene3DPlaygroundUi]'s shell). Each real demo owns exactly one of these -- state, viewport
@@ -38,6 +40,8 @@ internal val Scene3DDemos: List<Scene3DDemo> =
         RotatingCubeDemo.entry,
         GltfViewerDemo.entry,
         SkinnedMeshDemo.entry,
+        InstancedCubesDemo.entry,
+        InstancedSkinnedDemo.entry,
     )
 
 /** Which demo is active. Plain mutable holder (not a StateFlow) -- this playground has no

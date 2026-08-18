@@ -19,7 +19,6 @@
 
 plugins {
     id("awake.kmp-library-convention")
-    alias(libs.plugins.kotlin.serialization)
     id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
@@ -34,7 +33,6 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.napier)
-            implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
@@ -53,6 +51,6 @@ kotlin {
 mavenPublishing {
     pom {
         name.set("Awake Base")
-        description.set("Dependency-free foundation: math, input, fixed-timestep loop, glTF parsing, resource/bitmap I/O")
+        description.set("Dependency-free foundation: math, input, fixed-timestep loop, resource/bitmap I/O")
     }
 }
