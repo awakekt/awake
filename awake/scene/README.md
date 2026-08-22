@@ -160,4 +160,4 @@ that state would otherwise be keyed by `Entity`, prefer indexing by `entity.id` 
 plain array instead of a `Map<Entity, _>`/`Set<Entity>`. `Entity` is a value class, so
 using it as a hash-based collection key forces a box allocation and `hashCode()`/`equals()`
 per access; `TransformSystem` itself was rewritten this way after profiling showed it
-costing real CPU (see [docs/ecs-benchmark-scorecard.md](../docs/ecs-benchmark-scorecard.md)).
+costing real CPU (see [docs/ecs-benchmark-scorecard.md](../../docs/ecs-benchmark-scorecard.md)).

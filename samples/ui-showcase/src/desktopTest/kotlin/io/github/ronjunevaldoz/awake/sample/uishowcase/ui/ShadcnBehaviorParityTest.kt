@@ -3,9 +3,9 @@
 package io.github.ronjunevaldoz.awake.sample.uishowcase.ui
 
 import io.github.ronjunevaldoz.awake.core.input.Key
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.shadcnThemeValues
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnDropdownMenuItem
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnButton
@@ -13,11 +13,11 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnCheckbox
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnDialog
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnDropdownMenu
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSwitch
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
-import io.github.ronjunevaldoz.awake.ui.headless.height
-import io.github.ronjunevaldoz.awake.ui.headless.offset
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.height
+import io.github.ronjunevaldoz.awake.ui.modifier.offset
 import io.github.ronjunevaldoz.awake.ui.headless.requestFocus
-import io.github.ronjunevaldoz.awake.ui.headless.width
+import io.github.ronjunevaldoz.awake.ui.modifier.width
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -141,7 +141,7 @@ class ShadcnBehaviorParityTest {
         height = 300f,
         theme = shadcnThemeValues(),
     ) {
-        val triggerSlot = UiBounds(10f, 10f, 100f, 36f)
+        val triggerSlot = Rectangle(10f, 10f, 100f, 36f)
         var selectedIndex: Int? = null
 
         // Render expanded menu (positioned at y = 46; Item 0 is 50..82px; Item 1 is 82..114px)

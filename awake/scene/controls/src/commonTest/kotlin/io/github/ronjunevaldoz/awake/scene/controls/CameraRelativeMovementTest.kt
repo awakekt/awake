@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.controls
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.scene.controls.components.ActiveCamera
 import io.github.ronjunevaldoz.awake.scene.controls.components.MovementControl
@@ -13,7 +13,7 @@ import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import io.github.ronjunevaldoz.awake.core.math.Camera as CoreCamera
+import io.github.ronjunevaldoz.awake.core.math.Lens
 
 /**
  * Guards the defect that made the camera lose its subject: the movement basis was built from
@@ -42,7 +42,7 @@ class CameraRelativeMovementTest {
     @Test
     fun movementFollowsWhereTheCameraLooks() {
         // Camera parked on +X looking back toward the origin, so "forward" is -X, not -Z.
-        val moved = travel(cameraDistance = 10f, eye = Vec3(10f, 0f, 0f)) { moveZ = 1f }
+        val moved = travel(cameraDistance = 10f, eye = Vec3f(10f, 0f, 0f)) { moveZ = 1f }
 
         assertTrue(moved.x < -ABSOLUTE_TOLERANCE, "expected to move along -X, got $moved")
         assertEquals(0f, moved.z, ABSOLUTE_TOLERANCE)
@@ -54,16 +54,16 @@ class CameraRelativeMovementTest {
     /** Runs one movement step and returns how far the subject moved. */
     private fun travel(
         cameraDistance: Float,
-        eye: Vec3 = Vec3(0f, 0f, cameraDistance),
+        eye: Vec3f = Vec3f(0f, 0f, cameraDistance),
         intent: MovementControl.() -> Unit,
-    ): Vec3 {
+    ): Vec3f {
         val world = World()
 
         val cameraEntity = world.create()
         world.add(
             cameraEntity,
             Camera(
-                CoreCamera.perspective(eye = eye, center = Vec3.ZERO),
+                Lens.perspective(eye = eye, center = Vec3f.ZERO),
             ),
         )
         world.add(cameraEntity, ActiveCamera())

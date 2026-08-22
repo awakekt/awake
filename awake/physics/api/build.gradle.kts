@@ -31,14 +31,14 @@ kotlin {
     }
 
     // No platform-specific code at all in this module (mirrors awake:engine:render-api's own
-    // module-restructuring rationale, see docs/MVP_PLAN.md) -- every declaration here is a
+    // module-restructuring rationale, see docs/mvp-plan.md) -- every declaration here is a
     // plain interface/data class, implemented per-platform-binding by each physics backend
     // module (awake-backend-jolt today; JoltC/JoltPhysics.js backends deferred to a later
     // slice, see that decision log entry).
     sourceSets {
         commonMain.dependencies {
             // BodyTransform/RaycastHit/PhysicsWorld all take/return Vec3 (portable math).
-            implementation(project(":awake:core"))
+            implementation(project(":awake:core:math"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

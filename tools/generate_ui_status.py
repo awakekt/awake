@@ -22,10 +22,10 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 OUT = REPO / "docs/reference/ui-fidelity-status.md"
-CORE = REPO / "awake/engine/ui/ui-core/src"
-HEADLESS = REPO / "awake/engine/ui/ui-headless/src"
-DS = REPO / "awake/engine/ui/ui-designsystem/src"
-PREVIEWS = REPO / "docs/reference/shadcn-previews"
+CORE = REPO / "awake/ui/ui-core/src"
+HEADLESS = REPO / "awake/ui/headless/src"
+DS = REPO / "awake/ui/designsystem/src"
+PREVIEWS = REPO / "docs/reference/shadcn-previews-local"
 METRICS = REPO / "samples/ui-showcase/build/reports/shadcn-parity-metrics.json"
 
 DONE, PARTIAL, MISSING = "done", "partial", "missing"
@@ -122,7 +122,7 @@ def build_rows() -> list[tuple[str, str, str, str, str]]:
     ))
 
     advance_test = exists(
-        "awake/engine/ui/ui-core/src/commonTest/kotlin/io/github/ronjunevaldoz/"
+        "awake/ui/ui-core/src/commonTest/kotlin/io/github/ronjunevaldoz/"
         "awake/ui/font/PackedUiFontAdvanceTest.kt"
     )
     rows.append((
@@ -181,7 +181,7 @@ def build_rows() -> list[tuple[str, str, str, str, str]]:
 
     # --- Behaviour -------------------------------------------------------
     keys = set(re.findall(r"Key\.(\w+)", (CORE / "commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/input/UiInputState.kt").read_text())) \
-        if exists("awake/engine/ui/ui-core/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/input/UiInputState.kt") else set()
+        if exists("awake/ui/ui-core/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/input/UiInputState.kt") else set()
     rows.append((
         "Keyboard and focus", MISSING if len(keys) <= 1 else PARTIAL,
         f"keys exposed: {', '.join(sorted(keys)) or 'none'}",
@@ -283,7 +283,7 @@ def main() -> None:
     add("- **Gap** is what remains even when the status is `done`; a done row can still carry a")
     add("  real limitation.")
     add("- Status is deliberately coarse. It answers whether the mechanism exists, not whether")
-    add("  it is pixel-exact — `docs/reference/shadcn-parity.md` carries the measured numbers,")
+    add("  it is pixel-exact — `build/reports/ui-parity/report.md` carries the measured numbers,")
     add("  and `docs/reference/ui-validation.md` the policy for what counts as proof.")
     add("")
 

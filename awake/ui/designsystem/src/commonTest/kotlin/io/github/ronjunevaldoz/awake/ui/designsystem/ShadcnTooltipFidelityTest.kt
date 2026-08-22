@@ -7,7 +7,7 @@ import io.github.ronjunevaldoz.awake.testing.ui.AwakeUiPreviewMetadata
 import io.github.ronjunevaldoz.awake.testing.ui.AwakeUiPreviewValidationConfig
 import io.github.ronjunevaldoz.awake.testing.ui.FigmaModeMatrix
 import io.github.ronjunevaldoz.awake.testing.ui.validateAwakeUiPreview
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnTooltipText
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -21,7 +21,7 @@ class ShadcnTooltipFidelityTest {
     fun shadcnTooltipMatrixFidelity() = runTest {
         val aggregatedReport = FigmaModeMatrix.runValidationMatrix { config ->
             val theme = shadcnThemeValues(dark = config.mode == io.github.ronjunevaldoz.awake.testing.ui.FigmaMode.Dark)
-            val anchor = UiBounds(x = 100f, y = 50f, width = 100f, height = 30f)
+            val anchor = Rectangle(x = 100f, y = 50f, width = 100f, height = 30f)
             val frameOutput = renderShadcnComponent(
                 width = 300f * config.scale.scale,
                 height = 150f * config.scale.scale,

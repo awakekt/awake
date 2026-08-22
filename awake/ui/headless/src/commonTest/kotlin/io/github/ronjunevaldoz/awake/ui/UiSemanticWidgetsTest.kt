@@ -2,22 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.testing.ui.inspectSemanticContentFit
 import io.github.ronjunevaldoz.awake.testing.ui.inspectSemanticNodes
 import io.github.ronjunevaldoz.awake.testing.ui.inspectTextTruncation
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
 import io.github.ronjunevaldoz.awake.testing.ui.requireSemanticNode
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
 import io.github.ronjunevaldoz.awake.ui.headless.button
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.UiTextOverflow
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.button
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextOverflow
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement as HeadlessArrangement
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier as HeadlessModifier
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier as HeadlessModifier
 import io.github.ronjunevaldoz.awake.ui.headless.column as headlessColumn
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxSize as headlessFillMaxSize
-import io.github.ronjunevaldoz.awake.ui.headless.width as headlessWidth
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxSize as headlessFillMaxSize
+import io.github.ronjunevaldoz.awake.ui.modifier.width as headlessWidth
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.modifier.width
@@ -119,7 +121,7 @@ class UiSemanticWidgetsTest {
         val frame = renderUiComponent(width = 180f, height = 64f, font = font) {
             primitive.context.createAbsolute(x = 12f, y = 12f).text(
                 label = "This label is intentionally too wide for the slot",
-                slot = UiBounds(12f, 12f, 80f, 16f),
+                slot = Rectangle(12f, 12f, 80f, 16f),
                 overflow = UiTextOverflow.Ellipsis,
                 semanticId = "truncated.copy",
             )

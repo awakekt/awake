@@ -13,6 +13,10 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:core:math2d"))
+            implementation(project(":awake:core:color"))
+            implementation(project(":awake:core:input"))
             // Depends on the specific scene leaf modules it actually uses, not the
             // `:awake:scene` facade -- see docs/tasks/2026-08-05-scene-module-split-proposal.md
             // Phase 5. `TransformSystem` lives in `:awake:scene:scene-core`,
@@ -22,12 +26,12 @@ kotlin {
             api(project(":awake:scene:rendering"))
             api(project(":awake:scene:controls"))
             api(project(":awake:scene:runtime"))
-            api(project(":awake:engine:game-authoring"))
+            api(project(":awake:engine:bootstrap"))
             api(project(":awake:ui:ui-core"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
-            implementation(project(":awake:core"))
+            implementation(project(":awake:core:math"))
             implementation(project(":awake:ui:headless"))
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)

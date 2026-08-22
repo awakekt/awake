@@ -4,6 +4,10 @@ plugins {
     id("com.diffplug.spotless")
 }
 
+// ktlint 1.5.0 cannot parse Kotlin 2.2 context parameters (`context(name: Type)`), which
+// :awake:compose:* is built on. Bump the rest of the repo separately, against a clean tree.
+val ktlintVersion = if (project.path.startsWith(":awake:compose")) "1.7.1" else "1.5.0"
+
 extensions.configure<SpotlessExtension> {
     kotlin {
         target("src/**/*.kt")
@@ -11,7 +15,7 @@ extensions.configure<SpotlessExtension> {
         // .editorconfig relative to each subproject, and with this convention applied across
         // ~30 modules the root file was picked up inconsistently (no-wildcard-imports in
         // particular went unenforced in most of them). editorConfigOverride applies uniformly.
-        ktlint("1.5.0").editorConfigOverride(
+        ktlint(ktlintVersion).editorConfigOverride(
             mapOf(
                 "ktlint_standard_no-wildcard-imports" to "enabled",
                 // Off deliberately: this codebase's own convention is descriptive multi-line

@@ -53,7 +53,7 @@ So **every** `row()`/`column()` node not covered by a same-level `precomputedMea
 executes its `content` lambda exactly twice per frame: once as a throwaway trial, once for real.
 Because `content` is an ordinary Kotlin lambda that synchronously recurses into every nested
 `row()`/`column()` call (there is no lazy "gather children, decide, then measure" phase the way
-Compose's `Measurable` list allows -- see `MIRROR_MAP.md`'s Scope/DSL section), each of those two
+Compose's `Measurable` list allows -- see `mirror-map.md`'s Scope/DSL section), each of those two
 executions *itself* re-triggers this same 2x pattern in every descendant node. That compounds
 multiplicatively with nesting depth.
 
@@ -153,7 +153,7 @@ descendant widget's own state mutation/animation stepping) -- all of that curren
 correctly once, during the "real" (non-measuring) execution of `content`. A trial execution
 explicitly runs with `measuring = true` and existing side-effecting code (`animateFloat*`, etc.)
 already special-cases `isMeasuringInternal()` to no-op during trials (see `UiAnimation.kt`'s
-guards, referenced in `MIRROR_MAP.md`). Reusing the trial's *slots* while still running `content`
+guards, referenced in `mirror-map.md`). Reusing the trial's *slots* while still running `content`
 for real (not deleting the real execution, just not re-deriving `hasWeightedChild` from a second
 full trial) is safe; trying to skip the real execution entirely and only synthesize output from the
 trial's recorded slots would very likely reintroduce a real-vs-trial side-effect gap (hover
@@ -203,7 +203,7 @@ requires either:
 - **Static/structural weight detection without executing `content`** -- not possible in Kotlin
   without either a compiler plugin (out of scope, this project deliberately avoids one per
   `docs/reference/ai-collaboration.md`'s "no compiler-tracked call-site identity" framing already
-  cited in `MIRROR_MAP.md`) or requiring every call site to declare weight usage out-of-band (a
+  cited in `mirror-map.md`) or requiring every call site to declare weight usage out-of-band (a
   breaking API change to every `row {}`/`column {}` call site in the codebase -- not viable).
 - **Caching `hasWeightedChild` per call site across frames**, keyed by something stable (e.g. a
   caller-supplied `id`, mirroring `animateFloat`'s `id`-based identity model already in the

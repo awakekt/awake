@@ -4,17 +4,17 @@ package io.github.ronjunevaldoz.awake.sample.uishowcase.ui
 
 import io.github.ronjunevaldoz.awake.core.input.Input
 import io.github.ronjunevaldoz.awake.sample.uishowcase.state.UiShowcaseRuntimeState
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.headless.column
-import io.github.ronjunevaldoz.awake.ui.headless.height
-import io.github.ronjunevaldoz.awake.ui.headless.offset
-import io.github.ronjunevaldoz.awake.ui.headless.width
+import io.github.ronjunevaldoz.awake.ui.modifier.height
+import io.github.ronjunevaldoz.awake.ui.modifier.offset
+import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.toUiInputState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,7 +27,7 @@ import io.github.ronjunevaldoz.awake.ui.context.LocalFont
  * [renderUiShowcasePagePreview] dispatch, [drawUiShowcaseTextInputPreview] composition, and
  * [io.github.ronjunevaldoz.awake.ui.designsystem.shadcnFieldTextField] wrapper -- across
  * multiple frames with a persisted [UiContext], the same shape [io.github.ronjunevaldoz.awake
- * .ui.GameUiRuntime.render] uses in the live app. Every prior text-field test exercised
+ * .ui.AppUiRuntime.render] uses in the live app. Every prior text-field test exercised
  * `textField()` in isolation with a hand-built [UiContext]; none of them went through this
  * page's actual composition path, which is exactly where a live-reported "keys aren't consumed,
  * typed text isn't visible" bug could hide even with the widget-level tests green.

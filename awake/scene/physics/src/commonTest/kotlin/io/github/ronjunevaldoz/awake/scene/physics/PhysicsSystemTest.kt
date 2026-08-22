@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.physics
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.physics.BodyHandle
 import io.github.ronjunevaldoz.awake.physics.BodyTransform
@@ -34,8 +34,8 @@ class PhysicsSystemTest {
 
         override fun createBody(
             shape: PhysicsShape,
-            position: Vec3,
-            rotation: Vec3,
+            position: Vec3f,
+            rotation: Vec3f,
             motionType: MotionType,
         ): BodyHandle {
             createBodyCallCount++
@@ -53,7 +53,8 @@ class PhysicsSystemTest {
             return scriptedTransforms
         }
 
-        override fun raycast(origin: Vec3, direction: Vec3, maxDistance: Float): RaycastHit? = null
+        override fun raycast(origin: Vec3f, direction: Vec3f, maxDistance: Float): RaycastHit? =
+            null
 
         override fun destroy() = Unit
     }
@@ -62,7 +63,7 @@ class PhysicsSystemTest {
     fun createsBodyOnceLazilyAndSyncsTransformBackToEntity() {
         val world = World()
         val entity = world.create()
-        val transform = Transform(position = Vec3(0f, 10f, 0f))
+        val transform = Transform(position = Vec3f(0f, 10f, 0f))
         world.add(entity, transform)
         val physicsBody =
             PhysicsBody(shape = SphereShape(radius = 1f), motionType = MotionType.DYNAMIC)
@@ -88,8 +89,8 @@ class PhysicsSystemTest {
         physicsWorld.scriptedTransforms = listOf(
             BodyTransform(
                 handle = handle,
-                position = Vec3(1f, 2f, 3f),
-                rotation = Vec3(0f, 0.5f, 0f),
+                position = Vec3f(1f, 2f, 3f),
+                rotation = Vec3f(0f, 0.5f, 0f),
             ),
         )
         system.update(world, 1f / 60f)
@@ -104,7 +105,7 @@ class PhysicsSystemTest {
     fun ignoresSyncedTransformsForUnknownHandles() {
         val world = World()
         val entity = world.create()
-        world.add(entity, Transform(position = Vec3(0f, 0f, 0f)))
+        world.add(entity, Transform(position = Vec3f(0f, 0f, 0f)))
         world.add(
             entity,
             PhysicsBody(shape = SphereShape(radius = 1f), motionType = MotionType.STATIC),
@@ -113,8 +114,8 @@ class PhysicsSystemTest {
         physicsWorld.scriptedTransforms = listOf(
             BodyTransform(
                 handle = BodyHandle(999L),
-                position = Vec3(5f, 5f, 5f),
-                rotation = Vec3(0f, 0f, 0f),
+                position = Vec3f(5f, 5f, 5f),
+                rotation = Vec3f(0f, 0f, 0f),
             ),
         )
         val system = PhysicsSystem(physicsWorld)

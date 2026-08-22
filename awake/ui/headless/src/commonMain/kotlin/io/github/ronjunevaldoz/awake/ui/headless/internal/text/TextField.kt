@@ -2,23 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless.internal.text
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.UiShape
 import io.github.ronjunevaldoz.awake.ui.UiTextEditAction
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.canvas
 import io.github.ronjunevaldoz.awake.ui.childBox
 import io.github.ronjunevaldoz.awake.ui.font
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.graphics.clip
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.paintSurface
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.resolveInteractiveSurface
-import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.interact
+import io.github.ronjunevaldoz.awake.ui.foundation.interact
 import io.github.ronjunevaldoz.awake.ui.layouts.BoxScope
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
@@ -33,8 +34,10 @@ import io.github.ronjunevaldoz.awake.ui.scope.requestFocus
 import io.github.ronjunevaldoz.awake.ui.scope.resolveGlyphPx
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.ui.theme
-import io.github.ronjunevaldoz.awake.ui.toPx
-import io.github.ronjunevaldoz.awake.ui.withGraphicsLayerAlpha
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.ui.headless.withDisabledAlpha
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextOverflow
 
 private const val TEXT_FIELD_CARET_BLINK_PERIOD_SECONDS = 1f
 
@@ -105,12 +108,10 @@ fun UiPrimitiveScope.textField(
     // Reference's `disabled:opacity-50` treatment, same single group-alpha shape as
     // `Buttons.kt`'s `buttonSlotInternal` -- covers the fill/border paint, icons, and typed
     // text/caret as one composited unit so nothing drawn on top of the fill gets double-dimmed.
-    return withGraphicsLayerAlpha(if (enabled) 1f else 0.5f) {
+    return withDisabledAlpha(enabled) {
         paintSurface(
             slot = surface.interaction.slot,
-            resolved = surface.resolved.copy(
-                borderWidth = if (focused || isError) 1.5f.dp else surface.resolved.borderWidth,
-            ),
+            resolved = surface.resolved,
             borderColor = borderColor,
         )
 
@@ -134,14 +135,14 @@ fun UiPrimitiveScope.textField(
                 (if (leadingIcon != null) iconSlotWidth + iconGap else 0f) -
                 (if (trailingIcon != null) iconSlotWidth + iconGap else 0f)
             ).coerceAtLeast(0f)
-        val textContentSlot = UiBounds(
+        val textContentSlot = Rectangle(
             textAreaX,
             contentSlot.y,
             textAreaWidth,
             contentSlot.height,
         )
         if (leadingIcon != null) {
-            val iconBounds = UiBounds(
+            val iconBounds = Rectangle(
                 contentSlot.x,
                 contentSlot.y,
                 iconSlotWidth,
@@ -150,7 +151,7 @@ fun UiPrimitiveScope.textField(
             childBox(iconBounds, contentAlignment = UiAlignment.Center).leadingIcon()
         }
         if (trailingIcon != null) {
-            val iconBounds = UiBounds(
+            val iconBounds = Rectangle(
                 contentSlot.x + contentSlot.width - iconSlotWidth,
                 contentSlot.y,
                 iconSlotWidth,
@@ -262,7 +263,7 @@ fun UiPrimitiveScope.textField(
                     }
                 text(
                     label = displayed,
-                    slot = UiBounds(
+                    slot = Rectangle(
                         drawTextX,
                         textContentSlot.y,
                         measureWidth,
@@ -296,18 +297,22 @@ fun UiPrimitiveScope.textField(
                             cursor,
                         )
                     val caretY = textContentSlot.y + (textContentSlot.height - glyphPx) / 2f
-                    emitFillAndBorder(
-                        slot = UiBounds(
-                            caretX,
-                            caretY,
-                            TEXT_FIELD_CARET_WIDTH.toPx(),
-                            glyphPx,
-                        ),
-                        fillColor = surface.resolved.foreground ?: theme.colors.foreground,
-                        radiusPx = 0f,
-                        borderWidth = UiShape.none,
-                        borderColor = Color.Transparent,
+                    val caretSlot = Rectangle(
+                        caretX,
+                        caretY,
+                        TEXT_FIELD_CARET_WIDTH.toPx(),
+                        glyphPx,
                     )
+                    val caretColor = surface.resolved.foreground ?: theme.colors.foreground
+                    canvas(caretSlot) {
+                        drawFillAndBorder(
+                            slot = caretSlot,
+                            fillColor = caretColor,
+                            radiusPx = 0f,
+                            borderWidth = UiShape.none,
+                            borderColor = Color.Transparent,
+                        )
+                    }
                 }
             }
         }

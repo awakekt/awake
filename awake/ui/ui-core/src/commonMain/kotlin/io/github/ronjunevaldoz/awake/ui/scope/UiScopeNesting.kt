@@ -3,7 +3,7 @@
 package io.github.ronjunevaldoz.awake.ui
 
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.layouts.AbsoluteScope
 import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
 import io.github.ronjunevaldoz.awake.ui.layouts.BoxScope
@@ -17,14 +17,14 @@ import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
  * Nested-scope factories that inherit the receiver's overlay behavior automatically.
  */
 fun UiPrimitiveScope.childColumn(
-    slot: UiBounds,
+    slot: Rectangle,
     verticalArrangement: Arrangement = defaultArrangement(),
     modifier: UiModifier = Modifier,
     hasBoundedFillWidth: Boolean = true,
     hasBoundedFillHeight: Boolean = true,
     horizontalAlignment: UiAlignment.Horizontal = UiAlignment.Horizontal.Start,
     /** Final per-child slots with weights already resolved -- see planWeightedColumnSlots(). */
-    plannedSlots: List<UiBounds>? = null,
+    plannedSlots: List<Rectangle>? = null,
 ): ColumnScope = context.createColumn(
     slot = slot,
     insets = modifier.insets,
@@ -38,7 +38,7 @@ fun UiPrimitiveScope.childColumn(
 )
 
 fun UiPrimitiveScope.childRow(
-    slot: UiBounds,
+    slot: Rectangle,
     horizontalArrangement: Arrangement = defaultArrangement(),
     modifier: UiModifier = Modifier,
     hasBoundedFillWidth: Boolean = true,
@@ -56,7 +56,7 @@ fun UiPrimitiveScope.childRow(
 )
 
 fun UiPrimitiveScope.childAbsolute(
-    slot: UiBounds,
+    slot: Rectangle,
     modifier: UiModifier = Modifier,
 ): AbsoluteScope = context.createAbsolute(
     slot = slot,
@@ -90,7 +90,7 @@ fun <T> UiPrimitiveScope.boundDerivedContent(block: () -> T): T =
     context.withMeasuredSubtreeIsolated(block)
 
 fun UiPrimitiveScope.childBox(
-    slot: UiBounds,
+    slot: Rectangle,
     modifier: UiModifier = Modifier,
     contentAlignment: UiAlignment = UiAlignment.TopStart,
     hasBoundedFillWidth: Boolean = true,

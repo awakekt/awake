@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.core
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.scene.core.components.Transform
 import io.github.ronjunevaldoz.awake.scene.core.systems.TransformSystem
@@ -19,9 +19,9 @@ class TransformSystemTest {
         val child = world.create()
         val grandchild = world.create()
 
-        world.add(grandchild, Transform(position = Vec3(0f, 0f, 3f), parent = child))
-        world.add(root, Transform(position = Vec3(1f, 0f, 0f)))
-        world.add(child, Transform(position = Vec3(0f, 2f, 0f), parent = root))
+        world.add(grandchild, Transform(position = Vec3f(0f, 0f, 3f), parent = child))
+        world.add(root, Transform(position = Vec3f(1f, 0f, 0f)))
+        world.add(child, Transform(position = Vec3f(0f, 2f, 0f), parent = root))
 
         TransformSystem().update(world, 0f)
 
@@ -95,8 +95,8 @@ class TransformSystemTest {
         val root = world.create()
         val child = world.create()
 
-        world.add(root, Transform(position = Vec3(1f, 0f, 0f)))
-        world.add(child, Transform(position = Vec3(0f, 2f, 0f), parent = root))
+        world.add(root, Transform(position = Vec3f(1f, 0f, 0f)))
+        world.add(child, Transform(position = Vec3f(0f, 2f, 0f), parent = root))
 
         val system = TransformSystem()
         system.update(world, 0f)

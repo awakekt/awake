@@ -5,7 +5,7 @@ package io.github.ronjunevaldoz.awake.ui.designsystem
 import io.github.ronjunevaldoz.awake.testing.ui.UiComponentFrame
 import io.github.ronjunevaldoz.awake.testing.ui.UiTestSession
 import io.github.ronjunevaldoz.awake.testing.ui.uiTestSession
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnButton
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnCheckbox

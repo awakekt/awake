@@ -5,50 +5,19 @@
     <ID>ComplexCondition:AwakeUiPreviewValidator.kt$r1 != r2 || g1 != g2 || b1 != b2 || a1 != a2</ID>
     <ID>ComplexCondition:UiMetrics.kt$bounds.x &lt; allowedBounds.x - tolerancePx || bounds.y &lt; allowedBounds.y - tolerancePx || bounds.x + bounds.width > allowedBounds.x + allowedBounds.width + tolerancePx || bounds.y + bounds.height > allowedBounds.y + allowedBounds.height + tolerancePx</ID>
     <ID>CyclomaticComplexMethod:AwakeUiPreviewValidation.kt$fun validateAwakeUiPreview( metadata: AwakeUiPreviewMetadata, frame: AwakeUiPreviewFrame, config: AwakeUiPreviewValidationConfig = AwakeUiPreviewValidationConfig(), ): AwakeUiPreviewValidationReport</ID>
-    <ID>CyclomaticComplexMethod:UiInspection.kt$fun inspectUiFrame( primitives: List&lt;UiDrawPrimitive>, frame: UiBounds, font: UiFont? = null, ): UiInspectionReport</ID>
+    <ID>CyclomaticComplexMethod:UiInspection.kt$fun inspectUiFrame( primitives: List&lt;UiDrawPrimitive>, frame: Rectangle, font: UiFont? = null, ): UiInspectionReport</ID>
     <ID>CyclomaticComplexMethod:UiRasterizer.kt$fun List&lt;UiDrawPrimitive>.rasterize( width: Int, height: Int, background: Color = Color(0.1f, 0.1f, 0.12f, 1f), font: UiFont? = null, ): ByteArray</ID>
     <ID>DestructuringDeclarationWithTooManyEntries:UiRasterizer.kt$val (x, y, w, h) = scaledRect(primitive.x, primitive.y, primitive.w, primitive.h, primitive.transform)</ID>
     <ID>LongMethod:AwakeUiPreviewValidation.kt$fun validateAwakeUiPreview( metadata: AwakeUiPreviewMetadata, frame: AwakeUiPreviewFrame, config: AwakeUiPreviewValidationConfig = AwakeUiPreviewValidationConfig(), ): AwakeUiPreviewValidationReport</ID>
-    <ID>LongMethod:UiInspection.kt$fun inspectUiFrame( primitives: List&lt;UiDrawPrimitive>, frame: UiBounds, font: UiFont? = null, ): UiInspectionReport</ID>
+    <ID>LongMethod:UiInspection.kt$fun inspectUiFrame( primitives: List&lt;UiDrawPrimitive>, frame: Rectangle, font: UiFont? = null, ): UiInspectionReport</ID>
     <ID>LongMethod:UiRasterizer.kt$fun List&lt;UiDrawPrimitive>.rasterize( width: Int, height: Int, background: Color = Color(0.1f, 0.1f, 0.12f, 1f), font: UiFont? = null, ): ByteArray</ID>
-    <ID>LongMethod:UiRasterizer.kt$fun drawGlyph(glyph: UiDrawPrimitive.Glyph, font: UiFont)</ID>
+    <ID>LongParameterList:PixelMap.kt$PixelMap$(x: Int, y: Int, r: Float, g: Float, b: Float, srcA: Float)</ID>
+    <ID>LongParameterList:UiSnapshotWriter.kt$( name: String, title: String, summary: String, primitives: List&lt;UiDrawPrimitive>, width: Int, height: Int, background: Color = Color(0.1f, 0.1f, 0.12f, 1f), font: UiFont? = null, )</ID>
     <ID>LoopWithTooManyJumpStatements:UiRasterizer.kt$while</ID>
-    <ID>MagicNumber:AwakeUiPreview.kt$AwakeUiPreviewFrame$0.12f</ID>
-    <ID>MagicNumber:AwakeUiPreview.kt$AwakeUiPreviewFrame$0.1f</ID>
-    <ID>MagicNumber:AwakeUiPreviewValidator.kt$0xFF</ID>
-    <ID>MagicNumber:AwakeUiPreviewValidator.kt$3</ID>
-    <ID>MagicNumber:AwakeUiPreviewValidator.kt$4</ID>
-    <ID>MagicNumber:AwakeUiPreviewWriter.kt$0xFF</ID>
-    <ID>MagicNumber:AwakeUiPreviewWriter.kt$16</ID>
-    <ID>MagicNumber:AwakeUiPreviewWriter.kt$24</ID>
-    <ID>MagicNumber:AwakeUiPreviewWriter.kt$3</ID>
-    <ID>MagicNumber:AwakeUiPreviewWriter.kt$4</ID>
-    <ID>MagicNumber:AwakeUiPreviewWriter.kt$8</ID>
-    <ID>MagicNumber:AwakeUiSnapshot.desktop.kt$0xFF</ID>
-    <ID>MagicNumber:AwakeUiSnapshot.desktop.kt$16</ID>
-    <ID>MagicNumber:AwakeUiSnapshot.desktop.kt$24</ID>
-    <ID>MagicNumber:AwakeUiSnapshot.desktop.kt$3</ID>
-    <ID>MagicNumber:AwakeUiSnapshot.desktop.kt$4</ID>
-    <ID>MagicNumber:AwakeUiSnapshot.desktop.kt$8</ID>
-    <ID>MagicNumber:FigmaModeMatrix.kt$FigmaScale.Scale1_5x$1.5f</ID>
-    <ID>MagicNumber:PixelBaseline.kt$0xFF</ID>
-    <ID>MagicNumber:PixelBaseline.kt$4</ID>
-    <ID>MagicNumber:UiRasterizer.kt$0.12f</ID>
-    <ID>MagicNumber:UiRasterizer.kt$0.1f</ID>
-    <ID>MagicNumber:UiRasterizer.kt$0.5f</ID>
-    <ID>MagicNumber:UiRasterizer.kt$0.9999f</ID>
-    <ID>MagicNumber:UiRasterizer.kt$0xFF</ID>
-    <ID>MagicNumber:UiRasterizer.kt$255</ID>
-    <ID>MagicNumber:UiRasterizer.kt$255f</ID>
-    <ID>MagicNumber:UiRasterizer.kt$3</ID>
-    <ID>MagicNumber:UiRasterizer.kt$3f</ID>
-    <ID>MagicNumber:UiRasterizer.kt$4</ID>
-    <ID>MagicNumber:UiRasterizer.kt$4.0f</ID>
-    <ID>MagicNumber:UiRasterizer.kt$6</ID>
-    <ID>MagicNumber:UiSemanticInspection.kt$10f</ID>
     <ID>MatchingDeclarationName:PixelBaseline.kt$PixelDiffResult</ID>
     <ID>NestedBlockDepth:UiRasterizer.kt$fun List&lt;UiDrawPrimitive>.rasterize( width: Int, height: Int, background: Color = Color(0.1f, 0.1f, 0.12f, 1f), font: UiFont? = null, ): ByteArray</ID>
     <ID>ReturnCount:AwakeUiSnapshot.desktop.kt$actual fun loadAwakeUiSnapshot(id: String): ByteArray?</ID>
+    <ID>ReturnCount:PixelMap.kt$PixelMap$fun blend(x: Int, y: Int, r: Float, g: Float, b: Float, srcA: Float)</ID>
     <ID>TooManyFunctions:UiSemanticInspection.kt$io.github.ronjunevaldoz.awake.testing.ui.UiSemanticInspection.kt</ID>
   </CurrentIssues>
 </SmellBaseline>

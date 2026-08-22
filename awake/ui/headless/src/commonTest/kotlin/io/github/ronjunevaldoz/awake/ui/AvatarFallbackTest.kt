@@ -3,8 +3,8 @@
 package io.github.ronjunevaldoz.awake.ui
 
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.sp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.sp
 import io.github.ronjunevaldoz.awake.ui.headless.avatar
 import kotlin.test.Test
 import kotlin.test.assertEquals

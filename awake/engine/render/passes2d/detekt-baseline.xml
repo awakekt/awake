@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:DrawRunCoalescer.kt$DrawRunCoalescer$fun coalesce( primitives: List&lt;DrawCommand>, maxQuadsPerRun: Int = 1024, ): List&lt;StagedDrawRun></ID>
+    <ID>LongMethod:DrawRunCoalescer.kt$DrawRunCoalescer$fun coalesce( primitives: List&lt;DrawCommand>, maxQuadsPerRun: Int = 1024, ): List&lt;StagedDrawRun></ID>
+    <ID>NestedBlockDepth:DrawRunCoalescer.kt$DrawRunCoalescer$fun coalesce( primitives: List&lt;DrawCommand>, maxQuadsPerRun: Int = 1024, ): List&lt;StagedDrawRun></ID>
+    <ID>TooManyFunctions:DrawRunCoalescer.kt$DrawRunCoalescer</ID>
+  </CurrentIssues>
+</SmellBaseline>

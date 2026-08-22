@@ -72,7 +72,8 @@ expect object Vulkan {
      * Enumerates the Vulkan extension properties available for a specific physical device.
      *
      * @param physicalDevice The handle to the Vulkan physical device.
-     * @return An array of VkExtensionProperties representing the available device extensions.
+     * @param layerName Layer whose extensions to enumerate, or `null` for the implementation's own.
+     * @return An array of [VkExtensionProperties] representing the available device extensions.
      */
     fun vkEnumerateDeviceExtensionProperties(
         @VkHandleRef("VkPhysicalDevice") physicalDevice: Long,

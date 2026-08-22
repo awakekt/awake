@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.graphics.animation.animatedHeight
 import io.github.ronjunevaldoz.awake.ui.layouts.column
@@ -40,9 +41,9 @@ class AnimatedHeightUncachedColumnStalenessTest {
         var expanded = true
         var contentHeightDp = 100f
 
-        fun frame(): UiBounds? {
+        fun frame(): Rectangle? {
             ui.beginFrame(UiFrameInput(viewportWidth = 400f, viewportHeight = 800f, input = testSnapshot()))
-            var slot: UiBounds? = null
+            var slot: Rectangle? = null
             ui.createAbsolute(x = 0f, y = 0f).column(
                 id = "shell",
                 modifier = Modifier.width(300f.px).height(400f.px),

@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.ui.textStyle
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnTextStyle
 import io.github.ronjunevaldoz.awake.ui.font.FontWeight
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.UiTextOverflow
 import io.github.ronjunevaldoz.awake.ui.headless.UiTextWrap
@@ -46,14 +49,19 @@ enum class ShadcnTextEmphasis { Inherit, Medium }
 fun UiScope.shadcnText(
     label: String,
     style: ShadcnTextStyle = ShadcnTextStyle.P,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     centered: Boolean = false,
-    tone: ShadcnTextTone = ShadcnTextTone.Default,
+    // Nullable so an explicit tone can override a style's own default. `Default` means "inherit
+    // the ambient color", which is exactly what a caller needs for a `Muted`-sized row that must
+    // NOT be muted -- shadcn's AlertDescription is `text-sm` with no color class, so inside a
+    // destructive alert it inherits red. While this defaulted to `Default`, that request was
+    // indistinguishable from passing nothing and the style's muted default always won.
+    tone: ShadcnTextTone? = null,
     emphasis: ShadcnTextEmphasis = ShadcnTextEmphasis.Inherit,
     maxLines: Int = Int.MAX_VALUE,
     wrap: UiTextWrap = UiTextWrap.Word,
     overflow: UiTextOverflow = UiTextOverflow.Ellipsis,
-): UiBounds {
+): Rectangle {
     val (defaultSize, defaultWeight, isMutedDefault) = when (style) {
         ShadcnTextStyle.H1 -> Triple(Tw.Text.`4xl`, FontWeight.ExtraBold, false)
         ShadcnTextStyle.H2 -> Triple(Tw.Text.`3xl`, FontWeight.SemiBold, false)
@@ -71,13 +79,10 @@ fun UiScope.shadcnText(
         ShadcnTextStyle.Caption -> Triple(themeValues.typography.caption, FontWeight.Normal, false)
     }
 
-    val effectiveTone = when {
-        tone != ShadcnTextTone.Default -> tone
-        isMutedDefault -> ShadcnTextTone.Muted
-        else -> ShadcnTextTone.Default
-    }
+    val effectiveTone = tone ?: if (isMutedDefault) ShadcnTextTone.Muted else ShadcnTextTone.Default
+    val ambientColor = primitive.textStyle.color
     val foreground = when (effectiveTone) {
-        ShadcnTextTone.Default -> themeValues.colors.foreground
+        ShadcnTextTone.Default -> ambientColor ?: themeValues.colors.foreground
         ShadcnTextTone.Muted -> themeValues.colors.mutedForeground
         ShadcnTextTone.Destructive -> themeValues.colors.destructive
     }
@@ -89,7 +94,7 @@ fun UiScope.shadcnText(
     )
 
     val effectiveModifier = if (style == ShadcnTextStyle.Blockquote) {
-        modifier.padding(start = Tw.Spacing.s4)
+        modifier.padding(start = Tw.Spacing.s4, top = 0f.dp, end = 0f.dp, bottom = 0f.dp)
     } else {
         modifier
     }
@@ -107,45 +112,45 @@ fun UiScope.shadcnText(
 
 // Convenient shorthand delegates for official shadcn typography variants:
 
-fun UiScope.shadcnH1(label: String, modifier: Modifier = Modifier): UiBounds =
+fun UiScope.shadcnH1(label: String, modifier: UiModifier = Modifier): Rectangle =
     shadcnText(label = label, style = ShadcnTextStyle.H1, modifier = modifier)
 
-fun UiScope.shadcnH2(label: String, modifier: Modifier = Modifier): UiBounds =
+fun UiScope.shadcnH2(label: String, modifier: UiModifier = Modifier): Rectangle =
     shadcnText(label = label, style = ShadcnTextStyle.H2, modifier = modifier)
 
-fun UiScope.shadcnH3(label: String, modifier: Modifier = Modifier): UiBounds =
+fun UiScope.shadcnH3(label: String, modifier: UiModifier = Modifier): Rectangle =
     shadcnText(label = label, style = ShadcnTextStyle.H3, modifier = modifier)
 
-fun UiScope.shadcnH4(label: String, modifier: Modifier = Modifier): UiBounds =
+fun UiScope.shadcnH4(label: String, modifier: UiModifier = Modifier): Rectangle =
     shadcnText(label = label, style = ShadcnTextStyle.H4, modifier = modifier)
 
-fun UiScope.shadcnLead(label: String, modifier: Modifier = Modifier): UiBounds =
+fun UiScope.shadcnLead(label: String, modifier: UiModifier = Modifier): Rectangle =
     shadcnText(label = label, style = ShadcnTextStyle.Lead, modifier = modifier)
 
-fun UiScope.shadcnLarge(label: String, modifier: Modifier = Modifier): UiBounds =
+fun UiScope.shadcnLarge(label: String, modifier: UiModifier = Modifier): Rectangle =
     shadcnText(label = label, style = ShadcnTextStyle.Large, modifier = modifier)
 
-fun UiScope.shadcnSmall(label: String, modifier: Modifier = Modifier): UiBounds =
+fun UiScope.shadcnSmall(label: String, modifier: UiModifier = Modifier): Rectangle =
     shadcnText(label = label, style = ShadcnTextStyle.Small, modifier = modifier)
 
 fun UiScope.shadcnMuted(
     label: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     maxLines: Int = Int.MAX_VALUE,
-): UiBounds = shadcnText(label = label, style = ShadcnTextStyle.Muted, modifier = modifier, maxLines = maxLines)
+): Rectangle = shadcnText(label = label, style = ShadcnTextStyle.Muted, modifier = modifier, maxLines = maxLines)
 
-fun UiScope.shadcnBlockquote(label: String, modifier: Modifier = Modifier): UiBounds =
+fun UiScope.shadcnBlockquote(label: String, modifier: UiModifier = Modifier): Rectangle =
     shadcnText(label = label, style = ShadcnTextStyle.Blockquote, modifier = modifier)
 
-fun UiScope.shadcnCode(label: String, modifier: Modifier = Modifier): UiBounds =
+fun UiScope.shadcnCode(label: String, modifier: UiModifier = Modifier): Rectangle =
     shadcnText(label = label, style = ShadcnTextStyle.Code, modifier = modifier)
 
 fun UiScope.shadcnSectionTitle(
     title: String,
     description: String? = null,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     muted: Boolean = false,
-): UiBounds = column(modifier = modifier) {
+): Rectangle = column(modifier = modifier) {
     shadcnText(label = title, style = ShadcnTextStyle.H3, tone = if (muted) ShadcnTextTone.Muted else ShadcnTextTone.Default)
     if (description != null) {
         shadcnText(label = description, style = ShadcnTextStyle.Muted)
@@ -154,8 +159,8 @@ fun UiScope.shadcnSectionTitle(
 
 fun UiScope.shadcnTextLines(
     lines: Iterable<String>,
-    modifier: Modifier = Modifier,
-): UiBounds = column(modifier = modifier) {
+    modifier: UiModifier = Modifier,
+): Rectangle = column(modifier = modifier) {
     lines.forEach { line ->
         shadcnText(label = line, style = ShadcnTextStyle.Muted)
     }

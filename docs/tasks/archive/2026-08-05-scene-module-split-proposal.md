@@ -14,7 +14,7 @@ Split `awake:scene` by reusable capability without breaking the existing `awake-
 published artifact or moving authored gameplay back into engine code.
 
 This follows the stable API rule in
-[docs/reference/api-layering.md](../reference/api-layering.md): core should stay small,
+[docs/reference/api-layering.md](../../reference/api-layering.md): core should stay small,
 helpers should stay explicit, and authored gameplay belongs with the game/sample that owns
 the rules.
 

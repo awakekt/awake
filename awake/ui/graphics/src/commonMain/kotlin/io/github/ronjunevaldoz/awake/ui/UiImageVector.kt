@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.UiStroke
-import io.github.ronjunevaldoz.awake.ui.api.Dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiFillRule
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPath
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPathBuilder
+import io.github.ronjunevaldoz.awake.core.graphics2d.transform
+import io.github.ronjunevaldoz.awake.core.graphics2d.uiPath
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiStroke
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
 import io.github.ronjunevaldoz.awake.ui.api.UiIcon
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.api.layout.pixelPerfectPixel
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.core.math2d.pixelPerfectPixel
 
 data class UiVectorPath(
     val path: UiPath,
@@ -66,7 +71,7 @@ fun uiImageVector(
     return builder.build()
 }
 
-fun UiImageVector.fitTo(slot: UiBounds): List<UiVectorPath> {
+fun UiImageVector.fitTo(slot: Rectangle): List<UiVectorPath> {
     if (viewportWidth <= 0f || viewportHeight <= 0f || slot.width <= 0f || slot.height <= 0f) return emptyList()
     val scale = minOf(slot.width / viewportWidth, slot.height / viewportHeight)
     val scaledWidth = viewportWidth * scale

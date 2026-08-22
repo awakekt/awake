@@ -24,7 +24,7 @@ replaces both problems with a real, reproducible, gitignored checkout of the act
    `ShadcnBaseColor` value, `THEME_NAMES` in the script) -- the registry object literals that
    generate shadcn's real `:root`/`.dark` CSS custom properties for the new-york-v4 style -- and
    writes a generated, test-only Kotlin object:
-   `awake/engine/ui/ui-designsystem/src/commonTest/kotlin/io/github/ronjunevaldoz/awake/ui/designsystem/ShadcnReferenceTokens.kt`
+   `awake/ui/designsystem/src/commonTest/kotlin/io/github/ronjunevaldoz/awake/ui/designsystem/ShadcnReferenceTokens.kt`
    (`BY_BASE_COLOR`, keyed by theme name, plus a `light`/`dark` convenience for `"neutral"`).
    Deterministic: re-running against an unchanged checkout produces byte-identical output. A
    base-color name missing from `themes.ts` fails the script loudly rather than silently

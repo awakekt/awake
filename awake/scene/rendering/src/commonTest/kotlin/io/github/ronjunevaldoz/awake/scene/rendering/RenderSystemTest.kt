@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.rendering
 
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.core.math.Aabb
-import io.github.ronjunevaldoz.awake.core.math.Camera
+import io.github.ronjunevaldoz.awake.core.math.Lens
 import io.github.ronjunevaldoz.awake.core.math.ClipSpace
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.core.math.Mat4
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.scene.core.components.Transform
 import io.github.ronjunevaldoz.awake.render.material.Material
 import io.github.ronjunevaldoz.awake.render.mesh.Mesh
-import io.github.ronjunevaldoz.awake.render.mesh.MeshGeometry
-import io.github.ronjunevaldoz.awake.render.mesh.VertexFormat
+import io.github.ronjunevaldoz.awake.core.geometry.MeshGeometry
+import io.github.ronjunevaldoz.awake.core.geometry.VertexFormat
 import io.github.ronjunevaldoz.awake.render.renderer.DEFAULT_SCENE_LIGHT
 import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.LineSegment
@@ -28,8 +29,10 @@ import io.github.ronjunevaldoz.awake.scene.rendering.components.LodLevel
 import io.github.ronjunevaldoz.awake.scene.rendering.components.MeshBounds
 import io.github.ronjunevaldoz.awake.scene.rendering.components.MeshRenderer
 import io.github.ronjunevaldoz.awake.scene.rendering.components.Occluder
+import io.github.ronjunevaldoz.awake.scene.rendering.components.ParticleEmitter
+import io.github.ronjunevaldoz.awake.scene.rendering.components.ParticleVisual
 import io.github.ronjunevaldoz.awake.scene.rendering.systems.RenderSystem
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -47,7 +50,7 @@ class RenderSystemTest {
         var lastLight: SceneLight? = null
         var lastDrawCalls: List<DrawCall> = emptyList()
         override val clipSpace: ClipSpace = ClipSpace.WebGpu
-        override var clearColor: FloatArray = floatArrayOf(0f, 0f, 0f, 1f)
+        override var clearColor: Color = Color.Black
         override var wireframe: Boolean = false
         override var shadowsEnabled: Boolean = true
         override fun createMesh(geometry: MeshGeometry): Mesh = error("not needed for this test")
@@ -55,23 +58,24 @@ class RenderSystemTest {
             texture: TextureAsset?,
             renderTarget: RenderTarget?,
             uniformFloatCount: Int,
-        pbrTextures: PbrTextureSet?,
+            pbrTextures: PbrTextureSet?,
         ): Material =
             error("not needed for this test")
 
         override fun createRenderTarget(width: Int, height: Int): RenderTarget =
             error("not needed for this test")
 
-        override fun draw(camera: Camera, drawCalls: List<DrawCall>, light: SceneLight) {
+        override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) {
             lastLight = light
             lastDrawCalls = drawCalls
         }
 
         override fun renderToTexture(
-            target: RenderTarget,
-            camera: Camera,
-            drawCalls: List<DrawCall>,
-        ) = Unit
+        target: RenderTarget,
+        camera: Lens,
+        drawCalls: List<DrawCall>,
+        light: SceneLight,
+    ) = Unit
 
         override suspend fun readPixels(target: RenderTarget): TextureAsset =
             error("not needed for this test")
@@ -87,13 +91,13 @@ class RenderSystemTest {
         world.add(
             cameraEntity,
             io.github.ronjunevaldoz.awake.scene.rendering.components.Camera(
-                Camera(
-                    eye = Vec3(
+                Lens(
+                    eye = Vec3f(
                         0f,
                         0f,
                         5f,
                     ),
-                    center = Vec3(0f, 0f, 0f),
+                    center = Vec3f(0f, 0f, 0f),
                     fovYRadians = 1f,
                     near = 0.1f,
                     far = 100f,
@@ -119,15 +123,15 @@ class RenderSystemTest {
         val lightEntity = world.create()
         world.add(
             lightEntity,
-            Light(color = Vec3(1f, 0.5f, 0.25f), intensity = 2f, direction = Vec3(1f, 0f, 0f)),
+            Light(color = Vec3f(1f, 0.5f, 0.25f), intensity = 2f, direction = Vec3f(1f, 0f, 0f)),
         )
         val renderer = RecordingRenderer()
 
         RenderSystem(renderer).update(world, 1f / 60f)
 
         val light = renderer.lastLight
-        assertEquals(Vec3(1f, 0f, 0f), light?.direction)
-        assertEquals(Vec3(2f, 1f, 0.5f), light?.color)
+        assertEquals(Vec3f(1f, 0f, 0f), light?.direction)
+        assertEquals(Vec3f(2f, 1f, 0.5f), light?.color)
     }
 
     @Test
@@ -175,11 +179,11 @@ class RenderSystemTest {
     fun meshRendererInsideTheFrustumDraws() {
         val world = worldWithPrimaryCamera()
         val entity = world.create()
-        // Camera eye=(0,0,5) looks at the origin -- a unit box sitting at the origin is
+        // Lens eye=(0,0,5) looks at the origin -- a unit box sitting at the origin is
         // squarely in front of it.
         world.add(entity, Transform())
         world.add(entity, MeshRenderer(fakeMesh(), fakeMaterial()))
-        world.add(entity, MeshBounds(Aabb(Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f))))
+        world.add(entity, MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f))))
         val renderer = RecordingRenderer()
 
         RenderSystem(renderer).update(world, 1f / 60f)
@@ -191,11 +195,11 @@ class RenderSystemTest {
     fun meshRendererBehindTheCameraIsCulled() {
         val world = worldWithPrimaryCamera()
         val entity = world.create()
-        // Camera eye=(0,0,5) looks toward -z (at the origin) -- z=20 is behind the eye,
+        // Lens eye=(0,0,5) looks toward -z (at the origin) -- z=20 is behind the eye,
         // outside the frustum entirely.
         world.add(entity, Transform(worldMatrix = Mat4().translate(0f, 0f, 20f)))
         world.add(entity, MeshRenderer(fakeMesh(), fakeMaterial()))
-        world.add(entity, MeshBounds(Aabb(Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f))))
+        world.add(entity, MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f))))
         val renderer = RecordingRenderer()
 
         RenderSystem(renderer).update(world, 1f / 60f)
@@ -209,7 +213,7 @@ class RenderSystemTest {
         val nearMesh = fakeMesh()
         val farMesh = fakeMesh()
         val entity = world.create()
-        // Camera eye=(0,0,5), entity at the origin -- distance 5.
+        // Lens eye=(0,0,5), entity at the origin -- distance 5.
         world.add(entity, Transform())
         world.add(
             entity,
@@ -233,7 +237,7 @@ class RenderSystemTest {
         val nearMesh = fakeMesh()
         val farMesh = fakeMesh()
         val entity = world.create()
-        // Camera eye=(0,0,5) -- z=-995 is distance 1000, past both thresholds below.
+        // Lens eye=(0,0,5) -- z=-995 is distance 1000, past both thresholds below.
         world.add(entity, Transform(worldMatrix = Mat4().translate(0f, 0f, -995f)))
         world.add(
             entity,
@@ -259,11 +263,14 @@ class RenderSystemTest {
         world.add(occluderEntity, Transform())
         // Huge and centered between the eye (z=5) and the candidate (z=0) -- its screen rect
         // covers the whole viewport, guaranteeing containment regardless of exact projection.
-        world.add(occluderEntity, Occluder(Aabb(Vec3(-10f, -10f, 1.9f), Vec3(10f, 10f, 2.1f))))
+        world.add(occluderEntity, Occluder(Aabb(Vec3f(-10f, -10f, 1.9f), Vec3f(10f, 10f, 2.1f))))
         val candidateEntity = world.create()
         world.add(candidateEntity, Transform())
         world.add(candidateEntity, MeshRenderer(fakeMesh(), fakeMaterial()))
-        world.add(candidateEntity, MeshBounds(Aabb(Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f))))
+        world.add(
+            candidateEntity,
+            MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f)))
+        )
         val renderer = RecordingRenderer()
         val system = RenderSystem(renderer)
 
@@ -279,11 +286,14 @@ class RenderSystemTest {
         val occluderEntity = world.create()
         world.add(occluderEntity, Transform())
         // Off to the side -- doesn't cover the candidate sitting at the origin.
-        world.add(occluderEntity, Occluder(Aabb(Vec3(19f, -1f, 1.9f), Vec3(21f, 1f, 2.1f))))
+        world.add(occluderEntity, Occluder(Aabb(Vec3f(19f, -1f, 1.9f), Vec3f(21f, 1f, 2.1f))))
         val candidateEntity = world.create()
         world.add(candidateEntity, Transform())
         world.add(candidateEntity, MeshRenderer(fakeMesh(), fakeMaterial()))
-        world.add(candidateEntity, MeshBounds(Aabb(Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f))))
+        world.add(
+            candidateEntity,
+            MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f)))
+        )
         val renderer = RecordingRenderer()
         val system = RenderSystem(renderer)
 
@@ -298,7 +308,7 @@ class RenderSystemTest {
         val world = worldWithPrimaryCamera()
         val occluderEntity = world.create()
         world.add(occluderEntity, Transform())
-        world.add(occluderEntity, Occluder(Aabb(Vec3(-10f, -10f, 1.9f), Vec3(10f, 10f, 2.1f))))
+        world.add(occluderEntity, Occluder(Aabb(Vec3f(-10f, -10f, 1.9f), Vec3f(10f, 10f, 2.1f))))
         val candidateEntity = world.create()
         world.add(candidateEntity, Transform())
         world.add(candidateEntity, MeshRenderer(fakeMesh(), fakeMaterial()))
@@ -317,7 +327,7 @@ class RenderSystemTest {
         val entity = world.create()
         world.add(entity, Transform())
         world.add(entity, MeshRenderer(fakeMesh(), fakeMaterial()))
-        world.add(entity, MeshBounds(Aabb(Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f))))
+        world.add(entity, MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f))))
         val renderer = RecordingRenderer()
         val system = RenderSystem(renderer)
 
@@ -325,6 +335,115 @@ class RenderSystemTest {
 
         assertEquals(1, renderer.lastDrawCalls.size)
         assertEquals(0, system.lastOccludedCount)
+    }
+
+    @Test
+    fun particlesFarOutsideTheFrustumAreExcludedFromTheDrawCall() {
+        val world = worldWithPrimaryCamera() // eye (0,0,5), looking toward -Z (origin)
+        val emitter = burstEmitterAt(Vec3f(0f, 0f, 0f)) // in view
+        world.add(world.create(), emitter)
+        val farEmitter = burstEmitterAt(Vec3f(5000f, 5000f, 5000f)) // well outside every plane
+        world.add(world.create(), farEmitter)
+        val renderer = RecordingRenderer()
+
+        RenderSystem(renderer).update(world, 1f / 60f)
+
+        // Only the in-view emitter's particle produced a DrawCall -- the far one's single
+        // particle was frustum-culled, leaving it with zero live-and-visible instances.
+        assertEquals(1, renderer.lastDrawCalls.size)
+        assertEquals(1, renderer.lastDrawCalls[0].instanceModels?.size)
+    }
+
+    @Test
+    fun visibleParticlesAreOrderedBackToFrontFromTheCameraEye() {
+        val world = worldWithPrimaryCamera() // eye at z=5, looking toward -Z
+        val emitter = ParticleEmitter(
+            mesh = fakeMesh(), material = fakeMaterial(), origin = Vec3f(0f, 0f, 0f),
+            maxParticles = 3, spawnRate = 0f, lifetime = 10f, startAlpha = 1f, scale = 0.1f,
+        )
+        // Manually place 3 already-alive particles at increasing distance from the eye (z=5) --
+        // near (-1), mid (-3), far (-5) along the camera's forward axis.
+        listOf(-1f, -3f, -5f).forEachIndexed { index, z ->
+            emitter.particles[index].alive = true
+            emitter.particles[index].position.set(0f, 0f, z)
+            emitter.particles[index].lifetime = 10f
+        }
+        world.add(world.create(), emitter)
+        val renderer = RecordingRenderer()
+
+        RenderSystem(renderer).update(world, 1f / 60f)
+
+        val instanceModels = requireNotNull(renderer.lastDrawCalls[0].instanceModels)
+        assertEquals(3, instanceModels.size)
+        // Farthest (z=-5, distance 10 from eye) first, nearest (z=-1, distance 6) last --
+        // painter's algorithm for correct alpha blending.
+        assertEquals(-5f, instanceModels[0].m23)
+        assertEquals(-3f, instanceModels[1].m23)
+        assertEquals(-1f, instanceModels[2].m23)
+    }
+
+    /** One already-spawned, already-alive particle at [position] -- `spawnRate = 0f` so nothing
+     * else spawns; a plain [ParticleEmitter] constructor call doesn't accept pre-alive
+     * particles, so this reaches into the pool directly the same way the visible-ordering test
+     * above does. */
+    @Test
+    fun stretchWithVelocityPacksAWorldSpaceStretchVectorIntoInstanceModelColumn1() {
+        val world = worldWithPrimaryCamera()
+        val emitter = ParticleEmitter(
+            mesh = fakeMesh(), material = fakeMaterial(), origin = Vec3f(0f, 0f, 0f),
+            maxParticles = 1, spawnRate = 0f, lifetime = 10f, startAlpha = 1f, scale = 0.1f,
+            visual = ParticleVisual(stretchWithVelocity = true, stretchFactor = 0.5f),
+        )
+        emitter.particles[0].alive = true
+        emitter.particles[0].position.set(0f, 0f, 0f)
+        emitter.particles[0].velocity.set(2f, 0f, 0f)
+        emitter.particles[0].lifetime = 10f
+        world.add(world.create(), emitter)
+        val renderer = RecordingRenderer()
+
+        RenderSystem(renderer).update(world, 1f / 60f)
+
+        val model = requireNotNull(renderer.lastDrawCalls[0].instanceModels)[0]
+        // stretchFactor(0.5) * velocity(2,0,0) = (1,0,0) -- packed into column 1 (m01/m11/m21).
+        assertEquals(1f, model.m01, 1e-4f)
+        assertEquals(0f, model.m11, 1e-4f)
+        assertEquals(0f, model.m21, 1e-4f)
+    }
+
+    @Test
+    fun stretchWithVelocityDisabledLeavesColumn1AtItsPlainZeroDefault() {
+        val world = worldWithPrimaryCamera()
+        val emitter = ParticleEmitter(
+            mesh = fakeMesh(), material = fakeMaterial(), origin = Vec3f(0f, 0f, 0f),
+            maxParticles = 1, spawnRate = 0f, lifetime = 10f, startAlpha = 1f, scale = 0.1f,
+            // stretchWithVelocity defaults to false.
+        )
+        emitter.particles[0].alive = true
+        emitter.particles[0].position.set(0f, 0f, 0f)
+        emitter.particles[0].velocity.set(2f, 0f, 0f)
+        emitter.particles[0].lifetime = 10f
+        world.add(world.create(), emitter)
+        val renderer = RecordingRenderer()
+
+        RenderSystem(renderer).update(world, 1f / 60f)
+
+        val model = requireNotNull(renderer.lastDrawCalls[0].instanceModels)[0]
+        assertEquals(
+            0f,
+            model.m01,
+            "no stretch must leave column 1 at its plain off-diagonal zero, byte-for-byte the old formula"
+        )
+    }
+
+    private fun burstEmitterAt(position: Vec3f): ParticleEmitter {
+        val emitter = ParticleEmitter(
+            mesh = fakeMesh(), material = fakeMaterial(), origin = position,
+            maxParticles = 1, spawnRate = 0f, lifetime = 10f, startAlpha = 1f, scale = 0.1f,
+        )
+        emitter.particles[0].alive = true
+        emitter.particles[0].position.set(position.x, position.y, position.z)
+        emitter.particles[0].lifetime = 10f
+        return emitter
     }
 
     private fun fakeMesh(): Mesh = object : Mesh {
@@ -335,7 +454,7 @@ class RenderSystemTest {
     }
 
     private fun fakeMaterial(): Material = object : Material {
-        override fun updateUniformBuffer(mvp: FloatArray) = Unit
+        override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
         override fun bind(commandBuffer: Long, pipelineLayout: Long) = Unit
         override fun destroy() = Unit
     }

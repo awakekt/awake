@@ -532,7 +532,7 @@ private val debugMessengerTrampoline = staticCFunction {
     if (handled) 1u else 0u
 }
 
-// Phase 6 (MoltenVK cinterop) is in progress -- see docs/MVP_PLAN.md. Non-TODO() functions link
+// Phase 6 (MoltenVK cinterop) is in progress -- see docs/mvp-plan.md. Non-TODO() functions link
 // against the vendored MoltenVK.xcframework but are compiled-only, not yet hardware-verified.
 @OptIn(ExperimentalForeignApi::class)
 actual object Vulkan {

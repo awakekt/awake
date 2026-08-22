@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.ui.layouts
 
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 
 /**
@@ -31,8 +31,8 @@ class AbsoluteScope internal constructor(
     // centered) got a harmless zero-width UiSlot back. FillMax has no configured size to
     // resolve against on this scope, so it resolves to 0f -- the same literal passthrough
     // behavior, not a new error mode.
-    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): UiBounds =
-        UiBounds(
+    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): Rectangle =
+        Rectangle(
             x,
             y,
             width.resolve { 0f },

@@ -34,7 +34,7 @@ kotlin {
         namespace = "io.github.ronjunevaldoz.awake.physics.jolt"
     }
 
-    // Jolt Physics integration slice 2 (see docs/MVP_PLAN.md's decision log): real iOS
+    // Jolt Physics integration slice 2 (see docs/reference/decision-log.md): real iOS
     // backend via JoltC (SecondHalfGames/JoltC, a plain-C wrapper around Jolt Physics),
     // vendored as a git submodule at ios-native/JoltC -- mirrors awake-backend-vulkan's
     // MoltenVK cinterop precedent (a vendored C/C++ library built from source, not a
@@ -167,7 +167,7 @@ kotlin {
         commonMain.dependencies {
             api(project(":awake:physics:api"))
             // QuatEuler.kt's pure quaternion-to-Euler conversion takes/returns Vec3.
-            implementation(project(":awake:core"))
+            implementation(project(":awake:core:math"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

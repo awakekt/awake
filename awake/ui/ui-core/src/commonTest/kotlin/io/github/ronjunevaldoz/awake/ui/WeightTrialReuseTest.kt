@@ -3,7 +3,7 @@
 package io.github.ronjunevaldoz.awake.ui
 
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.context.UiMeasureTrialStats
 import io.github.ronjunevaldoz.awake.ui.layouts.column
@@ -12,7 +12,7 @@ import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.modifier.weight
 import io.github.ronjunevaldoz.awake.ui.modifier.width
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -54,7 +54,7 @@ class WeightTrialReuseTest {
     @Test
     fun layoutIsIdenticalOnTheReusedFrame() {
         val ui = UiContext()
-        val slots = mutableListOf<UiBounds>()
+        val slots = mutableListOf<Rectangle>()
         repeat(3) { frame ->
             ui.beginFrame(UiFrameInput(viewportWidth = 400f, viewportHeight = 400f, input = testSnapshot()))
             slots += ui.createColumn(x = 0f, y = 0f, width = 400f, height = 400f).row(
@@ -76,8 +76,8 @@ class WeightTrialReuseTest {
     fun aNewlyWeightedChildSelfCorrectsOnTheNextFrame() {
         val ui = UiContext()
 
-        fun draw(useWeight: Boolean): UiBounds {
-            var first = UiBounds(0f, 0f, 0f, 0f)
+        fun draw(useWeight: Boolean): Rectangle {
+            var first = Rectangle(0f, 0f, 0f, 0f)
             ui.beginFrame(UiFrameInput(viewportWidth = 400f, viewportHeight = 400f, input = testSnapshot()))
             ui.createColumn(x = 0f, y = 0f, width = 400f, height = 400f).row(
                 modifier = Modifier.width(Dimension.Fixed(300f.px)).height(Dimension.Fixed(40f.px)),
@@ -101,7 +101,7 @@ class WeightTrialReuseTest {
         val corrected = draw(useWeight = true)
         val reference = UiContext().let { fresh ->
             fresh.beginFrame(UiFrameInput(viewportWidth = 400f, viewportHeight = 400f, input = testSnapshot()))
-            var slot = UiBounds(0f, 0f, 0f, 0f)
+            var slot = Rectangle(0f, 0f, 0f, 0f)
             fresh.createColumn(x = 0f, y = 0f, width = 400f, height = 400f).row(
                 modifier = Modifier.width(Dimension.Fixed(300f.px)).height(Dimension.Fixed(40f.px)),
             ) {

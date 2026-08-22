@@ -2,7 +2,7 @@
 
 Audits `awake/backend/vulkan`'s `Renderer.kt` against `awake/backend/webgpu`'s `Renderer.kt`
 for correctness and cross-backend consistency, using the same direct-source-read discipline
-as `docs/reference/MIRROR_MAP.md` (that doc audits `ui-core`'s DSL against Jetpack Compose --
+as `docs/reference/mirror-map.md` (that doc audits `ui-core`'s DSL against Jetpack Compose --
 a different concern; this doc is scoped to the two render backends' own behavior and is
 intentionally kept separate from it, per explicit instruction). Every row below is backed by
 a direct read of:
@@ -14,7 +14,7 @@ a direct read of:
 - `awake/backend/webgpu/src/wasmJsMain/kotlin/io/github/ronjunevaldoz/awake/webgpu/material/Material.kt`
 - `awake/backend/vulkan/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/vulkan/material/Material.kt`
 - `awake/engine/ui/ui-core/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/UiDrawPrimitive.kt`
-- `awake/engine/ui/ui-core/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/layout/UiBounds.kt`
+- `awake/engine/ui/ui-core/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/layout/Rectangle.kt`
 
 not memory of either graphics API or of this codebase from an earlier session.
 
@@ -49,13 +49,13 @@ crash or leak -- flagging per this audit's scope, not fixing.
 
 `git show 22d72f33 -- <path>` for both files shows an identical 3-hunk diff per file:
 
-1. Import: `io.github.ronjunevaldoz.awake.ui.scope.UiSlot` -> `io.github.ronjunevaldoz.awake.ui.layout.UiBounds`
-2. `UiRun.ClipRun(val rect: UiSlot)` -> `UiRun.ClipRun(val rect: UiBounds)`
-3. `UiShapeSpec.RoundedRectangle(quad.radius.px).toPath(UiSlot(quad.x, quad.y, quad.w, quad.h))` -> `...toPath(UiBounds(quad.x, quad.y, quad.w, quad.h))`
+1. Import: `io.github.ronjunevaldoz.awake.ui.scope.UiSlot` -> `io.github.ronjunevaldoz.awake.ui.layout.Rectangle`
+2. `UiRun.ClipRun(val rect: UiSlot)` -> `UiRun.ClipRun(val rect: Rectangle)`
+3. `UiShapeSpec.RoundedRectangle(quad.radius.px).toPath(UiSlot(quad.x, quad.y, quad.w, quad.h))` -> `...toPath(Rectangle(quad.x, quad.y, quad.w, quad.h))`
 
 Confirmed genuinely behavior-neutral:
 
-- `UiBounds` (`ui-core/layout/UiBounds.kt`) is `data class UiBounds(val x: Float, val y: Float, val width: Float, val height: Float)` -- same 4-field shape every `ClipRun.rect`/`RoundedRectangle.toPath(...)` call site in both `Renderer.kt` files already reads (`.x`, `.y`, `.width`, `.height` in the scissor-rect and rounded-quad-path construction code), unchanged before/after.
+- `Rectangle` (`ui-core/layout/Rectangle.kt`) is `data class Rectangle(val x: Float, val y: Float, val width: Float, val height: Float)` -- same 4-field shape every `ClipRun.rect`/`RoundedRectangle.toPath(...)` call site in both `Renderer.kt` files already reads (`.x`, `.y`, `.width`, `.height` in the scissor-rect and rounded-quad-path construction code), unchanged before/after.
 - `grep -rn "UiSlot"` across the whole repo (excluding `build/`) turns up zero remaining real type references anywhere, including both `Renderer.kt` files -- the 4 remaining hits (`AbsoluteScope.kt`, `UiAnchor.kt`, `UiAnchor.kt` x2 inside a commented-out block, `GameUiRuntime.kt`) are all stale comments/doc strings, not live code, confirming the type merge is complete and this isn't a case of two parallel types now silently diverging.
 - Both files' `import` lists show no other changed lines in this commit -- the diff is exactly the 3 hunks above, nothing else moved.
 
@@ -171,5 +171,5 @@ No new leak pattern found in either `Renderer.kt`. Specifically checked:
   uniform buffer limit) that are pre-existing and already documented in-code, re-confirmed
   accurate as of this read, not newly discovered bugs.
 
-`docs/reference/MIRROR_MAP.md` was read for tone/structure reference only and was not
+`docs/reference/mirror-map.md` was read for tone/structure reference only and was not
 modified by this audit.

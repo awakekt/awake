@@ -2,16 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
 import io.github.ronjunevaldoz.awake.ui.headless.button
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.UiTextOverflow
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.UiTextWrap
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.layoutBitmapText
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.button
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextOverflow
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextWrap
+import io.github.ronjunevaldoz.awake.ui.foundation.text.layoutBitmapText
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
 import io.github.ronjunevaldoz.awake.ui.layouts.column
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
@@ -45,7 +48,7 @@ class TextWidgetsTest {
         val frame = renderUiComponent(width = 100f, height = 100f, font = font) {
             primitive.context.createAbsolute(x = 10f, y = 20f).text(
                 label = "TOOLONG",
-                slot = UiBounds(10f, 20f, slotWidthPx, 12f),
+                slot = Rectangle(10f, 20f, slotWidthPx, 12f),
                 font = font,
                 overflow = UiTextOverflow.Ellipsis,
             )
@@ -130,7 +133,7 @@ class TextWidgetsTest {
         val font = UiFonts.trueSans()
         val frame = renderUiComponent(width = 200f, height = 80f, font = font) {
             primitive.context.createAbsolute(x = 0f, y = 0f).text(
-                label = "BUTTON", slot = UiBounds(20f, 20f, 160f, 40f), font = font, centered = true,
+                label = "BUTTON", slot = Rectangle(20f, 20f, 160f, 40f), font = font, centered = true,
             )
         }
         val glyphBounds = frame.primitives.glyphBounds()
@@ -150,7 +153,7 @@ class TextWidgetsTest {
         // depend on it) -- request top alignment explicitly since that's what this test covers.
         val frame = renderUiComponent(width = 180f, height = 80f, font = font) {
             primitive.context.createAbsolute(x = 0f, y = 0f).text(
-                label = "Title", slot = UiBounds(16f, 24f, 120f, 20f), font = font, verticallyCentered = false,
+                label = "Title", slot = Rectangle(16f, 24f, 120f, 20f), font = font, verticallyCentered = false,
             )
         }
         val glyphBounds = frame.primitives.glyphBounds()
@@ -180,8 +183,8 @@ class TextWidgetsTest {
 
     @Test
     fun hoveredTextKeepsItsOriginalColumnSlot() {
-        var firstSlot: UiBounds? = null
-        var secondSlot: UiBounds? = null
+        var firstSlot: Rectangle? = null
+        var secondSlot: Rectangle? = null
 
         renderUiComponent(width = 240f, height = 120f, input = testSnapshot(x = 20f, y = 12f)) {
             primitive.context.column(
@@ -206,27 +209,27 @@ class TextWidgetsTest {
     }
 }
 
-private fun List<UiDrawPrimitive>.glyphBounds(): UiBounds {
+private fun List<UiDrawPrimitive>.glyphBounds(): Rectangle {
     val glyphs = filterIsInstance<UiDrawPrimitive.Glyph>()
     require(glyphs.isNotEmpty()) { "expected at least one glyph primitive" }
     return glyphs.drop(1).fold(
-        UiBounds(
+        Rectangle(
             glyphs.first().x,
             glyphs.first().y,
             glyphs.first().w,
             glyphs.first().h,
         ),
     ) { acc, glyph ->
-        acc.union(UiBounds(glyph.x, glyph.y, glyph.w, glyph.h))
+        acc.union(Rectangle(glyph.x, glyph.y, glyph.w, glyph.h))
     }
 }
 
-private fun UiBounds.centerY(): Float = y + height / 2f
+private fun Rectangle.centerY(): Float = y + height / 2f
 
-private fun UiBounds.union(other: UiBounds): UiBounds {
+private fun Rectangle.union(other: Rectangle): Rectangle {
     val minX = minOf(x, other.x)
     val minY = minOf(y, other.y)
     val maxX = maxOf(x + width, other.x + other.width)
     val maxY = maxOf(y + height, other.y + other.height)
-    return UiBounds(minX, minY, maxX - minX, maxY - minY)
+    return Rectangle(minX, minY, maxX - minX, maxY - minY)
 }

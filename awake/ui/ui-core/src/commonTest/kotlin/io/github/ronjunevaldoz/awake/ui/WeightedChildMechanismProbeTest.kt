@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
 import io.github.ronjunevaldoz.awake.ui.layouts.column
@@ -40,7 +41,7 @@ class WeightedChildMechanismProbeTest {
 
     @Test
     fun aDirectClaimSlotWeightGetsItsShare() {
-        var middle: UiBounds? = null
+        var middle: Rectangle? = null
         parent {
             claimSlot(Dimension.FillMax, Dimension.Fixed(FIXED.px), null)
             middle = claimSlot(Dimension.FillMax, Dimension.FillMax, LayoutWeight(1f))
@@ -51,7 +52,7 @@ class WeightedChildMechanismProbeTest {
 
     @Test
     fun aModifierWeightOnAColumnChildGetsTheSameShare() {
-        var middle: UiBounds? = null
+        var middle: Rectangle? = null
         parent {
             column(id = "a", modifier = Modifier.width(Dimension.FillMax).height(FIXED.px)) { }
             middle = column(id = "b", modifier = Modifier.width(Dimension.FillMax).weight(1f)) { }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupResult
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
@@ -29,7 +30,8 @@ class UiPopupTest {
         val scope = ui.createAbsolute(x = 0f, y = 0f)
 
         val result = scope.popup(
-            anchorSlot = io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(20f, 30f, 120f, 32f),
+            id = "positions-below-anchor-popup",
+            anchorSlot = io.github.ronjunevaldoz.awake.core.math2d.Rectangle(20f, 30f, 120f, 32f),
             expanded = true,
             width = Dimension.Fixed(120f.px),
             height = Dimension.Fixed(64f.px),
@@ -52,7 +54,8 @@ class UiPopupTest {
         val scope = ui.createAbsolute(x = 0f, y = 0f)
 
         val result = scope.popup(
-            anchorSlot = io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(0f, 0f, 10f, 10f),
+            id = "modifier-bounds-popup",
+            anchorSlot = io.github.ronjunevaldoz.awake.core.math2d.Rectangle(0f, 0f, 10f, 10f),
             expanded = true,
             width = Dimension.FillMax,
             height = Dimension.FillMax,
@@ -71,7 +74,8 @@ class UiPopupTest {
         val scope = ui.createAbsolute(x = 0f, y = 0f)
 
         val result = scope.popup(
-            anchorSlot = io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(0f, 0f, 10f, 10f),
+            id = "clamps-below-min-width-popup",
+            anchorSlot = io.github.ronjunevaldoz.awake.core.math2d.Rectangle(0f, 0f, 10f, 10f),
             expanded = true,
             width = Dimension.Fixed(40f.px),
             height = Dimension.Fixed(20f.px),
@@ -88,7 +92,8 @@ class UiPopupTest {
         val scope = ui.createAbsolute(x = 0f, y = 0f)
 
         val result = scope.popup(
-            anchorSlot = io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(20f, 30f, 120f, 32f),
+            id = "dismiss-on-outside-press-popup",
+            anchorSlot = io.github.ronjunevaldoz.awake.core.math2d.Rectangle(20f, 30f, 120f, 32f),
             expanded = true,
             width = Dimension.Fixed(120f.px),
             height = Dimension.Fixed(64f.px),
@@ -106,7 +111,7 @@ class UiPopupTest {
         // expanded flips false. It must now keep drawing (dimmed) through the exit fade instead.
         val ui = UiContext()
         val scope = ui.createAbsolute(x = 0f, y = 0f)
-        val anchor = io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(20f, 30f, 120f, 32f)
+        val anchor = io.github.ronjunevaldoz.awake.core.math2d.Rectangle(20f, 30f, 120f, 32f)
 
         ui.beginFrame(UiFrameInput(viewportWidth = 300f, viewportHeight = 200f, input = testSnapshot(x = -100f, y = -100f, down = false)))
         scope.popup(
@@ -144,7 +149,7 @@ class UiPopupTest {
     fun popupReallyStopsRenderingOnceItsExitFadeSettles() {
         val ui = UiContext()
         val scope = ui.createAbsolute(x = 0f, y = 0f)
-        val anchor = io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(20f, 30f, 120f, 32f)
+        val anchor = io.github.ronjunevaldoz.awake.core.math2d.Rectangle(20f, 30f, 120f, 32f)
 
         ui.beginFrame(UiFrameInput(viewportWidth = 300f, viewportHeight = 200f, input = testSnapshot(x = -100f, y = -100f, down = false)))
         scope.popup(

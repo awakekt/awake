@@ -13,7 +13,7 @@ import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.modifier.weight
 import io.github.ronjunevaldoz.awake.ui.modifier.width
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput

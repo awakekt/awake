@@ -5,7 +5,7 @@ package io.github.ronjunevaldoz.awake.sample.uishowcase.ui.pages.status
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.ShowcasePage
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.showcaseMatrix
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnAvatarSize
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnAvatar
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnAvatarGroup
@@ -33,7 +33,7 @@ internal val AvatarPage = ShowcasePage(
         }
         spacer(Modifier.height(12f.dp))
         shadcnMuted("Grouped, overlapping avatars share one recipe.")
-        shadcnAvatarGroup(initials = listOf("RJ", "AK", "MS", "TL"))
+        shadcnAvatarGroup(id = "showcase-avatar-group", initials = listOf("RJ", "AK", "MS", "TL"))
     },
     variants = {
         showcaseMatrix(ShadcnAvatarSize.entries) { size ->

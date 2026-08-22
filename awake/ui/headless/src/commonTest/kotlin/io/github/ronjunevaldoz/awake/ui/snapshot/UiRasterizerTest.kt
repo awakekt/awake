@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.snapshot
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.testing.ui.rasterize
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.UiPrimitiveTransform
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPrimitiveTransform
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

@@ -2,21 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.render.renderer
 
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.core.math.Aabb
-import io.github.ronjunevaldoz.awake.core.math.Camera
+import io.github.ronjunevaldoz.awake.core.math.Lens
 import io.github.ronjunevaldoz.awake.core.math.Frustum
 import io.github.ronjunevaldoz.awake.core.math.Mat4
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-private val RED = floatArrayOf(1f, 0f, 0f, 1f)
+private val RED = Color(r = 1f, g = 0f, b = 0f, a = 1f)
 
 class DebugGeometryTest {
-    private fun identityViewCamera() = Camera(
-        eye = Vec3(0f, 0f, 0f),
-        center = Vec3(0f, 0f, -1f),
-        up = Vec3(0f, 1f, 0f),
+    private fun identityViewCamera() = Lens(
+        eye = Vec3f(0f, 0f, 0f),
+        center = Vec3f(0f, 0f, -1f),
+        up = Vec3f(0f, 1f, 0f),
         fovYRadians = (kotlin.math.PI / 2.0).toFloat(),
         near = 1f,
         far = 10f,
@@ -36,7 +37,7 @@ class DebugGeometryTest {
 
     @Test
     fun boundsDebugLinesHasOneLinePerBoxEdgeInWorldSpace() {
-        val bounds = Aabb(Vec3(-1f, -1f, -1f), Vec3(1f, 1f, 1f))
+        val bounds = Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))
         val worldMatrix = Mat4().translate(5f, 0f, 0f)
 
         val lines = boundsDebugLines(bounds, worldMatrix, RED)

@@ -4,9 +4,9 @@ package io.github.ronjunevaldoz.awake.ui.layouts
 
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.api.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.childColumn
 import io.github.ronjunevaldoz.awake.ui.childRow
 import io.github.ronjunevaldoz.awake.ui.graphics.clip
@@ -17,7 +17,7 @@ import io.github.ronjunevaldoz.awake.ui.scope.claimModifiedSlot
 import io.github.ronjunevaldoz.awake.ui.scope.onOverScrollable
 import io.github.ronjunevaldoz.awake.ui.scope.onScrollConsumed
 import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 
 /**
  * Virtualized, fixed-item-height list -- Awake's `LazyColumn`/`LazyRow` analog. Only items whose
@@ -59,7 +59,7 @@ fun UiPrimitiveScope.lazyColumn(
     overscan: Int = 2,
     key: (index: Int) -> Any = { it },
     itemContent: ColumnScope.(index: Int, key: Any) -> Unit,
-): UiBounds {
+): Rectangle {
     val state = requireNotNull(modifier.scrollState) {
         "lazyColumn '$id' requires a scrollState -- supply Modifier.verticalScroll(state)."
     }
@@ -104,7 +104,7 @@ fun UiPrimitiveScope.lazyColumn(
     clip(slot) {
         for (index in startIndex..endIndex) {
             val itemKey = key(index)
-            val itemSlot = UiBounds(
+            val itemSlot = Rectangle(
                 x = slot.x,
                 y = slot.y + index * stridePx - state.offsetY,
                 width = slot.width,
@@ -133,7 +133,7 @@ fun UiPrimitiveScope.lazyRow(
     overscan: Int = 2,
     key: (index: Int) -> Any = { it },
     itemContent: RowScope.(index: Int, key: Any) -> Unit,
-): UiBounds {
+): Rectangle {
     val state = requireNotNull(modifier.scrollState) {
         "lazyRow '$id' requires a scrollState -- supply Modifier.horizontalScroll(state)."
     }
@@ -178,7 +178,7 @@ fun UiPrimitiveScope.lazyRow(
     clip(slot) {
         for (index in startIndex..endIndex) {
             val itemKey = key(index)
-            val itemSlot = UiBounds(
+            val itemSlot = Rectangle(
                 x = slot.x + index * stridePx - state.offsetX,
                 y = slot.y,
                 width = itemWidthPx,

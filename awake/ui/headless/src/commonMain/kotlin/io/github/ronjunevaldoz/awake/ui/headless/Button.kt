@@ -3,62 +3,91 @@
 package io.github.ronjunevaldoz.awake.ui.headless
 
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.withIntrinsicLabelWidth
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
+import io.github.ronjunevaldoz.awake.ui.modifier.clickable
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxHeight
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxSize
 import io.github.ronjunevaldoz.awake.ui.style.Style
-import io.github.ronjunevaldoz.awake.ui.withGraphicsLayerAlpha
-import io.github.ronjunevaldoz.awake.ui.headless.button as primitiveButton
 
 /**
  * Style-native button API. State rules belong in [style], not in a parallel visual DTO.
  *
- * [label] draws through the same primitive slot machinery as the trailing-lambda overload below
- * ([io.github.ronjunevaldoz.awake.ui.headless.internal.controls.buttonSlot]'s label-aware
- * overload) rather than composing `button(id) { text(label) }` at this layer: doing the
- * composition here needs to re-resolve the button's own style (for the label's weight/size) a
- * second time, and that second resolution silently drifted from what buttonSlotInternal itself
- * computes -- a real visible regression (labels rendered smaller) caught by
- * `ui-awake-shadcn-showcase`'s snapshot signature, not a false positive. Delegating to the
- * primitive keeps exactly one place that resolves a button's text style.
+ * A thin wrapper over the slot-form [button] below -- [label] draws through the exact same
+ * [interactiveSurface]/[row] machinery any content-lambda caller gets, via a content lambda that
+ * just renders [text]. The two previously used independently-drifted paths (this overload's own
+ * `primitiveButton`/`buttonSlotInternal` route vs. the slot form's `interactiveSurface`), which
+ * is what let a resolved-style/hover bug live in only one of them; see `surfaceCore`'s doc for
+ * the fix that made them equivalent.
+ *
+ * [withIntrinsicLabelWidth] resolves the button's own width up front (a real caller width wins
+ * unchanged; an unset width becomes the label's measured natural width; a `fillMaxWidth()`
+ * caught mid an ancestor's own WrapContent trial -- e.g. a vertical shadcnButtonGroup's members
+ * -- reports that same natural width for the trial only, same as before). That leaves the
+ * button's width fully resolved (never [io.github.ronjunevaldoz.awake.ui.api.layout.Dimension.WrapContent])
+ * by the time the slot form's own row/text render, so [label] can always claim the full content
+ * width there -- letting [text]'s own [centered] flag (not the row's fixed `Arrangement.Center`,
+ * see the slot form's doc) decide where the label draws.
  */
 fun UiScope.button(
     id: String,
     label: String? = null,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     style: Style = Style.Empty,
     centered: Boolean = true,
     enabled: Boolean = true,
     semanticRole: UiSemanticRole = UiSemanticRole.Button,
-): Boolean = primitive.primitiveButton(
-    id = id,
-    label = label,
-    modifier = modifier.asPrimitiveModifier(),
-    style = style,
-    radius = 0.dp,
-    centered = centered,
-    enabled = enabled,
-    semanticRole = semanticRole,
-)
+): Boolean {
+    val sizedModifier = if (label != null) {
+        primitive.withIntrinsicLabelWidth(
+            modifier = modifier,
+            label = label,
+            style = style,
+            defaults = Style { shape(0f.dp) },
+        )
+    } else {
+        modifier
+    }
+    return button(
+        id = id,
+        modifier = sizedModifier,
+        style = style,
+        enabled = enabled,
+        semanticRole = semanticRole,
+    ) {
+        if (label != null) {
+            text(
+                label = label,
+                modifier = Modifier.fillMaxSize(),
+                centered = centered,
+                overflow = UiTextOverflow.Ellipsis,
+                semanticId = "$id.label",
+            )
+        }
+    }
+}
 
 /** Callback-oriented button API for application composition. */
 fun UiScope.button(
     id: String,
     label: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     style: Style = Style.Empty,
     centered: Boolean = true,
     enabled: Boolean = true,
     semanticRole: UiSemanticRole = UiSemanticRole.Button,
 ) {
     if (
-        primitive.primitiveButton(
+        button(
             id = id,
             label = label,
-            modifier = modifier.asPrimitiveModifier(),
+            modifier = modifier,
             style = style,
-            radius = 0.dp,
             centered = centered,
             enabled = enabled,
             semanticRole = semanticRole,
@@ -104,15 +133,15 @@ fun UiScope.button(
  */
 fun UiScope.button(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     style: Style = Style.Empty,
     enabled: Boolean = true,
     semanticRole: UiSemanticRole = UiSemanticRole.Button,
-    content: RowScope.(slot: UiBounds) -> Unit,
+    content: RowScope.(slot: Rectangle) -> Unit,
 ): Boolean {
     var clicked = false
-    val hasExplicitWidth = modifier.asPrimitiveModifier().widthDimension != null
-    primitive.withGraphicsLayerAlpha(if (enabled) 1f else 0.5f) {
+    val hasExplicitWidth = modifier.widthDimension != null
+    primitive.withDisabledAlpha(enabled) {
         interactiveSurface(
             id = id,
             modifier = modifier

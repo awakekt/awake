@@ -4,8 +4,8 @@ package io.github.ronjunevaldoz.awake.sample.uishowcase.ui
 
 import io.github.ronjunevaldoz.awake.core.input.Input
 import io.github.ronjunevaldoz.awake.ui.UiSemanticNode
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebar
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebarFooterButton
@@ -13,16 +13,16 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebarHea
 import io.github.ronjunevaldoz.awake.ui.designsystem.shadcnThemeValues
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.headless.column
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxHeight
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxWidth
-import io.github.ronjunevaldoz.awake.ui.headless.padding
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxHeight
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxWidth
+import io.github.ronjunevaldoz.awake.ui.modifier.padding
 import io.github.ronjunevaldoz.awake.ui.headless.rememberScrollState
 import io.github.ronjunevaldoz.awake.ui.headless.row
 import io.github.ronjunevaldoz.awake.ui.headless.verticalScroll
-import io.github.ronjunevaldoz.awake.ui.headless.weight
-import io.github.ronjunevaldoz.awake.ui.headless.width
+import io.github.ronjunevaldoz.awake.ui.modifier.weight
+import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.toUiInputState
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -131,7 +131,7 @@ class ShowcaseShellSidebarTest {
         ui.pushLocal(LocalFont, BitmapFont())
 
         val sidebarScroll = ui.rememberScrollState("ui-showcase-scroll-side-test")
-        ui.showcaseRoot(theme = shadcnThemeValues(dark = false), bounds = UiBounds(0f, 0f, 1440f, 500f)) {
+        ui.showcaseRoot(theme = shadcnThemeValues(dark = false), bounds = Rectangle(0f, 0f, 1440f, 500f)) {
             row(
             modifier = Modifier.padding(24f.dp).fillMaxWidth().fillMaxHeight(),
             horizontalArrangement = Arrangement.spacedBy(20f.dp),
@@ -190,7 +190,7 @@ class ShowcaseShellSidebarTest {
 
         ui.beginFrame(UiFrameInput(viewportWidth = 1440f, viewportHeight = 900f, input = input.updateSnapshot().toUiInputState()))
         ui.pushLocal(LocalFont, BitmapFont())
-        ui.showcaseRoot(theme = shadcnThemeValues(dark = false), bounds = UiBounds(0f, 0f, 1440f, 900f)) {
+        ui.showcaseRoot(theme = shadcnThemeValues(dark = false), bounds = Rectangle(0f, 0f, 1440f, 900f)) {
             row(
             modifier = Modifier.padding(24f.dp).fillMaxWidth().fillMaxHeight(),
             horizontalArrangement = Arrangement.spacedBy(20f.dp),

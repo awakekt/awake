@@ -6,7 +6,7 @@ import io.github.ronjunevaldoz.awake.vulkan.models.VkMemoryRequirements
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkBufferCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkMemoryAllocateInfo
 
-// Phase 1b (desktop native build) has not landed yet — see docs/MVP_PLAN.md.
+// Phase 1b (desktop native build) has not landed yet — see docs/mvp-plan.md.
 actual object VulkanBuffers {
     actual external fun vkCreateBuffer(device: Long, createInfo: VkBufferCreateInfo): Long
 

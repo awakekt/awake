@@ -3,7 +3,7 @@
 package io.github.ronjunevaldoz.awake.ui.headless.internal.controls
 
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 
 /**
  * [shouldOpen] is true exactly on the frame a fresh secondary-click lands over the trigger's
@@ -14,7 +14,7 @@ import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
  */
 data class UiContextMenuTrigger(
     val shouldOpen: Boolean,
-    val anchor: UiBounds,
+    val anchor: Rectangle,
 )
 
 /**
@@ -22,7 +22,7 @@ data class UiContextMenuTrigger(
  * differently-skinned right-click menu needs the same interaction, independent of what
  * actually opens. Uses [UiPrimitiveScope.hitTest] rather than a manual point-in-rect comparison.
  */
-fun UiPrimitiveScope.contextMenuTrigger(id: String, expanded: Boolean, target: UiBounds): UiContextMenuTrigger {
+fun UiPrimitiveScope.contextMenuTrigger(id: String, expanded: Boolean, target: Rectangle): UiContextMenuTrigger {
     val input = context.inputState
     val state = widgetState(id)
     var shouldOpen = false
@@ -35,5 +35,5 @@ fun UiPrimitiveScope.contextMenuTrigger(id: String, expanded: Boolean, target: U
 
     val clickX = state.get("clickX", input.pointerX)
     val clickY = state.get("clickY", input.pointerY)
-    return UiContextMenuTrigger(shouldOpen = shouldOpen, anchor = UiBounds(clickX, clickY, 0f, 0f))
+    return UiContextMenuTrigger(shouldOpen = shouldOpen, anchor = Rectangle(clickX, clickY, 0f, 0f))
 }

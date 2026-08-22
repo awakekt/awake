@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.UiTextOverflow as PrimitiveTextOverflow
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.UiTextWrap as PrimitiveTextWrap
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text as primitiveText
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextOverflow as PrimitiveTextOverflow
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextWrap as PrimitiveTextWrap
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text as primitiveText
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.style.Style
 
 enum class UiTextWrap { None, Word }
@@ -26,7 +28,7 @@ private fun UiTextOverflow.asPrimitive(): PrimitiveTextOverflow = when (this) {
 /** Neutral text primitive; typography and color remain caller-provided visual decisions. */
 fun UiScope.text(
     label: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     style: Style = Style.Empty,
     color: Color? = null,
     centered: Boolean = false,
@@ -34,9 +36,9 @@ fun UiScope.text(
     overflow: UiTextOverflow = UiTextOverflow.Visible,
     maxLines: Int = if (wrap == UiTextWrap.None) 1 else Int.MAX_VALUE,
     semanticId: String? = null,
-): UiBounds = primitive.primitiveText(
+): Rectangle = primitive.primitiveText(
     label = label,
-    modifier = modifier.asPrimitiveModifier(),
+    modifier = modifier,
     style = style,
     color = color,
     centered = centered,

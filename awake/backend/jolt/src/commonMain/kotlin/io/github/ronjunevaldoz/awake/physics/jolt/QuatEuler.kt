@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.physics.jolt
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import kotlin.math.asin
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -21,12 +21,12 @@ import kotlin.math.sin
  * created with `createBody(..., rotation = Vec3(x, y, z), ...)` and read back via
  * [syncTransforms] round-trips the same (x, y, z) up to floating-point error.
  */
-internal fun quatToEulerVec3(w: Float, x: Float, y: Float, z: Float): Vec3 {
+internal fun quatToEulerVec3(w: Float, x: Float, y: Float, z: Float): Vec3f {
     val roll = atan2(2f * (w * x + y * z), 1f - 2f * (x * x + y * y))
     val sinPitch = (2f * (w * y - z * x)).coerceIn(-1f, 1f)
     val pitch = asin(sinPitch)
     val yaw = atan2(2f * (w * z + x * y), 1f - 2f * (y * y + z * z))
-    return Vec3(roll, pitch, yaw)
+    return Vec3f(roll, pitch, yaw)
 }
 
 /**
@@ -38,7 +38,7 @@ internal fun quatToEulerVec3(w: Float, x: Float, y: Float, z: Float): Vec3 {
  * `JPC_BodyCreationSettings.Rotation`. Pure function, no JoltC/cinterop type in its signature,
  * so it's testable the same way [quatToEulerVec3] is. Returns (w, x, y, z).
  */
-internal fun eulerVec3ToQuatWxyz(rotation: Vec3): FloatArray {
+internal fun eulerVec3ToQuatWxyz(rotation: Vec3f): FloatArray {
     val halfX = rotation.x * 0.5f
     val halfY = rotation.y * 0.5f
     val halfZ = rotation.z * 0.5f

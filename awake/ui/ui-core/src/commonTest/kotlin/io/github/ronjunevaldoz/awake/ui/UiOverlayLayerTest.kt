@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.graphics.clip
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
@@ -29,14 +30,15 @@ class UiOverlayLayerTest {
 
         // A base-layer marker, emitted first -- e.g. ordinary page content behind a popup.
         ui.createColumn(x = 0f, y = 0f, width = 100f)
-            .emit(UiDrawPrimitive.Quad(0f, 0f, 10f, 10f, Color(1f, 0f, 0f, 1f)))
+            .canvas(Rectangle(0f, 0f, 10f, 10f)) { drawRect(0f, 0f, 10f, 10f, Color(1f, 0f, 0f, 1f)) }
 
         // buttonSlot's content-lambda overload (used by dropdown menu items, among others)
         // routes its content through UiPrimitiveScope.childAbsolute(...) -- this must inherit the
         // overlay flag from whatever scope is doing the popup rendering.
         val overlayColumn = ui.createColumn(x = 0f, y = 0f, width = 100f, overlayOnly = true)
         val overlayMarker = UiDrawPrimitive.Quad(0f, 0f, 10f, 10f, Color(0f, 0f, 1f, 1f))
-        overlayColumn.childAbsolute(UiBounds(0f, 0f, 10f, 10f)).emit(overlayMarker)
+        overlayColumn.childAbsolute(Rectangle(0f, 0f, 10f, 10f))
+            .canvas(Rectangle(0f, 0f, 10f, 10f)) { drawRect(0f, 0f, 10f, 10f, Color(0f, 0f, 1f, 1f)) }
 
         val primitives = ui.finishFrame().primitives
         assertEquals(
@@ -61,12 +63,14 @@ class UiOverlayLayerTest {
         // A fill/border call from an overlay scope with no explicit `overlay` argument -- this
         // is exactly how surface()/paintSurface() call it.
         val overlayColumn = ui.createColumn(x = 0f, y = 0f, width = 100f, overlayOnly = true)
-        overlayColumn.emitFillAndBorder(
-            slot = UiBounds(0f, 0f, 10f, 10f),
-            fillColor = Color(0f, 0f, 1f, 1f),
-            radiusPx = 0f,
-            borderWidth = 0f.dp,
-        )
+        overlayColumn.canvas(Rectangle(0f, 0f, 10f, 10f)) {
+            drawFillAndBorder(
+                slot = Rectangle(0f, 0f, 10f, 10f),
+                fillColor = Color(0f, 0f, 1f, 1f),
+                radiusPx = 0f,
+                borderWidth = 0f.dp,
+            )
+        }
 
         val primitives = ui.finishFrame().primitives
         assertEquals(
@@ -103,13 +107,15 @@ class UiOverlayLayerTest {
         // A small base-layer ancestor clip -- e.g. a WrapContent card only tall enough for its
         // own normal-flow content, textually wrapping a nested popup call.
         val baseColumn = ui.createColumn(x = 0f, y = 0f, width = 100f)
-        baseColumn.clip(UiBounds(0f, 0f, 100f, 10f)) {
+        baseColumn.clip(Rectangle(0f, 0f, 100f, 10f)) {
             // The popup's own overlay content, composed synchronously nested inside the base
             // ancestor's still-active (10px-tall) clip -- but its OWN clip is much taller (its
             // real, correctly-measured wrap height).
             val overlayColumn = ui.createColumn(x = 0f, y = 0f, width = 100f, overlayOnly = true)
-            overlayColumn.clip(UiBounds(0f, 0f, 100f, 80f)) {
-                overlayColumn.emit(UiDrawPrimitive.Quad(0f, 60f, 10f, 10f, Color(0f, 0f, 1f, 1f)))
+            overlayColumn.clip(Rectangle(0f, 0f, 100f, 80f)) {
+                overlayColumn.canvas(Rectangle(0f, 0f, 10f, 10f)) {
+                    drawRect(0f, 60f, 10f, 10f, Color(0f, 0f, 1f, 1f))
+                }
             }
         }
 

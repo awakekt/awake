@@ -47,7 +47,7 @@ import platform.MoltenVK.vkDestroyImage as nativeVkDestroyImage
 import platform.MoltenVK.vkDestroySampler as nativeVkDestroySampler
 import platform.MoltenVK.vkGetImageMemoryRequirements as nativeVkGetImageMemoryRequirements
 
-// Phase 6 (MoltenVK cinterop) is in progress -- see docs/MVP_PLAN.md.
+// Phase 6 (MoltenVK cinterop) is in progress -- see docs/mvp-plan.md.
 @OptIn(ExperimentalForeignApi::class)
 actual object VulkanImages {
     actual fun vkCreateImage(device: Long, createInfo: VkImageCreateInfo): Long = memScoped {

@@ -3,29 +3,19 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>CyclomaticComplexMethod:ShadcnTheme.kt$private fun createPalette(config: ShadcnThemeConfig): ShadcnPalette</ID>
-    <ID>CyclomaticComplexMethod:ShadcnTypography.kt$fun UiScope.shadcnText( label: String, style: ShadcnTextStyle = ShadcnTextStyle.P, modifier: Modifier = Modifier, centered: Boolean = false, muted: Boolean = false, visuals: SurfaceStyle = SurfaceStyle(), maxLines: Int = Int.MAX_VALUE, wrap: UiTextWrap = UiTextWrap.Word, overflow: UiTextOverflow = UiTextOverflow.Ellipsis, ): UiBounds</ID>
-    <ID>LongMethod:ShadcnButtonStyles.kt$fun ShadcnButtonVariant.visuals( theme: UiThemeValues, size: ShadcnButtonSize, ): SurfaceVisuals</ID>
-    <ID>LongMethod:ShadcnSidebarRecipes.kt$fun UiScope.shadcnSidebarFooterButton( id: String, name: String, email: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}, ): Boolean</ID>
-    <ID>LongMethod:ShadcnSidebarRecipes.kt$fun UiScope.shadcnSidebarHeaderButton( id: String, title: String, subtitle: String, modifier: Modifier = Modifier, onClick: () -> Unit = {}, ): Boolean</ID>
+    <ID>CyclomaticComplexMethod:ShadcnTypography.kt$fun UiScope.shadcnText( label: String, style: ShadcnTextStyle = ShadcnTextStyle.P, modifier: UiModifier = Modifier, centered: Boolean = false, // Nullable so an explicit tone can override a style's own default. `Default` means "inherit // the ambient color", which is exactly what a caller needs for a `Muted`-sized row that must // NOT be muted -- shadcn's AlertDescription is `text-sm` with no color class, so inside a // destructive alert it inherits red. While this defaulted to `Default`, that request was // indistinguishable from passing nothing and the style's muted default always won. tone: ShadcnTextTone? = null, emphasis: ShadcnTextEmphasis = ShadcnTextEmphasis.Inherit, maxLines: Int = Int.MAX_VALUE, wrap: UiTextWrap = UiTextWrap.Word, overflow: UiTextOverflow = UiTextOverflow.Ellipsis, ): Rectangle</ID>
+    <ID>EmptyFunctionBlock:UiSnapshotFixtures.kt${ }</ID>
+    <ID>ForbiddenComment:ShadcnButtonRecipes.kt$// TODO: delegate to the content-lambda shadcnButton with a shadcnText body instead of</ID>
+    <ID>LongMethod:ShadcnPopupRecipes.kt$fun UiScope.shadcnDropdownMenu( id: String, anchorSlot: Rectangle, expanded: Boolean, items: List&lt;ShadcnDropdownMenuEntry>, selectedIndex: Int? = null, width: Dimension = Dimension.WrapContent, height: Dimension = Dimension.WrapContent, modifier: UiModifier = Modifier, positionProvider: UiPopupPositionProvider = UiPopupDefaults.dropdown(), properties: UiPopupProperties = UiPopupProperties(), ): UiMenuResult</ID>
     <ID>LongMethod:ShadcnTheme.kt$private fun createPalette(config: ShadcnThemeConfig): ShadcnPalette</ID>
-    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.145f</ID>
-    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.205f</ID>
-    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.245f</ID>
-    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.556f</ID>
-    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.577f</ID>
-    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.922f</ID>
-    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.97f</ID>
-    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$0.985f</ID>
-    <ID>MagicNumber:PresetUiThemes.kt$LightUiTheme.&lt;no name provided>$27.325f</ID>
-    <ID>MagicNumber:ShadcnCardStyles.kt$0.16f</ID>
-    <ID>MagicNumber:ShadcnNavigationRecipes.kt$0.12f</ID>
-    <ID>MagicNumber:ShadcnNavigationRecipes.kt$0.6f</ID>
-    <ID>MagicNumber:ShadcnStatusRecipes.kt$0.1f</ID>
-    <ID>MagicNumber:ShadcnStatusRecipes.kt$0.2f</ID>
-    <ID>MagicNumber:ShadcnSurfaceRecipes.kt$24f</ID>
-    <ID>MagicNumber:ShadcnVariants.kt$ShadcnCardSize.Default$4f</ID>
-    <ID>MatchingDeclarationName:ShadcnTypography.kt$ShadcnTextStyle</ID>
+    <ID>LongMethod:UiSnapshotFixtures.kt$internal fun reviewSnapshotScenes(): List&lt;UiSnapshotScene></ID>
+    <ID>LongMethod:UiSnapshotFixtures.kt$internal fun tutorialSnapshotScenes(): List&lt;UiSnapshotScene></ID>
+    <ID>MatchingDeclarationName:UiSnapshotFixtures.kt$UiSnapshotScene</ID>
     <ID>NestedBlockDepth:ShadcnStylePresetVerificationTest.kt$ShadcnStylePresetVerificationTest$@Test fun everyPresetResolvesACompleteThemeAcrossEveryBaseColorAndMode()</ID>
+    <ID>NewLineAtEndOfFile:ShadcnIcon.kt$io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnIcon.kt</ID>
+    <ID>TooManyFunctions:ShadcnInputStyles.kt$io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnInputStyles.kt</ID>
     <ID>TooManyFunctions:ShadcnTypography.kt$io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnTypography.kt</ID>
+    <ID>UnusedParameter:ShadcnButtonGroupRecipes.kt$orientation: ShadcnButtonGroupOrientation</ID>
+    <ID>UnusedPrivateProperty:ShadcnButtonGroupRecipes.kt$/** Vertical icon-only groups (shadcn's zoom controls, the reference this ports from) have no * label to give the group a real tap-target width -- shadcn's own CSS sets a baseline `size-9` * (36dp) member width for exactly this case. Applied unconditionally here (not a caller-tunable * param -- ownership rule 6, `Modifier.widthIn(min=)` already expresses a caller override). */ private val verticalIconGroupMinWidth = 36f.dp</ID>
   </CurrentIssues>
 </SmellBaseline>

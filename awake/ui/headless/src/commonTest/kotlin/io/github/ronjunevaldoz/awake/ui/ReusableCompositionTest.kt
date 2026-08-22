@@ -2,18 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.math2d.size
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.LocalTheme
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
-import io.github.ronjunevaldoz.awake.ui.headless.buttonSlot
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.buttonSlot
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.layout.toDimension
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
@@ -69,11 +73,11 @@ class ReusableCompositionTest {
         )
 
         assertEquals(
-            UiBounds(10f, 20f, 100f, 30f),
+            Rectangle(10f, 20f, 100f, 30f),
             first.slot,
         )
         assertEquals(
-            UiBounds(25f, 30f, 100f, 30f),
+            Rectangle(25f, 30f, 100f, 30f),
             second.slot,
         )
     }
@@ -93,14 +97,14 @@ class ReusableCompositionTest {
         ) { slot ->
             text(
                 label = ">",
-                slot = UiBounds(slot.x, slot.y, 12f, slot.height),
+                slot = Rectangle(slot.x, slot.y, 12f, slot.height),
                 font = font,
                 centered = false,
                 verticallyCentered = true,
             )
             text(
                 label = "Launch",
-                slot = UiBounds(slot.x + 18f, slot.y, 72f, slot.height),
+                slot = Rectangle(slot.x + 18f, slot.y, 72f, slot.height),
                 font = font,
                 centered = false,
                 verticallyCentered = true,
@@ -109,7 +113,7 @@ class ReusableCompositionTest {
 
         val glyphs = ui.finishFrame().primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
         assertEquals(
-            UiBounds(20f, 20f, 180f, 40f),
+            Rectangle(20f, 20f, 180f, 40f),
             result.slot,
         )
         assertTrue(
@@ -151,13 +155,16 @@ private fun UiPrimitiveScope.badge(
         },
         state = MutableStyleState(hovered = hovered, active = active).set(BadgeToneKey, emphasized),
     )
-    emitFillAndBorder(
-        slot = slot,
-        fillColor = resolved.background ?: Color.Transparent,
-        radiusPx = resolved.shape.toPx(),
-        borderWidth = resolved.borderWidth,
-        borderColor = resolved.borderColor ?: theme.colors.border,
-    )
+    val resolvedBorderColor = resolved.borderColor ?: theme.colors.border
+    canvas(slot) {
+        drawFillAndBorder(
+            slot = slot,
+            fillColor = resolved.background ?: Color.Transparent,
+            radiusPx = resolved.shape.toPx(),
+            borderWidth = resolved.borderWidth,
+            borderColor = resolvedBorderColor,
+        )
+    }
     if (font != null) {
         text(
             label,
@@ -178,8 +185,8 @@ private class DiagonalScope(
 ) : io.github.ronjunevaldoz.awake.ui.layouts.AbstractUiScope(context) {
     private var index = 0
 
-    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): UiBounds {
-        val slot = UiBounds(
+    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): Rectangle {
+        val slot = Rectangle(
             x = startX + stepX * index,
             y = startY + stepY * index,
             width = resolve(width, fallback = 100f),

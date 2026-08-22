@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.uiPath
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.uiPath
 import io.github.ronjunevaldoz.awake.vulkan.renderer.renderUiToTexture
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 /**
  * Pixel-level proof that [UiDrawPrimitive.FilledPath]'s diagonal edges are antialiased --
  * regression coverage for the "dropdown chevron looks jagged" report this session fixed by
- * adding [io.github.ronjunevaldoz.awake.ui.tessellateFillAa]'s AA fringe (see its doc comment
+ * adding [io.github.ronjunevaldoz.awake.core.graphics2d.tessellateFillAa]'s AA fringe (see its doc comment
  * for why an AA fringe ring was chosen over MSAA). A pixel-baseline snapshot alone can't prove
  * "smoother" -- this samples one scanline crossing a known diagonal edge and asserts the alpha
  * channel takes on INTERMEDIATE values there (not just hard 0/255 jumps), which is only

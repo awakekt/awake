@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.physics.jolt
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.physics.MotionType
 import io.github.ronjunevaldoz.awake.physics.SphereShape
 import kotlin.math.abs
@@ -21,13 +21,13 @@ class JoltPhysicsWorldTest {
     @Test
     fun dynamicBodyFallsUnderGravity() {
         val gravity = -9.81f
-        val world = JoltPhysicsWorld(gravity = Vec3(0f, gravity, 0f))
+        val world = JoltPhysicsWorld(gravity = Vec3f(0f, gravity, 0f))
         try {
             val startY = 10f
             val handle = world.createBody(
                 shape = SphereShape(radius = 0.5f),
-                position = Vec3(0f, startY, 0f),
-                rotation = Vec3(0f, 0f, 0f),
+                position = Vec3f(0f, startY, 0f),
+                rotation = Vec3f(0f, 0f, 0f),
                 motionType = MotionType.DYNAMIC,
             )
 
@@ -47,8 +47,8 @@ class JoltPhysicsWorldTest {
             assertTrue(
                 abs(fallDistance - expectedFallDistance) < expectedFallDistance * 0.2f,
                 "Expected the sphere to fall about $expectedFallDistance m over $steps steps " +
-                    "of $deltaTime s each, but it fell $fallDistance m " +
-                    "(from y=$startY to y=${transform.position.y}).",
+                        "of $deltaTime s each, but it fell $fallDistance m " +
+                        "(from y=$startY to y=${transform.position.y}).",
             )
         } finally {
             world.destroy()

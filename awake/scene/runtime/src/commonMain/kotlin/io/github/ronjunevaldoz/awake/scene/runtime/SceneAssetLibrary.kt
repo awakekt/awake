@@ -4,11 +4,12 @@ package io.github.ronjunevaldoz.awake.scene.runtime
 
 import io.github.ronjunevaldoz.awake.render.material.Material
 import io.github.ronjunevaldoz.awake.render.mesh.Mesh
+import io.github.ronjunevaldoz.awake.render.renderer.CullMode
 import io.github.ronjunevaldoz.awake.scene.rendering.components.MeshRenderer
 
-typealias SceneMeshFactory = SceneGameRuntime.() -> Mesh
-typealias SceneMaterialFactory = SceneGameRuntime.() -> Material
-typealias SceneMeshRendererFactory = SceneGameRuntime.() -> MeshRenderer
+typealias SceneMeshFactory = SceneAppLifecycleRuntime.() -> Mesh
+typealias SceneMaterialFactory = SceneAppLifecycleRuntime.() -> Material
+typealias SceneMeshRendererFactory = SceneAppLifecycleRuntime.() -> MeshRenderer
 
 data class SceneRenderableKey(
     val mesh: String,
@@ -23,14 +24,14 @@ class SceneAssetLibrary(
     private val meshes = linkedMapOf<String, Mesh>()
     private val materials = linkedMapOf<String, Material>()
 
-    fun requireMesh(runtime: SceneGameRuntime, name: String): Mesh = meshes.getOrPut(name) {
+    fun requireMesh(runtime: SceneAppLifecycleRuntime, name: String): Mesh = meshes.getOrPut(name) {
         val factory = checkNotNull(meshFactories[name]) {
             "No scene mesh named '$name' is registered."
         }
         runtime.factory()
     }
 
-    fun requireMaterial(runtime: SceneGameRuntime, name: String): Material =
+    fun requireMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material =
         materials.getOrPut(name) {
             val factory = checkNotNull(materialFactories[name]) {
                 "No scene material named '$name' is registered."
@@ -39,7 +40,7 @@ class SceneAssetLibrary(
         }
 
     fun resolve(
-        runtime: SceneGameRuntime,
+        runtime: SceneAppLifecycleRuntime,
         request: SceneRenderableRequest,
     ): MeshRenderer {
         val key = SceneRenderableKey(
@@ -53,6 +54,7 @@ class SceneAssetLibrary(
         return MeshRenderer(
             mesh = requireMesh(runtime, key.mesh),
             material = requireMaterial(runtime, key.material),
+            cullMode = request.meshRenderer.cullMode.toCullMode(),
         )
     }
 

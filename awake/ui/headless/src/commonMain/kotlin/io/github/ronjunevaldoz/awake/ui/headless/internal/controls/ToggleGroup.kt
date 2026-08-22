@@ -3,7 +3,7 @@
 package io.github.ronjunevaldoz.awake.ui.headless.internal.controls
 
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
 import io.github.ronjunevaldoz.awake.ui.layouts.row
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier

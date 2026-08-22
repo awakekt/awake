@@ -4,12 +4,12 @@ package io.github.ronjunevaldoz.awake.ui.context
 
 import io.github.ronjunevaldoz.awake.ui.UiInputState
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiInsets
 import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
 import io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.layouts.RowScope
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import kotlin.math.max
 
 internal class UiContextMeasureState {
@@ -38,7 +38,7 @@ internal class UiContextMeasureState {
     // the row-sizing trial's 4096px placeholder bound as its "real" height, and that leaked all
     // the way up into the row's resolved WrapContent height.
     internal var measuredMaxBottomExcludingFill = 0f
-    internal val measuredSlots = ArrayList<UiBounds>()
+    internal val measuredSlots = ArrayList<Rectangle>()
     internal val measuredWeights = ArrayList<LayoutWeight?>()
     internal val measuredFillsMainAxis = ArrayList<Boolean>()
 
@@ -53,7 +53,7 @@ internal class UiContextMeasureState {
     }
 
     fun record(
-        slot: UiBounds,
+        slot: Rectangle,
         contributesToWrapWidth: Boolean = true,
         contributesToWrapHeight: Boolean = true,
         contributesToChildList: Boolean = true,
@@ -112,10 +112,10 @@ internal class UiContextMeasureState {
         sourceContext: UiContext,
         height: Float = UNBOUNDED_MAIN_AXIS,
         wrapContentPass: Boolean = false,
-        content: ColumnScope.(slot: UiBounds) -> Unit,
+        content: ColumnScope.(slot: Rectangle) -> Unit,
     ): UiMeasuredContent {
         val measureContext = createMeasureContext(sourceContext)
-        val outerSlot = UiBounds(0f, 0f, width.coerceAtLeast(0f), height.coerceAtLeast(0f))
+        val outerSlot = Rectangle(0f, 0f, width.coerceAtLeast(0f), height.coerceAtLeast(0f))
         val measureScope = measureContext.createColumn(
             slot = outerSlot,
             // This trial column's own cursor advance must match the real column's actual
@@ -125,6 +125,7 @@ internal class UiContextMeasureState {
             // exact same pixel value regardless of UiDensity.scale.
             verticalArrangement = Arrangement.spacedBy(gap.px),
             insets = insets,
+            hasBoundedFillWidth = !wrapContentPass && width != UNBOUNDED_MAIN_AXIS,
             // The trial's height is UNBOUNDED_MAIN_AXIS unless a caller supplied a real one. That
             // is a placeholder, not a bound, and reporting it as bounded is what let children
             // resolve FillMax (and weight, which resolves through it) straight to 100000 and adopt
@@ -144,10 +145,10 @@ internal class UiContextMeasureState {
         sourceContext: UiContext,
         width: Float = UNBOUNDED_MAIN_AXIS,
         wrapContentPass: Boolean = false,
-        content: RowScope.(slot: UiBounds) -> Unit,
+        content: RowScope.(slot: Rectangle) -> Unit,
     ): UiMeasuredContent {
         val measureContext = createMeasureContext(sourceContext)
-        val outerSlot = UiBounds(0f, 0f, width.coerceAtLeast(0f), height.coerceAtLeast(0f))
+        val outerSlot = Rectangle(0f, 0f, width.coerceAtLeast(0f), height.coerceAtLeast(0f))
         val measureScope = measureContext.createRow(
             slot = outerSlot,
             // See the matching comment in measureColumnContent -- same real-gap-not-default
@@ -155,6 +156,7 @@ internal class UiContextMeasureState {
             horizontalArrangement = Arrangement.spacedBy(gap.px),
             insets = insets,
             hasBoundedFillWidth = width != UNBOUNDED_MAIN_AXIS,
+            hasBoundedFillHeight = !wrapContentPass && height != UNBOUNDED_MAIN_AXIS,
         )
         measureContext.withWrapContentPass(wrapContentPass) {
             UiMeasureTrialStats.record { measureScope.content(outerSlot) }
@@ -208,7 +210,8 @@ internal class UiContextMeasureState {
         )
         // Restore all effective ambient locals (not named theme/font/text values). This keeps a
         // trial consistent with the source tree even when an app provides its own UiLocal.
-        measureContext.restoreAmbientSnapshotInternal(sourceContext.ambientSnapshotInternal())
+        measureContext.copyAmbientFromInternal(sourceContext)
+        measureContext.syncWeightAnswersFromInternal(sourceContext)
         measureContext
     }
 }

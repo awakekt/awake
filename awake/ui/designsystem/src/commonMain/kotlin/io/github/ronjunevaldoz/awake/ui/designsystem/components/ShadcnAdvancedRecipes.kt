@@ -4,9 +4,10 @@
 
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.headless.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.ResizablePanelGroupScope
 import io.github.ronjunevaldoz.awake.ui.headless.ScrollState
 import io.github.ronjunevaldoz.awake.ui.headless.UiResizableDirection
@@ -22,30 +23,30 @@ import io.github.ronjunevaldoz.awake.ui.style.Style
 fun UiScope.shadcnResizablePanelGroup(
     id: String,
     direction: UiResizableDirection = UiResizableDirection.Horizontal,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     content: ResizablePanelGroupScope.() -> Unit,
-): UiBounds = resizablePanelGroup(id = id, direction = direction, modifier = modifier, content = content)
+): Rectangle = resizablePanelGroup(id = id, direction = direction, modifier = modifier, content = content)
 
 fun ResizablePanelGroupScope.shadcnResizablePanel(
     id: String,
     defaultSize: Float,
     minSize: Float = 0.1f,
     maxSize: Float = 1f,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = panel(id, defaultSize, minSize, maxSize, content)
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = panel(id, defaultSize, minSize, maxSize, content)
 
 fun ResizablePanelGroupScope.shadcnResizableHandle(
     id: String,
     withHandle: Boolean = false,
     style: Style = Style.Empty,
-): UiBounds = handle(id = id, withHandle = withHandle, style = style)
+): Rectangle = handle(id = id, withHandle = withHandle, style = style)
 
 fun UiScope.shadcnScrollArea(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     state: ScrollState = rememberScrollState(id),
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = surface(
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = surface(
     id = id,
     // A scrolling `surface()` call (one with `.scrollState` on its modifier) routes to
     // `scrollPanel()` (see `ScrollContainers.kt`), not `resolveVisualSurface()` -- that path

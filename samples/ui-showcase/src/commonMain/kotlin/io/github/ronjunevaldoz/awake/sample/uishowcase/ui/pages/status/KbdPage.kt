@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.sample.uishowcase.ui.pages.status
 
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnKbd
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier

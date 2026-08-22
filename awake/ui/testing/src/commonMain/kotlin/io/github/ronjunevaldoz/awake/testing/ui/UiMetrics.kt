@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.testing.ui
 
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.UiPath
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.bounds
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPath
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.core.graphics2d.bounds
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -26,15 +26,15 @@ enum class UiPrimitiveMetricKind {
 }
 
 data class UiFrameMetrics(
-    val frame: UiBounds,
+    val frame: Rectangle,
     val primitiveCounts: Map<UiPrimitiveMetricKind, Int>,
-    val contentBounds: UiBounds?,
+    val contentBounds: Rectangle?,
 ) {
-    fun normalizedContentBounds(): UiBounds? = contentBounds?.let { bounds ->
+    fun normalizedContentBounds(): Rectangle? = contentBounds?.let { bounds ->
         if (frame.width <= 0f || frame.height <= 0f) {
             null
         } else {
-            UiBounds(
+            Rectangle(
                 x = (bounds.x - frame.x) / frame.width,
                 y = (bounds.y - frame.y) / frame.height,
                 width = bounds.width / frame.width,
@@ -60,10 +60,10 @@ data class UiMetricsReport(val issues: List<String>) {
 
 fun measureUiFrame(
     primitives: List<UiDrawPrimitive>,
-    frame: UiBounds,
+    frame: Rectangle,
 ): UiFrameMetrics {
     val counts = linkedMapOf<UiPrimitiveMetricKind, Int>()
-    var contentBounds: io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds? = null
+    var contentBounds: io.github.ronjunevaldoz.awake.core.math2d.Rectangle? = null
 
     primitives.forEach { primitive ->
         counts[primitive.metricKind()] = (counts[primitive.metricKind()] ?: 0) + 1
@@ -129,7 +129,7 @@ fun inspectDensityParity(
 fun inspectBoundsFit(
     label: String,
     metrics: UiFrameMetrics,
-    allowedBounds: UiBounds,
+    allowedBounds: Rectangle,
     tolerancePx: Float = 0f,
 ): UiMetricsReport {
     val bounds = metrics.contentBounds ?: return UiMetricsReport(emptyList())
@@ -146,7 +146,7 @@ fun inspectBoundsFit(
 
 fun inspectNonOverlappingBounds(
     label: String,
-    bounds: List<UiBounds>,
+    bounds: List<Rectangle>,
     tolerancePx: Float = 0f,
 ): UiMetricsReport {
     val issues = ArrayList<String>()
@@ -167,8 +167,8 @@ fun inspectNonOverlappingBounds(
 
 private fun compareBounds(
     label: String,
-    reference: UiBounds?,
-    candidate: UiBounds?,
+    reference: Rectangle?,
+    candidate: Rectangle?,
     tolerance: Float,
     issues: MutableList<String>,
 ) {
@@ -197,13 +197,13 @@ private fun UiDrawPrimitive.metricKind(): UiPrimitiveMetricKind = when (this) {
     is UiDrawPrimitive.ClipPop -> UiPrimitiveMetricKind.ClipPop
 }
 
-private fun UiDrawPrimitive.metricBounds(): io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds? = when (this) {
-    is UiDrawPrimitive.Quad -> io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(x, y, w, h)
-    is UiDrawPrimitive.GradientQuad -> io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(x, y, w, h)
-    is UiDrawPrimitive.RoundedQuad -> io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(x, y, w, h)
-    is UiDrawPrimitive.Glyph -> io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(x, y, w, h)
-    is UiDrawPrimitive.Texture -> io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(x, y, w, h)
-    is UiDrawPrimitive.ShadowQuad -> io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(
+private fun UiDrawPrimitive.metricBounds(): io.github.ronjunevaldoz.awake.core.math2d.Rectangle? = when (this) {
+    is UiDrawPrimitive.Quad -> io.github.ronjunevaldoz.awake.core.math2d.Rectangle(x, y, w, h)
+    is UiDrawPrimitive.GradientQuad -> io.github.ronjunevaldoz.awake.core.math2d.Rectangle(x, y, w, h)
+    is UiDrawPrimitive.RoundedQuad -> io.github.ronjunevaldoz.awake.core.math2d.Rectangle(x, y, w, h)
+    is UiDrawPrimitive.Glyph -> io.github.ronjunevaldoz.awake.core.math2d.Rectangle(x, y, w, h)
+    is UiDrawPrimitive.Texture -> io.github.ronjunevaldoz.awake.core.math2d.Rectangle(x, y, w, h)
+    is UiDrawPrimitive.ShadowQuad -> io.github.ronjunevaldoz.awake.core.math2d.Rectangle(
         x + offsetX - blurRadius - spread,
         y + offsetY - blurRadius - spread,
         w + (blurRadius + spread) * 2f,
@@ -216,10 +216,10 @@ private fun UiDrawPrimitive.metricBounds(): io.github.ronjunevaldoz.awake.ui.api
     is UiDrawPrimitive.ClipPop -> null
 }
 
-private fun strokedBounds(path: UiPath, strokeWidthPx: Float): io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds {
+private fun strokedBounds(path: UiPath, strokeWidthPx: Float): io.github.ronjunevaldoz.awake.core.math2d.Rectangle {
     val bounds = path.bounds()
     val inset = strokeWidthPx / 2f
-    return io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(
+    return io.github.ronjunevaldoz.awake.core.math2d.Rectangle(
         x = bounds.x - inset,
         y = bounds.y - inset,
         width = bounds.width + inset * 2f,
@@ -227,12 +227,12 @@ private fun strokedBounds(path: UiPath, strokeWidthPx: Float): io.github.ronjune
     )
 }
 
-private fun io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds.union(other: io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds): io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds {
+private fun io.github.ronjunevaldoz.awake.core.math2d.Rectangle.union(other: io.github.ronjunevaldoz.awake.core.math2d.Rectangle): io.github.ronjunevaldoz.awake.core.math2d.Rectangle {
     val minX = min(x, other.x)
     val minY = min(y, other.y)
     val maxX = max(x + width, other.x + other.width)
     val maxY = max(y + height, other.y + other.height)
-    return io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds(
+    return io.github.ronjunevaldoz.awake.core.math2d.Rectangle(
         x = minX,
         y = minY,
         width = maxX - minX,

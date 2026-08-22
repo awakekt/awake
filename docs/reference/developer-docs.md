@@ -49,6 +49,9 @@ Use them like this:
 
 - `docs/architecture.md`
   - stable architecture, module boundaries, threading model, and long-lived technical rules
+- `docs/reference/module-architecture.md`
+  - source of truth for module decisions: how the 44 modules are grouped, which splits are
+    decided or withdrawn, and where a new module goes. Paired with `awake/README.md`'s map
 - `docs/reference/ui-ownership.md`
   - canonical placement rules for reusable UI primitives, compositions, design-system pieces,
     and sample adapters

@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan.texture
 
-import io.github.ronjunevaldoz.awake.core.graphics.Bitmap
-import io.github.ronjunevaldoz.awake.core.graphics.createBitmap
-import io.github.ronjunevaldoz.awake.core.utils.readResourceBytes
+import io.github.ronjunevaldoz.awake.core.image.Bitmap
+import io.github.ronjunevaldoz.awake.core.image.createBitmap
+import io.github.ronjunevaldoz.awake.core.host.readResourceBytes
 import io.github.ronjunevaldoz.awake.vulkan.device.GraphicsDevice
 
 /**

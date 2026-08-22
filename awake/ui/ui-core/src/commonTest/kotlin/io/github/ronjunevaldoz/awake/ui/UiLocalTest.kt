@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.sp
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.sp
 import io.github.ronjunevaldoz.awake.ui.context.UiContextStacks
 import io.github.ronjunevaldoz.awake.ui.context.uiLocalOf
 import io.github.ronjunevaldoz.awake.ui.theme.TextStyle

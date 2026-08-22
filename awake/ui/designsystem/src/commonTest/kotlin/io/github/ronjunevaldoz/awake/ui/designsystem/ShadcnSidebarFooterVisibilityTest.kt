@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebar
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebarFooterButton
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebarGroup
@@ -11,14 +11,14 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebarHea
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebarMenu
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebarMenuItem
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxHeight
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxWidth
-import io.github.ronjunevaldoz.awake.ui.headless.height
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxHeight
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxWidth
+import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.headless.row
 import io.github.ronjunevaldoz.awake.ui.headless.spacer
 import io.github.ronjunevaldoz.awake.ui.headless.surface
-import io.github.ronjunevaldoz.awake.ui.headless.width
+import io.github.ronjunevaldoz.awake.ui.modifier.width
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -35,7 +35,7 @@ class ShadcnSidebarFooterVisibilityTest {
 
     /** footerBottom, sidebarBottom, footerHeight -- the last so tolerances scale with density. */
     private fun footerBottomAndSidebarBottom(contentHeightDp: Float): Triple<Float, Float, Float> {
-        var sidebar: UiBounds? = null
+        var sidebar: Rectangle? = null
         val output = renderShadcnComponent(width = 400f, height = 600f, font = BitmapFont()) {
             sidebar = shadcnSidebar(
                 id = "sidebar",
@@ -124,7 +124,7 @@ class ShadcnSidebarFooterVisibilityTest {
         // sidebar's own height then resolves from its parent rather than from its modifier, and
         // the weighted content slot has to divide THAT. This is the shadcn-sidebar-example
         // preview's exact shape.
-        var sidebar: UiBounds? = null
+        var sidebar: Rectangle? = null
         val output = renderShadcnComponent(
             width = 600f,
             height = SIDEBAR_HEIGHT,
@@ -169,7 +169,7 @@ class ShadcnSidebarFooterVisibilityTest {
         // The preview's exact shape, and the one that isolated the bug: a real
         // shadcnSidebarHeaderButton above the weighted content slot. Every other case here uses a
         // spacer or a plain surface as the header and passes.
-        var sidebar: UiBounds? = null
+        var sidebar: Rectangle? = null
         val frame = renderShadcnComponent(width = 600f, height = 1040f, density = 2f) {
             sidebar = shadcnSidebar(
                 id = "sidebar",
@@ -206,7 +206,7 @@ class ShadcnSidebarFooterVisibilityTest {
         // inside a wrap-height surface inside a column. Every other case here puts it at the root,
         // and all of them pass while the preview renders the footer collapsed under the header --
         // so the wrapping parent is the remaining difference.
-        var sidebar: UiBounds? = null
+        var sidebar: Rectangle? = null
         val output = renderShadcnComponent(width = 600f, height = 900f, font = BitmapFont()) {
             surface(id = "wrapper", modifier = Modifier.fillMaxWidth()) {
                 sidebar = shadcnSidebar(

@@ -52,21 +52,30 @@ class World {
 
     inline fun <reified T : Any> add(entity: Entity, component: T): T? {
         val typeId = components.typeIdForKey(componentTypeKey<T>()) { T::class }
-        return addInternal(entity, typeId, T::class, component)
+        val store = components.storeForKey(typeId) { T::class }
+        return addInternal(entity, typeId, store, component)
     }
 
-    fun <T : Any> add(entity: Entity, type: KClass<T>, component: T): T? = addInternal(entity, components.typeId(type), type, component)
+    fun <T : Any> add(entity: Entity, type: KClass<T>, component: T): T? {
+        val typeId = components.typeId(type)
+        return addInternal(entity, typeId, components.store(typeId, type), component)
+    }
 
     @PublishedApi
-    internal fun <T : Any> addInternal(entity: Entity, typeId: ComponentTypeId, type: KClass<T>, component: T): T? {
+    internal fun <T : Any> addInternal(
+        entity: Entity,
+        typeId: ComponentTypeId,
+        store: ComponentStore<T>,
+        component: T,
+    ): T? {
         requireAlive(entity)
-        val previous = components.store(typeId, type).add(entity, component)
+        val previous = store.add(entity, component)
         if (previous == null) {
             entities.markComponentAdded(entity.id, typeId)
             queryCache.markAllQueriesDirty()
             familyRegistry.addComponent(entity, typeId, component)
         } else {
-            components.recycle(type, previous)
+            components.recycle(typeId, previous)
             familyRegistry.replaceComponent(entity, typeId, component)
         }
         return previous
@@ -96,18 +105,16 @@ class World {
 
     inline fun <reified T : Any> remove(entity: Entity): T? {
         val typeId = components.typeIdForKeyOrNull(componentTypeKey<T>()) ?: return null
-        return removeInternal(entity, typeId, T::class)
+        return removeInternal(entity, typeId)
     }
 
     fun <T : Any> remove(entity: Entity, type: KClass<T>): T? {
         val typeId = components.typeIdOrNull(type) ?: return null
-        return removeInternal(entity, typeId, type)
+        return removeInternal(entity, typeId)
     }
 
     @PublishedApi
-    // `type` drives reified type inference at the inline `remove<T>()` call sites (so T can be
-    // resolved without a KClass lookup on the hot path); the body itself only needs `typeId`.
-    internal fun <T : Any> removeInternal(entity: Entity, typeId: ComponentTypeId, @Suppress("unused") type: KClass<T>): T? {
+    internal fun <T : Any> removeInternal(entity: Entity, typeId: ComponentTypeId): T? {
         if (!entities.isAlive(entity)) {
             return null
         }
@@ -192,6 +199,17 @@ class World {
 
     fun componentCount(type: KClass<out Any>): Int = components.componentCount(type)
 
+    inline fun <reified T : Any> storageKind(): ComponentStorageKind = storageKind(T::class)
+
+    fun storageKind(type: KClass<out Any>): ComponentStorageKind = components.storageKind(type)
+
+    fun describeStorage(): List<ComponentStorageInfo> = components.storageInfo()
+
+    fun inspectStorage(entity: Entity): EntityStorageInfo? {
+        if (!entities.isAlive(entity)) return null
+        return EntityStorageInfo(entity, components.storageInfo(entities.signature(entity.id)))
+    }
+
     // No cast actually happens on this line -- components.store(typeId, type) already
     // returns ComponentStore<T> via its own generic signature. Kept here only because
     // this delegates into ComponentRegistry.store, whose real UNCHECKED_CAST this mirrors.
@@ -222,15 +240,21 @@ class World {
 
     inline fun <reified T : Any> add(entity: Entity, typeId: ComponentTypeId): T {
         val instance = components.pool(typeId)?.obtain() ?: components.pool(T::class).obtain()
-        addInternal(entity, typeId, T::class, instance as T)
-        return instance as T
+
+        @Suppress("UNCHECKED_CAST")
+        val typedInstance = instance as T
+        add(entity, typeId, typedInstance)
+        return typedInstance
     }
 
-    inline fun <reified T : Any> add(entity: Entity, typeId: ComponentTypeId, component: T): T? = addInternal(entity, typeId, T::class, component)
+    inline fun <reified T : Any> add(entity: Entity, typeId: ComponentTypeId, component: T): T? {
+        val store = components.storeOrNull<T>(typeId) ?: components.store(typeId, T::class)
+        return addInternal(entity, typeId, store, component)
+    }
 
     inline fun <reified T : Any> get(entity: Entity, typeId: ComponentTypeId): T? = getInternal<T>(entity, typeId)
 
-    inline fun <reified T : Any> remove(entity: Entity, typeId: ComponentTypeId): T? = removeInternal(entity, typeId, T::class)
+    inline fun <reified T : Any> remove(entity: Entity, typeId: ComponentTypeId): T? = removeInternal(entity, typeId)
 
     fun has(entity: Entity, typeId: ComponentTypeId): Boolean = hasInternal(entity, typeId)
 }

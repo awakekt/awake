@@ -12,7 +12,10 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":awake:core"))
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:core:math2d"))
+            implementation(project(":awake:core:math"))
+            api(project(":awake:core:color"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

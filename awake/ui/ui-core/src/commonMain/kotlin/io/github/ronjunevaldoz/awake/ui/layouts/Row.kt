@@ -5,7 +5,7 @@ package io.github.ronjunevaldoz.awake.ui.layouts
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.childRow
 import io.github.ronjunevaldoz.awake.ui.context.LocalCacheKey
 import io.github.ronjunevaldoz.awake.ui.context.UiMeasuredContent
@@ -16,12 +16,12 @@ import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.modifier.withSizeFallback
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.scope.claimModifiedSlot
 import io.github.ronjunevaldoz.awake.ui.scope.fillHeightOrNull
 import io.github.ronjunevaldoz.awake.ui.style.MutableStyleState
 import io.github.ronjunevaldoz.awake.ui.style.Style
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 
 /**
  * Shared implementation behind every scope-specific `row()` wrapper below -- each wrapper only
@@ -43,8 +43,8 @@ private fun UiPrimitiveScope.resolveMeasuredRow(
     availableHeightFallback: Float,
     id: String?,
     cacheKey: Any?,
-    content: RowScope.(slot: UiBounds) -> Unit,
-): UiBounds {
+    content: RowScope.(slot: Rectangle) -> Unit,
+): Rectangle {
     val requestedWidth = modifier.widthDimension ?: defaultWidth
     val requestedHeight = modifier.heightDimension ?: defaultHeight
     val effectiveArrangement = horizontalArrangement
@@ -106,8 +106,8 @@ fun ColumnScope.row(
     // Both default to null (existing call sites unaffected).
     id: String? = null,
     cacheKey: Any? = null,
-    content: RowScope.(slot: UiBounds) -> Unit,
-): UiBounds = (this as UiPrimitiveScope).resolveMeasuredRow(
+    content: RowScope.(slot: Rectangle) -> Unit,
+): Rectangle = (this as UiPrimitiveScope).resolveMeasuredRow(
     horizontalArrangement = horizontalArrangement,
     verticalAlignment = verticalAlignment,
     modifier = modifier,
@@ -129,8 +129,8 @@ fun RowScope.row(
     // Forwarded straight through to UiPrimitiveScope.row() below -- see that function's doc comment.
     id: String? = null,
     cacheKey: Any? = null,
-    content: RowScope.(slot: UiBounds) -> Unit,
-): UiBounds = (this as UiPrimitiveScope).resolveMeasuredRow(
+    content: RowScope.(slot: Rectangle) -> Unit,
+): Rectangle = (this as UiPrimitiveScope).resolveMeasuredRow(
     horizontalArrangement = horizontalArrangement,
     verticalAlignment = verticalAlignment,
     modifier = modifier,
@@ -149,8 +149,8 @@ fun AbsoluteScope.row(
     // Forwarded straight through to UiPrimitiveScope.row() below -- see that function's doc comment.
     id: String? = null,
     cacheKey: Any? = null,
-    content: RowScope.(slot: UiBounds) -> Unit,
-): UiBounds = (this as UiPrimitiveScope).resolveMeasuredRow(
+    content: RowScope.(slot: Rectangle) -> Unit,
+): Rectangle = (this as UiPrimitiveScope).resolveMeasuredRow(
     horizontalArrangement = horizontalArrangement,
     verticalAlignment = verticalAlignment,
     modifier = modifier,
@@ -169,8 +169,8 @@ fun BoxScope.row(
     // Forwarded straight through to UiPrimitiveScope.row() below -- see that function's doc comment.
     id: String? = null,
     cacheKey: Any? = null,
-    content: RowScope.(slot: UiBounds) -> Unit,
-): UiBounds = (this as UiPrimitiveScope).resolveMeasuredRow(
+    content: RowScope.(slot: Rectangle) -> Unit,
+): Rectangle = (this as UiPrimitiveScope).resolveMeasuredRow(
     horizontalArrangement = horizontalArrangement,
     verticalAlignment = verticalAlignment,
     modifier = modifier,
@@ -202,8 +202,8 @@ fun UiPrimitiveScope.row(
     // (UiWeightCacheConsistencyCheck) exists to catch -- to skip the trial on cache hits.
     id: String? = null,
     cacheKey: Any? = null,
-    content: RowScope.(slot: UiBounds) -> Unit,
-): UiBounds {
+    content: RowScope.(slot: Rectangle) -> Unit,
+): Rectangle {
     requireScrollableContainer(modifier, "row()")
     val hasExplicitFixedDimensions = modifier.widthDimension != null &&
         modifier.heightDimension != null &&
@@ -301,7 +301,7 @@ fun UiPrimitiveScope.row(
         val plan = effectiveArrangement.plan(slot.width, childWidths.size, occupiedWidth)
         var x = slot.x + plan.leadingSpacePx
         val arrangedSlots = childWidths.mapIndexed { index, width ->
-            UiBounds(x, slot.y, width, measured.slots[index].height).also {
+            Rectangle(x, slot.y, width, measured.slots[index].height).also {
                 x += width + plan.betweenSpacePx
             }
         }

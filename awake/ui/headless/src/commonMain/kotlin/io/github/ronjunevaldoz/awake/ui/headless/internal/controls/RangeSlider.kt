@@ -2,20 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless.internal.controls
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.canvas
 import io.github.ronjunevaldoz.awake.ui.context.sliderValueFromPointerX
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.paintSurface
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.resolveInteractiveSurface
-import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.UiInteraction
-import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.interact
+import io.github.ronjunevaldoz.awake.ui.foundation.UiInteraction
+import io.github.ronjunevaldoz.awake.ui.foundation.interact
 import io.github.ronjunevaldoz.awake.ui.layouts.box
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
@@ -26,7 +27,7 @@ import io.github.ronjunevaldoz.awake.ui.scope.pointerX
 import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.ui.theme
-import io.github.ronjunevaldoz.awake.ui.withGraphicsLayerAlpha
+import io.github.ronjunevaldoz.awake.ui.headless.withDisabledAlpha
 import kotlin.math.abs
 
 private const val RANGE_SLIDER_TRACK_HEIGHT_PX = 6f
@@ -80,7 +81,7 @@ fun UiPrimitiveScope.rangeSlider(
         // centered at fraction 0 or 1 on a full-width track extends past the widget's own
         // bounds and gets clipped by any parent that clips content.
         val trackInsetPx = RANGE_SLIDER_KNOB_DIAMETER_PX / 2f
-        val trackSlot = UiBounds(
+        val trackSlot = Rectangle(
             boxSlot.x + trackInsetPx,
             boxSlot.y + (boxSlot.height - RANGE_SLIDER_TRACK_HEIGHT_PX) / 2f,
             (boxSlot.width - trackInsetPx * 2f).coerceAtLeast(0f),
@@ -174,27 +175,31 @@ fun UiPrimitiveScope.rangeSlider(
         val newStartKnobX = trackSlot.x + trackSlot.width * lowFraction
         val newEndKnobX = trackSlot.x + trackSlot.width * highFraction
 
-        withGraphicsLayerAlpha(if (enabled) 1f else 0.5f) {
+        withDisabledAlpha(enabled) {
             paintSurface(
                 slot = trackSlot,
                 resolved = surface.resolved.copy(shapeSpec = UiShapeSpec.Pill),
             )
             if (fillWidth > 0f) {
-                emitFillAndBorder(
-                    slot = UiBounds(fillX, trackSlot.y, fillWidth, trackSlot.height),
-                    // resolved.foreground is the caller's accent color (shares shadcnSliderStyle
-                    // with slider()) -- the token is only a fallback for a bare Style.Empty
-                    // caller, not a hardcoded override.
-                    fillColor = surface.resolved.foreground ?: theme.colors.primary,
-                    radiusPx = 0f,
-                    borderWidth = UiShape.none,
-                    borderColor = Color.Transparent,
-                    shapeSpec = UiShapeSpec.Pill,
-                )
+                val fillSlot = Rectangle(fillX, trackSlot.y, fillWidth, trackSlot.height)
+                // resolved.foreground is the caller's accent color (shares shadcnSliderStyle
+                // with slider()) -- the token is only a fallback for a bare Style.Empty
+                // caller, not a hardcoded override.
+                val fillColor = surface.resolved.foreground ?: theme.colors.primary
+                canvas(fillSlot) {
+                    drawFillAndBorder(
+                        slot = fillSlot,
+                        fillColor = fillColor,
+                        radiusPx = 0f,
+                        borderWidth = UiShape.none,
+                        borderColor = Color.Transparent,
+                        shapeSpec = UiShapeSpec.Pill,
+                    )
+                }
             }
             for (knobCenterX in listOf(newStartKnobX, newEndKnobX)) {
                 paintSurface(
-                    slot = UiBounds(
+                    slot = Rectangle(
                         knobCenterX - RANGE_SLIDER_KNOB_DIAMETER_PX / 2f,
                         boxSlot.y + (boxSlot.height - RANGE_SLIDER_KNOB_DIAMETER_PX) / 2f,
                         RANGE_SLIDER_KNOB_DIAMETER_PX,
@@ -219,7 +224,7 @@ fun UiPrimitiveScope.rangeSlider(
             label = label,
             bounds = boxSlot,
             contentBounds = if (fillWidth > 0f) {
-                UiBounds(
+                Rectangle(
                     fillX,
                     trackSlot.y,
                     fillWidth,

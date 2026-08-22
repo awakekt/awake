@@ -92,7 +92,7 @@ awake:ui:designsystem
     └── awake:ui:ui-core    (internal theme/style infrastructure only)
     └── awake:ui:tailwind   (spacing / text-scale tokens)
     └── awake:ui:heroicons  (icon set)
-    └── awake:ui:ui-api     (Dp, UiBounds, UiThemeValues)
+    └── awake:ui:ui-api     (Dp, Rectangle, UiThemeValues)
 ```
 
 `awake:ui:ui-core` is an `implementation` dependency: it may support theme/text providers,

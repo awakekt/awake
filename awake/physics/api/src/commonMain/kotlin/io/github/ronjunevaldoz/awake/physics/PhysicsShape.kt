@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.physics
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 
 /** Backend-neutral collision shape description -- a plain data description, not a live
  * native handle, so `PhysicsWorld.createBody` (the only place a [PhysicsShape] is consumed)
@@ -13,6 +13,6 @@ sealed interface PhysicsShape
 
 /** [halfExtents] matches Jolt Physics' own `BoxShape` convention (half the box's total
  * width/height/depth along each axis), not a full-extent size. */
-data class BoxShape(val halfExtents: Vec3) : PhysicsShape
+data class BoxShape(val halfExtents: Vec3f) : PhysicsShape
 
 data class SphereShape(val radius: Float) : PhysicsShape

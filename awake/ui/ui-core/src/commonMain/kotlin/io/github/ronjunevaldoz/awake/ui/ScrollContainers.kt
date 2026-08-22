@@ -2,13 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.context.LocalCacheKey
 import io.github.ronjunevaldoz.awake.ui.context.UNBOUNDED_MAIN_AXIS
+import io.github.ronjunevaldoz.awake.ui.context.resolveHasWeightedChild
 import io.github.ronjunevaldoz.awake.ui.graphics.clip
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
 import io.github.ronjunevaldoz.awake.ui.layout.horizontalPx
 import io.github.ronjunevaldoz.awake.ui.layout.inset
 import io.github.ronjunevaldoz.awake.ui.layout.verticalPx
@@ -17,6 +21,7 @@ import io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.layouts.baseSpacingPx
 import io.github.ronjunevaldoz.awake.ui.layouts.defaultArrangement
 import io.github.ronjunevaldoz.awake.ui.layouts.planWeightedColumnSlots
+import io.github.ronjunevaldoz.awake.ui.layouts.requiresMeasuredDistribution
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.modifier.withSizeFallback
@@ -32,10 +37,47 @@ import io.github.ronjunevaldoz.awake.ui.scope.onScrollConsumed
 import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
 import io.github.ronjunevaldoz.awake.ui.scope.resolveStyle
 import io.github.ronjunevaldoz.awake.ui.style.Style
+import io.github.ronjunevaldoz.awake.ui.theme.UiTheme
+
+/** Which viewport dimension a scroll computation is being asked about -- replaces the former
+ * `"width"`/`"height"` string params, which had no compiler-checked exhaustiveness and let a
+ * typo silently fall through the `else -> false` / `else -> null` branches below. */
+private enum class ScrollAxis { Width, Height }
+
+/**
+ * Resolves a FillMax scroll axis against its bounded ancestor, or throws a diagnostic naming the
+ * container and the requested axis. Split out of `scrollPanel` so the axis-bound check reads as
+ * one self-contained rule instead of a nested closure inside the 280-line body.
+ */
+private fun UiPrimitiveScope.requireBoundedScrollAxis(axis: ScrollAxis, containerLabel: String): Float {
+    val isBounded = when (axis) {
+        ScrollAxis.Width -> hasBoundedFillWidth()
+        ScrollAxis.Height -> hasBoundedFillHeight()
+    }
+    val value = when (axis) {
+        ScrollAxis.Width -> fillWidthOrNull()
+        ScrollAxis.Height -> fillHeightOrNull()
+    }
+    return if (isBounded && value != null) {
+        value
+    } else if (context.isMeasuringInternal()) {
+        // A trial pass now reports its sentinel height as unbounded, which is true but is not
+        // the caller's mistake -- and the trial scope is anonymous, so throwing here names no
+        // one. Let the trial finish; the real placement pass reaches the same check with the
+        // actual scope and its testTag, and throws there.
+        value ?: UNBOUNDED_MAIN_AXIS
+    } else {
+        error(
+            "Scrollable container '$containerLabel' requested $axis=FillMax under unbounded parent ${debugScopeLabel()}. " +
+                "FillMax scroll viewports require a bounded parent $axis. " +
+                "A WrapContent ancestor usually means the parent chain never established one.",
+        )
+    }
+}
 
 data class UiScrollPanelResult(
-    val slot: UiBounds,
-    val viewport: UiBounds,
+    val slot: Rectangle,
+    val viewport: Rectangle,
     val contentWidth: Float,
     val contentHeight: Float,
     val verticalThumb: UiScrollThumb?,
@@ -52,7 +94,11 @@ fun UiPrimitiveScope.scrollPanel(
     modifier: UiModifier = Modifier,
     style: Style = Style.Empty,
     verticalArrangement: Arrangement = defaultArrangement(),
-    content: ColumnScope.(slot: UiBounds) -> Unit,
+    // Same opt-in cross-frame cache `surfaceCore` already consults, extended to this container.
+    // A scroll panel is the one column shape that trialled its content unconditionally, so
+    // `column(...).verticalScroll(...)` accepted a cacheKey and silently ignored it.
+    cacheKey: Any? = null,
+    content: ColumnScope.(slot: Rectangle) -> Unit,
 ): UiScrollPanelResult {
     val state =
         requireNotNull(modifier.scrollState) { "scrollPanel requires a scrollState on the modifier" }
@@ -89,37 +135,12 @@ fun UiPrimitiveScope.scrollPanel(
     val scrollbarEdgeInsetPx = config.gap.toPx().coerceAtLeast(0f)
     val gap = verticalArrangement.baseSpacingPx()
 
-    fun requireBoundedAxis(axis: String): Float {
-        val isBounded = when (axis) {
-            "width" -> hasBoundedFillWidth()
-            "height" -> hasBoundedFillHeight()
-            else -> false
-        }
-        val value = when (axis) {
-            "width" -> fillWidthOrNull()
-            "height" -> fillHeightOrNull()
-            else -> null
-        }
-        return if (isBounded && value != null) {
-            value
-        } else if (context.isMeasuringInternal()) {
-            // A trial pass now reports its sentinel height as unbounded, which is true but is not
-            // the caller's mistake -- and the trial scope is anonymous, so throwing here names no
-            // one. Let the trial finish; the real placement pass reaches the same check with the
-            // actual scope and its testTag, and throws there.
-            value ?: UNBOUNDED_MAIN_AXIS
-        } else {
-            error(
-                "Scrollable container '$containerLabel' requested $axis=FillMax under unbounded parent ${debugScopeLabel()}. " +
-                    "FillMax scroll viewports require a bounded parent $axis. " +
-                    "A WrapContent ancestor usually means the parent chain never established one.",
-            )
-        }
-    }
+    fun requireBoundedAxis(axis: ScrollAxis): Float =
+        requireBoundedScrollAxis(axis, containerLabel)
 
     fun availableOuterWidth(): Float = when (requestedWidth) {
         is Dimension.Fixed -> requestedWidth.dp.toPx()
-        Dimension.FillMax -> requireBoundedAxis(axis = "width")
+        Dimension.FillMax -> requireBoundedAxis(axis = ScrollAxis.Width)
         Dimension.WrapContent -> (fillWidthOrNull() ?: 4096f)
     }
 
@@ -130,7 +151,7 @@ fun UiPrimitiveScope.scrollPanel(
     // content is measured, so asking would be circular and it stays unbounded.
     val boundedInnerHeight: Float? = when (requestedHeight) {
         is Dimension.Fixed -> (requestedHeight.dp.toPx() - paddingHeight).coerceAtLeast(0f)
-        Dimension.FillMax -> (requireBoundedAxis(axis = "height") - paddingHeight).coerceAtLeast(0f)
+        Dimension.FillMax -> (requireBoundedAxis(axis = ScrollAxis.Height) - paddingHeight).coerceAtLeast(0f)
         Dimension.WrapContent -> null
     }
 
@@ -159,7 +180,7 @@ fun UiPrimitiveScope.scrollPanel(
 
     val containerWidth = when (requestedWidth) {
         is Dimension.Fixed -> (requestedWidth.dp.toPx() - paddingWidth).coerceAtLeast(0f)
-        Dimension.FillMax -> (requireBoundedAxis(axis = "width") - paddingWidth).coerceAtLeast(0f)
+        Dimension.FillMax -> (requireBoundedAxis(axis = ScrollAxis.Width) - paddingWidth).coerceAtLeast(0f)
         else -> measured.width // WrapContent
     }
     val horizontalNeeded = when (config.horizontalVisibility) {
@@ -178,19 +199,21 @@ fun UiPrimitiveScope.scrollPanel(
     }
 
     val slot = claimModifiedSlot(modifier.withSizeFallback(resolvedWidth, resolvedHeight))
-    emitFillAndBorder(
-        slot = slot,
-        fillColor = resolved.background ?: Color.Transparent,
-        radiusPx = resolved.shape.toPx(),
-        borderWidth = resolved.borderWidth,
-        borderColor = resolved.borderColor ?: currentTheme.colors.border,
-        shapeSpec = resolved.shapeSpec,
-    )
+    canvas(slot) {
+        drawFillAndBorder(
+            slot = slot,
+            fillColor = resolved.background ?: Color.Transparent,
+            radiusPx = resolved.shape.toPx(),
+            borderWidth = resolved.borderWidth,
+            borderColor = resolved.borderColor ?: currentTheme.colors.border,
+            shapeSpec = resolved.shapeSpec,
+        )
+    }
 
     val innerSlot = slot.inset(resolved.contentPadding)
     // Overlay scrollbar: the viewport is the full inner slot -- the scrollbar paints on top of
     // its last few pixels (see the thumb slots below), it does not carve out its own space.
-    val viewport = UiBounds(
+    val viewport = Rectangle(
         x = innerSlot.x,
         y = innerSlot.y,
         width = innerSlot.width,
@@ -227,7 +250,7 @@ fun UiPrimitiveScope.scrollPanel(
         }
     }
 
-    val contentSlot = UiBounds(
+    val contentSlot = Rectangle(
         viewport.x - state.offsetX,
         viewport.y - state.offsetY,
         viewport.width,
@@ -242,11 +265,32 @@ fun UiPrimitiveScope.scrollPanel(
     //
     // Planned against the VIEWPORT, not the offset content slot: a weighted child divides the
     // visible height, and scrolling must not change how the division comes out.
-    val plannedSlots = planWeightedColumnSlots(
-        slot = viewport,
-        arrangement = verticalArrangement,
-        content = content,
-    )?.map { planned -> planned.copy(y = planned.y - state.offsetY, x = planned.x - state.offsetX) }
+    // Gate the plan the way surfaceCore already does. Unweighted content under a non-distributing
+    // arrangement plans to null, so the trial that produced it was pure waste -- but answering
+    // "is there a weighted child" without executing the content is exactly what the opt-in
+    // hasWeightedChild cache is for. Only consulted when a key is actually present (the caller's
+    // own, or one an ancestor surface pushed): with no key, resolveHasWeightedChild would run its
+    // own trial and this container would pay two where it used to pay one.
+    val effectiveCacheKey = cacheKey ?: context.current(LocalCacheKey)
+    val planningIsMoot = effectiveCacheKey != null &&
+        !verticalArrangement.requiresMeasuredDistribution() &&
+        !context.resolveHasWeightedChild(id, effectiveCacheKey) {
+            measureColumnContent(
+                width = viewport.width,
+                gap = verticalArrangement.baseSpacingPx(),
+                height = viewport.height,
+                content = content,
+            ).weights.any { it != null }
+        }
+    val plannedSlots = if (planningIsMoot) {
+        null
+    } else {
+        planWeightedColumnSlots(
+            slot = viewport,
+            arrangement = verticalArrangement,
+            content = content,
+        )?.map { planned -> planned.copy(y = planned.y - state.offsetY, x = planned.x - state.offsetX) }
+    }
     val contentScope = childColumn(
         slot = contentSlot,
         verticalArrangement = verticalArrangement,
@@ -266,62 +310,33 @@ fun UiPrimitiveScope.scrollPanel(
         }
     }
 
-    // Vertical Scrollbar -- overlay thumb only, no separate track fill (matches the shadcn-
-    // compose reference's ScrollThumb: a bare thumb aligned to the container's edge, not a
-    // painted track). Uses theme.colors.border, the same token the reference's own
-    // `shadcnTheme.colors.border` thumb color resolves to -- not a hardcoded gray, and not
-    // `primary` (too strong an accent for a passive scroll indicator).
-    val vThumb = if (verticalNeeded && config.verticalVisibility != UiScrollbarVisibility.Never) {
-        val vTrackSlot = UiBounds(
-            x = innerSlot.x + innerSlot.width - scrollbarWidthPx - scrollbarEdgeInsetPx,
-            y = innerSlot.y,
-            width = scrollbarWidthPx,
-            height = viewport.height,
-        )
-        verticalScrollThumb(vTrackSlot, state)?.also { thumb ->
-            val custom = config.verticalScrollbar
-            if (custom != null) {
-                childAbsolute(thumb.track).custom(thumb)
-            } else {
-                emitFillAndBorder(
-                    slot = thumb.thumb,
-                    fillColor = currentTheme.colors.border,
-                    radiusPx = scrollbarWidthPx / 2f,
-                    borderWidth = UiShape.none,
-                    borderColor = Color.Transparent,
-                )
-            }
-        }
-    } else {
-        null
-    }
-
-    // Horizontal Scrollbar -- same overlay-thumb-only treatment as vertical, above.
-    val hThumb =
-        if (horizontalNeeded && config.horizontalVisibility != UiScrollbarVisibility.Never) {
-            val hTrackSlot = UiBounds(
-                x = innerSlot.x,
-                y = innerSlot.y + innerSlot.height - scrollbarWidthPx - scrollbarEdgeInsetPx,
-                width = viewport.width,
-                height = scrollbarWidthPx,
-            )
-            horizontalScrollThumb(hTrackSlot, state)?.also { thumb ->
-                val custom = config.horizontalScrollbar
-                if (custom != null) {
-                    childAbsolute(thumb.track).custom(thumb)
-                } else {
-                    emitFillAndBorder(
-                        slot = thumb.thumb,
-                        fillColor = currentTheme.colors.border,
-                        radiusPx = scrollbarWidthPx / 2f,
-                        borderWidth = UiShape.none,
-                        borderColor = Color.Transparent,
-                    )
-                }
-            }
-        } else {
-            null
-        }
+    // Overlay thumb only, no separate track fill (matches the shadcn-compose reference's
+    // ScrollThumb: a bare thumb aligned to the container's edge, not a painted track). Same
+    // geometry+paint shape for both axes, mirrored by [ScrollAxis].
+    val vThumb = paintScrollThumb(
+        axis = ScrollAxis.Height,
+        needed = verticalNeeded,
+        visibility = config.verticalVisibility,
+        custom = config.verticalScrollbar,
+        innerSlot = innerSlot,
+        viewport = viewport,
+        scrollbarWidthPx = scrollbarWidthPx,
+        scrollbarEdgeInsetPx = scrollbarEdgeInsetPx,
+        state = state,
+        currentTheme = currentTheme,
+    )
+    val hThumb = paintScrollThumb(
+        axis = ScrollAxis.Width,
+        needed = horizontalNeeded,
+        visibility = config.horizontalVisibility,
+        custom = config.horizontalScrollbar,
+        innerSlot = innerSlot,
+        viewport = viewport,
+        scrollbarWidthPx = scrollbarWidthPx,
+        scrollbarEdgeInsetPx = scrollbarEdgeInsetPx,
+        state = state,
+        currentTheme = currentTheme,
+    )
 
     return UiScrollPanelResult(
         slot = slot,
@@ -331,4 +346,57 @@ fun UiPrimitiveScope.scrollPanel(
         verticalThumb = vThumb,
         horizontalThumb = hThumb,
     )
+}
+
+/**
+ * Track geometry + thumb paint for one scrollbar axis. [ScrollAxis.Height] is the vertical
+ * scrollbar (a track running along the container's height); [ScrollAxis.Width] is the
+ * horizontal one -- same shape, mirrored dimensions, extracted out of `scrollPanel` because the
+ * two were previously hand-duplicated with only x/y and width/height swapped.
+ */
+private fun UiPrimitiveScope.paintScrollThumb(
+    axis: ScrollAxis,
+    needed: Boolean,
+    visibility: UiScrollbarVisibility,
+    custom: UiScrollbarSlot?,
+    innerSlot: Rectangle,
+    viewport: Rectangle,
+    scrollbarWidthPx: Float,
+    scrollbarEdgeInsetPx: Float,
+    state: UiScrollState,
+    currentTheme: UiTheme,
+): UiScrollThumb? {
+    if (!needed || visibility == UiScrollbarVisibility.Never) return null
+    val trackSlot = when (axis) {
+        ScrollAxis.Height -> Rectangle(
+            x = innerSlot.x + innerSlot.width - scrollbarWidthPx - scrollbarEdgeInsetPx,
+            y = innerSlot.y,
+            width = scrollbarWidthPx,
+            height = viewport.height,
+        )
+        ScrollAxis.Width -> Rectangle(
+            x = innerSlot.x,
+            y = innerSlot.y + innerSlot.height - scrollbarWidthPx - scrollbarEdgeInsetPx,
+            width = viewport.width,
+            height = scrollbarWidthPx,
+        )
+    }
+    val thumb = when (axis) {
+        ScrollAxis.Height -> verticalScrollThumb(trackSlot, state)
+        ScrollAxis.Width -> horizontalScrollThumb(trackSlot, state)
+    } ?: return null
+    if (custom != null) {
+        childAbsolute(thumb.track).custom(thumb)
+    } else {
+        canvas(thumb.thumb) {
+            drawFillAndBorder(
+                slot = thumb.thumb,
+                fillColor = currentTheme.colors.border,
+                radiusPx = scrollbarWidthPx / 2f,
+                borderWidth = UiShape.none,
+                borderColor = Color.Transparent,
+            )
+        }
+    }
+    return thumb
 }

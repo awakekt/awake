@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.designsystem.theme.ShadcnRadiusScale
 import kotlin.math.abs
 import kotlin.test.Test
@@ -31,7 +31,7 @@ import kotlin.test.assertTrue
  */
 class ShadcnRadiusScaleTest {
 
-    private fun assertDp(expected: Float, actual: io.github.ronjunevaldoz.awake.ui.api.Dp, label: String) {
+    private fun assertDp(expected: Float, actual: io.github.ronjunevaldoz.awake.core.math2d.Dp, label: String) {
         assertTrue(
             abs(expected - actual.value) < 0.001f,
             "$label: expected ${expected}dp, got ${actual.value}dp",

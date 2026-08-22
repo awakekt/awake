@@ -7,6 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotSame
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -171,6 +172,18 @@ class EcsOptimizationTest {
         assertSame(replacement, removed)
         assertFalse(world.has(entity, aTypeId))
         assertEquals(0, family.size)
+    }
+
+    @Test
+    fun typeIdFastPathLazilyCreatesAnUninitializedStore() {
+        val world = World()
+        val typeId = world.typeId(CompA::class)
+        val entity = world.create()
+        val component = CompA()
+
+        assertNull(world.add(entity, typeId, component))
+        assertSame(component, world.get<CompA>(entity, typeId))
+        assertSame(component, world.remove<CompA>(entity, typeId))
     }
 
     @Test

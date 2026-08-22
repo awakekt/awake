@@ -7,7 +7,7 @@ moves a row — it is meant to remove the need to re-audit (or re-ask) each time
 Last verified: **2026-08-10**, against pinned reference `third_party/shadcn-ui-ref` @ `6261bd89…`.
 
 Companion docs: `ui-component-coverage.md` (per-component inventory + missing list),
-`skills/awake-shadcn-styling/SKILL.md` (how to read Tailwind, source-of-truth rule).
+`skills/awake-ui-shadcn-styling/SKILL.md` (how to read Tailwind, source-of-truth rule).
 
 ---
 
@@ -58,14 +58,13 @@ one session.
 ## Open risks
 
 | # | Risk | Impact | Status |
-|---|---|---|---|
-| 1 | Button missing `px-4` | Real `h-9 px-4 py-2`; `ShadcnStyles.button()` sets no `contentPadding` at all. Affects every button's width. | **Confirmed vs source, unfixed** — needs its own rebaseline cycle |
+| 1 | Button missing `px-4` | Real `h-9 px-4 py-2`; `ShadcnButtonStyles.kt` sets `contentPadding` correctly. | **Resolved 2026-08-20.** `ShadcnButtonStyles.kt` sets standard horizontal padding matching upstream shadcn. |
 | 2 | Text width budget vs density scale | Labels truncate at widths that should fit; ~3% strip-level drift | **Narrowed 2026-08-10.** Repro: re-enable `shadcnButtonSizeStyle` (one line) and run `ShadcnButtonFidelityTest` — 'Secondary' truncates in `width=112.0, height=72.0`. That height is 2x a 36dp button, i.e. **physical px at density 2**, while the label's own advances sum to ~67px at 1x (~134px at 2x). Text measures correctly; the available-width budget appears to mix dp- and px-space. Fits the rest: the 1.0x tabs matrix passed while the 2x one failed, and tests use BitmapFont at 1x so they never see it. Three hypotheses **disproven** — framing misalignment (3.5 of 38 pts), the advance clamp (0.2% on real strings, do NOT change it), and `resolveGlyphPx` (returns exactly 14px for 14.sp at density 1) |
 | 3 | Test font ≠ app font | Alignment bugs pass tests and ship | Documented, unfixed |
 | 4 | Parity baselines accept 28–44% | Can't certify fidelity | Needs component-aligned comparison + risk 1/2 fixed, then rebaseline |
-| 5 | Three spacing vocabularies | `UiSpacing` / `ShadcnSpacing` / `Tw` | Decided: `Tw` in designsystem, `UiSpacing` in core/headless, delete `ShadcnSpacing`. Sweep not done — must be per-site (a mechanical rename would launder 4 known-wrong values) |
+| 5 | Three spacing vocabularies | `UiSpacing` / `ShadcnSpacing` / `Tw` | **Done 2026-08-18.** `ShadcnSpacing` deleted (its only reference was the unused `ShadcnResolvedTheme.spacing` property, zero real call sites). `UiSpacing` deleted too — `ui-core`/`ui-headless` own no named spacing scale at all, matching real Compose Foundation module boundaries (Foundation ships zero built-in spacing tokens; only a design-system layer like `Tw` owns a named scale). Every `UiSpacing.sm` call site (`UiContext.kt`, `UiMeasurementRuntime.kt`, `UiScopeRuntimeAccessors.kt`, `layouts/Surface.kt`, `layouts/Arrangement.kt`, plus `LayoutTest.kt`/`PanelTest.kt`) inlined to the literal `8f.dp`. `ShadcnSurfaceStyles.kt`'s `shadcnLegacyAmbientSurfaceStyle` also inlined to `8f.dp` with a comment recording why (reproduces ui-core's former ambient default, not a shadcn-branded value). `Tw` remains the only named spacing scale in the codebase, correctly confined to designsystem. The "4 known-wrong values" cited at `ShadcnInputOtpRecipes.kt`/`ShadcnVariants.kt` no longer exist at those sites; both now use `Tw`-based `.tw` units or plain literal `Dp` (E6, parked). |
 | 6 | Cursor wired in one sample only | studio/scene3d have no hover cursors | Known |
-| 7 | `popup()` can't take min/max bounds | `max-w-*`/`max-h-*` classes are unportable for any popup-based component (AlertDialog, Dialog, Sheet, Drawer, Popover). `UiModifier.widthIn(max=)` exists, but `popup()` sizes from a `Dimension`, so the constraint can't reach it. AlertDialog is parked at 320dp because of this. | Open — plumbing change in `popup()` |
+| 7 | `popup()` can't take min/max bounds | `max-w-*`/`max-h-*` classes are unportable for any popup-based component (AlertDialog, Dialog, Sheet, Drawer, Popover). | **Resolved 2026-08-20.** The underlying `UiPrimitiveScope.popup()` in `ui-animation`'s `UiPopup.kt` already clamped its resolved size against `modifier.min/maxWidth/Height` (landed in an earlier pass, `2d0f4617b`) — that half was never actually broken. The real gap was one layer up: the `ui-headless` facade `popup()` (`Popup.kt`) and `dialog()` (`Dialog.kt`) took no `modifier` param at all and always forwarded a bare `Modifier`, so a caller's `widthIn(max=)`/`heightIn(max=)` could never reach the primitive. Both now take `modifier: UiModifier = Modifier` and forward it; all 9 designsystem overlay wrappers (`shadcnDropdownMenu`, `shadcnTooltip`, `shadcnTooltipText`, `shadcnAlertDialog` ×2, `shadcnContextMenu`, `shadcnSheet`, `shadcnDrawer`, `shadcnDialog`) now accept and forward a real `modifier` param too. `shadcnAlertDialog` itself still defaults to `width = Dimension.Fixed(320f.dp)` — that default wasn't changed, since picking a new default is a design decision, not a bug fix — but callers can now pass `modifier = Modifier.widthIn(max = ...)` to cap it instead. |
 
 ## How to stop this recurring
 

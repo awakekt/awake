@@ -78,7 +78,7 @@ class DynamicMesh(
 
     /** Overwrites this frame's vertex/index contents. [vertices] must be at most
      * `maxQuads * VERTICES_PER_QUAD * FLOATS_PER_VERTEX` floats -- callers build this from
-     * [io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive.Quad]s (2 floats position + 4 floats
+     * [io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive.Quad]s (2 floats position + 4 floats
      * color per vertex).
      *
      * Called unconditionally every frame by `Renderer.drawUi` regardless of whether this
@@ -183,13 +183,13 @@ class DynamicMesh(
     companion object {
         /** Default (colored-quad) layout: pos (vec2) + color (vec4) + transform (vec4:
          * scale.xy + pivot.xy, see `UiPrimitiveTransform`) -- see `ui_quad.vert`. */
-        const val FLOATS_PER_VERTEX = 10
-        const val GLYPH_FLOATS_PER_VERTEX = 12
+        const val FLOATS_PER_VERTEX = io.github.ronjunevaldoz.awake.core.geometry.VertexFormats2D.FLOATS_PER_VERTEX
+        const val GLYPH_FLOATS_PER_VERTEX = io.github.ronjunevaldoz.awake.core.geometry.VertexFormats2D.GLYPH_FLOATS_PER_VERTEX
 
         /** pos(vec2) + localPos(vec2) + halfSize(vec2) + radius(float) + smoothing(float) + color(vec4) +
          * transform(vec4) -- see `ui_rounded_quad.vert`. */
-        const val ROUNDED_QUAD_FLOATS_PER_VERTEX = 16
-        const val VERTICES_PER_QUAD = 4
-        const val INDICES_PER_QUAD = 6
+        const val ROUNDED_QUAD_FLOATS_PER_VERTEX = io.github.ronjunevaldoz.awake.core.geometry.VertexFormats2D.ROUNDED_QUAD_FLOATS_PER_VERTEX
+        const val VERTICES_PER_QUAD = io.github.ronjunevaldoz.awake.core.geometry.VertexFormats2D.VERTICES_PER_QUAD
+        const val INDICES_PER_QUAD = io.github.ronjunevaldoz.awake.core.geometry.VertexFormats2D.INDICES_PER_QUAD
     }
 }

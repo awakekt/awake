@@ -3,11 +3,11 @@
 package io.github.ronjunevaldoz.awake.scene.controls.systems
 
 import io.github.ronjunevaldoz.awake.core.input.InputSnapshot
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.System
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.scene.controls.components.ActiveCamera
-import io.github.ronjunevaldoz.awake.scene.controls.components.CameraComponent
+import io.github.ronjunevaldoz.awake.scene.controls.components.CameraRig
 import io.github.ronjunevaldoz.awake.scene.controls.components.CameraMode
 import io.github.ronjunevaldoz.awake.scene.core.components.Transform
 import io.github.ronjunevaldoz.awake.scene.rendering.components.Camera
@@ -18,7 +18,7 @@ import kotlin.math.exp
 import kotlin.math.sin
 
 /**
- * Drives the [ActiveCamera]'s pose from its [CameraComponent].
+ * Drives the [ActiveCamera]'s pose from its [CameraRig].
  *
  * Every mode derives its aim from the single [forwardFrom] basis, so `yaw`/`pitch` mean the
  * same thing in all of them: dragging right always looks right, dragging down always looks
@@ -35,8 +35,8 @@ class CameraSystem(
     private var wasDragging = false
 
     // Scratch vectors -- this runs every frame, so the pose math must not allocate.
-    private val forward = Vec3()
-    private val desiredEye = Vec3()
+    private val forward = Vec3f()
+    private val desiredEye = Vec3f()
 
     override fun update(world: World, delta: Float) {
         val input = inputProvider()
@@ -52,7 +52,7 @@ class CameraSystem(
         lastPointerY = input.pointerY
         wasDragging = dragging
 
-        world.queryEach(Camera::class, CameraComponent::class) { entity, camera, config ->
+        world.queryEach(Camera::class, CameraRig::class) { entity, camera, config ->
             if (!world.has(entity, ActiveCamera::class)) return@queryEach
 
             val targetTransform = config.targetEntity?.let { world.get<Transform>(it) }
@@ -83,7 +83,7 @@ class CameraSystem(
         }
     }
 
-    private fun resetCameraForMode(config: CameraComponent, camera: Camera, target: Transform?) {
+    private fun resetCameraForMode(config: CameraRig, camera: Camera, target: Transform?) {
         when (config.mode) {
             CameraMode.FirstPerson -> {
                 config.pitch = 0f
@@ -100,7 +100,7 @@ class CameraSystem(
             CameraMode.Cinematic -> {
                 // Park the eye once; from here on only the aim tracks the target.
                 if (target != null) {
-                    camera.camera.eye.set(
+                    camera.lens.eye.set(
                         target.position.x + CINEMATIC_OFFSET,
                         target.position.y + CINEMATIC_HEIGHT,
                         target.position.z + CINEMATIC_OFFSET,
@@ -115,14 +115,14 @@ class CameraSystem(
     }
 
     private fun updateCameraPose(
-        config: CameraComponent,
+        config: CameraRig,
         camera: Camera,
         target: Transform?,
         dt: Float,
     ) {
         // Every mode aims at a target; without one there is no pose to compute.
         if (target == null) return
-        val core = camera.camera
+        val core = camera.lens
         when (config.mode) {
             CameraMode.FirstPerson -> {
                 core.eye.set(target.position).add(config.offsetPosition)
@@ -156,7 +156,7 @@ class CameraSystem(
      * The shared aim basis: +yaw turns right, +pitch looks up, and yaw 0 faces -Z. Writes into
      * [out] rather than returning a new vector so per-frame callers allocate nothing.
      */
-    private fun forwardFrom(yaw: Float, pitch: Float, out: Vec3) {
+    private fun forwardFrom(yaw: Float, pitch: Float, out: Vec3f) {
         val cp = cos(pitch)
         out.set(sin(yaw) * cp, sin(pitch), -cos(yaw) * cp)
     }

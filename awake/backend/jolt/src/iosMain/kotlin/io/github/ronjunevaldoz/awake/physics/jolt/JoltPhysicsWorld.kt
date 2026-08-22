@@ -9,7 +9,7 @@ import cnames.structs.JPC_JobSystem
 import cnames.structs.JPC_PhysicsSystem
 import cnames.structs.JPC_Shape
 import cnames.structs.JPC_String
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.physics.BodyHandle
 import io.github.ronjunevaldoz.awake.physics.BodyTransform
 import io.github.ronjunevaldoz.awake.physics.BoxShape
@@ -85,7 +85,7 @@ import platform.joltc.JPC_TempAllocatorImpl_delete
 import platform.joltc.JPC_TempAllocatorImpl_new
 import platform.joltc.JPC_Vec3
 
-// Jolt Physics integration slice 2 (see docs/MVP_PLAN.md's decision log): only 2 object
+// Jolt Physics integration slice 2 (see docs/reference/decision-log.md): only 2 object
 // layers, matching JoltC's own HelloWorld example (mirrors the desktop/Android jolt-jni
 // backend's own scoping, see that class's own doc comment) -- fine-grained per-game layer
 // authoring is out of scope for this slice.
@@ -128,7 +128,7 @@ private fun objectLayerPairShouldCollide(
 // nested struct fields (e.g. JPC_BodyCreationSettings.Position) expose only a read-only view
 // with no CValue setter, so those need field-by-field writes ([JPC_Vec3.write]/[JPC_Quat.write]).
 @OptIn(ExperimentalForeignApi::class)
-private fun vec3Value(v: Vec3): CValue<JPC_Vec3> = cValue {
+private fun vec3Value(v: Vec3f): CValue<JPC_Vec3> = cValue {
     x = v.x
     y = v.y
     z = v.z
@@ -143,7 +143,7 @@ private fun quatValue(w: Float, x: Float, y: Float, z: Float): CValue<JPC_Quat> 
 }
 
 @OptIn(ExperimentalForeignApi::class)
-private fun JPC_Vec3.write(v: Vec3) {
+private fun JPC_Vec3.write(v: Vec3f) {
     x = v.x
     y = v.y
     z = v.z
@@ -178,7 +178,7 @@ private fun joltErrorMessage(error: CPointer<JPC_String>?): String {
  * since jolt-jni and JoltC share zero code).
  */
 @OptIn(ExperimentalForeignApi::class)
-class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
+class JoltPhysicsWorld(gravity: Vec3f = Vec3f(0f, -9.81f, 0f)) : PhysicsWorld {
     private companion object {
         // Matches HelloWorld's own initialization order: allocator, factory, types, exactly
         // once per process. A `private companion object { init { } }` runs before any
@@ -193,15 +193,19 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
 
     private val tempAllocator = JPC_TempAllocatorImpl_new((10 * 1024 * 1024).toUInt())
         ?: error("JPC_TempAllocatorImpl_new failed")
-    private val jobSystem = JPC_JobSystemThreadPool_new2(JPC_MAX_PHYSICS_JOBS.toUInt(), JPC_MAX_PHYSICS_BARRIERS.toUInt())
+    private val jobSystem = JPC_JobSystemThreadPool_new2(
+        JPC_MAX_PHYSICS_JOBS.toUInt(),
+        JPC_MAX_PHYSICS_BARRIERS.toUInt()
+    )
         ?: error("JPC_JobSystemThreadPool_new2 failed")
 
     private val broadPhaseLayerInterfaceFns = cValue<JPC_BroadPhaseLayerInterfaceFns> {
         GetNumBroadPhaseLayers = staticCFunction(::getNumBroadPhaseLayers)
         GetBroadPhaseLayer = staticCFunction(::getBroadPhaseLayer)
     }
-    private val broadPhaseLayerInterface = JPC_BroadPhaseLayerInterface_new(null, broadPhaseLayerInterfaceFns)
-        ?: error("JPC_BroadPhaseLayerInterface_new failed")
+    private val broadPhaseLayerInterface =
+        JPC_BroadPhaseLayerInterface_new(null, broadPhaseLayerInterfaceFns)
+            ?: error("JPC_BroadPhaseLayerInterface_new failed")
 
     private val objectVsBroadPhaseLayerFilterFns = cValue<JPC_ObjectVsBroadPhaseLayerFilterFns> {
         ShouldCollide = staticCFunction(::objectVsBroadPhaseShouldCollide)
@@ -213,8 +217,9 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
     private val objectLayerPairFilterFns = cValue<JPC_ObjectLayerPairFilterFns> {
         ShouldCollide = staticCFunction(::objectLayerPairShouldCollide)
     }
-    private val objectLayerPairFilter = JPC_ObjectLayerPairFilter_new(null, objectLayerPairFilterFns)
-        ?: error("JPC_ObjectLayerPairFilter_new failed")
+    private val objectLayerPairFilter =
+        JPC_ObjectLayerPairFilter_new(null, objectLayerPairFilterFns)
+            ?: error("JPC_ObjectLayerPairFilter_new failed")
 
     private val physicsSystem: CPointer<JPC_PhysicsSystem> =
         JPC_PhysicsSystem_new() ?: error("JPC_PhysicsSystem_new failed")
@@ -238,13 +243,14 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
             objectLayerPairFilter,
         )
         JPC_PhysicsSystem_SetGravity(physicsSystem, vec3Value(gravity))
-        bodyInterface = JPC_PhysicsSystem_GetBodyInterface(physicsSystem) ?: error("JPC_PhysicsSystem_GetBodyInterface failed")
+        bodyInterface = JPC_PhysicsSystem_GetBodyInterface(physicsSystem)
+            ?: error("JPC_PhysicsSystem_GetBodyInterface failed")
     }
 
     override fun createBody(
         shape: PhysicsShape,
-        position: Vec3,
-        rotation: Vec3,
+        position: Vec3f,
+        rotation: Vec3f,
         motionType: MotionType,
     ): BodyHandle = memScoped {
         val joltShape = when (shape) {
@@ -259,6 +265,7 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
                 }
                 outShape.value ?: error("JPC_BoxShapeSettings_Create returned null shape")
             }
+
             is SphereShape -> {
                 val settings = alloc<JPC_SphereShapeSettings>()
                 JPC_SphereShapeSettings_default(settings.ptr)
@@ -277,7 +284,8 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
             MotionType.KINEMATIC -> JPC_MotionType.JPC_MOTION_TYPE_KINEMATIC
             MotionType.DYNAMIC -> JPC_MotionType.JPC_MOTION_TYPE_DYNAMIC
         }
-        val objectLayer = if (motionType == MotionType.STATIC) OBJECT_LAYER_NON_MOVING else OBJECT_LAYER_MOVING
+        val objectLayer =
+            if (motionType == MotionType.STATIC) OBJECT_LAYER_NON_MOVING else OBJECT_LAYER_MOVING
         val (qw, qx, qy, qz) = eulerVec3ToQuatWxyz(rotation)
 
         val bodyCreationSettings = alloc<JPC_BodyCreationSettings>()
@@ -313,7 +321,13 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
 
     override fun step(deltaTime: Float) {
         val collisionSteps = 1
-        JPC_PhysicsSystem_Update(physicsSystem, deltaTime, collisionSteps, tempAllocator, jobSystem.reinterpret<JPC_JobSystem>())
+        JPC_PhysicsSystem_Update(
+            physicsSystem,
+            deltaTime,
+            collisionSteps,
+            tempAllocator,
+            jobSystem.reinterpret<JPC_JobSystem>()
+        )
     }
 
     override fun syncTransforms(): List<BodyTransform> = memScoped {
@@ -323,40 +337,41 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
             JPC_BodyInterface_GetPositionAndRotation(bodyInterface, id, position.ptr, rotation.ptr)
             BodyTransform(
                 handle = BodyHandle(id.toLong()),
-                position = Vec3(position.x, position.y, position.z),
+                position = Vec3f(position.x, position.y, position.z),
                 rotation = quatToEulerVec3(rotation.w, rotation.x, rotation.y, rotation.z),
             )
         }
     }
 
-    override fun raycast(origin: Vec3, direction: Vec3, maxDistance: Float): RaycastHit? = memScoped {
-        val normalizedDirection = direction.normalized()
-        val castVector = Vec3(
-            normalizedDirection.x * maxDistance,
-            normalizedDirection.y * maxDistance,
-            normalizedDirection.z * maxDistance,
-        )
-        val args = alloc<JPC_NarrowPhaseQuery_CastRayArgs>()
-        args.Ray.Origin.write(origin)
-        args.Ray.Direction.write(castVector)
-        args.BroadPhaseLayerFilter = null
-        args.ObjectLayerFilter = null
-        args.BodyFilter = null
-        args.ShapeFilter = null
+    override fun raycast(origin: Vec3f, direction: Vec3f, maxDistance: Float): RaycastHit? =
+        memScoped {
+            val normalizedDirection = direction.normalized()
+            val castVector = Vec3f(
+                normalizedDirection.x * maxDistance,
+                normalizedDirection.y * maxDistance,
+                normalizedDirection.z * maxDistance,
+            )
+            val args = alloc<JPC_NarrowPhaseQuery_CastRayArgs>()
+            args.Ray.Origin.write(origin)
+            args.Ray.Direction.write(castVector)
+            args.BroadPhaseLayerFilter = null
+            args.ObjectLayerFilter = null
+            args.BodyFilter = null
+            args.ShapeFilter = null
 
-        val narrowPhaseQuery = JPC_PhysicsSystem_GetNarrowPhaseQuery(physicsSystem)
-            ?: error("JPC_PhysicsSystem_GetNarrowPhaseQuery failed")
-        val hit = JPC_NarrowPhaseQuery_CastRay(narrowPhaseQuery, args.ptr)
-        if (!hit) return@memScoped null
+            val narrowPhaseQuery = JPC_PhysicsSystem_GetNarrowPhaseQuery(physicsSystem)
+                ?: error("JPC_PhysicsSystem_GetNarrowPhaseQuery failed")
+            val hit = JPC_NarrowPhaseQuery_CastRay(narrowPhaseQuery, args.ptr)
+            if (!hit) return@memScoped null
 
-        val distance = maxDistance * args.Result.Fraction
-        val point = Vec3(
-            origin.x + normalizedDirection.x * distance,
-            origin.y + normalizedDirection.y * distance,
-            origin.z + normalizedDirection.z * distance,
-        )
-        RaycastHit(BodyHandle(args.Result.BodyID.toLong()), point, distance)
-    }
+            val distance = maxDistance * args.Result.Fraction
+            val point = Vec3f(
+                origin.x + normalizedDirection.x * distance,
+                origin.y + normalizedDirection.y * distance,
+                origin.z + normalizedDirection.z * distance,
+            )
+            RaycastHit(BodyHandle(args.Result.BodyID.toLong()), point, distance)
+        }
 
     override fun destroy() {
         trackedBodyIds.forEach { id ->

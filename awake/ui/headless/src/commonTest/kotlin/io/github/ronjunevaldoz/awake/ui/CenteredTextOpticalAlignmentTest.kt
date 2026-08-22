@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.api.sp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.core.math2d.sp
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.theme.TextStyle
 import kotlin.math.abs
 import kotlin.test.Test
@@ -30,7 +31,7 @@ import kotlin.test.assertTrue
 class CenteredTextOpticalAlignmentTest {
 
     /** 'T' is flat-topped and flat-bottomed with no overshoot, so its quad IS the cap box. */
-    private fun capBoxOf(label: String, slot: UiBounds): ClosedFloatingPointRange<Float> {
+    private fun capBoxOf(label: String, slot: Rectangle): ClosedFloatingPointRange<Float> {
         val font = UiFonts.default(cellSize = CELL_SIZE)
         val frame = renderUiComponent(width = slot.width, height = slot.height, font = font) {
             primitive.context.createAbsolute(x = slot.x, y = slot.y).text(
@@ -47,7 +48,7 @@ class CenteredTextOpticalAlignmentTest {
 
     @Test
     fun centeredCapBoxSitsInTheOpticalMiddleOfItsSlot() {
-        val slot = UiBounds(0f, 0f, 120f, SLOT_HEIGHT)
+        val slot = Rectangle(0f, 0f, 120f, SLOT_HEIGHT)
         val capBox = capBoxOf("Tag", slot)
 
         val gapAbove = capBox.start - slot.y
@@ -63,7 +64,7 @@ class CenteredTextOpticalAlignmentTest {
 
     @Test
     fun aDescenderDoesNotMoveTheCapitalsAroundIt() {
-        val slot = UiBounds(0f, 0f, 120f, SLOT_HEIGHT)
+        val slot = Rectangle(0f, 0f, 120f, SLOT_HEIGHT)
 
         val withoutDescender = capBoxOf("Tan", slot)
         val withDescender = capBoxOf("Tag", slot)

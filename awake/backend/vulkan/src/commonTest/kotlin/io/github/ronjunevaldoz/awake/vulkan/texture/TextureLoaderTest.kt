@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan.texture
 
-import io.github.ronjunevaldoz.awake.core.graphics.DefaultBitmap
+import io.github.ronjunevaldoz.awake.core.image.DefaultBitmap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

@@ -19,7 +19,7 @@ import com.github.stephengold.joltjni.TempAllocator
 import com.github.stephengold.joltjni.TempAllocatorMalloc
 import com.github.stephengold.joltjni.enumerate.EActivation
 import com.github.stephengold.joltjni.enumerate.EMotionType
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.physics.BodyHandle
 import io.github.ronjunevaldoz.awake.physics.BodyTransform
 import io.github.ronjunevaldoz.awake.physics.BoxShape
@@ -29,7 +29,7 @@ import io.github.ronjunevaldoz.awake.physics.PhysicsWorld
 import io.github.ronjunevaldoz.awake.physics.RaycastHit
 import io.github.ronjunevaldoz.awake.physics.SphereShape
 
-// Jolt Physics integration slice 1 (see docs/MVP_PLAN.md's decision log): only 2 object
+// Jolt Physics integration slice 1 (see docs/reference/decision-log.md): only 2 object
 // layers, matching jolt-jni's own HelloJoltJni tutorial -- fine-grained per-game layer
 // authoring (multiple moving layers with custom collision rules) is out of scope for this
 // slice, the same "coarse first, refine later" scoping this slice's API itself follows.
@@ -49,7 +49,7 @@ private const val MAX_CONTACTS = 20_480
  * implementation -- there's no additional platform-neutral layer to extract without
  * reinventing jolt-jni's own API.
  */
-class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
+class JoltPhysicsWorld(gravity: Vec3f = Vec3f(0f, -9.81f, 0f)) : PhysicsWorld {
     // Companion object init always runs before any instance member -- the only ordering
     // guarantee strong enough to load the native lib before tempAllocator's native constructor
     // call (confirmed via UnsatisfiedLinkError when this lived in an instance init instead).
@@ -76,10 +76,11 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
             enableCollision(OBJECT_LAYER_MOVING, OBJECT_LAYER_NON_MOVING)
             disableCollision(OBJECT_LAYER_NON_MOVING, OBJECT_LAYER_NON_MOVING)
         }
-        val broadPhaseLayerInterface = BroadPhaseLayerInterfaceTable(NUM_OBJECT_LAYERS, NUM_BROADPHASE_LAYERS).apply {
-            mapObjectToBroadPhaseLayer(OBJECT_LAYER_MOVING, 0)
-            mapObjectToBroadPhaseLayer(OBJECT_LAYER_NON_MOVING, 0)
-        }
+        val broadPhaseLayerInterface =
+            BroadPhaseLayerInterfaceTable(NUM_OBJECT_LAYERS, NUM_BROADPHASE_LAYERS).apply {
+                mapObjectToBroadPhaseLayer(OBJECT_LAYER_MOVING, 0)
+                mapObjectToBroadPhaseLayer(OBJECT_LAYER_NON_MOVING, 0)
+            }
         val objectVsBroadPhaseLayerFilter = ObjectVsBroadPhaseLayerFilterTable(
             broadPhaseLayerInterface,
             NUM_BROADPHASE_LAYERS,
@@ -102,13 +103,14 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
         bodyInterface = physicsSystem.bodyInterface
 
         val numWorkerThreads = Runtime.getRuntime().availableProcessors()
-        jobSystem = JobSystemThreadPool(Jolt.cMaxPhysicsJobs, Jolt.cMaxPhysicsBarriers, numWorkerThreads)
+        jobSystem =
+            JobSystemThreadPool(Jolt.cMaxPhysicsJobs, Jolt.cMaxPhysicsBarriers, numWorkerThreads)
     }
 
     override fun createBody(
         shape: PhysicsShape,
-        position: Vec3,
-        rotation: Vec3,
+        position: Vec3f,
+        rotation: Vec3f,
         motionType: MotionType,
     ): BodyHandle {
         val joltShape = when (shape) {
@@ -117,6 +119,7 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
                 shape.halfExtents.y,
                 shape.halfExtents.z,
             )
+
             is SphereShape -> com.github.stephengold.joltjni.SphereShape(shape.radius)
         }
         val joltMotionType = when (motionType) {
@@ -124,7 +127,8 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
             MotionType.KINEMATIC -> EMotionType.Kinematic
             MotionType.DYNAMIC -> EMotionType.Dynamic
         }
-        val objectLayer = if (motionType == MotionType.STATIC) OBJECT_LAYER_NON_MOVING else OBJECT_LAYER_MOVING
+        val objectLayer =
+            if (motionType == MotionType.STATIC) OBJECT_LAYER_NON_MOVING else OBJECT_LAYER_MOVING
 
         val bcs = BodyCreationSettings().apply {
             setShape(joltShape)
@@ -134,7 +138,8 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
             setObjectLayer(objectLayer)
         }
         val body = bodyInterface.createBody(bcs)
-        val activation = if (motionType == MotionType.STATIC) EActivation.DontActivate else EActivation.Activate
+        val activation =
+            if (motionType == MotionType.STATIC) EActivation.DontActivate else EActivation.Activate
         bodyInterface.addBody(body, activation)
 
         trackedBodyIds.add(body.id)
@@ -164,26 +169,29 @@ class JoltPhysicsWorld(gravity: Vec3 = Vec3(0f, -9.81f, 0f)) : PhysicsWorld {
             bodyInterface.getPositionAndRotation(id, position, rotation)
             BodyTransform(
                 handle = BodyHandle(id.toLong()),
-                position = Vec3(position.x(), position.y(), position.z()),
+                position = Vec3f(position.x(), position.y(), position.z()),
                 rotation = quatToEulerVec3(rotation.w, rotation.x, rotation.y, rotation.z),
             )
         }
     }
 
-    override fun raycast(origin: Vec3, direction: Vec3, maxDistance: Float): RaycastHit? {
+    override fun raycast(origin: Vec3f, direction: Vec3f, maxDistance: Float): RaycastHit? {
         val normalizedDirection = direction.normalized()
         val castVector = com.github.stephengold.joltjni.Vec3(
             normalizedDirection.x * maxDistance,
             normalizedDirection.y * maxDistance,
             normalizedDirection.z * maxDistance,
         )
-        val rRayCast = RRayCast(RVec3(origin.x.toDouble(), origin.y.toDouble(), origin.z.toDouble()), castVector)
+        val rRayCast = RRayCast(
+            RVec3(origin.x.toDouble(), origin.y.toDouble(), origin.z.toDouble()),
+            castVector
+        )
         val result = RayCastResult()
         val hit = physicsSystem.narrowPhaseQuery.castRay(rRayCast, result)
         if (!hit) return null
 
         val distance = maxDistance * result.fraction
-        val point = Vec3(
+        val point = Vec3f(
             origin.x + normalizedDirection.x * distance,
             origin.y + normalizedDirection.y * distance,
             origin.z + normalizedDirection.z * distance,

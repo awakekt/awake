@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.style
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.Sp
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.Sp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiInsets
 import io.github.ronjunevaldoz.awake.ui.font.FontWeight
 import io.github.ronjunevaldoz.awake.ui.theme.TextStyle
@@ -141,8 +141,17 @@ class Style private constructor(
     // textField wherever a theme layered a plain color on top of a state-varying fallback.
     fun resolve(state: StyleState = MutableStyleState(), fallbackTextStyle: TextStyle = TextStyle.Default): ResolvedStyle {
         val builder = ResolvedStyleBuilder(textStyle = fallbackTextStyle)
-        rules.filter { !it.isConditional }.forEach { it.apply(state, builder) }
-        rules.filter { it.isConditional }.forEach { it.apply(state, builder) }
+        // Two indexed passes rather than two `filter { }.forEach { }`: same ordering, but
+        // filtering allocated a list and an iterator on every resolve, and resolve runs per
+        // widget per trial pass.
+        for (i in rules.indices) {
+            val rule = rules[i]
+            if (!rule.isConditional) rule.apply(state, builder)
+        }
+        for (i in rules.indices) {
+            val rule = rules[i]
+            if (rule.isConditional) rule.apply(state, builder)
+        }
         return builder.build()
     }
 }

@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.core.systems
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.System
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.scene.core.components.Transform
 import io.github.ronjunevaldoz.awake.scene.navigation.NavMesh
 
 /**
- * Entity-pursuit AI (see docs/MMORPG_ROADMAP.md): [npcTransform] chases [targetTransform] by
+ * Entity-pursuit AI (see docs/mmorpg-roadmap.md): [npcTransform] chases [targetTransform] by
  * periodically re-querying [navMesh] for a path and steering kinematically toward the next
  * waypoint -- same "deliberately simple, no physics" bar as a kinematic player-movement path.
  * Chase only, not chase-*and*-avoid; dodge/avoid behavior is a follow-up, not required to prove
@@ -32,7 +32,7 @@ class ChaseAiSystem(
     private val repathInterval: Float = DEFAULT_REPATH_INTERVAL,
     private val waypointRadius: Float = DEFAULT_WAYPOINT_RADIUS,
 ) : System {
-    private var path: List<Vec3> = emptyList()
+    private var path: List<Vec3f> = emptyList()
     private var waypointIndex = 0
     private var timeSinceRepath = repathInterval // repath immediately on the first call
 

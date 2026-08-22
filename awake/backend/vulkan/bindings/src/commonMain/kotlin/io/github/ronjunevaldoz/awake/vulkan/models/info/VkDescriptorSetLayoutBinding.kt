@@ -7,7 +7,7 @@ import io.github.ronjunevaldoz.awake.vulkan.VkFlags
 
 /**
  * `descriptorType`/`stageFlags` are modeled as plain `Int` rather than jni-binding-generator
- * enum fields -- see the Phase 1d enum-marshalling hazard note in docs/MVP_PLAN.md. Both
+ * enum fields -- see the Phase 1d enum-marshalling hazard note in docs/mvp-plan.md. Both
  * VkDescriptorType and VkShaderStageFlagBits are extension-bearing in the Vulkan spec, so
  * ordinal-based marshalling would be unsafe long-term even though today's values happen to
  * line up. Use [VkDescriptorType] and Awake's existing `VkShaderStageFlagBits.value` for

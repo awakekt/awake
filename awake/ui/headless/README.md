@@ -75,7 +75,7 @@ behavior.
 ```
 awake:ui:headless
     └── awake:ui:ui-core    (implementation only — not re-exported)
-    └── awake:ui:ui-api     (Dp, UiBounds, UiThemeValues — part of public API)
+    └── awake:ui:ui-api     (Dp, Rectangle, UiThemeValues — part of public API)
 ```
 
 `ui-core` types (`UiModifier`, `UiPrimitiveScope`) must **not** leak into `headless` public
@@ -90,7 +90,7 @@ Every component in [Base UI's directory](https://base-ui.com/react/components), 
 against **this module's own primitives only** (function-level, not filename guessing — see
 `docs/reference/ui-validation.md`'s "proof over eyeballing" rule). `designsystem` depends on
 `headless`, never the reverse — see the dependency rule above and
-[`docs/reference/ui-ownership.md`](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/ui-ownership.md)
+[`docs/reference/ui-ownership.md`](../../../docs/reference/ui-ownership.md)
 — so this table stays scoped to what exists at this layer; it says nothing about `shadcn`
 skins, which belong to `designsystem`'s own doc.
 
@@ -142,11 +142,11 @@ Menubar and Toolbar (`ActionRow.kt`) reduce to the same shape at this layer — 
 names rather than duplicating the composition. Neither adds keyboard roving-focus/ARIA menu
 semantics Base UI's real versions have; extend `actionRow` if a consumer's UX needs that later,
 per
-[`skills/awake-ui-authoring/SKILL.md`](/Users/ronvaldoz/StudioProjects/awaken/skills/awake-ui-authoring/SKILL.md)'s
+[`skills/awake-ui-authoring/SKILL.md`](../../../skills/awake-ui-authoring/SKILL.md)'s
 no-speculative-behavior rule. Test coverage: `ActionRowWidgetsTest.kt`. A `designsystem` skin
 (`shadcnMenubar`/`shadcnToolbar`) is written separately when a real caller needs one, same as
 every other primitive in this file — see
-[`docs/reference/ui-validation.md`](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/ui-validation.md)
+[`docs/reference/ui-validation.md`](../../../docs/reference/ui-validation.md)
 for the required proof any new skin ships with.
 
 ---
@@ -154,7 +154,7 @@ for the required proof any new skin ships with.
 ### Adding a new primitive
 
 1. Add a file under `headless/` named after the primitive concept (e.g. `Slider.kt`).
-2. Write the function as a `UiScope` extension returning `UiBounds`.
+2. Write the function as a `UiScope` extension returning `Rectangle`.
 3. Accept a `Modifier` and an optional `style: Style` parameter — **do not
    hard-code any visual value** inside the primitive itself.
 4. Record a semantic node with the appropriate `UiSemanticRole` so tests and the overlay

@@ -37,8 +37,9 @@ import io.github.ronjunevaldoz.awake.testing.ui.AwakeUiPreviewMetadata
 import io.github.ronjunevaldoz.awake.testing.ui.renderAnnotatedUiPreviews
 import io.github.ronjunevaldoz.awake.testing.ui.saveAwakeUiPreview
 import io.github.ronjunevaldoz.awake.ui.UiInputState
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnButton
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnCard
@@ -50,15 +51,15 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnTooltipTex
 import io.github.ronjunevaldoz.awake.ui.designsystem.shadcnThemeValues
 import io.github.ronjunevaldoz.awake.ui.designsystem.shadcnTheme
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.headless.column
 import io.github.ronjunevaldoz.awake.ui.headless.createUiScope
-import io.github.ronjunevaldoz.awake.ui.headless.height
-import io.github.ronjunevaldoz.awake.ui.headless.offset
+import io.github.ronjunevaldoz.awake.ui.modifier.height
+import io.github.ronjunevaldoz.awake.ui.modifier.offset
 import io.github.ronjunevaldoz.awake.ui.headless.spacer
 import io.github.ronjunevaldoz.awake.ui.headless.uiScope
-import io.github.ronjunevaldoz.awake.ui.headless.width
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.ui.modifier.width
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.toUiInputState
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -79,6 +80,29 @@ private fun comparisonTestSnapshot(): UiInputState {
     return input.updateSnapshot().toUiInputState()
 }
 
+/**
+ * Framing for the card parity fixture.
+ *
+ * [CANVAS_WIDTH] is derived rather than written down, because the canvas, the margin and the
+ * card width are one relationship and spelling all three out lets them disagree silently: this
+ * fixture rendered a 272dp card inside a 288dp canvas against a 288dp reference, reporting a
+ * 16px "card is too narrow" divergence that was purely its own framing.
+ *
+ * [CARD_WIDTH] is a measurement of the reference (`card-login_light.json`), not a taste
+ * decision -- change it only when the pinned capture changes. [MARGIN] is the opposite: review
+ * legibility in the preview PNG, invisible to the comparison once the case declares a
+ * `coordinateOrigin`.
+ */
+private object CardParityFrame {
+    const val CARD_WIDTH = 288
+    const val MARGIN = 8
+    const val CANVAS_WIDTH = CARD_WIDTH + MARGIN * 2
+    const val CANVAS_HEIGHT = 234
+
+    val cardWidth: Dp = CARD_WIDTH.toFloat().dp
+    val margin: Dp = MARGIN.toFloat().dp
+}
+
 /** [ShadcnParityScreenshotTest] has no Card entry yet (shadcn-parity.md's inventory still
  * lists `shadcnSurface(variant = Card)`, superseded by the dedicated [shadcnCard] recipe) --
  * added here rather than in that file, per this task's "new test file only" scope. */
@@ -93,8 +117,8 @@ private fun comparisonTestSnapshot(): UiInputState {
         "doesn't use either, so the aligned crop is comparing the same one-field card content. The compatibility " +
         "shadcnCard now follows the reference's explicit CardHeader/CardContent spacing and does not inject a " +
         "separator that the source case never requests.",
-    width = 288,
-    height = 234,
+    width = CardParityFrame.CANVAS_WIDTH,
+    height = CardParityFrame.CANVAS_HEIGHT,
 )
 internal object AwakeCardLightPreview : AwakeUiPreviewEntry {
     override fun render(metadata: AwakeUiPreviewMetadata): AwakeUiPreviewFrame {
@@ -103,14 +127,14 @@ internal object AwakeCardLightPreview : AwakeUiPreviewEntry {
         val ui = UiContext()
         ui.beginFrame(UiFrameInput(viewportWidth = metadata.width.toFloat(), viewportHeight = metadata.height.toFloat(), input = comparisonTestSnapshot()))
         ui.pushLocal(LocalFont, font)
-        ui.showcaseRoot(theme = theme, bounds = UiBounds(0f, 0f, metadata.width.toFloat(), metadata.height.toFloat())) {
+        ui.showcaseRoot(theme = theme, bounds = Rectangle(0f, 0f, metadata.width.toFloat(), metadata.height.toFloat())) {
             column(
-            modifier = Modifier.offset(8f.dp, 8f.dp).width(272f.dp)
-                .height((metadata.height.toFloat() - 16f).dp),
+            modifier = Modifier.offset(CardParityFrame.margin, CardParityFrame.margin).width(CardParityFrame.cardWidth)
+                .height((metadata.height.toFloat() - CardParityFrame.MARGIN * 2).dp),
             ) {
             shadcnCard(
                 id = "parity-card",
-                modifier = Modifier.width(272f.px),
+                modifier = Modifier.width(CardParityFrame.CARD_WIDTH.toFloat().px),
                 header = {
                     shadcnText(
                         "Login to your account",
@@ -124,14 +148,14 @@ internal object AwakeCardLightPreview : AwakeUiPreviewEntry {
                 // the pinned shadcn case instead of compensating for the old core default gap.
                 spacer(Modifier.height(12f.dp))
                 shadcnInput(
-                    "parity-card-email",
+                    "parity-card.email",
                     value = "",
                     placeholder = "Email",
                     modifier = Modifier.width(240f.px).height(36f.px),
                 )
                 spacer(Modifier.height(12f.dp))
                 shadcnButton(
-                    "parity-card-login",
+                    "parity-card.login",
                     "Login",
                     modifier = Modifier.width(240f.px).height(36f.px),
                 )
@@ -177,10 +201,10 @@ internal object AwakeTooltipContentLightPreview : AwakeUiPreviewEntry {
         // Anchor is a 1px sliver, not drawn -- just enough for BottomCenter/TopCenter +
         // spacing.xs to place the bubble, so the canvas doesn't waste rows on a full-size
         // trigger the reference (bubble-only capture) never shows either.
-        val anchor = UiBounds(x = 0f, y = 0f, width = metadata.width.toFloat(), height = 1f)
+        val anchor = Rectangle(x = 0f, y = 0f, width = metadata.width.toFloat(), height = 1f)
         ui.showcaseRoot(
             theme = theme,
-            bounds = UiBounds(x = 0f, y = 0f, width = metadata.width.toFloat(), height = metadata.height.toFloat()),
+            bounds = Rectangle(x = 0f, y = 0f, width = metadata.width.toFloat(), height = metadata.height.toFloat()),
         ) {
             shadcnTooltipText(
                 anchorSlot = anchor,

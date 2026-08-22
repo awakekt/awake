@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.ui.layouts
 
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.childAbsolute
 import io.github.ronjunevaldoz.awake.ui.childBox
 import io.github.ronjunevaldoz.awake.ui.childColumn
@@ -18,8 +18,8 @@ import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
  * These keep nested authored code on the current receiver and avoid escaping back to an outer
  * runtime or needing `this@column` noise at call sites.
  */
-fun UiPrimitiveScope.column(
-    slot: UiBounds,
+fun UiPrimitiveScope.columnAt(
+    slot: Rectangle,
     verticalArrangement: Arrangement = defaultArrangement(),
     modifier: UiModifier = Modifier,
     block: ColumnScope.() -> Unit,
@@ -31,8 +31,8 @@ fun UiPrimitiveScope.column(
     ).block()
 }
 
-fun UiPrimitiveScope.row(
-    slot: UiBounds,
+fun UiPrimitiveScope.rowAt(
+    slot: Rectangle,
     horizontalArrangement: Arrangement = defaultArrangement(),
     modifier: UiModifier = Modifier,
     block: RowScope.() -> Unit,
@@ -45,7 +45,7 @@ fun UiPrimitiveScope.row(
 }
 
 fun UiPrimitiveScope.absolute(
-    slot: UiBounds,
+    slot: Rectangle,
     modifier: UiModifier = Modifier,
     block: AbsoluteScope.() -> Unit,
 ) {
@@ -53,7 +53,7 @@ fun UiPrimitiveScope.absolute(
 }
 
 fun UiPrimitiveScope.box(
-    slot: UiBounds,
+    slot: Rectangle,
     modifier: UiModifier = Modifier,
     contentAlignment: UiAlignment = UiAlignment.TopStart,
     block: BoxScope.() -> Unit,

@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupPositionProvider
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupProperties
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupResult
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.layouts.defaultArrangement
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.UiPopupDefaults as PrimitivePopupDefaults
@@ -55,22 +55,29 @@ object UiPopupDefaults {
  * configuration will move here only after its types have equally narrow ownership.
  */
 fun UiScope.popup(
-    anchorSlot: UiBounds,
+    anchorSlot: Rectangle,
     expanded: Boolean,
     width: Dimension = Dimension.WrapContent,
     height: Dimension = Dimension.WrapContent,
+    // `width`/`height` still pick the popup's BASE size the same way they always have (Fixed
+    // pins it, FillMax/WrapContent measure it); modifier only adds widthIn/heightIn-style CAPS
+    // on top -- Core's popup() primitive already clamps the resolved size against
+    // modifier.min/maxWidth/Height (see UiPopup.kt's `.constrain(...)` calls). This facade used
+    // to always pass a bare `Modifier`, so those caps could never reach it -- that was the actual
+    // gap, not a missing primitive.
+    modifier: UiModifier = Modifier,
     positionProvider: UiPopupPositionProvider = UiPopupDefaults.dropdown(),
     properties: UiPopupProperties = UiPopupProperties(),
-    id: String? = null,
+    id: String,
     fadeDurationMs: Float = 150f,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
+    content: ColumnScope.(slot: Rectangle) -> Unit,
 ): UiPopupResult = primitive.primitivePopup(
     anchorSlot = anchorSlot,
     expanded = expanded,
     width = width,
     height = height,
     verticalArrangement = defaultArrangement(),
-    modifier = Modifier,
+    modifier = modifier,
     positionProvider = positionProvider,
     properties = properties,
     id = id,

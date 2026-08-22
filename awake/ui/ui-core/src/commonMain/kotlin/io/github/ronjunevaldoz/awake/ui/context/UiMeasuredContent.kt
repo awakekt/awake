@@ -3,12 +3,12 @@
 package io.github.ronjunevaldoz.awake.ui.context
 
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 
 data class UiMeasuredContent(
     val width: Float,
     val height: Float,
-    val slots: List<UiBounds> = emptyList(),
+    val slots: List<Rectangle> = emptyList(),
     /** Parallel to [slots] -- `weights[i]` is the [LayoutWeight] claimed alongside `slots[i]`,
      * or null if that child claimed its slot without a weight. */
     val weights: List<LayoutWeight?> = emptyList(),

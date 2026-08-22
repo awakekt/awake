@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupProperties
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupResult
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.style.Style
 
 /** Neutral behavior inputs for a modal [dialog]. Visual style is [dialog]'s own `style` param --
@@ -40,9 +41,12 @@ fun UiScope.dialog(
     expanded: Boolean,
     width: Dimension = Dimension.WrapContent,
     height: Dimension = Dimension.WrapContent,
+    // Forwarded straight through to popup()'s modifier -- see Popup.kt's doc comment for the
+    // width/height-vs-modifier precedence rule this relies on.
+    modifier: UiModifier = Modifier,
     style: Style = Style.Empty,
     properties: DialogProperties = DialogProperties(),
-    content: ColumnScope.(slot: UiBounds) -> Unit,
+    content: ColumnScope.(slot: Rectangle) -> Unit,
 ): UiPopupResult {
     if (!expanded) return UiPopupResult(slot = null, dismissed = false)
 
@@ -56,6 +60,7 @@ fun UiScope.dialog(
         expanded = true,
         width = width,
         height = height,
+        modifier = modifier,
         positionProvider = UiPopupDefaults.centered(),
         properties = properties.popupProperties.copy(
             dismissOnClickOutside = properties.dismissOnClickOutside &&
@@ -71,4 +76,4 @@ fun UiScope.dialog(
     }
 }
 
-private val DetachedDialogAnchor = UiBounds(-1f, -1f, 0f, 0f)
+private val DetachedDialogAnchor = Rectangle(-1f, -1f, 0f, 0f)

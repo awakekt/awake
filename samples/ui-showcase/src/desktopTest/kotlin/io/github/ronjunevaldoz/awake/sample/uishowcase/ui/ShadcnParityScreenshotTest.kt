@@ -25,9 +25,9 @@ import io.github.ronjunevaldoz.awake.testing.ui.renderAnnotatedUiPreviews
 import io.github.ronjunevaldoz.awake.testing.ui.saveAwakeUiPreview
 import io.github.ronjunevaldoz.awake.testing.ui.verifyAwakeUiPreview
 import io.github.ronjunevaldoz.awake.ui.UiInputState
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnAvatarSize
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnTextStyle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
@@ -36,6 +36,9 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnAvatar
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnBadge
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnBreadcrumb
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnButton
+import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnButtonGroup
+import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnButtonGroupSeparator
+import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnButtonGroupOrientation
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnCheckbox
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnCollapsible
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnDialog
@@ -63,18 +66,18 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnButtonSize
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnButtonVariant
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.UiTextWrap
 import io.github.ronjunevaldoz.awake.ui.headless.column
 import io.github.ronjunevaldoz.awake.ui.headless.createUiScope
-import io.github.ronjunevaldoz.awake.ui.headless.height
-import io.github.ronjunevaldoz.awake.ui.headless.offset
+import io.github.ronjunevaldoz.awake.ui.modifier.height
+import io.github.ronjunevaldoz.awake.ui.modifier.offset
 import io.github.ronjunevaldoz.awake.ui.headless.row
 import io.github.ronjunevaldoz.awake.ui.headless.size
 import io.github.ronjunevaldoz.awake.ui.headless.uiScope
-import io.github.ronjunevaldoz.awake.ui.headless.width
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.ui.modifier.width
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.toUiInputState
 import kotlin.test.Test
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnDropdownMenuItem as UiDropdownMenuItem
@@ -107,6 +110,8 @@ class ShadcnParityScreenshotTest {
         listOf(
             AwakeButtonVariantsLightPreview,
             AwakeButtonVariantsDarkPreview,
+            AwakeButtonGroupBasicLightPreview,
+            AwakeButtonGroupVerticalLightPreview,
             AwakeTextFieldStatesLightPreview,
             AwakeTextareaStatesLightPreview,
             AwakeSwitchVariantsLightPreview,
@@ -170,7 +175,7 @@ private fun parityFrame(
     val ui = UiContext()
     ui.beginFrame(UiFrameInput(viewportWidth = metadata.width.toFloat(), viewportHeight = metadata.height.toFloat(), input = parityTestSnapshot()))
     ui.pushLocal(LocalFont, font)
-    ui.showcaseRoot(theme = theme, bounds = UiBounds(0f, 0f, metadata.width.toFloat(), metadata.height.toFloat())) {
+    ui.showcaseRoot(theme = theme, bounds = Rectangle(0f, 0f, metadata.width.toFloat(), metadata.height.toFloat())) {
         body()
     }
     val output = ui.finishFrame()
@@ -255,6 +260,67 @@ internal object AwakeButtonVariantsLightPreview : AwakeUiPreviewEntry {
 internal object AwakeButtonVariantsDarkPreview : AwakeUiPreviewEntry {
     override fun render(metadata: AwakeUiPreviewMetadata): AwakeUiPreviewFrame =
         parityFrame(metadata, dark = true) { drawParityButtonVariants(metadata) }
+}
+
+@AwakeUiPreview(
+    id = "awake-button-group-basic-light",
+    title = "Awake Button Group (light)",
+    group = "Shadcn Parity",
+    summary = "Two outline buttons joined through the public shadcnButtonGroup showcase recipe. " +
+        "Pairs with the pinned ButtonGroup reference so semantic geometry exposes the shared-border, " +
+        "corner-radius, inter-button, padding, and content-hugging-size contracts.",
+    width = 156,
+    height = 36,
+)
+internal object AwakeButtonGroupBasicLightPreview : AwakeUiPreviewEntry {
+    override fun render(metadata: AwakeUiPreviewMetadata): AwakeUiPreviewFrame =
+        parityFrame(metadata) {
+            shadcnButtonGroup(id = "parity-button-group") {
+                shadcnButton(
+                    id = "parity-button-group.archive",
+                    label = "Archive",
+                    variant = ShadcnButtonVariant.Outline,
+                )
+                shadcnButtonGroupSeparator(id = "parity-button-group.separator")
+                shadcnButton(
+                    id = "parity-button-group.report",
+                    label = "Report",
+                    variant = ShadcnButtonVariant.Outline,
+                )
+            }
+        }
+}
+
+@AwakeUiPreview(
+    id = "awake-button-group-vertical-light",
+    title = "Awake Vertical Button Group (light)",
+    group = "Shadcn Parity",
+    summary = "Two outline buttons in the public vertical Button Group recipe. Measures vertical shared-width, " +
+        "joined-top-border, and top/bottom-corner contracts against the pinned shadcn fixture.",
+    width = 156,
+    height = 72,
+)
+internal object AwakeButtonGroupVerticalLightPreview : AwakeUiPreviewEntry {
+    override fun render(metadata: AwakeUiPreviewMetadata): AwakeUiPreviewFrame =
+        parityFrame(metadata) {
+            shadcnButtonGroup(
+                id = "parity-button-group-vertical",
+                modifier = Modifier.width(156f.dp),
+                orientation = ShadcnButtonGroupOrientation.Vertical,
+            ) {
+                shadcnButton(
+                    id = "parity-button-group-vertical.archive",
+                    label = "Archive",
+                    variant = ShadcnButtonVariant.Outline,
+                )
+                shadcnButtonGroupSeparator(id = "parity-button-group-vertical.separator")
+                shadcnButton(
+                    id = "parity-button-group-vertical.report",
+                    label = "Report",
+                    variant = ShadcnButtonVariant.Outline,
+                )
+            }
+        }
 }
 
 @AwakeUiPreview(
@@ -424,7 +490,7 @@ internal object AwakeProgressLightPreview : AwakeUiPreviewEntry {
         val ui = UiContext()
         fun composeFrame() {
             ui.pushLocal(LocalFont, font)
-            ui.showcaseRoot(theme = theme, bounds = UiBounds(0f, 0f, 212f, metadata.height.toFloat())) {
+            ui.showcaseRoot(theme = theme, bounds = Rectangle(0f, 0f, 212f, metadata.height.toFloat())) {
                 column(
                 modifier = Modifier.width(212f.dp)
                     .height(metadata.height.toFloat().dp),
@@ -1067,7 +1133,7 @@ internal object AwakeDropdownMenuStatesLightPreview : AwakeUiPreviewEntry {
                 modifier = Modifier.offset(24f.dp, 16f.dp).width(160f.dp)
                     .height((metadata.height.toFloat() - 16f).dp),
             ) {
-                val triggerSlot = UiBounds(24f, 16f, 80f, 36f)
+                val triggerSlot = Rectangle(24f, 16f, 80f, 36f)
                 uiScope().shadcnDropdownMenu(
                     id = "parity-dropdown",
                     anchorSlot = triggerSlot,
@@ -1099,7 +1165,13 @@ internal object AwakePopoverStatesLightPreview : AwakeUiPreviewEntry {
                 modifier = Modifier.offset(24f.dp, 16f.dp).width(260f.dp)
                     .height((metadata.height.toFloat() - 16f).dp),
             ) {
-                val triggerSlot = UiBounds(24f, 16f, 130f, 36f)
+                shadcnButton(
+                    id = "parity-popover.trigger",
+                    label = "Open popover",
+                    variant = ShadcnButtonVariant.Outline,
+                    modifier = Modifier.width(130f.dp).height(36f.dp),
+                )
+                val triggerSlot = Rectangle(24f, 16f, 130f, 36f)
                 uiScope().shadcnPopover(
                     id = "parity-popover",
                     anchorSlot = triggerSlot,

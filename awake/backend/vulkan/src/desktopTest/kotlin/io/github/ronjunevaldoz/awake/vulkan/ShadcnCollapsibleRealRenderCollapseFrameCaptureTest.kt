@@ -3,21 +3,22 @@
 package io.github.ronjunevaldoz.awake.vulkan
 
 import io.github.ronjunevaldoz.awake.core.input.Input
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnTheme
+import io.github.ronjunevaldoz.awake.ui.designsystem.shadcnTheme
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnButton
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnCollapsible
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebar
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.headless.createUiScope
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxHeight
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxWidth
-import io.github.ronjunevaldoz.awake.ui.headless.height
-import io.github.ronjunevaldoz.awake.ui.headless.width
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxHeight
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxWidth
+import io.github.ronjunevaldoz.awake.ui.modifier.height
+import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.toUiInputState
 import java.io.File
 import kotlin.test.Test
@@ -31,7 +32,7 @@ import io.github.ronjunevaldoz.awake.ui.theme.asRuntimeTheme
  * despite [io.github.ronjunevaldoz.awake.ui.AnimatedHeightCollapseProbeTest] (ui-core) and
  * `ShadcnCollapsibleCollapseAnimationProbeTest` (samples/ui-showcase) both already proving the
  * LOGICAL height sequence is strictly monotonic with no jump. Neither of those probes ever asked
- * a renderer to actually draw anything -- both only read `UiBounds` off the real `UiContext`.
+ * a renderer to actually draw anything -- both only read `Rectangle` off the real `UiContext`.
  * This drives the same real `shadcnCollapsible`-in-`shadcnSidebar` shape through the real
  * headless Vulkan renderer (via [UiAnimationFrameCapture]) and dumps the actual rendered PNG
  * sequence for visual inspection -- the one layer of proof those probes structurally cannot
@@ -55,30 +56,31 @@ class ShadcnCollapsibleRealRenderCollapseFrameCaptureTest {
         fun frame(): List<UiDrawPrimitive> {
             ui.beginFrame(UiFrameInput(viewportWidth = 480f, viewportHeight = 800f, input = input.updateSnapshot().toUiInputState()))
             ui.pushLocal(LocalFont, font)
-            ui.pushLocal(LocalTheme, ShadcnTheme.asRuntimeTheme())
-            ui.createUiScope(UiBounds(0f, 0f, 480f, 800f)).shadcnSidebar(
-                id = "capture-sidebar",
-                modifier = Modifier.width(280f.dp).fillMaxHeight(),
-            ) {
-                shadcnCollapsible(
-                    id = "capture-category-getting-started",
-                    title = "Getting Started",
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it },
+            ui.createUiScope(Rectangle(0f, 0f, 480f, 800f)).shadcnTheme {
+                shadcnSidebar(
+                    id = "capture-sidebar",
+                    modifier = Modifier.width(280f.dp).fillMaxHeight(),
                 ) {
-                    repeat(4) { index ->
-                        shadcnButton(
-                            id = "capture-item-$index",
-                            label = "Item $index",
-                            modifier = Modifier.fillMaxWidth().height(32f.dp),
-                        )
+                    shadcnCollapsible(
+                        id = "capture-category-getting-started",
+                        title = "Getting Started",
+                        expanded = expanded,
+                        onExpandedChange = { expanded = it },
+                    ) {
+                        repeat(4) { index ->
+                            shadcnButton(
+                                id = "capture-item-$index",
+                                label = "Item $index",
+                                modifier = Modifier.fillMaxWidth().height(32f.dp),
+                            )
+                        }
                     }
+                    shadcnButton(
+                        id = "capture-inputs-header",
+                        label = "Inputs",
+                        modifier = Modifier.fillMaxWidth().height(32f.dp),
+                    )
                 }
-                shadcnButton(
-                    id = "capture-inputs-header",
-                    label = "Inputs",
-                    modifier = Modifier.fillMaxWidth().height(32f.dp),
-                )
             }
             return ui.finishFrame().primitives
         }

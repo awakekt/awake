@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.api.theme
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.Sp
-import io.github.ronjunevaldoz.awake.ui.api.sp
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.Sp
+import io.github.ronjunevaldoz.awake.core.math2d.sp
 
 /** Immutable semantic color values shared by UI layers. */
 interface UiColorTokens {

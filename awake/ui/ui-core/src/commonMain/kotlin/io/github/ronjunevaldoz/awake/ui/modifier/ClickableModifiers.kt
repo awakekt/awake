@@ -3,7 +3,7 @@
 package io.github.ronjunevaldoz.awake.ui.modifier
 
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.scope.inputState
 import io.github.ronjunevaldoz.awake.ui.scope.isFocused
 import io.github.ronjunevaldoz.awake.ui.scope.requestFocus
@@ -33,7 +33,7 @@ fun UiModifier.clickable(enabled: Boolean = true, onClick: () -> Unit): UiModifi
  * `ui-headless`'s `interact()` (see `Buttons.kt`'s call chain) already uses for `button`/
  * `checkbox`/etc., just generalized to any widget that owns a stable `id` and a claimed slot,
  * not a parallel input pipeline. No-op if `modifier.clickAction` is null. */
-fun UiPrimitiveScope.resolveClickable(id: String, slot: UiBounds, modifier: UiModifier) {
+fun UiPrimitiveScope.resolveClickable(id: String, slot: Rectangle, modifier: UiModifier) {
     val click = modifier.clickAction ?: return
     val hovered = hitTest(slot)
     tryClaimActive(id, hovered && click.enabled)

@@ -2,31 +2,12 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>ComplexCondition:ShadcnStyleParityTest.kt$ShadcnStyleParityTest$bg.contains("oklch(0 ") || bg.contains("rgb(0, 0, 0)") || bg.contains("oklch(0.145") || bg.contains("oklch(0.205")</ID>
+    <ID>CyclomaticComplexMethod:ShadcnStyleParityTest.kt$ShadcnStyleParityTest$private fun assertStyle(caseId: String, theme: String, entry: AwakeUiPreviewEntry)</ID>
     <ID>LongMethod:GettingStartedContent.kt$private fun RowScope.columnPreview(state: UiShowcaseRuntimeState)</ID>
-    <ID>LongMethod:ShowcaseApp.kt$internal fun GameUiRuntime.drawUiShowcaseOverlay( state: UiShowcaseRuntimeState, )</ID>
-    <ID>MagicNumber:CanvasPage.kt$0.16f</ID>
-    <ID>MagicNumber:CanvasPage.kt$0.22f</ID>
-    <ID>MagicNumber:CanvasPage.kt$12f</ID>
-    <ID>MagicNumber:CanvasPage.kt$18f</ID>
-    <ID>MagicNumber:CanvasPage.kt$20f</ID>
-    <ID>MagicNumber:CanvasPage.kt$22f</ID>
-    <ID>MagicNumber:CanvasPage.kt$48f</ID>
-    <ID>MagicNumber:CanvasPage.kt$70f</ID>
-    <ID>MagicNumber:CanvasPage.kt$78f</ID>
-    <ID>MagicNumber:CanvasPage.kt$92f</ID>
-    <ID>MagicNumber:ProgressPage.kt$0.25f</ID>
-    <ID>MagicNumber:ProgressPage.kt$0.65f</ID>
-    <ID>MagicNumber:RangeSliderPage.kt$20f</ID>
-    <ID>MagicNumber:RangeSliderPage.kt$80f</ID>
-    <ID>MagicNumber:ScrollAreaPage.kt$8</ID>
-    <ID>MagicNumber:ShowcaseApp.kt$720f</ID>
-    <ID>MagicNumber:SliderPage.kt$10f</ID>
-    <ID>MagicNumber:SliderPage.kt$50f</ID>
-    <ID>MagicNumber:SliderPage.kt$60f</ID>
-    <ID>MagicNumber:SliderPage.kt$95f</ID>
-    <ID>MagicNumber:UiShowcaseCounterStore.kt$UiShowcaseCounterStore$5</ID>
-    <ID>MagicNumber:UiShowcaseGame.kt$1600</ID>
-    <ID>MagicNumber:UiShowcaseGame.kt$900</ID>
+    <ID>LongMethod:ShowcaseApp.kt$internal fun AppUiRuntime.drawUiShowcaseOverlay( state: UiShowcaseRuntimeState, )</ID>
+    <ID>LongMethod:UiShowcaseAppLifecycleTest.kt$UiShowcaseAppLifecycleTest$@Test fun uiShowcaseDesktopShellDoesNotDuplicateIntroductionPageContent()</ID>
+    <ID>LongMethod:UiShowcaseAppLifecycleTest.kt$UiShowcaseAppLifecycleTest$@Test fun uiShowcaseSidebarCategoryHeaderCentersIconAndTitleVertically()</ID>
     <ID>NestedBlockDepth:UiShowcasePreviewDocsTest.kt$UiShowcasePreviewDocsTest$@Test fun writeShowcasePreviews()</ID>
     <ID>UnusedParameter:ShadcnParityScreenshotTest.kt$metadata: AwakeUiPreviewMetadata</ID>
   </CurrentIssues>

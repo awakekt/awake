@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnAlertVariant
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnBadgeVariant
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnAlertStyle
@@ -16,6 +16,7 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnStatusEmptySty
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
 import io.github.ronjunevaldoz.awake.ui.headless.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.UiSeparatorOrientation
 import io.github.ronjunevaldoz.awake.ui.headless.column
@@ -34,7 +35,7 @@ fun UiScope.shadcnBadge(
     id: String,
     label: String,
     variant: ShadcnBadgeVariant = ShadcnBadgeVariant.Secondary,
-): UiBounds {
+): Rectangle {
     val style = themeValues.shadcnBadgeStyle(variant)
     return surface(
         id = id,
@@ -49,8 +50,8 @@ fun UiScope.shadcnBadge(
 fun UiScope.shadcnKbd(
     id: String,
     label: String,
-    modifier: Modifier = Modifier,
-): UiBounds {
+    modifier: UiModifier = Modifier,
+): Rectangle {
     val style = shadcnKbdStyle(themeValues)
     return surface(
         id = id,
@@ -63,22 +64,26 @@ fun UiScope.shadcnKbd(
 }
 
 fun UiScope.shadcnSeparator(
-    modifier: Modifier = Modifier,
-    thickness: io.github.ronjunevaldoz.awake.ui.api.Dp = 1f.dp,
+    modifier: UiModifier = Modifier,
+    thickness: io.github.ronjunevaldoz.awake.core.math2d.Dp = 1f.dp,
     orientation: UiSeparatorOrientation = UiSeparatorOrientation.Horizontal,
     id: String? = null,
-): UiBounds = separator(
+): Rectangle = separator(
+    // separator()'s own id is required now (see the awake-ui-authoring skill's id-consistency
+    // rule); shadcnSeparator keeps its nullable id -- and this orientation-derived fallback,
+    // same collision risk as before -- for its many existing callers until a dedicated
+    // designsystem-side pass (Package 6 C4/C6) revisits nullable ids up this stack.
+    id = id ?: "separator.${orientation.name}",
     modifier = modifier,
     thickness = thickness,
     orientation = orientation,
     color = themeValues.colors.border,
-    id = id,
 )
 
 fun UiScope.shadcnProgress(
     id: String,
     value: Float,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
 ): Unit = progress(
     id = id,
     value = value,
@@ -88,7 +93,7 @@ fun UiScope.shadcnProgress(
 
 fun UiScope.shadcnSkeleton(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     shimmer: Boolean = false,
 ): Unit = skeleton(
     id = id,
@@ -99,7 +104,7 @@ fun UiScope.shadcnSkeleton(
 
 fun UiScope.shadcnSpinner(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
 ): Unit = spinner(
     id = id,
     modifier = modifier,
@@ -108,10 +113,10 @@ fun UiScope.shadcnSpinner(
 
 fun UiScope.shadcnAlert(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     variant: ShadcnAlertVariant = ShadcnAlertVariant.Default,
     content: ColumnScope.() -> Unit,
-): UiBounds = surface(
+): Rectangle = surface(
     id = id,
     modifier = modifier.fillMaxWidth(),
     style = shadcnAlertStyle(themeValues, variant),
@@ -125,16 +130,24 @@ fun UiScope.shadcnAlert(
     id: String,
     title: String,
     description: String? = null,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     variant: ShadcnAlertVariant = ShadcnAlertVariant.Default,
-): UiBounds = shadcnAlert(
+): Rectangle = shadcnAlert(
     id = id,
     modifier = modifier,
     variant = variant,
 ) {
-    shadcnText(title, emphasis = ShadcnTextEmphasis.Medium)
+    // Both rows are `text-sm` (14px) and both anchor to `Tw.Text.sm` -- `Caption`/`P` would not,
+    // resolving instead against preset-dependent `themeValues.typography.*` (11sp and 16sp in
+    // Vega), and a mis-sized description changes where the text wraps.
+    //
+    // AlertTitle is `font-medium`, so `Small`. AlertDescription is bare `text-sm` with NO color
+    // class in the pinned alert.tsx, so it inherits the root's -- black in a default alert, red
+    // in a destructive one. `Muted` supplies the right size and weight but forces
+    // muted-foreground, hence the explicit inheriting tone.
+    shadcnText(title, style = ShadcnTextStyle.Small)
     if (description != null) {
-        shadcnText(description, style = ShadcnTextStyle.Caption)
+        shadcnText(description, style = ShadcnTextStyle.Muted, tone = ShadcnTextTone.Default)
     }
 }
 
@@ -142,9 +155,9 @@ fun UiScope.shadcnEmpty(
     id: String,
     title: String,
     description: String? = null,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     action: (ColumnScope.() -> Unit)? = null,
-): UiBounds = surface(
+): Rectangle = surface(
     id = id,
     modifier = modifier.fillMaxWidth(),
     style = shadcnStatusEmptyStyle(),

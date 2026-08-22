@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.UiLinearGradient
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiLinearGradient
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.UiStroke
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiStroke
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
 import io.github.ronjunevaldoz.awake.ui.CanvasScope as PrimitiveCanvasScope
 import io.github.ronjunevaldoz.awake.ui.canvas as primitiveCanvas
@@ -23,7 +25,7 @@ data class HeadlessCanvasGradient(val start: Color, val end: Color, val horizont
  */
 class HeadlessCanvasScope internal constructor(
     private val primitive: PrimitiveCanvasScope,
-    val bounds: UiBounds,
+    val bounds: Rectangle,
 ) {
     fun nested(
         x: Float,
@@ -33,7 +35,7 @@ class HeadlessCanvasScope internal constructor(
         content: HeadlessCanvasScope.() -> Unit,
     ) {
         primitive.nested(x, y, width, height) {
-            HeadlessCanvasScope(this, UiBounds(bounds.x + x, bounds.y + y, width, height)).content()
+            HeadlessCanvasScope(this, Rectangle(bounds.x + x, bounds.y + y, width, height)).content()
         }
     }
 
@@ -101,17 +103,17 @@ class HeadlessCanvasScope internal constructor(
         primitive.clipShape(UiShapeSpec.Circle, x, y, diameter, diameter) {
             HeadlessCanvasScope(
                 this,
-                UiBounds(bounds.x + x, bounds.y + y, diameter, diameter),
+                Rectangle(bounds.x + x, bounds.y + y, diameter, diameter),
             ).content()
         }
     }
 }
 
 fun UiScope.canvas(
-    id: String = "canvas",
-    modifier: Modifier = Modifier,
+    id: String,
+    modifier: UiModifier = Modifier,
     content: HeadlessCanvasScope.() -> Unit,
-): UiBounds = primitive.primitiveCanvas(modifier = modifier.asPrimitiveModifier()) {
+): Rectangle = primitive.primitiveCanvas(modifier = modifier) {
     // Explicit receiver: this@canvas's UiScope and the CanvasScope lambda receiver now share one
     // @AwakeUiDsl marker (see B7), so an implicit `primitive` here would resolve nowhere.
     this@canvas.primitive.recordSemantic(role = UiSemanticRole.Panel, id = id, bounds = bounds)

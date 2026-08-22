@@ -21,7 +21,7 @@ import io.github.ronjunevaldoz.awake.scene.physics.components.PhysicsBody
  * constructed before any [PhysicsWorld] exists, e.g. straight out of `SceneLoader`), so the
  * first [update] that sees a `null` handle creates the backing body from that entity's
  * paired [Transform] and stores the returned [BodyHandle] both on the component and in
- * [handleToEntity] (needed because [PhysicsWorld.syncTransforms] hands back handles, not
+ * `handleToEntity` (needed because [PhysicsWorld.syncTransforms] hands back handles, not
  * entities, and this system is the only place able to bridge that back to ECS state).
  *
  * [PhysicsWorld.step]/[PhysicsWorld.syncTransforms] are each called exactly once per

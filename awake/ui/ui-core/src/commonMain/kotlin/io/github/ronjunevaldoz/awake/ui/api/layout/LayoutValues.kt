@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.api.layout
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
 
 /** Child placement intent inside a parent slot. Pixel placement belongs to ui-core. */
 enum class UiAlignment {

@@ -3,11 +3,11 @@
 package io.github.ronjunevaldoz.awake.testing.ui
 
 import io.github.ronjunevaldoz.awake.core.input.Input
-import io.github.ronjunevaldoz.awake.ui.UiDensity
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.UiDensity
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiInputState
 import io.github.ronjunevaldoz.awake.ui.UiSemanticNode
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.api.theme.UiThemeValues
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
@@ -40,7 +40,7 @@ typealias UiTestRootProvider = UiScope.(content: UiScope.() -> Unit) -> Unit
  */
 class UiComponentFrame(
     val semantics: List<UiSemanticNode>,
-    val root: UiBounds,
+    val root: Rectangle,
     /** This frame's draw output -- what a test asserting on painted geometry (a separator's
      * 1px line, an avatar's badge circle) needs, and the reason those tests used to hand-roll
      * the whole UiContext preamble instead of using this helper. */
@@ -57,9 +57,9 @@ class UiComponentFrame(
         "no semantic node '$id'. Present ids: ${semantics.mapNotNull { it.id }.sorted()}"
     }
 
-    fun bounds(id: String): UiBounds = node(id).bounds
+    fun bounds(id: String): Rectangle = node(id).bounds
 
-    fun boundsOrNull(id: String): UiBounds? = nodeOrNull(id)?.bounds
+    fun boundsOrNull(id: String): Rectangle? = nodeOrNull(id)?.bounds
 
     /** Bottom edge, the value most of these assertions actually compare. */
     fun bottomOf(id: String): Float = bounds(id).let { it.y + it.height }
@@ -100,7 +100,7 @@ class UiTestSession(
         y: Float = -100f,
         down: Boolean = false,
         deltaSeconds: Float = 1f / 60f,
-        content: UiScope.(root: UiBounds) -> Unit,
+        content: UiScope.(root: Rectangle) -> Unit,
     ): UiComponentFrame {
         input.setPointer(down = down, x = x, y = y)
         return frame(input.updateSnapshot().toUiInputState(), deltaSeconds, content)
@@ -110,10 +110,10 @@ class UiTestSession(
     fun frame(
         input: UiInputState,
         deltaSeconds: Float = 1f / 60f,
-        content: UiScope.(root: UiBounds) -> Unit,
+        content: UiScope.(root: Rectangle) -> Unit,
     ): UiComponentFrame {
         ui.beginFrame(UiFrameInput(width, height, input, deltaSeconds))
-        val root = UiBounds(0f, 0f, width, height)
+        val root = Rectangle(0f, 0f, width, height)
         ui.createUiScope(root).rootProvider { content(root) }
         val frame = ui.finishFrame()
         return UiComponentFrame(
@@ -125,17 +125,17 @@ class UiTestSession(
     }
 
     /** Renders one hover frame at ([x], [y]). */
-    fun hover(x: Float, y: Float, content: UiScope.(root: UiBounds) -> Unit): UiComponentFrame =
+    fun hover(x: Float, y: Float, content: UiScope.(root: Rectangle) -> Unit): UiComponentFrame =
         frame(x = x, y = y, down = false, content = content)
 
     /** Presses then releases the primary pointer at one position; returns the release frame. */
-    fun click(x: Float, y: Float, content: UiScope.(root: UiBounds) -> Unit): UiComponentFrame {
+    fun click(x: Float, y: Float, content: UiScope.(root: Rectangle) -> Unit): UiComponentFrame {
         frame(x = x, y = y, down = true, content = content)
         return frame(x = x, y = y, down = false, content = content)
     }
 
     /** Performs two complete primary clicks; returns the second release frame. */
-    fun doubleClick(x: Float, y: Float, content: UiScope.(root: UiBounds) -> Unit): UiComponentFrame {
+    fun doubleClick(x: Float, y: Float, content: UiScope.(root: Rectangle) -> Unit): UiComponentFrame {
         click(x, y, content)
         return click(x, y, content)
     }
@@ -145,7 +145,7 @@ class UiTestSession(
         x: Float,
         y: Float,
         durationSeconds: Float,
-        content: UiScope.(root: UiBounds) -> Unit,
+        content: UiScope.(root: Rectangle) -> Unit,
     ): UiComponentFrame {
         require(durationSeconds >= 0f) { "durationSeconds must be non-negative" }
         frame(x = x, y = y, down = true, content = content)
@@ -154,7 +154,7 @@ class UiTestSession(
     }
 
     /** Presses then releases the secondary pointer at one position; returns the release frame. */
-    fun rightClick(x: Float, y: Float, content: UiScope.(root: UiBounds) -> Unit): UiComponentFrame {
+    fun rightClick(x: Float, y: Float, content: UiScope.(root: Rectangle) -> Unit): UiComponentFrame {
         fun secondaryFrame(down: Boolean): UiComponentFrame {
             input.setPointer(down = false, x = x, y = y)
             input.setSecondaryPointer(down)
@@ -171,7 +171,7 @@ class UiTestSession(
         endX: Float,
         endY: Float,
         steps: Int = 1,
-        content: UiScope.(root: UiBounds) -> Unit,
+        content: UiScope.(root: Rectangle) -> Unit,
     ): UiComponentFrame {
         require(steps > 0) { "steps must be positive" }
         frame(x = startX, y = startY, down = true, content = content)
@@ -232,7 +232,7 @@ fun renderUiComponent(
     input: UiInputState = testSnapshot(),
     deltaSeconds: Float = 1f / 60f,
     rootProvider: UiTestRootProvider = { content -> content() },
-    content: UiScope.(root: UiBounds) -> Unit,
+    content: UiScope.(root: Rectangle) -> Unit,
 ): UiComponentFrame {
     val previousDensity = UiDensity.scale
     val previousFontScale = UiDensity.fontScale
@@ -243,7 +243,7 @@ fun renderUiComponent(
         ui.pushLocal(LocalFont, font)
         if (theme != null) ui.pushLocal(LocalTheme, theme.asRuntimeTheme())
         ui.beginFrame(UiFrameInput(width, height, input, deltaSeconds))
-        val root = UiBounds(0f, 0f, width, height)
+        val root = Rectangle(0f, 0f, width, height)
         ui.createUiScope(root).rootProvider { content(root) }
         val frame = ui.finishFrame()
         return UiComponentFrame(

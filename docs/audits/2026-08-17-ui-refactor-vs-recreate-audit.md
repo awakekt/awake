@@ -16,6 +16,177 @@ the E5 scratch test are already gone. Some audit line numbers for that file fami
 came from stale `build/` mirrors; re-verify file:line before starting any row, and
 exclude `**/build/**` from audit greps.
 
+## Re-audit — 2026-08-20
+
+Four fresh parallel audits (ui-core, headless, designsystem, cross-cutting) against
+real current source, 3 days and ~30 commits after the original. Same method as the
+2026-08-17 audit, same verdict: **refactor in place, don't recreate — holds more
+strongly now than on 2026-08-17.** 603/603 real UI tests green (up from the 524
+baseline cited as non-transferable "recreate" cost), `verifyUiOwnership` confirmed
+still doing real work (hand-verified its exemption ledger matches the tree exactly,
+not a vacuous green). No new architectural or layering problems found; only doc
+drift (fixed above — Package 5 and B6 were fully landed but still shown unchecked)
+and a set of small, bounded, mechanical-to-medium new findings:
+
+- **designsystem** — 8 `public` style-fn functions have zero external callers, should
+  be `internal` (`ShadcnAvatarStyles.kt`, `ShadcnSelectionStyles.kt`,
+  `ShadcnStatusStyles.kt`, `ShadcnToastStyles.kt` — this is the original audit's own
+  "8 unexplained public style fns" claim, never previously investigated, now
+  confirmed real). 4 real id-default collision bugs, same class as the already-fixed
+  F2 tooltip bug: `shadcnAvatarBadge`/`shadcnAvatarGroup`/`shadcnFieldSeparator`/
+  `shadcnSidebarMenuSub` each string-interpolate a defaulted `id` into a *different*
+  child widget's required-id slot — two un-ided sibling instances on one screen
+  silently share a `WidgetState`/measure-cache bucket. `docs/reference/ui-status.md`
+  risk #1 ("Button missing `px-4`") is stale — already fixed (`ShadcnButtonStyles.kt`
+  sets `contentPadding` correctly), doc not updated.
+
+  **Landed, 2026-08-20 (same day, follow-up pass) — 8 public style-fn finding only.**
+  Re-grepped the whole repo (not just `awake/ui/designsystem`) for each of the 8 names
+  and confirmed zero external callers again — every call site is inside
+  `awake/ui/designsystem/src/commonMain/.../components/*Recipes.kt` (or `ShadcnToast.kt`),
+  i.e. the same module. Changed all 8 from implicit-public to `internal`:
+  `ShadcnAvatarStyles.kt`'s `shadcnAvatarStyle`/`shadcnAvatarBadgeStyle`,
+  `ShadcnSelectionStyles.kt`'s `shadcnToggleGroupItemStyle`/`shadcnRadioStyle`,
+  `ShadcnStatusStyles.kt`'s `shadcnProgressStyle`/`shadcnSkeletonStyle`/`shadcnSpinnerStyle`,
+  `ShadcnToastStyles.kt`'s `shadcnToastStyle`. `:awake:ui:designsystem:desktopTest` and
+  `:verifyUiOwnership` green; `:samples:ui-showcase:compileKotlinDesktop` and
+  `:samples:studio:compileKotlinDesktop` both green, confirming no external code relied
+  on the public visibility. The 4 id-default collision bugs and the stale
+  `docs/reference/ui-status.md` risk #1 in this same bullet are unchanged, still open.
+- **headless** — `popup()` still has a nullable/defaulted `id` (`Popup.kt:64`), the
+  exact bug class F2 fixed for tooltip, one layer lower and still open; `popup()`
+  also takes no `modifier` param at all — literally the root cause C6 already
+  diagnosed for designsystem's 9 overlay wrappers.
+  **Fixed 2026-08-20 (follow-up pass), C6 closed.** Investigation found the actual
+  gap was one layer higher than C6's own framing suggested: `UiPrimitiveScope.popup()`
+  in `ui-animation`'s `UiPopup.kt` already took a `modifier: UiModifier` param and
+  already clamped its resolved size against `modifier.min/maxWidth/Height` (from an
+  earlier pass, `2d0f4617b`) — the primitive was never the missing piece. The real
+  gap was the `ui-headless` facades `popup()` (`Popup.kt`) and `dialog()` (`Dialog.kt`,
+  which every dialog/drawer/alert-dialog wrapper routes through instead of `popup()`
+  directly) always forwarding a bare `Modifier` instead of exposing one. Both now take
+  `modifier: UiModifier = Modifier` and forward it. Design decision made:
+  `width`/`height: Dimension` still pick the popup's base size (`Fixed` pins it,
+  `FillMax`/`WrapContent` measure it, unchanged); `modifier`'s `widthIn(max=)`/
+  `heightIn(max=)` only add a cap on top, matching the primitive's pre-existing
+  `.constrain(min, max)` semantics — no new precedence logic needed, just plumbing.
+  All 9 designsystem overlay wrappers (`shadcnDropdownMenu`, `shadcnTooltip`,
+  `shadcnTooltipText`, `shadcnAlertDialog` ×2, `shadcnContextMenu`, `shadcnSheet`,
+  `shadcnDrawer`, `shadcnDialog`) now accept and forward a real `modifier` param;
+  none deferred, all were mechanical once the headless-layer plumbing existed. Also
+  closes `docs/reference/ui-status.md` risk #7 (was misdiagnosed as a primitive-level
+  gap; corrected). `id` still defaulted at `Popup.kt:64` — that bug is unrelated and
+  stays open. 4 widgets
+  (`rangeSlider`/`toast`/`toggleGroup`/`select`) still have only internal-level test
+  coverage despite having a public facade that differs in signature — package 2's
+  "17 new facade tests… all public `headless.*` imports" claim overclaims for these
+  four.
+
+  **Fixed 2026-08-20 (follow-up pass).** Re-checked current source for all four
+  before writing anything: `rangeSlider()`, `toast()`, and both `toggleGroup()`
+  overloads each still have a public `UiScope` facade (`Input.kt`, `Status.kt`,
+  `Selection.kt`) with a real surface difference from their `UiPrimitiveScope`
+  counterpart (different receiver reached without `primitive.context.createAbsolute`/
+  `createColumn`, callback-based state for `toggleGroup` vs. the internal layer's
+  bare primitive call). `select()` turned out to already be fixed — `SelectFacadeTest.kt`
+  landed in an earlier commit on this branch (`ad76757ac`) and already drives the
+  public `headless.select` facade end-to-end (trigger render → open → click an
+  option); `UiPopupTest.kt`'s `dropdownUsesSharedPopupAndClosesAfterPickingOption()`
+  still imports `headless.internal.controls.select` directly, but that's the
+  internal-level test coexisting with the facade one, not a gap. Added 3 new files,
+  6 new tests, all driving only `io.github.ronjunevaldoz.awake.ui.headless.*`
+  imports: `RangeSliderFacadeTest.kt` (bounds from the requested modifier; dragging
+  near the end knob raises `valueEnd` only), `ToastFacadeTest.kt` (semantic node
+  carries the message while visible; return value flips to `false` once `durationMs`
+  elapses), `ToggleGroupFacadeTest.kt` (single-select overload's `onIndexChange` and
+  multi-select overload's `onSelectedIndicesChange` both fire correctly on a click).
+  `RangeSliderTest.kt`, `ToastTest.kt`, and `ToggleGroupWidgetTest.kt` (the
+  internal-level tests) are untouched — they cover the lower `UiPrimitiveScope` layer
+  and stay alongside the new facade tests, same as `ToggleFacadeTest.kt` sits
+  alongside `ToggleGroupWidgetTest.kt` already. `:awake:ui:headless:desktopTest`
+  (172 tests, 0 failures) and `:awake:ui:headless:verifyUiOwnership` both green.
+
+  `checkbox`/`switch`/`toggle`/`toggleGroup` have no slot/content form (icon
+  next to a label is impossible), unchanged and still open. C9's real remaining scope is narrower than
+  documented: 6 of 7 widgets it worries about are already pure return-value with no
+  callback; only `toggle` (dual return+callback) and `toggleGroup` (`Unit`+callback
+  only) still need work.
+- **ui-core** — two dead `@Deprecated` typealiases (`Dimension`/`LayoutWeight` in
+  `layout/Dimension.kt`) with zero real importers, safe to delete. `CanvasScope`'s
+  new `draw*` helpers (landed 2026-08-19) have no direct `ui-core` unit test, only
+  indirect coverage through consumer-module snapshots.
+- **Cross-cutting — the real headline finding.** `verifyUiOwnership` never runs on
+  `samples:*` (not in `classifiedUiModules`), and this let real drift accumulate
+  silently in exactly the layer nothing was watching: **~45 files** across
+  `samples/studio` and `samples/ui-showcase` bypass `ui-headless`'s licensed
+  `ModifierExports.kt` door and import `io.github.ronjunevaldoz.awake.ui.modifier.*`
+  (`ui-core`) directly — essentially every `ui-showcase` page file, plus 5 studio UI
+  files. More severe: **3 confirmed instances of consumer code hand-authoring
+  `Style { ... }`** against raw `surface()`/`text()` calls instead of using a
+  `shadcn*` recipe — `StudioToolbar.kt:165` (`barBand()`), `IconRail.kt:42`
+  (`railCard()`), `GettingStartedContent.kt:146` (`themeLabel()`, also reaching the
+  raw ambient `primitive.theme` directly). This is a direct violation of the
+  consumer rule codified 2 days ago in `docs/reference/ui-ownership.md`'s
+  "Consuming From A Sample, Game, Or Tool" section — invisible until this audit
+  because samples were never brought under the check that would have caught it.
+  Confirms the original audit's own root-cause finding ("dirt accumulates because
+  guardrails are off, not because the architecture is wrong") in a new place.
+  B9b's designsystem-`api(ui-core)`-instead-of-`implementation` gap is confirmed
+  still real but **should not be fixed before the ~45-file import drift and 3
+  `Style{}` violations above are fixed** — flipping the dependency scope first would
+  just break the build on those violations rather than resolve them. Real fix order:
+  (1) repoint the ~45 imports (mechanical, sed-able), (2) fix or promote the 3
+  `Style{}` sites to real recipes, (3) then flip designsystem's dependency scope and
+  bring `samples:*` under `verifyUiOwnership`.
+
+  **Landed, 2026-08-20 (same day, follow-up pass).** Real counts verified against
+  source before touching anything: 40 files (35 `ui-showcase` + 5 `studio`), not
+  ~45 — the audit's estimate rounds up; 3 `Style{}` sites confirmed exactly as
+  described. **Step 1**: found one real gap in `ModifierExports.kt` before
+  sweeping — `heightIn` exists in `ui-core`'s `LayoutModifiers.kt` and one file
+  (`ShowcaseShell.kt`) used it, but the door didn't re-export it (only `widthIn`
+  was). Added the re-export first, then repointed all 40 files' imports from
+  `ui.modifier.*` to `ui.headless.*` (mechanical `sed`, zero manual edits,
+  zero duplicate-import collisions). **Step 2**: `StudioToolbar.kt`'s `barBand()`
+  and `IconRail.kt`'s `railCard()` were both a real, reusable shape (full-bleed
+  muted chrome band; a card look with tighter padding) neither existing
+  `ShadcnSurfaceVariant` covered — promoted both into `ui-designsystem`: a new
+  `ShadcnSurfaceVariant.Band` (square corners, muted, horizontal-only inset,
+  backed by a new `ShadcnMetrics.bandPaddingX` field defaulted to
+  `fieldPaddingX` so the 8 existing theme presets need no per-theme tuning), and
+  a `contentPadding: Dp? = null` override param on `shadcnSurface` for the
+  card-with-tighter-padding case. `GettingStartedContent.kt`'s `themeLabel()`
+  turned out to already have a matching recipe in the tree —
+  `shadcnFieldLabel()` (`ShadcnFieldRecipes.kt`) resolves the identical
+  foreground/typography.label pairing through `themeValues.typography.label`
+  (accessible on the `ShadcnThemeValues` wrapper, not just raw `primitive.theme`)
+  — swapped the hand-authored `Style{}` for a direct call, no new recipe needed.
+  **Step 3**: flipped `implementation` (was `api`) and verified with a
+  `--no-build-cache` clean compile (build-cache `FROM-CACHE` hits initially
+  masked whether the flip mattered at all). Confirmed safe by construction, not
+  just by a green build: grepped every real consumer of
+  `:awake:ui:designsystem` (`samples:studio`, `samples:ui-showcase`,
+  `awake:backend:vulkan` — the only 3 in the repo) and all three already declare
+  their own direct `implementation(project(":awake:ui:ui-core"))`, so none were
+  ever relying on designsystem's `api` re-export for their own compile
+  classpath; the 3 real public designsystem signatures that take `Style` as a
+  parameter (`shadcnResizableHandle`, `shadcnAlertDialog` ×2) still resolve
+  fine for every current caller. Added `:samples:ui-showcase`/`:samples:studio`
+  to `classifiedUiModules` and gave both a real (non-empty) rule set — banning
+  `ui.modifier.*` imports and `Style {` authoring via `forbiddenUiSourcePatterns`
+  — rather than the vacuous-empty-ruleset shape package 1's own root-cause
+  finding warns against; both already applied `awake.ui-ownership-convention`
+  and passed clean on the first run (no plugin was wired in for either sample
+  before this pass). All verification green: the 6-module desktopTest command
+  from this doc's own "Validation" line, `verifyUiOwnership` on all 5 UI
+  modules plus both samples, and `awake:backend:vulkan:compileKotlinDesktop`
+  (the third designsystem consumer, not in the mandated command but checked
+  since it's the only other real caller).
+
+None of the above changes the verdict. All are bounded, independently landable,
+same shape as everything else that's already shipped from this doc — not
+architectural surprises, not a case for recreate.
+
 ## TL;DR
 
 - **The dirt accumulated because the guardrails were off, not because the architecture
@@ -39,7 +210,7 @@ What the stack looks like when all 6 packages land:
    (`hovered {}`, `selected {}`, `disabled {}`). The merge-order bug class (the
    2026-08-15 P0) is structurally impossible, not patched.
 2. **One widget contract.** Every leaf widget:
-   `(id, <state>, modifier, style, enabled, <callbacks>, content): UiBounds`.
+   `(id, <state>, modifier, style, enabled, <callbacks>, content): Rectangle`.
    Learn one widget, know all of them. No sizing/spacing params — `Modifier` and
    `Style` own that, always.
 3. **Single-responsibility leaves.** headless = leaf behavior only (dead composites
@@ -183,7 +354,7 @@ Deletions (executed 2026-08-17, ~-708 net lines / 93 files / 13 files deleted):
 - [ ] ~~`FigmaModeMatrix`~~ **RE-PARKED**: 3 live fidelity tests call it
       (Drawer/Select/Tooltip) — contradicts the memory-recorded deletion decision; delete
       with the Figma-tooling removal pass, after those tests get a neutral mode matrix — E5
-- [x] `pixelPerfectPixel` 4→1 (graphics `UiBounds.kt`, `roundToInt` semantics; all imports
+- [x] `pixelPerfectPixel` 4→1 (graphics `Rectangle.kt`, `roundToInt` semantics; all imports
       fixed) — B4
 - [x] Duplicate `@DslMarker` deleted — the marker mechanism now actually shadows across
       scopes for the first time; 3 latent implicit-receiver leaks surfaced and fixed — B7
@@ -273,17 +444,25 @@ val shadcnSwitchStyle = Style { selected { background(colors.primary) } }
 
 ## Package 5 — layout unlock (2–3 days) · rows D1 D2 B5
 
-- [ ] Land the intrinsic wrap+fill fix at `ColumnScope.kt:94` / `RowScope.kt:81`
+- [x] Land the intrinsic wrap+fill fix at `ColumnScope.kt:94` / `RowScope.kt:81`
       (failing spec `ShadcnButtonGroupTest` already in tree) — D1
-- [ ] Delete the 4 workaround species: `withIntrinsicLabelWidth` call sites where now
+      **done**, commit `505be7cee` (2026-08-18). Confirmed live 2026-08-20 re-audit:
+      `contributesToWrapWidth`/`contributesToWrapHeight` still correctly exclude
+      `Dimension.FillMax` only outside a wrap-content pass, matching the `after` snippet below.
+- [x] Delete the 4 workaround species: `withIntrinsicLabelWidth` call sites where now
       redundant, `wrapContentWidthOrDefault()`, `minWidth` param, `withSizeFallback(40dp)` — D1
-- [ ] Consume `UiShapeSpec.RoundedCorners` in button group (zero consumers today; stale
+      **done**, same commit. `wrapContentWidthOrDefault()` was found NOT dead (kept
+      deliberately — see package 5's own note elsewhere in this doc for why).
+- [x] Consume `UiShapeSpec.RoundedCorners` in button group (zero consumers today; stale
       "impossible" comment at `ShadcnButtonGroupRecipes.kt:95-103`); second consumer:
-      toggle-group segments — D2
-- [ ] Delete `LocalShadcnButtonGroup` context + triplicated `shape(0.dp)` mutations once
-      the group is a plain row/column — D2
-- [ ] Dedupe `Row.kt`'s 5 measure-block copies into one helper (Column's `smartColumn`
-      pattern); fixes the `LocalCacheKey` drift bug — B5
+      toggle-group segments — D2 **done**, same commit — per-corner radii live.
+- [x] Delete `LocalShadcnButtonGroup` context + triplicated `shape(0.dp)` mutations once
+      the group is a plain row/column — D2 **kept deliberately, not deleted** — found
+      structurally required, documented as a deviation from the plan at the time.
+- [x] Dedupe `Row.kt`'s 5 measure-block copies into one helper (Column's `smartColumn`
+      pattern); fixes the `LocalCacheKey` drift bug — B5 **done**, same commit. Confirmed
+      2026-08-20: `Row.kt` (347 lines) is one `resolveMeasuredRow` helper (`Row.kt:37`)
+      with 5 thin scope wrappers, matching `Column`'s pattern.
 
 ```kotlin
 // before — ui-core/layouts/ColumnScope.kt:94 (mirrored RowScope.kt:81)
@@ -325,27 +504,186 @@ Compiler-driven sweeps. Boring by design.
         `WidgetState`-held gesture state. Long-press/double-click need the input-latch
         fix (F11) first.
 - [ ] One canonical order everywhere:
-      `(id, <state>, modifier, style, enabled, content): UiBounds` (callbacks gone per
+      `(id, <state>, modifier, style, enabled, content): Rectangle` (callbacks gone per
       C9; continuous-gesture exceptions documented individually) — C3 C4
-- [ ] `id: String` required on every stateful widget (kill `canvas` default, `separator`
+- [x] `id: String` required on every stateful widget (kill `canvas` default, `separator`
       nullable-last, tooltip default); fold `semanticId` into `testTag` — C3
-- [ ] Remove the 16 rule-6 params (`size`, `textSize`, `boxSize`, `thickness`, `radius`,
+      **partial, 2026-08-20**. Investigated against real current source first: C1/C2/C8's
+      earlier work already made `id: String` required on nearly every headless widget (button,
+      checkbox, switch, textField, dialog, collapsible, resizablePanelGroup, all of Status.kt/
+      State.kt, …) — only `canvas` (defaulted `"canvas"`, zero real callers used the default)
+      and `separator`'s two overloads (nullable-last, the in-code collision comment the audit
+      cites) were still non-required. Both fixed; call sites updated (`Dropdown.kt`'s bare
+      `separator()`, `SeparatorWidgetsTest.kt`, and the two designsystem callers that reach the
+      headless `separator()` directly — `ShadcnSidebarRecipes.kt`, `ShadcnStatusRecipes.kt`'s
+      `shadcnSeparator`, which keeps its OWN nullable `id` with an orientation-derived fallback
+      rather than becoming required, since making it required cascades into
+      `samples/studio`/`samples/ui-showcase` callers that were out of scope this pass). Also
+      confirmed the audit's `disabled`-polarity-inverted-on-`field` finding is stale (no `field`
+      widget exists; every widget already uses `enabled: Boolean`) and landed the disabled-alpha
+      consolidation: one `UiPrimitiveScope.withDisabledAlpha(enabled) { }` helper in
+      `headless/ModifierExports.kt`, replacing 9 (not ~6) open-coded
+      `withGraphicsLayerAlpha(if (enabled) 1f else 0.5f)` sites. **Not done**: the canonical
+      param-order sweep (`style` position varies 3rd through last across ~10 widgets; `row`'s
+      raw-slot `id` sits 4th vs `column`'s 1st) and the `semanticId`-into-`testTag` fold —
+      both genuinely touch every widget signature plus every designsystem recipe that mirrors
+      one, which is the audit's own flagged highest-risk shape; re-scope as a dedicated pass
+      once C4/C6 (designsystem-side signatures) lands, since the two overlap at every recipe
+      call site.
+- [x] Remove the 16 rule-6 params (`size`, `textSize`, `boxSize`, `thickness`, `radius`,
       `minWidth`, `gap`, …); delete `Modifier.margin()` (silently drops end/bottom) — C5
-- [ ] `modifier` on all 8 overlay components; kill `Dimension` params + `FillMax` leak;
+      **partial, 2026-08-20**. `Modifier.margin()` deleted — confirmed zero callers repo-wide and
+      confirmed the drop-end/bottom bug (`= offset(start, top)`, ignored `end`/`bottom` params)
+      before deleting. The 16 sizing/spacing params themselves (`avatar`'s `size`/`textSize`,
+      `checkbox`'s `boxSize`, `separator`'s `thickness`, etc.) are NOT dead weight — each has a
+      real designsystem-recipe caller passing a concrete value today. Removing them means
+      rewriting those recipe call sites to route the same value through `Modifier.width()`/
+      `height()` instead, i.e. touching `ShadcnAvatarRecipes.kt`, `ShadcnSelectionRecipes.kt`,
+      `ShadcnSidebarRecipes.kt` — the exact designsystem-recipe surface C4/C6 owns. Re-scope to
+      land alongside that pass rather than as a separate headless-only sweep.
+      **update, 2026-08-20**: C4/C6 pass landed below did NOT touch this — the 16 sizing params
+      are real rule-6 duplication but each one's removal is itself a per-widget call-site rewrite,
+      not something that fell out "for free" from the C4/C6 investigation. Still re-scoped, now
+      to ride with whichever pass lands C4's deferred `id`-required sweep (same recipe files).
+- [x] `id: String` required on designsystem recipes following headless's convention; 9 `Unit`
+      returns that block popup-anchoring; 9 rule-6 params; FQNs in signatures; 8 unexplained
+      `public` style fns — C4 **partial, 2026-08-20**. Investigated against real current source:
+      audit's counts were stale (see C4 appendix row for the re-derived numbers — real `id`
+      nullable/defaulted count is ~10 not ~29, most are legitimate `column`/`row`-style layout
+      wrappers not stateful widgets; real Unit-return count is 12 not 9). **Landed**: 3 FQN fixes
+      (`ShadcnIcon.kt`, `ShadcnAvatarRecipes.kt`, `ShadcnSelectionGroupRecipes.kt`) and 5 zero-risk
+      Unit→Rectangle fixes whose body already tail-calls a Rectangle-returning headless primitive
+      (`shadcnIcon`, `shadcnSidebarGroup`, `shadcnSidebarMenu`, `shadcnSidebarMenuSub`,
+      `shadcnRadioGroup` in `ShadcnSidebarRecipes.kt`/`ShadcnSelectionGroupRecipes.kt`). **Not
+      landed**: `id`-required sweep (per-function judgment needed), the other 7 Unit-return fixes
+      (gated on a `ui-headless` `Selection.kt`/`Status.kt` primitive change, since
+      `toggleGroup()`/`progress()`/`skeleton()`/`spinner()` are themselves `Unit`-returning), the
+      rule-6 params (rides with C5's remainder), the public-style-fn audit (not reached).
+- [x] `modifier` on all 9 overlay components (real count, not the audit's original "8");
       replace hand-rolled text measurement with `withIntrinsicLabelSize` — C6
-- [ ] Rename raw-slot `column`/`row` overloads to `columnAt`/`rowAt`; single 21-param
-      factory, `UiContext.create*` become internal forwards — C1
-- [ ] `button()` label form becomes a wrapper over the slot form (after package 4 — the
+      **done, 2026-08-20**, commit `5e172a65b`. The blocker found on first investigation
+      (`popup()`/`dialog()` sized from `Dimension` with no `Modifier` bridge) turned out
+      smaller than it looked: the underlying primitive (`UiPopup.kt`) already had the
+      `Modifier`-constraint-clamping plumbing from an earlier commit — the real gap was
+      just the two `ui-headless` facades (`popup()`, `dialog()`) never forwarding a
+      caller's `modifier` at all. Added `modifier: Modifier = Modifier` to both facades,
+      forwarded through instead of a hardcoded `Modifier`; all 9 designsystem wrappers
+      (`shadcnDropdownMenu`, `shadcnTooltip`, `shadcnTooltipText`, both
+      `shadcnAlertDialog` overloads, `shadcnContextMenu`, `shadcnSheet`, `shadcnDrawer`,
+      `shadcnDialog`) now accept and forward a real `modifier`. Also closes
+      `ui-status.md` risk #7 (`popup()` couldn't take min/max bounds) — same root cause.
+      `withIntrinsicLabelSize` text-measurement replacement not separately revisited;
+      not found to be a live remaining issue during this pass.
+- [x] Rename raw-slot `column`/`row` overloads to `columnAt`/`rowAt` — **partial, done**,
+      commit `4ad43d45`. `UiContext.columnAt`/`rowAt` (member) and `UiPrimitiveScope`
+      (extension) renamed; root-authoring `UiContext.column`/`row` left as-is (it's the
+      primary entry point, not the raw form). The single-21-param-factory /
+      `UiContext.create*`-become-internal-forwards half is **not done** — those factories
+      are public API consumed directly (not just via `column`/`row`) by ui/headless test
+      infra, ui/animation, ui/testing, ui/benchmark, scene/runtime, engine/game-authoring,
+      and design-system snapshot fixtures across dozens of call sites. Internal-forwarding
+      them breaks cross-module compilation; rerouting every call site overlaps C3–C6's
+      signature sweep. Deferred to that pass — C1
+- [x] `button()` label form becomes a wrapper over the slot form (after package 4 — the
       prior attempt's regression was a B2 symptom) — C2
-- [ ] One style-fn shape: `internal fun shadcnXStyle(values: ShadcnThemeValues, …): Style`;
+      **done, third attempt**. Prereq work (commit `f6fb7cde`, same day) ported the
+      package-5 `isWrapContentPass`/`withIntrinsicLabelWidth` exception and the hover-state
+      resolution fix into `surfaceCore`, unifying the two previously-drifted
+      interactive-surface implementations `resolveInteractiveSurface`/`buttonSlotInternal`
+      (label form) and `interactiveSurface`/`surfaceCore` (slot form) called out in the
+      prior attempt below. `headless/Button.kt`'s label-form `button()` now delegates to
+      the slot-form `button(content: RowScope.(slot) -> Unit)` with a content lambda that
+      just renders `text(label, ...)`, no `primitiveButton`/`buttonSlotInternal` call left
+      in the label form. Two things had to be preserved explicitly, not "for free" from a
+      naive delegation, since the slot form's own row hardcodes
+      `Arrangement.Center`/`Vertical.Center` regardless of any per-call alignment request:
+      (1) the button's own width is resolved up front via the same `withIntrinsicLabelWidth`
+      helper `buttonSlotInternal` used (a real caller width wins unchanged, an unset width
+      becomes the label's measured natural width, a `fillMaxWidth()` caught mid an
+      ancestor's own WrapContent trial reports that natural width for the trial only) so the
+      button is never `WrapContent` by the time the row/text render; (2) the label's own
+      `text()` call then claims the button's full resolved content width
+      (`Modifier.fillMaxSize()`), so its own `centered` param — not the row's fixed
+      `Arrangement.Center` — decides left-vs-centered placement. Verified: targeted
+      `UiSemanticWidgetsTest` (`labelButtonHugsIntrinsicWidthWithoutExplicitWidth`,
+      `labelButtonRespectsCenteredForRepositioning`) green; full `:awake:ui:headless:desktopTest`,
+      `:awake:ui:ui-core:desktopTest`, `:awake:ui:designsystem:desktopTest` green, including
+      `ShadcnButtonGroupTest.verticalButtonGroupWrapsContentWidthAndButtonsFillMaxWidth`,
+      `ShadcnButtonStateColorTest` (both hover cases), and `UiSnapshotSignatureTest`.
+      `:samples:studio:desktopTest` not verified — pre-existing unrelated compile break in
+      `StudioShell.kt` (`Unresolved reference 'CAMERA_PREVIEW_CARD_PADDING'`) from
+      concurrent in-progress work in that file, out of this pass's scope.
+- [x] One style-fn shape: `internal fun shadcnXStyle(values: ShadcnThemeValues, …): Style`;
       merge the 14 `foreground+textSize` re-implementations and twin surface styles — B8
-- [ ] Merge the two `shadcnEmpty` implementations *(recreate unit)* — B8
-- [ ] Recreate `shadcnTabs` with a content slot *(recreate unit, below)* — D5
-- [ ] Split `scrollPanel` god function; enum axis instead of `"width"`/`"height"` strings — C7
-- [ ] Repackage `internal/controls/Buttons.kt` (declares the public package from `internal/`) — C8
-- [ ] Park or delete the 7 speculative presets (49 unverifiable positional Dp args) — E6
-- [ ] Spacing-vocab sweep per the recorded decision (`Tw` in designsystem, `UiSpacing` in
-      core/headless, delete `ShadcnSpacing`) — per-site, no bulk rename — B12
+      **done**. `shadcnTextStyle(foreground, size, weight: FontWeight? = null)` in
+      `ShadcnTypographyStyles.kt` is now the one canonical foreground+textSize(+weight) shape;
+      the 8 pure re-implementations across `ShadcnTableStyles.kt`, `ShadcnFieldStyles.kt`,
+      `ShadcnNavigationStyles.kt`, `ShadcnSidebarStyles.kt` route through it (composite ones
+      that also set background/border/padding/hover were left as-is -- routing those through
+      `shadcnTextStyle then Style {...}` was judged not worth the added indirection for the
+      remaining ~6 sites). The byte-identical `shadcnDialogSurfaceStyle`/
+      `shadcnAlertDialogSurfaceStyle` twins are merged (`ShadcnPopupRecipes.kt`'s one caller now
+      uses `shadcnDialogSurfaceStyle`). `FieldSet`/`FieldGroup` (`ShadcnFieldRecipes.kt`) were
+      already sharing `shadcnFieldContainer`, and the "45-line sidebar pair"
+      (`shadcnSidebarHeaderButton`/`shadcnSidebarFooterButton`) is a widget-recipe duplication,
+      not a style-fn one -- left for a future pass, not attempted here.
+- [x] Merge the two `shadcnEmpty` implementations *(recreate unit)* — B8
+      **already done** pre-pass -- only `ShadcnStatusRecipes.kt`'s `shadcnEmpty` exists now,
+      `ShadcnEmptyRecipes.kt` no longer exists.
+- [x] Recreate `shadcnTabs` with a content slot *(recreate unit, below)* — D5
+      **done**. The `items`/`selected`-keyed overload in `ShadcnNavigationRecipes.kt` now takes
+      `content: ColumnScope.(String) -> Unit = {}` and wraps track+panel in one `column(id)`
+      (default empty content preserves the old track-only render for existing callers/goldens).
+      Content renders against the frame-stable `selected` input, not the click-mutated
+      `resolved` value -- the first draft used `resolved` and hit the exact
+      `ColumnScope.claimSlot()` index-mismatch crash `StudioBottomDock`'s own comments warn
+      about (branch selection differing between a call's measure and paint pass). Migrated
+      `StudioBottomDock.kt`'s dock tabs off its external `when (renderedTab)` onto the new
+      content slot as the real-world proof. The label/`selectedIndex: Int` overload is
+      unchanged and stays track-only (documented: duplicate labels collapse to the same trigger
+      id, use the `items` overload for that case).
+- [x] Split `scrollPanel` god function; enum axis instead of `"width"`/`"height"` strings — C7
+      **done**. Private `ScrollAxis { Width, Height }` replaces the `"width"`/`"height"`
+      strings; `requireBoundedAxis` extracted to a top-level `requireBoundedScrollAxis`, and the
+      hand-duplicated vertical/horizontal scrollbar geometry+paint block extracted to one
+      axis-parameterized `paintScrollThumb`. `scrollPanel`'s own body shrank from the full
+      ~285 lines to the measure/layout/hit-test orchestration; `awake:ui:ui-core` desktopTest
+      green (no golden/behavior change intended).
+- [x] Repackage `internal/controls/Buttons.kt` (declares the public package from `internal/`) — C8
+      **done**, commit `5ced67ae`. Package fixed to `.headless.internal.controls`; surfaced
+      same-package implicit resolution in 6 test files + `Button.kt`/`Dropdown.kt`/
+      `internal/controls/Toggle.kt`, all fixed with an explicit import, no behavior change.
+      `desktopTest` green. The other 12 rows in this package were deliberately not
+      attempted in the same pass — genuinely the "touches nearly every widget signature"
+      work the package intro warns about. Proposed split for follow-up, not yet scheduled:
+      1. C9 return-value idiom (buttons/checkbox/slider callback → return value)
+      2. C9 gesture contract (`UiInteraction`, `interactiveSurface` recognizer)
+      3. C3/C4/C5/C6 signature sweep (canonical param order, required `id`, kill rule-6
+         params, overlay `modifier`)
+      4. C1 `column`/`row` rename + single-factory internal forwards
+      5. C2 `button()` label-form-as-wrapper (post package 4) — **done, see C2's own row above**
+      6. B8/D5/C7 designsystem-facing (style-fn shape, `shadcnEmpty` merge, `shadcnTabs`
+         recreate, `scrollPanel` split) — routed to `awake-design-system-engineer`
+      7. B12 spacing-vocab sweep (per-site, no bulk rename)
+- [x] Park or delete the 7 speculative presets (49 unverifiable positional Dp args) — E6
+      **verified load-bearing, kept as-is, no code change**. The package-6 agent's claim holds:
+      `ShadcnStylePreset.entries` (all 8 presets, `Vega` plus the 7 flagged as speculative) is
+      consumed by `samples/ui-showcase`'s theming picker --
+      `GettingStartedContent.kt:229` maps `entries` to labels for the picker UI, and
+      `UiShowcaseRuntimeState.kt:114-115` indexes back into `entries` from the picker's
+      selection. Deleting or parking any of the 7 would visibly break that picker. The audit's
+      "park or delete" assumption is stale; corrected here instead of acted on. The 49
+      positional-`Dp`-args readability complaint is separately real but out of this pass's
+      scope (would be a signature change to `ShadcnMetrics`'s constructor, not a
+      park-or-delete).
+- [x] Spacing-vocab sweep — **done**, commits `316a1788` (`ShadcnSpacing` deleted) and
+      `077f92b8` (`UiSpacing` deleted). Decision revised 2026-08-18: ui-core/ui-headless
+      own no spacing scale at all, matching Compose Foundation's layering (zero built-in
+      spacing tokens; only a design-system layer like Material owns a named scale).
+      `UiSpacing` deleted, not relocated to headless — every `UiSpacing.xs/.sm/.md/.lg/.xl`
+      call site in core/headless inlined to its literal `Dp` value. `ShadcnSpacing` also
+      deleted (confirmed dead — zero real callers). Only `Tw` (designsystem) keeps a
+      named scale — B12
 
 ```kotlin
 // before — shadcnTabs models only the track; content panel not expressible;
@@ -371,13 +709,24 @@ params remain; designsystem call sites compile against the canonical shapes.
 
 | Item | Row | What | Why parked |
 |---|---|---|---|
-| Delete headless facade mirror | B9 | `HeadlessModifier` (16 forwards) + second `UiScope`; `primitive` escape already public, 48 imports bypass the wall | Touches every widget signature; boundary is better enforced by package-1's live check + `implementation(ui-core)` |
+| Delete headless facade mirror | B9 | **Scoped and re-scoped across 3 passes 2026-08-18. Not landed; B9a now has a real executable plan, B9b resolved as mostly a non-issue, B9c still needs a decision.** `UiScope` is NOT a redundant wall — its docstring states real intent: capability narrowing, hiding Core's raw `UiPrimitiveScope` frame/draw/input escape hatches from widget-recipe authors. **B9a (retire `HeadlessModifier`/headless's `Modifier` type entirely):** 2 stop-and-report passes. Pass 1 found a bare `typealias` can't work (Kotlin forbids a package-level `typealias`+`val` sharing a name, and `UiModifier`'s a `data class` so no companion-object trick). Pass 2 found the real unblock needs no Core change at all — `awake/ui/ui-core/.../modifier/UiModifier.kt` already ships the bare-value idiom for free under a *different* name (`data class UiModifier` the type, `val Modifier: UiModifier` the value) — headless's own type just needs deleting and every file's import/type-position spelling redirected. Measured real size: **~171 files** — `Layout.kt` + 42 other headless-internal files need actual edits (delete the duplicate builders, rewrite the 6 genuine value-add functions to operate on `UiModifier` directly), 128 external files split into 110 pure one-line import redirects (mechanical, sed-able) and 18 with their own `modifier: Modifier` type-position params needing a reviewed rename to `UiModifier`. Proposed 2-phase execution: **Phase 1** — headless-internal rewrite (self-contained, `headless:desktopTest` gates it alone); **Phase 2** — the 128 external import redirects, run after Phase 1 lands. **Phase 1 landed clean 2026-08-18, one pass, no further split needed.** Real file list came in smaller than estimated: the ~43-file headless-internal estimate assumed `internal/controls/`, `internal/text/`, and `internal/layout/` (~20 files) still needed rewriting, but a prior pass had already migrated all of them to `UiModifier` directly — only `Layout.kt` and 20 headless-package top-level files (`Avatar.kt`, `Button.kt`, `Canvas.kt`, `Collapsible.kt`, `Dialog.kt`, `Dropdown.kt`, `Icon.kt`, `Input.kt`, `Menu.kt`, `OtpInput.kt`, `Popup.kt`, `Radio.kt`, `Resizable.kt`, `ScrollState.kt`, `Selection.kt`, `Separator.kt`, `Status.kt`, `Surface.kt`, `Text.kt`, `TextureQuad.kt`, `UiScope.kt`) needed real edits — `ScrollState.kt`'s `Modifier.verticalScroll` forwarder turned out to be a 6th pure duplicate not on the original list, deleted the same way. One extra surprise: 12 `headless:commonTest` files imported the deleted `headless.Modifier`/`.width`/`.height`/`.fillMaxSize` directly (same-package resolution, no explicit import needed before deletion) — fixed as in-scope rename maintenance per the task's own carve-out, plus one non-test, non-headless file (`awake/ui/testing/.../AwakeUiStateMatrix.kt`, a shared test-fixture module `headless:desktopTest` depends on to compile) needed the same `HeadlessModifier`/`toHeadless` cleanup — also fixed, since `headless:desktopTest` cannot go green without it. `HeadlessModifier`/`asPrimitiveModifier`/`toHeadless` are now zero-reference in `headless`'s implementation; `headless:desktopTest` and `headless:verifyUiOwnership` both green. `designsystem`/`samples:ui-showcase` now fail to compile as expected (still importing `headless.Modifier`) — that's Phase 2, not attempted here. **Phase 2 landed 2026-08-18, one pass, no further split needed — but the real fix diverged from the Phase-1 plan's assumption.** Real external-file count: 110 files needed the pure import redirect (matched the estimate closely) plus 17 (not the estimated 18) needed the `modifier: Modifier` → `modifier: UiModifier` type-position rename; `tailwind` (2 files) and 2 `backend:vulkan:desktopTest` files turned up as transitive-dependency surprises not on the original external-file list (`designsystem` depends on `tailwind` via `api(...)`, and `studio`/`ui-showcase` depend on `backend:vulkan` — both had to compile too). The load-bearing discovery: redirecting `designsystem`'s imports straight to `io.github.ronjunevaldoz.awake.ui.modifier.*` (the mechanical fix Phase 1 implied) fails `designsystem:verifyUiOwnership` — that check bans `import ...ui.(layouts|popup|scope|animate|child|modifier|unstyled)` in designsystem `*Main` sources on purpose (`docs/reference/ui-ownership.md`'s consumer rule: designsystem reaches `ui-headless` for structure, never `ui-core` directly), and Phase 1's full deletion of headless's forwarding wrappers removed the only licensed door through. Fix: added one new file, `awake/ui/headless/.../ModifierExports.kt` — a `typealias UiModifier = io.github...ui.modifier.UiModifier`, a `val Modifier` re-export, and one-line forwarders for the ~13 builder functions (`clickable`, `fillMaxHeight/Size/Width`, `height`/`width`/`widthIn`, `offset`, `padding` (3 overloads, restored the pre-Phase-1 all-defaulted 4-arg signature so existing partial-named-arg call sites keep compiling), `styleable`, `weight`) that `designsystem` `*Main` sources actually use post-redirect; `ScrollState.kt` got its `UiModifier.verticalScroll(state: ScrollState, ...)` forwarder restored the same way (Phase 1 had deleted it as a "pure duplicate" without noticing `ShadcnAdvancedRecipes.kt`/`ShowcaseApp.kt`/etc. depend on the headless-typed overload, since the bare `UiScrollState` core version doesn't accept headless's `ScrollState` wrapper). This is a narrow, deliberate re-introduction of forwarding — not a HeadlessModifier-style wrapper type, just typealias + passthrough — and it's exactly what `docs/reference/ui-ownership.md`'s existing text already licenses ("`ui-headless` layout and state APIs (`column`, `row`, `box`, `Modifier`, `Arrangement`, `weight`, `padding`, `remember*`) remain fine to import directly for structure"). `samples:*` (not `classifiedUiModules`-restricted) kept the direct `ui.modifier.*` imports Phase 1's plan intended. Verification: `designsystem:desktopTest`, `designsystem:verifyUiOwnership`, `headless:verifyUiOwnership`, `headless:desktopTest` all green; `ui-showcase:compileKotlinDesktop`/`compileTestKotlinDesktop` and `studio:compileKotlinDesktop` green (one pre-existing, unrelated `commonTest` break found in `samples/ui-showcase/.../LegacyShowcaseCoreAdapters.kt` — an implicit-receiver ambiguity on a recursive extension-function call, present unmodified since commit `451d2254`, well before this work — confirmed out of scope, not touched). Zero remaining `io.github.ronjunevaldoz.awake.ui.headless.Modifier`-family imports outside two explicitly-excluded in-progress files (`samples/studio/.../InspectorPanel.kt`, `StudioShell.kt`, both now valid again since the re-export restored their target symbols) and headless's own harmless test alias. **B9a is now fully landed.** **B9b (274 bypass imports):** re-measured at 387 lines/156 files by raw grep, but real investigation found this was the wrong metric — `verifyUiOwnership` already passes green on designsystem's `*Main` sources today; every "bypass" import in scope is a contract-type import (`ui.api`, `ui.style`, `ui.theme`, `Dp`/`Rectangle`/`Style`) package 1 already deliberately left unbanned. **Repoint = 0, formally-allow = the rest.** The one real gap found: `verifyUiOwnership` never runs on `samples:ui-showcase`/`samples:studio` at all (not in `classifiedUiModules`), and designsystem's `build.gradle.kts` depends on `ui-core` via `api(...)` instead of `implementation(...)` — the actual structural leak letting samples reach `ui-core` transitively. Flipping that dependency scope is real enforcement work with its own blast radius (verify every legitimate contract-type consumer still resolves), routed to `awake-ui-quality-engineer` as a scoped follow-up, not attempted here. Also found and fixed in passing: C7's `scrollPanel` split (`32abbefd`) broke `ui-core`'s `verifyUiOwnership` (`paintScrollThumb` trips the naming-lexicon ban) — landed the ledger exemption in `125fa7fb`. **B9c (`UiScope` capability-narrowing):** still needs a design decision before any code moves — not attempted | Touches every widget signature; boundary is better enforced by package-1's live check + `implementation(ui-core)`. B9a has an executable 2-phase plan ready to launch; B9b's real follow-up (samples `verifyUiOwnership` coverage + designsystem's `api`→`implementation` dependency-scope fix) routed to `awake-ui-quality-engineer`; B9c needs a decision |
 | Package-root rename | B11 | 6 packages split across modules break `internal` + import checks | Fold into the planned `io.github.awakelab.*` rename — one breaking pass, not two |
 | Typed pixel space | D7 | `value class Px` at pointer/bounds boundary; the dp-vs-px 2× drag class is unguarded | Wide, mechanical, best after signatures settle |
 | Density/global state | B10 | `UiDensity.scale` + `UiShape.base` mutable globals | Multi-window blocker, not a today problem |
 | Parity features | D3 D4 D6 | Focus ring, popover container panel, checkmark, tooltip arrow, indeterminate visual, input-group weight | Additive; same cost whenever done — cleanest after packages 4–5 |
-| Naming lexicon | P2 — **enforcement landed 2026-08-17**: 3 lexicon patterns live in `verifyUiOwnership` (emit/paint/render scope-extensions frozen to exempted legacy files, PascalCase providers banned — the 3 live ones renamed to camelCase, new `*Slot` twins banned with `claim*` excluded); bulk renames remain package-6/B11 work | Render path speaks 4 verb dialects (`emit*` dead, `paint*`, `draw*`, `render*`) with no layer rule; twin nouns (`DrawPrimitive`/`UiDrawPrimitive`, `Bounds`/`UiBounds`, `Alignment`/`Insets` aliases); shape drift (`ProvideCacheKey` PascalCase fn vs `provideTextStyle`, `visuals()` vs 47 `*Style()`, `with*` meaning both lambda-scoped and value-returning). Lexicon: `draw*` = UiDrawScope painting members only; `render*` = backends only, banned in ui modules; `emit*` banned; `measure*`/`resolve*`/`claim*` = ui-core pass verbs; `remember*` = state hooks; `with*` = lambda-scoped only, value-returning transforms get participle/noun names (the core-math `normalize()`/`normalized()` contract); one name per concept — twins die with B11's package rename; enforcement via name-pattern bans in the live ownership check | Decide with P1; mechanical renames land inside package 6's sweeps (C-rows already cover `visuals`→`shadcnButtonStyle`, `*Slot` deletion) |
-| Capability-scoped receivers | P1 | "Extension hell" root cause: `UiPrimitiveScope` is one god receiver (frame+layout+draw+input+state+theme), so every capability accretes as a floating extension — painting helpers scatter (`scrollPanel` inlines scrollbars, `Checkbox` inlines its mark), completion shows the whole engine, re-export layers multiply (B6/B9), same-name receivers mis-resolve (C8). Fix: Compose's model — a small member-based `UiDrawScope` (fillRect/roundRect/path/texture/textRun) handed out only by `draw {}`/`paintSurface`, `resolveStyle→paintSurface` as the ONLY widget-chrome path (D3's ring lands there), `UiPrimitiveScope` shrunk to composition (slots/state/locals), and an ownership-check ban on new `UiPrimitiveScope.draw*`/`emit*` extensions outside the draw layer | Architectural; design after B6/B9 delete the re-export layers — most of the "hell" is those plus B7's marker split, so measure again post-package-6 before committing to the split |
+| Naming lexicon | P2 — **enforcement landed 2026-08-17**: 3 lexicon patterns live in `verifyUiOwnership` (emit/paint/render scope-extensions frozen to exempted legacy files, PascalCase providers banned — the 3 live ones renamed to camelCase, new `*Slot` twins banned with `claim*` excluded); bulk renames remain package-6/B11 work. **2026-08-19**: `graphics/ShapePainter.kt`'s `emit*` family (`emitFillAndBorder`/`emitCheckmark`/`emitRadioDot`/`emitInsetDash`) renamed to `draw*` as part of landing the P1 row's `CanvasScope` migration — its exemption entry removed, first exempted file to graduate off the list | Render path speaks 4 verb dialects (`emit*` dead, `paint*`, `draw*`, `render*`) with no layer rule; twin nouns (`DrawPrimitive`/`UiDrawPrimitive`, `Bounds`/`Rectangle`, `Alignment`/`Insets` aliases); shape drift (`ProvideCacheKey` PascalCase fn vs `provideTextStyle`, `visuals()` vs 47 `*Style()`, `with*` meaning both lambda-scoped and value-returning). Lexicon: `draw*` = UiDrawScope painting members only; `render*` = backends only, banned in ui modules; `emit*` banned; `measure*`/`resolve*`/`claim*` = ui-core pass verbs; `remember*` = state hooks; `with*` = lambda-scoped only, value-returning transforms get participle/noun names (the core-math `normalize()`/`normalized()` contract); one name per concept — twins die with B11's package rename; enforcement via name-pattern bans in the live ownership check | Decide with P1; mechanical renames land inside package 6's sweeps (C-rows already cover `visuals`→`shadcnButtonStyle`, `*Slot` deletion) |
+| Capability-scoped receivers | P1 | "Extension hell" root cause: `UiPrimitiveScope` is one god receiver (frame+layout+draw+input+state+theme), so every capability accretes as a floating extension. **Re-measured 2026-08-18 (draw slice), and again 2026-08-18 (layout-vs-input slice): draw premise partially stale (see below); layout-vs-input split investigated and REJECTED — real usage is naturally interleaved, not separable.**
+>
+> **Layout (`claimSlot`) vs input/state (`hitTest`/`isActive`/`tryClaimActive`/`releaseActiveIfMatches`/`widgetState`) split — investigated, not executed, recommend NOT doing it.** Compose's own `MeasureScope`/`PointerInputScope` split works because Compose's phases are genuinely separate passes in time (measure happens once per recomposition, pointer input runs in its own coroutine reacting to events later). Awake's immediate-mode model doesn't have that separation: `claimSlot` reserves the rect and `hitTest`/`isActive` are evaluated against that exact rect in the same synchronous call, because there's no later "pointer phase" to defer to — every widget resolves its own hover/active state for its own slot, this frame, right after claiming it. Real evidence, grepped across `ui-core`/`headless`: the canonical claim-then-hit-test pattern repeats in every widget-authoring chokepoint, not as an edge case: `ui-core/layouts/Box.kt` (`box()`: `claimModifiedSlot` then `hitTest(slot)` on the next line), `ui-core/layouts/Surface.kt` (`surfaceCore`: claims a slot, hit-tests it, resolves `isActive`/style, then *re-claims* and *re-hit-tests* once real bounds are known — the file's own comment calls this "claim-slot-then-hit-test order," and says it deliberately "mirrors `resolveInteractiveSurface`/`interact()`... in ui-headless"), `ui-core/layouts/Row.kt`/`Column.kt` (`hovered = modifier.forceHover ?: hitTest(slot)` / `active = ... isActive(id)` right after each `claimSlot`), `ui-core/layouts/LazyList.kt` (`claimModifiedSlot` then `if (hitTest(slot))` for scroll-wheel consumption), `ui-core/modifier/ClickableModifiers.kt` (`resolveClickable`: `hitTest`→`tryClaimActive`→`isActive`→`releaseActiveIfMatches`→`isActive` again, all against a slot the caller just claimed), and `headless/internal/layout/Interaction.kt` (`interact()` — the one function nearly every interactive headless widget funnels through: `claimModifiedSlot` then `hitTest`/`tryClaimActive`/`isActive`/`releaseActiveIfMatches`/`isActive` again, all five calls in one function body). That's every layout composite (`box`/`row`/`column`/`surface`/`scrollPanel`-family) plus the two shared interaction chokepoints (`resolveClickable`, `interact()`) — i.e. the actual places new widgets are authored — needing BOTH scopes simultaneously if split, which means splitting doesn't remove a capability leak, it just forces every one of those ~9 files to hold two receivers (or a combined wrapper type, which recreates the god-receiver problem one level up). `widgetState` is used more independently (text-cursor/skeleton/spinner/collapsible state reads, not tangled with claimSlot in the same expression) but isn't worth its own interface just for that — same argument the P1 doc already made for not scope-gating state, now confirmed: it's fine ambient, no member overlap forces it into either side. **Verdict: do not split.** Recommend recording this as the answer to the P1 row's own step 6, not attempting a follow-up pass.
+>
+> **Step 4 (`emit`/`emitOverlay`/`context` removal from `UiPrimitiveScope`) — landed 2026-08-19, partial: `emit`/`emitOverlay` removed, `context` kept.** Grepped every real call site of `.emit(`/`.emitOverlay(`/`.context` on a `UiPrimitiveScope`-typed receiver outside `Canvas.kt`, across all three UI modules plus samples. `emit`/`emitOverlay`'s real external footprint was small (5 production call sites — `TextureQuad.kt`, `graphics/ClipScopes.kt` ×4, `layouts/Surface.kt`, plus `headless`'s `Dropdown.kt`/`Icon.kt`/`Overlay.kt`/`BasicText.kt` — and one test, `UiOverlayLayerTest.kt` ×3) and got migrated onto `canvas{}`/`CanvasScope` in the same pass (`CanvasScope` gained one new member, `drawGlyph`, for `BasicText.kt`'s pre-resolved-coordinates case `drawText` doesn't cover). `emit`/`emitOverlay` moved off `UiPrimitiveScope` onto a new internal-only `UiPrimitiveEmitter` interface (`AbstractUiScope` is the one real implementer); `graphics/ShapePainter.kt`'s `dispatchPrimitive` (the raw router underneath `CanvasScope`) narrowed to `internal` and now casts to it. `context`, by contrast, has a real footprint the "9 files" draw-path estimate never covered: production theme/local push-pop in `ui-designsystem` (`ShadcnButtonGroupRecipes.kt`, `ShadcnThemeLocals.kt`) and `ui-headless` (`ScrollState.kt`, `UiScope.requestFocus`), plus hundreds of `primitive.context.createAbsolute/createColumn/createBox(...)` test-scope-factory call sites across all three modules' test suites — a different capability (spawning child scopes from a `UiContext`) than the draw-default-lookup use `CanvasScope.context` closed in step 3, and not something `CanvasScope`/`canvas{}` addresses at all. Per this doc's own stop condition, did not force it through: `context` stays on `UiPrimitiveScope` (documented in place with the file list above), a further-split candidate if ever revisited, not scoped here. Verification: `ui-core`/`headless`/`designsystem` `desktopTest` green, all three `verifyUiOwnership` green, `UiSnapshotSignatureTest` zero drift, `samples:ui-showcase`/`samples:studio` compile.
+>
+> Draw-scope slice (unchanged from the 2026-08-18 finding, kept for context): **premise partially stale, did not execute.** The audit's assumed member list (`fillRect`/`roundRect`/`path`/`texture`/`textRun`) doesn't exist on `UiPrimitiveScope` — real draw output is a sealed `UiDrawPrimitive` (`Quad`/`RoundedQuad`/`Glyph`/`FilledPath`/`StrokedPath`/`Texture`/`GradientQuad`/`ShadowQuad` + 3 clip markers, `awake/ui/graphics/.../UiDrawPrimitive.kt`), emitted through exactly 2 raw methods (`emit`/`emitOverlay`) that are already the ONLY draw-shaped members on `UiPrimitiveScope` itself (`UiPrimitiveScope.kt`) — the rest of the interface is layout/state (`claimSlot`, `hitTest`, `isActive`, `tryClaimActive`, `releaseActiveIfMatches`, `widgetState`), not draw. The audit's own call-out is stale: `scrollPanel` and `Checkbox` do **not** inline their own draw logic — both already call shared helpers in one file, `ui-core/graphics/ShapePainter.kt` (`emitFillShape`, `emitFillAndBorder`, `emitCheckmark`, `emitRadioDot`, `emitInsetDash`), which `headless/internal/controls/Surface.kt`'s `paintSurface` (the `resolveStyle→paintSurface` chokepoint the audit wanted) already funnels through. Real remaining raw `emit`/`emitOverlay` call sites outside those shared helpers: 9 main-source files (`ui-core`: `TextureQuad.kt`, `layouts/Surface.kt`, `graphics/ClipScopes.kt`; `headless`: `ResizablePanelGroup.kt`, `Overlay.kt`, `Dropdown.kt`, `Icon.kt`, `BasicText.kt`) — each already the single canonical function for its own concern (`textureQuad()`, `clip{}`, `overlayScrim()`, `icon()`, `renderTextBlock()`), not scattered duplication. Bigger finding: a narrow, member-based draw scope matching this row's own Compose-`DrawScope` ask **already exists** — `CanvasScope` (`ui-core/.../Canvas.kt`): `drawRect`/`drawRoundRect`/`drawShape`/`drawCircle`/`drawLine`/`fillPath`/`strokePath`/`drawText`/`drawImage`/`drawGradientRect`/`drawGradientBorder`/`clipRect`/`clipPath`/`clipShape`, privately wrapping `UiPrimitiveScope` and handed out only inside `canvas {}` (`UiPrimitiveScope.canvas(...)`). Adding a second, differently-named `UiDrawScope` interface duplicating `CanvasScope`'s member set would itself be the "twin nouns" anti-pattern this same audit bans elsewhere (see the P2 lexicon row) — did not add one. The real remaining gap is narrower and harder than what was scoped: rewiring `ShapePainter.kt`'s shared helpers (and `border()`/`gradientRect()`/`gradientBorder()`) to operate on `CanvasScope` instead of raw `UiPrimitiveScope`, so `paintSurface` hands out `CanvasScope` rather than calling `UiPrimitiveScope` extensions directly. That's blocked on a real design decision every one of those helpers currently ducks: they default their color params via `context.current(LocalTheme)...` reached off `UiPrimitiveScope.context`, so narrowing the receiver means deciding whether `CanvasScope` grows theme-default params or callers resolve colors before calling — not mechanical, touches `ShapePainter.kt` + `BorderPrimitives.kt` + `GradientFillPrimitives.kt`/`GradientBorderPrimitives.kt` + all 17 of `emitFillAndBorder`'s call sites. **Follow-up note carried forward:** `textureQuad` (`UiPrimitiveScope.textureQuad` in `ui-core`, re-exported bare at `UiScope.textureQuad` in `ui-headless`) is still a raw draw primitive with no consumer-facing wrapper — Compose's own equivalent, `DrawScope.drawImage`, sits at the `compose-ui` layer too, but `compose-foundation`'s `Image()` composable wraps it for normal consumer use; Awake has the raw primitive but no headless/designsystem-level image widget — worth adding regardless of how the `CanvasScope`/`ShapePainter.kt` question above resolves
+>
+> **Landed 2026-08-19** (`docs/tasks/2026-08-18-ui-capability-scopes-plan.md` steps 2-3, Option B decided 2026-08-18): `ShapePainter.kt`'s four helpers moved from `UiPrimitiveScope` onto `CanvasScope` and were renamed to `draw*` (`drawFillAndBorder`/`drawCheckmark`/`drawRadioDot`/`drawInsetDash`) per the P2 lexicon decision below; `paintSurface` and all other real callers (13 production + 2 test call sites — bigger than the doc's own "9 files" estimate, which counted a different thing: raw `emit`/`emitOverlay` sites, not `emitFillAndBorder` callers) now resolve their theme-derived color before entering `canvas { }`, since `CanvasScope` has no ambient theme/context access. `CanvasScope.context` is deleted (the backing `scope` field went `private`→`internal` instead, so same-module helpers can still route through it internally). `border()`/`gradientRect()`/`gradientBorder()` were deliberately left on `UiPrimitiveScope`, unmigrated — out of this pass's real scope, each has exactly one caller relying on its internal theme default. `emitPrimitive` (the `emit`/`emitOverlay` router `CanvasScope`'s own `draw*` members call underneath) was renamed to `dispatchPrimitive` and kept on `UiPrimitiveScope`, not `draw*`-named — legitimately one layer below the draw scope, not a widget-facing verb. `verifyUiOwnership`'s exemption for `graphics/ShapePainter.kt` is removed; the file now passes the lexicon check with zero exemptions. The OTHER capabilities (layout/state/animation/focus/theme providers — ~140 extension functions still resolve on `UiPrimitiveScope`) remain untouched, as before | Architectural; the draw-capability half of this row is mostly already solved by `ShapePainter.kt` + `CanvasScope`, not a "build UiDrawScope" task — what's left is a theme/context-threading design decision (does `CanvasScope` gain default-color params, or do widget-chrome callers pre-resolve colors) before `paintSurface` can be rewired onto it; the OTHER capabilities (layout/state/animation/focus/theme providers — ~140 extension functions still resolve on `UiPrimitiveScope`) remain the actual "god receiver" surface and are untouched by this note |
+| Layout module placement | P3 (new, 2026-08-18) | `column`/`row`/`box`/`Modifier`/`Arrangement` layout math currently lives inside `ui-core` alongside rendering/input/state; `ui-headless` re-exports it under its own package for consumers. **Real Compose precedent checked**: `Column`/`Row`/`Box`/`Arrangement` live in `androidx.compose.foundation.layout`, the SAME `compose-foundation` artifact that owns unstyled interaction behavior (`clickable`, `BasicText`) — Compose does not split layout into its own module. Only `Modifier` (the interface) sits one layer below, in `compose-ui` (≈ `ui-core`). Mapped onto Awake, Compose's own layering argues layout should move fully INTO `ui-headless` (compose-foundation's shape), not out to a third module. **Premise narrowed 2026-08-21**: the Compose precedent cited here is real and still supports the move, but the broader `ui-headless` ≈ `compose-foundation` framing it leans on is not — Foundation contains no controls, and 21 of `ui-headless`'s 47 public functions are controls Compose ships in Material (see `docs/reference/ui-ownership.md`'s "`ui-headless` is not `compose-foundation`"). So this row argues for co-locating layout with unstyled behavior, which is defensible on its own terms, not for making `ui-headless` into a Foundation port | Not sized — needs its own scoping pass (what exactly moves, migration blast radius across headless/designsystem/samples) before any agent starts it; raised but explicitly deferred 2026-08-18 |
+| Rename `CanvasScope` → `DrawScope` | P4 (new, 2026-08-18) | Real Compose has only ONE draw scope type, `DrawScope` — multiple entry points (`Canvas{}`, `Modifier.drawBehind{}`, `Modifier.drawWithContent{}`) all hand out that same type; "Canvas" is only an entry-point function name in Compose, never a scope-type name. Awake's `CanvasScope` couples its one entry point (`canvas{}`) to its type name instead (matching Awake's own `column{}`/`ColumnScope` convention), which is a legitimate but divergent choice, not wrong — flagged because the user wants it noted, not because it's broken | Not scoped, not sized — real rename across every `CanvasScope` reference plus a naming decision (does `canvas{}` the entry point also rename, or stay while only the type changes, mirroring Compose's own entry-point-name ≠ type-name split?); raised but explicitly deferred 2026-08-18 |
+| Runtime duplicate-id collision check | P5 (new, 2026-08-20; **implemented 2026-08-20**) | Investigated whether a runtime check can catch a caller-supplied literal `id` reused across two sibling widget instances (the case the required-`id` fix, `c1a6dab10`, does NOT close). Prior pass (same day) found `widgetStateInternal(id)` unsafe as the hook — `TextField.kt:161`/`:331` call `widgetState(id)` twice within one real render of one `textField()` instance (once directly, once via its own private `caretBlinkElapsedSeconds` helper) — and concluded a new widget-instance bracket primitive would be needed. **Re-examined that same TextField evidence at the public-function-boundary angle the task asked about**: both `widgetState(id)` calls happen inside the single call to the public entry point `textField()` (the second one is `textField()`'s own private helper, not a second public function) — so a check that fires once per *public entry-point call*, not once per `widgetState()` call, sidesteps the false-positive entirely without needing any new bracket primitive. Traced the real chokepoint further and found something better than a manual per-function hook: `recordSemantic(id = ...)` (`UiScopeSemantics.kt` → `UiContext.recordSemanticInternal` → already gated `if (!measuring)`, so trial passes are already excluded) is called **exactly once per real render of every id-bearing widget checked**, either directly or through exactly one shared internal chokepoint per widget family: `surfaceCore` (`ui-core/layouts/Surface.kt`) for `surface`/`interactiveSurface` and everything built on them (`avatar`, `separator`, every `shadcn*` recipe including all 4 previously-fixed bugs — `shadcnAvatarBadge`, `shadcnAvatarGroup`, `shadcnFieldSeparator`, `shadcnSidebarMenuSub` — all route through `surface`), an equivalent internal chokepoint in `Column.kt` for `column(id = ...)`, and directly inside `checkbox`/`radio`/`textField`/`textarea`/`lazyColumn`/`lazyRow`/`resizablePanelGroup`'s `panel`/`handle`/`toast`/`progressBar`/`skeleton`/`switch`/`toggle`/`slider`/`rangeSlider`/`dropdown`/`canvas`/`text` (via `semanticId`). Checked every one of those for a same-id-twice-in-one-instance pattern (the exact TextField trap) and found **zero** — `Checkbox.kt`'s 2 `recordSemantic` calls are `checkbox()` and `radio()`, two separate public functions with independently-scoped ids, not one instance calling twice; same shape for `ResizablePanelGroup.kt`'s `panel()`/`handle()` and `LazyList.kt`'s `lazyColumn()`/`lazyRow()`. This makes `recordSemantic` a strictly better hook than a manual public-entry-point convention: it is an EXISTING, ALREADY-UNIVERSAL call already made by nearly every id-bearing widget, so the check needs zero new call sites added to any of the "few dozen" widget functions — one ~15-line change in one file. **Implemented**: `UiContextFrameState.kt` gained a per-frame `HashSet<String>` (`claimedSemanticIdsThisFrame`, cleared in `beginFrame` alongside the existing clip-stack clears) and `recordSemantic(node)` now does `node.id?.let { if (!claimedSemanticIdsThisFrame.add(it)) error(...) }` before delegating to the semantic collector — a hard `error()` throw, matching this codebase's only existing precedent for a serious-but-recoverable authoring bug (`Dimension.resolve`'s `error("WrapContent must be resolved...")`), since no `Log.warn`-equivalent convention exists anywhere in `awake` (`ui-core`/`headless` have zero `println`/logger usage) to prefer instead. Residual honesty caveat: this covers every id-bearing widget actually read in this pass (surface family, column family, and the dozen-plus direct callers listed above) but was not proven exhaustive against literally every widget file in `headless`/`designsystem` — a widget that takes an `id` and never reaches `recordSemantic` (none found) would silently miss this check rather than false-positive, which is the safe failure direction. **Verification**: `:awake:ui:ui-core:desktopTest` green (the module the change lives in, self-contained). `:awake:ui:headless:desktopTest`/`:designsystem:desktopTest`/`:testing:desktopTest` could NOT be run — blocked by an unrelated, concurrent, in-progress edit to `Dialog.kt`/`Popup.kt` (`Unresolved reference 'Modifier'`) from a different agent's parallel Popup.kt/UiPopup.kt task running at the same time, confirmed via `git status` showing those two files mid-modification and unrelated to this change; re-run those three suites once that concurrent edit lands | Implemented in `awake/ui/ui-core/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/context/UiContextFrameState.kt`; `ui-core` desktopTest green; `headless`/`designsystem`/`testing` desktopTest still needed once the concurrent Popup.kt/Dialog.kt edit in flight from another agent lands and those modules compile again |
 
 ```kotlin
 // before — headless/Layout.kt:34: mirror type whose wall is half-built
@@ -426,9 +775,9 @@ found). Verdict `recreate` = that unit is cheaper rewritten than patched.
 | B1 | Live style channels beyond `Style`: `UiComponentStyles` defaults tier (16 headless sites), `resolveFill`, designsystem's 7 delivery paths (`style=`, theme default, `styleable`, `then`, `DialogProperties.surface`, omission, non-Style params) | `ui-core/theme/UiComponentStyles.kt`, `headless/internal/controls/Buttons.kt:67,248`, designsystem-wide | Collapse to `style =` alone | refactor | 3 |
 | B2 | 6th undocumented channel: 30 unconditional theme-token picks no `Style` can override | `Checkbox.kt:94-95,127,190`, `Switch.kt:117,148`, `Slider.kt:112,131-132`, `RangeSlider.kt:183,203-204`, `Toggle.kt:53-57`, `Dropdown.kt:61-62,119-120,177`, `TextField.kt:96,98,273`, `Textarea.kt:97,280`, `ResizablePanelGroup.kt:222,232,255`, `ProgressBar.kt:57` | Selected-state slots in `Style`; token = fallback | refactor | 3 |
 | B3 | `ShadcnComponentStyles` competes with recipe styles on 9 widgets; owns the module's only `focused {}` rule — focus ring existence depends on merge order | `designsystem/ShadcnComponentStyles.kt:18-76` | Rewrite token-only + `shadcnFocusRing()` fragment | **recreate** | 3 |
-| B4 | `pixelPerfectPixel` ×4, 2 tie-rounding rules — border and icon snap .5px opposite ways | `ui-core/scope/UiScopeMetrics.kt:25`, `ui-core/api/layout/LayoutValues.kt:80`, `graphics/UiDensity.kt:31`, `graphics/api/layout/UiBounds.kt:27` | Keep one (`roundToInt` semantics), delete 3 | refactor | 1 |
+| B4 | `pixelPerfectPixel` ×4, 2 tie-rounding rules — border and icon snap .5px opposite ways | `ui-core/scope/UiScopeMetrics.kt:25`, `ui-core/api/layout/LayoutValues.kt:80`, `graphics/UiDensity.kt:31`, `graphics/api/layout/Rectangle.kt:27` | Keep one (`roundToInt` semantics), delete 3 | refactor | 1 |
 | B5 | `Row.kt` 50-line measure block ×5, drifted: only `AbsoluteScope.row` reads `LocalCacheKey` — and passes the wrong key downstream | `ui-core/layouts/Row.kt:25-332` | One helper + 4 thin wrappers (Column's pattern) | refactor | 2 |
-| B6 | `UiContext` 821 lines: 31 `@Deprecated` one-line forwards re-exposed 3–4×; ui-core calls its own deprecated layer from 15 sites | `ui-core/context/UiContext.kt`; callers in `Row.kt`, `Column.kt`, `Surface.kt` | Re-point 15 callers, delete the mirror in one commit | refactor | 3 |
+| B6 | ~~`UiContext` 821 lines: 31 `@Deprecated` one-line forwards re-exposed 3–4×; ui-core calls its own deprecated layer from 15 sites~~ — **done**, commit `451d2254d`. Confirmed 2026-08-20: `UiContext.kt` now 698 lines, zero `@Deprecated` annotations. Never had a checklist entry in any package (appendix-only), noted here so it isn't re-scoped by mistake | `ui-core/context/UiContext.kt`; callers in `Row.kt`, `Column.kt`, `Surface.kt` | Re-point 15 callers, delete the mirror in one commit | refactor | 3 |
 | B7 | Two `@DslMarker AwakeUiDsl` — headless `UiScope{}` does not shadow enclosing `UiPrimitiveScope` | `ui-core/UiDslMarker.kt:9` vs `headless/UiScope.kt:19` | Delete headless copy | refactor | 1 |
 | B8 | Designsystem dupes: 2 shipping `shadcnEmpty`; 14 `foreground+textSize` re-impls; byte-identical dialog surface styles; 45-line sidebar pair; `FieldSet`/`FieldGroup` identical modulo one Dp; 8 style-fn signature shapes | `ShadcnEmptyRecipes.kt:25` vs `ShadcnStatusRecipes.kt:141`; `ShadcnFieldStyles.kt`, `ShadcnPopupStyles.kt:45,52-53`, `ShadcnSidebarRecipes.kt:61-151` | Merge/delete/extract; one style-fn shape | recreate (empty) / refactor | 2 |
 | B9 | Headless facade wall half-built: `HeadlessModifier` mirror + second `UiScope`; `primitive` escape public (used 6× by designsystem); 48 unwrapped imports bypass it | `headless/Layout.kt:34-40`, `headless/UiScope.kt:24-29` | Delete mirror; enforce via check + dependency scope | refactor | 4 |
@@ -442,10 +791,10 @@ found). Verdict `recreate` = that unit is cheaper rewritten than patched.
 |---|---|---|---|---|---|
 | C1 | `column` ×12 entry points incl. 20/21-param twins; silent-wrong-overload trap documented in-tree ("infinite trial / OOM") | `UiContext.kt:125,148,257`, `UiLayoutFactory.kt:33`, `NestedLayouts.kt:21`, `Column.kt:282-395`, `UiScopeNesting.kt:19` | `columnAt`/`rowAt` renames; internal factory forwards | refactor | 2 |
 | C2 | `button()` label vs slot form: opposite sizing (wrap vs fill) and opposite theming (reads theme vs reads nothing), one name | `headless/Button.kt:25-42` vs `:85-114` | Label form wraps slot form (after B2) | refactor | 2 |
-| C3 | Headless signatures: `style` position ×8 variants; `id` ×5 conventions (canvas default, separator nullable-last with in-code collision note); `semanticId` = 4th identity param; `disabled` polarity inverted on `field`; disabled alpha open-coded ×6 | headless-wide; `Text.kt:36`, `Canvas.kt:111`, `Separator.kt:21-23` | Canonical order; id required; one `disabledAlpha{}` | refactor | 3 |
-| C4 | Designsystem signatures: `id` absent ~20 / optional 7 / defaulted 2; 9 `Unit` returns (can't anchor popups); 9 rule-6 params; FQNs in signatures; 8 unexplained `public` style fns | designsystem-wide | One mechanical pass | refactor | 2 |
-| C5 | Headless param bloat: 16 sizing/spacing params duplicating Modifier/Style; `Modifier.margin()` silently discards `end`+`bottom`, zero callers | `Avatar.kt:15-30`, `Selection.kt:17`, `Separator.kt:18`, `Buttons.kt:43-216`, `Layout.kt:113-124` | Delete/move to modifier (~20 call sites move) | refactor | 2 |
-| C6 | 8 overlays take `Dimension`/`Dp`, none has `modifier`; `Dimension.FillMax` in public API (banned); hand-rolled text measurement with magic 40/80/128 | `ShadcnPopupRecipes.kt:63-64,131-132,182-185`, `ShadcnOverlayRecipes.kt:82,128,133-134` | `modifier` on all 8; `withIntrinsicLabelSize`; also fix `popup()` min/max bounds (ui-status risk 7) | refactor | 3 |
+| C3 | Headless signatures: `style` position varies across ~10 widgets (3rd/4th/5th/6th/7th/last); `id` mostly already required (C1/C2/C8 work landed this), but `canvas` still defaulted (`id: String = "canvas"`, zero real callers used the default) and `separator` (both overloads) still nullable-last with an in-code collision comment; `row`'s raw-slot `id` sits 4th while `column`'s sits 1st (same-shape inconsistency, left alone per C1's note — overlaps the deferred factory-forwarding work); no widget named `field` exists anymore, no inverted-polarity `disabled` param found (already `enabled: Boolean` everywhere) — that finding is stale; disabled-alpha was open-coded `withGraphicsLayerAlpha(if (enabled) 1f else 0.5f)` 9× (not ~6) across `Button.kt` + 8 internal files | headless-wide; `Text.kt:36`; `Canvas.kt:113` (fixed); `Separator.kt` (fixed) | **Landed**: `canvas`'s `id` made required (dead default, zero callers); `separator`'s `id` (both overloads) made required, deprecated-fallback design-system callers updated (`ShadcnStatusRecipes.kt`, `ShadcnSidebarRecipes.kt`) to synthesize a stable id instead of relying on the headless default; one shared `UiPrimitiveScope.withDisabledAlpha(enabled) { }` helper added in `headless/ModifierExports.kt`, all 9 open-coded call sites migrated. **Not landed** (see Package 6 checklist note): full canonical param-order sweep across every widget (`style` position, `row`'s id slot) — genuinely touches every widget file plus every designsystem recipe wrapper that mirrors a headless widget's param shape (e.g. `shadcnSeparator`'s own nullable `id ?: ...` fallback, kept as-is to avoid touching `samples/studio` which was out of scope this pass), which is C4/C6 territory; `semanticId`-into-`testTag` fold not attempted (crosses into `ui-core`'s `Modifier`/`UiModifier` shape, a bigger change than this row's budget) | refactor | 3 (partially landed; remainder re-scoped to ride with C4/C6) |
+| C4 | Designsystem signatures: `id` absent ~20 / optional 7 / defaulted 2; 9 `Unit` returns (can't anchor popups); 9 rule-6 params; FQNs in signatures; 8 unexplained `public` style fns. **Re-derived, 2026-08-20** (audit's counts were stale, real picture from a full pass over all 21 recipe files' public signatures): only ~10 functions have a nullable/defaulted `id` (`shadcnAvatarBadge`/`Group`, `shadcnButtonGroupSeparator`, `shadcnField`/`FieldSet`/`FieldGroup`, `shadcnFieldSeparator`, `shadcnSidebarMenu`/`MenuSub`, `shadcnSeparator`), not ~29 — most are non-stateful layout wrappers over `column`/`row` (which themselves keep `id` optional by design per C1's note), not stateful widgets, so "required `id`" isn't a clean mechanical call for them. FQN-in-signature leaks: only 2 real instances (`ShadcnIcon.kt`'s receiver type, `ShadcnAvatarRecipes.kt`'s `Color` param), plus a third found during the sweep not in the original audit (`ShadcnSelectionGroupRecipes.kt`'s `gap: io.github...Dp`). Implicit-`Unit` returns verified via full-signature parsing (matching each `fun` to its real closing paren, not string grep, since return type can sit on a wrapping trailing-lambda line): 12 real instances, not 9 — `shadcnIcon`, `shadcnAccordion`, `shadcnToggleGroup`×2, `shadcnRadioGroup` (content-based overload), `shadcnSidebarGroup`, `shadcnSidebarMenu`, `shadcnSidebarMenuSub`, `shadcnProgress`, `shadcnSkeleton`, `shadcnSpinner`. 5 of those are zero-risk (tail expression already calls a `Rectangle`-returning headless primitive, just not propagated); the other 7 are NOT designsystem-only — `shadcnToggleGroup`/`Progress`/`Skeleton`/`Spinner` wrap headless `toggleGroup()`/`progress()`/`skeleton()`/`spinner()`, themselves `Unit`-returning in `ui-headless`'s `Selection.kt`/`Status.kt`; `shadcnAccordion`'s body loops over multiple items with no single natural "the" bounds (union rect? last item?) | designsystem-wide | One mechanical pass | refactor | 2 (**partial, 2026-08-20**: landed the 3 FQN fixes and the 5 zero-risk Unit→Rectangle fixes (`shadcnIcon`, `shadcnSidebarGroup`, `shadcnSidebarMenu`, `shadcnSidebarMenuSub`, `shadcnRadioGroup`) — `ShadcnIcon.kt`, `ShadcnAvatarRecipes.kt`, `ShadcnSelectionGroupRecipes.kt`, `ShadcnSidebarRecipes.kt`. **Deferred**: the ~10 nullable/defaulted `id` params (needs a per-function judgment call, stateful widget vs. legitimate `column`/`row`-style wrapper); the other 7 Unit-return fixes (gated on a `ui-headless` primitive change to `Selection.kt`/`Status.kt`, own follow-up); the 9 rule-6 sizing params (folded into C5's remainder below); the "8 unexplained `public` style fns" claim not independently re-verified this pass, no evidence gathered) |
+| C5 | Headless param bloat: `Modifier.margin()` confirmed zero callers repo-wide and confirmed still silently drops `end`/`bottom` (returns `offset(start, top)` only) — deleted. The other cited sizing/spacing params (`avatar`'s `size`/`textSize`, `checkbox`'s `boxSize`, `separator`'s `thickness`) are real, load-bearing, and each has direct designsystem-recipe callers passing a concrete value (`ShadcnAvatarRecipes.kt`, `ShadcnSelectionRecipes.kt`, `ShadcnSidebarRecipes.kt`/`ShadcnStatusRecipes.kt`) — removing them requires rewriting those recipe call sites to route the same value through `Modifier.width()/height()` instead, which is the C4/C6 designsystem-recipe pass, explicitly held back this round to avoid file collisions | `Avatar.kt:18-53`, `Selection.kt:14-32`, `Separator.kt:28-47`, `Layout.kt:41-46` (margin, deleted) | **Landed**: `Modifier.margin()` deleted. **Not landed**: the 16 sizing/spacing params themselves — re-scope as its own pass once C4/C6 lands, since it's the same designsystem call sites | refactor | 2 (margin-deletion sliver landed; param removal re-scoped to ride with C4/C6) |
+| C6 | 8 overlays take `Dimension`/`Dp`, none has `modifier`; `Dimension.FillMax` in public API (banned); hand-rolled text measurement with magic 40/80/128. **Investigated, 2026-08-20**: confirmed the real count is 9 overlay functions (`shadcnContextMenu`, `shadcnSheet`, `shadcnDrawer`, `shadcnDialog` in `ShadcnOverlayRecipes.kt`; `shadcnDropdownMenu`, `shadcnTooltip`, `shadcnTooltipText`, `shadcnAlertDialog`×2 in `ShadcnPopupRecipes.kt`), none take `modifier`. This is genuinely NOT a designsystem-only mechanical fix: `width`/`height: Dimension` params exist because the underlying `ui-headless` primitives they call — `popup()` (`Popup.kt:57`) and `dialog()` (`Dialog.kt:39`) — themselves size from `Dimension`, not `Modifier`; there is no existing `Modifier`→`Dimension` bridge at this call boundary (unlike `column`/`row`, which resolve a modifier's `fillMaxWidth()`/`width()` internally during layout). Adding `modifier: Modifier` to the 9 designsystem functions without first giving `popup()`/`dialog()` an equivalent capability would just be a second parallel, ignored parameter — worse than the status quo. Confirmed against `docs/reference/ui-ownership.md`: `Dimension.FillMax` "must not appear in public Headless or Design System authoring APIs" — no designsystem function defaults to `Dimension.FillMax` literally in its signature (`shadcnDrawer` computes it conditionally inside the body from a `Dp size` param, never exposed), so this specific finding is more about the `Dimension`-typed param itself being public API surface than a literal FillMax leak. `withIntrinsicLabelSize`/`withIntrinsicLabelWidth` grepped: the magic-number text measurement this audit row cites (`ShadcnPopupRecipes.kt`'s dropdown-menu width calc, `40f.dp`/`80f`/`128f.dp` literals) is real and still present (`ShadcnPopupRecipes.kt:81-88`) — routing it through the shared helper is plausible but was not attempted this pass given the higher-priority `Dimension`/`Modifier` finding took the full investigation budget. `popup()` min/max bounds (`docs/reference/ui-status.md` risk 7, verified verbatim: `UiModifier.widthIn(max=)` exists but `popup()` sizes from a `Dimension` so the constraint can't reach it, `AlertDialog` parked at a fixed 320dp because of this) is the same root cause as the `modifier` finding — both need one `ui-headless` `popup()`/`dialog()` plumbing change first | `ShadcnPopupRecipes.kt:63-64,131-132,182-185`, `ShadcnOverlayRecipes.kt:82,128,133-134` | `modifier` on all 8; `withIntrinsicLabelSize`; also fix `popup()` min/max bounds (ui-status risk 7) | refactor | 3 (**not landed this pass** — nothing genuinely safe/mechanical found at the designsystem layer alone; real fix is a `ui-headless` `popup()`/`dialog()` plumbing change (give them a `modifier: Modifier` or a min/max-aware sizing param that resolves to `Dimension` internally, the same way `column`/`row` already do), which then unblocks all 9 designsystem overlay signatures, the `FillMax`-as-public-param cleanup, the magic-number→`withIntrinsicLabelSize` swap, and ui-status risk 7 in one follow-up pass. Proposed split: (1) `ui-headless` `popup()`/`dialog()` modifier+bounds plumbing (owns the real risk, `awake:ui:headless` only); (2) designsystem call-site sweep once (1) lands, bundled with the deferred rule-6/id items from C4/C5) |
 | C7 | `scrollPanel` 285-line god function; stringly axis `"width"`/`"height"` beside real enums | `ui-core/ScrollContainers.kt:49-333` | Split axis fns; extract scrollbar paint + viewport geometry | refactor | 2 |
 | C8 | `internal/controls/Buttons.kt` declares the public package from `internal/`; `internal.*` packages not Kotlin-`internal` | `headless/internal/controls/Buttons.kt:3` | Repackage; real `internal` after F10 | refactor | 1 |
 | C9 | Mixed event idioms: `button` returns a result (immediate-mode native), `toggle`/`checkbox`/`switch`/`slider` take `onCheckedChange`/`onValueChange` callbacks (retained-mode idiom), some expose both — three contracts for "did the user interact" | headless `Selection.kt`, `Switch.kt`, `Slider.kt` vs `Button.kt` | Eliminate discrete-event callbacks: interaction returns the new state (`if (button(id))`, `checked = checkbox(id, checked)`, `value = slider(id, value)`); callbacks only if a continuous gesture genuinely needs one | refactor | 3 |

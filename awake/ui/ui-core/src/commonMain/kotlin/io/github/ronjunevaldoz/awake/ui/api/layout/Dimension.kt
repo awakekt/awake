@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.api.layout
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
 
 /** A widget's platform-independent sizing intent. Runtime resolution belongs to ui-core. */
 sealed class Dimension {

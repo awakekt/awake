@@ -62,7 +62,7 @@ class GraphicsDevice {
 
     /** Desktop-only headless variant of [create] for pure offscreen rendering (no window, no
      * `VkSurfaceKHR`, no swapchain -- see `Renderer`'s createHeadless doc comment and
-     * docs/MVP_PLAN.md's pixel-baseline-testing entry). `surface` stays `0L`
+     * docs/reference/decision-log.md's pixel-baseline-testing entry). `surface` stays `0L`
      * (`VK_NULL_HANDLE`) for this instance's whole lifetime: [findQueueFamilies] already
      * treats that as "skip present-family detection" (see its own doc comment), so only a
      * graphics-capable queue family is required here, and that same family backs both

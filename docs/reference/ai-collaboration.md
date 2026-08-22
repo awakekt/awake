@@ -31,10 +31,10 @@ sync, the repository uses a three-layer model:
 
 Awake keeps multiple entrypoint files so different assistants can discover the same project:
 
-- [AGENTS.md](/Users/ronvaldoz/StudioProjects/awaken/AGENTS.md)
-- [CLAUDE.md](/Users/ronvaldoz/StudioProjects/awaken/CLAUDE.md)
-- [GEMINI.md](/Users/ronvaldoz/StudioProjects/awaken/GEMINI.md)
-- [.claude/AGENTS.md](/Users/ronvaldoz/StudioProjects/awaken/.claude/AGENTS.md)
+- [AGENTS.md](../../AGENTS.md)
+- [CLAUDE.md](../../CLAUDE.md)
+- [GEMINI.md](../../GEMINI.md)
+- [.claude/AGENTS.md](../../.claude/AGENTS.md)
 
 Those files should stay small. They should:
 
@@ -64,10 +64,10 @@ Rules:
 
 See also:
 
-- [docs/reference/agent-starter-pack.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/agent-starter-pack.md)
-- [docs/reference/agent-routing.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/agent-routing.md)
-- [docs/reference/engineering-change-summaries.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/engineering-change-summaries.md)
-- [docs/reference/ui-testing-dictionary.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/ui-testing-dictionary.md) — plain-English UI testing vocabulary
+- [docs/reference/agent-starter-pack.md](agent-starter-pack.md)
+- [docs/reference/agent-routing.md](agent-routing.md)
+- [docs/reference/engineering-change-summaries.md](engineering-change-summaries.md)
+- [docs/reference/ui-testing-dictionary.md](ui-testing-dictionary.md) — plain-English UI testing vocabulary
 
 ## Duplication Policy
 
@@ -85,7 +85,7 @@ Avoid:
 ## Quality Gate Policy
 
 Detekt is not optional for code pushes. The repository keeps a tracked
-[.githooks/pre-push](/Users/ronvaldoz/StudioProjects/awaken/.githooks/pre-push) hook that runs
+[.githooks/pre-push](../../.githooks/pre-push) hook that runs
 `./gradlew detekt` before pushing Kotlin, Gradle, Detekt config, build-logic, or workflow
 changes.
 
@@ -106,28 +106,24 @@ Rules:
 
 ## Model Selection Rule
 
-Repo-local agent files keep a `model:` frontmatter field because some agent runners still
-expect one, but Awake treats that field as a capability tier label, not a provider lock-in.
+Repo-local agent files keep a `model:` frontmatter field containing the active provider model ID (e.g. `claude-opus-5`, `claude-sonnet-5`) so that runner tooling (Claude Code agent dispatch) can resolve an executable model.
 
 Rules:
 
-- use Awake's capability tiers in repo-local agent files: `flagship-coding`,
-  `balanced-coding`, or `fast-utility`
-- keep the provider-specific mapping in
-  [docs/reference/agent-catalog.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/agent-catalog.md)
-- when Codex, Claude, or Gemini need a concrete model, resolve the tier through the catalog
-  instead of hardcoding a single provider into the agent file
+- use the provider mapping in
+  [docs/reference/agent-catalog.md](agent-catalog.md) to choose the appropriate model ID for the agent's capability tier (`flagship-coding`, `balanced-coding`, or `fast-utility`)
+- update the mapping table in the catalog when a provider ships a new model generation
 
 ## Read Order
 
 For most Awake work:
 
-1. [docs/architecture.md](/Users/ronvaldoz/StudioProjects/awaken/docs/architecture.md)
-2. [docs/reference/ai-collaboration.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/ai-collaboration.md)
-3. [docs/reference/agent-catalog.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/agent-catalog.md)
-4. [docs/reference/ui-ownership.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/ui-ownership.md)
-5. [docs/reference/ui-validation.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/ui-validation.md)
-6. [docs/reference/game-structure.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/game-structure.md)
-7. [docs/MVP_PLAN.md](/Users/ronvaldoz/StudioProjects/awaken/docs/MVP_PLAN.md)
-8. [docs/tasks.md](/Users/ronvaldoz/StudioProjects/awaken/docs/tasks.md)
+1. [docs/architecture.md](../architecture.md)
+2. [docs/reference/ai-collaboration.md](ai-collaboration.md)
+3. [docs/reference/agent-catalog.md](agent-catalog.md)
+4. [docs/reference/ui-ownership.md](ui-ownership.md)
+5. [docs/reference/ui-validation.md](ui-validation.md)
+6. [docs/reference/game-structure.md](game-structure.md)
+7. [docs/mvp-plan.md](../mvp-plan.md)
+8. [docs/tasks.md](../tasks.md)
 9. the relevant `skills/awake/agents/*.md` file for the task

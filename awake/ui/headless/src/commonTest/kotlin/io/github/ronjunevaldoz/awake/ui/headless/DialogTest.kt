@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupResult
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -26,7 +26,7 @@ class DialogTest {
             ) { }
         }
 
-        assertEquals(UiBounds(50f, 20f, 100f, 80f), result?.slot)
+        assertEquals(Rectangle(50f, 20f, 100f, 80f), result?.slot)
         assertTrue(output.primitives.filterIsInstance<UiDrawPrimitive.Quad>().any { it.color == Color.Black })
         assertTrue(
             output.primitives.any { primitive ->

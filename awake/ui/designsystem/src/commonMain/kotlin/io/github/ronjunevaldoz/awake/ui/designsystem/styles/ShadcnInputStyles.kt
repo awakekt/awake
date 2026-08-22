@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem.styles
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiInsets
 import io.github.ronjunevaldoz.awake.ui.api.theme.UiThemeValues
 import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnThemeValues
@@ -32,6 +32,11 @@ internal fun shadcnSelectOptionStyle(values: ShadcnThemeValues): Style = Style {
     foreground(values.colors.popoverForeground)
     contentPadding(horizontal = 8f.dp, vertical = 6f.dp)
     textSize(values.typography.label)
+    // Same `sm` the selected row uses. shadcn's SelectItem is `rounded-sm` and its highlight is
+    // a focus fill on that same rounded element (select.tsx: `rounded-sm ... focus:bg-accent`),
+    // so the shape has to sit here on the base style, not only on the selected variant --
+    // without it the hover fill painted square corners under a rounded selected row.
+    shape(values.shapes.sm)
     hovered {
         background(values.colors.accent)
         foreground(values.colors.accentForeground)
@@ -43,10 +48,13 @@ internal fun shadcnSelectOptionStyle(values: ShadcnThemeValues): Style = Style {
     disabled { foreground(values.colors.mutedForeground) }
 }
 
+// `sm`, matching shadcnDropdownItemStyle: a selected option is a menu row, and both shadcn's
+// SelectItem and DropdownMenuItem are `rounded-sm`. At `md` the highlight read as a rounded
+// pill sitting in the list -- a button, not a selected row.
 internal fun shadcnSelectedOptionStyle(values: ShadcnThemeValues): Style = Style {
     background(values.colors.accent)
     foreground(values.colors.accentForeground)
-    shape(values.shapes.md)
+    shape(values.shapes.sm)
 }
 
 internal fun shadcnSliderStyle(values: ShadcnThemeValues): Style = Style {
@@ -86,7 +94,7 @@ internal fun shadcnInputOtpSlotStyle(values: ShadcnThemeValues, enabled: Boolean
 private fun UiThemeValues.shadcnInputStyle(variant: ShadcnTextFieldVariant, padding: UiInsets): Style = Style {
     when (variant) {
         ShadcnTextFieldVariant.Default -> {
-            background(Color.Transparent)
+            background(colors.background)
             foreground(colors.foreground)
             border(1f.dp, colors.input)
         }

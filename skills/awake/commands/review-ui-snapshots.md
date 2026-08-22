@@ -109,7 +109,7 @@ For each WARNING or FAIL, tie it to the actual widget code, not a generic sugges
 - This is a supplement to, not a replacement for, `awake:engine:ui:ui-headless`' own pass/fail unit
   tests (`UiContextTest.kt`, `LayoutTest.kt`, etc, kept in a separate package on purpose —
   see the session decision to keep unit tests and snapshot/visual tests apart).
-- Use [docs/reference/ui-ownership.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/ui-ownership.md)
+- Use [docs/reference/ui-ownership.md](../../../docs/reference/ui-ownership.md)
   as the canonical placement guide when routing a fix to `ui-core`, `ui-headless`, `ui`, or
   `ui-designsystem`.
 - Run this after adding a new theme, widget variant, or state (checked/hovered/active/

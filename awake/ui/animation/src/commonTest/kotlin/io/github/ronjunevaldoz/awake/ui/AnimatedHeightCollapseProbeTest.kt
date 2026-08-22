@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.graphics.animation.animatedHeight
 import io.github.ronjunevaldoz.awake.ui.layouts.spacer
@@ -82,7 +82,7 @@ class AnimatedHeightCollapseProbeTest {
         val frameDeltaMs = 1000f / 60f
         val expectedFrames = kotlin.math.ceil(durationMs / frameDeltaMs).toInt()
 
-        fun frame(): UiBounds? {
+        fun frame(): Rectangle? {
             ui.beginFrame(UiFrameInput(viewportWidth = 400f, viewportHeight = 800f, input = testSnapshot()))
             val slot = ui.createColumn(x = 0f, y = 0f, width = 300f).animatedHeight(
                 id = "shadcn-collapsible-probe",

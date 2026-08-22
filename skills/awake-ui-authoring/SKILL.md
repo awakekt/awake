@@ -18,6 +18,56 @@ else's design language.
 Decide with one question: **"would a differently-skinned product still need this code?"** Yes ->
 `ui-headless`. No -> `ui-designsystem`.
 
+## The two terms to reach for when something belongs to the skin
+
+Name the mechanism, not the intent. "Unstyled" is a goal and goals get argued with; these are
+greppable.
+
+**Ambient fallback** — reaching for the ambient theme instead of a parameter. Two shapes, same
+ban, different severity:
+
+| shape | example | severity |
+|---|---|---|
+| ambient fallback | `resolved.fill ?: theme.colors.primary` | debt — a skin can still win |
+| ambient override | `drawCheckmark(slot, theme.colors.primaryForeground)` | **bug** — a skin cannot win |
+
+> **ui-headless holds zero visual policy.** Every colour, radius and inset arrives as a
+> parameter, or nothing is drawn. Sizes still follow the size rule below — derivable from
+> content, never from a theme.
+
+Audited 2026-08-21: 31 ambient fallbacks and 14 ambient overrides. The overrides are why a
+shadcn skin cannot currently restyle a checkbox's checkmark, its indeterminate dash, a radio
+dot, or a toggle's on/off colours. `verifyUiHeadlessAmbientTheme` fails the build on any new
+one; its exemption list is the existing debt and only ever shrinks.
+
+**Second path** — a capability that already has a home getting another one. The repo's audit
+calls the noun form "twin nouns"; this is the same defect in behaviour.
+
+> **One canonical mechanism per concern.** Look the registry up before drawing it yourself.
+
+Live example: the checkbox hand-builds a checkmark from transcribed coordinates
+(`ShapePainter.drawCheckmark`) while `UiIcons`/`HeroIcons.check` already holds a generated
+vector — and the dropdown chevron in the same file family renders through the registry. Note
+this also evades `awake-ui-icons`' hand-transcription ban purely by being typed `UiPath`
+instead of `UiImageVector`, so state that rule by content, not type: **if it is a glyph, it
+comes from the registry; being a path is not an exemption.**
+
+## Which reference to check a control against
+
+`ui-headless` has no reference today, which is why `combobox` accumulated five defects and
+`select` three before anyone rendered them open. Use two, for different things — and take the
+*runtime* shape from neither, because Awake is immediate-mode and both references are retained:
+
+| Take | From | Why it transfers |
+|---|---|---|
+| Part anatomy, roles, keyboard, state attributes | **Radix / Base UI**, and WAI-ARIA APG for behaviour | A decomposition is not a state model, so it is mode-independent |
+| Tokens, variant/size enums, Tailwind-class translations | **`shadcn-compose`** (same author, already-solved Kotlin translation) | Pure data |
+| *Nothing* | either one's `remember`/recomposition/callback shape | Awake resolves state by explicit `id` and returns the outcome; see `kmp-api-mimicry`'s "mimic shape, not runtime" |
+
+Material is not the model for this layer: its signatures fuse `colors`/`elevation` into the
+control, which is the ambient-override defect above promoted to API. It stays useful only as a
+checklist of which controls ought to exist.
+
 ## The size rule (this is the one that bites)
 
 > A `ui-headless` widget may only fall back to a size it can derive from **its own content**,
@@ -47,6 +97,17 @@ visual policy and inevitably turns Core into a hidden design system. Headless ma
 generic visual-state contract; `ui-designsystem` supplies the actual branded sizes, colours, and
 radii by mapping its named variant to that neutral contract. A Headless fallback must remain
 content-derived, metric-derived, or a physical constraint.
+
+### Where a designsystem constant lives
+
+The rule above governs whether `ui-headless` may have a fallback at all. Once you are in
+`ui-designsystem` supplying a real branded value, the question becomes *where it lives*, and
+that has its own answer — see "Which home a number belongs in" in `awake-ui-shadcn-styling`.
+Short form: a Tailwind step names the step (`Tw.Spacing.s1`, not `4f.dp`) even when used once, a
+component's own geometry goes on its `Size` enum, and related values are derived from one
+another rather than restated. As of 2026-08-21 that module holds 75 unnamed inline literals, so
+the pattern is aspirational in most files — follow it in new code rather than matching what is
+already there.
 
 ## Units: authored values are `Dp`, never raw pixels
 
@@ -110,6 +171,215 @@ Modifier.fillMaxSize()
 
 Use `width(48.dp)` or `height(48.dp)` for a fixed authored dimension. Do not expose a public
 `width(Dimension)` or `height(Dimension)` overload just to make `FillMax` available.
+
+## New `Modifier`/layout extensions must match Compose's real API, or don't add them
+
+This rule covers modifiers and the layout DSL only. Do **not** extend it to controls: Compose
+Foundation has no `Button`/`Checkbox`/`Switch`/`Slider` to check against, and Material's own
+signatures fuse in visual parameters this layer cannot carry, so "does Compose have it?" has no
+usable answer there. Check a control's shape against Radix/Base UI anatomy instead — see
+`mirror-map.md`'s "Which upstream a given API mirrors".
+
+Before adding a new function to `UiModifier` (any file in `awake/ui/ui-core/.../modifier/`)
+or to the layout DSL (`row`/`column`/`box`/`Arrangement`/`Alignment`), check
+[`docs/reference/mirror-map.md`](../../docs/reference/mirror-map.md) (status table) and
+[`docs/reference/compose-modifier-layout-guidance.md`](../../docs/reference/compose-modifier-layout-guidance.md)
+(how-to + code examples) first:
+
+- **A real Compose function with this name/shape already exists and Awake doesn't have
+  it yet** → implement it matching Compose's real signature and semantics (verify
+  against Compose's actual current source/docs, not memory or assumption — this doc's
+  own header states every row is "backed by a direct read of the current source", not
+  recollection). Add it to `mirror-map.md` as **Faithful** once it lands.
+- **Awake needs something Compose genuinely has no equivalent for** (an engine-specific
+  concern with no Compose analog) → this is the one case where a new, non-Compose-shaped
+  function is legitimate. Name it so it's obviously not attempting Compose parity (avoid
+  a name that looks like a Compose function but isn't), and record it in `mirror-map.md`
+  as **Not implemented in Compose** with the real reason, so a future contributor doesn't
+  assume Compose semantics apply.
+- **You're tempted to add a function because it "feels like it should exist" but you
+  haven't checked whether Compose actually has it, or whether it behaves the way you're
+  about to implement it** → stop, check first. This is exactly how the **Diverges**
+  category happens — a function that looks Compose-shaped, passes a glance-review, then
+  causes a real layout/render bug later because its actual behavior quietly differs from
+  what a Compose-literate reader assumes. `mirror-map.md`'s own framing calls this out as
+  "the dangerous category" for a reason.
+
+Same rule for `Arrangement`/`Alignment`/scroll/graphics-layer helpers — anything under
+`ui-core`'s Compose-mimicking surface, not just `Modifier` itself. That surface now has two
+more first-class how-to docs beyond the Modifier/layout one: `row`/`column`/`box`/`Arrangement`
+usage (including the trial-measure model's real consequence for callers) is covered by
+[`compose-modifier-layout-guidance.md`](../../docs/reference/compose-modifier-layout-guidance.md)'s
+"Layout DSL" section, and `animateFloat`/`animateFloatTween`/`animateFloatRepeatable`/`Easing`/
+`rememberTransition`/`animatedVisibility` by the sibling
+[`compose-animation-guidance.md`](../../docs/reference/compose-animation-guidance.md) (a separate
+doc since animation lives in its own `awake:ui:animation` module). Check the relevant one before
+adding to either surface, same rule as above.
+
+## Escalate layout-engine defects; do not hide them in a recipe
+
+Treat the following parity evidence as a `ui-core` `Modifier`/layout contract investigation,
+not as an invitation to add component-specific dimensions, offsets, or separators:
+
+- the parent geometry is correct but a child does not receive or honor its allocated bounds;
+- `fillMax*` changes meaning during an intrinsic or wrap-content measurement trial, or expands
+  to an unbounded viewport instead of the resolved parent axis;
+- a recipe needs to inspect a measurement pass, member count, or use negative spacing merely to
+  preserve ordinary parent/child layout; or
+- a measured pixel slot is converted back into authored `Dp` to force a child into place.
+
+Preserve the parity report's expected/actual/delta evidence. Add the smallest reusable
+`ui-core` test matrix first (fixed and wrapping parent bounds, both axes where relevant, density
+1 and 2). Fix the generic constraint propagation or modifier behavior, then rerun core,
+design-system, and parity verification. Simplify the recipe only after the core contract is
+proved. A fixed-width vertical button group whose members become intrinsic during a wrap-height
+trial is the canonical cross-axis/intrinsic-sizing example.
+
+**Why core-first, not recipe-first — this is a repeatedly-proven pattern here, not a
+preference.** One `ui-core` primitive defect surfaces as *many* apparently-unrelated
+design-system symptoms, each of which invites its own local workaround:
+
+- The `weight()`+`fillMax*` starvation bug appeared as three separate symptoms
+  (`shadcnField*` controls, a checkout-form grid row, `shadcnToggleGroup`), each patched
+  locally with `weight(1f)`. The single `ui-core` fix (`9455bc51`) retired the entire class
+  and made all three workarounds optional — see `mirror-map.md`'s `weight()` row.
+- The vertical button-group fill bug was fixed in `RowScope`/`ColumnScope`'s `FillMax`
+  resolution (`ui-core`), not in the button-group recipe.
+
+A recipe-local fix for a primitive defect does not just leave the other symptoms broken —
+it actively hides the shared root cause and makes the eventual core fix harder, because
+each workaround must then be identified and unwound. The parity tool's own triage table
+encodes the same rule from the other direction ("child geometry drifts but parent passes →
+inspect `fillMax*`, intrinsic measurement, weights, and child modifiers"). See
+[`docs/tasks/2026-08-21-modifier-layout-compose-parity-plan.md`](../../docs/tasks/2026-08-21-modifier-layout-compose-parity-plan.md)
+for the full two-axis framing (Compose behavioral parity vs. shadcn visual parity) and why
+a visible shadcn drift is often a `Modifier`/layout defect wearing a design-system costume.
+
+## `UiLocal`: scoped values, and when NOT to reach for one
+
+`UiLocal` is Awake's `CompositionLocal` equivalent (`ui-core/context/UiLocal.kt`) — provide
+a value on the way into a subtree, read it anywhere below, restored on the way out. Provide
+via `Provide(LocalX, value) { }` (or the `provideTextStyle`/`provideTheme`/`provideFont`
+shorthands), read via `context.current(LocalX)`.
+
+**Two ways it deliberately differs from Compose — know both before porting Compose habits:**
+
+1. **No `compositionLocalOf` / `staticCompositionLocalOf` split.** That split exists in
+   Compose purely to decide whether a read invalidates a recomposition scope. Awake rebuilds
+   every frame from scratch — no composition, nothing to invalidate — so shipping the pair
+   would ship a distinction with no observable difference. One `uiLocalOf` is the whole API.
+2. **`combine` has no Compose equivalent, and it matters.** A scoped value is not always
+   "replace the parent": `LocalTextStyle` *merges* with the style it nests inside,
+   `LocalAlpha` *multiplies* so nested fades compound. That rule travels with the local's
+   declaration, not with each call site:
+   ```kotlin
+   val LocalAlpha: UiLocal<Float> = uiLocalOf(1f) { parent, incoming -> (parent * incoming).coerceIn(0f, 1f) }
+   ```
+   A local that should compound but was declared with the default replace-combiner is a real
+   rendering bug that surfaces far from its cause (nested fade silently stops compounding).
+   Decide replace vs. merge vs. multiply **when declaring**, not later.
+
+**Hard rule — declare at file scope, never inside a function or loop.** Each `uiLocalOf`
+allocates one process-lifetime slot; declaring one inside a function leaks a slot per call,
+a frame at a time. The slot model is also why reads are an array index rather than a hash
+lookup, so this isn't a style preference — it's the invariant the performance depends on.
+
+**When a `UiLocal` is the right tool** (all three should be true):
+- The value is genuinely *cross-cutting* over a subtree — theme, font, text style, alpha —
+  not data one specific child needs.
+- Threading it as an explicit parameter would mean passing it through widgets that don't
+  themselves use it, purely to reach a descendant.
+- It has a sensible default that lets a widget render standalone without a provider.
+
+**When it is the wrong tool** — same reasoning Compose gives for using `CompositionLocal`
+sparingly: it makes a widget's behavior depend on invisible ambient state, which is harder
+to reason about, harder to test in isolation, and harder to reuse. Prefer an explicit
+parameter when the caller reasonably needs to control the value, when only one or two levels
+separate provider from consumer, or when the value is really *data* rather than *environment*.
+An explicit param that's slightly tedious to thread beats an ambient dependency nobody can
+see at the call site.
+
+**Layer ownership still applies, and constrains this further:** `ui-headless` must not read
+the `Local*` stacks directly — it consumes the generic `Style` it is handed (see the
+checklist rule below, and "Headless consumes `Style`, not a theme recipe" above). The
+existing `ui-designsystem` locals (`LocalShadcnTheme`, `LocalShadcnButtonGroup`) live in
+designsystem *because* branded ambient state is designsystem's to own. Adding a new
+`UiLocal` in `ui-headless` to pass visual policy down is the ownership violation this skill
+exists to prevent, wearing a different hat.
+
+## Translating shadcn: name the Tailwind step, and remember CSS is `border-box`
+
+Two rules, both learned from real parity drift, both about translating a source class
+*faithfully* rather than eyeballing a number.
+
+**1. Use `Tw.Spacing.sN`, not the raw `Dp` it happens to equal.** shadcn's `p-1` is
+Tailwind spacing step 1. `Tw.Spacing.s1` says that; `4f.dp` says nothing and forces the
+next reader to rediscover where the number came from. Same for `gap-2` →
+`Arrangement.spacedBy(Tw.Spacing.s2)`.
+
+This is currently under-applied, not a settled convention: `ui/designsystem/styles/` holds
+**86 raw `Nf.dp` literals and zero `Tw.Spacing` references**, even though `Tw` is the
+designated design-system spacing scale (the B12 decision that deleted `ShadcnSpacing` and
+`UiSpacing` left `Tw` as the one named scale). Prefer `Tw` for any value that is genuinely
+a translated Tailwind step. Do not mass-rewrite the existing literals as a drive-by — not
+all 86 are spacing (border widths, radii, and sizes are in there too), and a blind sweep
+would launder wrong values into looking intentional.
+
+**2. CSS `border-box` means a border CONSUMES layout space; Awake's does not.** A shadcn
+container that is `p-1` plus a `border` insets its content by **border + padding = 5px**,
+not 4px. Awake's border is paint-only: `surfaceCore` insets content by
+`resolved.contentPadding` alone and never by `borderWidth`.
+
+That is deliberate and **Compose-faithful** — Compose's `Modifier.border` is a draw
+modifier, not a layout one, which is exactly why Compose code chains
+`.border(...).padding(...)` to inset content. So do **not** "fix" this in `ui-core`; doing
+so would break the Compose parity the engine is built on.
+
+The correct translation is at the recipe: fold the border width into that recipe's own
+`contentPadding`.
+
+```kotlin
+private val DropdownBorderWidth = 1f.dp
+border(DropdownBorderWidth, values.colors.border)
+contentPadding(Tw.Spacing.s1 + DropdownBorderWidth)   // shadcn `p-1` + border, border-box
+```
+
+Real cost of getting this wrong: `shadcnDropdownMenu` rendered its items at x=4 width=152
+inside a 160px surface instead of the reference's x=5 width=150, and the surface measured
+136 tall instead of 138 — exactly 1px per side on both axes, invisible by eye, caught only
+by the parity report. Ten bordered styles share this shape; `ShadcnBorderBoxInsetTest`
+pins the rule for the one with captured reference evidence.
+
+## State hooks (`remember*`): explicit `id`, not call-site identity
+
+`UiContext.rememberStateValue`/`rememberBooleanState`/`rememberFloatState`/`rememberIntState`/
+`rememberPopupState`/`rememberScrollState` (`ui-core/state/UiStateHooks.kt`) are Awake's
+`remember { mutableStateOf(...) }` equivalent — a per-widget value that survives across frames,
+backed by `WidgetState`.
+
+**The one way it deliberately differs from Compose, and it's the one that bites**: Compose's
+`remember` gets its identity for free from where the call sits in the composition's slot table —
+two different call sites can never accidentally collide, and the same call site keeps its state
+automatically. Awake has no composition and no slot table, so every hook takes a required
+`id: String` that **is** the entire identity — a flat lookup, nothing else backs it up. Two real
+failure directions follow from this, both silent:
+
+1. An `id` built from a value that itself changes resets state with no compile-time signal —
+   the same footgun class `animateFloat(id, ...)` already has (see
+   [`compose-animation-guidance.md`](../../docs/reference/compose-animation-guidance.md)).
+2. Two unrelated widgets that end up passing the identical `id` string silently *share* one
+   `WidgetState` bucket. `UiContext`'s duplicate-id throw (see the "Every stateful widget needs a
+   real, unique `id`" section above) does **not** catch this for bare hook usage — that throw
+   lives in `recordSemantic`, a path a raw `rememberStateValue` call never goes through on its
+   own. Only a widget that separately claims that same id as a semantic node gets the throw.
+
+Full identity model (the two-level `id`/`key` shape, trial-measurement guard behavior, and the
+`rememberPopupState`/`rememberScrollState` specifics) is in
+[`mirror-map.md`](../../docs/reference/mirror-map.md)'s "State hooks" section — read it before
+adding a new `remember*` hook or reasoning about whether an existing one is safe to call from a
+loop or a dynamically-keyed list. `docs/reference/ui-ownership.md`'s "Identity Params" table
+already documents the `id`/`testTag`/`cacheKey` three-way split and the two-level `id`/`key`
+convention; this section is the Compose-parity framing for the same rule, not a restatement of it.
 
 ## Naming: Radix is canonical
 
@@ -308,15 +578,62 @@ In Awake, every single UI widget is an atomic composition of exactly 4 primitive
 
 Leaf widgets (`button`, `checkbox`, `switch`, `tabs`, `collapsible`, etc.) must **never** call raw canvas graphics emitters (`emitFillAndBorder`, `emitCheckmark`, `emitRadioDot`) or manually calculate coordinate layouts; they must compose from these 4 primitives.
 
-### Jetpack Compose Naming & Callback Conventions
+### Widget event idiom: return-value, not callbacks (verified against real source 2026-08-20)
 
-Headless and Design System components strictly follow standard Compose callback and state parameter conventions:
-- `button`: `onClick: (() -> Unit)? = null`
-- `toggle`, `checkbox`, `switch`: `checked: Boolean`, `onCheckedChange: (Boolean) -> Unit = {}`
-- `radio`: `selected: Boolean`, `onClick: () -> Unit = {}`
-- `textField`, `textarea`: `value: String`, `onValueChange: (String) -> Unit = {}`
-- `slider`, `rangeSlider`: `value: Float`, `onValueChange: (Float) -> Unit = {}`
-- `tabs`: `selected: Boolean`, `onClick: () -> Unit = {}`
+Most discrete-interaction widgets are pure **return-value**, not callback-based --
+`checkbox`, `switch`, `slider`, `rangeSlider`, `select`, `combobox` take no
+`onXChange`/`onClick` param at all; the caller reads the widget's return (`Boolean`/
+`Float`/`Pair`/`Int?`) and reacts. `button` returns `Boolean` (`if (button(id)) { ... }`).
+This is the immediate-mode-native shape (see `docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md`
+row C9) -- prefer it for any new widget.
+
+Two known exceptions, not yet fixed (tracked in C9, both real, both narrower than this
+doc used to claim -- the previous version of this section listed `toggle`/`checkbox`/
+`switch`/`slider` as uniformly callback-based, which stopped being true once C3/C5
+landed; corrected here):
+- `toggle` carries **both** a `Boolean` return and an `onCheckedChange` callback
+  simultaneously -- pick the return value, the callback is redundant, don't add a third
+  widget that relies on the callback firing.
+- `toggleGroup` (both overloads) is `Unit`-returning with only a callback -- an
+  inconsistency with its sibling `slider`, not yet reconciled.
+
+`shadcn*` wrappers may still offer an `onClick`/`onXChange` convenience param as sugar
+over the return value (`shadcnButton(onClick = {...})` = `if (button(...)) onClick()`),
+documented synchronous-same-frame -- but the underlying `ui-headless` widget itself
+should be return-value shaped, not the other way around.
+
+## Every stateful widget needs a real, unique `id` -- collisions are silent without the check below
+
+`id` is the lookup key into `WidgetState` (hover/active/animation/scroll/caret state).
+Two widgets that end up with the same `id` string silently share one state slot --
+hovering one visually reacts on the other, one's animation glitches, clicking one can
+toggle the other's checked state. This has shipped as a real bug multiple times (see
+`docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md`'s 2026-08-20 re-audit section
+and the fixes in commits `c1a6dab10`/`b6e2759ae`).
+
+The two failure shapes to watch for, both already fixed once each but easy to
+reintroduce:
+1. **A defaulted/optional `id` that feeds a *different* child widget's required-id
+   slot.** `shadcnAvatarGroup(id: String = "avatar")` used to interpolate
+   `"$id.$index"` into each child avatar's id -- two `shadcnAvatarGroup`s on one
+   screen without an explicit `id` collided. Fix: every widget that constructs a
+   child widget's id from its own id must take a **required** `id`, not a defaulted
+   one.
+2. **A loop or sibling-call site that doesn't derive a unique id per iteration.**
+   `shadcnButtonGroupSeparator()` called inside `forEachIndexed` with no `id` fell
+   back to the same orientation-derived string every iteration -- a single button
+   group with 3+ members collided with *itself*. Fix: pass a derived id
+   (`"$id.sep.$index"`) at every call site inside a loop or repeated composition,
+   never rely on a shared default.
+
+**Safety net, not a substitute for getting it right:** `UiContext` throws immediately
+if the same `id` is claimed twice in one real (non-measuring) frame
+(`UiContextFrameState.recordSemantic`, `awake/ui/ui-core/.../context/UiContextFrameState.kt`).
+This turns the silent-bug class above into a loud crash during development/tests
+instead of a shipped visual glitch -- but it only fires once you actually render two
+colliding instances together, so it doesn't replace picking real, unique ids up front.
+If you hit this throw, the message names the colliding literal id; the fix is almost
+always shape #1 or #2 above.
 
 ## Checklist
 
@@ -336,4 +653,15 @@ Headless and Design System components strictly follow standard Compose callback 
       `widget(id) { text("...") }` through the existing slot, not a second resolution path.
       `shadcn*` may still expose `label:` as sugar, but its body must call that same slot.
 - [ ] Built exclusively from the 4 Foundational Primitives (`surface`, `row`/`column`/`box`/`spacer`, `text`/`icon`, `Modifier.*`) -- no raw canvas emitters or `interactiveSurface`.
-
+- [ ] Every `id` param is required, not defaulted/nullable, unless the widget genuinely
+      never constructs a child widget's id from it. Any loop or repeated call site derives
+      a unique id per iteration (`"$id.sep.$index"`), never relies on a shared default.
+- [ ] New `Modifier`/layout DSL function checked against `mirror-map.md` +
+      `compose-modifier-layout-guidance.md` first -- matches Compose's real API if Compose
+      has one, or is clearly named/documented as engine-specific if it doesn't. Not added
+      just because it "feels like it should exist." New animation or `remember*` state-hook
+      surface gets the same check against `mirror-map.md` + `compose-animation-guidance.md`
+      (animation) or the "State hooks" section above (state hooks).
+- [ ] Translated Tailwind spacing names its step (`Tw.Spacing.sN`), not the raw `Dp` it
+      equals. A bordered shadcn surface folds its border width into `contentPadding` --
+      CSS is `border-box`, Awake's border is paint-only (and Compose's is too).

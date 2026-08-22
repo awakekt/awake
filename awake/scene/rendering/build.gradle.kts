@@ -12,6 +12,9 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:core:math"))
+            implementation(project(":awake:core:color"))
             api(project(":awake:scene:scene-core"))
             api(project(":awake:engine:render:contract"))
         }

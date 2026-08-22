@@ -7,7 +7,7 @@ import io.github.ronjunevaldoz.awake.vulkan.VkUnionMember
 sealed class VkClearValue
 
 /**
- * VkClearValue value = {.color {ref}}
+ * Maps to `VkClearValue value = {.color {ref}}`.
  */
 @VkUnionMember("color")
 sealed class VkClearColorValue : VkClearValue() {
@@ -53,7 +53,7 @@ sealed class VkClearColorValue : VkClearValue() {
 }
 
 /**
- * VkClearValue value = {.depthStencil {ref}}
+ * Maps to `VkClearValue value = {.depthStencil {ref}}`.
  */
 @VkUnionMember("depthStencil")
 data class VkClearDepthStencilValue(

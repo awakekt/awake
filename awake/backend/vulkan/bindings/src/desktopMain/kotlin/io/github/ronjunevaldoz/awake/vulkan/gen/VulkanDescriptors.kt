@@ -7,7 +7,7 @@ import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorImageInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorPoolCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
 
-// Phase 1b (desktop native build) has not landed yet — see docs/MVP_PLAN.md.
+// Phase 1b (desktop native build) has not landed yet — see docs/mvp-plan.md.
 actual object VulkanDescriptors {
     actual external fun vkCreateDescriptorSetLayout(
         device: Long,

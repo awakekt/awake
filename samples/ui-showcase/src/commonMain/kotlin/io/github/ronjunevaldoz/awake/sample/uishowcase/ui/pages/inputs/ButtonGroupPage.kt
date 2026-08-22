@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.sample.uishowcase.ui.pages.inputs
 
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnTheme
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnButtonGroupOrientation
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnButton
@@ -23,7 +23,7 @@ import io.github.ronjunevaldoz.awake.ui.headless.rememberStateValue
 import io.github.ronjunevaldoz.awake.ui.headless.size
 import io.github.ronjunevaldoz.awake.ui.headless.spacer
 import io.github.ronjunevaldoz.awake.ui.headless.width
-import io.github.ronjunevaldoz.ui.heroicons.icon.HeroIcons
+import io.github.ronjunevaldoz.awake.ui.heroicons.icon.HeroIcons
 
 private val outline = HeroIcons.Outline24
 

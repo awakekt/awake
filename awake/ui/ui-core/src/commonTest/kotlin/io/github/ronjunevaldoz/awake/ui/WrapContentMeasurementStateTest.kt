@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.context.uiLocalOf
 import io.github.ronjunevaldoz.awake.ui.layouts.column
@@ -35,7 +36,7 @@ class WrapContentMeasurementStateTest {
         val ui = UiContext()
         ui.beginFrame(UiFrameInput(viewportWidth = 920f, viewportHeight = 620f, input = testSnapshot()))
 
-        var content: UiBounds? = null
+        var content: Rectangle? = null
         ui.createBox(x = 0f, y = 0f, width = 920f, height = 620f).column(
             id = "content-viewport",
             modifier = Modifier.width(Dimension.FillMax).height(Dimension.FillMax),
@@ -71,7 +72,7 @@ class WrapContentMeasurementStateTest {
         // *inside* the content passed to the WrapContent surface itself, not the outer scroll
         // column -- this is the exact nesting depth where the bug lives, since surface()'s own
         // internal unbounded trial re-executes this same content with a brand-new state store.
-        val content: io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope.(UiBounds) -> Unit = {
+        val content: io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope.(Rectangle) -> Unit = {
             val mode by rememberStateValue("page-mode", "value") { "short" }
             if (mode == "short") {
                 surface(id = "row-0", modifier = Modifier.width(Dimension.FillMax).height(Dimension.Fixed(36f.px))) { }
@@ -83,7 +84,7 @@ class WrapContentMeasurementStateTest {
         }
 
         // First frame: establish persisted state as "short" (the default).
-        var slotShort: UiBounds? = null
+        var slotShort: Rectangle? = null
         ui.createBox(x = 0f, y = 0f, width = 920f, height = 620f).column(
             id = "content-viewport",
             modifier = (Modifier.verticalScroll(UiScrollState())).width(Dimension.FillMax).height(Dimension.FillMax),
@@ -104,7 +105,7 @@ class WrapContentMeasurementStateTest {
 
         // Second frame: real app-driven state change -- user navigates to the "long" page.
         ui.beginFrame(UiFrameInput(viewportWidth = 920f, viewportHeight = 620f, input = testSnapshot()))
-        var slotLong: UiBounds? = null
+        var slotLong: Rectangle? = null
         ui.createBox(x = 0f, y = 0f, width = 920f, height = 620f).column(
             id = "content-viewport",
             modifier = (Modifier.verticalScroll(UiScrollState())).width(Dimension.FillMax).height(Dimension.FillMax),
@@ -125,7 +126,7 @@ class WrapContentMeasurementStateTest {
         )
     }
 
-    private fun statefulRows(stateKey: String): io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope.(UiBounds) -> Unit = {
+    private fun statefulRows(stateKey: String): io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope.(Rectangle) -> Unit = {
         val mode by rememberStateValue(stateKey, "value") { "short" }
         val rows = if (mode == "short") 1 else 20
         repeat(rows) { index ->
@@ -135,12 +136,12 @@ class WrapContentMeasurementStateTest {
 
     private fun measureAfterNavigation(
         stateKey: String,
-        wrap: io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope.(io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope.(UiBounds) -> Unit) -> UiBounds,
+        wrap: io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope.(io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope.(Rectangle) -> Unit) -> Rectangle,
     ): Pair<Float, Float> {
         val content = statefulRows(stateKey)
         val ui = UiContext()
         ui.beginFrame(UiFrameInput(viewportWidth = 920f, viewportHeight = 620f, input = testSnapshot()))
-        var slotShort: UiBounds? = null
+        var slotShort: Rectangle? = null
         ui.createBox(x = 0f, y = 0f, width = 920f, height = 620f).column(
             id = "content-viewport",
             modifier = (Modifier.verticalScroll(UiScrollState())).width(Dimension.FillMax).height(Dimension.FillMax),
@@ -152,7 +153,7 @@ class WrapContentMeasurementStateTest {
         ui.rememberStateValue<String>(stateKey, "value") { "short" }.value = "long"
 
         ui.beginFrame(UiFrameInput(viewportWidth = 920f, viewportHeight = 620f, input = testSnapshot()))
-        var slotLong: UiBounds? = null
+        var slotLong: Rectangle? = null
         ui.createBox(x = 0f, y = 0f, width = 920f, height = 620f).column(
             id = "content-viewport",
             modifier = (Modifier.verticalScroll(UiScrollState())).width(Dimension.FillMax).height(Dimension.FillMax),

@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless.internal.controls
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.canvas
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
 import io.github.ronjunevaldoz.awake.ui.graphics.emitShimmerOverlay
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
@@ -19,7 +20,7 @@ import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
 import io.github.ronjunevaldoz.awake.ui.scope.resolveStyle
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.ui.theme
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -61,13 +62,15 @@ fun UiPrimitiveScope.skeleton(
             )
     val baseColor = resolved.background ?: theme.colors.muted
     val radiusPx = resolved.shape.toPx()
-    emitFillAndBorder(
-        slot = slot,
-        fillColor = baseColor.withAlpha(baseColor.a * pulse),
-        radiusPx = radiusPx,
-        borderWidth = UiShape.none,
-        borderColor = Color.Transparent,
-    )
+    canvas(slot) {
+        drawFillAndBorder(
+            slot = slot,
+            fillColor = baseColor.withAlpha(baseColor.a * pulse),
+            radiusPx = radiusPx,
+            borderWidth = UiShape.none,
+            borderColor = Color.Transparent,
+        )
+    }
     if (shimmer) {
         emitShimmerOverlay(id = id, slot = slot, radiusPx = radiusPx)
     }

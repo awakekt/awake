@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.core.input.Input
 import io.github.ronjunevaldoz.awake.testing.ui.inspectUiFrame
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.context.UiCursor
 import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.ResizableDirection
@@ -28,8 +30,8 @@ class ResizablePanelGroupTest {
     @Test
     fun twoPanelsSplitAroundOneHandleLeavesRoomForTheHandle() {
         val ui = UiContext()
-        var panel1: UiBounds? = null
-        var panel2: UiBounds? = null
+        var panel1: Rectangle? = null
+        var panel2: Rectangle? = null
         ui.simulateFrame(pointerDown = false, x = -100f, y = -100f) {
             ui.createAbsolute(x = 0f, y = 0f).resizablePanelGroup(
                 id = "group",
@@ -49,8 +51,8 @@ class ResizablePanelGroupTest {
     @Test
     fun dragMovesFractionsAndClampsAtMinSize() {
         val ui = UiContext()
-        var panel1: UiBounds? = null
-        var panel2: UiBounds? = null
+        var panel1: Rectangle? = null
+        var panel2: Rectangle? = null
         val input = Input()
 
         fun frame(pointerDown: Boolean, x: Float) {
@@ -107,7 +109,7 @@ class ResizablePanelGroupTest {
     @Test
     fun dragStillMovesFractionsWhenGroupIsNestedInAnUncachedColumn() {
         val ui = UiContext()
-        var panel1: UiBounds? = null
+        var panel1: Rectangle? = null
         val input = Input()
 
         fun frame(pointerDown: Boolean, x: Float) {

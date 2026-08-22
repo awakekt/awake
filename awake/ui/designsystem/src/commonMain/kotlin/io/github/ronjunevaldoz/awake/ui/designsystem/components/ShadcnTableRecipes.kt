@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnTableCaptionStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnTableCellStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnTableHeaderStyle
@@ -11,6 +11,7 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnTableStyle
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
 import io.github.ronjunevaldoz.awake.ui.headless.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.height
 import io.github.ronjunevaldoz.awake.ui.headless.row
@@ -69,10 +70,10 @@ fun shadcnTableColumnWidthsPx(columns: List<ShadcnTableColumn>, availableWidthPx
 fun UiScope.shadcnTable(
     id: String,
     columns: List<ShadcnTableColumn>,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     caption: String? = null,
     content: ShadcnTableScope.() -> Unit,
-): UiBounds = surface(
+): Rectangle = surface(
     id = id,
     modifier = modifier,
     style = shadcnTableStyle(themeValues),

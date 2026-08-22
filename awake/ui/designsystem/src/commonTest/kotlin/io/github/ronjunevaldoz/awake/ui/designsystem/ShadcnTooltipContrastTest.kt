@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem
 
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnTooltipText
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
 import kotlin.test.Test
@@ -29,7 +29,7 @@ class ShadcnTooltipContrastTest {
             input = testSnapshot(x = -100f, y = -100f, down = false),
         ) {
             shadcnTooltipText(
-                anchorSlot = UiBounds(x = 100f, y = 60f, width = 100f, height = 30f),
+                anchorSlot = Rectangle(x = 100f, y = 60f, width = 100f, height = 30f),
                 visible = true,
                 text = "Tooltip Info",
                 id = "tooltip-contrast",

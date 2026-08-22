@@ -58,8 +58,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`StudioShellLayoutTest.panelsDockFlushToEveryFrameEdge` fails.** Pre-existing, confirmed
   against clean `main` with all local changes stashed. Never diagnosed.
 
+## [0.1.0-dev.6] - 2026-08-23
+
+Rendering-architecture pass, plus the ECS and UI work that accumulated since dev.4 (this branch
+never carried the dev.5 tag, which was cut on `vulkan`).
+
+The theme is removing decisions that were being made twice. Pipeline construction moved behind a
+shared description with a per-backend factory; `GpuDevice` gave the Vulkan/WebGPU boundary a name
+and a rule; and the WebGPU backend became executable on the desktop JVM, so it is testable
+outside a browser for the first time. Alongside that: ECS tag storage and a reflection-free
+component-mutation path, UI frame-allocation cuts, and continued shadcn parity work.
+
 ### Added
 
+- The WebGPU backend now runs on the desktop JVM as a **test target**, and creates a real GPU
+  device there. WebGPU code was previously compile-checked and never executed outside a browser.
+  Production is unaffected — desktop and Android still ship Vulkan. Note this exercises Awake's
+  WebGPU code path over wgpu-native, not a browser's WebGPU implementation, so canvas sizing, JS
+  interop and browser driver behaviour still need a browser check.
+- `GpuDevice`, the named render-hardware-interface boundary: what a GPU backend can do, with no
+  knowledge of what a scene is. `Renderer` extends it. No behavioural change — see
+  `docs/reference/render-hardware-interface.md`.
+- WebGPU now builds the alpha-blended transparent pipeline companion Vulkan already had, so
+  a `DrawCall.transparent` draw blends on both backends instead of silently rendering opaque
+  on WebGPU. A format with no transparent companion still falls back to its opaque pipeline.
+- A reflection-free cached-`ComponentTypeId` mutation path for ECS add/remove operations.
+  Matched JDK 17 measurements improved component churn by 16.9% at 10k and 22.1% at
+  100k, while 100k maintained-family churn allocation fell by roughly 90%.
+- A benchmark-only pure-archetype ECS control that performs real row migration and a
+  256-signature fragmentation suite. Matched JDK 17 measurements keep production Awake on
+  sparse sets plus maintained families: stable/query iteration stayed faster and dynamic-tag
+  churn avoided archetype migration's roughly 7.6x throughput penalty at 100k entities.
+- `EcsTag`, structured storage diagnostics, and payload-free singleton storage across both
+  component stores and maintained `Family1`/`Family2` caches. Tag family iteration keeps one
+  singleton reference; the existing `components*()` APIs lazily materialize compatibility arrays.
+- `shadcnTabs`' `items`/`selected` overload takes a `content: ColumnScope.(String) -> Unit`
+  slot, rendering a real content panel below the track instead of modeling the track only.
+  Defaults to empty, so existing track-only callers are unaffected.
+- `ShadcnSurfaceVariant.Band` — a full-bleed chrome strip (muted, square-cornered,
+  horizontal-only inset), for an app toolbar/status-bar row rather than a panel/card.
+  `shadcnSurface` also takes an optional `contentPadding: Dp?` override.
+- `popup()`/`dialog()` (`ui-headless`) and all 9 designsystem overlay wrappers built on them
+  (`shadcnDropdownMenu`, `shadcnTooltip`, `shadcnAlertDialog`, `shadcnContextMenu`,
+  `shadcnSheet`, `shadcnDrawer`, `shadcnDialog`, …) take a `modifier: Modifier` param.
+  `widthIn(max=)`/`heightIn(max=)` now actually clamp the popup's resolved size — the
+  underlying primitive already supported it, the facades just never forwarded it.
+- `samples:ui-showcase`/`samples:studio` are now covered by `verifyUiOwnership`, banning
+  direct `ui-core` (`ui.modifier.*`) imports and hand-authored `Style { }` blocks in consumer
+  code — the same rule that already applied to `ui-designsystem`.
 - GPU-based 3D Camera System: a single `CameraComponent` carrying a `CameraMode` enum
   (`FirstPerson`, `ThirdPerson`, `Cinematic`, `TopDown`) plus an `ActiveCamera` tag
   component. One `CameraSystem` drives every mode and only processes entities tagged with
@@ -117,6 +163,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- 8 dead-public designsystem style functions narrowed to `internal`: `shadcnAvatarStyle`,
+  `shadcnAvatarBadgeStyle`, `shadcnToggleGroupItemStyle`, `shadcnRadioStyle`,
+  `shadcnProgressStyle`, `shadcnSkeletonStyle`, `shadcnSpinnerStyle`, `shadcnToastStyle`. Zero
+  real callers existed outside their own module.
 - Legacy camera systems and controllers: `OrbitCameraController`, `OrbitCameraSystem`,
   `FollowCameraSystem`, `LookAtCameraSystem`, and `FreeFlyCameraSystem`.
 - `PlayerControlSystem` and legacy control components (`OrbitControl`, `FreeFlyControl`,
@@ -141,6 +191,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Pipeline construction is described once and built per backend. `PipelineSpec`, `PipelineKey`,
+  `PipelineRequest`, `PipelineSet`, `PipelineVariant` and `buildPipelineTable` moved into
+  `render:contract`; each backend now implements a one-method `PipelineFactory` that only
+  translates an already-decided description into its own API. Previously each backend decided
+  independently which pipelines exist, which is how WebGPU came to lack a transparent pipeline
+  that Vulkan had.
+- UI frame allocation cut 56% (1,151,016 → 507,357 bytes on a 20-row/60-surface scene), and it
+  scales linearly with page size again rather than superlinearly. Five fixes, all aimed at work
+  that trial measurement passes repeat and then discard: trial contexts read weight answers
+  through to the real context instead of copying them; ambient locals copy store-to-store instead
+  of through a snapshot object; a trial no longer tessellates clip shapes whose primitives it
+  will drop; `Style.resolve` walks its rules by index instead of building two filtered lists; and
+  `Modifier` is one shared empty instance with identity-guarded `width`/`height`. `ui-core`'s new
+  `UiFrameAllocationProbe` measures this and holds a ceiling that ratchets down as further
+  allocation fixes land.
+- Kotlin upgraded to 2.4.10, the latest stable bug-fix release. ECS family internals are split
+  into focused membership/cache/value-column files with documented tag and payload strategies.
 - `awake-ecs` `System` is now scheduler-free: the stale `frequency` property and
   `SystemFrequency` enum were removed from the public ECS core API. Scene scheduling now
   belongs to `awake-scene`/`awake-scene-dsl` registration via `SceneSystemPhase` plus
@@ -182,7 +249,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `VulkanApplication.createSurface()` no longer branches on `window is Long` to distinguish
   Android's `Surface` from desktop's GLFW window handle — it delegates to the new
   `expect fun createSurface` in `awake-vulkan` instead. Behavior is unchanged; this is a
-  structural cleanup (see Phase 1c in `docs/MVP_PLAN.md` for the full rationale).
+  structural cleanup (see Phase 1c in `docs/mvp-plan.md` for the full rationale).
 - `awake-ecs` component stores now use primitive sparse/dense arrays instead of
   `MutableList` storage, reducing structural add/remove overhead in the benchmark harness.
 - Glyph coverage-alpha now gets stem darkening (`pow(alpha, 1/1.45)`) on both backends.
@@ -206,6 +273,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is now a companion function and only the layout handle is held.
 - Dark-theme `card` and `sidebar` colors corrected to oklch lightness 0.205, matching the
   published shadcn spec (they were 0.168 and 0.158).
+- `UiContext.column`/`row` (member) and `UiPrimitiveScope.column`/`row` (extension) — the
+  raw-slot forms that take an already-resolved `Rectangle` — renamed to `columnAt`/`rowAt`.
+  They shared a name with the unrelated "smart" `column`/`row` family that resolves its own
+  slot from id/style/arrangement, an overload-resolution trap. Root-authoring
+  `UiContext.column`/`row` (resolves its own slot from a `Modifier`) is unaffected.
+- `ui-headless`'s own `Modifier` type (`HeadlessModifier`, plus ~14 duplicate builder
+  functions) is gone. `Modifier` and its builders (`width`, `padding`, `clickable`, etc.) are
+  now `ui-core`'s real `UiModifier`, re-exported through `ui-headless` for `ui-designsystem`'s
+  benefit — behaviorally identical, but any code importing
+  `io.github.ronjunevaldoz.awake.ui.headless.Modifier` directly by fully-qualified name (rare)
+  should re-check that the symbol still resolves; the star/named import form is unaffected.
+- `ShapePainter.kt`'s widget-chrome helpers move from `UiPrimitiveScope` extensions to
+  `CanvasScope` extensions and are renamed to match: `emitFillAndBorder` → `drawFillAndBorder`,
+  `emitCheckmark` → `drawCheckmark`, `emitRadioDot` → `drawRadioDot`, `emitInsetDash` →
+  `drawInsetDash`. They now take resolved `Color` params instead of reading theme defaults
+  internally — `CanvasScope` never touches theme, matching how Compose's `DrawScope` works.
+  `CanvasScope.context` is fully removed, no longer just relocated.
+- `UiPrimitiveScope.emit`/`emitOverlay` are gone — `CanvasScope` (via `canvas { }`) is now the
+  only way to submit a draw primitive. Code drawing straight from `UiPrimitiveScope` needs to
+  move behind `canvas { }`, same shape as `ShapePainter.kt`'s widget-chrome helpers above.
+  `UiPrimitiveScope.context` is unaffected — still there, real usage outside `ui-core`'s draw
+  path is much larger and out of scope for this pass.
+- `canvas()`'s `id` param is now required (its default was dead — zero real callers used it).
+  `separator()`'s `id` is now required on both overloads, including the deprecated `color:`
+  bridge — closes a real same-id collision risk the old nullable-last default carried.
+- `Modifier.margin()` is deleted. It silently dropped `end`/`bottom` and had zero real callers;
+  use `Modifier.padding()`/explicit `width`/`height`/`offset` instead.
+- `shadcnIcon`, `shadcnRadioGroup`'s content-slot overload, and `shadcnSidebarGroup`/
+  `shadcnSidebarMenu`/`shadcnSidebarMenuSub` now return `Rectangle` instead of `Unit`, so they
+  can anchor a popup or be composed into layout math like other recipes. Purely additive —
+  existing callers that ignore the return value are unaffected.
+- Claiming the same widget `id` twice in one frame now throws immediately instead of the two
+  widgets silently sharing one state slot (hover/active/animation bleeding between them).
+  Turning this on surfaced 3 real pre-existing collisions in `samples:studio` (a pill
+  toolbar's separators, and two toolbar hairlines all defaulting to the same fallback id) —
+  fixed alongside the check.
+
+### Fixed
+
+- Both backends leaked one pipeline per vertex format on teardown. Each enumerated its pipeline
+  companions by hand in `destroyBackend` and each omitted the transparent one when it was added.
+  `PipelineSet.all` now enumerates them, so a companion added later cannot be missed.
+- `popup()`'s `id` is now required (headless facade + the underlying primitive). It used to
+  default through `id ?: modifier.testTag ?: "popup"` — any popup with neither set silently
+  shared one fade-animation state bucket with every other un-ided popup on screen. Fixed the
+  same collision-by-default pattern in `shadcnAvatarBadge`, `shadcnAvatarGroup`,
+  `shadcnFieldSeparator`, and `shadcnSidebarMenuSub`, whose defaulted `id`s fed a *different*
+  child widget's required-id slot.
+- A `FillMax`-width `interactiveSurface()`/`button()` (any content-lambda form, not just the
+  headless label form) with no explicit width could never resolve a hover-conditional
+  `Style` — `surfaceCore` built its interactive style from a placeholder `hovered = false`
+  computed before any real slot existed, then never recomputed it once the real slot (and a
+  real hit test) existed. `resolveInteractiveSurface`'s headless path never had this bug; it
+  now shares the same claim-then-hit-test-then-resolve order. Same fix ports package 5's
+  wrap-content/`FillMax` intrinsic-width exception into `surfaceCore`, which had only ever
+  reached the headless-only button path.
 
 ## [0.1.0-dev.5] - 2026-08-18
 

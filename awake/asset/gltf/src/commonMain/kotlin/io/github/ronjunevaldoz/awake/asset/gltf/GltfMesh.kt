@@ -2,6 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.asset.gltf
 
+import io.github.ronjunevaldoz.awake.core.geometry.GpuDataShape
+import io.github.ronjunevaldoz.awake.core.geometry.VertexFormat
+
 /**
  * A single decoded glTF primitive's attribute arrays, before interleaving -- one `Float`
  * per component, row-major (`positions[i*3]`/`[i*3+1]`/`[i*3+2]` is vertex `i`'s x/y/z).
@@ -14,7 +17,7 @@ package io.github.ronjunevaldoz.awake.asset.gltf
  * is the primitive's material's `baseColorTexture` image, still encoded (PNG/JPEG, whatever
  * bytes the glTF file embedded) -- `null` unless the primitive has a material with one.
  * Decoding is deliberately not this parser's job (a platform concern, not a glTF-parsing one)
- * -- see `io.github.ronjunevaldoz.awake.core.graphics.createBitmap`. [metallicRoughnessImageBytes]/
+ * -- see `io.github.ronjunevaldoz.awake.core.image.createBitmap`. [metallicRoughnessImageBytes]/
  * [normalImageBytes]/[occlusionImageBytes]/[emissiveImageBytes] are the same kind of
  * still-encoded, per-material image bytes, one per glTF PBR texture channel -- `null` unless
  * the primitive's material has that channel. [baseColorFactor] (`[r,g,b,a]`)/[metallicFactor]/
@@ -83,7 +86,7 @@ data class GltfMesh(
 
     /**
      * Interleaves into the position(vec3)+normal(vec3)+color(vec3) -- 9 floats/vertex --
-     * layout [io.github.ronjunevaldoz.awake.render.mesh.VertexFormat.PositionNormalColor]
+     * layout [io.github.ronjunevaldoz.awake.core.geometry.VertexFormat.PositionNormalColor]
      * describes, for a shader that shades with real per-vertex normals instead of flat unlit
      * vertex color. Missing [normals] default to world-up (`0, 1, 0`) -- an arbitrary but
      * harmless fallback (no glTF exporter omits `NORMAL` on a mesh meant to be shaded, so this
@@ -123,7 +126,7 @@ data class GltfMesh(
 
     /**
      * Interleaves into position(vec3)+normal(vec3)+color(vec3)+uv(vec2) -- 11 floats/vertex --
-     * layout [io.github.ronjunevaldoz.awake.render.mesh.VertexFormat.PositionNormalColorUv]
+     * layout [io.github.ronjunevaldoz.awake.core.geometry.VertexFormat.PositionNormalColorUv]
      * describes, for a shader that samples [baseColorImageBytes] using [uvs]. Missing
      * [normals]/[colors] default the same way [toInterleavedPositionNormalColor] does; missing
      * [uvs] default to `(0, 0)`, same as [toInterleavedPositionColorUv].
@@ -170,11 +173,11 @@ data class GltfMesh(
     /**
      * Interleaves into position(vec3)+normal(vec3)+color(vec3)+jointIndices(uint4)+
      * jointWeights(vec4) -- 17 floats/vertex, matching
-     * [io.github.ronjunevaldoz.awake.render.mesh.VertexFormat.PositionNormalColorSkin]. Missing
+     * [io.github.ronjunevaldoz.awake.core.geometry.VertexFormat.PositionNormalColorSkin]. Missing
      * [normals]/[colors] default the same way [toInterleavedPositionNormalColor] does. Requires
      * [jointIndices]/[jointWeights] to be present (only called for an actually-skinned
      * primitive). Joint indices are packed via [Float.fromBits] -- the interleaved buffer is a
-     * `FloatArray` end to end, but [VertexAttributeFormat.UInt4][io.github.ronjunevaldoz.awake.render.mesh.VertexAttributeFormat.UInt4]
+     * `FloatArray` end to end, but [VertexAttributeFormat.UInt4][io.github.ronjunevaldoz.awake.core.geometry.VertexAttributeFormat.UInt4]
      * tells the GPU to read those 4 bytes back as a raw `uint32`, not a float value, so the bit
      * pattern -- not the numeric float value -- has to equal the joint index.
      */
@@ -217,14 +220,19 @@ data class GltfMesh(
     }
 
     private companion object {
-        const val POSITION_COMPONENTS = 3
-        const val NORMAL_COMPONENTS = 3
-        const val COLOR_COMPONENTS = 3
-        const val UV_COMPONENTS = 2
-        const val JOINT_COMPONENTS = 4
-        const val VERTEX_STRIDE_COMPONENTS = 8
-        const val NORMAL_VERTEX_STRIDE_COMPONENTS = 9
-        const val TEXTURED_VERTEX_STRIDE_COMPONENTS = 11
-        const val SKINNED_VERTEX_STRIDE_COMPONENTS = 17
+        // Derived from the formats these interleavers write, not counted by hand. Each stride
+        // was previously a literal duplicating a VertexFormat this module could not see, so
+        // changing a format silently produced the wrong interleaving -- the same defect as the
+        // rounded-quad stride drift, where webgpu held 15 against a shared 16.
+        val POSITION_COMPONENTS = GpuDataShape.Vec3.componentCount
+        val NORMAL_COMPONENTS = GpuDataShape.Vec3.componentCount
+        val COLOR_COMPONENTS = GpuDataShape.Vec3.componentCount
+        val UV_COMPONENTS = GpuDataShape.Vec2.componentCount
+        val JOINT_COMPONENTS = GpuDataShape.UInt4.componentCount
+
+        val VERTEX_STRIDE_COMPONENTS = VertexFormat.PositionColorUv.strideFloats
+        val NORMAL_VERTEX_STRIDE_COMPONENTS = VertexFormat.PositionNormalColor.strideFloats
+        val TEXTURED_VERTEX_STRIDE_COMPONENTS = VertexFormat.PositionNormalColorUv.strideFloats
+        val SKINNED_VERTEX_STRIDE_COMPONENTS = VertexFormat.PositionNormalColorSkin.strideFloats
     }
 }

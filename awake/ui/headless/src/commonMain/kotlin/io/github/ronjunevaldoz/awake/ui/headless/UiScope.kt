@@ -6,10 +6,12 @@ import io.github.ronjunevaldoz.awake.ui.AwakeUiDsl
 import io.github.ronjunevaldoz.awake.ui.provideTextStyle
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.withIntrinsicLabelSize as primitiveWithIntrinsicLabelSize
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.ui.theme.TextStyle
 import io.github.ronjunevaldoz.awake.ui.font
@@ -46,7 +48,7 @@ val UiScope.currentFont: UiFont
 fun UiScope.resolveGlyphPx(textStyle: TextStyle): Float = primitive.primitiveResolveGlyphPx(textStyle = textStyle)
 
 /** Records a generic panel semantic for a Headless-owned composite region. */
-fun UiScope.panelSemantics(id: String, bounds: UiBounds) {
+fun UiScope.panelSemantics(id: String, bounds: Rectangle) {
     primitive.recordSemantic(role = UiSemanticRole.Panel, id = id, bounds = bounds)
 }
 
@@ -65,14 +67,12 @@ fun UiScope.provideTextStyle(style: TextStyle, content: UiScope.() -> Unit) {
 /** Applies natural label width and font-metric height to surface recipes. */
 fun UiScope.withIntrinsicLabelSize(
     label: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     style: Style = Style.Empty,
-): Modifier = HeadlessModifier(
-    primitive.primitiveWithIntrinsicLabelSize(
-        modifier = modifier.asPrimitiveModifier(),
-        label = label,
-        style = style,
-    ),
+): UiModifier = primitive.primitiveWithIntrinsicLabelSize(
+    modifier = modifier,
+    label = label,
+    style = style,
 )
 
 /**
@@ -81,7 +81,7 @@ fun UiScope.withIntrinsicLabelSize(
  * App integration owns [UiContext]; ordinary widgets receive only [UiScope]. The explicit
  * [slot] keeps root sizing at the app/runtime boundary rather than inventing a Headless size.
  */
-fun UiContext.createUiScope(slot: UiBounds): UiScope =
+fun UiContext.createUiScope(slot: Rectangle): UiScope =
     UiScope(createBox(slot = slot))
 
 /** Internal bridge used while Headless behavior is migrated from Core's raw receiver. */

@@ -2,72 +2,91 @@
 
 ## Current Objective
 
-Stabilize Awake's public API boundaries before the next core/scene split. The current focus
-is separating core APIs, reusable helpers, and authoring sugar so future module moves do not
-just spread unclear ownership across more folders.
+Prototype and decision-gate adaptive bulk ECS structural mutation without changing the default
+immediate API or reopening the rejected archetype migration. Public API stabilization and UI
+parity remain parallel lanes.
 
 ## Active Phase
 
+- 2026-08-22: Vector precision variants are drafted in
+  [math/01-vector-precision-variants-todo](tasks/math/01-vector-precision-variants-todo.md).
+  Three independent flat types, no shared supertype -- generics box and a sealed parent kills
+  inlining without unifying the operations. Each variant is gated on a real consumer; `Vec3d` has
+  one today (`MeshSimplifier`'s 19 `DoubleArray` uses), `Vec3i` has none.
+- 2026-08-22: Retiring the global `UiDensity` is drafted in
+  [2026-08-22-retire-global-density-plan](tasks/2026-08-22-retire-global-density-plan.md). Two
+  `Dp.toPx()` apply to one receiver and one silently reads a process-wide scale; compose has not
+  hit it yet. Four blockers, 80 of the 94 affected files die with `ui-core`. Lands before the
+  prefix rename.
+- 2026-08-22: `PathFillTessellation.kt` cleanup is drafted in
+  [2026-08-22-pathfilltessellation-cleanup-plan](tasks/2026-08-22-pathfilltessellation-cleanup-plan.md).
+  The `UiPath` split left one 664-line file, and 53% of it is mesh clipping rather than fill
+  tessellation. Eleven functions implement three algorithms, triplicated across vertex types; ten
+  public helpers have zero external consumers. Follows the 2D vocabulary lane.
+
+- 2026-08-22: **2D draw vocabulary lane — run these three in order.** They are separate tasks because
+  they are separate kinds of work (behavioural / mechanical / structural), and they must not share a
+  commit. Two of them have a tail that only completes when Stage 3 deletes `ui-core`.
+
+  | # | Task | Kind |
+  |---|---|---|
+  | 1 | [retire-global-density](tasks/2026-08-22-retire-global-density-plan.md) phases 1–3 | Behavioural, then structural |
+  | 2 | [ui-prefix-rename](tasks/2026-08-22-ui-prefix-rename-plan.md) — move, then Phase A | Structural, then mechanical |
+  | 3 | [split-uipath](tasks/2026-08-22-split-uipath-plan.md) | Structural |
+  | 4 | Decide whether the vertex/mesh types leave `core:graphics2d` | Decision, cheap after 3 |
+  | — | *At Stage 3:* rename Phase B (delete typealiases) and density phase 4 (delete `UiDensity`) | Free |
+
+  Density first because it is the only behavioural work here and wants reviewing alone, and because
+  it deletes a type the rename would otherwise have to name. Rename before split so the split starts
+  from final names and is reviewed once. Split before the module-boundary decision, because it turns
+  that decision from an extraction into a one-line move.
+
+- 2026-08-22: Splitting `UiPath.kt` is drafted in
+  [2026-08-22-split-uipath-plan](tasks/2026-08-22-split-uipath-plan.md). 1,651 lines, 16 top-level
+  types, named after one of them. Eight files along clusters that are already clean, no behaviour
+  change, 31 existing tests to prove it. Runs after the prefix rename so the split starts from
+  final names.
+- 2026-08-22: The `Ui`-prefix rename of the 2D draw vocabulary is planned in
+  [2026-08-22-ui-prefix-rename-plan](tasks/2026-08-22-ui-prefix-rename-plan.md). ~2,200 refs across
+  ~200 files, but 60% sit in modules Stage 3 deletes -- so it splits into a surviving-graph pass now
+  and typealias cleanup later. `UiDensity` is not a rename: two `Dp.toPx()` apply to one receiver,
+  and the fix is moving density out of `core:math2d`.
+- 2026-08-22: The editor's rebuild on the compose engine is drafted in
+  [editor/01-compose-editor-plan-todo](tasks/editor/01-compose-editor-plan-todo.md). Studio's
+  panels are not ported -- they are built on the trial-measure engine being replaced. Stage 0 is
+  the plugin seam with no UI and no compose dependency; the UI stages are gated on
+  `04-styling-theme`, `06-focus-text-input` and `08-lazy-lists`.
+- 2026-08-21: Adaptive bulk ECS structural mutation is drafted in
+  [2026-08-21-ecs-adaptive-bulk-mutation-plan](tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md).
+  Phase 0 freezes same-semantics baselines and the command-order contract before production code.
+- 2026-08-20: Public/private template delivery is drafted in
+  [2026-08-20-template-repository-plan](tasks/2026-08-20-template-repository-plan.md). The
+  public game template proves the external Awake consumer path; the private MMO template layers
+  product-specific client/server foundations on that validated baseline.
+- 2026-08-20: Architecture-governance standardization is drafted in
+  [2026-08-20-architecture-governance-standardization-plan](tasks/2026-08-20-architecture-governance-standardization-plan.md).
+  It first restores truthful module/task verification, then aligns active docs, agent routing,
+  and facade-versus-leaf dependency rules before considering any further core extraction.
 - 2026-08-12: UI showcase visual-parity work is tracked in
   [docs/tasks/2026-08-12-ui-showcase-parity-tracker.md](tasks/2026-08-12-ui-showcase-parity-tracker.md).
   It is deliberately separate from the now-public-boundary-complete Headless migration: no
   component is marked visually complete without source, semantic, crop, and final-build proof.
-- 2026-08-05: API layering plan added. Use
-  [docs/reference/api-layering.md](reference/api-layering.md) as the stable rule and
-  [docs/tasks/2026-08-05-api-layering-plan.md](tasks/2026-08-05-api-layering-plan.md) as
-  the active ECS/scene cleanup plan.
-- 2026-08-05: Phase 2 ECS/scene API classification audit recorded in the API layering
-  plan. Demo navmesh bootstrap moved out of `awake:scene`; authored gameplay systems moved
-  to the scene3d sample. The scene module split proposal is now tracked in
-  [docs/tasks/archive/2026-08-05-scene-module-split-proposal.md](tasks/archive/2026-08-05-scene-module-split-proposal.md).
-- 2026-08-05: First scene split slice landed behind the `awake-scene` facade:
-  `:awake:scene:scene-core` owns `Transform`/`Name`, and `:awake:scene:rendering` owns
-  render-facing scene components plus `RenderSystem`.
-- 2026-08-05: Physics scene leaf split landed behind the `awake-scene` facade:
-  `:awake:scene:physics` owns `PhysicsBody`/`PhysicsSystem`.
-- 2026-08-05: Controls scene leaf split landed behind the `awake-scene` facade:
-  `:awake:scene:controls` owns `OrbitControl`/`FreeFlyControl`/`FollowControl`/
-  `MovementControl` plus their camera systems. `PlayerControlSystem` stays in
-  `:awake:scene` (depends on `ui-core`).
-- 2026-08-05: Runtime scene split landed behind the `awake-scene` facade:
-  `:awake:scene:runtime` owns `SceneGameRuntime`/`SceneGameSpec`/`SceneRouterSpec`, the
-  scene document model, and `SceneAssetLibrary` (moved as one unit -- `SceneGameSpec`
-  couples them directly). The deprecated `SceneRuntime` bootstrap stays in `:awake:scene`
-  (depends on `TransformSystem`, which hasn't split out yet).
-- 2026-08-05: Scene module split Phase 5 (DSL dependency tightening) landed:
-  `TransformSystem` moved to `:awake:scene:scene-core`, `PlayerControlSystem` moved into
-  `:awake:scene:authoring` directly (needs `ui-core`). `:awake:scene:authoring` now depends on the
-  specific `:awake:scene:*` leaf modules it uses instead of the whole `:awake:scene`
-  facade -- this completes the module list the split proposal sketched, leaving only
-  `NavMesh` and the deprecated `SceneRuntime` bootstrap in `:awake:scene` itself.
-- 2026-08-06: `:awake:scene:scene-core` gained `SpinControl`/`SpinSystem` (generic entity
-  rotation) and `:awake:scene:controls` gained `LookAtControl`/`LookAtCameraSystem` plus
-  `PrimaryOrbitCamera` (a plain lifecycle helper, not an ECS `System`, for a UI-driven
-  debug camera entity) -- extracted from duplicated demo boilerplate, following the same
-  component+System convention the existing camera controls already use.
-- 2026-07-10: `VulkanApplication` now loads `scene.json` through `SceneRuntimeHost`; next
-  we peel shared code into smaller modules, starting with math/runtime/utils.
-- 2026-08-06: The above core split is done -- confirmed complete via
-  [docs/reference/decision-log.md](reference/decision-log.md) D11-D13 and the current
-  `settings.gradle.kts` (no `awake:core` module exists anymore): `awake-core` split into
-  dependency-free `:awake:core` (math/input/glTF/utils), `:awake:backend:opengl`, and
-  `:awake:engine:render:contract`; the Vulkan/WebGPU backends physically split into
-  `:awake:backend:vulkan`/`:awake:backend:webgpu`. This entry and the matching Open
-  Questions/Fix Lanes bullets below were stale, written before D11-D13 landed.
-- 2026-08-06: `RotatingCubeDemo` gained a "Camera mode" toggle (Orbit/Follow/Look at),
-  wiring the previously-unused `FollowControl`/`LookAtControl` + `FollowCameraSystem`/
-  `LookAtCameraSystem` (built 2026-08-06, never attached to any entity until now) onto
-  `PrimaryOrbitCamera`'s camera entity -- `PrimaryOrbitCamera.entity` is now a public
-  read-only property so a demo can attach extra components to that same entity instead of
-  spawning a second camera.
+- 2026-08-21: The path to a reproducible, full shadcn compatibility claim is drafted in
+  [2026-08-21-shadcn-parity-tool-plan](tasks/2026-08-21-shadcn-parity-tool-plan.md). It retains
+  the existing geometry, token, crop, and golden tools; repairs their stale status evidence; and
+  adds the missing unified manifest plus behavior, semantics, focus, and motion trace oracles.
+- 2026-08-05: API layering and the scene leaf-module split are complete. Use
+  [docs/reference/api-layering.md](reference/api-layering.md) as the stable rule; the
+  [completed plan](tasks/archive/2026-08-05-api-layering-plan.md) remains as history.
 
 ## Open Questions
 
-- Which ECS/scene APIs are true core, which are reusable helpers, and which are only
-  authoring sugar?
-- Should `SceneGameRuntime` remain renderer/UI aware, or should those concerns move behind
-  smaller runtime interfaces during the scene split?
-- Do we split `physics` now, or leave it until the scene/runtime shape is settled?
+- Where is the measured crossover between incremental family maintenance and one dirty-family
+  rebuild across batch size, density, and family arity?
+- After the internal prototype passes, should the opt-in batch entrypoint be public in v1 or remain
+  an advanced API until a real consumer adopts it?
+- Should entity destruction join the first batch contract or remain immediate until component
+  add/remove semantics are proven?
 - Should Awake v1 use one universal `Style`, or separate style types immediately for
   text/button/panel families?
 - Which properties stay in `UiModifier`, and which must move into the new `Style` layer?
@@ -78,29 +97,34 @@ just spread unclear ownership across more folders.
 
 ## Fix Lanes
 
-- Dev: Core split (complete -- see
-  [docs/reference/decision-log.md](reference/decision-log.md) D11-D13)
-- Dev: ECS/scene API layering and classification
-- Dev: Scene module split (complete -- see
-  [docs/tasks/archive/2026-08-05-scene-module-split-proposal.md](tasks/archive/2026-08-05-scene-module-split-proposal.md))
+- Dev: Adaptive bulk ECS structural-mutation prototype and decision benchmarks
 - Dev: UI DSL and style audit
 - Beta: None yet
-- Stable: Refresh runtime docs after the module split lands
+- Stable: Core split, ECS/scene API layering, scene module split, sparse/tag family storage
 
 ## Task Log
 
-- [2026-07-09-decouple-world](tasks/2026-07-09-decouple-world.md)
-- [2026-08-05-api-layering-plan](tasks/2026-08-05-api-layering-plan.md)
+- [2026-08-21-ecs-adaptive-bulk-mutation-plan](tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md)
+- [2026-08-20-template-repository-plan](tasks/2026-08-20-template-repository-plan.md)
+- [2026-08-20-architecture-governance-standardization-plan](tasks/2026-08-20-architecture-governance-standardization-plan.md)
 - [2026-08-12-ui-showcase-parity-tracker](tasks/2026-08-12-ui-showcase-parity-tracker.md)
+- [2026-08-21-shadcn-parity-tool-plan](tasks/2026-08-21-shadcn-parity-tool-plan.md)
+- [2026-08-20-vulkan-webgpu-uncommonized-audit](audits/2026-08-20-vulkan-webgpu-uncommonized-audit.md)
 
 ## Archive Index
 
+- [2026-07-09-decouple-world](tasks/archive/2026-07-09-decouple-world.md) -- completed World facade split
+- [2026-08-05-api-layering-plan](tasks/archive/2026-08-05-api-layering-plan.md) -- classification and scene split complete
+- [2026-08-18-ecs-hybrid-archetype-sparse-set](tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md) -- archetype migration rejected
+- [2026-08-21-ecs-storage-decoupling](tasks/archive/2026-08-21-ecs-storage-decoupling.md) -- implemented and verified
+- [2026-08-21-ecs-family-tag-columns](tasks/archive/2026-08-21-ecs-family-tag-columns.md) -- implemented and benchmarked
+- [2026-08-21-ecs-cached-type-id-churn](tasks/archive/2026-08-21-ecs-cached-type-id-churn.md) -- accepted optimization; micro follow-up rejected
 - [2026-07-10-scene-runtime](tasks/archive/2026-07-10-scene-runtime.md) -- core split executed
 - [2026-07-14-ui-dsl-audit](tasks/archive/2026-07-14-ui-dsl-audit.md) -- superseded by the 2026-08-11 headless boundary migration doc
 - [2026-07-14-ui-module-split](tasks/archive/2026-07-14-ui-module-split.md) -- superseded by the 2026-08-11 headless boundary migration doc
 - [2026-07-17-ui-api-simplification](tasks/archive/2026-07-17-ui-api-simplification.md) -- all implementation items done
 - [2026-07-22-core-graphics-split](tasks/archive/2026-07-22-core-graphics-split.md) -- standing policy decided (no shared graphics module yet)
-- [2026-07-24-uislot-narrowing](tasks/archive/2026-07-24-uislot-narrowing.md) -- superseded plan, UiSlot/UiBounds merged
+- [2026-07-24-uislot-narrowing](tasks/archive/2026-07-24-uislot-narrowing.md) -- superseded plan, UiSlot/Rectangle merged
 - [2026-08-02-trial-measure-cross-frame-cache](tasks/archive/2026-08-02-trial-measure-cross-frame-cache.md) -- shipped (`cacheKey` param on row/column)
 - [2026-08-02-trial-measure-double-execution](tasks/archive/2026-08-02-trial-measure-double-execution.md) -- shipped (`requiresMeasuredDistribution()`, commit `55dd0681`)
 - [2026-08-05-scene-module-split-proposal](tasks/archive/2026-08-05-scene-module-split-proposal.md) -- complete, all five leaf modules exist

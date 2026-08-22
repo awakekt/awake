@@ -9,6 +9,8 @@ val classifiedUiModules = setOf(
     ":awake:ui:designsystem",
     ":awake:ui:tailwind",
     ":awake:ui:heroicons",
+    ":samples:ui-showcase",
+    ":samples:studio",
 )
 check(project.path in classifiedUiModules) {
     "Unclassified module applies awake.ui-ownership-convention: ${project.path}. " +
@@ -85,6 +87,15 @@ val forbiddenUiSourcePatterns = when (project.path) {
         // "local infrastructure" (docs/reference/ui-ownership.md, theme values section).
         "(?m)^import\\s+io\\.github\\.ronjunevaldoz\\.awake\\.ui\\.context\\.(?!UiLocal\\b|uiLocalOf\\b)",
     )
+    // docs/reference/ui-ownership.md's "Consuming From A Sample, Game, Or Tool" rule: visible
+    // UI comes only through shadcn* recipes; ui-core's modifier builders and hand-authored
+    // Style{} blocks are a styling escape hatch, not structure -- the licensed door through is
+    // ui-headless's ModifierExports.kt.
+    ":samples:ui-showcase",
+    ":samples:studio" -> listOf(
+        "(?m)^import\\s+io\\.github\\.ronjunevaldoz\\.awake\\.ui\\.modifier\\.",
+        "\\bStyle\\s*\\{",
+    )
     else -> emptyList()
 }
 
@@ -94,13 +105,15 @@ val forbiddenUiSourcePatterns = when (project.path) {
 // Shrink this list — never grow it without an audit row.
 val exemptUiSourcePatternFiles = when (project.path) {
     ":awake:ui:ui-core" -> listOf(
-        // emit* painter family — becomes UiDrawScope draw* members in the P1 receiver split.
-        "graphics/ShapePainter.kt",
+        // paintScrollThumb — same P1 fate as ShapePainter's emit family (row C7's scrollPanel
+        // split, commit 32abbefd, landed the naming-lexicon violation uncaught). ShapePainter.kt
+        // itself is no longer exempt: its emit* family moved to CanvasScope's draw* members
+        // 2026-08-19 (docs/tasks/2026-08-18-ui-capability-scopes-plan.md step 2).
+        "ScrollContainers.kt",
     )
     ":awake:ui:headless" -> listOf(
         // paintSurface / renderTextBlock — same P1 fate as ShapePainter's emit family.
         "internal/controls/Surface.kt",
-        "internal/text/BasicText.kt",
         // buttonSlot twins — die with the UiButtonVariant deletion (row E4, package 4).
         "internal/controls/Buttons.kt",
     )
@@ -129,4 +142,66 @@ val verifyUiOwnership = tasks.register<VerifyUiOwnershipTask>("verifyUiOwnership
 
 tasks.named("check").configure {
     dependsOn(verifyUiOwnership)
+}
+
+// --- Ambient-fallback gate (ui-headless) -------------------------------------------------
+//
+// ui-headless holds zero visual policy: every colour, size and radius arrives as a parameter,
+// or nothing is drawn. Reaching for the ambient theme instead is an "ambient fallback", and it
+// is how an headless default quietly becomes the spec -- the trap `awake-ui-authoring` names.
+// Two shapes, different severities, same ban: `resolved.x ?: theme.y` still lets a skin win,
+// while a bare `theme.y` cannot be overridden at all (a shadcn skin currently cannot restyle a
+// checkbox's checkmark for exactly this reason).
+//
+// Registered as its own task rather than folded into forbiddenUiSourcePatterns because that
+// list's exemptions are per-file across ALL patterns -- exempting today's debt there would
+// silently drop the naming-lexicon rules for 18 more files.
+val ambientThemeSourcePatterns = listOf(
+    "\\btheme\\s*\\.\\s*(colors|typography|shapes)\\b",
+)
+
+// Pre-existing debt, audited 2026-08-21: 31 ambient fallbacks and 14 unoverridable ambient
+// reads. Shrink this list — never grow it. A new file reaching for the theme fails the build.
+val ambientThemeDebtFiles = listOf(
+    "internal/controls/Buttons.kt",
+    "internal/controls/Checkbox.kt",
+    "internal/controls/Dropdown.kt",
+    "internal/controls/Icon.kt",
+    "internal/controls/ProgressBar.kt",
+    "internal/controls/RangeSlider.kt",
+    "internal/controls/Skeleton.kt",
+    "internal/controls/Slider.kt",
+    "internal/controls/Spinner.kt",
+    "internal/controls/Surface.kt",
+    "internal/controls/Switch.kt",
+    "internal/controls/Toast.kt",
+    "internal/controls/Toggle.kt",
+    "internal/layout/ResizablePanelGroup.kt",
+    "internal/text/TextField.kt",
+    "internal/text/Textarea.kt",
+    // BasicText.kt/Text.kt left this module for ui-core's foundation package; their own theme
+    // reads went with them, where no equivalent gate exists yet.
+)
+
+if (project.path == ":awake:ui:headless") {
+    val verifyUiHeadlessAmbientTheme =
+        tasks.register<VerifyUiOwnershipTask>("verifyUiHeadlessAmbientTheme") {
+            group = "verification"
+            description = "Reject ambient-theme fallbacks in ui-headless; visual policy is the skin's."
+            modulePath.set(project.path)
+            sourceFiles.from(
+                fileTree("src") {
+                    include("**/*Main/**/*.kt")
+                    exclude("**/*Test/**/*.kt")
+                }
+            )
+            forbiddenDeclarationNames.set(emptyList<String>())
+            forbiddenTypeReferences.set(emptyList<String>())
+            forbiddenSourcePatterns.set(ambientThemeSourcePatterns)
+            exemptSourcePatternFiles.set(ambientThemeDebtFiles)
+        }
+
+    tasks.named("check").configure {
+        dependsOn(verifyUiHeadlessAmbientTheme)
+    }
 }

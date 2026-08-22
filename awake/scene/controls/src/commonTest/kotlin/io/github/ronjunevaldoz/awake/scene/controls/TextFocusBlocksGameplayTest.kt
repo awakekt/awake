@@ -7,7 +7,7 @@ import io.github.ronjunevaldoz.awake.core.input.InputSnapshot
 import io.github.ronjunevaldoz.awake.core.input.Key
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.scene.controls.components.ActiveCamera
-import io.github.ronjunevaldoz.awake.scene.controls.components.CameraComponent
+import io.github.ronjunevaldoz.awake.scene.controls.components.CameraRig
 import io.github.ronjunevaldoz.awake.scene.controls.components.CameraMode
 import io.github.ronjunevaldoz.awake.scene.controls.components.MovementControl
 import io.github.ronjunevaldoz.awake.scene.controls.systems.CameraInputSystem
@@ -102,9 +102,9 @@ class TextFocusBlocksGameplayTest {
         assertEquals(CameraMode.ThirdPerson, config.mode, "a fresh press must switch mode")
     }
 
-    private fun activeCamera(world: World): CameraComponent {
+    private fun activeCamera(world: World): CameraRig {
         val entity = world.create()
-        val config = CameraComponent()
+        val config = CameraRig()
         world.add(entity, config)
         world.add(entity, ActiveCamera())
         return config

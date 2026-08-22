@@ -43,7 +43,7 @@ import platform.MoltenVK.vkGetPhysicalDeviceMemoryProperties as nativeVkGetPhysi
 import platform.MoltenVK.vkMapMemory as nativeVkMapMemory
 import platform.MoltenVK.vkUnmapMemory as nativeVkUnmapMemory
 
-// Phase 6 (MoltenVK cinterop) is in progress -- see docs/MVP_PLAN.md.
+// Phase 6 (MoltenVK cinterop) is in progress -- see docs/mvp-plan.md.
 @OptIn(ExperimentalForeignApi::class)
 actual object VulkanBuffers {
     actual fun vkCreateBuffer(device: Long, createInfo: VkBufferCreateInfo): Long = memScoped {

@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.testing.ui
 
 import io.github.ronjunevaldoz.awake.ui.UiSemanticNode
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 
 enum class UiSemanticIssueKind {
     InvalidSemanticBounds,
@@ -172,7 +172,7 @@ fun inspectSemanticOverlaps(
  *
  * This is the authoritative check for text-centering correctness. It runs entirely on semantic
  * data — no GPU or pixel rasterizer required — and catches bugs like passing a wrap-content slot
- * to [renderTextBlock] instead of the enclosing panel's full bounds.
+ * to [drawTextBlock] instead of the enclosing panel's full bounds.
  *
  * @param nodes        Semantic nodes from [io.github.ronjunevaldoz.awake.ui.context.UiFrameOutput.semantics].
  * @param tolerancePx  Maximum allowed deviation in each axis (default 1 px — half a sub-pixel).
@@ -284,6 +284,7 @@ fun requireSemanticNode(
  *
  * A tolerance of 0 means content must be strictly inside the bounds by at least `minPaddingPx`.
  *
+ * @param nodes The semantic nodes to inspect.
  * @param minPaddingPx Minimum required inset on each side in pixels.
  * @param allowIds     IDs of nodes deliberately flush to their bounds (e.g. full-bleed images).
  */
@@ -328,8 +329,10 @@ private fun Float.roundTo1(): String = (kotlin.math.round(this * 10f) / 10f).toS
  * Checks that each node's [UiSemanticNode.contentBounds] is inset from its
  * [UiSemanticNode.bounds] by exactly [expectedPaddingPx] on every side.
  *
+ * @param nodes The semantic nodes to inspect.
  * @param expectedPaddingPx The exact required inset on each side in pixels.
- * @param tolerancePx       Maximum allowed deviation from the exact padding (default 0.5px).
+ * @param tolerancePx Maximum allowed deviation from the exact padding (default 0.5px).
+ * @param allowIds IDs of nodes deliberately flush to their bounds.
  */
 fun inspectExactPadding(
     nodes: List<UiSemanticNode>,
@@ -425,8 +428,11 @@ fun inspectSpacing(
  * Checks that the gap between every pair of adjacent siblings (ordered by axis) is
  * exactly [expectedGapPx].
  *
+ * @param label Human-readable name for the sibling set, used in reported issues.
+ * @param nodes The sibling nodes to inspect.
  * @param expectedGapPx The exact required gap between siblings in pixels.
- * @param tolerancePx   Maximum allowed deviation from the exact spacing (default 0.5px).
+ * @param axis Axis to measure along, or `null` to infer it from the nodes' layout.
+ * @param tolerancePx Maximum allowed deviation from the exact spacing (default 0.5px).
  */
 fun inspectExactSpacing(
     label: String,
@@ -548,16 +554,16 @@ fun inspectTokens(
 /** Axis override for [inspectSpacing]. Null = auto-detect from node spread. */
 enum class SpacingAxis { Horizontal, Vertical }
 
-private fun UiBounds.hasFiniteSize(): Boolean =
+private fun Rectangle.hasFiniteSize(): Boolean =
     x.isFinite() && y.isFinite() && width.isFinite() && height.isFinite() && width >= 0f && height >= 0f
 
-private fun UiBounds.isWithin(other: UiBounds, tolerancePx: Float): Boolean =
+private fun Rectangle.isWithin(other: Rectangle, tolerancePx: Float): Boolean =
     x >= other.x - tolerancePx &&
         y >= other.y - tolerancePx &&
         x + width <= other.x + other.width + tolerancePx &&
         y + height <= other.y + other.height + tolerancePx
 
-private fun UiBounds.overlaps(other: UiBounds, tolerancePx: Float): Boolean =
+private fun Rectangle.overlaps(other: Rectangle, tolerancePx: Float): Boolean =
     x < other.x + other.width - tolerancePx &&
         x + width > other.x + tolerancePx &&
         y < other.y + other.height - tolerancePx &&

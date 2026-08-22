@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless.internal.controls
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.theme
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
-import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.UiInteraction
-import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.interact
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.canvas
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.foundation.UiInteraction
+import io.github.ronjunevaldoz.awake.ui.foundation.interact
 import io.github.ronjunevaldoz.awake.ui.layout.inset
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
@@ -18,23 +19,23 @@ import io.github.ronjunevaldoz.awake.ui.scope.resolveStyle
 import io.github.ronjunevaldoz.awake.ui.style.MutableStyleState
 import io.github.ronjunevaldoz.awake.ui.style.ResolvedStyle
 import io.github.ronjunevaldoz.awake.ui.style.Style
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 
 internal data class ResolvedSurface(
-    val slot: UiBounds,
+    val slot: Rectangle,
     val resolved: ResolvedStyle,
-    val contentSlot: UiBounds,
+    val contentSlot: Rectangle,
 )
 
 internal data class InteractiveSurface(
     val interaction: UiInteraction,
     val resolved: ResolvedStyle,
-    val contentSlot: UiBounds,
+    val contentSlot: Rectangle,
 )
 
 internal data class ResolvedSurfaceStyle(
     val resolved: ResolvedStyle,
-    val contentSlot: UiBounds,
+    val contentSlot: Rectangle,
 )
 
 internal fun UiPrimitiveScope.resolveSurface(
@@ -111,7 +112,7 @@ internal fun UiPrimitiveScope.resolveInteractiveSurface(
 }
 
 private fun UiPrimitiveScope.resolveSurfaceStyle(
-    slot: UiBounds,
+    slot: Rectangle,
     style: Style,
     defaults: Style,
     selected: Boolean,
@@ -139,21 +140,23 @@ private fun UiPrimitiveScope.resolveSurfaceStyle(
 }
 
 internal fun UiPrimitiveScope.paintSurface(
-    slot: UiBounds,
+    slot: Rectangle,
     resolved: ResolvedStyle,
     fillColor: Color? = null,
     borderColor: Color? = null,
     shapeSpec: UiShapeSpec? = resolved.shapeSpec,
 ) {
     val theme = theme
-    emitFillAndBorder(
-        slot = slot,
-        fillColor = fillColor ?: resolved.background ?: theme.colors.background,
-        radiusPx = resolved.shape.toPx(),
-        borderWidth = resolved.borderWidth,
-        borderColor = borderColor ?: resolved.borderColor ?: theme.colors.border,
-        shapeSpec = shapeSpec,
-        fillTokenId = resolved.backgroundToken,
-        borderTokenId = resolved.borderColorToken,
-    )
+    canvas(slot) {
+        drawFillAndBorder(
+            slot = slot,
+            fillColor = fillColor ?: resolved.background ?: theme.colors.background,
+            radiusPx = resolved.shape.toPx(),
+            borderWidth = resolved.borderWidth,
+            borderColor = borderColor ?: resolved.borderColor ?: theme.colors.border,
+            shapeSpec = shapeSpec,
+            fillTokenId = resolved.backgroundToken,
+            borderTokenId = resolved.borderColorToken,
+        )
+    }
 }

@@ -1,6 +1,6 @@
 ---
 name: awake-ecs-authoring
-description: Rules for authoring Awake ECS components, systems and scenes - component construction, query/family costs, structural-change churn, entity lifecycle, and the scene DSL. Read before adding a component, writing a System, or building entities with the scene { } DSL. Trigger keywords - ECS, World, entity, component, System.update, queryEach, family, Poolable, scene DSL, EntityModifier, Modifier(), cameraEntity, MeshRenderer, Transform, spawn, destroy.
+description: Rules for authoring Awake ECS components, systems and scenes - component construction, query/family costs, structural-change churn, entity lifecycle, and the scene DSL. Read before adding a component, writing a System, or building entities with the scene { } DSL. Trigger keywords - ECS, World, entity, component, System.update, queryEach, family, Poolable, scene DSL, EntityScope, cameraEntity, MeshRenderer, Transform, spawn, destroy.
 ---
 
 # Authoring ECS components, systems and scenes in Awake
@@ -41,6 +41,24 @@ world.ensure(entity, ::MovementControl)    // explicit factory
 Modifier().configure(::Transform) { ... }  // DSL takes a factory for the same reason
 ```
 
+**Payload-free tags use `EcsTag`.** A component whose presence is its entire value should be a
+singleton object implementing `EcsTag`. The store and maintained `Family1`/`Family2` caches keep
+entity IDs plus one canonical singleton instead of one repeated reference per entity:
+
+```kotlin
+data object IsSelected : EcsTag
+world.add(entity, IsSelected)
+```
+
+Keep game-specific tag vocabulary in the game repository. Awake owns only the generic contract
+and storage. Never implement `EcsTag` with a class that creates multiple instances; the store
+rejects it because a tag has exactly one canonical value.
+
+**Iterate tag families; do not request arrays on hot paths.** `family.forEach`,
+`forEachComponent`, and `forEachComponents` branch on representation once before the dense loop.
+Calling `components()`, `componentsA()`, or `componentsB()` for an `EcsTag` lazily materializes
+repeated singleton references for source compatibility. `componentAt` does not materialize one.
+
 ## Systems
 
 ```kotlin
@@ -57,8 +75,26 @@ class SpinSystem : System {
 caches and allocate nothing. The `vararg` overload calls `types.toSet()` on every invocation -
 avoid it in a per-frame path.
 
+**Family storage changes require matched evidence.** Use the exact pre-change commit, Kotlin
+toolchain, JDK, entity counts, forks, warmups, and measurements. Publish score and error for tag
+and ordinary-component controls; capture GC evidence; run every KMP ECS test target. Cross-runtime
+Flecs/EnTT/Bevy/Unity numbers are architecture references, never substitutes for Awake's same-JVM
+Fleks/Artemis/Ashley harness. See `docs/tasks/archive/2026-08-21-ecs-family-tag-columns.md`.
+
+**Archetype promotion currently fails its gate.** The benchmark-only pure-archetype control
+performs real stable-row migration and covers 256 tag signatures. Production maintained families
+still win stable and required/excluded query iteration, while sparse dynamic tags avoid the
+archetype control's roughly 7.6x churn penalty at 100k. Do not add archetype routing from table
+locality intuition alone; first demonstrate a new real workload that clears the matched gate in
+`docs/tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md`.
+
 **Structural changes are not free.** `world.add` / `world.remove` invalidate the query cache
 and churn the family caches. Never add-and-remove the same component every frame:
+
+When a hot structural path already owns a `ComponentTypeId`, keep class resolution outside the
+entity loop. The cached-ID overloads exist to avoid repeated `T::class`/KClass work; do not route
+them back through class-based mutation helpers. See
+`docs/tasks/archive/2026-08-21-ecs-cached-type-id-churn.md`.
 
 ```kotlin
 // Before: two full query-cache invalidations per frame, plus a fresh allocation, purely to
@@ -86,24 +122,28 @@ If a system reads another's output, say so in a comment at the registration site
 
 ```kotlin
 world.scene {
-    val cube = entity("SpinningCube", Modifier().transform(y = 0.5f).with(SpinControl()))
-    entity("MainCamera", Modifier().camera(CameraMode.ThirdPerson, target = cube))
+    val cube = entity("SpinningCube") {
+        transform(y = 0.5f)
+        with(SpinControl())
+    }
+    entity("MainCamera") {
+        camera(CameraMode.ThirdPerson, target = cube)
+    }
 }
 ```
 
-- `Modifier()` is a **function** returning a fresh `EntityModifier` (it mirrors Compose's
-  `Modifier`; the UI one is a `val`, so both can be imported into one file).
-- `EntityModifier.with(component)` **mutates and returns the same builder**. It is not a pure
-  combinator - do not branch off a shared base expecting independent copies.
-- `configure(::Type) { }` takes a factory (see the reflective-construction rule above).
+- `entity("name") { }` provides an `EntityScope` receiver where components are attached directly to the entity.
+- `with(component)` attaches a pre-existing component instance directly to the entity.
+- `configure(::Type) { }` takes an explicit constructor factory (see the reflective-construction rule above).
+- Child entities are spawned via nested `entity("child") { }` blocks and automatically parented to the enclosing entity's `Transform`.
 
 **A camera needs both halves.** `Camera` is the lens `RenderSystem` renders from;
 `CameraComponent` is the control state `CameraSystem` drives. An entity carrying only one is
-silently inert - it will never be rendered from, or never move. `Modifier().camera(...)`
+silently inert - it will never be rendered from, or never move. Calling `camera(...)` inside `entity { }`
 attaches both; prefer it over hand-assembling either.
 
 Attaching a raw `core.math.Camera` does **not** make an entity a camera - it registers under
-its own type and matches no scene query. Wrap it: `Modifier().camera(lens = myCoreCamera)`.
+its own type and matches no scene query. Wrap it: `entity("camera") { camera(lens = myCoreCamera) }`.
 
 **Own what you destroy.** Keep the `Entity` handles you spawned and destroy exactly those.
 A global `queryEach(SpinControl::class) { destroy(it) }` in a teardown will take out every
@@ -128,9 +168,12 @@ through to whatever outer extension does match.
 ## Checklist
 
 - [ ] `reset()` clears every field of the component, flags included.
+- [ ] Payload-free marker components are singleton objects implementing `EcsTag`.
+- [ ] Hot tag-family code uses iteration or `componentAt`, not a materialized `components*()` array.
 - [ ] No reflective `world.add<T>(entity)` - factory or instance passed explicitly.
 - [ ] No per-frame add/remove of the same component.
 - [ ] No structural mutation during `queryEach` iteration.
 - [ ] Camera entities carry both `Camera` and `CameraComponent`.
 - [ ] Teardown destroys only entities this feature spawned, plus its GPU resources.
 - [ ] New nested DSL receivers are `@DslMarker`-annotated.
+- [ ] ECS storage changes include matched ordinary/tag benchmarks, GC evidence, and all-target tests.

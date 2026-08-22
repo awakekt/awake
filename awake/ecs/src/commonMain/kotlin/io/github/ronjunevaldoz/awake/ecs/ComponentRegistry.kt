@@ -4,179 +4,71 @@ package io.github.ronjunevaldoz.awake.ecs
 
 import kotlin.reflect.KClass
 
+/** Thin internal façade coordinating type, pool, and storage registries. */
 @PublishedApi
+@Suppress("TooManyFunctions") // Deliberate façade: methods delegate policy to focused registries.
 internal class ComponentRegistry {
-    private var stores = arrayOfNulls<ComponentStore<Any>>(16)
-
-    private val componentPools = mutableMapOf<KClass<out Any>, ComponentPool<Any>>()
-    private var componentPoolsById = arrayOfNulls<ComponentPool<Any>>(16)
-
-    private val typeIds = mutableMapOf<KClass<out Any>, ComponentTypeId>()
-
-    /** Mirrors [typeIds], but keyed by [componentTypeKey]'s platform token instead of a `KClass`
-     * -- see [typeIdForKey] for why this exists and how it stays in sync with [typeIds]. */
-    private val typeIdsByKey = mutableMapOf<Any, ComponentTypeId>()
-    private var hasComponentPools = false
+    private val types = ComponentTypeCatalog()
+    private val pools = ComponentPoolRegistry()
+    private val storage = ComponentStorageRegistry()
 
     fun clear() {
-        forEachStore { it.clear() }
-        stores.fill(null)
-        typeIds.clear()
-        typeIdsByKey.clear()
-        componentPoolsById.fill(null)
-        componentPools.values.forEach { it.clear() }
-        hasComponentPools = componentPools.isNotEmpty()
+        storage.clear()
+        types.clear()
+        pools.clear()
     }
 
     fun componentCount(type: KClass<out Any>): Int {
-        val typeId = typeIds[type] ?: return 0
-        return storeOrNull<Any>(typeId)?.size ?: 0
+        val typeId = types.typeIdOrNull(type) ?: return 0
+        return storage.storeOrNull<Any>(typeId)?.size ?: 0
     }
 
-    fun <T : Any> registerPool(type: KClass<T>, factory: () -> T) {
-        // componentPools is keyed by `type` (KClass<T>) here, and every read site (pool(),
-        // recycle()) looks the entry up by that same key, so the erased Any-typed pool is
-        // only ever obtained/freed with instances of the T it was registered for.
-        @Suppress("UNCHECKED_CAST")
-        val pool = ComponentPool(factory) as ComponentPool<Any>
-        componentPools[type] = pool
-        hasComponentPools = true
-        typeIds[type]?.let { typeId ->
-            ensurePoolCapacity(typeId.value)
-            componentPoolsById[typeId.value] = pool
-        }
-    }
+    fun <T : Any> registerPool(type: KClass<T>, factory: () -> T) =
+        pools.register(type, factory, types.typeIdOrNull(type))
 
-    fun recycle(component: Any) {
-        if (!hasComponentPools) {
-            return
-        }
-        componentPools[component::class]?.free(component)
-    }
+    fun recycle(component: Any) = pools.recycle(component)
 
-    fun <T : Any> recycle(type: KClass<T>, component: T) {
-        if (!hasComponentPools) {
-            return
-        }
-        typeIds[type]?.let { recycle(it, component) } ?: componentPools[type]?.free(component)
-    }
+    fun <T : Any> recycle(type: KClass<T>, component: T) = pools.recycle(type, component)
 
-    fun recycle(typeId: ComponentTypeId, component: Any) {
-        if (!hasComponentPools) {
-            return
-        }
-        val id = typeId.value
-        if (id < componentPoolsById.size) {
-            componentPoolsById[id]?.free(component)
-        }
+    fun recycle(typeId: ComponentTypeId, component: Any) = pools.recycle(typeId, component)
+
+    @PublishedApi
+    internal fun pool(type: KClass<out Any>): ComponentPool<Any> = pools.pool(type).also {
+        types.typeIdOrNull(type)?.let { typeId -> pools.bind(typeId, type) }
     }
 
     @PublishedApi
-    internal fun pool(type: KClass<out Any>): ComponentPool<Any> = componentPools.getOrPut(type) {
-        ComponentPool {
-            createComponentInstance(type)
-        }
+    internal fun pool(typeId: ComponentTypeId): ComponentPool<Any>? = pools.pool(typeId)
+
+    fun <T : Any> typeId(type: KClass<T>): ComponentTypeId = types.register(type).also { pools.bind(it, type) }
+
+    fun typeIdOrNull(type: KClass<out Any>): ComponentTypeId? = types.typeIdOrNull(type)
+
+    fun <T : Any> typeIdForKey(key: Any, type: () -> KClass<T>): ComponentTypeId =
+        types.typeIdForKeyOrNull(key) ?: typeId(type())
+
+    fun typeIdForKeyOrNull(key: Any): ComponentTypeId? = types.typeIdForKeyOrNull(key)
+
+    fun storageKind(type: KClass<out Any>): ComponentStorageKind {
+        val typeId = types.typeIdOrNull(type) ?: return ComponentStorageKind.Unregistered
+        return storage.storageKind(typeId)
     }
 
-    @PublishedApi
-    internal fun pool(typeId: ComponentTypeId): ComponentPool<Any>? {
-        val id = typeId.value
-        return if (id < componentPoolsById.size) componentPoolsById[id] else null
-    }
+    fun storageInfo(): List<ComponentStorageInfo> = storage.storageInfo(types)
 
-    fun <T : Any> typeId(type: KClass<T>): ComponentTypeId = typeIds.getOrPut(type) {
-        require(typeIds.size < MAX_COMPONENT_TYPES) {
-            "Awake ECS currently supports up to $MAX_COMPONENT_TYPES component types per World."
-        }
-        val id = typeIds.size
-        ensurePoolCapacity(id)
-        componentPools[type]?.let { pool ->
-            componentPoolsById[id] = pool
-        }
-        val typeId = ComponentTypeId(id)
-        typeIdsByKey[componentTypeKeyOf(type)] = typeId
-        typeId
-    }
+    fun storageInfo(signature: Long): List<ComponentStorageInfo> = storage.storageInfo(types, signature)
 
-    fun typeIdOrNull(type: KClass<out Any>): ComponentTypeId? = typeIds[type]
+    fun <T : Any> store(typeId: ComponentTypeId, type: KClass<T>): ComponentStore<T> = storage.store(typeId, type)
 
-    /** Fast path for [World]'s reified `add`/`remove`/`get`/`has` sugar -- resolves (or
-     * registers) a type id from [key] (see [componentTypeKey]) instead of a `KClass`, so the
-     * reified call site never needs to derive one on the steady-state (already-registered) path.
-     * [type] is only invoked -- and only ever pays a `KClass` derivation cost -- the first time
-     * this component type is registered in this [ComponentRegistry], from either this method or
-     * [typeId]; every call after that is a single hash lookup keyed by a cheap platform token. */
-    fun <T : Any> typeIdForKey(key: Any, type: () -> KClass<T>): ComponentTypeId {
-        typeIdsByKey[key]?.let { return it }
-        return typeId(type())
-    }
+    fun <T : Any> storeOrNull(typeId: ComponentTypeId): ComponentStore<T>? = storage.storeOrNull(typeId)
 
-    /** Same lookup as [typeIdOrNull], but keyed by [componentTypeKey]'s token -- doesn't register
-     * a new type on a miss, matching [typeIdOrNull]'s "unknown type means null, not a fresh id"
-     * contract for `get`/`has`. */
-    fun typeIdForKeyOrNull(key: Any): ComponentTypeId? = typeIdsByKey[key]
-
-    // stores is keyed by ComponentTypeId, and every id is minted 1:1 with the KClass it was
-    // registered for (see typeId()); the slot at `id` can only ever hold the ComponentStore<T>
-    // created for that exact T below, or null.
-    @Suppress("UNCHECKED_CAST")
-    fun <T : Any> store(typeId: ComponentTypeId, type: KClass<T>): ComponentStore<T> {
-        val id = typeId.value
-        if (id < stores.size) {
-            val existing = stores[id]
-            if (existing != null) return existing as ComponentStore<T>
-        }
-
-        val store: ComponentStore<T> = ComponentStore(type)
-        ensureStoreCapacity(id)
-        stores[id] = store as ComponentStore<Any>
-        return store
-    }
-
-    // Same typeId-to-T binding as store() above -- the slot at `id` can only ever hold the
-    // ComponentStore<T> minted for that id's own T.
-    @Suppress("UNCHECKED_CAST")
-    fun <T : Any> storeOrNull(typeId: ComponentTypeId): ComponentStore<T>? {
-        val id = typeId.value
-        return if (id < stores.size) stores[id] as? ComponentStore<T> else null
-    }
-
-    /** Fast path for [World]'s reified `add` sugar -- unlike the strict [storeOrNull]-or-`error`
-     * combination the `ComponentTypeId` overload of `World.add` uses (which requires the store to
-     * already exist), this lazily creates the store via [type] if it's missing, since the reified
-     * sugar has to work correctly on a brand-new component type's very first `add` with no prior
-     * setup. [type] is only invoked on that first-ever miss. */
-    fun <T : Any> storeForKey(typeId: ComponentTypeId, type: () -> KClass<T>): ComponentStore<T> = storeOrNull(typeId) ?: store(typeId, type())
+    fun <T : Any> storeForKey(typeId: ComponentTypeId, type: () -> KClass<T>): ComponentStore<T> =
+        storage.storeOrNull(typeId) ?: storage.store(typeId, type())
 
     fun removeEntity(entity: Entity, signature: Long) {
-        if (signature == 0L) {
-            return
+        if (signature == 0L) return
+        storage.forEach { store ->
+            store.remove(entity)?.let { removed -> pools.recycle(store.type, removed) }
         }
-        forEachStore { store ->
-            val removed = store.remove(entity)
-            if (removed != null) {
-                recycle(store.type, removed)
-            }
-        }
-    }
-
-    private inline fun forEachStore(action: (ComponentStore<Any>) -> Unit) {
-        stores.forEach { it?.let(action) }
-    }
-
-    private fun ensureStoreCapacity(id: Int) {
-        if (id >= stores.size) {
-            stores = stores.copyOf(maxOf(id + 1, stores.size * 2))
-        }
-    }
-
-    private fun ensurePoolCapacity(id: Int) {
-        if (id >= componentPoolsById.size) {
-            componentPoolsById = componentPoolsById.copyOf(maxOf(id + 1, componentPoolsById.size * 2))
-        }
-    }
-
-    private companion object {
-        private const val MAX_COMPONENT_TYPES = Long.SIZE_BITS
     }
 }

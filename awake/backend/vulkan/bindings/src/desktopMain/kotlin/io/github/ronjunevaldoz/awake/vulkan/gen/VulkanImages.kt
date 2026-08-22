@@ -7,7 +7,7 @@ import io.github.ronjunevaldoz.awake.vulkan.models.info.VkBufferImageCopy
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkImageCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkSamplerCreateInfo
 
-// Phase 1b (desktop native build) has not landed yet — see docs/MVP_PLAN.md.
+// Phase 1b (desktop native build) has not landed yet — see docs/mvp-plan.md.
 actual object VulkanImages {
     actual external fun vkCreateImage(device: Long, createInfo: VkImageCreateInfo): Long
 

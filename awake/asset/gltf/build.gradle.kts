@@ -33,9 +33,10 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:image"))
             // Mat4/Quat/Vec3 (node transforms), createBitmap/readResourceBytes (base color
             // texture decode, external buffer/image resource loading).
-            implementation(project(":awake:core"))
+            implementation(project(":awake:core:math"))
             // NormalizedInt -- decoding normalized BYTE/SHORT accessors (quantized exports).
             implementation(project(":awake:core:geometry"))
             // Skeleton/Skin/AnimationClip/AnimationPose -- engine-neutral skinning/animation

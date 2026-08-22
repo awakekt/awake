@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
 import io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope
@@ -90,8 +91,8 @@ class LayoutSizingMatrixTest {
         UiLayoutDiagnostics.allowUnplannedWeight = true
         val ui = UiContext()
         ui.beginFrame(UiFrameInput(viewportWidth = FRAME, viewportHeight = FRAME, input = testSnapshot()))
-        var child: UiBounds? = null
-        val body: ColumnScope.(UiBounds) -> Unit = {
+        var child: Rectangle? = null
+        val body: ColumnScope.(Rectangle) -> Unit = {
             column(id = "head", modifier = Modifier.width(Dimension.FillMax).height(FIXED.px)) { }
             child = column(id = "body", modifier = childModifier(cell.child)) {
                 // Isolates "weight ignored" from "empty child measures zero": the known-good

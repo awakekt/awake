@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.graphics
 
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.UiLinearGradient
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiLinearGradient
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 
 fun UiPrimitiveScope.gradientRect(
-    slot: UiBounds,
+    slot: Rectangle,
     gradient: UiLinearGradient,
     overlay: Boolean = false,
 ) {
-    emitPrimitive(
+    dispatchPrimitive(
         UiDrawPrimitive.GradientQuad(
             x = slot.x,
             y = slot.y,

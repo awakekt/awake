@@ -4,16 +4,21 @@ package io.github.ronjunevaldoz.awake.scene.rendering.systems
 
 import io.github.ronjunevaldoz.awake.core.math.Frustum
 import io.github.ronjunevaldoz.awake.core.math.Mat4
+import io.github.ronjunevaldoz.awake.core.math.Plane
 import io.github.ronjunevaldoz.awake.core.math.ScreenBounds
 import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec4
+import io.github.ronjunevaldoz.awake.core.math.containsSphere
 import io.github.ronjunevaldoz.awake.core.math.intersects
 import io.github.ronjunevaldoz.awake.core.math.isOccludedBy
+import io.github.ronjunevaldoz.awake.core.math.planes
 import io.github.ronjunevaldoz.awake.core.math.screenBounds
 import io.github.ronjunevaldoz.awake.ecs.System
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.render.renderer.DEFAULT_SCENE_LIGHT
 import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.Renderer
+import io.github.ronjunevaldoz.awake.render.renderer.PointLight
 import io.github.ronjunevaldoz.awake.render.renderer.SceneLight
 import io.github.ronjunevaldoz.awake.scene.core.components.Transform
 import io.github.ronjunevaldoz.awake.scene.rendering.components.Camera
@@ -24,6 +29,7 @@ import io.github.ronjunevaldoz.awake.scene.rendering.components.LodGroup
 import io.github.ronjunevaldoz.awake.scene.rendering.components.MeshBounds
 import io.github.ronjunevaldoz.awake.scene.rendering.components.MeshRenderer
 import io.github.ronjunevaldoz.awake.scene.rendering.components.Occluder
+import io.github.ronjunevaldoz.awake.scene.rendering.components.ParticleEmitter
 import io.github.ronjunevaldoz.awake.scene.rendering.components.PbrMaterial
 import io.github.ronjunevaldoz.awake.scene.rendering.components.SkinnedPose
 
@@ -32,6 +38,9 @@ class RenderSystem(
 ) : System {
     private val drawCalls = ArrayList<DrawCall>()
     private val occluderBounds = ArrayList<ScreenBounds>()
+
+    /** Refilled each frame by [sceneLight]; see its own note on why it is not a local. */
+    private val pointLights = ArrayList<PointLight>()
 
     /** How many entities occlusion culling actually excluded last frame -- zero when no
      * [Occluder] entities exist, or when none of them fully cover anything. Exists purely so a
@@ -52,10 +61,10 @@ class RenderSystem(
         // independent opt-in from MeshBounds.
         val occluderFamily = world.family<Transform, Occluder>()
         val occlusionViewProjection: Mat4? = if (occluderFamily.size > 0) {
-            val viewProjection = camera.camera.viewProjectionMatrix(CONSERVATIVE_ASPECT, renderer.clipSpace)
+            val viewProjection = camera.lens.viewProjectionMatrix(CONSERVATIVE_ASPECT, renderer.clipSpace)
             occluderFamily.forEach { _, transform, occluder ->
                 val worldBounds = occluder.localBounds.transformed(transform.worldMatrix)
-                camera.camera.screenBounds(worldBounds, viewProjection)?.let { occluderBounds.add(it) }
+                camera.lens.screenBounds(worldBounds, viewProjection)?.let { occluderBounds.add(it) }
             }
             viewProjection
         } else {
@@ -86,8 +95,8 @@ class RenderSystem(
             val bounds = world.get<MeshBounds>(entity)
             if (bounds != null) {
                 val worldBounds = bounds.localBounds.transformed(transform.worldMatrix)
-                if (!Frustum.intersects(camera.camera, CONSERVATIVE_ASPECT, worldBounds)) return@forEach
-                if (isOccluded(camera.camera, worldBounds, occlusionViewProjection)) {
+                if (!Frustum.intersects(camera.lens, CONSERVATIVE_ASPECT, worldBounds)) return@forEach
+                if (isOccluded(camera.lens, worldBounds, occlusionViewProjection)) {
                     lastOccludedCount++
                     return@forEach
                 }
@@ -98,6 +107,8 @@ class RenderSystem(
                     material = meshRenderer.material,
                     model = transform.worldMatrix,
                     extraUniformFloats = extras,
+                    cullMode = meshRenderer.cullMode,
+                    transparent = meshRenderer.transparent,
                 ),
             )
         }
@@ -129,27 +140,47 @@ class RenderSystem(
                 ),
             )
         }
+        // Billboard particles -- one DrawCall per emitter, instanceModels/instanceColors carry
+        // one entry per LIVE particle (dead pool slots are skipped, not drawn as invisible
+        // instances). cameraRight/cameraUp are the same forward/right/up basis Frustum.corners
+        // already computes, just used here to keep every particle facing the camera in the
+        // shader rather than baking a per-instance rotation into its own model matrix -- see
+        // ParticleEmitter's own doc comment for why particles never carry rotation at all.
+        val particleFamily = world.family<ParticleEmitter>()
+        if (particleFamily.size > 0) {
+            val forward = (camera.lens.center - camera.lens.eye).normalized()
+            val right = forward.cross(camera.lens.up).normalized()
+            val cameraUp = right.cross(forward)
+            val cameraBasis = floatArrayOf(right.x, right.y, right.z, 0f, cameraUp.x, cameraUp.y, cameraUp.z, 0f)
+            // Built once per frame, shared by every emitter's own per-particle test below --
+            // Frustum.planes recomputes 6 planes from the camera each call, so sharing it across
+            // hundreds of particles (instead of recomputing per particle) is the whole point.
+            val frustumPlanes = Frustum.planes(camera.lens, CONSERVATIVE_ASPECT)
+            particleFamily.forEach { _, emitter ->
+                addParticleDrawCalls(emitter, cameraBasis, frustumPlanes, camera.lens.eye)
+            }
+        }
         // LodGroup picks ONE level's mesh/material by distance to the camera eye -- see that
         // component's own doc comment for why an entity carries this instead of MeshRenderer,
         // not both. LOD selects detail, it doesn't cull -- MeshBounds/frustum culling still
         // applies on top when present.
         world.family<Transform, LodGroup>().forEach { entity, transform, lodGroup ->
             val worldPosition = Vec3(transform.worldMatrix.m03, transform.worldMatrix.m13, transform.worldMatrix.m23)
-            val distance = (worldPosition - camera.camera.eye).length3()
+            val distance = (worldPosition - camera.lens.eye).length3()
             val level = lodGroup.levels.firstOrNull { distance <= it.maxDistance } ?: lodGroup.levels.last()
 
             val bounds = world.get<MeshBounds>(entity)
             if (bounds != null) {
                 val worldBounds = bounds.localBounds.transformed(transform.worldMatrix)
-                if (!Frustum.intersects(camera.camera, CONSERVATIVE_ASPECT, worldBounds)) return@forEach
-                if (isOccluded(camera.camera, worldBounds, occlusionViewProjection)) {
+                if (!Frustum.intersects(camera.lens, CONSERVATIVE_ASPECT, worldBounds)) return@forEach
+                if (isOccluded(camera.lens, worldBounds, occlusionViewProjection)) {
                     lastOccludedCount++
                     return@forEach
                 }
             }
             drawCalls.add(DrawCall(mesh = level.mesh, material = level.material, model = transform.worldMatrix))
         }
-        renderer.draw(camera.camera, drawCalls, sceneLight(world))
+        renderer.draw(camera.lens, drawCalls, sceneLight(world))
     }
 
     /** `false` when [occlusionViewProjection] is `null` (no [Occluder] entities exist this
@@ -157,7 +188,7 @@ class RenderSystem(
      * own doc comment) -- both are "can't tell, so don't cull" cases, same conservative bias
      * [Frustum.intersects] already keeps. */
     private fun isOccluded(
-        camera: io.github.ronjunevaldoz.awake.core.math.Camera,
+        camera: io.github.ronjunevaldoz.awake.core.math.Lens,
         worldBounds: io.github.ronjunevaldoz.awake.core.math.Aabb,
         occlusionViewProjection: Mat4?,
     ): Boolean {
@@ -166,14 +197,147 @@ class RenderSystem(
         return occluderBounds.any { isOccludedBy(candidateBounds, it) }
     }
 
-    /** The first [Light] entity in the world, converted to render-api's backend-neutral
-     * [SceneLight] -- [DEFAULT_SCENE_LIGHT] (the same direction/color every lit shader
-     * hardcoded before this existed) when a scene has no `Light` entity at all, so an
-     * un-lit scene renders exactly as it always did. */
+    /** Builds and adds [emitter]'s own particle `DrawCall` (skipped if it has no live particles),
+     * then recurses into every [ParticleEmitter.children] entry -- children have no `Entity` of
+     * their own, so they're not reachable via `world.family<ParticleEmitter>()` and must be
+     * walked here explicitly, same recursion shape [ParticleSystem.simulate] already uses to
+     * advance them. [cameraBasis] is shared across the whole tree (computed once per frame by the
+     * caller), not recomputed per emitter. */
+    private fun addParticleDrawCalls(
+        emitter: ParticleEmitter,
+        cameraBasis: FloatArray,
+        frustumPlanes: List<Plane>,
+        eye: Vec3,
+    ) {
+        // Reused buffers, cleared (not reallocated) every frame -- see
+        // ParticleEmitter.instanceModelsBuffer's own doc comment for why this replaced
+        // a `particles.filter{}.map{}.map{}` chain (3 list allocations + no-op work on
+        // dead slots, every emitter, every frame). visibleParticlesBuffer holds PARTICLE
+        // references (not floats) so it can be frustum-filtered and depth-sorted before the
+        // instance buffers are built from it, instead of building instance data first and
+        // discovering the order/visibility needs fixing after.
+        val visible = emitter.visibleParticlesBuffer
+        visible.clear()
+        emitter.particles.forEach { particle ->
+            if (!particle.alive) return@forEach
+            if (!frustumPlanes.containsSphere(particle.position, particle.scale)) return@forEach
+            visible += particle
+        }
+        // Back-to-front (farthest first): alpha-blended particles don't write depth, so draw
+        // order IS the only thing deciding which one wins where two overlap -- the standard
+        // painter's-algorithm fix. Squared distance, not length3(): the ordering is identical
+        // and it skips a sqrt plus a Vec3 allocation per comparison.
+        visible.sortByDescending { it.position.squaredDistanceTo(eye) }
+        val instanceModels = emitter.instanceModelsBuffer
+        val instanceColors = emitter.instanceColorsBuffer
+        val instanceFrames = emitter.instanceFramesBuffer
+        instanceModels.clear()
+        instanceColors.clear()
+        instanceFrames.clear()
+        visible.forEachIndexed { index, particle ->
+            // Pooled and mutated in place -- see ParticleEmitter.modelPool's own doc comment.
+            while (emitter.modelPool.size <= index) emitter.modelPool += Mat4()
+            while (emitter.colorPool.size <= index) emitter.colorPool += Vec4()
+            val model = emitter.modelPool[index].setTranslationScale(
+                particle.position.x,
+                particle.position.y,
+                particle.position.z,
+                particle.scale,
+            )
+            // ParticleVisual.stretchWithVelocity: column 1 (m01/m11/m21) is otherwise dead --
+            // particle.wgsl only ever reads column 0 (width) and column 3 (center), never
+            // column 1's own diagonal scale value `.scale()` happens to leave there -- so a
+            // world-space stretch vector rides there for free instead of needing a whole new
+            // per-instance GPU buffer/binding just for this one optional capability.
+            if (emitter.visual.stretchWithVelocity) {
+                val speed = particle.velocity.length3()
+                if (speed > 0f) {
+                    val stretch = particle.velocity * emitter.visual.stretchFactor
+                    model.m01 = stretch.x
+                    model.m11 = stretch.y
+                    model.m21 = stretch.z
+                }
+            }
+            instanceModels += model
+            // Per-PARTICLE color+alpha (each ages independently, so a burst's
+            // later-spawned particles sit at an earlier point in the emitter's
+            // startColor->endColor gradient than its first-spawned ones) -- see
+            // Particle.currentColor's own doc comment.
+            val color = particle.currentColor(emitter)
+            instanceColors += emitter.colorPool[index].also {
+                it.x = color.x
+                it.y = color.y
+                it.z = color.z
+                it.w = particle.currentAlpha()
+            }
+            // Per-PARTICLE desynced sprite-strip frame -- see Particle.currentFrame's own doc
+            // comment.
+            instanceFrames += particle.currentFrame(emitter)
+        }
+        if (instanceModels.isNotEmpty()) {
+            // Camera basis (shared, every emitter this frame) + this emitter's frame count --
+            // see ParticleVisual.frameCount's own doc comment. frameInfo.y is unused/reserved
+            // now that frame cycling is per-particle (instanceFrames), not emitter-wide.
+            val uniformFloats = emitter.uniformFloatsBuffer
+            cameraBasis.copyInto(uniformFloats)
+            uniformFloats[8] = emitter.visual.frameCount.toFloat()
+            uniformFloats[9] = 0f
+            uniformFloats[10] = 0f
+            uniformFloats[11] = 0f
+            drawCalls.add(
+                DrawCall(
+                    mesh = emitter.mesh,
+                    material = emitter.material,
+                    instanceModels = instanceModels,
+                    instanceColors = instanceColors,
+                    instanceFrames = instanceFrames,
+                    extraUniformFloats = uniformFloats,
+                ),
+            )
+        }
+        emitter.children.forEach { child -> addParticleDrawCalls(child, cameraBasis, frustumPlanes, eye) }
+    }
+
+    /**
+     * The scene's lighting: the first [Light.Type.Directional] entity plus every
+     * [Light.Type.Point] one, converted to the backend-neutral [SceneLight].
+     *
+     * [DEFAULT_SCENE_LIGHT] when no directional light exists -- the direction and colour every
+     * lit shader hardcoded before this component did, so an un-lit scene renders as it always
+     * did. Point lights still apply on top of that default; a scene can be lit entirely by them.
+     *
+     * A point light's position comes from its entity's `Transform`, so a point light without one
+     * is skipped rather than silently placed at the origin.
+     */
     private fun sceneLight(world: World): SceneLight {
-        val family = world.family<Light>()
-        val light = family.components().firstOrNull() ?: return DEFAULT_SCENE_LIGHT
-        return SceneLight(direction = light.direction, color = light.color * light.intensity)
+        var directional: Light? = null
+        // Reused, not rebuilt: this runs every frame, and `skills/awake-core-math` rules out
+        // allocating inside System.update.
+        //
+        // The list is reused; the PointLight instances still are not -- one per point light per
+        // frame. Pooling them would mean making PointLight mutable, and it is a public value type
+        // the render contract hands to backends. A handful of small objects is the accepted cost;
+        // the ArrayList, two mapped Lists and 2N Pairs this replaces were not.
+        pointLights.clear()
+        world.family<Light>().forEach { entity, light ->
+            when (light.type) {
+                Light.Type.Directional -> if (directional == null) directional = light
+                Light.Type.Point -> {
+                    val transform = world.get<Transform>(entity) ?: return@forEach
+                    pointLights += PointLight(
+                        position = transform.position,
+                        color = light.color * light.intensity,
+                        range = light.range,
+                    )
+                }
+            }
+        }
+        val sun = directional
+        return if (sun == null) {
+            DEFAULT_SCENE_LIGHT.copy(points = pointLights)
+        } else {
+            SceneLight(sun.direction, sun.color * sun.intensity, pointLights)
+        }
     }
 }
 

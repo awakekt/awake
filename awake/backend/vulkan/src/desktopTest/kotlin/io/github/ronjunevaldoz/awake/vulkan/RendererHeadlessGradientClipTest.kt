@@ -2,22 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.core.utils.readResourceBytes
-import io.github.ronjunevaldoz.awake.render.mesh.VertexFormat
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.UiLinearGradient
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.px
-import io.github.ronjunevaldoz.awake.ui.toPath
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.VulkanUiPass
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.VulkanLinePass
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.host.readResourceBytes
+import io.github.ronjunevaldoz.awake.core.geometry.VertexFormat
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiLinearGradient
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.graphics2d.toPath
 import io.github.ronjunevaldoz.awake.vulkan.commands.TransferContext
 import io.github.ronjunevaldoz.awake.vulkan.debug.LineRenderPipeline
 import io.github.ronjunevaldoz.awake.vulkan.device.GraphicsDevice
 import io.github.ronjunevaldoz.awake.vulkan.gen.VulkanDescriptors
 import io.github.ronjunevaldoz.awake.vulkan.material.Material
+import io.github.ronjunevaldoz.awake.render.passes.OpaqueRenderFeature
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.PipelineTable
+import io.github.ronjunevaldoz.awake.render.passes2d.UiRenderFeature
 import io.github.ronjunevaldoz.awake.vulkan.pipeline.RenderPipeline
 import io.github.ronjunevaldoz.awake.vulkan.pipeline.ShaderPair
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.UiShaderPairs
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.createSceneRenderPass
 import io.github.ronjunevaldoz.awake.vulkan.renderer.Renderer
 import io.github.ronjunevaldoz.awake.vulkan.renderer.renderUiToTexture
 import io.github.ronjunevaldoz.awake.vulkan.swapchain.SwapchainManager
@@ -52,7 +59,7 @@ class RendererHeadlessGradientClipTest {
 
         // Rounded-rect clip well inside the canvas, with a corner radius large enough that its
         // corners cut noticeably into its own bounding box.
-        val clipBounds = UiBounds(16f, 16f, 96f, 96f)
+        val clipBounds = Rectangle(16f, 16f, 96f, 96f)
         val clipPath = UiShapeSpec.RoundedRectangle(32f.px).toPath(clipBounds)
 
         val gradient = UiLinearGradient(
@@ -68,7 +75,7 @@ class RendererHeadlessGradientClipTest {
         val primitives = listOf(
             UiDrawPrimitive.ClipPathPush(clipPath, clipBounds),
             UiDrawPrimitive.GradientQuad(0f, 0f, TARGET_SIZE.toFloat(), TARGET_SIZE.toFloat(), gradient),
-            UiDrawPrimitive.ClipPop(UiBounds(0f, 0f, TARGET_SIZE.toFloat(), TARGET_SIZE.toFloat())),
+            UiDrawPrimitive.ClipPop(Rectangle(0f, 0f, TARGET_SIZE.toFloat(), TARGET_SIZE.toFloat())),
         )
 
         renderer.renderUiToTexture(target, primitives, font = null)
@@ -109,6 +116,7 @@ class RendererHeadlessGradientClipTest {
     private class Fixture(
         val graphicsDevice: GraphicsDevice,
         val pipelineLayoutMaterial: Material,
+        val sceneRenderPass: Long,
         val renderPipeline: RenderPipeline,
         val lineRenderPipeline: LineRenderPipeline,
         val transferContext: TransferContext,
@@ -116,10 +124,10 @@ class RendererHeadlessGradientClipTest {
     ) {
         fun destroy() {
             renderer.destroy()
-            lineRenderPipeline.destroy()
             renderPipeline.destroy()
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, pipelineLayoutMaterial.descriptorSetLayout.handle)
             transferContext.destroy()
+            Vulkan.vkDestroyRenderPass(graphicsDevice.device, sceneRenderPass)
             graphicsDevice.destroy()
         }
     }
@@ -133,9 +141,11 @@ class RendererHeadlessGradientClipTest {
         val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
         swapchainManager.createHeadless(TARGET_SIZE, TARGET_SIZE)
         val pipelineLayoutMaterial = Material(graphicsDevice)
+        val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
         val renderPipeline = RenderPipeline(
             graphicsDevice,
             swapchainManager,
+            sceneRenderPass,
             pipelineLayoutMaterial.descriptorSetLayout,
             runBlocking { loadShaderPair("assets/shader/vulkan/triangle.vert.spv", "assets/shader/vulkan/triangle.frag.spv") },
             VertexFormat.PositionColorUv,
@@ -145,27 +155,38 @@ class RendererHeadlessGradientClipTest {
         val lineRenderPipeline = LineRenderPipeline(
             graphicsDevice,
             swapchainManager,
-            renderPipeline.renderPass,
+            sceneRenderPass,
             runBlocking { loadShaderPair("assets/shader/vulkan/debug_line.vert.spv", "assets/shader/vulkan/debug_line.frag.spv") },
             MAX_FRAMES_IN_FLIGHT,
         )
         val transferContext = TransferContext(graphicsDevice)
         val renderer = Renderer(
+            graphicsDevice = graphicsDevice,
+            swapchainManager = swapchainManager,
+            pipelines = PipelineTable(primary = renderPipeline),
+            renderFeatures = listOf(OpaqueRenderFeature(VulkanLinePass(lineRenderPipeline)), UiRenderFeature(VulkanUiPass())),
+            transferContext = transferContext,
+            uiShaderPairs = UiShaderPairs(
+                quad = runBlocking { loadShaderPair("assets/shader/vulkan/ui_quad.vert.spv", "assets/shader/vulkan/ui_quad.frag.spv") },
+                glyph = runBlocking { loadShaderPair("assets/shader/vulkan/ui_glyph.vert.spv", "assets/shader/vulkan/ui_glyph.frag.spv") },
+                texture = runBlocking {
+                    loadShaderPair("assets/shader/vulkan/ui_texture.vert.spv", "assets/shader/vulkan/ui_texture.frag.spv")
+                },
+                roundedQuad = runBlocking {
+                    loadShaderPair("assets/shader/vulkan/ui_rounded_quad.vert.spv", "assets/shader/vulkan/ui_rounded_quad.frag.spv")
+                },
+            ),
+            maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
+        )
+        return Fixture(
             graphicsDevice,
-            swapchainManager,
+            pipelineLayoutMaterial,
+            sceneRenderPass,
             renderPipeline,
-            emptyMap(),
             lineRenderPipeline,
             transferContext,
-            runBlocking { loadShaderPair("assets/shader/vulkan/ui_quad.vert.spv", "assets/shader/vulkan/ui_quad.frag.spv") },
-            runBlocking { loadShaderPair("assets/shader/vulkan/ui_glyph.vert.spv", "assets/shader/vulkan/ui_glyph.frag.spv") },
-            runBlocking { loadShaderPair("assets/shader/vulkan/ui_texture.vert.spv", "assets/shader/vulkan/ui_texture.frag.spv") },
-            runBlocking {
-                loadShaderPair("assets/shader/vulkan/ui_rounded_quad.vert.spv", "assets/shader/vulkan/ui_rounded_quad.frag.spv")
-            },
-            MAX_FRAMES_IN_FLIGHT,
+            renderer,
         )
-        return Fixture(graphicsDevice, pipelineLayoutMaterial, renderPipeline, lineRenderPipeline, transferContext, renderer)
     }
 
     private companion object {

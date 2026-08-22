@@ -20,7 +20,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * A generic, protocol-agnostic Ktor WebSocket debug-control channel -- lets an AI agent (or
  * any other WebSocket client) drive/inspect a running desktop app deterministically, without
  * simulating mouse clicks or fighting real-GUI-window screenshot timing. Originally built for
- * `samples/hello-cube` (see `docs/MVP_PLAN.md`'s D24 decision log entry for that history) and
+ * `samples/hello-cube` (see `docs/mvp-plan.md`'s D24 decision log entry for that history) and
  * pulled out into this standalone module so any future desktop sample can reuse it without
  * depending on `hello-cube`'s own demo/command types -- this module knows nothing about
  * [TCommand]/[TResponse]'s shape, [parseCommand]/[encodeResponse] are supplied by the caller.
@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * synchronous entry point.** This server's own WebSocket handler runs on Ktor's own engine
  * thread/coroutine (`embeddedServer(...).start(wait = false)` -- non-blocking, background),
  * and must NEVER directly touch a consumer's live app state itself. Instead, every incoming
- * command is enqueued onto [commandQueue] as a `(TCommand, CompletableDeferred<TResponse>)`
+ * command is enqueued onto `commandQueue` as a `(TCommand, CompletableDeferred<TResponse>)`
  * pair and the handler suspends on the deferred; the consumer's own per-frame render loop
  * (the real render-thread owner) calls [drainCommands] once per frame, applies each
  * command's effect, and completes the paired deferred with the resulting [TResponse] -- the
@@ -72,7 +72,7 @@ class WebSocketDebugTransport<TCommand, TResponse>(
 
     /** Called once per frame from the consumer's own render loop, on the render thread --
      * drains every command queued since the last call. Returns a plain list (not a
-     * `Sequence`) so the caller can iterate it freely without re-touching [commandQueue]. */
+     * `Sequence`) so the caller can iterate it freely without re-touching `commandQueue`. */
     override fun drainCommands(): List<Pair<TCommand, CompletableDeferred<TResponse>>> {
         val drained = mutableListOf<Pair<TCommand, CompletableDeferred<TResponse>>>()
         while (true) {

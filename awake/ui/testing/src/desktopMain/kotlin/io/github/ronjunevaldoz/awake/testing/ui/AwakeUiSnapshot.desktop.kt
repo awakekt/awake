@@ -46,7 +46,7 @@ private fun saveImage(file: File, pixels: ByteArray, width: Int, height: Int) {
 }
 
 /** Decodes a rasterize()-shaped RGBA8888 byte buffer into a [BufferedImage] -- shared by every
- * desktop test/tool that writes a rasterized [io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive]
+ * desktop test/tool that writes a rasterized [io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive]
  * frame to a PNG, so the pixel-unpack loop lives in exactly one place. */
 fun ByteArray.toBufferedImage(width: Int, height: Int): BufferedImage {
     val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)

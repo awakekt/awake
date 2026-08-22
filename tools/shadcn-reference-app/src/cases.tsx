@@ -23,8 +23,9 @@ import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbP
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collapsible"
 import { Kbd } from "./ui/kbd"
 import { Skeleton } from "./ui/skeleton"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem } from "./ui/dropdown-menu"
-import { Popover, PopoverContent } from "./ui/popover"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover"
+import { ButtonGroup } from "./ui/button-group"
 
 /**
  * The reference cases. Each id is the single source of truth shared with the Awake side:
@@ -63,6 +64,22 @@ export const CASES: Record<string, { render: () => ReactNode }> = {
         <Button variant="outline" disabled>Outline</Button>
         <Button variant="destructive" disabled>Destructive</Button>
       </div>
+    ),
+  },
+  "button-group-basic": {
+    render: () => (
+      <ButtonGroup data-parity-id="parity-button-group">
+        <Button data-parity-id="parity-button-group.archive" variant="outline">Archive</Button>
+        <Button data-parity-id="parity-button-group.report" variant="outline">Report</Button>
+      </ButtonGroup>
+    ),
+  },
+  "button-group-vertical": {
+    render: () => (
+      <ButtonGroup data-parity-id="parity-button-group-vertical" orientation="vertical" className="w-[156px]">
+        <Button data-parity-id="parity-button-group-vertical.archive" variant="outline">Archive</Button>
+        <Button data-parity-id="parity-button-group-vertical.report" variant="outline">Report</Button>
+      </ButtonGroup>
     ),
   },
   "checkbox-states": {
@@ -149,14 +166,14 @@ export const CASES: Record<string, { render: () => ReactNode }> = {
   },
   "card-login": {
     render: () => (
-      <Card className="w-[288px]">
-        <CardHeader>
-          <CardTitle>Login to your account</CardTitle>
+      <Card data-parity-id="parity-card" className="w-[288px]">
+        <CardHeader data-parity-id="parity-card.header">
+          <CardTitle data-parity-id="parity-card.title">Login to your account</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" placeholder="Email" />
-          <Button className="w-full">Login</Button>
+        <CardContent data-parity-id="parity-card.content" className="flex flex-col gap-3">
+          <Label htmlFor="email" data-parity-id="parity-card.label">Email</Label>
+          <Input id="email" placeholder="Email" data-parity-id="parity-card.email" />
+          <Button className="w-full" data-parity-id="parity-card.login">Login</Button>
         </CardContent>
       </Card>
     ),
@@ -296,7 +313,10 @@ export const CASES: Record<string, { render: () => ReactNode }> = {
   "dropdown-menu-states": {
     render: () => (
       <DropdownMenu open>
-        <DropdownMenuContent open className="w-[160px]">
+        <DropdownMenuTrigger asChild>
+          <Button data-parity-id="parity-dropdown.trigger" variant="outline">Open menu</Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent open data-parity-id="parity-dropdown.surface" className="w-[160px]">
           <DropdownMenuItem data-parity-id="parity-dropdown.item.0">My Account</DropdownMenuItem>
           <DropdownMenuItem data-parity-id="parity-dropdown.item.1">Edit</DropdownMenuItem>
           <DropdownMenuItem data-parity-id="parity-dropdown.item.2">Duplicate</DropdownMenuItem>
@@ -308,6 +328,9 @@ export const CASES: Record<string, { render: () => ReactNode }> = {
   "popover-states": {
     render: () => (
       <Popover open>
+        <PopoverTrigger asChild>
+          <Button data-parity-id="parity-popover.trigger" variant="outline">Open popover</Button>
+        </PopoverTrigger>
         <PopoverContent open className="w-[260px]" data-parity-id="parity-popover.content">
           <p className="text-sm">Place content for the popover here.</p>
         </PopoverContent>

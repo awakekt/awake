@@ -5,14 +5,16 @@
 
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.Sp
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.Sp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.api.theme.UiTypography
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnAvatarBadgeStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnAvatarStyle
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.avatar
 import io.github.ronjunevaldoz.awake.ui.headless.height
@@ -40,9 +42,9 @@ private fun ShadcnAvatarSize.resolveTextSize(typography: UiTypography): Sp = whe
 fun UiScope.shadcnAvatar(
     id: String,
     initials: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     size: ShadcnAvatarSize = ShadcnAvatarSize.Default,
-): UiBounds = avatar(
+): Rectangle = avatar(
     id = id,
     initials = initials,
     size = size.boxSize,
@@ -52,23 +54,23 @@ fun UiScope.shadcnAvatar(
 )
 
 fun UiScope.shadcnAvatarBadge(
-    modifier: Modifier = Modifier,
+    id: String,
+    modifier: UiModifier = Modifier,
     size: Dp = 10f.dp,
-    color: io.github.ronjunevaldoz.awake.core.colors.Color? = null,
-    id: String = "avatar.badge",
-): UiBounds = surface(
+    color: Color? = null,
+): Rectangle = surface(
     id = id,
     modifier = modifier.width(size).height(size),
     style = shadcnAvatarBadgeStyle(themeValues, color),
 ) { _ -> }
 
 fun UiScope.shadcnAvatarGroup(
+    id: String,
     initials: List<String>,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     size: ShadcnAvatarSize = ShadcnAvatarSize.Default,
     overlap: Dp = 8f.dp,
-    id: String = "avatar",
-): UiBounds = row(modifier = modifier) {
+): Rectangle = row(modifier = modifier) {
     initials.forEachIndexed { index, value ->
         shadcnAvatar(
             id = "$id.$index",

@@ -14,7 +14,9 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":awake:core"))
+
+    implementation(project(":awake:core:math2d"))
+    implementation(project(":awake:core:math"))
     implementation(project(":awake:ui:ui-core"))
     implementation(libs.kotlinx.benchmark.runtime)
 }

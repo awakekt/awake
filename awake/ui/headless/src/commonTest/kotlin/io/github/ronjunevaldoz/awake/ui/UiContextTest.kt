@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.context.sliderValueFromPointerX
 import io.github.ronjunevaldoz.awake.ui.headless.button
+import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.button
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.select
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.slider
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.toggle
@@ -160,8 +163,8 @@ class UiContextTest {
 
         val optionBackgrounds = ui.finishFrame().primitives.filter { primitive ->
             when (primitive) {
-                is UiDrawPrimitive.Quad -> primitive.x == 20f && primitive.w == 160f && (primitive.y == 52f || primitive.y == 84f)
-                is UiDrawPrimitive.RoundedQuad -> primitive.x == 20f && primitive.w == 160f && (primitive.y == 52f || primitive.y == 84f)
+                is UiDrawPrimitive.Quad -> primitive.x == 20f && primitive.w == 160f && (primitive.y == 56f || primitive.y == 88f)
+                is UiDrawPrimitive.RoundedQuad -> primitive.x == 20f && primitive.w == 160f && (primitive.y == 56f || primitive.y == 88f)
                 else -> false
             }
         }
@@ -219,13 +222,13 @@ class UiContextTest {
                         primitive.x == 20f &&
                             primitive.w == 160f &&
                             primitive.h == 32f &&
-                            (primitive.y == 52f || primitive.y == 84f)
+                            (primitive.y == 56f || primitive.y == 88f)
 
                     is UiDrawPrimitive.RoundedQuad ->
                         primitive.x == 20f &&
                             primitive.w == 160f &&
                             primitive.h == 32f &&
-                            (primitive.y == 52f || primitive.y == 84f)
+                            (primitive.y == 56f || primitive.y == 88f)
 
                     is UiDrawPrimitive.FilledPath -> false
                     is UiDrawPrimitive.StrokedPath -> false

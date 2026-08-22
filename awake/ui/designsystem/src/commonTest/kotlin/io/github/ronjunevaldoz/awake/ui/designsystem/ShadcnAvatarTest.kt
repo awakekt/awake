@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem
 
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnAvatarSize
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnAvatar
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnAvatarBadge
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnAvatarGroup
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.headless.box
 import io.github.ronjunevaldoz.awake.ui.headless.column
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxSize
-import io.github.ronjunevaldoz.awake.ui.headless.height
-import io.github.ronjunevaldoz.awake.ui.headless.offset
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxSize
+import io.github.ronjunevaldoz.awake.ui.modifier.height
+import io.github.ronjunevaldoz.awake.ui.modifier.offset
 import io.github.ronjunevaldoz.awake.ui.headless.row
-import io.github.ronjunevaldoz.awake.ui.headless.width
+import io.github.ronjunevaldoz.awake.ui.modifier.width
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -82,6 +82,7 @@ class ShadcnAvatarTest {
                     shadcnAvatar(id = "avatar", initials = "A", size = size)
                 }
                 shadcnAvatarBadge(
+                    id = "avatar.badge",
                     modifier = Modifier.offset(
                         x = size.boxSize - size.badgeSize,
                         y = size.boxSize - size.badgeSize,
@@ -111,7 +112,7 @@ class ShadcnAvatarTest {
     fun avatarGroupOverlapsAvatarsAfterTheFirst() {
         val frame = renderShadcnComponent(width = 300f, height = 200f) {
             row(modifier = Modifier.fillMaxSize()) {
-                shadcnAvatarGroup(initials = listOf("A", "B", "C"))
+                shadcnAvatarGroup(id = "avatar", initials = listOf("A", "B", "C"))
             }
         }
         val first = frame.bounds("avatar.0")

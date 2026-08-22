@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.api
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 
 /** Shared popup state contract implemented by the runtime and exposed by Headless. */
 interface UiPopupState {
@@ -27,15 +27,15 @@ data class UiPopupProperties(
 
 /** Result of composing a popup for one frame. */
 data class UiPopupResult(
-    val slot: UiBounds?,
+    val slot: Rectangle?,
     val dismissed: Boolean,
 )
 
 /** Computes a popup slot from measured bounds without accessing the UI runtime. */
 fun interface UiPopupPositionProvider {
     fun calculatePosition(
-        anchorBounds: UiBounds,
-        windowBounds: UiBounds,
+        anchorBounds: Rectangle,
+        windowBounds: Rectangle,
         popupContentSize: UiPopupSize,
-    ): UiBounds
+    ): Rectangle
 }

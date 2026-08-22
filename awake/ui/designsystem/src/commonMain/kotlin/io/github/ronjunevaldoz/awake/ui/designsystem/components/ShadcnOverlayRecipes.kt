@@ -4,14 +4,14 @@
 
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
 import io.github.ronjunevaldoz.awake.ui.api.EaseOut
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupPositionProvider
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupProperties
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupResult
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnButtonSize
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnButtonVariant
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnDialogSurfaceStyle
@@ -21,6 +21,7 @@ import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
 import io.github.ronjunevaldoz.awake.ui.headless.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.headless.DialogProperties
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.RowScope
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.animateFloatTween
@@ -37,8 +38,8 @@ import io.github.ronjunevaldoz.awake.ui.headless.panelSemantics
 import io.github.ronjunevaldoz.awake.ui.headless.popup
 import io.github.ronjunevaldoz.awake.ui.headless.row
 import io.github.ronjunevaldoz.awake.ui.headless.surface
-import io.github.ronjunevaldoz.awake.ui.toPx
-import io.github.ronjunevaldoz.ui.heroicons.icon.HeroIcons
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.ui.heroicons.icon.HeroIcons
 
 /** Public, skin-level menu entries. They intentionally contain no Core style or layout types. */
 sealed interface ShadcnMenuEntry
@@ -50,8 +51,9 @@ fun UiScope.shadcnContextMenu(
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
     items: List<ShadcnMenuEntry>,
-    target: UiScope.() -> UiBounds,
-): UiBounds {
+    modifier: UiModifier = Modifier,
+    target: UiScope.() -> Rectangle,
+): Rectangle {
     val bounds = target()
     val trigger = contextMenuTrigger(id, expanded, bounds)
     if (trigger.shouldOpen) onExpandedChange(true)
@@ -67,6 +69,7 @@ fun UiScope.shadcnContextMenu(
             anchorSlot = trigger.anchor,
             expanded = true,
             items = entries,
+            modifier = modifier,
         )
         if (result.dismissed || result.selectedIndex != null) onExpandedChange(false)
     }
@@ -82,15 +85,17 @@ fun UiScope.shadcnSheet(
     onDismissRequest: () -> Unit = {},
     side: ShadcnSheetSide = ShadcnSheetSide.Right,
     size: Dp = 320f.dp,
-    content: ColumnScope.(UiBounds) -> Unit,
+    modifier: UiModifier = Modifier,
+    content: ColumnScope.(Rectangle) -> Unit,
 ): UiPopupResult {
     if (!expanded) return UiPopupResult(null, false)
     val progress = animateFloatTween("$id.slide", 1f, 0f, 250f, EaseOut)
     overlayScrim(frameBounds(), themeValues.overlay)
     val result = popup(
         id = id,
-        anchorSlot = UiBounds(0f, 0f, 0f, 0f),
+        anchorSlot = Rectangle(0f, 0f, 0f, 0f),
         expanded = true,
+        modifier = modifier,
         positionProvider = sheetPositionProvider(side, size.toPx(), progress),
         properties = UiPopupProperties(dismissOnClickOutside = true, clippingEnabled = false),
     ) { slot ->
@@ -120,10 +125,10 @@ fun UiScope.shadcnSheet(
 private fun sheetPositionProvider(side: ShadcnSheetSide, size: Float, progress: Float) = UiPopupPositionProvider { _, frame, _ ->
     val offset = (1f - progress) * size
     when (side) {
-        ShadcnSheetSide.Left -> UiBounds(-offset, 0f, size, frame.height)
-        ShadcnSheetSide.Right -> UiBounds(frame.width - size + offset, 0f, size, frame.height)
-        ShadcnSheetSide.Top -> UiBounds(0f, -offset, frame.width, size)
-        ShadcnSheetSide.Bottom -> UiBounds(0f, frame.height - size + offset, frame.width, size)
+        ShadcnSheetSide.Left -> Rectangle(-offset, 0f, size, frame.height)
+        ShadcnSheetSide.Right -> Rectangle(frame.width - size + offset, 0f, size, frame.height)
+        ShadcnSheetSide.Top -> Rectangle(0f, -offset, frame.width, size)
+        ShadcnSheetSide.Bottom -> Rectangle(0f, frame.height - size + offset, frame.width, size)
     }
 }
 
@@ -133,12 +138,14 @@ fun UiScope.shadcnDrawer(
     onDismissRequest: () -> Unit,
     position: ShadcnDrawerPosition = ShadcnDrawerPosition.Bottom,
     size: Dp = 320f.dp,
-    content: ColumnScope.(UiBounds) -> Unit,
+    modifier: UiModifier = Modifier,
+    content: ColumnScope.(Rectangle) -> Unit,
 ): UiPopupResult = dialog(
     id = id,
     expanded = expanded,
     width = if (position == ShadcnDrawerPosition.Left || position == ShadcnDrawerPosition.Right) Dimension.Fixed(size) else Dimension.FillMax,
     height = if (position == ShadcnDrawerPosition.Top || position == ShadcnDrawerPosition.Bottom) Dimension.Fixed(size) else Dimension.FillMax,
+    modifier = modifier,
     style = shadcnDrawerSurfaceStyle(themeValues, shadcnMetrics),
     properties = DialogProperties(
         dismissOnClickOutside = true,
@@ -164,14 +171,16 @@ fun UiScope.shadcnDialog(
     expanded: Boolean,
     width: Dimension = Dimension.WrapContent,
     height: Dimension = Dimension.WrapContent,
+    modifier: UiModifier = Modifier,
     header: (ColumnScope.() -> Unit)? = null,
     actions: (RowScope.() -> Unit)? = null,
-    content: ColumnScope.(UiBounds) -> Unit,
+    content: ColumnScope.(Rectangle) -> Unit,
 ): UiPopupResult = dialog(
     id = id,
     expanded = expanded,
     width = width,
     height = height,
+    modifier = modifier,
     style = shadcnDialogSurfaceStyle(themeValues, shadcnMetrics),
     properties = DialogProperties(
         dismissOnClickOutside = true,

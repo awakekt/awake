@@ -21,7 +21,7 @@ uiScope.shadcnButton(...)
 
 ```text
 ui-api
-  Stable, runtime-free value contracts only: UiBounds, Dimension, Dp, Sp, and
+  Stable, runtime-free value contracts only: Rectangle, Dimension, Dp, Sp, and
   color/shape/typography value contracts. Move structural contracts here only
   when they have no UiContext, renderer, or runtime dependency.
   May depend only on genuine lower-level contracts such as awake-core Color.

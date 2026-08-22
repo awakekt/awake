@@ -5,7 +5,7 @@ package io.github.ronjunevaldoz.awake.ui.modifier
 import io.github.ronjunevaldoz.awake.ui.UiScrollConfig
 import io.github.ronjunevaldoz.awake.ui.UiScrollState
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.api.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
@@ -58,5 +58,9 @@ data class UiModifier(
     val clickAction: UiClickable? = null,
 )
 
-val Modifier: UiModifier
-    get() = UiModifier()
+/**
+ * One shared instance rather than a fresh one per read. [UiModifier] is deeply immutable, and this
+ * is read once per widget per trial pass, so a getter that allocated made the empty modifier one of
+ * the frame's larger allocation sites.
+ */
+val Modifier: UiModifier = UiModifier()

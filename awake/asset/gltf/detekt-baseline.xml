@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:GltfParser.kt$GltfParser$private fun readPrimitive( document: GltfDocument, buffers: List&lt;ByteArray>, primitive: GltfPrimitive, externalResources: Map&lt;String, ByteArray> = emptyMap(), ): GltfMesh</ID>
+    <ID>TooManyFunctions:GltfParser.kt$GltfParser</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -4,22 +4,22 @@ package io.github.ronjunevaldoz.awake.ui.headless.internal.layout
 
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.font
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.font.measureTextWidth
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.resolveTextLineMetrics
+import io.github.ronjunevaldoz.awake.ui.foundation.text.resolveTextLineMetrics
 import io.github.ronjunevaldoz.awake.ui.layout.horizontalPx
 import io.github.ronjunevaldoz.awake.ui.layout.verticalPx
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.modifier.width
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.scope.resolveGlyphPx
 import io.github.ronjunevaldoz.awake.ui.scope.resolveStyle
 import io.github.ronjunevaldoz.awake.ui.style.MutableStyleState
 import io.github.ronjunevaldoz.awake.ui.style.Style
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 import kotlin.math.ceil
 
 /**
@@ -33,6 +33,22 @@ import kotlin.math.ceil
 internal fun UiPrimitiveScope.withIntrinsicLabelWidth(
     modifier: UiModifier,
     label: String,
+    style: Style = Style.Empty,
+    defaults: Style = Style.Empty,
+    extraWidth: Dp = 0f.dp,
+): UiModifier = withIntrinsicLabelWidth(modifier, listOf(label), style, defaults, extraWidth)
+
+/**
+ * [withIntrinsicLabelWidth] over several candidate labels, sized to the widest.
+ *
+ * A control whose text changes with its state -- a dropdown trigger showing the current
+ * selection, say -- would otherwise resize every time that text changed, and could end up
+ * narrower than something it still has to display. Measuring every label it may show keeps its
+ * width stable. The style resolves once; only the per-label text measurement repeats.
+ */
+internal fun UiPrimitiveScope.withIntrinsicLabelWidth(
+    modifier: UiModifier,
+    labels: List<String>,
     style: Style = Style.Empty,
     defaults: Style = Style.Empty,
     extraWidth: Dp = 0f.dp,
@@ -55,7 +71,11 @@ internal fun UiPrimitiveScope.withIntrinsicLabelWidth(
         state = MutableStyleState(),
     )
     val glyphPx = resolveGlyphPx(textStyle = resolved.textStyle)
-    val labelWidthPx = font.measureTextWidth(label, glyphPx, resolved.textStyle.weight)
+    var labelWidthPx = 0f
+    labels.forEach { candidate ->
+        val candidateWidth = font.measureTextWidth(candidate, glyphPx, resolved.textStyle.weight)
+        if (candidateWidth > labelWidthPx) labelWidthPx = candidateWidth
+    }
     // CSS borders participate in the element's intrinsic border-box even when their color is
     // transparent (`border border-transparent` is part of shadcn Button and Badge). Resolve the
     // width from the style instead of compensating in individual recipes.

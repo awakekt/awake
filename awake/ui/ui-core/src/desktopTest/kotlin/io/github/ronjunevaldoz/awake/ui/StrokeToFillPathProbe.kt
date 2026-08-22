@@ -2,7 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.tessellateFill
+import io.github.ronjunevaldoz.awake.core.graphics2d.strokeToFillPath
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPath
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPathCommand
+import io.github.ronjunevaldoz.awake.core.graphics2d.PathCommand
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiStroke
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiStrokeCap
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiStrokeJoin
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiTriangleMesh
+import io.github.ronjunevaldoz.awake.core.graphics2d.containsPoint
+import io.github.ronjunevaldoz.awake.core.math2d.size
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -31,9 +42,9 @@ class StrokeToFillPathProbe {
         val outline = path.strokeToFillPath(stroke)
 
         // Closed: every subpath ends in Close, and there is exactly one subpath (one open contour).
-        assertEquals(1, outline.commands.count { it == UiPathCommand.Close })
-        assertTrue(outline.commands.first() is UiPathCommand.MoveTo)
-        assertTrue(outline.commands.last() == UiPathCommand.Close)
+        assertEquals(1, outline.commands.count { it == PathCommand.Close })
+        assertTrue(outline.commands.first() is PathCommand.MoveTo)
+        assertTrue(outline.commands.last() == PathCommand.Close)
 
         // Minkowski dilation of the 2-segment, 90-degree polyline by a disk of `radius`:
         // 2*r*totalLength (the two segment rectangles) + r^2*turnAngle/2 (the one round join's
@@ -76,7 +87,7 @@ class StrokeToFillPathProbe {
         val stroke = UiStroke(width = (halfWidth * 2).dp, cap = UiStrokeCap.Butt, join = UiStrokeJoin.Round)
         val outline = path.strokeToFillPath(stroke)
 
-        assertEquals(2, outline.commands.count { it == UiPathCommand.Close }, "outer + inner ring")
+        assertEquals(2, outline.commands.count { it == PathCommand.Close }, "outer + inner ring")
         assertTrue(outline.containsPoint(0f, 5f), "the stroke band itself should be filled")
         assertTrue(!outline.containsPoint(5f, 5f), "the hollow interior should stay empty")
         assertTrue(!outline.containsPoint(-5f, -5f), "well outside the shape should stay empty")

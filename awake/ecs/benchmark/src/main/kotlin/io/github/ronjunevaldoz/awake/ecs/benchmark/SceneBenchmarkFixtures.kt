@@ -9,7 +9,7 @@ import com.github.quillraven.fleks.ComponentType
 import com.github.quillraven.fleks.IntervalSystem
 import com.github.quillraven.fleks.configureWorld
 import io.github.ronjunevaldoz.awake.core.math.Mat4
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.core.math.times
 import io.github.ronjunevaldoz.awake.ecs.ComponentTypeId
 import io.github.ronjunevaldoz.awake.scene.core.components.Transform
@@ -248,7 +248,7 @@ open class AwakeHierarchyState {
         var parent: AwakeEntity? = null
         repeat(depth) { index ->
             val entity = world.create()
-            world.add(entity, Transform(position = Vec3(0f, 0f, 1f), parent = parent))
+            world.add(entity, Transform(position = Vec3f(0f, 0f, 1f), parent = parent))
             parent = entity
             if (index == depth - 1) {
                 lastEntity = entity
@@ -306,7 +306,7 @@ open class ArtemisHierarchyState {
         repeat(depth) { index ->
             val entity = world.create()
             transformMapper.create(entity).apply {
-                position = Vec3(0f, 0f, 1f)
+                position = Vec3f(0f, 0f, 1f)
                 this.parent = parent
             }
             parent = entity
@@ -336,7 +336,7 @@ open class AshleyHierarchyState {
         var parent: AshleyEntity? = null
         repeat(depth) { index ->
             val entity = engine.createEntity()
-            entity.add(AshleyTransform(position = Vec3(0f, 0f, 1f), parent = parent))
+            entity.add(AshleyTransform(position = Vec3f(0f, 0f, 1f), parent = parent))
             engine.addEntity(entity)
             entities += entity
             parent = entity
@@ -420,9 +420,9 @@ class ArtemisTransformSystem(
 }
 
 class ArtemisTransform : ArtemisComponent() {
-    var position: Vec3 = Vec3(0f, 0f, 1f)
-    var rotation: Vec3 = Vec3(0f, 0f, 0f)
-    var scale: Vec3 = Vec3(1f, 1f, 1f)
+    var position: Vec3f = Vec3f(0f, 0f, 1f)
+    var rotation: Vec3f = Vec3f(0f, 0f, 0f)
+    var scale: Vec3f = Vec3f(1f, 1f, 1f)
     var parent: Int = -1
     var worldMatrix: Mat4 = Mat4()
 
@@ -440,9 +440,9 @@ class ArtemisMeshRenderer : ArtemisComponent() {
 }
 
 data class AshleyTransform(
-    var position: Vec3 = Vec3(0f, 0f, 1f),
-    var rotation: Vec3 = Vec3(0f, 0f, 0f),
-    var scale: Vec3 = Vec3(1f, 1f, 1f),
+    var position: Vec3f = Vec3f(0f, 0f, 1f),
+    var rotation: Vec3f = Vec3f(0f, 0f, 0f),
+    var scale: Vec3f = Vec3f(1f, 1f, 1f),
     var parent: AshleyEntity? = null,
     var worldMatrix: Mat4 = Mat4(),
 ) : AshleyComponent {
@@ -460,9 +460,9 @@ data class AshleyMeshRenderer(
 ) : AshleyComponent
 
 data class FleksTransform(
-    var position: Vec3 = Vec3(0f, 0f, 1f),
-    var rotation: Vec3 = Vec3(0f, 0f, 0f),
-    var scale: Vec3 = Vec3(1f, 1f, 1f),
+    var position: Vec3f = Vec3f(0f, 0f, 1f),
+    var rotation: Vec3f = Vec3f(0f, 0f, 0f),
+    var scale: Vec3f = Vec3f(1f, 1f, 1f),
     var parent: FleksEntity? = null,
     var worldMatrix: Mat4 = Mat4(),
 ) : Component<FleksTransform> {

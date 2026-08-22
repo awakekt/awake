@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.layouts
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
@@ -15,7 +15,7 @@ import io.github.ronjunevaldoz.awake.ui.resolveRootSlot
  * Root layout entry points from a [UiContext].
  *
  * This is the authored "start a page/frame here" surface. Public authoring should be
- * modifier-first; raw [UiBounds] overloads remain only as compatibility bridges while older
+ * modifier-first; raw [Rectangle] overloads remain only as compatibility bridges while older
  * tests, previews, and helpers are migrated.
  */
 fun UiContext.column(

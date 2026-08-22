@@ -2,9 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.api.layout.contains
+import io.github.ronjunevaldoz.awake.core.graphics2d.safeInteriorMargin
+import io.github.ronjunevaldoz.awake.core.graphics2d.toPath
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPoint
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiTriangleMesh
+import io.github.ronjunevaldoz.awake.core.graphics2d.clipToConvexPaths
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.core.math2d.contains
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -22,14 +28,14 @@ class UiPathSafeInteriorClipTest {
 
     @Test
     fun interiorGlyphSkipsExactClipButProducesIdenticalGeometry() {
-        val bounds = UiBounds(0f, 0f, 600f, 300f)
+        val bounds = Rectangle(0f, 0f, 600f, 300f)
         val shape = UiShapeSpec.RoundedRectangle(8f.dp)
         val path = shape.toPath(bounds)
         val margin = shape.safeInteriorMargin(bounds)
         val safeInteriorRect = insetRect(bounds, margin)
 
         // A glyph-sized quad well inside the card, nowhere near a rounded corner.
-        val interiorGlyph = UiBounds(x = 100f, y = 100f, width = 8f, height = 16f)
+        val interiorGlyph = Rectangle(x = 100f, y = 100f, width = 8f, height = 16f)
         assertTrue(safeInteriorRect.contains(interiorGlyph), "interior glyph must be classified as safe")
 
         val rawMesh = quadMesh(interiorGlyph)
@@ -51,14 +57,14 @@ class UiPathSafeInteriorClipTest {
 
     @Test
     fun cornerOverlappingGlyphStillNeedsExactClip() {
-        val bounds = UiBounds(0f, 0f, 600f, 300f)
+        val bounds = Rectangle(0f, 0f, 600f, 300f)
         val shape = UiShapeSpec.RoundedRectangle(8f.dp)
         val path = shape.toPath(bounds)
         val margin = shape.safeInteriorMargin(bounds)
         val safeInteriorRect = insetRect(bounds, margin)
 
         // A quad straddling the top-left rounded corner -- the exact bug 62d3d98c fixed.
-        val cornerQuad = UiBounds(x = -2f, y = -2f, width = 12f, height = 12f)
+        val cornerQuad = Rectangle(x = -2f, y = -2f, width = 12f, height = 12f)
         assertFalse(safeInteriorRect.contains(cornerQuad), "corner-straddling quad must NOT be classified as safe")
 
         val rawMesh = quadMesh(cornerQuad)
@@ -78,7 +84,7 @@ class UiPathSafeInteriorClipTest {
      */
     @Test
     fun measureGlyphClipCostBeforeAndAfterSafeInteriorSkip() {
-        val bounds = UiBounds(0f, 0f, 600f, 300f)
+        val bounds = Rectangle(0f, 0f, 600f, 300f)
         val shape = UiShapeSpec.RoundedRectangle(8f.dp)
         val path = shape.toPath(bounds)
         val margin = shape.safeInteriorMargin(bounds)
@@ -88,7 +94,7 @@ class UiPathSafeInteriorClipTest {
         val glyphs = (0 until glyphCount).map { i ->
             val col = i % 60
             val row = i / 60
-            UiBounds(x = margin + 4f + col * 9f, y = margin + 4f + row * 18f, width = 8f, height = 16f)
+            Rectangle(x = margin + 4f + col * 9f, y = margin + 4f + row * 18f, width = 8f, height = 16f)
         }
         val skippable = glyphs.count { safeInteriorRect.contains(it) }
 
@@ -121,14 +127,14 @@ class UiPathSafeInteriorClipTest {
         }
     }
 
-    private fun insetRect(bounds: UiBounds, margin: Float): UiBounds = UiBounds(
+    private fun insetRect(bounds: Rectangle, margin: Float): Rectangle = Rectangle(
         x = bounds.x + margin,
         y = bounds.y + margin,
         width = (bounds.width - 2f * margin).coerceAtLeast(0f),
         height = (bounds.height - 2f * margin).coerceAtLeast(0f),
     )
 
-    private fun quadMesh(bounds: UiBounds): UiTriangleMesh = UiTriangleMesh(
+    private fun quadMesh(bounds: Rectangle): UiTriangleMesh = UiTriangleMesh(
         points = listOf(
             UiPoint(bounds.x, bounds.y),
             UiPoint(bounds.x + bounds.width, bounds.y),

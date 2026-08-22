@@ -50,4 +50,6 @@ spaghetti.
 - [ ] decide which sample-local compositions should be promoted into `ui-dsl`
 - [x] preview validation and layout signatures now run on desktop, iOS, wasmJs, and Android
   host -- the reflection-based metadata that forced desktop-only proof is gone
-- [x] add a dedicated shadcn parity scorecard -- see [`docs/reference/shadcn-parity.md`](../reference/shadcn-parity.md), built from `ronjunevaldoz/shadcn-compose`'s published `component-metadata.json` (real variant lists + real rendered preview images) rather than scraping `ui.shadcn.com` directly
+- [x] add a dedicated shadcn parity scorecard — retired because it was based on a third-party
+  port. The replacement is the pinned-source workflow in
+  [`docs/reference/ui-parity-tool.md`](../reference/ui-parity-tool.md).

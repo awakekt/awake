@@ -3,7 +3,7 @@
 package io.github.ronjunevaldoz.awake.vulkan
 
 import io.github.ronjunevaldoz.awake.core.input.Input
-import io.github.ronjunevaldoz.awake.ui.UiDensity
+import io.github.ronjunevaldoz.awake.core.math2d.UiDensity
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCAction

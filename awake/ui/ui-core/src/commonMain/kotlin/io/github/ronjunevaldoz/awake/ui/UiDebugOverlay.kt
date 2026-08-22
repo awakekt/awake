@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPath
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiStroke
+import io.github.ronjunevaldoz.awake.core.graphics2d.uiPath
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 
 /** Colors for [UiSemanticNode.debugOverlayPrimitives] -- one lane per rect kind so bounds,
@@ -16,7 +20,7 @@ object UiDebugOverlayColors {
     val ClippedBounds = Color(1f, 0.35f, 0.3f, 0.9f)
 }
 
-private fun rectOutline(slot: UiBounds): UiPath = uiPath {
+private fun rectOutline(slot: Rectangle): UiPath = uiPath {
     moveTo(slot.x, slot.y)
     lineTo(slot.x + slot.width, slot.y)
     lineTo(slot.x + slot.width, slot.y + slot.height)

@@ -2,6 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.physics
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 
-data class RaycastHit(val handle: BodyHandle, val point: Vec3, val distance: Float)
+data class RaycastHit(val handle: BodyHandle, val point: Vec3f, val distance: Float)

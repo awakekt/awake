@@ -11,13 +11,13 @@ import io.github.ronjunevaldoz.awake.scene.core.components.Transform
 
 /**
  * Propagates world matrices parent-before-child every frame via a memoized DFS (with cycle
- * detection). [visitedStamp]/[visitingStamp] track per-entity DFS state by `entity.id`
+ * detection). `visitedStamp`/`visitingStamp` track per-entity DFS state by `entity.id`
  * instead of a `Map<Entity, Transform>`/two `Set<Entity>` -- `Entity` is a value class, so
  * using it as a `Map`/`Set` key forces a box allocation plus `hashCode()`/`equals()` on
  * every visit. Profiling `awakeTransformHierarchyPropagation` showed that combined
  * `HashMap`/`HashSet`/`Entity.box-impl` cost at ~19% of CPU samples (see
  * docs/ecs-benchmark-scorecard.md). A node is "visited this frame" when its stamp equals
- * [frameStamp]; incrementing [frameStamp] once per [update] call implicitly invalidates
+ * `frameStamp`; incrementing `frameStamp` once per [update] call implicitly invalidates
  * every previous frame's stamps without needing to clear the arrays. `world.get<Transform>`
  * (an O(1) sparse-set lookup, not a hash lookup) replaces the old snapshot map for parent
  * lookups. Still recomputes from scratch every frame (correct if a caller reparents an
@@ -28,6 +28,7 @@ class TransformSystem : System {
     private var visitedStamp = IntArray(0)
     private var visitingStamp = IntArray(0)
     private var frameStamp = 0
+    private val localScratch = Mat4()
 
     override fun update(world: World, delta: Float) {
         frameStamp += 1
@@ -45,13 +46,14 @@ class TransformSystem : System {
         check(visitingStamp[id] != frameStamp) { "Transform hierarchy contains a cycle at $entity." }
         visitingStamp[id] = frameStamp
 
-        val local = transform.localMatrix()
         val parent = transform.parent
         val parentTransform = if (parent != null) world.get<Transform>(parent) else null
-        transform.worldMatrix = if (parent != null && parentTransform != null) {
-            local * propagate(world, parent, parentTransform)
+        if (parent != null && parentTransform != null) {
+            val parentWorld = propagate(world, parent, parentTransform)
+            transform.computeLocalMatrix(localScratch)
+            Mat4.multiplyInPlace(localScratch, parentWorld, transform.worldMatrix)
         } else {
-            local
+            transform.computeLocalMatrix(transform.worldMatrix)
         }
 
         visitedStamp[id] = frameStamp

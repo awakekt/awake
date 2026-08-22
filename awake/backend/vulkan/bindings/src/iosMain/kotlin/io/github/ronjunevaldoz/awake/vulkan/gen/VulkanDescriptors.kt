@@ -42,7 +42,7 @@ import platform.MoltenVK.vkDestroyDescriptorPool as nativeVkDestroyDescriptorPoo
 import platform.MoltenVK.vkDestroyDescriptorSetLayout as nativeVkDestroyDescriptorSetLayout
 import platform.MoltenVK.vkUpdateDescriptorSets as nativeVkUpdateDescriptorSets
 
-// Phase 6 (MoltenVK cinterop) is in progress -- see docs/MVP_PLAN.md.
+// Phase 6 (MoltenVK cinterop) is in progress -- see docs/mvp-plan.md.
 @OptIn(ExperimentalForeignApi::class)
 actual object VulkanDescriptors {
     actual fun vkCreateDescriptorSetLayout(

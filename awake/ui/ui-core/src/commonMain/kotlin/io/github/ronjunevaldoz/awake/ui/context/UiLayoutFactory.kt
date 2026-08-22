@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.ui.context
 
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiInsets
 import io.github.ronjunevaldoz.awake.ui.layout.inset
 import io.github.ronjunevaldoz.awake.ui.layouts.AbsoluteScope
@@ -37,7 +37,7 @@ internal class UiLayoutFactory(
         height: Float? = null,
         verticalArrangement: Arrangement = defaultArrangement(),
         tracking: UiLayoutTracking = UiLayoutTracking(hasBoundedFillHeight = height != null),
-        plannedSlots: List<UiBounds>? = null,
+        plannedSlots: List<Rectangle>? = null,
         horizontalAlignment: UiAlignment.Horizontal = UiAlignment.Horizontal.Start,
     ): ColumnScope = ColumnScope(
         context,
@@ -55,11 +55,11 @@ internal class UiLayoutFactory(
     )
 
     fun createColumn(
-        slot: UiBounds,
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         verticalArrangement: Arrangement = defaultArrangement(),
         tracking: UiLayoutTracking = UiLayoutTracking(),
-        plannedSlots: List<UiBounds>? = null,
+        plannedSlots: List<Rectangle>? = null,
         horizontalAlignment: UiAlignment.Horizontal = UiAlignment.Horizontal.Start,
     ): ColumnScope {
         val content = slot.inset(insets)
@@ -89,7 +89,7 @@ internal class UiLayoutFactory(
     )
 
     fun createAbsolute(
-        slot: UiBounds,
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         testTag: String? = null,
         overlayOnly: Boolean = false,
@@ -105,7 +105,7 @@ internal class UiLayoutFactory(
         width: Float? = null,
         horizontalArrangement: Arrangement = defaultArrangement(),
         tracking: UiLayoutTracking = UiLayoutTracking(hasBoundedFillWidth = width != null),
-        plannedSlots: List<UiBounds>? = null,
+        plannedSlots: List<Rectangle>? = null,
         verticalAlignment: UiAlignment.Vertical = UiAlignment.Vertical.Top,
     ): RowScope = RowScope(
         context,
@@ -123,11 +123,11 @@ internal class UiLayoutFactory(
     )
 
     fun createRow(
-        slot: UiBounds,
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         horizontalArrangement: Arrangement = defaultArrangement(),
         tracking: UiLayoutTracking = UiLayoutTracking(),
-        plannedSlots: List<UiBounds>? = null,
+        plannedSlots: List<Rectangle>? = null,
         verticalAlignment: UiAlignment.Vertical = UiAlignment.Vertical.Top,
     ): RowScope {
         val content = slot.inset(insets)
@@ -164,7 +164,7 @@ internal class UiLayoutFactory(
     )
 
     fun createBox(
-        slot: UiBounds,
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         contentAlignment: UiAlignment = UiAlignment.TopStart,
         tracking: UiLayoutTracking = UiLayoutTracking(),

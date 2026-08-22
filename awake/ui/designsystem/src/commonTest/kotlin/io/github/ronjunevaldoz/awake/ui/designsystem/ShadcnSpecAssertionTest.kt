@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnAvatarSize
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnRadioMetrics
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnButtonSize
@@ -123,4 +123,4 @@ class ShadcnSpecAssertionTest {
     }
 }
 
-private fun Float.dpOf(): Dp = io.github.ronjunevaldoz.awake.ui.api.Dp(this)
+private fun Float.dpOf(): Dp = io.github.ronjunevaldoz.awake.core.math2d.Dp(this)

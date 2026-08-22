@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.4.0"
+kotlin = "2.4.10"
 agp = "9.2.1"
 compose-multiplatform = "1.11.1"
 detekt = "1.23.8"
@@ -11,6 +11,7 @@ artemis-odb = "2.3.0"
 ashley = "1.7.3"
 lwjgl = "3.3.6"
 kotlinx-benchmark = "0.4.17"
+kover = "0.9.8"
 kotlinx-serialization = "1.11.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-browser = "0.5.0"
@@ -23,6 +24,9 @@ vanniktech-publish = "0.36.0"
 # Phase 2.5 (Web/WebGPU) spike -- no stable release yet (last tag v0.1.1, June 2025), this
 # is a Sonatype snapshot build (see settings.gradle.kts's snapshot repo addition).
 wgpu4k = "0.2.0-SNAPSHOT"
+# Descriptor types (BufferDescriptor, BindGroupDescriptor, ...). On wasmJs these arrive via
+# wgpu4k-toolkit; the toolkit is wasm-only, so the desktop test target needs them declared.
+webgpu-ktypes = "0.0.10-SNAPSHOT"
 # MVP1a NavMesh slice -- pure-Java Recast/Detour port, JVM-only (desktop+Android), see
 # docs/MMORPG_ROADMAP.md's NavMesh decision.
 recast4j = "1.5.11"
@@ -34,7 +38,7 @@ snaploader = "1.1.1-stable"
 oshi-core = "7.4.0"
 # Desktop-only Ktor WebSocket debug-control channel for sample-hello-cube (see
 # docs/MVP_PLAN.md's debug-control-channel decision log entry) -- 3.5.1 is the latest stable
-# release compatible with this repo's Kotlin 2.4.0 (Ktor 3.x requires Kotlin 2.0+).
+# release compatible with this repo's Kotlin 2.4.10 (Ktor 3.x requires Kotlin 2.0+).
 ktor = "3.5.1"
 # Tailwind spacing/sizing scale codegen (awake:engine:ui:tailwind-generator) -- generates the
 # Tw.kt object from a vendored static scale, same manual-invoke shape as
@@ -56,6 +60,7 @@ wgpu4k = { module = "io.ygdrasil:wgpu4k", version.ref = "wgpu4k" }
 # WGPUContext) the core wgpu4k module doesn't -- see wgpu4k-toolkit/src/webMain/kotlin/
 # Surface.kt in the wgpu4k repo.
 wgpu4k-toolkit = { module = "io.ygdrasil:wgpu4k-toolkit", version.ref = "wgpu4k" }
+webgpu-ktypes-descriptors = { module = "io.ygdrasil:webgpu-ktypes-descriptors", version.ref = "webgpu-ktypes" }
 compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
 compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
 compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
@@ -128,3 +133,4 @@ android-library-kmp = { id = "com.android.kotlin.multiplatform.library", version
 compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-publish" }
 kotlinx-benchmark = { id = "org.jetbrains.kotlinx.benchmark", version.ref = "kotlinx-benchmark" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

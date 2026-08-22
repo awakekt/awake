@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.testing.ui.rasterize
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.skeleton
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
@@ -41,7 +41,7 @@ class SkeletonShimmerPixelTest {
         // walk the identical frame count/delta so the pulse-fill's own elapsed-time state
         // (unrelated to shimmer) matches between the two renders.
         val frameDeltaSeconds = 1f / 60f
-        var primitives: List<io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive> = emptyList()
+        var primitives: List<io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive> = emptyList()
         repeat(36) {
             ui.beginFrame(UiFrameInput(viewportWidth = width.toFloat(), viewportHeight = height.toFloat(), input = testSnapshot(), deltaSeconds = frameDeltaSeconds))
             val scope = ui.createAbsolute(x = 0f, y = 0f)

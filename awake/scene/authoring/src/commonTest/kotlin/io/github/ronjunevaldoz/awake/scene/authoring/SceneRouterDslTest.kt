@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.authoring
 
-import io.github.ronjunevaldoz.awake.core.math.Camera
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math.Lens
 import io.github.ronjunevaldoz.awake.core.math.ClipSpace
-import io.github.ronjunevaldoz.awake.engine.game.requireService
-import io.github.ronjunevaldoz.awake.engine.gameauthoring.GameUiRuntime
-import io.github.ronjunevaldoz.awake.engine.gameauthoring.game
-import io.github.ronjunevaldoz.awake.engine.gameauthoring.ui
+import io.github.ronjunevaldoz.awake.engine.platform.dsl.requireService
+import io.github.ronjunevaldoz.awake.engine.bootstrap.dsl.app
+import io.github.ronjunevaldoz.awake.engine.bootstrap.ui.AppUiRuntime
+import io.github.ronjunevaldoz.awake.engine.bootstrap.ui.ui
 import io.github.ronjunevaldoz.awake.render.material.Material
 import io.github.ronjunevaldoz.awake.render.mesh.Mesh
-import io.github.ronjunevaldoz.awake.render.mesh.MeshGeometry
-import io.github.ronjunevaldoz.awake.render.mesh.VertexFormat
+import io.github.ronjunevaldoz.awake.core.geometry.MeshGeometry
+import io.github.ronjunevaldoz.awake.core.geometry.VertexFormat
 import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.LineSegment
 import io.github.ronjunevaldoz.awake.render.renderer.Renderer
@@ -21,10 +22,10 @@ import io.github.ronjunevaldoz.awake.render.texture.RenderTarget
 import io.github.ronjunevaldoz.awake.render.texture.TextureAsset
 import io.github.ronjunevaldoz.awake.scene.authoring.blueprints.cameraEntity
 import io.github.ronjunevaldoz.awake.scene.runtime.SceneRouterRuntime
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.offset
 import io.github.ronjunevaldoz.awake.ui.modifier.size
@@ -37,7 +38,7 @@ class SceneRouterDslTest {
     @Test
     fun routedScenesSwitchThroughCommonRuntime() = runTest {
         val renderer = RouterRecordingRenderer()
-        val game = game {
+        val game = app {
             scenes {
                 initial("overview")
                 route("overview", label = "Overview") {
@@ -58,14 +59,14 @@ class SceneRouterDslTest {
         }
 
         game.ready(renderer)
-        game.render(0.016f, 640f, 480f)
+        game.update(0.016f, 640f, 480f)
 
         val router = game.requireService<SceneRouterRuntime>()
         assertEquals("overview", router.activeSceneId)
         assertEquals("overview", router.sceneRuntime.sceneName)
 
         router.switchTo("editor")
-        game.render(0.016f, 640f, 480f)
+        game.update(0.016f, 640f, 480f)
 
         assertEquals("editor", router.activeSceneId)
         assertEquals("editor", router.sceneRuntime.sceneName)
@@ -74,7 +75,7 @@ class SceneRouterDslTest {
     @Test
     fun routedScenesComposeWithGameUiInstaller() = runTest {
         val renderer = RouterRecordingRenderer()
-        val game = game {
+        val game = app {
             scenes {
                 route("overview") {
                     cameraEntity("camera")
@@ -95,10 +96,10 @@ class SceneRouterDslTest {
         }
 
         game.ready(renderer)
-        game.render(0.016f, 320f, 240f)
+        game.update(0.016f, 320f, 240f)
 
         assertEquals("overview", game.requireService<SceneRouterRuntime>().activeSceneLabel)
-        assertEquals(GameUiRuntime::class, game.requireService<GameUiRuntime>()::class)
+        assertEquals(AppUiRuntime::class, game.requireService<AppUiRuntime>()::class)
     }
 }
 
@@ -108,7 +109,7 @@ private class RouterRecordingRenderer : Renderer {
     var lastUiPrimitives: List<UiDrawPrimitive> = emptyList()
 
     override val clipSpace: ClipSpace = ClipSpace.WebGpu
-    override var clearColor: FloatArray = floatArrayOf(0f, 0f, 0f, 1f)
+    override var clearColor: Color = Color.Black
     override var wireframe: Boolean = false
     override var shadowsEnabled: Boolean = true
 
@@ -125,7 +126,7 @@ private class RouterRecordingRenderer : Renderer {
         uniformFloatCount: Int,
         pbrTextures: PbrTextureSet?,
     ): Material = object : Material {
-        override fun updateUniformBuffer(mvp: FloatArray) = Unit
+        override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
         override fun bind(commandBuffer: Long, pipelineLayout: Long) = Unit
         override fun destroy() = Unit
     }
@@ -136,9 +137,14 @@ private class RouterRecordingRenderer : Renderer {
         override fun destroy() = Unit
     }
 
-    override fun draw(camera: Camera, drawCalls: List<DrawCall>, light: SceneLight) = Unit
+    override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) = Unit
 
-    override fun renderToTexture(target: RenderTarget, camera: Camera, drawCalls: List<DrawCall>) =
+    override fun renderToTexture(
+        target: RenderTarget,
+        camera: Lens,
+        drawCalls: List<DrawCall>,
+        light: SceneLight,
+    ) =
         Unit
 
     override suspend fun readPixels(target: RenderTarget): TextureAsset =

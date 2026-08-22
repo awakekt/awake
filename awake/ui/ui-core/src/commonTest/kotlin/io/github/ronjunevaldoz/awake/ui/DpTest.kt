@@ -2,10 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.api.sp
+import io.github.ronjunevaldoz.awake.core.math2d.UiDensity
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.core.math2d.sp
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
 import io.github.ronjunevaldoz.awake.ui.scope.resolveGlyphPx
@@ -75,7 +78,7 @@ class DpTest {
 
         ui.pushLocal(LocalFont, font)
         ui.pushLocal(LocalTheme, UiDefaultTheme)
-        val glyphPx = ui.createAbsolute(slot = UiBounds(0f, 0f, 0f, 0f)).resolveGlyphPx(
+        val glyphPx = ui.createAbsolute(slot = Rectangle(0f, 0f, 0f, 0f)).resolveGlyphPx(
             font = font,
             textStyle = TextStyle(size = 10.sp),
         )
@@ -93,7 +96,7 @@ class DpTest {
 
         ui.pushLocal(LocalFont, font)
         ui.pushLocal(LocalTheme, UiDefaultTheme)
-        val glyphPx = ui.createAbsolute(slot = UiBounds(0f, 0f, 0f, 0f)).resolveGlyphPx(
+        val glyphPx = ui.createAbsolute(slot = Rectangle(0f, 0f, 0f, 0f)).resolveGlyphPx(
             font = font,
             textStyle = TextStyle(size = 13f.sp),
         )

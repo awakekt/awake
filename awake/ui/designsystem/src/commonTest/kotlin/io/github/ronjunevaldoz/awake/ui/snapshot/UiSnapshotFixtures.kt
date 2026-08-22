@@ -7,11 +7,11 @@ import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.scope.requestFocus
 import io.github.ronjunevaldoz.awake.ui.headless.provideTextStyle
 import io.github.ronjunevaldoz.awake.ui.theme.TextStyle
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiImageVector
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
 import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnTheme
@@ -33,25 +33,26 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnSurfaceVariant
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
-import io.github.ronjunevaldoz.awake.ui.headless.UiButtonVariant
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.UiButtonVariant
 import io.github.ronjunevaldoz.awake.ui.headless.button
+import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.button
 import io.github.ronjunevaldoz.awake.ui.headless.checkbox
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxHeight
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxSize
-import io.github.ronjunevaldoz.awake.ui.headless.height
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxHeight
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxSize
+import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.icon
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.select
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.UiTextWrap
-import io.github.ronjunevaldoz.awake.ui.headless.offset
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextWrap
+import io.github.ronjunevaldoz.awake.ui.modifier.offset
 import io.github.ronjunevaldoz.awake.ui.headless.slider
 import io.github.ronjunevaldoz.awake.ui.headless.spacer
 import io.github.ronjunevaldoz.awake.ui.headless.text
 import io.github.ronjunevaldoz.awake.ui.headless.textField
 import io.github.ronjunevaldoz.awake.ui.headless.toggle
-import io.github.ronjunevaldoz.awake.ui.headless.width
+import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.layouts.surface
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.testing.ui.UiComponentFrame
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
@@ -59,7 +60,7 @@ import io.github.ronjunevaldoz.awake.ui.uiImageVector
 import io.github.ronjunevaldoz.awake.ui.headless.column as headlessColumn
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.checkbox as coreCheckbox
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.toggle as coreToggle
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text as coreText
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text as coreText
 import io.github.ronjunevaldoz.awake.ui.headless.row as headlessRow
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier as CoreModifier
 import io.github.ronjunevaldoz.awake.ui.modifier.align as coreAlign
@@ -72,7 +73,7 @@ data class UiSnapshotScene(
     val name: String,
     val width: Int,
     val height: Int,
-    val primitives: List<io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive>,
+    val primitives: List<io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive>,
     val background: Color = Color(0.1f, 0.1f, 0.12f, 1f),
     val font: UiFont? = null,
     val title: String? = null,

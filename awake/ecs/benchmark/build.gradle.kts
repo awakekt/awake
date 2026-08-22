@@ -30,7 +30,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":awake:core"))
+    implementation(project(":awake:core:math"))
     implementation(project(":awake:ecs"))
     implementation(project(":awake:scene"))
     implementation(project(":awake:backend:vulkan"))
@@ -38,6 +38,7 @@ dependencies {
     implementation(libs.artemis.odb)
     implementation(libs.ashley)
     implementation(libs.kotlinx.benchmark.runtime)
+    testImplementation(kotlin("test"))
 }
 
 benchmark {

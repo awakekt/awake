@@ -6,13 +6,13 @@ import io.github.ronjunevaldoz.awake.ui.EaseOut
 import io.github.ronjunevaldoz.awake.ui.Easing
 import io.github.ronjunevaldoz.awake.ui.animateFloatTween
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.graphics.clip
 import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
 import io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.scope.fillWidthOrNull
 import io.github.ronjunevaldoz.awake.ui.scope.isMeasuring
 import io.github.ronjunevaldoz.awake.ui.scope.measureColumnContent
@@ -26,8 +26,8 @@ fun ColumnScope.animatedHeight(
     modifier: UiModifier = Modifier,
     durationMs: Float = 250f,
     easing: Easing = EaseOut,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds? {
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle? {
     // 1. Measure the content to know the target expanded height -- only on the frame this
     // collapses into an expanded state, not every frame it stays expanded (that used to run a
     // full extra layout pass forever for a collapsible left open, e.g. a sidebar group).

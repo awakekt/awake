@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan.pipeline
 
-import io.github.ronjunevaldoz.awake.render.mesh.GpuDataShape
-import io.github.ronjunevaldoz.awake.render.mesh.VertexFormat
+import io.github.ronjunevaldoz.awake.core.geometry.GpuDataShape
+import io.github.ronjunevaldoz.awake.core.geometry.VertexFormat
 import io.github.ronjunevaldoz.awake.vulkan.Vulkan
 import io.github.ronjunevaldoz.awake.vulkan.device.GraphicsDevice
 import io.github.ronjunevaldoz.awake.vulkan.enums.VkCullModeFlagBits
@@ -65,101 +65,107 @@ class ShadowRenderPipeline(
     private var pipelineCache: Long = 0
     private var graphicsPipeline: LongArray = longArrayOf()
 
+    // See RenderPipeline's own init doc comment -- same partial-creation-leak guard.
     init {
-        val fragShaderModule = createShaderModule(shaders.fragment.toIntArray())
-        val vertShaderModule = createShaderModule(shaders.vertex.toIntArray())
+        try {
+            val fragShaderModule = createShaderModule(device, shaders.fragment.toShaderIntArray())
+            val vertShaderModule = createShaderModule(device, shaders.vertex.toShaderIntArray())
 
-        val shaderStages = arrayOf(
-            VkPipelineShaderStageCreateInfo(
-                stage = VkShaderStageFlagBits.FRAGMENT,
-                module = fragShaderModule,
-                pName = fragmentEntryPoint,
-            ),
-            VkPipelineShaderStageCreateInfo(
-                stage = VkShaderStageFlagBits.VERTEX,
-                module = vertShaderModule,
-                pName = vertexEntryPoint,
-            ),
-        )
-
-        val vertexInputInfo = arrayOf(
-            VkPipelineVertexInputStateCreateInfo(
-                pVertexBindingDescriptions = arrayOf(
-                    VkVertexInputBindingDescription(
-                        binding = 0,
-                        stride = vertexFormat.strideBytes,
-                        inputRate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX,
-                    ),
+            val shaderStages = arrayOf(
+                VkPipelineShaderStageCreateInfo(
+                    stage = VkShaderStageFlagBits.FRAGMENT,
+                    module = fragShaderModule,
+                    pName = fragmentEntryPoint,
                 ),
-                pVertexAttributeDescriptions = vertexFormat.entries.map { entry ->
-                    VkVertexInputAttributeDescription(
-                        location = entry.attribute.location,
-                        binding = 0,
-                        format = entry.attribute.format.toVkFormat(),
-                        offset = entry.offsetBytes,
-                    )
-                }.toTypedArray(),
-            ),
-        )
+                VkPipelineShaderStageCreateInfo(
+                    stage = VkShaderStageFlagBits.VERTEX,
+                    module = vertShaderModule,
+                    pName = vertexEntryPoint,
+                ),
+            )
 
-        val dynamicInfo = arrayOf(
-            VkPipelineDynamicStateCreateInfo(
-                pDynamicStates = arrayOf(VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT, VkDynamicState.VK_DYNAMIC_STATE_SCISSOR),
-            ),
-        )
+            val vertexInputInfo = arrayOf(
+                VkPipelineVertexInputStateCreateInfo(
+                    pVertexBindingDescriptions = arrayOf(
+                        VkVertexInputBindingDescription(
+                            binding = 0,
+                            stride = vertexFormat.strideBytes,
+                            inputRate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX,
+                        ),
+                    ),
+                    pVertexAttributeDescriptions = vertexFormat.entries.map { entry ->
+                        VkVertexInputAttributeDescription(
+                            location = entry.attribute.location,
+                            binding = 0,
+                            format = entry.attribute.format.toVkFormat(),
+                            offset = entry.offsetBytes,
+                        )
+                    }.toTypedArray(),
+                ),
+            )
 
-        val viewportInfo = arrayOf(
-            VkPipelineViewportStateCreateInfo(
-                pViewports = arrayOf(VkViewport(width = mapSize.toFloat(), height = mapSize.toFloat())),
-                pScissors = arrayOf(VkRect2D(offset = VkOffset2D(), extent = VkExtent2D(mapSize, mapSize))),
-            ),
-        )
+            val dynamicInfo = arrayOf(
+                VkPipelineDynamicStateCreateInfo(
+                    pDynamicStates = arrayOf(VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT, VkDynamicState.VK_DYNAMIC_STATE_SCISSOR),
+                ),
+            )
 
-        val depthStencil = arrayOf(VkPipelineDepthStencilStateCreateInfo())
-        val multisamplingInfo = arrayOf(VkPipelineMultisampleStateCreateInfo())
-        val inputAssemblyInfo = arrayOf(
-            VkPipelineInputAssemblyStateCreateInfo(
-                topology = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-                primitiveRestartEnable = false,
-            ),
-        )
-        val rasterizationInfo = arrayOf(
-            VkPipelineRasterizationStateCreateInfo(
-                cullMode = VkCullModeFlagBits.VK_CULL_MODE_NONE.value,
-                lineWidth = 1f,
-            ),
-        )
-        // No color attachments in ShadowMap's render pass, so no blend attachments either.
-        val colorBlendInfo = arrayOf(VkPipelineColorBlendStateCreateInfo(pAttachments = arrayOf()))
+            val viewportInfo = arrayOf(
+                VkPipelineViewportStateCreateInfo(
+                    pViewports = arrayOf(VkViewport(width = mapSize.toFloat(), height = mapSize.toFloat())),
+                    pScissors = arrayOf(VkRect2D(offset = VkOffset2D(), extent = VkExtent2D(mapSize, mapSize))),
+                ),
+            )
 
-        pipelineLayout = Vulkan.vkCreatePipelineLayout(
-            device,
-            VkPipelineLayoutCreateInfo(pSetLayouts = arrayOf(descriptorSetLayout.handle)),
-        )
+            val depthStencil = arrayOf(VkPipelineDepthStencilStateCreateInfo())
+            val multisamplingInfo = arrayOf(VkPipelineMultisampleStateCreateInfo())
+            val inputAssemblyInfo = arrayOf(
+                VkPipelineInputAssemblyStateCreateInfo(
+                    topology = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                    primitiveRestartEnable = false,
+                ),
+            )
+            val rasterizationInfo = arrayOf(
+                VkPipelineRasterizationStateCreateInfo(
+                    cullMode = VkCullModeFlagBits.VK_CULL_MODE_NONE.value,
+                    lineWidth = 1f,
+                ),
+            )
+            // No color attachments in ShadowMap's render pass, so no blend attachments either.
+            val colorBlendInfo = arrayOf(VkPipelineColorBlendStateCreateInfo(pAttachments = arrayOf()))
 
-        val createInfos = arrayOf(
-            VkGraphicsPipelineCreateInfo(
-                pStages = shaderStages,
-                pVertexInputState = vertexInputInfo,
-                pInputAssemblyState = inputAssemblyInfo,
-                pViewportState = viewportInfo,
-                pRasterizationState = rasterizationInfo,
-                pMultisampleState = multisamplingInfo,
-                pColorBlendState = colorBlendInfo,
-                pDepthStencilState = depthStencil,
-                pDynamicState = dynamicInfo,
-                layout = pipelineLayout,
-                renderPass = renderPass,
-                subpass = 0,
-                basePipelineHandle = 0,
-                basePipelineIndex = -1,
-            ),
-        )
-        pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
-        graphicsPipeline = Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, createInfos)
+            pipelineLayout = Vulkan.vkCreatePipelineLayout(
+                device,
+                VkPipelineLayoutCreateInfo(pSetLayouts = arrayOf(descriptorSetLayout.handle)),
+            )
 
-        Vulkan.vkDestroyShaderModule(device, fragShaderModule)
-        Vulkan.vkDestroyShaderModule(device, vertShaderModule)
+            val createInfos = arrayOf(
+                VkGraphicsPipelineCreateInfo(
+                    pStages = shaderStages,
+                    pVertexInputState = vertexInputInfo,
+                    pInputAssemblyState = inputAssemblyInfo,
+                    pViewportState = viewportInfo,
+                    pRasterizationState = rasterizationInfo,
+                    pMultisampleState = multisamplingInfo,
+                    pColorBlendState = colorBlendInfo,
+                    pDepthStencilState = depthStencil,
+                    pDynamicState = dynamicInfo,
+                    layout = pipelineLayout,
+                    renderPass = renderPass,
+                    subpass = 0,
+                    basePipelineHandle = 0,
+                    basePipelineIndex = -1,
+                ),
+            )
+            pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+            graphicsPipeline = Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, createInfos)
+
+            Vulkan.vkDestroyShaderModule(device, fragShaderModule)
+            Vulkan.vkDestroyShaderModule(device, vertShaderModule)
+        } catch (e: Throwable) {
+            destroy()
+            throw e
+        }
     }
 
     fun bind(commandBuffer: Long) {
@@ -171,23 +177,4 @@ class ShadowRenderPipeline(
         Vulkan.vkDestroyPipelineLayout(device, pipelineLayout)
         Vulkan.vkDestroyPipelineCache(device, pipelineCache)
     }
-
-    private fun createShaderModule(code: IntArray): Long =
-        Vulkan.vkCreateShaderModule(device, VkShaderModuleCreateInfo(pCode = code))
-
-    private fun ByteArray.toIntArray(): IntArray = IntArray(size / 4) { i ->
-        (this[i * 4].toInt() and 0xFF) or
-            ((this[i * 4 + 1].toInt() and 0xFF) shl 8) or
-            ((this[i * 4 + 2].toInt() and 0xFF) shl 16) or
-            ((this[i * 4 + 3].toInt() and 0xFF) shl 24)
-    }
-}
-
-private fun GpuDataShape.toVkFormat(): VkFormat = when (this) {
-    GpuDataShape.Float -> VkFormat.VK_FORMAT_R32_SFLOAT
-    GpuDataShape.Vec2 -> VkFormat.VK_FORMAT_R32G32_SFLOAT
-    GpuDataShape.Vec3 -> VkFormat.VK_FORMAT_R32G32B32_SFLOAT
-    GpuDataShape.Vec4 -> VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT
-    GpuDataShape.UInt4 -> VkFormat.VK_FORMAT_R32G32B32A32_UINT
-    GpuDataShape.Mat4 -> error("Mat4 is not a valid vertex-attribute format.")
 }

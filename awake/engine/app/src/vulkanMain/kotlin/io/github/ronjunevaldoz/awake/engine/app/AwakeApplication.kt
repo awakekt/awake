@@ -2,22 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.engine.app
 
-import io.github.ronjunevaldoz.awake.engine.game.Game
-import io.github.ronjunevaldoz.awake.engine.game.GameShaderSet
-import io.github.ronjunevaldoz.awake.render.mesh.VertexFormat
-import io.github.ronjunevaldoz.awake.vulkan.application.VulkanGameApplication
+import io.github.ronjunevaldoz.awake.asset.shaders.ShaderSet
+import io.github.ronjunevaldoz.awake.engine.platform.lifecycle.AwakeAppLifecycle
+import io.github.ronjunevaldoz.awake.core.geometry.VertexFormat
+import io.github.ronjunevaldoz.awake.vulkan.application.VulkanEngine
 
 actual class AwakeApplication actual constructor(
-    shaderSet: GameShaderSet,
+    shaderSet: ShaderSet,
     vertexFormat: VertexFormat,
-    game: Game,
-    additionalPipelines: Map<VertexFormat, GameShaderSet>,
+    appLifecycle: AwakeAppLifecycle,
+    additionalPipelines: Map<VertexFormat, ShaderSet>,
     wireframeSupport: Boolean,
-    shadowShaderSet: GameShaderSet?,
-) : VulkanGameApplication(
+    shadowShaderSet: ShaderSet?,
+) : VulkanEngine(
     shaderSet = shaderSet,
     vertexFormat = vertexFormat,
-    game = game,
+    appLifecycle = appLifecycle,
     additionalPipelines = additionalPipelines,
     wireframeSupport = wireframeSupport,
     shadowShaderSet = shadowShaderSet,

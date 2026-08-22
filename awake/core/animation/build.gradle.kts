@@ -17,7 +17,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             // Mat4/Quat/Vec3 -- bone transforms, keyframe interpolation, joint-palette math.
-            implementation(project(":awake:core"))
+            implementation(project(":awake:core:math"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

@@ -27,11 +27,6 @@ class UiLocal<T> internal constructor(
     internal val combine: (parent: T, incoming: T) -> T,
 )
 
-/** Effective scoped-local state captured for a measurement trial. */
-internal class UiLocalSnapshot internal constructor(
-    internal val stacks: Array<Any?>,
-)
-
 private var nextLocalSlot = 0
 
 /**
@@ -88,21 +83,40 @@ internal class UiLocalValues {
     }
 
     /**
-     * Copies every local stack, including app-declared locals, for a nested measurement context.
+     * Copies every local stack, including app-declared locals, into a nested measurement context.
      * A trial must observe the same ambient values as its source without knowing their types.
+     *
+     * Direct store-to-store rather than through a captured snapshot object: this runs once per
+     * trial pass, and a snapshot allocated an array plus a list per occupied slot every time,
+     * all of it garbage by the end of the trial. Copying in place reuses the trial context's own
+     * lists, so a warmed-up trial allocates nothing here. The element loops are indexed for the
+     * same reason -- `addAll` copies through an intermediate array and a `for (x in list)`
+     * allocates an iterator.
      */
-    fun snapshot(): UiLocalSnapshot = UiLocalSnapshot(
-        Array(stacks.size) { index ->
-            @Suppress("UNCHECKED_CAST")
-            (stacks[index] as? MutableList<Any?>)?.toMutableList()
-        },
-    )
-
-    /** Restores a snapshot without coupling this store to any named local. */
-    fun restore(snapshot: UiLocalSnapshot) {
-        stacks = Array(snapshot.stacks.size.coerceAtLeast(INITIAL_SLOTS)) { index ->
-            @Suppress("UNCHECKED_CAST")
-            (snapshot.stacks.getOrNull(index) as? MutableList<Any?>)?.toMutableList()
+    @Suppress("UNCHECKED_CAST")
+    fun copyFrom(source: UiLocalValues) {
+        val sourceStacks = source.stacks
+        val requiredSize = sourceStacks.size.coerceAtLeast(INITIAL_SLOTS)
+        if (stacks.size < requiredSize) {
+            stacks = stacks.copyOf(requiredSize)
+        }
+        for (i in sourceStacks.indices) {
+            val sourceList = sourceStacks[i] as? MutableList<Any?>
+            if (sourceList == null) {
+                stacks[i] = null
+                continue
+            }
+            var targetList = stacks[i] as? MutableList<Any?>
+            if (targetList == null) {
+                targetList = ArrayList(sourceList.size)
+                stacks[i] = targetList
+            } else {
+                targetList.clear()
+            }
+            for (j in sourceList.indices) targetList.add(sourceList[j])
+        }
+        for (i in sourceStacks.size until stacks.size) {
+            stacks[i] = null
         }
     }
 

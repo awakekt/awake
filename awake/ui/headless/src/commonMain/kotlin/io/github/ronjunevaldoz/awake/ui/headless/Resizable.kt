@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.ResizableDirection as PrimitiveDirection
 import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.ResizablePanelGroupScope as PrimitiveScope
@@ -17,15 +19,15 @@ class ResizablePanelGroupScope internal constructor(
 fun UiScope.resizablePanelGroup(
     id: String,
     direction: UiResizableDirection = UiResizableDirection.Horizontal,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     content: ResizablePanelGroupScope.() -> Unit,
-): UiBounds = primitive.primitiveResizablePanelGroup(
+): Rectangle = primitive.primitiveResizablePanelGroup(
     id = id,
     direction = when (direction) {
         UiResizableDirection.Horizontal -> PrimitiveDirection.Horizontal
         UiResizableDirection.Vertical -> PrimitiveDirection.Vertical
     },
-    modifier = modifier.asPrimitiveModifier(),
+    modifier = modifier,
 ) { content(ResizablePanelGroupScope(this)) }
 
 fun ResizablePanelGroupScope.panel(
@@ -33,8 +35,8 @@ fun ResizablePanelGroupScope.panel(
     defaultSize: Float,
     minSize: Float = 0.1f,
     maxSize: Float = 1f,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = primitive.panel(
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = primitive.panel(
     id = id,
     defaultSize = defaultSize,
     minSize = minSize,
@@ -46,4 +48,4 @@ fun ResizablePanelGroupScope.handle(
     id: String,
     withHandle: Boolean = false,
     style: Style = Style.Empty,
-): UiBounds = primitive.handle(id = id, withHandle = withHandle, style = style)
+): Rectangle = primitive.handle(id = id, withHandle = withHandle, style = style)

@@ -2,9 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.graphics2d.tessellateFill
+import io.github.ronjunevaldoz.awake.core.math2d.UiDensity
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiStroke
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiStrokeCap
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiStrokeJoin
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiTriangleMesh
+import io.github.ronjunevaldoz.awake.core.math2d.size
+import io.github.ronjunevaldoz.awake.core.graphics2d.strokeToFillPath
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -33,7 +41,7 @@ class OutlineIconStrokeScaleTest {
         val coverage = listOf(1f, 2f, 3f).map { scale ->
             UiDensity.scale = scale
             val slotSize = ICON_SIZE.value * scale
-            val slot = UiBounds(0f, 0f, slotSize, slotSize)
+            val slot = Rectangle(0f, 0f, slotSize, slotSize)
             val fitted = squareGlyph().fitTo(slot).single()
             val stroke = requireNotNull(fitted.stroke)
             val outlineArea = fitted.path.strokeToFillPath(stroke).tessellateFill().area()

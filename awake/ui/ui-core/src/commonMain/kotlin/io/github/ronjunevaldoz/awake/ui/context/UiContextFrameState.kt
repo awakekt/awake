@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.context
 
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiInputState
 import io.github.ronjunevaldoz.awake.ui.UiSemanticNode
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.api.layout.intersect
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.core.math2d.intersect
 
 internal class UiContextFrameState {
     private val renderCollector = UiRenderCollector()
@@ -19,12 +19,26 @@ internal class UiContextFrameState {
     // flow content) clip rect leak into a nested overlay widget's (e.g. a dialog/popup/tooltip)
     // *own* clip intersection just because the overlay widget's composition happens to run
     // textually nested inside that ancestor's content lambda.
-    private val clipStack = ArrayList<UiBounds>()
-    private val overlayClipStack = ArrayList<UiBounds>()
+    private val clipStack = ArrayList<Rectangle>()
+    private val overlayClipStack = ArrayList<Rectangle>()
+
+    // Every id-bearing widget in this codebase -- surface()/interactiveSurface() (hence
+    // avatar/separator/every shadcn* recipe built on them), column(), checkbox()/radio(),
+    // textField()/textarea(), lazyColumn()/lazyRow(), resizablePanelGroup's panel()/handle(),
+    // toast/progressBar/skeleton/switch/toggle/slider/rangeSlider/dropdown/canvas/text() -- calls
+    // recordSemantic(id = ...) itself, directly or through exactly one shared internal choke
+    // point, exactly ONCE per real (non-measuring) render of that widget instance. Unlike
+    // widgetState(id), which the same instance can legitimately re-enter from more than one
+    // internal helper in one frame (see TextField.kt's cursorState/caretBlinkElapsedSeconds), no
+    // such multi-call pattern exists for recordSemantic anywhere in ui-core/headless/designsystem
+    // -- so a same-id-twice-in-one-frame hit here really is two sibling instances colliding on
+    // the same literal id, not one instance's own repeat call. See
+    // docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md's P5 row.
+    private val claimedSemanticIdsThisFrame = HashSet<String>()
 
     var inputState: UiInputState = UiInputState()
         private set
-    var fullFrameRect: UiBounds = UiBounds(0f, 0f, 0f, 0f)
+    var fullFrameRect: Rectangle = Rectangle(0f, 0f, 0f, 0f)
         private set
     var frameDeltaSeconds: Float = 1f / 60f
         private set
@@ -34,7 +48,8 @@ internal class UiContextFrameState {
         semanticCollector.beginFrame()
         clipStack.clear()
         overlayClipStack.clear()
-        fullFrameRect = UiBounds(0f, 0f, screenWidth, screenHeight)
+        claimedSemanticIdsThisFrame.clear()
+        fullFrameRect = Rectangle(0f, 0f, screenWidth, screenHeight)
         frameDeltaSeconds = deltaSeconds.coerceAtLeast(0f)
         this.inputState = inputState
     }
@@ -47,8 +62,17 @@ internal class UiContextFrameState {
     fun emitOverlay(primitive: UiDrawPrimitive) =
         renderCollector.emitOverlay(primitive)
 
-    fun recordSemantic(node: UiSemanticNode) =
+    fun recordSemantic(node: UiSemanticNode) {
+        val id = node.id
+        if (id != null && !claimedSemanticIdsThisFrame.add(id)) {
+            error(
+                "Duplicate widget id '$id' claimed by two sibling widgets in the same frame -- " +
+                    "widget ids must be unique per screen. Pass a distinct literal id (or a " +
+                    "derived one, e.g. \"\$id.\${index}\" inside a loop) to each caller.",
+            )
+        }
         semanticCollector.record(node)
+    }
 
     fun semanticNodes(): List<UiSemanticNode> = semanticCollector.snapshot()
 
@@ -64,7 +88,7 @@ internal class UiContextFrameState {
      * the old single shared stack's `current.intersect(rect)`, permanently truncating dialog/
      * popup content no matter how correctly that widget's own wrap-height was measured.
      */
-    fun pushClip(rect: UiBounds, overlay: Boolean = false): UiBounds {
+    fun pushClip(rect: Rectangle, overlay: Boolean = false): Rectangle {
         val stack = if (overlay) overlayClipStack else clipStack
         val current = stack.lastOrNull() ?: fullFrameRect
         val resolved = current.intersect(rect)
@@ -72,7 +96,7 @@ internal class UiContextFrameState {
         return resolved
     }
 
-    fun popClip(overlay: Boolean = false): UiBounds {
+    fun popClip(overlay: Boolean = false): Rectangle {
         val stack = if (overlay) overlayClipStack else clipStack
         if (stack.isNotEmpty()) stack.removeAt(stack.size - 1)
         return stack.lastOrNull() ?: fullFrameRect

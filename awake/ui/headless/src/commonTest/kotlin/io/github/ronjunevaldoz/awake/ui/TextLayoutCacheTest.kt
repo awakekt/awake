@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.clearTextLayoutCache
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.clearTextLayoutCache
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -48,7 +48,7 @@ class TextLayoutCacheTest {
     private fun renderOnce(ui: UiContext, font: UiFont, label: String, slotWidth: Float = 200f) {
         ui.pushLocal(LocalFont, font)
         val scope = ui.createAbsolute(x = 0f, y = 0f)
-        scope.text(label = label, slot = UiBounds(0f, 0f, slotWidth, 12f), font = font)
+        scope.text(label = label, slot = Rectangle(0f, 0f, slotWidth, 12f), font = font)
     }
 
     @Test
@@ -57,7 +57,7 @@ class TextLayoutCacheTest {
         val ui = UiContext()
         val label = "the quick brown fox"
         // emitLinesInternal's draw pass calls advanceFor once per character every frame,
-        // cache or no cache -- that's the one part of renderTextBlock this design deliberately
+        // cache or no cache -- that's the one part of drawTextBlock this design deliberately
         // does not (and should not) skip, see the design doc's "not a cache target" note. A
         // cache hit therefore doesn't drive the per-frame delta to zero, it drives it down to
         // exactly this floor.

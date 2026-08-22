@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import io.github.ronjunevaldoz.awake.core.math.Camera as CoreCamera
+import io.github.ronjunevaldoz.awake.core.math.Lens
 import io.github.ronjunevaldoz.awake.scene.rendering.components.Camera as SceneCameraComponent
 
 class SceneLoaderTest {
@@ -25,7 +25,10 @@ class SceneLoaderTest {
         val parent = world.create()
         val child = world.create()
         world.add(parent, Name("parent"))
-        world.add(parent, Transform(position = io.github.ronjunevaldoz.awake.core.math.Vec3(1f, 2f, 3f)))
+        world.add(
+            parent,
+            Transform(position = io.github.ronjunevaldoz.awake.core.math.Vec3f(1f, 2f, 3f))
+        )
         world.add(parent, PbrMaterial(metallic = 0.25f, roughness = 0.4f))
         world.add(
             parent,
@@ -38,16 +41,16 @@ class SceneLoaderTest {
         world.add(
             child,
             Transform(
-                position = io.github.ronjunevaldoz.awake.core.math.Vec3(4f, 5f, 6f),
+                position = io.github.ronjunevaldoz.awake.core.math.Vec3f(4f, 5f, 6f),
                 parent = parent,
             ),
         )
         world.add(
             child,
             SceneCameraComponent(
-                CoreCamera(
-                    eye = io.github.ronjunevaldoz.awake.core.math.Vec3(7f, 8f, 9f),
-                    center = io.github.ronjunevaldoz.awake.core.math.Vec3(1f, 2f, 3f),
+                Lens(
+                    eye = io.github.ronjunevaldoz.awake.core.math.Vec3f(7f, 8f, 9f),
+                    center = io.github.ronjunevaldoz.awake.core.math.Vec3f(1f, 2f, 3f),
                     fovYRadians = (PI / 3.0).toFloat(),
                     near = 0.1f,
                     far = 100f,
@@ -58,7 +61,7 @@ class SceneLoaderTest {
         world.add(
             child,
             Light(
-                color = io.github.ronjunevaldoz.awake.core.math.Vec3(0.1f, 0.2f, 0.3f),
+                color = io.github.ronjunevaldoz.awake.core.math.Vec3f(0.1f, 0.2f, 0.3f),
                 intensity = 0.75f,
                 type = Light.Type.Point,
             ),
@@ -185,7 +188,7 @@ class SceneLoaderTest {
         assertEquals(5f, cameraTransform.position.z)
         assertNotNull(camera)
         assertTrue(camera.isPrimary)
-        assertEquals(PI / 4.0, camera.camera.fovYRadians.toDouble(), 0.0001)
+        assertEquals(PI / 4.0, camera.lens.fovYRadians.toDouble(), 0.0001)
         assertNotNull(parentTransform)
         assertNotNull(childTransform)
         assertEquals(parentEntity, childTransform.parent)

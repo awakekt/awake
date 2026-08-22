@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.graphics.animation.animatedHeight
 import io.github.ronjunevaldoz.awake.ui.layouts.column
@@ -40,7 +40,7 @@ class AnimatedHeightWrapContentOverlapTest {
         val ui = UiContext()
         val columnWidth = 300f
         var expanded = false
-        var lastSlot: UiBounds? = null
+        var lastSlot: Rectangle? = null
 
         fun frame() {
             ui.beginFrame(UiFrameInput(viewportWidth = 400f, viewportHeight = 800f, input = testSnapshot()))
@@ -84,7 +84,7 @@ class AnimatedHeightWrapContentOverlapTest {
         val ui = UiContext()
         val rowWidth = 400f
         var expanded = false
-        var lastSlot: UiBounds? = null
+        var lastSlot: Rectangle? = null
         var realContentWidth = 0f
 
         fun frame() {

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.testing
 
-import io.github.ronjunevaldoz.awake.core.utils.RgbaSample
-import io.github.ronjunevaldoz.awake.core.utils.summarizePixels
+import io.github.ronjunevaldoz.awake.testing.RgbaSample
+import io.github.ronjunevaldoz.awake.testing.summarizePixels
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

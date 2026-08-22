@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.layouts.column
 import io.github.ronjunevaldoz.awake.ui.layouts.surface
@@ -20,11 +21,11 @@ import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
  * `samples/ui-showcase`'s scroll-panel preview (`showcase-scroll-panel-page` wrapping
  * `scroll-container`). Reproduces the exact shape -- a `Dimension.WrapContent`-height outer
  * `surface` wrapping a fixed-height (176px) `verticalScroll` inner `column` -- and measures the
- * outer's real committed [UiBounds.height] at several `UiScrollState.offsetY` values.
+ * outer's real committed [Rectangle.height] at several `UiScrollState.offsetY` values.
  */
 class WrapContentScrollLeakProbeTest {
 
-    private fun content(): io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope.(UiBounds) -> Unit = {
+    private fun content(): io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope.(Rectangle) -> Unit = {
         column(
             id = "scroll-container",
             modifier = Modifier.width(Dimension.FillMax).height(176f.px).verticalScroll(scrollState),
@@ -45,9 +46,9 @@ class WrapContentScrollLeakProbeTest {
         scrollState = UiScrollState()
         val ui = UiContext()
 
-        fun renderFrame(): UiBounds {
+        fun renderFrame(): Rectangle {
             ui.beginFrame(UiFrameInput(viewportWidth = 920f, viewportHeight = 620f, input = testSnapshot()))
-            var outerSlot: UiBounds? = null
+            var outerSlot: Rectangle? = null
             ui.createBox(x = 0f, y = 0f, width = 920f, height = 620f).column(
                 id = "page",
                 modifier = Modifier.width(Dimension.FillMax).height(Dimension.FillMax),

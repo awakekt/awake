@@ -39,11 +39,11 @@ tools. Never let one stand in for the other.**
 | Is this value right? | `ShadcnReferenceTokenExpandedTest` vs generated `ShadcnReferenceTokens.kt` | A token equals the pinned reference exactly. |
 | Does the logic hold? | Unit tests, throwaway probes reading real `UiBounds`/pixels | The measured number is what you claim. |
 
-This repo shipped the confusion twice. `shadcn-parity.md` described itself as machine-readable
-ground truth while sourcing from `shadcn-compose`, a third-party port. The reference PNGs it
-cited came from the same port — one rendered the text "Vega", a shadcn-compose preset name that
-appears nowhere in real shadcn. Everything "verified against shadcn" was Awake compared to a
-lookalike.
+This repo shipped the confusion twice. The retired `shadcn-parity.md` described itself as
+machine-readable ground truth while sourcing from `shadcn-compose`, a third-party port. The
+reference PNGs it cited came from the same port — one rendered the text "Vega", a
+shadcn-compose preset name that appears nowhere in real shadcn. Everything "verified against
+shadcn" was Awake compared to a lookalike.
 
 **Check provenance before trusting any reference.** If you cannot name where an artifact came
 from and how to regenerate it, it is not ground truth.
@@ -66,6 +66,37 @@ When several visual changes land together (this is normal in a multi-agent pass)
 re-record at the end. Recording per-change bakes each intermediate state into the goldens and
 destroys the ability to attribute a later regression.
 
+### Step 3 means a predictive rule, not a plausible story
+
+"I changed blending, so the blended scenes moved" is a story. It fits any outcome, which is why
+it cannot catch a fix that is also breaking something. Instead state a rule that predicts the
+moved set **before** you look, then check it against every scene:
+
+> A scene moved **iff** it contains at least one `FilledPath`. — 16/16, zero exceptions.
+
+The rule must be a biconditional over the full scene list. A scene that moved without satisfying
+it, or satisfies it without moving, is an unexplained pixel: stop and investigate.
+
+This is not ceremony. Unifying the rasterizer's per-primitive composites onto one blend
+(2026-08-21) moved six signatures for the right reason *and* introduced a double-blend seam:
+two triangles sharing an edge both claim a sample sitting exactly on it, which the old overwrite
+hid. Re-recording on the strength of "translucent things changed, looks right" would have baked
+that seam into the goldens as correct. Writing the rule forced a per-scene audit, and the seam
+turned up as a scene that moved more than the rule allowed.
+
+Corollaries:
+
+- **A moved golden is a question, not an answer.** Never let re-recording be the fix.
+- **Test the mechanism, not the symptom.** "The alert looks right" passes happily while the same
+  change wrecks every vector path. Target the actual rule that changed.
+- **Measure, don't infer.** Print the pixel. `r=255 g=0 b=0 a=25` is a fact; "the alpha looks
+  lost" is a hunch, and hunches send you to patch code that was never broken.
+- **Follow the value to where it dies.** The alert's `0.1` alpha was correct in the style *and*
+  in the emitted primitive. The bug was a *second* primitive underneath. Dump the whole primitive
+  stream before concluding a value was dropped.
+- Keep "tests I did not touch still pass" separate from "baselines I re-recorded now pass". Only
+  the first is evidence.
+
 Two independent mechanisms exist and both must be updated:
 
 - **PNG goldens** — refreshed by the record flag.
@@ -77,6 +108,42 @@ Beware the failure message's shape: `assertSnapshotSignatures` throws on the *fi
 so it names one scene while many have drifted. `UiShowcaseLayoutSignatureTest` does the
 opposite — it always prints the complete matrix, most of which is unchanged. Diff the printed
 values against the recorded ones rather than trusting the headline.
+
+## The pinned capture is the authority — not the PNG, and not what you remember shadcn doing
+
+Every reference case ships a JSON next to its PNG holding the browser's own computed styles:
+
+```bash
+python3 -c "import json;print(json.load(open('docs/reference/shadcn-previews-local/alert-variants_light.json'))['nodes'])"
+```
+
+It gives exact `backgroundColor`, `borderColor`, `borderWidth`, `borderRadius`, `color`,
+`fontSize`, `lineHeight` and four-sided padding per node. Read it before concluding anything from
+a crop. `tools/shadcn-reference-app/src/ui/<component>.tsx` is the vendored source at the same
+pin and is the second half of the evidence — the class list explains *why* the numbers are what
+they are.
+
+Worked example, 2026-08-21. Awake's alert painted a `muted` background for the default variant
+and `destructive/10` behind a full-strength border for destructive. The capture said otherwise:
+
+| | default | destructive |
+|---|---|---|
+| `backgroundColor` | `oklch(1 0 0)` (white) | `rgba(0, 0, 0, 0)` — **transparent** |
+| `borderColor` | gray, 1px | destructive at **0.5** alpha |
+| `color` | black | destructive red |
+
+and `alert.tsx` explained it: `default: "bg-background text-foreground"`,
+`destructive: "border-destructive/50 text-destructive"` — which sets no background at all. All
+three colors were wrong, and so was a source comment in this repo asserting `AlertDescription` is
+`text-muted-foreground`; the pinned file has no color class there, so it inherits the root and a
+destructive alert's description is red.
+
+Two rules follow:
+
+- **Never translate from memory of shadcn.** Conventions changed between versions; `bg-*/10`
+  tinted alerts are an older one. Only the pin counts, and the pin is what the captures came from.
+- **A component can look plausible and still be wrong on every axis.** The tinted alert read as a
+  perfectly reasonable alert. Only the numbers exposed it.
 
 ## Parity is four dimensions, not one number
 
@@ -98,7 +165,7 @@ rasterizer, different font hinting). Each entry carries `awakeSize`, `referenceS
 **`comparedSize` gates whether `mismatchPct` means anything.** The two images are framed
 differently, so the harness compares their aligned intersection. When that intersection is a
 sliver — a slider comparison collapsing to 300x12, a dialog comparing 320x150 of a 1280x800
-capture — the percentage measures framing, not fidelity. `generate_parity_report.py` marks
+capture — the percentage measures framing, not fidelity. The manifest-backed report marks
 these `poor` and they must be read as **unmeasured**, not as failures.
 
 Demonstrated: the glyph-advance fix produced a large, plainly visible improvement in text
@@ -165,6 +232,27 @@ State it rather than implying coverage:
 - Real-GPU output is only spot-checked; most suites run the CPU rasterizer in `ui-testing`,
   which is a separate implementation from the Vulkan/WebGPU pipelines.
 
+### Where the CPU rasterizer deliberately matches the backends, and where it cannot
+
+Because that rasterizer backs the preview, snapshot and parity images, anywhere it diverges from
+the shipped pipeline it is a wrong *oracle*, not merely a wrong pixel — a whole class of bug that
+stays green. Two such divergences were closed on 2026-08-21 and are worth knowing:
+
+- **Compositing.** Every primitive now blends through one `PixelMap.blend` (straight-alpha
+  source-over). Plain quads, gradients and triangle meshes previously overwrote the destination
+  and parked the source alpha in the alpha channel, so any translucent fill rasterized fully
+  saturated.
+- **Vector antialiasing.** `FilledPath` tessellates through `tessellateFillAa` and interpolates
+  per-vertex alpha, matching `UiRunCoalescer`. It previously used the flat `tessellateFill()`,
+  so previews showed ragged curves and uneven stroke width the backends never render.
+
+`StrokedPath` is **intentionally** left un-antialiased, because `UiRunCoalescer` hands it the
+flat `tessellateStroke` too. Do not "improve" it here — the preview must neither under- nor
+overstate the backends. Fixing it means fixing the backend path first.
+
+When adding a primitive to the rasterizer, check which tessellator the coalescer gives it and
+match that, then pin the behaviour in `UiRasterizerBlendTest`.
+
 ## Where a test belongs, and when NOT to write one
 
 131 test files across `ui-core`, `ui-headless`, `ui-designsystem` and `ui-showcase`. The count is
@@ -224,7 +312,7 @@ tools/fetch_shadcn_reference.sh                      # pin the reference (run fi
 ./gradlew :awake:ui:ui-core:desktopTest
 ./gradlew :awake:ui:headless:desktopTest
 ./gradlew :samples:ui-showcase:desktopTest
-python3 tools/generate_parity_report.py              # after the comparison test
+scripts/awake ui report                              # after reference/preview/validate
 ```
 
 See `tools/README.md` for the generators and the full parity chain.
@@ -239,11 +327,60 @@ new renderer:
 awake ui reference --component checkbox --state rest --theme light
 awake ui preview --component checkbox --state rest --theme light --debug-layout
 awake ui validate --component checkbox --theme light
+awake ui report
+awake ui performance --component checkbox --theme light
 ```
 
 The command rejects states and visual configuration that lack a paired official reference and
 Awake preview. Do not interpret a generated Awake-to-Awake golden as parity, and do not use any
 record flag before reviewing the official crop heatmap.
+
+The report calls out per-node geometry, four-sided padding, sibling spacing, and border/radius
+facts when their semantic evidence exists. It is correct for a property to be `unmeasured`:
+never infer vertical padding from a text line box or infer border width from a low-resolution
+pixel diff. Add the missing semantic/style capture first.
+
+### Universal comparison triage
+
+Apply the same ordering to every component, state, and overlay: inspect the source crop, Awake
+crop, and heatmap; then reason from report artifacts → geometry → padding → spacing/relationships
+→ layout intent → style → paint. The image tells you where paint differs, while semantic and
+computed-style facts tell you what contract differs.
+
+- Parent bounds drift: inspect the recipe/container constraint or overlay placement.
+- Child bounds drift under a correct parent: inspect bound propagation, intrinsic sizing,
+  `fillMax*`, weight, and child modifiers. If that evidence indicates a generic measurement or
+  allocation defect, escalate it to `ui-core` rather than compensating in the recipe; preserve
+  the delta and add density-1-and-2 core layout coverage before retesting parity.
+- Padding/spacing/relationship drift: inspect the recipe's insets, arrangement, separators,
+  border-collapse, or anchor offset. Never hide it with comparison framing.
+- Layout-intent mismatch: translate the source flex/grid/min/max rule and use multi-probe
+  fixtures before claiming adaptive behavior.
+- Style drift after geometry passes: inspect owning tokens, border, radius, color, shadow, or
+  renderer path. A heatmap alone cannot settle these.
+- `unmeasured`, `partial`, missing artifact, behavior, or motion: coverage is incomplete; add
+  the relevant semantic/source/interaction evidence rather than guessing.
+
+Before claiming a correction, state the report's before/after expected–actual–delta values, the
+source rule, the lowest Awake ownership layer changed, inspected crop/heatmap paths, focused
+tests, and remaining incomplete evidence. This is universal policy, not a component-specific
+checklist.
+
+### Observed-bug handoff is mandatory
+
+Report every observed `drift`, `REVIEW`, behavioral failure, or blocking `unmeasured` field even
+when the task stops before a fix. Embed or attach the source crop, Awake crop, and heatmap using
+their absolute artifact paths, then summarize the component state/viewport, semantic IDs,
+expected → actual (`delta`), likely lowest owner, remaining uncertainty, and the next command.
+A mismatch percentage without those images and facts is not a bug report. A resolved issue needs
+the same evidence with a concise before/after summary.
+
+For nested components and overlays, source fixtures must put `data-parity-id` on both the
+container and every measured child; portal fixtures also require a real trigger/anchor ID. Awake
+uses the same IDs in its semantic tree. Declare their horizontal/vertical gaps or trigger-to-
+surface offsets in `tools/shadcn_parity_manifest.json`. The manifest is an
+explicit correspondence contract, not a request to auto-match elements by label or position.
+Use `skills/awake/commands/verify-ui-parity.md` for the complete registration workflow.
 
 ## Component-level cropping
 
@@ -252,7 +389,7 @@ The shadcn reference side is already component-cropped by Playwright through
 `tools/capture_shadcn_local.py`. For the Awake side, use
 `tools/compare_component_crops.py`: it resolves a semantic node ID from the generated preview
 JSON, applies the preview raster scale and optional logical padding, writes the crop and a
-heatmap, and records JSON metrics. Use `tools/ui_component_parity_cases.json` for reviewed
-pairings or start from `tools/ui_component_parity_cases.example.json` for new coverage. Cases
+heatmap, and records JSON metrics. Use `tools/shadcn_parity_manifest.json` for new coverage.
+The legacy crop manifest remains a compatibility input while existing cases migrate. Cases
 without a threshold are reported as `REVIEW`; this tool does not update baselines. Review the
 crop and diff before adding a threshold or enabling `--fail-on-mismatch`.

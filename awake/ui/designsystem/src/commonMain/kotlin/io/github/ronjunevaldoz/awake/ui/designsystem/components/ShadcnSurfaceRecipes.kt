@@ -4,12 +4,13 @@
 
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupPositionProvider
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupProperties
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupResult
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnCardSize
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnCardVariant
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnSurfaceVariant
@@ -19,6 +20,7 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnSurfaceStyle
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
 import io.github.ronjunevaldoz.awake.ui.headless.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.UiPopupDefaults
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.height
@@ -28,28 +30,31 @@ import io.github.ronjunevaldoz.awake.ui.headless.surface
 
 fun UiScope.shadcnSurface(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     variant: ShadcnSurfaceVariant? = null,
+    // Overrides the variant's own inset -- e.g. a rail-sized card that keeps the Default look
+    // but needs a tighter inset than the theme's panel padding.
+    contentPadding: Dp? = null,
     cacheKey: Any? = null,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = surface(
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = surface(
     id = id,
     modifier = modifier,
-    style = shadcnSurfaceStyle(themeValues, shadcnMetrics, variant),
+    style = shadcnSurfaceStyle(themeValues, shadcnMetrics, variant, contentPadding),
     cacheKey = cacheKey,
     content = content,
 )
 
 fun UiScope.shadcnCard(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     variant: ShadcnCardVariant = ShadcnCardVariant.Default,
     size: ShadcnCardSize = ShadcnCardSize.Default,
     cacheKey: Any? = null,
     header: (ColumnScope.() -> Unit)? = null,
     footer: (ColumnScope.() -> Unit)? = null,
-    body: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = surface(
+    body: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = surface(
     id = id,
     modifier = modifier,
     style = themeValues.shadcnCardStyle(variant, shadcnMetrics),
@@ -71,13 +76,13 @@ fun UiScope.shadcnCard(
 
 fun UiScope.shadcnPopover(
     id: String,
-    anchorSlot: UiBounds,
+    anchorSlot: Rectangle,
     expanded: Boolean,
     width: Dimension = Dimension.WrapContent,
     height: Dimension = Dimension.WrapContent,
     positionProvider: UiPopupPositionProvider = UiPopupDefaults.popover(),
     properties: UiPopupProperties = UiPopupProperties(),
-    content: ColumnScope.(slot: UiBounds) -> Unit,
+    content: ColumnScope.(slot: Rectangle) -> Unit,
 ): UiPopupResult = popup(
     anchorSlot = anchorSlot,
     expanded = expanded,

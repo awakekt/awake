@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.px
-import io.github.ronjunevaldoz.awake.ui.toPath
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.graphics2d.toPath
 import io.github.ronjunevaldoz.awake.vulkan.renderer.renderUiToTexture
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -34,7 +34,7 @@ class RendererHeadlessRoundedQuadChunkingTest {
             // stageColoredVertexTriangleMeshes/tessellateFillAa exact-clip path this test guards
             // (the un-clipped case instead uses the dedicated SDF pipeline, a different code path
             // not affected by this bug).
-            val clipBounds = UiBounds(4f, 4f, 248f, 248f)
+            val clipBounds = Rectangle(4f, 4f, 248f, 248f)
             val clipPath = UiShapeSpec.RoundedRectangle(16f.px).toPath(clipBounds)
 
             // Each rounded quad's AA-fringed tessellation (tessellateFillAa) produces well more
@@ -56,7 +56,7 @@ class RendererHeadlessRoundedQuadChunkingTest {
 
             val primitives = listOf(UiDrawPrimitive.ClipPathPush(clipPath, clipBounds)) +
                 roundedQuads +
-                listOf(UiDrawPrimitive.ClipPop(UiBounds(0f, 0f, 256f, 256f)))
+                listOf(UiDrawPrimitive.ClipPop(Rectangle(0f, 0f, 256f, 256f)))
 
             // Sanity check the fixture actually exercises the bug this test guards against -- if
             // this ever stops being true (e.g. DynamicMesh's capacity changes), the test data

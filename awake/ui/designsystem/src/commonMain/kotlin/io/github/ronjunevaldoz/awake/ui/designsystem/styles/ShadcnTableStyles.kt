@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem.styles
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnThemeValues
 import io.github.ronjunevaldoz.awake.ui.style.Style
 
@@ -11,15 +11,9 @@ internal fun shadcnTableStyle(values: ShadcnThemeValues): Style = Style {
     shape(values.shapes.md)
     contentPadding(8f.dp)
 }
-internal fun shadcnTableCellStyle(values: ShadcnThemeValues): Style = Style {
-    foreground(values.colors.foreground)
-    textSize(values.typography.body)
-}
-internal fun shadcnTableHeaderStyle(values: ShadcnThemeValues): Style = Style {
-    foreground(values.colors.mutedForeground)
-    textSize(values.typography.label)
-}
-internal fun shadcnTableCaptionStyle(values: ShadcnThemeValues): Style = Style {
-    foreground(values.colors.mutedForeground)
-    textSize(values.typography.caption)
-}
+internal fun shadcnTableCellStyle(values: ShadcnThemeValues): Style =
+    shadcnTextStyle(values.colors.foreground, values.typography.body)
+internal fun shadcnTableHeaderStyle(values: ShadcnThemeValues): Style =
+    shadcnTextStyle(values.colors.mutedForeground, values.typography.label)
+internal fun shadcnTableCaptionStyle(values: ShadcnThemeValues): Style =
+    shadcnTextStyle(values.colors.mutedForeground, values.typography.caption)

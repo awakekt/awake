@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.context
 
-import io.github.ronjunevaldoz.awake.ui.UiSpacing
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiInsets
 import io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.layouts.RowScope
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 
 internal class UiMeasurementRuntime(
     private val measureState: UiContextMeasureState = UiContextMeasureState(),
@@ -18,7 +18,7 @@ internal class UiMeasurementRuntime(
     }
 
     fun record(
-        slot: UiBounds,
+        slot: Rectangle,
         contributesToWrapWidth: Boolean = true,
         contributesToWrapHeight: Boolean = true,
         contributesToChildList: Boolean = true,
@@ -52,12 +52,12 @@ internal class UiMeasurementRuntime(
 
     fun measureColumnContent(
         width: Float,
-        gap: Float = UiSpacing.sm.toPx(),
+        gap: Float = 8f.dp.toPx(),
         insets: UiInsets = UiInsets.Zero,
         height: Float = UNBOUNDED_MAIN_AXIS,
         sourceContext: UiContext,
         wrapContentPass: Boolean = false,
-        content: ColumnScope.(slot: UiBounds) -> Unit,
+        content: ColumnScope.(slot: Rectangle) -> Unit,
     ): UiMeasuredContent = measureState.measureColumnContent(
         width = width,
         gap = gap,
@@ -75,7 +75,7 @@ internal class UiMeasurementRuntime(
         width: Float = UNBOUNDED_MAIN_AXIS,
         sourceContext: UiContext,
         wrapContentPass: Boolean = false,
-        content: RowScope.(slot: UiBounds) -> Unit,
+        content: RowScope.(slot: Rectangle) -> Unit,
     ): UiMeasuredContent = measureState.measureRowContent(
         height = height,
         gap = gap,

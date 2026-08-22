@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.math2d.size
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.testing.ui.rasterize
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
 import io.github.ronjunevaldoz.awake.testing.ui.uiTestSession
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
@@ -99,8 +102,8 @@ class CheckboxTest {
         )
         assertEquals(
             1,
-            frame.primitives.filterIsInstance<UiDrawPrimitive.StrokedPath>().size,
-            "checked state emits one stroked checkmark",
+            frame.primitives.filterIsInstance<UiDrawPrimitive.FilledPath>().size,
+            "checked state emits one antialiased filled checkmark",
         )
     }
 

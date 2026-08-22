@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.runtime
 
+import io.github.ronjunevaldoz.awake.scene.rendering.components.Light
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -83,6 +84,10 @@ data class SceneLight(
     val color: SceneVec3 = SceneVec3(1f, 1f, 1f),
     val intensity: Float = 1f,
     val type: Type = Type.Point,
+    /** Where a [Type.Point] light's contribution reaches zero, in world units. Ignored for a
+     * directional light. Defaults to the component's own default rather than repeating the
+     * number here, so raising it is a one-line change. */
+    val range: Float = Light().range,
 ) : SceneComponent {
     @Serializable
     enum class Type {
@@ -96,7 +101,12 @@ data class SceneLight(
 data class SceneMeshRenderer(
     val mesh: String,
     val material: String,
-) : SceneComponent
+    /** [io.github.ronjunevaldoz.awake.render.renderer.CullMode]'s own doc comment covers the
+     * trade-off -- `None` (default) preserves every existing scene's exact current behavior. */
+    val cullMode: CullMode = CullMode.None,
+) : SceneComponent {
+    enum class CullMode { None, Back, Front }
+}
 
 @Serializable
 @SerialName("spinControl")

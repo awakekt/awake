@@ -4,20 +4,20 @@ package io.github.ronjunevaldoz.awake.ui.scope
 
 import io.github.ronjunevaldoz.awake.ui.UiInputState
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
-import io.github.ronjunevaldoz.awake.ui.UiSpacing
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiInsets
 import io.github.ronjunevaldoz.awake.ui.context.UNBOUNDED_MAIN_AXIS
 import io.github.ronjunevaldoz.awake.ui.context.UiCursor
 import io.github.ronjunevaldoz.awake.ui.context.UiMeasuredContent
 import io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.layouts.RowScope
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 
 val UiPrimitiveScope.inputState: UiInputState
     get() = context.inputState
 
-fun UiPrimitiveScope.frameBounds(): UiBounds = context.frameBoundsInternal()
+fun UiPrimitiveScope.frameBounds(): Rectangle = context.frameBoundsInternal()
 
 fun UiPrimitiveScope.frameDeltaSeconds(): Float = context.frameDeltaSecondsInternal()
 
@@ -48,17 +48,20 @@ fun UiPrimitiveScope.onScrollConsumed() = context.onScrollConsumedInternal()
 fun UiPrimitiveScope.requestCursor(cursor: UiCursor) = context.requestCursorInternal(cursor)
 
 /**
- * @param height available main-axis space, or null when the caller has no bound to offer. A caller
- * that knows its viewport must pass it: a `FillMax`-height child resolves against whatever it is
- * given, so falling through to the unbounded default reports a height nothing can be laid out
- * against.
+ * Runs [content] through a trial column measure pass and reports its measured size without
+ * drawing it.
+ *
+ * [height] is the available main-axis space, or `null` when the caller has no bound to offer. A
+ * caller that knows its viewport must pass it: a `FillMax`-height child resolves against whatever
+ * it is given, so falling through to the unbounded default reports a height nothing can be laid
+ * out against.
  */
 fun UiPrimitiveScope.measureColumnContent(
     width: Float,
-    gap: Float = UiSpacing.sm.toPx(),
+    gap: Float = 8f.dp.toPx(),
     insets: UiInsets = UiInsets.Zero,
     height: Float? = null,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
+    content: ColumnScope.(slot: Rectangle) -> Unit,
 ): UiMeasuredContent = context.measureColumnContentInternal(
     width = width,
     gap = gap,
@@ -71,7 +74,7 @@ fun UiPrimitiveScope.measureRowContent(
     height: Float,
     gap: Float,
     insets: UiInsets = UiInsets.Zero,
-    content: RowScope.(slot: UiBounds) -> Unit,
+    content: RowScope.(slot: Rectangle) -> Unit,
 ): UiMeasuredContent = context.measureRowContentInternal(
     height = height,
     gap = gap,

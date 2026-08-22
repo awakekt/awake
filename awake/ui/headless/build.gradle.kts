@@ -16,13 +16,17 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:core:math2d"))
+            implementation(project(":awake:core:math"))
+            implementation(project(":awake:core:color"))
+            implementation(project(":awake:core:input"))
             // Public headless contracts may use API values without exposing the runtime.
             api(project(":awake:ui:graphics"))
             api(project(":awake:ui:animation"))
             api(project(":awake:ui:text"))
             implementation(project(":awake:ui:ui-core"))
             implementation(project(":awake:ui:heroicons"))
-            implementation(project(":awake:core"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

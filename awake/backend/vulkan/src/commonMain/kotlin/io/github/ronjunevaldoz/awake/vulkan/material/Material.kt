@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan.material
 
+import io.github.ronjunevaldoz.awake.render.renderer.UniformFields
 import io.github.ronjunevaldoz.awake.vulkan.device.GraphicsDevice
 import io.github.ronjunevaldoz.awake.vulkan.enums.VkShaderStageFlagBits
 import io.github.ronjunevaldoz.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
@@ -22,37 +23,26 @@ import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorSetLayoutBin
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorType
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkMemoryAllocateInfo
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.VulkanMaterialBinding
 import io.github.ronjunevaldoz.awake.vulkan.texture.ShadowMap
 import io.github.ronjunevaldoz.awake.vulkan.texture.Texture
 import io.github.ronjunevaldoz.awake.render.material.Material as RenderMaterial
 
 /**
- * Phase 2 (renderer abstraction): owns the MVP-matrix uniform buffer and the descriptor
- * set that binds it (plus a [Texture]'s sampler/view) to the pipeline -- extracted verbatim
- * from `VulkanApplication`'s `createDescriptorSetLayout`/`createUniformBuffer`/
- * `createDescriptorPool`/`createDescriptorSet`/`updateUniformBuffer` functions and their
- * backing fields.
- *
- * Split into two phases like [Mesh][io.github.ronjunevaldoz.awake.vulkan.mesh.Mesh]/[Texture]
- * are lazily constructed relative to `VulkanApplication`'s other eager state, but for a
- * different reason here: [descriptorSetLayout] must exist *before* the graphics pipeline is
- * created (the pipeline layout references it), while the descriptor set itself can't be
- * written until a real [Texture] exists to read `sampler`/`imageView` from. So the
- * constructor only creates the layout; [createResources] (called once the texture is ready)
- * stores the texture binding. Per-frame/per-draw uniform buffers and descriptor sets are
- * then created lazily when the renderer knows which frame-in-flight slot and draw occurrence
- * this material is being used for.
+ * Owns the MVP-matrix uniform buffer and the descriptor set that binds it (plus a [Texture]'s
+ * sampler/view) to the pipeline. Construction is split in two: the constructor only creates
+ * [descriptorSetLayout], since a graphics pipeline needs that layout to exist before it's
+ * built; [createResources] (called once a real [Texture] exists) stores the texture binding.
+ * Per-frame/per-draw uniform buffers and descriptor sets are created lazily as the renderer
+ * requests specific frame/draw slots.
  */
 class Material(
     graphicsDevice: GraphicsDevice,
     private val uniformFloatCount: Int = DEFAULT_UNIFORM_FLOAT_COUNT,
-    /** Non-null only for a [io.github.ronjunevaldoz.awake.vulkan.renderer.Renderer] built with
-     * shadow support (see that class's own `shadowMap` doc comment) -- when present, every
-     * material gets 2 extra descriptor bindings (3: shadow depth image, 4: its sampler) bound
-     * to this SAME shared [ShadowMap], same "every material gets it whether or not its own
-     * shader samples it" reasoning the base-color texture bindings (1/2) already use. `null`
-     * (default) keeps every existing Material caller's descriptor-set layout/uniform buffer
-     * exactly as it was before shadows existed. */
+    /** Non-null only when the renderer has shadow support -- every material then gets 2 extra
+     * descriptor bindings (3: shadow depth image, 4: sampler) bound to this shared [ShadowMap],
+     * same "every material gets it regardless of whether its shader samples it" pattern the
+     * base-color bindings (1/2) already use. */
     private val shadowMap: ShadowMap? = null,
 ) : RenderMaterial {
     private val graphicsDevice = graphicsDevice
@@ -162,11 +152,18 @@ class Material(
      * the renderer's frame path uses [updateUniformBuffer] with explicit frame/draw slots so
      * one shared material can be drawn multiple times without later draws overwriting earlier
      * uniforms before the GPU consumes them. */
-    override fun updateUniformBuffer(mvp: FloatArray) {
-        updateUniformBuffer(frameIndex = 0, drawSlotIndex = 0, values = mvp)
+    override fun updateUniformBuffer(uniformFloats: FloatArray) {
+        updateUniformBuffer(frameIndex = 0, drawSlotIndex = 0, values = uniformFloats)
     }
 
-    fun updateUniformBuffer(frameIndex: Int, drawSlotIndex: Int, values: FloatArray) {
+    /** Returns the slot it wrote into, as the shared render layer's opaque binding handle -- the
+     * caller (`prepareDrawCalls`) needs exactly that to record the draw, and resolving it here
+     * costs nothing extra (the slot was already looked up to write). */
+    fun updateUniformBuffer(
+        frameIndex: Int,
+        drawSlotIndex: Int,
+        values: FloatArray,
+    ): VulkanMaterialBinding {
         // Catches an oversized write here, in Kotlin, with the actual float counts involved --
         // the alternative is vkMapMemory rejecting it deep in native code as a bare
         // VUID-vkMapMemory-size-00681 with no indication of which Material/DrawCall was at
@@ -178,6 +175,7 @@ class Material(
         }
         val slot = uniformSlot(frameIndex, drawSlotIndex)
         VulkanBuffers.writeBufferMemoryFloats(device, slot.uniformBufferMemory.handle, 0, values)
+        return slot
     }
 
     override fun bind(commandBuffer: Long, pipelineLayout: Long) {
@@ -209,13 +207,16 @@ class Material(
         val descriptorSet: DescriptorSetHandle,
         val uniformBuffer: BufferHandle,
         val uniformBufferMemory: DeviceMemoryHandle,
-    )
+    ) : VulkanMaterialBinding {
+        override val descriptorSetHandle: Long get() = descriptorSet.handle
+    }
 
     companion object {
         /** A bare MVP matrix -- every material before skinning existed. A skinned material
          * requests `16 + 16 * jointCount` (MVP + joint palette) instead, see
          * `Renderer.createMaterial`'s own `uniformFloatCount` parameter. */
-        private const val DEFAULT_UNIFORM_FLOAT_COUNT = 16
+        /** One MVP matrix -- a plain-colored mesh's whole uniform block. */
+        private val DEFAULT_UNIFORM_FLOAT_COUNT = UniformFields.Mvp.floats
 
         /** metallicRoughness, normal, occlusion, emissive -- textured.wgsl's binding numbers,
          * in [PbrImageViews.asList]'s order. */

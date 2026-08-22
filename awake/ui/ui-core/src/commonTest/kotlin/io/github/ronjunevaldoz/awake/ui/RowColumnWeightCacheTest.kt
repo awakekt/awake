@@ -3,7 +3,7 @@
 package io.github.ronjunevaldoz.awake.ui
 
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.context.UiMeasureTrialStats
 import io.github.ronjunevaldoz.awake.ui.context.UiWeightCacheConsistencyCheck
@@ -13,8 +13,9 @@ import io.github.ronjunevaldoz.awake.ui.layouts.surface
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.modifier.weight
+import io.github.ronjunevaldoz.awake.ui.modifier.verticalScroll
 import io.github.ronjunevaldoz.awake.ui.modifier.width
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -34,7 +35,7 @@ class RowColumnWeightCacheTest {
     fun cacheHitSkipsTrialAndProducesIdenticalLayout() {
         val ui = UiContext()
 
-        fun draw(): UiBounds = ui.createColumn(x = 0f, y = 0f, width = 400f, height = 400f).column(
+        fun draw(): Rectangle = ui.createColumn(x = 0f, y = 0f, width = 400f, height = 400f).column(
             id = "outer",
             modifier = Modifier.width(Dimension.Fixed(200f.px)).height(Dimension.Fixed(120f.px)),
             cacheKey = "stable",
@@ -69,8 +70,8 @@ class RowColumnWeightCacheTest {
     fun cacheKeyChangePicksUpNewWeightedChildAnswer() {
         val ui = UiContext()
 
-        fun draw(useWeight: Boolean, cacheKey: String): List<UiBounds> {
-            val slots = mutableListOf<UiBounds>()
+        fun draw(useWeight: Boolean, cacheKey: String): List<Rectangle> {
+            val slots = mutableListOf<Rectangle>()
             ui.createColumn(x = 0f, y = 0f, width = 400f, height = 400f).column(
                 id = "outer",
                 modifier = Modifier.width(Dimension.Fixed(300f.px)).height(Dimension.Fixed(120f.px)),
@@ -165,5 +166,49 @@ class RowColumnWeightCacheTest {
         } finally {
             UiWeightCacheConsistencyCheck.enabled = false
         }
+    }
+
+    /**
+     * A scrollable column trialled its content on every frame no matter what -- `scrollPanel`
+     * planned weighted slots unconditionally, so a `cacheKey` reached it and did nothing. That is
+     * the failure this guards: not a wrong layout, but an opt-in that silently opted out.
+     */
+    @Test
+    fun scrollableColumnHonoursCacheKey() {
+        val ui = UiContext()
+        val scrollState = UiScrollState()
+
+        fun draw(cacheKey: Any?): Rectangle =
+            ui.createColumn(x = 0f, y = 0f, width = 400f, height = 400f).column(
+                id = "scroller",
+                cacheKey = cacheKey,
+                modifier = Modifier
+                    .width(Dimension.Fixed(200f.px))
+                    .height(Dimension.Fixed(120f.px))
+                    .verticalScroll(scrollState),
+            ) {
+                surface(id = "child", modifier = Modifier.height(Dimension.Fixed(30f.px))) { }
+            }
+
+        fun trialsForSecondFrame(cacheKey: Any?): Int {
+            ui.beginFrame(UiFrameInput(viewportWidth = 400f, viewportHeight = 400f, input = testSnapshot()))
+            draw(cacheKey)
+            ui.finishFrame()
+
+            ui.beginFrame(UiFrameInput(viewportWidth = 400f, viewportHeight = 400f, input = testSnapshot()))
+            UiMeasureTrialStats.reset()
+            UiMeasureTrialStats.enabled = true
+            draw(cacheKey)
+            UiMeasureTrialStats.enabled = false
+            ui.finishFrame()
+            return UiMeasureTrialStats.trialCount
+        }
+
+        val uncached = trialsForSecondFrame(null)
+        val cached = trialsForSecondFrame("stable")
+        assertTrue(
+            cached < uncached,
+            "cacheKey did not reach the scroll path: $cached trials cached vs $uncached uncached",
+        )
     }
 }

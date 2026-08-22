@@ -13,6 +13,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:core:math2d"))
             api(project(":awake:ui:graphics"))
             api(project(":awake:ui:ui-core"))
         }

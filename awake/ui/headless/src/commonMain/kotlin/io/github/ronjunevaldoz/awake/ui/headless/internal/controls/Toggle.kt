@@ -2,23 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless.internal.controls
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.font
 import io.github.ronjunevaldoz.awake.ui.theme
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.childAbsolute
 import io.github.ronjunevaldoz.awake.ui.compositeContent
-import io.github.ronjunevaldoz.awake.ui.headless.UiButtonVariant
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.paintSurface
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.resolveInteractiveSurface
-import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.interact
+import io.github.ronjunevaldoz.awake.ui.foundation.interact
+import io.github.ronjunevaldoz.awake.ui.foundation.toggled
 import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.withIntrinsicLabelWidth
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.UiTextOverflow
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextOverflow
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.layouts.AbsoluteScope
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
@@ -40,7 +40,7 @@ private inline fun UiPrimitiveScope.toggleInternal(
     // crossinline because the content is now dispatched inside compositeContent's lambda, which a
     // non-local return out of would skip -- leaving the suppression depth counter raised for the
     // rest of the frame.
-    crossinline drawContent: AbsoluteScope.(contentSlot: UiBounds, resolved: ResolvedStyle) -> Unit,
+    crossinline drawContent: AbsoluteScope.(contentSlot: Rectangle, resolved: ResolvedStyle) -> Unit,
 ): Boolean {
     val theme = theme
     // Reads no ambient theme -- shadcnToggle's shadcnToggleStyle already supplies a complete
@@ -79,7 +79,7 @@ private inline fun UiPrimitiveScope.toggleInternal(
         modifier = sizedModifier,
     )
 
-    val newChecked = if (interaction.clicked && enabled) !checked else checked
+    val newChecked = interaction.toggled(checked)
     if (newChecked != checked) {
         onCheckedChange(newChecked)
     }

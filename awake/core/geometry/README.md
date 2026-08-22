@@ -1,6 +1,6 @@
 # Awake Core Geometry
 
-Portable mesh geometry math for [Awake](../../README.md) — no file I/O, no asset-format
+Portable mesh geometry math for [Awake](../../../README.md) — no file I/O, no asset-format
 dependency, no platform-specific code. Compiles for every target this engine ships
 (desktop/Android/iOS/wasmJs), so it's usable directly at runtime, not just from an offline
 tool.

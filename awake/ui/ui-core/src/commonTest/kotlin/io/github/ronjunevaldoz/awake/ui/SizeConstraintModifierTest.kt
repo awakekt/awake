@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
@@ -23,7 +23,7 @@ import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
  */
 class SizeConstraintModifierTest {
 
-    private fun claim(modifier: io.github.ronjunevaldoz.awake.ui.modifier.UiModifier): UiBounds {
+    private fun claim(modifier: io.github.ronjunevaldoz.awake.ui.modifier.UiModifier): Rectangle {
         val ui = UiContext()
         ui.beginFrame(UiFrameInput(viewportWidth = 500f, viewportHeight = 300f, input = testSnapshot()))
         return ui.createAbsolute(x = 0f, y = 0f).claimModifiedSlot(modifier)

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.ui.api.layout.UiInsets
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 
 /**
  * Flat semantic record for one UI element emitted during a frame.
@@ -40,11 +41,11 @@ enum class UiSemanticRole {
  */
 data class UiSemanticNode(
     val role: UiSemanticRole,
-    val bounds: UiBounds,
+    val bounds: Rectangle,
     val id: String? = null,
     val label: String? = null,
-    val contentBounds: UiBounds? = null,
-    val clippedBounds: UiBounds? = null,
+    val contentBounds: Rectangle? = null,
+    val clippedBounds: Rectangle? = null,
     val truncated: Boolean = false,
     val lineCount: Int = 0,
     val selected: Boolean? = null,
@@ -57,6 +58,13 @@ data class UiSemanticNode(
     val foregroundToken: String? = null,
     val borderColor: Color? = null,
     val borderToken: String? = null,
+    /** Resolved style padding, retained so diagnostics do not infer it from text bounds. */
+    val contentPadding: UiInsets? = null,
+    /** Requested layout behavior before slots are resolved, for parity diagnostics. */
+    val widthStrategy: String? = null,
+    val heightStrategy: String? = null,
+    /** Resolved physical border width for preview/parity diagnostics. */
+    val borderWidth: Float? = null,
     val borderRadius: Float? = null,
     val shadowToken: String? = null,
     val textStyleToken: String? = null,

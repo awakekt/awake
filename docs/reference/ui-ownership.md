@@ -11,18 +11,18 @@ sample-specific adapters.
 
 These are placement rules, not style preferences.
 
-1. `awake:engine:ui:ui-core` may expose only runtime mechanics: geometry resolution, drawing,
+1. `:awake:ui:ui-core` may expose only runtime mechanics: geometry resolution, drawing,
    anchoring, clipping, slots, input, focus, state, and a neutral fallback implementation. It
    must not expose component recipes, variants, or branded policy.
-2. `awake:engine:ui:ui-headless` owns generic leaf-widget behavior and generic visual-state
+2. `:awake:ui:headless` owns generic leaf-widget behavior and generic visual-state
    contracts built on `ui-core`. It must not own property-form, inspector, tooling-shell, or
    other multi-widget composition; those belong in `ui-dsl` (when that focused composition layer
    is present). It also must not own named variants or a design language.
-3. `awake:engine:ui:ui-designsystem` owns branded or strongly opinionated recipes and every
+3. `:awake:ui:designsystem` owns branded or strongly opinionated recipes and every
    named authored theme intended for direct app/sample use.
 4. `samples:*` and future game modules own runtime-bound adapters, authored overlays,
    debug HUD wiring, and sample-specific compositions.
-5. `UiBounds` is an immutable resolved-bounds contract in `awake:ui:graphics` — the de-facto
+5. `Rectangle` is an immutable resolved-bounds contract in `awake:ui:graphics` — the de-facto
    contract module (a dedicated `ui-api` Gradle module does not exist; references to "ui-api"
    in this doc mean the contract *role*, physically hosted by `graphics` today). It is shared
    by Core, Headless, Design System, renderers, and tests; it is not a Headless widget or a
@@ -76,14 +76,14 @@ out of Headless rather than letting a temporary exception become an ownership le
 
 ## Module Responsibilities
 
-| Module | Responsibility | Examples |
-|---|---|---|
-| `awake:engine:ui:ui-api` | Immutable cross-layer values and theme-value contracts | `UiBounds`, `Dimension`, `Dp`, `Sp`, color/shape/typography contracts |
-| `awake:engine:ui:ui-core` | Runtime layout, drawing, input, state, and neutral component-style fallback | low-level layout, clipping, slots, pixel resolution, `CoreUiComponentStyles` |
-| `awake:engine:ui:ui-headless` | Reusable leaf-widget behavior and neutral `Style` application | button mechanics, checkbox, text field, slider, primitive panels |
-| `awake:engine:ui:ui-dsl` | Neutral multi-widget and tooling composition when needed | property rows/lists, inspector scaffolds, tooling shells |
-| `awake:engine:ui:ui-designsystem` | Branded or strongly opinionated recipes | shadcn-style skins, `ShadcnDefaultTheme`, `DarkUiTheme`, `LightUiTheme`, branded presets |
-| `samples:*` or game modules | Sample/game adapters and authored usage | scene inspector bindings, demo-specific overlays, debug HUD wiring |
+| Module                                                                                                        | Responsibility                                                              | Examples                                                                                 |
+|---------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| `ui-api` *(role, not a Gradle module — see rule 5)*                                                           | Immutable cross-layer values and theme-value contracts                      | `Rectangle`, `Dimension`, `Dp`, `Sp`, color/shape/typography contracts                    |
+| `:awake:ui:ui-core`                                                                                           | Runtime layout, drawing, input, state, and neutral component-style fallback | low-level layout, clipping, slots, pixel resolution, `CoreUiComponentStyles`             |
+| `:awake:ui:headless`                                                                                          | Reusable leaf-widget behavior and neutral `Style` application               | button mechanics, checkbox, text field, slider, primitive panels                         |
+| `ui-dsl` *(does not currently exist — deleted 2026-07-24, see "headless/Designsystem Content Pairing" above)* | Neutral multi-widget and tooling composition, if reintroduced               | property rows/lists, inspector scaffolds, tooling shells                                 |
+| `:awake:ui:designsystem`                                                                                      | Branded or strongly opinionated recipes                                     | shadcn-style skins, `ShadcnDefaultTheme`, `DarkUiTheme`, `LightUiTheme`, branded presets |
+| `samples:*` or game modules                                                                                   | Sample/game adapters and authored usage                                     | scene inspector bindings, demo-specific overlays, debug HUD wiring                       |
 
 ## Primitive Vs Composition
 
@@ -145,28 +145,76 @@ Theme *values* and component visual policy are deliberately separate:
   component-local style files map brand-specific variants and interaction states to `Style`. It
   may depend internally on Core for style and local infrastructure, but a component recipe must
   use Headless for layout, rendering, input, interaction, and semantics; it must not call Core
-  widget primitives directly. It is the only module allowed to hardcode `Color(...)`/`Color.fromOklch(...)` literals, and only inside
+  widget primitives directly. It is the only module allowed to hardcode `Color(...)`/
+  `Color.fromOklch(...)` literals, and only inside
   theme-definition files (`ShadcnTheme.kt`, `PresetUiThemes.kt`, `OklchColor.kt`) -- not inside
   individual component files.
 - `samples:*` select a named design-system theme and must not hardcode `Color(...)` for anything
   a supplied theme or visual recipe already covers.
 
+## Consuming From A Sample, Game, Or Tool
+
+Not limited to `samples:studio` — this applies to every consumer: games, tools, demos.
+
+**Rule: consumer code renders visible UI only through `ui-designsystem` (`shadcn*` recipes).
+It must never import `ui-core` directly, and must never author its own `Style { ... }` to
+restyle a component.** `ui-headless` layout and state APIs (`column`, `row`, `box`,
+`Modifier`, `Arrangement`, `weight`, `padding`, `remember*`) remain fine to import directly for
+structure — they carry no branded visual policy, so importing them isn't a styling escape
+hatch. See `skills/awake-ui-shadcn-consuming/SKILL.md` for the full skill.
+
+This mirrors Jetpack Compose's own layering, checked directly against Compose's real module
+boundaries (not by analogy): `Column`/`Row`/`Box`/`Arrangement` live in
+`androidx.compose.foundation.layout`, inside the *same* `compose-foundation` artifact that
+also owns unstyled interaction behavior (`clickable`, `BasicText`) — Compose does not split
+layout into a module separate from unstyled widget behavior. Only `Modifier` (the interface)
+sits one layer below, in `compose-ui`. A Compose app that uses Material still imports
+Foundation's `Column`/`Row` directly — Material doesn't re-wrap them — while never touching
+`compose-ui` internals or building its own low-level draw calls to fake a Material look.
+The consumer rule above is that same shape: reach into `ui-headless` freely for structure,
+never into the `compose-ui`-equivalent layer (`ui-core`), and get all visible styling from the
+design-system layer.
+
+### `ui-headless` is not `compose-foundation` (corrected 2026-08-21)
+
+That argument is sound for layout and state, and this doc used to extend it into a flat
+`ui-core`/`ui-headless`/`ui-designsystem` ≈ `compose-ui`/`compose-foundation`/Material mapping.
+The middle term does not hold. Of `ui-headless`'s 47 public functions, roughly 12 have a real
+Foundation counterpart (`box`/`row`/`column`/`spacer`, `text` → `BasicText`, `textField`/
+`textarea` → `BasicTextField`, `canvas` → `Canvas`, `icon`/`textureQuad` → `Image`, `surface` ≈
+`Box` + `background`/`border`/`clip`) and 12 are infrastructure. The other **21 are controls
+Foundation does not contain at all** — `button`, `checkbox`, `radio`, `switch`, `slider`,
+`progress`, `separator`, `select`, `menuItem`, `toggle`, `toast`, `spinner`, `avatar` and the
+rest. Compose ships every one of those in Material, not Foundation; Foundation deliberately
+stops below controls.
+
+So `ui-headless` is Foundation-shaped for layout/text/draw and **Material-shaped for its
+control set, with the styling removed**. Its real upstream for those controls is Radix — which
+is what shadcn itself is built on, as the pinned reference id records
+(`shadcn-6261bd8-new-york-v4-radix-1.4.2`) — not Material and not Foundation.
+
+This matters beyond naming, because "no new API unless real Jetpack Compose has it" is
+unanswerable when aimed at a control: Foundation has no `Button` to check against, and
+Material's `Button(onClick, colors, elevation, …)` fuses visual parameters this layer is
+forbidden to carry. Check a control's API shape against Radix/Base UI anatomy, and layout and
+modifier APIs against Foundation.
+
 ## Concrete Placement Examples
 
-| API shape | Correct home | Why |
-|---|---|---|
-| `UiSlot.anchored(anchor, width, height, margin)` | `ui-core` | pure placement math returning a slot |
-| `button`, `checkbox`, `slider` | `ui-headless` | generic reusable leaf widgets |
-| `UiColorTokens`, `UiShapeTokens`, `UiTypography` | `ui-api` | immutable, runtime-free theme value contracts |
-| neutral fallback theme resolution and `CoreUiComponentStyles` | `ui-core` | generic runtime fallback, not branded policy |
-| neutral theme/text local providers | `ui-core` | runtime mechanics shared by every skin, with no branded API |
-| `Style` / generic interaction-state rules | `ui-headless` | widget-state contract without branded names |
-| `UiScope.shadcnTheme(...)` and shadcn `themeValues` access | `ui-designsystem` | branded scope and recipe-facing ambient access |
-| `PropertyList`, `PropertyRow`, `propertyCheckbox`, generic inspector scaffolds | `ui-dsl` | neutral multi-widget/tooling composition, not a leaf widget |
-| `ShadcnDefaultTheme`, `DarkUiTheme`, `LightUiTheme` | `ui-designsystem` | named authored themes belong above engine core |
-| `ShadcnPanelStyle`, `Primary`/`Ghost`/`Outline` variants | `ui-designsystem` | branded visual policy, not engine primitive |
-| hardcoded `Color(...)` token values | `ui-designsystem` theme-definition files only | everywhere else reads `theme.tokens.*` |
-| `HelloCubeHud`, `SceneInspectorBindings`, demo overlays | sample/game module | runtime-bound authored usage |
+| API shape                                                                      | Correct home                                  | Why                                                         |
+|--------------------------------------------------------------------------------|-----------------------------------------------|-------------------------------------------------------------|
+| `UiSlot.anchored(anchor, width, height, margin)`                               | `ui-core`                                     | pure placement math returning a slot                        |
+| `button`, `checkbox`, `slider`                                                 | `ui-headless`                                 | generic reusable leaf widgets                               |
+| `UiColorTokens`, `UiShapeTokens`, `UiTypography`                               | `ui-api`                                      | immutable, runtime-free theme value contracts               |
+| neutral fallback theme resolution and `CoreUiComponentStyles`                  | `ui-core`                                     | generic runtime fallback, not branded policy                |
+| neutral theme/text local providers                                             | `ui-core`                                     | runtime mechanics shared by every skin, with no branded API |
+| `Style` / generic interaction-state rules                                      | `ui-headless`                                 | widget-state contract without branded names                 |
+| `UiScope.shadcnTheme(...)` and shadcn `themeValues` access                     | `ui-designsystem`                             | branded scope and recipe-facing ambient access              |
+| `PropertyList`, `PropertyRow`, `propertyCheckbox`, generic inspector scaffolds | `ui-dsl`                                      | neutral multi-widget/tooling composition, not a leaf widget |
+| `ShadcnDefaultTheme`, `DarkUiTheme`, `LightUiTheme`                            | `ui-designsystem`                             | named authored themes belong above engine core              |
+| `ShadcnPanelStyle`, `Primary`/`Ghost`/`Outline` variants                       | `ui-designsystem`                             | branded visual policy, not engine primitive                 |
+| hardcoded `Color(...)` token values                                            | `ui-designsystem` theme-definition files only | everywhere else reads `theme.tokens.*`                      |
+| `HelloCubeHud`, `SceneInspectorBindings`, demo overlays                        | sample/game module                            | runtime-bound authored usage                                |
 
 These API shapes are specifically discouraged in reusable UI modules:
 
@@ -230,6 +278,7 @@ Decided via Q&A, applies going forward -- existing violations are not retroactiv
 this rule, only new/moved files must comply.
 
 **`ui-core`**
+
 - No new files directly under `ui/` root. Every new type goes in a themed subfolder
   (`modifier/`, `style/`, `layout/`, `scope/`, `theme/`, `context/`, `font/`, `graphics/`, or a
   new one if none fit). The remaining root files (`Canvas.kt`, `ScrollContainers.kt`, etc. —
@@ -237,10 +286,11 @@ this rule, only new/moved files must comply.
   model to copy -- the migration plan is audit row E2/pkg-3 in
   `docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md`.
 - Public runtime types in `ui-core` are `Ui`-prefixed (`UiModifier`, `UiAnchor`, ...) -- the
-  prefix signals an engine runtime type. Cross-layer immutable contracts such as `UiBounds`
+  prefix signals an engine runtime type. Cross-layer immutable contracts such as `Rectangle`
   belong in `ui-api`, not Core.
 
 **`ui-headless`**
+
 - No `Ui`-prefix requirement -- the module name already scopes these as generic widgets
   (`Buttons.kt`, `Surface.kt`, `Spinner.kt`).
 - Subfolder by interaction category: anything that takes user input goes under `input/`
@@ -249,6 +299,7 @@ this rule, only new/moved files must comply.
   `Skeleton`) stays at the top level of `headless/`.
 
 **`ui-designsystem`**
+
 - Every component file is prefixed with its brand name (`Shadcn*` today). Components
   currently live flat under `components/` since only one brand exists -- not yet moved into a
   `components/shadcn/` subfolder, since there is nothing to disambiguate from yet. The rule for
@@ -365,7 +416,7 @@ Awake also build-enforces authored-unit usage in:
 
 - `:awake:ui:ui-headless`
 - `:awake:ui:ui-designsystem`
-- `:awake:engine:game-authoring`
+- `:awake:engine:bootstrap`
 - `:samples:ui-showcase`
 
 Those modules run `verifyUiAuthoredUnits`, which currently rejects numeric `.px` literals in
@@ -376,11 +427,11 @@ Those modules run `verifyUiAuthoredUnits`, which currently rejects numeric `.px`
 Three different string-identity params exist across the UI API. They look similar but serve
 unrelated purposes -- never treat one as a substitute for another.
 
-| Param | Type | Required? | Purpose | Lifetime |
-|---|---|---|---|---|
-| `id: String` | positional widget param | required, no default | Cross-frame `WidgetState` lookup key -- dropdown open/close, animation progress, any per-widget state that must survive frame-to-frame | Stable for the widget's lifetime; changing it resets its state |
-| `testTag: String?` | `UiModifier` field | optional, `null` default | Debug/test identification only -- has zero effect on rendering, state, or measurement | N/A -- cosmetic |
-| `id` / `cacheKey` (on `row()`/`column()`) | opt-in perf params | optional, both `null` | Cross-frame trial-measure cache key (see `docs/tasks/archive/2026-08-02-trial-measure-cross-frame-cache.md`) -- `cacheKey` must change whenever the weighted-child structure could change | Opt-in; omitting both means no caching, safest default |
+| Param                                     | Type                    | Required?                | Purpose                                                                                                                                                                                   | Lifetime                                                       |
+|-------------------------------------------|-------------------------|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------|
+| `id: String`                              | positional widget param | required, no default     | Cross-frame `WidgetState` lookup key -- dropdown open/close, animation progress, any per-widget state that must survive frame-to-frame                                                    | Stable for the widget's lifetime; changing it resets its state |
+| `testTag: String?`                        | `UiModifier` field      | optional, `null` default | Debug/test identification only -- has zero effect on rendering, state, or measurement                                                                                                     | N/A -- cosmetic                                                |
+| `id` / `cacheKey` (on `row()`/`column()`) | opt-in perf params      | optional, both `null`    | Cross-frame trial-measure cache key (see `docs/tasks/archive/2026-08-02-trial-measure-cross-frame-cache.md`) -- `cacheKey` must change whenever the weighted-child structure could change | Opt-in; omitting both means no caching, safest default         |
 
 Rule: if a widget owns state (open/closed, progress, selection), it takes a required
 `id: String`. If you only need to find/assert on a node in a test, use `testTag` via the

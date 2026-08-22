@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.otpDigitsOnly as primitiveOtpDigitsOnly
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.otpShowsSeparatorBefore as primitiveOtpShowsSeparatorBefore
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
+import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.style.Style
 
 /**
@@ -16,8 +19,8 @@ fun UiScope.otpInput(
     id: String,
     value: String,
     length: Int,
-    modifier: Modifier = Modifier,
-    fieldModifier: Modifier = Modifier.width(1f.dp),
+    modifier: UiModifier = Modifier,
+    fieldModifier: UiModifier = Modifier.width(1f.dp),
     enabled: Boolean = true,
     groupSize: Int = 0,
     horizontalArrangement: Arrangement = Arrangement.Start,
@@ -41,9 +44,9 @@ fun UiScope.otpInput(
             value = value,
             modifier = fieldModifier,
             style = Style {
-                background(io.github.ronjunevaldoz.awake.core.colors.Color.Transparent)
-                foreground(io.github.ronjunevaldoz.awake.core.colors.Color.Transparent)
-                border(0f.dp, io.github.ronjunevaldoz.awake.core.colors.Color.Transparent)
+                background(io.github.ronjunevaldoz.awake.core.color.Color.Transparent)
+                foreground(io.github.ronjunevaldoz.awake.core.color.Color.Transparent)
+                border(0f.dp, io.github.ronjunevaldoz.awake.core.color.Color.Transparent)
                 contentPadding(0f.dp)
             },
             enabled = enabled,

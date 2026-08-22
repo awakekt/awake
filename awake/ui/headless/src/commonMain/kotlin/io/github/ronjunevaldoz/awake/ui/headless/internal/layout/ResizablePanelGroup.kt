@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless.internal.layout
 
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.theme
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.WidgetState
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.boundDerivedContent
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
+import io.github.ronjunevaldoz.awake.ui.foundation.interact
 import io.github.ronjunevaldoz.awake.ui.context.UiCursor
 import io.github.ronjunevaldoz.awake.ui.layouts.AbstractUiScope
 import io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope
@@ -21,7 +22,7 @@ import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.modifier.withSizeFallback
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.scope.claimModifiedSlot
 import io.github.ronjunevaldoz.awake.ui.scope.isMeasuring
 import io.github.ronjunevaldoz.awake.ui.scope.pointerDown
@@ -31,7 +32,7 @@ import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
 import io.github.ronjunevaldoz.awake.ui.scope.requestCursor
 import io.github.ronjunevaldoz.awake.ui.style.MutableStyleState
 import io.github.ronjunevaldoz.awake.ui.style.Style
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 import kotlin.math.floor
 
 /** Axis a [resizablePanelGroup] lays panels/handles out along -- react-resizable-panels'
@@ -83,7 +84,7 @@ class ResizablePanelGroupScope internal constructor(
     context: UiContext,
     val direction: ResizableDirection,
     private val groupState: WidgetState,
-    private val bounds: UiBounds,
+    private val bounds: Rectangle,
     private val availableMainAxisPx: Float,
     private val countingOnly: Boolean,
     private val panelSpecs: List<ResizablePanelSpec> = emptyList(),
@@ -106,13 +107,13 @@ class ResizablePanelGroupScope internal constructor(
     private var cursorMain = if (direction == ResizableDirection.Horizontal) bounds.x else bounds.y
     private var handleIndex = 0
 
-    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): UiBounds {
+    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): Rectangle {
         val w = resolveAxis(width, bounds.width)
         val h = resolveAxis(height, bounds.height)
         val slot = if (direction == ResizableDirection.Horizontal) {
-            UiBounds(cursorMain, bounds.y, w, h)
+            Rectangle(cursorMain, bounds.y, w, h)
         } else {
-            UiBounds(bounds.x, cursorMain, w, h)
+            Rectangle(bounds.x, cursorMain, w, h)
         }
         cursorMain += if (direction == ResizableDirection.Horizontal) w else h
         return slot
@@ -132,12 +133,12 @@ class ResizablePanelGroupScope internal constructor(
         defaultSize: Float,
         minSize: Float = 0.1f,
         maxSize: Float = 1f,
-        content: ColumnScope.(slot: UiBounds) -> Unit,
-    ): UiBounds {
+        content: ColumnScope.(slot: Rectangle) -> Unit,
+    ): Rectangle {
         val fractionKey = "$id.fraction"
         if (countingOnly) {
             collectedPanels.add(ResizablePanelSpec(fractionKey, minSize, maxSize, defaultSize))
-            return UiBounds(0f, 0f, 0f, 0f)
+            return Rectangle(0f, 0f, 0f, 0f)
         }
         val fraction = groupState.get(fractionKey, defaultSize)
         val sizePx = (fraction * availableMainAxisPx).coerceAtLeast(0f)
@@ -156,11 +157,11 @@ class ResizablePanelGroupScope internal constructor(
     /** A draggable divider between the [panel] immediately before and after it. Real drag/resize
      * mechanics only -- the visible line and optional grip are the shadcn skin's job (see
      * `shadcnResizableHandle` in ui-designsystem). */
-    fun handle(id: String, withHandle: Boolean = false, style: Style = Style.Empty): UiBounds {
+    fun handle(id: String, withHandle: Boolean = false, style: Style = Style.Empty): Rectangle {
         if (countingOnly) {
             handleCount++
             collectedHandleIds.add(id)
-            return UiBounds(0f, 0f, 0f, 0f)
+            return Rectangle(0f, 0f, 0f, 0f)
         }
         val modifier = if (direction == ResizableDirection.Horizontal) {
             Modifier.width(RESIZABLE_HANDLE_THICKNESS).height(Dimension.FillMax)
@@ -279,7 +280,7 @@ fun UiPrimitiveScope.resizablePanelGroup(
     direction: ResizableDirection = ResizableDirection.Horizontal,
     modifier: UiModifier = Modifier,
     content: ResizablePanelGroupScope.() -> Unit,
-): UiBounds {
+): Rectangle {
     val slot = claimModifiedSlot(modifier.withSizeFallback(Dimension.FillMax, Dimension.FillMax))
     val groupState = widgetState(id)
     val mainAxisTotal = if (direction == ResizableDirection.Horizontal) slot.width else slot.height

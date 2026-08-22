@@ -157,7 +157,7 @@ repo-local agent file.
 
 Awake keeps a reusable sample here:
 
-- [skills/awake/templates/awake-domain-engineer.template.md](/Users/ronvaldoz/StudioProjects/awaken/skills/awake/templates/awake-domain-engineer.template.md)
+- [skills/awake/templates/awake-domain-engineer.template.md](../../skills/awake/templates/awake-domain-engineer.template.md)
 
 For most repos, one good template is enough as long as the catalog explains ownership
 boundaries clearly.

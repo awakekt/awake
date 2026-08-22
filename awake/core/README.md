@@ -27,13 +27,13 @@ Split out of `awake:core` as they grew independent test surfaces and target-spec
 
 - [`awake:core:geometry`](geometry/README.md) — portable mesh geometry math (simplification,
   quantized vertex decoding), no file I/O.
-- `awake:core:animation` — skeletal animation runtime (`Skeleton`/`Skin`/`AnimationClip`/
-  `AnimationPose`, crossfade blending). No README yet — flag if you need one written.
+- [`awake:core:animation`](animation/README.md) — skeletal animation runtime (`Skeleton`/`Skin`/`AnimationClip`/
+  `AnimationPose`, crossfade blending).
 
 ## Proposed future modules
 
 Not yet built. See
-[`docs/tasks/2026-08-17-awake-core-module-split-proposal.md`](../../docs/tasks/2026-08-17-awake-core-module-split-proposal.md)
+[`docs/reference/module-architecture.md`](../../docs/reference/module-architecture.md)
 for the full proposal (dependency graph, per-module scope) before starting work on any of
 these — `physics`, `assets`, `audio`, `platform`, `time`, `diagnostics`, and extracting
 `math`/`input` out of this module into their own. When one of these actually gets built,

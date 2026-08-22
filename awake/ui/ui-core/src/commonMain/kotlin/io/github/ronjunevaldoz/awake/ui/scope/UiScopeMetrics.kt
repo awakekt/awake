@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.scope
 
-import io.github.ronjunevaldoz.awake.ui.UiDensity
+import io.github.ronjunevaldoz.awake.core.math2d.UiDensity
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.api.layout.pixelPerfectPixel
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.core.math2d.pixelPerfectPixel
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.layout.place
 import io.github.ronjunevaldoz.awake.ui.layouts.BoxScope
@@ -20,7 +20,7 @@ import io.github.ronjunevaldoz.awake.ui.layouts.resolveAgainst
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.theme.TextStyle
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 
 fun UiPrimitiveScope.resolveGlyphPx(
     font: UiFont = context.current(io.github.ronjunevaldoz.awake.ui.context.LocalFont),
@@ -46,7 +46,7 @@ fun UiPrimitiveScope.debugScopeLabel(): String {
     return if (name.isNullOrBlank()) typeName else "'$name' ($typeName)"
 }
 
-fun UiPrimitiveScope.claimModifiedSlot(modifier: UiModifier = Modifier): UiBounds {
+fun UiPrimitiveScope.claimModifiedSlot(modifier: UiModifier = Modifier): Rectangle {
     // A weighted child's own width/height defaults to WrapContent below (no Dimension set by
     // weight() itself, see UiModifier), which Dimension.resolveAgainst() can't handle -- weight
     // only sizes the row/column's main axis, so on that axis "unset" must resolve like FillMax
@@ -105,7 +105,7 @@ private fun UiPrimitiveScope.defaultAlignment(): UiAlignment = when (this) {
  * growing the container guarantees this can't regress a single existing call site; it just
  * silently gives up centering for that (already degenerate) one.
  */
-private fun UiPrimitiveScope.crossAxisAlignmentContainer(containerSlot: UiBounds): UiBounds = when (this) {
+private fun UiPrimitiveScope.crossAxisAlignmentContainer(containerSlot: Rectangle): Rectangle = when (this) {
     is RowScope -> containerSlot.copy(height = height.coerceAtLeast(containerSlot.height))
     is ColumnScope -> containerSlot.copy(width = width.coerceAtLeast(containerSlot.width))
     else -> containerSlot

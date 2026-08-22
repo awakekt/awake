@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.testing.ui
 
 import io.github.ronjunevaldoz.awake.ui.UiSemanticNode
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -18,7 +18,7 @@ class OpticalCenteringTest {
         val centeredNode = UiSemanticNode(
             id = "title",
             role = UiSemanticRole.Text,
-            bounds = UiBounds(x = 0f, y = 0f, width = 100f, height = 12f),
+            bounds = Rectangle(x = 0f, y = 0f, width = 100f, height = 12f),
             label = "CENTERED",
         )
 
@@ -32,7 +32,7 @@ class OpticalCenteringTest {
         val shiftedNode = UiSemanticNode(
             id = "off-center",
             role = UiSemanticRole.Text,
-            bounds = UiBounds(x = 0f, y = 50f, width = 100f, height = 30f),
+            bounds = Rectangle(x = 0f, y = 50f, width = 100f, height = 30f),
             label = "OFF",
         )
 

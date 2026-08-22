@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupPositionProvider
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupProperties
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupResult
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupSize
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.layout.horizontalPx
 import io.github.ronjunevaldoz.awake.ui.layout.place
 import io.github.ronjunevaldoz.awake.ui.layout.verticalPx
@@ -78,7 +79,7 @@ object UiPopupDefaults {
 }
 
 fun UiPrimitiveScope.popup(
-    anchorSlot: UiBounds,
+    anchorSlot: Rectangle,
     expanded: Boolean,
     width: Dimension = Dimension.WrapContent,
     height: Dimension = Dimension.WrapContent,
@@ -86,19 +87,18 @@ fun UiPrimitiveScope.popup(
     modifier: UiModifier = Modifier,
     positionProvider: UiPopupPositionProvider = UiPopupDefaults.dropdown(),
     properties: UiPopupProperties = UiPopupProperties(),
-    id: String? = null,
+    id: String,
     fadeDurationMs: Float = 150f,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
+    content: ColumnScope.(slot: Rectangle) -> Unit,
 ): UiPopupResult {
     // Real AnimatedVisibility-equivalent (see UiAnimatedVisibility.kt) instead of the previous
     // bare `if (!expanded) return` instant-unmount: keep computing position/content -- wrapped in
     // a fading graphics-layer alpha -- until the exit tween settles at zero, so show/hide fades
-    // instead of snapping. stateId falls back through [id]/[modifier.testTag] so callers that
-    // already pass a stable testTag (or the new [id]) get correctly independent fade state per
-    // popup instance instead of colliding on one shared, unlabeled key.
-    val stateId = id ?: modifier.testTag ?: "popup"
+    // instead of snapping. [id] keys the fade state per popup instance -- it used to be optional
+    // with a literal "popup" fallback, which silently collided every un-ided popup onto one
+    // shared fade-animation bucket; id is required now, so every popup gets independent state.
     val alpha = animateFloatTween(
-        id = "__popup_alpha__$stateId",
+        id = "__popup_alpha__$id",
         target = if (expanded) 1f else 0f,
         initial = if (expanded) 1f else 0f,
         durationMs = fadeDurationMs,
@@ -157,14 +157,18 @@ fun UiPrimitiveScope.popup(
         placedSlot
     }
 
+    if (!isMeasuring()) {
+        registerOverlayOcclusion(popupSlot)
+    }
+
     // Outside-click dismissal only makes sense while genuinely expanded -- during the exit fade
     // window (expanded already false, still visuallyActive) the caller already decided to close
     // it, so this must not re-report a dismiss every frame of the fade.
     val dismissed = expanded &&
         properties.dismissOnClickOutside &&
         pointerDown() &&
-        !hitTest(anchorBoundsSlot) &&
-        !hitTest(popupSlot)
+        !context.hitTest(anchorBoundsSlot) &&
+        !context.hitTest(popupSlot)
 
     if (dismissed) {
         return UiPopupResult(slot = popupSlot, dismissed = true)
@@ -216,14 +220,14 @@ private fun resolvePopupDimension(
  * never renders outside [windowBounds].
  */
 private fun placePopupRelativeToAnchor(
-    anchorBounds: UiBounds,
-    windowBounds: UiBounds,
+    anchorBounds: Rectangle,
+    windowBounds: Rectangle,
     popupSize: UiPopupSize,
     anchorAlignment: UiAlignment,
     popupAlignment: UiAlignment,
     offsetX: Float,
     offsetY: Float,
-): UiBounds {
+): Rectangle {
     var resolvedAnchorAlignment = anchorAlignment
     var resolvedPopupAlignment = popupAlignment
 
@@ -294,16 +298,16 @@ private fun placePopupRelativeToAnchor(
 }
 
 private fun placePopupRelativeToAnchor(
-    anchorBounds: UiBounds,
+    anchorBounds: Rectangle,
     popupSize: UiPopupSize,
     anchorAlignment: UiAlignment,
     popupAlignment: UiAlignment,
     offsetX: Float,
     offsetY: Float,
-): UiBounds {
+): Rectangle {
     val anchorPoint = anchorBounds.alignmentPoint(anchorAlignment)
     val popupPoint = popupSize.alignmentOffset(popupAlignment)
-    return UiBounds(
+    return Rectangle(
         x = anchorPoint.first - popupPoint.first + offsetX,
         y = anchorPoint.second - popupPoint.second + offsetY,
         width = popupSize.width,
@@ -346,7 +350,7 @@ private fun UiAlignment.flipHorizontal(): UiAlignment = when (this) {
     else -> this
 }
 
-private fun UiBounds.alignmentPoint(alignment: UiAlignment): Pair<Float, Float> = when (alignment) {
+private fun Rectangle.alignmentPoint(alignment: UiAlignment): Pair<Float, Float> = when (alignment) {
     UiAlignment.TopStart -> x to y
     UiAlignment.TopCenter -> x + width / 2f to y
     UiAlignment.TopEnd -> x + width to y
@@ -371,11 +375,11 @@ private fun UiPopupSize.alignmentOffset(alignment: UiAlignment): Pair<Float, Flo
         UiAlignment.BottomEnd -> width to height
     }
 
-private fun UiBounds.clampWithin(bounds: UiBounds): UiBounds {
+private fun Rectangle.clampWithin(bounds: Rectangle): Rectangle {
     // coerceAtLeast(bounds.x/.y) guards the case where the popup is wider/taller than the
     // window itself (max would fall below min and coerceIn would throw) -- pin to the window's
     // near edge instead of crashing.
     val clampedX = x.coerceIn(bounds.x, (bounds.x + bounds.width - width).coerceAtLeast(bounds.x))
     val clampedY = y.coerceIn(bounds.y, (bounds.y + bounds.height - height).coerceAtLeast(bounds.y))
-    return UiBounds(clampedX, clampedY, width, height)
+    return Rectangle(clampedX, clampedY, width, height)
 }

@@ -44,7 +44,7 @@ class ShadcnSidebarMenuItemTest {
         }.semantics
         val node = requireSemanticNode(semantics, id = "item", role = UiSemanticRole.Button)
         assertEquals(
-            io.github.ronjunevaldoz.awake.core.colors.Color.Transparent,
+            io.github.ronjunevaldoz.awake.core.color.Color.Transparent,
             node.backgroundColor,
             "an inactive sidebar menu item should stay chromeless until hovered",
         )

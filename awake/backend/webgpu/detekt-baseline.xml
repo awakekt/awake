@@ -2,58 +2,24 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>CyclomaticComplexMethod:RendererDraw3D.kt$internal fun Renderer.performDraw(camera: Camera, drawCalls: List&lt;DrawCall>, light: SceneLight)</ID>
-    <ID>CyclomaticComplexMethod:RendererDrawUi.kt$internal fun Renderer.performDrawUi(primitives: List&lt;UiDrawPrimitive>, font: UiFont?)</ID>
-    <ID>LongMethod:RendererDraw3D.kt$internal fun Renderer.performDraw(camera: Camera, drawCalls: List&lt;DrawCall>, light: SceneLight)</ID>
-    <ID>LongMethod:RendererDrawUi.kt$internal fun Renderer.performDrawUi(primitives: List&lt;UiDrawPrimitive>, font: UiFont?)</ID>
-    <ID>LongParameterList:Renderer.kt$Renderer$( graphicsDevice: GraphicsDevice, swapchainManager: SwapchainManager, renderPipeline: RenderPipeline, /** The one [io.github.ronjunevaldoz.awake.render.mesh.VertexFormat] [renderPipeline] was * built for -- this backend only ever has the one 3D pipeline (see this class's own doc * comment), so a [DrawCall] whose mesh uses any other format is skipped rather than drawn * through a pipeline that expects a different vertex layout (see [performDraw]'s doc * comment). Mirrors Vulkan's `Renderer.pipelinesByFormat`, minus the "more than one * pipeline" part -- no format table needed when there's only ever one entry. */ internal val primaryVertexFormat: VertexFormat = VertexFormat.PositionColorUv, internal val lineRenderPipeline: LineRenderPipeline, internal val uiShaderCode: ByteArray, internal val uiGlyphShaderCode: ByteArray, internal val uiTextureShaderCode: ByteArray, internal val uiRoundedQuadShaderCode: ByteArray, commandPool: Long, maxFramesInFlight: Int, /** A `GPUPrimitiveTopology.LineList` companion of [renderPipeline] (same shader/vertex * layout, drawn via each mesh's own derived [io.github.ronjunevaldoz.awake.webgpu.mesh * .Mesh.lineIndexBuffer] instead of its triangle index buffer) -- see [wireframe]'s doc * comment for the "why LineList, not a barycentric shader" rationale. `null` (default) * for every game that doesn't opt into `WebGpuGameApplication`'s `wireframeSupport`. */ internal val wireframeRenderPipeline: RenderPipeline? = null, )</ID>
-    <ID>MagicNumber:Mesh.kt$3</ID>
-    <ID>MagicNumber:Mesh.kt$4</ID>
-    <ID>MagicNumber:Mesh.kt$5</ID>
-    <ID>MagicNumber:Mesh.kt$6</ID>
-    <ID>MagicNumber:Renderer.kt$Renderer$255</ID>
-    <ID>MagicNumber:Renderer.kt$Renderer$256</ID>
-    <ID>MagicNumber:Renderer.kt$Renderer$3</ID>
-    <ID>MagicNumber:Renderer.kt$Renderer$4</ID>
-    <ID>MagicNumber:RendererDrawUi.kt$1e9f</ID>
-    <ID>MagicNumber:RendererDrawUi.kt$2e9f</ID>
-    <ID>MagicNumber:RendererDrawUi.kt$3</ID>
-    <ID>MagicNumber:RendererDrawUi.kt$4</ID>
-    <ID>MagicNumber:RendererDrawUi.kt$5</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$10</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$11</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$12</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$13</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$14</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$3</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$4</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$5</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$6</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$7</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$8</ID>
-    <ID>MagicNumber:RendererVertexWriters.kt$9</ID>
-    <ID>MagicNumber:WebGpuCanvasHost.kt$100.0</ID>
-    <ID>MagicNumber:WebGpuCanvasHost.kt$1000.0</ID>
-    <ID>MagicNumber:WebGpuCanvasHost.kt$32.0</ID>
-    <ID>NestedBlockDepth:RendererDrawUi.kt$internal fun Renderer.performDrawUi(primitives: List&lt;UiDrawPrimitive>, font: UiFont?)</ID>
+    <ID>CyclomaticComplexMethod:WebGpuEngine.kt$WebGpuEngine$override suspend fun createBackendResources(window: Any): BackendResources</ID>
+    <ID>LongMethod:RendererDraw3D.kt$internal fun Renderer.performDraw(camera: Lens, drawCalls: List&lt;DrawCall>, light: SceneLight)</ID>
+    <ID>LongMethod:WebGpuEngine.kt$WebGpuEngine$override suspend fun createBackendResources(window: Any): BackendResources</ID>
+    <ID>LongParameterList:RendererDraw3D.kt$( encoder: io.ygdrasil.webgpu.GPURenderPassEncoder, opaqueDraws: PreparedDraws, primaryPipeline: PipelineHandle, viewProjection: io.github.ronjunevaldoz.awake.core.math.Mat4, cameraEye: io.github.ronjunevaldoz.awake.core.math.Vec3f, light: SceneLight, renderingContext: io.ygdrasil.webgpu.RenderingContext, )</ID>
+    <ID>LongParameterList:RendererOpaqueDraws.kt$( drawCall: DrawCall, cameraEye: Vec3f, mvp: Mat4, lightUniforms: SceneLightUniforms, primary: PrimaryPipelineBinding, slotIndex: Int, )</ID>
+    <ID>LongParameterList:RendererOpaqueDraws.kt$( drawCall: DrawCall, cameraEye: Vec3f, viewProjection: Mat4, lightUniforms: SceneLightUniforms, primary: PrimaryPipelineBinding, slotIndex: Int, )</ID>
+    <ID>LongParameterList:WebGpuFrameContext.kt$WebGpuFrameContext$( private val renderer: Renderer, override val encoder: GPURenderPassEncoder, override val groupedDrawCalls: Map&lt;out PipelineHandle, List&lt;PreparedDraw>>, override val transparentDrawCalls: List&lt;PreparedDraw> = emptyList(), override val primaryPipeline: PipelineHandle, override val viewProjection: Mat4, override val cameraEye: Vec3f, override val light: SceneLight, override val surfaceWidth: Int, override val surfaceHeight: Int, )</ID>
+    <ID>MemberNameEqualsClassName:Texture.kt$Texture$val texture: GPUTexture</ID>
+    <ID>SpreadOperator:RendererOpaqueDraws.kt$(drawCall.extraUniformFloats, *ParticleExtraUniformLayout.fields)</ID>
+    <ID>TooGenericExceptionCaught:WebGpuEngine.kt$e: Exception</ID>
     <ID>TooManyFunctions:Renderer.kt$Renderer : RenderRenderer</ID>
-    <ID>TooManyFunctions:RendererDrawUi.kt$io.github.ronjunevaldoz.awake.webgpu.renderer.RendererDrawUi.kt</ID>
     <ID>TooManyFunctions:WebGpuCanvasHost.kt$io.github.ronjunevaldoz.awake.webgpu.application.WebGpuCanvasHost.kt</ID>
-    <ID>UnusedParameter:Material.kt$Material$texture: Texture</ID>
     <ID>UnusedParameter:RenderPipeline.kt$RenderPipeline$commandBuffer: Long</ID>
     <ID>UnusedParameter:TransferContext.kt$TransferContext$block: (Long) -> Unit</ID>
-    <ID>UnusedPrivateProperty:Material.kt$Material$graphicsDevice: GraphicsDevice</ID>
-    <ID>UnusedPrivateProperty:Material.kt$Material$private val uniformFloatCount: Int = 16</ID>
     <ID>UnusedPrivateProperty:Mesh.kt$Mesh$runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit</ID>
     <ID>UnusedPrivateProperty:RenderPipeline.kt$RenderPipeline$descriptorSetLayout: DescriptorSetLayoutHandle</ID>
     <ID>UnusedPrivateProperty:RenderPipeline.kt$RenderPipeline$fragShaderCode: ByteArray</ID>
-    <ID>UnusedPrivateProperty:Renderer.kt$Renderer$commandPool: Long</ID>
     <ID>UnusedPrivateProperty:Renderer.kt$Renderer$maxFramesInFlight: Int</ID>
-    <ID>UnusedPrivateProperty:Texture.kt$Texture$data: ByteArray</ID>
-    <ID>UnusedPrivateProperty:Texture.kt$Texture$graphicsDevice: GraphicsDevice</ID>
-    <ID>UnusedPrivateProperty:Texture.kt$Texture$height: Int</ID>
-    <ID>UnusedPrivateProperty:Texture.kt$Texture$runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit</ID>
-    <ID>UnusedPrivateProperty:Texture.kt$Texture$width: Int</ID>
     <ID>UnusedPrivateProperty:TransferContext.kt$TransferContext$graphicsDevice: GraphicsDevice</ID>
   </CurrentIssues>
 </SmellBaseline>

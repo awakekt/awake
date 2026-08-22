@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.ui.font
 
 /**
  * A minimal, hand-authored 8x8 monospace bitmap font -- deliberately not `msdf-bmfont-xml`/
- * MSDF rendering (see docs/MVP_PLAN.md's custom-UI decision log): this is a debug-catalog
+ * MSDF rendering (see docs/reference/decision-log.md's custom-UI entries): this is a debug-catalog
  * label, not user-facing typography, so a real signed-distance-field toolchain + shader
  * would be solving a problem this UI doesn't have yet.
  *

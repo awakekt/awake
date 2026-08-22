@@ -2,24 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless.internal.text
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.UiShape
 import io.github.ronjunevaldoz.awake.ui.UiTextEditAction
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.font
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
+import io.github.ronjunevaldoz.awake.ui.canvas
 import io.github.ronjunevaldoz.awake.ui.graphics.clip
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
-import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.interact
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.foundation.interact
 import io.github.ronjunevaldoz.awake.ui.layout.inset
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.modifier.withSizeFallback
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.scope.clearFocusIfMatches
 import io.github.ronjunevaldoz.awake.ui.scope.frameDeltaSeconds
 import io.github.ronjunevaldoz.awake.ui.scope.inputState
@@ -32,8 +33,13 @@ import io.github.ronjunevaldoz.awake.ui.scope.resolveStyle
 import io.github.ronjunevaldoz.awake.ui.style.MutableStyleState
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.ui.theme
-import io.github.ronjunevaldoz.awake.ui.toPx
-import io.github.ronjunevaldoz.awake.ui.withGraphicsLayerAlpha
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.ui.headless.withDisabledAlpha
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextOverflow
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextWrap
+import io.github.ronjunevaldoz.awake.ui.foundation.text.layoutBitmapText
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiBitmapTextLayout
 
 private const val TEXT_FIELD_CARET_BLINK_PERIOD_SECONDS = 1f
 private const val TEXT_FIELD_CARET_WIDTH_PX = 1.5f
@@ -106,15 +112,18 @@ fun UiPrimitiveScope.textarea(
     // Reference's `disabled:opacity-50` treatment, same single group-alpha shape as
     // `Buttons.kt`'s `buttonSlotInternal` -- covers the fill/border paint and the typed
     // text/caret as one composited unit so nothing drawn on top of the fill gets double-dimmed.
-    return withGraphicsLayerAlpha(if (enabled) 1f else 0.5f) {
-        emitFillAndBorder(
-            slot = interaction.slot,
-            fillColor = resolvedWithInteraction.background ?: theme.colors.background,
-            radiusPx = resolvedWithInteraction.shape.toPx(),
-            borderWidth = if (focused || isError) 1.5f.dp else resolvedWithInteraction.borderWidth,
-            borderColor = borderColor,
-            shapeSpec = resolvedWithInteraction.shapeSpec,
-        )
+    val fillColor = resolvedWithInteraction.background ?: theme.colors.background
+    return withDisabledAlpha(enabled) {
+        canvas(interaction.slot) {
+            drawFillAndBorder(
+                slot = interaction.slot,
+                fillColor = fillColor,
+                radiusPx = resolvedWithInteraction.shape.toPx(),
+                borderWidth = resolvedWithInteraction.borderWidth,
+                borderColor = borderColor,
+                shapeSpec = resolvedWithInteraction.shapeSpec,
+            )
+        }
 
         val resolvedFont = font
         val glyphPx = fontHeight
@@ -138,7 +147,7 @@ fun UiPrimitiveScope.textarea(
         // lands on whatever was actually rendered (last frame's scrolled position), not this frame's
         // not-yet-recomputed one.
         val lastScrollOffsetY = cursorState.get("scrollOffsetY", 0f)
-        val lastDrawSlot = UiBounds(
+        val lastDrawSlot = Rectangle(
             contentSlot.x,
             contentSlot.y - lastScrollOffsetY,
             contentSlot.width,
@@ -263,7 +272,7 @@ fun UiPrimitiveScope.textarea(
             scrollOffsetY = scrollOffsetY.coerceIn(0f, maxScrollY)
         }
         cursorState.set("scrollOffsetY", scrollOffsetY)
-        val drawSlot = UiBounds(
+        val drawSlot = Rectangle(
             contentSlot.x,
             contentSlot.y - scrollOffsetY,
             contentSlot.width,
@@ -308,18 +317,22 @@ fun UiPrimitiveScope.textarea(
                         drawSlot,
                         cursor,
                     )
-                    emitFillAndBorder(
-                        slot = UiBounds(
-                            caretPos.first,
-                            caretPos.second,
-                            TEXT_FIELD_CARET_WIDTH_PX,
-                            glyphPx,
-                        ),
-                        fillColor = resolvedWithInteraction.foreground ?: theme.colors.foreground,
-                        radiusPx = 0f,
-                        borderWidth = UiShape.none,
-                        borderColor = Color.Transparent,
+                    val caretSlot = Rectangle(
+                        caretPos.first,
+                        caretPos.second,
+                        TEXT_FIELD_CARET_WIDTH_PX,
+                        glyphPx,
                     )
+                    val caretColor = resolvedWithInteraction.foreground ?: theme.colors.foreground
+                    canvas(caretSlot) {
+                        drawFillAndBorder(
+                            slot = caretSlot,
+                            fillColor = caretColor,
+                            radiusPx = 0f,
+                            borderWidth = UiShape.none,
+                            borderColor = Color.Transparent,
+                        )
+                    }
                 }
             }
         }
@@ -376,7 +389,7 @@ private fun cursorPositionPx(
     font: UiFont,
     glyphPx: Float,
     lineGap: Float,
-    contentSlot: UiBounds,
+    contentSlot: Rectangle,
     cursor: Int,
 ): Pair<Float, Float> {
     val (lineIdx, colIdx) = cursorToLineAndCol(layout, value, cursor)
@@ -396,7 +409,7 @@ private fun indexForPointerXY(
     font: UiFont,
     glyphPx: Float,
     lineGap: Float,
-    contentSlot: UiBounds,
+    contentSlot: Rectangle,
     pointerX: Float,
     pointerY: Float,
 ): Int {

@@ -2,19 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless.internal.controls
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.canvas
 import io.github.ronjunevaldoz.awake.ui.context.sliderValueFromPointerX
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.paintSurface
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.resolveInteractiveSurface
-import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.interact
+import io.github.ronjunevaldoz.awake.ui.foundation.interact
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.modifier.withSizeFallback
@@ -23,8 +24,8 @@ import io.github.ronjunevaldoz.awake.ui.scope.pointerX
 import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.ui.theme
-import io.github.ronjunevaldoz.awake.ui.toPx
-import io.github.ronjunevaldoz.awake.ui.withGraphicsLayerAlpha
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.ui.headless.withDisabledAlpha
 
 // Dp, not raw px: added to/subtracted from `slot`/`trackSlot` coordinates that are already
 // density-scaled, so a raw literal would render half-size at 2x.
@@ -88,7 +89,7 @@ fun UiPrimitiveScope.slider(
         defaults = Style.Empty,
         focused = false,
     )
-    val trackSlot = UiBounds(
+    val trackSlot = Rectangle(
         trackX,
         slot.y + (slot.height - trackHeightPx) / 2f,
         trackWidth,
@@ -99,32 +100,36 @@ fun UiPrimitiveScope.slider(
     val knobCenterX = trackSlot.x + handleWidth
     // See `ShadcnButtons.kt`'s `buttonSlotInternal` doc for why this is one group alpha
     // around the whole painted widget (track/fill/knob/label), not a per-color tweak.
-    withGraphicsLayerAlpha(if (enabled) 1f else 0.5f) {
+    withDisabledAlpha(enabled) {
         paintSurface(
             slot = trackSlot,
             resolved = surface.resolved.copy(shapeSpec = UiShapeSpec.Pill),
         )
         if (handleWidth > 0f) {
-            emitFillAndBorder(
-                slot = UiBounds(
-                    trackSlot.x,
-                    trackSlot.y,
-                    handleWidth,
-                    trackSlot.height,
-                ),
-                // resolved.foreground is the caller's accent color (shadcnSliderStyle sets
-                // `foreground(colors.primary)`) -- the token is only a fallback for a bare
-                // Style.Empty caller, not a hardcoded override.
-                fillColor = surface.resolved.foreground ?: theme.colors.primary,
-                radiusPx = 0f,
-                borderWidth = UiShape.none,
-                borderColor = Color.Transparent,
-                shapeSpec = UiShapeSpec.Pill,
+            val fillSlot = Rectangle(
+                trackSlot.x,
+                trackSlot.y,
+                handleWidth,
+                trackSlot.height,
             )
+            // resolved.foreground is the caller's accent color (shadcnSliderStyle sets
+            // `foreground(colors.primary)`) -- the token is only a fallback for a bare
+            // Style.Empty caller, not a hardcoded override.
+            val fillColor = surface.resolved.foreground ?: theme.colors.primary
+            canvas(fillSlot) {
+                drawFillAndBorder(
+                    slot = fillSlot,
+                    fillColor = fillColor,
+                    radiusPx = 0f,
+                    borderWidth = UiShape.none,
+                    borderColor = Color.Transparent,
+                    shapeSpec = UiShapeSpec.Pill,
+                )
+            }
         }
         if (showKnob) {
             paintSurface(
-                slot = UiBounds(
+                slot = Rectangle(
                     knobCenterX - knobDiameterPx / 2f,
                     slot.y + (slot.height - knobDiameterPx) / 2f,
                     knobDiameterPx,
@@ -148,7 +153,7 @@ fun UiPrimitiveScope.slider(
         label = label,
         bounds = slot,
         contentBounds = if (handleWidth > 0f) {
-            UiBounds(
+            Rectangle(
                 slot.x,
                 slot.y,
                 handleWidth,

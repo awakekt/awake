@@ -14,6 +14,14 @@
       "why": "A state no docs demo exposes; our disabled rendering had no reference at all."
     },
     {
+      "id": "button-group-basic",
+      "why": "Pinned ButtonGroup with two outline buttons; verifies joined borders, per-corner radii, zero inter-button gap, and content-hugging width."
+    },
+    {
+      "id": "button-group-vertical",
+      "why": "Pinned vertical ButtonGroup at a fixed 156px width; verifies full-width members, collapsed top border, and top/bottom-only outer corners."
+    },
+    {
       "id": "badge-variants",
       "why": "Badge variants, including the ghost/link pair the variant audit flagged."
     },

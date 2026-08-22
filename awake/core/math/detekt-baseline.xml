@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>DestructuringDeclarationWithTooManyEntries:Mat4TranslationScaleTest.kt$Mat4TranslationScaleTest$val (x, y, z, scale) = case.toList()</ID>
+    <ID>MatchingDeclarationName:LensTest.kt$CameraTest</ID>
+    <ID>MatchingDeclarationName:Matrix.kt$Mat4</ID>
+    <ID>MatchingDeclarationName:Occlusion.kt$ScreenBounds</ID>
+    <ID>TooManyFunctions:Matrix.kt$Mat4</ID>
+    <ID>TooManyFunctions:Vec3d.kt$Vec3d</ID>
+    <ID>TooManyFunctions:Vec3f.kt$Vec3f</ID>
+    <ID>TooManyFunctions:Vec3i.kt$Vec3i</ID>
+    <ID>VariableNaming:Matrix.kt$Mat4$val sx_ = sin(rx)</ID>
+    <ID>VariableNaming:Matrix.kt$Mat4$val sy_ = sin(ry)</ID>
+    <ID>VariableNaming:Matrix.kt$Mat4$val sz_ = sin(rz)</ID>
+  </CurrentIssues>
+</SmellBaseline>

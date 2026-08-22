@@ -1,11 +1,16 @@
-# Awake ECS
+# Module Awake ECS
 
 A small, dependency-free sparse-set Entity Component System for Kotlin Multiplatform
-(Android, iOS, JVM/desktop). Built in-house for the [Awake](../README.md) engine instead of
-adopting an existing library (Fleks, Artemis-odb, Ashley) — see
-[docs/ecs-benchmark-scorecard.md](../docs/ecs-benchmark-scorecard.md) for the real,
+(Android, iOS, JVM/desktop, Web/wasmJs). Built in-house for the [Awake](../../README.md) engine
+instead of adopting an existing library (Fleks, Artemis-odb, Ashley) — see
+[docs/ecs-benchmark-scorecard.md](../../docs/ecs-benchmark-scorecard.md) for the real,
 same-JVM benchmark comparison that justifies this, and
-[.claude/agents/ecs-dev.md](../.claude/agents/ecs-dev.md) for the architecture rationale.
+[awake-engine-core-engineer.md](../../.claude/agents/awake-engine-core-engineer.md) for the architecture rationale.
+
+**The core tradeoff:** family membership is maintained on every structural change, so
+iteration walks a packed array with no matching work. That buys roughly 5-6x faster query
+iteration than the alternatives, paid for with slower bulk component churn. Games iterate
+constantly and mutate structure rarely, so the trade is deliberate.
 
 Not thread-safe by design — this ECS is meant to be driven from a single game-update
 thread, matching this project's Vulkan threading model.
@@ -13,7 +18,7 @@ thread, matching this project's Vulkan threading model.
 ## Installation
 
 ```kotlin
-implementation("io.github.ronjunevaldoz:awake-ecs:1.0.0-SNAPSHOT")
+implementation("io.github.ronjunevaldoz:awake-ecs:0.1.0-dev.5-SNAPSHOT")
 
 repositories {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots")
@@ -79,30 +84,33 @@ world.has<Position>(entity)               // Boolean
 world.remove<Position>(entity)            // Position? -- the removed value, or null
 ```
 
-Every one of these also has an explicit-`KClass` overload
-(`world.add(entity, Position::class, component)`, etc.) alongside the reified generic
-sugar shown above. **Prefer the reified sugar for one-off calls; in a loop over many
-entities, hoist the `KClass` once and use the explicit overload instead** — profiling
-found Kotlin's reified generics re-derive the type token on every call site without
-`kotlin-reflect` on the classpath, which only matters at that call frequency. See
-`.claude/agents/ecs-dev.md`'s "Hot-path performance" section.
+Payload-free marker components should be singleton objects implementing `EcsTag`:
 
 ```kotlin
-// Hot loop: hoist the KClass once instead of `world.add<Position>(entity, component)` per entity
-val positionType = Position::class
-for (entity in manyEntities) {
-    world.add(entity, positionType, Position(0f, 0f))
-}
+data object IsSelected : EcsTag
+
+world.add(entity, IsSelected)
+world.has<IsSelected>(entity) // true
 ```
 
-There's an even faster path for the hottest loops: cache the `ComponentTypeId` (via
-`world.typeId(type)`) instead of the `KClass` itself. It skips both the reflection-derived
-type token *and* the `KClass`-keyed map lookup that the `KClass` overload still does:
+Tag columns store one canonical singleton instead of a repeated reference per entity, so
+prefer family iteration on hot paths — `components()`/`componentsA()`/`componentsB()` still
+work for tags, but materialize the repeated array that direct iteration avoids. The tag must
+be a Kotlin `object`; a class producing multiple instances is rejected.
+
+Each of these has three overloads. Pick by call frequency:
+
+| Overload | Use for | Cost it avoids |
+|---|---|---|
+| `world.add<Position>(entity, c)` | one-off calls | — |
+| `world.add(entity, type, c)` | loops, `type` hoisted | re-deriving the reified type token |
+| `world.add(entity, typeId, c)` | hot loops | the above, plus the `KClass` map lookup |
 
 ```kotlin
+// Hot loop: hoist the ComponentTypeId once, outside the loop
 val positionTypeId = world.typeId(Position::class)
 for (entity in manyEntities) {
-    world.add(entity, positionTypeId, Position(0f, 0f))   // fastest add() overload
+    world.add(entity, positionTypeId, Position(0f, 0f))
 }
 ```
 
@@ -159,7 +167,8 @@ movers.forEach { entity, position, velocity -> /* ... */ }
 movers.forEachComponents { position, velocity -> /* ... */ }   // skip the Entity if you don't need it
 movers.size
 
-// Direct array access, for callers that want bulk/indexed access instead of a callback
+// Direct array access, for callers that want bulk/indexed access instead of a callback.
+// For EcsTag columns this lazily materializes repeated singleton references.
 val positions: Array<Position> = movers.componentsA()
 val velocity = movers.componentB(0)
 ```
@@ -221,8 +230,13 @@ a `Map`/`Set` keyed by `Entity`, to avoid boxing the value class on every frame)
 
 ## What this ECS deliberately doesn't do
 
-- No archetype/table storage — sparse-set per component type instead (see
-  `.claude/agents/ecs-dev.md` for why, and when that tradeoff would need revisiting).
+- No archetype/table storage — sparse-set per component type plus maintained dense family
+  caches instead. The measured decision lives in
+  [`docs/tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md`](../../docs/tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md).
+- No bulk/batch structural mutation API — `add`/`remove` apply immediately. A benchmarked
+  deferred-rebuild prototype only beat the immediate path when a batch touched roughly the
+  entire world at once, which is not a workload this engine runs. See
+  [`docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md`](../../docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md).
 - No built-in scheduler, job system, or parallelism — single-threaded by design.
 - No serialization at this layer — component types are plain data classes; use whatever
   serialization approach fits your game (`awake-scene`'s scene runtime uses
@@ -237,5 +251,5 @@ a `Map`/`Set` keyed by `Entity`, to avoid boxing the value class on every frame)
 
 `awake-ecs-benchmark` (a separate, JVM-only module) benchmarks this ECS against Fleks,
 Artemis-odb, and Ashley on the same JVM/hardware. See
-[docs/ecs-benchmark-scorecard.md](../docs/ecs-benchmark-scorecard.md) for the numbers,
+[docs/ecs-benchmark-scorecard.md](../../docs/ecs-benchmark-scorecard.md) for the numbers,
 methodology, and an honest account of where this ECS currently wins and where it doesn't.

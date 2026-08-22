@@ -5,9 +5,9 @@ package io.github.ronjunevaldoz.awake.ui.designsystem
 import io.github.ronjunevaldoz.awake.ui.UiInputState
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupResult
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnDropdownMenuItem
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnDropdownMenuSeparator
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnAlertDialog
@@ -30,7 +30,7 @@ class UiPopupCompositionsTest {
         renderShadcnComponent(width = 240f, height = 160f, input = UiInputState()) { _ ->
             result = shadcnTooltipText(
                 id = "tooltip",
-                anchorSlot = UiBounds(48f, 24f, 96f, 28f),
+                anchorSlot = Rectangle(48f, 24f, 96f, 28f),
                 visible = true,
                 text = "Helpful hint",
             )
@@ -45,7 +45,7 @@ class UiPopupCompositionsTest {
         val frame = renderShadcnComponent(width = 320f, height = 240f, input = UiInputState()) { _ ->
             result = shadcnDropdownMenu(
                 id = "menu",
-                anchorSlot = UiBounds(20f, 16f, 120f, 28f),
+                anchorSlot = Rectangle(20f, 16f, 120f, 28f),
                 expanded = true,
                 items = listOf(
                     ShadcnDropdownMenuItem("Open"),

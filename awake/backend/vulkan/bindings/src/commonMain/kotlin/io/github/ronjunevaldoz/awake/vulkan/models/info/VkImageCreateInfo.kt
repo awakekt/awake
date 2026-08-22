@@ -5,7 +5,7 @@ package io.github.ronjunevaldoz.awake.vulkan.models.info
 /**
  * `imageType`/`format`/`tiling`/`initialLayout`/`usage`/`sharingMode` are all plain `Int`
  * (real Vulkan numeric values, not jni-binding-generator enum fields) -- consistent with
- * the Phase 1d ordinal-vs-value hazard rule (see docs/MVP_PLAN.md). `VkImageType`/
+ * the Phase 1d ordinal-vs-value hazard rule (see docs/mvp-plan.md). `VkImageType`/
  * `VkFormat`/`VkImageTiling`/`VkImageLayout` are all extension-bearing in the Vulkan spec.
  */
 class VkImageCreateInfo(

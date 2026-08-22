@@ -2,11 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem.theme
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.theme.UiShapeTokens
-import io.github.ronjunevaldoz.awake.ui.tailwind.Tw
 
 data class ShadcnRadiusScale(
     override val xs: Dp,
@@ -39,22 +38,6 @@ data class ShadcnRadiusScale(
     }
 }
 
-/** shadcn-matching spacing names, wrapping [UiSpacing]'s dp values instead of duplicating them --
- * ui-core owns the raw scale, this just renames/extends it for shadcn call sites (e.g. `theme.spacing.xxl`).
- *
- * This object is the ONE spacing vocabulary `ui-designsystem` components should speak. Reaching
- * past it to [Tw.Spacing] directly inside a component is what splits the module into two competing
- * vocabularies for the same concept -- add the missing step here instead, the way [smd]/[lgx] were.
- * `Tw` is this object's source of truth, not a parallel API for call sites. */
-object ShadcnSpacing {
-    val xs: Dp = Tw.Spacing.s1
-    val sm: Dp = Tw.Spacing.s2
-    val md: Dp = Tw.Spacing.s4
-    val lg: Dp = Tw.Spacing.s6
-    val xl: Dp = Tw.Spacing.s8
-    val xxl: Dp = Tw.Spacing.s12
-}
-
 data class ShadcnMetrics(
     // Card/Dialog/Muted-surface/Alert inset -- real shadcn's Card/Dialog p-6.
     val panelPadding: Dp,
@@ -72,6 +55,11 @@ data class ShadcnMetrics(
     // Real text-Input's vertical inset (real shadcn's Input py-1) -- smaller than
     // [fieldPaddingY]'s SelectTrigger py-2.
     val inputPaddingY: Dp,
+    // Horizontal inset for a full-bleed chrome band (ShadcnSurfaceVariant.Band) -- an app
+    // toolbar/status-bar strip, not part of shadcn/ui's own vocabulary. Defaults to
+    // [fieldPaddingX] (same horizontal-inset scale) so existing per-theme presets don't need
+    // their own tuned value.
+    val bandPaddingX: Dp = fieldPaddingX,
 )
 
 data class ShadcnPalette(

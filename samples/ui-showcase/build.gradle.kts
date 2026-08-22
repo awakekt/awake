@@ -11,6 +11,15 @@ plugins {
     id("awake.spotless-convention")
     id("awake.ui-authored-units-convention")
     id("awake.ui-preview-report-convention")
+    id("awake.ui-ownership-convention")
+}
+
+// verifyUiOwnership reads the whole src/ tree for its .kt source-pattern checks;
+// syncAwakeShaders writes generated shader files under src/ too. Neither task actually depends
+// on the other's output, but Gradle's parallel scheduler still needs an explicit order to avoid
+// a same-directory read/write race.
+tasks.named("verifyUiOwnership") {
+    mustRunAfter("syncAwakeShaders")
 }
 
 kotlin {
@@ -83,7 +92,11 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":awake:engine:game-authoring"))
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:core:math2d"))
+            implementation(project(":awake:core:color"))
+            implementation(project(":awake:core:input"))
+            implementation(project(":awake:engine:bootstrap"))
             implementation(project(":awake:scene:authoring"))
             implementation(project(":awake:ui:designsystem"))
             implementation(libs.kotlinx.coroutines.core)
@@ -100,7 +113,7 @@ kotlin {
             dependsOn(commonMain.get())
         }
         appMain.dependencies {
-            implementation(project(":awake:core"))
+            implementation(project(":awake:core:math"))
             implementation(project(":awake:backend:vulkan"))
         }
 
@@ -111,7 +124,6 @@ kotlin {
         named("androidMain") {
             dependsOn(appMain)
             dependencies {
-                api(project(":awake:core"))
                 api(project(":awake:backend:vulkan"))
             }
         }
@@ -122,7 +134,6 @@ kotlin {
 
         named("wasmJsMain") {
             dependencies {
-                implementation(project(":awake:core"))
                 implementation(project(":awake:backend:webgpu"))
                 implementation(libs.kotlinx.browser)
             }
@@ -163,6 +174,14 @@ tasks.register<JavaExec>("run") {
         jvmArgsList += "-XstartOnFirstThread"
     }
     jvmArgs(jvmArgsList)
+}
+
+tasks.withType<Test>().configureEach {
+    val record =
+        System.getenv("AWAKE_RECORD_SNAPSHOTS") ?: System.getProperty("AWAKE_RECORD_SNAPSHOTS")
+    if (record != null) {
+        systemProperty("AWAKE_RECORD_SNAPSHOTS", record)
+    }
 }
 
 tasks.register("validateUiShowcasePlatforms") {

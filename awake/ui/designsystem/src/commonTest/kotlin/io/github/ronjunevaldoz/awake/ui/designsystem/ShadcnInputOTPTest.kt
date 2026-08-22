@@ -58,7 +58,7 @@ class ShadcnInputOTPTest {
         assertTrue(digitNode != null, "semantic Text node with label '4' must exist")
 
         val contentBounds = digitNode!!.contentBounds
-        assertTrue(contentBounds != null, "digit Text node must have contentBounds set by renderTextBlock")
+        assertTrue(contentBounds != null, "digit Text node must have contentBounds set by drawTextBlock")
 
         // 3. Assert centering within 1 px tolerance
         val tolerancePx = 1f

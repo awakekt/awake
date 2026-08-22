@@ -2,8 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.graphics2d.toPath
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiColoredTriangleMesh
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiColoredVertex
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiFillRule
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPath
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPoint
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.graphics2d.flattenContours
+import io.github.ronjunevaldoz.awake.core.math2d.size
+import io.github.ronjunevaldoz.awake.core.graphics2d.splitToCapacity
+import io.github.ronjunevaldoz.awake.core.graphics2d.tessellateFill
+import io.github.ronjunevaldoz.awake.core.graphics2d.tessellateFillAa
+import io.github.ronjunevaldoz.awake.core.graphics2d.uiPath
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -275,11 +288,11 @@ class UiPathFillTessellationTest {
      * count on a curve where it's imperceptible -- see UiPath.adaptiveArcSteps. */
     @Test
     fun adaptiveFlatteningScalesArcStepsWithCircleSize() {
-        val bigCircle = UiShapeSpec.Circle.toPath(UiBounds(0f, 0f, 400f, 400f))
+        val bigCircle = UiShapeSpec.Circle.toPath(Rectangle(0f, 0f, 400f, 400f))
         val bigSegments = bigCircle.flattenContours().single().points.size
         assertTrue(bigSegments >= 40, "400px circle should flatten to >=40 segments, was $bigSegments")
 
-        val smallCircle = UiShapeSpec.Circle.toPath(UiBounds(0f, 0f, 12f, 12f))
+        val smallCircle = UiShapeSpec.Circle.toPath(Rectangle(0f, 0f, 12f, 12f))
         val smallSegments = smallCircle.flattenContours().single().points.size
         assertTrue(smallSegments <= 24, "12px circle should flatten to <=24 segments, was $smallSegments")
     }

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan.mesh
 
+import io.github.ronjunevaldoz.awake.render.passes.InstancePacker
+import io.github.ronjunevaldoz.awake.core.geometry.GpuDataShape
 import io.github.ronjunevaldoz.awake.vulkan.device.GraphicsDevice
 import io.github.ronjunevaldoz.awake.vulkan.enums.VkShaderStageFlagBits
 import io.github.ronjunevaldoz.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
@@ -21,6 +23,7 @@ import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorSetLayoutBin
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorType
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkMemoryAllocateInfo
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.VulkanMaterialBinding
 
 /**
  * The per-instance JOINT PALETTES behind one animated instanced draw call -- [InstanceBuffer]'s
@@ -61,7 +64,9 @@ class SkinnedInstanceBuffer(
         val memory: DeviceMemoryHandle,
         val descriptorPool: DescriptorPoolHandle,
         val descriptorSet: DescriptorSetHandle,
-    )
+    ) : VulkanMaterialBinding {
+        override val descriptorSetHandle: Long get() = descriptorSet.handle
+    }
 
     private val byteSize = (maxInstances.toLong() * FLOATS_PER_INSTANCE * Float.SIZE_BYTES)
 
@@ -85,35 +90,33 @@ class SkinnedInstanceBuffer(
     }
 
     // Reused across frames so a steady instance count allocates nothing per frame.
-    private var packed: FloatArray = FloatArray(0)
 
     /** Packs [palettes] into this frame slot's buffer at a fixed [FLOATS_PER_INSTANCE] stride --
      * the shader indexes `palettes[instance_index]` as an array of fixed-size structs, so a
      * shorter palette (a skin with fewer than [MAX_JOINTS] joints, e.g. CesiumMan's 19) is
      * written at the start of its slot and the rest of the slot is simply never indexed. */
+    private val packer = InstancePacker<FloatArray>(
+        GpuDataShape.Mat4,
+        "SkinnedInstanceBuffer",
+        repeat = MAX_JOINTS,
+    ) { out, offset, palette ->
+        require(palette.size <= MAX_JOINTS * GpuDataShape.Mat4.componentCount) {
+            "Joint palette ${palette.size} floats exceeds MAX_JOINTS ($MAX_JOINTS) * 16."
+        }
+        palette.copyInto(out, offset)
+    }
+
     fun update(frameIndex: Int, palettes: List<FloatArray>) {
-        require(palettes.size <= maxInstances) {
-            "Animated instance count (${palettes.size}) exceeds SkinnedInstanceBuffer capacity " +
-                "($maxInstances) -- raise maxInstances or draw fewer instances."
-        }
-        if (palettes.isEmpty()) return
-        if (packed.size != palettes.size * FLOATS_PER_INSTANCE) {
-            packed = FloatArray(palettes.size * FLOATS_PER_INSTANCE)
-        }
-        var index = 0
-        while (index < palettes.size) {
-            val palette = palettes[index]
-            require(palette.size <= FLOATS_PER_INSTANCE) {
-                "Joint palette ${palette.size} floats exceeds MAX_JOINTS ($MAX_JOINTS) * 16."
-            }
-            palette.copyInto(packed, index * FLOATS_PER_INSTANCE)
-            index += 1
-        }
-        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, packed)
+        val floats = packer.pack(palettes, maxInstances) ?: return
+        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, floats)
     }
 
     /** Binds this frame slot's palette descriptor set as [PALETTE_SET]. The material's own set 0
      * is bound separately (see `RendererDraw3D.recordDrawCalls`). */
+    /** This frame slot's palette descriptor set, for the shared opaque feature to bind at
+     * [PALETTE_SET]. */
+    fun binding(frameIndex: Int): VulkanMaterialBinding = resourcesFor(frameIndex)
+
     fun bind(frameIndex: Int, commandBuffer: Long, pipelineLayout: Long) {
         VulkanDescriptors.vkCmdBindDescriptorSet(
             commandBuffer,
@@ -180,7 +183,7 @@ class SkinnedInstanceBuffer(
         const val MAX_JOINTS = 64
 
         /** One fixed-size `JointPalette` struct: 64 `mat4` = 1024 floats = 4 KB per instance. */
-        const val FLOATS_PER_INSTANCE = MAX_JOINTS * 16
+        val FLOATS_PER_INSTANCE = MAX_JOINTS * GpuDataShape.Mat4.componentCount
 
         /** 256 * 4 KB = 1 MB per frame slot. Far lower than [InstanceBuffer]'s 4096 because an
          * animated instance costs 16x a static one -- 4096 here would be 16 MB per slot. */

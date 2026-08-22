@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.render.renderer
 
-import io.github.ronjunevaldoz.awake.render.mesh.GpuDataShape
+import io.github.ronjunevaldoz.awake.core.geometry.GpuDataShape
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

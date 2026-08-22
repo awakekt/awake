@@ -6,19 +6,19 @@
     <ID>CyclomaticComplexMethod:CreateVulkanAccessor.kt$private fun CppClassBuilder.generateVulkanGetters( clazz: Class&lt;*>, declareMembers: Array&lt;Field>, )</ID>
     <ID>CyclomaticComplexMethod:CreateVulkanUtils.kt$fun createVulkanUtils(clazz: Class&lt;*>)</ID>
     <ID>CyclomaticComplexMethod:CreateVulkanUtils.kt$private fun CppFunctionBodyBuilder.processParameters( method: Method, import: (dependency: String) -> Unit, ): List&lt;String></ID>
+    <ID>CyclomaticComplexMethod:FieldExt.kt$fun Class&lt;*>.toJavaType(includeArray: Boolean = false): JNIType</ID>
+    <ID>CyclomaticComplexMethod:FieldExt.kt$fun Class&lt;*>.toVulkanType(): String</ID>
+    <ID>CyclomaticComplexMethod:FieldExt.kt$fun Field.toJavaSignature(element: Boolean = false): String</ID>
     <ID>CyclomaticComplexMethod:GenerateVulkanFromObject.kt$fun CppClassBuilder.generateVulkanFromObject( clazz: Class&lt;*>, declareMembers: Array&lt;Field>, hasArrayField: Boolean, )</ID>
-    <ID>CyclomaticComplexMethod:fieldExt.kt$fun Class&lt;*>.toJavaType(includeArray: Boolean = false): JNIType</ID>
-    <ID>CyclomaticComplexMethod:fieldExt.kt$fun Class&lt;*>.toVulkanType(): String</ID>
-    <ID>CyclomaticComplexMethod:fieldExt.kt$fun Field.toJavaSignature(element: Boolean = false): String</ID>
     <ID>LongMethod:CreateVulkanAccessor.kt$fun CppFunctionBodyBuilder.processObjectAccessor( void: Boolean, javaMember: Field, returnType: String, import: (dependency: String) -> Unit, )</ID>
     <ID>LongMethod:CreateVulkanAccessor.kt$fun createVulkanAccessor(clazz: Class&lt;*>)</ID>
     <ID>LongMethod:CreateVulkanAccessor.kt$fun processCopy(clazzInfo: String, arrayVariable: String)</ID>
     <ID>LongMethod:CreateVulkanAccessor.kt$fun processObjectElement(javaType: JNIType)</ID>
     <ID>LongMethod:CreateVulkanUtils.kt$fun createVulkanUtils(clazz: Class&lt;*>)</ID>
     <ID>LongMethod:CreateVulkanUtils.kt$private fun CppFunctionBodyBuilder.processVkGet( method: Method, methodName: String, methodParams: String, import: (dependency: String) -> Unit, )</ID>
-    <ID>LongMethod:main.kt$fun main(args: Array&lt;String>)</ID>
+    <ID>LongMethod:Main.kt$fun main(args: Array&lt;String>)</ID>
+    <ID>MatchingDeclarationName:FieldExt.kt$JNIType</ID>
     <ID>MatchingDeclarationName:WriteFile.kt$FileWriter</ID>
-    <ID>MatchingDeclarationName:fieldExt.kt$JNIType</ID>
     <ID>NestedBlockDepth:CreateVulkanAccessor.kt$fun CppFunctionBodyBuilder.processArrayAccessor( void: Boolean, clazz: Class&lt;*>, javaMember: Field, returnType: String, import: (dependency: String) -> Unit, )</ID>
     <ID>NestedBlockDepth:CreateVulkanAccessor.kt$fun CppFunctionBodyBuilder.processObjectAccessor( void: Boolean, javaMember: Field, returnType: String, import: (dependency: String) -> Unit, )</ID>
     <ID>NestedBlockDepth:CreateVulkanAccessor.kt$private fun CppClassBuilder.generateVulkanGetters( clazz: Class&lt;*>, declareMembers: Array&lt;Field>, )</ID>
@@ -34,18 +34,18 @@
     <ID>PackageNaming:CreateVulkanAccessor.kt$package io.github.ronjunevaldoz.awake.vulkan_generator.vulkan</ID>
     <ID>PackageNaming:CreateVulkanMutator.kt$package io.github.ronjunevaldoz.awake.vulkan_generator.vulkan</ID>
     <ID>PackageNaming:CreateVulkanUtils.kt$package io.github.ronjunevaldoz.awake.vulkan_generator.vulkan</ID>
+    <ID>PackageNaming:FieldExt.kt$package io.github.ronjunevaldoz.awake.vulkan_generator.tool</ID>
     <ID>PackageNaming:GenerateVulkanFromObject.kt$package io.github.ronjunevaldoz.awake.vulkan_generator.vulkan</ID>
+    <ID>PackageNaming:Main.kt$package io.github.ronjunevaldoz.awake.vulkan_generator</ID>
     <ID>PackageNaming:VulkanCppBuilder.kt$package io.github.ronjunevaldoz.awake.vulkan_generator.vulkan</ID>
     <ID>PackageNaming:WriteFile.kt$package io.github.ronjunevaldoz.awake.vulkan_generator.tool</ID>
-    <ID>PackageNaming:fieldExt.kt$package io.github.ronjunevaldoz.awake.vulkan_generator.tool</ID>
-    <ID>PackageNaming:main.kt$package io.github.ronjunevaldoz.awake.vulkan_generator</ID>
-    <ID>ReturnCount:fieldExt.kt$fun Field.toVulkanType(useVector: Boolean = true): String</ID>
+    <ID>ReturnCount:FieldExt.kt$fun Field.toVulkanType(useVector: Boolean = true): String</ID>
     <ID>TooGenericExceptionCaught:WriteFile.kt$FileWriter$e: Exception</ID>
     <ID>TooGenericExceptionThrown:CreateVulkanAccessor.kt$throw RuntimeException("Nested array not supported")</ID>
-    <ID>TooGenericExceptionThrown:fieldExt.kt$throw Exception("Not yet supported")</ID>
-    <ID>TooGenericExceptionThrown:fieldExt.kt$throw RuntimeException("getArrayElement not supported (use getArrayRegion instead) ${type.simpleName}")</ID>
-    <ID>TooGenericExceptionThrown:fieldExt.kt$throw RuntimeException("getArrayRegion not supported ${type.simpleName}")</ID>
-    <ID>TooManyFunctions:fieldExt.kt$io.github.ronjunevaldoz.awake.vulkan_generator.tool.fieldExt.kt</ID>
+    <ID>TooGenericExceptionThrown:FieldExt.kt$throw Exception("Not yet supported")</ID>
+    <ID>TooGenericExceptionThrown:FieldExt.kt$throw RuntimeException("getArrayElement not supported (use getArrayRegion instead) ${type.simpleName}")</ID>
+    <ID>TooGenericExceptionThrown:FieldExt.kt$throw RuntimeException("getArrayRegion not supported ${type.simpleName}")</ID>
+    <ID>TooManyFunctions:FieldExt.kt$io.github.ronjunevaldoz.awake.vulkan_generator.tool.FieldExt.kt</ID>
     <ID>UnusedPrivateMember:CreateVulkanAccessor.kt$private fun getMergedClassName(clazz: Class&lt;*>): String</ID>
   </CurrentIssues>
 </SmellBaseline>

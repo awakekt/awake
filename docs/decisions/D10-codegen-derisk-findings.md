@@ -1,6 +1,6 @@
 # D10 — jni-binding-generator de-risk findings (2026-07-07)
 
-Phase 1a of [MVP_PLAN.md](../MVP_PLAN.md) called for a week-one de-risk: run
+Phase 1a of [mvp-plan.md](../mvp-plan.md) called for a week-one de-risk: run
 [jni-binding-generator](https://github.com/ronjunevaldoz/jni-binding-generator) against
 `VkGraphicsPipelineCreateInfo` (the nastiest nested Vulkan struct) before committing to it
 as the replacement for the bespoke `awake-vulkan-generator`. This documents what was found.
@@ -110,7 +110,7 @@ array-as-pointer-with-count-field (`@VkArray("stageCount")`), optional-pointer-v
 `awake-vulkan-generator`'s `CreateVulkanAccessor`/`CreateVulkanMutator`/`VulkanCppBuilder`
 already implements, purpose-built for exactly this Vulkan struct shape.
 
-## Options (see D10 in MVP_PLAN.md for the recommendation ask)
+## Options (see D10 in mvp-plan.md for the recommendation ask)
 
 **(a) Extend jni-binding-generator with real struct support.** Gains: one tool, its Gradle
 integration, drift detection, generated test files, and community reuse if ever open-sourced
@@ -315,7 +315,7 @@ jni-binding-generator's own CHANGELOG v1.6.10 for the fix in isolation.
   `sType`/`pNext` field (hardcoded in the hand-written native body instead — it's a
   compile-time constant per struct type anyway) and uses `VkSharingMode` (verified
   ordinal == value for both its entries, and the Vulkan spec has never extended it) as the
-  only real enum field. See the Phase 1d hazard note in [MVP_PLAN.md](../MVP_PLAN.md) for
+  only real enum field. See the Phase 1d hazard note in [mvp-plan.md](../mvp-plan.md) for
   the concrete rule going forward.
 
 **Verification:** Android demo APK builds clean (generated file compiles for both
@@ -431,7 +431,7 @@ the `#include` block per the Round 6 lesson — confirmed that pitfall doesn't r
 deliberately checked for.
 
 **Verified end-to-end with a real uniform buffer wired into the actual triangle shader,
-not an isolated call** — per the testing policy now in MVP_PLAN.md. `triangle.frag` reads
+not an isolated call** — per the testing policy now in mvp-plan.md. `triangle.frag` reads
 `layout(binding=0) uniform UBO { vec4 tint; }`; the demo creates a real uniform buffer,
 descriptor set layout/pool/set, writes `tint = (0.5, 0.5, 1.0, 0.0)`, and binds the
 descriptor set every frame before `vkCmdDraw`.

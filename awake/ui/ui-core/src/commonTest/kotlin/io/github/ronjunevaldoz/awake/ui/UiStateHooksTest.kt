@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -57,12 +57,12 @@ class UiStateHooksTest {
         val ui = UiContext()
 
         ui.beginFrame(UiFrameInput(viewportWidth = 320f, viewportHeight = 200f, input = testSnapshot()))
-        val scope = ui.createAbsolute(slot = UiBounds(0f, 0f, 0f, 0f))
+        val scope = ui.createAbsolute(slot = Rectangle(0f, 0f, 0f, 0f))
         var expanded by scope.rememberBooleanState("delegate-demo", initial = true)
         expanded = false
 
         ui.beginFrame(UiFrameInput(viewportWidth = 320f, viewportHeight = 200f, input = testSnapshot()))
-        val nextScope = ui.createAbsolute(slot = UiBounds(0f, 0f, 0f, 0f))
+        val nextScope = ui.createAbsolute(slot = Rectangle(0f, 0f, 0f, 0f))
         val persisted by nextScope.rememberBooleanState("delegate-demo", initial = true)
 
         assertFalse(persisted)
@@ -73,21 +73,21 @@ class UiStateHooksTest {
         val ui = UiContext()
 
         ui.beginFrame(UiFrameInput(viewportWidth = 320f, viewportHeight = 200f, input = testSnapshot()))
-        val scope = ui.createAbsolute(slot = UiBounds(0f, 0f, 0f, 0f))
+        val scope = ui.createAbsolute(slot = Rectangle(0f, 0f, 0f, 0f))
         val popupState = scope.rememberPopupState("menu")
         popupState.open()
         popupState.toggle()
         popupState.toggle()
 
         ui.beginFrame(UiFrameInput(viewportWidth = 320f, viewportHeight = 200f, input = testSnapshot()))
-        val nextScope = ui.createAbsolute(slot = UiBounds(0f, 0f, 0f, 0f))
+        val nextScope = ui.createAbsolute(slot = Rectangle(0f, 0f, 0f, 0f))
         val persisted = nextScope.rememberPopupState("menu")
         assertTrue(persisted.expanded)
 
         persisted.close()
 
         ui.beginFrame(UiFrameInput(viewportWidth = 320f, viewportHeight = 200f, input = testSnapshot()))
-        val finalScope = ui.createAbsolute(slot = UiBounds(0f, 0f, 0f, 0f))
+        val finalScope = ui.createAbsolute(slot = Rectangle(0f, 0f, 0f, 0f))
         val closed = finalScope.rememberPopupState("menu")
         assertFalse(closed.expanded)
     }

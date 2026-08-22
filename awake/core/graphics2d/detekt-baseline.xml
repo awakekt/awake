@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:PathBounds.kt$!minX.isFinite() || !minY.isFinite() || !maxX.isFinite() || !maxY.isFinite()</ID>
+    <ID>CyclomaticComplexMethod:PathFillTessellation.kt$fun resolveFillGroups(contours: List&lt;PathContour>, fillRule: FillRule): List&lt;FillGroup></ID>
+    <ID>CyclomaticComplexMethod:PathFillTessellation.kt$fun scanlineFillTriangulation( contours: List&lt;List&lt;DrawPoint>>, fillRule: FillRule, ): Pair&lt;List&lt;DrawPoint>, IntArray></ID>
+    <ID>CyclomaticComplexMethod:PathFlattening.kt$fun DrawPath.flattenContours( curveSteps: Int = MIN_ADAPTIVE_STEPS, arcStepDegrees: Float = 90f, ): List&lt;PathContour></ID>
+    <ID>CyclomaticComplexMethod:PathStrokeTessellation.kt$fun DrawPath.tessellateStroke(stroke: DrawStroke, density: Float = 1f): TriangleMesh</ID>
+    <ID>LongMethod:PathFillTessellation.kt$fun scanlineFillTriangulation( contours: List&lt;List&lt;DrawPoint>>, fillRule: FillRule, ): Pair&lt;List&lt;DrawPoint>, IntArray></ID>
+    <ID>LongMethod:PathFlattening.kt$fun DrawPath.flattenContours( curveSteps: Int = MIN_ADAPTIVE_STEPS, arcStepDegrees: Float = 90f, ): List&lt;PathContour></ID>
+    <ID>LongParameterList:DrawPath.kt$PathBuilder$(c1x: Float, c1y: Float, c2x: Float, c2y: Float, x: Float, y: Float)</ID>
+    <ID>LongParameterList:DrawPath.kt$PathBuilder$(left: Float, top: Float, right: Float, bottom: Float, startDegrees: Float, sweepDegrees: Float)</ID>
+    <ID>LongParameterList:DrawPath.kt$PathCommand.Companion$( c1x: Float, c1y: Float, c2x: Float, c2y: Float, x: Float, y: Float, )</ID>
+    <ID>LongParameterList:DrawPath.kt$PathCommand.Companion$( left: Float, top: Float, right: Float, bottom: Float, startDegrees: Float, sweepDegrees: Float, )</ID>
+    <ID>LongParameterList:PathFillTessellation.kt$( innerRing: List&lt;DrawPoint>, outerRing: List&lt;DrawPoint>, color: Color, transparent: Color, vertices: ArrayList&lt;ColoredVertex>, indices: ArrayList&lt;Int>, )</ID>
+    <ID>LoopWithTooManyJumpStatements:PathFillTessellation.kt$for</ID>
+    <ID>LoopWithTooManyJumpStatements:PathPredicates.kt$for</ID>
+    <ID>MatchingDeclarationName:PathFillTessellation.kt$FillGroup</ID>
+    <ID>NestedBlockDepth:PathFillTessellation.kt$fun scanlineFillTriangulation( contours: List&lt;List&lt;DrawPoint>>, fillRule: FillRule, ): Pair&lt;List&lt;DrawPoint>, IntArray></ID>
+    <ID>ReturnCount:MeshClipping.kt$private fun clipColoredPolygonToConvexContour(subject: List&lt;ColoredVertex>, clip: List&lt;DrawPoint>): List&lt;ColoredVertex></ID>
+    <ID>ReturnCount:MeshClipping.kt$private fun clipPolygonToConvexContour(subject: List&lt;DrawPoint>, clip: List&lt;DrawPoint>): List&lt;DrawPoint></ID>
+    <ID>ReturnCount:MeshClipping.kt$private fun clipTexturedPolygonToConvexContour(subject: List&lt;TexturedVertex>, clip: List&lt;DrawPoint>): List&lt;TexturedVertex></ID>
+    <ID>ReturnCount:PathBounds.kt$fun DrawPath.bounds(): Rectangle</ID>
+    <ID>ReturnCount:PathPredicates.kt$fun isConvex(points: List&lt;DrawPoint>): Boolean</ID>
+    <ID>ReturnCount:PathStrokeTessellation.kt$fun DrawPath.tessellateStroke(stroke: DrawStroke, density: Float = 1f): TriangleMesh</ID>
+    <ID>ReturnCount:PathStrokeTessellation.kt$internal fun offsetClosedRing(rawPoints: List&lt;DrawPoint>, distance: Float, join: StrokeJoin): List&lt;DrawPoint></ID>
+    <ID>ReturnCount:PathStrokeTessellation.kt$internal fun offsetOpenRing(points: List&lt;DrawPoint>, halfWidth: Float, stroke: DrawStroke): List&lt;DrawPoint></ID>
+    <ID>ReturnCount:TriangleMesh.kt$fun ColoredTriangleMesh.splitToCapacity(maxVertices: Int, maxIndices: Int): List&lt;ColoredTriangleMesh></ID>
+    <ID>TooManyFunctions:MeshClipping.kt$io.github.ronjunevaldoz.awake.core.graphics2d.MeshClipping.kt</ID>
+  </CurrentIssues>
+</SmellBaseline>

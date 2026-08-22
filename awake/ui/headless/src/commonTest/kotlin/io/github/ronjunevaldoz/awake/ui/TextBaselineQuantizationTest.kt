@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.font.GlyphRect
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFontSamplingMode
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -68,7 +69,7 @@ class TextBaselineQuantizationTest {
         val font = VaryingMetricsFont()
         return renderUiComponent(width = 400f, height = 100f, font = font) {
             primitive.context.createAbsolute(x = 0f, y = slotY).text(
-                label = label, slot = UiBounds(0f, slotY, 400f, GLYPH_PX), font = font,
+                label = label, slot = Rectangle(0f, slotY, 400f, GLYPH_PX), font = font,
             )
         }.primitives.filterIsInstance<UiDrawPrimitive.Glyph>()
     }

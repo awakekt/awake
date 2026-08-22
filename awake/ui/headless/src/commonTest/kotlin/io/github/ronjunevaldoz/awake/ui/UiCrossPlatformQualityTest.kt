@@ -2,18 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.testing.ui.inspectBoundsFit
 import io.github.ronjunevaldoz.awake.testing.ui.inspectDensityParity
 import io.github.ronjunevaldoz.awake.testing.ui.inspectThemeParity
 import io.github.ronjunevaldoz.awake.testing.ui.measureUiFrame
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.api.theme.UiColorTokens
 import io.github.ronjunevaldoz.awake.ui.api.theme.UiThemeValues
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
 import io.github.ronjunevaldoz.awake.ui.headless.button
+import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.button
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.modifier.width
@@ -80,7 +82,7 @@ class UiCrossPlatformQualityTest {
         inspectBoundsFit(
             label = "button",
             metrics = metrics,
-            allowedBounds = UiBounds(20f, 20f, 180f, 44f),
+            allowedBounds = Rectangle(20f, 20f, 180f, 44f),
             tolerancePx = 1f,
         ).requireClean()
     }

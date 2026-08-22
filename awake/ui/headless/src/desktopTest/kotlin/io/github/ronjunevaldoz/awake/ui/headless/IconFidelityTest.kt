@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.testing.ui.rasterize
 import io.github.ronjunevaldoz.awake.ui.UiImageVector
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.icon
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
@@ -13,7 +13,7 @@ import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.testSnapshot
 import io.github.ronjunevaldoz.awake.ui.uiImageVector
-import io.github.ronjunevaldoz.ui.heroicons.icon.HeroIcons
+import io.github.ronjunevaldoz.awake.ui.heroicons.icon.HeroIcons
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
@@ -22,8 +22,8 @@ import kotlin.test.assertTrue
 import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
 
 /**
- * Proves each shipped [io.github.ronjunevaldoz.ui.heroicons.icon.HeroIcons] glyph renders the *same shape* as the official Heroicons SVG
- * it was generated from, automatically -- see `skills/awake-icon-authoring/SKILL.md`. Three icon
+ * Proves each shipped [io.github.ronjunevaldoz.awake.ui.heroicons.icon.HeroIcons] glyph renders the *same shape* as the official Heroicons SVG
+ * it was generated from, automatically -- see `skills/awake-ui-icons/SKILL.md`. Three icon
  * defects shipped in one session before this existed, and every one was only caught by a human
  * looking at a picture.
  *
@@ -270,7 +270,7 @@ class IconFidelityTest {
 
     /**
      * Proves the guard actually fails on a real regression instead of always passing. Builds a
-     * deliberately wrong vector in-test (never touches [io.github.ronjunevaldoz.ui.heroicons.icon.HeroIcons]/`chevron-down`'s shipped
+     * deliberately wrong vector in-test (never touches [io.github.ronjunevaldoz.awake.ui.heroicons.icon.HeroIcons]/`chevron-down`'s shipped
      * data) and confirms its IoU against the real `chevron-down` reference collapses far below
      * [passThreshold] -- the measured drop that [passThreshold]'s doc comment cites.
      */

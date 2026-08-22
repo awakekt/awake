@@ -2,19 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.layouts
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.UiSpacing
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.canvas
 import io.github.ronjunevaldoz.awake.ui.childColumn
+import io.github.ronjunevaldoz.awake.ui.context.resolveHasWeightedChild
 import io.github.ronjunevaldoz.awake.ui.context.resolveMeasuredContentCached
 import io.github.ronjunevaldoz.awake.ui.graphics.clip
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.graphics.dispatchPrimitive
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
 import io.github.ronjunevaldoz.awake.ui.layout.horizontalPx
 import io.github.ronjunevaldoz.awake.ui.layout.inset
 import io.github.ronjunevaldoz.awake.ui.layout.verticalPx
@@ -24,15 +27,17 @@ import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.modifier.resolveClickable
 import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.modifier.withSizeFallback
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.scope.claimModifiedSlot
 import io.github.ronjunevaldoz.awake.ui.scope.fillWidthOrNull
 import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
 import io.github.ronjunevaldoz.awake.ui.scope.resolveStyle
 import io.github.ronjunevaldoz.awake.ui.style.MutableStyleState
+import io.github.ronjunevaldoz.awake.ui.style.ResolvedStyle
 import io.github.ronjunevaldoz.awake.ui.style.Style
+import io.github.ronjunevaldoz.awake.ui.theme.TextStyle
 import io.github.ronjunevaldoz.awake.ui.theme.UiDefaultTheme
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 
 /**
  * Replaces the deleted `UiTheme.components.surface` ambient fallback -- a Panel-role column's
@@ -49,7 +54,13 @@ import io.github.ronjunevaldoz.awake.ui.toPx
 internal val neutralSurfaceDefaults: Style = Style {
     background(UiDefaultTheme.colors.background)
     foreground(UiDefaultTheme.colors.foreground)
-    contentPadding(UiSpacing.sm)
+    contentPadding(8f.dp)
+}
+
+/** Constant, so it is not rebuilt per surface per trial pass. */
+private val surfaceShapeDefaults: Style = Style {
+    shape(UiShape.md)
+    borderWidth(UiShape.none)
 }
 
 fun UiPrimitiveScope.surface(
@@ -59,15 +70,12 @@ fun UiPrimitiveScope.surface(
     modifier: UiModifier = Modifier,
     clipContent: Boolean = false,
     cacheKey: Any? = null,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = smartColumn(
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = smartColumn(
     id = id,
     gap = verticalArrangement.baseSpacingPx(),
     verticalArrangement = verticalArrangement,
-    style = Style {
-        shape(UiShape.md)
-        borderWidth(UiShape.none)
-    } then style,
+    style = surfaceShapeDefaults then style,
     modifier = modifier,
     clipContent = clipContent,
     cacheKey = cacheKey,
@@ -101,8 +109,8 @@ fun ColumnScope.surface(
     style: Style = Style.Empty,
     modifier: UiModifier = Modifier,
     clipContent: Boolean = false,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = (this as UiPrimitiveScope).surface(
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = (this as UiPrimitiveScope).surface(
     id = id,
     verticalArrangement = verticalArrangement,
     style = style,
@@ -117,8 +125,8 @@ fun RowScope.surface(
     style: Style = Style.Empty,
     modifier: UiModifier = Modifier,
     clipContent: Boolean = false,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = (this as UiPrimitiveScope).surface(
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = (this as UiPrimitiveScope).surface(
     id = id,
     verticalArrangement = verticalArrangement,
     style = style,
@@ -140,9 +148,10 @@ fun RowScope.surface(
  * longer exists at all -- a new name carries zero of that risk for whatever needs this shape
  * next.
  *
- * @param semanticRole a composed-clickable surface (`Modifier.clickable(...)`) is semantically a
- * Button, a Checkbox, etc, not a generic Panel.
- * @param resolvedSlot the visual-container half of the Compose-style clickable+Surface split
+ * [semanticRole] exists because a composed-clickable surface (`Modifier.clickable(...)`) is
+ * semantically a Button, a Checkbox, etc, not a generic Panel.
+ *
+ * [resolvedSlot] is the visual-container half of the Compose-style clickable+Surface split
  * (see the `awake-ui-authoring` skill's "4 independent pieces" note): a caller that already
  * claimed its own slot -- typically via `interact()`, the gesture/interaction-state piece --
  * hands it in here so this never claims a second one for the same widget. Necessary, not just
@@ -157,7 +166,7 @@ fun UiPrimitiveScope.interactiveSurface(
     clipContent: Boolean = false,
     cacheKey: Any? = null,
     semanticRole: UiSemanticRole = UiSemanticRole.Panel,
-    resolvedSlot: UiBounds? = null,
+    resolvedSlot: Rectangle? = null,
     // surface()'s own baseline is neutralSurfaceDefaults (background/foreground/comfortable
     // content padding) -- correct for a panel, wrong for most interactive widgets built on top
     // of this (a plain surface's padding silently bled through a button that never asked for
@@ -167,8 +176,8 @@ fun UiPrimitiveScope.interactiveSurface(
     // does, so this default is never actually reached -- kept only so a direct `ui-core` caller
     // that skips supplying one still gets a sane baseline instead of an unstyled invisible panel.
     defaults: Style = neutralSurfaceDefaults,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = surfaceCore(
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = surfaceCore(
     id = id,
     verticalArrangement = verticalArrangement,
     modifier = modifier,
@@ -187,15 +196,27 @@ internal fun UiPrimitiveScope.surfaceCore(
     clipContent: Boolean,
     cacheKey: Any?,
     semanticRole: UiSemanticRole,
-    resolvedSlot: UiBounds?,
+    resolvedSlot: Rectangle?,
     // Load-bearing default, unlike interactiveSurface's own (see its doc) -- Column.kt's
     // resolveVisualSurface() (a plain `column()`/`surface()` call whose own style already
     // resolves a background/border/shape) calls this directly without overriding it, so every
     // such call in the app inherits neutralSurfaceDefaults for whatever it left unset.
     defaults: Style = neutralSurfaceDefaults,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds {
-    val width = modifier.widthDimension ?: Dimension.WrapContent
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle {
+    val requestedWidth = modifier.widthDimension ?: Dimension.WrapContent
+    // A FillMax width is "no opinion, fill whatever's available" -- it has no real intrinsic
+    // width of its own for a bounded/real layout pass, but an ancestor sizing ITSELF from
+    // WrapContent (see UiContext.wrapContentPass) needs exactly this surface's own natural
+    // content width to hug around (e.g. a vertical shadcnButtonGroup's members are all
+    // fillMaxWidth(), and the group must still wrap to the widest one). Report it for that one
+    // trial only, by measuring content the same way a real WrapContent width already does below
+    // -- a real Fixed width, or FillMax outside a wrap trial, is never touched. Mirrors
+    // ui-headless's withIntrinsicLabelWidth, which applies the identical exception to a button's
+    // label-only sizing pass -- see that function's doc.
+    val reportsNaturalWidthDuringWrapTrial =
+        resolvedSlot == null && requestedWidth == Dimension.FillMax && context.isWrapContentPassInternal()
+    val width = if (reportsNaturalWidthDuringWrapTrial) Dimension.WrapContent else requestedWidth
     val height = modifier.heightDimension ?: Dimension.WrapContent
     val gap = verticalArrangement.baseSpacingPx()
     val effectiveStyle = modifier.styleable ?: Style.Empty
@@ -214,20 +235,6 @@ internal fun UiPrimitiveScope.surfaceCore(
         else -> null to false
     }
 
-    val styleState = MutableStyleState(
-        hovered = modifier.forceHover ?: initialHovered,
-        active = modifier.forceActive ?: isActive(id),
-        focused = modifier.forceFocus ?: context.isFocusedInternal(id),
-    )
-    val resolved = resolveStyle(
-        style = effectiveStyle,
-        defaults = defaults,
-        state = styleState,
-    )
-    // The surface text style participates in measurement as well as painting. Without this,
-    // compact surfaces such as badges are measured with the parent text metrics and then drawn
-    // with their own caption metrics, producing clipped pills and a border that collapses into
-    // a line. Keep the same resolved foreground propagation for both passes.
     // A surface's `foreground` IS its content colour (shadcn's bg-*/text-* pairing), so it has to
     // beat whatever colour was merely inherited. Style.resolve() seeds its builder FROM
     // LocalTextStyle, so `resolved.textStyle.color` is non-null the moment any ancestor
@@ -237,13 +244,39 @@ internal fun UiPrimitiveScope.surfaceCore(
     // inherited value distinguishes "declared on this surface" from "merely inherited", so an
     // explicit per-call text colour still wins.
     val inheritedTextColor = context.current(io.github.ronjunevaldoz.awake.ui.context.LocalTextStyle).color
-    val declaresOwnTextColor =
-        resolved.textStyle.color != null && resolved.textStyle.color != inheritedTextColor
-    val contentTextStyle = if (!declaresOwnTextColor && resolved.foreground != null) {
-        resolved.textStyle.copy(color = resolved.foreground)
-    } else {
-        resolved.textStyle
+    fun resolveVisuals(hovered: Boolean): Pair<ResolvedStyle, TextStyle> {
+        val styleState = MutableStyleState(
+            hovered = modifier.forceHover ?: hovered,
+            active = modifier.forceActive ?: isActive(id),
+            focused = modifier.forceFocus ?: context.isFocusedInternal(id),
+        )
+        val resolved = resolveStyle(
+            style = effectiveStyle,
+            defaults = defaults,
+            state = styleState,
+        )
+        // The surface text style participates in measurement as well as painting. Without this,
+        // compact surfaces such as badges are measured with the parent text metrics and then
+        // drawn with their own caption metrics, producing clipped pills and a border that
+        // collapses into a line. Keep the same resolved foreground propagation for both passes.
+        val declaresOwnTextColor =
+            resolved.textStyle.color != null && resolved.textStyle.color != inheritedTextColor
+        val contentTextStyle = if (!declaresOwnTextColor && resolved.foreground != null) {
+            resolved.textStyle.copy(color = resolved.foreground)
+        } else {
+            resolved.textStyle
+        }
+        return resolved to contentTextStyle
     }
+
+    // hasWrapContent means no real slot exists yet -- initialHovered is a placeholder (always
+    // false) rather than a real hit test, so resolving hover/active/focused against it here would
+    // always paint the resting state (e.g. a hovered shadcn primary button never picking up its
+    // `primary/90` hover fill). Good enough for sizing purposes (padding/border/text metrics
+    // essentially never vary by hover), but not for the visuals actually painted below -- those
+    // get re-resolved against the real slot once it exists. Mirrors
+    // resolveInteractiveSurface/interact()'s claim-slot-then-hit-test order in ui-headless.
+    var (resolved, contentTextStyle) = resolveVisuals(initialHovered)
     val paddingWidth = resolved.contentPadding.horizontalPx()
     val paddingHeight = resolved.contentPadding.verticalPx()
     val effectiveCacheKey = cacheKey ?: context.current(io.github.ronjunevaldoz.awake.ui.context.LocalCacheKey)
@@ -264,6 +297,7 @@ internal fun UiPrimitiveScope.surfaceCore(
                 context.measureColumnContentInternal(
                     width = maxContentWidth,
                     gap = gap,
+                    wrapContentPass = true,
                     content = content,
                 )
             }
@@ -284,9 +318,17 @@ internal fun UiPrimitiveScope.surfaceCore(
         else -> height
     }
     val slot = initialSlot ?: claimModifiedSlot(modifier.width(resolvedWidth).height(resolvedHeight))
+    if (initialSlot == null) {
+        // The slot above didn't exist when resolveVisuals(initialHovered) ran -- redo it now
+        // against the real bounds so the painted/recorded state reflects the actual pointer
+        // position instead of the sizing-pass placeholder.
+        val (finalResolved, finalContentTextStyle) = resolveVisuals(hitTest(slot))
+        resolved = finalResolved
+        contentTextStyle = finalContentTextStyle
+    }
     resolveClickable(id = id, slot = slot, modifier = modifier)
     resolved.shadow?.let { shadow ->
-        emit(
+        dispatchPrimitive(
             UiDrawPrimitive.ShadowQuad(
                 x = slot.x,
                 y = slot.y,
@@ -300,19 +342,26 @@ internal fun UiPrimitiveScope.surfaceCore(
                 color = shadow.color,
                 tokenId = shadow.tokenId,
             ),
+            overlay = false,
         )
     }
-    emitFillAndBorder(
-        slot = slot,
-        fillColor = resolved.background ?: Color.Transparent,
-        radiusPx = resolved.shape.toPx(),
-        borderWidth = resolved.borderWidth,
-        borderColor = resolved.borderColor
-            ?: context.current(io.github.ronjunevaldoz.awake.ui.context.LocalTheme).colors.border,
-        shapeSpec = resolved.shapeSpec,
-        fillTokenId = resolved.backgroundToken,
-        borderTokenId = resolved.borderColorToken,
-    )
+    // Resolved here, on the surrounding UiPrimitiveScope, not inside canvas{} -- CanvasScope is
+    // a pure draw surface with no theme/context access (Option B,
+    // docs/tasks/2026-08-18-ui-capability-scopes-plan.md).
+    val resolvedBorderColor = resolved.borderColor
+        ?: context.current(io.github.ronjunevaldoz.awake.ui.context.LocalTheme).colors.border
+    canvas(slot) {
+        drawFillAndBorder(
+            slot = slot,
+            fillColor = resolved.background ?: Color.Transparent,
+            radiusPx = resolved.shape.toPx(),
+            borderWidth = resolved.borderWidth,
+            borderColor = resolvedBorderColor,
+            shapeSpec = resolved.shapeSpec,
+            fillTokenId = resolved.backgroundToken,
+            borderTokenId = resolved.borderColorToken,
+        )
+    }
     recordSemantic(
         role = semanticRole,
         id = id,
@@ -323,6 +372,18 @@ internal fun UiPrimitiveScope.surfaceCore(
         foregroundToken = resolved.foregroundToken,
         borderColor = resolved.borderColor,
         borderToken = resolved.borderColorToken,
+        contentPadding = resolved.contentPadding,
+        widthStrategy = when (requestedWidth) {
+            Dimension.FillMax -> "fill-parent"
+            Dimension.WrapContent -> "intrinsic"
+            is Dimension.Fixed -> "fixed"
+        },
+        heightStrategy = when (height) {
+            Dimension.FillMax -> "fill-parent"
+            Dimension.WrapContent -> "intrinsic"
+            is Dimension.Fixed -> "fixed"
+        },
+        borderWidth = resolved.borderWidth.value,
         borderRadius = resolved.shape.toPx(),
     )
     // A surface's `foreground` is its content colour, so it has to reach the text inside it.
@@ -337,13 +398,32 @@ internal fun UiPrimitiveScope.surfaceCore(
     // A surface is a column that paints. It has to divide its height the same way a plain
     // column does -- without this it dropped every child weight, so whether a container
     // distributed space came down to whether it happened to have a background.
+    val nodeKey = context.enterLayoutNodeInternal()
+    val remembered = if (id != null && cacheKey != null) {
+        null
+    } else {
+        context.rememberedHasWeightedChildInternal(nodeKey)
+    }
     val contentArrangement = Arrangement.spacedBy(gap.px)
     val contentInsets = resolved.contentPadding
-    val plannedSlots = planWeightedColumnSlots(
-        slot = slot.inset(contentInsets),
-        arrangement = contentArrangement,
-        content = content,
-    )
+    val needsWeightedDistribution = contentArrangement.requiresMeasuredDistribution() ||
+        (remembered != false && (remembered == true || context.resolveHasWeightedChild(id, effectiveCacheKey) {
+            context.measureColumnContentInternal(
+                width = slot.width,
+                gap = gap,
+                height = slot.height,
+                content = content,
+            ).weights.any { it != null }
+        }))
+    val plannedSlots = if (!context.isMeasuringInternal() && needsWeightedDistribution) {
+        planWeightedColumnSlots(
+            slot = slot.inset(contentInsets),
+            arrangement = contentArrangement,
+            content = content,
+        )
+    } else {
+        null
+    }
     val contentScope = childColumn(
         slot,
         verticalArrangement = contentArrangement,
@@ -371,6 +451,7 @@ internal fun UiPrimitiveScope.surfaceCore(
     context.pushLocal(io.github.ronjunevaldoz.awake.ui.context.LocalCacheKey, effectiveCacheKey)
     try {
         context.withMeasuredRecordingSuppressed {
+            if (!needsWeightedDistribution && remembered == false) context.tolerateUnplannedWeightInternal()
             if (clipContent || resolved.shape.toPx() > 0f || resolved.shapeSpec != null) {
                 clip(effectiveShape, slot) { contentScope.content(slot) }
             } else {
@@ -380,7 +461,9 @@ internal fun UiPrimitiveScope.surfaceCore(
     } finally {
         context.popLocal(io.github.ronjunevaldoz.awake.ui.context.LocalCacheKey)
     }
+    context.recordHasWeightedChildInternal(nodeKey, context.lastChildWeightObservation)
     context.popShapeSpec()
     context.popLocal(io.github.ronjunevaldoz.awake.ui.context.LocalTextStyle)
+    context.exitLayoutNodeInternal()
     return slot
 }

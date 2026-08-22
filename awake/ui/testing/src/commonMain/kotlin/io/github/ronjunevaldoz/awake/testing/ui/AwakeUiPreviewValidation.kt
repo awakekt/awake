@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.testing.ui
 
 import io.github.ronjunevaldoz.awake.ui.UiSemanticNode
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 
 /**
  * Sentinel: pass as [AwakeUiPreviewValidationConfig.checkCenteredTextIds] to assert centering
@@ -60,20 +60,20 @@ data class AwakeUiPreviewValidationConfig(
      */
     val spacingRules: List<AwakeUiPreviewSpacingRule> = emptyList(),
 
-    /** Assert exact pixel dimensions from Figma */
+    /** Assert exact pixel dimensions from Figma. */
     val dimensionRules: List<AwakeUiPreviewDimensionRule> = emptyList(),
 
-    /** Assert that specific semantic nodes use the correct design tokens */
+    /** Assert that specific semantic nodes use the correct design tokens. */
     val tokenRules: List<AwakeUiPreviewTokenRule> = emptyList(),
 
-    /** Assert exact content padding from Figma */
+    /** Assert exact content padding from Figma. */
     val exactPaddingRules: List<AwakeUiPreviewExactPaddingRule> = emptyList(),
 
-    /** Assert exact sibling spacing from Figma */
+    /** Assert exact sibling spacing from Figma. */
     val exactSpacingRules: List<AwakeUiPreviewExactSpacingRule> = emptyList(),
 )
 
-/** Assert that specific semantic nodes use the correct design tokens */
+/** Assert that specific semantic nodes use the correct design tokens. */
 data class AwakeUiPreviewTokenRule(
     val nodeId: String,
     val expectedBackgroundToken: String? = null,
@@ -82,7 +82,7 @@ data class AwakeUiPreviewTokenRule(
     val expectedTextStyleToken: String? = null,
 )
 
-/** Assert exact pixel dimensions from Figma */
+/** Assert exact pixel dimensions from Figma. */
 data class AwakeUiPreviewDimensionRule(
     val nodeId: String,
     val exactHeight: Float? = null,
@@ -90,14 +90,14 @@ data class AwakeUiPreviewDimensionRule(
     val tolerancePx: Float = 0.5f,
 )
 
-/** Assert exact content padding from Figma */
+/** Assert exact content padding from Figma. */
 data class AwakeUiPreviewExactPaddingRule(
     val nodeId: String,
     val exactPaddingPx: Float,
     val tolerancePx: Float = 0.5f,
 )
 
-/** Assert exact sibling spacing from Figma */
+/** Assert exact sibling spacing from Figma. */
 data class AwakeUiPreviewExactSpacingRule(
     val label: String,
     val nodeIds: Set<String>,
@@ -150,7 +150,7 @@ fun validateAwakeUiPreview(
     config: AwakeUiPreviewValidationConfig = AwakeUiPreviewValidationConfig(),
 ): AwakeUiPreviewValidationReport {
     val issues = ArrayList<String>()
-    val frameBounds = UiBounds(0f, 0f, metadata.width.toFloat(), metadata.height.toFloat())
+    val frameBounds = Rectangle(0f, 0f, metadata.width.toFloat(), metadata.height.toFloat())
 
     val visualReport = inspectUiFrame(
         primitives = frame.primitives,

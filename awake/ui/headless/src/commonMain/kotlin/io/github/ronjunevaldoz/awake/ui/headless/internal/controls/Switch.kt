@@ -2,32 +2,34 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless.internal.controls
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.font
 import io.github.ronjunevaldoz.awake.ui.theme
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.canvas
+import io.github.ronjunevaldoz.awake.ui.foundation.toggled
 import io.github.ronjunevaldoz.awake.ui.font.measureTextWidth
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.paintSurface
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.resolveInteractiveSurface
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.UiTextOverflow
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextOverflow
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.modifier.withSizeFallback
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
 import io.github.ronjunevaldoz.awake.ui.scope.resolveGlyphPx
 import io.github.ronjunevaldoz.awake.ui.scope.resolveStyle
 import io.github.ronjunevaldoz.awake.ui.style.Style
-import io.github.ronjunevaldoz.awake.ui.toPx
-import io.github.ronjunevaldoz.awake.ui.withGraphicsLayerAlpha
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.ui.headless.withDisabledAlpha
 import kotlin.math.ceil
 
 // shadcn's Switch track is w-8 h-[1.15rem] (32dp x 18.4dp at 1rem=16dp), not a 44x24 Material
@@ -104,13 +106,13 @@ fun UiPrimitiveScope.switch(
     // Track slot is always fixed-size, anchored at the START of the claimed slot.
     // When the caller passes .width(260dp), the full slot is 260dp wide but we only paint
     // the 32dp track on the left side; the label gets the remaining space to the right.
-    val trackSlot = UiBounds(
+    val trackSlot = Rectangle(
         x = surface.interaction.slot.x,
         y = surface.interaction.slot.y + (surface.interaction.slot.height - TOGGLE_HEIGHT.toPx()) / 2f,
         width = TOGGLE_WIDTH.toPx(),
         height = TOGGLE_HEIGHT.toPx(),
     )
-    val newChecked = if (surface.interaction.clicked) !checked else checked
+    val newChecked = surface.interaction.toggled(checked)
     // resolved.background already reflects the caller's own checked-state color
     // (shadcnSwitchStyle sets `background(if (checked) primary else input)`) -- the theme
     // token below is only a fallback for a bare-Style.Empty caller, not a hardcoded override
@@ -121,7 +123,7 @@ fun UiPrimitiveScope.switch(
         ?: if (newChecked) theme.colors.primary else theme.colors.muted
     // See `ShadcnButtons.kt`'s `buttonSlotInternal` doc for why this is one group alpha
     // around the whole painted widget, not a per-color tweak.
-    withGraphicsLayerAlpha(if (enabled) 1f else 0.5f) {
+    withDisabledAlpha(enabled) {
         // The track is always a true stadium/pill regardless of what shape the caller's style
         // resolves to -- same reasoning as the color above, and consistent with the knob below,
         // which already hardcodes UiShapeSpec.Pill instead of trusting the resolved style.
@@ -139,19 +141,22 @@ fun UiPrimitiveScope.switch(
         } else {
             trackSlot.x
         }
-        emitFillAndBorder(
-            slot = UiBounds(
-                knobX,
-                knobY,
-                knobDiameter,
-                knobDiameter,
-            ),
-            fillColor = theme.colors.background,
-            radiusPx = 0f,
-            borderWidth = UiShape.none,
-            borderColor = Color.Transparent,
-            shapeSpec = UiShapeSpec.Pill,
+        val knobSlot = Rectangle(
+            knobX,
+            knobY,
+            knobDiameter,
+            knobDiameter,
         )
+        canvas(knobSlot) {
+            drawFillAndBorder(
+                slot = knobSlot,
+                fillColor = theme.colors.background,
+                radiusPx = 0f,
+                borderWidth = UiShape.none,
+                borderColor = Color.Transparent,
+                shapeSpec = UiShapeSpec.Pill,
+            )
+        }
         if (label != null) {
             val trackWidthPx = TOGGLE_WIDTH.toPx()
             // Slot width is already claimed as track+gap+measured label (see fallbackWidthPx
@@ -160,7 +165,7 @@ fun UiPrimitiveScope.switch(
                 (surface.interaction.slot.width - trackWidthPx - gapPx).coerceAtLeast(0f)
             text(
                 label,
-                slot = UiBounds(
+                slot = Rectangle(
                     trackSlot.x + trackWidthPx + gapPx,
                     surface.interaction.slot.y,
                     labelWidth,

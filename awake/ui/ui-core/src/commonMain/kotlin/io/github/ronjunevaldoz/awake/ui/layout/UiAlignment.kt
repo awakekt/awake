@@ -3,17 +3,17 @@
 package io.github.ronjunevaldoz.awake.ui.layout
 
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiInsets
 
-fun UiBounds.place(
+fun Rectangle.place(
     width: Float,
     height: Float,
     alignment: UiAlignment = UiAlignment.TopStart,
     insets: UiInsets = UiInsets.Zero,
     offsetX: Float = 0f,
     offsetY: Float = 0f,
-): UiBounds {
+): Rectangle {
     val content = inset(insets)
     val resolvedWidth = width.coerceIn(0f, content.width)
     val resolvedHeight = height.coerceIn(0f, content.height)
@@ -27,5 +27,5 @@ fun UiBounds.place(
         UiAlignment.CenterStart, UiAlignment.Center, UiAlignment.CenterEnd -> content.y + (content.height - resolvedHeight) / 2f
         UiAlignment.BottomStart, UiAlignment.BottomCenter, UiAlignment.BottomEnd -> content.y + content.height - resolvedHeight
     } + offsetY
-    return UiBounds(x, y, resolvedWidth, resolvedHeight)
+    return Rectangle(x, y, resolvedWidth, resolvedHeight)
 }

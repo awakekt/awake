@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem.styles
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnThemeValues
 import io.github.ronjunevaldoz.awake.ui.font.FontWeight
 import io.github.ronjunevaldoz.awake.ui.style.Style
@@ -48,10 +48,8 @@ internal fun shadcnTabStyle(values: ShadcnThemeValues, active: Boolean): Style =
     fontWeight(FontWeight.Medium)
 }
 
-internal fun shadcnBreadcrumbItemStyle(values: ShadcnThemeValues, current: Boolean): Style = Style {
-    foreground(if (current) values.colors.foreground else values.colors.mutedForeground)
-    textSize(values.typography.caption)
-}
+internal fun shadcnBreadcrumbItemStyle(values: ShadcnThemeValues, current: Boolean): Style =
+    shadcnTextStyle(if (current) values.colors.foreground else values.colors.mutedForeground, values.typography.caption)
 
 internal fun shadcnBreadcrumbMutedStyle(values: ShadcnThemeValues): Style =
     shadcnBreadcrumbItemStyle(values, current = false)

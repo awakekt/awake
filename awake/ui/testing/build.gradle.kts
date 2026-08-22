@@ -33,7 +33,11 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":awake:core"))
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:core:math2d"))
+            implementation(project(":awake:core:color"))
+            implementation(project(":awake:core:input"))
+            implementation(project(":awake:core:math"))
             implementation(project(":awake:ui:ui-core"))
             implementation(project(":awake:ui:headless"))
             // api: NoopRenderer's supertype must be visible to tests that subclass it.
@@ -42,6 +46,12 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            // Test-only, and only here: the cross-engine differ is the one place that has to see
+            // both engines at once. Neither `ui-core` nor `:awake:compose:*` may depend on the
+            // other, so the comparison lives in a third module that already depends on one of them.
+            implementation(project(":awake:compose:runtime"))
+            implementation(project(":awake:compose:ui"))
+            implementation(project(":awake:compose:foundation"))
         }
     }
 }

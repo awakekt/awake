@@ -6,7 +6,7 @@ import kotlin.jvm.JvmInline
 
 /**
  * Local copy of `awake-backend-vulkan`'s `handles/Handles.kt` (Module restructuring slice 2,
- * see docs/MVP_PLAN.md) -- these 9 tiny value classes are duplicated rather than shared
+ * see docs/mvp-plan.md) -- these 9 tiny value classes are duplicated rather than shared
  * across a module dependency, since the whole point of physically splitting the Vulkan and
  * WebGPU backends is that neither depends on the other. [WebGpuHandles] uses these the same
  * way the Vulkan backend's real handle-owning classes do, just wrapping a table index instead

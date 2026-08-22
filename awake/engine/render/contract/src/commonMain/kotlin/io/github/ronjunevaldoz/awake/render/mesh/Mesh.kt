@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.render.mesh
 
+import io.github.ronjunevaldoz.awake.core.geometry.VertexFormat
+
 /**
- * Module restructuring slice 1 (see docs/MVP_PLAN.md): the backend-neutral surface
+ * Module restructuring slice 1 (see docs/mvp-plan.md): the backend-neutral surface
  * `RenderSystem`/`DrawCall`/`Renderer.draw()` actually need across the module boundary --
  * deliberately narrow, not a 1:1 port of every Vulkan-backend `Mesh` member. Usage analysis
  * this session confirmed no caller outside `awake-vulkan` ever reads `vertexBuffer`/

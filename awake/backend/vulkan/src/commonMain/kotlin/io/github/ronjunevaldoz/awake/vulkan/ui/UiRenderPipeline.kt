@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan.ui
 
+import io.github.ronjunevaldoz.awake.render.passes2d.UiPipelineKind
 import io.github.ronjunevaldoz.awake.vulkan.VK_SUBPASS_EXTERNAL
 import io.github.ronjunevaldoz.awake.vulkan.Vulkan
 import io.github.ronjunevaldoz.awake.vulkan.device.GraphicsDevice
@@ -27,9 +28,14 @@ import io.github.ronjunevaldoz.awake.vulkan.models.VkOffset2D
 import io.github.ronjunevaldoz.awake.vulkan.models.VkRect2D
 import io.github.ronjunevaldoz.awake.vulkan.models.VkSubpassDependency
 import io.github.ronjunevaldoz.awake.vulkan.models.VkViewport
+import io.github.ronjunevaldoz.awake.vulkan.enums.VkCompareOp
+import io.github.ronjunevaldoz.awake.vulkan.enums.VkFrontFace
+import io.github.ronjunevaldoz.awake.vulkan.enums.VkPolygonMode
+import io.github.ronjunevaldoz.awake.vulkan.enums.VkSampleCountFlagBits
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkBufferCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkBufferUsageFlagBits
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorBufferInfo
+import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorImageInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorPoolCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorPoolSize
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorSetLayoutBinding
@@ -38,7 +44,6 @@ import io.github.ronjunevaldoz.awake.vulkan.models.info.VkDescriptorType
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkGraphicsPipelineCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkMemoryAllocateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkRenderPassCreateInfo
-import io.github.ronjunevaldoz.awake.vulkan.models.info.VkShaderModuleCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkSubpassDescription
 import io.github.ronjunevaldoz.awake.vulkan.models.info.pipeline.VkPipelineCacheCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.pipeline.VkPipelineColorBlendAttachmentState
@@ -53,31 +58,29 @@ import io.github.ronjunevaldoz.awake.vulkan.models.info.pipeline.VkPipelineShade
 import io.github.ronjunevaldoz.awake.vulkan.models.info.pipeline.VkPipelineVertexInputStateCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.pipeline.VkPipelineViewportStateCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.pipeline.VkVertexInputAttributeDescription
+import io.github.ronjunevaldoz.awake.core.geometry.VertexFormat
+import io.github.ronjunevaldoz.awake.core.geometry.VertexFormats2D
 import io.github.ronjunevaldoz.awake.vulkan.models.info.pipeline.VkVertexInputBindingDescription
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.createShaderModule
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.toShaderIntArray
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.toVkFormat
 import io.github.ronjunevaldoz.awake.vulkan.swapchain.SwapchainManager
+import io.github.ronjunevaldoz.awake.vulkan.texture.Texture
+
 
 /**
- * The UI overlay's own render pass + pipeline -- structurally different from the 3D
- * [io.github.ronjunevaldoz.awake.vulkan.pipeline.RenderPipeline] (single color attachment
- * only, no depth, `loadOp = LOAD` so it draws on top of the 3D pass's output instead of
- * clearing it, `blendEnable = true` for alpha-over compositing). See docs/MVP_PLAN.md's
- * custom-UI decision log entry for why this is a second pass rather than folded into the
- * existing one.
- *
- * Screen size is passed via a small uniform buffer (not a push constant -- this repo's
- * Vulkan bindings don't expose `vkCmdPushConstants` yet, only the pipeline-layout struct
- * fields for declaring push-constant ranges), written once at construction and again only
- * on resize.
+ * Unified UI overlay pipeline -- handles colored quads, rounded quads, font glyphs, and textures.
  */
 class UiRenderPipeline(
     graphicsDevice: GraphicsDevice,
     private val swapchainManager: SwapchainManager,
     vertShaderCode: ByteArray,
     fragShaderCode: ByteArray,
-    // Offscreen headless capture passes in an external render pass instead of letting this
-    // pipeline create its own, since the internal one is hardcoded for swapchain compositing
-    // (wrong layout contract for an OffscreenRenderTarget framebuffer).
-    private val externalRenderPass: Long? = null,
+    val kind: UiPipelineKind = UiPipelineKind.Quad,
+    val hasTexture: Boolean = false,
+    externalRenderPass: Long? = null,
+    private val framesInFlight: Int = 1,
+    fixedTexture: Texture? = null,
 ) {
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
@@ -94,17 +97,32 @@ class UiRenderPipeline(
     private var pipelineCache: Long = 0
     private var graphicsPipeline: LongArray = longArrayOf()
 
-    // Only destroy renderPass if this pipeline itself created it -- an externally-owned
-    // render pass (offscreen case above) is torn down by whoever owns it instead.
+    private val descriptorSlotsByFrame = List(framesInFlight) {
+        mutableListOf<TextureDescriptorSlot>()
+    }
+
+    private data class TextureDescriptorSlot(
+        val descriptorPool: Long,
+        val descriptorSet: Long,
+    )
+
     private var ownsRenderPass: Boolean = externalRenderPass == null
 
     init {
-        renderPass = externalRenderPass ?: createRenderPass()
-        descriptorSetLayout = createDescriptorSetLayout()
-        createScreenSizeUniformBuffer()
-        createDescriptorSet()
-        createGraphicsPipeline(vertShaderCode, fragShaderCode)
-        writeScreenSize(swapchainManager.extent.width.toFloat(), swapchainManager.extent.height.toFloat())
+        require(framesInFlight > 0) { "framesInFlight must be positive." }
+        try {
+            renderPass = externalRenderPass ?: createRenderPass()
+            descriptorSetLayout = createDescriptorSetLayout()
+            createScreenSizeUniformBuffer()
+            if (!hasTexture || fixedTexture != null) {
+                createFixedDescriptorSet(fixedTexture)
+            }
+            createGraphicsPipeline(vertShaderCode, fragShaderCode)
+            writeScreenSize(swapchainManager.extent.width.toFloat(), swapchainManager.extent.height.toFloat())
+        } catch (e: Throwable) {
+            destroy()
+            throw e
+        }
     }
 
     private fun createRenderPass(): Long = Vulkan.vkCreateRenderPass(
@@ -114,10 +132,6 @@ class UiRenderPipeline(
                 VkAttachmentDescription(
                     format = swapchainManager.imageFormat,
                     loadOp = VkAttachmentLoadOp.LOAD,
-                    // The 3D pass's finalLayout now leaves the image in COLOR_ATTACHMENT_OPTIMAL
-                    // (see RenderPipeline.kt) instead of transitioning straight to
-                    // PRESENT_SRC_KHR -- this pass picks up from there and does that final
-                    // transition itself once the UI overlay is drawn on top.
                     initialLayout = VkImageLayout.VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
                     finalLayout = VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
                 ),
@@ -138,10 +152,6 @@ class UiRenderPipeline(
                     srcSubpass = VK_SUBPASS_EXTERNAL,
                     dstSubpass = 0,
                     srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value,
-                    // This pass loads the swapchain image produced by the preceding 3D
-                    // render pass in the same command buffer. Make those color writes
-                    // visible before LOAD/blend reads the image, otherwise scene+UI frames
-                    // can intermittently sample stale attachment contents.
                     srcAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT.value,
                     dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value,
                     dstAccessMask = VkAccessFlagBits.VK_ACCESS_COLOR_ATTACHMENT_READ_BIT.value or
@@ -151,18 +161,35 @@ class UiRenderPipeline(
         ),
     )
 
-    private fun createDescriptorSetLayout(): Long = VulkanDescriptors.vkCreateDescriptorSetLayout(
-        device,
-        VkDescriptorSetLayoutCreateInfo(
-            pBindings = arrayOf(
+    private fun createDescriptorSetLayout(): Long {
+        val screenSizeStageFlags = VkShaderStageFlagBits.VERTEX.value or VkShaderStageFlagBits.FRAGMENT.value
+        val bindings = if (hasTexture) {
+            arrayOf(
                 VkDescriptorSetLayoutBinding(
                     binding = 0,
                     descriptorType = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-                    stageFlags = VkShaderStageFlagBits.VERTEX.value,
+                    stageFlags = screenSizeStageFlags,
                 ),
-            ),
-        ),
-    )
+                VkDescriptorSetLayoutBinding(
+                    binding = 1,
+                    descriptorType = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                    stageFlags = VkShaderStageFlagBits.FRAGMENT.value,
+                ),
+            )
+        } else {
+            arrayOf(
+                VkDescriptorSetLayoutBinding(
+                    binding = 0,
+                    descriptorType = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    stageFlags = screenSizeStageFlags,
+                ),
+            )
+        }
+        return VulkanDescriptors.vkCreateDescriptorSetLayout(
+            device,
+            VkDescriptorSetLayoutCreateInfo(pBindings = bindings),
+        )
+    }
 
     private fun createScreenSizeUniformBuffer() {
         val bufferSize = SCREEN_SIZE_UNIFORM_BYTES.toLong()
@@ -184,15 +211,20 @@ class UiRenderPipeline(
         VulkanBuffers.vkBindBufferMemory(device, screenSizeBuffer, screenSizeBufferMemory, 0)
     }
 
-    private fun createDescriptorSet() {
+    private fun createFixedDescriptorSet(fixedTexture: Texture?) {
+        val poolSizes = if (fixedTexture != null) {
+            arrayOf(
+                VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
+                VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, descriptorCount = 1),
+            )
+        } else {
+            arrayOf(
+                VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
+            )
+        }
         descriptorPool = VulkanDescriptors.vkCreateDescriptorPool(
             device,
-            VkDescriptorPoolCreateInfo(
-                maxSets = 1,
-                pPoolSizes = arrayOf(
-                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
-                ),
-            ),
+            VkDescriptorPoolCreateInfo(maxSets = 1, pPoolSizes = poolSizes),
         )
         descriptorSet = VulkanDescriptors.vkAllocateDescriptorSet(device, descriptorPool, descriptorSetLayout)
         VulkanDescriptors.vkUpdateDescriptorSetBuffer(
@@ -202,12 +234,89 @@ class UiRenderPipeline(
             VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
             VkDescriptorBufferInfo(buffer = screenSizeBuffer, range = SCREEN_SIZE_UNIFORM_BYTES.toLong()),
         )
+        if (fixedTexture != null) {
+            VulkanDescriptors.vkUpdateDescriptorSetImage(
+                device,
+                descriptorSet,
+                1,
+                VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+                VkDescriptorImageInfo(
+                    sampler = fixedTexture.sampler.handle,
+                    imageView = fixedTexture.imageView.handle,
+                ),
+            )
+        }
     }
 
-    /** Call once at construction and again whenever the swapchain resizes. */
+    private fun descriptorSlot(frameIndex: Int, drawSlotIndex: Int): TextureDescriptorSlot {
+        val slots = descriptorSlotsByFrame[frameIndex]
+        while (slots.size <= drawSlotIndex) {
+            slots.add(createDescriptorSlot())
+        }
+        return slots[drawSlotIndex]
+    }
+
+    private fun createDescriptorSlot(): TextureDescriptorSlot {
+        val pool = VulkanDescriptors.vkCreateDescriptorPool(
+            device,
+            VkDescriptorPoolCreateInfo(
+                maxSets = 1,
+                pPoolSizes = arrayOf(
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptorCount = 1),
+                    VkDescriptorPoolSize(type = VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, descriptorCount = 1),
+                ),
+            ),
+        )
+        val set = VulkanDescriptors.vkAllocateDescriptorSet(device, pool, descriptorSetLayout)
+        VulkanDescriptors.vkUpdateDescriptorSetBuffer(
+            device,
+            set,
+            0,
+            VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            VkDescriptorBufferInfo(buffer = screenSizeBuffer, range = SCREEN_SIZE_UNIFORM_BYTES.toLong()),
+        )
+        return TextureDescriptorSlot(pool, set)
+    }
+
+    fun bindMaterial(commandBuffer: Long, frameIndex: Int, drawSlotIndex: Int, sampler: Long, imageView: Long) {
+        val slot = descriptorSlot(frameIndex, drawSlotIndex)
+        VulkanDescriptors.vkUpdateDescriptorSetImage(
+            device,
+            slot.descriptorSet,
+            1,
+            VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            VkDescriptorImageInfo(
+                sampler = sampler,
+                imageView = imageView,
+            ),
+        )
+        Vulkan.vkCmdBindPipeline(
+            commandBuffer,
+            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+            graphicsPipeline[0],
+        )
+        VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, pipelineLayout, 0, slot.descriptorSet)
+    }
+
+    fun bindMaterial(commandBuffer: Long, sampler: Long, imageView: Long) =
+        bindMaterial(commandBuffer, frameIndex = 0, drawSlotIndex = 0, sampler = sampler, imageView = imageView)
+
+    fun prepareDescriptorSet(texture: Texture, frameIndex: Int = 0): Long {
+        val slot = descriptorSlot(frameIndex, 0)
+        VulkanDescriptors.vkUpdateDescriptorSetImage(
+            device,
+            slot.descriptorSet,
+            1,
+            VkDescriptorType.VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            VkDescriptorImageInfo(
+                sampler = texture.sampler.handle,
+                imageView = texture.imageView.handle,
+            ),
+        )
+        return slot.descriptorSet
+    }
+
     fun writeScreenSize(width: Float, height: Float) {
-        // Padded to 4 floats (16 bytes) to match std140 uniform-buffer alignment rules --
-        // only .xy is read by the shader (see ui_quad.vert/.wgsl).
         VulkanBuffers.writeBufferMemoryFloats(
             device,
             screenSizeBufferMemory,
@@ -216,65 +325,45 @@ class UiRenderPipeline(
         )
     }
 
-    private fun createShaderModule(code: IntArray): Long =
-        Vulkan.vkCreateShaderModule(device, VkShaderModuleCreateInfo(pCode = code))
-
-    private fun ByteArray.toIntArray(): IntArray = IntArray(size / 4) { i ->
-        (this[i * 4].toInt() and 0xFF) or
-            ((this[i * 4 + 1].toInt() and 0xFF) shl 8) or
-            ((this[i * 4 + 2].toInt() and 0xFF) shl 16) or
-            ((this[i * 4 + 3].toInt() and 0xFF) shl 24)
-    }
-
     private fun createGraphicsPipeline(vertShaderCode: ByteArray, fragShaderCode: ByteArray) {
-        val fragShaderModule = createShaderModule(fragShaderCode.toIntArray())
-        val vertShaderModule = createShaderModule(vertShaderCode.toIntArray())
+        val fragShaderModule = createShaderModule(device, fragShaderCode.toShaderIntArray())
+        val vertShaderModule = createShaderModule(device, vertShaderCode.toShaderIntArray())
 
         val shaderStages = arrayOf(
             VkPipelineShaderStageCreateInfo(stage = VkShaderStageFlagBits.FRAGMENT, module = fragShaderModule, pName = "main"),
             VkPipelineShaderStageCreateInfo(stage = VkShaderStageFlagBits.VERTEX, module = vertShaderModule, pName = "main"),
         )
 
+        val vertexAttributes = kind.vertexFormat.entries.map { entry ->
+            VkVertexInputAttributeDescription(
+                location = entry.attribute.location,
+                binding = 0,
+                format = entry.attribute.format.toVkFormat(),
+                offset = entry.offsetBytes,
+            )
+        }.toTypedArray()
+
         val vertexInputInfo = arrayOf(
             VkPipelineVertexInputStateCreateInfo(
                 pVertexBindingDescriptions = arrayOf(
                     VkVertexInputBindingDescription(
                         binding = 0,
-                        stride = DynamicMesh.FLOATS_PER_VERTEX * Float.SIZE_BYTES,
+                        stride = kind.vertexFormat.strideBytes,
                         inputRate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX,
                     ),
                 ),
-                pVertexAttributeDescriptions = arrayOf(
-                    VkVertexInputAttributeDescription(
-                        location = 0,
-                        binding = 0,
-                        format = VkFormat.VK_FORMAT_R32G32_SFLOAT,
-                        offset = 0,
-                    ),
-                    VkVertexInputAttributeDescription(
-                        location = 1,
-                        binding = 0,
-                        format = VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT,
-                        offset = 2 * Float.SIZE_BYTES,
-                    ),
-                    // scale(xy) + pivot(zw) -- see ui_quad.vert's inTransform.
-                    VkVertexInputAttributeDescription(
-                        location = 2,
-                        binding = 0,
-                        format = VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT,
-                        offset = 6 * Float.SIZE_BYTES,
-                    ),
-                ),
+                pVertexAttributeDescriptions = vertexAttributes,
             ),
         )
 
-        val dynamicInfo = arrayOf(
-            VkPipelineDynamicStateCreateInfo(
-                pDynamicStates = arrayOf(VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT, VkDynamicState.VK_DYNAMIC_STATE_SCISSOR),
+        val inputAssembly = arrayOf(
+            VkPipelineInputAssemblyStateCreateInfo(
+                topology = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                primitiveRestartEnable = false,
             ),
         )
 
-        val viewportInfo = arrayOf(
+        val viewportState = arrayOf(
             VkPipelineViewportStateCreateInfo(
                 pViewports = arrayOf(
                     VkViewport(
@@ -282,93 +371,154 @@ class UiRenderPipeline(
                         height = swapchainManager.extent.height.toFloat(),
                     ),
                 ),
-                pScissors = arrayOf(VkRect2D(offset = VkOffset2D(), extent = swapchainManager.extent)),
+                pScissors = arrayOf(VkRect2D(extent = swapchainManager.extent)),
             ),
         )
 
-        val multisamplingInfo = arrayOf(VkPipelineMultisampleStateCreateInfo())
-
-        val inputAssemblyInfo = arrayOf(
-            VkPipelineInputAssemblyStateCreateInfo(
-                topology = VkPrimitiveTopology.VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-                primitiveRestartEnable = false,
-            ),
-        )
-
-        val rasterizationInfo = arrayOf(
+        val rasterizer = arrayOf(
             VkPipelineRasterizationStateCreateInfo(
+                depthClampEnable = false,
+                rasterizerDiscardEnable = false,
+                polygonMode = VkPolygonMode.VK_POLYGON_MODE_FILL,
+                lineWidth = 1.0f,
                 cullMode = VkCullModeFlagBits.VK_CULL_MODE_NONE.value,
-                lineWidth = 1f,
+                frontFace = VkFrontFace.VK_FRONT_FACE_CLOCKWISE,
+                depthBiasEnable = false,
             ),
         )
 
-        val blendAttachment = VkPipelineColorBlendAttachmentState(
-            blendEnable = true,
-            srcColorBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA,
-            dstColorBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-            srcAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA,
-            dstAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-            colorWriteMask = VkColorComponentFlagBits.VK_COLOR_COMPONENT_R_BIT.value or
-                VkColorComponentFlagBits.VK_COLOR_COMPONENT_G_BIT.value or
-                VkColorComponentFlagBits.VK_COLOR_COMPONENT_B_BIT.value or
-                VkColorComponentFlagBits.VK_COLOR_COMPONENT_A_BIT.value,
+        val multisampling = arrayOf(
+            VkPipelineMultisampleStateCreateInfo(
+                sampleShadingEnable = false,
+                rasterizationSamples = VkSampleCountFlagBits.VK_SAMPLE_COUNT_1_BIT,
+            ),
         )
 
-        val colorBlendInfo = arrayOf(VkPipelineColorBlendStateCreateInfo(pAttachments = arrayOf(blendAttachment)))
-
-        pipelineLayout = Vulkan.vkCreatePipelineLayout(
-            device,
-            VkPipelineLayoutCreateInfo(pSetLayouts = arrayOf(descriptorSetLayout)),
+        val colorBlendAttachment = arrayOf(
+            VkPipelineColorBlendAttachmentState(
+                colorWriteMask = VkColorComponentFlagBits.VK_COLOR_COMPONENT_R_BIT.value or
+                    VkColorComponentFlagBits.VK_COLOR_COMPONENT_G_BIT.value or
+                    VkColorComponentFlagBits.VK_COLOR_COMPONENT_B_BIT.value or
+                    VkColorComponentFlagBits.VK_COLOR_COMPONENT_A_BIT.value,
+                blendEnable = true,
+                srcColorBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA,
+                dstColorBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                colorBlendOp = io.github.ronjunevaldoz.awake.vulkan.enums.VkBlendOp.VK_BLEND_OP_ADD,
+                srcAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_SRC_ALPHA,
+                dstAlphaBlendFactor = VkBlendFactor.VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                alphaBlendOp = io.github.ronjunevaldoz.awake.vulkan.enums.VkBlendOp.VK_BLEND_OP_ADD,
+            ),
         )
 
-        val createInfos = arrayOf(
+        val colorBlending = arrayOf(
+            VkPipelineColorBlendStateCreateInfo(
+                logicOpEnable = false,
+                pAttachments = colorBlendAttachment,
+            ),
+        )
+
+        val dynamicStates = arrayOf(
+            VkDynamicState.VK_DYNAMIC_STATE_VIEWPORT,
+            VkDynamicState.VK_DYNAMIC_STATE_SCISSOR,
+        )
+        val dynamicStateInfo = arrayOf(VkPipelineDynamicStateCreateInfo(pDynamicStates = dynamicStates))
+
+        val depthStencil = arrayOf(
+            VkPipelineDepthStencilStateCreateInfo(
+                depthTestEnable = false,
+                depthWriteEnable = false,
+                depthCompareOp = VkCompareOp.VK_COMPARE_OP_NEVER,
+                depthBoundsTestEnable = false,
+                stencilTestEnable = false,
+            ),
+        )
+
+        val pipelineLayoutInfo = VkPipelineLayoutCreateInfo(
+            pSetLayouts = arrayOf(descriptorSetLayout),
+            pPushConstantRanges = arrayOf(),
+        )
+        pipelineLayout = Vulkan.vkCreatePipelineLayout(device, pipelineLayoutInfo)
+        pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+
+        val pipelineInfo = arrayOf(
             VkGraphicsPipelineCreateInfo(
                 pStages = shaderStages,
                 pVertexInputState = vertexInputInfo,
-                pInputAssemblyState = inputAssemblyInfo,
-                pViewportState = viewportInfo,
-                pRasterizationState = rasterizationInfo,
-                pMultisampleState = multisamplingInfo,
-                pColorBlendState = colorBlendInfo,
-                pDepthStencilState = uiDepthStencilState,
-                pDynamicState = dynamicInfo,
+                pInputAssemblyState = inputAssembly,
+                pViewportState = viewportState,
+                pRasterizationState = rasterizer,
+                pMultisampleState = multisampling,
+                pColorBlendState = colorBlending,
+                pDynamicState = dynamicStateInfo,
+                pDepthStencilState = depthStencil,
                 layout = pipelineLayout,
                 renderPass = renderPass,
                 subpass = 0,
-                basePipelineHandle = 0,
-                basePipelineIndex = -1,
             ),
         )
-        pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
-        graphicsPipeline = Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, createInfos)
 
+        graphicsPipeline = Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, pipelineInfo)
         Vulkan.vkDestroyShaderModule(device, fragShaderModule)
         Vulkan.vkDestroyShaderModule(device, vertShaderModule)
     }
 
-    fun bind(commandBuffer: Long) {
-        Vulkan.vkCmdBindPipeline(commandBuffer, VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline[0])
-        VulkanDescriptors.vkCmdBindDescriptorSet(commandBuffer, pipelineLayout, 0, descriptorSet)
+    fun bind(commandBuffer: Long, customDescriptorSet: Long? = null) {
+        Vulkan.vkCmdBindPipeline(
+            commandBuffer,
+            VkPipelineBindPoint.VK_PIPELINE_BIND_POINT_GRAPHICS,
+            graphicsPipeline[0],
+        )
+        val setToBind = customDescriptorSet ?: descriptorSet
+        if (setToBind != 0L) {
+            VulkanDescriptors.vkCmdBindDescriptorSet(
+                commandBuffer,
+                pipelineLayout,
+                0,
+                setToBind,
+            )
+        }
     }
 
     fun destroy() {
-        graphicsPipeline.forEach { Vulkan.vkDestroyPipeline(device, it) }
-        Vulkan.vkDestroyPipelineLayout(device, pipelineLayout)
-        Vulkan.vkDestroyPipelineCache(device, pipelineCache)
-        VulkanBuffers.vkDestroyBuffer(device, screenSizeBuffer)
-        VulkanBuffers.vkFreeMemory(device, screenSizeBufferMemory)
-        VulkanDescriptors.vkDestroyDescriptorPool(device, descriptorPool)
-        VulkanDescriptors.vkDestroyDescriptorSetLayout(device, descriptorSetLayout)
-        if (ownsRenderPass) Vulkan.vkDestroyRenderPass(device, renderPass)
+        descriptorSlotsByFrame.forEach { slots ->
+            slots.forEach { slot ->
+                VulkanDescriptors.vkDestroyDescriptorPool(device, slot.descriptorPool)
+            }
+            slots.clear()
+        }
+        if (descriptorPool != 0L) {
+            VulkanDescriptors.vkDestroyDescriptorPool(device, descriptorPool)
+            descriptorPool = 0
+        }
+        if (descriptorSetLayout != 0L) {
+            VulkanDescriptors.vkDestroyDescriptorSetLayout(device, descriptorSetLayout)
+            descriptorSetLayout = 0
+        }
+        if (screenSizeBuffer != 0L) {
+            VulkanBuffers.vkDestroyBuffer(device, screenSizeBuffer)
+            VulkanBuffers.vkFreeMemory(device, screenSizeBufferMemory)
+            screenSizeBuffer = 0
+            screenSizeBufferMemory = 0
+        }
+        graphicsPipeline.forEach { pipeline ->
+            Vulkan.vkDestroyPipeline(device, pipeline)
+        }
+        graphicsPipeline = longArrayOf()
+        if (pipelineLayout != 0L) {
+            Vulkan.vkDestroyPipelineLayout(device, pipelineLayout)
+            pipelineLayout = 0
+        }
+        if (pipelineCache != 0L) {
+            Vulkan.vkDestroyPipelineCache(device, pipelineCache)
+            pipelineCache = 0
+        }
+        if (ownsRenderPass && renderPass != 0L) {
+            Vulkan.vkDestroyRenderPass(device, renderPass)
+            renderPass = 0
+        }
     }
 
-    private companion object {
-        const val SCREEN_SIZE_UNIFORM_BYTES = 4 * Float.SIZE_BYTES
-        val uiDepthStencilState = arrayOf(
-            VkPipelineDepthStencilStateCreateInfo(
-                depthTestEnable = false,
-                depthWriteEnable = false,
-            ),
-        )
+    companion object {
+        private const val SCREEN_SIZE_UNIFORM_BYTES = 16
     }
 }

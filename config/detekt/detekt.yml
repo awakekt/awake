@@ -61,12 +61,12 @@ comments:
   CommentOverPrivateProperty:
     active: false
   DeprecatedBlockTag:
-    active: false
+    active: true
   EndOfSentenceFormat:
-    active: false
+    active: true
     endOfSentenceFormat: '([.?!][ \t\n\r\f<])|([.?!:]$)'
   KDocReferencesNonPublicProperty:
-    active: false
+    active: true
     excludes: &testSourceSetExcludes
       - '**/test/**'
       - 'test/**'
@@ -89,7 +89,7 @@ comments:
       - '**/iosTest/**'
       - 'iosTest/**'
   OutdatedDocumentation:
-    active: false
+    active: true
     matchTypeParameters: true
     matchDeclarationsOrder: true
     allowParamOnConstructorProperties: false
@@ -631,8 +631,24 @@ style:
   LoopWithTooManyJumpStatements:
     active: true
     maxJumpCount: 1
+  # Disabled 2026-08-22 on measurement, not preference. 539 of the repo's 719 findings, and
+  # the reason detekt is red in 27 modules -- which buries the findings that would matter.
+  #
+  # Every one of the 109 findings in awake:core:math, the most arithmetic-dense module here,
+  # was classified by hand: 54 matrix element indices (`data[15]`, `data[col * 4 + row]`,
+  # `FloatArray(16)`), 9 instances of the 4 in `0 until 4`, 5 NDC-to-pixel remaps
+  # (`0.5f * (ndcX + 1f)`), 3 rows of a box's 12-edge table, 2 clip-space depth conventions.
+  # None was a threshold, capacity, or tunable value -- the category this rule exists for.
+  # `data[15]` is m33; `FloatArray(16)` is what Mat4 *means*. Naming those yields M33_INDEX = 15.
+  #
+  # The rule is also silent where the real bugs were: GltfMesh's four duplicated vertex strides
+  # went unflagged because they were already named constants, and MeshSimplifier's two
+  # incompatible meanings of `3` were both literals it never distinguished.
+  #
+  # Re-enable only alongside a config that can exclude array subscripts; padding ignoreNumbers
+  # to cover 0..16 would leave the rule nominally on while removing what it checks.
   MagicNumber:
-    active: true
+    active: false
     excludes:
       - '**/test/**'
       - 'test/**'

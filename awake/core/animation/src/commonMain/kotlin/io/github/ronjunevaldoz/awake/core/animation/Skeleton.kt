@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.core.animation
 
 import io.github.ronjunevaldoz.awake.core.math.Mat4
 import io.github.ronjunevaldoz.awake.core.math.Quat
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 
 /** One bone, resolved for skeletal playback -- [translation]/[rotation]/[scale] kept as separate
  * components (not pre-composed into one [Mat4]) so animation playback can overwrite just the one
@@ -15,9 +15,9 @@ import io.github.ronjunevaldoz.awake.core.math.Vec3
  * (e.g. glTF's [io.github.ronjunevaldoz.awake.asset.gltf.GltfParser]) is responsible for mapping
  * its own source format's node/joint addressing onto this flat, index-based hierarchy. */
 data class Bone(
-    val translation: Vec3,
+    val translation: Vec3f,
     val rotation: Quat,
-    val scale: Vec3,
+    val scale: Vec3f,
     val matrix: Mat4?,
     val children: List<Int>,
 ) {

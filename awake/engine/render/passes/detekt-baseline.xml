@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongParameterList:DebugLineVertices.kt$( out: FloatArray, offset: Int, x: Float, y: Float, z: Float, color: Color, )</ID>
+  </CurrentIssues>
+</SmellBaseline>

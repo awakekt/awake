@@ -2,15 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.testing.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
-import io.github.ronjunevaldoz.awake.ui.UiPrimitiveTransform
-import io.github.ronjunevaldoz.awake.ui.containsPoint
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.testing.PixelMap
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPrimitiveTransform
+import io.github.ronjunevaldoz.awake.core.graphics2d.containsPoint
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFontSamplingMode
-import io.github.ronjunevaldoz.awake.ui.px
-import io.github.ronjunevaldoz.awake.ui.tessellateFill
-import io.github.ronjunevaldoz.awake.ui.tessellateStroke
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.graphics2d.tessellateFill
+import io.github.ronjunevaldoz.awake.core.graphics2d.tessellateFillAa
+import io.github.ronjunevaldoz.awake.core.graphics2d.tessellateStroke
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min
@@ -46,15 +48,12 @@ fun List<UiDrawPrimitive>.rasterize(
     background: Color = Color(0.1f, 0.1f, 0.12f, 1f),
     font: UiFont? = null,
 ): ByteArray {
-    val pixels = ByteArray(width * height * 4)
-    var i = 0
-    while (i < pixels.size) {
-        pixels[i] = (background[0] * 255).toInt().toByte()
-        pixels[i + 1] = (background[1] * 255).toInt().toByte()
-        pixels[i + 2] = (background[2] * 255).toInt().toByte()
-        pixels[i + 3] = (background.a * 255).toInt().toByte()
-        i += 4
-    }
+    val pixelMap = PixelMap(width, height)
+    val pixels = pixelMap.pixels
+    pixelMap.fill(background)
+    // Per-mesh "already composited" stamps for fillTriangleMesh; 0 means never claimed.
+    val meshCoverage = IntArray(width * height)
+    var meshStamp = 0
 
     var clipX0 = 0f
     var clipY0 = 0f
@@ -62,7 +61,7 @@ fun List<UiDrawPrimitive>.rasterize(
     var clipY1 = height.toFloat()
     data class ClipSnapshot(val rect: FloatArray, val activePathCount: Int)
     val clipStack = ArrayDeque<ClipSnapshot>()
-    val activePathClips = ArrayList<io.github.ronjunevaldoz.awake.ui.UiPath>()
+    val activePathClips = ArrayList<io.github.ronjunevaldoz.awake.core.graphics2d.UiPath>()
 
     fun passesPathClips(x: Float, y: Float): Boolean = activePathClips.all { it.containsPoint(x, y) }
 
@@ -71,23 +70,11 @@ fun List<UiDrawPrimitive>.rasterize(
         val y0 = max(y, clipY0).toInt().coerceIn(0, height)
         val x1 = min(x + w, clipX1).toInt().coerceIn(0, width)
         val y1 = min(y + h, clipY1).toInt().coerceIn(0, height)
-        val r = (color[0] * 255).toInt().coerceIn(0, 255)
-        val g = (color[1] * 255).toInt().coerceIn(0, 255)
-        val b = (color[2] * 255).toInt().coerceIn(0, 255)
-        val a = (color.a * 255).toInt().coerceIn(0, 255)
         var py = y0
         while (py < y1) {
             var px = x0
             while (px < x1) {
-                if (!passesPathClips(px + 0.5f, py + 0.5f)) {
-                    px += 1
-                    continue
-                }
-                val offset = (py * width + px) * 4
-                pixels[offset] = r.toByte()
-                pixels[offset + 1] = g.toByte()
-                pixels[offset + 2] = b.toByte()
-                pixels[offset + 3] = a.toByte()
+                if (passesPathClips(px + 0.5f, py + 0.5f)) pixelMap.blend(px, py, color)
                 px += 1
             }
             py += 1
@@ -171,7 +158,7 @@ fun List<UiDrawPrimitive>.rasterize(
         return (coverage.pow(1f / gamma) * 255f).toInt().coerceIn(0, 255)
     }
 
-    fun fillGradientRect(x: Float, y: Float, w: Float, h: Float, gradient: io.github.ronjunevaldoz.awake.ui.UiLinearGradient) {
+    fun fillGradientRect(x: Float, y: Float, w: Float, h: Float, gradient: io.github.ronjunevaldoz.awake.core.graphics2d.UiLinearGradient) {
         val x0 = max(x, clipX0).toInt().coerceIn(0, width)
         val y0 = max(y, clipY0).toInt().coerceIn(0, height)
         val x1 = min(x + w, clipX1).toInt().coerceIn(0, width)
@@ -188,12 +175,7 @@ fun List<UiDrawPrimitive>.rasterize(
                 }
                 val top = lerpColor(gradient.topLeft, gradient.topRight, sampleX)
                 val bottom = lerpColor(gradient.bottomLeft, gradient.bottomRight, sampleX)
-                val color = lerpColor(top, bottom, sampleY)
-                val offset = (py * width + px) * 4
-                pixels[offset] = (color.r * 255).toInt().coerceIn(0, 255).toByte()
-                pixels[offset + 1] = (color.g * 255).toInt().coerceIn(0, 255).toByte()
-                pixels[offset + 2] = (color.b * 255).toInt().coerceIn(0, 255).toByte()
-                pixels[offset + 3] = (color.a * 255).toInt().coerceIn(0, 255).toByte()
+                pixelMap.blend(px, py, lerpColor(top, bottom, sampleY))
                 px += 1
             }
             py += 1
@@ -242,18 +224,7 @@ fun List<UiDrawPrimitive>.rasterize(
 
                 if (dist <= 1.0f) {
                     val alphaFactor = (1.0f - smoothstep(-1.0f, 1.0f, dist)) * ca
-                    if (alphaFactor > 0f) {
-                        val offset = (py * width + px) * 4
-                        val bgA = (pixels[offset + 3].toInt() and 0xFF) / 255f
-                        val outA = alphaFactor + bgA * (1f - alphaFactor)
-                        val r = (cr * alphaFactor + (pixels[offset].toInt() and 0xFF) * (1f - alphaFactor)).toInt().coerceIn(0, 255)
-                        val g = (cg * alphaFactor + (pixels[offset + 1].toInt() and 0xFF) * (1f - alphaFactor)).toInt().coerceIn(0, 255)
-                        val b = (cb * alphaFactor + (pixels[offset + 2].toInt() and 0xFF) * (1f - alphaFactor)).toInt().coerceIn(0, 255)
-                        pixels[offset] = r.toByte()
-                        pixels[offset + 1] = g.toByte()
-                        pixels[offset + 2] = b.toByte()
-                        pixels[offset + 3] = (outA * 255).toInt().coerceIn(0, 255).toByte()
-                    }
+                    pixelMap.blend(px, py, cr.toFloat(), cg.toFloat(), cb.toFloat(), alphaFactor)
                 }
                 px += 1
             }
@@ -313,33 +284,18 @@ fun List<UiDrawPrimitive>.rasterize(
                     continue
                 }
                 val alpha = (sourceAlpha * tintAlpha) / 255
-                val offset = (py * width + px) * 4
-                // Glyphs are alpha-blended in the shipped GPU backends. The preview buffer is
-                // straight-alpha RGBA, so writing the source RGB directly (the old behaviour)
-                // left antialiased glyph pixels black/white with a translucent alpha. That made
-                // a preview look correct only after an external compositor happened to blend it
-                // and made pixel comparisons read the wrong RGB values. Composite source-over
-                // here so CPU previews and backend output have the same visible pixels.
-                val srcA = alpha / 255f
-                val dstA = (pixels[offset + 3].toInt() and 0xFF) / 255f
-                val outA = srcA + dstA * (1f - srcA)
-                if (outA > 0f) {
-                    val dstR = pixels[offset].toInt() and 0xFF
-                    val dstG = pixels[offset + 1].toInt() and 0xFF
-                    val dstB = pixels[offset + 2].toInt() and 0xFF
-                    val inv = dstA * (1f - srcA)
-                    pixels[offset] = ((r * srcA + dstR * inv) / outA).toInt().coerceIn(0, 255).toByte()
-                    pixels[offset + 1] = ((g * srcA + dstG * inv) / outA).toInt().coerceIn(0, 255).toByte()
-                    pixels[offset + 2] = ((b * srcA + dstB * inv) / outA).toInt().coerceIn(0, 255).toByte()
-                    pixels[offset + 3] = (outA * 255f).toInt().coerceIn(0, 255).toByte()
-                }
+                // Glyphs are alpha-blended in the shipped GPU backends. Writing the source RGB
+                // directly (the old behaviour) left antialiased glyph pixels black/white with a
+                // translucent alpha, so a preview looked correct only after an external
+                // compositor happened to blend it, and pixel comparisons read the wrong RGB.
+                pixelMap.blend(px, py, r.toFloat(), g.toFloat(), b.toFloat(), alpha / 255f)
                 px += 1
             }
             py += 1
         }
     }
 
-    fun fillTriangle(ax: Float, ay: Float, bx: Float, by: Float, cx: Float, cy: Float, color: Color) {
+    fun fillTriangle(ax: Float, ay: Float, bx: Float, by: Float, cx: Float, cy: Float, color: Color, stamp: Int) {
         val minX = max(min(ax, min(bx, cx)), clipX0).toInt().coerceIn(0, width)
         val minY = max(min(ay, min(by, cy)), clipY0).toInt().coerceIn(0, height)
         // Ceil the exclusive max bounds: plain toInt() truncation dropped the triangle's last
@@ -349,10 +305,6 @@ fun List<UiDrawPrimitive>.rasterize(
         // as horizontal banding through hole/concave glyphs.
         val maxX = ceil(min(max(ax, max(bx, cx)), clipX1)).toInt().coerceIn(0, width)
         val maxY = ceil(min(max(ay, max(by, cy)), clipY1)).toInt().coerceIn(0, height)
-        val r = (color[0] * 255).toInt().coerceIn(0, 255)
-        val g = (color[1] * 255).toInt().coerceIn(0, 255)
-        val b = (color[2] * 255).toInt().coerceIn(0, 255)
-        val a = (color.a * 255).toInt().coerceIn(0, 255)
 
         fun edge(x0: Float, y0: Float, x1: Float, y1: Float, px: Float, py: Float): Float =
             (px - x0) * (y1 - y0) - (py - y0) * (x1 - x0)
@@ -368,11 +320,15 @@ fun List<UiDrawPrimitive>.rasterize(
                 val w2 = edge(cx, cy, ax, ay, sampleX, sampleY)
                 val inside = (w0 >= 0f && w1 >= 0f && w2 >= 0f) || (w0 <= 0f && w1 <= 0f && w2 <= 0f)
                 if (inside && passesPathClips(sampleX, sampleY)) {
-                    val offset = (py * width + px) * 4
-                    pixels[offset] = r.toByte()
-                    pixels[offset + 1] = g.toByte()
-                    pixels[offset + 2] = b.toByte()
-                    pixels[offset + 3] = a.toByte()
+                    val cell = py * width + px
+                    // Claim the pixel for this mesh before compositing. The inside test accepts a
+                    // sample sitting exactly on an edge (`>= 0 || <= 0`), so two triangles sharing
+                    // that edge both cover it -- harmless when this overwrote, but a second blend
+                    // darkens it into a visible seam through any translucent path.
+                    if (meshCoverage[cell] != stamp) {
+                        meshCoverage[cell] = stamp
+                        pixelMap.blend(px, py, color)
+                    }
                 }
                 px += 1
             }
@@ -392,13 +348,96 @@ fun List<UiDrawPrimitive>.rasterize(
         return floatArrayOf(scaledX, scaledY, w * transform.scaleX, h * transform.scaleY)
     }
 
-    fun fillTriangleMesh(path: io.github.ronjunevaldoz.awake.ui.UiTriangleMesh, color: Color) {
+    fun fillColoredTriangle(
+        a: io.github.ronjunevaldoz.awake.core.graphics2d.UiColoredVertex,
+        b: io.github.ronjunevaldoz.awake.core.graphics2d.UiColoredVertex,
+        c: io.github.ronjunevaldoz.awake.core.graphics2d.UiColoredVertex,
+        stamp: Int,
+    ) {
+        val ax = a.position.x
+        val ay = a.position.y
+        val bx = b.position.x
+        val by = b.position.y
+        val cx = c.position.x
+        val cy = c.position.y
+        val minX = max(min(ax, min(bx, cx)), clipX0).toInt().coerceIn(0, width)
+        val minY = max(min(ay, min(by, cy)), clipY0).toInt().coerceIn(0, height)
+        val maxX = ceil(min(max(ax, max(bx, cx)), clipX1)).toInt().coerceIn(0, width)
+        val maxY = ceil(min(max(ay, max(by, cy)), clipY1)).toInt().coerceIn(0, height)
+
+        fun edge(x0: Float, y0: Float, x1: Float, y1: Float, px: Float, py: Float): Float =
+            (px - x0) * (y1 - y0) - (py - y0) * (x1 - x0)
+
+        val area = edge(ax, ay, bx, by, cx, cy)
+        if (area == 0f) return
+        var py = minY
+        while (py < maxY) {
+            var px = minX
+            while (px < maxX) {
+                val sampleX = px + 0.5f
+                val sampleY = py + 0.5f
+                val w0 = edge(ax, ay, bx, by, sampleX, sampleY)
+                val w1 = edge(bx, by, cx, cy, sampleX, sampleY)
+                val w2 = edge(cx, cy, ax, ay, sampleX, sampleY)
+                val inside = (w0 >= 0f && w1 >= 0f && w2 >= 0f) || (w0 <= 0f && w1 <= 0f && w2 <= 0f)
+                if (inside && passesPathClips(sampleX, sampleY)) {
+                    val cell = py * width + px
+                    if (meshCoverage[cell] != stamp) {
+                        meshCoverage[cell] = stamp
+                        // w1 is opposite vertex a, w2 opposite b, w0 opposite c.
+                        val la = w1 / area
+                        val lb = w2 / area
+                        val lc = w0 / area
+                        val r = (a.color.r * la + b.color.r * lb + c.color.r * lc) * 255f
+                        val g = (a.color.g * la + b.color.g * lb + c.color.g * lc) * 255f
+                        val bl = (a.color.b * la + b.color.b * lb + c.color.b * lc) * 255f
+                        val alpha = a.color.a * la + b.color.a * lb + c.color.a * lc
+                        pixelMap.blend(px, py, r, g, bl, alpha.coerceIn(0f, 1f))
+                    }
+                }
+                px += 1
+            }
+            py += 1
+        }
+    }
+
+    /**
+     * Rasterizes a [tessellateFillAa] mesh, interpolating each triangle's per-vertex color
+     * barycentrically.
+     *
+     * `tessellateFillAa` encodes antialiasing as geometry: the interior is inset by half the
+     * fringe width and a thin ring straddling the true boundary fades its alpha to zero. Filling
+     * that mesh with one flat color -- which is what routing `FilledPath` through the plain
+     * [fillTriangleMesh] did -- throws the fringe away and leaves every vector path hard-edged,
+     * so previews showed ragged curves and uneven stroke width the real backends never render
+     * (both of them tessellate `FilledPath` through `tessellateFillAa`).
+     */
+    fun fillColoredTriangleMesh(mesh: io.github.ronjunevaldoz.awake.core.graphics2d.UiColoredTriangleMesh) {
+        meshStamp += 1
+        val stamp = meshStamp
+        var index = 0
+        while (index + 2 < mesh.indices.size) {
+            fillColoredTriangle(
+                mesh.vertices[mesh.indices[index]],
+                mesh.vertices[mesh.indices[index + 1]],
+                mesh.vertices[mesh.indices[index + 2]],
+                stamp,
+            )
+            index += 3
+        }
+    }
+
+    // A mesh is filled with one uniform color, so every pixel it covers must composite exactly
+    // once no matter how many of its triangles claim that pixel. Stamping (rather than a mask
+    // that needs clearing) keeps that per-mesh with no allocation and no reset pass.
+    fun fillTriangleMesh(path: io.github.ronjunevaldoz.awake.core.graphics2d.UiTriangleMesh, color: Color) {
+        meshStamp += 1
         var index = 0
         while (index + 2 < path.indices.size) {
             val a = path.points[path.indices[index]]
             val b = path.points[path.indices[index + 1]]
             val c = path.points[path.indices[index + 2]]
-            fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y, color)
+            fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y, color, meshStamp)
             index += 3
         }
     }
@@ -415,7 +454,10 @@ fun List<UiDrawPrimitive>.rasterize(
                 val scale = min(primitive.transform?.scaleX ?: 1f, primitive.transform?.scaleY ?: 1f)
                 fillRoundedQuad(x, y, w, h, primitive.radius * scale, primitive.smoothing, primitive.color)
             }
-            is UiDrawPrimitive.FilledPath -> fillTriangleMesh(primitive.path.tessellateFill(), primitive.color)
+            // FilledPath antialiases, StrokedPath does not -- deliberately mirroring which
+            // tessellator each one gets in the real UiRunCoalescer, so the preview neither
+            // under- nor over-states what the backends draw.
+            is UiDrawPrimitive.FilledPath -> fillColoredTriangleMesh(primitive.path.tessellateFillAa(primitive.color))
             is UiDrawPrimitive.StrokedPath -> fillTriangleMesh(primitive.path.tessellateStroke(primitive.stroke), primitive.color)
             is UiDrawPrimitive.Glyph -> {
                 val (x, y, w, h) = scaledRect(primitive.x, primitive.y, primitive.w, primitive.h, primitive.transform)

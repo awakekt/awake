@@ -2,13 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiInputState
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxSize
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxWidth
+import io.github.ronjunevaldoz.awake.ui.modifier.height
+import io.github.ronjunevaldoz.awake.ui.modifier.width
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.style.MutableStyleState
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import kotlin.test.Test
@@ -21,7 +26,7 @@ import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
 class UiScopeFacadeTest {
     @Test
     fun createsAHeadlessFacadeForTheRootRegion() {
-        val scope = UiContext().createUiScope(UiBounds(0f, 0f, 320f, 240f))
+        val scope = UiContext().createUiScope(Rectangle(0f, 0f, 320f, 240f))
 
         assertNotNull(scope)
         assertNotNull(scope)
@@ -29,7 +34,7 @@ class UiScopeFacadeTest {
 
     @Test
     fun keepsThemeAndTypographyProvidersOutOfTheHeadlessFacade() {
-        val scope = UiContext().createUiScope(UiBounds(0f, 0f, 320f, 240f))
+        val scope = UiContext().createUiScope(Rectangle(0f, 0f, 320f, 240f))
         assertNotNull(scope)
     }
 
@@ -47,7 +52,7 @@ class UiScopeFacadeTest {
     fun facadeCanUseHeadlessOverlayBehaviorWithoutExposingThePrimitiveScope() {
         val context = UiContext()
         context.beginFrame(UiFrameInput(viewportWidth = 320f, viewportHeight = 240f, input = UiInputState()))
-        val scope = context.createUiScope(UiBounds(0f, 0f, 320f, 240f))
+        val scope = context.createUiScope(Rectangle(0f, 0f, 320f, 240f))
 
         scope.overlayScrim(scope.frameBounds(), Color.Black)
 
@@ -61,11 +66,12 @@ class UiScopeFacadeTest {
     fun popupUsesHeadlessContractsAndColumnScope() {
         val context = UiContext()
         context.beginFrame(UiFrameInput(viewportWidth = 200f, viewportHeight = 120f, input = UiInputState()))
-        val scope = context.createUiScope(UiBounds(0f, 0f, 200f, 120f))
+        val scope = context.createUiScope(Rectangle(0f, 0f, 200f, 120f))
 
         var receivedColumnScope = false
         val result = scope.popup(
-            anchorSlot = UiBounds(20f, 20f, 40f, 20f),
+            id = "facade-popup",
+            anchorSlot = Rectangle(20f, 20f, 40f, 20f),
             expanded = true,
             width = Dimension.Fixed(80f.px),
             height = Dimension.Fixed(40f.px),
@@ -73,7 +79,7 @@ class UiScopeFacadeTest {
             receivedColumnScope = true
         }
 
-        assertEquals(UiBounds(20f, 40f, 80f, 40f), result.slot)
+        assertEquals(Rectangle(20f, 40f, 80f, 40f), result.slot)
         assertTrue(receivedColumnScope)
     }
 
@@ -81,7 +87,7 @@ class UiScopeFacadeTest {
     fun layoutsUseHeadlessScopesAndComposeStyleModifier() {
         val context = UiContext()
         context.beginFrame(UiFrameInput(viewportWidth = 200f, viewportHeight = 120f, input = UiInputState()))
-        val scope = context.createUiScope(UiBounds(0f, 0f, 200f, 120f))
+        val scope = context.createUiScope(Rectangle(0f, 0f, 200f, 120f))
 
         var receivedRowScope = false
         val slot = scope.column(modifier = Modifier.fillMaxSize()) {
@@ -90,7 +96,7 @@ class UiScopeFacadeTest {
             }
         }
 
-        assertEquals(UiBounds(0f, 0f, 200f, 120f), slot)
+        assertEquals(Rectangle(0f, 0f, 200f, 120f), slot)
         assertTrue(receivedRowScope)
     }
 
@@ -98,7 +104,7 @@ class UiScopeFacadeTest {
     fun surfaceUsesHeadlessVisualContracts() {
         val context = UiContext()
         context.beginFrame(UiFrameInput(viewportWidth = 200f, viewportHeight = 120f, input = UiInputState()))
-        val scope = context.createUiScope(UiBounds(0f, 0f, 200f, 120f))
+        val scope = context.createUiScope(Rectangle(0f, 0f, 200f, 120f))
 
         val slot = scope.surface(
             id = "panel",
@@ -106,7 +112,7 @@ class UiScopeFacadeTest {
             style = Style { background(Color.Black); shape(4f.px) },
         ) { }
 
-        assertEquals(UiBounds(0f, 0f, 80f, 40f), slot)
+        assertEquals(Rectangle(0f, 0f, 80f, 40f), slot)
         assertTrue(context.finishFrame().primitives.filterIsInstance<UiDrawPrimitive.RoundedQuad>().any { it.color == Color.Black })
     }
 
@@ -114,7 +120,7 @@ class UiScopeFacadeTest {
     fun buttonUsesHeadlessModifierAndNeutralStyle() {
         val context = UiContext()
         context.beginFrame(UiFrameInput(viewportWidth = 200f, viewportHeight = 120f, input = UiInputState()))
-        val scope = context.createUiScope(UiBounds(0f, 0f, 200f, 120f))
+        val scope = context.createUiScope(Rectangle(0f, 0f, 200f, 120f))
 
         val clicked = scope.button(
             id = "confirm",
@@ -131,7 +137,7 @@ class UiScopeFacadeTest {
     fun buttonUsesTheStyleNativeApi() {
         val context = UiContext()
         context.beginFrame(UiFrameInput(viewportWidth = 200f, viewportHeight = 120f, input = UiInputState()))
-        val scope = context.createUiScope(UiBounds(0f, 0f, 200f, 120f))
+        val scope = context.createUiScope(Rectangle(0f, 0f, 200f, 120f))
 
         scope.button(
             id = "confirm-style",
@@ -147,13 +153,13 @@ class UiScopeFacadeTest {
     fun textureQuadForwardsTheMaterialIntoTheSlotItClaims() {
         val context = UiContext()
         context.beginFrame(UiFrameInput(viewportWidth = 200f, viewportHeight = 120f, input = UiInputState()))
-        val scope = context.createUiScope(UiBounds(0f, 0f, 200f, 120f))
+        val scope = context.createUiScope(Rectangle(0f, 0f, 200f, 120f))
         val material = Any()
 
         scope.textureQuad(material, modifier = Modifier.width(80f.px).height(45f.px))
 
         val texture = context.finishFrame().primitives.filterIsInstance<UiDrawPrimitive.Texture>().single()
-        assertEquals(UiBounds(0f, 0f, 80f, 45f), UiBounds(texture.x, texture.y, texture.w, texture.h))
+        assertEquals(Rectangle(0f, 0f, 80f, 45f), Rectangle(texture.x, texture.y, texture.w, texture.h))
         assertTrue(texture.material === material)
     }
 

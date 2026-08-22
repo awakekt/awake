@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.render.renderer
 
 import io.github.ronjunevaldoz.awake.core.math.ClipSpace
 import io.github.ronjunevaldoz.awake.core.math.Mat4
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.core.math.times
 import kotlin.math.abs
 
@@ -21,16 +21,16 @@ const val SHADOW_FAR = 40f
 /** [view]/[projection] kept separate (not just their product) so a caller that needs the
  * combined matrix ([viewProjection], the real shadow pass) and a caller that needs the raw
  * [view] to invert (the debug visualizer's box wireframe) both work from one function. */
-data class DirectionalShadowBox(val eye: Vec3, val view: Mat4, val projection: Mat4) {
+data class DirectionalShadowBox(val eye: Vec3f, val view: Mat4, val projection: Mat4) {
     val viewProjection: Mat4 get() = view * projection
 }
 
 /** The directional light's own view-projection box, built the same "view * projection"
- * (Kotlin operator order) way [io.github.ronjunevaldoz.awake.core.math.Camera
+ * (Kotlin operator order) way [io.github.ronjunevaldoz.awake.core.math.Lens
  * .viewProjectionMatrix] builds a real camera's -- an orthographic projection instead of a
  * perspective one (correct for a directional/parallel-rays light). */
 fun directionalShadowBox(
-    direction: Vec3,
+    direction: Vec3f,
     clipSpace: ClipSpace,
     distance: Float = SHADOW_LIGHT_DISTANCE,
     halfSize: Float = SHADOW_ORTHO_HALF_SIZE,
@@ -39,8 +39,8 @@ fun directionalShadowBox(
 ): DirectionalShadowBox {
     val normalizedDirection = direction.normalized()
     val eye = normalizedDirection * distance
-    val up = if (abs(normalizedDirection.y) > 0.99f) Vec3(0f, 0f, 1f) else Vec3(0f, 1f, 0f)
-    val view = Mat4.setLookAt(eye = eye, center = Vec3.ZERO, up = up)
+    val up = if (abs(normalizedDirection.y) > 0.99f) Vec3f(0f, 0f, 1f) else Vec3f(0f, 1f, 0f)
+    val view = Mat4.setLookAt(eye = eye, center = Vec3f.ZERO, up = up)
     val projection = Mat4.orthographic(
         left = -halfSize,
         right = halfSize,

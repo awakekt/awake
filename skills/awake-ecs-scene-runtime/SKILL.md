@@ -5,9 +5,8 @@ description: >
   game or sample -- World/Entity/component basics, the sceneGame{}/GameModuleDsl.scene{}
   DSL surface, when to reach for SceneGameRuntime instead of GameUiRuntime (and why they
   don't compose inside one demo), and the TransformSystem-overwrites-worldMatrix trap.
-  This is a how-to reference for consuming the ECS, distinct from the awake-ecs-performance-engineer
-  and awake-scene-runtime-engineer personas (which guide work ON the ECS/scene-authoring internals
-  themselves).
+  This is a how-to reference for consuming the ECS, distinct from the awake-engine-core-engineer
+  persona (which guides work ON the ECS/scene-authoring internals themselves).
 license: Apache-2.0
 metadata:
   author: awake
@@ -22,7 +21,7 @@ metadata:
     - sceneGame
     - RenderSystem
     - TransformSystem
-    - scene3d-playground
+    - studio
 ---
 
 ## When to Use This Skill
@@ -146,7 +145,7 @@ DSL method exists; it's a small, closed surface, not an open-ended builder.
 
 ## Spawn-on-activate / destroy-on-deactivate (the per-demo-page pattern)
 
-A multi-page sample (see `samples/scene3d-playground`) needs each page to own its own entities
+A multi-page sample (see `samples/studio`'s example switcher) needs each page to own its own entities
 without leaking a previous page's mesh when the user switches pages. The pattern:
 
 ```kotlin
@@ -190,8 +189,9 @@ system is installed automatically as built-in infrastructure, before the built-i
 `RenderSystem`. If you set `worldMatrix` directly (e.g. from a parsed glTF node transform, or a
 hand-built `Mat4`), expect the infrastructure transform pass to recompute it from component
 fields on the next frame unless the component model explicitly preserves that authored matrix.
-This isn't hypothetical -- it is exactly what `samples/scene3d-playground`'s glTF viewer demo
-has to account for (see `GltfViewerDemo.kt`'s own doc comment).
+This isn't hypothetical -- it is exactly what a glTF viewer demo (a parsed node transform
+feeding `worldMatrix` directly) has to account for; `samples/studio`'s own glTF viewer example
+hits the same trap.
 
 **Do not register `RenderSystem` manually inside `scene {}` DSL modules.**
 `SceneGameDsl.build()` calls `installInfrastructureSystems()`, which appends a built-in
@@ -218,8 +218,8 @@ sometimes grab the wrong window). The fix is a real, deterministic, CI-runnable 
 instead of eyeballing screenshots.
 
 **Pattern** (see `awake/backend/vulkan/src/desktopTest/.../RendererHeadlessPixelBaselineTest.kt`
-for the original, and `samples/scene3d-playground/src/desktopTest/.../RotatingCubePixelBaselineTest.kt`
-for a sample-level example built on it):
+for the original -- the sample-level example this once pointed at was retired with
+`samples/scene3d-playground`; a `samples/studio`-level equivalent doesn't exist yet):
 
 1. Construct a headless Vulkan pipeline -- `GraphicsDevice.createHeadless()` +
    `SwapchainManager.createHeadless(width, height)` -- no GLFW window, no real swapchain/surface.
@@ -274,13 +274,10 @@ for a sample-level example built on it):
 
 ---
 
-## Related Skills
+## Related Skills & Agents
 
-- `awake-ecs-performance-engineer` -- persona for working ON `awake-ecs`'s own storage/query
-  internals (entity arena, component pools, family indexing), not for consuming it from a game
-- `awake-scene-runtime-engineer` -- persona for working ON `awake-scene`/`awake-scene-authoring`
-  themselves (new components, new systems, DSL surface changes)
-- `awake-game-framework-engineer` -- persona for `GameUiRuntime`/`engine`/`game authoring` itself
+- `awake-engine-core-engineer` -- persona for working ON `awake:ecs` and `awake:scene` internals (storage/query machinery, entity arena, scene DSL)
+- `awake-game-runtime-engineer` -- persona for `GameApplication`/`awake:engine:game` runtime assembly and sample shells
 
 ---
 

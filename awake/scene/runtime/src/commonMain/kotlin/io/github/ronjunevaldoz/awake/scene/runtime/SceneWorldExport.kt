@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.runtime
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.Entity
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.scene.core.components.Name
@@ -92,12 +92,12 @@ private fun Transform.toSceneTransform(): SceneTransform = SceneTransform(
 )
 
 private fun SceneCameraComponent.toSceneComponent(): SceneCamera = SceneCamera(
-    eye = camera.eye.toSceneVec3(),
-    center = camera.center.toSceneVec3(),
-    up = camera.up.toSceneVec3(),
-    fovYDegrees = camera.fovYRadians * (180f / PI.toFloat()),
-    near = camera.near,
-    far = camera.far,
+    eye = lens.eye.toSceneVec3(),
+    center = lens.center.toSceneVec3(),
+    up = lens.up.toSceneVec3(),
+    fovYDegrees = lens.fovYRadians * (180f / PI.toFloat()),
+    near = lens.near,
+    far = lens.far,
     primary = isPrimary,
 )
 
@@ -108,6 +108,7 @@ private fun Light.toSceneComponent(): SceneLight = SceneLight(
         Light.Type.Directional -> SceneLight.Type.Directional
         Light.Type.Point -> SceneLight.Type.Point
     },
+    range = range,
 )
 
 private fun PbrMaterial.toSceneComponent(): ScenePbrMaterial = ScenePbrMaterial(
@@ -120,4 +121,4 @@ private fun SpinControl.toSceneComponent(): SceneSpinControl = SceneSpinControl(
     speed = speed,
 )
 
-private fun Vec3.toSceneVec3(): SceneVec3 = SceneVec3(x, y, z)
+private fun Vec3f.toSceneVec3(): SceneVec3 = SceneVec3(x, y, z)

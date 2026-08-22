@@ -20,7 +20,7 @@ any existing verification gate.
 | Finding | Consequence | Decision |
 |---|---|---|
 | Several tools still read the former `awake/engine/ui/...` layout. | Generated reports inspect missing directories and can publish false results. | Repair paths before trusting or consolidating reports. |
-| `shadcn-parity.md` currently reports zero implemented components while the manual coverage document reports 41. | Two status documents contradict the code and each other. | Keep generated reporting, repair it, then retire duplicate manual status sources. |
+| The retired `shadcn-parity.md` reported zero implemented components while the manual coverage document reported 41. | Two status documents contradicted the code and each other. | Replace it with the manifest-backed report, then retire duplicate manual status sources. |
 | `ShowcaseFramePerfProbeTest` only prints timing. | It consumes normal test time without making a pass/fail claim. | Remove it or replace it with a real benchmark; do not keep it as a test. |
 | `LegacyShowcaseCoreAdapters.kt` still has real test callers. | It is transitional, not dead code. | Migrate its callers first; delete only when no caller remains. |
 | `test_awake_ui_cli.py` has useful mapping tests but is not invoked by a normal verification task. | It can silently rot. | Wire it into a dependable UI verification task, or remove it if that is not practical. |

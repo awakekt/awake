@@ -12,6 +12,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:math"))
             api(project(":awake:scene:scene-core"))
             api(project(":awake:physics:api"))
         }

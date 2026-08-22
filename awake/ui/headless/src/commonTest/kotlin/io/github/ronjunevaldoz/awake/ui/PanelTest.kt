@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.math2d.px
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.layouts.surface
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.height
@@ -43,7 +47,7 @@ class PanelTest {
         val ui = UiContext()
         val column = ui.createColumn(x = 10f, y = 20f, width = 200f)
 
-        var firstChildSlot: UiBounds? = null
+        var firstChildSlot: Rectangle? = null
         column.surface(
             "p",
             modifier = Modifier.width(Dimension.Fixed(180f.px)).height(Dimension.Fixed(100f.px)),
@@ -53,12 +57,12 @@ class PanelTest {
 
         val childSlot = requireNotNull(firstChildSlot)
         assertEquals(
-            10f + UiSpacing.sm.toPx(),
+            10f + 8f.dp.toPx(),
             childSlot.x,
             "nested content must start after the panel's content padding",
         )
         assertEquals(
-            20f + UiSpacing.sm.toPx(),
+            20f + 8f.dp.toPx(),
             childSlot.y,
             "nested content must start after the panel's content padding",
         )

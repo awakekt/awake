@@ -3,11 +3,11 @@
 package io.github.ronjunevaldoz.awake.ui
 
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
 import io.github.ronjunevaldoz.awake.ui.layouts.row
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
@@ -19,8 +19,8 @@ import kotlin.test.assertEquals
 class RowCrossAxisCenterProbeTest {
     @Test
     fun rowCentersChildrenOfDifferentHeightsAtSameMidpoint() {
-        var shortBounds: UiBounds? = null
-        var tallBounds: UiBounds? = null
+        var shortBounds: Rectangle? = null
+        var tallBounds: Rectangle? = null
         renderUiComponent(width = 300f, height = 100f) {
             primitive.context.createColumn(x = 0f, y = 0f, width = 300f).row(
                 horizontalArrangement = Arrangement.spacedBy(8f.dp),

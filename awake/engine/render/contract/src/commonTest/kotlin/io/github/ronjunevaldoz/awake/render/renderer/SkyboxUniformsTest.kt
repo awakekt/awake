@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.render.renderer
 
-import io.github.ronjunevaldoz.awake.core.math.Camera
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math.Lens
 import io.github.ronjunevaldoz.awake.core.math.ClipSpace
 import io.github.ronjunevaldoz.awake.core.math.Mat4
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.core.math.Vec4
 import io.github.ronjunevaldoz.awake.core.math.transformPosition
 import kotlin.math.abs
@@ -16,10 +17,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class SkyboxUniformsTest {
-    private val camera = Camera(
-        eye = Vec3(0f, 2f, 6f),
-        center = Vec3.ZERO,
-        up = Vec3(0f, 1f, 0f),
+    private val camera = Lens(
+        eye = Vec3f(0f, 2f, 6f),
+        center = Vec3f.ZERO,
+        up = Vec3f(0f, 1f, 0f),
         fovYRadians = (kotlin.math.PI / 4.0).toFloat(),
         near = 0.1f,
         far = 100f,
@@ -32,9 +33,9 @@ class SkyboxUniformsTest {
         val floats = skyboxUniformFloats(
             camera.viewProjectionMatrix(16f / 9f, ClipSpace.Vulkan),
             camera.eye,
-            Vec3(0.4f, 0.8f, 0.4f),
-            floatArrayOf(1f, 0f, 0f),
-            floatArrayOf(0f, 0f, 1f),
+            Vec3f(0.4f, 0.8f, 0.4f),
+            Color(r = 1f, g = 0f, b = 0f),
+            Color(r = 0f, g = 0f, b = 1f),
         )
 
         assertNotNull(floats)
@@ -43,14 +44,14 @@ class SkyboxUniformsTest {
 
     @Test
     fun cameraAndSunLandAtTheirDeclaredOffsets() {
-        val sun = Vec3(0.4f, 0.8f, 0.4f)
+        val sun = Vec3f(0.4f, 0.8f, 0.4f)
         val floats = assertNotNull(
             skyboxUniformFloats(
                 camera.viewProjectionMatrix(1f, ClipSpace.Vulkan),
                 camera.eye,
                 sun,
-                floatArrayOf(1f, 0f, 0f),
-                floatArrayOf(0f, 0f, 1f),
+                Color(r = 1f, g = 0f, b = 0f),
+                Color(r = 0f, g = 0f, b = 1f),
             ),
         )
 
@@ -67,7 +68,13 @@ class SkyboxUniformsTest {
     fun inverseMatrixRoundTripsAWorldPointThroughTheViewProjection() {
         val viewProjection = camera.viewProjectionMatrix(1f, ClipSpace.Vulkan)
         val floats = assertNotNull(
-            skyboxUniformFloats(viewProjection, camera.eye, Vec3(0f, 1f, 0f), floatArrayOf(0f, 0f, 0f), floatArrayOf(0f, 0f, 0f)),
+            skyboxUniformFloats(
+                viewProjection,
+                camera.eye,
+                Vec3f(0f, 1f, 0f),
+                Color(r = 0f, g = 0f, b = 0f),
+                Color(r = 0f, g = 0f, b = 0f)
+            ),
         )
         val inverse = mat4Of(floats.copyOf(16))
 
@@ -86,9 +93,9 @@ class SkyboxUniformsTest {
             skyboxUniformFloats(
                 mat4Of(FloatArray(16)),
                 camera.eye,
-                Vec3(0f, 1f, 0f),
-                floatArrayOf(0f, 0f, 0f),
-                floatArrayOf(0f, 0f, 0f),
+                Vec3f(0f, 1f, 0f),
+                Color(r = 0f, g = 0f, b = 0f),
+                Color(r = 0f, g = 0f, b = 0f),
             ),
         )
     }

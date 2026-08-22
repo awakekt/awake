@@ -2,15 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiLinearGradient
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPath
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.graphics2d.DrawShape
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiStroke
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.core.graphics2d.transform
+import io.github.ronjunevaldoz.awake.core.graphics2d.uiPath
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.graphics.clip
-import io.github.ronjunevaldoz.awake.ui.graphics.emitFillAndBorder
-import io.github.ronjunevaldoz.awake.ui.graphics.emitPrimitive
+import io.github.ronjunevaldoz.awake.ui.graphics.dispatchPrimitive
+import io.github.ronjunevaldoz.awake.ui.graphics.drawFillAndBorder
 import io.github.ronjunevaldoz.awake.ui.graphics.gradientBorder
 import io.github.ronjunevaldoz.awake.ui.graphics.gradientRect
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
@@ -22,11 +31,9 @@ import io.github.ronjunevaldoz.awake.ui.theme.TextStyle
 
 @AwakeUiDsl
 class CanvasScope internal constructor(
-    private val scope: UiPrimitiveScope,
-    val bounds: UiBounds,
+    internal val scope: UiPrimitiveScope,
+    val bounds: Rectangle,
 ) {
-    val context get() = scope.context
-
     fun nested(
         x: Float,
         y: Float,
@@ -37,7 +44,7 @@ class CanvasScope internal constructor(
         if (width <= 0f || height <= 0f) return
         CanvasScope(
             scope = scope,
-            bounds = UiBounds(bounds.x + x, bounds.y + y, width, height),
+            bounds = Rectangle(bounds.x + x, bounds.y + y, width, height),
         ).content()
     }
 
@@ -50,7 +57,7 @@ class CanvasScope internal constructor(
         overlay: Boolean = false,
     ) {
         if (width <= 0f || height <= 0f) return
-        scope.emitPrimitive(
+        scope.dispatchPrimitive(
             UiDrawPrimitive.Quad(
                 x = bounds.x + x,
                 y = bounds.y + y,
@@ -72,7 +79,7 @@ class CanvasScope internal constructor(
     ) {
         if (width <= 0f || height <= 0f) return
         scope.gradientRect(
-            slot = UiBounds(bounds.x + x, bounds.y + y, width, height),
+            slot = Rectangle(bounds.x + x, bounds.y + y, width, height),
             gradient = gradient,
             overlay = overlay,
         )
@@ -89,7 +96,7 @@ class CanvasScope internal constructor(
     ) {
         if (width <= 0f || height <= 0f) return
         scope.gradientBorder(
-            slot = UiBounds(bounds.x + x, bounds.y + y, width, height),
+            slot = Rectangle(bounds.x + x, bounds.y + y, width, height),
             width = borderWidth,
             gradient = gradient,
             overlay = overlay,
@@ -109,8 +116,8 @@ class CanvasScope internal constructor(
         overlay: Boolean = false,
     ) {
         if (width <= 0f || height <= 0f) return
-        scope.emitFillAndBorder(
-            slot = UiBounds(bounds.x + x, bounds.y + y, width, height),
+        drawFillAndBorder(
+            slot = Rectangle(bounds.x + x, bounds.y + y, width, height),
             fillColor = color,
             radiusPx = radius.toPx(),
             borderWidth = borderWidth,
@@ -132,12 +139,12 @@ class CanvasScope internal constructor(
         overlay: Boolean = false,
     ) {
         if (width <= 0f || height <= 0f) return
-        val slot = UiBounds(bounds.x + x, bounds.y + y, width, height)
+        val slot = Rectangle(bounds.x + x, bounds.y + y, width, height)
         val radius = when (shape) {
-            is UiShapeSpec.RoundedRectangle -> shape.radius.toPx()
+            is DrawShape.RoundedRectangle -> shape.radius.toPx()
             else -> 0f
         }
-        scope.emitFillAndBorder(
+        drawFillAndBorder(
             slot = slot,
             fillColor = color,
             radiusPx = radius,
@@ -189,7 +196,7 @@ class CanvasScope internal constructor(
     }
 
     fun fillPath(path: UiPath, color: Color, overlay: Boolean = false) {
-        scope.emitPrimitive(
+        scope.dispatchPrimitive(
             UiDrawPrimitive.FilledPath(
                 path = path.transform(translateX = bounds.x, translateY = bounds.y),
                 color = color,
@@ -204,7 +211,7 @@ class CanvasScope internal constructor(
         stroke: UiStroke = UiStroke(),
         overlay: Boolean = false,
     ) {
-        scope.emitPrimitive(
+        scope.dispatchPrimitive(
             UiDrawPrimitive.StrokedPath(
                 path = path.transform(translateX = bounds.x, translateY = bounds.y),
                 stroke = stroke,
@@ -218,10 +225,14 @@ class CanvasScope internal constructor(
         text: String,
         x: Float,
         y: Float,
-        color: Color = context.current(io.github.ronjunevaldoz.awake.ui.context.LocalTextStyle).color
-            ?: context.current(io.github.ronjunevaldoz.awake.ui.context.LocalTheme).colors.foreground,
-        font: UiFont = context.current(io.github.ronjunevaldoz.awake.ui.context.LocalFont),
-        textStyle: TextStyle = context.current(io.github.ronjunevaldoz.awake.ui.context.LocalTextStyle),
+        // Reads scope.context directly (not a public CanvasScope.context accessor -- removed,
+        // see docs/tasks/2026-08-18-ui-capability-scopes-plan.md step 3): these are drawText's
+        // own convenience defaults, an existing CanvasScope capability untouched by the
+        // ShapePainter/Option B migration, not a new external theme dependency.
+        color: Color = scope.context.current(io.github.ronjunevaldoz.awake.ui.context.LocalTextStyle).color
+            ?: scope.context.current(io.github.ronjunevaldoz.awake.ui.context.LocalTheme).colors.foreground,
+        font: UiFont = scope.context.current(io.github.ronjunevaldoz.awake.ui.context.LocalFont),
+        textStyle: TextStyle = scope.context.current(io.github.ronjunevaldoz.awake.ui.context.LocalTextStyle),
         overlay: Boolean = false,
     ) {
         if (text.isEmpty()) return
@@ -234,7 +245,7 @@ class CanvasScope internal constructor(
             if (glyph != null) {
                 val glyphWidth = glyph.widthEm * glyphPx
                 val glyphHeight = glyph.heightEm * glyphPx
-                scope.emitPrimitive(
+                scope.dispatchPrimitive(
                     UiDrawPrimitive.Glyph(
                         x = cursorX + glyph.offsetXEm * glyphPx,
                         y = baselineY + glyph.offsetYEm * glyphPx,
@@ -253,6 +264,33 @@ class CanvasScope internal constructor(
         }
     }
 
+    /**
+     * Draws one pre-shaped glyph quad at its own already-resolved destination/UV rect --
+     * the escape hatch for a caller (BasicText's own multi-line/shimmer layout) that computes
+     * per-glyph positioning itself instead of going through [drawText]'s single-line-run
+     * pen-advance loop. [x]/[y] are absolute (already includes this scope's own [bounds] offset,
+     * unlike every other `draw*` member here) because the caller already resolved them against
+     * real line/pen metrics this scope has no visibility into.
+     */
+    fun drawGlyph(
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        u0: Float,
+        v0: Float,
+        u1: Float,
+        v1: Float,
+        color: Color,
+        tokenId: String? = null,
+        overlay: Boolean = false,
+    ) {
+        scope.dispatchPrimitive(
+            UiDrawPrimitive.Glyph(x, y, width, height, u0, v0, u1, v1, color, tokenId = tokenId),
+            overlay = overlay,
+        )
+    }
+
     fun drawImage(
         x: Float,
         y: Float,
@@ -262,7 +300,7 @@ class CanvasScope internal constructor(
         overlay: Boolean = false,
     ) {
         if (width <= 0f || height <= 0f) return
-        scope.emitPrimitive(
+        scope.dispatchPrimitive(
             UiDrawPrimitive.Texture(
                 x = bounds.x + x,
                 y = bounds.y + y,
@@ -282,7 +320,7 @@ class CanvasScope internal constructor(
         content: CanvasScope.() -> Unit,
     ) {
         if (width <= 0f || height <= 0f) return
-        scope.clip(UiBounds(bounds.x + x, bounds.y + y, width, height)) {
+        scope.clip(Rectangle(bounds.x + x, bounds.y + y, width, height)) {
             CanvasScope(this, this@CanvasScope.bounds).content()
         }
     }
@@ -302,7 +340,7 @@ class CanvasScope internal constructor(
         content: CanvasScope.() -> Unit,
     ) {
         if (width <= 0f || height <= 0f) return
-        val clipRect = UiBounds(bounds.x + x, bounds.y + y, width, height)
+        val clipRect = Rectangle(bounds.x + x, bounds.y + y, width, height)
         scope.clip(
             shape = shape,
             rect = clipRect,
@@ -320,14 +358,14 @@ class CanvasScope internal constructor(
 fun UiPrimitiveScope.canvas(
     modifier: UiModifier = Modifier,
     content: CanvasScope.() -> Unit,
-): UiBounds {
+): Rectangle {
     val slot = claimModifiedSlot(modifier.withSizeFallback(Dimension.FillMax, Dimension.FillMax))
     CanvasScope(this, slot).content()
     return slot
 }
 
 fun UiPrimitiveScope.canvas(
-    slot: UiBounds,
+    slot: Rectangle,
     content: CanvasScope.() -> Unit,
 ) {
     CanvasScope(this, slot).content()

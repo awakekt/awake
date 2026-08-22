@@ -96,8 +96,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:input"))
             // Buffer/memory types the raw Vk*/gen wrappers marshal through.
-            implementation(project(":awake:core"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

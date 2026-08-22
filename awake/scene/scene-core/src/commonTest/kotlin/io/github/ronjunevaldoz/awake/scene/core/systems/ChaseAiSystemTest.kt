@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.core.systems
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.scene.core.components.Transform
 import io.github.ronjunevaldoz.awake.scene.navigation.NavMesh
@@ -11,11 +11,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ChaseAiSystemTest {
-    private class FakeNavMesh(private val path: List<Vec3>) : NavMesh {
+    private class FakeNavMesh(private val path: List<Vec3f>) : NavMesh {
         var findPathCallCount = 0
             private set
 
-        override fun findPath(start: Vec3, end: Vec3): List<Vec3> {
+        override fun findPath(start: Vec3f, end: Vec3f): List<Vec3f> {
             findPathCallCount++
             return path
         }
@@ -24,9 +24,9 @@ class ChaseAiSystemTest {
     @Test
     fun stepsTowardEachWaypointInTurn() {
         val world = World()
-        val npcTransform = Transform(position = Vec3(0f, 0f, 0f))
-        val targetTransform = Transform(position = Vec3(10f, 0f, 0f))
-        val navMesh = FakeNavMesh(listOf(Vec3(1f, 0f, 0f), Vec3(2f, 0f, 0f)))
+        val npcTransform = Transform(position = Vec3f(0f, 0f, 0f))
+        val targetTransform = Transform(position = Vec3f(10f, 0f, 0f))
+        val navMesh = FakeNavMesh(listOf(Vec3f(1f, 0f, 0f), Vec3f(2f, 0f, 0f)))
         // repathInterval huge so the fixed path above isn't reset mid-test.
         val system = ChaseAiSystem(
             npcTransform,
@@ -48,16 +48,16 @@ class ChaseAiSystemTest {
         assertTrue(
             npcTransform.position.x > 1.1f,
             "Expected the NPC to pass the first waypoint (1,0,0) and head toward the " +
-                "second (2,0,0) by now (x=${npcTransform.position.x}).",
+                    "second (2,0,0) by now (x=${npcTransform.position.x}).",
         )
     }
 
     @Test
     fun repathsAfterIntervalElapses() {
         val world = World()
-        val npcTransform = Transform(position = Vec3(0f, 0f, 0f))
-        val targetTransform = Transform(position = Vec3(10f, 0f, 0f))
-        val navMesh = FakeNavMesh(listOf(Vec3(1f, 0f, 0f)))
+        val npcTransform = Transform(position = Vec3f(0f, 0f, 0f))
+        val targetTransform = Transform(position = Vec3f(10f, 0f, 0f))
+        val navMesh = FakeNavMesh(listOf(Vec3f(1f, 0f, 0f)))
         val system = ChaseAiSystem(npcTransform, targetTransform, navMesh, repathInterval = 0.5f)
 
         system.update(world, 0.1f)
@@ -70,8 +70,8 @@ class ChaseAiSystemTest {
     @Test
     fun doesNothingWhenNoPathExists() {
         val world = World()
-        val npcTransform = Transform(position = Vec3(0f, 0f, 0f))
-        val targetTransform = Transform(position = Vec3(10f, 0f, 0f))
+        val npcTransform = Transform(position = Vec3f(0f, 0f, 0f))
+        val targetTransform = Transform(position = Vec3f(10f, 0f, 0f))
         val system = ChaseAiSystem(npcTransform, targetTransform, FakeNavMesh(emptyList()))
 
         system.update(world, 0.1f)

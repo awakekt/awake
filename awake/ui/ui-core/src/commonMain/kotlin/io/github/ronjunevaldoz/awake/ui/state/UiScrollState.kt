@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.layouts.AbsoluteScope
 
 /** Slot API for custom scrollbar rendering. */
@@ -158,12 +158,12 @@ internal class PersistedUiScrollState(
 }
 
 data class UiScrollThumb(
-    val track: UiBounds,
-    val thumb: UiBounds,
+    val track: Rectangle,
+    val thumb: Rectangle,
 )
 
 fun verticalScrollThumb(
-    track: UiBounds,
+    track: Rectangle,
     state: UiScrollState,
     minThumbHeight: Float = 12f,
 ): UiScrollThumb? {
@@ -177,7 +177,7 @@ fun verticalScrollThumb(
     val thumbY = track.y + availableTravel * progress
     return UiScrollThumb(
         track = track,
-        thumb = UiBounds(
+        thumb = Rectangle(
             x = track.x,
             y = thumbY,
             width = track.width,
@@ -187,7 +187,7 @@ fun verticalScrollThumb(
 }
 
 fun horizontalScrollThumb(
-    track: UiBounds,
+    track: Rectangle,
     state: UiScrollState,
     minThumbWidth: Float = 12f,
 ): UiScrollThumb? {
@@ -201,7 +201,7 @@ fun horizontalScrollThumb(
     val thumbX = track.x + availableTravel * progress
     return UiScrollThumb(
         track = track,
-        thumb = UiBounds(
+        thumb = Rectangle(
             x = thumbX,
             y = track.y,
             width = thumbWidth,

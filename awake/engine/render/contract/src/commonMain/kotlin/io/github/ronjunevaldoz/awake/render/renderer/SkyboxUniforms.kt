@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.render.renderer
 
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.core.math.Mat4
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.core.math.inverse
-import io.github.ronjunevaldoz.awake.render.mesh.GpuDataShape
+import io.github.ronjunevaldoz.awake.core.geometry.GpuDataShape
 
 /** `skybox.wgsl`'s uniform block, field for field: inverseViewProjection (mat4x4), cameraEye/
  * sunDirection/horizonColor/zenithColor/sunColor/moonColor (each a `vec4f`). Same "one number,
@@ -23,10 +24,10 @@ val SkyboxUniformLayout = UniformLayout(
 /** Warm sun, cooler and dimmer moon. Not [Renderer] fields: they are derived decoration, and
  * two more toggles would not buy a caller anything the horizon/zenith pair doesn't. */
 @Suppress("MagicNumber") // Colour components.
-val SUN_DISC_COLOR = floatArrayOf(1f, 0.92f, 0.72f, 1f)
+val SUN_DISC_COLOR = Color(r = 1f, g = 0.92f, b = 0.72f, a = 1f)
 
 @Suppress("MagicNumber") // Colour components.
-val MOON_DISC_COLOR = floatArrayOf(0.72f, 0.78f, 0.88f, 1f)
+val MOON_DISC_COLOR = Color(r = 0.72f, g = 0.78f, b = 0.88f, a = 1f)
 
 /**
  * The float block both backends' skybox pipelines upload, assembled from data the 3D pass
@@ -40,21 +41,15 @@ val MOON_DISC_COLOR = floatArrayOf(0.72f, 0.78f, 0.88f, 1f)
  */
 fun skyboxUniformFloats(
     viewProjection: Mat4,
-    cameraEye: Vec3,
-    sunDirection: Vec3,
-    horizonColor: FloatArray,
-    zenithColor: FloatArray,
+    cameraEye: Vec3f,
+    sunDirection: Vec3f,
+    horizonColor: Color,
+    zenithColor: Color,
 ): FloatArray? {
     val inverse = viewProjection.inverse() ?: return null
     return inverse.data +
-        floatArrayOf(cameraEye.x, cameraEye.y, cameraEye.z, 0f) +
-        floatArrayOf(sunDirection.x, sunDirection.y, sunDirection.z, 0f) +
-        rgba(horizonColor) + rgba(zenithColor) + SUN_DISC_COLOR + MOON_DISC_COLOR
+            floatArrayOf(cameraEye.x, cameraEye.y, cameraEye.z, 0f) +
+            floatArrayOf(sunDirection.x, sunDirection.y, sunDirection.z, 0f) +
+            horizonColor.toFloatArray() + zenithColor.toFloatArray() +
+            SUN_DISC_COLOR.toFloatArray() + MOON_DISC_COLOR.toFloatArray()
 }
-
-/** Pads a caller-supplied colour to the 4 floats the shader's `vec4f` reads -- a game is free
- * to hand [Renderer.horizonColor] a 3-float RGB. */
-private fun rgba(color: FloatArray): FloatArray =
-    floatArrayOf(color[0], color[1], color[2], color.getOrElse(ALPHA_INDEX) { 1f })
-
-private const val ALPHA_INDEX = 3

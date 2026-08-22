@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.sample.uishowcase.ui.pages.inputs
 
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.ronjunevaldoz.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnCard
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnFieldTextField
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnFieldTextarea

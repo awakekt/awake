@@ -6,7 +6,7 @@ import io.github.ronjunevaldoz.awake.testing.ui.UiComponentFrame
 import io.github.ronjunevaldoz.awake.testing.ui.UiTestSession
 import io.github.ronjunevaldoz.awake.testing.ui.renderUiComponent
 import io.github.ronjunevaldoz.awake.ui.UiInputState
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
@@ -25,7 +25,7 @@ internal fun renderShadcnComponent(
     fontScale: Float = 1f,
     input: UiInputState = testSnapshot(),
     deltaSeconds: Float = 1f / 60f,
-    content: UiScope.(root: UiBounds) -> Unit,
+    content: UiScope.(root: Rectangle) -> Unit,
 ): UiComponentFrame = renderUiComponent(
     width = width,
     height = height,
@@ -49,33 +49,33 @@ internal class ShadcnTestSession(
         y: Float = -100f,
         down: Boolean = false,
         deltaSeconds: Float = 1f / 60f,
-        content: UiScope.(root: UiBounds) -> Unit,
+        content: UiScope.(root: Rectangle) -> Unit,
     ): UiComponentFrame = session.frame(x = x, y = y, down = down, deltaSeconds = deltaSeconds, content = content)
 
     /** Uses an exact input snapshot for probes that exercise wheel or secondary-pointer input. */
     fun frame(
         input: UiInputState,
         deltaSeconds: Float = 1f / 60f,
-        content: UiScope.(root: UiBounds) -> Unit,
+        content: UiScope.(root: Rectangle) -> Unit,
     ): UiComponentFrame = session.frame(input = input, deltaSeconds = deltaSeconds, content = content)
 
-    fun hover(x: Float, y: Float, content: UiScope.(root: UiBounds) -> Unit): UiComponentFrame =
+    fun hover(x: Float, y: Float, content: UiScope.(root: Rectangle) -> Unit): UiComponentFrame =
         session.hover(x, y, content)
 
-    fun click(x: Float, y: Float, content: UiScope.(root: UiBounds) -> Unit): UiComponentFrame =
+    fun click(x: Float, y: Float, content: UiScope.(root: Rectangle) -> Unit): UiComponentFrame =
         session.click(x, y, content)
 
-    fun doubleClick(x: Float, y: Float, content: UiScope.(root: UiBounds) -> Unit): UiComponentFrame =
+    fun doubleClick(x: Float, y: Float, content: UiScope.(root: Rectangle) -> Unit): UiComponentFrame =
         session.doubleClick(x, y, content)
 
     fun longPress(
         x: Float,
         y: Float,
         durationSeconds: Float,
-        content: UiScope.(root: UiBounds) -> Unit,
+        content: UiScope.(root: Rectangle) -> Unit,
     ): UiComponentFrame = session.longPress(x, y, durationSeconds, content)
 
-    fun rightClick(x: Float, y: Float, content: UiScope.(root: UiBounds) -> Unit): UiComponentFrame =
+    fun rightClick(x: Float, y: Float, content: UiScope.(root: Rectangle) -> Unit): UiComponentFrame =
         session.rightClick(x, y, content)
 
     fun drag(
@@ -84,7 +84,7 @@ internal class ShadcnTestSession(
         endX: Float,
         endY: Float,
         steps: Int = 1,
-        content: UiScope.(root: UiBounds) -> Unit,
+        content: UiScope.(root: Rectangle) -> Unit,
     ): UiComponentFrame = session.drag(startX, startY, endX, endY, steps, content)
 
     override fun close() = session.close()

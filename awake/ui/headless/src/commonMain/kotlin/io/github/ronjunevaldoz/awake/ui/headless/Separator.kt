@@ -2,11 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.headless
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxHeight
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxWidth
+import io.github.ronjunevaldoz.awake.ui.modifier.height
+import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.style.Style
 
 enum class UiSeparatorOrientation { Horizontal, Vertical }
@@ -20,20 +26,18 @@ enum class UiSeparatorOrientation { Horizontal, Vertical }
  * paints nothing, the same "caller's job to style it" contract [interactiveSurface] documents.
  */
 fun UiScope.separator(
-    modifier: Modifier = Modifier,
+    id: String,
+    modifier: UiModifier = Modifier,
     thickness: Dp = 1f.dp,
     orientation: UiSeparatorOrientation = UiSeparatorOrientation.Horizontal,
     style: Style = Style.Empty,
-    // Defaults to an orientation-derived id, which collides as soon as one frame draws two
-    // horizontal separators. Callers that repeat separators must pass their own.
-    id: String? = null,
-): UiBounds {
+): Rectangle {
     val sepModifier = when (orientation) {
         UiSeparatorOrientation.Horizontal -> modifier.fillMaxWidth().height(thickness)
         UiSeparatorOrientation.Vertical -> modifier.fillMaxHeight().width(thickness)
     }
     return surface(
-        id = id ?: "separator.${orientation.name}",
+        id = id,
         modifier = sepModifier,
         // A separator is always a straight edge, never a rounded pill -- structural to what
         // this widget is, not something a caller-supplied style should be able to accidentally
@@ -45,15 +49,15 @@ fun UiScope.separator(
 /** Compatibility bridge for callers that have not moved their separator colour into [Style]. */
 @Deprecated("Use style = Style { background(color) }")
 fun UiScope.separator(
-    modifier: Modifier = Modifier,
+    id: String,
+    modifier: UiModifier = Modifier,
     thickness: Dp = 1f.dp,
     orientation: UiSeparatorOrientation = UiSeparatorOrientation.Horizontal,
     color: Color,
-    id: String? = null,
-): UiBounds = separator(
+): Rectangle = separator(
+    id = id,
     modifier = modifier,
     thickness = thickness,
     orientation = orientation,
     style = Style { background(color); shape(UiShape.none) },
-    id = id,
 )

@@ -15,10 +15,15 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:core:math2d"))
+            implementation(project(":awake:core:math"))
+            implementation(project(":awake:core:color"))
+            implementation(project(":awake:core:input"))
             // Core is exposed for its Style/UiLocal contract types, which appear in
             // public design-system signatures. Runtime-package imports are rejected by
             // verifyUiOwnership (awake.ui-ownership-convention).
-            api(project(":awake:ui:ui-core"))
+            implementation(project(":awake:ui:ui-core"))
             api(project(":awake:ui:tailwind"))
             api(project(":awake:ui:headless"))
             api(project(":awake:ui:heroicons"))

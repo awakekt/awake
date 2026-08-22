@@ -11,7 +11,7 @@ Split into two types:
 
 - `UiSlot` (existing, `ui-core` internal) -- stays the mutable/measurement-facing type the layout
   engine composes internally. Made `internal` to `ui-core`.
-- `UiBounds` (new, public) -- frozen value type crossing the module boundary. Return type of
+- `Rectangle` (new, public) -- frozen value type crossing the module boundary. Return type of
   `surface{}`/`row{}`/`claimSlot()`, type of `UiSemanticNode.contentBounds` and any lambda param
   handed to downstream widget code.
 
@@ -26,15 +26,15 @@ ui-headless, ui-dsl, ui-designsystem, engine/ui/ui-testing, game-dsl, samples, a
 - No downstream code reads a `gap` field off `UiSlot` -- the "gaps on components" symptom is local
   spacing constants (`CHECKBOX_LABEL_GAP`, `TOGGLE_LABEL_GAP`, line-height gap in `Textarea`)
   combined with `.width`/`.height`/`.x` reads, e.g. `Checkbox.kt:65`, `Switch.kt:67,72`,
-  `Textarea.kt:293`, `PropertyCheckbox.kt:43-70`. `UiBounds` doesn't need a gap field; these sites
+  `Textarea.kt:293`, `PropertyCheckbox.kt:43-70`. `Rectangle` doesn't need a gap field; these sites
   keep working unchanged since they only need x/y/width/height.
 - A few sites reconstruct/`.copy()` a slot-shaped value outside ui-core (`UiLayoutSignatureTest.kt`,
   `ReusableCompositionTest.kt`, `ProgressBar.kt`, `Switch.kt`, `TextField.kt`) -- these need to
-  migrate onto `UiBounds(...)`/`.copy(...)` too.
+  migrate onto `Rectangle(...)`/`.copy(...)` too.
 
-**Conclusion:** `UiBounds(x, y, width, height)` plus a `place(...)` extension covers every
+**Conclusion:** `Rectangle(x, y, width, height)` plus a `place(...)` extension covers every
 downstream module except ui-headless, which also needs `.inset(...)`. Since ui-headless is a
-separate module from ui-core, `.inset(...)` must ship on `UiBounds`, not stay ui-core-internal.
+separate module from ui-core, `.inset(...)` must ship on `Rectangle`, not stay ui-core-internal.
 
 ## Implementation Order (batched, 2026-07-24)
 
@@ -46,17 +46,17 @@ into batches, each independently compilable/testable/committable:
 params on `shadcnTooltip`, `shadcnTooltipText`, `shadcnDropdownMenu`
 (`ui-designsystem/components/popup/`). ~20 call sites across ui-headless, ui-designsystem,
 samples, and tests (several tests construct `UiSlot(...)` directly as the arg).
-1. Add `UiBounds` (`ui-core`, `layout` package) with `x`/`y`/`width`/`height` -- start minimal
+1. Add `Rectangle` (`ui-core`, `layout` package) with `x`/`y`/`width`/`height` -- start minimal
    (just the fields), add `.place(...)`/`.inset(...)` ports only if this batch's call sites
    actually need them (`anchorSlot` itself is read-only positioning data, may not need either).
-2. Add `UiSlot.toBounds()` and `UiBounds.toSlot()` conversions at the ui-core boundary --
+2. Add `UiSlot.toBounds()` and `Rectangle.toSlot()` conversions at the ui-core boundary --
    `popup()`'s internal math (`calculatePosition`, `hitTest`) stays `UiSlot`-based, converts at
    the function boundary.
-3. Change `anchorSlot`'s type to `UiBounds` on `popup()`, `shadcnTooltip()`,
+3. Change `anchorSlot`'s type to `Rectangle` on `popup()`, `shadcnTooltip()`,
    `shadcnTooltipText()`, `shadcnDropdownMenu()`.
 4. Fix the ~20 call sites: real widget results' `.slot` field is still `UiSlot`-typed (Batch 2's
    job, not this batch's), so callers add an explicit `.toBounds()` at the call site for now;
-   test files that construct `UiSlot(...)` directly switch to constructing `UiBounds(...)`.
+   test files that construct `UiSlot(...)` directly switch to constructing `Rectangle(...)`.
 5. Compile whole tree (0 errors), run `desktopTest`, confirm baseline: scene-dsl=1,
    ui-showcase=6, ui-dsl=3 (now under game-dsl), all other modules 0.
 
@@ -64,8 +64,8 @@ samples, and tests (several tests construct `UiSlot(...)` directly as the arg).
 return types (`surface{}`, `row{}`, `claimSlot()`, `UiSemanticNode.contentBounds`/`bounds`,
 `UiButtonResult.slot`, and other widget-result `.slot` fields), plus every
 `content: XScope.(slot: UiSlot) -> Unit` lambda param (the Slot-API content-lambda pattern
-carries measured output through nearly every widget), from `UiSlot` to `UiBounds`. This is what
-lets Batch 1's callers drop their explicit `.toBounds()` calls (the value is already `UiBounds`
+carries measured output through nearly every widget), from `UiSlot` to `Rectangle`. This is what
+lets Batch 1's callers drop their explicit `.toBounds()` calls (the value is already `Rectangle`
 by the time it reaches them).
 
 **Full audit (2026-07-24) found this is much larger than the original ~166-site estimate
@@ -91,7 +91,7 @@ order (ui-headless, then ui-designsystem, engine/ui/ui-testing, game-dsl, sample
 ## Hard Rule (in effect now, enforced once implementation lands)
 
 `UiSlot` is `ui-core`-internal. No module outside `ui-core` may construct, read, or `.copy()` a
-`UiSlot`. Anything crossing the `ui-core` boundary must use `UiBounds` instead. Recorded in
+`UiSlot`. Anything crossing the `ui-core` boundary must use `Rectangle` instead. Recorded in
 `docs/reference/ui-ownership.md`'s Hard Rules list (rule 6).
 
 ## Status
@@ -104,11 +104,11 @@ order (ui-headless, then ui-designsystem, engine/ui/ui-testing, game-dsl, sample
 
 ## Resolution (superseded plan)
 
-`UiSlot` and `UiBounds` turned out structurally identical (`x`/`y`/`width`/`height`, both
+`UiSlot` and `Rectangle` turned out structurally identical (`x`/`y`/`width`/`height`, both
 immutable `val`) -- the only real distinction was the intended public/internal split, which the
 two-type-plus-converter design enforced by convention, not by the compiler. Once Batch 2 finished
-converting the public widget surface to `UiBounds`, the remaining `UiSlot` was renamed into
-`UiBounds` directly (merged into a single `ui-core` public type in the `layout` package) instead
+converting the public widget surface to `Rectangle`, the remaining `UiSlot` was renamed into
+`Rectangle` directly (merged into a single `ui-core` public type in the `layout` package) instead
 of proceeding with the originally planned Batch 3 (`internal`-lock `UiSlot` +
 `forbiddenUiTypeReferences` Gradle enforcement). This eliminates the `toBounds()`/`toSlot()`
 conversion boundary and the dual-type maintenance cost entirely, at the cost of no longer having a

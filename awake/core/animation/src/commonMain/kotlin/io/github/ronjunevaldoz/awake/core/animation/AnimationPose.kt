@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.core.animation
 
 import io.github.ronjunevaldoz.awake.core.math.Mat4
 import io.github.ronjunevaldoz.awake.core.math.Quat
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 
 /**
  * One [skeleton]'s current working pose -- a mutable per-bone TRS buffer, seeded from bind pose.
@@ -28,8 +28,12 @@ class AnimationPose(private val skeleton: Skeleton) {
         clip.channels.forEach { channel ->
             val value = sampleChannel(channel.sampler, timeSeconds)
             when (channel.property) {
-                AnimationProperty.Translation -> translation[channel.targetBone] = Vec3(value[0], value[1], value[2])
-                AnimationProperty.Scale -> scale[channel.targetBone] = Vec3(value[0], value[1], value[2])
+                AnimationProperty.Translation -> translation[channel.targetBone] =
+                    Vec3f(value[0], value[1], value[2])
+
+                AnimationProperty.Scale -> scale[channel.targetBone] =
+                    Vec3f(value[0], value[1], value[2])
+
                 AnimationProperty.Rotation ->
                     rotation[channel.targetBone] = Quat(value[0], value[1], value[2], value[3])
             }
@@ -54,8 +58,18 @@ class AnimationPose(private val skeleton: Skeleton) {
         val loBase = lo * comps
         val hiBase = hi * comps
         return if (comps == 4) {
-            val a = Quat(sampler.values[loBase], sampler.values[loBase + 1], sampler.values[loBase + 2], sampler.values[loBase + 3])
-            val b = Quat(sampler.values[hiBase], sampler.values[hiBase + 1], sampler.values[hiBase + 2], sampler.values[hiBase + 3])
+            val a = Quat(
+                sampler.values[loBase],
+                sampler.values[loBase + 1],
+                sampler.values[loBase + 2],
+                sampler.values[loBase + 3]
+            )
+            val b = Quat(
+                sampler.values[hiBase],
+                sampler.values[hiBase + 1],
+                sampler.values[hiBase + 2],
+                sampler.values[hiBase + 3]
+            )
             val r = Quat.nlerp(a, b, t)
             floatArrayOf(r.x, r.y, r.z, r.w)
         } else {
@@ -98,7 +112,11 @@ class AnimationPose(private val skeleton: Skeleton) {
         fun computeGlobal(boneIndex: Int, parent: Mat4): Mat4 {
             globalTransforms[boneIndex]?.let { return it }
             val bone = skeleton.bones[boneIndex]
-            val local = bone.matrix ?: Mat4.fromTrs(translation[boneIndex], rotation[boneIndex], scale[boneIndex])
+            val local = bone.matrix ?: Mat4.fromTrs(
+                translation[boneIndex],
+                rotation[boneIndex],
+                scale[boneIndex]
+            )
             val global = Mat4.multiplyColumnMajor(parent, local)
             globalTransforms[boneIndex] = global
             return global

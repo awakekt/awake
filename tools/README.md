@@ -4,7 +4,7 @@ This folder contains the implementation details behind Awake's UI workflow. Star
 single front door instead of choosing scripts yourself:
 
 ```bash
-scripts/awake ui <reference|preview|validate> ...
+scripts/awake ui <reference|preview|validate|report|performance> ...
 ```
 
 Use the lower-level tools only when you are maintaining the reference pipeline, adding a new
@@ -15,6 +15,8 @@ fixture, or investigating a renderer/font/icon problem.
 | Need | Use | A pass means |
 |---|---|---|
 | Check a component while iterating | `awake ui reference`, `preview`, or `validate` | You produced the relevant reference, Awake preview, or semantic crop. Review the generated image. |
+| Report a registered parity slice | `awake ui report` | Geometry, paint, and missing-oracle evidence are written separately. |
+| Measure comparison-tool cost | `awake ui performance` | Crop/diff orchestration time, not UI frame performance. |
 | Prove a layout matches shadcn | `ShadcnGeometryParityTest` | The measured bounds match the pinned reference. |
 | Detect an unintended visual change | snapshot tests or `ShadcnReferenceComparisonTest` | Awake did not drift from its accepted output. This is not proof of fidelity. |
 | Maintain upstream shadcn inputs | fetch, extract, and capture tools below | The pinned source, tokens, and captures are refreshed. |
@@ -41,6 +43,10 @@ scripts/awake ui preview --component button --state rest --theme light
 
 # Crop Awake by semantic node and compare it with the reference. This never records a baseline.
 scripts/awake ui validate --component button --theme light
+
+# Summarize manifest-backed evidence and measure comparison-tool cost.
+scripts/awake ui report
+scripts/awake ui performance --component button --theme light
 ```
 
 The command fails for an unregistered state or pairing rather than guessing. Add the reference
@@ -55,7 +61,7 @@ reference-report pipeline:
 tools/fetch_shadcn_reference.sh
 python3 tools/extract_shadcn_tokens.py
 ./gradlew :samples:ui-showcase:desktopTest --tests "*ShadcnReferenceComparisonTest*"
-python3 tools/generate_parity_report.py
+scripts/awake ui report
 python3 tools/generate_ui_status.py
 ```
 
@@ -70,7 +76,7 @@ flattened to line segments, and how the font atlas ended up with mismatched glyp
 
 | Script | Generates | Notes |
 |---|---|---|
-| `svg_to_ui_image_vector.py` | `UiImageVector` glyph data (e.g. `HeroIcons.kt`) | Preserves curves as real cubic Beziers, converts SVG arcs exactly, keeps nested `evenodd` subpaths as holes. Rejects what the engine cannot render (strokes, transforms, crossing subpaths). Run `--self-test` after editing. See `skills/awake-icon-authoring/SKILL.md`. |
+| `svg_to_ui_image_vector.py` | `UiImageVector` glyph data (e.g. `HeroIcons.kt`) | Preserves curves as real cubic Beziers, converts SVG arcs exactly, keeps nested `evenodd` subpaths as holes. Rejects what the engine cannot render (strokes, transforms, crossing subpaths). Run `--self-test` after editing. See `skills/awake-ui-icons/SKILL.md`. |
 | `:awake:ui:font-atlas-generator` (`generateFontAtlas` task, Kotlin/JVM, not a `tools/*.py` script) | `RobotoRegularUiFontData.kt` (packed glyph atlas + metrics) | Reads glyph metrics from the TTF's own outline geometry (`Font.createGlyphVector`) and rasterizes a separate antialiased atlas bitmap via `Graphics2D`. Glyph offsets and advances must stay in the same coordinate space — mixing cell-relative offsets with pen-relative advances produces uneven letter spacing. Replaced the former `generate_ui_font_atlas.py`, which derived metrics from the antialiased raster ink bbox and quantized them to 1/64 em. |
 
 ```bash
@@ -108,14 +114,14 @@ Read `docs/reference/shadcn-reference-pipeline.md` first.
 | `capture_shadcn_local.py` | Builds and serves `shadcn-reference-app/`, then screenshots each case from `shadcn_reference_cases.json` into `docs/reference/shadcn-previews-local/`. Components come verbatim from the pinned checkout, so the reference is shadcn's own source. Captures states a docs page cannot show (focus, disabled, hover, open overlays) and any theme or radius. A case may name its own `selector` when Radix portals its content outside `#case`. |
 | `compare_parity.py` | Diffs an Awake render against a reference capture: aligned crop, heatmap, mismatch metrics. Pairing lives in `shadcn_parity_pairs.json`. |
 | `compare_component_crops.py` | Resolves an Awake semantic node ID to a raster crop, compares that crop with a component-hugging shadcn reference PNG, and writes the crop, heatmap, and JSON metrics. Supports a batch manifest. |
-| `generate_parity_report.py` | Regenerates `docs/reference/shadcn-parity.md` from the component inventory, token test state, and comparison metrics. |
+| `generate_ui_parity_report.py` | Generates the manifest-backed JSON/Markdown evidence report under `build/reports/ui-parity/`. |
 | `generate_ui_status.py` | Regenerates `docs/reference/ui-fidelity-status.md`, the per-area status matrix. Each row's status comes from a probe against the source, so it cannot claim done for unwired work. |
 | `shadcn_parity_baseline.json` | Committed regression baseline consumed by `ShadcnReferenceComparisonTest.kt` (not a script) -- each pair's last-accepted mismatch%, an absolute-percentage-point tolerance, and an `excluded` map for pairs whose crop alignment can't be trusted yet. See `docs/reference/ui-validation.md`'s "Shadcn Parity Regression Gate" section. |
 
 ```bash
 tools/fetch_shadcn_reference.sh
 ./gradlew :samples:ui-showcase:desktopTest --tests "*ShadcnReferenceComparisonTest*"
-python3 tools/generate_parity_report.py
+scripts/awake ui report
 python3 tools/generate_ui_status.py
 ```
 
@@ -125,7 +131,7 @@ python3 tools/generate_ui_status.py
 `tools/shadcn-reference-app` inside a `w-fit` `#case` wrapper (or an explicit portal selector)
 and Playwright screenshots that target. `compare_component_crops.py` supplies the missing
 Awake-side crop. It reads the semantic JSON emitted beside an Awake preview PNG, converts the
-node's logical `UiBounds` to the preview's raster scale, and compares the resulting crop without
+node's logical `Rectangle` to the preview's raster scale, and compares the resulting crop without
 manual image editing.
 
 Use the same state/content on both sides; for a grouped case, repeat `--node-id` to union the
@@ -195,7 +201,7 @@ row together before expanding the command's supported combinations.
 ## Icon fidelity
 
 Proves each shipped `HeroIcons` `UiImageVector` renders the same shape as the official
-Heroicons SVG it was generated from, automatically -- see `skills/awake-icon-authoring/SKILL.md`.
+Heroicons SVG it was generated from, automatically -- see `skills/awake-ui-icons/SKILL.md`.
 
 | Script | Purpose |
 |---|---|

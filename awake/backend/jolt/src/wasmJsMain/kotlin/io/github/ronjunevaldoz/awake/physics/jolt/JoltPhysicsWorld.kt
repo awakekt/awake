@@ -4,7 +4,7 @@
 
 package io.github.ronjunevaldoz.awake.physics.jolt
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.physics.BodyHandle
 import io.github.ronjunevaldoz.awake.physics.BodyTransform
 import io.github.ronjunevaldoz.awake.physics.BoxShape
@@ -109,7 +109,12 @@ private object JoltModule {
     }
     """,
 )
-private external fun joltCreateWorld(jolt: JsAny, gravityX: Double, gravityY: Double, gravityZ: Double): JsAny
+private external fun joltCreateWorld(
+    jolt: JsAny,
+    gravityX: Double,
+    gravityY: Double,
+    gravityZ: Double
+): JsAny
 
 /** Object layer 1 ("moving") for every non-static body, 0 ("non-moving") for static ones --
  * matches [joltCreateWorld]'s own `LAYER_NON_MOVING`/`LAYER_MOVING` constants. */
@@ -272,8 +277,8 @@ class JoltPhysicsWorld private constructor(private val world: JsAny) : PhysicsWo
 
     override fun createBody(
         shape: PhysicsShape,
-        position: Vec3,
-        rotation: Vec3,
+        position: Vec3f,
+        rotation: Vec3f,
         motionType: MotionType,
     ): BodyHandle {
         val (qw, qx, qy, qz) = eulerVec3ToQuatWxyz(rotation)
@@ -301,6 +306,7 @@ class JoltPhysicsWorld private constructor(private val world: JsAny) : PhysicsWo
                 motionTypeCode,
                 isStatic,
             )
+
             is SphereShape -> joltCreateBody(
                 world,
                 false,
@@ -338,7 +344,7 @@ class JoltPhysicsWorld private constructor(private val world: JsAny) : PhysicsWo
         val transform = joltGetBodyTransform(world, idNum)
         BodyTransform(
             handle = BodyHandle(idNum.toLong()),
-            position = Vec3(
+            position = Vec3f(
                 jsArrayGet(transform, 0).toFloat(),
                 jsArrayGet(transform, 1).toFloat(),
                 jsArrayGet(transform, 2).toFloat(),
@@ -352,9 +358,9 @@ class JoltPhysicsWorld private constructor(private val world: JsAny) : PhysicsWo
         )
     }
 
-    override fun raycast(origin: Vec3, direction: Vec3, maxDistance: Float): RaycastHit? {
+    override fun raycast(origin: Vec3f, direction: Vec3f, maxDistance: Float): RaycastHit? {
         val normalizedDirection = direction.normalized()
-        val castVector = Vec3(
+        val castVector = Vec3f(
             normalizedDirection.x * maxDistance,
             normalizedDirection.y * maxDistance,
             normalizedDirection.z * maxDistance,
@@ -372,7 +378,7 @@ class JoltPhysicsWorld private constructor(private val world: JsAny) : PhysicsWo
         val fraction = jsArrayGet(result, 0).toFloat()
         val bodyIdNum = jsArrayGet(result, 1).toInt()
         val distance = maxDistance * fraction
-        val point = Vec3(
+        val point = Vec3f(
             origin.x + normalizedDirection.x * distance,
             origin.y + normalizedDirection.y * distance,
             origin.z + normalizedDirection.z * distance,
@@ -387,9 +393,14 @@ class JoltPhysicsWorld private constructor(private val world: JsAny) : PhysicsWo
     }
 
     companion object {
-        suspend fun create(gravity: Vec3 = Vec3(0f, -9.81f, 0f)): JoltPhysicsWorld {
+        suspend fun create(gravity: Vec3f = Vec3f(0f, -9.81f, 0f)): JoltPhysicsWorld {
             val jolt = JoltModule.get()
-            val world = joltCreateWorld(jolt, gravity.x.toDouble(), gravity.y.toDouble(), gravity.z.toDouble())
+            val world = joltCreateWorld(
+                jolt,
+                gravity.x.toDouble(),
+                gravity.y.toDouble(),
+                gravity.z.toDouble()
+            )
             return JoltPhysicsWorld(world)
         }
     }

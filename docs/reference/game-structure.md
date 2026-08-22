@@ -161,7 +161,7 @@ Use the answers like this:
 - session/runtime truth -> `state/`
 - UI rendering data -> `ui/presenter/` or `ui/components/`
 - authored overlay/screen composition -> `ui/overlays/` or `ui/screens/`
-- reusable engine primitive -> engine module, following [ui-ownership.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/ui-ownership.md)
+- reusable engine primitive -> engine module, following [ui-ownership.md](ui-ownership.md)
 
 ## Split To Modules Only When Needed
 

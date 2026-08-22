@@ -64,8 +64,8 @@ fun UiScope.row(
     ...,
     id: String? = null,
     cacheKey: Any? = null,
-    content: RowScope.(slot: UiBounds) -> Unit
-): UiBounds
+    content: RowScope.(slot: Rectangle) -> Unit
+): Rectangle
 ```
 
 - Both default to `null` -- **every existing call site is byte-for-byte unaffected**, zero risk to
@@ -121,7 +121,7 @@ dependency that flips whether a child calls `.weight()`), the cache silently ret
 `hasWeightedChild` answer, picking the wrong measurement branch. This is a genuinely new failure
 mode, not present in the current unconditional-trial code at all, and it's caller-introduced (opt-
 in), which makes it easy to get subtly wrong at a call site -- the same shape of hazard
-`animateFloat`'s `id` staleness already carries in this codebase (documented in `MIRROR_MAP.md`:
+`animateFloat`'s `id` staleness already carries in this codebase (documented in `mirror-map.md`:
 "forgetting to keep `id` stable across frames ... silently restarts the animation with no compile-
 time signal"). This design does not solve that class of hazard, it inherits it -- and should say so
 plainly rather than pretend `cacheKey` staleness is impossible.
@@ -183,7 +183,7 @@ Extend `TrialMeasureScalingTest.kt` with a new fixture: the same nested chain sh
 **two frames** with `id`/`cacheKey` supplied and held constant, and assert frame 2's trial count is
 `O(depth)` (linear -- each level pays one real execution but the cache prevents the extra trial),
 not `O(2^depth)`. This is the fixture shape that's actually representative of what's failing today
-(confirmed: `spacedBy` is unaffected by the landed fix per `MIRROR_MAP.md`'s own updated entry).
+(confirmed: `spacedBy` is unaffected by the landed fix per `mirror-map.md`'s own updated entry).
 
 **Honest read on the real Checkout Form page specifically:** this conservative first step does
 *not* automatically improve `UiShowcaseFieldDemoPage.kt` or its containing shell. Checked directly:

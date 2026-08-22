@@ -3,16 +3,16 @@
 package io.github.ronjunevaldoz.awake.sample.uishowcase.ui
 
 import io.github.ronjunevaldoz.awake.sample.uishowcase.state.UiShowcaseRuntimeState
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnSidebar
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
-import io.github.ronjunevaldoz.awake.ui.headless.height
+import io.github.ronjunevaldoz.awake.ui.modifier.height
 import io.github.ronjunevaldoz.awake.ui.headless.rememberScrollState
 import io.github.ronjunevaldoz.awake.ui.headless.verticalScroll
-import io.github.ronjunevaldoz.awake.ui.headless.width
+import io.github.ronjunevaldoz.awake.ui.modifier.width
 import io.github.ronjunevaldoz.awake.ui.rememberStateValue
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,7 +31,7 @@ class ShadcnCollapsibleToggleTest {
     private fun expandedState(ui: UiContext, category: String) =
         ui.rememberStateValue("ui-showcase-sidebar-category", category) { true }
 
-    private fun headerBounds(ui: UiContext, category: String): UiBounds {
+    private fun headerBounds(ui: UiContext, category: String): Rectangle {
         val id = "ui-showcase-sidebar-category-$category.trigger"
         val semantics = ui.finishFrame().semantics
         val node = semantics.firstOrNull { it.id == id }
@@ -39,7 +39,7 @@ class ShadcnCollapsibleToggleTest {
         return node.bounds
     }
 
-    private fun UiBounds.center(): Pair<Float, Float> = (x + width / 2f) to (y + height / 2f)
+    private fun Rectangle.center(): Pair<Float, Float> = (x + width / 2f) to (y + height / 2f)
 
     private fun UiScope.drawSidebar(ui: UiContext) {
         val sidebarScroll = ui.rememberScrollState("ui-showcase-scroll-side")

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.layouts.column
 import io.github.ronjunevaldoz.awake.ui.layouts.spacer
@@ -35,7 +36,7 @@ class WrapContentWidthFillMaxChildTest {
         val ui = UiContext()
         ui.beginFrame(UiFrameInput(viewportWidth = 1000f, viewportHeight = 400f, input = testSnapshot()))
 
-        var slot: UiBounds? = null
+        var slot: Rectangle? = null
         ui.createBox(x = 0f, y = 0f, width = 900f, height = 400f).column(
             id = "parent",
             modifier = Modifier.width(Dimension.Fixed(900f.px)).height(Dimension.WrapContent),
@@ -64,7 +65,7 @@ class WrapContentWidthFillMaxChildTest {
         val ui = UiContext()
         ui.beginFrame(UiFrameInput(viewportWidth = 1000f, viewportHeight = 400f, input = testSnapshot()))
 
-        var slot: UiBounds? = null
+        var slot: Rectangle? = null
         ui.createBox(x = 0f, y = 0f, width = 900f, height = 400f).column(
             id = "parent",
             modifier = Modifier.width(Dimension.Fixed(900f.px)).height(Dimension.WrapContent),

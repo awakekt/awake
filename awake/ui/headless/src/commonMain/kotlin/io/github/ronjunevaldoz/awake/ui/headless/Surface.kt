@@ -3,9 +3,12 @@
 package io.github.ronjunevaldoz.awake.ui.headless
 
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.layouts.surface as primitiveSurface
 import io.github.ronjunevaldoz.awake.ui.layouts.interactiveSurface as primitiveInteractiveSurface
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
+import io.github.ronjunevaldoz.awake.ui.modifier.styleable
 import io.github.ronjunevaldoz.awake.ui.style.Style
 
 /**
@@ -16,16 +19,16 @@ import io.github.ronjunevaldoz.awake.ui.style.Style
  */
 fun UiScope.surface(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     style: Style = Style.Empty,
     verticalArrangement: Arrangement = Arrangement.Start,
     clipContent: Boolean = false,
     // Opt-in cross-frame cache for the WrapContent sizing trial -- see UiScope.column.
     cacheKey: Any? = null,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = primitive.primitiveSurface(
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = primitive.primitiveSurface(
     id = id,
-    modifier = modifier.asPrimitiveModifier(),
+    modifier = modifier,
     style = style,
     cacheKey = cacheKey,
     verticalArrangement = verticalArrangement.asPrimitiveArrangement(),
@@ -42,7 +45,7 @@ fun UiScope.surface(
  */
 fun UiScope.interactiveSurface(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     style: Style = Style.Empty,
     verticalArrangement: Arrangement = Arrangement.Start,
     clipContent: Boolean = false,
@@ -52,10 +55,10 @@ fun UiScope.interactiveSurface(
     // ambient theme -- ui-headless does not read Local*/theme state itself (see the
     // `awake-ui-authoring` skill). [style] is the caller's complete, self-sufficient answer;
     // an interactive widget composes its own themed defaults INTO [style] before calling this.
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): UiBounds = primitive.primitiveInteractiveSurface(
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): Rectangle = primitive.primitiveInteractiveSurface(
     id = id,
-    modifier = modifier.styleable(style).asPrimitiveModifier(),
+    modifier = modifier.styleable(style),
     cacheKey = cacheKey,
     verticalArrangement = verticalArrangement.asPrimitiveArrangement(),
     clipContent = clipContent,

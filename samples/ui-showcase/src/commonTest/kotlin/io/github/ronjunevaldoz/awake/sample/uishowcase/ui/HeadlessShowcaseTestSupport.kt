@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.sample.uishowcase.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.testing.ui.UiComponentFrame
 import io.github.ronjunevaldoz.awake.testing.ui.UiTestSession
@@ -18,12 +18,12 @@ import io.github.ronjunevaldoz.awake.ui.font.UiFonts
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.createUiScope
 import io.github.ronjunevaldoz.awake.ui.headless.ColumnScope
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 
 /** Direct-context counterpart to [showcaseTestSession] for probes that manage their own frames. */
 internal fun UiContext.showcaseRoot(
     theme: ShadcnThemeValues = shadcnThemeValues(),
-    bounds: UiBounds = frameBoundsInternal(),
+    bounds: Rectangle = frameBoundsInternal(),
     content: UiScope.() -> Unit,
 ) {
     createUiScope(bounds).shadcnTheme(theme = theme, content = content)
@@ -41,13 +41,13 @@ internal class ShowcaseTestSession(
         y: Float = -100f,
         down: Boolean = false,
         deltaSeconds: Float = 1f / 60f,
-        content: UiScope.(root: UiBounds) -> Unit,
+        content: UiScope.(root: Rectangle) -> Unit,
     ): UiComponentFrame = session.frame(x = x, y = y, down = down, deltaSeconds = deltaSeconds, content = content)
 
     fun frame(
         input: UiInputState,
         deltaSeconds: Float = 1f / 60f,
-        content: UiScope.(root: UiBounds) -> Unit,
+        content: UiScope.(root: Rectangle) -> Unit,
     ): UiComponentFrame = session.frame(input = input, deltaSeconds = deltaSeconds, content = content)
 
     override fun close() = session.close()
@@ -76,7 +76,7 @@ internal fun <T> showcaseTestSession(
 internal fun AwakeUiPreviewMetadata.shadcnComponentStateMatrix(
     theme: ShadcnThemeValues = shadcnThemeValues(),
     font: UiFont = UiFonts.default(),
-    block: ColumnScope.(Modifier) -> Unit,
+    block: ColumnScope.(UiModifier) -> Unit,
 ): List<AwakeUiPreviewSample> = headlessComponentStateMatrix(
     theme = theme,
     font = font,

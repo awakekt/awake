@@ -4,11 +4,11 @@ package io.github.ronjunevaldoz.awake.ui.layouts
 
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.scope.measureColumnContent
-import io.github.ronjunevaldoz.awake.ui.toPx
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 
 /**
  * Everything a [io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope] needs except `claimSlot` -- shared once here instead of repeated per
@@ -19,10 +19,14 @@ import io.github.ronjunevaldoz.awake.ui.toPx
 abstract class AbstractUiScope(
     final override val context: UiContext,
     private val emitToOverlay: Boolean = false,
-) : io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope {
+) : io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope,
+    io.github.ronjunevaldoz.awake.ui.UiPrimitiveEmitter {
     final override val emitsToOverlay: Boolean = emitToOverlay
-    final override fun hitTest(slot: UiBounds) =
-        context.hitTestInternal(slot)
+    final override fun registerOverlayOcclusion(bounds: Rectangle, isModal: Boolean) {
+        context.registerOverlayOcclusion(bounds, isModal)
+    }
+    final override fun hitTest(slot: Rectangle) =
+        context.hitTestInternal(slot, overlay = emitToOverlay)
 
     final override fun isActive(id: String) = context.isActiveInternal(id)
     final override fun tryClaimActive(id: String, hovered: Boolean) =
@@ -31,7 +35,7 @@ abstract class AbstractUiScope(
     final override fun releaseActiveIfMatches(id: String) =
         context.releaseActiveIfMatchesInternal(id)
 
-    final override fun emit(primitive: io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive) =
+    final override fun emit(primitive: io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive) =
         if (emitToOverlay) {
             context.emitOverlayInternal(primitive)
         } else {
@@ -40,7 +44,7 @@ abstract class AbstractUiScope(
             )
         }
 
-    final override fun emitOverlay(primitive: io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive) =
+    final override fun emitOverlay(primitive: io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive) =
         context.emitOverlayInternal(primitive)
 
     final override fun widgetState(id: String) = context.widgetStateInternal(id)
@@ -101,10 +105,10 @@ internal fun requireScrollableContainer(modifier: UiModifier, container: String)
  * logic is what hid a weighted child collapsing to its content height.
  */
 internal fun UiPrimitiveScope.planWeightedColumnSlots(
-    slot: UiBounds,
+    slot: Rectangle,
     arrangement: Arrangement,
-    content: ColumnScope.(slot: UiBounds) -> Unit,
-): List<UiBounds>? {
+    content: ColumnScope.(slot: Rectangle) -> Unit,
+): List<Rectangle>? {
     val gap = arrangement.baseSpacingPx()
     // Real gap, so a FillMax child's trial height already accounts for the space before its
     // next sibling.
@@ -128,7 +132,7 @@ internal fun UiPrimitiveScope.planWeightedColumnSlots(
     val plan = arrangement.plan(slot.height, childHeights.size, occupied)
     var y = slot.y + plan.leadingSpacePx
     return childHeights.mapIndexed { index, height ->
-        UiBounds(slot.x, y, measured.slots[index].width, height).also {
+        Rectangle(slot.x, y, measured.slots[index].width, height).also {
             y += height + plan.betweenSpacePx
         }
     }

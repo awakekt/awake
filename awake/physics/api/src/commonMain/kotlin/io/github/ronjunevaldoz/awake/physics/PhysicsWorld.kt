@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.physics
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 
 /**
- * Jolt Physics integration, slice 1 (see docs/MVP_PLAN.md's decision log): mirrors
+ * Jolt Physics integration, slice 1 (see docs/reference/decision-log.md): mirrors
  * `awake:engine:render-api`/`awake:backend:vulkan`'s own module split -- a neutral
  * commonMain-only interface here, a concrete implementation per native binding in its own
  * backend module (`awake:backend:jolt` today, using jolt-jni on desktop+Android; a JoltC
@@ -20,7 +20,12 @@ import io.github.ronjunevaldoz.awake.core.math.Vec3
  * itself.
  */
 interface PhysicsWorld {
-    fun createBody(shape: PhysicsShape, position: Vec3, rotation: Vec3, motionType: MotionType): BodyHandle
+    fun createBody(
+        shape: PhysicsShape,
+        position: Vec3f,
+        rotation: Vec3f,
+        motionType: MotionType
+    ): BodyHandle
 
     fun destroyBody(handle: BodyHandle)
 
@@ -32,7 +37,7 @@ interface PhysicsWorld {
      * would scale with body count instead of staying constant. */
     fun syncTransforms(): List<BodyTransform>
 
-    fun raycast(origin: Vec3, direction: Vec3, maxDistance: Float): RaycastHit?
+    fun raycast(origin: Vec3f, direction: Vec3f, maxDistance: Float): RaycastHit?
 
     fun destroy()
 }

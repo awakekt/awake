@@ -2,5 +2,20 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>ComplexCondition:DebugVisualizationSystem.kt$!settings.showFrustum &amp;&amp; !settings.showBounds &amp;&amp; !settings.showOcclusion &amp;&amp; !settings.showLights &amp;&amp; !settings.showShadowFrustum</ID>
+    <ID>CyclomaticComplexMethod:DebugVisualizationSystem.kt$fun debugVisualizationLines( world: World, renderer: Renderer, settings: WorldDebugSettings ): List&lt;LineSegment></ID>
+    <ID>CyclomaticComplexMethod:RenderSystem.kt$RenderSystem$override fun update(world: World, delta: Float)</ID>
+    <ID>LargeClass:ParticleSystemTest.kt$ParticleSystemTest</ID>
+    <ID>LongMethod:RenderSystem.kt$RenderSystem$override fun update(world: World, delta: Float)</ID>
+    <ID>LongMethod:RenderSystem.kt$RenderSystem$private fun addParticleDrawCalls( emitter: ParticleEmitter, cameraBasis: FloatArray, frustumPlanes: List&lt;Plane>, eye: Vec3, )</ID>
+    <ID>LongParameterList:BurstEmitterPool.kt$BurstEmitterPool$( mesh: Mesh, material: Material, maxParticles: Int, origin: Vec3f, spawnRate: Float, lifetime: Float, startAlpha: Float, scale: Float, motion: ParticleMotion, visual: ParticleVisual, ground: ParticleGround, lifecycle: ParticleLifecycle, dynamics: ParticleDynamics, )</ID>
+    <ID>LongParameterList:ParticleEmitter.kt$( world: World, mesh: Mesh, material: Material, position: Vec3f, count: Int, spawnRate: Float, lifetime: Float, startAlpha: Float, baseVelocity: Vec3f, velocityJitter: Float = 0f, scale: Float = 0.25f, startColor: Vec3f = Vec3f(1f, 1f, 1f), endColor: Vec3f = startColor, coneHalfAngleDegrees: Float? = null, followEntity: Entity? = null, groundY: Float? = null, )</ID>
+    <ID>LongParameterList:ParticleEmitter.kt$ParticleEmitter$( newOrigin: Vec3f, newSpawnRate: Float, newLifetime: Float, newStartAlpha: Float, newScale: Float, newMotion: ParticleMotion, newVisual: ParticleVisual, newGround: ParticleGround, newLifecycle: ParticleLifecycle, newDynamics: ParticleDynamics, )</ID>
+    <ID>LongParameterList:ParticleEmitter.kt$ParticleEmitter$( val mesh: Mesh, val material: Material, val origin: Vec3f, val maxParticles: Int, var spawnRate: Float, var lifetime: Float, var startAlpha: Float, var scale: Float, var motion: ParticleMotion = ParticleMotion(), var visual: ParticleVisual = ParticleVisual(), var ground: ParticleGround = ParticleGround(), var lifecycle: ParticleLifecycle = ParticleLifecycle(), var dynamics: ParticleDynamics = ParticleDynamics(), val children: List&lt;ParticleEmitter> = emptyList(), )</ID>
+    <ID>LoopWithTooManyJumpStatements:ParticleSystem.kt$ParticleSystem$while</ID>
+    <ID>ReturnCount:ParticleSystem.kt$ParticleSystem$private fun groundHeightAt(emitter: ParticleEmitter, x: Float, z: Float): Float?</ID>
+    <ID>ReturnCount:ParticleSystem.kt$ParticleSystem$private fun spawnVelocity(emitter: ParticleEmitter, spawnPosition: Vec3f): Vec3f</ID>
+    <ID>ReturnCount:RenderSystem.kt$RenderSystem$private fun isOccluded( camera: io.github.ronjunevaldoz.awake.core.math.Lens, worldBounds: io.github.ronjunevaldoz.awake.core.math.Aabb, occlusionViewProjection: Mat4?, ): Boolean</ID>
+    <ID>TooManyFunctions:ParticleSystem.kt$ParticleSystem : System</ID>
   </CurrentIssues>
 </SmellBaseline>

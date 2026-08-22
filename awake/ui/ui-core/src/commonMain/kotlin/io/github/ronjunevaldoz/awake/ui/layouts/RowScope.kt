@@ -5,7 +5,7 @@ package io.github.ronjunevaldoz.awake.ui.layouts
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 
 /**
@@ -24,7 +24,7 @@ class RowScope internal constructor(
     override val hasBoundedFillWidth: Boolean = width != null,
     override val hasBoundedFillHeight: Boolean = true,
     emitToOverlay: Boolean = false,
-    private val plannedSlots: List<UiBounds>? = null,
+    private val plannedSlots: List<Rectangle>? = null,
     /** Container-level cross-axis default -- matches Compose's `Row(verticalAlignment = ...)`.
      * Every child not carrying its own explicit `.align(...)` falls back to this via
      * `claimModifiedSlot()`'s `defaultAlignment()`, which widens that child's alignment
@@ -45,7 +45,7 @@ class RowScope internal constructor(
         get() = width?.let { (it - (cursorX - startX)).coerceAtLeast(0f) }
     override val fillHeight: Float? = height
 
-    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): UiBounds {
+    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): Rectangle {
         plannedSlots?.let { slots ->
             val slot = slots[plannedIndex++]
             context.recordMeasuredSlot(slot)
@@ -59,11 +59,17 @@ class RowScope internal constructor(
         // (over the resulting measured widths) has something meaningful to work with.
         val effectiveWidth = if (weight != null && width == Dimension.WrapContent) Dimension.FillMax else width
         val resolvedWidth = effectiveWidth.resolve {
+            // Compose parity (FillNode): fillMaxWidth() in an unbounded parent (maxWidth ==
+            // Constraints.Infinity) has NO effect -- the child falls back to its own intrinsic
+            // wrap-content size. Awake's equivalent: when hasBoundedFillWidth is false (e.g. WrapContent
+            // measurement trial or unbounded parent), FillMax must return 0f so the wrap-content
+            // trial's own content measurement drives the real size instead.
+            if (!hasBoundedFillWidth) return@resolve 0f
             val availableWidth = this.width ?: (context.frameBoundsInternal().width - cursorX)
             (availableWidth - (cursorX - startX)).coerceAtLeast(0f)
         }
         val resolvedHeight = height.resolve { this.height }
-        val slot = UiBounds(
+        val slot = Rectangle(
             cursorX,
             y,
             resolvedWidth,

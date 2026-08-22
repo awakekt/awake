@@ -7,25 +7,28 @@ import io.github.ronjunevaldoz.awake.ui.font
 import io.github.ronjunevaldoz.awake.ui.theme
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
-import io.github.ronjunevaldoz.awake.ui.graphics.emitCheckmark
-import io.github.ronjunevaldoz.awake.ui.graphics.emitInsetDash
-import io.github.ronjunevaldoz.awake.ui.graphics.emitRadioDot
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.canvas
+import io.github.ronjunevaldoz.awake.ui.foundation.UiToggleableState
+import io.github.ronjunevaldoz.awake.ui.foundation.toggled
+import io.github.ronjunevaldoz.awake.ui.graphics.drawCheckmark
+import io.github.ronjunevaldoz.awake.ui.graphics.drawInsetDash
+import io.github.ronjunevaldoz.awake.ui.graphics.drawRadioDot
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.paintSurface
 import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.resolveInteractiveSurface
 import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.withIntrinsicLabelWidth
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.UiTextOverflow
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextOverflow
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.modifier.withSizeFallback
 import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
 import io.github.ronjunevaldoz.awake.ui.style.Style
-import io.github.ronjunevaldoz.awake.ui.toPx
-import io.github.ronjunevaldoz.awake.ui.withGraphicsLayerAlpha
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.ui.headless.withDisabledAlpha
 
 // Dp, not raw px: every coordinate it is added to below (`boxPx`, `surface.interaction.slot`)
 // already went through `.dp.toPx()`, so a raw literal here would stay 8 physical pixels while
@@ -73,7 +76,7 @@ fun UiPrimitiveScope.checkbox(
         enabled = enabled,
     )
     val boxPx = boxSize.toPx()
-    val boxSlot = UiBounds(
+    val boxSlot = Rectangle(
         surface.interaction.slot.x,
         surface.interaction.slot.y + (surface.interaction.slot.height - boxPx) / 2f,
         boxPx,
@@ -83,7 +86,7 @@ fun UiPrimitiveScope.checkbox(
     // `Buttons.kt`'s `buttonSlotInternal` -- covers the box fill/border, the check/dash mark,
     // and the label as one composited unit so the label drawn on top of the box's own paint
     // never gets double-dimmed.
-    return withGraphicsLayerAlpha(if (enabled) 1f else 0.5f) {
+    return withDisabledAlpha(enabled) {
         paintSurface(
             slot = boxSlot,
             resolved = if (checked || indeterminate) {
@@ -103,23 +106,31 @@ fun UiPrimitiveScope.checkbox(
             borderColor = surface.resolved.borderColor
                 ?: theme.colors.primary.takeIf { checked || indeterminate },
         )
-        // Mirrors real shadcn's triStateToggleable: clicking an Indeterminate box always lands
-        // on checked=true, same as clicking an Off box -- only an On box flips to false.
-        val newChecked = if (surface.interaction.clicked) {
-            if (indeterminate) true else !checked
-        } else {
-            checked
+        // triStateToggleable: clicking Indeterminate lands on checked, same as clicking Off --
+        // only On flips to false. The transition lives in ui-core's foundation layer so the
+        // three controls that toggle cannot drift apart again.
+        val toggleState = when {
+            indeterminate -> UiToggleableState.Indeterminate
+            checked -> UiToggleableState.On
+            else -> UiToggleableState.Off
         }
+        val newChecked = surface.interaction.toggled(toggleState) == UiToggleableState.On
         val inset = boxPx * 0.25f
+        // The indicator is the resolved foreground, same as the fill/border above take the
+        // resolved background/borderColor. These read the theme directly, which no skin could
+        // override -- a caller supplying a complete Style still got a theme-coloured mark.
+        // The theme token stays as a fallback for a bare-Style.Empty caller.
         if (indeterminate) {
-            emitInsetDash(boxSlot, inset)
+            val dashColor = surface.resolved.foreground ?: theme.colors.primary
+            canvas(boxSlot) { drawInsetDash(boxSlot, inset, dashColor) }
         } else if (newChecked) {
-            emitCheckmark(boxSlot)
+            val markColor = surface.resolved.foreground ?: theme.colors.primaryForeground
+            canvas(boxSlot) { drawCheckmark(boxSlot, markColor) }
         }
         val resolvedFont = font
         if (label != null) {
             val gapPx = CHECKBOX_LABEL_GAP.toPx()
-            val labelSlot = UiBounds(
+            val labelSlot = Rectangle(
                 boxSlot.x + boxPx + gapPx,
                 surface.interaction.slot.y,
                 surface.interaction.slot.width - boxPx - gapPx,
@@ -183,22 +194,23 @@ fun UiPrimitiveScope.radio(
         enabled = enabled,
     )
     val boxPx = boxSize.toPx()
-    val boxSlot = UiBounds(
+    val boxSlot = Rectangle(
         surface.interaction.slot.x,
         surface.interaction.slot.y + (surface.interaction.slot.height - boxPx) / 2f,
         boxPx,
         boxPx,
     )
-    return withGraphicsLayerAlpha(if (enabled) 1f else 0.5f) {
+    return withDisabledAlpha(enabled) {
         paintSurface(
             slot = boxSlot,
-            resolved = surface.resolved.copy(shapeSpec = io.github.ronjunevaldoz.awake.ui.UiShapeSpec.Circle),
+            resolved = surface.resolved.copy(shapeSpec = io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec.Circle),
             fillColor = surface.resolved.background ?: theme.colors.background,
             borderColor = surface.resolved.borderColor ?: theme.colors.border,
-            shapeSpec = io.github.ronjunevaldoz.awake.ui.UiShapeSpec.Circle,
+            shapeSpec = io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec.Circle,
         )
         if (selected) {
-            emitRadioDot(boxSlot, theme.colors.primary)
+            val dotColor = surface.resolved.foreground ?: theme.colors.primary
+            canvas(boxSlot) { drawRadioDot(boxSlot, dotColor) }
         }
         val next = if (surface.interaction.clicked && enabled) true else selected
         recordSemantic(

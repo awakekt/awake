@@ -5,9 +5,10 @@
 
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnRadioGroupStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnRadioLabelStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnRadioStyle
@@ -15,6 +16,7 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnToggleGroupIte
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
 import io.github.ronjunevaldoz.awake.ui.headless.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.column
 import io.github.ronjunevaldoz.awake.ui.headless.height
@@ -43,7 +45,7 @@ fun UiScope.shadcnToggleGroup(
     id: String,
     options: List<String>,
     selectedIndices: Set<Int>,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     onSelectedIndicesChange: (Set<Int>) -> Unit = {},
 ) {
     toggleGroup(
@@ -60,7 +62,7 @@ fun UiScope.shadcnToggleGroup(
     id: String,
     options: List<String>,
     selectedIndex: Int,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     onIndexChange: (Int) -> Unit = {},
 ) {
     toggleGroup(
@@ -77,7 +79,7 @@ fun UiScope.shadcnRadioButton(
     id: String,
     selected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     enabled: Boolean = true,
 ): Boolean = radio(
     id = id,
@@ -90,26 +92,24 @@ fun UiScope.shadcnRadioButton(
 
 fun UiScope.shadcnRadioGroup(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     enabled: Boolean = true,
     content: ColumnScope.() -> Unit,
-) {
-    surface(
-        id = id,
-        modifier = modifier,
-        style = shadcnRadioGroupStyle(),
-        verticalArrangement = Arrangement.spacedBy(ShadcnRadioMetrics.groupGap),
-        content = { content() },
-    )
-}
+): Rectangle = surface(
+    id = id,
+    modifier = modifier,
+    style = shadcnRadioGroupStyle(),
+    verticalArrangement = Arrangement.spacedBy(ShadcnRadioMetrics.groupGap),
+    content = { content() },
+)
 
 fun UiScope.shadcnRadioGroup(
     id: String,
     options: List<String>,
     selectedIndex: Int,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     enabled: Boolean = true,
-    gap: io.github.ronjunevaldoz.awake.ui.api.Dp = ShadcnRadioMetrics.groupGap,
+    gap: Dp = ShadcnRadioMetrics.groupGap,
     onIndexChange: (Int) -> Unit = {},
 ): Int {
     var resolved = selectedIndex

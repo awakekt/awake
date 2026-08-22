@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan.debug
 
+import io.github.ronjunevaldoz.awake.render.passes.debug.DebugLineLayout
 import io.github.ronjunevaldoz.awake.vulkan.Vulkan
 import io.github.ronjunevaldoz.awake.vulkan.device.GraphicsDevice
 import io.github.ronjunevaldoz.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
@@ -11,6 +12,7 @@ import io.github.ronjunevaldoz.awake.vulkan.handles.DeviceMemoryHandle
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkBufferCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkBufferUsageFlagBits
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkMemoryAllocateInfo
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.VulkanBufferBinding
 
 /**
  * A world-space `LINE_LIST` vertex buffer rewritten every frame -- same HOST_VISIBLE
@@ -32,7 +34,10 @@ class LineMesh(
         val vertexBuffer: BufferHandle,
         val vertexBufferMemory: DeviceMemoryHandle,
         var vertexCount: Int = 0,
-    )
+    ) {
+        /** This slot's buffer as the port's opaque handle -- built once, not per frame. */
+        val binding = VulkanBufferBinding(vertexBuffer.handle)
+    }
 
     private val frameResources: Array<FrameResources>
     private var activeFrameIndex: Int = 0
@@ -93,6 +98,13 @@ class LineMesh(
         VulkanBuffers.writeBufferMemoryFloats(device, frame.vertexBufferMemory.handle, 0, vertices)
     }
 
+    /** This frame slot's vertex buffer, for the shared opaque feature to bind at binding 0. */
+    fun binding(frameIndex: Int): VulkanBufferBinding = resourcesFor(frameIndex).binding
+
+    /** [vertexCount] for an explicit frame slot -- the active-slot property reads whichever slot
+     * [update] last wrote, which is not necessarily the slot being recorded. */
+    fun vertexCount(frameIndex: Int): Int = resourcesFor(frameIndex).vertexCount
+
     fun bind(commandBuffer: Long) = bind(activeFrameIndex, commandBuffer)
 
     fun bind(frameIndex: Int, commandBuffer: Long) {
@@ -129,7 +141,9 @@ class LineMesh(
 
     companion object {
         /** pos (vec3) + color (vec4) -- see `debug_line.vert`. */
-        const val FLOATS_PER_VERTEX = 7
-        const val VERTICES_PER_LINE = 2
+        /** Aliased, not re-declared: a second literal is exactly the stride drift Phase 1 hit
+         * on rounded quads (webgpu had 15 where the shared truth was 16). */
+        val FLOATS_PER_VERTEX = DebugLineLayout.FLOATS_PER_VERTEX
+        const val VERTICES_PER_LINE = DebugLineLayout.VERTICES_PER_LINE
     }
 }

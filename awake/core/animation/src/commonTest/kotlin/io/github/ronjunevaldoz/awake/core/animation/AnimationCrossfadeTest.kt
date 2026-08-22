@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.core.animation
 
 import io.github.ronjunevaldoz.awake.core.math.Mat4
 import io.github.ronjunevaldoz.awake.core.math.Quat
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -14,11 +14,20 @@ import kotlin.test.assertNotEquals
  * interpolation noise. */
 class AnimationCrossfadeTest {
     private fun oneJointSkeleton(): Skeleton = Skeleton(
-        bones = listOf(Bone(Vec3.ZERO, Quat.IDENTITY, Vec3(1f, 1f, 1f), matrix = null, children = emptyList())),
+        bones = listOf(
+            Bone(
+                Vec3f.ZERO,
+                Quat.IDENTITY,
+                Vec3f(1f, 1f, 1f),
+                matrix = null,
+                children = emptyList()
+            )
+        ),
         roots = listOf(0),
     )
 
-    private fun identitySkin(): Skin = Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4()))
+    private fun identitySkin(): Skin =
+        Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4()))
 
     private fun staticTranslationClip(x: Float): AnimationClip = AnimationClip(
         name = null,
@@ -26,7 +35,11 @@ class AnimationCrossfadeTest {
             AnimationChannel(
                 targetBone = 0,
                 property = AnimationProperty.Translation,
-                sampler = AnimationSampler(times = floatArrayOf(0f), values = floatArrayOf(x, 0f, 0f), componentsPerKeyframe = 3),
+                sampler = AnimationSampler(
+                    times = floatArrayOf(0f),
+                    values = floatArrayOf(x, 0f, 0f),
+                    componentsPerKeyframe = 3
+                ),
             ),
         ),
     )

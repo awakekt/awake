@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.core.input.Input
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.ResizableDirection
 import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.resizablePanelGroup
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.ui.layouts.column
 import io.github.ronjunevaldoz.awake.ui.layouts.surface
@@ -34,9 +35,9 @@ import kotlin.test.assertTrue
 class ResizablePanelDragConservationTest {
 
     private class Panels {
-        var p1: UiBounds? = null
-        var p2: UiBounds? = null
-        var handle: UiBounds? = null
+        var p1: Rectangle? = null
+        var p2: Rectangle? = null
+        var handle: Rectangle? = null
     }
 
     private fun frame(ui: UiContext, input: Input, panels: Panels, pointerDown: Boolean, x: Float) {
@@ -93,7 +94,7 @@ class ResizablePanelDragConservationTest {
         val ui = UiContext()
         val input = Input()
         val panels = Panels()
-        var group: UiBounds? = null
+        var group: Rectangle? = null
 
         fun wrappedFrame(pointerDown: Boolean, x: Float) {
             ui.simulateFrame(pointerDown = pointerDown, x = x, y = 100f, input = input) {
@@ -143,7 +144,7 @@ class ResizablePanelDragConservationTest {
         val ui = UiContext()
         val input = Input()
         val panels = Panels()
-        var card: UiBounds? = null
+        var card: Rectangle? = null
 
         fun surfaceFrame(pointerDown: Boolean, x: Float) {
             ui.simulateFrame(pointerDown = pointerDown, x = x, y = 200f, input = input) {
@@ -194,14 +195,14 @@ class ResizablePanelDragConservationTest {
     fun nestedThreePanelStudioShapeDragsExactlyOnAllHandles() {
         val ui = UiContext()
         val input = Input()
-        var sidebar: UiBounds? = null
-        var viewport: UiBounds? = null
-        var inspector: UiBounds? = null
-        var main: UiBounds? = null
-        var dock: UiBounds? = null
-        var leftHandle: UiBounds? = null
-        var rightHandle: UiBounds? = null
-        var dockHandle: UiBounds? = null
+        var sidebar: Rectangle? = null
+        var viewport: Rectangle? = null
+        var inspector: Rectangle? = null
+        var main: Rectangle? = null
+        var dock: Rectangle? = null
+        var leftHandle: Rectangle? = null
+        var rightHandle: Rectangle? = null
+        var dockHandle: Rectangle? = null
 
         fun studioFrame(pointerDown: Boolean, x: Float, y: Float) {
             ui.simulateFrame(pointerDown = pointerDown, x = x, y = y, input = input) {
@@ -297,8 +298,8 @@ class ResizablePanelDragConservationTest {
     fun handleDrawsPixelSnappedSeparatorLineAndOrientedGrip() {
         val ui = UiContext()
         val input = Input()
-        var handleH: UiBounds? = null
-        var handleV: UiBounds? = null
+        var handleH: Rectangle? = null
+        var handleV: Rectangle? = null
         ui.simulateFrame(pointerDown = false, x = -100f, y = -100f, input = input) {
             ui.createAbsolute(x = 0f, y = 0f).resizablePanelGroup(
                 id = "line-group",

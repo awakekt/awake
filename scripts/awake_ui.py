@@ -14,6 +14,7 @@ import argparse
 import json
 import subprocess
 import sys
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -22,6 +23,7 @@ from typing import Iterable
 REPO_ROOT = Path(__file__).resolve().parent.parent
 REFERENCE_CASES = REPO_ROOT / "tools" / "shadcn_reference_cases.json"
 PARITY_CASES = REPO_ROOT / "tools" / "ui_component_parity_cases.json"
+PARITY_MANIFEST = REPO_ROOT / "tools" / "shadcn_parity_manifest.json"
 PARITY_TEST = ":samples:ui-showcase:desktopTest"
 PARITY_TEST_FILTER = "*ShadcnParityScreenshotTest*"
 
@@ -41,6 +43,7 @@ COMPONENTS: dict[str, ComponentSpec] = {
         {"rest": ("button-variants",), "disabled": ("button-disabled",), "sizes": ("button-sizes",), "all": ("button-variants", "button-disabled", "button-sizes")},
         ("button-variants",),
     ),
+    "button-group": ComponentSpec("button-group", {"rest": ("button-group-basic", "button-group-vertical"), "horizontal": ("button-group-basic",), "vertical": ("button-group-vertical",), "all": ("button-group-basic", "button-group-vertical")}, ("button-group-basic", "button-group-vertical")),
     "badge": ComponentSpec("badge", {"rest": ("badge-variants",), "all": ("badge-variants",)}, ("badge-variants",)),
     "checkbox": ComponentSpec("checkbox", {"rest": ("checkbox-states",), "all": ("checkbox-states",)}, ("checkbox-states",)),
     "radio": ComponentSpec("radio", {"rest": ("radio-group-states",), "all": ("radio-group-states",)}, ("radio-group-states",)),
@@ -51,6 +54,8 @@ COMPONENTS: dict[str, ComponentSpec] = {
     "slider": ComponentSpec("slider", {"rest": ("slider-states",), "all": ("slider-states",)}, ("slider-states",)),
     "select": ComponentSpec("select", {"rest": ("select-closed",), "all": ("select-closed",)}, ("select-closed",)),
     "card": ComponentSpec("card", {"rest": ("card-login",), "all": ("card-login",)}, ("card-login",)),
+    "dropdown-menu": ComponentSpec("dropdown-menu", {"open": ("dropdown-menu-states",), "all": ("dropdown-menu-states",)}, ("dropdown-menu-states",)),
+    "popover": ComponentSpec("popover", {"open": ("popover-states",), "all": ("popover-states",)}, ("popover-states",)),
     "tooltip": ComponentSpec("tooltip", {"open": ("tooltip-open",), "all": ("tooltip-open",)}, ()),
     "dialog": ComponentSpec("dialog", {"open": ("dialog-open",), "all": ("dialog-open",)}, ()),
 }
@@ -59,6 +64,7 @@ ALIASES = {
     "radio-group": "radio",
     "text-field": "input",
     "textfield": "input",
+    "dropdown": "dropdown-menu",
 }
 
 DEBUG_COLORS = {
@@ -145,11 +151,17 @@ def capture_reference(args: argparse.Namespace) -> int:
     return 0
 
 
-def run_awake_preview() -> None:
-    # The current Kotlin preview registry renders every fixture in one test class. It may return
-    # non-zero while old Awake-to-Awake goldens are intentionally stale, but it still writes the
-    # requested preview PNG/semantic JSON; artefact existence below is the generation contract.
-    result = run(["./gradlew", PARITY_TEST, "--tests", PARITY_TEST_FILTER, "--no-daemon", "--quiet"], check=False)
+def run_awake_preview(cases: Iterable[dict]) -> None:
+    # Run both fixture classes in ONE Gradle test invocation. Separate invocations replace the
+    # generated preview directory, which used to leave Card evidence but erase Dropdown/Button.
+    command = ["./gradlew", PARITY_TEST, "--tests", PARITY_TEST_FILTER]
+    if any(Path(case["awakePng"]).name == "awake-card-light.png" for case in cases):
+        command.extend(("--tests", "*ShadcnReferenceComparisonTest*"))
+    command.extend(("--rerun-tasks", "--no-daemon", "--quiet"))
+    # It may return non-zero while old Awake-to-Awake goldens are intentionally stale, but it
+    # still writes the requested preview PNG/semantic JSON; artefact existence below is the
+    # generation contract.
+    result = run(command, check=False)
     if result.returncode:
         print(
             "note: parity golden test returned non-zero; generated files are checked next. "
@@ -219,7 +231,7 @@ def preview_awake(args: argparse.Namespace) -> int:
     if args.output is not None and not args.debug_layout:
         fail("--output is only valid together with --debug-layout")
     cases = matching_parity_cases(spec, args.theme)
-    run_awake_preview()
+    run_awake_preview(cases)
     verify_awake_files(cases)
     for case in cases:
         print("generated", case["awakePng"])
@@ -259,6 +271,35 @@ def validate_component(args: argparse.Namespace) -> int:
     return 0
 
 
+def report_parity(args: argparse.Namespace) -> int:
+    command = [sys.executable, "tools/generate_ui_parity_report.py"]
+    if args.output:
+        command.extend(("--out", str(args.output)))
+    run(command)
+    return 0
+
+
+def performance_report(args: argparse.Namespace) -> int:
+    """Measure the parity-tool slice, never pretend this is UI frame performance."""
+    spec = component_spec(args.component)
+    cases = matching_parity_cases(spec, args.theme)
+    started = time.perf_counter()
+    validate_component(argparse.Namespace(component=args.component, theme=args.theme, strict=False))
+    elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+    out = REPO_ROOT / "build/reports/ui-parity/performance.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps({
+        "kind": "parity-tool-performance",
+        "component": spec.canonical_name,
+        "theme": args.theme,
+        "cases": [case["name"] for case in cases],
+        "comparisonElapsedMs": elapsed_ms,
+        "note": "Measures crop/diff/report tooling only; use the UI benchmark suite for frame performance.",
+    }, indent=2) + "\n")
+    print("wrote", out.relative_to(REPO_ROOT))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="awake", description=__doc__)
     commands = parser.add_subparsers(dest="area", required=True)
@@ -289,6 +330,15 @@ def build_parser() -> argparse.ArgumentParser:
     validate.add_argument("--theme", default="light", choices=("light", "dark", "both"))
     validate.add_argument("--strict", action="store_true", help="fail on a reviewed per-case threshold")
     validate.set_defaults(handler=validate_component)
+
+    report = ui_commands.add_parser("report", help="Generate the manifest-backed parity report")
+    report.add_argument("--output", type=Path, help="JSON report output, relative to repository root")
+    report.set_defaults(handler=report_parity)
+
+    performance = ui_commands.add_parser("performance", help="Measure the parity-tool comparison path")
+    performance.add_argument("--component", required=True)
+    performance.add_argument("--theme", default="light", choices=("light", "dark", "both"))
+    performance.set_defaults(handler=performance_report)
     return parser
 
 

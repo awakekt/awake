@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.authoring
 
-import io.github.ronjunevaldoz.awake.engine.gameauthoring.GameSpecDsl
-import io.github.ronjunevaldoz.awake.scene.runtime.SceneGameSpec
+import io.github.ronjunevaldoz.awake.engine.bootstrap.dsl.AppSpecDsl
+import io.github.ronjunevaldoz.awake.scene.runtime.SceneAppSpec
 import io.github.ronjunevaldoz.awake.scene.runtime.SceneRoute
 import io.github.ronjunevaldoz.awake.scene.runtime.SceneRouterSpec
 
-fun GameSpecDsl.scenes(block: SceneFlowDsl.() -> Unit) {
+fun AppSpecDsl.scenes(block: SceneFlowDsl.() -> Unit) {
     install(sceneFlow(block))
 }
 
@@ -28,7 +28,7 @@ class SceneFlowDsl internal constructor() {
     fun route(
         id: String,
         label: String = id,
-        spec: SceneGameSpec,
+        spec: SceneAppSpec,
     ) {
         require(routes.none { it.id == id }) { "Scene route '$id' is already registered." }
         routes += SceneRoute(id = id, label = label, spec = spec)
@@ -40,7 +40,7 @@ class SceneFlowDsl internal constructor() {
     fun scene(
         id: String,
         label: String = id,
-        spec: SceneGameSpec,
+        spec: SceneAppSpec,
     ) {
         route(id = id, label = label, spec = spec)
     }
@@ -48,12 +48,12 @@ class SceneFlowDsl internal constructor() {
     fun route(
         id: String,
         label: String = id,
-        block: SceneGameDsl.() -> Unit,
+        block: SceneAppDsl.() -> Unit,
     ) {
         route(
             id = id,
             label = label,
-            spec = sceneGame {
+            spec = sceneApp {
                 name(id)
                 block()
             },
@@ -63,7 +63,7 @@ class SceneFlowDsl internal constructor() {
     fun scene(
         id: String,
         label: String = id,
-        block: SceneGameDsl.() -> Unit,
+        block: SceneAppDsl.() -> Unit,
     ) {
         route(id = id, label = label, block = block)
     }

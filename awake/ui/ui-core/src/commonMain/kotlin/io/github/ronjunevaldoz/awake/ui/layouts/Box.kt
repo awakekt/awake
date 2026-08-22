@@ -5,7 +5,7 @@ package io.github.ronjunevaldoz.awake.ui.layouts
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.childBox
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
@@ -21,8 +21,8 @@ import io.github.ronjunevaldoz.awake.ui.style.Style
 fun UiPrimitiveScope.box(
     modifier: UiModifier = Modifier,
     contentAlignment: UiAlignment = UiAlignment.TopStart,
-    content: BoxScope.(slot: UiBounds) -> Unit,
-): UiBounds {
+    content: BoxScope.(slot: Rectangle) -> Unit,
+): Rectangle {
     requireScrollableContainer(modifier, "box()")
     val slot = claimModifiedSlot(modifier.withSizeFallback(Dimension.FillMax, Dimension.FillMax))
     val styleState = MutableStyleState(

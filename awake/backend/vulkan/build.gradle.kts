@@ -24,6 +24,7 @@ plugins {
     id("awake.kmp-library-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
+    id("awake.backend-layering-convention")
     id("awake.spotless-convention")
 }
 
@@ -39,37 +40,49 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            api(project(":awake:engine:render:passes2d"))
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:core:math2d"))
+            implementation(project(":awake:core:color"))
+            implementation(project(":awake:core:host"))
+            implementation(project(":awake:core:image"))
+            implementation(project(":awake:core:input"))
             // Renderer/DrawCall/TextureLoader (moved in from awake-core) need Mat4/Camera
-            // and Bitmap/readResourceBytes -- see docs/MVP_PLAN.md's Decision Log, D11, for
+            // and Bitmap/readResourceBytes -- see docs/mvp-plan.md's Decision Log, D11, for
             // the awake-core split this module boundary comes from.
-            implementation(project(":awake:core"))
+            implementation(project(":awake:core:math"))
             // The backend consumes raw UI draw primitives and mesh utilities to submit the
             // frame to Vulkan. Keep this direct rather than relying on render-contract's
             // transitive ui-core dependency; authored value contracts come from ui-api.
             implementation(project(":awake:ui:ui-core"))
-            // Module restructuring slice 1 (see docs/MVP_PLAN.md): Mesh/Material/Renderer's
+            // Module restructuring slice 1 (see docs/mvp-plan.md): Mesh/Material/Renderer's
             // expect declarations now implement the narrow backend-neutral interfaces this
             // module owns, so RenderSystem (awake-scene) can depend on just that module
             // instead of all of awake-backend-vulkan's concrete Vulkan bindings. `api`, not
             // `implementation`, since consumers reaching these types through awake-backend-vulkan
             // (e.g. VulkanApplication.kt) need them visible too.
             api(project(":awake:engine:render:contract"))
+            // The shared render-pass layer (SharedOpaqueRenderFeature + the CommandRecorder
+            // port). `api`, not `implementation`: this module's public pipeline/mesh/material
+            // types implement the port's handle interfaces, so consumers see them.
+            api(project(":awake:engine:render:passes"))
             // Raw generated Vulkan API (see docs/tasks/2026-08-09-application-seam-and-module-
             // naming-plan.md, Part 3) -- gen/handles/models/enums/Vulkan.kt/VulkanSurface.kt.
             // `api`, not `implementation`: Renderer/GraphicsDevice/etc.'s own public signatures
             // (e.g. RenderPipeline constructor params) surface these raw types to consumers.
             api(project(":awake:backend:vulkan:bindings"))
-            // Reusable-Application gap fix (see docs/MVP_PLAN.md's Decision Log):
+            // Reusable-Application gap fix (see docs/mvp-plan.md's Decision Log):
             // VulkanGameApplication implements the Application interface (awake-engine) and
             // owns generic scene loading/TransformSystem/RenderSystem wiring (awake-scene) so
             // a new game doesn't have to hand-roll the same ~200 lines of GraphicsDevice/
             // SwapchainManager/RenderPipeline/Mesh/Material bootstrap awake-demo used to.
             implementation(libs.kotlinx.coroutines.core)
             // VulkanGameApplication now extends GameApplication (see
-            // docs/MVP_PLAN.md's decision log for the duplication this replaces). `api`,
+            // docs/reference/decision-log.md for the duplication this replaces). `api`,
             // not `implementation`: it's a supertype of VulkanGameApplication, so consumers
             // (sample-hello-cube, awake-demo) need it resolvable on their own classpath too.
-            api(project(":awake:engine:game"))
+            api(project(":awake:engine:platform"))
+            api(project(":awake:asset:shaders"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

@@ -141,8 +141,8 @@ Use these first:
   only after inspecting the recorded diff PNG confirms the drift is an intended change, never
   blind. That test is a regression lock against Awake's *own* prior render, not a fidelity
   check against real shadcn/ui — for that, see "Shadcn Reference Fidelity Harness" below
-  (`ShadcnReferenceComparisonTest`, `tools/capture_shadcn_reference.py`,
-  `tools/compare_parity.py`)
+  (`ShadcnReferenceComparisonTest`, `tools/capture_shadcn_local.py`,
+  `scripts/awake ui validate`)
 - the `RendererHeadlessPixelBaselineTest`-style pattern (`awake:backend:vulkan:desktopTest`)
   for headlessly rendering a real frame and dumping it as a PNG when no live window/browser is
   available — the go-to for "does this actually render right" questions on 3D/backend work
@@ -150,7 +150,7 @@ Use these first:
   regressions — measures real trial-measure pass counts and wall-clock time, not estimates
 - the throwaway-probe-test idiom: build the real widget/scene through `renderUiComponent` (or a
   raw `UiContext` only when exercising the Core/runtime or renderer layer itself) and read its
-  actual `UiBounds`/pixels, instead of reasoning about spacing,
+  actual `Rectangle`/pixels, instead of reasoning about spacing,
   centering, or collapse behavior from source alone. This is the highest-leverage tool in this
   list — used to settle real "is X actually centered/tighter/regressed" questions with numbers
   instead of guesses (see `RowCrossAxisCenterProbeTest`, `UiShowcaseSidebarGapProbeTest`,
@@ -159,7 +159,7 @@ Use these first:
 - `UiAnimationFrameCapture` (`awake:backend:vulkan:desktopTest`,
   `io.github.ronjunevaldoz.awake.vulkan.UiAnimationFrameCapture`) for "does this animation
   actually render right, frame by frame, through the real backend" questions -- the gap none of
-  the tools above can close: a throwaway `UiBounds` probe (like the one above) proves the
+  the tools above can close: a throwaway `Rectangle` probe (like the one above) proves the
   *logical* sequence is smooth, but never asks a renderer to draw anything, so it structurally
   cannot see a render-backend artifact (frame-pacing/dirty-rect lag between computed clip
   bounds and what actually gets presented). Builds the same real headless Vulkan renderer
@@ -187,14 +187,14 @@ invisible to regression framing no matter how many times you re-measure it.
 
 When investigating a spacing/layout complaint, do both, not just the first:
 
-1. **Regression check** — did this specific change alter the spacing? (before/after `UiBounds`
+1. **Regression check** — did this specific change alter the spacing? (before/after `Rectangle`
    diff, the throwaway-probe idiom above.)
 2. **Absolute check** — is the spacing *right*, independent of whether it changed? Grep the
    affected file for hardcoded `spacer(...)`/`padding(...)`/fixed `height(...)` literals near
    the reported area — cheap, and catches exactly this class of longstanding-but-still-wrong
    gap. Compare the absolute dp value against the shadcn reference (`third_party/shadcn-ui-ref/`,
    a pinned checkout -- run `tools/fetch_shadcn_reference.sh` if it's missing, see
-   [docs/reference/shadcn-reference-pipeline.md](/Users/ronvaldoz/StudioProjects/awaken/docs/reference/shadcn-reference-pipeline.md))
+   [docs/reference/shadcn-reference-pipeline.md](shadcn-reference-pipeline.md))
    or the token scale (`ShadcnSpacing`/`UiSpacing`) it should be using instead of a hardcoded
    literal.
 
@@ -421,7 +421,7 @@ no oracle exists for them.
   side is cropped by semantic node ID from the generated preview JSON. This is the canonical
   way to compare a component inside a larger showcase without manually cropping screenshots.
 
-Caveat carried over from `docs/reference/shadcn-parity.md`: shadcn/ui has no single canonical
+Caveat carried over from the retired parity scorecard: shadcn/ui has no single canonical
 look (style presets, base colors, density all vary) -- these captures are *a* real reference,
 not *the* one true pixel target. The previous `docs/reference/shadcn-previews/*.png` set
 (hand-captured 2026-07-19) was never actually from `ui.shadcn.com` despite being described that
@@ -474,7 +474,7 @@ override, which changes pixels the radius token doesn't touch.)
 first, read `build/reports/shadcn-parity/<name>_diff.png`, explain the drift, only then record.
 
 **Not every pair is gated.** A pair whose aligned crop doesn't cover most of its own content
-measures framing, not fidelity (see `generate_parity_report.py`'s `crop` column:
+measures framing, not fidelity (see `build/reports/ui-parity/report.md` after `awake ui report`:
 `good` >=75% of the Awake render's own area was compared, `partial` >=35%, `poor` below that).
 `tools/shadcn_parity_baseline.json`'s `excluded` map holds pairs deliberately left out, each
 with a stated reason -- currently just `slider-local-light`, whose reference PNG

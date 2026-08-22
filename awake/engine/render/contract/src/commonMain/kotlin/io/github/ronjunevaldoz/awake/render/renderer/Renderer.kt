@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.render.renderer
 
-import io.github.ronjunevaldoz.awake.core.math.Camera
+import io.github.ronjunevaldoz.awake.render.pipeline.GpuDevice
+import io.github.ronjunevaldoz.awake.core.math.Lens
 import io.github.ronjunevaldoz.awake.core.math.ClipSpace
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.render.material.Material
 import io.github.ronjunevaldoz.awake.render.mesh.Mesh
-import io.github.ronjunevaldoz.awake.render.mesh.MeshGeometry
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.geometry.MeshGeometry
 import io.github.ronjunevaldoz.awake.render.texture.PbrTextureSet
 import io.github.ronjunevaldoz.awake.render.texture.RenderTarget
 import io.github.ronjunevaldoz.awake.render.texture.TextureAsset
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 
 private const val DEFAULT_LIGHT_DIRECTION_X = 0.4f
@@ -22,51 +24,45 @@ private const val DEFAULT_LIGHT_DIRECTION_Z = 0.4f
  * `const` before [Renderer.draw]'s `light` parameter existed -- kept as the default so a scene
  * with no `Light` entity renders identically to before this parameter was added. */
 val DEFAULT_SCENE_LIGHT = SceneLight(
-    direction = Vec3(DEFAULT_LIGHT_DIRECTION_X, DEFAULT_LIGHT_DIRECTION_Y, DEFAULT_LIGHT_DIRECTION_Z),
-    color = Vec3(1f, 1f, 1f),
+    direction = Vec3f(
+        DEFAULT_LIGHT_DIRECTION_X,
+        DEFAULT_LIGHT_DIRECTION_Y,
+        DEFAULT_LIGHT_DIRECTION_Z
+    ),
+    color = Vec3f(1f, 1f, 1f),
 )
 
 /** Defaults for [Renderer.horizonColor]/[Renderer.zenithColor]/[Renderer.fogColor] -- a plain
  * daytime sky (warm, light blue-white at the horizon, deeper blue overhead) and a neutral
- * gray-blue haze. Read-only in practice: a backend overriding these with real storage hands
- * out its own arrays. */
+ * gray-blue haze. Safe to hand out directly rather than copy per backend: [Color] is an
+ * immutable data class, unlike the shared mutable `FloatArray` these used to be. */
 @Suppress("MagicNumber") // Colour components; naming each channel would not clarify anything.
-val DEFAULT_HORIZON_COLOR = floatArrayOf(0.72f, 0.80f, 0.88f, 1f)
+val DEFAULT_HORIZON_COLOR = Color(r = 0.72f, g = 0.80f, b = 0.88f, a = 1f)
 
 @Suppress("MagicNumber")
-val DEFAULT_ZENITH_COLOR = floatArrayOf(0.20f, 0.38f, 0.68f, 1f)
+val DEFAULT_ZENITH_COLOR = Color(r = 0.20f, g = 0.38f, b = 0.68f, a = 1f)
 
 @Suppress("MagicNumber")
-val DEFAULT_FOG_COLOR = floatArrayOf(0.55f, 0.62f, 0.70f, 1f)
+val DEFAULT_FOG_COLOR = Color(r = 0.55f, g = 0.62f, b = 0.70f, a = 1f)
 
 /**
- * Module restructuring slice 1 (see docs/MVP_PLAN.md): the one real cross-backend entry
+ * Module restructuring slice 1 (see docs/mvp-plan.md): the one real cross-backend entry
  * point `RenderSystem` calls. `awake-vulkan`'s `expect class Renderer` implements this
  * (`expect class Renderer(...) : io.github.ronjunevaldoz.awake.render.renderer.Renderer`) --
  * see [io.github.ronjunevaldoz.awake.render.mesh.Mesh]'s doc comment for why this doesn't
  * change `VulkanApplication.kt`'s construction pattern.
  */
-interface Renderer {
-    /** The NDC convention this backend's API expects -- Y direction *and* depth range (see
-     * [ClipSpace]). Vulkan's NDC has +Y down and depth `0..1`; WebGPU's has +Y up and depth
-     * `0..1` (the +Y up half is confirmed by this repo's own `ui_quad.wgsl`: "pixel-space is
-     * Y-down, NDC is Y-up").
-     *
-     * The renderer owns this because the renderer owns the API. A [Camera] stores only lens
-     * parameters; this value is what gets handed to [Camera.viewProjectionMatrix] at the
-     * moment a matrix is built, so nothing upstream -- a scene document, a demo, a test --
-     * ever gets the chance to bake in the wrong convention. */
-    val clipSpace: ClipSpace
+interface Renderer : GpuDevice {
 
     /** RGBA (each `0f..1f`) color the 3D render pass clears to before every frame's
      * [draw] call -- defaults to opaque black on every backend, so any app that never sets
      * this sees exactly what it always did. A game with real 3D content whose camera can see
      * past its scene geometry (e.g. a sky above a ground plane) sets this once it becomes
      * relevant, mirroring the "optional per-game override, set from an `overlay`/`onReady`
-     * block" pattern [io.github.ronjunevaldoz.awake.engine.application.GameUiRuntime.provideDrawCalls]
+     * block" pattern [io.github.ronjunevaldoz.awake.engine.application.AppUiRuntime.provideDrawCalls]
      * already established -- a plain `var`, not a per-frame parameter of [draw] itself, since
      * one solid background color rarely needs to change every single frame. */
-    var clearColor: FloatArray
+    var clearColor: Color
 
     /** When `true`, meshes drawn by the next [draw] call render as edges instead of filled
      * triangles, for whichever formats the active backend has a wireframe-capable pipeline
@@ -116,29 +112,25 @@ interface Renderer {
      */
     var showEnvironment: Boolean
         get() = false
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
     /** RGB(A) the sky gradient blends from at the horizon ([showEnvironment] only). */
-    var horizonColor: FloatArray
+    var horizonColor: Color
         get() = DEFAULT_HORIZON_COLOR
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
     /** RGB(A) the sky gradient blends to straight overhead ([showEnvironment] only). */
-    var zenithColor: FloatArray
+    var zenithColor: Color
         get() = DEFAULT_ZENITH_COLOR
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
     /** RGB(A) distant geometry blends toward on the two PBR-capable lit paths
      * (`textured.wgsl`/`lit_shadow.wgsl`). Only visible once [fogDensity] is non-zero. */
-    var fogColor: FloatArray
+    var fogColor: Color
         get() = DEFAULT_FOG_COLOR
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
@@ -147,7 +139,6 @@ interface Renderer {
      * more uniform field the existing lit shaders read, so it works on any backend. */
     var fogDensity: Float
         get() = 0f
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
@@ -166,63 +157,33 @@ interface Renderer {
      */
     var sceneViewport: RenderViewport?
         get() = null
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
-    /** Uploads [geometry] as a GPU mesh, on demand -- a game calls this itself for whatever
-     * assets it wants, whenever it wants (not something the render bootstrap decides upfront
-     * from a constructor-supplied asset list). */
-    fun createMesh(geometry: MeshGeometry): Mesh
 
-    /** Builds a [Material] bound to this `Renderer`'s single render pipeline, on demand --
-     * see [createMesh]'s doc comment for the same "game decides, not the bootstrap"
-     * rationale. [texture] and [renderTarget] are mutually exclusive (passing both throws
-     * `IllegalArgumentException`) -- when [renderTarget] is given, the built [Material]
-     * samples that target's own color attachment directly (no CPU round-trip), the same
-     * sampling machinery [texture] already uses either way. Both null falls back to a
-     * trivial 1x1 white pixel. [uniformFloatCount] is the material's per-object uniform
-     * buffer's size in floats -- `24` (MVP + [SceneLight]'s direction/color, both `vec4f`) by
-     * default, since every material a [DrawCall] can reach goes through [draw]'s single lit
-     * pass (`prepareDrawCalls` always writes MVP + either light or [DrawCall
-     * .extraUniformFloats], unconditionally -- a smaller buffer here would be a real
-     * out-of-bounds write, not just wasted space); a skinned material passes `16 + 16 *
-     * jointCount` instead (MVP + joint palette via [DrawCall.extraUniformFloats], no light).
-     * [pbrTextures] is the rest of a glTF metallic-roughness material's channels alongside
-     * [texture] (base color) -- `null` (default) keeps every existing caller building a
-     * base-color-only (or untextured) material exactly as it always did; a backend with no
-     * PBR sampling support is free to ignore it, same as [texture] itself on a backend with
-     * no texture support at all. */
-    fun createMaterial(
-        texture: TextureAsset? = null,
-        renderTarget: RenderTarget? = null,
-        uniformFloatCount: Int = 24,
-        pbrTextures: PbrTextureSet? = null,
-    ): Material
 
-    /** Creates an offscreen [width]x[height] color+depth render destination, on demand -- see
-     * [createMesh]'s doc comment for the same "game decides, not the bootstrap" rationale.
-     * This `Renderer` tracks the returned [RenderTarget] for teardown in its own `destroy()`
-     * (mirroring how created textures are already tracked), same as [RenderTarget.destroy]
-     * itself documents. */
-    fun createRenderTarget(width: Int, height: Int): RenderTarget
 
     /** [light] shades every [DrawCall] in this frame's pass -- defaults to
      * [DEFAULT_SCENE_LIGHT] (the same direction/color every lit shader hardcoded before this
      * parameter existed) so a scene with no `Light` entity looks exactly as it always did.
      * `RenderSystem` overrides this with the scene's actual primary `Light` entity when one
      * exists. */
-    fun draw(camera: Camera, drawCalls: List<DrawCall>, light: SceneLight = DEFAULT_SCENE_LIGHT)
+    fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight = DEFAULT_SCENE_LIGHT)
 
     /** Renders [drawCalls] against [camera] into [target] instead of the swapchain/canvas --
      * a sibling of [draw] (not an overload/parameter of it), since the two have different
      * post-conditions: [draw] ends with a present, this ends with [target]'s color image left
      * in a sampled-readable state for [readPixels] or a compositing [Material] to consume.
      * [target]'s own [RenderTarget.width]/[RenderTarget.height] supply the aspect ratio passed
-     * to [Camera.viewProjectionMatrix] -- NOT the live swapchain/canvas size. Does not draw
+     * to [Lens.viewProjectionMatrix] -- NOT the live swapchain/canvas size. Does not draw
      * debug lines ([drawDebugLines]) or a UI overlay ([drawUi]) -- an offscreen render is a
      * clean scene-only pass; both are out of scope for now. */
-    fun renderToTexture(target: RenderTarget, camera: Camera, drawCalls: List<DrawCall>)
+    fun renderToTexture(
+        target: RenderTarget,
+        camera: Lens,
+        drawCalls: List<DrawCall>,
+        light: SceneLight = DEFAULT_SCENE_LIGHT,
+    )
 
     /** Reads [target]'s color attachment back to the CPU as tightly-packed RGBA8 pixels (the
      * same layout [TextureAsset.data] already assumes) -- for golden-image/screenshot-diff
@@ -235,7 +196,7 @@ interface Renderer {
     suspend fun readPixels(target: RenderTarget): TextureAsset
 
     /** Draws this frame's UI overlay on top of whatever [draw] already wrote -- a separate
-     * method (not folded into [draw]) so the 3D `Camera`+[DrawCall] contract stays untouched.
+     * method (not folded into [draw]) so the 3D `Lens`+[DrawCall] contract stays untouched.
      * Each backend composites this as a second render pass with `loadOp = LOAD`, after the
      * 3D pass, in the same frame. [font] is only needed the first time a caller draws glyph
      * primitives -- both the (colored-quad) UI pipeline and the glyph pipeline are built
@@ -249,6 +210,4 @@ interface Renderer {
      * geometry. Stages the lines for the next [draw] call, same "stage now, consume on next
      * draw" pattern [drawUi] already uses -- call before [draw] each frame. */
     fun drawDebugLines(lines: List<LineSegment>)
-
-    fun destroy()
 }

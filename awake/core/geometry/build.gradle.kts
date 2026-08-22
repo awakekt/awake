@@ -15,6 +15,12 @@ kotlin {
     }
 
     sourceSets {
+        commonMain.dependencies {
+            // Aabb, Vec3 -- api, not implementation: MeshGeometry.bounds returns an Aabb, so a
+            // consumer needs the type visible. awake:core:math has no dependencies of its own,
+            // so this costs nothing transitively.
+            api(project(":awake:core:math"))
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
         }

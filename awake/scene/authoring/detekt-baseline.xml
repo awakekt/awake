@@ -3,6 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>MatchingDeclarationName:SceneAssetDsl.kt$SceneAssetsDsl</ID>
-    <ID>TooManyFunctions:SceneGameDsl.kt$SceneGameDsl</ID>
+    <ID>TooManyFunctions:SceneAppDsl.kt$SceneAppDsl</ID>
   </CurrentIssues>
 </SmellBaseline>

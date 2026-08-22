@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.controls.systems
 
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.System
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.scene.controls.components.ActiveCamera
@@ -21,8 +21,8 @@ class MatrixRelativeMovementSystem(
 ) : System {
     // Scratch vectors reused every frame -- this runs once per frame forever, so allocating
     // a fresh basis here would be pure garbage.
-    private val forward = Vec3(0f, 0f, -1f)
-    private val right = Vec3(1f, 0f, 0f)
+    private val forward = Vec3f(0f, 0f, -1f)
+    private val right = Vec3f(1f, 0f, 0f)
 
     override fun update(world: World, delta: Float) {
         // 1. Resolve Active Camera orientation
@@ -30,7 +30,7 @@ class MatrixRelativeMovementSystem(
         right.set(1f, 0f, 0f)
 
         world.queryEach(Camera::class, ActiveCamera::class) { _, camera, _ ->
-            val core = camera.camera
+            val core = camera.lens
             // Horizontal (XZ) view direction. Kept as scalars so the basis costs no
             // allocation; `forward` MUST end up unit-length, otherwise it scales movement
             // speed by the camera's distance to its target.

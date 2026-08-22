@@ -1,7 +1,7 @@
 # graphicsLayer rotation/scale tier (2026-08-02)
 
 Design/scoping only -- no fix implemented in this task. Read
-`docs/reference/MIRROR_MAP.md`'s `graphicsLayer` section, `modifier/GraphicsLayer.kt`,
+`docs/reference/mirror-map.md`'s `graphicsLayer` section, `modifier/GraphicsLayer.kt`,
 `UiDrawPrimitive.kt`'s `scaledByAlpha`, and `UiContextFrameState.kt`'s `pushClip`/`popClip`
 before touching anything here. This doc covers the tier alpha compositing deliberately left
 out this session (commits `76f10b99`/`35ad0f0d`/`770e78c1`/`10cee8c9`/`e836ed91`).
@@ -51,7 +51,7 @@ Vulkan (`.spv` compiled alongside), and `ui_quad.wgsl`, `ui_rounded_quad.wgsl`,
 predicted, verified by directory listing, not assumed.
 
 **The clip stack's real shape** (`UiContextFrameState.kt`, confirmed by reading): `pushClip`/
-`popClip` maintain a flat `ArrayList<UiBounds>` of already-intersected axis-aligned rects.
+`popClip` maintain a flat `ArrayList<Rectangle>` of already-intersected axis-aligned rects.
 `pushClip(rect)` intersects `rect` against `clipStack.lastOrNull() ?: fullFrameRect` and
 pushes the intersection; `popClip()` pops and returns the new top (or `fullFrameRect` if
 empty). `UiDrawPrimitive.ClipPush(rect)`/`ClipPop(restoreRect)` carry these resolved,
@@ -140,11 +140,11 @@ space, i.e. "clip to this rounded rect, then rotate the whole clipped-and-filled
 not "clip to this axis-aligned rect in un-rotated screen space, then draw rotated content
 into it." Matching this is the right target for Awake too, since it's what a Compose
 developer reading `graphicsLayer` docs would expect (this codebase's own stated goal per
-`MIRROR_MAP.md`'s intro).
+`mirror-map.md`'s intro).
 
 **Why Awake's current clip model cannot represent that today, concretely**: `pushClip`/
 `popClip`/`ClipPush`/`ClipPop` are a pure axis-aligned-rectangle scissor-rect stack --
-`UiBounds` has no rotation field, `ClipPush(rect: UiBounds)` is drawn via a literal
+`Rectangle` has no rotation field, `ClipPush(rect: Rectangle)` is drawn via a literal
 `vkCmdSetScissor`/WebGPU `setScissorRect` call in both backends, and scissor rects are a
 hardware feature that is *inherently* axis-aligned on both Vulkan and WebGPU (and most GPU
 APIs) -- there is no "rotated scissor rect" primitive to fall back to. Making a rotated clip
@@ -168,7 +168,7 @@ spinners, small rotated badges, hover-scale card effects) rarely nest inside an 
 region in the first place, so the mismatch is low-frequency in practice even though it's a
 real semantic gap, and (c) shipping a documented "clip stays axis-aligned for now, matching
 Compose here is future work" caveat is honest and matches this project's own established
-convention for exactly this kind of staged scoping (see `MIRROR_MAP.md`'s own tone for
+convention for exactly this kind of staged scoping (see `mirror-map.md`'s own tone for
 partially-real features).
 
 ## Recommended overall approach and honest size/risk estimate

@@ -3,8 +3,8 @@
 package io.github.ronjunevaldoz.awake.ui.modifier
 
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
@@ -12,8 +12,14 @@ import io.github.ronjunevaldoz.awake.ui.api.layout.UiInsets
 
 fun UiModifier.width(dp: Dp): UiModifier = copy(widthDimension = Dimension.Fixed(dp))
 fun UiModifier.height(dp: Dp): UiModifier = copy(heightDimension = Dimension.Fixed(dp))
-fun UiModifier.width(dimension: Dimension): UiModifier = copy(widthDimension = dimension)
-fun UiModifier.height(dimension: Dimension): UiModifier = copy(heightDimension = dimension)
+// Identity guard: several engine paths re-assert a dimension a caller already authored (see
+// Surface.kt's fillingCrossAxis), and copying a 20-field data class to write back the value it
+// already holds is the frame's most-repeated wasted allocation.
+fun UiModifier.width(dimension: Dimension): UiModifier =
+    if (widthDimension == dimension) this else copy(widthDimension = dimension)
+
+fun UiModifier.height(dimension: Dimension): UiModifier =
+    if (heightDimension == dimension) this else copy(heightDimension = dimension)
 
 /** Bounds the resolved width, mirroring Compose's `Modifier.widthIn`. Either end may be null. */
 fun UiModifier.widthIn(min: Dp? = null, max: Dp? = null): UiModifier =

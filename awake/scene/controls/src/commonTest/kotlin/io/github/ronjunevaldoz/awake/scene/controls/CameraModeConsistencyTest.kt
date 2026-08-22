@@ -3,11 +3,11 @@
 package io.github.ronjunevaldoz.awake.scene.controls
 
 import io.github.ronjunevaldoz.awake.core.input.InputSnapshot
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.Entity
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.scene.controls.components.ActiveCamera
-import io.github.ronjunevaldoz.awake.scene.controls.components.CameraComponent
+import io.github.ronjunevaldoz.awake.scene.controls.components.CameraRig
 import io.github.ronjunevaldoz.awake.scene.controls.components.CameraMode
 import io.github.ronjunevaldoz.awake.scene.controls.systems.CameraSystem
 import io.github.ronjunevaldoz.awake.scene.core.components.Transform
@@ -16,7 +16,7 @@ import io.github.ronjunevaldoz.awake.ui.context.UiInputOwnership
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import io.github.ronjunevaldoz.awake.core.math.Camera as CoreCamera
+import io.github.ronjunevaldoz.awake.core.math.Lens
 
 /**
  * First-person and third-person used to derive their aim from opposite conventions -- one
@@ -49,7 +49,7 @@ class CameraModeConsistencyTest {
         val (cameraEntity, _) = spawn(world, CameraMode.ThirdPerson, yaw = 0f, pitch = 0f)
         settle(world)
 
-        val core = world.get(cameraEntity, Camera::class)!!.camera
+        val core = world.get(cameraEntity, Camera::class)!!.lens
         // Looking down -Z means the eye sits on the +Z side of what it is aimed at.
         assertTrue(
             core.eye.z > core.center.z,
@@ -79,7 +79,7 @@ class CameraModeConsistencyTest {
      * View direction after one held drag. The first frame only latches the pointer origin
      * (`wasDragging` is still false), so the delta lands on the second.
      */
-    private fun viewAfterDrag(mode: CameraMode, dx: Float, dy: Float): Vec3 {
+    private fun viewAfterDrag(mode: CameraMode, dx: Float, dy: Float): Vec3f {
         val world = World()
         val (cameraEntity, _) = spawn(world, mode, yaw = 0f, pitch = 0f)
 
@@ -89,7 +89,7 @@ class CameraModeConsistencyTest {
         snapshot = IDLE.copy(pointerX = dx, pointerY = dy, pointerDown = true)
         repeat(8) { system.update(world, 1f) }
 
-        val core = world.get(cameraEntity, Camera::class)!!.camera
+        val core = world.get(cameraEntity, Camera::class)!!.lens
         return (core.center - core.eye).normalize()
     }
 
@@ -108,12 +108,12 @@ class CameraModeConsistencyTest {
     }
 
     /** Unit-ish view direction (`center - eye`) once the mode's pose has settled. */
-    private fun viewDirection(mode: CameraMode, yaw: Float, pitch: Float): Vec3 {
+    private fun viewDirection(mode: CameraMode, yaw: Float, pitch: Float): Vec3f {
         val world = World()
         val (cameraEntity, _) = spawn(world, mode, yaw, pitch)
         settle(world)
 
-        val core = world.get(cameraEntity, Camera::class)!!.camera
+        val core = world.get(cameraEntity, Camera::class)!!.lens
         return (core.center - core.eye).normalize()
     }
 
@@ -128,7 +128,7 @@ class CameraModeConsistencyTest {
         mode: CameraMode,
         yaw: Float,
         pitch: Float,
-    ): Pair<Entity, CameraComponent> {
+    ): Pair<Entity, CameraRig> {
         val target = world.create()
         world.add(target, Transform())
 
@@ -136,10 +136,10 @@ class CameraModeConsistencyTest {
         world.add(
             cameraEntity,
             Camera(
-                CoreCamera.perspective(eye = Vec3(0f, 0f, 5f), center = Vec3.ZERO),
+                Lens.perspective(eye = Vec3f(0f, 0f, 5f), center = Vec3f.ZERO),
             ),
         )
-        val config = CameraComponent().apply {
+        val config = CameraRig().apply {
             this.mode = mode
             this.targetEntity = target
             this.needsReset = false

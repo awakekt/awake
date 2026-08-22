@@ -13,7 +13,7 @@ import io.github.ronjunevaldoz.awake.vulkan.enums.VkSharingMode
  * being passed across JNI. This also sidesteps a real hazard: jni-binding-generator marshals
  * enum fields via ordinal position, and `VkStructureType`'s ordinal only matches its real
  * Vulkan value up to entry 48 (extension types jump to values like 1000094000) — see the
- * Phase 1d note in docs/MVP_PLAN.md. `sharingMode` is safe here because `VkSharingMode` has
+ * Phase 1d note in docs/mvp-plan.md. `sharingMode` is safe here because `VkSharingMode` has
  * exactly two entries whose ordinal matches its value (0/1) and the Vulkan spec has never
  * extended it.
  */

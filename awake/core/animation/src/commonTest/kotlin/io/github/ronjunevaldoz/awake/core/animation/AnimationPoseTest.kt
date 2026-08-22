@@ -4,7 +4,7 @@ package io.github.ronjunevaldoz.awake.core.animation
 
 import io.github.ronjunevaldoz.awake.core.math.Mat4
 import io.github.ronjunevaldoz.awake.core.math.Quat
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -13,15 +13,19 @@ import kotlin.test.assertTrue
  * unit up), not a real glTF file, so the joint-palette math itself is isolated from any
  * importer's parsing. */
 class AnimationPoseTest {
-    private fun bone(translation: Vec3 = Vec3(0f, 0f, 0f), children: List<Int> = emptyList()): Bone =
-        Bone(translation, Quat.IDENTITY, Vec3(1f, 1f, 1f), matrix = null, children = children)
+    private fun bone(
+        translation: Vec3f = Vec3f(0f, 0f, 0f),
+        children: List<Int> = emptyList()
+    ): Bone =
+        Bone(translation, Quat.IDENTITY, Vec3f(1f, 1f, 1f), matrix = null, children = children)
 
     private fun twoJointSkeleton(): Skeleton = Skeleton(
-        bones = listOf(bone(children = listOf(1)), bone(translation = Vec3(0f, 1f, 0f))),
+        bones = listOf(bone(children = listOf(1)), bone(translation = Vec3f(0f, 1f, 0f))),
         roots = listOf(0),
     )
 
-    private fun identitySkin(): Skin = Skin(joints = listOf(0, 1), inverseBindMatrices = listOf(Mat4(), Mat4()))
+    private fun identitySkin(): Skin =
+        Skin(joints = listOf(0, 1), inverseBindMatrices = listOf(Mat4(), Mat4()))
 
     @Test
     fun jointPaletteAtBindPoseMatchesSkeletonHierarchy() {
@@ -163,7 +167,8 @@ class AnimationPoseTest {
         val blended = a.jointPalette(identitySkin())
         // A valid rotation matrix's basis columns stay unit length -- m00^2 + m01^2 + m02^2 == 1
         // (within tolerance). A degenerate near-zero quaternion would fail this.
-        val lengthSquared = blended[0] * blended[0] + blended[1] * blended[1] + blended[2] * blended[2]
+        val lengthSquared =
+            blended[0] * blended[0] + blended[1] * blended[1] + blended[2] * blended[2]
         assertTrue(kotlin.math.abs(lengthSquared - 1f) < 0.01f)
     }
 

@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.testing.render
 
-import io.github.ronjunevaldoz.awake.core.math.Camera
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math.Lens
 import io.github.ronjunevaldoz.awake.core.math.ClipSpace
 import io.github.ronjunevaldoz.awake.render.material.Material
 import io.github.ronjunevaldoz.awake.render.mesh.Mesh
-import io.github.ronjunevaldoz.awake.render.mesh.MeshGeometry
+import io.github.ronjunevaldoz.awake.core.geometry.MeshGeometry
 import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.LineSegment
 import io.github.ronjunevaldoz.awake.render.renderer.Renderer
@@ -14,7 +15,7 @@ import io.github.ronjunevaldoz.awake.render.renderer.SceneLight
 import io.github.ronjunevaldoz.awake.render.texture.PbrTextureSet
 import io.github.ronjunevaldoz.awake.render.texture.RenderTarget
 import io.github.ronjunevaldoz.awake.render.texture.TextureAsset
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 
 /**
@@ -25,7 +26,7 @@ import io.github.ronjunevaldoz.awake.ui.font.UiFont
  */
 open class NoopRenderer : Renderer {
     override val clipSpace: ClipSpace = ClipSpace.WebGpu
-    override var clearColor: FloatArray = floatArrayOf(0f, 0f, 0f, 1f)
+    override var clearColor: Color = Color.Black
     override var wireframe: Boolean = false
     override var shadowsEnabled: Boolean = true
 
@@ -42,7 +43,7 @@ open class NoopRenderer : Renderer {
         uniformFloatCount: Int,
         pbrTextures: PbrTextureSet?,
     ): Material = object : Material {
-        override fun updateUniformBuffer(mvp: FloatArray) = Unit
+        override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
         override fun bind(commandBuffer: Long, pipelineLayout: Long) = Unit
         override fun destroy() = Unit
     }
@@ -53,9 +54,14 @@ open class NoopRenderer : Renderer {
         override fun destroy() = Unit
     }
 
-    override fun draw(camera: Camera, drawCalls: List<DrawCall>, light: SceneLight) = Unit
+    override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) = Unit
 
-    override fun renderToTexture(target: RenderTarget, camera: Camera, drawCalls: List<DrawCall>) = Unit
+    override fun renderToTexture(
+        target: RenderTarget,
+        camera: Lens,
+        drawCalls: List<DrawCall>,
+        light: SceneLight,
+    ) = Unit
 
     override suspend fun readPixels(target: RenderTarget): TextureAsset =
         TextureAsset(ByteArray(target.width * target.height * 4), target.width, target.height)

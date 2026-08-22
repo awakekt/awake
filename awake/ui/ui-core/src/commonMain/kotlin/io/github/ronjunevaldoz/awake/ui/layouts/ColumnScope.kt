@@ -5,7 +5,7 @@ package io.github.ronjunevaldoz.awake.ui.layouts
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 
 /**
@@ -24,7 +24,7 @@ class ColumnScope internal constructor(
     override val hasBoundedFillWidth: Boolean = true,
     override val hasBoundedFillHeight: Boolean = height != null,
     emitToOverlay: Boolean = false,
-    private val plannedSlots: List<UiBounds>? = null,
+    private val plannedSlots: List<Rectangle>? = null,
     /** Container-level cross-axis default -- matches Compose's `Column(horizontalAlignment =
      * ...)`. See [RowScope.verticalAlignment] for the matching row-side explanation. */
     val horizontalAlignment: UiAlignment.Horizontal = UiAlignment.Horizontal.Start,
@@ -42,7 +42,7 @@ class ColumnScope internal constructor(
         private set
     private var plannedIndex: Int = 0
 
-    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): UiBounds {
+    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): Rectangle {
         plannedSlots?.let { slots ->
             val slot = slots[plannedIndex++]
             context.recordMeasuredSlot(slot)
@@ -78,10 +78,16 @@ class ColumnScope internal constructor(
         // (height) axis for a weighted child.
         val effectiveHeight = if (weight != null && height == Dimension.WrapContent) Dimension.FillMax else height
         val resolvedHeight = effectiveHeight.resolve {
+            // Compose parity (FillNode): fillMaxHeight() in an unbounded parent (maxHeight ==
+            // Constraints.Infinity) has NO effect -- the child falls back to its own intrinsic
+            // wrap-content size. Awake's equivalent: when hasBoundedFillHeight is false (e.g. WrapContent
+            // measurement trial or unbounded parent), FillMax must return 0f so the wrap-content
+            // trial's own content measurement drives the real size instead.
+            if (!hasBoundedFillHeight) return@resolve 0f
             val availableHeight = this.height ?: (context.frameBoundsInternal().height - cursorY)
             (availableHeight - (cursorY - startY)).coerceAtLeast(0f)
         }
-        val slot = UiBounds(
+        val slot = Rectangle(
             x,
             cursorY,
             resolvedWidth,

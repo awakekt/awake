@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -55,12 +55,12 @@ class UiScrollStateTest {
         state.scrollTo(60f)
 
         val thumb = verticalScrollThumb(
-            track = UiBounds(90f, 10f, 6f, 80f),
+            track = Rectangle(90f, 10f, 6f, 80f),
             state = state,
         )
 
         assertNotNull(thumb)
-        assertEquals(UiBounds(90f, 10f, 6f, 80f), thumb.track)
+        assertEquals(Rectangle(90f, 10f, 6f, 80f), thumb.track)
         assertEquals(32f, thumb.thumb.height)
         assertEquals(34f, thumb.thumb.y)
     }

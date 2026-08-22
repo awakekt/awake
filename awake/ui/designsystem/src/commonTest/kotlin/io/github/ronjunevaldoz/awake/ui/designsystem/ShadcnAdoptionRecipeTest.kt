@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnEmpty
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnFieldSeparator
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnInputGroup
@@ -15,7 +15,7 @@ class ShadcnAdoptionRecipeTest {
 
     @Test
     fun testShadcnKbdRendersBounds() {
-        var kbdBounds: UiBounds? = null
+        var kbdBounds: Rectangle? = null
         renderShadcnComponent(width = 300f, height = 200f) { _ ->
             kbdBounds = shadcnKbd(id = "kbd", label = "⌘K")
         }
@@ -24,7 +24,7 @@ class ShadcnAdoptionRecipeTest {
 
     @Test
     fun testShadcnEmptyRendersBounds() {
-        var emptyBounds: UiBounds? = null
+        var emptyBounds: Rectangle? = null
         renderShadcnComponent(width = 400f, height = 300f) { _ ->
             emptyBounds = shadcnEmpty(
                 id = "empty",
@@ -37,9 +37,9 @@ class ShadcnAdoptionRecipeTest {
 
     @Test
     fun testShadcnFieldSeparatorWithLabel() {
-        var sepBounds: UiBounds? = null
+        var sepBounds: Rectangle? = null
         renderShadcnComponent(width = 400f, height = 100f) { _ ->
-            sepBounds = shadcnFieldSeparator(label = "OR")
+            sepBounds = shadcnFieldSeparator(id = "field.sep", label = "OR")
         }
         assertNotNull(sepBounds)
     }

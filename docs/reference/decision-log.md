@@ -1,7 +1,7 @@
 # Decision Log
 
 Historical "why we chose X" rationale for Awake's engine architecture, extracted from
-`docs/MVP_PLAN.md` (2026-08-06) to keep that document focused on live planning --
+`docs/mvp-plan.md` (2026-08-06) to keep that document focused on live planning --
 vision, current state, phases, timeline, risks. Entries here are append-only; a
 decision that gets revisited gets a dated addendum in its own entry, not a rewrite.
 
@@ -13,6 +13,14 @@ architecture is one sparse-set per component type, not archetype tables. If futu
 need library-grade features such as complex boolean family queries, archetype migration, or
 multi-threaded scheduling, treat that as scope growth and revisit the decision instead of
 silently adding a general-purpose ECS library.
+
+**Addendum (2026-08-21):** the archetype migration gate failed because Awake's maintained dense
+families already beat the benchmark-only stable-row prototype. The evidence-backed change was
+smaller: singleton `EcsTag` storage now remains payload-free inside maintained families and
+improves tag-family iteration by roughly 2.4× without a meaningful ordinary-family regression.
+Flecs 4.1 `DontFragment`, EnTT, Bevy's table/sparse choice, and Unity chunks were reviewed as
+architecture references; only same-JVM benchmark rows are treated as comparative performance.
+See `docs/tasks/archive/2026-08-21-ecs-family-tag-columns.md`.
 
 ### D2 — Compose-style scene API
 **Correction (2026-08-03):** this entry was left marked "OPEN — under discussion" after the
@@ -76,7 +84,7 @@ more rounds — round 2 found three further gaps after the initial fix landed, r
 all three and re-verified clean against the real Awake source (all fields/functions parse
 correctly; generated C++ compiles against real JNI headers; tool's own 259-test suite,
 compile-check, and drift checks all pass). Full history:
-[decisions/D10-codegen-derisk-findings.md](decisions/D10-codegen-derisk-findings.md).
+[decisions/D10-codegen-derisk-findings.md](../decisions/D10-codegen-derisk-findings.md).
 `awake-vulkan-generator` retirement (originally a Phase 1a checklist item) is back on the
 table now that jni-binding-generator covers real struct marshalling end-to-end.
 
@@ -414,7 +422,7 @@ classes shrinks `VulkanApplication.kt` from 229 lines to ~90 (mostly geometry da
 bootstrap code) — real proof, not just a claim. All 5 targets compile clean; a real wasmJs
 browser screenshot is pixel-identical to the pre-refactor render (confirming this was a
 pure extraction); `awake-scene`'s test suite is unaffected. New
-[`sample-hello-cube`](../sample-hello-cube) module (a single static cube, no texture)
+`sample-hello-cube` module (a single static cube, no texture)
 compiles and its desktop process boots without crashing, demonstrating the base class is
 genuinely reusable outside `awake-demo` — visual screenshot confirmation of that specific
 module wasn't done (no reliable tool for its unlisted native GLFW window in this session).
@@ -750,7 +758,7 @@ subprocess — had already proven simpler and more reliable to verify throughout
   this slice, since it's a pre-existing gap this session's UI system already had and is out
   of scope for a retirement/port task.
 - Docs updated: `README.md`'s "Running the Demo"/"Building a New Game" sections now describe
-  `sample-hello-cube` as the primary demo; `docs/MMORPG_ROADMAP.md`'s catalog-tool row now
+  `sample-hello-cube` as the primary demo; `docs/mmorpg-roadmap.md`'s catalog-tool row now
   points at `sample-hello-cube`. Historical decision-log entries referencing `awake-demo`
   (D14/D16/D18/D19/etc.) are left unedited — accurate record of what was true when written.
 - **Verified**: all 5 `sample-hello-cube` targets compile clean after the port,
@@ -1440,6 +1448,45 @@ module boundary this time: `getState`/`setMinimap` both round-tripped correctly 
 `:samples:server`'s generic server + `hello-cube`'s own `DebugCommand`/`DebugSnapshot`
 parse/encode functions. `awake:scene:desktopTest`, `:samples:hello-cube:androidApp:
 assembleDebug`, and `spotlessCheck` on both modules all pass.
+
+### D26 — Keep two hand-written backends; RHI is capability-tiered, not WebGPU-capped
+
+**DECIDED (2026-08-23).** Phase 0 of the
+[`GpuDevice` RHI plan](../tasks/2026-08-23-rhi-gpudevice-plan.md), which existed to settle
+"abstract two backends" versus "delete one".
+
+**Option C (drop the hand-written Vulkan backend, run wgpu4k on every target) is rejected --
+on strategy, not on a technical wall.** The evidence went the opposite way to expectation and
+is recorded here so nobody re-litigates it from a false premise: wgpu4k's Gradle metadata
+publishes a variant for *every* Awake target: `wgpu4k-android` (via the root module's
+`androidApiElements` redirect), `wgpu4k-jvm` for desktop, `ios_arm64`/`ios_simulator_arm64`, and
+`wasm`. `wgpu4k-native` and `kffi` publish `androidJvm` as well. C was feasible.
+
+*(Corrected 2026-08-23: an earlier revision of this entry claimed the main `wgpu4k` artifact
+offered only Kotlin/Native `android_arm64`/`android_x64`. It also redirects an Android JVM
+variant to `wgpu4k-android`. The conclusion is unchanged -- every target is covered -- but the
+stated evidence was wrong.)*
+
+Rejected anyway: it would discard the hand-written Vulkan/JNI layer and the headless test
+harness built on it (the only pixel-level render coverage this engine has), and stake the
+engine's floor on a `0.2.0-SNAPSHOT` dependency's performance ceiling and release cadence.
+
+**Vulkan is the primary backend; WebGPU exists only because browsers cannot run Vulkan.** It is
+a compatibility target, and is expected to lag -- it already has no shadow pass.
+
+**Consequence for the RHI design: capability tiers, decided in the same conversation.** An
+earlier draft said "shape the shared layer like WebGPU" without qualification, which would have
+let the compatibility backend cap the primary one -- backwards. Corrected to two tiers:
+
+- **Core** = the intersection of both backends, which *is* WebGPU-shaped by arithmetic (WebGPU is
+  a capability subset of Vulkan), not by preference. A WebGPU-shaped core is always implementable
+  on Vulkan; a Vulkan-shaped one is never implementable on WebGPU.
+- **Extensions** = Vulkan-only capability (explicit barriers, subpasses, bindless, multi-queue)
+  behind optional interfaces that engine code feature-detects and never requires. Web takes the
+  fallback path or does without.
+
+The rule is **not** "never use Vulkan features". It is "the core may never *require* what WebGPU
+cannot do".
 
 ### D25 — `UiContext.slider`, and public `OrbitCameraSystem.yaw`/`pitch`/`distance`
 

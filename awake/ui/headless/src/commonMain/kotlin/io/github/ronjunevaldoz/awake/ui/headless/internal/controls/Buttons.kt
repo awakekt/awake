@@ -1,25 +1,23 @@
 // Copyright (c) Ron June Valdoz
 // SPDX-License-Identifier: Apache-2.0
-package io.github.ronjunevaldoz.awake.ui.headless
+package io.github.ronjunevaldoz.awake.ui.headless.internal.controls
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.ui.UiPrimitiveScope
 import io.github.ronjunevaldoz.awake.ui.provideTextStyle
 import io.github.ronjunevaldoz.awake.ui.font
 import io.github.ronjunevaldoz.awake.ui.theme
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.UiShape
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.childAbsolute
 import io.github.ronjunevaldoz.awake.ui.compositeContent
-import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.paintSurface
-import io.github.ronjunevaldoz.awake.ui.headless.internal.controls.resolveInteractiveSurface
 import io.github.ronjunevaldoz.awake.ui.headless.internal.layout.withIntrinsicLabelWidth
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.UiTextOverflow
-import io.github.ronjunevaldoz.awake.ui.headless.internal.text.text
+import io.github.ronjunevaldoz.awake.ui.foundation.text.UiTextOverflow
+import io.github.ronjunevaldoz.awake.ui.foundation.text.text
 import io.github.ronjunevaldoz.awake.ui.layouts.AbsoluteScope
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
@@ -29,11 +27,11 @@ import io.github.ronjunevaldoz.awake.ui.scope.recordSemantic
 import io.github.ronjunevaldoz.awake.ui.style.ResolvedStyle
 import io.github.ronjunevaldoz.awake.ui.style.Style
 import io.github.ronjunevaldoz.awake.ui.theme.TextStyle
-import io.github.ronjunevaldoz.awake.ui.toPx
-import io.github.ronjunevaldoz.awake.ui.withGraphicsLayerAlpha
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.ui.headless.withDisabledAlpha
 
-/** [button] with the resolved [UiBounds] alongside the click result. */
-data class UiButtonResult(val clicked: Boolean, val slot: UiBounds)
+/** [button] with the resolved [Rectangle] alongside the click result. */
+data class UiButtonResult(val clicked: Boolean, val slot: Rectangle)
 
 private inline fun UiPrimitiveScope.buttonSlotInternal(
     id: String,
@@ -45,7 +43,7 @@ private inline fun UiPrimitiveScope.buttonSlotInternal(
     intrinsicWidth: Dimension? = null,
     enabled: Boolean = true,
     semanticRole: UiSemanticRole = UiSemanticRole.Button,
-    crossinline drawContent: AbsoluteScope.(contentSlot: UiBounds, resolved: ResolvedStyle) -> Unit,
+    crossinline drawContent: AbsoluteScope.(contentSlot: Rectangle, resolved: ResolvedStyle) -> Unit,
 ): UiButtonResult {
     val theme = theme
     // Reads no ambient theme (see Button.kt's doc for the same rule on the slot-form button) --
@@ -91,7 +89,7 @@ private inline fun UiPrimitiveScope.buttonSlotInternal(
     // content lambda's own text/graphics, the same "one flat composited result, dimmed once"
     // shape `ShadcnSlider.kt` in the reference repo settled on -- not a per-color alpha tweak,
     // which double-dims anything the content draws on top of the fill.
-    withGraphicsLayerAlpha(if (enabled) 1f else 0.5f) {
+    withDisabledAlpha(enabled) {
         paintSurface(
             slot = surface.interaction.slot,
             resolved = surface.resolved,
@@ -125,6 +123,9 @@ private inline fun UiPrimitiveScope.buttonSlotInternal(
         foregroundToken = surface.resolved.foregroundToken,
         borderColor = surface.resolved.borderColor,
         borderToken = surface.resolved.borderColorToken,
+        // Semantic previews are density-1 reference fixtures. Keep this as the authored Dp
+        // scalar so a source-to-Awake report can expose an exact border-width fact.
+        borderWidth = surface.resolved.borderWidth.value,
         borderRadius = surface.resolved.shape.toPx(),
         textStyleToken = surface.resolved.textStyleToken,
     )
@@ -217,7 +218,7 @@ fun UiPrimitiveScope.buttonSlot(
     radius: Dp = UiShape.none,
     enabled: Boolean = true,
     semanticRole: UiSemanticRole = UiSemanticRole.Button,
-    content: AbsoluteScope.(slot: UiBounds) -> Unit,
+    content: AbsoluteScope.(slot: Rectangle) -> Unit,
 ): UiButtonResult = buttonSlotInternal(
     id = id,
     modifier = modifier,
@@ -238,7 +239,7 @@ fun UiPrimitiveScope.button(
     radius: Dp = UiShape.none,
     enabled: Boolean = true,
     semanticRole: UiSemanticRole = UiSemanticRole.Button,
-    content: AbsoluteScope.(slot: UiBounds) -> Unit,
+    content: AbsoluteScope.(slot: Rectangle) -> Unit,
 ): Boolean = buttonSlot(
     id = id,
     modifier = modifier,

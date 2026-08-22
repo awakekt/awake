@@ -30,16 +30,24 @@ kotlin {
         namespace = "io.github.ronjunevaldoz.awake.render"
     }
 
-    // No platform-specific code at all in this module (see docs/MVP_PLAN.md's module
+    // No platform-specific code at all in this module (see docs/mvp-plan.md's module
     // restructuring notes) -- every declaration here is a plain interface/data class,
     // implemented by each backend module (awake-vulkan today; a future awake-backend-webgpu
     // once slice 2 physically splits that out).
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:core:color"))
             // DrawCall/Renderer.draw() take Mat4/Camera (portable math), and the resource-
             // loading `expect fun`s some backends' Texture implementations need come from
             // awake-base too.
-            implementation(project(":awake:core"))
+            implementation(project(":awake:core:math"))
+            // VertexFormat/MeshGeometry/GpuDataShape live here now -- api, not implementation:
+            // DrawCall.mesh.format and Renderer.createMesh(MeshGeometry) put these types in this
+            // module's own public signatures, so a consumer needs them visible. See
+            // docs/reference/module-architecture.md -- the "prefer implementation" rule's
+            // deliberate exception.
+            api(project(":awake:core:geometry"))
             // api, not implementation: Renderer.drawUi(primitives: List<UiDrawPrimitive>)
             // exposes UiDrawPrimitive in this module's own public interface, so consumers
             // implementing Renderer (awake-backend-vulkan, awake-backend-webgpu) need it

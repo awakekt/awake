@@ -18,6 +18,15 @@ SPEC.loader.exec_module(awake_ui)
 
 
 class AwakeUiCliTest(unittest.TestCase):
+    def test_report_and_performance_are_public_cli_commands(self) -> None:
+        report = awake_ui.build_parser().parse_args(["ui", "report"])
+        performance = awake_ui.build_parser().parse_args([
+            "ui", "performance", "--component", "button", "--theme", "dark",
+        ])
+        self.assertIs(report.handler, awake_ui.report_parity)
+        self.assertIs(performance.handler, awake_ui.performance_report)
+        self.assertEqual(performance.theme, "dark")
+
     def test_component_alias_and_reference_state_mapping_are_explicit(self) -> None:
         radio = awake_ui.component_spec("radio-group")
         self.assertEqual(radio.canonical_name, "radio")

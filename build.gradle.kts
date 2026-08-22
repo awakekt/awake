@@ -28,6 +28,56 @@ plugins {
     alias(libs.plugins.android.library.kmp) apply false
     alias(libs.plugins.compose.multiplatform) apply false
     alias(libs.plugins.vanniktech.publish) apply false
+    alias(libs.plugins.kover)
+}
+
+// Raised as the engine's own coverage rises; never lowered to make a red build pass.
+//
+// 98.3% line, measured 2026-08-22, up from 90.5%. Not 100, and 100 is not the target: what remains
+// is Kotlin's own `$DefaultImpls` holders, `$default` argument bridges and `protected set`
+// accessors -- code nobody wrote and no test can call directly. The holders are excluded below so
+// the number counts authored code; chasing the last point by testing compiler output would buy a
+// rounder figure and no confidence.
+val composeMinLineCoverage = 95
+
+// Coverage is scoped to :awake:compose:* rather than the whole repo. A repo-wide threshold
+// would fail on day one across ~30 modules whose coverage nobody has measured, and a gate
+// that is red everywhere is not a gate -- the same way spotlessCheck currently fails in 26
+// modules without anyone noticing. Widen module by module as each earns a number.
+//
+// Kover measures JVM-executed tests only: "Source code outside the common and JVM source
+// sets is ignored". These modules also run on wasmJs and iOS Native, and those runs are
+// invisible here -- so this percentage is the JVM subset, not the target matrix.
+dependencies {
+    kover(project(":awake:compose:runtime"))
+    kover(project(":awake:compose:ui"))
+    kover(project(":awake:compose:foundation"))
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                // Kotlin emits these; nobody writes them and no test can call them directly.
+                // Counting them would make the metric measure the compiler rather than the suite.
+                classes("*\$DefaultImpls", "*.DefaultImpls")
+            }
+        }
+        total {
+            verify {
+                rule {
+                    minBound(composeMinLineCoverage)
+                }
+            }
+        }
+    }
+}
+
+// koverVerify is not wired into `check` by Kover itself. Note this repo's CI runs
+// `./gradlew detekt`, not `check`, so the threshold is only enforced where koverVerify is
+// invoked explicitly -- add a CI step for it if coverage should actually gate a merge.
+tasks.matching { it.name == "check" }.configureEach {
+    dependsOn(tasks.named("koverVerify"))
 }
 
 // Version comes from the latest v* git tag, so publishing is "tag + push" and the
@@ -67,11 +117,11 @@ tasks.register("developerDocs") {
     dependsOn(
         ":awake:core:dokkaGeneratePublicationHtml",
         ":awake:ecs:dokkaGeneratePublicationHtml",
-        ":awake:engine:game:dokkaGeneratePublicationHtml",
-        ":awake:engine:game-authoring:dokkaGeneratePublicationHtml",
-        ":awake:engine:game-authoring:desktopTest",
-        ":awake:engine:game-authoring:gameDslTutorialDocsReport",
-        ":awake:engine:game-authoring:uiDslTutorialDocsReport",
+        ":awake:engine:platform:dokkaGeneratePublicationHtml",
+        ":awake:engine:bootstrap:dokkaGeneratePublicationHtml",
+        ":awake:engine:bootstrap:desktopTest",
+        ":awake:engine:bootstrap:gameDslTutorialDocsReport",
+        ":awake:engine:bootstrap:uiDslTutorialDocsReport",
         ":awake:engine:render:contract:dokkaGeneratePublicationHtml",
         ":awake:ui:ui-core:dokkaGeneratePublicationHtml",
         ":awake:ui:ui-designsystem:dokkaGeneratePublicationHtml",

@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.layout
 
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.px
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.px
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension as ApiDimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight as ApiLayoutWeight
 import io.github.ronjunevaldoz.awake.ui.api.layout.toDimension as apiToDimension
 
-/** @deprecated Import this contract from `io.github.ronjunevaldoz.awake.ui.api.layout`. */
+/** Import this contract from `io.github.ronjunevaldoz.awake.core.math`. */
 @Deprecated("Import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension instead.")
 typealias Dimension = ApiDimension
 
-/** @deprecated Import this contract from `io.github.ronjunevaldoz.awake.ui.api.layout`. */
+/** Import this contract from `io.github.ronjunevaldoz.awake.core.math`. */
 @Deprecated("Import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight instead.")
 typealias LayoutWeight = ApiLayoutWeight
 

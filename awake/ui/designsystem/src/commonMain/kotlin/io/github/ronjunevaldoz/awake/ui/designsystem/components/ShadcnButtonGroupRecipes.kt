@@ -2,19 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
-import io.github.ronjunevaldoz.awake.ui.api.Dp
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.math2d.Dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiLocal
 import io.github.ronjunevaldoz.awake.ui.context.uiLocalOf
 import io.github.ronjunevaldoz.awake.ui.headless.Arrangement
 import io.github.ronjunevaldoz.awake.ui.headless.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.UiSeparatorOrientation
 import io.github.ronjunevaldoz.awake.ui.headless.column
+import io.github.ronjunevaldoz.awake.ui.headless.fillMaxWidth
 import io.github.ronjunevaldoz.awake.ui.headless.row
 import io.github.ronjunevaldoz.awake.ui.headless.surface
 import io.github.ronjunevaldoz.awake.ui.headless.widthIn
@@ -32,7 +34,7 @@ enum class ShadcnButtonGroupOrientation {
  * the group's `content: UiScope.() -> Unit` shape (a bare composition block, matching every
  * other headless container) has no per-child slot for a caller to pass an index through.
  *
- * [memberCount]/[nextIndex] are populated across the SAME frame's own trial-then-real dispatch
+ * `memberCount`/`nextIndex` are populated across the SAME frame's own trial-then-real dispatch
  * (see [io.github.ronjunevaldoz.awake.ui.context.UiContext.wrapContentPass]) -- `content` always
  * runs once as a WrapContent sizing trial before the real render, so the trial pass alone already
  * knows how many members exist by the time the real pass needs to color the first/last corners.
@@ -118,10 +120,10 @@ internal fun UiScope.currentLocal(
  */
 fun UiScope.shadcnButtonGroup(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     orientation: ShadcnButtonGroupOrientation = ShadcnButtonGroupOrientation.Horizontal,
     content: UiScope.() -> Unit,
-): UiBounds = groupSurface(id, orientation, modifier) {
+): Rectangle = groupSurface(id, orientation, modifier.wrapContentWidthOrDefault()) {
     pushLocal(LocalShadcnButtonGroup, ShadcnButtonGroupContext(orientation)) {
         // wrapContentWidthOrDefault() is load-bearing, not decorative: this row/column is nested
         // inside a ColumnScope receiver, so it resolves through ColumnScope.row()/column()'s own
@@ -140,7 +142,8 @@ fun UiScope.shadcnButtonGroup(
 
             ShadcnButtonGroupOrientation.Vertical -> column(
                 verticalArrangement = Arrangement.spacedBy(0f.dp),
-                modifier = Modifier.wrapContentWidthOrDefault(),
+                horizontalAlignment = UiAlignment.Horizontal.Start,
+                modifier = Modifier.fillMaxWidth(),
             ) { content() }
         }
     }
@@ -155,20 +158,17 @@ private val verticalIconGroupMinWidth = 36f.dp
 private fun UiScope.groupSurface(
     id: String,
     orientation: ShadcnButtonGroupOrientation,
-    modifier: Modifier,
+    modifier: UiModifier,
     content: ColumnScope.() -> Unit,
-): UiBounds = surface(
+): Rectangle = surface(
     id = id,
     modifier = modifier,
+    clipContent = true,
     style = Style {
         background(themeValues.colors.card)
         foreground(themeValues.colors.cardForeground)
         border(1f.dp, themeValues.colors.border)
         shape(themeValues.shapes.md)
-        // Zero, as in shadcn: the children ARE the control's edges. Each member now carries its
-        // own per-corner shape (see ShadcnButtonGroupContext.cornerShape) instead of the group
-        // itself painting one uniform radius, so this container never needs its own visible
-        // rounding -- a filled end member's real corner already matches the group's outer arc.
         contentPadding(0f.dp)
     },
 ) { content() }
@@ -180,8 +180,8 @@ private fun UiScope.groupSurface(
  */
 fun UiScope.shadcnButtonGroupSeparator(
     id: String? = null,
-    modifier: Modifier = Modifier,
-): UiBounds {
+    modifier: UiModifier = Modifier,
+): Rectangle {
     val groupCtx = currentLocal(LocalShadcnButtonGroup)
     val separatorOrientation = when (groupCtx?.orientation) {
         ShadcnButtonGroupOrientation.Vertical -> UiSeparatorOrientation.Horizontal

@@ -4,12 +4,13 @@
 
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnTextFieldVariant
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnInputGroupAffixStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnInputGroupAffixTextStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnInputGroupStyle
+import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnDropdownSurfaceStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnSelectOptionStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnSelectedOptionStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnSliderStyle
@@ -17,6 +18,7 @@ import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnTextFieldStyle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.shadcnTextareaStyle
 import io.github.ronjunevaldoz.awake.ui.headless.BoxScope
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.combobox
 import io.github.ronjunevaldoz.awake.ui.headless.fillMaxWidth
@@ -34,7 +36,7 @@ fun UiScope.shadcnSelect(
     id: String,
     options: List<String>,
     selectedIndex: Int? = null,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     enabled: Boolean = true,
     placeholder: String = "",
 ): Int? = select(
@@ -46,6 +48,8 @@ fun UiScope.shadcnSelect(
     style = themeValues.shadcnTextFieldStyle(ShadcnTextFieldVariant.Default, shadcnMetrics),
     selectedStyle = shadcnSelectedOptionStyle(themeValues),
     optionStyle = shadcnSelectOptionStyle(themeValues),
+    // The same popover panel shadcnDropdownMenu and shadcnCombobox put behind their items.
+    surfaceStyle = shadcnDropdownSurfaceStyle(themeValues),
     enabled = enabled,
 )
 
@@ -53,7 +57,7 @@ fun UiScope.shadcnCombobox(
     id: String,
     options: List<String>,
     selectedIndex: Int? = null,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     enabled: Boolean = true,
     placeholder: String = "Select framework...",
     filterPlaceholder: String = "Search framework...",
@@ -71,13 +75,15 @@ fun UiScope.shadcnCombobox(
     selectedStyle = shadcnSelectedOptionStyle(themeValues),
     optionStyle = shadcnSelectOptionStyle(themeValues),
     filterStyle = themeValues.shadcnTextFieldStyle(ShadcnTextFieldVariant.Ghost, shadcnMetrics),
+    // The same popover panel shadcnDropdownMenu puts behind its own items.
+    surfaceStyle = shadcnDropdownSurfaceStyle(themeValues),
 )
 
 fun UiScope.shadcnInput(
     id: String,
     value: String,
     placeholder: String = "",
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     variant: ShadcnTextFieldVariant = ShadcnTextFieldVariant.Default,
     enabled: Boolean = true,
     isError: Boolean = false,
@@ -101,7 +107,7 @@ fun UiScope.shadcnTextarea(
     id: String,
     value: String,
     placeholder: String = "",
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     variant: ShadcnTextFieldVariant = ShadcnTextFieldVariant.Default,
     enabled: Boolean = true,
     isError: Boolean = false,
@@ -123,7 +129,7 @@ fun UiScope.shadcnSlider(
     max: Float,
     value: Float,
     label: String? = null,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     enabled: Boolean = true,
     showKnob: Boolean = true,
 ): Float = slider(
@@ -145,7 +151,7 @@ fun UiScope.shadcnRangeSlider(
     valueStart: Float,
     valueEnd: Float,
     label: String? = null,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     enabled: Boolean = true,
 ): Pair<Float, Float> = rangeSlider(
     id = id,
@@ -165,7 +171,7 @@ fun UiScope.shadcnInputGroup(
     placeholder: String = "",
     prefixText: String? = null,
     suffixText: String? = null,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     enabled: Boolean = true,
 ): String {
     var result = value
@@ -178,7 +184,7 @@ fun UiScope.shadcnInputGroup(
             prefixText?.let { prefix ->
                 surface(
                     id = "$id.prefix",
-                    modifier = Modifier.padding(start = 12f.dp, end = 12f.dp),
+                    modifier = Modifier.padding(start = 12f.dp, top = 0f.dp, end = 12f.dp, bottom = 0f.dp),
                     style = shadcnInputGroupAffixStyle(themeValues),
                 ) {
                     text(label = prefix, style = shadcnInputGroupAffixTextStyle(themeValues))
@@ -194,7 +200,7 @@ fun UiScope.shadcnInputGroup(
             suffixText?.let { suffix ->
                 surface(
                     id = "$id.suffix",
-                    modifier = Modifier.padding(start = 12f.dp, end = 12f.dp),
+                    modifier = Modifier.padding(start = 12f.dp, top = 0f.dp, end = 12f.dp, bottom = 0f.dp),
                     style = shadcnInputGroupAffixStyle(themeValues),
                 ) {
                     text(label = suffix, style = shadcnInputGroupAffixTextStyle(themeValues))

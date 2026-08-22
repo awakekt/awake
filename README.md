@@ -1,100 +1,100 @@
-<p align="center">
-  <img src=".github/logo.png" alt="Awake" width="200">
-</p>
+<h1 align="center">Awake</h1>
+<p align="center">Kotlin Multiplatform first, Vulkan and WebGPU native — a game engine and graphics runtime for developers who want to feel every frame they write.</p>
 
 <p align="center">
   <a href="https://github.com/awake-lab/awake/actions/workflows/build-and-publish.yml"><img src="https://github.com/awake-lab/awake/actions/workflows/build-and-publish.yml/badge.svg" alt="Build And Publish"></a>
-  <a href="http://kotlinlang.org"><img src="https://img.shields.io/badge/kotlin-2.4.0-blue.svg?logo=kotlin" alt="Kotlin"></a>
+  <a href="http://kotlinlang.org"><img src="https://img.shields.io/badge/kotlin-2.4.10-blue.svg?logo=kotlin" alt="Kotlin"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
   <a href="https://www.patreon.com/cw/awakelab"><img src="https://img.shields.io/badge/donate-Patreon-f96854.svg?logo=patreon" alt="Patreon"></a>
 </p>
 
-<h1 align="center">Awake</h1>
-<p align="center">A Kotlin Multiplatform game engine — one codebase, every platform.</p>
-
-> **Not published yet.** Build from source. Nothing has shipped to Maven Central.
+> Not published yet — build from source. Code-first by design, editor optional. See [`docs/about.md`](docs/about.md) for why.
 
 ## What it does
 
-- **Renders** — Vulkan on Desktop/Android/iOS, WebGPU on the Web. Shadows, PBR
-  materials, glTF loading with GPU skinning.
-- **Simulates** — a sparse-set ECS, a `scene { }` DSL, scenes authored as JSON instead of
-  hand-rolled demo code.
-- **Draws UI** — an immediate-mode, shadcn-styled UI stack, ~80 components across three
-  owned layers (layout, unstyled widgets, styled design system).
-- **Handles physics** — a backend-neutral API with a Jolt Physics implementation.
+- **Renders** — Vulkan on Desktop/Android/iOS, WebGPU on the Web. Shadows, PBR materials, glTF loading with GPU skinning, full-stack `CullMode` control, and batching state deduplication.
+- **Simulates** — a high-performance sparse-set ECS, zero-allocation transform math, and declarative `@AwakeSceneDsl` authoring.
+- **Draws UI** — an immediate-mode, shadcn-styled UI stack with ~80 components across `ui-core`, `ui-headless`, and `ui-designsystem`.
+- **Procedural Geometry** — built-in primitive geometry generators (`generate { cube() }`, `generate { plane() }`) with auto-computed bounds.
+- **Handles physics** — a backend-neutral API with a Jolt Physics bridge.
 
 ## Get started
 
 ```bash
-./gradlew :samples:scene3d-playground:run
+./gradlew :samples:studio:run
 ```
 
-A rotating cube, a glTF viewer, and a skinned-mesh demo, with camera and material
-controls. For the Web build (Chrome/Edge 113+): `:samples:scene3d-playground:wasmJsBrowserDevelopmentRun`,
-then open the printed URL.
+Runs **Awake Studio**: an interactive 3D editor with live scene switching, glTF previewing, skinned mesh animations, particle emitters, inspector panels, and 3D gizmos.
 
-Also runnable: [`samples/ui-showcase`](samples/ui-showcase) (one page per UI component;
-components shadcn ships that Awake has not built yet are listed as explicit placeholders) and [`samples/studio`](samples/studio) (a small editor shell). Desktop and Web
-have app wrappers today; iOS and Android build the shared framework/AAR only, no app
-wrapper yet.
+Web build (Chrome/Edge 113+ with WebGPU):
+```bash
+./gradlew :samples:studio:wasmJsBrowserDevelopmentRun
+```
 
-## How a game fits together
+Also runnable: [`samples/ui-showcase`](samples/ui-showcase), a complete gallery showcasing every shadcn UI component.
 
-1. **A `Game`** — your code (`ready`, `render`, optional `resize`/`pause`/`resume`).
-2. **An application** — `VulkanGameApplication` or `WebGpuGameApplication`, which builds
-   the device/swapchain/pipelines for you.
-3. **A scene, optionally** — `sceneGame { }` gives you an ECS world with `Transform`,
-   `MeshRenderer`, `Camera`, and `Light`, plus the systems that drive them.
+## Quickstart
+
+Awake provides a declarative, type-safe DSL for building applications and scenes:
 
 ```kotlin
-class MyGame : Game {
-    override suspend fun ready(renderer: Renderer) { /* load meshes/materials */ }
-    override fun render(delta: Float, viewportWidth: Float, viewportHeight: Float) { /* draw */ }
-}
+fun main() = runVulkanDesktopGame(
+    game {
+        window {
+            title = "Rotating Cube"
+            size(1280, 720)
+        }
+        scene {
+            defaultOrbitCamera()
 
-val app = VulkanGameApplication(
-    shaderSet = gameShaderSet("triangle"),
-    vertexFormat = VertexFormat.PositionNormalColor,
-    game = MyGame(),
+            entity("cube") {
+                with(SpinControl(speedX = 0.5f, speedY = 1.0f))
+                mesh(generate { cube(size = 2f, colored = true) })
+            }
+
+            lighting.singleDirectionalLight(color = Color.WHITE)
+        }
+    },
 )
+```
+
+For lower-level control or custom render loops:
+```kotlin
+class MyCustomApp : AppLifecycle {
+    override suspend fun ready(renderer: Renderer) { /* Load GPU assets */ }
+    override fun update(delta: Float, viewportWidth: Float, viewportHeight: Float) { /* Draw commands */ }
+}
 ```
 
 ## Modules
 
-All modules are `0.1.0-SNAPSHOT`. ✅ supported · ⚠️ compiles, not functional yet · ❌ not targeted.
+All `0.1.0-SNAPSHOT`, alpha.
 
-| Module | Type | Status | 📱 Mobile | 🖥️ Desktop | 🌐 Web | What it does |
-|:---|:---|:---|:---:|:---:|:---:|:---|
-| [`base`](awake/base) | Core | 🧪 Alpha | ✅ | ✅ | ✅ | Math, assets, input |
-| [`ecs`](awake/ecs) | Core | 🧪 Alpha | ✅ | ✅ | ✅ | Sparse-set ECS runtime |
-| [`engine`](awake/engine) | Runtime | 🧪 Alpha | ✅ | ✅ | ✅ | Bootstrap and app lifecycle |
-| [`engine:ui`](awake/engine/ui) | UI | 🧪 Alpha | ✅ | ✅ | ✅ | Immediate-mode UI stack |
-| [`scene`](awake/scene/README.md) | Runtime | 🧪 Alpha | ✅ | ✅ | ✅ | Scene graph and components |
-| [`physics:api`](awake/physics/api) | API | 🧪 Alpha | ✅ | ✅ | ✅ | Backend-neutral physics contract |
-| [`backend:vulkan`](awake/backend/vulkan) | Backend | 🧪 Alpha | ✅ | ✅ | ❌ | Main renderer |
-| [`backend:webgpu`](awake/backend/webgpu) | Backend | ⚠️ Experimental | ❌ | ❌ | ✅ | Web renderer |
-| [`backend:jolt`](awake/backend/jolt) | Backend | 🧪 Alpha | ✅ | ✅ | ⚠️ | Jolt Physics implementation (Web stub only) |
-| [`backend:opengl`](awake/backend/opengl) | Backend | 🧊 Frozen | ✅ | ✅ | ❌ | The old engine's renderer. Compiles, not wired in. |
+- [`core`](awake/core) — math, geometry, matrix TRS, AABB bounds, animation
+- [`ecs`](awake/ecs) — high-performance sparse-set ECS runtime
+- [`asset`](awake/asset) — glTF loading, mesh optimization, shader tooling
+- [`scene`](awake/scene/README.md) — scene graph, authoring DSL, and `SceneManager` lifecycle
+- [`engine`](awake/engine) — application bootstrap, mediator runtime, and render-pass orchestration
+- [`ui`](awake/ui/README.md) — immediate-mode UI stack (`ui-core`, `ui-headless`, `ui-designsystem`, `ui-tailwind`)
+- [`physics:api`](awake/physics/api) — backend-neutral physics contract
+- [`backend:vulkan`](awake/backend/vulkan) — main Vulkan renderer (Desktop/Android/iOS)
+- [`backend:webgpu`](awake/backend/webgpu) — WebGPU web renderer
+- [`backend:jolt`](awake/backend/jolt) — Jolt Physics bridge
 
 ## Docs
 
 - [`CHANGELOG.md`](CHANGELOG.md) — what changed
-- [`docs/MVP_PLAN.md`](docs/MVP_PLAN.md) — near-term status
+- [`docs/mvp-plan.md`](docs/mvp-plan.md) — active roadmap and status
+- [`docs/tasks.md`](docs/tasks.md) — current work lanes and landed milestones
 - [`docs/reference/developer-docs.md`](docs/reference/developer-docs.md) — build/test/docs workflow
-- [`docs/reference/ui-validation.md`](docs/reference/ui-validation.md) — how UI/icon fidelity is
-  verified
-- [`tools/README.md`](tools/README.md) — asset generators and the parity toolchain
-
-`./gradlew developerDocs` builds the API reference and UI tutorial pages.
+- [`docs/reference/ui-ownership.md`](docs/reference/ui-ownership.md) — UI architecture & clean layering
+- [`docs/reference/ui-validation.md`](docs/reference/ui-validation.md) — how UI and icon fidelity are verified
+- [`docs/benchmarks/performance-visualization.ipynb`](docs/benchmarks/performance-visualization.ipynb) — interactive performance benchmarks
 
 ## License
 
-[Apache License, Version 2.0](LICENSE.md) — free for everyone, indie or enterprise, no
-royalties, no revenue threshold. Awake has no company behind it and no other revenue
-source: development is funded entirely by [Patreon](https://www.patreon.com/cw/awakelab)
-and [GitHub Sponsors](https://github.com/sponsors/awake-lab). If Awake is useful to you,
-that's what keeps it maintained.
+[Apache License, Version 2.0](LICENSE.md). Solo project, no company behind it — funded by
+[Patreon](https://www.patreon.com/cw/awakelab) and [GitHub Sponsors](https://github.com/sponsors/awake-lab).
 
 ## Contributing
 

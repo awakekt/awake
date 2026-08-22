@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.rendering
 
+import io.github.ronjunevaldoz.awake.core.color.Color
 import io.github.ronjunevaldoz.awake.core.math.Aabb
-import io.github.ronjunevaldoz.awake.core.math.Camera
+import io.github.ronjunevaldoz.awake.core.math.Lens
 import io.github.ronjunevaldoz.awake.core.math.ClipSpace
 import io.github.ronjunevaldoz.awake.core.math.Frustum
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.World
 import io.github.ronjunevaldoz.awake.render.material.Material
 import io.github.ronjunevaldoz.awake.render.mesh.Mesh
-import io.github.ronjunevaldoz.awake.render.mesh.MeshGeometry
+import io.github.ronjunevaldoz.awake.core.geometry.MeshGeometry
 import io.github.ronjunevaldoz.awake.render.renderer.DrawCall
 import io.github.ronjunevaldoz.awake.render.renderer.LineSegment
 import io.github.ronjunevaldoz.awake.render.renderer.Renderer
@@ -23,7 +24,7 @@ import io.github.ronjunevaldoz.awake.scene.rendering.components.MeshBounds
 import io.github.ronjunevaldoz.awake.scene.rendering.components.WorldDebugSettings
 import io.github.ronjunevaldoz.awake.scene.rendering.systems.CONSERVATIVE_ASPECT
 import io.github.ronjunevaldoz.awake.scene.rendering.systems.DebugVisualizationSystem
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -33,7 +34,7 @@ class DebugVisualizationSystemTest {
     private class RecordingRenderer : Renderer {
         var lastDebugLines: List<LineSegment>? = null
         override val clipSpace: ClipSpace = ClipSpace.WebGpu
-        override var clearColor: FloatArray = floatArrayOf(0f, 0f, 0f, 1f)
+        override var clearColor: Color = Color.Black
         override var wireframe: Boolean = false
         override var shadowsEnabled: Boolean = true
         override fun createMesh(geometry: MeshGeometry): Mesh = error("not needed for this test")
@@ -44,10 +45,20 @@ class DebugVisualizationSystemTest {
             pbrTextures: PbrTextureSet?,
         ): Material = error("not needed for this test")
 
-        override fun createRenderTarget(width: Int, height: Int): RenderTarget = error("not needed for this test")
-        override fun draw(camera: Camera, drawCalls: List<DrawCall>, light: SceneLight) = Unit
-        override fun renderToTexture(target: RenderTarget, camera: Camera, drawCalls: List<DrawCall>) = Unit
-        override suspend fun readPixels(target: RenderTarget): TextureAsset = error("not needed for this test")
+        override fun createRenderTarget(width: Int, height: Int): RenderTarget =
+            error("not needed for this test")
+
+        override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) = Unit
+        override fun renderToTexture(
+        target: RenderTarget,
+        camera: Lens,
+        drawCalls: List<DrawCall>,
+        light: SceneLight,
+    ) = Unit
+
+        override suspend fun readPixels(target: RenderTarget): TextureAsset =
+            error("not needed for this test")
+
         override fun drawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) = Unit
         override fun drawDebugLines(lines: List<LineSegment>) {
             lastDebugLines = lines
@@ -62,10 +73,24 @@ class DebugVisualizationSystemTest {
         world.add(
             cameraEntity,
             io.github.ronjunevaldoz.awake.scene.rendering.components.Camera(
-                Camera(eye = Vec3(0f, 0f, 5f), center = Vec3(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 100f),
+                Lens(
+                    eye = Vec3f(0f, 0f, 5f),
+                    center = Vec3f(0f, 0f, 0f),
+                    fovYRadians = 1f,
+                    near = 0.1f,
+                    far = 100f
+                ),
             ),
         )
         return world
+    }
+
+    private fun World.primaryCameraEntityId(): Int {
+        var id = -1
+        family<io.github.ronjunevaldoz.awake.scene.rendering.components.Camera>().forEach { entity, _ ->
+            id = entity.id
+        }
+        return id
     }
 
     @Test
@@ -92,7 +117,13 @@ class DebugVisualizationSystemTest {
     @Test
     fun showFrustumDrawsOneLinePerFrustumEdge() {
         val world = worldWithPrimaryCamera()
-        world.add(world.create(), WorldDebugSettings(showFrustum = true))
+        world.add(
+            world.create(),
+            WorldDebugSettings(
+                showFrustum = true,
+                frustumTargetEntityId = world.primaryCameraEntityId()
+            )
+        )
         val renderer = RecordingRenderer()
 
         DebugVisualizationSystem(renderer).update(world, 1f / 60f)
@@ -106,7 +137,7 @@ class DebugVisualizationSystemTest {
         world.add(world.create(), WorldDebugSettings(showBounds = true))
         val entity = world.create()
         world.add(entity, Transform())
-        world.add(entity, MeshBounds(Aabb(Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f))))
+        world.add(entity, MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f))))
         val renderer = RecordingRenderer()
 
         DebugVisualizationSystem(renderer).update(world, 1f / 60f)
@@ -117,15 +148,25 @@ class DebugVisualizationSystemTest {
     @Test
     fun bothTogglesCombineTheirLines() {
         val world = worldWithPrimaryCamera()
-        world.add(world.create(), WorldDebugSettings(showFrustum = true, showBounds = true))
+        world.add(
+            world.create(),
+            WorldDebugSettings(
+                showFrustum = true,
+                showBounds = true,
+                frustumTargetEntityId = world.primaryCameraEntityId()
+            ),
+        )
         val entity = world.create()
         world.add(entity, Transform())
-        world.add(entity, MeshBounds(Aabb(Vec3(-0.5f, -0.5f, -0.5f), Vec3(0.5f, 0.5f, 0.5f))))
+        world.add(entity, MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f))))
         val renderer = RecordingRenderer()
 
         DebugVisualizationSystem(renderer).update(world, 1f / 60f)
 
         assertEquals(Frustum.EDGES.size + Aabb.EDGES.size, renderer.lastDebugLines?.size)
-        assertTrue(CONSERVATIVE_ASPECT > 1f, "sanity: the shared conservative aspect constant is importable here")
+        assertTrue(
+            CONSERVATIVE_ASPECT > 1f,
+            "sanity: the shared conservative aspect constant is importable here"
+        )
     }
 }

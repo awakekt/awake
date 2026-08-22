@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem.components
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnButtonSize
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.ShadcnButtonVariant
 import io.github.ronjunevaldoz.awake.ui.designsystem.styles.visuals
 import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.headless.UiModifier
 import io.github.ronjunevaldoz.awake.ui.headless.RowScope
 import io.github.ronjunevaldoz.awake.ui.headless.UiScope
 import io.github.ronjunevaldoz.awake.ui.headless.button
@@ -16,26 +17,12 @@ import io.github.ronjunevaldoz.awake.ui.headless.size
 import io.github.ronjunevaldoz.awake.ui.headless.styleable
 import io.github.ronjunevaldoz.awake.ui.style.Style
 
-/**
- * TODO this must be converted to
- *     return shadcnButton(
- *         id = id,
- *         modifier = modifier,
- *         variant = variant,
- *         size = size,
- *         enabled = enabled,
- *         onClick = onClick
- *     ) {
- *         shadcnText(
- *             label = label,
- *             centered = centered
- *         )
- *     }
- */
+// TODO: delegate to the content-lambda shadcnButton with a shadcnText body instead of
+// duplicating its layout here.
 fun UiScope.shadcnButton(
     id: String,
     label: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     variant: ShadcnButtonVariant = ShadcnButtonVariant.Primary,
     size: ShadcnButtonSize = ShadcnButtonSize.Md,
     centered: Boolean = true,
@@ -68,22 +55,23 @@ fun UiScope.shadcnButton(
 
 fun UiScope.shadcnButton(
     id: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     variant: ShadcnButtonVariant = ShadcnButtonVariant.Primary,
     size: ShadcnButtonSize = ShadcnButtonSize.Md,
     enabled: Boolean = true,
     onClick: (() -> Unit)? = null,
-    content: RowScope.(slot: UiBounds) -> Unit,
+    content: RowScope.(slot: Rectangle) -> Unit,
 ): Boolean {
     val groupCtx = currentLocal(LocalShadcnButtonGroup)
     val groupStyle = groupCtx?.let { cornerStyle(it) } ?: Style.Empty
-    // Content-lambda buttons (icons, in practice) have no label to derive an intrinsic width
-    // from, so buttonSlotInternal's own fallback resolves straight to FillMax -- an icon button
-    // dropped into a row without an explicit width stretched to fill it. shadcn's `size="icon"`
-    // is always exactly `size-9`, no caller override point either -- square unconditionally.
+    val groupModifier = if (groupCtx?.orientation == ShadcnButtonGroupOrientation.Vertical) {
+        modifier.fillMaxWidth()
+    } else {
+        modifier
+    }
     val sizedModifier =
-        if (size == ShadcnButtonSize.Icon) modifier.size(size.heightDp) else modifier.heightOrDefault(
-            size.heightDp
+        if (size == ShadcnButtonSize.Icon) groupModifier.size(size.heightDp) else groupModifier.heightOrDefault(
+            size.heightDp,
         )
     return button(
         id = id,

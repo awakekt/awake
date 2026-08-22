@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.context
 
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiInputState
-import io.github.ronjunevaldoz.awake.ui.UiPrimitiveTransform
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPrimitiveTransform
 import io.github.ronjunevaldoz.awake.ui.UiSemanticNode
-import io.github.ronjunevaldoz.awake.ui.UiSpacing
 import io.github.ronjunevaldoz.awake.ui.WidgetState
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiInsets
 import io.github.ronjunevaldoz.awake.ui.layouts.AbsoluteScope
 import io.github.ronjunevaldoz.awake.ui.layouts.Arrangement
@@ -18,9 +18,9 @@ import io.github.ronjunevaldoz.awake.ui.layouts.BoxScope
 import io.github.ronjunevaldoz.awake.ui.layouts.ColumnScope
 import io.github.ronjunevaldoz.awake.ui.layouts.RowScope
 import io.github.ronjunevaldoz.awake.ui.layouts.defaultArrangement
-import io.github.ronjunevaldoz.awake.ui.scaledByAlpha
-import io.github.ronjunevaldoz.awake.ui.toPx
-import io.github.ronjunevaldoz.awake.ui.withTransform
+import io.github.ronjunevaldoz.awake.core.graphics2d.scaledByAlpha
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
+import io.github.ronjunevaldoz.awake.core.graphics2d.withTransform
 
 /**
  * Minimal immediate-mode UI context -- ImGui's own architecture (hot/active id tracking, no
@@ -47,12 +47,11 @@ class UiContext internal constructor(
     fun <T> pushLocal(local: UiLocal<T>, value: T) = stacks.push(local, value)
     fun <T> popLocal(local: UiLocal<T>) = stacks.pop(local)
 
-    fun pushShapeSpec(spec: io.github.ronjunevaldoz.awake.ui.UiShapeSpec?) = stacks.pushShapeSpec(spec)
+    fun pushShapeSpec(spec: io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec?) = stacks.pushShapeSpec(spec)
     fun popShapeSpec() = stacks.popShapeSpec()
 
     /** Internal ambient-state handoff for a cached measurement context. */
-    internal fun ambientSnapshotInternal(): UiLocalSnapshot = stacks.snapshot()
-    internal fun restoreAmbientSnapshotInternal(snapshot: UiLocalSnapshot) = stacks.restore(snapshot)
+    internal fun copyAmbientFromInternal(source: UiContext) = stacks.copyAmbientFrom(source.stacks)
 
     /**
      * Resets the context for a new frame. Accepts [UiInputState] to remain
@@ -79,7 +78,7 @@ class UiContext internal constructor(
         hasBoundedFillWidth: Boolean = true,
         hasBoundedFillHeight: Boolean = height != null,
         overlayOnly: Boolean = false,
-        plannedSlots: List<UiBounds>? = null,
+        plannedSlots: List<Rectangle>? = null,
         horizontalAlignment: UiAlignment.Horizontal = UiAlignment.Horizontal.Start,
     ): ColumnScope = layouts.createColumn(
         x = x,
@@ -93,14 +92,14 @@ class UiContext internal constructor(
     )
 
     fun createColumn(
-        slot: UiBounds,
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         verticalArrangement: Arrangement = defaultArrangement(),
         testTag: String? = null,
         hasBoundedFillWidth: Boolean = true,
         hasBoundedFillHeight: Boolean = true,
         overlayOnly: Boolean = false,
-        plannedSlots: List<UiBounds>? = null,
+        plannedSlots: List<Rectangle>? = null,
         horizontalAlignment: UiAlignment.Horizontal = UiAlignment.Horizontal.Start,
     ): ColumnScope = layouts.createColumn(
         slot = slot,
@@ -119,7 +118,7 @@ class UiContext internal constructor(
     ): AbsoluteScope = layouts.createAbsolute(x, y, testTag, overlayOnly)
 
     fun createAbsolute(
-        slot: UiBounds,
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         testTag: String? = null,
         overlayOnly: Boolean = false,
@@ -135,7 +134,7 @@ class UiContext internal constructor(
         hasBoundedFillWidth: Boolean = width != null,
         hasBoundedFillHeight: Boolean = true,
         overlayOnly: Boolean = false,
-        plannedSlots: List<UiBounds>? = null,
+        plannedSlots: List<Rectangle>? = null,
         verticalAlignment: UiAlignment.Vertical = UiAlignment.Vertical.Top,
     ): RowScope = layouts.createRow(
         x = x,
@@ -149,14 +148,14 @@ class UiContext internal constructor(
     )
 
     fun createRow(
-        slot: UiBounds,
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         horizontalArrangement: Arrangement = defaultArrangement(),
         testTag: String? = null,
         hasBoundedFillWidth: Boolean = true,
         hasBoundedFillHeight: Boolean = true,
         overlayOnly: Boolean = false,
-        plannedSlots: List<UiBounds>? = null,
+        plannedSlots: List<Rectangle>? = null,
         verticalAlignment: UiAlignment.Vertical = UiAlignment.Vertical.Top,
     ): RowScope = layouts.createRow(
         slot = slot,
@@ -187,7 +186,7 @@ class UiContext internal constructor(
     )
 
     fun createBox(
-        slot: UiBounds,
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         contentAlignment: UiAlignment = UiAlignment.TopStart,
         testTag: String? = null,
@@ -201,8 +200,8 @@ class UiContext internal constructor(
         tracking = UiLayoutTracking(testTag, hasBoundedFillWidth, hasBoundedFillHeight, overlayOnly),
     )
 
-    fun column(
-        slot: UiBounds,
+    fun columnAt(
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         verticalArrangement: Arrangement = defaultArrangement(),
         testTag: String? = null,
@@ -216,8 +215,8 @@ class UiContext internal constructor(
         ).content()
     }
 
-    fun row(
-        slot: UiBounds,
+    fun rowAt(
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         horizontalArrangement: Arrangement = defaultArrangement(),
         testTag: String? = null,
@@ -232,7 +231,7 @@ class UiContext internal constructor(
     }
 
     fun box(
-        slot: UiBounds,
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         contentAlignment: UiAlignment = UiAlignment.TopStart,
         testTag: String? = null,
@@ -247,7 +246,7 @@ class UiContext internal constructor(
     }
 
     fun absolute(
-        slot: UiBounds,
+        slot: Rectangle,
         insets: UiInsets = UiInsets.Zero,
         testTag: String? = null,
         content: AbsoluteScope.() -> Unit,
@@ -269,8 +268,15 @@ class UiContext internal constructor(
         if (!measuring) runtime.onScrollConsumed()
     }
 
-    internal fun hitTestInternal(slot: UiBounds): Boolean =
-        !measuring && runtime.hitTest(slot)
+    fun hitTest(slot: Rectangle, overlay: Boolean = true): Boolean =
+        !measuring && runtime.hitTest(slot, overlay)
+
+    internal fun hitTestInternal(slot: Rectangle, overlay: Boolean = false): Boolean =
+        hitTest(slot, overlay)
+
+    fun registerOverlayOcclusion(bounds: Rectangle, isModal: Boolean = false) {
+        if (!measuring) runtime.registerOverlayOcclusion(bounds, isModal)
+    }
 
     internal fun isActiveInternal(id: String): Boolean = runtime.isActive(id)
 
@@ -306,7 +312,7 @@ class UiContext internal constructor(
      * primitive emitted via [emitInternal]/[emitOverlayInternal] anywhere inside the matching
      * [popGraphicsLayerAlphaInternal] window, no matter how many nested composite widgets deep,
      * has its color's alpha channel multiplied by the effective stacked value (see
-     * [io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive.scaledByAlpha]). This is the real
+     * [io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive.scaledByAlpha]). This is the real
      * application point for [io.github.ronjunevaldoz.awake.ui.modifier.UiAlphaEffect] -- see
      * `UiAnimatedVisibility.kt`'s `withGraphicsLayerAlpha`/`animatedVisibility` for the public
      * scoped-block API built on top of this pair.
@@ -321,10 +327,10 @@ class UiContext internal constructor(
 
     /**
      * Pushes [transform] onto the graphics-layer scale stack -- every geometry-carrying
-     * primitive ([io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive.Quad]/`RoundedQuad`/`Glyph`/
+     * primitive ([io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive.Quad]/`RoundedQuad`/`Glyph`/
      * `Texture`) emitted via [emitInternal]/[emitOverlayInternal] anywhere inside the matching
      * [popGraphicsLayerScaleInternal] window carries [transform] through to the backend's draw
-     * call (see [io.github.ronjunevaldoz.awake.ui.withTransform]). Unlike alpha, nested scale
+     * call (see [io.github.ronjunevaldoz.awake.core.graphics2d.withTransform]). Unlike alpha, nested scale
      * blocks do NOT compose multiplicatively (see [UiContextStacks.pushTransform]'s doc) -- the
      * real application point for [io.github.ronjunevaldoz.awake.ui.modifier.UiScaleEffect], see
      * `UiGraphicsLayerScope.kt`'s `withGraphicsLayerScale` for the public scoped-block API.
@@ -348,9 +354,9 @@ class UiContext internal constructor(
         if (!measuring) runtime.recordSemantic(node)
     }
 
-    fun pushClipInternal(rect: UiBounds, overlay: Boolean = false): UiBounds = runtime.pushClip(rect, overlay)
+    fun pushClipInternal(rect: Rectangle, overlay: Boolean = false): Rectangle = runtime.pushClip(rect, overlay)
 
-    fun popClipInternal(overlay: Boolean = false): UiBounds = runtime.popClip(overlay)
+    fun popClipInternal(overlay: Boolean = false): Rectangle = runtime.popClip(overlay)
 
     fun pointerDownEdgeInternal(): Boolean = runtime.pointerDownEdge()
 
@@ -370,7 +376,7 @@ class UiContext internal constructor(
 
     // Public (not module-internal) despite the name -- see isFocusedInternal's doc above; the
     // same low-level, scope-less test harnesses read frame bounds off a raw UiContext.
-    fun frameBoundsInternal(): UiBounds = runtime.fullFrameRect
+    fun frameBoundsInternal(): Rectangle = runtime.fullFrameRect
 
     fun isMeasuringInternal(): Boolean = measuring
 
@@ -445,7 +451,7 @@ class UiContext internal constructor(
     private var wrapContributionSuppressionDepth = 0
 
     internal fun recordMeasuredSlot(
-        slot: UiBounds,
+        slot: Rectangle,
         contributesToWrapWidth: Boolean = true,
         contributesToWrapHeight: Boolean = true,
     ) {
@@ -570,6 +576,9 @@ class UiContext internal constructor(
     private var weightAnswers = HashMap<Long, Boolean>()
     private var previousWeightAnswers = HashMap<Long, Boolean>()
 
+    // Non-null only on a trial context -- see [syncWeightAnswersFromInternal].
+    private var weightAnswerSource: UiContext? = null
+
     private fun beginWeightAnswerFrame() {
         pathCounters.clear()
         pathHashStack.clear()
@@ -601,8 +610,24 @@ class UiContext internal constructor(
 
     /** Last frame's observed answer for this node, or null on the first frame / after a
      * structural change (both of which fall back to the trial, i.e. today's behavior). */
-    internal fun rememberedHasWeightedChildInternal(nodeKey: Long): Boolean? =
-        if (measuring) null else previousWeightAnswers[nodeKey]
+    internal fun rememberedHasWeightedChildInternal(nodeKey: Long): Boolean? {
+        val source = weightAnswerSource ?: return previousWeightAnswers[nodeKey]
+        // This frame's answer outranks last frame's, matching the copy order this replaced.
+        return source.weightAnswers[nodeKey] ?: source.previousWeightAnswers[nodeKey]
+    }
+
+    /**
+     * Points a trial context at the real context's answers instead of copying them.
+     *
+     * Copying allocated a map node per entry per trial pass, and trial passes are the frame's
+     * multiplier (7,696/frame on ui-showcase's Checkout Form -- see `UiContextMeasureState`),
+     * which made this one function 17% of all frame allocation. A trial context never writes its
+     * own answers ([recordHasWeightedChildInternal] is guarded by `!measuring`), so its maps stay
+     * empty and a chain of nested trials always collapses to the one context that does write.
+     */
+    internal fun syncWeightAnswersFromInternal(source: UiContext) {
+        weightAnswerSource = source.weightAnswerSource ?: source
+    }
 
     internal fun recordHasWeightedChildInternal(nodeKey: Long, hasWeightedChild: Boolean) {
         if (!measuring) weightAnswers[nodeKey] = hasWeightedChild
@@ -612,13 +637,13 @@ class UiContext internal constructor(
 
     internal fun measureColumnContentInternal(
         width: Float,
-        gap: Float = UiSpacing.sm.toPx(),
+        gap: Float = 8f.dp.toPx(),
         insets: UiInsets = UiInsets.Zero,
         height: Float = UNBOUNDED_MAIN_AXIS,
         // See [wrapContentPass] -- true only for the WrapContent-sizing trial (resolveMeasuredColumn),
         // never for the hasWeightedChild-detection or plannedSlots trials.
         wrapContentPass: Boolean = false,
-        content: ColumnScope.(slot: UiBounds) -> Unit,
+        content: ColumnScope.(slot: Rectangle) -> Unit,
     ): UiMeasuredContent = withOwnMeasurementScope {
         measurement.measureColumnContent(
             width = width,
@@ -663,7 +688,7 @@ class UiContext internal constructor(
         // See measureColumnContentInternal's matching param -- true only for the WrapContent-sizing
         // trial (resolveMeasuredRow), never for the hasWeightedChild-detection or plannedSlots trials.
         wrapContentPass: Boolean = false,
-        content: RowScope.(slot: UiBounds) -> Unit,
+        content: RowScope.(slot: Rectangle) -> Unit,
     ): UiMeasuredContent = measurement.measureRowContent(
         height = height,
         gap = gap,

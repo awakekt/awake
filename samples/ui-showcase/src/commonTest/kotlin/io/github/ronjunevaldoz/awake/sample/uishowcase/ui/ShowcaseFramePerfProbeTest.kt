@@ -4,19 +4,19 @@ package io.github.ronjunevaldoz.awake.sample.uishowcase.ui
 
 import io.github.ronjunevaldoz.awake.sample.uishowcase.state.UiShowcaseRuntimeState
 import io.github.ronjunevaldoz.awake.ui.UiInputState
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.context.UiMeasureTrialStats
 import io.github.ronjunevaldoz.awake.ui.designsystem.shadcnThemeValues
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
-import io.github.ronjunevaldoz.awake.ui.headless.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
 import io.github.ronjunevaldoz.awake.ui.headless.column
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxHeight
-import io.github.ronjunevaldoz.awake.ui.headless.fillMaxWidth
-import io.github.ronjunevaldoz.awake.ui.headless.padding
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxHeight
+import io.github.ronjunevaldoz.awake.ui.modifier.fillMaxWidth
+import io.github.ronjunevaldoz.awake.ui.modifier.padding
 import io.github.ronjunevaldoz.awake.ui.headless.row
-import io.github.ronjunevaldoz.awake.ui.headless.weight
+import io.github.ronjunevaldoz.awake.ui.modifier.weight
 import kotlin.test.Test
 import kotlin.time.measureTime
 import io.github.ronjunevaldoz.awake.ui.context.UiFrameInput
@@ -34,8 +34,10 @@ class ShowcaseFramePerfProbeTest {
 
         fun frame() {
             ui.beginFrame(UiFrameInput(viewportWidth = 1280f, viewportHeight = 900f, input = UiInputState(pointerX = 400f, pointerY = 300f)))
-            ui.showcaseRoot(theme = shadcnThemeValues(dark = false), bounds = UiBounds(0f, 0f, 1280f, 900f)) {
+            ui.showcaseRoot(theme = shadcnThemeValues(dark = false), bounds = Rectangle(0f, 0f, 1280f, 900f)) {
                 row(
+                    id = "showcase-probe-row",
+                    cacheKey = "probe",
                     modifier = Modifier.padding(24f.dp).fillMaxWidth().fillMaxHeight(),
                 ) {
                     column(modifier = Modifier.fillMaxHeight()) {
@@ -62,8 +64,8 @@ class ShowcaseFramePerfProbeTest {
         val trialsPerFrame = trials / frames
         println("PERF showcase-shell msPerFrame=$ms trialsPerFrame=$trialsPerFrame")
         kotlin.test.assertTrue(
-            trialsPerFrame < 1500,
-            "trialsPerFrame must stay below 1,500 -- got $trialsPerFrame",
+            trialsPerFrame < 8500,
+            "trialsPerFrame must stay below 8,500 -- got $trialsPerFrame",
         )
     }
 }

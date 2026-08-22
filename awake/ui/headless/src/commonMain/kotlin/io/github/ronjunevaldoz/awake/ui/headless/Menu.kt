@@ -4,7 +4,9 @@ package io.github.ronjunevaldoz.awake.ui.headless
 
 import io.github.ronjunevaldoz.awake.ui.api.UiPopupResult
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
+import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
+import io.github.ronjunevaldoz.awake.ui.modifier.UiModifier
 import io.github.ronjunevaldoz.awake.ui.style.Style
 
 /** A neutral menu item contract. Visuals and item content belong to the caller's skin. */
@@ -23,7 +25,7 @@ sealed interface UiMenuEntry
 fun ColumnScope.menuItem(
     item: UiMenuItem,
     label: String,
-    modifier: Modifier = Modifier,
+    modifier: UiModifier = Modifier,
     style: Style = Style.Empty,
 ): Boolean = button(
     id = item.id,
@@ -31,6 +33,11 @@ fun ColumnScope.menuItem(
     modifier = modifier,
     style = style,
     enabled = item.enabled,
+    // A menu row reads as a list entry, not a button label: shadcn's DropdownMenuItem and
+    // Compose's both start-align. This delegates to button(), whose own default is centered --
+    // inheriting it silently centered every menu in the module, which the geometry oracle
+    // cannot see because it measures row bounds rather than text position inside them.
+    centered = false,
     semanticRole = UiSemanticRole.MenuItem,
 )
 
@@ -45,6 +52,6 @@ data class UiMenuResult(
     val popup: UiPopupResult,
     val selectedIndex: Int?,
 ) {
-    val slot: UiBounds? get() = popup.slot
+    val slot: Rectangle? get() = popup.slot
     val dismissed: Boolean get() = popup.dismissed
 }

@@ -3,14 +3,14 @@
 package io.github.ronjunevaldoz.awake.scene.authoring.infrastructure
 
 import io.github.ronjunevaldoz.awake.core.input.Input
-import io.github.ronjunevaldoz.awake.scene.authoring.SceneGameDsl
+import io.github.ronjunevaldoz.awake.scene.authoring.SceneAppDsl
 import io.github.ronjunevaldoz.awake.scene.controls.systems.CameraInputSystem
 import io.github.ronjunevaldoz.awake.scene.controls.systems.CameraSystem
 import io.github.ronjunevaldoz.awake.scene.controls.systems.MatrixRelativeMovementSystem
 import io.github.ronjunevaldoz.awake.scene.controls.systems.PlayerInputSystem
 import io.github.ronjunevaldoz.awake.scene.runtime.SceneSystemHandle
 
-fun SceneGameDsl.cameraSystem(
+fun SceneAppDsl.cameraSystem(
     name: String = "camera",
 ): SceneSystemHandle<CameraSystem> = frameSystem(name) {
     CameraSystem(
@@ -19,7 +19,7 @@ fun SceneGameDsl.cameraSystem(
     )
 }
 
-fun SceneGameDsl.cameraInputSystem(
+fun SceneAppDsl.cameraInputSystem(
     name: String = "cameraInput",
 ): SceneSystemHandle<CameraInputSystem> = frameSystem(name) {
     CameraInputSystem(
@@ -28,7 +28,7 @@ fun SceneGameDsl.cameraInputSystem(
     )
 }
 
-fun SceneGameDsl.playerInputSystem(
+fun SceneAppDsl.playerInputSystem(
     name: String = "playerInput",
 ): SceneSystemHandle<PlayerInputSystem> = frameSystem(name) {
     PlayerInputSystem(
@@ -37,7 +37,7 @@ fun SceneGameDsl.playerInputSystem(
     )
 }
 
-fun SceneGameDsl.matrixRelativeMovementSystem(
+fun SceneAppDsl.matrixRelativeMovementSystem(
     name: String = "movement",
     speed: Float = 5f,
 ): SceneSystemHandle<MatrixRelativeMovementSystem> = frameSystem(name) {

@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.snapshot
 
-import io.github.ronjunevaldoz.awake.core.utils.summarizePixels
+import io.github.ronjunevaldoz.awake.testing.summarizePixels
 import io.github.ronjunevaldoz.awake.testing.ui.inspectUiFrame
 import io.github.ronjunevaldoz.awake.testing.ui.rasterize
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -40,7 +40,7 @@ private fun assertSnapshotSignatures(
     scenes.forEach { scene ->
         val inspection = inspectUiFrame(
             primitives = scene.primitives,
-            frame = UiBounds(0f, 0f, scene.width.toFloat(), scene.height.toFloat()),
+            frame = Rectangle(0f, 0f, scene.width.toFloat(), scene.height.toFloat()),
             font = scene.font,
         )
         assertEquals(true, inspection.isClean, "UI inspection failed for ${scene.name}:\n${inspection.summary()}")
@@ -114,15 +114,38 @@ private fun UiSnapshotScene.snapshotSignature(): ULong {
 // fixtures never asked a design-system layer (shadcnButton/shadcnToggle/shadcnCheckbox) to. Every
 // real branded (shadcn*) scene is unaffected (its recipe's Style was already complete).
 // `shadcn-field-error` is untouched.
+// 2026-08-21 (2): `button-outline`/`panel-with-children` ONLY -- re-recorded after UiRasterizer's
+// per-primitive composites were unified onto PixelMap.blend. Plain quads, gradients, and
+// triangle meshes each overwrote the destination and parked the source alpha in the alpha
+// channel, so a translucent fill rasterized fully saturated; only rounded quads and glyphs
+// actually blended. Since this rasterizer backs the preview/parity images, that made those a
+// wrong ORACLE, not just a wrong pixel. Verified before recording: a scene's signature moved if
+// and only if it contains a translucent FilledPath/StrokedPath (audited across all 16 scenes,
+// zero exceptions) -- scenes whose only translucency is a RoundedQuad are byte-identical,
+// because that path already blended. `UiRasterizerBlendTest` pins the math, including that a
+// uniformly-colored path stays uniform: triangles sharing an edge both claim a sample sitting
+// exactly on it, which the old overwrite hid and a real blend would have darkened into a seam.
+// 2026-08-21 (3): two stacked changes, both found chasing why the destructive alert painted as a
+// solid red block. (1) ShapePainter faked a rounded border by filling a border-colored rect and
+// insetting the fill over it, which only hides that rect where the fill is opaque -- a
+// translucent fill (`bg-destructive/10`) let it through and the surface read as solid border
+// color. It now strokes a real ring over the fill instead. (2) UiRasterizer tessellated
+// `FilledPath` with the flat `tessellateFill()` while BOTH backends use `tessellateFillAa()`, so
+// previews rendered every vector path hard-edged -- ragged curves and uneven stroke width the
+// shipped renderer never produces. It now interpolates the AA mesh's per-vertex alpha.
+// `StrokedPath` deliberately stays flat, matching UiRunCoalescer.
+// Verified before recording: a scene's signature moved if and only if it contains at least one
+// FilledPath -- audited across all 16 scenes, zero exceptions. Renders reviewed by eye; the
+// alert now shows a 10% tint behind a crisp ring, and the vector star's points are smooth.
 private val expectedReviewSnapshotSignatures = mapOf(
     "toggle-unchecked" to 0x7ce00b0d014d12a3uL,
     "toggle-checked" to 0x40bd692f48964ffcuL,
     "button-filled" to 0x7fc33cce03403ef9uL,
-    "button-outline" to 0x43c2d3e7b6428919uL,
+    "button-outline" to 0xaa8c92433ef60d49uL,
     "button-ghost" to 0x7fc33cce03403ef9uL,
     "theme-dark" to 0x7fc33cce03403ef9uL,
     "theme-light" to 0x03d4c72d17b9808fuL,
-    "panel-with-children" to 0xbff05d211a1e91cfuL,
+    "panel-with-children" to 0xd97b9ed3d782f04duL,
     "shadcn-field-error" to 0x105ac00923155246uL,
 )
 
@@ -168,14 +191,38 @@ private val expectedReviewSnapshotSignatures = mapOf(
 // of Shadcn's card color where it left a field unset. Every scene built from shadcn* recipes
 // (ui-button-variants/ui-panel-controls/ui-alert-dialog/ui-rounded-clip-vector/
 // ui-awake-shadcn-showcase) is unaffected, having always supplied a complete Style.
+// 2026-08-20: re-recorded after checkmarks and outline buttons were converted to antialiased
+// strokeToFillPath, and focused textfields aligned with integer dp borders.
+// 2026-08-21: `ui-awake-shadcn-showcase` ONLY -- re-recorded after ShadcnButtonSize gained a real
+// `paddingY` (shadcn's default button is `h-9 px-4 py-2`; the `py-2` had no field to live in, so
+// ShadcnButtonStyles hardcoded `contentPadding(size.paddingX, 0f.dp)`). Verified before recording,
+// per awake-ui-verification's required sequence: the parity report against the pinned shadcn
+// capture moved button padding from `drift` to `pass` with top/bottom now exactly 8.0/8.0, and
+// height stayed exactly 36.0 (delta 0.0) on all six variants -- the fixed-height modifier governs
+// the outer box while contentPadding insets the interior, which is how shadcn's own `h-9` and
+// `py-2` coexist. Only this one scene moved; the other six hash identically, because a symmetric
+// vertical inset around an already-centered label inside a fixed height does not move a pixel --
+// it only shows up where the content box genuinely constrains layout, which is this scene.
+// 2026-08-21 (2): `ui-shaped-panel`/`ui-panel-controls`/`ui-rounded-clip-vector`/
+// `ui-awake-shadcn-showcase` ONLY -- the rasterizer blend unification described in the
+// review-map comment above. These four are exactly the tutorial scenes carrying a translucent
+// FilledPath/StrokedPath; `ui-button-variants`/`ui-alert-dialog` are translucent too but only
+// via RoundedQuad, which already blended, and hash identically. Renders reviewed by eye before
+// re-pinning -- the vector star's antialiased edges are clean with no darkened diagonal where
+// its tessellated triangles meet.
+// 2026-08-21 (3): the border-ring and vector-path AA changes described in the review-map comment
+// above. The five moved here are exactly the tutorial scenes containing a FilledPath;
+// `ui-button-variants`/`ui-alert-dialog` have none and hash identically. Note
+// `ui-component-state-matrix` moves now but did not for the earlier blend fix -- its FilledPath
+// is an opaque checkmark, so antialiasing reaches it where a translucency-only change could not.
 private val expectedTutorialSnapshotSignatures = mapOf(
     "ui-button-variants" to 0x6a983a490866bb5buL,
-    "ui-shaped-panel" to 0xc53d9ba3cc72f320uL,
-    "ui-panel-controls" to 0x1db3974a628bbe07uL,
+    "ui-shaped-panel" to 0xa31191a8cf8a1bc2uL,
+    "ui-panel-controls" to 0x66673800d46e9413uL,
     "ui-alert-dialog" to 0x7e805d3ddbe20949uL,
-    "ui-component-state-matrix" to 0x9d720517432f7dfeuL,
-    "ui-rounded-clip-vector" to 0x0627d9a01bb6098buL,
-    "ui-awake-shadcn-showcase" to 0x9900cb4fb67ecb53uL,
+    "ui-component-state-matrix" to 0xf8239396a9524e97uL,
+    "ui-rounded-clip-vector" to 0x7cef410ec1383cf4uL,
+    "ui-awake-shadcn-showcase" to 0x3c547f71644597cfuL,
 )
 
 private fun ULong.toHexString(): String {

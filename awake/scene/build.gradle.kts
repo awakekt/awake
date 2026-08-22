@@ -40,9 +40,12 @@ kotlin {
             api(project(":awake:scene:rendering"))
             api(project(":awake:scene:runtime"))
             api(project(":awake:scene:authoring"))
-            api(project(":awake:core"))
+            api(project(":awake:core:math"))
+            api(project(":awake:core:color"))
+            api(project(":awake:core:input"))
+            api(project(":awake:core:host"))
             api(project(":awake:ecs"))
-            // Module restructuring slice 1 (see docs/MVP_PLAN.md): RenderSystem/MeshRenderer
+            // Module restructuring slice 1 (see docs/mvp-plan.md): RenderSystem/MeshRenderer
             // only ever touch the backend-neutral Mesh/Material/Renderer/DrawCall contract,
             // never awake-vulkan's concrete Vulkan bindings -- depending on just the
             // interface module (instead of all of awake-vulkan) is the actual point of this

@@ -28,18 +28,24 @@ annotation class VkReturnType(val name: String)
 annotation class NativeSurfaceWindow
 
 /**
+ * Marks an extension entry point the generator must resolve through `vkGetInstanceProcAddr`
+ * rather than call directly, because the loader does not export it.
  *
- *         auto pfnDestroyDebugUtilsMessengerEXT =
- *                 (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
- *                         instance, "vkDestroyDebugUtilsMessengerEXT");
- *
+ * ```
+ * auto pfnDestroyDebugUtilsMessengerEXT =
+ *         (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr(
+ *                 instance, "vkDestroyDebugUtilsMessengerEXT");
+ * ```
  */
 annotation class VkSingleton
 annotation class VkUnionMember(val alias: String, val saveToParent: Boolean = false)
 
 /**
- * @param sizeAlias <elementType> [sizeAlias] otherwise do not generate
- * @param stride multiplier for array size for example given UInt::class -> sizeOf(uint32_t)
+ * Marks a field the generator emits as a sized native array.
+ *
+ * @property sizeAlias Name of the sibling count field. Empty means do not generate.
+ * @property stride Element type whose native size multiplies the count, e.g. `UInt::class`
+ * for `sizeof(uint32_t)`.
  */
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
@@ -49,7 +55,7 @@ annotation class VkArray(
 )
 
 /**
- * Allows to generate toObject cpp method
+ * Generates a `toObject` C++ method for this type.
  */
 @Target(AnnotationTarget.CLASS)
 annotation class VkMutator

@@ -12,7 +12,7 @@ import io.github.ronjunevaldoz.awake.core.animation.Skin
 import io.github.ronjunevaldoz.awake.core.geometry.NormalizedInt
 import io.github.ronjunevaldoz.awake.core.math.Mat4
 import io.github.ronjunevaldoz.awake.core.math.Quat
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.asset.gltf.GltfParser.decodeBuffer
 import io.github.ronjunevaldoz.awake.asset.gltf.GltfParser.parse
 import io.github.ronjunevaldoz.awake.asset.gltf.GltfParser.parseScene
@@ -42,7 +42,7 @@ private val GltfJson = Json { ignoreUnknownKeys = true }
 
 /**
  * Minimal glTF 2.0 mesh importer -- JSON structure + embedded (base64 data-URI) buffers
- * only. Deliberately narrow scope for this MVP phase (per docs/MVP_PLAN.md's Phase 4
+ * only. Deliberately narrow scope for this MVP phase (per docs/archive/mvp-phase-log.md's Phase 4
  * checklist: "cube can be hardcoded, but the first real model needs this. Full glTF
  * (skinning, animation) is post-MVP"):
  * - **External `.bin`/image files** are supported via the `externalResources` parameter --
@@ -92,7 +92,10 @@ object GltfParser {
      * resolves buffers with no `uri` (i.e. glTF's "use the GLB BIN chunk" convention) in
      * addition to base64 data URIs.
      */
-    fun parseScene(bytes: ByteArray, externalResources: Map<String, ByteArray> = emptyMap()): LoadedScene {
+    fun parseScene(
+        bytes: ByteArray,
+        externalResources: Map<String, ByteArray> = emptyMap()
+    ): LoadedScene {
         val (json, glbBin) = readGlbContainer(bytes)
         val document = GltfJson.decodeFromString(GltfDocument.serializer(), json)
         val buffers = document.buffers.map { decodeBufferOrGlbBin(it, glbBin, externalResources) }
@@ -165,15 +168,22 @@ object GltfParser {
         }
         val material = primitive.material?.let { document.materials.getOrNull(it) }
         val baseColorImageBytes =
-            readMaterialImageBytes(document, material?.pbrMetallicRoughness?.baseColorTexture, externalResources)
+            readMaterialImageBytes(
+                document,
+                material?.pbrMetallicRoughness?.baseColorTexture,
+                externalResources
+            )
         val metallicRoughnessImageBytes = readMaterialImageBytes(
             document,
             material?.pbrMetallicRoughness?.metallicRoughnessTexture,
             externalResources,
         )
-        val normalImageBytes = readMaterialImageBytes(document, material?.normalTexture, externalResources)
-        val occlusionImageBytes = readMaterialImageBytes(document, material?.occlusionTexture, externalResources)
-        val emissiveImageBytes = readMaterialImageBytes(document, material?.emissiveTexture, externalResources)
+        val normalImageBytes =
+            readMaterialImageBytes(document, material?.normalTexture, externalResources)
+        val occlusionImageBytes =
+            readMaterialImageBytes(document, material?.occlusionTexture, externalResources)
+        val emissiveImageBytes =
+            readMaterialImageBytes(document, material?.emissiveTexture, externalResources)
         val pbr = material?.pbrMetallicRoughness
         val baseColorFactor = pbr?.baseColorFactor?.toFloatArray() ?: floatArrayOf(1f, 1f, 1f, 1f)
         val metallicFactor = pbr?.metallicFactor ?: 1f
@@ -228,7 +238,10 @@ object GltfParser {
      * this reads the whole node hierarchy -- a skin's joints are node indices, so the demo layer
      * needs the real scene graph, not just one primitive's raw attributes.
      */
-    fun parseSkinned(json: String, externalResources: Map<String, ByteArray> = emptyMap()): LoadedSkinnedScene {
+    fun parseSkinned(
+        json: String,
+        externalResources: Map<String, ByteArray> = emptyMap()
+    ): LoadedSkinnedScene {
         val document = GltfJson.decodeFromString(GltfDocument.serializer(), json)
         val buffers = document.buffers.map { decodeBuffer(it, externalResources) }
 
@@ -241,9 +254,9 @@ object GltfParser {
             val r = node.rotation ?: listOf(0f, 0f, 0f, 1f)
             val s = node.scale ?: listOf(1f, 1f, 1f)
             Bone(
-                translation = Vec3(t[0], t[1], t[2]),
+                translation = Vec3f(t[0], t[1], t[2]),
                 rotation = Quat(r[0], r[1], r[2], r[3]),
-                scale = Vec3(s[0], s[1], s[2]),
+                scale = Vec3f(s[0], s[1], s[2]),
                 matrix = explicitMatrix,
                 children = node.children,
             )
@@ -260,7 +273,11 @@ object GltfParser {
         val skinnedNodes = document.nodes.mapIndexedNotNull { index, node ->
             val meshIndex = node.mesh
             val skinIndex = node.skin
-            if (meshIndex != null && skinIndex != null) SkinnedNodeRef(index, meshIndex, skinIndex) else null
+            if (meshIndex != null && skinIndex != null) SkinnedNodeRef(
+                index,
+                meshIndex,
+                skinIndex
+            ) else null
         }
 
         return LoadedSkinnedScene(Skeleton(bones, rootNodes), meshes, skins, clips, skinnedNodes)
@@ -361,7 +378,10 @@ object GltfParser {
 
     /** Decodes [buffer]'s `uri` -- a base64 data URI, or an external file looked up in
      * [externalResources] (see [externalUris]). */
-    private fun decodeBuffer(buffer: GltfBuffer, externalResources: Map<String, ByteArray>): ByteArray {
+    private fun decodeBuffer(
+        buffer: GltfBuffer,
+        externalResources: Map<String, ByteArray>
+    ): ByteArray {
         val uri = buffer.uri
             ?: error("glTF buffer has no uri -- only GLB-embedded (BIN chunk) buffers may omit it.")
         return resolveUri(uri, externalResources)
@@ -386,7 +406,7 @@ object GltfParser {
         return externalResources[uri]
             ?: error(
                 "glTF buffer uri '$uri' is external and wasn't provided in externalResources -- " +
-                    "fetch it (see externalUris) and pass its bytes in before parsing.",
+                        "fetch it (see externalUris) and pass its bytes in before parsing.",
             )
     }
 
@@ -395,7 +415,7 @@ object GltfParser {
         val markerIndex = uri.indexOf(BASE64_DATA_URI_MARKER)
         require(uri.startsWith("data:") && markerIndex >= 0) {
             "glTF buffer uri is not a base64 data URI -- external .bin file references " +
-                "are not supported by this parser: $uri"
+                    "are not supported by this parser: $uri"
         }
         return Base64.decode(uri.substring(markerIndex + BASE64_DATA_URI_MARKER.length))
     }
@@ -413,9 +433,9 @@ object GltfParser {
         val r = node.rotation ?: listOf(0f, 0f, 0f, 1f)
         val s = node.scale ?: listOf(1f, 1f, 1f)
         return Mat4.fromTrs(
-            translation = Vec3(t[0], t[1], t[2]),
+            translation = Vec3f(t[0], t[1], t[2]),
             rotation = Quat(r[0], r[1], r[2], r[3]),
-            scale = Vec3(s[0], s[1], s[2]),
+            scale = Vec3f(s[0], s[1], s[2]),
         )
     }
 
@@ -469,7 +489,7 @@ object GltfParser {
         val accessor = accessorAt(document, accessorIndex)
         require(typeComponentCount(accessor.type) == componentsPerElement) {
             "glTF accessor $accessorIndex has type ${accessor.type}, expected " +
-                "$componentsPerElement-component elements."
+                    "$componentsPerElement-component elements."
         }
         val bufferView = bufferViewFor(document, accessor, accessorIndex)
         val bytes = buffers[bufferView.buffer]
@@ -501,28 +521,32 @@ object GltfParser {
             requireNormalized(accessor, accessorIndex)
             NormalizedInt.signedByte(bytes[offset].toInt())
         }
+
         COMPONENT_TYPE_UNSIGNED_BYTE -> {
             requireNormalized(accessor, accessorIndex)
             NormalizedInt.unsignedByte(bytes[offset].toInt() and 0xFF)
         }
+
         COMPONENT_TYPE_SHORT -> {
             requireNormalized(accessor, accessorIndex)
             NormalizedInt.signedShort(readShortLe(bytes, offset))
         }
+
         COMPONENT_TYPE_UNSIGNED_SHORT -> {
             requireNormalized(accessor, accessorIndex)
             NormalizedInt.unsignedShort(readUShortLe(bytes, offset))
         }
+
         else -> error(
             "glTF accessor $accessorIndex has componentType ${accessor.componentType}, expected FLOAT " +
-                "or a normalized BYTE/UNSIGNED_BYTE/SHORT/UNSIGNED_SHORT.",
+                    "or a normalized BYTE/UNSIGNED_BYTE/SHORT/UNSIGNED_SHORT.",
         )
     }
 
     private fun requireNormalized(accessor: GltfAccessor, accessorIndex: Int) {
         require(accessor.normalized) {
             "glTF accessor $accessorIndex has an integer componentType (${accessor.componentType}) " +
-                "but normalized=false -- only normalized integer vertex attributes are decoded as floats."
+                    "but normalized=false -- only normalized integer vertex attributes are decoded as floats."
         }
     }
 
@@ -558,7 +582,7 @@ object GltfParser {
 
     /** Reads a `JOINTS_0`-shaped accessor (`ubyte4` or `ushort4` per the glTF 2.0 spec) into
      * `IntArray(count * 4)`, one entry per component -- widened to `Int` regardless of the
-     * source byte width, matching [io.github.ronjunevaldoz.awake.render.mesh.VertexAttributeFormat.UInt4]'s
+     * source byte width, matching [io.github.ronjunevaldoz.awake.core.geometry.VertexAttributeFormat.UInt4]'s
      * own "widen everything to 4 bytes/component" convention. */
     private fun readJointAccessor(
         document: GltfDocument,
@@ -595,7 +619,7 @@ object GltfParser {
         (bytes[offset].toInt() and 0xFF) or ((bytes[offset + 1].toInt() and 0xFF) shl 8)
 
     private fun readUIntLe(bytes: ByteArray, offset: Int): Int = (bytes[offset].toInt() and 0xFF) or
-        ((bytes[offset + 1].toInt() and 0xFF) shl 8) or
-        ((bytes[offset + 2].toInt() and 0xFF) shl 16) or
-        ((bytes[offset + 3].toInt() and 0xFF) shl 24)
+            ((bytes[offset + 1].toInt() and 0xFF) shl 8) or
+            ((bytes[offset + 2].toInt() and 0xFF) shl 16) or
+            ((bytes[offset + 3].toInt() and 0xFF) shl 24)
 }

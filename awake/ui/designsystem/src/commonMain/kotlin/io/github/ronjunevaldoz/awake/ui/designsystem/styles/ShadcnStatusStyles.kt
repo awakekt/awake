@@ -2,26 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.designsystem.styles
 
-import io.github.ronjunevaldoz.awake.core.colors.Color
-import io.github.ronjunevaldoz.awake.ui.api.dp
-import io.github.ronjunevaldoz.awake.ui.api.sp
+import io.github.ronjunevaldoz.awake.core.color.Color
+import io.github.ronjunevaldoz.awake.core.math2d.dp
+import io.github.ronjunevaldoz.awake.core.math2d.sp
 import io.github.ronjunevaldoz.awake.ui.api.theme.UiThemeValues
 import io.github.ronjunevaldoz.awake.ui.designsystem.ShadcnThemeValues
 import io.github.ronjunevaldoz.awake.ui.style.Style
 
-fun shadcnProgressStyle(values: UiThemeValues): Style = Style {
+internal fun shadcnProgressStyle(values: UiThemeValues): Style = Style {
     background(values.colors.primary.withAlpha(0.2f))
     foreground(values.colors.primary)
     border(0f.dp, Color.Transparent)
     shape(values.shapes.full)
 }
 
-fun shadcnSkeletonStyle(values: UiThemeValues): Style = Style {
+internal fun shadcnSkeletonStyle(values: UiThemeValues): Style = Style {
     background(values.colors.muted)
     shape(values.shapes.md)
 }
 
-fun shadcnSpinnerStyle(values: UiThemeValues): Style = Style {
+internal fun shadcnSpinnerStyle(values: UiThemeValues): Style = Style {
     foreground(values.colors.primary)
 }
 
@@ -35,10 +35,18 @@ internal fun shadcnKbdStyle(values: ShadcnThemeValues): Style = Style {
     textSize(10f.sp)
 }
 
+// Pinned alert.tsx (`shadcn-6261bd8-new-york-v4`): base is `rounded-lg border p-4 text-sm`, with
+//   default     -> `bg-background text-foreground`
+//   destructive -> `border-destructive/50 text-destructive`   (sets NO background)
+// The captured computed styles agree exactly: default is `oklch(1 0 0)` on a gray 1px border,
+// destructive is `rgba(0, 0, 0, 0)` -- fully transparent -- behind a border at 0.5 alpha.
+// This previously painted `muted` for default and `destructive/10` for destructive with a
+// full-strength border, which is a different (older) alert convention than the pinned one.
 internal fun shadcnAlertStyle(values: ShadcnThemeValues, variant: ShadcnAlertVariant): Style = Style {
-    background(if (variant == ShadcnAlertVariant.Destructive) values.colors.destructive.withAlpha(0.1f) else values.colors.muted)
-    foreground(if (variant == ShadcnAlertVariant.Destructive) values.colors.destructive else values.colors.foreground)
-    border(1f.dp, if (variant == ShadcnAlertVariant.Destructive) values.colors.destructive else values.colors.border)
+    val destructive = variant == ShadcnAlertVariant.Destructive
+    background(if (destructive) Color.Transparent else values.colors.background)
+    foreground(if (destructive) values.colors.destructive else values.colors.foreground)
+    border(1f.dp, if (destructive) values.colors.destructive.withAlpha(0.5f) else values.colors.border)
     shape(values.shapes.lg)
     contentPadding(16f.dp)
 }

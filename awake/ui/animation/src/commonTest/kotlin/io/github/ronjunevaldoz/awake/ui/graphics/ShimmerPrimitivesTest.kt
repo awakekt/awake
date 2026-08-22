@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.graphics
 
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.testSnapshot
 import kotlin.test.Test
@@ -21,7 +21,7 @@ class ShimmerPrimitivesTest {
         val durationMs = 1200f
         val frameDeltaSeconds = 1f / 60f
         val totalFrames = ((durationMs / 1000f) * 60f * 2.5f).toInt() // ~2.5 cycles worth of frames
-        val slot = UiBounds(x = 0f, y = 0f, width = 200f, height = 40f)
+        val slot = Rectangle(x = 0f, y = 0f, width = 200f, height = 40f)
 
         val samples = mutableListOf<Float>()
         repeat(totalFrames) {
@@ -50,7 +50,7 @@ class ShimmerPrimitivesTest {
         val ui = UiContext()
         ui.beginFrame(UiFrameInput(viewportWidth = 320f, viewportHeight = 200f, input = testSnapshot()))
         val scope = ui.createAbsolute(x = 0f, y = 0f)
-        val slot = UiBounds(x = 10f, y = 0f, width = 40f, height = 20f) // narrower than the 160px floor
+        val slot = Rectangle(x = 10f, y = 0f, width = 40f, height = 20f) // narrower than the 160px floor
         val band = scope.shimmerBand(id = "shimmer-band-width-probe", slot = slot)
         ui.finishFrame().primitives
 

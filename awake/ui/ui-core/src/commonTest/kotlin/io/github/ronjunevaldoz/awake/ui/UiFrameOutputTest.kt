@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui
 
-import io.github.ronjunevaldoz.awake.ui.api.dp
+import io.github.ronjunevaldoz.awake.core.math2d.dp
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 import io.github.ronjunevaldoz.awake.ui.context.UiCursor
 import io.github.ronjunevaldoz.awake.ui.modifier.Modifier
@@ -27,7 +27,7 @@ class UiFrameOutputTest {
         ui.requestFocusInternal("field")
         ui.createAbsolute(slot = ui.resolveRootSlot(Modifier.offset(10f.dp, 10f.dp), defaultWidth = Dimension.Fixed(0.dp), defaultHeight = Dimension.Fixed(0.dp))).recordSemantic(
             role = UiSemanticRole.Text,
-            bounds = UiBounds(10f, 10f, 80f, 20f),
+            bounds = Rectangle(10f, 10f, 80f, 20f),
             id = "field.label",
             label = "Name",
         )

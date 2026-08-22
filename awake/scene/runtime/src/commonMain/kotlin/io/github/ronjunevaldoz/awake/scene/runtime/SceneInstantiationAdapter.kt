@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.scene.runtime
 
-import io.github.ronjunevaldoz.awake.core.math.Camera
-import io.github.ronjunevaldoz.awake.core.math.Vec3
+import io.github.ronjunevaldoz.awake.core.math.Lens
+import io.github.ronjunevaldoz.awake.core.math.Vec3f
 import io.github.ronjunevaldoz.awake.ecs.Entity
 import io.github.ronjunevaldoz.awake.ecs.World
+import io.github.ronjunevaldoz.awake.render.renderer.CullMode
 import io.github.ronjunevaldoz.awake.scene.core.components.Name
 import io.github.ronjunevaldoz.awake.scene.core.components.SpinControl
 import io.github.ronjunevaldoz.awake.scene.core.components.Transform
@@ -30,7 +31,7 @@ interface SceneInstantiationAdapter<Node, Instance> {
 
 class AwakeWorldSceneAdapter(
     private val world: World = World(),
-) : SceneInstantiationAdapter<Entity, SceneInstance> {
+) : SceneInstantiationAdapter<Entity, Scene> {
     private val renderableRequests = ArrayList<SceneRenderableRequest>()
 
     override fun createNode(node: SceneNode, parent: Entity?): Entity = world.create()
@@ -59,7 +60,7 @@ class AwakeWorldSceneAdapter(
         }
     }
 
-    override fun complete(roots: List<SceneNodeHandle<Entity>>): SceneInstance = SceneInstance(
+    override fun complete(roots: List<SceneNodeHandle<Entity>>): Scene = Scene(
         world = world,
         roots = roots.map { it.toSceneNodeInstance() },
         renderableRequests = renderableRequests.toList(),
@@ -74,7 +75,7 @@ internal fun SceneTransform.toComponent(parent: Entity?): Transform = Transform(
 )
 
 internal fun SceneCamera.toComponent(): SceneCameraComponent = SceneCameraComponent(
-    camera = Camera(
+    lens = Lens(
         eye = eye.toVec3(),
         center = center.toVec3(),
         up = up.toVec3(),
@@ -88,11 +89,18 @@ internal fun SceneCamera.toComponent(): SceneCameraComponent = SceneCameraCompon
 internal fun SceneLight.toComponent(): Light = Light(
     color = color.toVec3(),
     intensity = intensity,
+    range = range,
     type = when (type) {
         SceneLight.Type.Directional -> Light.Type.Directional
         SceneLight.Type.Point -> Light.Type.Point
     },
 )
+
+internal fun SceneMeshRenderer.CullMode.toCullMode(): CullMode = when (this) {
+    SceneMeshRenderer.CullMode.None -> CullMode.None
+    SceneMeshRenderer.CullMode.Back -> CullMode.Back
+    SceneMeshRenderer.CullMode.Front -> CullMode.Front
+}
 
 internal fun ScenePbrMaterial.toComponent(): PbrMaterial = PbrMaterial(
     metallic = metallic,
@@ -104,7 +112,7 @@ internal fun SceneSpinControl.toComponent(): SpinControl = SpinControl().also {
     it.speed = speed
 }
 
-internal fun SceneVec3.toVec3(): Vec3 = Vec3(x, y, z)
+internal fun SceneVec3.toVec3(): Vec3f = Vec3f(x, y, z)
 
 private fun degreesToRadians(degrees: Float): Float = degrees * (PI.toFloat() / 180f)
 

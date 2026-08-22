@@ -5,7 +5,7 @@ package io.github.ronjunevaldoz.awake.ui.designsystem
 import io.github.ronjunevaldoz.awake.testing.ui.inspectTextTruncation
 import io.github.ronjunevaldoz.awake.ui.UiSemanticRole
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.ShadcnDropdownMenuItem
 import io.github.ronjunevaldoz.awake.ui.designsystem.components.shadcnDropdownMenu
 import io.github.ronjunevaldoz.awake.ui.font.BitmapFont
@@ -28,7 +28,7 @@ class DropdownMenuIntrinsicWidthTest {
         val semantics = renderShadcnComponent(width = 640f, height = 400f, font = BitmapFont()) {
             shadcnDropdownMenu(
                 id = "camera-menu",
-                anchorSlot = UiBounds(120f, 80f, 0f, 0f),
+                anchorSlot = Rectangle(120f, 80f, 0f, 0f),
                 expanded = true,
                 items = listOf(
                     ShadcnDropdownMenuItem(label = "Perspective"),
@@ -46,7 +46,7 @@ class DropdownMenuIntrinsicWidthTest {
         val frame = renderShadcnComponent(width = 640f, height = 400f, font = BitmapFont()) {
             shadcnDropdownMenu(
                 id = "actions-menu",
-                anchorSlot = UiBounds(120f, 80f, 0f, 0f),
+                anchorSlot = Rectangle(120f, 80f, 0f, 0f),
                 expanded = true,
                 items = listOf(
                     ShadcnDropdownMenuItem(label = "Edit"),

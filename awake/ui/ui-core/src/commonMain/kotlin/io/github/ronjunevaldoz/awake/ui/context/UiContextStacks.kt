@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.context
 
-import io.github.ronjunevaldoz.awake.ui.UiPrimitiveTransform
-import io.github.ronjunevaldoz.awake.ui.UiShapeSpec
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiPrimitiveTransform
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiShapeSpec
 import io.github.ronjunevaldoz.awake.ui.font.UiFont
 import io.github.ronjunevaldoz.awake.ui.font.UiFonts
 import io.github.ronjunevaldoz.awake.ui.theme.TextStyle
@@ -63,8 +63,7 @@ internal class UiContextStacks {
     fun <T> current(local: UiLocal<T>): T = locals.current(local)
     fun <T> push(local: UiLocal<T>, value: T) = locals.push(local, value)
     fun <T> pop(local: UiLocal<T>) = locals.pop(local)
-    fun snapshot(): UiLocalSnapshot = locals.snapshot()
-    fun restore(snapshot: UiLocalSnapshot) = locals.restore(snapshot)
+    fun copyAmbientFrom(source: UiContextStacks) = locals.copyFrom(source.locals)
 
     fun pushTheme(theme: UiTheme) = locals.push(LocalTheme, theme)
     fun popTheme() = locals.pop(LocalTheme)

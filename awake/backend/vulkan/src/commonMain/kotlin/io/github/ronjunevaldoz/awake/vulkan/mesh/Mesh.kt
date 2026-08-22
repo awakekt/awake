@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.vulkan.mesh
 
-import io.github.ronjunevaldoz.awake.render.mesh.VertexFormat
+import io.github.ronjunevaldoz.awake.core.geometry.VertexFormat
 import io.github.ronjunevaldoz.awake.vulkan.device.GraphicsDevice
 import io.github.ronjunevaldoz.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import io.github.ronjunevaldoz.awake.vulkan.gen.VulkanBuffers
@@ -12,6 +12,7 @@ import io.github.ronjunevaldoz.awake.vulkan.models.info.VkBufferCreateInfo
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkBufferUsageFlagBits
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkIndexType
 import io.github.ronjunevaldoz.awake.vulkan.models.info.VkMemoryAllocateInfo
+import io.github.ronjunevaldoz.awake.vulkan.pipeline.VulkanBufferBinding
 import io.github.ronjunevaldoz.awake.render.mesh.Mesh as RenderMesh
 
 /**
@@ -49,6 +50,11 @@ class Mesh(
     var indexBufferMemory: DeviceMemoryHandle = DeviceMemoryHandle(0)
     val indexCount: Int = indices.size
 
+    /** The same two buffers above, as the port's opaque handle type -- built once here so the
+     * shared per-draw recording path allocates nothing per frame. */
+    val vertexBinding: VulkanBufferBinding
+    val indexBinding: VulkanBufferBinding
+
     init {
         val vertexBufferSize = (vertices.size * Float.SIZE_BYTES).toLong()
         val (vBuffer, vMemory) = createDeviceLocalBuffer(
@@ -72,6 +78,9 @@ class Mesh(
         )
         indexBuffer = BufferHandle(iBuffer)
         indexBufferMemory = DeviceMemoryHandle(iMemory)
+
+        vertexBinding = VulkanBufferBinding(vertexBuffer.handle)
+        indexBinding = VulkanBufferBinding(indexBuffer.handle)
     }
 
     /** Allocates a `byteSize`-byte HOST_VISIBLE staging buffer, writes into it via [write],

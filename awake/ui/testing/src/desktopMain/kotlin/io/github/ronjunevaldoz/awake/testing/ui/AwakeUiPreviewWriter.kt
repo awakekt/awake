@@ -4,6 +4,7 @@ package io.github.ronjunevaldoz.awake.testing.ui
 
 import java.io.File
 import javax.imageio.ImageIO
+import io.github.ronjunevaldoz.awake.core.math2d.toPx
 
 private val previewManifestLock = Any()
 
@@ -124,6 +125,13 @@ private fun saveDesignReport(scene: AwakeUiPreviewScene, outDir: File) {
             node.backgroundToken?.let { append("      \"backgroundToken\": \"${it.escapeJson()}\",\n") }
             node.foregroundToken?.let { append("      \"foregroundToken\": \"${it.escapeJson()}\",\n") }
             node.borderToken?.let { append("      \"borderToken\": \"${it.escapeJson()}\",\n") }
+            node.contentPadding?.let { padding ->
+                append("      \"contentPadding\": { \"start\": ${padding.start.toPx()}, \"top\": ${padding.top.toPx()}, \"end\": ${padding.end.toPx()}, \"bottom\": ${padding.bottom.toPx()} },\n")
+            }
+            node.widthStrategy?.let { append("      \"widthStrategy\": \"${it.escapeJson()}\",\n") }
+            node.heightStrategy?.let { append("      \"heightStrategy\": \"${it.escapeJson()}\",\n") }
+            node.borderWidth?.let { append("      \"borderWidth\": $it,\n") }
+            node.borderRadius?.let { append("      \"borderRadius\": $it,\n") }
             node.textStyleToken?.let { append("      \"textStyleToken\": \"${it.escapeJson()}\",\n") }
             append("      \"truncated\": ${node.truncated}\n")
             append("    }${if (index < scene.semantics.lastIndex) "," else ""}\n")

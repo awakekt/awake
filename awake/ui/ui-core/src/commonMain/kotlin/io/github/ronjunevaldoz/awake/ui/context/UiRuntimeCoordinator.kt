@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 package io.github.ronjunevaldoz.awake.ui.context
 
-import io.github.ronjunevaldoz.awake.ui.UiDrawPrimitive
+import io.github.ronjunevaldoz.awake.core.graphics2d.UiDrawPrimitive
 import io.github.ronjunevaldoz.awake.ui.UiInputState
 import io.github.ronjunevaldoz.awake.ui.UiSemanticNode
 import io.github.ronjunevaldoz.awake.ui.WidgetState
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 
 internal class UiRuntimeCoordinator(
     private val interaction: UiContextInteractionState = UiContextInteractionState(),
@@ -17,7 +17,7 @@ internal class UiRuntimeCoordinator(
 
     val inputState: UiInputState get() = frameState.inputState
     val frameDeltaSeconds: Float get() = frameState.frameDeltaSeconds
-    val fullFrameRect: UiBounds get() = frameState.fullFrameRect
+    val fullFrameRect: Rectangle get() = frameState.fullFrameRect
 
     fun beginFrame(
         screenWidth: Float,
@@ -62,8 +62,12 @@ internal class UiRuntimeCoordinator(
 
     fun semanticNodes(): List<UiSemanticNode> = finalizedFrameOutput?.semantics ?: frameState.semanticNodes()
 
-    fun hitTest(slot: UiBounds): Boolean =
-        interaction.hitTest(slot, frameState.inputState)
+    fun hitTest(slot: Rectangle, overlay: Boolean = false): Boolean =
+        interaction.hitTest(slot, frameState.inputState, overlay)
+
+    fun registerOverlayOcclusion(bounds: Rectangle, isModal: Boolean = false) {
+        interaction.registerOverlayOcclusion(bounds, isModal)
+    }
 
     fun isActive(id: String): Boolean = interaction.isActive(id)
 
@@ -99,9 +103,9 @@ internal class UiRuntimeCoordinator(
         frameState.recordSemantic(node)
     }
 
-    fun pushClip(rect: UiBounds, overlay: Boolean = false): UiBounds = frameState.pushClip(rect, overlay)
+    fun pushClip(rect: Rectangle, overlay: Boolean = false): Rectangle = frameState.pushClip(rect, overlay)
 
-    fun popClip(overlay: Boolean = false): UiBounds = frameState.popClip(overlay)
+    fun popClip(overlay: Boolean = false): Rectangle = frameState.popClip(overlay)
 
     fun pointerDownEdge(): Boolean = interaction.pointerDownEdge()
 

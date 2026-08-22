@@ -5,7 +5,7 @@ package io.github.ronjunevaldoz.awake.ui.layouts
 import io.github.ronjunevaldoz.awake.ui.api.layout.Dimension
 import io.github.ronjunevaldoz.awake.ui.api.layout.LayoutWeight
 import io.github.ronjunevaldoz.awake.ui.api.layout.UiAlignment
-import io.github.ronjunevaldoz.awake.ui.api.layout.UiBounds
+import io.github.ronjunevaldoz.awake.core.math2d.Rectangle
 import io.github.ronjunevaldoz.awake.ui.context.UiContext
 
 /**
@@ -28,6 +28,6 @@ class BoxScope internal constructor(
     override val fillWidth: Float? = this.width
     override val fillHeight: Float? = this.height
 
-    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): UiBounds =
-        UiBounds(x, y, this.width, this.height).also(context::recordMeasuredSlot)
+    override fun claimSlot(width: Dimension, height: Dimension, weight: LayoutWeight?): Rectangle =
+        Rectangle(x, y, this.width, this.height).also(context::recordMeasuredSlot)
 }
