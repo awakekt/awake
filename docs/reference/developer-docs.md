@@ -21,18 +21,16 @@ This currently builds:
 - module API references through `dokkaGeneratePublicationHtml`
 - the Game DSL tutorial guide at
   `awake/engine/game-authoring/build/reports/game-dsl-tutorials/index.html`
-- the UI DSL tutorial guide at
-  `awake/engine/ui-dsl/build/reports/ui-dsl-tutorials/index.html`
-- the UI snapshot gallery at
-  `awake/engine/ui/ui-headless/build/reports/ui-snapshots/index.html`
-- the curated UI tutorial guide at
-  `awake/engine/ui/ui-headless/build/reports/ui-tutorials/index.html`
+- the UI showcase preview gallery at
+  `samples/ui-showcase/build/reports/ui-previews/index.html`
+- the Compose UI snapshot gallery at
+  `awake/compose/ui-testing/build/reports/ui-snapshots/index.html`
 
 The rollout tracker for module-by-module coverage lives in
 `docs/reference/tutorial-coverage.md`.
 
-The DSL module map and recommended composition style live in
-`docs/reference/dsl-modules.md`.
+The retired immediate-mode DSL map is preserved in
+`docs/archive/2026-08-28-retired-dsl-modules.md`; it is not current API guidance.
 
 The root game-shell cookbook lives in
 `docs/reference/game-dsl.md`.
@@ -98,7 +96,7 @@ Every published module should keep its KDoc good enough that Dokka is worth open
 
 Use snapshot-backed guides for:
 
-- the declarative UI facade in `awake:engine:ui-dsl`
+- the retained Compose-shaped UI facade in `awake:compose:ui` and `awake:compose:foundation`
 - UI widgets
 - style composition
 - layout patterns
@@ -110,51 +108,41 @@ signature?"
 
 ## Unified UI Component Lookup
 
-`samples/ui-showcase`'s page-level preview gallery and `ui-headless`'s bare-widget snapshot
-gallery are two separate Gradle report tasks (they live in different modules on opposite sides
-of the module graph -- see `docs/architecture.md`'s Module Graph -- so merging them into one
-Kotlin test would require an illegal cross-module dependency). Instead, a root-level task reads
-both modules' already-generated output after the fact and writes one merged, searchable page:
+`samples/ui-showcase` writes the branded component gallery, while `:awake:compose:ui-testing`
+writes reusable UI snapshot output:
 
 ```bash
-./gradlew :samples:ui-showcase:desktopTest :awake:ui:headless:desktopTest uiComponentLookupReport
+./gradlew :samples:ui-showcase:uiPreviewReport :awake:compose:ui-testing:desktopTest
 ```
 
-This regenerates `build/reports/ui-component-lookup/index.html`: every card is tagged with its
-source module (`ui-showcase` or `ui-headless`) for correct attribution, and a plain-JS text
-filter (`oninput` substring match against id/title/group/source, no search backend or index
-library) narrows the list as you type a component name.
+A root-level `uiComponentLookupReport` used to merge the two into one searchable page. It was
+deleted: it named a task and a project path that had both been renamed, so it could not configure
+at all, and the per-component preview images it existed to index are now written directly by the
+tests that produce them.
 
 ## Live Preview Loop
 
-For fast iteration on `samples/ui-showcase` pages, `ui-headless` widgets, or the
-`ui-designsystem` components either renders, don't run the full `desktopTest` suite for either
-module -- it runs every test, including unrelated pre-existing failures. Instead, scope to the
-two narrow test classes that write the preview/snapshot galleries, then regenerate the merged
-lookup:
+For fast iteration, scope to the narrow test classes that write the galleries rather than running
+either module's full `desktopTest`:
 
 ```bash
 ./gradlew \
     :samples:ui-showcase:desktopTest --tests "*UiShowcasePreviewDocsTest*" \
-    :awake:ui:headless:desktopTest --tests "*UiSnapshotTest*" \
-    uiComponentLookupReport \
+    :awake:compose:ui-testing:desktopTest --tests "*CaptureImageTest*" \
     --continuous
 ```
 
-`--continuous` is Gradle's own file-watch mode: it watches the inputs of every task in the
-graph (so edits to `ui-designsystem`/`ui-headless` sources that either gallery depends on
-trigger a rebuild too, not just edits inside the two test classes themselves) and reruns the
-whole requested task graph on change -- regenerating both source reports and then
-`build/reports/ui-component-lookup/index.html` in a few seconds per change, since
-`uiShowcasePreviewReport`/`uiSnapshotReport` are each `finalizedBy` their test task and
-`uiComponentLookupReport` runs after both (`mustRunAfter`).
+`--continuous` is Gradle's own file-watch mode: it watches the inputs of every task in the graph,
+so edits to `ui:designsystem`/`compose:foundation` sources that either gallery depends on trigger a
+rebuild too, not just edits inside the two test classes. Each report task is `finalizedBy` its
+test task, so both galleries regenerate on change.
 
 To also auto-reload an open browser tab, run the wrapper script instead, which pairs the
 same `--continuous` task graph with a tiny static file server that injects a reload-on-change
 poll into the served HTML:
 
 ```bash
-./tools/ui_preview_watch.sh 8090
+./skills/awake-ui-verification/scripts/ui_preview_watch.sh 8090
 # open http://127.0.0.1:8090
 ```
 
@@ -177,7 +165,7 @@ more than one is run at once). `.claude/launch.json`'s `port` field must match t
 | 8085 | `samples/hello-cube` prod preview | `:samples:hello-cube:wasmJsBrowserProductionRun` |
 | 8086 | `samples/studio` dev | `:samples:studio:wasmJsBrowserDevelopmentRun` |
 | 8087 | `samples/studio` prod preview | `:samples:studio:wasmJsBrowserProductionRun` |
-| 8090 | `tools/ui_preview_watch.sh` / `ui_preview_server.py` | live-reload static file server |
+| 8090 | `skills/awake-ui-verification/scripts/ui_preview_watch.sh` / `ui_preview_server.py` | live-reload static file server |
 
 Convention: when adding a new dev-server tool (a new sample's wasmJs target, a new preview
 script, etc.), reserve the next free port in this range, wire it into the module's
@@ -203,22 +191,19 @@ This is the fastest way to diagnose a layout/inset bug (an asymmetric padding, a
 clipped node, a bounds rect that doesn't match what a component's modifier requested) without
 manually cropping pixels out of a screenshot: toggle F3, take one screenshot, read the outlines.
 
-The underlying primitives live in
-`awake/engine/ui/ui-core/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/UiDebugOverlay.kt`;
-the toggle wiring (key state, the append-after-`finishFrame()` step) lives in
-`awake/engine/game-authoring/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/engine/application/GameUiRuntime.kt`.
+The debug overlay is owned by the retained Compose UI runtime; use the semantic bounds and raster
+output from `:awake:compose:ui-testing` for verification. The application UI runtime owns the
+toggle wiring and appends the overlay after the frame is finished.
 F3 is mapped to `Key.F3` in both input backends -- GLFW (desktop,
-`awake/backend/vulkan/src/desktopMain/kotlin/io/github/ronjunevaldoz/awake/vulkan/application/GlfwInputBridge.kt`)
+`awake/backend/vulkan/src/desktopMain/kotlin/io/github/awakelab/awake/vulkan/application/GlfwInputBridge.kt`)
 and DOM keyboard events (wasmJs,
-`awake/backend/webgpu/src/wasmJsMain/kotlin/io/github/ronjunevaldoz/awake/webgpu/application/WebGpuCanvasHost.kt`)
+`awake/backend/webgpu/src/wasmJsMain/kotlin/io/github/awakelab/awake/webgpu/application/WebGpuCanvasHost.kt`)
 so it works identically on both.
 
 ## Adding a UI Tutorial
 
-1. Add or update a curated test in either:
-  - `awake/engine/ui-dsl/src/desktopTest/kotlin/io/github/ronjunevaldoz/awake/ui/snapshot/UiDslTutorialDocsTest.kt`
-   - `awake/engine/ui/ui-headless/src/desktopTest/kotlin/io/github/ronjunevaldoz/awake/ui/snapshot/UiTutorialDocsTest.kt`
-2. Render the example with `saveUiTutorialSnapshot(...)`
+1. Add or update a focused test under `awake/compose/ui-testing` or the owning design-system/sample module.
+2. Render the example with `composeFrame(...)` or `composeTestSession(...)`.
 3. Keep the title and summary short and tutorial-oriented
 4. Add machine-checkable validation for semantics, text fit, clipping, and state coverage per
    `docs/reference/ui-validation.md`

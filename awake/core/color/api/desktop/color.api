@@ -1,0 +1,36 @@
+public final class io/github/awakelab/awake/core/color/Color {
+	public static final field Companion Lio/github/awakelab/awake/core/color/Color$Companion;
+	public fun <init> ()V
+	public fun <init> (FFFF)V
+	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun brighten (F)Lio/github/awakelab/awake/core/color/Color;
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lio/github/awakelab/awake/core/color/Color;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/color/Color;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/color/Color;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun get (I)F
+	public final fun getA ()F
+	public final fun getB ()F
+	public final fun getG ()F
+	public final fun getR ()F
+	public fun hashCode ()I
+	public final fun isTransparent ()Z
+	public final fun lerp (Lio/github/awakelab/awake/core/color/Color;F)Lio/github/awakelab/awake/core/color/Color;
+	public final fun toFloatArray ()[F
+	public fun toString ()Ljava/lang/String;
+	public final fun withAlpha (F)Lio/github/awakelab/awake/core/color/Color;
+}
+
+public final class io/github/awakelab/awake/core/color/Color$Companion {
+	public final fun fromChannels ([F)Lio/github/awakelab/awake/core/color/Color;
+	public final fun fromHex (IF)Lio/github/awakelab/awake/core/color/Color;
+	public final fun fromHex (Ljava/lang/String;)Lio/github/awakelab/awake/core/color/Color;
+	public static synthetic fun fromHex$default (Lio/github/awakelab/awake/core/color/Color$Companion;IFILjava/lang/Object;)Lio/github/awakelab/awake/core/color/Color;
+	public final fun getBlack ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getTransparent ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getWhite ()Lio/github/awakelab/awake/core/color/Color;
+}
+

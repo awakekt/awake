@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "name": "nav-chase",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 8.0, "y": 17.0, "z": 27.0 },
+          "center": { "x": 8.0, "y": 0.0, "z": 8.0 },
+          "fovYDegrees": 48.0,
+          "near": 0.1,
+          "far": 120.0,
+          "primary": true
+        }
+      ]
+    },
+    {
+      "name": "nav-terrain",
+      "components": [
+        { "component": "meshRenderer", "mesh": "nav-terrain", "material": "lit-shadow", "cullMode": "Back" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.9 }
+      ]
+    },
+    {
+      "name": "nav-target",
+      "transform": { "position": { "x": 3.0, "y": 0.5, "z": 3.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+      ]
+    },
+    {
+      "name": "nav-chaser",
+      "transform": { "position": { "x": 3.0, "y": 0.5, "z": 14.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+      ]
+    },
+    {
+      "name": "light",
+      "components": [
+        { "component": "light", "type": "Directional" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:DrawWithCache.kt$DrawWithCacheNode$cachedResult == null || w != lastWidth || h != lastHeight || d != lastDensity || ld != lastLayoutDirection</ID>
+    <ID>CyclomaticComplexMethod:ComposeHost.kt$ComposeHost$private fun dispatchInput(input: FrameInput)</ID>
+    <ID>CyclomaticComplexMethod:ComposeHost.kt$ComposeHost$private fun dispatchTouchInput(input: FrameInput)</ID>
+    <ID>CyclomaticComplexMethod:FocusOwner.kt$FocusOwner$private fun moveSpatial(root: LayoutNode, direction: FocusDirection): Boolean</ID>
+    <ID>CyclomaticComplexMethod:LayoutNode.kt$LayoutNode$private fun rebuildChain()</ID>
+    <ID>CyclomaticComplexMethod:PointerInputDispatcher.kt$PointerInputDispatcher$private fun descendInto(into: MutableList&lt;LayoutNode>, node: LayoutNode, x: Int, y: Int)</ID>
+    <ID>LongMethod:DrawScope.kt$PaintScope$override fun drawLayer( alpha: Float, scaleX: Float, scaleY: Float, translationX: Float, translationY: Float, rotationDegrees: Float, blendMode: BlendMode, renderEffect: RenderEffect?, shadowElevation: Dp, shape: Shape, drawContent: () -> Unit, )</ID>
+    <ID>LongMethod:FocusOwner.kt$FocusOwner$private fun moveSpatial(root: LayoutNode, direction: FocusDirection): Boolean</ID>
+    <ID>LongMethod:LayoutNode.kt$LayoutNode$private fun rebuildChain()</ID>
+    <ID>LongParameterList:DrawModifiers.kt$GraphicsLayerElement$( private val alpha: Float, private val scaleX: Float, private val scaleY: Float, private val translationX: Float, private val translationY: Float, private val rotationDegrees: Float, private val blendMode: BlendMode, private val renderEffect: RenderEffect?, private val shadowElevation: Dp, private val shape: Shape, )</ID>
+    <ID>LongParameterList:DrawScope.kt$LayerDrawScope$( alpha: Float, scaleX: Float, scaleY: Float, translationX: Float, translationY: Float, rotationDegrees: Float, blendMode: BlendMode, renderEffect: RenderEffect?, shadowElevation: Dp, shape: Shape, drawContent: () -> Unit, )</ID>
+    <ID>LongParameterList:DrawScope.kt$LayerDrawScope$( path: DrawPath, color: Color, x: Float, y: Float, width: Float, height: Float, offsetX: Float, offsetY: Float, blurRadius: Float, rotationDegrees: Float = 0f, )</ID>
+    <ID>LongParameterList:Layout.kt$LayerPositionProvider$( parentX: Int, parentY: Int, layerWidth: Int, layerHeight: Int, viewportWidth: Int, viewportHeight: Int, )</ID>
+    <ID>LoopWithTooManyJumpStatements:FocusOwner.kt$FocusOwner$for</ID>
+    <ID>ReturnCount:FocusOwner.kt$FocusOwner$fun moveFocus(root: LayoutNode, direction: FocusDirection): Boolean</ID>
+    <ID>ReturnCount:KeyInputDispatcher.kt$KeyInputDispatcher$fun handleFocusTraversal(root: LayoutNode, event: KeyEvent): Boolean</ID>
+    <ID>ReturnCount:LayoutNode.kt$LayoutNode$private fun retainModifierNode(index: Int, element: Modifier.Element): Any</ID>
+    <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$fun dispatch(root: LayoutNode, event: PointerEvent, x: Int, y: Int, dx: Int = 0, dy: Int = 0): Boolean</ID>
+    <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$private fun descendInto(into: MutableList&lt;LayoutNode>, node: LayoutNode, x: Int, y: Int)</ID>
+    <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$private fun hitDetachedLayer(into: MutableList&lt;LayoutNode>, node: LayoutNode, x: Int, y: Int): Boolean</ID>
+    <ID>TooManyFunctions:DrawModifiers.kt$io.github.awakelab.awake.compose.ui.draw.DrawModifiers.kt</ID>
+    <ID>TooManyFunctions:DrawScope.kt$DrawScope</ID>
+    <ID>TooManyFunctions:LayoutNode.kt$LayoutNode : PlaceableMeasurableRememberHolder</ID>
+    <ID>TooManyFunctions:PointerInputDispatcher.kt$PointerInputDispatcher</ID>
+  </CurrentIssues>
+</SmellBaseline>

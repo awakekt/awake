@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:ShadcnInputOtp.kt$fun ShadcnInputOtp( state: TextFieldState, length: Int = 6, modifier: Modifier = Modifier, enabled: Boolean = true, isError: Boolean = false, groupSize: Int = 0, pattern: Regex? = null, )</ID>
+    <ID>CyclomaticComplexMethod:ShadcnSelect.kt$private fun ShadcnSelectContent( items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, highlightedIndex: Int?, modifier: Modifier, id: String, ): Int?</ID>
+    <ID>CyclomaticComplexMethod:ShadcnSelect.kt$private fun handleSelectKey( event: KeyEvent, items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, expanded: Boolean, state: SelectKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, ): Boolean</ID>
+    <ID>LongMethod:ShadcnCombobox.kt$private fun ShadcnComboboxContent( items: List&lt;ShadcnComboboxItem>, selectedIndex: Int?, searchState: TextFieldState, emptyText: String, modifier: Modifier, id: String, ): Int?</ID>
+    <ID>LongMethod:ShadcnInputOtp.kt$fun ShadcnInputOtp( state: TextFieldState, length: Int = 6, modifier: Modifier = Modifier, enabled: Boolean = true, isError: Boolean = false, groupSize: Int = 0, pattern: Regex? = null, )</ID>
+    <ID>LongMethod:ShadcnSelect.kt$private fun ShadcnSelectContent( items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, highlightedIndex: Int?, modifier: Modifier, id: String, ): Int?</ID>
+    <ID>LongMethod:ShadcnSlider.kt$fun ShadcnRangeSlider( start: Float, end: Float, modifier: Modifier = Modifier, min: Float = 0f, max: Float = 1f, steps: Int = 0, enabled: Boolean = true, onStartChange: (Float) -> Unit = {}, onEndChange: (Float) -> Unit = {}, )</ID>
+    <ID>LongMethod:ShadcnSlider.kt$fun ShadcnSlider( value: Float, modifier: Modifier = Modifier, min: Float = 0f, max: Float = 1f, steps: Int = 0, enabled: Boolean = true, onValueChange: (Float) -> Unit = {}, )</ID>
+    <ID>LongParameterList:ShadcnButton.kt$( modifier: Modifier, variant: ShadcnButtonVariant, size: ShadcnButtonSizeVariant, enabled: Boolean, onClick: () -> Unit, shape: Shape?, borderSides: BorderSides, hasIcon: Boolean, content: context(Composer) () -> Unit, )</ID>
+    <ID>LongParameterList:ShadcnCombobox.kt$( items: List&lt;ShadcnComboboxItem>, selectedIndex: Int?, searchState: TextFieldState, emptyText: String, modifier: Modifier, id: String, )</ID>
+    <ID>LongParameterList:ShadcnDropdownMenu.kt$( event: KeyEvent, entries: List&lt;ShadcnMenuEntry>, expanded: Boolean, state: MenuKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, )</ID>
+    <ID>LongParameterList:ShadcnSelect.kt$( event: KeyEvent, items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, expanded: Boolean, state: SelectKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, )</ID>
+    <ID>LongParameterList:ShadcnSelect.kt$( items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, expanded: Boolean, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, id: String, modifier: Modifier = Modifier, placeholder: String = "Select...", enabled: Boolean = true, )</ID>
+    <ID>MatchingDeclarationName:ShadcnCombobox.kt$ShadcnComboboxItem</ID>
+    <ID>MatchingDeclarationName:ShadcnSelect.kt$ShadcnSelectItem</ID>
+    <ID>MatchingDeclarationName:ShadcnSidebarShell.kt$SidebarState</ID>
+    <ID>NestedBlockDepth:ShadcnStylePresetVerificationTest.kt$ShadcnStylePresetVerificationTest$@Test fun everyPresetResolvesACompleteThemeAcrossEveryBaseColorAndMode()</ID>
+    <ID>ReturnCount:ShadcnDropdownMenu.kt$private fun List&lt;ShadcnMenuEntry>.nextEnabledIndex(current: Int?, forward: Boolean): Int?</ID>
+    <ID>ReturnCount:ShadcnDropdownMenu.kt$private fun handleMenuKey( event: KeyEvent, entries: List&lt;ShadcnMenuEntry>, expanded: Boolean, state: MenuKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, ): Boolean</ID>
+    <ID>ReturnCount:ShadcnSelect.kt$private fun List&lt;ShadcnSelectItem>.nextEnabledIndex(current: Int?, forward: Boolean): Int?</ID>
+    <ID>ReturnCount:ShadcnSelect.kt$private fun handleSelectKey( event: KeyEvent, items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, expanded: Boolean, state: SelectKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, ): Boolean</ID>
+    <ID>ReturnCount:ShadcnSlider.kt$private fun handleSliderKey(event: KeyEvent, min: Float, max: Float, steps: Int, state: SliderDragState): Boolean</ID>
+    <ID>TooManyFunctions:ShadcnSidebarShell.kt$io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarShell.kt</ID>
+    <ID>TopLevelPropertyNaming:ShadcnCheckboxStyle.kt$/** Source Checkbox's `disabled:opacity-50`. */ internal const val ShadcnCheckboxDisabledAlpha = 0.5f</ID>
+    <ID>TopLevelPropertyNaming:ShadcnProgressStyle.kt$/** Source Progress track's `bg-primary/20`. */ internal const val ShadcnProgressTrackAlpha = 0.2f</ID>
+    <ID>TopLevelPropertyNaming:ShadcnTabsStyle.kt$/** Source inactive TabsTrigger's `text-foreground/60`. */ internal const val ShadcnTabsInactiveAlpha = 0.6f</ID>
+    <ID>VariableNaming:ShadcnVisualBaselineTest.kt$ShadcnVisualBaselineTest$/** Long enough for a toggled overlay to reach full opacity before it is captured. */ private val SETTLE_FRAMES = 20</ID>
+    <ID>VariableNaming:ShadcnVisualBaselineTest.kt$ShadcnVisualBaselineTest$private val OVERLAY_HEIGHT = 220</ID>
+    <ID>VariableNaming:ShadcnVisualBaselineTest.kt$ShadcnVisualBaselineTest$private val OVERLAY_WIDTH = 360</ID>
+    <ID>VariableNaming:ShadcnVisualBaselineTest.kt$ShadcnVisualBaselineTest$private val Theme = ShadcnThemeValues(ShadcnTheme)</ID>
+  </CurrentIssues>
+</SmellBaseline>

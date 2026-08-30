@@ -1,0 +1,19 @@
+public final class io/github/awakelab/awake/engine/compose/ComposeAppModuleKt {
+	public static final fun composeAppModule (Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/core/text/font/UiFont;Z)Lio/github/awakelab/awake/engine/platform/core/AppModule;
+	public static synthetic fun composeAppModule$default (Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/core/text/font/UiFont;ZILjava/lang/Object;)Lio/github/awakelab/awake/engine/platform/core/AppModule;
+}
+
+public final class io/github/awakelab/awake/engine/compose/ComposeAppRuntime {
+	public final fun getCursor ()Lio/github/awakelab/awake/core/input/PointerCursor;
+	public final fun getHost ()Lio/github/awakelab/awake/compose/ui/platform/ComposeHost;
+	public final fun getInputOwnership ()Lio/github/awakelab/awake/compose/ui/platform/InputOwnership;
+	public final fun getLastFrame ()Lio/github/awakelab/awake/compose/ui/platform/FrameOutput;
+	public final fun getRenderer ()Lio/github/awakelab/awake/render/renderer/Renderer;
+}
+
+public final class io/github/awakelab/awake/engine/compose/GraphicsLayerCompositor {
+	public fun <init> ()V
+	public final fun composite (Lio/github/awakelab/awake/render/renderer/Renderer;Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/core/text/font/UiFont;II)Ljava/util/List;
+	public final fun dispose ()V
+}
+

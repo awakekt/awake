@@ -3,15 +3,16 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>DestructuringDeclarationWithTooManyEntries:Mat4TranslationScaleTest.kt$Mat4TranslationScaleTest$val (x, y, z, scale) = case.toList()</ID>
+    <ID>LongParameterList:CameraMathUtils.kt$CameraMathUtils$( currentPos: Vec3f, yaw: Float, pitch: Float, moveInput: Vec3f, speed: Float, dt: Float, outPos: Vec3f, )</ID>
+    <ID>LongParameterList:CameraMathUtils.kt$CameraMathUtils$( targetPos: Vec3f, targetOffset: Vec3f, yaw: Float, pitch: Float, distance: Float, outCenter: Vec3f, outEye: Vec3f, )</ID>
     <ID>MatchingDeclarationName:LensTest.kt$CameraTest</ID>
     <ID>MatchingDeclarationName:Matrix.kt$Mat4</ID>
     <ID>MatchingDeclarationName:Occlusion.kt$ScreenBounds</ID>
+    <ID>ReturnCount:CameraMathUtils.kt$CameraMathUtils$fun applyZoom( state: CameraPoseState, zoomDelta: Float, rate: Float = 0.1f, minDistance: Float = 3.0f, maxDistance: Float = 3000.0f, ): Boolean</ID>
+    <ID>TooManyFunctions:CameraMathUtils.kt$CameraMathUtils</ID>
     <ID>TooManyFunctions:Matrix.kt$Mat4</ID>
     <ID>TooManyFunctions:Vec3d.kt$Vec3d</ID>
     <ID>TooManyFunctions:Vec3f.kt$Vec3f</ID>
     <ID>TooManyFunctions:Vec3i.kt$Vec3i</ID>
-    <ID>VariableNaming:Matrix.kt$Mat4$val sx_ = sin(rx)</ID>
-    <ID>VariableNaming:Matrix.kt$Mat4$val sy_ = sin(ry)</ID>
-    <ID>VariableNaming:Matrix.kt$Mat4$val sz_ = sin(rz)</ID>
   </CurrentIssues>
 </SmellBaseline>

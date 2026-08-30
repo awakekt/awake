@@ -1,11 +1,12 @@
-# Module Awake ECS
+# Awake ECS
 
 A small, dependency-free sparse-set Entity Component System for Kotlin Multiplatform
 (Android, iOS, JVM/desktop, Web/wasmJs). Built in-house for the [Awake](../../README.md) engine
 instead of adopting an existing library (Fleks, Artemis-odb, Ashley) — see
 [docs/ecs-benchmark-scorecard.md](../../docs/ecs-benchmark-scorecard.md) for the real,
 same-JVM benchmark comparison that justifies this, and
-[awake-engine-core-engineer.md](../../.claude/agents/awake-engine-core-engineer.md) for the architecture rationale.
+[awake-engine-core-engineer.md](../../.claude/agents/awake-engine-core-engineer.md) for the
+architecture rationale.
 
 **The core tradeoff:** family membership is maintained on every structural change, so
 iteration walks a packed array with no matching work. That buys roughly 5-6x faster query
@@ -17,13 +18,22 @@ thread, matching this project's Vulkan threading model.
 
 ## Installation
 
-```kotlin
-implementation("io.github.ronjunevaldoz:awake-ecs:0.1.0-dev.5-SNAPSHOT")
+Not on Maven Central. `build-and-publish.yml` publishes the `vulkan-kmp` artifacts only, so this
+module has never been released — build it locally with `./gradlew publishToMavenLocal` and take it
+from there:
 
+```kotlin
 repositories {
-    maven("https://s01.oss.sonatype.org/content/repositories/snapshots")
+    mavenLocal()
+}
+
+dependencies {
+    implementation("io.github.awake-lab:ecs:<version>")
 }
 ```
+
+The version is derived from `git describe`, so it follows your checkout — print it with
+`./gradlew :awake:ecs:properties | grep version`.
 
 ## Core concepts
 
@@ -40,7 +50,7 @@ repositories {
 ## Quick start
 
 ```kotlin
-import io.github.ronjunevaldoz.awake.ecs.World
+import io.github.awakelab.awake.ecs.World
 
 data class Position(var x: Float, var y: Float)
 data class Velocity(var dx: Float, var dy: Float)
@@ -84,6 +94,18 @@ world.has<Position>(entity)               // Boolean
 world.remove<Position>(entity)            // Position? -- the removed value, or null
 ```
 
+To ask what an entity is made of rather than whether it has one specific component:
+
+```kotlin
+world.componentTypes(entity)              // List<KClass<out Any>>, registration order
+                                          // empty for a dead entity
+```
+
+Types, not values — a heterogeneous set of components has no type-safe representation, so read
+each one back with `get`. This is what an inspector, a debug overlay or a serializer wants;
+`inspectStorage(entity)` returns the same set with each type's storage kind and count attached,
+which is a question about performance rather than about the entity.
+
 Payload-free marker components should be singleton objects implementing `EcsTag`:
 
 ```kotlin
@@ -100,11 +122,11 @@ be a Kotlin `object`; a class producing multiple instances is rejected.
 
 Each of these has three overloads. Pick by call frequency:
 
-| Overload | Use for | Cost it avoids |
-|---|---|---|
-| `world.add<Position>(entity, c)` | one-off calls | — |
-| `world.add(entity, type, c)` | loops, `type` hoisted | re-deriving the reified type token |
-| `world.add(entity, typeId, c)` | hot loops | the above, plus the `KClass` map lookup |
+| Overload                         | Use for               | Cost it avoids                          |
+|----------------------------------|-----------------------|-----------------------------------------|
+| `world.add<Position>(entity, c)` | one-off calls         | —                                       |
+| `world.add(entity, type, c)`     | loops, `type` hoisted | re-deriving the reified type token      |
+| `world.add(entity, typeId, c)`   | hot loops             | the above, plus the `KClass` map lookup |
 
 ```kotlin
 // Hot loop: hoist the ComponentTypeId once, outside the loop
@@ -122,7 +144,8 @@ pooled instances instead of allocating fresh ones on every `add`/`remove`:
 ```kotlin
 world.registerPool(Position::class) { Position(0f, 0f) }
 
-val entity = world.spawn<Position> { it.x = 1f; it.y = 2f }   // create() + pooled add<T>() + init block
+val entity =
+    world.spawn<Position> { it.x = 1f; it.y = 2f }   // create() + pooled add<T>() + init block
 world.destroy(entity)                                          // Position instance returns to the pool
 ```
 
@@ -131,7 +154,9 @@ the pool (on `remove`/`destroy`), so the next `obtain()` doesn't hand back stale
 
 ```kotlin
 data class Position(var x: Float = 0f, var y: Float = 0f) : Poolable {
-    override fun reset() { x = 0f; y = 0f }
+    override fun reset() {
+        x = 0f; y = 0f
+    }
 }
 ```
 
@@ -232,11 +257,13 @@ a `Map`/`Set` keyed by `Entity`, to avoid boxing the value class on every frame)
 
 - No archetype/table storage — sparse-set per component type plus maintained dense family
   caches instead. The measured decision lives in
-  [`docs/tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md`](../../docs/tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md).
+  [
+  `docs/tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md`](../../docs/tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md).
 - No bulk/batch structural mutation API — `add`/`remove` apply immediately. A benchmarked
   deferred-rebuild prototype only beat the immediate path when a batch touched roughly the
   entire world at once, which is not a workload this engine runs. See
-  [`docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md`](../../docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md).
+  [
+  `docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md`](../../docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md).
 - No built-in scheduler, job system, or parallelism — single-threaded by design.
 - No serialization at this layer — component types are plain data classes; use whatever
   serialization approach fits your game (`awake-scene`'s scene runtime uses

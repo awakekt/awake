@@ -1,0 +1,1 @@
+--8<-- "awake/backend/vulkan/bindings/README.md"

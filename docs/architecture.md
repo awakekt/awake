@@ -2,7 +2,7 @@
 
 Awake is a Kotlin Multiplatform game engine library: a Vulkan-first cross-platform renderer
 (Android/iOS/desktop, with WebGPU covering wasmJs) evolving toward a full KMP engine with ECS,
-a Compose-style scene API, an immediate-mode UI stack, and a desktop editor.
+a Compose-style scene API, a retained Compose-shaped UI stack, and a desktop editor.
 
 ## Read This With
 
@@ -20,7 +20,7 @@ a Compose-style scene API, an immediate-mode UI stack, and a desktop editor.
 ## Module Shape
 
 Arrows point from a module to the modules that depend on it. Only `main`-source Gradle
-dependencies are drawn; test-only edges (mostly into `awake:ui:testing`) and the standalone
+dependencies are drawn; test-only edges (mostly into `awake:compose:ui-testing`) and the standalone
 tooling/benchmark modules are listed in the table instead.
 
 ```mermaid
@@ -32,15 +32,17 @@ flowchart TD
 
     subgraph assets["awake:asset"]
         gltf["gltf"]
+        terrain["terrain"]
         shaders["shaders"]
     end
 
     subgraph engine["awake:engine"]
         renderContract["render:contract"]
         renderPasses["render:passes"]
+        renderPasses2d["render:passes2d"]
+        renderTesting["render:testing"]
         platform["platform"]
         platformAuthoring["platform-authoring"]
-        engineApp["app"]
     end
 
     subgraph sceneModules["awake:scene"]
@@ -53,15 +55,14 @@ flowchart TD
         scene["awake:scene (facade)"]
     end
 
-    subgraph uiModules["awake:ui"]
-        uiGraphics["graphics<br/>contract values"]
-        uiText["text"]
-        uiCore["ui-core<br/>runtime mechanics"]
-        uiAnimation["animation"]
-        uiHeroicons["heroicons"]
-        uiHeadless["headless<br/>generic behavior + neutral visuals"]
+    subgraph uiModules["awake:compose + awake:ui"]
+        composeRuntime["compose:runtime<br/>retained composition"]
+        composeUi["compose:ui<br/>layout and drawing"]
+        composeFoundation["compose:foundation<br/>neutral controls"]
+        composeTesting["compose:ui-testing<br/>verification"]
         uiTailwind["tailwind"]
-        uiDesignsystem["designsystem<br/>branded recipes + variants"]
+        uiMaterial3["ui:material3<br/>Material 3 recipes"]
+        uiShadcn["ui:shadcn<br/>shadcn recipes + variants"]
     end
 
     subgraph backends["awake:backend"]
@@ -79,6 +80,8 @@ flowchart TD
     core --> gltf
     geometry --> gltf
     coreAnim --> gltf
+    core --> terrain
+    geometry --> terrain
     core --> shaders
     renderContract --> shaders
     core --> physicsApi
@@ -86,18 +89,15 @@ flowchart TD
     physicsApi --> jolt
 
     core --> renderContract
-    uiCore --> renderContract
+    composeUi --> renderContract
     renderContract --> renderPasses
+    renderContract --> renderPasses2d
+    renderPasses --> renderPasses2d
+    renderContract --> renderTesting
     core --> platform
     renderContract --> platform
-    uiCore --> platform
+    composeUi --> platform
     platform --> platformAuthoring
-    uiHeadless --> platformAuthoring
-    platform --> engineApp
-    renderContract --> engineApp
-    shaders --> engineApp
-    vulkan --> engineApp
-    webgpu --> engineApp
 
     core --> sceneCore
     ecs --> sceneCore
@@ -151,10 +151,10 @@ flowchart TD
     core --> uiTailwind
     uiGraphics --> uiTailwind
     uiHeadless --> uiTailwind
-    uiCore --> uiDesignsystem
-    uiHeadless --> uiDesignsystem
-    uiHeroicons --> uiDesignsystem
-    uiTailwind --> uiDesignsystem
+    composeFoundation --> uiMaterial3
+    composeFoundation --> uiShadcn
+    uiHeroicons --> uiShadcn
+    uiTailwind --> uiShadcn
 
     core --> vkBindings
     vkAndroidNative --> vkBindings
@@ -162,6 +162,7 @@ flowchart TD
     uiCore --> vulkan
     renderContract --> vulkan
     renderPasses --> vulkan
+    renderPasses2d --> vulkan
     platform --> vulkan
     shaders --> vulkan
     vkBindings --> vulkan
@@ -169,6 +170,7 @@ flowchart TD
     uiCore --> webgpu
     renderContract --> webgpu
     renderPasses --> webgpu
+    renderPasses2d --> webgpu
     platform --> webgpu
     shaders --> webgpu
     scene --> webgpu
@@ -184,7 +186,8 @@ flowchart TD
     sceneAuthoring --> samples
     uiCore --> samples
     uiHeroicons --> samples
-    uiDesignsystem --> samples
+    uiMaterial3 --> samples
+    uiShadcn --> samples
     vulkan --> samples
     webgpu --> samples
 ```
@@ -197,6 +200,7 @@ flowchart TD
 | `:awake:core:geometry`                          | Dependency-free mesh geometry utilities: `MeshSimplifier`, `NormalizedInt` vertex packing                                                                                                                                                                                          | yes           |
 | `:awake:core:animation`                         | Skeletal animation data and sampling: `AnimationClip`, `AnimationPose`, `AnimationCrossfade`, `Skeleton`, `Skin`                                                                                                                                                                   | yes           |
 | `:awake:asset:gltf`                             | glTF/GLB parsing and asset import, split out of `awake:core`                                                                                                                                                                                                                       | yes           |
+| `:awake:asset:terrain`                          | Backend-neutral immutable heightmaps and `PositionNormalColor` grid-mesh generation; physics conversion and renderer policy remain with consumers                                                                                                                                    | yes           |
 | `:awake:asset:mesh-optimizer`                   | Standalone JVM CLI that pre-simplifies glTF meshes offline via `core:geometry`                                                                                                                                                                                                     | not published |
 | `:awake:asset:shaders`                          | Shared engine shader sources plus `ShaderSet`/`ShaderStages` and the engine uniform layouts (`TexturedUniformLayout`, `LitShadowUniformLayout`)                                                                                                                                    | yes           |
 | `:awake:ecs`                                    | Sparse-set ECS runtime: entities, stores, queries, systems                                                                                                                                                                                                                         | yes           |
@@ -210,9 +214,12 @@ flowchart TD
 | `:awake:scene:authoring`                        | Authored scene DSL (`sceneGame { ... }`, entities/assets/systems) on top of the scene leaf modules (`scene-core`/`rendering`/`controls`/`runtime`) and `engine:bootstrap`, not the `awake:scene` facade                                                                            | not published |
 | `:awake:engine:render:contract`                 | Renderer-facing abstractions: `Renderer`, `DrawCall`, `Mesh`/`MeshGeometry`/`VertexFormat`, `Material`, `TextureAsset`/`RenderTarget`/`MipChain`, `SceneLight`, `UniformLayout`, `RenderViewport`                                                                                  | not published |
 | `:awake:engine:render:passes`                   | Backend-shared pass and recording pieces built on the contract: `CommandRecorder`, `PreparedDraw`, `SharedOpaqueRenderFeature`                                                                                                                                                     | not published |
+| `:awake:engine:render:passes2d`                 | Backend-neutral 2D primitive coalescing, mesh-upload/recording ports, and shared 2D pass algorithms; intentionally UI-framework-free                                                                                                                                               | not published |
+| `:awake:engine:render:testing`                  | KMP render diagnostics and test support: `PixelMap`, `FrameCapture`, pixel assertions, and desktop PNG output; used from test source sets, never production APIs                                                                                                                  | not published |
 | `:awake:engine:platform`                        | Backend-neutral app/lifecycle glue: the `GraphicsEngine` base class both backends extend, `AppSpec`/`AppModule`/`AppLifecycle`/`AwakeAppLifecycle`, `WindowConfig`, `FrameStats`, and the Android `VulkanView`                                                                     | not published |
 | `:awake:engine:bootstrap`                       | Authored `game { ... }` entrypoint (`GameDsl`, `GameModuleDsl`, `GameUiDsl`) assembling an `AppSpec` from `awake:engine:platform` contracts, plus the UI runtime and perf-overlay wiring                                                                                           | not published |
-| `:awake:engine:app`                             | `expect class AwakeApplication`, the per-target alias picking `VulkanEngine` (android/ios/desktop) or `WebGpuEngine` (wasmJs) so `commonMain` never imports a backend module; no in-repo consumer yet -- samples construct the backend engine directly                             | not published |
+| `:awake:engine:compose`                         | Optional application-level Compose host: input conversion, UI staging, UI-only presentation, and the one-host invariant; depends on Platform and `awake:compose:ui`                                                                                                                 | not published |
+| `:awake:editor`                                 | Generic editor state, session-facing contracts, and KMP-safe component/asset/environment/animation/build provider registry; no Studio, renderer, scene-host, or game-policy dependency                                                                                              | not published |
 | `:awake:backend:vulkan`                         | Vulkan renderer: `VulkanEngine`, `Renderer`/`RendererDraw3D`/`RendererDrawUi`, pipelines and render features                                                                                                                                                                       | not published |
 | `:awake:backend:vulkan:bindings`                | Vulkan KMP API surface plus the JNI (android/desktop) and cinterop (iOS) bridge                                                                                                                                                                                                    | not published |
 | `:awake:backend:vulkan:bindings:android-native` | Android CMake/NDK module holding the generated JNI Accessor/Mutator C++; no Kotlin plugin                                                                                                                                                                                          | not published |
@@ -221,15 +228,16 @@ flowchart TD
 | `:awake:physics:api`                            | Backend-agnostic physics contracts: `PhysicsWorld`, `BodyHandle`, `BodyTransform`, `PhysicsShape`, `MotionType`, `RaycastHit`                                                                                                                                                      | not published |
 | `:awake:backend:jolt`                           | Jolt Physics binding (JNI on desktop/Android via `jolt-jni`, JoltC cinterop on iOS) implementing `awake:physics:api`                                                                                                                                                               | not published |
 | `:awake:ui:graphics`                            | Runtime-free contract values: `Rectangle`, dimensions/units, and color/shape contracts (the "ui-api" role; no separate `ui-api` module exists)                                                                                                                                      | not published |
-| `:awake:ui:text`                                | Font and text contracts: `UiFont`/`BitmapFont`/`MsdfFont`/`PackedUiFont`, `GlyphAtlasSource`, `TextStyle`, `FontWeight`                                                                                                                                                            | not published |
-| `:awake:ui:ui-core`                             | UI runtime mechanics: layout/drawing/input/state, modifiers, scopes, and neutral fallback resolution; no component recipes or variants                                                                                                                                             | not published |
+| `:awake:core:text`                                | Font and text contracts: `UiFont`/`BitmapFont`/`MsdfFont`/`PackedUiFont`, `GlyphAtlasSource`, `TextStyle`, `FontWeight`                                                                                                                                                            | not published |
+| `:awake:compose:runtime`                        | Retained composition and invalidation lifecycle                                                                                                                                                                                                                                      | not published |
+| `:awake:compose:ui`                             | Compose-shaped layout, drawing, modifiers, text, and UI runtime contracts                                                                                                                                                                                                             | not published |
+| `:awake:compose:foundation`                     | Foundation-shaped layout and neutral controls                                                                                                                                                                                                                                        | not published |
 | `:awake:ui:animation`                           | UI tween/transition primitives: `UiAnimation`, `UiTransition`, `UiAnimatedVisibility`, `UiPopup`                                                                                                                                                                                   | not published |
-| `:awake:ui:heroicons`                           | Generated Heroicons `UiImageVector` icon set                                                                                                                                                                                                                                       | not published |
-| `:awake:ui:headless`                            | Reusable widget behavior and neutral visual-state contracts built on `ui-core`; no named variants or design language                                                                                                                                                               | not published |
-| `:awake:ui:tailwind`                            | Tailwind token scales (`Tw`, `OklchColor`, `TwLayout`, `TwInsets`, `TwModifiers`) consumed by the design system                                                                                                                                                                    | not published |
-| `:awake:ui:designsystem`                        | Branded themes, named variants, and `shadcn*` recipes that map to Headless neutral visual states                                                                                                                                                                                   | not published |
-| `:awake:ui:testing`                             | Shared test harness: `AwakeUiSnapshot`/`UiRasterizer`/`AwakeUiPreview`, `PixelBaseline`/`TimingBaseline`, `NoopRenderer`; consumed from test source sets only                                                                                                                      | not published |
-| `:awake:ui:tailwind-generator`                  | Standalone JVM CLI generating the `ui:tailwind` token sources                                                                                                                                                                                                                      | not published |
+| `:awake:heroicons`                           | Generated Heroicons `UiImageVector` icon set                                                                                                                                                                                                                                       | not published |
+| `:awake:tailwind`                            | Tailwind token scales (`Tw`, `OklchColor`, `TwLayout`, `TwInsets`, `TwModifiers`) consumed by the design system                                                                                                                                                                    | not published |
+| `:awake:ui:shadcn`                        | Branded themes, named variants, and `shadcn*` recipes built on Compose Foundation                                                                                                                                                                                                    | not published |
+| `:awake:compose:ui-testing`                     | Frame composition, semantics, rasterization, and UI verification helpers                                                                                                                                                                                                             | not published |
+| `:awake:tailwind-generator`                  | Standalone JVM CLI generating the `ui:tailwind` token sources                                                                                                                                                                                                                      | not published |
 | `:awake:ui:font-atlas-generator`                | Standalone JVM CLI generating packed font atlases for `ui:text`                                                                                                                                                                                                                    | not published |
 | `:awake:ui:benchmark`                           | Standalone JVM kotlinx-benchmark harness for UI layout/draw hot paths                                                                                                                                                                                                              | not published |
 | `:samples:ui-showcase`                          | Component gallery sample exercising the design system across Vulkan and WebGPU targets                                                                                                                                                                                             | sample-only   |

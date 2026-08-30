@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
@@ -27,7 +33,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     android {
-        namespace = "io.github.ronjunevaldoz.awake.sample.uishowcase"
+        namespace = "io.github.awakelab.awake.sample.uishowcase"
         compileSdk = (findProperty("android.compileSdk") as String).toInt()
         minSdk = (findProperty("android.minSdk") as String).toInt()
         withHostTest {}
@@ -98,14 +104,15 @@ kotlin {
             implementation(project(":awake:core:input"))
             implementation(project(":awake:engine:bootstrap"))
             implementation(project(":awake:scene:authoring"))
-            implementation(project(":awake:ui:designsystem"))
+            implementation(project(":awake:ui:shadcn"))
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
-            implementation(project(":awake:ui:testing"))
-            implementation(project(":awake:ui:ui-core"))
+            implementation(project(":awake:compose:ui-testing"))
+            implementation(project(":awake:compose:foundation"))
+            implementation(project(":awake:engine:render:testing"))
             implementation(libs.kotlinx.coroutines.test)
         }
 
@@ -154,11 +161,25 @@ val moltenVkIcdPath =
         .files.firstOrNull()?.absolutePath
 val dyldFallbackLibraryPath = "/opt/homebrew/opt/vulkan-loader/lib:/opt/homebrew/lib:/usr/local/lib"
 
+// Vulkan-backed previews use the same headless loader/native-library setup as the backend's
+// pixel tests. Keep software previews portable; only the opt-in GPU preview needs this wiring.
+tasks.named<Test>("desktopTest") {
+    requireExclusiveGpu(this)
+    dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
+    useNagaShaderCompiler(this)
+    jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
+    environment(VulkanDesktopEnv.environment())
+    forkEvery = 1
+}
+
 tasks.register<JavaExec>("run") {
     group = "application"
     description = "Run the Awake UI showcase sample."
     dependsOn("desktopMainClasses")
-    mainClass.set("io.github.ronjunevaldoz.awake.sample.uishowcase.app.MainKt")
+    dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
+    // Shipped shaders are WGSL, so every pipeline this sample builds goes through naga.
+    useNagaShaderCompiler(this)
+    mainClass.set("io.github.awakelab.awake.sample.uishowcase.app.MainKt")
     classpath = files(
         layout.buildDirectory.dir("classes/kotlin/desktop/main"),
         layout.buildDirectory.dir("processedResources/desktop/main"),
@@ -170,7 +191,7 @@ tasks.register<JavaExec>("run") {
     environment("DYLD_FALLBACK_LIBRARY_PATH", dyldFallbackLibraryPath)
     val jvmArgsList =
         mutableListOf("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
-    if (System.getProperty("os.name").lowercase().contains("mac")) {
+    if (HostOs.isMac) {
         jvmArgsList += "-XstartOnFirstThread"
     }
     jvmArgs(jvmArgsList)

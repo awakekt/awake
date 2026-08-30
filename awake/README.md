@@ -61,11 +61,12 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:rendering` | `MeshRenderer`, `Camera`, `Light`, `ParticleEmitter`, `RenderSystem` |
 | `scene:controls` | `CameraRig`, camera modes, input-driven movement |
 | `scene:physics` | Rigid-body/collider components, physics sync |
+| `scene:navigation` | `NavGridTile`, slope bake, A* + smoothing, `NavGrid` implementing `scene-core`'s `NavMesh` |
 | `scene:runtime` | Scene JSON load/save, entity instantiation |
 | `scene:authoring` | The `scene { }` DSL |
 | `scene` | Aggregator re-exporting the six above |
 
-## ui — the immediate-mode UI stack
+## ui — component families and UI support
 
 Hand-written, not Compose. See [ui/README.md](ui/README.md) and
 [docs/reference/ui-ownership.md](../docs/reference/ui-ownership.md) for which layer owns what.
@@ -76,7 +77,8 @@ Hand-written, not Compose. See [ui/README.md](ui/README.md) and
 | `ui:text` | Font atlas, glyph metrics, shaping |
 | `ui:ui-core` | Layout engine, modifiers, measurement — Compose-UI-shaped |
 | `ui:headless` | Unstyled controls and layout — Foundation-shaped |
-| `ui:designsystem` | Shadcn recipes and theme tokens — Material's role |
+| `ui:material3` | Material 3 color schemes and components, beginning with `Scaffold` |
+| `ui:shadcn` | Shadcn recipes and theme tokens |
 | `ui:animation` | Tweening and transitions |
 | `ui:tailwind`, `ui:tailwind-generator` | Tailwind-style token generation |
 | `ui:heroicons` | Generated icon vectors |

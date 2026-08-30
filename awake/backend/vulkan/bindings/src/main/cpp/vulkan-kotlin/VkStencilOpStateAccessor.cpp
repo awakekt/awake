@@ -8,13 +8,13 @@
 VkStencilOpStateAccessor::VkStencilOpStateAccessor(JNIEnv *env, jobject obj) : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     failOpField = env->GetFieldID(clazz, "failOp",
-                                  "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStencilOp;");
+                                  "Lio/github/awakelab/awake/vulkan/enums/VkStencilOp;");
     passOpField = env->GetFieldID(clazz, "passOp",
-                                  "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStencilOp;");
+                                  "Lio/github/awakelab/awake/vulkan/enums/VkStencilOp;");
     depthFailOpField = env->GetFieldID(clazz, "depthFailOp",
-                                       "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStencilOp;");
+                                       "Lio/github/awakelab/awake/vulkan/enums/VkStencilOp;");
     compareOpField = env->GetFieldID(clazz, "compareOp",
-                                     "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkCompareOp;");
+                                     "Lio/github/awakelab/awake/vulkan/enums/VkCompareOp;");
     compareMaskField = env->GetFieldID(clazz, "compareMask", "I");
     writeMaskField = env->GetFieldID(clazz, "writeMask", "I");
     referenceField = env->GetFieldID(clazz, "reference", "I");

@@ -9,7 +9,7 @@ duplication exists today and ranks what to migrate next.
 
 ## Why
 
-Two backends are hand-authored side by side (Vulkan and WebGPU). Without a named boundary, each
+Historically, two backends were hand-authored side by side (Vulkan and WebGPU). Without a named boundary, each
 one independently decides *what* to render as well as *how*, and the two drift. The worked
 example: WebGPU shipped with no alpha-blended pipeline at all for as long as Vulkan had one,
 because "which pipelines exist" was answered twice. Nothing failed — transparent draws just
@@ -105,6 +105,22 @@ JNI and wgpu4k glue.
 without changing shared code?* If not, the concept is below the line and does not belong in the
 facade.
 
+### Neither side may name content
+
+The above/below split says where a *decision* lives. A second, independent rule says what the
+vocabulary may be: **a graphics backend knows hardware only.** Pipelines, buffers, textures,
+samplers, command recording. It must never know what a skybox or a shadow *is*.
+
+This is not the same rule as the one above, and it is easy to satisfy one while breaking the
+other. `SkyboxRenderPipeline` is genuinely below the line -- it is real driver work -- and still
+violates this, because a backend that declares it has become a game: a fourth content feature then
+costs an edit to both backends. Enforced by `verifyBackendLayering` on `check`.
+
+The facade itself is not exempt, and currently fails: `Renderer.showEnvironment`, `horizonColor`
+and `zenithColor` are sky vocabulary sitting on the hardware interface. A horizon colour is not a
+capability -- it is uniform data owned by the skybox feature. Tracked in
+[2026-08-23-backend-content-split-plan.md](../tasks/2026-08-23-backend-content-split-plan.md).
+
 ## What already exists
 
 ```mermaid
@@ -122,7 +138,7 @@ flowchart TB
 
     subgraph rhi["RHI — knows about hardware only"]
         direction TB
-        facade{{"GpuDevice<br/>NOT YET DECLARED"}}:::missing
+        facade{{"GpuDevice<br/>declared · partial"}}:::partial
         r1["PipelineSpec · PipelineFactory<br/>buildPipelineTable · PipelineVariant"]:::done
         r2["VertexFormat · GpuDataShape<br/>UniformLayout · UniformWriter"]:::done
         r3["CommandRecorder"]:::partial
@@ -150,8 +166,9 @@ flowchart TB
     classDef floor fill:#263238,stroke:#607d8b,color:#fff
 ```
 
-Green is done and shared. Amber is started but partly migrated. Red is remaining work — note the
-facade itself is red: the pieces exist, the boundary they belong to does not. Slate is permanent.
+Green is done and shared. Amber is started but partly migrated. Red is remaining work. The facade
+exists, but still mixes runtime and RHI vocabulary while draw preparation is migrated. Slate is
+permanent.
 
 **The dotted arrows are the real finding.** Both backends today reach past the facade and consume
 runtime vocabulary directly — `DrawCall` in six files each, `SceneLight` in four, `Lens` in three.

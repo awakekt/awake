@@ -1,0 +1,199 @@
+public abstract class io/github/awakelab/awake/engine/platform/GraphicsEngine : io/github/awakelab/awake/engine/platform/WindowLifecycle {
+	public fun <init> (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;)V
+	public final fun create (Ljava/lang/Object;)V
+	protected abstract fun createBackendResources (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	protected abstract fun destroyBackend ()V
+	public final fun dispose ()V
+	protected final fun drawDebugLines (Ljava/util/List;)V
+	protected final fun getAppLifecycle ()Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;
+	protected final fun getAspectRatio ()F
+	public fun getInput ()Lio/github/awakelab/awake/core/input/Input;
+	protected final fun getRenderer ()Lio/github/awakelab/awake/render/renderer/Renderer;
+	public final fun pause ()V
+	public final fun resize (IIII)V
+	public final fun resume ()V
+	public final fun update (F)V
+}
+
+protected final class io/github/awakelab/awake/engine/platform/GraphicsEngine$BackendResources {
+	public fun <init> (Lio/github/awakelab/awake/render/renderer/Renderer;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/render/renderer/Renderer;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/render/renderer/Renderer;
+	public final fun component2 ()Lkotlin/jvm/functions/Function0;
+	public final fun component3 ()Lkotlin/jvm/functions/Function0;
+	public final fun copy (Lio/github/awakelab/awake/render/renderer/Renderer;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)Lio/github/awakelab/awake/engine/platform/GraphicsEngine$BackendResources;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/engine/platform/GraphicsEngine$BackendResources;Lio/github/awakelab/awake/render/renderer/Renderer;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/awakelab/awake/engine/platform/GraphicsEngine$BackendResources;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDensity ()Lkotlin/jvm/functions/Function0;
+	public final fun getRenderer ()Lio/github/awakelab/awake/render/renderer/Renderer;
+	public final fun getViewportSize ()Lkotlin/jvm/functions/Function0;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/awakelab/awake/engine/platform/WindowLifecycle {
+	public abstract fun create (Ljava/lang/Object;)V
+	public static synthetic fun create$default (Lio/github/awakelab/awake/engine/platform/WindowLifecycle;Ljava/lang/Object;ILjava/lang/Object;)V
+	public abstract fun dispose ()V
+	public abstract fun getInput ()Lio/github/awakelab/awake/core/input/Input;
+	public abstract fun pause ()V
+	public abstract fun resize (IIII)V
+	public abstract fun resume ()V
+	public abstract fun update (F)V
+}
+
+public final class io/github/awakelab/awake/engine/platform/WindowLifecycle$DefaultImpls {
+	public static synthetic fun create$default (Lio/github/awakelab/awake/engine/platform/WindowLifecycle;Ljava/lang/Object;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/engine/platform/config/WindowConfig {
+	public fun <init> (Ljava/lang/String;IILio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;
+	public final fun copy (Ljava/lang/String;IILio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;)Lio/github/awakelab/awake/engine/platform/config/WindowConfig;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/engine/platform/config/WindowConfig;Ljava/lang/String;IILio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;ILjava/lang/Object;)Lio/github/awakelab/awake/engine/platform/config/WindowConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBackend ()Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;
+	public final fun getHeight ()I
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/awakelab/awake/engine/platform/core/AppModule : io/github/awakelab/awake/engine/platform/lifecycle/AppInstaller {
+}
+
+public final class io/github/awakelab/awake/engine/platform/core/AppSpec {
+	public final fun createLifecycle ()Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;
+	public final fun getWindowConfig ()Lio/github/awakelab/awake/engine/platform/config/WindowConfig;
+}
+
+public final class io/github/awakelab/awake/engine/platform/core/FrameStats {
+	public fun <init> ()V
+	public fun <init> (FI)V
+	public synthetic fun <init> (FIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getFps ()F
+	public final fun getFrameTimeMs ()F
+	public final fun getP50FrameTimeMs ()F
+	public final fun getP95FrameTimeMs ()F
+	public final fun getP99FrameTimeMs ()F
+	public final fun percentileFrameTimeMs (F)F
+	public final fun update (F)Z
+}
+
+public final class io/github/awakelab/awake/engine/platform/dsl/AppContractKt {
+	public static final fun select (Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackendBuilder;Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;)V
+}
+
+public abstract interface class io/github/awakelab/awake/engine/platform/dsl/AppServiceLookup {
+	public fun requireService (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public abstract fun service (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+}
+
+public final class io/github/awakelab/awake/engine/platform/dsl/AppServiceLookup$DefaultImpls {
+	public static fun requireService (Lio/github/awakelab/awake/engine/platform/dsl/AppServiceLookup;Lkotlin/reflect/KClass;)Ljava/lang/Object;
+}
+
+public final class io/github/awakelab/awake/engine/platform/dsl/AppSpecBuilder {
+	public fun <init> ()V
+	public final fun build ()Lio/github/awakelab/awake/engine/platform/core/AppSpec;
+	public final fun dispose (Lkotlin/jvm/functions/Function0;)V
+	public final fun getInput ()Lio/github/awakelab/awake/core/input/Input;
+	public final fun install (Lio/github/awakelab/awake/engine/platform/lifecycle/AppInstaller;)V
+	public final fun pause (Lkotlin/jvm/functions/Function0;)V
+	public final fun ready (Lkotlin/jvm/functions/Function2;)V
+	public final fun render (Lkotlin/jvm/functions/Function1;)V
+	public final fun requireService (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun resize (Lkotlin/jvm/functions/Function2;)V
+	public final fun resume (Lkotlin/jvm/functions/Function0;)V
+	public final fun service (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun service (Lkotlin/reflect/KClass;Ljava/lang/Object;)V
+	public final fun serviceLookup ()Lio/github/awakelab/awake/engine/platform/dsl/AppServiceLookup;
+	public final fun window (Lkotlin/jvm/functions/Function1;)V
+	public final fun windowBuilder ()Lio/github/awakelab/awake/engine/platform/dsl/AppWindowConfigBuilder;
+}
+
+public final class io/github/awakelab/awake/engine/platform/dsl/AppWindowBackend : java/lang/Enum {
+	public static final field DEFAULT Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;
+	public static final field OPENGL Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;
+	public static final field VULKAN Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;
+	public static final field WEBGPU Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;
+	public static fun values ()[Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;
+}
+
+public final class io/github/awakelab/awake/engine/platform/dsl/AppWindowBackendBuilder {
+	public fun <init> ()V
+	public final fun default ()V
+	public final fun openGl ()V
+	public final fun vulkan ()V
+	public final fun webGpu ()V
+}
+
+public final class io/github/awakelab/awake/engine/platform/dsl/AppWindowConfigBuilder {
+	public fun <init> ()V
+	public final fun build ()Lio/github/awakelab/awake/engine/platform/config/WindowConfig;
+	public final fun getBackend ()Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackendBuilder;
+	public final fun getTitle ()Ljava/lang/String;
+	public final fun setTitle (Ljava/lang/String;)V
+	public final fun size (II)V
+}
+
+public final class io/github/awakelab/awake/engine/platform/lifecycle/AppFrame {
+	public fun <init> (FFFLio/github/awakelab/awake/core/input/InputSnapshot;F)V
+	public synthetic fun <init> (FFFLio/github/awakelab/awake/core/input/InputSnapshot;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()Lio/github/awakelab/awake/core/input/InputSnapshot;
+	public final fun component5 ()F
+	public final fun copy (FFFLio/github/awakelab/awake/core/input/InputSnapshot;F)Lio/github/awakelab/awake/engine/platform/lifecycle/AppFrame;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/engine/platform/lifecycle/AppFrame;FFFLio/github/awakelab/awake/core/input/InputSnapshot;FILjava/lang/Object;)Lio/github/awakelab/awake/engine/platform/lifecycle/AppFrame;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDelta ()F
+	public final fun getDensity ()F
+	public final fun getInput ()Lio/github/awakelab/awake/core/input/InputSnapshot;
+	public final fun getViewportHeight ()F
+	public final fun getViewportWidth ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/awakelab/awake/engine/platform/lifecycle/AppInstaller {
+	public abstract fun install (Lio/github/awakelab/awake/engine/platform/dsl/AppSpecBuilder;)V
+}
+
+public abstract interface class io/github/awakelab/awake/engine/platform/lifecycle/AppLifecycle {
+	public fun dispose ()V
+	public fun pause ()V
+	public abstract fun ready (Lio/github/awakelab/awake/render/renderer/Renderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun resize (FF)V
+	public fun resume ()V
+	public abstract fun update (Lio/github/awakelab/awake/engine/platform/lifecycle/AppFrame;)V
+}
+
+public final class io/github/awakelab/awake/engine/platform/lifecycle/AppLifecycle$DefaultImpls {
+	public static fun dispose (Lio/github/awakelab/awake/engine/platform/lifecycle/AppLifecycle;)V
+	public static fun pause (Lio/github/awakelab/awake/engine/platform/lifecycle/AppLifecycle;)V
+	public static fun resize (Lio/github/awakelab/awake/engine/platform/lifecycle/AppLifecycle;FF)V
+	public static fun resume (Lio/github/awakelab/awake/engine/platform/lifecycle/AppLifecycle;)V
+}
+
+public final class io/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle : io/github/awakelab/awake/engine/platform/dsl/AppServiceLookup, io/github/awakelab/awake/engine/platform/lifecycle/AppLifecycle {
+	public fun dispose ()V
+	public final fun getInput ()Lio/github/awakelab/awake/core/input/Input;
+	public final fun getWindowConfig ()Lio/github/awakelab/awake/engine/platform/config/WindowConfig;
+	public fun pause ()V
+	public fun ready (Lio/github/awakelab/awake/render/renderer/Renderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun requireService (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public fun resize (FF)V
+	public fun resume ()V
+	public fun service (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun update (FFF)V
+	public fun update (Lio/github/awakelab/awake/engine/platform/lifecycle/AppFrame;)V
+}
+

@@ -67,7 +67,7 @@ VkBool32 VkDebugUtilsMessengerCreateInfoEXTAccessor::onDebugUtilsMessage(
 
 
     jobject arg1 = enum_utils::setEnumFromVulkan(env, jSeverity,
-                                                 "io/github/ronjunevaldoz/awake/vulkan/enums/flags/VkDebugUtilsMessageSeverityFlagBitsEXT");
+                                                 "io/github/awakelab/awake/vulkan/enums/flags/VkDebugUtilsMessageSeverityFlagBitsEXT");
     jobject arg2 = env->NewObject(integerClass, integerConstructor,
                                   static_cast<jint>(messageTypes));
     jobject arg4 = env->NewObject(stringClass, stringConstructor, jStringValue);

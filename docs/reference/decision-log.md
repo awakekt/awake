@@ -98,7 +98,7 @@ existed, only 3 files pulled in `vulkan.*` (`Renderer.kt`, `DrawCall.kt`,
 `VulkanTextureLoader.kt`), and only 1 file pulled in Compose (`glExt.kt`, deep in the legacy
 OpenGL path). New module `:awake-base` (modeled on `:awake-ecs`'s already-lean template) now
 holds math, `Input`, `FixedTimestepLoop`, glTF parsing, and bitmap/resource I/O — moved with
-package names unchanged (`io.github.ronjunevaldoz.awake.core.*`), so `awake-core`'s
+package names unchanged (`io.github.awakelab.awake.core.*`), so `awake-core`'s
 `api(project(":awake-base"))` re-export needed zero downstream import changes. The 3
 Vulkan-coupled files moved (and were repackaged) into `:awake-vulkan` itself, which now
 depends on `:awake-base` for `Camera`/`Mat4`; `awake-core` dropped its `:awake-vulkan`
@@ -141,7 +141,7 @@ pattern — plain interfaces have no constructors, so there's no "same call, dif
 implementation per platform" left; fixing that properly would mean splitting
 `VulkanApplication.kt` per-platform, a much larger change than what was asked for.
 
-**Resolution**: `expect class Foo(...) : io.github.ronjunevaldoz.awake.render.foo.Foo { }`
+**Resolution**: `expect class Foo(...) : io.github.awakelab.awake.render.foo.Foo { }`
 is fully valid Kotlin — an `expect` class can implement an interface declared in a
 *different* module, and Kotlin requires only the `actual` implementations (already in
 `awake-vulkan`'s `vulkanMain`/`wasmJsMain`) to also declare the same supertype. This means
@@ -218,10 +218,10 @@ VkExtent2D` (also confirmed dead on closer inspection — despite its own doc co
 claiming `RenderPipeline`/`Renderer` read it, they don't) were both dropped from the new
 `awake-backend-webgpu` module.
 
-**Package naming**: `awake-backend-vulkan` keeps the `io.github.ronjunevaldoz.awake.vulkan`
+**Package naming**: `awake-backend-vulkan` keeps the `io.github.awakelab.awake.vulkan`
 package unchanged (only the Gradle module id changed) — matches `awake-engine-render-api`'s
 existing precedent (module id ≠ package root) and meant zero import changes anywhere.
-`awake-backend-webgpu`'s moved files were repackaged to `io.github.ronjunevaldoz.awake.webgpu`
+`awake-backend-webgpu`'s moved files were repackaged to `io.github.awakelab.awake.webgpu`
 — safe since grep confirmed no file outside the old `awake-vulkan` module ever imported a
 wasmJs-specific symbol. Its own tiny `handles/Handles.kt` (9 `@JvmInline value class`
 wrappers) is a local copy, not a dependency on `awake-backend-vulkan`, to keep the two
@@ -291,8 +291,8 @@ planning, each resolved with the user before implementation:
 
 `SceneRuntimeHost` (used by every platform, including the new wasmJs one) needed two
 changes to become genuinely shared: its `Renderer` import switched from the concrete
-`io.github.ronjunevaldoz.awake.vulkan.renderer.Renderer` to the backend-neutral
-`io.github.ronjunevaldoz.awake.render.renderer.Renderer` interface (a pre-existing bug —
+`io.github.awakelab.awake.vulkan.renderer.Renderer` to the backend-neutral
+`io.github.awakelab.awake.render.renderer.Renderer` interface (a pre-existing bug —
 `RenderSystem` already expected the interface), and its constructor became `private` +
 a `companion object suspend fun create(...)` factory, since `SceneLoader.loadFromResource`
 is now `suspend` and Kotlin forbids `suspend` calls inside `init {}`/property initializers.
@@ -369,7 +369,7 @@ layer that doesn't need `awake-scene` for anything.
 **Resolution**: renamed `awake-core` → `awake-engine` as a plain Gradle module id +
 directory rename (`git mv`), no dependency changes — matches the precedent already set by
 `awake-engine-render-api` (module id ≠ Kotlin package root is fine) and `awake-backend-
-vulkan` (D13): package name `io.github.ronjunevaldoz.awake.core` and the iOS framework
+vulkan` (D13): package name `io.github.awakelab.awake.core` and the iOS framework
 `baseName = "awake-core"` were left unchanged, since neither is tied to any native
 toolchain or external consumer that would break, and touching them isn't necessary to fix
 the actual issue (the module id/name). Updated all 3 consumers'
@@ -1449,6 +1449,55 @@ module boundary this time: `getState`/`setMinimap` both round-tripped correctly 
 parse/encode functions. `awake:scene:desktopTest`, `:samples:hello-cube:androidApp:
 assembleDebug`, and `spotlessCheck` on both modules all pass.
 
+### D27 — A graphics backend knows hardware only; content is split out
+
+**DECIDED (2026-08-23).** Raised while reviewing phase 4b: the backend modules were becoming a
+game instead of a GPU library.
+
+`awake:backend:vulkan` declared `SkyboxRenderPipeline`, `ShadowMap` and `ShadowFeature` -- three
+answers to "what is being drawn", which is the app's question, not the driver's. A backend that
+knows what a skybox *is* cannot gain a fourth content feature without being edited, and it must be
+edited twice, once per backend. That is the same mechanism that let WebGPU ship without an
+alpha-blended pipeline Vulkan had.
+
+**The rule:** a graphics backend knows pipelines, buffers, textures, samplers and command
+recording, and nothing about content. Content is engine-provided-optional (declared in
+`awake:asset:shaders`, recorded in `awake:engine:render:passes`) or game-authored
+(`samples/<game>/`). No new module -- all three homes already existed.
+
+**Superseded:** the older bar in `render-extensibility.md`, "authored content is a nullable,
+opt-in constructor param". Opt-in is not absent; a nullable `skyboxRenderPipeline:
+SkyboxRenderPipeline?` still couples the backend to the content.
+
+**Enforced, not documented:** `verifyBackendLayering` rejects content vocabulary in any backend
+declaration and runs on `check`. It checks declared names only, so doc comments and shader paths
+naming a skybox stay legal.
+
+**Closed 2026-08-24 (`21e820127`):** the exemption list ran 14 files (8 Vulkan, 6 WebGPU) to 0.
+Most of it resolved as renames, because the types were already capabilities and only their names
+answered "what is being drawn" -- `ShadowMap` became `DepthTarget`, `ShadowRenderPipeline` became
+`DepthOnlyPipeline`, `ShadowFeature` became `DepthPrePassFeature`. See
+`render-extensibility.md` for the full names table.
+
+**Amendment to the completion test.** "Empty is the completion test" was written before anyone
+had read what the check reads, and it claims more than it can. Declared names are all it matches,
+so content in a call, a local, a property or a well-chosen function name never appears.
+`RendererDraw3D` declared `lightViewProjection`, which decided what volume a directional light
+covers -- real content, never on the list, because "light" is not vocabulary and the rest were
+calls and locals. Moved out in `0a94382e3`: `SceneLight` carries the matrix and `RenderSystem`
+builds it. `prepareDrawCalls` hand-writing `lit_shadow.wgsl`'s uniform block went the same way in
+`b19fe3e63`. What is left in a backend is references, not decisions.
+
+An empty list means "no content in a declared name". The rule above is unchanged; only the claim
+that a green check proves it is.
+
+**Deliberately not treated as a missing mediator.** The Bridge-shaped instinct is right, but the
+blocker is two absent hardware primitives -- `PipelineSpec` cannot express a vertex-less pipeline
+or a standalone uniform block -- so every content feature hand-rolls them per backend. Adding an
+indirection layer before those primitives exist relocates the duplication instead of deleting it.
+Sequence and phases in
+[2026-08-23-backend-content-split-plan.md](../tasks/2026-08-23-backend-content-split-plan.md).
+
 ### D26 — Keep two hand-written backends; RHI is capability-tiered, not WebGPU-capped
 
 **DECIDED (2026-08-23).** Phase 0 of the
@@ -1544,3 +1593,24 @@ behavior stabilized once left alone, as the numbers above show.)
 ### D4 — Editor base
 **Decided: build on [graphyn-editor](https://github.com/ronjunevaldoz/graphyn-editor)**
 (Compose Desktop shell + design system) rather than building from scratch.
+
+### D28 — Open-world subsystems: Awake vs starter-kit boundary
+**DECIDED (2026-08-29).** Full record:
+[decisions/D28-open-world-framework-boundary.md](../decisions/D28-open-world-framework-boundary.md).
+
+The open-world RFC proposes every subsystem in Awake core. Exactly one consumer pack exists,
+so the framework boundary's two-consumer ground is unavailable and the API-limitation ground
+decides each row. Awake gains consumer-declarable texture bindings (`BindingSemantic` is a
+closed enum today), `texture2DArray` upload, current-frame scene depth as a sampled input, and
+clipmap draw emission from a `Heightmap`. Water, atmosphere, biomes, vegetation, prop
+placement and splat layer authoring move to a consumer starter-kit — a net deletion, since
+`WaterRenderSystem` and `AtmosphereSystem` build uniforms and discard them and their
+components have no other caller.
+
+**Applied 2026-08-29:** 11 files deleted from `:awake:scene:rendering`, `:awake:asset:terrain`
+and `:awake:asset:shader-compiler`; recoverable from `31837432b`, the last commit that still
+contains them.
+
+Registering a custom pass is **not** a limitation: D27's `ContentFeature` /
+`RenderPlan.contentFeatures` already works and both samples use it. What a consumer cannot
+declare is that pipeline's texture bindings.

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import de.undercouch.gradle.tasks.download.Download
 import java.io.File
 
@@ -7,12 +12,11 @@ plugins {
 
 val glslangDownload =
     tasks.register<Download>("glslangDownload") {
-        val osName = System.getProperty("os.name").lowercase()
         val hostFile = when {
-            osName.contains("mac") -> "main-osx"
-            osName.contains("win") -> "master-windows"
-            osName.contains("linux") -> "main-linux"
-            else -> throw Exception("$osName not supported")
+            HostOs.isMac -> "main-osx"
+            HostOs.isWindows -> "master-windows"
+            HostOs.isLinux -> "main-linux"
+            else -> throw GradleException("No glslang build for host ${HostOs.slug}.")
         }
         src("https://github.com/KhronosGroup/glslang/releases/download/main-tot/glslang-$hostFile-Release.zip")
         dest(layout.buildDirectory.file("glslang.zip"))

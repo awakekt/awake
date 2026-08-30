@@ -8,14 +8,14 @@
 namespace exception_utils {
     void resultException(JNIEnv *env, jint result, const char *message) {
         jclass exceptionClass = env->FindClass(
-                "io/github/ronjunevaldoz/awake/vulkan/utils/VkResultException");
+                "io/github/awakelab/awake/vulkan/utils/VkResultException");
         if (exceptionClass != nullptr) {
             jmethodID constructor = env->GetMethodID(exceptionClass, "<init>",
-                                                     "(Ljava/lang/String;Lio/github/ronjunevaldoz/awake/vulkan/enums/VkResult;)V");
+                                                     "(Ljava/lang/String;Lio/github/awakelab/awake/vulkan/enums/VkResult;)V");
             if (constructor != nullptr) {
                 jstring jMessage = env->NewStringUTF(message);
                 auto resultEnum = enum_utils::setEnumFromVulkan(env, result,
-                                                                "io/github/ronjunevaldoz/awake/vulkan/enums/VkResult");
+                                                                "io/github/awakelab/awake/vulkan/enums/VkResult");
                 jobject exceptionObj = env->NewObject(exceptionClass, constructor, jMessage,
                                                       resultEnum);
                 env->Throw(reinterpret_cast<jthrowable>(exceptionObj));

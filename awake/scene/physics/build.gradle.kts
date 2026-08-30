@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 plugins {
     id("awake.kmp-library-convention")
     id("awake.dokka-convention")
@@ -7,7 +12,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.scene.physics"
+        namespace = "io.github.awakelab.awake.scene.physics"
     }
 
     sourceSets {

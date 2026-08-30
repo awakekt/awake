@@ -19,7 +19,7 @@ implementation(project(":awake:asset:gltf"))
 ## Usage Example
 
 ```kotlin
-import io.github.ronjunevaldoz.awake.asset.gltf.GltfParser
+import io.github.awakelab.awake.asset.gltf.GltfParser
 
 val glbBytes: ByteArray = loadAssetBytes("character.glb")
 val document = GltfParser.parse(glbBytes)

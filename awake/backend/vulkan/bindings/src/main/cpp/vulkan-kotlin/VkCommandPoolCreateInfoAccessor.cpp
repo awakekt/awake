@@ -9,7 +9,7 @@ VkCommandPoolCreateInfoAccessor::VkCommandPoolCreateInfoAccessor(JNIEnv *env, jo
         env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     queueFamilyIndexField = env->GetFieldID(clazz, "queueFamilyIndex", "I");

@@ -17,7 +17,7 @@ Use it when a task seems to span multiple domains and you want the smallest agen
 |---|---|---|
 | Vector/Matrix math, ECS sparse sets, entity lifecycle, query performance, glTF format decoding, scene graph hierarchy | `awake-engine-core-engineer` | Foundation data layout, allocation-free loops, and core contracts dominate |
 | Vulkan/WebGPU driver pipelines, GPU swapchain, JNI bindings codegen, Jolt physics bridge | `awake-render-backend-engineer` | Native driver correctness, memory symmetry, and GPU resource lifetimes dominate |
-| Immediate-mode UI layout engine, headless behavioral widgets, Shadcn component recipes, visual snapshots & parity gates | `awake-ui-engineer` | End-to-end UI mechanics, token styling, and regression verification dominate |
+| Immediate-mode UI layout engine, headless behavioral widgets, Shadcn component recipes, website/HTML/CSS/Tailwind ports, visual snapshots & parity gates | `awake-ui-engineer` | End-to-end UI mechanics, source translation, token styling, and regression verification dominate |
 | `GameApplication` shell bootstrap, frame lifecycle wiring, sample app composition, MVI state containers & effect draining | `awake-game-runtime-engineer` | Application assembly, mode transitions, and state flow dominate |
 | Multiplatform launchers (Android/iOS/Desktop/Wasm), Gradle convention plugins, CI/CD workflows, Maven Central & SPM release | `awake-platform-release-engineer` | Build toolchain, platform glue, and package distribution dominate |
 | Cross-module boundary reviews, KMP clean architecture audits, API leakage checks, legacy code extraction planning | `awake-architecture-auditor` | Multi-module architectural integrity and policy enforcement dominate |
@@ -46,3 +46,18 @@ If the task is authoring custom particle emitter descriptors, material colors, o
 ### UI Component Authoring vs Game Dialogue UI
 If the task is implementing a new reusable Shadcn component recipe or layout primitive in `awake:ui:*`, route to `awake-ui-engineer`.
 If the task is authoring dialogue text and branching quest options for a game story, route to `awake-narrative-director`.
+
+### Website Source vs Awake UI Recipe
+Route HTML/CSS or an observed website to `awake-ui-engineer` through
+[`awake-web-to-compose`](../../skills/awake-web-to-compose/SKILL.md). It treats the site as a
+visual and behavioural reference, never a runtime dependency.
+
+- Tailwind source adds [`awake-tailwind-to-compose`](../../skills/awake-tailwind-to-compose/SKILL.md).
+- Official shadcn source adds [`awake-shadcn-to-compose`](../../skills/awake-shadcn-to-compose/SKILL.md).
+- A review of hierarchy, reuse, tokens, dark mode, responsiveness, or accessibility adds
+  [`awake-ui-design-audit`](../../skills/awake-ui-design-audit/SKILL.md).
+
+For an existing Awake screen, use the consuming or authoring recipe skill according to whether
+the task uses a shared recipe or changes one. Do not route an Awake engine port to the published
+external `kmp-shadcn-compose` library skill: it is a separate dependency choice for consumer KMP
+applications.

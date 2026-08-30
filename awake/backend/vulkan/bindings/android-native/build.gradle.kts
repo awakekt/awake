@@ -1,20 +1,7 @@
 /*
- * Awake
- * Awake.awake-vulkan.android-native
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
  *
- * Copyright (c) ronjunevaldoz 2023.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 // Plain Android library that owns the CMake/NDK build and bundled Vulkan
@@ -28,11 +15,12 @@ plugins {
     // integration logs "could not get Android Extension" trying to inspect it anyway, with
     // nothing to document.
     id("awake.detekt-convention")
+    id("com.vanniktech.maven.publish")
     id("awake.spotless-convention")
 }
 
 android {
-    namespace = "io.github.ronjunevaldoz.awake.vulkan.jni"
+    namespace = "io.github.awakelab.awake.vulkan.jni"
     ndkVersion = "26.1.10909125"
 
     defaultConfig {
@@ -65,8 +53,8 @@ android {
 //
 // --kotlin-source points at the whole module (needed so the generator's struct/enum
 // pre-pass can see types declared anywhere, e.g. models/info/VkBufferCreateInfo.kt), but
-// --package-filter scopes actual *generation* to io.github.ronjunevaldoz.awake.vulkan.gen —
-// the new Phase 1d package. The legacy io.github.ronjunevaldoz.awake.vulkan.Vulkan (58
+// --package-filter scopes actual *generation* to io.github.awakelab.awake.vulkan.gen —
+// the new Phase 1d package. The legacy io.github.awakelab.awake.vulkan.Vulkan (58
 // functions, awake-vulkan-generator-backed) is deliberately left alone: some of its
 // existing signatures (e.g. Array<VkLayerProperties> as a *return type*, as opposed to a
 // struct field) use shapes jni-binding-generator doesn't support at the function level yet.
@@ -74,11 +62,9 @@ android {
 // docs/decisions/D10-codegen-derisk-findings.md for the full history.
 //
 // IMPORTANT — neither task below runs automatically before the native build.
-// The generated *_jni.gen.cpp's JNI entry-point bodies are TODO stubs ("Call into your
-// native library using the marshalled values above") that get hand-edited with the real
-// Vulkan calls (see the header comment in generated/VulkanBuffers_jni.gen.cpp —
-// jni-binding-generator's own bundled examples work the same way; none show a filled-in
-// body either, this is the tool's actual intended usage, not a workaround).
+// Annotated functions delegate from generated JNI wrappers to named implementations in
+// ordinary *_native.cpp files. Unannotated generated entry points remain TODO stubs that
+// require the legacy hand-edit workflow until they are migrated.
 //
 // This also means `--check` (byte-for-byte diff against a fresh generation) CANNOT be
 // wired in as an automatic build gate: once a hand-edit exists, `--check` fails forever,
@@ -97,12 +83,12 @@ val kotlinSourceForJni = layout.projectDirectory.dir("../src")
 val jniOutputDir = layout.projectDirectory.dir("../src/main/cpp/generated")
 val jniScriptsDir = rootProject.layout.projectDirectory.dir("tools/jni-binding-generator/scripts")
 val jniScript = jniScriptsDir.file("jni-binding-generator.py")
-val jniPackageFilter = "io.github.ronjunevaldoz.awake.vulkan.gen"
+val jniPackageFilter = "io.github.awakelab.awake.vulkan.gen"
 
 tasks.register<Exec>("generateJniBindings") {
     group = "jni"
     description = "Generate JNI marshalling C++ from Kotlin external functions (jni-binding-generator). " +
-        "Run manually after changing a .gen package signature, then re-apply hand-written native bodies."
+        "Run manually after changing a .gen package signature; annotated native implementations stay in *_native.cpp."
 
     inputs.dir(jniScriptsDir)
     inputs.dir(kotlinSourceForJni)
@@ -120,7 +106,7 @@ tasks.register<Exec>("generateJniBindings") {
 tasks.register<Exec>("checkJniBindings") {
     group = "jni"
     description = "Fail if committed generated JNI bindings are stale relative to the Kotlin source " +
-        "(run generateJniBindings + re-apply native bodies if this fails)"
+        "(run generateJniBindings, then verify any unannotated native bodies)"
 
     inputs.dir(jniScriptsDir)
     inputs.dir(kotlinSourceForJni)
@@ -133,4 +119,45 @@ tasks.register<Exec>("checkJniBindings") {
         "--package-filter", jniPackageFilter,
         "--check",
     )
+}
+
+
+// Published because the bindings' Android flavor api-depends on this module: without its own
+// coordinates the bindings' Android POM would reference an artifact that exists nowhere and
+// every consumer's resolution would fail. Kept as a separate AAR (not folded into the
+// bindings artifact) for the same reason the module exists at all -- AGP 9's KMP plugin has
+// no externalNativeBuild, so the CMake/NDK build needs a plain library to live in.
+mavenPublishing {
+    publishToMavenCentral()
+    signAllPublications()
+    configure(
+        com.vanniktech.maven.publish.AndroidSingleVariantLibrary(
+            variant = "release",
+            sourcesJar = com.vanniktech.maven.publish.SourcesJar.Empty(),
+            javadocJar = com.vanniktech.maven.publish.JavadocJar.Empty(),
+        ),
+    )
+    coordinates("io.github.awake-lab", "vulkan-kmp-android-native", version.toString())
+    pom {
+        name.set("Vulkan KMP Android Native")
+        description.set("NDK-built JNI library and validation layers backing vulkan-kmp on Android")
+        url.set("https://awake-lab.github.io/awake")
+        licenses {
+            license {
+                name.set("Apache License, Version 2.0")
+                url.set("https://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        scm {
+            connection.set("scm:git:git://github.com/awake-lab/awake.git")
+            developerConnection.set("scm:git:ssh://github.com:awake-lab/awake.git")
+            url.set("https://github.com/awake-lab/awake")
+        }
+        developers {
+            developer {
+                name.set("Ron June Valdoz")
+                email.set("ronjune.lopez@gmail.com")
+            }
+        }
+    }
 }

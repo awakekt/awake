@@ -1,0 +1,22 @@
+public final class io/github/awakelab/awake/scene/physics/components/PhysicsBody {
+	public synthetic fun <init> (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/physics/MotionType;Lio/github/awakelab/awake/physics/BodyHandle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/physics/MotionType;Lio/github/awakelab/awake/physics/BodyHandle;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/physics/PhysicsShape;
+	public final fun component2 ()Lio/github/awakelab/awake/physics/MotionType;
+	public final fun component3-DsBvwB4 ()Lio/github/awakelab/awake/physics/BodyHandle;
+	public final fun copy-0ierQjg (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/physics/MotionType;Lio/github/awakelab/awake/physics/BodyHandle;)Lio/github/awakelab/awake/scene/physics/components/PhysicsBody;
+	public static synthetic fun copy-0ierQjg$default (Lio/github/awakelab/awake/scene/physics/components/PhysicsBody;Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/physics/MotionType;Lio/github/awakelab/awake/physics/BodyHandle;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/physics/components/PhysicsBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHandle-DsBvwB4 ()Lio/github/awakelab/awake/physics/BodyHandle;
+	public final fun getMotionType ()Lio/github/awakelab/awake/physics/MotionType;
+	public final fun getShape ()Lio/github/awakelab/awake/physics/PhysicsShape;
+	public fun hashCode ()I
+	public final fun setHandle--TR43kA (Lio/github/awakelab/awake/physics/BodyHandle;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/physics/systems/PhysicsSystem : io/github/awakelab/awake/ecs/System {
+	public fun <init> (Lio/github/awakelab/awake/physics/PhysicsWorld;)V
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+

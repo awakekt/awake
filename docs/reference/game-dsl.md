@@ -137,7 +137,7 @@ That keeps:
 
 The cookbook examples above are backed by executable tests and a generated report:
 
-- [awake/engine/bootstrap/src/commonTest/kotlin/io/github/ronjunevaldoz/awake/engine/bootstrap/AppLifecycleUiDslTest.kt](../../awake/engine/bootstrap/src/commonTest/kotlin/io/github/ronjunevaldoz/awake/engine/bootstrap/AppLifecycleUiDslTest.kt)
+- [awake/engine/bootstrap/src/commonTest/kotlin/io/github/awakelab/awake/engine/bootstrap/AppLifecycleUiDslTest.kt](../../awake/engine/bootstrap/src/commonTest/kotlin/io/github/awakelab/awake/engine/bootstrap/AppLifecycleUiDslTest.kt)
 - `awake/engine/game-authoring/build/reports/game-dsl-tutorials/index.html`
 - `samples/starter-game` was retired; `samples/ui-showcase` is the live consumer of this DSL
 

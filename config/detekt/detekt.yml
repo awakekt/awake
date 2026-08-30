@@ -152,8 +152,8 @@ complexity:
   LongParameterList:
     active: true
     excludes:
-      - '**/src/**/kotlin/io/github/ronjunevaldoz/awake/vulkan/models/info/**'
-      - '**/src/**/kotlin/io/github/ronjunevaldoz/awake/vulkan/models/physicaldevice/**'
+      - '**/src/**/kotlin/io/github/awakelab/awake/vulkan/models/info/**'
+      - '**/src/**/kotlin/io/github/awakelab/awake/vulkan/models/physicaldevice/**'
       - '**/OpenGL.kt'
       - '**/RendererVertexWriters.kt'
     functionThreshold: 6
@@ -671,7 +671,7 @@ style:
       - '**/iosTest/**'
       - 'iosTest/**'
       - '**/*.kts'
-      - '**/src/**/kotlin/io/github/ronjunevaldoz/awake/vulkan/enums/**'
+      - '**/src/**/kotlin/io/github/awakelab/awake/vulkan/enums/**'
       - '**/RobotoRegularUiFontData.kt'
       - '**/GlyphAtlasSource.kt'
       - '**/HeroIcons.kt'
@@ -897,5 +897,5 @@ style:
     active: true
     excludeImports:
       - 'java.util.*'
-      - 'io.github.ronjunevaldoz.awake.ui.layout.*'
-      - 'io.github.ronjunevaldoz.awake.ui.style.*'
+      - 'io.github.awakelab.awake.ui.layout.*'
+      - 'io.github.awakelab.awake.ui.style.*'

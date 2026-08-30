@@ -36,11 +36,20 @@ interface ParentDataModifierNode : Modifier.Element {
 }
 ```
 
-Nodes have a real lifecycle — `onAttach()` / `onDetach()` — which is what Compose bolts on via
-`DisposableEffect`. See the shimmer example in `05-animation.md`.
+Stateful nodes use a per-pass `ModifierNodeElement` and a retained `Modifier.Node`. The reconciler
+matches an element class at the same chain position, calls `update` on the retained node, and calls
+`onAttach()` / `onDetach()` exactly once at its ownership boundary. A `Modifier.Node` is not a
+`Modifier.Element`, so it cannot be inserted in a chain directly; every retained implementation
+must enter through its element.
 
 ```kotlin
-private class PaddingNode(private val insets: UiInsets) : LayoutModifierNode {
+private class PaddingElement(private val insets: UiInsets) : ModifierNodeElement<PaddingNode>() {
+    override fun create() = PaddingNode()
+    override fun update(node: PaddingNode) { node.insets = insets }
+}
+
+private class PaddingNode : Modifier.Node(), LayoutModifierNode {
+    lateinit var insets: UiInsets
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val h = insets.horizontal.roundToPx()
         val v = insets.vertical.roundToPx()
@@ -51,7 +60,7 @@ private class PaddingNode(private val insets: UiInsets) : LayoutModifierNode {
     }
 }
 
-fun Modifier.padding(all: Dp): Modifier = this then PaddingNode(UiInsets.all(all))
+fun Modifier.padding(all: Dp): Modifier = this then PaddingElement(UiInsets.all(all))
 ```
 
 ## Order is meaningful, and we say so
@@ -116,27 +125,36 @@ break silently, which is the half worth guarding.
 | `scrollState`, `scrollConfig` | `ScrollNode` | See `08-lazy-lists.md` |
 | `graphicsLayer` | `GraphicsLayerNode` | See `10-graphics-layer.md` |
 | `clickAction` | `PointerInputNode` (`Modifier.clickable`) | |
-| `styleable` | **Not ported.** `Style` stays in `ui-designsystem` | See `04-styling-theme.md` |
+| `styleable` | **Not ported.** `Style` stays in `ui-shadcn` | See `04-styling-theme.md` |
 | — | `Modifier.onPlaced { bounds -> }` | New. Replaces reading a container's returned `Rectangle`; 46 call sites need it |
+
+## `Shape` unifies `background`/`border`/`clip`
+
+`compose:ui` provides `Shape`/`ShapeOutline`, `RectangleShape`, `RoundedCornerShape`, and
+`CircleShape`; `background(color, shape)`, `border(width, color, shape)`, and `clip(shape)` consume
+the same outline. Existing `cornerRadius: Dp` overloads remain compatibility wrappers around a uniform
+`RoundedCornerShape`. A per-corner `RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)` falls
+back to the established path pipeline, while rectangle and uniform rounded shapes retain the cheaper
+quad paths. `clipToBounds()` remains the explicit rectangular fast alias.
 
 ## What consumers stop writing
 
 No `id: String` on a modifier — node identity is positional. No `cacheKey`. No `withSizeFallback`.
 No container inspecting a modifier to choose a strategy.
 
-## A link does not survive the frame
+## Retained node state
 
-The chain is rebuilt on every pass, so a `Modifier.Element` instance lives exactly one frame. Compose
-avoids this with `ModifierNodeElement`, which splits the per-pass element from a retained node and
-reconciles them with `create`/`update`. This engine has no such split.
+The chain is rebuilt on every pass, so a `Modifier.Element` instance lives exactly one frame.
+`ModifierNodeElement` splits that per-pass element from a retained node and reconciles them with
+`create`/`update`.
 
 The consequence is not theoretical. `clickable` originally recorded the press on the node instance,
 and a click spanning two frames -- which every real click does -- never fired, because the instance
 that saw the release was not the one that saw the press. Every test passed, because none of them
 reconciled between the two.
 
-**Rule for now: a modifier link must be stateless.** Anything that has to outlive the pass goes in
-one of three places:
+Anything that has to outlive the pass belongs in a `Modifier.Node`, or in one of these existing
+owners:
 
 | Where | For |
 |---|---|
@@ -144,5 +162,7 @@ one of three places:
 | A caller-owned object held with `remember` | `InteractionSource`, and anything a styling layer reads |
 | The dispatcher | Gesture bookkeeping, exposed on the event as `isCaptureHolder` / `isInBounds` |
 
-Building the element/node split is the real fix and is not scheduled. Until it is, a consumer writing
-a stateful modifier will hit exactly the bug above, so this page is the warning.
+The retained split is proven by `ModifierNodeLifecycleTest`: updates preserve identity, replacement
+detaches before attaching, and removing a subtree detaches every retained modifier node. The
+migration inventory and completion criteria live in
+`docs/tasks/2026-08-27-compose-modifier-node-lifecycle-plan.md`.

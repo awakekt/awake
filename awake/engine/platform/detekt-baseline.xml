@@ -3,9 +3,9 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>LongParameterList:AppSpec.kt$AppSpec$( val windowConfig: WindowConfig, private val onReady: List&lt;suspend (Renderer) -> Unit>, private val onTick: List&lt;(frame: AppFrame) -> Unit>, private val onResize: List&lt;(width: Float, height: Float) -> Unit>, private val onPause: List&lt;() -> Unit>, private val onResume: List&lt;() -> Unit>, private val onDispose: List&lt;() -> Unit>, private val services: Map&lt;KClass&lt;*>, Any>, )</ID>
-    <ID>NewLineAtEndOfFile:AppInstaller.kt$io.github.ronjunevaldoz.awake.engine.platform.lifecycle.AppInstaller.kt</ID>
-    <ID>NewLineAtEndOfFile:AwakeAppLifecycle.kt$io.github.ronjunevaldoz.awake.engine.platform.lifecycle.AwakeAppLifecycle.kt</ID>
-    <ID>NewLineAtEndOfFile:WindowConfig.kt$io.github.ronjunevaldoz.awake.engine.platform.config.WindowConfig.kt</ID>
+    <ID>NewLineAtEndOfFile:AppInstaller.kt$io.github.awakelab.awake.engine.platform.lifecycle.AppInstaller.kt</ID>
+    <ID>NewLineAtEndOfFile:AwakeAppLifecycle.kt$io.github.awakelab.awake.engine.platform.lifecycle.AwakeAppLifecycle.kt</ID>
+    <ID>NewLineAtEndOfFile:WindowConfig.kt$io.github.awakelab.awake.engine.platform.config.WindowConfig.kt</ID>
     <ID>TooManyFunctions:AppSpecBuilder.kt$AppSpecBuilder</ID>
     <ID>TooManyFunctions:VulkanView.kt$VulkanView : SurfaceViewCallback2</ID>
   </CurrentIssues>

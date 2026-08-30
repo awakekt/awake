@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import java.util.Base64
 
 plugins {
@@ -10,7 +15,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.engine.bootstrap"
+        namespace = "io.github.awakelab.awake.engine.bootstrap"
     }
 
     sourceSets {
@@ -20,22 +25,18 @@ kotlin {
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:input"))
             api(project(":awake:engine:platform"))
-            implementation(project(":awake:ui:headless"))
         }
         commonTest.dependencies {
             implementation(project(":awake:core:math"))
             implementation(project(":awake:engine:render:contract"))
-            implementation(project(":awake:ui:ui-core"))
-            implementation(project(":awake:ui:headless"))
+            implementation(project(":awake:core:text"))
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
         named("desktopTest") {
             dependencies {
                 implementation(project(":awake:engine:render:contract"))
-                implementation(project(":awake:ui:ui-core"))
-                implementation(project(":awake:ui:headless"))
-                implementation(project(":awake:ui:testing"))
+                implementation(project(":awake:core:text"))
                 implementation(kotlin("test"))
                 implementation(libs.kotlinx.coroutines.test)
             }

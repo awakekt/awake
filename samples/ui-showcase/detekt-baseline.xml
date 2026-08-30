@@ -2,13 +2,9 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComplexCondition:ShadcnStyleParityTest.kt$ShadcnStyleParityTest$bg.contains("oklch(0 ") || bg.contains("rgb(0, 0, 0)") || bg.contains("oklch(0.145") || bg.contains("oklch(0.205")</ID>
-    <ID>CyclomaticComplexMethod:ShadcnStyleParityTest.kt$ShadcnStyleParityTest$private fun assertStyle(caseId: String, theme: String, entry: AwakeUiPreviewEntry)</ID>
-    <ID>LongMethod:GettingStartedContent.kt$private fun RowScope.columnPreview(state: UiShowcaseRuntimeState)</ID>
-    <ID>LongMethod:ShowcaseApp.kt$internal fun AppUiRuntime.drawUiShowcaseOverlay( state: UiShowcaseRuntimeState, )</ID>
-    <ID>LongMethod:UiShowcaseAppLifecycleTest.kt$UiShowcaseAppLifecycleTest$@Test fun uiShowcaseDesktopShellDoesNotDuplicateIntroductionPageContent()</ID>
-    <ID>LongMethod:UiShowcaseAppLifecycleTest.kt$UiShowcaseAppLifecycleTest$@Test fun uiShowcaseSidebarCategoryHeaderCentersIconAndTitleVertically()</ID>
-    <ID>NestedBlockDepth:UiShowcasePreviewDocsTest.kt$UiShowcasePreviewDocsTest$@Test fun writeShowcasePreviews()</ID>
-    <ID>UnusedParameter:ShadcnParityScreenshotTest.kt$metadata: AwakeUiPreviewMetadata</ID>
+    <ID>ForbiddenComment:AspectRatioPage.kt$// TODO: Render component here</ID>
+    <ID>LargeClass:ShadcnComposeParityPreviewTest.kt$ShadcnComposeParityPreviewTest</ID>
+    <ID>LongMethod:ShadcnComposeParityPreviewTest.kt$ShadcnComposeParityPreviewTest$@Test fun renderStrokeAaDiagnostic()</ID>
+    <ID>LongParameterList:ShadcnComposeParityPreviewTest.kt$ShadcnComposeParityPreviewTest$( previewName: String, outDir: File, width: Int, height: Int, frame: ComposeComponentFrame, bg: Color, )</ID>
   </CurrentIssues>
 </SmellBaseline>

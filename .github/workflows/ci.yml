@@ -2,7 +2,13 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # `dev/**` is where work actually lands: this repo integrates by merging branch into branch,
+    # not by PR, and `main` has not moved since 2026-08-11 while `dev/improvement` ran ~900
+    # commits past it. Pinned to main alone, CI did not run for two weeks -- which is how
+    # `:awake:engine:app`, `awake:ui:testing`'s commonTest and `samples/ui-showcase`'s wasmJs all
+    # stopped compiling with nothing reporting it. A source set nobody builds is indistinguishable
+    # from one that passes.
+    branches: [main, 'dev/**']
   pull_request:
 
 concurrency:
@@ -39,6 +45,25 @@ jobs:
       - name: Detekt (all modules, baselined)
         run: ./gradlew detekt
 
+      # Every step below this one names a specific module, so a module nobody names is never
+      # built. These two name none: Gradle runs the task in every project that has it, so a new
+      # module is covered the day it exists. Compile-only on purpose -- running the suites would
+      # pull in `:awake:backend:vulkan:desktopTest`, which needs the native library and lavapipe
+      # that only the `desktop-vulkan-smoke` job installs.
+      #
+      # This is the gate that was missing. `awake:ui:testing`'s commonTest stopped compiling and
+      # took all 75 of its tests out of every run; `samples/ui-showcase`'s wasmJs called a
+      # constructor that no longer existed; `:awake:engine:app` had been broken for weeks. All
+      # three looked exactly like passing, because nothing built them.
+      - name: Every desktop test source set compiles
+        run: ./gradlew compileTestKotlinDesktop
+
+      - name: Jolt desktop physics tests
+        run: ./gradlew :awake:backend:jolt:desktopTest
+
+      - name: Every wasmJs source set compiles
+        run: ./gradlew compileKotlinWasmJs
+
       # hello-cube (retired) had a dedicated :androidApp wrapper module producing a real
       # installable APK, uploaded below as a regression artifact. ui-showcase only has a KMP
       # `android {}` library target (no application-plugin wrapper module), so this currently
@@ -49,6 +74,14 @@ jobs:
 
       - name: Build desktop demo
         run: ./gradlew :samples:ui-showcase:desktopJar
+
+      # studio is the sample with real coverage -- 53 tests over its store, gizmo math, shell
+      # layout, save/load and the ASL shader drift guard -- and until now no CI step named it at
+      # all, so none of them ran here. No GPU or native library involved: nothing in
+      # `desktopTest` touches VulkanEngine, GraphicsDevice or loadLibrary, which is why this
+      # belongs in `build` rather than the lavapipe job.
+      - name: Studio sample (tests and desktop jar)
+        run: ./gradlew :samples:studio:desktopTest :samples:studio:desktopJar
 
       - name: Build vulkan generator
         run: ./gradlew :awake:backend:vulkan:generator:assemble
@@ -88,6 +121,12 @@ jobs:
 
       - name: Build desktop native Vulkan library
         run: ./gradlew :awake:backend:vulkan:buildDesktopNative
+
+      # Conformance for the published vulkan-kmp bindings: their own desktop suite
+      # (VulkanDesktopNativeSmokeTest and friends) ran nowhere in CI before this step --
+      # the renderer's suite exercised them only indirectly.
+      - name: vulkan-kmp bindings conformance (lavapipe)
+        run: ./gradlew :awake:backend:vulkan:bindings:desktopTest
 
       - name: Desktop Vulkan smoke test (real vkCreateInstance via lavapipe)
         run: ./gradlew :awake:backend:vulkan:desktopTest

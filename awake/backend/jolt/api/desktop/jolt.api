@@ -1,0 +1,12 @@
+public final class io/github/awakelab/awake/physics/jolt/JoltPhysicsWorld : io/github/awakelab/awake/physics/PhysicsWorld {
+	public fun <init> ()V
+	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun createBody-PNriADU (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/MotionType;)J
+	public fun destroy ()V
+	public fun destroyBody-g3LjJeE (J)V
+	public fun raycast (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/physics/RaycastHit;
+	public fun step (F)V
+	public fun syncTransforms ()Ljava/util/List;
+}
+

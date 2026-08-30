@@ -1,20 +1,7 @@
 /*
- * Awake
- * Awake.awake-backend-vulkan.bindings
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
  *
- * Copyright (c) ronjunevaldoz 2023.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 // Raw generated Vulkan API surface, split out of :awake:backend:vulkan (see
@@ -35,14 +22,25 @@
 
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
+    id("awake.native-build-convention")
+}
+
+// Mirrored Khronos API: the Vulkan spec is the documentation for Vk* names, and demanding
+// KDoc on ~800 generated enum entries would only produce paraphrases. The strict
+// undocumented-API guardrail stays for authored modules; this one opts out.
+dokka {
+    dokkaSourceSets.configureEach {
+        reportUndocumented.set(false)
+    }
 }
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.vulkan"
+        namespace = "io.github.awakelab.awake.vulkan"
     }
 
     // See :awake:backend:vulkan's build.gradle.kts history for the full MoltenVK rationale
@@ -66,38 +64,34 @@ kotlin {
         val target =
             kotlin.targets.getByName(targetName) as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
-        val generatedDefFile =
-            layout.buildDirectory.file("cinterop/MoltenVK-$targetName.def").get().asFile
-        generatedDefFile.parentFile.mkdirs()
-        val moltenVkLinkerOpts = listOf(
-            "-L${staticDir.path}", "-lMoltenVK", "-lc++",
-            "-framework", "Metal",
-            "-framework", "QuartzCore",
-            "-framework", "IOSurface",
-            "-framework", "CoreGraphics",
-            "-framework", "Foundation",
-            "-framework", "UIKit",
-        ).joinToString(" ")
-        generatedDefFile.writeText(
-            project.file("src/nativeInterop/cinterop/MoltenVK.def").readText() +
-                    "\nlinkerOpts = $moltenVkLinkerOpts\n"
+        registerGeneratedDefCinterop(
+            target = target,
+            interopName = "MoltenVK",
+            baseDefFile = project.file("src/nativeInterop/cinterop/MoltenVK.def"),
+            headerDirs = listOf(moltenVkIncludeDir),
+            linkerOpts = listOf(
+                "-L${staticDir.path}", "-lMoltenVK", "-lc++",
+                "-framework", "Metal",
+                "-framework", "QuartzCore",
+                "-framework", "IOSurface",
+                "-framework", "CoreGraphics",
+                "-framework", "Foundation",
+                "-framework", "UIKit",
+            ),
         )
-        target.compilations.getByName("main") {
-            cinterops {
-                create("MoltenVK") {
-                    defFile(generatedDefFile)
-                    includeDirs(moltenVkIncludeDir)
-                }
-            }
-        }
     }
 
     jvm("desktop")
 
     sourceSets {
-        commonMain.dependencies {
-            implementation(project(":awake:core:input"))
-            // Buffer/memory types the raw Vk*/gen wrappers marshal through.
+        named("desktopMain") {
+            resources.srcDir(layout.buildDirectory.dir("generated/natives-resources"))
+            // Natives built on other machines. A host can only compile its own, so a jar that
+            // covers more than one platform has to be assembled from several builds -- CI fans out
+            // per runner and points this at the collected `natives/<platform>/` tree.
+            (findProperty("awake.prebuiltNatives") as String?)
+                ?.takeIf { it.isNotBlank() }
+                ?.let { resources.srcDir(it) }
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -117,70 +111,87 @@ kotlin {
 val desktopNativeBuildDir = layout.buildDirectory.dir("desktop-native")
 val desktopNativeLibDir = layout.buildDirectory.dir("desktop-native-libs")
 
-// Locates ccache without relying on it being on PATH at Gradle's own launch time --
-// homebrew's two standard prefixes cover both Apple Silicon and Intel Macs.
-fun findCcache(): String? =
-    listOf("/opt/homebrew/bin/ccache", "/usr/local/bin/ccache").firstOrNull { File(it).exists() }
-
-tasks.register<Exec>("configureDesktopNative") {
-    group = "native"
-    description = "Configure the desktop native build (CMake) -- run after any C++ source change."
-    workingDir = desktopNativeBuildDir.get().asFile.also { it.mkdirs() }
-    commandLine(
-        buildList {
-            add("cmake")
-            add("-S"); add(layout.projectDirectory.dir("desktop-native").asFile.absolutePath)
-            add("-B"); add(desktopNativeBuildDir.get().asFile.absolutePath)
-            add("-DCMAKE_BUILD_TYPE=Debug")
-            findCcache()?.let {
-                add("-DCMAKE_C_COMPILER_LAUNCHER=$it")
-                add("-DCMAKE_CXX_COMPILER_LAUNCHER=$it")
-            }
-        }
-    )
-}
-
-tasks.register<Exec>("buildDesktopNative") {
-    group = "native"
+val buildDesktopNative = registerCMakeLibrary(
+    name = "DesktopNative",
+    sourceDir = layout.projectDirectory.dir("desktop-native").asFile,
+    buildDir = desktopNativeBuildDir.get().asFile,
     description = "Build the desktop native library (.dylib/.so/.dll) and copy it where the " +
-            "desktop JVM's System.loadLibrary(\"awake-vulkan\") can find it (-Djava.library.path)."
-    dependsOn("configureDesktopNative")
-    workingDir = desktopNativeBuildDir.get().asFile
-    commandLine("cmake", "--build", desktopNativeBuildDir.get().asFile.absolutePath)
+        "desktop JVM's System.loadLibrary(\"awake-vulkan\") can find it (-Djava.library.path).",
+)
+
+// The copy is this module's own: nothing else needs its output next to a java.library.path.
+buildDesktopNative.configure {
     doLast {
         val libDir = desktopNativeLibDir.get().asFile.also { it.mkdirs() }
+        // An exact filename, not a pattern. The pattern this replaced was written
+        // `lib?awake-vulkan\.(dylib|so|dll)` -- "li" plus an optional "b" -- so it missed
+        // awake-vulkan.dll, the real Windows name, and matched liawake-vulkan.so.
+        val expected = HostOs.libraryFileName("awake-vulkan")
         val built = desktopNativeBuildDir.get().asFile.walkTopDown()
-            .filter { it.isFile && it.name.matches(Regex("lib?awake-vulkan\\.(dylib|so|dll)")) }
-            .firstOrNull()
-            ?: throw GradleException("Built awake-vulkan native library not found under $desktopNativeBuildDir")
+            .firstOrNull { it.isFile && it.name == expected }
+            ?: throw GradleException("$expected not found under $desktopNativeBuildDir")
         built.copyTo(File(libDir, built.name), overwrite = true)
         println("Desktop native library copied to: ${File(libDir, built.name)}")
+
+        val platformTag = when {
+            HostOs.isMac && (System.getProperty("os.arch").lowercase().contains("arm64") || System.getProperty("os.arch").lowercase().contains("aarch64")) -> "macos-arm64"
+            HostOs.isMac -> "macos-x86_64"
+            HostOs.isLinux && (System.getProperty("os.arch").lowercase().contains("arm64") || System.getProperty("os.arch").lowercase().contains("aarch64")) -> "linux-arm64"
+            HostOs.isLinux -> "linux-x86_64"
+            HostOs.isWindows -> "windows-x86_64"
+            else -> HostOs.slug
+        }
+        val nativesResDir = layout.buildDirectory.dir("generated/natives-resources/natives/$platformTag").get().asFile.also { it.mkdirs() }
+        built.copyTo(File(nativesResDir, built.name), overwrite = true)
+        println("Desktop native library packaged for resources: ${File(nativesResDir, built.name)}")
     }
 }
 
-// See :awake:backend:vulkan's original build.gradle.kts history for the macOS Vulkan
-// loader/ICD rationale -- unchanged by the split.
-val moltenVkIcdPath =
-    fileTree("/opt/homebrew/Cellar/molten-vk") { include("*/etc/vulkan/icd.d/MoltenVK_icd.json") }
-        .plus(fileTree("/usr/local/Cellar/molten-vk") { include("*/etc/vulkan/icd.d/MoltenVK_icd.json") })
-        .files.firstOrNull()?.absolutePath
-val desktopVulkanEnv = buildMap {
-    if (moltenVkIcdPath != null) put("VK_ICD_FILENAMES", moltenVkIcdPath)
-    put(
-        "DYLD_FALLBACK_LIBRARY_PATH",
-        "/opt/homebrew/opt/vulkan-loader/lib:/opt/homebrew/lib:/usr/local/lib"
-    )
-}
+val desktopVulkanEnv = VulkanDesktopEnv.environment()
 
 tasks.named<Test>("desktopTest") {
+    requireExclusiveGpu(this)
     jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
     environment(desktopVulkanEnv)
 }
 
-val startOnFirstThread = if (System.getProperty("os.name").lowercase().contains("mac")) {
+val startOnFirstThread = if (HostOs.isMac) {
     listOf("-XstartOnFirstThread")
 } else {
     emptyList()
+}
+
+// The platforms a release must carry a native library for. Windows is deliberately absent: no CI
+// job has ever compiled the desktop C++ on it, so promising it would be a guess. macOS arm64 and
+// Linux x86_64 are both built by existing jobs, and macOS x86_64 by the runner added alongside this.
+val requiredNativePlatforms = listOf("macos-arm64", "macos-x86_64", "linux-x86_64")
+
+// A one-platform jar is indistinguishable from a correct one until a consumer on another OS tries
+// to load it, and then it fails at run time with "not found for platform". The published jar
+// carried only the host's library for its whole life because nothing ever looked.
+tasks.register("verifyDesktopNatives") {
+    group = "verification"
+    description = "Fail if the desktop jar's resources are missing a native library for a supported platform."
+    doLast {
+        val roots = buildList {
+            add(layout.buildDirectory.dir("generated/natives-resources").get().asFile)
+            (findProperty("awake.prebuiltNatives") as String?)
+                ?.takeIf { it.isNotBlank() }
+                ?.let { add(file(it)) }
+        }
+        val missing = requiredNativePlatforms.filter { platform ->
+            roots.none { root ->
+                File(root, "natives/$platform").listFiles()?.any { it.isFile && it.length() > 0 } == true
+            }
+        }
+        check(missing.isEmpty()) {
+            "The desktop jar would ship without a native library for: ${missing.joinToString(", ")}.\n" +
+                "Looked under: ${roots.joinToString(", ") { it.absolutePath }}\n" +
+                "A host builds only its own library, so a release assembles them from per-OS CI runs " +
+                "and passes -Pawake.prebuiltNatives=<collected dir>."
+        }
+        println("Desktop natives present for: ${requiredNativePlatforms.joinToString(", ")}")
+    }
 }
 
 // Manual diagnostic task (same convention as checkJniBindings) -- proves GLFW window + Vulkan
@@ -199,4 +210,18 @@ tasks.register<JavaExec>("verifyGlfwMain") {
     )
     jvmArgs(startOnFirstThread + "-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
     environment(desktopVulkanEnv)
+}
+
+mavenPublishing {
+    // Flat, searchable coordinates for the standalone library ("vulkan kmp" is the query its
+    // audience types) -- distinct from the path-derived group other modules keep for
+    // capability-collision safety; "vulkan-kmp" is unique so the projectsEvaluated duplicate
+    // check stays satisfied.
+    coordinates("io.github.awake-lab", "vulkan-kmp", version.toString())
+    pom {
+        name.set("Vulkan KMP Bindings")
+        description.set(
+            "Raw Vulkan API bindings for Kotlin Multiplatform -- desktop JVM, Android, and iOS via MoltenVK"
+        )
+    }
 }

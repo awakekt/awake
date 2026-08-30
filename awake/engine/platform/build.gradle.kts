@@ -1,4 +1,9 @@
 /*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/*
  * Awake
  * Awake.awake-engine-platform
  *
@@ -27,7 +32,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.engine.platform"
+        namespace = "io.github.awakelab.awake.engine.platform"
     }
 
     // GraphicsEngine.kt: the backend-neutral render bootstrap that VulkanEngine
@@ -47,11 +52,6 @@ kotlin {
             // drawDebugLines()'s plumbing, nothing scene/ECS-specific.
             api(project(":awake:engine:render:contract"))
             implementation(libs.kotlinx.coroutines.core)
-        }
-        named("androidMain") {
-            dependencies {
-                implementation(project(":awake:ui:ui-core"))
-            }
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

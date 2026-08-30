@@ -1,4 +1,9 @@
 /*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/*
  * Awake
  * Awake.awake-asset-gltf
  *
@@ -28,7 +33,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.asset.gltf"
+        namespace = "io.github.awakelab.awake.asset.gltf"
     }
 
     sourceSets {

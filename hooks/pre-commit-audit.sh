@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
 # Pre-commit hook: profile-parity check, commit summary, and a CHANGELOG nudge.
 # Wired via .githooks/pre-commit (core.hooksPath), alongside the existing
 # commit-msg and pre-push hooks in the same directory.

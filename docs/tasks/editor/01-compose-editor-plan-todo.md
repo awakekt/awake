@@ -1,109 +1,183 @@
-# Editor on compose:ui — rebuild, don't port
+# Awake Editor Plan — rebuild, do not port
 
-Drafted 2026-08-22. Status: todo, blocked on compose capabilities named below.
+Drafted 2026-08-22. Revised 2026-08-25. Status: Stages 0 and 1 foundations complete;
+Stage 2's host-owned interaction seam and reusable scene helpers, plus Stage 3's shell, hierarchy,
+inspector, toolbar, and viewport controls are complete. Studio is one fixture with no dock or
+catalogue; generic selection, tools, and play state are exercised through `EditorStore`.
 
 ## Decision
 
-`awake:editor` is written directly against `awake:compose:*`. Studio's 2600 reusable lines are
-**not** ported.
+`awake:editor` is Awake's generic editor library. It is rebuilt for the retained
+`awake:compose:*` UI engine; Studio's existing editor implementation is not ported. A port would
+carry `ui-core`'s trial-measure model and its old UI assumptions into a library intended to outlive
+them.
 
-Porting looks cheaper and is not. Those panels are built on `ui:ui-core`'s trial-measure model,
-`Style{}` state-rule merges and the shadcn recipe layer — three things the compose engine
-deliberately does not have. A port would carry the shape of the engine being replaced into the
-module meant to outlive it, and then need rewriting a second time.
+The library owns generic editor behaviour: selection, editor camera, viewport interaction,
+gizmos, panels, and provider-facing extension points. It owns no game content or world policy.
+Visible editor controls use the design-system recipes; `awake:editor` may use Compose layout and
+foundation APIs for structure and interaction, but does not recreate a local button, field, or
+theme system.
 
-What carries over is the **decisions**, not the code. Studio already learned things worth keeping:
+```text
+awake:editor              generic editor behaviour, UI, and tests
+awake:engine:compose      one application Compose host and frame integration
+samples:studio            host composition, one registered fixture, smoke proof
+private packs / games     provider implementations and authored world policy
+```
 
-| Decision | Where it came from |
+The application, not the editor, owns `ComposeAppRuntime`, presentation, and backend resources.
+For a scene-backed application, it installs `sceneComposeAppModule` before the scene module so the
+single host stages the editor UI before the scene render pass presents the frame.
+
+### UI dependency delivery
+
+The host constructs the explicit `EditorSession` adapter and `EditorProviders` collection. At the
+editor UI boundary it supplies them with `CompositionLocalProvider`; panels read the scoped values
+rather than accept them through every intermediate layout function.
+
+```kotlin
+context(_: Composer)
+fun EditorContent(session: EditorSession, providers: EditorProviders, store: EditorStore) {
+    CompositionLocalProvider(
+        LocalEditorSession provides session,
+        LocalEditorProviders provides providers,
+        LocalEditorStore provides store,
+    ) {
+        AwakeEditor()
+    }
+}
+```
+
+Composition locals are UI-scoped delivery, not a lifecycle or service locator: creation, disposal,
+testing, and the non-UI provider/session contracts remain explicit at the application boundary.
+
+What carries over from Studio is behaviour, not source:
+
+| Decision | Reason |
 |---|---|
-| Editor camera is a separate persistent entity, not the scene's authored camera | Frustum gizmo and camera preview are both degenerate when you view through the camera you are inspecting |
-| Panels render once per frame, called from the shell — never from inside a resizable group's draw | A resizable group measures more than once per frame; `StudioCameraPreview` documents the symptom |
-| `drawDebugLines` replaces the frame's line buffer rather than appending | Gizmo and debug-line features silently erased each other |
-| Offscreen passes must null `sceneViewport` around `renderToTexture` | Otherwise the inset is clipped to the main viewport's window rect |
+| The editor camera is a persistent entity separate from an authored camera | Inspecting a camera through itself makes its frustum and preview degenerate |
+| The shell invokes panels once per frame | A resizable layout can measure content more than once |
+| Debug-line submission replaces the frame buffer | Independent gizmo features must not erase one another |
+| Offscreen preview renders clear the scene viewport temporarily | An inset must not inherit the main viewport clip |
 
-## What "thin" means here
+## Extension and session boundary
 
-Not "fewer lines". The editor owns **no content**. Everything it displays is registered by the
-host application:
+The [framework/plugin plan](../2026-08-24-framework-boundary-and-plugin-ecosystem-plan.md) is the
+canonical definition of provider contracts, persistence, installation, permissions, and removal.
+This plan must not create a second registry model.
 
-```
-awake:editor          panels, gizmos, selection, the registry, the frame shell
-                      knows about: Entity, Component, Scene, DrawCommand
-                      knows nothing about: cubes, ducks, particles, any concrete component
+`awake:editor` consumes these KMP-safe provider kinds:
 
-samples/studio        registers the demo content, runs the editor
-mmo:*                 registers its own content, runs the same editor
-```
-
-Three registries, and they are the entire plugin surface:
-
-| Registry | Registers | Editor uses it for |
+| Provider | Editor responsibility | Provider responsibility |
 |---|---|---|
-| Components | a component type + how to draw its inspector row | Inspector panel |
-| Systems | a `System` + whether it runs in Edit, Play, or both | Mode toggle |
-| Assets | a loader + a thumbnail provider per extension | Asset browser, import |
+| Component | Display/edit schema and route codec operations | Stable ID, versioned codec, validation, inspector fields, ECS mapping |
+| Asset | Show metadata, thumbnail state, and errors | Import/parser, cache, lifetime, and format policy |
+| Environment | Select and preview when supported by the render plan | Environment source and renderer composition |
+| Animation | Show clips, bind animator, provide isolated scrub preview | Source import and animation/skin binding |
+| Build | Surface run, cancel, rebuild, dispose, and bake actions | Algorithm, progress, dirty-region policy, preview resources, deterministic seed |
 
-Studio's failure to have this is why `StudioPills` hardcodes wireframe/shadows/frustum toggles and
-`ExampleLoader` hardcodes eight demos. Neither is reusable, and neither is a big file — the
-problem is the missing seam, not the size.
+Every provider has a stable ID, versioned configuration codec, metadata, validation, and disposal.
+An unavailable provider never discards authored data: the editor preserves its opaque payload and
+reports the capability as unavailable.
 
-## Blocked on
+The editor operates on two distinct states:
 
-The editor cannot start until the compose engine grows four capabilities. From
-`docs/reference/compose-engine/README.md`'s own status table:
+```text
+authored SceneDocument --start play--> isolated Play world --stop--> destroyed
+        ^                                                |
+        +--- explicit provider-owned Apply changes ------+
+```
 
-| Editor surface | Needs | Compose page | State |
-|---|---|---|---|
-| Hierarchy tree | scrollable list | `08-lazy-lists` | Not started |
-| Inspector fields | text input, focus | `06-focus-text-input` | Not started |
-| Toolbar, pills, buttons | `clickable`, `background`, `border` | `04-styling-theme` | Not started |
-| Viewport gizmo | `DrawScope`, pointer input | `10-graphics-layer`, `12-gestures` | **Landed 2026-08-22** |
-| Panel layout, docking | Row/Column/Box, weight | `01-layout`, `02-modifier` | Done |
-| Frame timing | frame loop | `:runtime` | Not started |
+Starting Play snapshots authored data. Stopping Play destroys only the isolated world. A provider
+may explicitly apply a reviewed change to authored configuration; simulation output never writes
+back implicitly. Placement and generation providers persist a specification (seed, asset IDs,
+parameters), not generated entities; they own preview output, cancellation, cleanup, and optional
+baking. Awake supplies the seam, never the generation or world-placement policy.
 
-`04` is the critical one: without `clickable` there is no button, and without a button there is no
-toolbar. `08` and `06` gate the two largest panels.
+The host creates and passes an explicit editor/session adapter and provider collection to that UI
+scope. The editor does not access `SceneAppLifecycleRuntime`, own a renderer, call `present`, or
+retain a thumbnail cache. Render previews are requested through the relevant provider or
+host-facing preview service so resource lifetime stays with the renderer-aware owner.
 
-**Do not start the editor before `04` lands.** The alternative is hand-rolling a button on raw
-pointer input in the editor module, which becomes the thing that has to be deleted when `04`
-arrives.
+## Compose readiness
 
-## Stages
+The original capability block is obsolete. The retained Compose engine now provides layout,
+styling, click/focus/text-input, frame processing, and the required pointer primitives. `LazyColumn`
+is available but still settles its visible window one frame late; hierarchy work must validate that
+trade-off with a representative scene. Real render layers remain unavailable, so previews must use
+the existing renderer-owned offscreen path rather than `graphicsLayer`.
 
-Each stage is independently useful and independently verifiable.
+No editor-local replacements for controls or input are permitted. Capability gaps are resolved in
+Compose or the design system before an editor surface depends on them.
 
-**Stage 0 — seam first, no UI.** `awake:editor` with the three registries, `EditorState`, and
-selection. No compose dependency at all. Studio keeps its current UI and registers its content
-through the new registries. This de-risks everything after it: if the registry shape is wrong, it
-is wrong now, in a module with no rendering to unpick.
+## Delivery stages
 
-**Stage 1 — viewport.** Editor camera, transform gizmo, selection picking, debug overlays. These
-need only `DrawScope` and pointer input, both landed. First compose-rendered editor surface.
+Each stage is independently useful and verified before the next begins.
 
-**Stage 2 — panels.** Hierarchy and Inspector, gated on `08` and `06`. Toolbar gated on `04`.
+1. **Stage 0 — contracts and state, no UI.** **Core complete.** `awake:editor` owns editor state,
+   selection, the session adapter, canonical provider registry interfaces, and synthetic-provider
+   tests. Studio's temporary UI may register one fixture through those contracts during its
+   thinning phase.
+2. **Stage 1 — document and play lifecycle.** **Foundation complete.** `SceneDocument` persists
+   opaque versioned extension records; `SceneExtensionRegistry` validates available providers and
+   reports unavailable data without discarding it; `SceneDocumentEditSession` snapshots into and
+   destroys an isolated Play world. The optional `awake:editor:scene` module's
+   `SceneDocumentEditorSession` is the host-owned `EditorSession` adapter; the app remains
+   responsible for scheduling its Play world. No provider is allowed to mutate an authored
+   document from Play.
+3. **Stage 2 — viewport.** **Root and interaction seam complete.** `ProvideAwakeEditor` provides
+   explicit session and provider locals, while `AwakeEditor` exposes a full-size host-rendered
+   viewport slot. The full-size viewport turns an unconsumed release into `EditorStore`'s
+   viewport-pick request, allowing a future gizmo to consume its own interaction first.
+   `EditorEffectRouter` is owned and drained by the host; its renderer/world-aware picker returns
+   only a stable result through selection. `awake:editor:scene` now owns the editor camera,
+   transform gizmo, viewport rectangle/projection helpers, preview/orientation-gizmo primitives,
+   display/debug/camera controls, and the persistent Scene-view camera system. The host retains
+   renderer lifetime and maps renderer/camera policy into explicit controls and controller adapters.
+4. **Stage 3 — shell and panels.** **Complete.**
+   `AwakeEditorShell` provides resizable hierarchy, viewport, and inspector regions with
+   application-owned slots and named shadcn surfaces. `EditorScaffold`, `EditorDock`,
+   `EditorProviderPanel`, and `EditorToolbar` exist. `SceneHierarchyPanel`, `SceneInspectorPanel`,
+   the generic tool palette, and scene viewport controls now live in editor modules; Studio binds
+   them as an integration host. Validate a
+   representative hierarchy against the lazy-list one-frame-settling behaviour.
+5. **Stage 4 — assets and capability panels.** **Complete.** Added `EditorAssetPanel`, `EditorAnimationPanel`, `EditorEnvironmentPanel`, and `EditorBuildPanel` with comprehensive test coverage in `awake:editor`. Provider-owned preview paths supply thumbnails and render resources; the
+   editor does not cache renderer objects.
+6. **Stage 5 — thin Studio.** **Complete.** Generic editor tests and behaviour live in
+   `awake:editor` and `awake:editor:scene`; Studio has one registered fixture and integration
+   smoke coverage. The catalogue, dock, showcase render plan, reusable viewport presentation, and
+   renderer viewport helper are gone from Studio. Its bridge adapts only host scene/camera policy
+   to reusable editor state.
 
-**Stage 3 — assets.** Import via the asset registry, save via `scene:runtime`'s `SceneWriter`
-(already moved there, 2b30b27c9). Thumbnails via `renderToTexture`, the mechanism
-`StudioCameraPreview` already proves.
+## Acceptance gates
 
-**Stage 4 — retire `samples/studio`'s editor code.** Only once the compose editor is at parity.
-Studio becomes what its name says: a sample that registers demo content.
+- `awake:editor` depends on neither Studio, a pack, nor a game; it has no application-host or
+  backend-present dependency.
+- Synthetic providers prove registration, stable ordering, validation, cancellation, and disposal.
+- Built-in and unknown extension records survive load/save unchanged when their provider is absent.
+- Edit and Play worlds are isolated; stopping Play releases its world and does not mutate authored
+  data unless an explicit provider-owned Apply operation is invoked.
+- A scene-backed host proves a single Compose host, UI staging before scene presentation, and no
+  duplicate present.
+- Studio registers only a small fixture and has no direct knowledge of concrete demo assets,
+  terrain, skybox, animation, or game-specific component names.
+- Viewport, interaction, and panel behaviour have focused editor tests; Studio is not used as a
+  unit-test fixture.
 
 ## Non-goals
 
-- **No port of Studio's panels.** Stated above; repeated here because it is the decision most
-  likely to be quietly reversed under time pressure.
-- **No `awake:editor` before `04-styling-theme`.** Stage 0 has no UI and is exempt.
-- **Not a general docking framework.** Fixed layout: viewport centre, panels left and right,
-  toolbar top. Studio's current layout is fine and nobody has asked for rearrangeable docks.
-- **No new module outside `awake/`.** The editor is published like everything else in `awake/`.
-  Naming: `awake:editor` is the library, `samples/studio` stays the app — an `awake:studio` that
-  `samples/studio` depends on reads as circular.
+- Porting Studio's existing panels or preserving its implementation details.
+- A general docking framework. The first editor uses a fixed layout.
+- Arbitrary system registration as an editor plugin API. Scheduling belongs to the session/runtime;
+  a future neutral editor-mode seam needs its own proven contract.
+- Procedural terrain, erosion, water, biomes, vegetation, placement algorithms, or game assets in
+  Awake. These remain private providers or game code.
+- Runtime code loading. Plugin installation remains build-time, pinned, verified artifact
+  resolution as specified by the framework/plugin plan.
 
-## Open
+## Open only when the stage requires it
 
-- **Does the editor depend on `scene:*` or invert it?** Registries need `World`, `Entity`,
-  `System`. Depending on `awake:scene` is simplest and probably right, but it means the editor
-  cannot edit a non-ECS document. Decide at Stage 0, where it is cheap.
-- **Where does the asset registry's thumbnail cache live?** `renderToTexture` needs a `Renderer`,
-  which the editor otherwise does not hold.
+- Whether a future non-ECS document adapter is justified by two real consumers. The first editor
+  targets Awake scenes through the explicit adapter.
+- The smallest renderer-aware preview service API, to be defined only when two provider kinds need
+  more than their existing renderer-owned paths.

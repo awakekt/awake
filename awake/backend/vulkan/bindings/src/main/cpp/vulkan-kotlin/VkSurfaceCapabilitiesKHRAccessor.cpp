@@ -11,15 +11,15 @@ VkSurfaceCapabilitiesKHRAccessor::VkSurfaceCapabilitiesKHRAccessor(JNIEnv *env, 
     minImageCountField = env->GetFieldID(clazz, "minImageCount", "I");
     maxImageCountField = env->GetFieldID(clazz, "maxImageCount", "I");
     currentExtentField = env->GetFieldID(clazz, "currentExtent",
-                                         "Lio/github/ronjunevaldoz/awake/vulkan/models/VkExtent2D;");
+                                         "Lio/github/awakelab/awake/vulkan/models/VkExtent2D;");
     minImageExtentField = env->GetFieldID(clazz, "minImageExtent",
-                                          "Lio/github/ronjunevaldoz/awake/vulkan/models/VkExtent2D;");
+                                          "Lio/github/awakelab/awake/vulkan/models/VkExtent2D;");
     maxImageExtentField = env->GetFieldID(clazz, "maxImageExtent",
-                                          "Lio/github/ronjunevaldoz/awake/vulkan/models/VkExtent2D;");
+                                          "Lio/github/awakelab/awake/vulkan/models/VkExtent2D;");
     maxImageArrayLayersField = env->GetFieldID(clazz, "maxImageArrayLayers", "I");
     supportedTransformsField = env->GetFieldID(clazz, "supportedTransforms", "I");
     currentTransformField = env->GetFieldID(clazz, "currentTransform",
-                                            "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkSurfaceTransformFlagBitsKHR;");
+                                            "Lio/github/awakelab/awake/vulkan/enums/VkSurfaceTransformFlagBitsKHR;");
     supportedCompositeAlphaField = env->GetFieldID(clazz, "supportedCompositeAlpha", "I");
     supportedUsageFlagsField = env->GetFieldID(clazz, "supportedUsageFlags", "I");
 }

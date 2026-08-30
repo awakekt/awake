@@ -1,0 +1,145 @@
+public final class io/github/awakelab/awake/core/animation/AnimationChannel {
+	public fun <init> (ILio/github/awakelab/awake/core/animation/AnimationProperty;Lio/github/awakelab/awake/core/animation/AnimationSampler;)V
+	public final fun component1 ()I
+	public final fun component2 ()Lio/github/awakelab/awake/core/animation/AnimationProperty;
+	public final fun component3 ()Lio/github/awakelab/awake/core/animation/AnimationSampler;
+	public final fun copy (ILio/github/awakelab/awake/core/animation/AnimationProperty;Lio/github/awakelab/awake/core/animation/AnimationSampler;)Lio/github/awakelab/awake/core/animation/AnimationChannel;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/animation/AnimationChannel;ILio/github/awakelab/awake/core/animation/AnimationProperty;Lio/github/awakelab/awake/core/animation/AnimationSampler;ILjava/lang/Object;)Lio/github/awakelab/awake/core/animation/AnimationChannel;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getProperty ()Lio/github/awakelab/awake/core/animation/AnimationProperty;
+	public final fun getSampler ()Lio/github/awakelab/awake/core/animation/AnimationSampler;
+	public final fun getTargetBone ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/animation/AnimationClip {
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lio/github/awakelab/awake/core/animation/AnimationClip;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/animation/AnimationClip;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/core/animation/AnimationClip;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChannels ()Ljava/util/List;
+	public final fun getDuration ()F
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/animation/AnimationCrossfade {
+	public static final field DEFAULT_BLEND_SECONDS F
+	public static final field MIN_DURATION F
+	public fun <init> (Lio/github/awakelab/awake/core/animation/Skeleton;)V
+	public final fun advance (FLio/github/awakelab/awake/core/animation/Skin;)[F
+	public final fun play (Lio/github/awakelab/awake/core/animation/AnimationClip;F)V
+	public static synthetic fun play$default (Lio/github/awakelab/awake/core/animation/AnimationCrossfade;Lio/github/awakelab/awake/core/animation/AnimationClip;FILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/core/animation/AnimationLibrary {
+	public fun <init> (Lio/github/awakelab/awake/core/animation/Skeleton;Ljava/util/Map;)V
+	public final fun getClips ()Ljava/util/Map;
+	public final fun getSkeleton ()Lio/github/awakelab/awake/core/animation/Skeleton;
+}
+
+public final class io/github/awakelab/awake/core/animation/AnimationPlayback : java/lang/Enum {
+	public static final field Loop Lio/github/awakelab/awake/core/animation/AnimationPlayback;
+	public static final field Once Lio/github/awakelab/awake/core/animation/AnimationPlayback;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/animation/AnimationPlayback;
+	public static fun values ()[Lio/github/awakelab/awake/core/animation/AnimationPlayback;
+}
+
+public final class io/github/awakelab/awake/core/animation/AnimationPlayer {
+	public fun <init> (Lio/github/awakelab/awake/core/animation/AnimationLibrary;)V
+	public final fun crossFadeTo (Ljava/lang/String;FLio/github/awakelab/awake/core/animation/AnimationPlayback;)V
+	public static synthetic fun crossFadeTo$default (Lio/github/awakelab/awake/core/animation/AnimationPlayer;Ljava/lang/String;FLio/github/awakelab/awake/core/animation/AnimationPlayback;ILjava/lang/Object;)V
+	public final fun getActiveClipId ()Ljava/lang/String;
+	public final fun getSpeed ()F
+	public final fun isFinished ()Z
+	public final fun isPlaying ()Z
+	public final fun play (Ljava/lang/String;Lio/github/awakelab/awake/core/animation/AnimationPlayback;Z)V
+	public static synthetic fun play$default (Lio/github/awakelab/awake/core/animation/AnimationPlayer;Ljava/lang/String;Lio/github/awakelab/awake/core/animation/AnimationPlayback;ZILjava/lang/Object;)V
+	public final fun setSpeed (F)V
+	public final fun update (F)Lio/github/awakelab/awake/core/animation/AnimationPose;
+}
+
+public final class io/github/awakelab/awake/core/animation/AnimationPose {
+	public fun <init> (Lio/github/awakelab/awake/core/animation/Skeleton;)V
+	public final fun blend (Lio/github/awakelab/awake/core/animation/AnimationPose;F)V
+	public final fun copyFrom (Lio/github/awakelab/awake/core/animation/AnimationPose;)V
+	public final fun jointPalette (Lio/github/awakelab/awake/core/animation/Skin;)[F
+	public final fun resetToBindPose ()V
+	public final fun sample (Lio/github/awakelab/awake/core/animation/AnimationClip;F)V
+}
+
+public final class io/github/awakelab/awake/core/animation/AnimationProperty : java/lang/Enum {
+	public static final field Rotation Lio/github/awakelab/awake/core/animation/AnimationProperty;
+	public static final field Scale Lio/github/awakelab/awake/core/animation/AnimationProperty;
+	public static final field Translation Lio/github/awakelab/awake/core/animation/AnimationProperty;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/animation/AnimationProperty;
+	public static fun values ()[Lio/github/awakelab/awake/core/animation/AnimationProperty;
+}
+
+public final class io/github/awakelab/awake/core/animation/AnimationSampler {
+	public fun <init> ([F[FI)V
+	public final fun component1 ()[F
+	public final fun component2 ()[F
+	public final fun component3 ()I
+	public final fun copy ([F[FI)Lio/github/awakelab/awake/core/animation/AnimationSampler;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/animation/AnimationSampler;[F[FIILjava/lang/Object;)Lio/github/awakelab/awake/core/animation/AnimationSampler;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponentsPerKeyframe ()I
+	public final fun getTimes ()[F
+	public final fun getValues ()[F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/animation/Bone {
+	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Mat4;Ljava/util/List;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun component2 ()Lio/github/awakelab/awake/core/math/Quat;
+	public final fun component3 ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun component4 ()Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Mat4;Ljava/util/List;)Lio/github/awakelab/awake/core/animation/Bone;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/animation/Bone;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Mat4;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/core/animation/Bone;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChildren ()Ljava/util/List;
+	public final fun getMatrix ()Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun getRotation ()Lio/github/awakelab/awake/core/math/Quat;
+	public final fun getScale ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getTranslation ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public fun hashCode ()I
+	public final fun localTransform ()Lio/github/awakelab/awake/core/math/Mat4;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/animation/Skeleton {
+	public fun <init> (Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;Ljava/util/List;)Lio/github/awakelab/awake/core/animation/Skeleton;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/core/animation/Skeleton;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBones ()Ljava/util/List;
+	public final fun getRoots ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/animation/Skin {
+	public fun <init> (Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;Ljava/util/List;)Lio/github/awakelab/awake/core/animation/Skin;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/animation/Skin;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/core/animation/Skin;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInverseBindMatrices ()Ljava/util/List;
+	public final fun getJoints ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+

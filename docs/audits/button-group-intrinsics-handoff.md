@@ -14,10 +14,10 @@ does not have. In Compose the same component needs neither: a row/column plus
 ## Look at it first
 
 ```bash
-./gradlew :awake:ui:designsystem:desktopTest --tests "*ShadcnButtonGroupCaptureTest*" --rerun-tasks
+./gradlew :awake:ui:shadcn:desktopTest --tests "*ShadcnButtonGroupCaptureTest*" --rerun-tasks
 ```
 
-Writes `awake/ui/designsystem/build/ui-snapshots/button-group.png`. Three defects are visible
+Writes `awake/ui/shadcn/build/ui-snapshots/button-group.png`. Three defects are visible
 there, and only the second was known when this doc was first written:
 
 1. The HORIZONTAL group renders no labels at all. This is the variant used as the studio toolbar

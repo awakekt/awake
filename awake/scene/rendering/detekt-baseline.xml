@@ -3,7 +3,7 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:DebugVisualizationSystem.kt$!settings.showFrustum &amp;&amp; !settings.showBounds &amp;&amp; !settings.showOcclusion &amp;&amp; !settings.showLights &amp;&amp; !settings.showShadowFrustum</ID>
-    <ID>CyclomaticComplexMethod:DebugVisualizationSystem.kt$fun debugVisualizationLines( world: World, renderer: Renderer, settings: WorldDebugSettings ): List&lt;LineSegment></ID>
+    <ID>CyclomaticComplexMethod:DebugVisualizationSystem.kt$fun debugVisualizationLines( world: World, renderer: Renderer, settings: WorldDebugSettings, ): List&lt;LineSegment></ID>
     <ID>CyclomaticComplexMethod:RenderSystem.kt$RenderSystem$override fun update(world: World, delta: Float)</ID>
     <ID>LargeClass:ParticleSystemTest.kt$ParticleSystemTest</ID>
     <ID>LongMethod:RenderSystem.kt$RenderSystem$override fun update(world: World, delta: Float)</ID>
@@ -15,7 +15,7 @@
     <ID>LoopWithTooManyJumpStatements:ParticleSystem.kt$ParticleSystem$while</ID>
     <ID>ReturnCount:ParticleSystem.kt$ParticleSystem$private fun groundHeightAt(emitter: ParticleEmitter, x: Float, z: Float): Float?</ID>
     <ID>ReturnCount:ParticleSystem.kt$ParticleSystem$private fun spawnVelocity(emitter: ParticleEmitter, spawnPosition: Vec3f): Vec3f</ID>
-    <ID>ReturnCount:RenderSystem.kt$RenderSystem$private fun isOccluded( camera: io.github.ronjunevaldoz.awake.core.math.Lens, worldBounds: io.github.ronjunevaldoz.awake.core.math.Aabb, occlusionViewProjection: Mat4?, ): Boolean</ID>
+    <ID>ReturnCount:RenderSystem.kt$RenderSystem$private fun isOccluded( camera: io.github.awakelab.awake.core.math.Lens, worldBounds: io.github.awakelab.awake.core.math.Aabb, occlusionViewProjection: Mat4?, ): Boolean</ID>
     <ID>TooManyFunctions:ParticleSystem.kt$ParticleSystem : System</ID>
   </CurrentIssues>
 </SmellBaseline>

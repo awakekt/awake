@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import com.diffplug.gradle.spotless.SpotlessExtension
 
 plugins {
@@ -6,7 +12,19 @@ plugins {
 
 // ktlint 1.5.0 cannot parse Kotlin 2.2 context parameters (`context(name: Type)`), which
 // :awake:compose:* is built on. Bump the rest of the repo separately, against a clean tree.
-val ktlintVersion = if (project.path.startsWith(":awake:compose")) "1.7.1" else "1.5.0"
+// :awake:ui:benchmark and :awake:editor declare context-parameterised helpers to drive the
+// compose engine's ComposeHost, so they need the same bump.
+val ktlintVersion = if (project.path.startsWith(":awake:compose") ||
+    project.path == ":awake:ui:benchmark" ||
+    project.path == ":awake:editor" ||
+    project.path == ":awake:ui:shadcn" ||
+    project.path == ":samples:studio" ||
+    project.path == ":samples:ui-showcase"
+) {
+    "1.7.1"
+} else {
+    "1.5.0"
+}
 
 extensions.configure<SpotlessExtension> {
     kotlin {
@@ -70,8 +88,11 @@ extensions.configure<SpotlessExtension> {
         // right before the doc comment instead, so it's preserved as code.
         licenseHeader(
             """
-            // Copyright (c) Ron June Valdoz
-            // SPDX-License-Identifier: Apache-2.0
+            /*
+             * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+             *
+             * SPDX-License-Identifier: Apache-2.0
+             */
             """.trimIndent(),
             "^(/\\*\\*|package |@file|import |expect |actual |fun |class |object |interface |val |var |private |internal |public )"
         )

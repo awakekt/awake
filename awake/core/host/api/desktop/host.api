@@ -1,0 +1,26 @@
+public final class io/github/awakelab/awake/core/host/DesktopFrameLoop : io/github/awakelab/awake/core/host/FrameLoop {
+	public static final field INSTANCE Lio/github/awakelab/awake/core/host/DesktopFrameLoop;
+	public fun tick (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class io/github/awakelab/awake/core/host/FixedTimestepLoop {
+	public static final field DEFAULT_FIXED_DELTA F
+	public static final field DEFAULT_MAX_STEPS_PER_FRAME I
+	public fun <init> ()V
+	public fun <init> (FI)V
+	public synthetic fun <init> (FIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun advance (FLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class io/github/awakelab/awake/core/host/FrameLoop {
+	public abstract fun tick (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class io/github/awakelab/awake/core/host/FrameLoopKt {
+	public static final field TARGET_FPS I
+}
+
+public final class io/github/awakelab/awake/core/host/ResourceKt {
+	public static final fun readResourceBytes (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+

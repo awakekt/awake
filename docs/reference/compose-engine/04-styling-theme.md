@@ -21,7 +21,7 @@ Two consequences:
   2026-08 parity audit's "collapse the five style channels into `Style` alone" is the same collapse
   Compose made. `mirror-map.md` should record parity here, not a `Diverges` row.
 - **`Style` is a foundation concern, not a Material one.** It goes in `:awake:compose:foundation`
-  beside `background`/`border`, and `ui-designsystem` consumes it to build shadcn recipes — the same
+  beside `background`/`border`, and `ui-shadcn` consumes it to build shadcn recipes — the same
   relationship Material3 has to it.
 
 The lesson for this doc set: claims about Compose are checkable against the jars in
@@ -43,7 +43,7 @@ So:
   `focusable(enabled, source)` / `clickable(source, onClick)`, fed from last frame's placed bounds.
   Compose's parameter order, verified against the jar.
 - **`:foundation` owns `Style`** as a resolver that *produces* those primitives, and
-  `ui-designsystem` consumes it for shadcn recipes.
+  `ui-shadcn` consumes it for shadcn recipes.
 
 An earlier draft of this page put all of the above in `:ui`. Compose owns them in `foundation` and
 no evidence was ever cited for diverging, so they moved. `:ui` is left with the chain, the phases
@@ -51,9 +51,11 @@ and the node, and nothing that paints a colour.
 
 ## Interactions without Flow
 
-Compose's `InteractionSource` is `Flow<Interaction>`, read through `collectIsHoveredAsState()`.
-Coroutines are an explicit non-goal here (see the README), so the flow collapses to a property and
-`tryEmit` — which is already non-suspending in Compose — becomes the only emit path.
+Compose's `InteractionSource` is `Flow<Interaction>`, read through `collectIsHoveredAsState()`,
+whose job is to bridge the flow into recomposition-tracked state. Neither half applies here:
+coroutines are an explicit non-goal (see the README), and there is no recomposition to track for.
+The flow collapses to a property, `tryEmit` — already non-suspending in Compose — becomes the only
+emit path, and a styling layer reads the properties during the pass that runs every frame anyway.
 
 What is kept is the part that matters: interactions are **sets**, not booleans. Two presses and one
 release leave a node still pressed. A boolean flag loses that, and the bug it produces is a button

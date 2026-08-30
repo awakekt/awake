@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>InvalidPackageDeclaration:LayoutNestingBenchmark.kt$package io.github.awakelab.awake.core.text.benchmark</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -8,13 +8,13 @@
 VkPresentInfoKHRAccessor::VkPresentInfoKHRAccessor(JNIEnv *env, jobject obj) : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     pWaitSemaphoresField = env->GetFieldID(clazz, "pWaitSemaphores", "[Ljava/lang/Long;");
     pSwapchainsField = env->GetFieldID(clazz, "pSwapchains", "[Ljava/lang/Long;");
     pImageIndicesField = env->GetFieldID(clazz, "pImageIndices", "[I");
     pResultsField = env->GetFieldID(clazz, "pResults",
-                                    "[Lio/github/ronjunevaldoz/awake/vulkan/enums/VkResult;");
+                                    "[Lio/github/awakelab/awake/vulkan/enums/VkResult;");
 }
 
 VkStructureType

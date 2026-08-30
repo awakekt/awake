@@ -1,0 +1,151 @@
+public final class io/github/awakelab/awake/asset/terrain/Heightmap {
+	public fun <init> ([FIILio/github/awakelab/awake/core/math/Vec3f;)V
+	public final fun copySamples ()[F
+	public final fun getDepth ()I
+	public final fun getScale ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getWidth ()I
+	public final fun heightAt (II)F
+	public final fun mutableCopy ()Lio/github/awakelab/awake/asset/terrain/MutableHeightmap;
+}
+
+public final class io/github/awakelab/awake/asset/terrain/HeightmapChange {
+	public fun <init> (JLio/github/awakelab/awake/asset/terrain/HeightmapDirtyRegion;)V
+	public final fun component1 ()J
+	public final fun component2 ()Lio/github/awakelab/awake/asset/terrain/HeightmapDirtyRegion;
+	public final fun copy (JLio/github/awakelab/awake/asset/terrain/HeightmapDirtyRegion;)Lio/github/awakelab/awake/asset/terrain/HeightmapChange;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/terrain/HeightmapChange;JLio/github/awakelab/awake/asset/terrain/HeightmapDirtyRegion;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/terrain/HeightmapChange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDirtyRegion ()Lio/github/awakelab/awake/asset/terrain/HeightmapDirtyRegion;
+	public final fun getRevision ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/terrain/HeightmapDirtyRegion {
+	public fun <init> (IIII)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun copy (IIII)Lio/github/awakelab/awake/asset/terrain/HeightmapDirtyRegion;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/terrain/HeightmapDirtyRegion;IIIIILjava/lang/Object;)Lio/github/awakelab/awake/asset/terrain/HeightmapDirtyRegion;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaxX ()I
+	public final fun getMaxZ ()I
+	public final fun getMinX ()I
+	public final fun getMinZ ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/terrain/HeightmapMeshBuilderKt {
+	public static final fun toPositionNormalColorMesh (Lio/github/awakelab/awake/asset/terrain/Heightmap;Lio/github/awakelab/awake/core/color/Color;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
+	public static final fun toPositionNormalColorMesh (Lio/github/awakelab/awake/asset/terrain/Heightmap;Lkotlin/jvm/functions/Function3;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
+	public static synthetic fun toPositionNormalColorMesh$default (Lio/github/awakelab/awake/asset/terrain/Heightmap;Lio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
+}
+
+public final class io/github/awakelab/awake/asset/terrain/HeightmapSampleEdit {
+	public fun <init> (IIF)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()F
+	public final fun copy (IIF)Lio/github/awakelab/awake/asset/terrain/HeightmapSampleEdit;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/terrain/HeightmapSampleEdit;IIFILjava/lang/Object;)Lio/github/awakelab/awake/asset/terrain/HeightmapSampleEdit;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHeight ()F
+	public final fun getX ()I
+	public final fun getZ ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/terrain/MutableHeightmap {
+	public fun <init> ([FIILio/github/awakelab/awake/core/math/Vec3f;)V
+	public final fun apply (Ljava/util/List;)Lio/github/awakelab/awake/asset/terrain/HeightmapChange;
+	public final fun copySamples ()[F
+	public final fun getDepth ()I
+	public final fun getRevision ()J
+	public final fun getScale ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getWidth ()I
+	public final fun heightAt (II)F
+	public final fun setHeightAt (IIF)Lio/github/awakelab/awake/asset/terrain/HeightmapChange;
+	public final fun snapshot ()Lio/github/awakelab/awake/asset/terrain/Heightmap;
+}
+
+public final class io/github/awakelab/awake/asset/terrain/clipmap/ClipmapRingState {
+	public fun <init> (IFLio/github/awakelab/awake/core/math/Vec3f;F)V
+	public final fun component1 ()I
+	public final fun component2 ()F
+	public final fun component3 ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun component4 ()F
+	public final fun computeMorphFactor (FFF)F
+	public static synthetic fun computeMorphFactor$default (Lio/github/awakelab/awake/asset/terrain/clipmap/ClipmapRingState;FFFILjava/lang/Object;)F
+	public final fun contains (FF)Z
+	public final fun copy (IFLio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/asset/terrain/clipmap/ClipmapRingState;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/terrain/clipmap/ClipmapRingState;IFLio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Lio/github/awakelab/awake/asset/terrain/clipmap/ClipmapRingState;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHalfExtent ()F
+	public final fun getLevel ()I
+	public final fun getMaxX ()F
+	public final fun getMaxZ ()F
+	public final fun getMinX ()F
+	public final fun getMinZ ()F
+	public final fun getSnappedCenter ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getSpacing ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig {
+	public fun <init> ()V
+	public fun <init> (IIF)V
+	public synthetic fun <init> (IIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()F
+	public final fun copy (IIF)Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;IIFILjava/lang/Object;)Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun extentForLevel (I)F
+	public final fun getBaseSpacing ()F
+	public final fun getCoreExtent ()F
+	public final fun getRingCount ()I
+	public final fun getRingResolution ()I
+	public fun hashCode ()I
+	public final fun spacingForLevel (I)F
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapGeometry {
+	public static final field INSTANCE Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapGeometry;
+	public final fun buildAllClipmapMeshes (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Ljava/util/List;
+	public static synthetic fun buildAllClipmapMeshes$default (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapGeometry;Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;ILjava/lang/Object;)Ljava/util/List;
+	public final fun buildCoreMesh (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
+	public final fun buildRingMesh (ILio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
+}
+
+public final class io/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapTracker {
+	public fun <init> ()V
+	public fun <init> (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getConfig ()Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;
+	public final fun getRingStates ()Ljava/util/List;
+	public final fun update (Lio/github/awakelab/awake/core/math/Vec3f;)Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap {
+	public fun <init> (II[B)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()[B
+	public final fun copy (II[B)Lio/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap;II[BILjava/lang/Object;)Lio/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHeight ()I
+	public final fun getRgbaBytes ()[B
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public final fun sampleWeights (FF)[F
+	public fun toString ()Ljava/lang/String;
+}
+

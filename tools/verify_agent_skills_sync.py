@@ -1,13 +1,20 @@
 #!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# GATE: exit 1 means vendored skills drifted from source.
+# Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
+# a build; `scripts/awake verify` runs every one.
 """
-Verify synchronization of Awake's agents, domain skills, catalog documentation, and entrypoints.
+Verify synchronization of Awake's deployed agents, domain skills, catalog documentation, and entrypoints.
 
 Checks:
-1. Agent Catalog Parity: Every agent file in skills/awake/agents/ is listed in docs/reference/agent-catalog.md.
+1. Agent Catalog Parity: Every agent file in .agents/skills/awake/agents/ is listed in docs/reference/agent-catalog.md.
 2. Frontmatter Validity: Every agent has valid YAML frontmatter with name, description, tools, and model.
-3. Domain Skills Integrity: Every cited domain skill exists in skills/ with valid SKILL.md frontmatter.
+3. Domain Skills Integrity: Every cited domain skill exists in .agents/skills/ with valid SKILL.md frontmatter.
 4. Entrypoint Parity: AGENTS.md, CLAUDE.md, GEMINI.md, and .claude/AGENTS.md have matching mandatory skill lists.
-5. Symlink Resolution: .claude/agents and .agents/skills resolve to valid targets.
+5. Deployment Mirror: every .agents/skills/<name> is mirrored byte-for-byte at .claude/skills/<name>.
 
 Exit code 0 on success, 1 on validation error.
 """
@@ -17,8 +24,11 @@ import re
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-AGENTS_DIR = REPO_ROOT / "skills" / "awake" / "agents"
-SKILLS_DIR = REPO_ROOT / "skills"
+DEPLOYED_SKILLS_DIR = REPO_ROOT / ".agents" / "skills"
+AWAKE_BUNDLE_DIR = DEPLOYED_SKILLS_DIR / "awake"
+AGENTS_DIR = AWAKE_BUNDLE_DIR / "agents"
+SKILLS_DIR = DEPLOYED_SKILLS_DIR
+MIRROR_SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
 CATALOG_PATH = REPO_ROOT / "docs" / "reference" / "agent-catalog.md"
 ENTRYPOINTS = [
     REPO_ROOT / "AGENTS.md",
@@ -90,8 +100,8 @@ def check_domain_skills() -> list[str]:
         "awake-render-webgpu",
         "awake-physics-jolt",
         "awake-ui-authoring",
-        "awake-ui-shadcn-consuming",
-        "awake-ui-shadcn-styling",
+        "awake-shadcn-recipe-consuming",
+        "awake-shadcn-recipe-authoring",
         "awake-ui-icons",
         "awake-ui-verification",
         "awake-framework-boundary",
@@ -121,8 +131,8 @@ def check_entrypoint_skills() -> list[str]:
         "skills/awake-render-webgpu/SKILL.md",
         "skills/awake-physics-jolt/SKILL.md",
         "skills/awake-ui-authoring/SKILL.md",
-        "skills/awake-ui-shadcn-consuming/SKILL.md",
-        "skills/awake-ui-shadcn-styling/SKILL.md",
+        "skills/awake-shadcn-recipe-consuming/SKILL.md",
+        "skills/awake-shadcn-recipe-authoring/SKILL.md",
         "skills/awake-ui-icons/SKILL.md",
         "skills/awake-ui-verification/SKILL.md",
         "skills/awake-framework-boundary/SKILL.md",
@@ -141,17 +151,57 @@ def check_entrypoint_skills() -> list[str]:
     return errors
 
 
-def check_symlinks() -> list[str]:
-    errors = []
-    claude_agents = REPO_ROOT / ".claude" / "agents"
-    if not claude_agents.exists():
-        errors.append(".claude/agents symlink or directory does not exist")
-    elif claude_agents.is_symlink() and not claude_agents.resolve().exists():
-        errors.append(f".claude/agents points to non-existent target: {claude_agents.readlink()}")
+def mirrored_files(root: Path) -> set[Path]:
+    """Content files under [root], ignoring interpreter build artifacts.
 
-    agents_awake = REPO_ROOT / ".agents" / "skills" / "awake"
-    if not agents_awake.exists():
-        errors.append(".agents/skills/awake does not exist")
+    `__pycache__`/`.pyc` are regenerated per run and differ between two otherwise identical
+    trees, so comparing them reports drift that does not exist.
+    """
+    return {
+        path.relative_to(root)
+        for path in root.rglob("*")
+        if path.is_file() and "__pycache__" not in path.parts and path.suffix != ".pyc"
+    }
+
+
+def check_symlinks() -> list[str]:
+    """Every `.agents/skills/<name>` is mirrored byte-for-byte at `.claude/skills/<name>`.
+
+    Previously this compared only the `awake` bundle -- one directory of twenty-eight -- and so
+    reported "fully synchronized" while nine SKILL.md and three scripts had drifted. The stale
+    copies still named retired modules (`ui-core`, `ui-headless`), and `.claude/` is what agents
+    actually read.
+    """
+    errors = []
+    if not AWAKE_BUNDLE_DIR.exists():
+        errors.append(f"{AWAKE_BUNDLE_DIR.relative_to(REPO_ROOT)} does not exist")
+    if not DEPLOYED_SKILLS_DIR.exists():
+        errors.append(f"{DEPLOYED_SKILLS_DIR.relative_to(REPO_ROOT)} does not exist")
+        return errors
+    if not MIRROR_SKILLS_DIR.exists():
+        errors.append(f"{MIRROR_SKILLS_DIR.relative_to(REPO_ROOT)} mirror does not exist")
+        return errors
+
+    canonical_names = {path.name for path in DEPLOYED_SKILLS_DIR.iterdir() if path.is_dir()}
+    mirror_names = {path.name for path in MIRROR_SKILLS_DIR.iterdir() if path.is_dir()}
+
+    for name in sorted(canonical_names - mirror_names):
+        errors.append(f".claude/skills/{name} mirror does not exist")
+    for name in sorted(mirror_names - canonical_names):
+        errors.append(f".claude/skills/{name} has no source in .agents/skills")
+
+    for name in sorted(canonical_names & mirror_names):
+        canonical_root = DEPLOYED_SKILLS_DIR / name
+        mirror_root = MIRROR_SKILLS_DIR / name
+        canonical_files = mirrored_files(canonical_root)
+        mirror_files = mirrored_files(mirror_root)
+        for relative_path in sorted(canonical_files - mirror_files):
+            errors.append(f"missing from mirror: {name}/{relative_path}")
+        for relative_path in sorted(mirror_files - canonical_files):
+            errors.append(f"extra in mirror: {name}/{relative_path}")
+        for relative_path in sorted(canonical_files & mirror_files):
+            if (canonical_root / relative_path).read_bytes() != (mirror_root / relative_path).read_bytes():
+                errors.append(f"skill mirror differs: {name}/{relative_path}")
 
     return errors
 
@@ -172,14 +222,12 @@ def check_module_readmes() -> list[str]:
         REPO_ROOT / "awake" / "engine" / "render" / "contract",
         REPO_ROOT / "awake" / "engine" / "render" / "passes",
         REPO_ROOT / "awake" / "ui",
-        REPO_ROOT / "awake" / "ui" / "ui-core",
-        REPO_ROOT / "awake" / "ui" / "headless",
-        REPO_ROOT / "awake" / "ui" / "designsystem",
-        REPO_ROOT / "awake" / "ui" / "text",
+        REPO_ROOT / "awake" / "ui" / "shadcn",
+        REPO_ROOT / "awake" / "core" / "text",
         REPO_ROOT / "awake" / "engine" / "platform",
         REPO_ROOT / "awake" / "engine" / "bootstrap",
-        REPO_ROOT / "awake" / "engine" / "app",
         REPO_ROOT / "awake" / "backend" / "vulkan",
+        REPO_ROOT / "awake" / "backend" / "vulkan" / "bindings",
         REPO_ROOT / "awake" / "backend" / "webgpu",
         REPO_ROOT / "awake" / "physics" / "api",
         REPO_ROOT / "awake" / "backend" / "jolt",

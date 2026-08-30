@@ -74,7 +74,7 @@ outside its stable table. Production remains sparse-set based. See the
 ### B. UI Layout & Frame Timing (`:awake:ui:benchmark`)
 
 Ran via `./gradlew :awake:ui:benchmark:mainBenchmark`.
-Measures pure `ui-core` layout pass execution time across deep row/column trees without widget styling noise.
+Measures retained Compose layout pass execution time across deep row/column trees without widget styling noise.
 
 | Benchmark Target | Nesting Depth | Metric | Target SLA |
 |---|---:|---|---|
@@ -91,13 +91,13 @@ Measures pure `ui-core` layout pass execution time across deep row/column trees 
 |---|---|---|---|---|
 | **ECS Storage** | `:awake:ecs` | `:awake:ecs:benchmark` | 🟡 Active | Immediate storage covered; adaptive bulk-mutation crossover and same-semantics competitor controls planned. |
 | **Scene Graph** | `:awake:scene` | `:awake:ecs:benchmark` | ✅ Covered | Hierarchy matrix evaluation and transform propagation. |
-| **UI Layout** | `:awake:ui:ui-core` | `:awake:ui:benchmark` | ✅ Covered | Deep nesting trial-measure curves. |
+| **UI Layout** | `:awake:compose:foundation` | `:awake:ui:benchmark` | ✅ Covered | Deep nesting measure-policy curves. |
 | **Geometry** | `:awake:core:geometry` | — | 🟡 Missing | Needs `MeshSimplifier` decimation throughput benchmark (50k–500k triangles). |
 | **Animation** | `:awake:core:animation` | — | 🟡 Missing | Needs skeletal SLERP pose blending benchmark across 50–200 joint hierarchies. |
 | **Asset I/O** | `:awake:asset:gltf` | — | 🟡 Missing | Needs `GltfParser` binary throughput benchmark ($\text{MB/s}$). |
 | **Physics** | `:awake:backend:jolt` | — | 🟡 Missing | Needs `PhysicsWorld.step()` tick cost with 1,000 active dynamic bodies. |
 | **Rendering** | `:awake:backend:vulkan` | — | 🟡 Missing | Needs command buffer recording and descriptor set binding throughput. |
-| **Text Engine** | `:awake:ui:text` | — | 🟡 Missing | Needs font glyph lookup and multiline text measurement throughput. |
+| **Text Engine** | `:awake:core:text` | — | 🟡 Missing | Needs font glyph lookup and multiline text measurement throughput. |
 
 ---
 
@@ -127,7 +127,7 @@ Awake uses a 3-tier strategy to maintain high performance without slowing down d
 
 ## 4. Engineer Responsibilities
 
-- **When modifying hot paths** in `:awake:ecs`, `:awake:core:math`, or `:awake:ui:ui-core`:
+- **When modifying hot paths** in `:awake:ecs`, `:awake:core:math`, or `:awake:compose:foundation`:
   1. Run the respective benchmark suite before and after your change.
   2. Record the new numbers and ensure no regression occurred.
   3. Update this matrix and [docs/ecs-benchmark-scorecard.md](../ecs-benchmark-scorecard.md) in the same pull request.

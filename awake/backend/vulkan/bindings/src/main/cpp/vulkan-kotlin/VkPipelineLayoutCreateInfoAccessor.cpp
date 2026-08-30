@@ -9,13 +9,13 @@ VkPipelineLayoutCreateInfoAccessor::VkPipelineLayoutCreateInfoAccessor(JNIEnv *e
         : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     pSetLayoutsField = env->GetFieldID(clazz, "pSetLayouts", "[Ljava/lang/Long;");
     pushConstantRangeCountField = env->GetFieldID(clazz, "pushConstantRangeCount", "I");
     pPushConstantRangesField = env->GetFieldID(clazz, "pPushConstantRanges",
-                                               "[Lio/github/ronjunevaldoz/awake/vulkan/models/info/pipeline/VkPushConstantRange;");
+                                               "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPushConstantRange;");
 }
 
 VkStructureType

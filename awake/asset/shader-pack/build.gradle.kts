@@ -1,5 +1,8 @@
-// Copyright (c) Ron June Valdoz
-// SPDX-License-Identifier: Apache-2.0
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 // Awake's shader "standard library": the authored WGSL every sample draws with, plus the Kotlin
 // uniform layouts describing those specific shaders. Split out of awake:asset:shaders so that
@@ -8,7 +11,6 @@
 // docs/reference/render-extensibility.md for the authored-content-vs-capability rule this
 // enforces structurally.
 plugins {
-    id("awake.shader-pipeline-convention")
     id("awake.kmp-library-convention")
     id("awake.publish-convention")
     id("awake.dokka-convention")
@@ -18,7 +20,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.asset.shaderpack"
+        namespace = "io.github.awakelab.awake.asset.shaderpack"
     }
 
     sourceSets {
@@ -27,6 +29,22 @@ kotlin {
             // api, not implementation: a consumer reading TexturedUniformLayout.total needs
             // those types visible through this module.
             api(project(":awake:engine:render:contract"))
+            // ShaderSet/ShaderStages appear in skyboxContentFeature's signature.
+            api(project(":awake:asset:shaders"))
+            // ContentFeature/SkyboxRenderFeature: the shipped content declaration lives beside
+            // its own .wgsl here, recording lives in render:passes. Acyclic -- passes does not
+            // depend on this module.
+            api(project(":awake:engine:render:passes"))
+        }
+        commonMain.dependencies {
+            // The shadow shaders' ASL definitions live HERE, beside the .wgsl they emit,
+            // deriving their struct from MaterialUniformLayouts.LitShadow via fieldsFrom.
+            // Exposed (not implementation) because the definitions are public values whose
+            // type, AslShaderDefinition, comes from the DSL module.
+            api(project(":awake:asset:shader-dsl"))
+            // terrainContentFeature ships the clipmap geometry and heightmap beside its shader.
+            // Acyclic: :awake:asset:terrain depends only on core modules.
+            api(project(":awake:asset:terrain"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -39,17 +57,4 @@ mavenPublishing {
         name.set("Awake Shader Pack")
         description.set("Awake's authored WGSL shaders and their Kotlin-side uniform layouts")
     }
-}
-
-// The convention plugin defaults sourceDirectory to the non-standard src/commonMain/shaders --
-// keep the shaders under the conventional KMP resources root instead, as awake:asset:shaders did
-// before the split.
-val packShaderDirectory = layout.projectDirectory.dir("src/commonMain/resources/shaders")
-
-tasks.named<ValidateWgslShadersTask>("validateAwakeShaders") {
-    sourceDirectory.set(packShaderDirectory)
-}
-
-tasks.named<SyncWgslShaderPipelineTask>("syncAwakeShaders") {
-    sourceDirectory.set(packShaderDirectory)
 }

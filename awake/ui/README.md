@@ -14,16 +14,17 @@ The UI system is decomposed into focused, single-responsibility modules:
 
 ```kotlin
 include(":awake:ui:graphics")
-include(":awake:ui:text")
+include(":awake:core:text")
 include(":awake:ui:animation")
 include(":awake:ui:ui-core")
 include(":awake:ui:headless")
-include(":awake:ui:tailwind")
-include(":awake:ui:designsystem")
-include(":awake:ui:heroicons")
+include(":awake:tailwind")
+include(":awake:ui:material3")
+include(":awake:ui:shadcn")
+include(":awake:heroicons")
 include(":awake:ui:testing")
 include(":awake:ui:font-atlas-generator")
-include(":awake:ui:tailwind-generator")
+include(":awake:tailwind-generator")
 ```
 
 ### Module Descriptions
@@ -42,8 +43,9 @@ One line each — the public API and its class names are KDoc'd in the source it
 - `awake:ui:headless` — unstyled, accessible leaf widgets for building custom design systems.
   Public APIs receive generic `Style`; no branded or theme-provider vocabulary.
 - `awake:ui:tailwind` — standalone Tailwind CSS design tokens.
-- `awake:ui:designsystem` — [shadcn/ui](https://ui.shadcn.com/)-styled component library
-  built on `headless` + `tailwind`. Owns named themes and branded recipes.
+- `awake:ui:material3` — Material 3 color schemes and components, including `Scaffold`.
+- `awake:ui:shadcn` — [shadcn/ui](https://ui.shadcn.com/)-styled component library built on
+  Compose Foundation + Tailwind. Owns named themes and branded recipes.
 - `awake:ui:heroicons` — Heroicons icon set integration.
 - `awake:ui:testing` — snapshot test runners and interaction-test harnesses for UI components.
 - `awake:ui:font-atlas-generator` — SDF/MSDF font atlas generation tooling.
@@ -54,11 +56,12 @@ One line each — the public API and its class names are KDoc'd in the source it
 ```mermaid
 graph TD
     GRAPHICS[":awake:ui:graphics<br/>(Drawing, Gradients, Shapes, Paths, Dp, Bounds)"]
-    TEXT[":awake:ui:text<br/>(MSDF Font, Bitmap Font, TextStyle, FontWeight)"]
+    TEXT[":awake:core:text<br/>(MSDF Font, Bitmap Font, TextStyle, FontWeight)"]
     CORE[":awake:ui:ui-core<br/>(UiContext, Layout Engine, Alignment, Insets, Modifiers)"]
     ANIMATION[":awake:ui:animation<br/>(animateFloat, AnimatedVisibility, Transitions, Popups)"]
     HEADLESS[":awake:ui:headless<br/>(Unstyled Primitives & Tab Contracts)"]
-    DS[":awake:ui:designsystem<br/>(Shadcn Recipes)"]
+    MATERIAL3[":awake:ui:material3<br/>(Material 3 Components)"]
+    DS[":awake:ui:shadcn<br/>(Shadcn Recipes)"]
 
     GRAPHICS --> TEXT
     GRAPHICS --> CORE
@@ -69,6 +72,7 @@ graph TD
     ANIMATION --> HEADLESS
     TEXT --> HEADLESS
 
+    HEADLESS --> MATERIAL3
     HEADLESS --> DS
     CORE -. "internal infrastructure" .-> DS
 ```

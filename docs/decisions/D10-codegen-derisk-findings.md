@@ -271,9 +271,9 @@ before every type lookup for both function params/returns and struct fields.
 known limitation ("assumed to be in the same package as the struct that contains it");
 wiring against the real codebase showed it's not an edge case here — it's the norm (enums
 live in `enums/`, structs in `models/info/`). `VkBufferCreateInfo.sharingMode: VkSharingMode`
-was marshalled with `Lio/github/ronjunevaldoz/awake/vulkan/models/info/VkSharingMode;` — the
+was marshalled with `Lio/github/awakelab/awake/vulkan/models/info/VkSharingMode;` — the
 struct's package, not the enum's real one
-(`io/github/ronjunevaldoz/awake/vulkan/enums/VkSharingMode`). Fixed generically:
+(`io/github/awakelab/awake/vulkan/enums/VkSharingMode`). Fixed generically:
 `collect_enum_packages()` tracks each enum's actual declaring package (mirroring how
 `KotlinStruct.package` already works); the struct generator uses it, falling back to the
 referencing struct's package only if genuinely unknown. Both gaps fixed and verified
@@ -659,7 +659,7 @@ Added `VulkanWindow` (new jni-binding-generator object, desktop-only): `glfwInit
 `VulkanBuffers`/`VulkanDescriptors`/`VulkanImages` became real (Round 10), regenerating
 picked up TWO real Kotlin sources per class name (android + desktop), and
 jni-binding-generator's existing duplicate-name-detection kicked in — output filenames
-became fully-qualified (`io_github_ronjunevaldoz_awake_vulkan_gen_VulkanBuffers_jni.gen.cpp`
+became fully-qualified (`io_github_awakelab_awake_vulkan_gen_VulkanBuffers_jni.gen.cpp`
 instead of `VulkanBuffers_jni.gen.cpp`) to avoid one platform's generation silently
 overwriting the other's. This is correct, intentional tool behavior for a genuine
 two-source situation, not a bug — embraced it rather than fighting it: renamed the

@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
 # check-installed-skills-version.sh — checks a *globally installed* (non-git)
 # kmp-agent-skills bundle against the latest GitHub release, using the
 # .kmp-agent-skills-version marker sync-local-assistant-skills.sh writes.

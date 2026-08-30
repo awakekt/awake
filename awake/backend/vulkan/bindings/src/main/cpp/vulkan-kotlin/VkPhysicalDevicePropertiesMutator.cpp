@@ -8,19 +8,19 @@
 VkPhysicalDevicePropertiesMutator::VkPhysicalDevicePropertiesMutator(JNIEnv *env) : env(env) {
     this->env = env;
     clazz = env->FindClass(
-            "io/github/ronjunevaldoz/awake/vulkan/models/physicaldevice/VkPhysicalDeviceProperties");
+            "io/github/awakelab/awake/vulkan/models/physicaldevice/VkPhysicalDeviceProperties");
     apiVersionField = env->GetFieldID(clazz, "apiVersion", "I");
     driverVersionField = env->GetFieldID(clazz, "driverVersion", "I");
     vendorIDField = env->GetFieldID(clazz, "vendorID", "I");
     deviceIDField = env->GetFieldID(clazz, "deviceID", "I");
     deviceTypeField = env->GetFieldID(clazz, "deviceType",
-                                      "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkPhysicalDeviceType;");
+                                      "Lio/github/awakelab/awake/vulkan/enums/VkPhysicalDeviceType;");
     deviceNameField = env->GetFieldID(clazz, "deviceName", "[C");
     pipelineCacheUUIDField = env->GetFieldID(clazz, "pipelineCacheUUID", "[B");
     limitsField = env->GetFieldID(clazz, "limits",
-                                  "Lio/github/ronjunevaldoz/awake/vulkan/models/physicaldevice/VkPhysicalDeviceLimits;");
+                                  "Lio/github/awakelab/awake/vulkan/models/physicaldevice/VkPhysicalDeviceLimits;");
     sparsePropertiesField = env->GetFieldID(clazz, "sparseProperties",
-                                            "Lio/github/ronjunevaldoz/awake/vulkan/models/physicaldevice/VkPhysicalDeviceSparseProperties;");
+                                            "Lio/github/awakelab/awake/vulkan/models/physicaldevice/VkPhysicalDeviceSparseProperties;");
 }
 
 jobject
@@ -32,7 +32,7 @@ VkPhysicalDevicePropertiesMutator::toObject(VkPhysicalDeviceProperties source) {
     env->SetIntField(newObj, vendorIDField, static_cast<jint>(source.vendorID));
     env->SetIntField(newObj, deviceIDField, static_cast<jint>(source.deviceID));
     auto deviceType = enum_utils::setEnumFromVulkan(env, static_cast<jint>(source.deviceType),
-                                                    "io/github/ronjunevaldoz/awake/vulkan/enums/VkPhysicalDeviceType");
+                                                    "io/github/awakelab/awake/vulkan/enums/VkPhysicalDeviceType");
     env->SetObjectField(newObj, deviceTypeField, deviceType);
     env->DeleteLocalRef(deviceType);
     // processing primitive array

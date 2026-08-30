@@ -1,0 +1,59 @@
+public final class io/github/awakelab/awake/asset/shaderpack/AslMeshVariantShadersKt {
+	public static final fun getInstancedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getSkinnedInstancedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getSkinnedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getSkinnedTexturedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
+public final class io/github/awakelab/awake/asset/shaderpack/AslParticleShaderKt {
+	public static final fun getParticleShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
+public final class io/github/awakelab/awake/asset/shaderpack/AslShadowShadersKt {
+	public static final fun getLitShadowShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getShadowDepthShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
+public final class io/github/awakelab/awake/asset/shaderpack/AslSkyboxShaderKt {
+	public static final fun getSkyboxShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
+public final class io/github/awakelab/awake/asset/shaderpack/AslTexturedShaderKt {
+	public static final fun getTexturedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
+public final class io/github/awakelab/awake/asset/shaderpack/LitShadowUniformLayoutKt {
+	public static final fun getLitShadowUniformLayout ()Lio/github/awakelab/awake/render/renderer/UniformLayout;
+}
+
+public final class io/github/awakelab/awake/asset/shaderpack/ShadowUniforms {
+	public final fun getCameraPosition ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+	public final fun getFogColor ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+	public final fun getLightColor ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+	public final fun getLightDirection ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+	public final fun getLightMvp ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+	public final fun getMaterial ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+	public final fun getModel ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+	public final fun getMvp ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+	public final fun getPointLightColors ()Lio/github/awakelab/awake/asset/shaderdsl/AslArrayHandle;
+	public final fun getPointLightPositions ()Lio/github/awakelab/awake/asset/shaderdsl/AslArrayHandle;
+	public final fun getVertexAnimation ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+}
+
+public final class io/github/awakelab/awake/asset/shaderpack/ShadowUniformsKt {
+	public static final fun shadowUniforms (Lio/github/awakelab/awake/asset/shaderdsl/AslShaderBuilder;Z)Lio/github/awakelab/awake/asset/shaderpack/ShadowUniforms;
+}
+
+public final class io/github/awakelab/awake/asset/shaderpack/SkyboxContentFeatureKt {
+	public static final fun skyboxContentFeature (Lio/github/awakelab/awake/asset/shaders/ShaderSet;)Lio/github/awakelab/awake/asset/shaders/ContentFeatureSource;
+}
+
+public final class io/github/awakelab/awake/asset/shaderpack/TexturedUniformLayoutKt {
+	public static final fun getTexturedUniformLayout ()Lio/github/awakelab/awake/render/renderer/UniformLayout;
+}
+
+public final class io/github/awakelab/awake/asset/shaderpack/generator/GenerateShadersKt {
+	public static final fun main ()V
+	public static synthetic fun main ([Ljava/lang/String;)V
+}
+

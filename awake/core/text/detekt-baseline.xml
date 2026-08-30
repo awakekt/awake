@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LargeClass:RobotoBlackUiFontData.kt$RobotoBlackUiFontData : PackedUiFontData</ID>
+    <ID>LargeClass:RobotoBoldUiFontData.kt$RobotoBoldUiFontData : PackedUiFontData</ID>
+    <ID>LargeClass:RobotoLightUiFontData.kt$RobotoLightUiFontData : PackedUiFontData</ID>
+    <ID>LargeClass:RobotoMediumUiFontData.kt$RobotoMediumUiFontData : PackedUiFontData</ID>
+    <ID>LargeClass:RobotoRegularUiFontData.kt$RobotoRegularUiFontData : PackedUiFontData</ID>
+    <ID>LargeClass:RobotoSemiBoldUiFontData.kt$RobotoSemiBoldUiFontData : PackedUiFontData</ID>
+    <ID>LargeClass:RobotoThinUiFontData.kt$RobotoThinUiFontData : PackedUiFontData</ID>
+    <ID>LongParameterList:GlyphAtlasSource.kt$GlyphAtlasSource$( rows: IntArray, atlasX: Int, atlasY: Int, atlasInsetPx: Int, atlasCellSize: Int, atlasInnerSize: Int, supersampleGrid: Int, )</ID>
+    <ID>LongParameterList:MsdfFont.kt$MsdfFont$(px: Float, py: Float, x0: Float, y0: Float, x1: Float, y1: Float)</ID>
+    <ID>ReturnCount:GlyphAtlasSource.kt$GlyphAtlasSource$fun sampleCoverage( rows: IntArray, atlasX: Int, atlasY: Int, atlasInsetPx: Int, atlasCellSize: Int, atlasInnerSize: Int, supersampleGrid: Int, ): Float</ID>
+    <ID>ReturnCount:UiFont.kt$fun UiFont.measureTextWidth(label: String, glyphPx: Float, weight: FontWeight = FontWeight.Normal): Float</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 // Serves a module's resource directories to test runtimes that get no resource processing
 // from Kotlin itself:
 //  - Kotlin/Native test binaries run from build/bin/<target>/debugTest and readResourceBytes'

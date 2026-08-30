@@ -1,51 +1,55 @@
-# Awake Engine Platform
+# Awake App Platform
 
-The backend-neutral application contract for [Awake](../../../README.md): what a frame is, what an
-app's own behavior looks like, and the bootstrap that drives one. Holds no Vulkan or WebGPU
-dependency — each backend supplies a `GraphicsEngine` subclass instead (see
-[`:awake:engine:app`](../app/README.md)).
+`awake:engine:platform` is the UI-free, backend-neutral application contract. It turns a window
+host's frame callbacks into a portable application lifecycle; Vulkan and WebGPU supply concrete
+`GraphicsEngine` subclasses.
 
-## Installation
+## Owns
 
-```kotlin
-implementation(project(":awake:engine:platform"))
+- `AppFrame`, `AppLifecycle`, and `AwakeAppLifecycle`
+- `GraphicsEngine` and its backend-resource lifecycle
+- `WindowConfig`, backend selection, `Input`, and typed app services
+- `AppSpec`, `AppSpecBuilder`, `AppInstaller`, and `AppModule` contracts
+
+It does not own a `World`, scene scheduling, Compose UI, editor behavior, Vulkan/WebGPU driver
+objects, or game policy.
+
+## Composition boundary
+
+```text
+engine:platform   frame/lifecycle/input/window/services; no UI
+engine:bootstrap  authored app/module composition DSL
+engine:compose     optional ComposeHost integration module
+compose:ui          retained Compose UI runtime
+scene:*            optional ECS scene-session feature
 ```
 
-## Key Primitives
+An application that has no UI or no ECS scene can still use Platform. Do not add `ComposeHost` or
+scene-specific state here: the composed application root installs those optional features.
 
-- `AppLifecycle` — the app's own behavior: `ready(renderer)`, `update(frame)`, `resize`, `pause`,
-  `resume`, `dispose`. Injected into the engine rather than inherited from it.
-- `AppFrame` — everything one frame carries: `delta`, `viewportWidth`/`viewportHeight`, and this
-  frame's `InputSnapshot`. Pushed to `update`, so nothing reaches into ambient state for the
-  frame it is already being called about.
-- `AwakeAppLifecycle` — one running session: an `AppLifecycle` plus its `WindowConfig` and
-  service registry. Owns the session's `Input` accumulator.
-- `GraphicsEngine` — the template-method bootstrap. Owns the frame loop, the renderer handle and
-  teardown ordering; each backend implements `createBackendResources`/`destroyBackend`.
-- `AppSpec` / `AppSpecBuilder` — the immutable spec a session is built from, and its builder.
-  `AppInstaller`/`AppModule` let a feature register itself into one.
-- `FrameStats` — fps and frame-time tracking, including p50/p95/p99.
+## Key types
 
-## Usage Example
+- `AppLifecycle` receives `ready(renderer)`, `update(frame)`, resize, pause, resume, and dispose.
+- `AppFrame` carries the frame delta, viewport, input snapshot, and display density.
+- `AwakeAppLifecycle` is one running application session with window configuration and services.
+- `GraphicsEngine` owns backend setup, per-frame handoff, idle-before-dispose ordering, and
+  backend teardown.
+- `AppModule` is a reusable feature installer; it does not own window configuration.
 
-```kotlin
-val lifecycle = AppSpecBuilder().apply {
-    window { title = "My App"; size(1280, 720) }
-    ready { renderer -> /* load meshes, materials */ }
-    render { frame -> /* frame.delta, frame.input, ... */ }
-}.build().createLifecycle()
-```
+Most consumers use the authoring DSL from
+[`awake:engine:bootstrap`](../bootstrap/README.md), rather than constructing an `AppSpecBuilder`
+directly.
 
-Most code should not build a spec by hand — [`:awake:engine:bootstrap`](../bootstrap/README.md)'s
-`app { }` DSL wraps this.
+## Planned direction
 
-## Related Modules
+The [scene-session simplification plan](../../../docs/tasks/2026-08-25-scene-session-simplification-plan.md)
+keeps Platform UI-free. `awake:engine:compose` owns the optional Compose host and root content,
+while `SceneSession` becomes an installed feature rather than a second application host.
 
-- [`:awake:engine:app`](../app/README.md) — `AwakeApplication`, the backend-bound host
-  (Vulkan/WebGPU) built on `GraphicsEngine`.
-- [`:awake:engine:bootstrap`](../bootstrap/README.md) — the `app { }` / `module { }` authoring
-  DSLs over `AppSpecBuilder`.
-- [`:awake:scene`](../../scene/README.md) — `SceneAppLifecycleRuntime` (in `:awake:scene:runtime`)
-  is the ECS scene implementation of `AppLifecycle`.
-- [`:awake:engine:render:contract`](../render/contract/README.md) — `Renderer` and the render
-  vocabulary types this module exposes.
+## Related modules
+
+- [`awake:engine:bootstrap`](../bootstrap/README.md) — `app {}` and `appModule {}` composition.
+- [`awake:engine:compose`](../compose/README.md) — optional `composeAppModule` integration.
+- [`awake:scene`](../../scene/README.md) — ECS scene facade and session/runtime APIs.
+- `awake:compose:ui` — retained Compose UI runtime used by `engine:compose`.
+- `awake:engine:render:contract` — `Renderer` and render vocabulary used by lifecycle setup.

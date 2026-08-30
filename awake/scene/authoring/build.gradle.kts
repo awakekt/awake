@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 plugins {
     id("awake.kmp-library-convention")
     alias(libs.plugins.kotlin.serialization)
@@ -8,7 +13,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.scene.authoring"
+        namespace = "io.github.awakelab.awake.scene.authoring"
     }
 
     sourceSets {
@@ -27,12 +32,12 @@ kotlin {
             api(project(":awake:scene:controls"))
             api(project(":awake:scene:runtime"))
             api(project(":awake:engine:bootstrap"))
-            api(project(":awake:ui:ui-core"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(project(":awake:core:math"))
-            implementation(project(":awake:ui:headless"))
+            implementation(project(":awake:core:text"))
+            implementation(project(":awake:compose:foundation"))
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }

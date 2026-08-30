@@ -12,7 +12,7 @@ VkVertexInputAttributeDescriptionAccessor::VkVertexInputAttributeDescriptionAcce
     locationField = env->GetFieldID(clazz, "location", "I");
     bindingField = env->GetFieldID(clazz, "binding", "I");
     formatField = env->GetFieldID(clazz, "format",
-                                  "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkFormat;");
+                                  "Lio/github/awakelab/awake/vulkan/enums/VkFormat;");
     offsetField = env->GetFieldID(clazz, "offset", "I");
 }
 

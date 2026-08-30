@@ -1,0 +1,929 @@
+{
+  "schemaVersion": 1,
+  "reference": {
+    "id": "shadcn-6261bd8-new-york-v4-radix-1.4.2",
+    "sourcePin": "6261bd89f72d794aea491482cc2acfd8dc3d63e2",
+    "registry": "apps/v4/registry/new-york-v4",
+    "referenceApp": "tools/shadcn/reference-app",
+    "viewport": {
+      "width": 1400,
+      "height": 900,
+      "dpr": 1,
+      "reducedMotion": "reduce"
+    },
+    "font": "Roboto Regular/Medium"
+  },
+  "cases": [
+    {
+      "id": "button-group.basic.light.rest",
+      "component": "button-group",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "button-group-basic",
+      "awakePreview": "awake-button-group-basic-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-button-group-basic-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-button-group-basic-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/button-group-basic_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/button-group-basic_light.json",
+      "comparisonName": "button-group-basic-light",
+      "nodeIds": [
+        "parity-button-group",
+        "parity-button-group.archive",
+        "parity-button-group.report"
+      ],
+      "relationships": [
+        {
+          "name": "archive-to-report",
+          "kind": "horizontal-gap",
+          "first": "parity-button-group.archive",
+          "second": "parity-button-group.report"
+        }
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "content-hugging horizontal group; source collapses the second outline button's left border and inner radii"
+    },
+    {
+      "id": "button-group.vertical.light.rest",
+      "component": "button-group",
+      "state": "vertical",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "button-group-vertical",
+      "awakePreview": "awake-button-group-vertical-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-button-group-vertical-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-button-group-vertical-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/button-group-vertical_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/button-group-vertical_light.json",
+      "comparisonName": "button-group-vertical-light",
+      "nodeIds": [
+        "parity-button-group-vertical",
+        "parity-button-group-vertical.archive",
+        "parity-button-group-vertical.report"
+      ],
+      "relationships": [
+        {
+          "name": "archive-to-report",
+          "kind": "vertical-gap",
+          "first": "parity-button-group-vertical.archive",
+          "second": "parity-button-group-vertical.report"
+        }
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "fixed 156px source group; children stretch to the shared group width and source collapses the second outline button's top border and inner radii"
+    },
+    {
+      "id": "card.login.light.rest",
+      "component": "card",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "card-login",
+      "awakePreview": "awake-card-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-card-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-card-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/card-login_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/card-login_light.json",
+      "comparisonName": "card-login-light",
+      "coordinateOrigin": "parity-card",
+      "nodeIds": [
+        "parity-card",
+        "parity-card.email",
+        "parity-card.login"
+      ],
+      "relationships": [
+        {
+          "name": "email-to-login",
+          "kind": "vertical-gap",
+          "first": "parity-card.email",
+          "second": "parity-card.login"
+        }
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "fixed 288px source card; content uses 24px card/header insets, a 24px card gap, and a 12px content stack gap"
+    },
+    {
+      "id": "dropdown-menu.states.light.open",
+      "component": "dropdown-menu",
+      "state": "open",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "dropdown-menu-states",
+      "awakePreview": "awake-dropdown-menu-states-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-dropdown-menu-states-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-dropdown-menu-states-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/dropdown-menu-states_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/dropdown-menu-states_light.json",
+      "comparisonName": "dropdown-menu-states-light",
+      "coordinateOrigin": "parity-dropdown.surface",
+      "nodeIds": [
+        "parity-dropdown.surface",
+        "parity-dropdown.item.0",
+        "parity-dropdown.item.1",
+        "parity-dropdown.item.2",
+        "parity-dropdown.item.3"
+      ],
+      "relationships": [
+        {
+          "name": "item-0-to-1",
+          "kind": "vertical-gap",
+          "first": "parity-dropdown.item.0",
+          "second": "parity-dropdown.item.1"
+        },
+        {
+          "name": "item-1-to-2",
+          "kind": "vertical-gap",
+          "first": "parity-dropdown.item.1",
+          "second": "parity-dropdown.item.2"
+        },
+        {
+          "name": "item-2-to-3",
+          "kind": "vertical-gap",
+          "first": "parity-dropdown.item.2",
+          "second": "parity-dropdown.item.3"
+        }
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "fixed 160px source menu with min-width 128px; surface padding 4px and 32px item rows"
+    },
+    {
+      "id": "popover.states.light.open",
+      "component": "popover",
+      "state": "open",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "popover-states",
+      "awakePreview": "awake-popover-states-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-popover-states-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-popover-states-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/popover-states_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/popover-states_light.json",
+      "comparisonName": "popover-states-light",
+      "coordinateOrigin": "parity-popover.content",
+      "nodeIds": [
+        "parity-popover.trigger",
+        "parity-popover.content"
+      ],
+      "paintNodeIds": [
+        "parity-popover.content"
+      ],
+      "relationships": [
+        {
+          "name": "trigger-to-content-y",
+          "kind": "vertical-offset",
+          "first": "parity-popover.trigger",
+          "second": "parity-popover.content"
+        }
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "style",
+        "paint"
+      ],
+      "sizing": "fixed 260px popover content; 16px insets; trigger-to-content offset uses the source portal anchor"
+    },
+    {
+      "id": "button.variants.light.rest",
+      "component": "button",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "button-variants",
+      "awakePreview": "awake-button-variants-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-button-variants-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-button-variants-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/button-variants_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/button-variants_light.json",
+      "comparisonName": "button-variants-light",
+      "nodeIds": [
+        "parity-default",
+        "parity-secondary",
+        "parity-outline",
+        "parity-ghost",
+        "parity-destructive",
+        "parity-link"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "intrinsic controls in a content-hugging row; 8dp gap maps to Tailwind gap-2; button height is shadcn h-9 (36dp)"
+    },
+    {
+      "id": "button.variants.dark.rest",
+      "component": "button",
+      "state": "rest",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "button-variants",
+      "awakePreview": "awake-button-variants-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-button-variants-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-button-variants-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/button-variants_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/button-variants_dark.json",
+      "comparisonName": "button-variants-dark",
+      "nodeIds": [
+        "parity-default",
+        "parity-secondary",
+        "parity-outline",
+        "parity-ghost",
+        "parity-destructive",
+        "parity-link"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "same geometry as light; theme may change paint but must not change bounds"
+    },
+    {
+      "id": "button.icons.light.rest",
+      "component": "button",
+      "state": "icons",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "button-icons",
+      "awakePreview": "awake-button-icons-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-button-icons-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-button-icons-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/button-icons_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/button-icons_light.json",
+      "comparisonName": "button-icons-light",
+      "nodeIds": [
+        "parity-icon-default",
+        "parity-icon-outline",
+        "parity-icon-label"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "icon buttons map to source size-9 (36dp) and size-8 (32dp); an icon-bearing default button uses a 12dp horizontal inset and 8dp icon-label gap"
+    },
+    {
+      "id": "button.icons.dark.rest",
+      "component": "button",
+      "state": "icons",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "button-icons",
+      "awakePreview": "awake-button-icons-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-button-icons-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-button-icons-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/button-icons_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/button-icons_dark.json",
+      "comparisonName": "button-icons-dark",
+      "nodeIds": [
+        "parity-icon-default",
+        "parity-icon-outline",
+        "parity-icon-label"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "same geometry as light; theme may change paint but must not change bounds"
+    },
+    {
+      "id": "button.sizes.light.rest",
+      "component": "button",
+      "state": "sizes",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "button-sizes",
+      "awakePreview": "awake-button-sizes-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-button-sizes-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-button-sizes-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/button-sizes_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/button-sizes_light.json",
+      "comparisonName": "button-sizes-light",
+      "nodeIds": ["parity-size-small", "parity-size-default", "parity-size-large"],
+      "oracles": ["geometry", "padding", "spacing", "style", "paint"],
+      "sizing": "source sizes sm/default/lg map to h-8 px-3, h-9 px-4 py-2, and h-10 px-6; sm uses text-xs"
+    },
+    {
+      "id": "button.sizes.dark.rest",
+      "component": "button",
+      "state": "sizes",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "button-sizes",
+      "awakePreview": "awake-button-sizes-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-button-sizes-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-button-sizes-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/button-sizes_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/button-sizes_dark.json",
+      "comparisonName": "button-sizes-dark",
+      "nodeIds": ["parity-size-small", "parity-size-default", "parity-size-large"],
+      "oracles": ["geometry", "padding", "spacing", "style", "paint"],
+      "sizing": "same geometry as light; theme may change paint but must not change bounds"
+    },
+    {
+      "id": "button.disabled.light.rest",
+      "component": "button",
+      "state": "disabled",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "button-disabled",
+      "awakePreview": "awake-button-disabled-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-button-disabled-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-button-disabled-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/button-disabled_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/button-disabled_light.json",
+      "comparisonName": "button-disabled-light",
+      "nodeIds": ["parity-disabled-default", "parity-disabled-outline", "parity-disabled-destructive"],
+      "oracles": ["geometry", "padding", "spacing", "style", "paint"],
+      "sizing": "three h-9 buttons, each with source disabled:opacity-50"
+    },
+    {
+      "id": "button.disabled.dark.rest",
+      "component": "button",
+      "state": "disabled",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "button-disabled",
+      "awakePreview": "awake-button-disabled-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-button-disabled-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-button-disabled-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/button-disabled_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/button-disabled_dark.json",
+      "comparisonName": "button-disabled-dark",
+      "nodeIds": ["parity-disabled-default", "parity-disabled-outline", "parity-disabled-destructive"],
+      "oracles": ["geometry", "padding", "spacing", "style", "paint"],
+      "sizing": "same geometry as light; theme may change paint but must not change bounds"
+    },
+    {
+      "id": "alert.variants.light.rest",
+      "component": "alert",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "alert-variants",
+      "awakePreview": "awake-alert-variants-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-alert-variants-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-alert-variants-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/alert-variants_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/alert-variants_light.json",
+      "comparisonName": "alert-variants-light",
+      "coordinateOrigin": "parity-alert-default",
+      "nodeIds": [
+        "parity-alert-default",
+        "parity-alert-destructive"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "style",
+        "paint"
+      ],
+      "sizing": "272px-wide content-hugging alert cards; reference reports 16px padding on all four sides and a 1px border. Registered 2026-08-21 to test whether the border-box under-inset found in dropdown generalises -- it does NOT: padding passes here. Geometry still drifts on HEIGHT (92 expected vs 67.6/83.3) because Awake renders the description on one line where the reference wraps to two."
+    },
+    {
+      "id": "badge.variants.light.rest",
+      "component": "badge",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "badge-variants",
+      "awakePreview": "awake-badge-variants-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-badge-variants-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-badge-variants-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/badge-variants_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/badge-variants_light.json",
+      "comparisonName": "badge-variants-light",
+      "nodeIds": [
+        "badge.Default",
+        "badge.Secondary",
+        "badge.Destructive",
+        "badge.Outline"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "four intrinsic badges in a gap-2 row; source uses rounded-md, px-2, py-0.5 and a 1px border only for outline"
+    },
+    {
+      "id": "badge.variants.dark.rest",
+      "component": "badge",
+      "state": "rest",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "badge-variants",
+      "awakePreview": "awake-badge-variants-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-badge-variants-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-badge-variants-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/badge-variants_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/badge-variants_dark.json",
+      "comparisonName": "badge-variants-dark",
+      "nodeIds": [
+        "badge.Default",
+        "badge.Secondary",
+        "badge.Destructive",
+        "badge.Outline"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "same geometry as light; theme may change paint but must not change bounds"
+    },
+    {
+      "id": "switch.states.light.rest",
+      "component": "switch",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "switch-states",
+      "awakePreview": "awake-switch-variants-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-switch-variants-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-switch-variants-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/switch-states_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/switch-states_light.json",
+      "comparisonName": "switch-states-light",
+      "nodeIds": [
+        "parity-switch-off",
+        "parity-switch-on",
+        "parity-switch-disabled"
+      ],
+      "oracles": [
+        "geometry",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "three source switches (off, on, disabled) in a gap-2 row; switch boxes are 32 by 18 pixels"
+    },
+    {
+      "id": "switch.states.dark.rest",
+      "component": "switch",
+      "state": "rest",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "switch-states",
+      "awakePreview": "awake-switch-variants-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-switch-variants-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-switch-variants-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/switch-states_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/switch-states_dark.json",
+      "comparisonName": "switch-states-dark",
+      "nodeIds": [
+        "parity-switch-off",
+        "parity-switch-on",
+        "parity-switch-disabled"
+      ],
+      "oracles": [
+        "geometry",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "same geometry as light; theme may change paint but must not change bounds"
+    },
+    {
+      "id": "checkbox.states.light.rest",
+      "component": "checkbox",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "checkbox-states",
+      "awakePreview": "awake-checkbox-states-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-checkbox-states-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-checkbox-states-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/checkbox-states_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/checkbox-states_light.json",
+      "comparisonName": "checkbox-states-light",
+      "nodeIds": [
+        "parity-checkbox-unchecked",
+        "parity-checkbox-checked",
+        "parity-checkbox-disabled"
+      ],
+      "oracles": [
+        "geometry",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "three source checkboxes (unchecked, checked, disabled) in a gap-4 row; every box is size-4 with no content padding"
+    },
+    {
+      "id": "checkbox.states.dark.rest",
+      "component": "checkbox",
+      "state": "rest",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "checkbox-states",
+      "awakePreview": "awake-checkbox-states-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-checkbox-states-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-checkbox-states-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/checkbox-states_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/checkbox-states_dark.json",
+      "comparisonName": "checkbox-states-dark",
+      "nodeIds": [
+        "parity-checkbox-unchecked",
+        "parity-checkbox-checked",
+        "parity-checkbox-disabled"
+      ],
+      "oracles": [
+        "geometry",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "same geometry as light; theme may change paint but must not change bounds"
+    },
+    {
+      "id": "radio.states.light.rest",
+      "component": "radio",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "radio-group-states",
+      "awakePreview": "awake-radiogroup-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-radiogroup-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-radiogroup-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/radio-group-states_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/radio-group-states_light.json",
+      "comparisonName": "radio-group-states-light",
+      "nodeIds": [
+        "parity-radio.0",
+        "parity-radio.0.label",
+        "parity-radio.1",
+        "parity-radio.1.label",
+        "parity-radio.2",
+        "parity-radio.2.label"
+      ],
+      "oracles": [
+        "geometry",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "three `grid gap-3` option rows; each has a size-4 radio, a gap-2 label relation, and no content padding"
+    },
+    {
+      "id": "radio.states.dark.rest",
+      "component": "radio",
+      "state": "rest",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "radio-group-states",
+      "awakePreview": "awake-radiogroup-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-radiogroup-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-radiogroup-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/radio-group-states_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/radio-group-states_dark.json",
+      "comparisonName": "radio-group-states-dark",
+      "nodeIds": [
+        "parity-radio.0",
+        "parity-radio.0.label",
+        "parity-radio.1",
+        "parity-radio.1.label",
+        "parity-radio.2",
+        "parity-radio.2.label"
+      ],
+      "oracles": [
+        "geometry",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "same geometry as light; theme may change paint but must not change bounds"
+    },
+    {
+      "id": "progress.states.light.rest",
+      "component": "progress",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "progress-states",
+      "awakePreview": "awake-progress-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-progress-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-progress-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/progress-states_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/progress-states_light.json",
+      "comparisonName": "progress-states-light",
+      "nodeIds": [
+        "parity-progress-1",
+        "parity-progress-2"
+      ],
+      "oracles": [
+        "geometry",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "two full-width `h-2` tracks in a gap-4 column; the indicator is a proportional inner fill without content padding"
+    },
+    {
+      "id": "progress.states.dark.rest",
+      "component": "progress",
+      "state": "rest",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "progress-states",
+      "awakePreview": "awake-progress-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-progress-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-progress-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/progress-states_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/progress-states_dark.json",
+      "comparisonName": "progress-states-dark",
+      "nodeIds": ["parity-progress-1", "parity-progress-2"],
+      "oracles": ["geometry", "spacing", "style", "paint"],
+      "sizing": "same geometry as light; theme may change paint but must not change bounds"
+    },
+    {
+      "id": "input.states.light.rest",
+      "component": "input",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "input-states",
+      "awakePreview": "awake-textfield-states-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-textfield-states-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-textfield-states-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/input-states_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/input-states_light.json",
+      "comparisonName": "input-states-light",
+      "nodeIds": [
+        "parity-field-1",
+        "parity-field-2",
+        "parity-field-3"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "three full-width h-9 inputs in a gap-3 column; each has px-3 py-1 internal padding"
+    },
+    {
+      "id": "input.states.dark.rest",
+      "component": "input",
+      "state": "rest",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "input-states",
+      "awakePreview": "awake-textfield-states-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-textfield-states-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-textfield-states-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/input-states_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/input-states_dark.json",
+      "comparisonName": "input-states-dark",
+      "nodeIds": ["parity-field-1", "parity-field-2", "parity-field-3"],
+      "oracles": ["geometry", "padding", "spacing", "style", "paint"],
+      "sizing": "same geometry as light; theme may change paint but must not change bounds"
+    },
+    {
+      "id": "select.closed.light.rest",
+      "component": "select",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "select-closed",
+      "awakePreview": "awake-select-closed-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-select-closed-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-select-closed-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/select-closed_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/select-closed_light.json",
+      "comparisonName": "select-closed-light",
+      "nodeIds": [
+        "parity-select"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "style",
+        "paint"
+      ],
+      "sizing": "fixed 172px default h-9 trigger with px-3 py-2 content padding; reference and Awake use the shared parity-select root id"
+    },
+    {
+      "id": "select.open.light.open",
+      "component": "select",
+      "state": "open",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "select-open",
+      "awakePreview": "awake-select-open-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-select-open-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-select-open-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/select-open_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/select-open_light.json",
+      "comparisonName": "select-open-light",
+      "nodeIds": ["parity-select.content"],
+      "oracles": ["geometry", "padding", "style", "paint"],
+      "sizing": "172px x 160px popup with 1px border, 8px radius, and selected-row accent checked by image comparison"
+    },
+    {
+      "id": "select.open.dark.open",
+      "component": "select",
+      "state": "open",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "select-open",
+      "awakePreview": "awake-select-open-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-select-open-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-select-open-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/select-open_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/select-open_dark.json",
+      "comparisonName": "select-open-dark",
+      "nodeIds": ["parity-select.content"],
+      "oracles": ["geometry", "padding", "style", "paint"],
+      "sizing": "Same popup geometry as light; dark theme changes paint only"
+    },
+    {
+      "id": "select.scrolled.light.scrolled",
+      "component": "select",
+      "state": "scrolled",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "select-scrolled",
+      "awakePreview": "awake-select-scrolled-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-select-scrolled-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-select-scrolled-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/select-scrolled_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/select-scrolled_light.json",
+      "comparisonName": "select-scrolled-light",
+      "nodeIds": [
+        "parity-select.scrolled.content",
+        "parity-select.scrolled.item.0",
+        "parity-select.scrolled.item.1",
+        "parity-select.scrolled.item.2",
+        "parity-select.scrolled.item.3",
+        "parity-select.scrolled.item.4",
+        "parity-select.scrolled.item.5",
+        "parity-select.scrolled.item.6",
+        "parity-select.scrolled.item.7",
+        "parity-select.scrolled.item.8",
+        "parity-select.scrolled.item.9"
+      ],
+      "paintNodeIds": ["parity-select.scrolled.content"],
+      "oracles": ["geometry", "padding", "spacing", "style", "paint"],
+      "sizing": "172px x 160px overflow popup with a later selected row; visible text must remain separated after item-aligned scrolling"
+    },
+    {
+      "id": "select.scrolled.dark.scrolled",
+      "component": "select",
+      "state": "scrolled",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "select-scrolled",
+      "awakePreview": "awake-select-scrolled-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-select-scrolled-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-select-scrolled-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/select-scrolled_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/select-scrolled_dark.json",
+      "comparisonName": "select-scrolled-dark",
+      "nodeIds": [
+        "parity-select.scrolled.content",
+        "parity-select.scrolled.item.0",
+        "parity-select.scrolled.item.1",
+        "parity-select.scrolled.item.2",
+        "parity-select.scrolled.item.3",
+        "parity-select.scrolled.item.4",
+        "parity-select.scrolled.item.5",
+        "parity-select.scrolled.item.6",
+        "parity-select.scrolled.item.7",
+        "parity-select.scrolled.item.8",
+        "parity-select.scrolled.item.9"
+      ],
+      "paintNodeIds": ["parity-select.scrolled.content"],
+      "oracles": ["geometry", "padding", "spacing", "style", "paint"],
+      "sizing": "Same overflow geometry as light; dark theme changes paint only"
+    },
+    {
+      "id": "slider.states.light.rest",
+      "component": "slider",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "slider-states",
+      "awakePreview": "awake-slider-states-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-slider-states-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-slider-states-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/slider-states_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/slider-states_light.json",
+      "comparisonName": "slider-states-light",
+      "nodeIds": ["parity-slider"],
+      "oracles": ["geometry", "style", "paint"],
+      "sizing": "300px horizontal slider root; track h-1.5 and thumb size-4"
+    },
+    {
+      "id": "slider.states.dark.rest",
+      "component": "slider",
+      "state": "rest",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "slider-states",
+      "awakePreview": "awake-slider-states-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-slider-states-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-slider-states-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/slider-states_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/slider-states_dark.json",
+      "comparisonName": "slider-states-dark",
+      "nodeIds": ["parity-slider"],
+      "oracles": ["geometry", "style", "paint"],
+      "sizing": "Same geometry as light; dark theme changes paint only"
+    },
+    {
+      "id": "tabs.states.light.rest",
+      "component": "tabs",
+      "state": "rest",
+      "theme": "light",
+      "status": "required",
+      "referenceCase": "tabs-states",
+      "awakePreview": "awake-tabs-light",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-tabs-light.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-tabs-light.json",
+      "referencePng": "docs/reference/shadcn-previews-local/tabs-states_light.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/tabs-states_light.json",
+      "comparisonName": "tabs-states-light",
+      "nodeIds": [
+        "parity-tabs.track",
+        "parity-tabs.Account",
+        "parity-tabs.Password"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "content-hugging h-9 track with 3px internal padding; source triggers are 29px high with px-2 py-1 and hug their text. Current Awake width is 153px against the reference's 156px because the Account glyph advance differs; tracked as typography quality, not component geometry."
+    },
+    {
+      "id": "tabs.states.dark.rest",
+      "component": "tabs",
+      "state": "rest",
+      "theme": "dark",
+      "status": "required",
+      "referenceCase": "tabs-states",
+      "awakePreview": "awake-tabs-dark",
+      "awakePng": "samples/ui-showcase/build/ui-previews/awake-tabs-dark.png",
+      "semanticJson": "samples/ui-showcase/build/ui-previews/awake-tabs-dark.json",
+      "referencePng": "docs/reference/shadcn-previews-local/tabs-states_dark.png",
+      "referenceJson": "docs/reference/shadcn-previews-local/tabs-states_dark.json",
+      "comparisonName": "tabs-states-dark",
+      "nodeIds": [
+        "parity-tabs.track",
+        "parity-tabs.Account",
+        "parity-tabs.Password"
+      ],
+      "oracles": [
+        "geometry",
+        "padding",
+        "spacing",
+        "style",
+        "paint"
+      ],
+      "sizing": "same geometry as light; dark-specific active-tab background and missing shadow are independently reviewed."
+    }
+  ]
+}

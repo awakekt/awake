@@ -8,9 +8,9 @@
 VkDebugUtilsLabelEXTMutator::VkDebugUtilsLabelEXTMutator(JNIEnv *env) : env(env) {
     this->env = env;
     clazz = env->FindClass(
-            "io/github/ronjunevaldoz/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT");
+            "io/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT");
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     pLabelNameField = env->GetFieldID(clazz, "pLabelName", "Ljava/lang/String;");
     colorField = env->GetFieldID(clazz, "color", "[F");
@@ -21,7 +21,7 @@ VkDebugUtilsLabelEXTMutator::toObject(VkDebugUtilsLabelEXT source) {
     auto constructor = env->GetMethodID(clazz, "<init>", "()V");
     auto newObj = env->NewObject(clazz, constructor);
     auto sType = enum_utils::setEnumFromVulkan(env, static_cast<jint>(source.sType),
-                                               "io/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType");
+                                               "io/github/awakelab/awake/vulkan/enums/VkStructureType");
     env->SetObjectField(newObj, sTypeField, sType);
     env->DeleteLocalRef(sType);
     // processing Any, Void, Null, Object

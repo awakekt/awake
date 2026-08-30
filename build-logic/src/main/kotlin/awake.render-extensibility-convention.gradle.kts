@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 // Applied to the shader CONTRACT module only. See VerifyRenderExtensibilityTask's own doc
 // comment for what drifting back would cost.
 val verifyRenderExtensibility = tasks.register<VerifyRenderExtensibilityTask>("verifyRenderExtensibility") {

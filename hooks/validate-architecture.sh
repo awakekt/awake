@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
 # Runs the lightweight architecture audit after any file edit.
 # Claude Code invokes this as a PostToolUse hook on Edit/Write.
 # Exits 0 (clean) or 1 (findings) — Claude Code surfaces failures inline.

@@ -1,0 +1,483 @@
+public final class io/github/awakelab/awake/vulkan/application/GlfwInputBridgeKt {
+	public static final fun getDefaultGlfwGameplayKeys ()Ljava/util/Map;
+	public static final fun pollGlfwInput (JLio/github/awakelab/awake/core/input/Input;Ljava/util/Map;)V
+	public static synthetic fun pollGlfwInput$default (JLio/github/awakelab/awake/core/input/Input;Ljava/util/Map;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/vulkan/application/GlfwTextInputBridgeKt {
+	public static final fun pollGlfwTextInput (JLio/github/awakelab/awake/core/input/Input;D)V
+	public static synthetic fun pollGlfwTextInput$default (JLio/github/awakelab/awake/core/input/Input;DILjava/lang/Object;)V
+}
+
+public abstract interface class io/github/awakelab/awake/vulkan/application/GlfwWindowInput {
+	public abstract fun consumeScrollDeltaY ()D
+	public abstract fun cursorX ()D
+	public abstract fun cursorY ()D
+	public abstract fun framebufferScaleX ()F
+	public abstract fun framebufferScaleY ()F
+	public abstract fun isKeyDown (I)Z
+	public abstract fun isMouseButtonDown (I)Z
+}
+
+public final class io/github/awakelab/awake/vulkan/application/GlfwWindowInputKt {
+	public static final fun glfwWindowInput (J)Lio/github/awakelab/awake/vulkan/application/GlfwWindowInput;
+}
+
+public final class io/github/awakelab/awake/vulkan/application/VulkanDesktopHostKt {
+	public static final fun runVulkanDesktopGame (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lio/github/awakelab/awake/asset/shaders/RenderPlan;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public static final fun runVulkanDesktopGame (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lio/github/awakelab/awake/vulkan/application/VulkanEngine;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public static final fun runVulkanDesktopGame (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun runVulkanDesktopGame$default (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lio/github/awakelab/awake/asset/shaders/RenderPlan;ZLkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static synthetic fun runVulkanDesktopGame$default (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lio/github/awakelab/awake/vulkan/application/VulkanEngine;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static synthetic fun runVulkanDesktopGame$default (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+}
+
+public class io/github/awakelab/awake/vulkan/application/VulkanEngine : io/github/awakelab/awake/engine/platform/GraphicsEngine {
+	public static final field MAX_FRAMES_IN_FLIGHT I
+	public fun <init> (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lio/github/awakelab/awake/asset/shaders/RenderPlan;Z)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lio/github/awakelab/awake/asset/shaders/RenderPlan;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	protected fun createBackendResources (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	protected fun destroyBackend ()V
+	public final fun getRuntimeShaders ()Z
+}
+
+public final class io/github/awakelab/awake/vulkan/commands/TransferContext {
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;)V
+	public final fun destroy ()V
+	public final fun getCommandPool--v6gp-c ()J
+	public final fun runOneTimeCommands (Lkotlin/jvm/functions/Function1;)V
+	public final fun setCommandPool-SEfKxqM (J)V
+}
+
+public final class io/github/awakelab/awake/vulkan/debug/LineMesh {
+	public static final field Companion Lio/github/awakelab/awake/vulkan/debug/LineMesh$Companion;
+	public static final field OFFSCREEN_FRAMES I
+	public static final field VERTICES_PER_LINE I
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;II)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (IJ)V
+	public final fun bind (J)V
+	public final fun binding (I)Lio/github/awakelab/awake/vulkan/pipeline/VulkanBufferBinding;
+	public final fun destroy ()V
+	public final fun draw (IJ)V
+	public final fun draw (J)V
+	public final fun getVertexCount ()I
+	public final fun update (I[F)V
+	public final fun update ([F)V
+	public final fun vertexCount (I)I
+}
+
+public final class io/github/awakelab/awake/vulkan/debug/LineMesh$Companion {
+	public final fun getFLOATS_PER_VERTEX ()I
+}
+
+public final class io/github/awakelab/awake/vulkan/debug/LineRenderPipeline : io/github/awakelab/awake/vulkan/pipeline/VulkanPipelineHandle {
+	public static final field MVP_UNIFORM_BYTES I
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lio/github/awakelab/awake/vulkan/swapchain/SwapchainManager;JLio/github/awakelab/awake/vulkan/pipeline/ShaderPair;I)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lio/github/awakelab/awake/vulkan/swapchain/SwapchainManager;JLio/github/awakelab/awake/vulkan/pipeline/ShaderPair;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (J)V
+	public final fun bind (JI)V
+	public final fun destroy ()V
+	public fun getBindingLayout ()Lio/github/awakelab/awake/render/pipeline/BindingLayout;
+	public fun getPipelineHandle ()J
+	public fun getPipelineLayoutHandle ()J
+	public fun getUsesDepthSet ()Z
+	public final fun uniformBinding (I)Lio/github/awakelab/awake/vulkan/pipeline/VulkanMaterialBinding;
+	public final fun writeMvp (I[F)V
+	public final fun writeMvp ([F)V
+}
+
+public final class io/github/awakelab/awake/vulkan/device/GraphicsDevice {
+	public fun <init> ()V
+	public final fun create (Ljava/lang/Object;)V
+	public final fun createHeadless ()V
+	public final fun destroy ()V
+	public final fun getDebugUtilsMessenger ()J
+	public final fun getDevice ()J
+	public final fun getGraphicsQueue ()J
+	public final fun getInstance ()J
+	public final fun getPhysicalDevice ()J
+	public final fun getPresentQueue ()J
+	public final fun getSurface ()J
+	public final fun setDebugUtilsMessenger (J)V
+	public final fun setDevice (J)V
+	public final fun setGraphicsQueue (J)V
+	public final fun setInstance (J)V
+	public final fun setPhysicalDevice (J)V
+	public final fun setPresentQueue (J)V
+	public final fun setSurface (J)V
+}
+
+public final class io/github/awakelab/awake/vulkan/material/Material : io/github/awakelab/awake/render/material/Material {
+	public static final field Companion Lio/github/awakelab/awake/vulkan/material/Material$Companion;
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;I)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (JJ)V
+	public final fun bind (JJII)V
+	public final fun createResources (Lio/github/awakelab/awake/vulkan/texture/Texture;Lio/github/awakelab/awake/vulkan/material/PbrImageViews;)V
+	public final fun createResourcesFromRenderTarget (JJLio/github/awakelab/awake/vulkan/material/PbrImageViews;)V
+	public fun destroy ()V
+	public final fun getDescriptorPool-xR6nxtM ()J
+	public final fun getDescriptorSet-gsJa6DA ()J
+	public final fun getDescriptorSetLayout-moIXNPM ()J
+	public final fun getImageViewHandle ()J
+	public final fun getSamplerHandle ()J
+	public final fun getUniformBuffer-1-scWOs ()J
+	public final fun getUniformBufferMemory-m1aW7qE ()J
+	public final fun updateUniformBuffer (II[F)Lio/github/awakelab/awake/vulkan/pipeline/VulkanMaterialBinding;
+	public fun updateUniformBuffer ([F)V
+}
+
+public final class io/github/awakelab/awake/vulkan/material/Material$Companion {
+	public final fun createDescriptorSetLayout-cMY4LSM (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;)J
+}
+
+public final class io/github/awakelab/awake/vulkan/material/PbrImageViews {
+	public fun <init> (JJJJ)V
+	public final fun asList ()Ljava/util/List;
+	public final fun component1 ()J
+	public final fun component2 ()J
+	public final fun component3 ()J
+	public final fun component4 ()J
+	public final fun copy (JJJJ)Lio/github/awakelab/awake/vulkan/material/PbrImageViews;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/vulkan/material/PbrImageViews;JJJJILjava/lang/Object;)Lio/github/awakelab/awake/vulkan/material/PbrImageViews;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEmissive ()J
+	public final fun getMetallicRoughness ()J
+	public final fun getNormal ()J
+	public final fun getOcclusion ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/vulkan/mesh/AlphaInstanceBuffer {
+	public static final field Companion Lio/github/awakelab/awake/vulkan/mesh/AlphaInstanceBuffer$Companion;
+	public static final field INSTANCE_ALPHA_BINDING I
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;II)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (IJ)V
+	public final fun binding (I)Lio/github/awakelab/awake/vulkan/pipeline/VulkanBufferBinding;
+	public final fun destroy ()V
+	public final fun update (ILjava/util/List;)V
+}
+
+public final class io/github/awakelab/awake/vulkan/mesh/AlphaInstanceBuffer$Companion {
+	public final fun getFLOATS_PER_INSTANCE ()I
+}
+
+public final class io/github/awakelab/awake/vulkan/mesh/FrameInstanceBuffer {
+	public static final field Companion Lio/github/awakelab/awake/vulkan/mesh/FrameInstanceBuffer$Companion;
+	public static final field INSTANCE_FRAME_BINDING I
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;II)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (IJ)V
+	public final fun binding (I)Lio/github/awakelab/awake/vulkan/pipeline/VulkanBufferBinding;
+	public final fun destroy ()V
+	public final fun update (ILjava/util/List;)V
+}
+
+public final class io/github/awakelab/awake/vulkan/mesh/FrameInstanceBuffer$Companion {
+	public final fun getFLOATS_PER_INSTANCE ()I
+}
+
+public final class io/github/awakelab/awake/vulkan/mesh/InstanceBuffer {
+	public static final field Companion Lio/github/awakelab/awake/vulkan/mesh/InstanceBuffer$Companion;
+	public static final field DEFAULT_MAX_INSTANCES I
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;II)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (IJ)V
+	public final fun binding (I)Lio/github/awakelab/awake/vulkan/pipeline/VulkanBufferBinding;
+	public final fun destroy ()V
+	public final fun update (ILjava/util/List;)V
+}
+
+public final class io/github/awakelab/awake/vulkan/mesh/InstanceBuffer$Companion {
+	public final fun getFLOATS_PER_INSTANCE ()I
+}
+
+public final class io/github/awakelab/awake/vulkan/mesh/Mesh : io/github/awakelab/awake/render/mesh/Mesh {
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lkotlin/jvm/functions/Function1;[F[ILio/github/awakelab/awake/core/geometry/VertexFormat;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lkotlin/jvm/functions/Function1;[F[ILio/github/awakelab/awake/core/geometry/VertexFormat;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (J)V
+	public fun destroy ()V
+	public final fun draw (J)V
+	public final fun drawInstanced (JI)V
+	public fun getFormat ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
+	public final fun getIndexBinding ()Lio/github/awakelab/awake/vulkan/pipeline/VulkanBufferBinding;
+	public final fun getIndexBuffer-1-scWOs ()J
+	public final fun getIndexBufferMemory-m1aW7qE ()J
+	public final fun getIndexCount ()I
+	public final fun getVertexBinding ()Lio/github/awakelab/awake/vulkan/pipeline/VulkanBufferBinding;
+	public final fun getVertexBuffer-1-scWOs ()J
+	public final fun getVertexBufferMemory-m1aW7qE ()J
+	public final fun setIndexBuffer-_o6MCjM (J)V
+	public final fun setIndexBufferMemory-4-hH6wM (J)V
+	public final fun setVertexBuffer-_o6MCjM (J)V
+	public final fun setVertexBufferMemory-4-hH6wM (J)V
+}
+
+public final class io/github/awakelab/awake/vulkan/mesh/SkinnedInstanceBuffer {
+	public static final field Companion Lio/github/awakelab/awake/vulkan/mesh/SkinnedInstanceBuffer$Companion;
+	public static final field DEFAULT_MAX_INSTANCES I
+	public static final field MAX_JOINTS I
+	public static final field PALETTE_SET I
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;II)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (IJJ)V
+	public final fun binding (I)Lio/github/awakelab/awake/vulkan/pipeline/VulkanMaterialBinding;
+	public final fun destroy ()V
+	public final fun update (ILjava/util/List;)V
+}
+
+public final class io/github/awakelab/awake/vulkan/mesh/SkinnedInstanceBuffer$Companion {
+	public final fun createDescriptorSetLayout-cMY4LSM (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;)J
+	public final fun getFLOATS_PER_INSTANCE ()I
+}
+
+public final class io/github/awakelab/awake/vulkan/pipeline/DepthOnlyPipeline {
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;JJLio/github/awakelab/awake/vulkan/pipeline/ShaderPair;Lio/github/awakelab/awake/core/geometry/VertexFormat;ILjava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;JJLio/github/awakelab/awake/vulkan/pipeline/ShaderPair;Lio/github/awakelab/awake/core/geometry/VertexFormat;ILjava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (J)V
+	public final fun destroy ()V
+	public final fun getPipelineLayout ()J
+}
+
+public final class io/github/awakelab/awake/vulkan/pipeline/RenderPipeline : io/github/awakelab/awake/render/command/UniformBlockOwner, io/github/awakelab/awake/vulkan/pipeline/VulkanPipelineHandle {
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lio/github/awakelab/awake/vulkan/swapchain/SwapchainManager;JJLio/github/awakelab/awake/vulkan/pipeline/ShaderPair;Lio/github/awakelab/awake/core/geometry/VertexFormat;Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/vulkan/enums/VkPolygonMode;Lio/github/awakelab/awake/vulkan/enums/VkCullModeFlagBits;Lio/github/awakelab/awake/render/pipeline/PipelineVariant;Ljava/util/List;Lio/github/awakelab/awake/render/renderer/UniformLayout;IZLio/github/awakelab/awake/render/pipeline/BindingLayout;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lio/github/awakelab/awake/vulkan/swapchain/SwapchainManager;JJLio/github/awakelab/awake/vulkan/pipeline/ShaderPair;Lio/github/awakelab/awake/core/geometry/VertexFormat;Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/vulkan/enums/VkPolygonMode;Lio/github/awakelab/awake/vulkan/enums/VkCullModeFlagBits;Lio/github/awakelab/awake/render/pipeline/PipelineVariant;Ljava/util/List;Lio/github/awakelab/awake/render/renderer/UniformLayout;IZLio/github/awakelab/awake/render/pipeline/BindingLayout;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (J)V
+	public final fun destroy ()V
+	public fun getBindingLayout ()Lio/github/awakelab/awake/render/pipeline/BindingLayout;
+	public final fun getGraphicsPipeline ()[J
+	public final fun getPipelineCache ()J
+	public fun getPipelineHandle ()J
+	public final fun getPipelineLayout ()J
+	public fun getPipelineLayoutHandle ()J
+	public final fun getRenderPass ()J
+	public fun getUniformBlock ()Lio/github/awakelab/awake/render/command/UniformBlock;
+	public fun getUsesDepthSet ()Z
+	public final fun getVertexFormat ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
+	public final fun setGraphicsPipeline ([J)V
+	public final fun setPipelineCache (J)V
+	public final fun setPipelineLayout (J)V
+}
+
+public final class io/github/awakelab/awake/vulkan/pipeline/RenderPipelineKt {
+	public static final fun createSceneRenderPass (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lio/github/awakelab/awake/vulkan/swapchain/SwapchainManager;)J
+}
+
+public final class io/github/awakelab/awake/vulkan/pipeline/ShaderPair {
+	public fun <init> ([B[B)V
+	public final fun component1 ()[B
+	public final fun component2 ()[B
+	public final fun copy ([B[B)Lio/github/awakelab/awake/vulkan/pipeline/ShaderPair;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/vulkan/pipeline/ShaderPair;[B[BILjava/lang/Object;)Lio/github/awakelab/awake/vulkan/pipeline/ShaderPair;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFragment ()[B
+	public final fun getVertex ()[B
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/vulkan/pipeline/VulkanBufferBinding : io/github/awakelab/awake/render/command/BufferHandle {
+	public fun <init> (J)V
+	public final fun getAsArray ()[J
+	public final fun getHandle ()J
+}
+
+public abstract interface class io/github/awakelab/awake/vulkan/pipeline/VulkanMaterialBinding : io/github/awakelab/awake/render/command/MaterialBinding {
+	public abstract fun getDescriptorSetHandle ()J
+}
+
+public final class io/github/awakelab/awake/vulkan/pipeline/VulkanPipelineFactory : io/github/awakelab/awake/render/pipeline/PipelineFactory {
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lio/github/awakelab/awake/vulkan/swapchain/SwapchainManager;JJLjava/util/Map;Ljava/util/Set;ILkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lio/github/awakelab/awake/vulkan/swapchain/SwapchainManager;JJLjava/util/Map;Ljava/util/Set;ILkotlin/jvm/functions/Function2;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun create (Lio/github/awakelab/awake/render/pipeline/PipelineKey;Lio/github/awakelab/awake/render/pipeline/PipelineSpec;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class io/github/awakelab/awake/vulkan/pipeline/VulkanPipelineHandle : io/github/awakelab/awake/render/command/PipelineHandle {
+	public abstract fun getPipelineHandle ()J
+	public abstract fun getPipelineLayoutHandle ()J
+	public abstract fun getUsesDepthSet ()Z
+}
+
+public final class io/github/awakelab/awake/vulkan/pipeline/VulkanPipelineHandle$DefaultImpls {
+	public static fun getBindingLayout (Lio/github/awakelab/awake/vulkan/pipeline/VulkanPipelineHandle;)Lio/github/awakelab/awake/render/pipeline/BindingLayout;
+}
+
+public final class io/github/awakelab/awake/vulkan/pipeline/VulkanShaderResolver : io/github/awakelab/awake/asset/shaders/RuntimeShaderResolver {
+	public fun <init> ()V
+	public fun resolve (Lio/github/awakelab/awake/asset/shaders/ShaderSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/awakelab/awake/vulkan/renderer/Renderer : io/github/awakelab/awake/render/renderer/Renderer {
+	public static final field Companion Lio/github/awakelab/awake/vulkan/renderer/Renderer$Companion;
+	public fun compositeUiTargets (Lio/github/awakelab/awake/render/texture/RenderTarget;Lio/github/awakelab/awake/render/texture/RenderTarget;Lio/github/awakelab/awake/render/texture/RenderTarget;Lio/github/awakelab/awake/render/renderer/UiTargetCompositeMode;)V
+	public fun createMaterial (Lio/github/awakelab/awake/render/texture/TextureAsset;Lio/github/awakelab/awake/render/texture/RenderTarget;ILio/github/awakelab/awake/render/texture/PbrTextureSet;)Lio/github/awakelab/awake/render/material/Material;
+	public fun createMesh (Lio/github/awakelab/awake/core/geometry/MeshGeometry;)Lio/github/awakelab/awake/render/mesh/Mesh;
+	public fun createRenderTarget (II)Lio/github/awakelab/awake/render/texture/RenderTarget;
+	public fun destroy ()V
+	public fun draw (Lio/github/awakelab/awake/core/math/Lens;Ljava/util/List;Lio/github/awakelab/awake/render/renderer/SceneLight;)V
+	public fun drawDebugLines (Ljava/util/List;)V
+	public fun drawUi (Ljava/util/List;Lio/github/awakelab/awake/core/text/font/UiFont;)V
+	public fun drawUiToTexture (Lio/github/awakelab/awake/render/texture/RenderTarget;Ljava/util/List;Lio/github/awakelab/awake/core/text/font/UiFont;)V
+	public fun getClearColor ()Lio/github/awakelab/awake/core/color/Color;
+	public fun getClipSpace ()Lio/github/awakelab/awake/core/math/ClipSpace;
+	public fun getDebugMode ()Z
+	public fun getFogColor ()Lio/github/awakelab/awake/core/color/Color;
+	public fun getFogDensity ()F
+	public fun getHorizonColor ()Lio/github/awakelab/awake/core/color/Color;
+	public fun getSceneViewport ()Lio/github/awakelab/awake/render/renderer/RenderViewport;
+	public fun getShadowsEnabled ()Z
+	public fun getShowEnvironment ()Z
+	public fun getWireframe ()Z
+	public fun getZenithColor ()Lio/github/awakelab/awake/core/color/Color;
+	public fun presentWithoutScene ()V
+	public fun readPixels (Lio/github/awakelab/awake/render/texture/RenderTarget;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun renderToTexture (Lio/github/awakelab/awake/render/texture/RenderTarget;Lio/github/awakelab/awake/core/math/Lens;Ljava/util/List;Lio/github/awakelab/awake/render/renderer/SceneLight;)V
+	public fun setClearColor (Lio/github/awakelab/awake/core/color/Color;)V
+	public fun setDebugMode (Z)V
+	public fun setFogColor (Lio/github/awakelab/awake/core/color/Color;)V
+	public fun setFogDensity (F)V
+	public fun setHorizonColor (Lio/github/awakelab/awake/core/color/Color;)V
+	public fun setSceneViewport (Lio/github/awakelab/awake/render/renderer/RenderViewport;)V
+	public fun setShadowsEnabled (Z)V
+	public fun setShowEnvironment (Z)V
+	public fun setWireframe (Z)V
+	public fun setZenithColor (Lio/github/awakelab/awake/core/color/Color;)V
+	public fun waitIdle ()V
+}
+
+public final class io/github/awakelab/awake/vulkan/renderer/Renderer$Companion {
+}
+
+public final class io/github/awakelab/awake/vulkan/renderer/RendererDrawUiKt {
+	public static final fun renderUiGlyphsToTexture (Lio/github/awakelab/awake/vulkan/renderer/Renderer;Lio/github/awakelab/awake/render/texture/RenderTarget;Ljava/util/List;Lio/github/awakelab/awake/core/text/font/UiFont;)V
+	public static final fun renderUiToTexture (Lio/github/awakelab/awake/vulkan/renderer/Renderer;Lio/github/awakelab/awake/render/texture/RenderTarget;Ljava/util/List;Lio/github/awakelab/awake/core/text/font/UiFont;)V
+}
+
+public final class io/github/awakelab/awake/vulkan/swapchain/SwapchainManager {
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;ILkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;ILkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun create ()V
+	public final fun createHeadless (IILio/github/awakelab/awake/vulkan/enums/VkFormat;)V
+	public static synthetic fun createHeadless$default (Lio/github/awakelab/awake/vulkan/swapchain/SwapchainManager;IILio/github/awakelab/awake/vulkan/enums/VkFormat;ILjava/lang/Object;)V
+	public final fun createSyncObjects ()V
+	public final fun destroy ()V
+	public final fun destroySyncObjects ()V
+	public final fun getCurrentFrame ()I
+	public final fun getExtent ()Lio/github/awakelab/awake/vulkan/models/VkExtent2D;
+	public final fun getImageAvailableSemaphores ()[J
+	public final fun getImageFormat ()Lio/github/awakelab/awake/vulkan/enums/VkFormat;
+	public final fun getImageViews ()Ljava/util/List;
+	public final fun getInFlightFences ()[J
+	public final fun getMaxFramesInFlight ()I
+	public final fun getRenderFinishedSemaphores ()[J
+	public final fun getSwapChain ()J
+	public final fun hasDrawableExtent ()Z
+	public final fun setCurrentFrame (I)V
+	public final fun setExtent (Lio/github/awakelab/awake/vulkan/models/VkExtent2D;)V
+	public final fun setImageFormat (Lio/github/awakelab/awake/vulkan/enums/VkFormat;)V
+	public final fun setImageViews (Ljava/util/List;)V
+	public final fun setRenderFinishedSemaphores ([J)V
+	public final fun setSwapChain (J)V
+}
+
+public final class io/github/awakelab/awake/vulkan/texture/DepthTarget {
+	public static final field Companion Lio/github/awakelab/awake/vulkan/texture/DepthTarget$Companion;
+	public static final field DEFAULT_SIZE I
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;I)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun binding ()Lio/github/awakelab/awake/vulkan/pipeline/VulkanMaterialBinding;
+	public final fun destroy ()V
+	public final fun getDescriptorSetLayout ()J
+	public final fun getFramebuffer ()J
+	public final fun getImage ()J
+	public final fun getImageView ()J
+	public final fun getRenderPass ()J
+	public final fun getSampler ()J
+	public final fun getSize ()I
+}
+
+public final class io/github/awakelab/awake/vulkan/texture/DepthTarget$Companion {
+	public final fun getDEPTH_FORMAT ()Lio/github/awakelab/awake/vulkan/enums/VkFormat;
+}
+
+public final class io/github/awakelab/awake/vulkan/texture/OffscreenRenderTarget : io/github/awakelab/awake/render/texture/RenderTarget {
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;JIIILkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;JIIILkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun destroy ()V
+	public final fun getColorImage ()J
+	public final fun getColorImageMemory ()J
+	public final fun getColorImageView ()J
+	public final fun getFramebuffer ()J
+	public fun getHeight ()I
+	public final fun getSampler ()J
+	public fun getWidth ()I
+	public final fun prepareForColorAttachment (J)V
+	public final fun transitionToShaderReadOnly (J)V
+}
+
+public final class io/github/awakelab/awake/vulkan/texture/Texture {
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lkotlin/jvm/functions/Function1;[BIILio/github/awakelab/awake/vulkan/models/info/VkSamplerCreateInfo;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lkotlin/jvm/functions/Function1;[BIILio/github/awakelab/awake/vulkan/models/info/VkSamplerCreateInfo;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun destroy ()V
+	public final fun getImage-yiziK9Y ()J
+	public final fun getImageMemory-m1aW7qE ()J
+	public final fun getImageView-BYY9Zlk ()J
+	public final fun getSampler-iSNPYe4 ()J
+	public final fun setImage-xsFfjl8 (J)V
+	public final fun setImageMemory-4-hH6wM (J)V
+	public final fun setImageView-i6p3bDk (J)V
+	public final fun setSampler-ETa77pg (J)V
+}
+
+public final class io/github/awakelab/awake/vulkan/texture/TextureLoaderKt {
+	public static final fun loadVulkanTexture (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun toRgba8Bytes (Lio/github/awakelab/awake/core/image/Bitmap;)[B
+}
+
+public final class io/github/awakelab/awake/vulkan/ui/DynamicMesh {
+	public static final field Companion Lio/github/awakelab/awake/vulkan/ui/DynamicMesh$Companion;
+	public static final field FLOATS_PER_VERTEX I
+	public static final field GLYPH_FLOATS_PER_VERTEX I
+	public static final field INDICES_PER_QUAD I
+	public static final field ROUNDED_QUAD_FLOATS_PER_VERTEX I
+	public static final field VERTICES_PER_QUAD I
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;III)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (IJ)V
+	public final fun bind (J)V
+	public final fun destroy ()V
+	public final fun draw (IJ)V
+	public final fun draw (J)V
+	public final fun getDrawIndexCount ()I
+	public final fun update (I[F[I)V
+	public final fun update ([F[I)V
+}
+
+public final class io/github/awakelab/awake/vulkan/ui/DynamicMesh$Companion {
+}
+
+public final class io/github/awakelab/awake/vulkan/ui/UiRenderPipeline {
+	public static final field Companion Lio/github/awakelab/awake/vulkan/ui/UiRenderPipeline$Companion;
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lio/github/awakelab/awake/vulkan/swapchain/SwapchainManager;[B[BLio/github/awakelab/awake/render/passes2d/DrawPipelineKind;ZLjava/lang/Long;ILio/github/awakelab/awake/vulkan/texture/Texture;Lio/github/awakelab/awake/core/graphics2d/BlendMode;ZZ)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;Lio/github/awakelab/awake/vulkan/swapchain/SwapchainManager;[B[BLio/github/awakelab/awake/render/passes2d/DrawPipelineKind;ZLjava/lang/Long;ILio/github/awakelab/awake/vulkan/texture/Texture;Lio/github/awakelab/awake/core/graphics2d/BlendMode;ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun bind (JLjava/lang/Long;)V
+	public static synthetic fun bind$default (Lio/github/awakelab/awake/vulkan/ui/UiRenderPipeline;JLjava/lang/Long;ILjava/lang/Object;)V
+	public final fun bindMaterial (JIIJJ)V
+	public final fun bindMaterial (JJJ)V
+	public final fun bindTargetComposite (JIJJJJLio/github/awakelab/awake/render/renderer/UiTargetCompositeMode;)V
+	public final fun destroy ()V
+	public final fun getHasTexture ()Z
+	public final fun getKind ()Lio/github/awakelab/awake/render/passes2d/DrawPipelineKind;
+	public final fun getRenderPass ()J
+	public final fun prepareDescriptorSet (Lio/github/awakelab/awake/vulkan/texture/Texture;I)J
+	public static synthetic fun prepareDescriptorSet$default (Lio/github/awakelab/awake/vulkan/ui/UiRenderPipeline;Lio/github/awakelab/awake/vulkan/texture/Texture;IILjava/lang/Object;)J
+	public final fun writeFontInfo (ZF)V
+	public final fun writeScreenSize (FF)V
+}
+
+public final class io/github/awakelab/awake/vulkan/ui/UiRenderPipeline$Companion {
+}
+

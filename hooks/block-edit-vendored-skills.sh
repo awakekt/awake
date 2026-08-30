@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
 # PreToolUse hook: blocks Edit/Write calls that target a deployed skill mirror
 # instead of the real source. Deployed copies under .claude/skills/,
 # .agents/skills/, .codex/skills/, or .gemini/skills/ are synced FROM a source

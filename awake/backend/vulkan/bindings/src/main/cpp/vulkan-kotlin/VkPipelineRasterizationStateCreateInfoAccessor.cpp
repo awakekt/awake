@@ -9,16 +9,16 @@ VkPipelineRasterizationStateCreateInfoAccessor::VkPipelineRasterizationStateCrea
         JNIEnv *env, jobject obj) : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     depthClampEnableField = env->GetFieldID(clazz, "depthClampEnable", "Z");
     rasterizerDiscardEnableField = env->GetFieldID(clazz, "rasterizerDiscardEnable", "Z");
     polygonModeField = env->GetFieldID(clazz, "polygonMode",
-                                       "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkPolygonMode;");
+                                       "Lio/github/awakelab/awake/vulkan/enums/VkPolygonMode;");
     cullModeField = env->GetFieldID(clazz, "cullMode", "I");
     frontFaceField = env->GetFieldID(clazz, "frontFace",
-                                     "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkFrontFace;");
+                                     "Lio/github/awakelab/awake/vulkan/enums/VkFrontFace;");
     depthBiasEnableField = env->GetFieldID(clazz, "depthBiasEnable", "Z");
     depthBiasConstantFactorField = env->GetFieldID(clazz, "depthBiasConstantFactor", "F");
     depthBiasClampField = env->GetFieldID(clazz, "depthBiasClamp", "F");

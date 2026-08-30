@@ -8,41 +8,27 @@ platform target (Android, desktop, iOS).
 
 ## Installation
 
+### In-Repo Dependency
 ```kotlin
 implementation(project(":awake:backend:vulkan"))
 ```
-
-Pulls in `:awake:backend:vulkan:bindings` transitively (`api(...)`, see below). Also
+Pulls in `:awake:backend:vulkan:bindings` transitively (`api(...)`). Also
 depends on `:awake:core` and `:awake:ui:ui-core`, and exposes `:awake:engine:render:contract`
 as `api` so downstream code can use `Renderer` against the shared interface.
 
-## Future: Maven installation
-
-Not published yet -- neither this module nor `:bindings` applies `awake.publish-convention`
-today (compare `awake:asset:gltf`'s `build.gradle.kts`, which does). When it is, the expected
-shape:
+### Standalone Maven Dependency (`vulkan-kmp`)
+If you only need raw Vulkan API bindings without engine dependencies:
 
 ```kotlin
-// commonMain -- Renderer/RenderPipeline/etc., same API regardless of target.
-implementation("io.github.awake-lab:awake-backend-vulkan:<version>")
+// commonMain
+implementation("io.github.awake-lab:vulkan-kmp:<version>")
 ```
 
-`:bindings` ships a real compiled native library per desktop platform (CMake-built
-`libawake-vulkan.dylib`/`.so`/`.dll`, loaded via `System.loadLibrary("awake-vulkan")` --
-see `VulkanWindow.kt`'s `init` block) plus Android's own native build under
-`:bindings:android-native`. A plain single-artifact Maven publish (what `gltf` does today)
-does **not** cover this: Maven Central needs either per-platform classifiers on the
-`awake-backend-vulkan-bindings` artifact (`-macos-x64`, `-macos-arm64`, `-linux-x64`, ...) or
-a platform-specific artifact per target, resolved automatically by Gradle's KMP metadata --
-neither is set up. Publishing this module for real means designing that native-artifact
-packaging first, not just flipping on `awake.publish-convention`.
+See [`bindings/README.md`](bindings/README.md) for full setup instructions across Desktop JVM, Android, and iOS.
 
-Until then, consume via the local project dependency below, and build the native lib once
-per machine with `./gradlew :awake:backend:vulkan:bindings:configureDesktopNative
-:awake:backend:vulkan:bindings:buildDesktopNative` (desktop) -- `:run` does not do this for
-you automatically (CMake configure+build is slow enough that it's not wired as an automatic
-task dependency); skipping it is exactly what an `UnsatisfiedLinkError: no awake-vulkan in
-java.library.path` at runtime means.
+* **Desktop JVM**: Embedded Fat JAR (`/natives/<os-arch>/`) with `VulkanNativeLoader` auto-extracting to `~/.awake/natives/` at runtime (zero configuration).
+* **Android**: `vulkan-kmp-android-native` AAR with multi-ABI `.so` (`arm64-v8a`, `x86_64`) resolved automatically.
+* **iOS**: Kotlin/Native `cinterop` linking with `MoltenVK.xcframework`.
 
 ## Module layout
 

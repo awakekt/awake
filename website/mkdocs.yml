@@ -25,6 +25,7 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
+  - Vulkan KMP: vulkan-kmp.md
   - Guides:
       - Theming: guides/theming.md
       - UI Components:

@@ -1,4 +1,9 @@
 /*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/*
  * Awake
  * Awake.awake-physics-api
  *
@@ -27,7 +32,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.physics"
+        namespace = "io.github.awakelab.awake.physics"
     }
 
     // No platform-specific code at all in this module (mirrors awake:engine:render-api's own

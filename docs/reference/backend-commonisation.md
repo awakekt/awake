@@ -4,29 +4,38 @@ Vulkan and WebGPU are hand-authored side by side. This is the measurement of how
 and which parts can realistically be shared — so the next pass is chosen on evidence rather than
 on which file happened to annoy someone.
 
-Measured 2026-08-22. Kotlin lines in `commonMain`/`wasmJsMain`, tests and `build/` excluded.
-Re-measure with the commands at the bottom; do not trust these numbers after a large refactor.
+Re-measured 2026-08-23 (was 2026-08-22). Kotlin lines in `commonMain`/`wasmJsMain`, tests and
+`build/` excluded. Re-measure with `python3 tools/loc_survey.py`; do not trust these numbers after
+a large refactor.
 
 ## Distribution
 
 | package | Vulkan | WebGPU | combined | shareable? |
 |---|---:|---:|---:|---|
-| `renderer/` | 2,033 | 1,461 | **3,494** | mostly — same algorithm, two spellings |
-| `pipeline/` | 1,229 | 662 | 1,891 | the *decisions* yes, the struct-building no |
-| `mesh/` | 777 | 434 | 1,211 | packing yes, allocation no |
-| `debug/` | 729 | 300 | 1,029 | yes — three more pipelines of the same shape |
+| `renderer/` | 2,032 | 1,449 | **3,481** | mostly — same algorithm, two spellings |
+| `pipeline/` | 1,194 | 744 | 1,938 | the *decisions* yes, the struct-building no |
+| `mesh/` | 777 | 426 | 1,203 | packing yes, allocation no |
+| `debug/` | 774 | 337 | 1,111 | yes — three more pipelines of the same shape |
 | `ui/` | 719 | 310 | 1,029 | partly done already via `render:passes2d` |
-| `texture/` + `material/` | 1,075 | 348 | 1,423 | mip/format logic yes, upload no |
-| `application/` | 485 | 679 | 1,164 | partly — wiring, not device setup |
-| `device/` + `swapchain/` + `commands/` | 574 | 158 | 732 | **no** — this *is* the API |
-| **total per-backend** | **7,621** | **4,352** | **11,973** | |
+| `texture/` + `material/` | 1,075 | 344 | 1,419 | mip/format logic yes, upload no |
+| `application/` | 826 | 511 | 1,337 | partly — wiring, not device setup |
+| `device/` + `swapchain/` + `commands/` | 574 | 201 | 775 | **no** — this *is* the API |
+| **total per-backend** | **7,971** | **4,322** | **12,293** | |
 
-Shared render code (`render:contract` + `render:passes` + `render:passes2d`): **3,115**.
+Shared render code (`render:contract` + `render:passes` + `render:passes2d`): **3,691**.
 
-- Commonised, whole render stack: **3,115 / 15,088 = 20.6%**
-- Excluding `device`/`swapchain`/`commands`: **21.7%**
+- Commonised, whole render stack: **3,691 / 15,984 = 23.1%**
+- Excluding `device`/`swapchain`/`commands`: **24.3%**
 - Counting only packages with a real counterpart on both sides (`renderer/` + `pipeline/`):
-  3,115 / 8,576 = **36.3%**
+  3,691 / 9,110 = **40.5%**
+
+Movement since 2026-08-22: shared code grew 3,115 -> 3,691 and the whole-stack figure 20.6% ->
+23.1%. Both backends' `pipeline/` and `debug/` *grew* too — WebGPU's `pipeline/` by 82 lines,
+`debug/` by 37 — because the content-feature provider list added a per-backend `*ContentFeature`
+and `SkyboxContentFeature` to each side. That is expected and temporary: those files are exactly
+the ledger entries phase 3 of
+[the content-split plan](../tasks/2026-08-23-backend-content-split-plan.md) deletes. A pass that
+moves the number the wrong way is worth recording, not hiding.
 
 ## Read the percentage carefully
 
@@ -82,13 +91,12 @@ bodies (`readResourceBytes` and friends).
 ## Re-measuring
 
 ```bash
-find awake/engine/render/contract/src/commonMain awake/engine/render/passes/src/commonMain awake/engine/render/passes2d/src/commonMain -name "*.kt" | xargs wc -l | tail -1
+python3 tools/loc_survey.py
 ```
 
-```bash
-find awake/backend/vulkan/src/commonMain -name "*.kt" | xargs wc -l | tail -1
-```
+Prints the per-package split, the shared total and the whole-stack percentage in one go.
 
-```bash
-find awake/backend/webgpu/src/wasmJsMain -name "*.kt" | xargs wc -l | tail -1
-```
+This replaces three hand-run `find | xargs wc -l` commands that had gone stale: the WebGPU one
+counted `src/wasmJsMain` only, and that backend now keeps most of its code in `src/commonMain`, so
+it under-reported. The script walks the whole `src/` tree and excludes `build/` and tests by name,
+which is the rule this doc states at the top.

@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "name": "point-lights",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 0.0, "y": 4.0, "z": 9.0 },
+          "center": { "x": 0.0, "y": 0.5, "z": 0.0 },
+          "fovYDegrees": 45.0,
+          "near": 0.1,
+          "far": 100.0,
+          "primary": true
+        }
+      ]
+    },
+    {
+      "name": "ground",
+      "components": [
+        { "component": "meshRenderer", "mesh": "ground", "material": "lit-shadow", "cullMode": "Back" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.85 }
+      ]
+    },
+    {
+      "name": "centre-cube",
+      "transform": { "position": { "x": 0.0, "y": 0.5, "z": 0.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "spinControl" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.35 }
+      ]
+    },
+    {
+      "name": "left-cube",
+      "transform": { "position": { "x": -3.0, "y": 0.5, "z": 0.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.6 }
+      ]
+    },
+    {
+      "name": "right-cube",
+      "transform": { "position": { "x": 3.0, "y": 0.5, "z": 0.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.6 }
+      ]
+    },
+
+    { "name": "red-light",
+      "transform": { "position": { "x": -3.0, "y": 1.6, "z": 1.6 } },
+      "components": [
+        { "component": "light", "type": "Point", "color": { "x": 1.0, "y": 0.2, "z": 0.15 },
+          "intensity": 6.0, "range": 6.0 }
+      ]
+    },
+    { "name": "green-light",
+      "transform": { "position": { "x": 0.0, "y": 2.2, "z": 2.0 } },
+      "components": [
+        { "component": "light", "type": "Point", "color": { "x": 0.2, "y": 1.0, "z": 0.3 },
+          "intensity": 6.0, "range": 6.0 }
+      ]
+    },
+    { "name": "blue-light",
+      "transform": { "position": { "x": 3.0, "y": 1.6, "z": 1.6 } },
+      "components": [
+        { "component": "light", "type": "Point", "color": { "x": 0.2, "y": 0.35, "z": 1.0 },
+          "intensity": 6.0, "range": 6.0 }
+      ]
+    }
+  ]
+}

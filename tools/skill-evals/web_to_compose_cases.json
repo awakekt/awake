@@ -1,0 +1,47 @@
+[
+  {
+    "id": "static-brand-page-without-system",
+    "request": "Copy this single desktop marketing page into Awake Compose. The source has no design system and its unique hero treatment appears once.",
+    "source": "raw-html-css",
+    "expected_route": ["awake-web-to-compose"],
+    "expected_ownership": "one-off",
+    "expected_warning": "record minimal product-layer debt without blocking the faithful port",
+    "forbidden": ["force Shadcn branding", "introduce HTML or CSS runtime"]
+  },
+  {
+    "id": "repeated-branded-feature-card",
+    "request": "Port a product site whose three feature cards share anatomy, hover state, and branded surface treatment.",
+    "source": "raw-html-css",
+    "expected_route": ["awake-web-to-compose", "awake-ui-design-audit"],
+    "expected_ownership": "product-local",
+    "expected_warning": "do not promote brand-specific cards to the shared system",
+    "forbidden": ["copy modifier blocks into each card", "promote to engine-wide recipe solely because it repeats"]
+  },
+  {
+    "id": "generic-control-already-shared",
+    "request": "Port a normal primary action that matches an existing Awake shared button variant.",
+    "source": "raw-html-css",
+    "expected_route": ["awake-web-to-compose", "awake-shadcn-recipe-consuming"],
+    "expected_ownership": "shared",
+    "expected_warning": "none",
+    "forbidden": ["clone a local button", "restyle the shared control for convenience"]
+  },
+  {
+    "id": "tailwind-dashboard",
+    "request": "Translate a Tailwind dashboard with responsive utility classes into Awake Compose.",
+    "source": "tailwind",
+    "expected_route": ["awake-web-to-compose", "awake-tailwind-to-compose"],
+    "expected_ownership": "product-local",
+    "expected_warning": "verify responsive modes from evidence rather than copying media-query values",
+    "forbidden": ["Tailwind class strings", "browser runtime dependency"]
+  },
+  {
+    "id": "official-shadcn-dialog",
+    "request": "Translate an official shadcn dialog example into Awake Compose while preserving its trigger and dismiss behavior.",
+    "source": "shadcn",
+    "expected_route": ["awake-web-to-compose", "awake-shadcn-to-compose"],
+    "expected_ownership": "shared",
+    "expected_warning": "record a Foundation gap if reusable dialog mechanics are unavailable",
+    "forbidden": ["React dependency", "DOM event API"]
+  }
+]

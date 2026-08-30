@@ -1,23 +1,9 @@
 /*
- * Awake
- * Awake.awake-backend-vulkan
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
  *
- * Copyright (c) ronjunevaldoz 2023.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
-import java.security.MessageDigest
 import java.util.Base64
 
 plugins {
@@ -30,7 +16,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.vulkan"
+        namespace = "io.github.awakelab.awake.vulkan"
     }
 
     // iosX64 (Intel simulator) dropped: Compose Multiplatform stopped publishing it
@@ -41,6 +27,9 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:engine:render:passes2d"))
+            // Backend-owned headless UI capture uses the same render-target/readback contract
+            // as Vulkan pixel tests; it is not a common UI rendering dependency.
+            implementation(project(":awake:engine:render:testing"))
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
@@ -51,10 +40,10 @@ kotlin {
             // and Bitmap/readResourceBytes -- see docs/mvp-plan.md's Decision Log, D11, for
             // the awake-core split this module boundary comes from.
             implementation(project(":awake:core:math"))
-            // The backend consumes raw UI draw primitives and mesh utilities to submit the
-            // frame to Vulkan. Keep this direct rather than relying on render-contract's
-            // transitive ui-core dependency; authored value contracts come from ui-api.
-            implementation(project(":awake:ui:ui-core"))
+            // Glyph metrics for the UI pass. `ui:text`, not `ui-core`: the backend needs
+            // `UiFont` and nothing else from the UI stack, and depending on the engine being
+            // retired for one type is what kept `ui-core` alive here.
+            implementation(project(":awake:core:text"))
             // Module restructuring slice 1 (see docs/mvp-plan.md): Mesh/Material/Renderer's
             // expect declarations now implement the narrow backend-neutral interfaces this
             // module owns, so RenderSystem (awake-scene) can depend on just that module
@@ -83,18 +72,17 @@ kotlin {
             // (sample-hello-cube, awake-demo) need it resolvable on their own classpath too.
             api(project(":awake:engine:platform"))
             api(project(":awake:asset:shaders"))
+            implementation(project(":awake:asset:shader-compiler"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
-            // Headless-renderer pixel-baseline regression test (desktopTest only, see
-            // RendererHeadlessPixelBaselineTest) needs comparePixels().
-            implementation(project(":awake:ui:testing"))
-            // Real-widget real-render investigations (see UiAnimationFrameCapture /
-            // ShadcnCollapsibleRealRenderCollapseFrameCaptureTest, desktopTest only) need
-            // actual shadcn widgets (shadcnSidebar/shadcnCollapsible), not just raw
-            // UiDrawPrimitives -- test-only, no cycle (ui-designsystem doesn't depend on this
-            // module).
-            implementation(project(":awake:ui:designsystem"))
+            implementation(project(":awake:engine:compose"))
+            // Backend-neutral offscreen frame capture and PNG diagnostics.
+            implementation(project(":awake:engine:render:testing"))
+            // RendererHeadlessShadowMapTest builds the real lit_shadow pipeline and uses the
+            // same generated shader-pack artifacts as production; keep this test dependency for
+            // the pack's uniform layouts and drift coverage.
+            implementation(project(":awake:asset:shader-pack"))
         }
         androidMain.dependencies {
             implementation(libs.leakcanary.android)
@@ -102,27 +90,24 @@ kotlin {
     }
 }
 
-// On macOS, the Vulkan loader needs VK_ICD_FILENAMES to find MoltenVK's ICD manifest at run
-// time -- same rationale as :awake:backend:vulkan:bindings' own desktopTest env (this module's
-// desktopTest exercises the real renderer, so it needs the same environment).
-val moltenVkIcdPath =
-    fileTree("/opt/homebrew/Cellar/molten-vk") { include("*/etc/vulkan/icd.d/MoltenVK_icd.json") }
-        .plus(fileTree("/usr/local/Cellar/molten-vk") { include("*/etc/vulkan/icd.d/MoltenVK_icd.json") })
-        .files.firstOrNull()?.absolutePath
-val desktopVulkanEnv = buildMap {
-    if (moltenVkIcdPath != null) put("VK_ICD_FILENAMES", moltenVkIcdPath)
-    put(
-        "DYLD_FALLBACK_LIBRARY_PATH",
-        "/opt/homebrew/opt/vulkan-loader/lib:/opt/homebrew/lib:/usr/local/lib"
-    )
-}
+// This module's desktopTest exercises the real renderer, so it needs the same loader
+// environment as bindings' own tests -- one definition for all three consumers.
+val desktopVulkanEnv = VulkanDesktopEnv.environment()
 val desktopNativeLibDir =
     project(":awake:backend:vulkan:bindings").layout.buildDirectory.dir("desktop-native-libs")
 
-// Always points java.library.path at bindings' desktop-native-libs for desktop tests -- a
-// no-op if :awake:backend:vulkan:bindings:buildDesktopNative hasn't been run (System.loadLibrary
-// just fails with its usual UnsatisfiedLinkError in that case, same as if this weren't set).
+// Points java.library.path at bindings' desktop-native-libs AND builds the library first.
+//
+// The dependency is the load-bearing half. Setting the path alone is silently a no-op when
+// nothing has produced the .dylib: `System.loadLibrary("awake-vulkan")` then throws
+// UnsatisfiedLinkError and 18 of these tests fail for a reason that looks like a code defect
+// and is not. Every fresh clone and every new git worktree starts in exactly that state.
 tasks.named<Test>("desktopTest") {
+    requireExclusiveGpu(this)
+    dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
+    // RendererHeadlessContentTextureTest compiles its ASL probe to SPIR-V through the same
+    // naga binding VulkanShaderResolver uses in production.
+    useNagaShaderCompiler(this)
     jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
     environment(desktopVulkanEnv)
     // `-DAWAKE_RECORD_SNAPSHOTS=true` on the Gradle CLI only sets the property on Gradle's own
@@ -196,69 +181,4 @@ tasks.register("pixelBaselineReport") {
         out.writeText(html)
         println("Pixel baseline report: file://${out.absolutePath}")
     }
-}
-
-// Vulkan loads the checked-in .spv binaries at runtime, NOT the .frag/.vert sources next to
-// them -- so editing GLSL without recompiling silently ships the old shader. That really
-// happened: 7 of 10 binaries had drifted, hiding both an unimplemented MSDF branch and a
-// descriptor-stage mismatch until the SPIR-V was regenerated.
-//
-// Gate on a hash of each GLSL source recorded when its .spv was last built, rather than
-// recompiling and byte-comparing: glslangValidator is unpinned (the glsl-validator convention
-// fetches main-tot), so different compiler versions legitimately emit different bytes and a
-// byte gate would fail for the wrong reason. A source hash needs no compiler and no network.
-val shaderSourceDir = layout.projectDirectory.dir("src/commonMain/resources/assets/shader/vulkan")
-val shaderManifest = shaderSourceDir.file("shader-sources.sha256")
-
-fun hashShaderSources(): String =
-    shaderSourceDir.asFile.listFiles()
-        .orEmpty()
-        .filter { it.extension == "frag" || it.extension == "vert" }
-        .sortedBy { it.name }
-        .joinToString("\n") { file ->
-            val digest = MessageDigest.getInstance("SHA-256").digest(file.readBytes())
-            "${file.name}  " + digest.joinToString("") { byte -> "%02x".format(byte) }
-        }
-
-tasks.register("updateShaderManifest") {
-    group = "shader"
-    description = "Record the current GLSL source hashes. Run after recompiling .spv binaries."
-    doLast {
-        shaderManifest.asFile.writeText(hashShaderSources() + "\n")
-        logger.lifecycle("Wrote ${shaderManifest.asFile.name}")
-    }
-}
-
-val verifyShaderBinaries = tasks.register("verifyShaderBinaries") {
-    group = "verification"
-    description = "Fail if a .frag/.vert changed without its .spv being regenerated."
-    doLast {
-        val manifestFile = shaderManifest.asFile
-        require(manifestFile.exists()) {
-            "Missing ${manifestFile.name}. Run :awake:backend:vulkan:updateShaderManifest."
-        }
-        val expected = manifestFile.readText().trim()
-        val actual = hashShaderSources().trim()
-        if (expected != actual) {
-            val changed =
-                actual.lines().filter { it !in expected.lines() }.map { it.substringBefore("  ") }
-            error(
-                "Vulkan GLSL changed but the checked-in .spv was not regenerated: " +
-                        "${changed.joinToString()}. Recompile with " +
-                        "`glslangValidator -V <file> -o <file>.spv`, then run " +
-                        ":awake:backend:vulkan:updateShaderManifest."
-            )
-        }
-    }
-}
-
-tasks.named("check") { dependsOn(verifyShaderBinaries) }
-
-// Also gate RESOURCE PACKAGING, not just `check`. `check` alone only fires for someone who runs
-// this module's own verification; it is silent for the far more common path of building or
-// running a sample, which is exactly how a stale ui_glyph.frag.spv shipped a gamma fix that
-// never reached the GPU. Hanging the gate off processResources means any build that packages
-// the .spv has to prove the .spv matches its GLSL first.
-tasks.matching { it.name.endsWith("rocessResources") }.configureEach {
-    dependsOn(verifyShaderBinaries)
 }

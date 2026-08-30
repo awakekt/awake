@@ -1,0 +1,59 @@
+name: Source provenance audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install licensing scanners
+        run: python -m pip install --disable-pip-version-check 'reuse[charset-normalizer]' scancode-toolkit==32.5.0
+
+      # This is audit-only until every tracked file has REUSE metadata. The staged local gate is
+      # already strict for source files, so this job makes legacy debt visible without blocking
+      # unrelated changes.
+      - name: Audit REUSE metadata
+        run: reuse lint
+        continue-on-error: true
+
+      - name: Scan detected license and copyright evidence
+        run: scancode --license --copyright --package --json-pp scancode.json .
+
+      - name: Install PMD CPD
+        run: |
+          curl --fail --location --silent --show-error \
+            --output pmd.zip \
+            https://github.com/pmd/pmd/releases/download/pmd_releases%2F7.18.0/pmd-dist-7.18.0-bin.zip
+          unzip -q pmd.zip
+
+      # Audit-only: establish reviewed exclusions/baselines before turning duplicate findings into
+      # a merge gate. CPD detects internal similarity, not external source ownership.
+      - name: Report Kotlin and Python copy-paste similarity
+        run: |
+          pmd-bin-7.18.0/bin/pmd cpd --minimum-tokens 120 --language kotlin --format text awake samples build-logic > pmd-kotlin-cpd.txt || true
+          pmd-bin-7.18.0/bin/pmd cpd --minimum-tokens 120 --language python --format text tools scripts skills > pmd-python-cpd.txt || true
+
+      - name: Upload audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-provenance-audit
+          path: |
+            scancode.json
+            pmd-kotlin-cpd.txt
+            pmd-python-cpd.txt

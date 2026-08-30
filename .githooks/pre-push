@@ -10,9 +10,10 @@ if [[ "${AWAKE_SKIP_AGENT_SYNC_HOOK:-}" != "1" ]]; then
 fi
 
 # 2. Check Kotlin & Build Quality Gates (Detekt)
+run_detekt=1
 if [[ "${AWAKE_SKIP_DETEKT_HOOK:-}" == "1" || "${SKIP_DETEKT_HOOK:-}" == "1" ]]; then
   echo "Skipping Detekt pre-push hook because AWAKE_SKIP_DETEKT_HOOK/SKIP_DETEKT_HOOK is set." >&2
-  exit 0
+  run_detekt=0
 fi
 
 zero_oid="0000000000000000000000000000000000000000"
@@ -48,10 +49,34 @@ while read -r local_ref local_oid remote_ref remote_oid; do
 done
 
 if [[ "$should_run" != "1" ]]; then
-  echo "Detekt pre-push hook: no Kotlin/build quality changes detected; skipping." >&2
+  echo "Pre-push hooks: no Kotlin/build quality changes detected; skipping." >&2
   exit 0
 fi
 
-echo "Detekt pre-push hook: running ./gradlew detekt" >&2
-echo "Set AWAKE_SKIP_DETEKT_HOOK=1 only for an explicit, reviewed emergency bypass." >&2
-./gradlew detekt
+if [[ "$run_detekt" == "1" ]]; then
+  echo "Detekt pre-push hook: running ./gradlew detekt" >&2
+  echo "Set AWAKE_SKIP_DETEKT_HOOK=1 only for an explicit, reviewed emergency bypass." >&2
+  ./gradlew detekt
+fi
+
+# 3. Cost and appearance ratchets
+#
+# Counts and pixels, not milliseconds: how much geometry one frame of ordinary UI produces and how
+# many draw runs it coalesces into, plus whether the components still rasterise to their committed
+# baselines. Their fixtures are their own rather than an app's, so only an engine change moves them.
+# Every number is an exact integer and the rasteriser is deterministic, so neither can flake the way
+# a wall-clock threshold would on a loaded dev machine -- which is why RendererHeadlessFrameTimingTest
+# refuses to assert on time at all.
+#
+# The whole module's desktopTest rather than a list of test-name filters: a filter list silently
+# stops covering whatever is added next, and this hook is the only thing that runs these.
+#
+# It lives here rather than in pre-commit because it needs Gradle: pre-commit is deliberately all
+# sub-second greps, and making every commit pay a test run would just get the hook disabled.
+if [[ "${AWAKE_SKIP_PERF_HOOK:-}" == "1" ]]; then
+  echo "Skipping cost/appearance ratchets because AWAKE_SKIP_PERF_HOOK is set." >&2
+  exit 0
+fi
+
+echo "Cost and appearance ratchets: running :awake:ui:shadcn:desktopTest" >&2
+./gradlew :awake:ui:shadcn:desktopTest

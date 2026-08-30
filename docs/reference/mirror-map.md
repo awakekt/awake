@@ -1,6 +1,6 @@
 # Mirror Map: Awake UI DSL vs. Jetpack Compose
 
-Awake's `ui-core` DSL (`UiModifier`, `row()`/`column()`/`box()`, `remember*` state hooks,
+Awake's retained Compose-shaped UI API (`Modifier`, `Row`/`Column`/`Box`, state hooks,
 `animateFloat*`, `graphicsLayer`) is deliberately shaped to *feel* like Jetpack Compose --
 chainable modifiers, slot-lambda scopes, `weight()`, `remember`-style state,
 `animateFloatAsState`-style helpers -- so that
@@ -13,12 +13,11 @@ primitive against Compose's real current public shape and calls out three states
 since it passes a glance-review and then causes a layout/render bug later), and
 **Not implemented** (a real gap, not necessarily a deviation). Every row below is backed
 by a direct read of the current source under
-`awake/ui/ui-core/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/` (state hooks)
-and `awake/ui/animation/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/`
+`awake/compose/ui/src/commonMain/kotlin/io/github/awakelab/awake/compose/ui/` (runtime and state hooks)
+and `awake/ui/animation/src/commonMain/kotlin/io/github/awakelab/awake/ui/`
 (animation primitives) -- corrected 2026-08-21, the previous `awake/engine/ui/ui-core/...`
 path does not exist in this repo (verified: `awake/engine/ui/` contains only an empty
-`ui-designsystem/` leftover, unrelated to the real `ui-core` module, which lives at
-`awake/ui/ui-core/`) -- not
+`ui-shadcn/` leftover) -- not
 memory of Compose or of this codebase from an earlier session.
 
 Use this doc before reaching for a Compose idiom in Awake code: check whether the row
@@ -35,7 +34,7 @@ Everything below this section maps *infrastructure* — modifiers, the layout DS
 animation, `graphicsLayer` — and for those, Compose is the right thing to check against.
 Components are a different question, and the answer is not Compose Foundation.
 
-Classifying `ui-headless`'s 47 public functions (audited 2026-08-21):
+Classifying the retained Compose Foundation and Design System public functions (audited 2026-08-28):
 
 | Bucket | Count | Upstream to check against |
 |---|---|---|
@@ -88,6 +87,7 @@ Source: `layouts/Row.kt`, `Column.kt`, `Box.kt`, `RowScope.kt`, `ColumnScope.kt`
 | Compose primitive | Awake equivalent | Status | Deviation detail |
 |---|---|---|---|
 | `Row(horizontalArrangement, verticalAlignment) { }` | `row(horizontalArrangement, verticalAlignment, modifier, id, cacheKey) { }` (`Row.kt`) | Diverges (default arrangement value, corrected 2026-08-21) | Named-parameter shape and `verticalAlignment` default (`UiAlignment.Vertical.Top`, matching Compose's real `Row` default) are faithful, but the previous row text's claim that `defaultArrangement()` is "`Arrangement.Start`-equivalent" is factually wrong -- verified against `defaultArrangement()`'s real body (`layouts/Arrangement.kt:130`): `fun defaultArrangement(): Arrangement = Arrangement.spacedBy(8f.dp)`. Compose's real `Row` defaults `horizontalArrangement` to `Arrangement.Start` (children packed together, zero gap); Awake's every `row()` overload (`ColumnScope.row`/`RowScope.row`/`AbsoluteScope.row`/`BoxScope.row`/`UiPrimitiveScope.row`, all in `Row.kt`) defaults to an **8dp gap between every child** instead. A caller who omits `horizontalArrangement` expecting Compose's packed-together default gets unrequested spacing with no compile-time signal -- pass `horizontalArrangement = Arrangement.Start` explicitly to get Compose's actual default behavior. See the new "Layout DSL" section of `compose-modifier-layout-guidance.md` for the how-to. |
+| `FlowRow` / `FlowColumn` | `FlowRow` / `FlowColumn` (`Flow.kt`) | Faithful subset | Foundation flow layouts wrap children into new rows or columns only on a bounded main axis, preserving one line when unbounded unless an explicit item cap applies. Both axis arrangements distribute the items within each line/column and the lines/columns within the container; scoped/default cross-axis and alignment-line placement plus per-line weights are supported. `maxLines` collapses later children. AndroidX's dynamically composed overflow-indicator API is deprecated upstream and requires multi-content subcomposition, deliberately absent from Awake. |
 | `Column(verticalArrangement, horizontalAlignment) { }` | `column(id, verticalArrangement, horizontalAlignment, modifier, style, cacheKey) { }` (`Column.kt`) | Diverges (default arrangement value, corrected 2026-08-21) | Same divergence as the `Row` row directly above -- `column()`'s `verticalArrangement` also defaults to `defaultArrangement()` = `Arrangement.spacedBy(8f.dp)`, not Compose's real zero-gap `Arrangement.Top` default, while `horizontalAlignment`'s default (`UiAlignment.Horizontal.Start`) does match Compose's real `Column` default. The previous row text ("Same shape.") didn't make an explicit claim about the default and so wasn't wrong, but was silent about this real, load-bearing gap. |
 | `Box(contentAlignment) { }` | `box(modifier, contentAlignment) { }` (`Box.kt`) | Diverges (default size, corrected 2026-08-21) | `contentAlignment` as a named param (not a modifier) is faithful. Not faithful: Compose's `Box` with no size modifier shrink-wraps to its children's measured size (like Awake's own `WrapContent`); Awake's `box()` primitive (`UiPrimitiveScope.box`, `Box.kt`) claims its slot via `modifier.withSizeFallback(Dimension.FillMax, Dimension.FillMax)` -- a bare `box { }` with no explicit `.width()`/`.height()` fills its parent's configured axis on both dimensions instead of hugging its content. The previous row text made no claim about default sizing and was silent about this. See `compose-modifier-layout-guidance.md`'s new "Layout DSL" section. |
 | `Arrangement.Start/Center/End/SpaceBetween/SpaceEvenly/SpaceAround/spacedBy(dp)` | Same set, `Arrangement` sealed interface (`Arrangement.kt`) | Faithful | Free-space math for `Center`/`End`/`SpaceBetween`/`SpaceEvenly`/`SpaceAround` in `Arrangement.plan()` matches Compose's own formulas (leading/between space split). |

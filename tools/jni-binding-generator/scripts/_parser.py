@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 import re
@@ -26,6 +30,10 @@ _STRUCT_CLASS_RE = re.compile(r"\b(data\s+class|class)\s+(\w+)\s*(?:<[^>]*>)?\s*
 _FILENAME_KT_RE = re.compile(r"([A-Za-z0-9_]+)\.kt$")
 # @JvmName("altName") immediately before an external fun.
 _JVM_NAME_RE = re.compile(r'@JvmName\s*\(\s*"(\w+)"\s*\)')
+_NATIVE_IMPL_RE = re.compile(r"//\s*jni-native:\s*([A-Za-z_]\w*)\s*$", re.MULTILINE)
+_NATIVE_ANNOTATION_RE = re.compile(
+    r'@JniNative\s*\(\s*"([A-Za-z_]\w*)"\s*\)', re.MULTILINE
+)
 # Detect unsupported constructs that must be rejected before code-gen.
 # Both "suspend external fun" and "external suspend fun" are valid Kotlin.
 _SUSPEND_RE = re.compile(r"\b(?:suspend\s+external|external\s+suspend)\s+fun\b")
@@ -175,10 +183,12 @@ def _strip_comments(source: str) -> str:
     """
 
     def blank(match: re.Match[str]) -> str:
-        return "\n" * match.group(0).count("\n")
+        # Preserve both line numbers and character offsets for later source
+        # slicing (the multi-class parser restores generation annotations).
+        return "".join("\n" if char == "\n" else " " for char in match.group(0))
 
     source = _BLOCK_COMMENT_RE.sub(blank, source)
-    source = _LINE_COMMENT_RE.sub("", source)
+    source = _LINE_COMMENT_RE.sub(blank, source)
     return source
 
 
@@ -191,6 +201,7 @@ def package_name_from_source(source: str) -> str:
 
 def parse_kotlin_source(source: str, filename: str = "") -> ParsedFile:
     """Parse a single Kotlin source string into a ParsedFile."""
+    original_source = source
     source = _strip_comments(source)
 
     # MVP 1: reject suspend funs and extension funs up front with clear messages.
@@ -269,7 +280,32 @@ def parse_kotlin_source(source: str, filename: str = "") -> ParsedFile:
         name = jvm_name_match.group(1) if jvm_name_match else m.group(1)
         line = source.count("\n", 0, m.start()) + 1
         params = _split_params(params_raw)
-        functions.append(ExternalFunction(name=name, params=params, return_type=ret, line=line))
+        preceding = original_source[:m.start()]
+        native_matches = None
+        native_window = preceding[-240:]
+        last_external_end = max(
+            (match.end() for match in re.finditer(r"\bexternal\s+fun\b", native_window)),
+            default=-1,
+        )
+        for candidate in _NATIVE_IMPL_RE.finditer(native_window):
+            if candidate.start() > last_external_end:
+                native_matches = candidate
+        native_impl = native_matches.group(1) if native_matches else None
+        annotation_matches = None
+        for candidate in _NATIVE_ANNOTATION_RE.finditer(native_window):
+            if candidate.start() > last_external_end:
+                annotation_matches = candidate
+        if annotation_matches:
+            native_impl = annotation_matches.group(1)
+        functions.append(
+            ExternalFunction(
+                name=name,
+                params=params,
+                return_type=ret,
+                line=line,
+                native_impl=native_impl,
+            )
+        )
 
     # Collect enum names, struct types, and typealiases visible in this single source
     # string. The driver pre-pass merges globals from the whole source set on top of these.
@@ -349,7 +385,9 @@ def parse_kotlin_source_multi(source: str, filename: str = "") -> list[ParsedFil
 
     results: list[ParsedFile] = []
     for start, end in ranges:
-        segment = pkg_prefix + stripped[start:end]
+        # Keep comments in the class segment so source annotations that affect
+        # generation, such as // jni-native:, survive the multi-class split.
+        segment = pkg_prefix + source[start:end]
         parsed = parse_kotlin_source(segment, filename)
         if parsed.functions:
             line_delta = stripped.count("\n", 0, start) - pkg_prefix.count("\n")

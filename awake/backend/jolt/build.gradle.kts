@@ -1,4 +1,9 @@
 /*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/*
  * Awake
  * Awake.awake-backend-jolt
  *
@@ -22,16 +27,12 @@ plugins {
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
+    id("awake.native-build-convention")
 }
-
-// Locates ccache without relying on it being on PATH at Gradle's own launch time --
-// homebrew's two standard prefixes cover both Apple Silicon and Intel Macs.
-fun findCcache(): String? =
-    listOf("/opt/homebrew/bin/ccache", "/usr/local/bin/ccache").firstOrNull { File(it).exists() }
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.physics.jolt"
+        namespace = "io.github.awakelab.awake.physics.jolt"
     }
 
     // Jolt Physics integration slice 2 (see docs/reference/decision-log.md): real iOS
@@ -75,53 +76,29 @@ kotlin {
         val target =
             kotlin.targets.getByName(targetName) as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
-        val configureTask = tasks.register<Exec>("configureJoltC$capitalizedTargetName") {
-            group = "native"
-            description = "Configure the JoltC iOS ($targetName) native build (CMake) -- " +
-                    "run after any JoltC/JoltPhysics source change."
-            doFirst { nativeBuildDir.mkdirs() }
-            commandLine(
-                buildList {
-                    add("cmake")
-                    add("-S"); add(joltCDir.absolutePath)
-                    add("-B"); add(nativeBuildDir.absolutePath)
-                    add("-DCMAKE_SYSTEM_NAME=iOS")
-                    add("-DCMAKE_OSX_SYSROOT=$sysroot")
-                    add("-DCMAKE_OSX_ARCHITECTURES=arm64")
-                    add("-DCMAKE_OSX_DEPLOYMENT_TARGET=13.0")
-                    add("-DCMAKE_BUILD_TYPE=Release")
-                    add("-DUSE_ASSERTS=OFF")
-                    // JoltPhysics is the slow part of a full rebuild (see buildJoltC's own doc
-                    // comment) -- ccache caches object files by source+flags hash, so a clean
-                    // rebuild restores from cache instead of recompiling the whole engine.
-                    // Falls back to no launcher if ccache isn't installed locally.
-                    findCcache()?.let {
-                        add("-DCMAKE_C_COMPILER_LAUNCHER=$it")
-                        add("-DCMAKE_CXX_COMPILER_LAUNCHER=$it")
-                    }
-                }
-            )
-        }
-
-        tasks.register<Exec>("buildJoltC$capitalizedTargetName") {
-            group = "native"
-            description =
-                "Build the JoltC + JoltPhysics static libraries for iOS ($targetName) -- " +
-                        "manual/on-demand, like desktop-native's buildDesktopNative: CMake configure+build " +
-                        "is too slow to run on every Kotlin edit, and these libraries only change when the " +
-                        "vendored JoltC/JoltPhysics C++ sources themselves change."
-            dependsOn(configureTask)
-            commandLine(
-                "cmake",
-                "--build",
-                nativeBuildDir.absolutePath,
-                "--target",
-                "joltc",
-                "--",
-                "-j",
-                Runtime.getRuntime().availableProcessors().toString()
-            )
-        }
+        registerCMakeLibrary(
+            name = "JoltC$capitalizedTargetName",
+            sourceDir = joltCDir,
+            buildDir = nativeBuildDir,
+            buildType = "Release",
+            defines = listOf(
+                "CMAKE_SYSTEM_NAME=iOS",
+                "CMAKE_OSX_SYSROOT=$sysroot",
+                "CMAKE_OSX_ARCHITECTURES=arm64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET=13.0",
+                "USE_ASSERTS=OFF",
+            ),
+            // JoltPhysics is the slow half of a rebuild, so parallelise it. ccache is applied
+            // by the shared helper.
+            buildArgs = listOf(
+                "--target", "joltc",
+                "--", "-j", Runtime.getRuntime().availableProcessors().toString(),
+            ),
+            description = "Build the JoltC + JoltPhysics static libraries for iOS " +
+                "($targetName) -- manual/on-demand, like buildDesktopNative: CMake " +
+                "configure+build is too slow to run on every Kotlin edit, and these libraries " +
+                "only change when the vendored JoltC/JoltPhysics C++ sources do.",
+        )
 
         // Gradle's binaries.X { linkerOpts(...) } only affects binaries THIS module builds
         // directly, not a downstream consumer's own final link step -- same lesson already
@@ -132,28 +109,17 @@ kotlin {
         // time (like MoltenVK's own per-target .def) since the linker flags are just build
         // directory paths -- known before the native libraries are actually built, same as
         // MoltenVK's own generated .def doesn't need the xcframework to exist yet either.
-        val joltcLibDir = nativeBuildDir
-        val joltLibDir = nativeBuildDir.resolve("JoltPhysics/Build")
-        val generatedDefFile =
-            layout.buildDirectory.file("cinterop/JoltC-$targetName.def").get().asFile
-        generatedDefFile.parentFile.mkdirs()
-        val joltCLinkerOpts = listOf(
-            "-L${joltcLibDir.path}", "-ljoltc",
-            "-L${joltLibDir.path}", "-lJolt",
-            "-lc++",
-        ).joinToString(" ")
-        generatedDefFile.writeText(
-            project.file("src/nativeInterop/cinterop/JoltC.def").readText() +
-                    "\nlinkerOpts = $joltCLinkerOpts\n"
+        registerGeneratedDefCinterop(
+            target = target,
+            interopName = "JoltC",
+            baseDefFile = project.file("src/nativeInterop/cinterop/JoltC.def"),
+            headerDirs = listOf(joltCDir),
+            linkerOpts = listOf(
+                "-L${nativeBuildDir.path}", "-ljoltc",
+                "-L${nativeBuildDir.resolve("JoltPhysics/Build").path}", "-lJolt",
+                "-lc++",
+            ),
         )
-        target.compilations.getByName("main") {
-            cinterops {
-                create("JoltC") {
-                    defFile(generatedDefFile)
-                    includeDirs(joltCDir)
-                }
-            }
-        }
     }
 
     jvm("desktop")

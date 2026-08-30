@@ -1,20 +1,18 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 plugins {
     base
 }
 
 val syncAwakeShaders = tasks.register<SyncWgslShaderPipelineTask>("syncAwakeShaders") {
     group = "build setup"
-    description = "Sync canonical WGSL shaders into WebGPU resources and generate Vulkan SPIR-V artifacts."
+    description = "Sync canonical WGSL shaders into each backend's resource tree."
     sourceDirectory.set(layout.projectDirectory.dir("src/commonMain/shaders"))
     webGpuOutputDirectory.set(layout.projectDirectory.dir("src/wasmJsMain/resources/assets/shader/webgpu"))
     vulkanOutputDirectory.set(layout.projectDirectory.dir("src/appMain/resources/assets/shader/vulkan"))
-    nagaExecutable.convention(
-        providers.gradleProperty("awake.shader.nagaBinary")
-            .orElse(providers.environmentVariable("AWAKE_NAGA"))
-            .orElse("naga")
-    )
-    vertexEntryPoint.convention("vertexMain")
-    fragmentEntryPoint.convention("fragmentMain")
 }
 
 val validateAwakeShaders = tasks.register<ValidateWgslShadersTask>("validateAwakeShaders") {

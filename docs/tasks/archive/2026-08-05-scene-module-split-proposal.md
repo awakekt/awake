@@ -230,7 +230,7 @@ Keep these protections:
 Short term:
 
 ```kotlin
-implementation("io.github.ronjunevaldoz.awake:awake-scene:<version>")
+implementation("io.github.awakelab.awake:awake-scene:<version>")
 ```
 
 continues to work through the facade.

@@ -10,7 +10,7 @@ VkAttachmentReferenceAccessor::VkAttachmentReferenceAccessor(JNIEnv *env, jobjec
     clazz = env->GetObjectClass(obj);
     attachmentField = env->GetFieldID(clazz, "attachment", "I");
     layoutField = env->GetFieldID(clazz, "layout",
-                                  "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkImageLayout;");
+                                  "Lio/github/awakelab/awake/vulkan/enums/VkImageLayout;");
 }
 
 void

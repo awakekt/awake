@@ -5,15 +5,12 @@
     <ID>CyclomaticComplexMethod:WebGpuEngine.kt$WebGpuEngine$override suspend fun createBackendResources(window: Any): BackendResources</ID>
     <ID>LongMethod:RendererDraw3D.kt$internal fun Renderer.performDraw(camera: Lens, drawCalls: List&lt;DrawCall>, light: SceneLight)</ID>
     <ID>LongMethod:WebGpuEngine.kt$WebGpuEngine$override suspend fun createBackendResources(window: Any): BackendResources</ID>
-    <ID>LongParameterList:RendererDraw3D.kt$( encoder: io.ygdrasil.webgpu.GPURenderPassEncoder, opaqueDraws: PreparedDraws, primaryPipeline: PipelineHandle, viewProjection: io.github.ronjunevaldoz.awake.core.math.Mat4, cameraEye: io.github.ronjunevaldoz.awake.core.math.Vec3f, light: SceneLight, renderingContext: io.ygdrasil.webgpu.RenderingContext, )</ID>
-    <ID>LongParameterList:RendererOpaqueDraws.kt$( drawCall: DrawCall, cameraEye: Vec3f, mvp: Mat4, lightUniforms: SceneLightUniforms, primary: PrimaryPipelineBinding, slotIndex: Int, )</ID>
-    <ID>LongParameterList:RendererOpaqueDraws.kt$( drawCall: DrawCall, cameraEye: Vec3f, viewProjection: Mat4, lightUniforms: SceneLightUniforms, primary: PrimaryPipelineBinding, slotIndex: Int, )</ID>
+    <ID>LongParameterList:RendererDraw3D.kt$( encoder: io.ygdrasil.webgpu.GPUCommandEncoder, colorView: io.ygdrasil.webgpu.GPUTextureView, renderingContext: io.ygdrasil.webgpu.RenderingContext, opaqueDraws: PreparedDraws, primaryPipeline: PipelineHandle, viewProjection: Mat4, cameraEye: io.github.awakelab.awake.core.math.Vec3f, light: SceneLight, )</ID>
+    <ID>LongParameterList:RendererDraw3D.kt$( encoder: io.ygdrasil.webgpu.GPURenderPassEncoder, opaqueDraws: PreparedDraws, primaryPipeline: PipelineHandle, viewProjection: io.github.awakelab.awake.core.math.Mat4, cameraEye: io.github.awakelab.awake.core.math.Vec3f, light: SceneLight, renderingContext: io.ygdrasil.webgpu.RenderingContext, )</ID>
     <ID>LongParameterList:WebGpuFrameContext.kt$WebGpuFrameContext$( private val renderer: Renderer, override val encoder: GPURenderPassEncoder, override val groupedDrawCalls: Map&lt;out PipelineHandle, List&lt;PreparedDraw>>, override val transparentDrawCalls: List&lt;PreparedDraw> = emptyList(), override val primaryPipeline: PipelineHandle, override val viewProjection: Mat4, override val cameraEye: Vec3f, override val light: SceneLight, override val surfaceWidth: Int, override val surfaceHeight: Int, )</ID>
     <ID>MemberNameEqualsClassName:Texture.kt$Texture$val texture: GPUTexture</ID>
     <ID>SpreadOperator:RendererOpaqueDraws.kt$(drawCall.extraUniformFloats, *ParticleExtraUniformLayout.fields)</ID>
-    <ID>TooGenericExceptionCaught:WebGpuEngine.kt$e: Exception</ID>
     <ID>TooManyFunctions:Renderer.kt$Renderer : RenderRenderer</ID>
-    <ID>TooManyFunctions:WebGpuCanvasHost.kt$io.github.ronjunevaldoz.awake.webgpu.application.WebGpuCanvasHost.kt</ID>
     <ID>UnusedParameter:RenderPipeline.kt$RenderPipeline$commandBuffer: Long</ID>
     <ID>UnusedParameter:TransferContext.kt$TransferContext$block: (Long) -> Unit</ID>
     <ID>UnusedPrivateProperty:Mesh.kt$Mesh$runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit</ID>

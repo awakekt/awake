@@ -9,11 +9,11 @@ VkCommandBufferAllocateInfoAccessor::VkCommandBufferAllocateInfoAccessor(JNIEnv 
         : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     commandPoolField = env->GetFieldID(clazz, "commandPool", "J");
     levelField = env->GetFieldID(clazz, "level",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkCommandBufferLevel;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkCommandBufferLevel;");
     commandBufferCountField = env->GetFieldID(clazz, "commandBufferCount", "I");
 }
 

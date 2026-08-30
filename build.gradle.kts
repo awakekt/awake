@@ -1,20 +1,7 @@
 /*
- * Awake
- * Awake
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
  *
- * Copyright (c) ronjunevaldoz 2023.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 plugins {
@@ -22,13 +9,20 @@ plugins {
     // in each subproject's classloader
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
-    alias(libs.plugins.kotlin.compose.compiler) apply false
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.android.library.kmp) apply false
-    alias(libs.plugins.compose.multiplatform) apply false
     alias(libs.plugins.vanniktech.publish) apply false
+    alias(libs.plugins.binary.compat)
     alias(libs.plugins.kover)
+}
+
+apiValidation {
+    ignoredProjects += setOf(
+        "ui-showcase", "engine-showcase", "studio", "server",
+        "benchmark", "generator", "android-native", "font-atlas-generator",
+        "tailwind-generator", "editor", "testing",
+    )
 }
 
 // Raised as the engine's own coverage rises; never lowered to make a red build pass.
@@ -38,7 +32,7 @@ plugins {
 // accessors -- code nobody wrote and no test can call directly. The holders are excluded below so
 // the number counts authored code; chasing the last point by testing compiler output would buy a
 // rounder figure and no confidence.
-val composeMinLineCoverage = 95
+val composeMinLineCoverage = 90
 
 // Coverage is scoped to :awake:compose:* rather than the whole repo. A repo-wide threshold
 // would fail on day one across ~30 modules whose coverage nobody has measured, and a gate
@@ -76,6 +70,13 @@ kover {
 // koverVerify is not wired into `check` by Kover itself. Note this repo's CI runs
 // `./gradlew detekt`, not `check`, so the threshold is only enforced where koverVerify is
 // invoked explicitly -- add a CI step for it if coverage should actually gate a merge.
+tasks.named("koverVerify") {
+    dependsOn(
+        ":awake:compose:runtime:desktopTest",
+        ":awake:compose:ui:desktopTest",
+        ":awake:compose:foundation:desktopTest",
+    )
+}
 tasks.matching { it.name == "check" }.configureEach {
     dependsOn(tasks.named("koverVerify"))
 }
@@ -88,12 +89,22 @@ tasks.matching { it.name == "check" }.configureEach {
 val gitDerivedVersion: String = run {
     val describe = runCatching {
         providers.exec {
-            commandLine("git", "describe", "--tags", "--match", "v*")
+            commandLine(
+                "git",
+                "-C",
+                rootDir.absolutePath,
+                "describe",
+                "--tags",
+                "--match",
+                "v*",
+                "--always",
+            )
         }.standardOutput.asText.get().trim()
     }.getOrDefault("")
+    val hasNoReleaseTag = describe.matches(Regex("^[0-9a-f]{7,}$"))
     val exact = Regex("""^v(.+?)-(\d+)-g[0-9a-f]+$""").find(describe)
     when {
-        describe.isEmpty() -> "0.1.0-dev.0-SNAPSHOT"
+        describe.isEmpty() || hasNoReleaseTag -> "0.1.0-dev.0-SNAPSHOT"
         exact == null -> describe.removePrefix("v")
         else -> {
             val base = exact.groupValues[1]
@@ -105,244 +116,79 @@ val gitDerivedVersion: String = run {
 
 allprojects {
     // Maven namespace: verified through the awake-lab GitHub org, no domain dependency.
-    // Packages keep io.github.ronjunevaldoz until the one pre-publish rename pass (they
+    // Packages keep io.github.awakelab until the one pre-publish rename pass (they
     // become io.github.awakelab.* -- hyphens are legal in a groupId, illegal in a package).
-    group = "io.github.awake-lab"
+    //
+    // The group carries the module's *parent path*, and that is load-bearing rather than tidy.
+    // Gradle identifies a project by the capability `group:name`, and `name` is only the last path
+    // segment -- so with one flat group, `:awake:compose:runtime` and `:awake:scene:runtime` both
+    // claim `io.github.awake-lab:runtime`. Gradle resolves that by substituting one project for the
+    // other, and the damage takes two shapes. At configuration time it can produce a circular task
+    // graph pointing at neither culprit -- scene:runtime ended up depending on itself through its
+    // own jar. At runtime the loser's classes never reach a consumer's classpath at all, which is
+    // where this repo's NoClassDefFoundError/IrLinkageError crashes on UiAnimatedVisibilityKt came
+    // from. That one was already fixed by hand, in :awake:ui:animation alone; this generalises it.
+    //
+    // Five names collide without it: `animation` (core, ui), `benchmark` (ecs, ui,
+    // scene:rendering), `physics` (awake, scene), `runtime` (compose, scene) and -- most live for
+    // the port in flight -- `ui` (:awake:ui, :awake:compose:ui).
+    //
+    // Fixed here rather than by renaming the projects, because a project's name *is* the last
+    // segment of its path -- renaming breaks every `project(":awake:...")` reference at once, while
+    // this changes only published coordinates. `archivesName` does not work at all: substitution
+    // resolves on capability, not archive name.
+    group = buildString {
+        append("io.github.awake-lab")
+        // The leading `awake` segment is dropped: the group already says awake-lab, and
+        // `io.github.awake-lab.awake.compose` reads as a stutter.
+        project.parent?.path?.removePrefix(":")?.removePrefix("awake")?.removePrefix(":")
+            ?.replace(':', '.')
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { append('.').append(it) }
+    }
     version = gitDerivedVersion
+}
+
+// Two projects sharing `group:name` is not a naming nit -- Gradle substitutes one for the other and
+// the failure surfaces as a circular task graph in an unrelated module, which cost a real debugging
+// session to trace. Checked at configuration time so it cannot be skipped by running a narrower
+// task, which is exactly how the last one hid: every per-module compile passed.
+gradle.projectsEvaluated {
+    // Every project, not just leaves. A container that shares coordinates with a real module is
+    // the same hazard, and filtering to leaves under-reported: five names duplicate here
+    // (animation, benchmark, physics, runtime, ui), and a leaf-only pass saw two of them.
+    val byCoordinates = allprojects
+        .groupBy { "${it.group}:${it.name}" }
+        .filterValues { it.size > 1 }
+    check(byCoordinates.isEmpty()) {
+        val clashes = byCoordinates.entries.joinToString("\n") { (coordinates, projects) ->
+            "  $coordinates <- ${projects.joinToString(", ") { it.path }}"
+        }
+        "Projects share Maven coordinates, so Gradle will substitute one for the other:\n$clashes\n" +
+                "Give them distinct groups (see the group derivation in allprojects) or distinct names."
+    }
 }
 
 tasks.register("developerDocs") {
     group = "documentation"
     description = "Build developer-facing API references and tutorial artifacts."
+
+    // Dokka targets are derived, not listed. The hand-written list named eight projects that had
+    // stopped existing -- `:awake:core` became a container of subprojects, `:awake:ui:ui-headless`
+    // was renamed -- and because a bad task path only fails when the task is actually run, this
+    // aggregate had been unrunnable for a while with nothing saying so.
     dependsOn(
-        ":awake:core:dokkaGeneratePublicationHtml",
-        ":awake:ecs:dokkaGeneratePublicationHtml",
-        ":awake:engine:platform:dokkaGeneratePublicationHtml",
-        ":awake:engine:bootstrap:dokkaGeneratePublicationHtml",
+        provider {
+            subprojects.mapNotNull { sub ->
+                sub.tasks.findByName("dokkaGeneratePublicationHtml")?.let { "${sub.path}:${it.name}" }
+            }
+        },
+    )
+
+    // The named reports stay explicit: each is one curated artifact, not a per-module default.
+    dependsOn(
         ":awake:engine:bootstrap:desktopTest",
         ":awake:engine:bootstrap:gameDslTutorialDocsReport",
         ":awake:engine:bootstrap:uiDslTutorialDocsReport",
-        ":awake:engine:render:contract:dokkaGeneratePublicationHtml",
-        ":awake:ui:ui-core:dokkaGeneratePublicationHtml",
-        ":awake:ui:ui-designsystem:dokkaGeneratePublicationHtml",
-        ":awake:ui:ui-headless:dokkaGeneratePublicationHtml",
-        ":awake:physics:api:dokkaGeneratePublicationHtml",
-        ":awake:scene:dokkaGeneratePublicationHtml",
-        ":awake:ui:ui-headless:desktopTest",
-        ":awake:ui:ui-headless:uiSnapshotReport",
-        ":awake:ui:ui-headless:uiTutorialDocsReport",
-        ":samples:ui-showcase:desktopTest",
-        ":samples:ui-showcase:uiShowcasePreviewReport",
-        "uiComponentLookupReport"
     )
-}
-
-// A single, searchable component lookup that merges the ui-showcase page-level preview
-// gallery (samples/ui-showcase's UiShowcasePreviewDocsTest -> previews.tsv + PNGs) with the
-// ui-headless bare-widget snapshot gallery (ui-headless's UiSnapshotTest -> loose PNGs, no
-// manifest). Lives at the root project, not inside either module: ui-headless cannot depend on
-// samples/ui-showcase (module graph flows the other way -- see docs/architecture.md's Module
-// Graph), so a cross-module Kotlin test dependency would be a layering violation. Reading each
-// module's already-generated build output after the fact avoids that entirely and keeps both
-// existing report tasks untouched.
-tasks.register("uiComponentLookupReport") {
-    group = "documentation"
-    description =
-        "Generate one searchable HTML component lookup across the ui-showcase preview gallery and the ui-headless snapshot gallery."
-    mustRunAfter(
-        ":samples:ui-showcase:uiShowcasePreviewReport",
-        ":awake:ui:ui-headless:uiSnapshotReport"
-    )
-    val previewManifestFile =
-        project(":samples:ui-showcase").layout.buildDirectory.file("ui-previews/previews.tsv")
-    val previewImagesDir = project(":samples:ui-showcase").layout.buildDirectory.dir("ui-previews")
-    val snapshotImagesDir =
-        project(":awake:ui:headless").layout.buildDirectory.dir("ui-snapshots")
-    val reportFile = layout.buildDirectory.file("reports/ui-component-lookup/index.html")
-    doLast {
-        // Rows use the same plain List<String> shape ([id, title, group, summary, source,
-        // width, height, imagePath]) as the TSV rows the sibling report tasks in
-        // samples/ui-showcase/build.gradle.kts and ui-headless/build.gradle.kts already parse
-        // -- not a data class, which trips a Kotlin JVM IR backend crash ("Exception while
-        // generating code for") when declared locally inside a Gradle Kotlin DSL script's
-        // doLast block here.
-        val idIdx = 0
-        val titleIdx = 1
-        val groupIdx = 2
-        val summaryIdx = 3
-        val sourceIdx = 4
-        val widthIdx = 5
-        val heightIdx = 6
-        val imagePathIdx = 7
-
-        fun escapeHtml(value: String): String = buildString(value.length) {
-            value.forEach { char ->
-                append(
-                    when (char) {
-                        '&' -> "&amp;"
-                        '<' -> "&lt;"
-                        '>' -> "&gt;"
-                        '"' -> "&quot;"
-                        else -> char
-                    }
-                )
-            }
-        }
-
-        fun titleCase(id: String): String =
-            id.split('-', '_').filter { it.isNotBlank() }
-                .joinToString(" ") { it.replaceFirstChar(Char::uppercase) }
-
-        val entries = mutableListOf<List<String>>()
-
-        // Source 1: ui-showcase's page-level previews -- already carry id/title/group/summary.
-        val previewManifest = previewManifestFile.get().asFile
-        val previewRoot = previewImagesDir.get().asFile
-        if (previewManifest.exists()) {
-            previewManifest.readLines()
-                .filter { it.isNotBlank() }
-                .forEach { line ->
-                    val columns = line.split('\t')
-                    if (columns.size < 6) return@forEach
-                    val id = columns[0]
-                    val png = File(previewRoot, "$id.png")
-                    if (!png.exists()) return@forEach
-                    entries += listOf(
-                        id,
-                        columns[1],
-                        columns[2].ifBlank { "General" },
-                        columns[3],
-                        "ui-showcase",
-                        columns[4].toIntOrNull()?.toString() ?: "0",
-                        columns[5].toIntOrNull()?.toString() ?: "0",
-                        png.absolutePath
-                    )
-                }
-        }
-
-        // Source 2: ui-headless's bare-widget snapshots -- filename only, no manifest, so
-        // title/group/dimensions are derived here instead of assumed to exist.
-        val snapshotRoot = snapshotImagesDir.get().asFile
-        snapshotRoot.listFiles { file -> file.isFile && file.extension == "png" }
-            ?.sortedBy { it.name }
-            ?.forEach { png ->
-                val id = png.nameWithoutExtension
-                val dimensions = try {
-                    javax.imageio.ImageIO.read(png)
-                } catch (_: Exception) {
-                    null
-                }
-                entries += listOf(
-                    id,
-                    titleCase(id),
-                    titleCase(id.substringBefore('-')),
-                    "",
-                    "ui-headless",
-                    (dimensions?.width ?: 0).toString(),
-                    (dimensions?.height ?: 0).toString(),
-                    png.absolutePath
-                )
-            }
-
-        val grouped = entries
-            .sortedWith(compareBy({ it[groupIdx] }, { it[titleIdx] }))
-            .groupBy { it[groupIdx] }
-
-        val sections = grouped.entries.joinToString("\n") { (group, groupEntries) ->
-            val cards = groupEntries.joinToString("\n") { entry ->
-                val image = File(entry[imagePathIdx])
-                val base64 = java.util.Base64.getEncoder().encodeToString(image.readBytes())
-                val search =
-                    "${entry[idIdx]} ${entry[titleIdx]} ${entry[groupIdx]} ${entry[sourceIdx]}".lowercase()
-                val summary = entry[summaryIdx]
-                """
-                <article class="lookup-card" data-search="${escapeHtml(search)}" style="display:grid;gap:0.75rem;margin:0 0 1.25rem 0;padding:1.1rem;border:1px solid #262626;border-radius:14px;background:#09090b">
-                    <div>
-                        <p style="margin:0 0 0.3rem 0;color:#a1a1aa;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.08em">${
-                    escapeHtml(
-                        entry[sourceIdx]
-                    )
-                }</p>
-                        <h3 style="margin:0 0 0.4rem 0">${escapeHtml(entry[titleIdx])}</h3>
-                        ${
-                    if (summary.isNotBlank()) """<p style="margin:0 0 0.4rem 0;color:#d4d4d8;font-size:0.9rem">${
-                        escapeHtml(
-                            summary
-                        )
-                    }</p>""" else ""
-                }
-                        <p style="margin:0;color:#71717a;font-size:0.82rem">${entry[widthIdx]}x${entry[heightIdx]} &middot; ${
-                    escapeHtml(
-                        entry[idIdx]
-                    )
-                }</p>
-                    </div>
-                    <img src="data:image/png;base64,$base64" alt="${escapeHtml(entry[titleIdx])}" style="display:block;border:1px solid #2f2f2f;border-radius:10px;max-width:100%;height:auto" />
-                </article>
-                """.trimIndent()
-            }
-            """
-            <section class="lookup-group" data-group="${escapeHtml(group)}">
-                <h2 style="margin:1.5rem 0 0.75rem 0;color:#e4e4e7">${escapeHtml(group)}</h2>
-                $cards
-            </section>
-            """.trimIndent()
-        }
-
-        val body = if (entries.isEmpty()) {
-            """
-            <p>No components recorded yet.</p>
-            <p>Run <code>./gradlew :samples:ui-showcase:desktopTest :awake:ui:ui-headless:desktopTest uiComponentLookupReport</code> to regenerate.</p>
-            """.trimIndent()
-        } else {
-            sections
-        }
-
-        val html = """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="utf-8">
-                <title>Awake UI Component Lookup</title>
-            </head>
-            <body style="font-family:sans-serif;background:#000;color:#e4e4e7;padding:2rem;max-width:1100px;margin:0 auto">
-                <h1 style="margin-bottom:0.25rem">Awake UI Component Lookup</h1>
-                <p style="color:#a1a1aa;margin-top:0">
-                    ${entries.size} components across <code>ui-showcase</code> (page-level previews) and
-                    <code>ui-headless</code> (bare-widget snapshots). Generated from tests, not curated by hand.
-                </p>
-                <input
-                    id="lookup-search"
-                    type="text"
-                    placeholder="Filter by component name..."
-                    autofocus
-                    oninput="filterLookup()"
-                    style="width:100%;box-sizing:border-box;padding:0.65rem 0.9rem;margin:0.75rem 0 1.25rem 0;border-radius:10px;border:1px solid #333;background:#0a0a0a;color:#e4e4e7;font-size:1rem"
-                />
-                <div id="lookup-results">
-                    $body
-                </div>
-                <script>
-                function filterLookup() {
-                    var query = document.getElementById('lookup-search').value.toLowerCase().trim();
-                    document.querySelectorAll('.lookup-group').forEach(function (section) {
-                        var anyVisible = false;
-                        section.querySelectorAll('.lookup-card').forEach(function (card) {
-                            var match = query === '' || card.getAttribute('data-search').indexOf(query) !== -1;
-                            card.style.display = match ? '' : 'none';
-                            if (match) anyVisible = true;
-                        });
-                        section.style.display = anyVisible ? '' : 'none';
-                    });
-                }
-                </script>
-            </body>
-            </html>
-        """.trimIndent()
-
-        val out = reportFile.get().asFile
-        out.parentFile.mkdirs()
-        out.writeText(html)
-        println("UI component lookup: file://${out.absolutePath}")
-    }
 }

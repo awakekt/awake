@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:UiRasterizer.kt$fun List&lt;UiDrawPrimitive>.rasterizeToPixelMap( width: Int, height: Int, background: Color = Color(0.1f, 0.1f, 0.12f, 1f), font: UiFont? = null, ): PixelMap</ID>
+    <ID>LongMethod:UiRasterizer.kt$fun List&lt;UiDrawPrimitive>.rasterizeToPixelMap( width: Int, height: Int, background: Color = Color(0.1f, 0.1f, 0.12f, 1f), font: UiFont? = null, ): PixelMap</ID>
+    <ID>LongParameterList:RasterGeometry.kt$( ax: Float, ay: Float, bx: Float, by: Float, cx: Float, cy: Float, clipX0: Float, clipY0: Float, clipX1: Float, clipY1: Float, width: Int, height: Int, pathClip: (Float, Float) -> Boolean, drawPixel: (x: Int, y: Int, w0: Float, w1: Float, w2: Float, area: Float) -> Unit, )</ID>
+    <ID>LongParameterList:RasterGeometry.kt$( x0: Float, y0: Float, x1: Float, y1: Float, px: Float, py: Float, )</ID>
+    <ID>LongParameterList:RasterGeometry.kt$( x: Float, y: Float, w: Float, h: Float, transform: UiPrimitiveTransform?, block: (x: Float, y: Float, w: Float, h: Float) -> Unit, )</ID>
+    <ID>LoopWithTooManyJumpStatements:UiRasterizer.kt$while</ID>
+    <ID>NestedBlockDepth:UiRasterizer.kt$fun List&lt;UiDrawPrimitive>.rasterizeToPixelMap( width: Int, height: Int, background: Color = Color(0.1f, 0.1f, 0.12f, 1f), font: UiFont? = null, ): PixelMap</ID>
+    <ID>TooManyFunctions:SemanticsTestApi.kt$io.github.awakelab.awake.compose.testing.SemanticsTestApi.kt</ID>
+  </CurrentIssues>
+</SmellBaseline>

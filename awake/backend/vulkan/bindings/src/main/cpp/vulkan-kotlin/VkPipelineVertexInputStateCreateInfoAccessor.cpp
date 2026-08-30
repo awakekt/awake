@@ -9,13 +9,13 @@ VkPipelineVertexInputStateCreateInfoAccessor::VkPipelineVertexInputStateCreateIn
         JNIEnv *env, jobject obj) : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     pVertexBindingDescriptionsField = env->GetFieldID(clazz, "pVertexBindingDescriptions",
-                                                      "[Lio/github/ronjunevaldoz/awake/vulkan/models/info/pipeline/VkVertexInputBindingDescription;");
+                                                      "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkVertexInputBindingDescription;");
     pVertexAttributeDescriptionsField = env->GetFieldID(clazz, "pVertexAttributeDescriptions",
-                                                        "[Lio/github/ronjunevaldoz/awake/vulkan/models/info/pipeline/VkVertexInputAttributeDescription;");
+                                                        "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkVertexInputAttributeDescription;");
 }
 
 VkStructureType

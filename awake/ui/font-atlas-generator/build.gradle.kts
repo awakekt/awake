@@ -1,5 +1,8 @@
-// Copyright (c) Ron June Valdoz
-// SPDX-License-Identifier: Apache-2.0
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
 import org.gradle.api.tasks.JavaExec
 
@@ -12,7 +15,7 @@ plugins {
 }
 
 application {
-    mainClass.set("io.github.ronjunevaldoz.awake.fontatlasgenerator.MainKt")
+    mainClass.set("io.github.awakelab.awake.fontatlasgenerator.MainKt")
 }
 
 dependencies {
@@ -20,7 +23,7 @@ dependencies {
 }
 
 // `application`'s own `run` task doesn't set a stable workingDir, and the generator writes to a
-// path relative to this module's project dir (matching :awake:ui:tailwind-generator's
+// path relative to this module's project dir (matching :awake:tailwind-generator's
 // Main.kt convention) -- register an explicit task so regeneration is reproducible from any cwd.
 // Run via `./gradlew :awake:ui:font-atlas-generator:generateFontAtlas` and commit the diff.
 tasks.register<JavaExec>("generateFontAtlas") {
@@ -29,6 +32,6 @@ tasks.register<JavaExec>("generateFontAtlas") {
         "geometry -- run this and commit the diff after any font or atlas metric change."
     dependsOn("classes")
     workingDir = projectDir
-    mainClass.set("io.github.ronjunevaldoz.awake.fontatlasgenerator.MainKt")
+    mainClass.set("io.github.awakelab.awake.fontatlasgenerator.MainKt")
     classpath = sourceSets.main.get().runtimeClasspath
 }

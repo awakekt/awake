@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "name": "heightfield-terrain",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 11.0, "y": 10.0, "z": 16.0 },
+          "center": { "x": 6.0, "y": 0.5, "z": 6.0 },
+          "fovYDegrees": 48.0,
+          "near": 0.1,
+          "far": 100.0,
+          "primary": true
+        }
+      ]
+    },
+    {
+      "name": "heightfield-terrain",
+      "components": [
+        { "component": "meshRenderer", "mesh": "heightfield-terrain", "material": "lit-shadow", "cullMode": "Back" }
+      ]
+    },
+    {
+      "name": "light",
+      "components": [
+        { "component": "light", "type": "Directional" }
+      ]
+    }
+  ]
+}

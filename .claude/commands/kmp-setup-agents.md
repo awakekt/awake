@@ -107,7 +107,7 @@ routing, not depend on which command happened to initialize it):
 - `dokka` → library-publishing (Javadoc jars)
 - `iosX64`, `iosArm64` targets in build files → xcframework-spm
 - `@DslMarker`-annotated types with names ending in `Modifier`/`Scope`/`UiDsl`, or a
-  `mirror-map.md` at the project root → api-mimicry
+  `MIRROR_MAP.md` at the project root → api-mimicry
 - `CMakeLists.txt` or `*.def` cinterop files present → check whether the referenced
   native code already exists as a 3rd-party/vendored source (→ jni-pro) or is authored
   first-party in this repo (→ native-authoring); read the file paths, don't assume
@@ -208,7 +208,7 @@ sub-domain like that, author a project-owned maintainer agent the same way a pro
 authors a custom skill: `agents/<name>-maintainer.md` at the root, deployed to
 `.claude/agents/<name>-maintainer.md`.
 
-Only do this when the sub-domain is real and ongoing — a one-off task doesn't need a standing agent. Two concrete cases this collection's own skills already point at (UI DSL mimicry, first-party native core) with full example templates: `kmp-expert`'s `references/agents-md-templates.md` → "Library-specific maintainer agent examples". Both are starting points, not fixed templates — the real checklist should reflect the project's actual `mirror-map.md`/native layout, not be copied verbatim.
+Only do this when the sub-domain is real and ongoing — a one-off task doesn't need a standing agent. Two concrete cases this collection's own skills already point at (UI DSL mimicry, first-party native core) with full example templates: `kmp-expert`'s `references/agents-md-templates.md` → "Library-specific maintainer agent examples". Both are starting points, not fixed templates — the real checklist should reflect the project's actual `MIRROR_MAP.md`/native layout, not be copied verbatim.
 
 **Gate — verify before proceeding:**
 
@@ -252,6 +252,7 @@ Consumer commands (safe to install):
   kmp-check-updates.md          — check for skill updates
   kmp-clean-comments.md         — refactor code documentation
   kmp-migrate-to-shadcn.md      — migrate design system to shadcn-compose
+  kmp-refine-skill.md           — refine a project-owned skill against agentskills.io best practices
 ```
 
 Do NOT copy repo-internal commands — each one operates on `kmp-agent-skills` itself, not

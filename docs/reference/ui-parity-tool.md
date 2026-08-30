@@ -1,8 +1,56 @@
 # UI parity tool
 
+<!-- ui-tooling-map -->
+> **Four docs cover UI tooling, with different jobs.** Land in the one that matches your question:
+>
+> | Question | Read |
+> |---|---|
+> | *Is anything wrong?* | `scripts/awake verify` — every gate, one run |
+> | *Which tool answers my question, and may I re-record this baseline?* | [`skills/awake-ui-verification`](../../skills/awake-ui-verification/SKILL.md) — judgment |
+> | *What proof does this kind of UI change require?* | [`docs/reference/ui-validation.md`](ui-validation.md) — policy |
+> | *What commands do I run, in what order?* | [`docs/reference/ui-parity-tool.md`](ui-parity-tool.md) — procedure |
+> | *What is this script, and can it fail a build?* | [`tools/README.md`](../../tools/README.md) — catalogue |
+<!-- /ui-tooling-map -->
+
+
 `scripts/awake ui` is the single entry point for comparing a registered Awake component with
 the pinned shadcn reference. It orchestrates existing capture, preview, semantic-crop, and
 report tools; it does not create a second renderer or accept guessed file pairings.
+
+## Choose the Smallest Valid Run
+
+Use focused checks while iterating and reserve the full chain for commit/merge evidence:
+
+```bash
+# Iteration: owning module plus the component's tests.
+./gradlew :awake:ui:shadcn:compileKotlinDesktop
+./gradlew :awake:ui:shadcn:desktopTest --tests '*Select*'
+
+# Commit: fresh focused artifacts and local hygiene.
+scripts/awake ui inspect --component select --state open --theme light
+git diff --check
+
+# Merge or parity claim: full reference/showcase/report chain.
+scripts/awake ui inspect --component select --state open --theme both
+scripts/awake ui report
+python3 tools/shadcn/audit_ui_render_quality.py --project .
+```
+
+The focused run is sufficient for recipe iteration only when the changed behavior is covered by
+the selected component matrix. Run the GPU/offscreen lane only for backend paint, shaders,
+blending, text sampling, frame pacing, or anti-aliasing changes. Never treat a skipped expensive
+command as skipped evidence in the final handoff.
+
+To run the same fresh chain for every component, registered state, and available theme in the
+manifest without manually enumerating them:
+
+```bash
+scripts/awake ui audit --theme both
+```
+
+This writes `build/reports/ui-parity/all-components-inspect.json` and one
+`build/reports/ui-parity/<component>-inspect.png` contact sheet per registered component. Review
+the report and sheets; the command does not turn visual drift into an automatic pass.
 
 ## Button vertical slice
 
@@ -21,6 +69,21 @@ scripts/awake ui report
 scripts/awake ui performance --component button --theme light
 ```
 
+For normal component work, use the one-command equivalent instead. It always regenerates the
+pinned reference and the retained-Compose preview before comparing them, writes a provenance
+record with hashes of the evidence it used, and creates a `Reference | Awake Compose | Diff`
+contact sheet for review:
+
+```bash
+scripts/awake ui inspect --component button --state rest --theme both
+```
+
+`inspect` uses `ShadcnComposeParityPreviewTest`, which renders with `composeFrame`, exports
+`captureSemantics()`, and rasterizes the retained Compose primitive stream. It does not route
+through the retired immediate-mode UI test harness. When report geometry drifts, it additionally
+writes the existing semantic-bounds debug overlay. `inspect` makes artifacts fresh; visual review
+of its contact sheet is still required before calling a component visually equivalent.
+
 Outputs:
 
 - `build/reports/ui-component-parity/*_awake.png` — Awake crop;
@@ -29,6 +92,9 @@ Outputs:
 - `build/reports/ui-parity/report.{json,md}` — manifest-backed parity status; and
 - `build/reports/ui-parity/performance.json` — elapsed crop/diff tool time, explicitly not UI
   frame-time performance.
+
+For an inspect run, `build/reports/ui-parity/<component>-inspect.png` is the contact sheet and
+`build/reports/ui-parity/<component>-inspect.json` records the exact artifact hashes.
 
 `report` shows geometry, four-sided padding, sibling spacing, border/radius, paint, behavior,
 and motion separately. It reports exact expected/actual/delta values for captured facts. An
@@ -48,7 +114,7 @@ those claims.
 
 1. Add an official reference case and React fixture.
 2. Add an Awake preview with stable, unique semantic ids.
-3. Add a matching row to `tools/shadcn_parity_manifest.json`: content, state, theme, artifact
+3. Add a matching row to `tools/shadcn/shadcn_parity_manifest.json`: content, state, theme, artifact
    paths, semantic ids, source sizing intent, and only the oracles that exist.
 4. Capture, preview, validate, inspect crop/heatmap, then run `report`.
 5. Add behavior/semantic tests at the lowest owning module. A pixel threshold never compensates

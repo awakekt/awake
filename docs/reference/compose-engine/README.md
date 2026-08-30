@@ -13,25 +13,27 @@ capability by capability, checked against the Compose 1.11.1 jars rather than re
 A UI layer inside a frame loop. Nothing in Compose's world redraws behind a live 3D scene, and that
 single fact drives most of the differences:
 
-- **A 60 fps loop rebuilds every frame anyway**, so automatic skipping buys much less than it does
-  in an app that idles at 0 fps between taps. That is why there is no compiler plugin.
+- **A 60 fps loop still paints every frame**, so skipping buys much less than it does in an app
+  that idles at 0 fps between taps. There is no skipping at all: the whole tree composes every
+  frame, and there is no compiler plugin. An explicit `recomposeScope` was tried and removed --
+  see the parity ledger's runtime section for what it cost.
 - **The frame is a hard 16.67 ms budget shared with rendering and physics**, so allocation is
   ratcheted in CI rather than left to a profiler someone runs later.
 - **Input is shared with gameplay**, so the frame reports what the UI claimed — `isCaptured`,
   `isTextInputFocused`, `isScrollConsumed` — instead of assuming it owns the device.
 
-## What it deliberately is not
+## What is not present today
 
 Absent, not planned-and-inert. Each of these is a consequence of the choices above, not a gap
 waiting to close:
 
 | Not here | Why | Cost |
 |---|---|---|
-| Compiler plugin, automatic skipping | Kotlin context parameters give the calling convention with no version-locked artifact for consumers | The whole tree recomposes every frame |
-| Snapshot state, read tracking | Nothing to invalidate when every frame rebuilds | No `mutableStateOf` |
+| Compiler plugin, skipping | Kotlin context parameters give the calling convention with no version-locked artifact for consumers | No `$changed` masks and no restart boundaries: every composable re-runs every frame |
+| Snapshot state | Nothing observes, because nothing skips | State that outlives a frame is a plain class held by `remember`; see `runtime/State.kt` |
 | Subcomposition | Measure-time composition is a large machine | `LazyColumn` picks its window from the previous pass, so it settles a frame late |
 | `LaunchedEffect` / `DisposableEffect` | Frame-driven, no coroutines — async belongs in the app layer | `remember { }` plus the caller's own scope |
-| Real layers (`graphicsLayer`) | Needs render-to-texture, which `awake/render` does not have | `alpha` double-darkens overlapping children |
+| Full graphics-layer parity | `Modifier.graphicsLayer(alpha/scale/translation/rotation/blendMode/renderEffect/shadowElevation/shape = …)` captures and composites a subtree through renderer-owned offscreen targets on Vulkan and WebGPU | Awake has the supported target-isolation subset; generic shadow gradients/spread and destination modes beyond `Screen`/`Overlay` remain absent |
 
 **There is no benchmark against Compose.** Every measured number here is against `ui-core`, the
 engine this replaces. Any claim that this is *faster than Compose* would be unfalsifiable, so none
@@ -45,7 +47,7 @@ tests:
 | Mechanism | Caught |
 |---|---|
 | **Cross-engine differ** — one scene through both engines, primitive for primitive | The 8 dp default gap, unprompted, on its first run |
-| **Allocation ratchet** in the suite, currently 33,289 B/frame | A `Color` allocated per quad, +2.5 kB/frame, invisible in the frame total |
+| **Allocation ratchet** in the suite, currently 38,076 B/frame | A `Color` allocated per quad, +2.5 kB/frame, invisible in the frame total |
 | **`LayoutStats.intrinsicQueries`** | Compose never says when you paid for an extra tree walk |
 | **Absent beats inert** | `FocusDirection` ships 2 of 8 directions; the other 6 do not exist rather than silently doing nothing |
 | **Every divergence classified with evidence**, or the diff fails | "The new engine draws something else" is the finding, not a nuisance |
@@ -53,32 +55,34 @@ tests:
 Two the tests missed entirely: a click spanning two frames never fired while `clickable` sat at 100%
 line coverage, and `Text` measured correctly while painting nothing at all.
 
-## Status — Stage 1, near complete
+## Status — retained core landed; targeted Stage 2 active
 
 Green on all five targets: desktop JVM, Android host, wasmJs under headless Chrome, iOS simulator,
 iosArm64 compiles. **1,197 test runs**, 0 failures. Coverage (Kover, JVM-executed tests only, with
-compiler-generated `$DefaultImpls` excluded): **98.3%**. Allocation: **33,289 B/frame**, stable to
-the byte, against a 35,000 ratchet.
+compiler-generated `$DefaultImpls` excluded): **98.3%**. Allocation: **38,076 B/frame** observed
+baseline, against a 39,000 ratchet.
 
 | Page | Module | State |
 |---|---|---|
 | `01-layout` | `:ui` | **Done.** `Constraints` (packed, zero-alloc), measure contract, `LayoutNode`, `Alignment`, Row/Column/Box, intrinsics both directions |
-| `02-modifier` | `:ui` | **Done.** Chain, every `*ModifierNode` kind, chain-position-aware draw and hit-testing. `ModifierChainDiagnostics` rescoped — see the page |
+| `02-modifier` | `:ui` | **Done for the retained core.** Chain, node elements/lifecycle, every `*ModifierNode` kind, chain-position-aware draw and hit-testing. `ModifierChainDiagnostics` remains rescoped — see the page |
 | `03-composition-locals` | `:runtime`+`:ui` | **Done.** Plus `remember` with per-node slots |
 | `04-styling-theme` | `:foundation` | **Done.** `background`/`border`/`clip`/`alpha`, `hoverable`/`focusable`/`clickable`, `InteractionSource`, and `Style`/`StyleState`/`styleable` with the six state rules |
 | `05-animation` | `:ui`+`:foundation` | **Done for Stage 1.** `FrameClock` (clamped to a 10 fps floor), `rememberLoopingPhase`, `animateFloat`. No subscription and no `invalidateDraw` -- see the page for why the sketch's node-field phase cannot work |
-| `06-focus-text-input` | `:ui`+`:foundation` | **Done for Stage 1.** `FocusOwner`, tab ring, modal trapping, `BasicTextField`, caret, `EditCommand`. No selection, no IME |
+| `06-focus-text-input` | `:ui`+`:foundation` | **Done for Stage 1.** `FocusOwner`, reachable tab ring, modal trapping, `BasicTextField`, caret, selection, committed platform text input, and transient IME pre-edit composition. Platform adapters still need to populate the new frame fields. |
 | `07-overlay-layering` | `:ui` | **Done for Stage 1.** Layer slots, paint and hit order, modal focus trapping, and modal *input* capture -- a modal blocks its own subtree only, so a toast declared outside one is blocked too |
 | `08-lazy-lists` | `:foundation` | **Partial.** `verticalScroll`, `LazyColumn` with per-item measurement. Window settles a frame late |
 | `09-testing-harness` | `:ui:testing` | **Done for Stage 1.** Cross-engine differ, capped at five scenes — see the gate below |
 | `16-migration-deltas` | — | **Done.** The five visible changes Stage 3 will carry to every screen |
-| `10-graphics-layer` | `:ui` | **Partial.** `alpha` composes; real layers need render-to-texture |
+| `17-modifier-parity` | `:ui`+`:foundation` | **Tracked.** Every stable Compose Modifier, enumerated from the jars, with a verdict each. Batch 1 (layout) landed |
+| `10-graphics-layer` | `:ui` | **Partial.** Target isolation, alpha/transforms, blur, rectangle/uniform-rounded and generic-path solid elevation, and `SourceOver`/`Plus`/`Screen`/`Overlay` composition are built. Generic gradients/spread and remaining destination modes are tracked. |
 | `11-refinements` | — | Register written; the chain diagnostic was rescoped once ordering became meaningful |
-| `12-gestures` | `:ui` | **Partial.** Three passes, capture, hover, click, drag, wheel. No long-press or multi-touch |
+| `12-gestures` | `:ui` | **Partial.** Three passes, per-pointer capture, hover, click, drag, wheel, and dispatcher-timed long-press. Host adapters currently expose one mouse pointer; touch-frame adaptation remains to be added. |
 | `13-semantics` | `:ui` | **Done.** Typed keys, `mergeDescendants`, tree-derived order |
 | `14-density-resize` | `:ui` | **Partial.** `density`/`fontScale`, viewport resize re-measures. RTL undecided |
 | reconciler | `:runtime` | **Done.** Positional identity, `key(value){}`, layer slots, `Applier` seam |
 | frame loop | `:ui` | **Done.** `ComposeHost.frame`, pointer edge detection, keyboard routing |
+| app/scene Compose bridge | `:engine:compose` + `:scene:runtime` | **Partial.** `sceneComposeAppModule` stages one app-level Compose host before scene presentation and provides world/renderer locals. Ownership, cursor, frame-stat, semantic, and primitive feedback still need bridging into the scene runtime before Studio migrates. |
 
 ### The Stage 1 gate, narrowed
 
@@ -97,7 +101,8 @@ check.** Snapshots survive `ui-core`'s deletion; the differ does not. The differ
 Stage 3's migration, where a field-level diagnosis on a screen that moved unexpectedly is worth more
 than a pixel diff that only says "different".
 
-Next: Stage 3.
+Next: finish the app/scene Compose bridge and complete Stage 2's controlled consumer evidence; add further
+Compose capabilities only when a real screen is blocked.
 
 ## Why not `ui-core`
 
@@ -160,8 +165,9 @@ failure.
 annotation that looks like Compose's while checking nothing is the *silent when unarmed* failure this
 repo keeps hitting. The context parameter enforces for real.
 
-The one thing a compiler plugin would still buy is automatic skipping (`$changed` masks). That is a
-Stage 2 decision, gated on a measurement Stage 1 produces — see the stage map below.
+The one thing a compiler plugin would still buy is automatic skipping (`$changed` masks). Stage 2
+instead provides explicit retained scopes, gated per consumer on a measurement — see the stage map
+below.
 
 ## Effects and coroutines — a non-goal for the *engine*, not the app
 
@@ -196,7 +202,7 @@ this engine has *less*; `11-refinements.md` is the review gate that keeps the li
 | **`@Composable` with no compiler plugin** | Requires a Kotlin-version-locked plugin, imposed on every consumer of a published artifact | Kotlin context parameters. Verified on 2.4.10 across all five targets: no flag, nesting works, outside-composition is a compile error |
 | **Read-only `children`** | `LayoutNode` children are mutable to their holder | A caller could restructure the tree between measure and place, leaving placement running against sizes that no longer exist. Surfaced by `kmp-audit` |
 | **`LayoutStats.intrinsicQueries`** | Compose never says when an intrinsic cost you an extra subtree walk | `awake-ui-performance` Rule 4: a path that is silent when unarmed is the one that ships wrong. Off by default, zero cost disarmed |
-| **Allocation ratcheted in the suite** | No equivalent gate | 33,289 B/frame, stable to the byte. It caught a `Color` allocated per quad that the frame total read as noise |
+| **Allocation ratcheted in the suite** | No equivalent gate | 38,076 B/frame, stable to the byte. It caught a `Color` allocated per quad that the frame total read as noise |
 | **Allocation-free measure** | `layout()` allocates a `MeasureResult` per call | Each node and chain link owns a reused result and scope. Driven by the 16 KB/frame ship gate — `ConstraintsAllocationProbe` measures the `Constraints` half at 0 B against Float's 32 B/op. Tradeoff: the result object is mutable, so it must not be retained past a pass |
 
 ### Designed, not yet built
@@ -247,7 +253,7 @@ Top-level peer of `:awake:ui`, not nested under it: `:runtime` is not UI-specifi
 reconciler diff any tree, as `androidx.compose.runtime` is UI-agnostic), and this engine *replaces*
 `ui-core` rather than extending it.
 
-`:ui` depends on `:runtime` plus `:awake:ui:graphics` and `:awake:ui:text` — primitive layers that
+`:ui` depends on `:runtime` plus `:awake:ui:graphics` and `:awake:core:text` — primitive layers that
 carry no `ui-core` dependency in `commonMain`. **Nothing depends on `:awake:ui:ui-core`, in either
 direction.**
 
@@ -271,7 +277,7 @@ make Vulkan depend on a UI engine.
 |---|---|---|
 | `UiDrawPrimitive`, `UiPath`, `UiGradient`, `Rectangle`, `UiPrimitiveTransform` | `:awake:core:graphics` | The render contract. Backends consume them; `UiPath`/`UiGradient`/`Rectangle` are referenced by `FilledPath`/`GradientQuad`/`ClipPush` |
 | `Dp`, `Sp`, `UiDensity`, `UiImageVector`, `UiIcon`, `UiEasing`, `PopupContracts` | `:awake:compose:*` | Authoring surface. No backend needs them |
-| `:awake:ui:text` | `:awake:compose:text` | Font and glyph metrics are consumed by the UI engine only |
+| `:awake:core:text` | `:awake:compose:text` | Font and glyph metrics are consumed by the UI engine only |
 
 `Color` is already correct at `:awake:core:color` — 7 non-UI modules use it (backends, render,
 scene), so it was never a UI type. Keep it a sibling of `:awake:core:graphics` rather than folding
@@ -283,7 +289,7 @@ End state:
 :awake:core:color
 :awake:core:graphics        <- the render-contract half of :awake:ui:graphics
 :awake:compose:runtime
-:awake:compose:text         <- :awake:ui:text
+:awake:compose:text         <- :awake:core:text
 :awake:compose:ui           <- absorbs the authoring half
 :awake:compose:foundation
 ```
@@ -293,12 +299,12 @@ whenever — it only makes an existing contract's home honest, and every consume
 working.
 
 The authoring half must wait. Six modules still depend on `:awake:ui:graphics` today:
-`:awake:ui:ui-core`, `:awake:ui:headless`, `:awake:ui:heroicons`, `:awake:ui:tailwind`,
-`:awake:ui:text`, and `:awake:engine:render:passes`. Moving it early would make `ui-core` depend on
+`:awake:ui:ui-core`, `:awake:ui:headless`, `:awake:heroicons`, `:awake:tailwind`,
+`:awake:core:text`, and `:awake:engine:render:passes`. Moving it early would make `ui-core` depend on
 the `:awake:compose` tree while it is still the shipping engine, which inverts the direction this
 split exists to keep clean.
 
-The move belongs in **Stage 3**, after `ui-headless` and `ui-designsystem` are ported and `ui-core`
+The move belongs in **Stage 3**, after `ui-headless` and `ui-shadcn` are ported and `ui-core`
 is deleted, bundled with the `io.github.awakelab.*` namespace rename so the ~242 `Dp`/`Sp` imports
 and these package moves are one pass rather than three.
 
@@ -312,7 +318,7 @@ Nothing is blocked in the meantime: `:awake:compose:ui` already declares
 | `01-layout.md` | `Constraints`, `Measurable`/`Placeable`/`MeasurePolicy`, `LayoutNode`, intrinsics, Row/Column/Box policies, the Int-vs-Float pixel decision |
 | `02-modifier.md` | `Modifier` chain, `LayoutModifierNode`/`DrawModifierNode`/`PointerInputNode`, ordering, port map from `UiModifier` |
 | `03-composition-locals.md` | `CompositionLocal` on a retained tree; migration of the 7 existing `UiLocal`s |
-| `04-styling-theme.md` | Why `Style`/`styleable` stays in `ui-designsystem`; the primitive draw modifiers `:ui` ships instead |
+| `04-styling-theme.md` | Why `Style`/`styleable` stays in `ui-shadcn`; the primitive draw modifiers `:ui` ships instead |
 | `05-animation.md` | Frame-clock animation; why every `isMeasuringInternal()` guard becomes unnecessary |
 | `06-focus-text-input.md` | Focus tree, caret/selection, IME routing |
 | `07-overlay-layering.md` | Popup/dialog/tooltip/toast as tree layers; z-order, occlusion, modal capture |
@@ -331,13 +337,12 @@ Nothing is blocked in the meantime: `:awake:compose:ui` already declares
 - **Stage 1** — the engine. **Near complete**; see the status table. The exit gate is the Checkout
   Form rendering on this engine with pixel snapshots as the fidelity check — narrowed from
   "diffing clean on both engines", for the reason given above the table.
-- **Stage 2** — skipping (composer invalidation, read-tracking state), **gated on a measurement that
-  has not been taken**: F2 attribution on a real scene once trial cost is structurally zero. If UI
-  build is not a material share of the 16.67 ms budget, skipping buys nothing and the
-  Kotlin-version-locked plugin it needs is a liability bought for free.
-- **Stage 3** — `ui-designsystem` depends on `:foundation` instead of `ui-headless`; `ui-core` and
+- **Stage 2** — explicit retained scopes, composer invalidation, and read-tracking state.
+  **In progress:** the runtime and attribution are landed; select and measure one real Studio
+  subtree before adopting a scope. Compiler-generated skipping remains out of scope.
+- **Stage 3** — `ui-shadcn` depends on `:foundation` instead of `ui-headless`; `ui-core` and
   `ui-headless` are deleted together. **No shadcn code moves into `:awake:compose:*`** — the recipes
-  stay in `ui-designsystem` and change only what they import; `:foundation` stays unstyled and knows
+  stay in `ui-shadcn` and change only what they import; `:foundation` stays unstyled and knows
   nothing about tokens or a theme. `ui-headless` is not ported: measured, its controls hold no
   state — `Checkbox` is 225 lines and 0 state markers — so it is rendering-without-theming, not
   Radix's behaviour-without-rendering, and `:foundation` already ships what it was standing in for.

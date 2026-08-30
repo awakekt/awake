@@ -15,16 +15,16 @@ replaces both problems with a real, reproducible, gitignored checkout of the act
 
 ## Pieces
 
-1. **`tools/fetch_shadcn_reference.sh`** -- clones/updates `shadcn-ui/ui` at a pinned commit SHA
+1. **`tools/shadcn/fetch_shadcn_reference.sh`** -- clones/updates `shadcn-ui/ui` at a pinned commit SHA
    into `third_party/shadcn-ui-ref/` (gitignored -- see `.gitignore`'s `/third_party/` entry).
    Idempotent: safe to re-run any time, always resets the checkout to `PINNED_SHA`.
-2. **`tools/extract_shadcn_tokens.py`** (python3, stdlib only) -- parses
+2. **`tools/shadcn/extract_shadcn_tokens.py`** (python3, stdlib only) -- parses
    `third_party/shadcn-ui-ref/apps/v4/registry/themes.ts`'s theme entries for every base color
    Awake ships (`neutral`, `stone`, `zinc`, `mauve`, `olive`, `mist`, `taupe` -- one entry per
    `ShadcnBaseColor` value, `THEME_NAMES` in the script) -- the registry object literals that
    generate shadcn's real `:root`/`.dark` CSS custom properties for the new-york-v4 style -- and
    writes a generated, test-only Kotlin object:
-   `awake/ui/designsystem/src/commonTest/kotlin/io/github/ronjunevaldoz/awake/ui/designsystem/ShadcnReferenceTokens.kt`
+   `awake/ui/shadcn/src/commonTest/kotlin/io/github/awakelab/awake/ui/shadcn/ShadcnReferenceTokens.kt`
    (`BY_BASE_COLOR`, keyed by theme name, plus a `light`/`dark` convenience for `"neutral"`).
    Deterministic: re-running against an unchanged checkout produces byte-identical output. A
    base-color name missing from `themes.ts` fails the script loudly rather than silently
@@ -41,17 +41,55 @@ replaces both problems with a real, reproducible, gitignored checkout of the act
 ## Usage
 
 ```bash
-tools/fetch_shadcn_reference.sh          # clone/update the pinned checkout
-python3 tools/extract_shadcn_tokens.py   # regenerate ShadcnReferenceTokens.kt from it
-./gradlew :awake:ui:designsystem:desktopTest --tests "*ShadcnReferenceToken*"
+tools/shadcn/fetch_shadcn_reference.sh          # clone/update the pinned checkout
+python3 tools/shadcn/extract_shadcn_tokens.py   # regenerate ShadcnReferenceTokens.kt from it
+./gradlew :awake:ui:shadcn:desktopTest --tests "*ShadcnReferenceToken*"
 ```
+
+## Verifying
+
+`tools/shadcn/verify_shadcn_reference.sh` runs the two checks this pipeline needs, and they are
+deliberately different in severity.
+
+**1. Is the generated table stale? — fails.** Re-runs the extractor and diffs against the committed
+`ShadcnReferenceTokens.kt`. A hand-edit of a generated file breaks the chain back to upstream while
+every test stays green, which is the exact failure this pipeline exists to remove.
+
+That is not hypothetical. `OUT_FILE` pointed at `awake/ui/shadcn/...`, a module path
+that no longer exists, and `mkdir(parents=True)` meant a run silently created the dead tree and
+wrote there while the real file went untouched. Nobody noticed because git does not track empty
+directories.
+
+**2. Has upstream moved since `PINNED_SHA`? — reports only.** Never fails, never bumps. Moving the
+pin changes what the theme has to match, which is a visual decision with its own review.
+
+Verified 2026-08-23: the registry at the current pin is byte-identical to `main`.
+
+**Trap:** `apps/v4/app/globals.css` is the docs site's own theme and *has* diverged from the
+registry — its light `--foreground` is `oklch(0% 0 0)` where the registry says `oklch(0.145 0 0)`.
+Checking it produces a false drift alarm. `apps/v4/registry/themes.ts` is what ships and what the
+extractor reads.
+
+## What Is A Gate, And What Is Not
+
+| Piece | Runs | Fails a build? |
+|---|---|---|
+| `ShadcnReferenceTokenExpandedTest` | with the suite | **yes** |
+| `verify_shadcn_reference.sh` check 1 (stale) | on demand | **yes**, exit 1 |
+| `verify_shadcn_reference.sh` check 2 (upstream) | on demand | no, reports |
+| `capture_shadcn_local.py`, `tools/shadcn/reference-app`, `shadcn_parity_*.json` | **manually, by a human** | **no** |
+
+The pixel layer is **an investigation tool, not a gate**. It has no CI reference, no Gradle task and
+no Kotlin test driving it, and that is stated here rather than left to be discovered: tooling that
+looks like a gate and is not is worse than tooling that says it is manual. Use it to find out *why*
+a component looks wrong; do not expect it to tell you *that* one does.
 
 ## Bumping The Pinned SHA
 
 1. Pick a new commit on `shadcn-ui/ui`'s `main` (e.g. `git ls-remote https://github.com/shadcn-ui/ui.git HEAD`).
-2. Edit `PINNED_SHA` in `tools/fetch_shadcn_reference.sh`.
-3. Re-run `tools/fetch_shadcn_reference.sh` (moves the checkout), then
-   `python3 tools/extract_shadcn_tokens.py` (regenerates `ShadcnReferenceTokens.kt`).
+2. Edit `PINNED_SHA` in `tools/shadcn/fetch_shadcn_reference.sh`.
+3. Re-run `tools/shadcn/fetch_shadcn_reference.sh` (moves the checkout), then
+   `python3 tools/shadcn/extract_shadcn_tokens.py` (regenerates `ShadcnReferenceTokens.kt`).
 4. Diff the regenerated file. If any token values changed upstream, re-run
    `ShadcnReferenceTokenExpandedTest` and reconcile `KNOWN_DRIFTED` -- a token that was locked
    drift may now match (delete its entry) or a previously-matching token may now need one added.
@@ -61,7 +99,7 @@ python3 tools/extract_shadcn_tokens.py   # regenerate ShadcnReferenceTokens.kt f
 ## Depends On This Pipeline
 
 - `ShadcnReferenceTokenExpandedTest.kt` / `ShadcnReferenceTokenTest.kt`
-  (`awake:engine:ui:ui-designsystem`) -- token-level OKLCH ground truth.
+  (`:awake:ui:shadcn`) -- token-level OKLCH ground truth.
 - `docs/reference/ui-validation.md`'s "Investigating Extra Space Reports" absolute-check step --
   points here for the shadcn reference location instead of a manual `/tmp` clone.
 - Any future `ShadcnParityScreenshotTest`-style pixel-baseline work that wants a real rendered
@@ -116,6 +154,13 @@ for the style presets -- and did not, for six of seven base colors, until this p
   - all 8 presets x all 7 base colors x both modes (112 combinations) resolve a complete theme
     without throwing, with a few cheap well-formedness checks (radius token identity, alpha
     channels in range) on top.
+
+**The component reference is hand-copied and ungated.** `tools/shadcn/reference-app/src/ui/*.tsx`
+were copied in by hand, not extracted from the pinned checkout, and **11 of the 26 have drifted** --
+`skeleton` uses `bg-muted` where upstream uses `bg-accent`, and `toggle` is missing a whole group of
+classes. Every screenshot-based parity number is measured against that. Tokens are machine-extracted
+and gated; components are neither. See
+[`docs/tasks/2026-08-23-vendor-the-reference-app-components.md`](../tasks/2026-08-23-vendor-the-reference-app-components.md).
 
 **NOT verified, and not claimed to be:**
 

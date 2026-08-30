@@ -1,4 +1,9 @@
 /*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/*
  * Awake
  * Awake.awake-asset-shaders
  *
@@ -31,7 +36,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.asset.shaders"
+        namespace = "io.github.awakelab.awake.asset.shaders"
     }
 
     sourceSets {
@@ -41,6 +46,13 @@ kotlin {
             // building its own ShaderSet needs those types visible through this module
             // (matches awake:backend:vulkan's own api(render:contract) for the same reason).
             api(project(":awake:engine:render:contract"))
+            // ContentFeature, for RenderPlan's own field. Acyclic: passes depends on
+            // render:contract and the core modules, never on this one.
+            api(project(":awake:engine:render:passes"))
+            // The engine's own UI shaders are ASL definitions here rather than .wgsl resources,
+            // so EngineShaderSets can hand a backend their WGSL with no file to ship. Acyclic:
+            // shader-dsl depends on core:geometry and render:contract only.
+            api(project(":awake:asset:shader-dsl"))
             // readResourceBytes -- ShaderSource.resolveBytes()'s own implementation detail, not
             // part of this module's public API surface, so implementation (not api) is enough.
         }

@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "name": "streamed-nav",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 0.0, "y": 62.0, "z": 62.0 },
+          "center": { "x": 0.0, "y": 0.0, "z": 0.0 },
+          "fovYDegrees": 52.0,
+          "near": 0.1,
+          "far": 400.0,
+          "primary": true
+        }
+      ]
+    },
+    {
+      "name": "stream-target",
+      "transform": { "position": { "x": 26.0, "y": 0.5, "z": 0.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+      ]
+    },
+    {
+      "name": "stream-chaser",
+      "transform": { "position": { "x": 20.0, "y": 0.5, "z": 6.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "cube", "material": "lit-shadow" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.4 }
+      ]
+    },
+    {
+      "name": "light",
+      "components": [
+        { "component": "light", "type": "Directional" }
+      ]
+    }
+  ]
+}

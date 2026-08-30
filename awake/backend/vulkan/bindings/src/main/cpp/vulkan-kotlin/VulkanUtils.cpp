@@ -16,7 +16,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
     std::vector<VkQueueFamilyProperties> vkArray(count);
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &count, vkArray.data());
     jclass clazz = env->FindClass(
-            "io/github/ronjunevaldoz/awake/vulkan/models/VkQueueFamilyProperties");
+            "io/github/awakelab/awake/vulkan/models/VkQueueFamilyProperties");
     auto jArray = env->NewObjectArray(static_cast<jsize>(count), clazz, nullptr);
     env->DeleteLocalRef(clazz);
     for (int i = 0; i < count; ++i) {
@@ -224,7 +224,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         std::vector<VkExtensionProperties> vkArray(count);
         vkEnumerateDeviceExtensionProperties(physicalDevice, vkarg1, &count, vkArray.data());
         jclass clazz = env->FindClass(
-                "io/github/ronjunevaldoz/awake/vulkan/models/VkExtensionProperties");
+                "io/github/awakelab/awake/vulkan/models/VkExtensionProperties");
         auto jArray = env->NewObjectArray(static_cast<jsize>(count), clazz, nullptr);
         env->DeleteLocalRef(clazz);
         for (int i = 0; i < count; ++i) {
@@ -419,7 +419,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         std::vector<VkExtensionProperties> vkArray(count);
         vkEnumerateInstanceExtensionProperties(vkarg0, &count, vkArray.data());
         jclass clazz = env->FindClass(
-                "io/github/ronjunevaldoz/awake/vulkan/models/VkExtensionProperties");
+                "io/github/awakelab/awake/vulkan/models/VkExtensionProperties");
         auto jArray = env->NewObjectArray(static_cast<jsize>(count), clazz, nullptr);
         env->DeleteLocalRef(clazz);
         for (int i = 0; i < count; ++i) {
@@ -642,7 +642,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         std::vector<VkLayerProperties> vkArray(count);
         vkEnumerateInstanceLayerProperties(&count, vkArray.data());
         jclass clazz = env->FindClass(
-                "io/github/ronjunevaldoz/awake/vulkan/models/VkLayerProperties");
+                "io/github/awakelab/awake/vulkan/models/VkLayerProperties");
         auto jArray = env->NewObjectArray(static_cast<jsize>(count), clazz, nullptr);
         env->DeleteLocalRef(clazz);
         for (int i = 0; i < count; ++i) {
@@ -843,12 +843,12 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surfaceKHR, &count,
                                                   vkArray.data());
         jclass clazz = env->FindClass(
-                "io/github/ronjunevaldoz/awake/vulkan/enums/VkPresentModeKHR");
+                "io/github/awakelab/awake/vulkan/enums/VkPresentModeKHR");
         auto jArray = env->NewObjectArray(static_cast<jsize>(count), clazz, nullptr);
         env->DeleteLocalRef(clazz);
         for (int i = 0; i < count; ++i) {
             jobject obj = enum_utils::setEnumFromVulkan(env, vkArray[i],
-                                                        "io/github/ronjunevaldoz/awake/vulkan/enums/VkPresentModeKHR");
+                                                        "io/github/awakelab/awake/vulkan/enums/VkPresentModeKHR");
             env->SetObjectArrayElement(jArray, (jint) i, obj);
             env->DeleteLocalRef(obj);
         }
@@ -921,7 +921,7 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         std::vector<VkSurfaceFormatKHR> vkArray(count);
         vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surfaceKHR, &count, vkArray.data());
         jclass clazz = env->FindClass(
-                "io/github/ronjunevaldoz/awake/vulkan/models/VkSurfaceFormatKHR");
+                "io/github/awakelab/awake/vulkan/models/VkSurfaceFormatKHR");
         auto jArray = env->NewObjectArray(static_cast<jsize>(count), clazz, nullptr);
         env->DeleteLocalRef(clazz);
         for (int i = 0; i < count; ++i) {

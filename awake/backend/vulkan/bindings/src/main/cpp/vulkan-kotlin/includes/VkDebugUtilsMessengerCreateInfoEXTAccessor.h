@@ -33,7 +33,7 @@ private:
         this->obj = env->NewGlobalRef(obj);
         clazz = (jclass) env->NewGlobalRef(env->GetObjectClass(obj));
         sTypeField = env->GetFieldID(clazz, "sType",
-                                     "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                     "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
         pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
         flagsField = env->GetFieldID(clazz, "flags", "I");
         messageSeverityField = env->GetFieldID(clazz, "messageSeverity", "I");

@@ -1,0 +1,102 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package io.github.awakelab.awake.ui.shadcn.theme
+
+import io.github.awakelab.awake.core.color.Color
+import io.github.awakelab.awake.core.math2d.Dp
+import io.github.awakelab.awake.core.math2d.dp
+
+data class ShadcnRadiusScale(
+    val xs: Dp,
+    val sm: Dp,
+    val md: Dp,
+    val lg: Dp,
+    val xl: Dp,
+    val full: Dp,
+) {
+    companion object {
+        // Multiplicative, matching Tailwind v4 / new-york-v4's real derivation (verified against
+        // the pinned reference app's own index.css):
+        //   --radius-sm: calc(var(--radius) * 0.6)   --radius-lg: var(--radius)
+        //   --radius-md: calc(var(--radius) * 0.8)   --radius-xl: calc(var(--radius) * 1.4)
+        // This was previously additive (base-4 / base-2 / base+4) with a comment asserting
+        // shadcn's scale "is additive, not multiplicative" -- factually wrong, but it produced
+        // IDENTICAL numbers at Vega's base of 10dp (6/8/10/14), so the preset the parity
+        // comparisons use was correct by coincidence while every other preset drifted (Nova's
+        // base of 5dp gave 1/3/9 instead of the real 3/4/7).
+        // xs has no shadcn counterpart -- kept as one step below sm on the same ratio curve.
+        // Clamped at 0 so a 0dp base preset (Lyra) can't go negative.
+        fun fromBase(base: Dp): ShadcnRadiusScale = ShadcnRadiusScale(
+            xs = (base.value * 0.4f).coerceAtLeast(0f).dp,
+            sm = (base.value * 0.6f).coerceAtLeast(0f).dp,
+            md = (base.value * 0.8f).coerceAtLeast(0f).dp,
+            lg = base,
+            xl = (base.value * 1.4f).coerceAtLeast(0f).dp,
+            full = 9999f.dp,
+        )
+    }
+}
+
+data class ShadcnMetrics(
+    // Card/Dialog/Muted-surface/Alert inset -- real shadcn's Card/Dialog p-6.
+    val panelPadding: Dp,
+    // Popover's own inset -- real shadcn's Popover p-4, deliberately smaller than
+    // [panelPadding]; kept as its own field rather than reusing panelPadding since real shadcn
+    // does NOT share one inset value across all three surfaces.
+    val surfacePadding: Dp,
+    val fieldPaddingX: Dp,
+    // Select-trigger's own vertical inset (real shadcn's SelectTrigger py-2) -- see
+    // [inputPaddingY] for the real text-Input's distinct (smaller) py-1 value; the two used to
+    // incorrectly share this one field.
+    val fieldPaddingY: Dp,
+    val badgePaddingX: Dp,
+    val badgePaddingY: Dp,
+    // Real text-Input's vertical inset (real shadcn's Input py-1) -- smaller than
+    // [fieldPaddingY]'s SelectTrigger py-2.
+    val inputPaddingY: Dp,
+    // Horizontal inset for a full-bleed chrome band (ShadcnSurfaceVariant.Band) -- an app
+    // toolbar/status-bar strip, not part of shadcn/ui's own vocabulary. Defaults to
+    // [fieldPaddingX] (same horizontal-inset scale) so existing per-theme presets don't need
+    // their own tuned value.
+    val bandPaddingX: Dp = fieldPaddingX,
+)
+
+data class ShadcnPalette(
+    val background: Color,
+    val foreground: Color,
+    // Shadow/scrim tints. Real shadcn's box-shadow and overlay backgrounds are a fixed black at
+    // some alpha regardless of light/dark theme (they represent elevation over the page, not a
+    // brand color), so these are theme-independent constants, not hue-derived like the rest of
+    // this palette -- see createPalette(). Call sites apply their own alpha on top of [shadow];
+    // [overlay] is already the complete scrim color (shadcn's `bg-black/50`).
+    val shadow: Color,
+    val overlay: Color,
+    val primary: Color,
+    val primaryForeground: Color,
+    val secondary: Color,
+    val secondaryForeground: Color,
+    val muted: Color,
+    val mutedForeground: Color,
+    val accent: Color,
+    val accentForeground: Color,
+    val destructive: Color,
+    val destructiveForeground: Color,
+    val border: Color,
+    val ring: Color,
+    val input: Color,
+    val card: Color,
+    val cardForeground: Color,
+    val popover: Color,
+    val popoverForeground: Color,
+    val sidebar: Color,
+    val sidebarForeground: Color,
+    val sidebarPrimary: Color,
+    val sidebarPrimaryForeground: Color,
+    val sidebarAccent: Color,
+    val sidebarAccentForeground: Color,
+    val sidebarBorder: Color,
+    val sidebarRing: Color,
+)

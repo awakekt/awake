@@ -1,69 +1,48 @@
-# AGENTS.md — Awake
+# Awake Engine: Agent Guide
 
-Awake is a Kotlin Multiplatform game engine library and game studio. Use this file as a startup index, not
-as the long-form home for project policy.
+Welcome to **Awake Engine**. This repository is the core Kotlin Multiplatform 3D/2D game engine runtime powered by Vulkan, WebGPU, and Compose Multiplatform.
 
-## Read First
+## Engine Domain Skills (.agents/skills/)
 
-- [docs/architecture.md](../docs/architecture.md)
-- [docs/reference/ai-collaboration.md](../docs/reference/ai-collaboration.md)
-- [docs/reference/agent-catalog.md](../docs/reference/agent-catalog.md)
-- [docs/reference/ui-ownership.md](../docs/reference/ui-ownership.md)
-- [docs/reference/ui-validation.md](../docs/reference/ui-validation.md)
-- [docs/reference/game-structure.md](../docs/reference/game-structure.md)
-- [docs/reference/framework-game-boundary.md](../docs/reference/framework-game-boundary.md)
-- [docs/mvp-plan.md](../docs/mvp-plan.md)
-- [docs/tasks.md](../docs/tasks.md)
+All engine-specific skills and architectural rules are located in `.agents/skills/`:
 
-## Critical Guardrails
+### Core Engine & Lifecycle
+- [Awake Engine Overview](.agents/skills/awake/SKILL.md): Engine directory layout and conventions
+- [Awake App Composition](.agents/skills/awake-app-composition/SKILL.md): Composing applications and engine subsystems
+- [Awake ECS Authoring](.agents/skills/awake-ecs-authoring/SKILL.md): Entity-Component-System design rules
+- [Awake Scene Runtime](.agents/skills/awake-ecs-scene-runtime/SKILL.md): SceneAppLifecycleRuntime & frame loops
+- [Awake Core Math](.agents/skills/awake-core-math/SKILL.md): Vec3f, Quat, Mat4, Bounds, and geometry
+- [Awake State Management](.agents/skills/awake-state-management/SKILL.md): Reactive state and event flows
+- [Awake Framework Boundary](.agents/skills/awake-framework-boundary/SKILL.md): Rules separating core engine from game packs
+- [Awake Copyright & Provenance](.agents/skills/awake-copyright-provenance/SKILL.md): License and attribution rules
 
-- The Android Vulkan sample remains the regression gate for backend work.
-- Do not hand-edit generated JNI Accessor/Mutator C++ files; regenerate them.
-- Engine modules do not follow the app-style 6-layer clean-architecture split.
-- Reusable UI boundaries are canonical in [docs/reference/ui-ownership.md](../docs/reference/ui-ownership.md).
-- Shared UI verification rules are canonical in [docs/reference/ui-validation.md](../docs/reference/ui-validation.md).
-- ECS storage and family changes require exact pre/post JMH controls, GC evidence, all-target
-  tests, and the rules in `skills/awake-ecs-authoring/SKILL.md`; cross-runtime ECS numbers are
-  architectural references, not comparable performance evidence.
+### Rendering, Pipelines & Shaders
+- [Awake Render Vulkan](.agents/skills/awake-render-vulkan/SKILL.md): Vulkan pipeline, swapchain, and Naga SPIR-V compilation
+- [Awake Render WebGPU](.agents/skills/awake-render-webgpu/SKILL.md): WebGPU pipeline and native WGSL execution
+- [Awake Render Pipeline](.agents/skills/awake-render-pipeline/SKILL.md): RenderPlan, ShaderSet, and pass orchestration
 
-## Mandatory Repo-Local Domain Skills
+### Physics & Asset Pipelines
+- [Awake Physics Jolt](.agents/skills/awake-physics-jolt/SKILL.md): Jolt physics bodies, collision shapes, and steps
+- [Awake Terrain Authoring](.agents/skills/awake-terrain-authoring/SKILL.md): Raw Heightmap and surface sampling
+- [Awake FBX Asset Cooking](.agents/skills/awake-fbx-asset-cooking/SKILL.md): FBX to GLB conversion rules
 
-- `skills/awake-core-math/SKILL.md` — Vector/Matrix mutating-vs-allocating math & camera basis
-- `skills/awake-ecs-authoring/SKILL.md` — Component/system creation, singleton tags, family storage, pooling, query, and benchmark rules
-- `skills/awake-ecs-scene-runtime/SKILL.md` — Scene runtime and entity hierarchy patterns
-- `skills/awake-render-pipeline/SKILL.md` — Strategy RenderFeature & Pipeline/Material separation
-- `skills/awake-render-vulkan/SKILL.md` — Vulkan swapchain, resource lifecycle & Android gate
-- `skills/awake-render-webgpu/SKILL.md` — WebGPU wgpu4k/Dawn, WASM canvas resize & buffer binding
-- `skills/awake-physics-jolt/SKILL.md` — Jolt C++ native bridge, physics contract & collision loop
-- `skills/awake-ui-authoring/SKILL.md` — UI 3-layer architecture (`ui-core` vs `ui-headless` vs `ui-designsystem`)
-- `skills/awake-ui-shadcn-consuming/SKILL.md` — Consuming Shadcn component recipes
-- `skills/awake-ui-shadcn-styling/SKILL.md` — Building & extending Shadcn component recipes
-- `skills/awake-ui-icons/SKILL.md` — SVG-to-UiImageVector generation pipeline
-- `skills/awake-ui-performance/SKILL.md` — per-frame allocation, trial-pass cost, `cacheKey`, and how to measure them
-- `skills/awake-ui-verification/SKILL.md` — UI visual snapshots and parity test baselines
-- `skills/awake-framework-boundary/SKILL.md` — framework-versus-game ownership before promoting sample code or adding MMO-oriented abstractions
+### UI, Shadcn & Styling
+- [Awake UI Authoring](.agents/skills/awake-ui-authoring/SKILL.md): Compose UI component authoring
+- [Awake UI Performance](.agents/skills/awake-ui-performance/SKILL.md): Frame pacing & draw call reduction
+- [Awake Compose Authoring](.agents/skills/awake-compose-authoring/SKILL.md): Design system tokens and spacing
+- [Awake UI Design Audit](.agents/skills/awake-ui-design-audit/SKILL.md): Automated UI design audit rubric
+- [Awake UI Layout Guidance](.agents/skills/awake-ui-layout-guidance/SKILL.md): Responsive and adaptive layouts
+- [Awake UI Verification](.agents/skills/awake-ui-verification/SKILL.md): Visual regression and component crops
+- [Awake UI Icons](.agents/skills/awake-ui-icons/SKILL.md): Heroicons vector compiling
+- [Awake UI CSS Modifier](.agents/skills/awake-ui-css-modifier/SKILL.md): CSS modifier semantics
+- [Awake Shadcn Parity Workflow](.agents/skills/awake-shadcn-parity-workflow/SKILL.md): Web Shadcn parity workflow
+- [Awake Shadcn to Compose](.agents/skills/awake-shadcn-to-compose/SKILL.md): Porting Shadcn primitives
+- [Awake Shadcn Recipe Authoring](.agents/skills/awake-shadcn-recipe-authoring/SKILL.md): Custom Shadcn recipe authoring
+- [Awake Shadcn Recipe Consuming](.agents/skills/awake-shadcn-recipe-consuming/SKILL.md): Consuming recipes in UI
 
-## Upstream KMP Skill Routing
-
-| Topic | Skill |
-|---|---|
-| Publishing to Maven Central | `kotlin-multiplatform-library-publishing` |
-| iOS / SPM distribution, MoltenVK framework | `kotlin-multiplatform-xcframework-spm` |
-| JNI bridge / C++ marshalling / memory safety | `kotlin-multiplatform-jni-pro` |
-| Platform-specific implementations (`expect/actual`) | `kotlin-multiplatform-expect-actual` |
-| Toolchain upgrade / KMP migration | `kotlin-multiplatform-migration` |
-| Unit / integration tests | `kotlin-multiplatform-unit-testing` |
-| Code quality (Detekt, Ktlint) | `kotlin-multiplatform-code-quality` |
-| CI automation | `kotlin-multiplatform-ci-github-actions` |
-| Desktop windowing / packaging (editor, GLFW host) | `kotlin-multiplatform-desktop-app` |
-| Custom drawing / graphics layers (editor viewport) | `kotlin-multiplatform-graphics-modifiers` |
-| Release / versioning / changelog | `kotlin-multiplatform-release` |
-| Architecture audit | `kotlin-multiplatform-audit` |
-| Capture lessons learned | `kotlin-multiplatform-lessons` |
-| Harvest consumer lessons | `/kmm-harvest-lessons` |
-
-## Repo-Local Skill Sources
-
-- Canonical repo-local skill and agent files live under `skills/awake/`.
-- `.claude/agents` and `.claude/commands/awake` are symlinks into `skills/awake/`.
-- Edit the tracked files under `skills/awake/`, not the symlinked `.claude/` paths.
+UI verification is tiered: use focused compile/tests and CPU previews during iteration, complete
+the standalone state matrix before commit, and run showcase/reference/audit evidence before a
+parity claim. Use GPU capture only for backend paint, shader, blending, text-sampling, pacing, or
+anti-aliasing changes; see `docs/reference/ui-validation.md`.
+- [Awake Tailwind to Compose](.agents/skills/awake-tailwind-to-compose/SKILL.md): Tailwind classes to Compose modifiers
+- [Awake Web to Compose](.agents/skills/awake-web-to-compose/SKILL.md): Web layout patterns to Compose

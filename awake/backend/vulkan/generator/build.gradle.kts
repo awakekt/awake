@@ -1,4 +1,9 @@
 /*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/*
  * Awake
  * Awake.awake-vulkan-generator
  *
@@ -32,7 +37,7 @@ sourceSets["main"].kotlin.srcDir("src/main/kotlin")
 sourceSets["main"].resources.srcDir("../bindings/src/main/cpp/vulkan-kotlin/")
 
 application { // Specify the main class using the application plugin
-    mainClass.set("io.github.ronjunevaldoz.awake.vulkan_generator.MainKt")
+    mainClass.set("io.github.awakelab.awake.vulkan_generator.MainKt")
 }
 
 dependencies {

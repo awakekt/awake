@@ -1,3 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 plugins {
     id("awake.kmp-library-convention")
     id("awake.dokka-convention")
@@ -8,21 +14,15 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.compose.foundation"
+        namespace = "io.github.awakelab.awake.compose.foundation"
     }
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":awake:core:graphics2d"))
-            implementation(project(":awake:core:math2d"))
             api(project(":awake:compose:ui"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
-    }
-
-    compilerOptions {
-        freeCompilerArgs.addAll(listOf("-Xcontext-parameters"))
     }
 }

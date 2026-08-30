@@ -42,5 +42,6 @@ re-argued:
   covers hot spots; whether it is worth a plugin is a Stage 2 measurement.
 - **No `LaunchedEffect`/`SideEffect`.** The engine is frame-driven with no coroutines, and node
   `onAttach`/`onDetach` covers what `DisposableEffect` exists for.
-- **No true layer semantics for `graphicsLayer`.** Needs render-to-texture in the backends. See
+- **Partial `graphicsLayer` semantics.** Offscreen isolation, alpha and texture transforms are
+  implemented; effects still need texture-pipeline support. See
   `10-graphics-layer.md`.

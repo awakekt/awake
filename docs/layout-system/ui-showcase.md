@@ -66,7 +66,7 @@ Every page renders up to three sections, in this order:
 | States | size/enabled/value ladders | no |
 
 A page declaring neither matrix renders the hero alone. Exhaustive interaction coverage lives
-in `:awake:ui:designsystem` tests, not in extra pages.
+in `:awake:ui:shadcn` tests, not in extra pages.
 
 Pages in the **Blocks** category are registered placeholders for shadcn components Awake has
 not built yet. They render a "not implemented" empty state naming the missing primitive and its

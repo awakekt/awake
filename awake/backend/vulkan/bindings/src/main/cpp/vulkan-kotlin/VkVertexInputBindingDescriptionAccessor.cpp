@@ -12,7 +12,7 @@ VkVertexInputBindingDescriptionAccessor::VkVertexInputBindingDescriptionAccessor
     bindingField = env->GetFieldID(clazz, "binding", "I");
     strideField = env->GetFieldID(clazz, "stride", "I");
     inputRateField = env->GetFieldID(clazz, "inputRate",
-                                     "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkVertexInputRate;");
+                                     "Lio/github/awakelab/awake/vulkan/enums/VkVertexInputRate;");
 }
 
 uint32_t

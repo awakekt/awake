@@ -1,0 +1,39 @@
+# Components with no visual baseline yet.
+# This list may only shrink: record a baseline and delete the line. A new component must
+# either ship a baseline or add itself here, where review can see it.
+alert
+avatar
+badge
+breadcrumb
+button
+button-group
+button-group-separator
+card
+checkbox
+collapsible
+combobox
+dialog
+empty
+field
+field-text
+icon
+input
+kbd
+label
+progress
+radio-group
+select
+separator
+sidebar
+sidebar-shell
+skeleton
+surface
+switch
+table
+tabs
+text
+textarea
+toast
+toggle
+toggle-group
+tooltip

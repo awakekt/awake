@@ -1,0 +1,209 @@
+public abstract interface class io/github/awakelab/awake/asset/shaders/ContentFeatureSource {
+	public abstract fun resolve (Lio/github/awakelab/awake/asset/shaders/RenderBackend;)Lio/github/awakelab/awake/render/passes/ContentFeature;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/EngineShaderSets {
+	public static final field INSTANCE Lio/github/awakelab/awake/asset/shaders/EngineShaderSets;
+	public final fun getDebugLine ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public final fun getUiGlyph ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public final fun getUiQuad ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public final fun getUiRoundedQuad ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public final fun getUiTargetComposite ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public final fun getUiTexture ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/EngineShaderSetsKt {
+	public static final fun uiShaderSet (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/RenderBackend : java/lang/Enum {
+	public static final field Vulkan Lio/github/awakelab/awake/asset/shaders/RenderBackend;
+	public static final field WebGpu Lio/github/awakelab/awake/asset/shaders/RenderBackend;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/asset/shaders/RenderBackend;
+	public static fun values ()[Lio/github/awakelab/awake/asset/shaders/RenderBackend;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/RenderCapabilities {
+	public fun <init> (Lio/github/awakelab/awake/asset/shaders/RenderBackend;ZLkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/asset/shaders/RenderBackend;ZLkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBackend ()Lio/github/awakelab/awake/asset/shaders/RenderBackend;
+	public final fun getDepthPrePass ()Z
+	public final fun getSupportsPipeline ()Lkotlin/jvm/functions/Function1;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/RenderPlan {
+	public fun <init> (Lio/github/awakelab/awake/asset/shaders/ScenePipeline;Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/asset/shaders/ShaderSet;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/asset/shaders/ScenePipeline;Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/asset/shaders/ShaderSet;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/asset/shaders/ScenePipeline;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public final fun contentFeaturesFor (Lio/github/awakelab/awake/asset/shaders/RenderBackend;)Ljava/util/List;
+	public final fun copy (Lio/github/awakelab/awake/asset/shaders/ScenePipeline;Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/asset/shaders/ShaderSet;)Lio/github/awakelab/awake/asset/shaders/RenderPlan;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/shaders/RenderPlan;Lio/github/awakelab/awake/asset/shaders/ScenePipeline;Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/asset/shaders/ShaderSet;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/shaders/RenderPlan;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getContentFeatures ()Ljava/util/List;
+	public final fun getDepthPrePassShaderSet ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public final fun getPrimary ()Lio/github/awakelab/awake/asset/shaders/ScenePipeline;
+	public final fun getScenePipelines ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun toPipelineRequests (Lio/github/awakelab/awake/asset/shaders/RenderBackend;)Ljava/util/List;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/RenderPlanKt {
+	public static final fun narrowedTo (Lio/github/awakelab/awake/asset/shaders/RenderPlan;Lio/github/awakelab/awake/asset/shaders/RenderCapabilities;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/asset/shaders/RenderPlan;
+	public static synthetic fun narrowedTo$default (Lio/github/awakelab/awake/asset/shaders/RenderPlan;Lio/github/awakelab/awake/asset/shaders/RenderCapabilities;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/shaders/RenderPlan;
+	public static final fun stagesFor (Lio/github/awakelab/awake/asset/shaders/ShaderSet;Lio/github/awakelab/awake/asset/shaders/RenderBackend;)Lio/github/awakelab/awake/asset/shaders/ShaderStages;
+}
+
+public abstract interface class io/github/awakelab/awake/asset/shaders/ResolvedShader {
+	public abstract fun getEntryPoint ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ResolvedShader$SpirV : io/github/awakelab/awake/asset/shaders/ResolvedShader {
+	public fun <init> ([BLjava/lang/String;)V
+	public final fun component1 ()[B
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy ([BLjava/lang/String;)Lio/github/awakelab/awake/asset/shaders/ResolvedShader$SpirV;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/shaders/ResolvedShader$SpirV;[BLjava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/shaders/ResolvedShader$SpirV;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBytes ()[B
+	public fun getEntryPoint ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ResolvedShader$Wgsl : io/github/awakelab/awake/asset/shaders/ResolvedShader {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/awakelab/awake/asset/shaders/ResolvedShader$Wgsl;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/shaders/ResolvedShader$Wgsl;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/shaders/ResolvedShader$Wgsl;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getEntryPoint ()Ljava/lang/String;
+	public final fun getSource ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/awakelab/awake/asset/shaders/RuntimeShaderResolver {
+	public abstract fun resolve (Lio/github/awakelab/awake/asset/shaders/ShaderSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ScenePipeline {
+	public fun <init> (Lio/github/awakelab/awake/render/pipeline/PipelineKey;Lio/github/awakelab/awake/asset/shaders/ShaderSet;Lio/github/awakelab/awake/core/geometry/VertexFormat;Lio/github/awakelab/awake/render/pipeline/PipelineVariant;Lio/github/awakelab/awake/render/pipeline/BindingLayout;ZZZ)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/render/pipeline/PipelineKey;Lio/github/awakelab/awake/asset/shaders/ShaderSet;Lio/github/awakelab/awake/core/geometry/VertexFormat;Lio/github/awakelab/awake/render/pipeline/PipelineVariant;Lio/github/awakelab/awake/render/pipeline/BindingLayout;ZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/render/pipeline/PipelineKey;
+	public final fun component2 ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public final fun component3 ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
+	public final fun component4 ()Lio/github/awakelab/awake/render/pipeline/PipelineVariant;
+	public final fun component5 ()Lio/github/awakelab/awake/render/pipeline/BindingLayout;
+	public final fun component6 ()Z
+	public final fun component7 ()Z
+	public final fun component8 ()Z
+	public final fun copy (Lio/github/awakelab/awake/render/pipeline/PipelineKey;Lio/github/awakelab/awake/asset/shaders/ShaderSet;Lio/github/awakelab/awake/core/geometry/VertexFormat;Lio/github/awakelab/awake/render/pipeline/PipelineVariant;Lio/github/awakelab/awake/render/pipeline/BindingLayout;ZZZ)Lio/github/awakelab/awake/asset/shaders/ScenePipeline;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/shaders/ScenePipeline;Lio/github/awakelab/awake/render/pipeline/PipelineKey;Lio/github/awakelab/awake/asset/shaders/ShaderSet;Lio/github/awakelab/awake/core/geometry/VertexFormat;Lio/github/awakelab/awake/render/pipeline/PipelineVariant;Lio/github/awakelab/awake/render/pipeline/BindingLayout;ZZZILjava/lang/Object;)Lio/github/awakelab/awake/asset/shaders/ScenePipeline;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBindingLayout ()Lio/github/awakelab/awake/render/pipeline/BindingLayout;
+	public final fun getBuildBackCulled ()Z
+	public final fun getBuildTransparent ()Z
+	public final fun getBuildWireframe ()Z
+	public final fun getKey ()Lio/github/awakelab/awake/render/pipeline/PipelineKey;
+	public final fun getShaders ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public final fun getVariant ()Lio/github/awakelab/awake/render/pipeline/PipelineVariant;
+	public final fun getVertexFormat ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ScenePipelineKt {
+	public static final fun toRequests (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ShaderProgramResourcesKt {
+	public static final fun getEntryPoint (Lio/github/awakelab/awake/asset/shaders/ShaderSource;)Ljava/lang/String;
+	public static final fun perBackendShaderSet (Ljava/lang/String;)Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public static final fun resolveBytes (Lio/github/awakelab/awake/asset/shaders/ShaderSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun shaderSet (Lio/github/awakelab/awake/asset/shaders/ShaderStages;Lio/github/awakelab/awake/asset/shaders/ShaderStages;)Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public static final fun shaderSet (Ljava/lang/String;)Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ShaderSet {
+	public fun <init> (Lio/github/awakelab/awake/asset/shaders/ShaderStages;Lio/github/awakelab/awake/asset/shaders/ShaderStages;)V
+	public final fun component1 ()Lio/github/awakelab/awake/asset/shaders/ShaderStages;
+	public final fun component2 ()Lio/github/awakelab/awake/asset/shaders/ShaderStages;
+	public final fun copy (Lio/github/awakelab/awake/asset/shaders/ShaderStages;Lio/github/awakelab/awake/asset/shaders/ShaderStages;)Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/shaders/ShaderSet;Lio/github/awakelab/awake/asset/shaders/ShaderStages;Lio/github/awakelab/awake/asset/shaders/ShaderStages;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getVulkan ()Lio/github/awakelab/awake/asset/shaders/ShaderStages;
+	public final fun getWebGpu ()Lio/github/awakelab/awake/asset/shaders/ShaderStages;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ShaderSetLoadingKt {
+	public static final fun entryPoint (Lio/github/awakelab/awake/asset/shaders/ShaderStages;Lio/github/awakelab/awake/asset/shaders/ShaderStage;)Ljava/lang/String;
+	public static final fun resourcePath (Lio/github/awakelab/awake/asset/shaders/ShaderStages;Lio/github/awakelab/awake/asset/shaders/ShaderStage;)Ljava/lang/String;
+	public static final fun spec (Lio/github/awakelab/awake/asset/shaders/ShaderStages;Lio/github/awakelab/awake/core/geometry/VertexFormat;Lio/github/awakelab/awake/render/pipeline/PipelineVariant;Lio/github/awakelab/awake/render/pipeline/BindingLayout;)Lio/github/awakelab/awake/render/pipeline/PipelineSpec;
+	public static synthetic fun spec$default (Lio/github/awakelab/awake/asset/shaders/ShaderStages;Lio/github/awakelab/awake/core/geometry/VertexFormat;Lio/github/awakelab/awake/render/pipeline/PipelineVariant;Lio/github/awakelab/awake/render/pipeline/BindingLayout;ILjava/lang/Object;)Lio/github/awakelab/awake/render/pipeline/PipelineSpec;
+	public static final fun withPipelineLoadContext (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class io/github/awakelab/awake/asset/shaders/ShaderSource {
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ShaderSource$InlineText : io/github/awakelab/awake/asset/shaders/ShaderSource {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lio/github/awakelab/awake/asset/shaders/ShaderSource$InlineText;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/shaders/ShaderSource$InlineText;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/shaders/ShaderSource$InlineText;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSourceCode ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ShaderSource$PrecompiledBinary : io/github/awakelab/awake/asset/shaders/ShaderSource {
+	public fun <init> ([BLjava/lang/String;)V
+	public synthetic fun <init> ([BLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBytes ()[B
+	public final fun getEntryPoint ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ShaderSource$ResourcePath : io/github/awakelab/awake/asset/shaders/ShaderSource {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/awakelab/awake/asset/shaders/ShaderSource$ResourcePath;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/shaders/ShaderSource$ResourcePath;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/shaders/ShaderSource$ResourcePath;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntryPoint ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ShaderStage : java/lang/Enum {
+	public static final field COMPUTE Lio/github/awakelab/awake/asset/shaders/ShaderStage;
+	public static final field FRAGMENT Lio/github/awakelab/awake/asset/shaders/ShaderStage;
+	public static final field VERTEX Lio/github/awakelab/awake/asset/shaders/ShaderStage;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/asset/shaders/ShaderStage;
+	public static fun values ()[Lio/github/awakelab/awake/asset/shaders/ShaderStage;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ShaderStages {
+	public static final field Companion Lio/github/awakelab/awake/asset/shaders/ShaderStages$Companion;
+	public synthetic fun <init> (Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun get (Lio/github/awakelab/awake/asset/shaders/ShaderStage;)Lio/github/awakelab/awake/asset/shaders/ShaderSource;
+	public final fun getStages ()Ljava/util/Map;
+}
+
+public final class io/github/awakelab/awake/asset/shaders/ShaderStages$Companion {
+	public final fun compute (Lio/github/awakelab/awake/asset/shaders/ShaderSource;)Lio/github/awakelab/awake/asset/shaders/ShaderStages;
+	public final fun graphics (Lio/github/awakelab/awake/asset/shaders/ShaderSource;Lio/github/awakelab/awake/asset/shaders/ShaderSource;)Lio/github/awakelab/awake/asset/shaders/ShaderStages;
+}
+

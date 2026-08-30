@@ -23,11 +23,11 @@ Every public-facing module should eventually have:
 | `awake:engine` | Dokka | Not yet | Sample bootstrap | Planned | Add engine lifecycle walkthrough |
 | `awake:engine:game` | Dokka | Not yet | `samples:hello-cube` bootstrap proof | Planned | Add backend-neutral game setup tutorial |
 | `awake:engine:game-authoring` | Dokka + `awake/engine/game-authoring/README.md` + `docs/reference/game-dsl.md` | Partial | `game authoring` tutorial docs + `samples:hello-cube` authored bootstrap proof | In progress | Expand `gameModule` cookbook with multi-feature samples |
-| `awake:engine:ui-dsl` | Dokka + `awake/engine/ui-dsl/README.md` | Partial | UI DSL tutorial snapshots | In progress | Expand authored UI cookbook and custom component examples |
+| `awake:compose:ui` | Dokka | Partial | Compose UI tests | In progress | Expand layout, modifier, and text tutorials |
 | `awake:engine:render-api` | Dokka | Not yet | Compileable sample | Planned | Add mesh/material/renderer usage guide |
-| `awake:engine:ui:ui-core` | Dokka | Partial | UI tutorial snapshots | In progress | Add path/style/shape guide |
-| `awake:engine:ui:ui-headless` | Dokka | Partial | UI tutorial snapshots | In progress | Expand widget cookbook |
-| `awake:engine:ui:ui-designsystem` | Dokka | Not yet | UI tutorial snapshots | Planned | Add design-system styling guide |
+| `awake:compose:foundation` | Dokka | Partial | Foundation UI tests | In progress | Expand neutral control cookbook |
+| `awake:compose:ui-testing` | Dokka | Not yet | Compose frame/raster tests | Planned | Add verification helper guide |
+| `awake:ui:designsystem` | Dokka | Partial | Showcase previews and parity tests | In progress | Add design-system styling guide |
 | `awake:scene` | Dokka + `awake/scene/README.md` | Partial | Sample scene runtime | Partial | Add scene JSON + runtime tutorial |
 | `awake:scene:authoring` | Dokka + `awake/scene/authoring/README.md` | Partial | `gameModule { ecs(...) }` composition proof | In progress | Expand scene authoring cookbook |
 | `awake:physics:api` | Dokka | Not yet | Deterministic sample/tests | Planned | Add body/world setup tutorial |
@@ -48,9 +48,8 @@ Use generated artifacts for:
 Current implementation:
 
 - `./gradlew developerDocs`
-- `awake/engine/ui-dsl/build/reports/ui-dsl-tutorials/index.html`
-- `awake/engine/ui/ui-headless/build/reports/ui-tutorials/index.html`
-- `awake/engine/ui/ui-headless/build/reports/ui-snapshots/index.html`
+- `samples/ui-showcase/build/reports/ui-previews/index.html`
+- `awake/compose/ui-testing/build/reports/ui-snapshots/index.html`
 
 ### Non-Visual APIs
 
@@ -70,13 +69,13 @@ Acceptable proof includes:
 
 ## Rollout Order
 
-1. `ui-core`, `ui-headless`, `ui-designsystem`
+1. `compose:ui`, `compose:foundation`, `ui:designsystem`
 2. `engine:game`, `scene`, `render-api`
 3. `ecs`, `base`, `physics:api`
 4. backend-specific guides
 
 That order matches current product pressure: the upcoming DSL needs the UI docs first, then
-the scene/bootstrap layer that will consume it.
+the scene/bootstrap layer that will consume them.
 
 ## Definition Of Done
 

@@ -6,6 +6,17 @@ Prototype and decision-gate adaptive bulk ECS structural mutation without changi
 immediate API or reopening the rejected archetype migration. Public API stabilization and UI
 parity remain parallel lanes.
 
+- 2026-08-29: The final pre-Maven Kotlin package migration is drafted in
+  [2026-08-29-kotlin-package-namespace-migration-plan](tasks/2026-08-29-kotlin-package-namespace-migration-plan.md).
+  It moves `io.github.awakelab.awake.*` to `io.github.awakelab.awake.*` using a checked-in
+  refactor script, source-folder moves, and a multiplatform consumer validation gate.
+
+- 2026-08-29: Maven Central publication for the public Awake consumer path is drafted in
+  [2026-08-29-maven-central-publication-plan](tasks/2026-08-29-maven-central-publication-plan.md).
+  The existing workflow publishes Vulkan bindings only; the plan publishes the engine, asset, and
+  Vulkan/WebGPU modules required by [awake-template](https://github.com/awake-lab/awake-template)
+  and validates a clean Maven-only consumer build.
+
 ## Active Phase
 
 - 2026-08-22: Vector precision variants are drafted in
@@ -56,6 +67,14 @@ parity remain parallel lanes.
   panels are not ported -- they are built on the trial-measure engine being replaced. Stage 0 is
   the plugin seam with no UI and no compose dependency; the UI stages are gated on
   `04-styling-theme`, `06-focus-text-input` and `08-lazy-lists`.
+- 2026-08-24: Framework ownership, editor extension seams, and plugin installation are drafted in
+  [2026-08-24-framework-boundary-and-plugin-ecosystem-plan](tasks/2026-08-24-framework-boundary-and-plugin-ecosystem-plan.md).
+  Studio thinning is separately drafted in
+  [2026-08-24-studio-thinning-plan](tasks/2026-08-24-studio-thinning-plan.md).
+- 2026-08-25: Scene-session simplification is drafted in
+  [2026-08-25-scene-session-simplification-plan](tasks/2026-08-25-scene-session-simplification-plan.md).
+  It restores one app/Compose root, extracts a session and explicit schedule, and earns any
+  physical module split only after package-level dependency boundaries are proven.
 - 2026-08-21: Adaptive bulk ECS structural mutation is drafted in
   [2026-08-21-ecs-adaptive-bulk-mutation-plan](tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md).
   Phase 0 freezes same-semantics baselines and the command-order contract before production code.
@@ -105,6 +124,9 @@ parity remain parallel lanes.
 ## Task Log
 
 - [2026-08-21-ecs-adaptive-bulk-mutation-plan](tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md)
+- [2026-08-24-framework-boundary-and-plugin-ecosystem-plan](tasks/2026-08-24-framework-boundary-and-plugin-ecosystem-plan.md)
+- [2026-08-24-studio-thinning-plan](tasks/2026-08-24-studio-thinning-plan.md)
+- [2026-08-25-scene-session-simplification-plan](tasks/2026-08-25-scene-session-simplification-plan.md)
 - [2026-08-20-template-repository-plan](tasks/2026-08-20-template-repository-plan.md)
 - [2026-08-20-architecture-governance-standardization-plan](tasks/2026-08-20-architecture-governance-standardization-plan.md)
 - [2026-08-12-ui-showcase-parity-tracker](tasks/2026-08-12-ui-showcase-parity-tracker.md)
@@ -129,5 +151,5 @@ parity remain parallel lanes.
 - [2026-08-02-trial-measure-double-execution](tasks/archive/2026-08-02-trial-measure-double-execution.md) -- shipped (`requiresMeasuredDistribution()`, commit `55dd0681`)
 - [2026-08-05-scene-module-split-proposal](tasks/archive/2026-08-05-scene-module-split-proposal.md) -- complete, all five leaf modules exist
 - [2026-08-10-glyph-scale-regression](tasks/archive/2026-08-10-glyph-scale-regression.md) -- resolved bug investigation
-- [2026-08-11-ui-designsystem-headless-boundary-migration](tasks/archive/2026-08-11-ui-designsystem-headless-boundary-migration.md) -- superseded by the 2026-08-15 visual-policy decision
+- [2026-08-11-ui-shadcn-headless-boundary-migration](tasks/archive/2026-08-11-ui-shadcn-headless-boundary-migration.md) -- superseded by the 2026-08-15 visual-policy decision
 - [2026-08-14-ui-implementation-plan](tasks/archive/2026-08-14-ui-implementation-plan.md) -- superseded by 2026-08-14-ui-roadmap.md

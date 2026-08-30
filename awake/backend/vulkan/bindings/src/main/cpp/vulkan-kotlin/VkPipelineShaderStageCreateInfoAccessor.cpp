@@ -10,15 +10,15 @@ VkPipelineShaderStageCreateInfoAccessor::VkPipelineShaderStageCreateInfoAccessor
         env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     stageField = env->GetFieldID(clazz, "stage",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkShaderStageFlagBits;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkShaderStageFlagBits;");
     moduleField = env->GetFieldID(clazz, "module", "J");
     pNameField = env->GetFieldID(clazz, "pName", "Ljava/lang/String;");
     pSpecializationInfoField = env->GetFieldID(clazz, "pSpecializationInfo",
-                                               "[Lio/github/ronjunevaldoz/awake/vulkan/models/info/pipeline/VkSpecializationInfo;");
+                                               "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkSpecializationInfo;");
 }
 
 VkStructureType

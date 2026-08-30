@@ -10,15 +10,15 @@ VkSubpassDescriptionAccessor::VkSubpassDescriptionAccessor(JNIEnv *env, jobject 
     clazz = env->GetObjectClass(obj);
     flagsField = env->GetFieldID(clazz, "flags", "I");
     pipelineBindPointField = env->GetFieldID(clazz, "pipelineBindPoint",
-                                             "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkPipelineBindPoint;");
+                                             "Lio/github/awakelab/awake/vulkan/enums/VkPipelineBindPoint;");
     pInputAttachmentsField = env->GetFieldID(clazz, "pInputAttachments",
-                                             "[Lio/github/ronjunevaldoz/awake/vulkan/models/VkAttachmentReference;");
+                                             "[Lio/github/awakelab/awake/vulkan/models/VkAttachmentReference;");
     pColorAttachmentsField = env->GetFieldID(clazz, "pColorAttachments",
-                                             "[Lio/github/ronjunevaldoz/awake/vulkan/models/VkAttachmentReference;");
+                                             "[Lio/github/awakelab/awake/vulkan/models/VkAttachmentReference;");
     pResolveAttachmentsField = env->GetFieldID(clazz, "pResolveAttachments",
-                                               "[Lio/github/ronjunevaldoz/awake/vulkan/models/VkAttachmentReference;");
+                                               "[Lio/github/awakelab/awake/vulkan/models/VkAttachmentReference;");
     pDepthStencilAttachmentField = env->GetFieldID(clazz, "pDepthStencilAttachment",
-                                                   "[Lio/github/ronjunevaldoz/awake/vulkan/models/VkAttachmentReference;");
+                                                   "[Lio/github/awakelab/awake/vulkan/models/VkAttachmentReference;");
     pPreserveAttachmentsField = env->GetFieldID(clazz, "pPreserveAttachments", "[I");
 }
 

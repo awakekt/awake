@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -21,6 +25,7 @@ class ExternalFunction:
     params: list[Param]
     return_type: str | None
     line: int = 0  # 1-based line of the declaration in the source file
+    native_impl: str | None = None
 
 
 @dataclass

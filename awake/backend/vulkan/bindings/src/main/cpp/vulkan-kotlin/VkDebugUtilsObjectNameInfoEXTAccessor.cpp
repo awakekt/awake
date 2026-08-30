@@ -10,10 +10,10 @@ VkDebugUtilsObjectNameInfoEXTAccessor::VkDebugUtilsObjectNameInfoEXTAccessor(JNI
         env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     objectTypeField = env->GetFieldID(clazz, "objectType",
-                                      "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkObjectType;");
+                                      "Lio/github/awakelab/awake/vulkan/enums/VkObjectType;");
     objectHandleField = env->GetFieldID(clazz, "objectHandle", "J");
     pObjectNameField = env->GetFieldID(clazz, "pObjectName", "Ljava/lang/String;");
 }

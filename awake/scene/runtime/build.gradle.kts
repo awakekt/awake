@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 plugins {
     id("awake.kmp-library-convention")
     alias(libs.plugins.kotlin.serialization)
@@ -9,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.scene.runtime"
+        namespace = "io.github.awakelab.awake.scene.runtime"
     }
 
     sourceSets {
@@ -18,16 +23,20 @@ kotlin {
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:host"))
             implementation(project(":awake:core:input"))
+            api(project(":awake:core:logging"))
             api(project(":awake:scene:scene-core"))
             api(project(":awake:scene:rendering"))
             api(project(":awake:core:math"))
             api(project(":awake:ecs"))
             api(project(":awake:engine:platform"))
-            api(project(":awake:ui:ui-core"))
-            // Needed by SceneGameFrame.kt's frameStats() -- textLayoutCacheStats() lives in
-            // ui-headless, not ui-core.
-            implementation(project(":awake:ui:headless"))
+            api(project(":awake:engine:compose"))
+            api(project(":awake:core:text"))
+            // The compose engine, which the overlay composes into.
+            api(project(":awake:compose:ui"))
             api(project(":awake:engine:render:contract"))
+            // The compose engine's locals, so the runtime can provide `World`/`Renderer`/stats to
+            // an overlay instead of the overlay taking them as parameters.
+            api(project(":awake:compose:runtime"))
             implementation(libs.kotlinx.serialization.json)
         }
 

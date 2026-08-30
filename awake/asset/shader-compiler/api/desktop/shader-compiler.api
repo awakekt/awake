@@ -1,0 +1,15 @@
+public final class io/github/awakelab/awake/asset/shadercompiler/NagaException : java/lang/RuntimeException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class io/github/awakelab/awake/asset/shadercompiler/NagaShaderCompiler : io/github/awakelab/awake/asset/shadercompiler/RuntimeShaderCompiler {
+	public static final field INSTANCE Lio/github/awakelab/awake/asset/shadercompiler/NagaShaderCompiler;
+	public fun validate (Ljava/lang/String;)Ljava/lang/String;
+	public fun wgslToSpirv (Ljava/lang/String;)[B
+}
+
+public abstract interface class io/github/awakelab/awake/asset/shadercompiler/RuntimeShaderCompiler {
+	public abstract fun validate (Ljava/lang/String;)Ljava/lang/String;
+	public abstract fun wgslToSpirv (Ljava/lang/String;)[B
+}
+

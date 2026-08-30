@@ -1,6 +1,16 @@
 # ASL — Kotlin DSL generating WGSL, feeding the existing naga pipeline
 
-Status: vision sketch, scoped down from two earlier drafts of this doc. First draft proposed
+Implementation plan: [2026-08-23-asl-procedural-shader-plan.md](../tasks/2026-08-23-asl-procedural-shader-plan.md)
+(answers the open questions below; the Gradle task sketched here is superseded there).
+
+Status: the five UI shader definitions (`ui_quad`, `ui_rounded_quad`, `ui_texture`, `ui_glyph`,
+and `ui_target_composite`) now live in ASL and feed the existing WGSL-to-SPIR-V pipeline. The
+target-composite migration uses one explicit ABI on both backends: separate sampled-image and
+sampler bindings plus a uniform mode field. Resource wiring and runtime parity are verified by
+the WebGPU and Vulkan desktop pixel suites. The latest fix corrected the shared `screenToNdc`
+uniform contract and removed stale backend-local shader resources that were shadowing generated
+outputs.
+First draft proposed
 a from-scratch Kotlin-to-(GLSL+WGSL) compiler without checking Awake already had a
 single-source pipeline. Second draft corrected that and proposed closing gaps without a
 compiler. This version captures the actual current direction: **ASL emits WGSL text only,
@@ -86,6 +96,12 @@ sequencing after the emitter itself is proven, not bundled into the first spike.
 
 ## Gradle wiring
 
+The first production slice is now wired by `:awake:asset:shader-pack:generateAslShaders`, followed
+by the existing `validateAwakeShaders` and `syncAwakeShaders` tasks. The generated WebGPU files
+are copied into the shader-pack wasm resource tree and naga emits Vulkan SPIR-V into the
+shader-pack app resource tree. Backend-local UI shader duplicates have been removed; both
+backends now consume the shader-pack outputs, avoiding resource-precedence drift.
+
 ```kotlin
 // New task, generates into src/commonMain/shaders/ (or a generated/ subdirectory inside it --
 // open question, see below) BEFORE naga ever runs.
@@ -105,7 +121,11 @@ becomes ASL's backend for free.
 
 ## Open questions
 
-1. **Are generated `.wgsl` files committed, or purely build output?** Two options:
+1. **Are generated `.wgsl` files committed, or purely build output?** Resolved: generated files
+   remain committed, matching this repo's existing generator convention. Two sources of truth in
+   a review diff are intentional: the ASL definition explains the change and the generated WGSL
+   makes the runtime artifact reviewable.
+   Two options considered:
    - **Committed** (generator writes into `src/commonMain/shaders/`, output checked into git)
      — matches this repo's existing convention for the Vulkan bindings generator
      (`vulkan_generator` output lives in real committed `.kt` files under
@@ -114,15 +134,16 @@ becomes ASL's backend for free.
    - **Build-only** (generator writes into `build/generated/shaders/`, that directory added
      to `sourceDirectory`'s scan, never committed) — one source of truth in git, but a shader
      bug is harder to spot by reading a diff (the generated WGSL never appears in review).
-   Given this repo's own generator precedent leans committed, that's the likely answer, but
-   worth confirming explicitly before building the task — changes the task's output-path
-   design.
+   The committed-output choice is now implemented.
 2. **Module placement** — `awake:asset:shaders:asl` (new submodule) vs. growing
    `awake:asset:shaders` in place. Lean toward a new submodule: the DSL/emitter is a
    meaningfully different capability (Kotlin AST → text) from the existing typed
    `VertexFormat`/`UniformLayout` contracts, and keeping it separate lets a consumer depend
    on the typed contracts without pulling in the code-generation machinery.
-3. **Acceptance bar for a first spike** — regenerate `triangle.wgsl` byte-for-byte (or
+3. **Acceptance bar for a first spike** — Resolved for the UI migration: all five UI shaders
+   regenerate and naga-validate, and both backend desktop pixel suites pass. `triangle.wgsl`
+   remains the acceptance case for expanding ASL coverage beyond UI.
+   Regenerate `triangle.wgsl` byte-for-byte (or
    naga-validate-identical) as the proof case before attempting `lit_shadow.wgsl`'s greater
    complexity (PBR math, shadow sampling, more uniform fields). Don't generalize the emitter
    past what one real shader has proven it needs.

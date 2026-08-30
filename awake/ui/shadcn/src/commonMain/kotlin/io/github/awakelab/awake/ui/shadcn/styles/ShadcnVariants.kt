@@ -1,0 +1,85 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package io.github.awakelab.awake.ui.shadcn.styles
+
+import io.github.awakelab.awake.core.math2d.Dp
+import io.github.awakelab.awake.core.math2d.dp
+
+enum class ShadcnButtonVariant {
+    Primary,
+    Secondary,
+    Outline,
+    Ghost,
+    Danger,
+    Link,
+}
+
+// Mirrors real shadcn's ButtonSize axis. Height AND padding both come from button.tsx's own
+// buttonVariants.size entries -- verified 2026-08-10 against the pinned reference, which is also
+// where the `xs` height came from (this previously read 28dp with a comment claiming xs had "no
+// direct shadcn counterpart"; current source defines it as h-6).
+//   xs      -> "h-6 gap-1 rounded-md px-2 text-xs"      -> 24dp / px-2        / no py-*
+//   sm      -> "h-8 gap-1.5 rounded-md px-3"            -> 32dp / px-3        / no py-*
+//   default -> "h-9 px-4 py-2"                          -> 36dp / px-4 / py-2
+//   lg      -> "h-10 rounded-md px-6"                   -> 40dp / px-6        / no py-*
+//   icon    -> "size-9"                                 -> 36dp / no padding
+//
+// Only `default` carries a `py-*` class, so 0 is the faithful [paddingY] for the rest, not a
+// placeholder. It stays separate from [heightDp] the same way shadcn's `h-9` and `py-2` coexist:
+// the height fixes the button's outer box, the padding insets its content within that box.
+enum class ShadcnButtonSize(val heightDp: Dp, val paddingX: Dp, val paddingY: Dp) {
+    Xs(24f.dp, 8f.dp, 0f.dp),
+    Sm(32f.dp, 12f.dp, 0f.dp),
+    Md(36f.dp, 16f.dp, 8f.dp),
+    Lg(40f.dp, 24f.dp, 0f.dp),
+    Icon(36f.dp, 0f.dp, 0f.dp),
+}
+
+enum class ShadcnBadgeVariant {
+    Primary,
+    Secondary,
+    Outline,
+    Danger,
+    Ghost,
+}
+
+enum class ShadcnSurfaceVariant {
+    Muted,
+
+    // Full-bleed chrome strip: muted, square corners, horizontal-only inset -- an app toolbar or
+    // status bar, not a panel/card. See ShadcnSurfaceStyles.shadcnSurfaceStyle for the shape.
+    Band,
+}
+
+enum class ShadcnTextFieldVariant {
+    Default,
+    Filled,
+    Ghost,
+}
+
+enum class ShadcnAlertVariant {
+    Default,
+    Destructive,
+}
+
+enum class ShadcnCardVariant {
+    Default,
+    Elevated,
+}
+
+/** Mirrors shadcn-compose's `CardSize` -- controls header/footer divider spacing only,
+ * everything else about a card's own layout is unaffected. */
+enum class ShadcnCardSize(val dividerGapDp: Float) {
+    Compact(2f),
+    Default(4f),
+}
+
+// Mirrors real shadcn's `ToggleVariant` (Default/Outline) -- Outline reuses the same bordered
+// treatment as ShadcnButtonVariant.Outline (see UiButtonVariant.Outline in shadcnToggle()).
+enum class ShadcnToggleVariant {
+    Default,
+    Outline,
+}

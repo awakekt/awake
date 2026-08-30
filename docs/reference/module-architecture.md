@@ -389,7 +389,7 @@ is per-module but every reader assumes per-package. Moved to `awake.engine.platf
 
 This is not isolated. Seven packages in the `ui` group are split across two or more modules, the
 bare `ui` package across **five**, and `ui:heroicons` publishes under
-`io.github.ronjunevaldoz.ui.*` -- missing the `awake` segment entirely, on a coordinate that is
+`io.github.awakelab.ui.*` -- missing the `awake` segment entirely, on a coordinate that is
 already published. Recorded here; not fixed in this pass.
 
 ## Withdrawn — **Decided, do not revisit without new evidence**
@@ -606,6 +606,33 @@ extent and a placed rect are different facts.
    across dozens of consumers were already rejected once.
 5. **Give it a README** and update [`awake/README.md`](../../awake/README.md)'s map in the same
    commit.
+
+## Packages inside a module
+
+**Rule 1 applies one level down: name a package for the subsystem, not the layer.** A feature's
+components, systems and configuration belong in one package together. `components/` and `systems/`
+are layer names by the same test that rejects `impl` and `util` — they group by what a type *is*
+rather than by what it is *for*, so one feature ends up split across two folders and neither folder
+describes anything.
+
+`:awake:scene` currently runs both conventions at once, which is what motivated writing this down:
+
+| Package | Convention |
+|---|---|
+| `scene/world/` — `WorldPartitionSystem`, `StreamObserver`, `WorldCellCoord`, `WorldPartitionConfig` | subsystem ✅ |
+| `scene/navigation/`, `scene/ai/` | subsystem ✅ |
+| `scene/core/components/` + `scene/core/systems/` | layer ❌ |
+| `scene/controls/`, `scene/physics/`, `scene/rendering/` — each split `components/` / `systems/` | layer ❌ |
+
+The visible symptoms: `StreamObserver` is a component that lives in no `components/` folder,
+`TerrainComponent` and `TerrainClipmapSystem` are one feature in two folders, and `scene-core`
+contains a package named `core`.
+
+**This is not a mandate to repackage.** Converting ~50 files at once would collide with everything
+in flight and prove nothing. New features use subsystem packages; existing ones convert when they
+are being touched for another reason anyway. `Transform` and `Name` are genuinely cross-cutting and
+have no subsystem to move to — a shared package for types every feature uses is the exception, and
+it should be named for what it holds rather than for its layer.
 
 ## Related
 

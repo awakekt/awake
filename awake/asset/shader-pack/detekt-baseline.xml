@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongParameterList:TerrainContentFeature.kt$TerrainRenderFeature$( private val pipeline: PipelineHandle, private val uniforms: UniformBlock, private val geometry: ContentGeometry, private val tracker: TerrainClipmapTracker, private val heightScale: Float, private val heightBias: Float, /** `TerrainUniformLayout.TerrainSampling`'s four floats -- see `encodeForSampling`. */ private val sampling: FloatArray, /** Consulted per frame; see [terrainContentFeature]. */ private val isVisible: () -> Boolean = { true }, )</ID>
+  </CurrentIssues>
+</SmellBaseline>

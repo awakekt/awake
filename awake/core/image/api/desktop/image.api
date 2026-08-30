@@ -1,0 +1,24 @@
+public abstract interface class io/github/awakelab/awake/core/image/Bitmap {
+	public abstract fun getChannel ()I
+	public abstract fun getHeight ()I
+	public abstract fun getPixels ()[I
+	public abstract fun getWidth ()I
+}
+
+public final class io/github/awakelab/awake/core/image/BitmapKt {
+	public static final fun createBitmap ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun decodeBitmap ([B)Lio/github/awakelab/awake/core/image/Bitmap;
+}
+
+public final class io/github/awakelab/awake/core/image/BitmapRgba8Kt {
+	public static final fun toRgba8Bytes (Lio/github/awakelab/awake/core/image/Bitmap;)[B
+}
+
+public final class io/github/awakelab/awake/core/image/DefaultBitmap : io/github/awakelab/awake/core/image/Bitmap {
+	public fun <init> (III[I)V
+	public fun getChannel ()I
+	public fun getHeight ()I
+	public fun getPixels ()[I
+	public fun getWidth ()I
+}
+

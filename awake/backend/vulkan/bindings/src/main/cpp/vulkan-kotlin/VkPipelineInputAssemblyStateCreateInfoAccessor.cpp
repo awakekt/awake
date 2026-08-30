@@ -9,11 +9,11 @@ VkPipelineInputAssemblyStateCreateInfoAccessor::VkPipelineInputAssemblyStateCrea
         JNIEnv *env, jobject obj) : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     topologyField = env->GetFieldID(clazz, "topology",
-                                    "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkPrimitiveTopology;");
+                                    "Lio/github/awakelab/awake/vulkan/enums/VkPrimitiveTopology;");
     primitiveRestartEnableField = env->GetFieldID(clazz, "primitiveRestartEnable", "Z");
 }
 

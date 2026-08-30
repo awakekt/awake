@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
@@ -33,6 +38,21 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
     abstract val forbiddenImports: ListProperty<String>
 
     /**
+     * Content words no backend declaration may contain, e.g. `Skybox`.
+     *
+     * The import check above catches a backend *depending on* scene vocabulary. This catches the
+     * other direction, which is the more common one: a backend *inventing* it. `SkyboxRenderPipeline`
+     * imports nothing forbidden and still means the driver layer knows what a sky is -- so a fourth
+     * content feature cannot be added without editing a backend.
+     *
+     * Matched against declared names only (`class`/`interface`/`object`/`fun`), so a doc comment or
+     * a shader path string naming a skybox stays legal. Naming the thing to explain it is fine;
+     * declaring it here is not.
+     */
+    @get:Input
+    abstract val forbiddenContentVocabulary: ListProperty<String>
+
+    /**
      * Path suffixes (invariant separators) still allowed to import [forbiddenImports] -- a
      * tracked-debt ledger, not an opt-out.
      *
@@ -43,6 +63,16 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
     @get:Input
     abstract val exemptFiles: ListProperty<String>
 
+    /**
+     * Path suffixes still allowed to declare [forbiddenContentVocabulary] -- the same kind of
+     * tracked-debt ledger as [exemptFiles], for the same reason: the rule arrived after the code.
+     *
+     * Shrink it, never grow it. Empty is the completion test for phase 4b of
+     * `docs/tasks/2026-08-23-rhi-gpudevice-plan.md`.
+     */
+    @get:Input
+    abstract val contentExemptFiles: ListProperty<String>
+
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val sourceFiles: ConfigurableFileCollection
@@ -51,27 +81,37 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
     fun verify() {
         val forbidden = forbiddenImports.get()
         val exempt = exemptFiles.get()
-        val violations = mutableListOf<String>()
+        val vocabulary = forbiddenContentVocabulary.get()
+        val contentExempt = contentExemptFiles.get()
+        val importViolations = mutableListOf<String>()
+        val contentViolations = mutableListOf<String>()
 
         sourceFiles.files.filter { it.isFile && it.extension == "kt" }.forEach { file ->
             val path = file.invariantSeparatorsPath
-            if (exempt.any { path.endsWith(it) }) return@forEach
+            val importExempt = exempt.any { path.endsWith(it) }
+            val vocabularyExempt = contentExempt.any { path.endsWith(it) }
+            if (importExempt && vocabularyExempt) return@forEach
             file.readLines().forEachIndexed { index, line ->
                 val trimmed = line.trim()
-                if (!trimmed.startsWith("import ")) return@forEachIndexed
-                val imported = trimmed.removePrefix("import ").substringBefore(" as ").trim()
-                val simpleName = imported.substringAfterLast('.')
-                if (simpleName in forbidden) {
-                    violations += "${file.name}:${index + 1}: imports $simpleName"
+                if (!importExempt && trimmed.startsWith("import ")) {
+                    val imported = trimmed.removePrefix("import ").substringBefore(" as ").trim()
+                    if (imported.substringAfterLast('.') in forbidden) {
+                        importViolations += "${file.name}:${index + 1}: imports ${imported.substringAfterLast('.')}"
+                    }
+                }
+                if (vocabularyExempt) return@forEachIndexed
+                val declared = DECLARATION.find(trimmed)?.groupValues?.get(2) ?: return@forEachIndexed
+                vocabulary.firstOrNull { declared.contains(it, ignoreCase = true) }?.let { word ->
+                    contentViolations += "${file.name}:${index + 1}: declares $declared ($word)"
                 }
             }
         }
 
-        if (violations.isNotEmpty()) {
+        if (importViolations.isNotEmpty()) {
             throw GradleException(
                 buildString {
                     appendLine("${modulePath.get()} imports render-runtime vocabulary into a GPU backend:")
-                    violations.forEach { appendLine("  $it") }
+                    importViolations.forEach { appendLine("  $it") }
                     appendLine()
                     appendLine("A backend receives pipelines and recorded commands -- it should not know")
                     appendLine("what a scene light or camera is. Move the logic that needs these types into")
@@ -81,5 +121,25 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
                 },
             )
         }
+
+        if (contentViolations.isNotEmpty()) {
+            throw GradleException(
+                buildString {
+                    appendLine("${modulePath.get()} declares content vocabulary inside a GPU backend:")
+                    contentViolations.forEach { appendLine("  $it") }
+                    appendLine()
+                    appendLine("A graphics backend knows hardware only -- pipelines, buffers, textures,")
+                    appendLine("command recording. It must not know what a skybox or a shadow IS. Content")
+                    appendLine("is declared once in the shared layer (awake:engine:render:passes) and built")
+                    appendLine("from a PipelineSpec the backend compiles without naming it.")
+                    appendLine("See docs/reference/render-extensibility.md.")
+                },
+            )
+        }
+    }
+
+    private companion object {
+        /** `class Foo` / `fun bar` / `internal object Baz` -- captures the declared name in group 2. */
+        val DECLARATION = Regex("""\b(class|interface|object|fun)\s+([A-Za-z_][A-Za-z0-9_]*)""")
     }
 }

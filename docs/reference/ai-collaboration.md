@@ -67,7 +67,7 @@ See also:
 - [docs/reference/agent-starter-pack.md](agent-starter-pack.md)
 - [docs/reference/agent-routing.md](agent-routing.md)
 - [docs/reference/engineering-change-summaries.md](engineering-change-summaries.md)
-- [docs/reference/ui-testing-dictionary.md](ui-testing-dictionary.md) — plain-English UI testing vocabulary
+- [docs/reference/glossary/](glossary/) — plain-English vocabulary: [2D](glossary/2d.md), [3D](glossary/3d.md), [UI testing](glossary/ui-testing.md)
 
 ## Duplication Policy
 

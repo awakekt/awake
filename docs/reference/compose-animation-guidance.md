@@ -6,8 +6,8 @@
 > (Modifier/layout how-to). `mirror-map.md` records *what* diverges. This doc explains *how* to use
 > each animation primitive safely, *why* it's shaped the way it is, and the footguns a
 > Compose-literate reader will not expect. Every section is grounded in the actual source files
-> under `awake/ui/animation/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/` (`UiAnimation.kt`,
-> `UiTransition.kt`, `UiAnimatedVisibility.kt`) and `awake/ui/graphics/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/api/UiEasing.kt`,
+> under `awake/ui/animation/src/commonMain/kotlin/io/github/awakelab/awake/ui/` (`UiAnimation.kt`,
+> `UiTransition.kt`, `UiAnimatedVisibility.kt`) and `awake/ui/graphics/src/commonMain/kotlin/io/github/awakelab/awake/ui/api/UiEasing.kt`,
 > not memory.
 
 A sibling doc rather than a section of `compose-modifier-layout-guidance.md` because animation
@@ -117,7 +117,7 @@ button(id, modifier = Modifier.scale(scale)) { text("Hover me") }
 
 **Never use this for anything that must visibly finish.** Convergence time scales with
 `ln(startValue / snapDistance)` -- fast early, then an imperceptibly slow crawl right before the
-final snap. `skills/awake-ui-shadcn-styling/SKILL.md` documents the exact shipped symptom: a real
+final snap. `skills/awake-shadcn-recipe-authoring/SKILL.md` documents the exact shipped symptom: a real
 120px collapse *looked* fully collapsed within ~10 frames while the container kept an invisible
 sub-pixel sliver of leftover height for dozens more frames, then hard-snapped once it finally
 crossed `snapDistance` -- reported live as **"slowly hidden, then snap."** A wrap-sized parent
@@ -236,7 +236,7 @@ rather than continuing to wrap into cycles that were never allowed to happen -- 
 **Compose equivalent**: `Easing` fun-interface (`fun transform(fraction: Float): Float`) +
 named presets (`LinearEasing`, `FastOutSlowInEasing`, `CubicBezierEasing(a, b, c, d)`).
 
-**Awake**: Identical fun-interface shape (`io.github.ronjunevaldoz.awake.ui.api.Easing`, `ui-graphics`
+**Awake**: Identical fun-interface shape (`io.github.awakelab.awake.ui.api.Easing`, `ui-graphics`
 module) with its own preset library, named after CSS timing functions rather than Compose's Material
 curve names:
 
@@ -372,10 +372,10 @@ not a per-component workaround.
 
 ## Links
 
-- [`UiAnimation.kt`](../../awake/ui/animation/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/UiAnimation.kt) -- `animateFloat`, `animateFloatTween`, `animateFloatRepeatable`, `RepeatMode`
-- [`UiTransition.kt`](../../awake/ui/animation/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/UiTransition.kt) -- `rememberTransition`/`updateTransition`
-- [`UiAnimatedVisibility.kt`](../../awake/ui/animation/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/UiAnimatedVisibility.kt) -- `withGraphicsLayerAlpha`, `withGraphicsLayerScale`, `animatedVisibility`
-- [`UiEasing.kt`](../../awake/ui/graphics/src/commonMain/kotlin/io/github/ronjunevaldoz/awake/ui/api/UiEasing.kt) -- `Easing`, presets, `CubicBezierEasing`
+- [`UiAnimation.kt`](../../awake/ui/animation/src/commonMain/kotlin/io/github/awakelab/awake/ui/UiAnimation.kt) -- `animateFloat`, `animateFloatTween`, `animateFloatRepeatable`, `RepeatMode`
+- [`UiTransition.kt`](../../awake/ui/animation/src/commonMain/kotlin/io/github/awakelab/awake/ui/UiTransition.kt) -- `rememberTransition`/`updateTransition`
+- [`UiAnimatedVisibility.kt`](../../awake/ui/animation/src/commonMain/kotlin/io/github/awakelab/awake/ui/UiAnimatedVisibility.kt) -- `withGraphicsLayerAlpha`, `withGraphicsLayerScale`, `animatedVisibility`
+- [`UiEasing.kt`](../../awake/ui/graphics/src/commonMain/kotlin/io/github/awakelab/awake/ui/api/UiEasing.kt) -- `Easing`, presets, `CubicBezierEasing`
 - [`mirror-map.md`](mirror-map.md) -- status table (Animation primitives section, State hooks section for the shared identity model)
 - [`compose-modifier-layout-guidance.md`](compose-modifier-layout-guidance.md) -- `Modifier`/layout how-to, GraphicsLayer section (`alpha()`/`scale()`/`graphicsLayer()`), Layout DSL section (trial-measurement model this doc's guard section depends on)
-- [`skills/awake-ui-shadcn-styling/SKILL.md`](../../skills/awake-ui-shadcn-styling/SKILL.md) -- the `animateFloat` vs `animateFloatTween` decision from a real `shadcnCollapsibleCard` build
+- [`skills/awake-shadcn-recipe-authoring/SKILL.md`](../../skills/awake-shadcn-recipe-authoring/SKILL.md) -- the `animateFloat` vs `animateFloatTween` decision from a real `shadcnCollapsibleCard` build

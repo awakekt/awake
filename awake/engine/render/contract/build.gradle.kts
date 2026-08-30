@@ -1,4 +1,9 @@
 /*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+/*
  * Awake
  * Awake.awake-engine-render-api
  *
@@ -27,7 +32,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.ronjunevaldoz.awake.render"
+        namespace = "io.github.awakelab.awake.render"
     }
 
     // No platform-specific code at all in this module (see docs/mvp-plan.md's module
@@ -36,7 +41,8 @@ kotlin {
     // once slice 2 physically splits that out).
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":awake:core:graphics2d"))
+            api(project(":awake:core:graphics2d"))
+            api(project(":awake:core:text"))
             implementation(project(":awake:core:color"))
             // DrawCall/Renderer.draw() take Mat4/Camera (portable math), and the resource-
             // loading `expect fun`s some backends' Texture implementations need come from
@@ -48,14 +54,12 @@ kotlin {
             // docs/reference/module-architecture.md -- the "prefer implementation" rule's
             // deliberate exception.
             api(project(":awake:core:geometry"))
-            // api, not implementation: Renderer.drawUi(primitives: List<UiDrawPrimitive>)
-            // exposes UiDrawPrimitive in this module's own public interface, so consumers
-            // implementing Renderer (awake-backend-vulkan, awake-backend-webgpu) need it
-            // visible transitively.
-            api(project(":awake:ui:ui-core"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            // PipelineRegistry.register is suspend (shader loading is IO), so its tests need a
+            // multiplatform coroutine runner -- runBlocking does not exist on wasmJs.
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

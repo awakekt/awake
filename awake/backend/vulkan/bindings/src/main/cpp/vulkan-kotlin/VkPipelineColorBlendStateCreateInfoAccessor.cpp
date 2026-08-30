@@ -9,14 +9,14 @@ VkPipelineColorBlendStateCreateInfoAccessor::VkPipelineColorBlendStateCreateInfo
         JNIEnv *env, jobject obj) : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkStructureType;");
+                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     logicOpEnableField = env->GetFieldID(clazz, "logicOpEnable", "Z");
     logicOpField = env->GetFieldID(clazz, "logicOp",
-                                   "Lio/github/ronjunevaldoz/awake/vulkan/enums/VkLogicOp;");
+                                   "Lio/github/awakelab/awake/vulkan/enums/VkLogicOp;");
     pAttachmentsField = env->GetFieldID(clazz, "pAttachments",
-                                        "[Lio/github/ronjunevaldoz/awake/vulkan/models/info/pipeline/VkPipelineColorBlendAttachmentState;");
+                                        "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineColorBlendAttachmentState;");
     blendConstantsField = env->GetFieldID(clazz, "blendConstants", "[F");
 }
 

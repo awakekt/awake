@@ -1,0 +1,94 @@
+{
+  "_comment": "Single source of truth for which Awake preview PNG diffs against which real shadcn/ui reference PNG. Consumed by tools/shadcn/compare_parity.py's --all mode and by ShadcnReferenceComparisonTest.kt (samples/ui-showcase/src/desktopTest) -- keep both in sync with this file rather than hardcoding the pairing twice. 'awake' is a preview id from ShadcnParityScreenshotTest.kt (rendered to samples/ui-showcase/build/ui-previews/<id>.png); 'reference' is a filename in docs/reference/shadcn-previews/.",
+  "pairs": [
+    {
+      "name": "button-local-light",
+      "awake": "awake-button-variants-light",
+      "reference": "button-variants_light.png",
+      "local": true
+    },
+    {
+      "name": "button-local-dark",
+      "awake": "awake-button-variants-dark",
+      "reference": "button-variants_dark.png",
+      "local": true
+    },
+    {
+      "name": "badge-local-light",
+      "awake": "awake-badge-variants-light",
+      "reference": "badge-variants_light.png",
+      "local": true
+    },
+    {
+      "name": "checkbox-local-light",
+      "awake": "awake-checkbox-states-light",
+      "reference": "checkbox-states_light.png",
+      "local": true
+    },
+    {
+      "name": "switch-local-light",
+      "awake": "awake-switch-variants-light",
+      "reference": "switch-states_light.png",
+      "local": true
+    },
+    {
+      "name": "input-local-light",
+      "awake": "awake-textfield-states-light",
+      "reference": "input-states_light.png",
+      "local": true
+    },
+    {
+      "name": "tabs-local-light",
+      "awake": "awake-tabs-light",
+      "reference": "tabs-states_light.png",
+      "local": true
+    },
+    {
+      "name": "slider-local-light",
+      "awake": "awake-slider-light",
+      "reference": "slider-states_light.png",
+      "local": true
+    },
+    {
+      "name": "select-local-light",
+      "awake": "awake-select-closed-light",
+      "reference": "select-closed_light.png",
+      "local": true
+    },
+    {
+      "name": "card-local-light",
+      "awake": "awake-card-light",
+      "reference": "card-login_light.png",
+      "local": true
+    },
+    {
+      "name": "tooltip-local-light",
+      "awake": "awake-tooltip-content-light",
+      "reference": "tooltip-open_light.png",
+      "local": true,
+      "_comment": "Reference captures [data-slot=tooltip-content] only (the open bubble) -- pairs against the bubble-only preview, not the trigger button. See awake-tooltip-content-light's own doc comment."
+    },
+    {
+      "name": "dialog-local-light",
+      "awake": "awake-dialog-states-light",
+      "reference": "dialog-open_light.png",
+      "local": true
+    },
+    {
+      "name": "radiogroup-local-light",
+      "awake": "awake-radiogroup-light",
+      "reference": "radio-group-states_light.png"
+    },
+    {
+      "name": "progress-local-light",
+      "awake": "awake-progress-light",
+      "reference": "progress-states_light.png"
+    },
+    {
+      "name": "badge-local-dark",
+      "awake": "awake-badge-variants-dark",
+      "reference": "badge-variants_dark.png"
+    }
+  ],
+  "_localComment": "Pairs whose reference lives in docs/reference/shadcn-previews-local/ come from the local reference app (tools/shadcn/capture_shadcn_local.py) and carry a 'local': true flag. Those are authoritative: components render from the pinned shadcn checkout. Entries without the flag still point at the legacy scrape of ui.shadcn.com and are being migrated."
+}

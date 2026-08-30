@@ -1,0 +1,145 @@
+public final class io/github/awakelab/awake/compose/testing/ComposeComponentFrame {
+	public fun <init> (Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/node/LayoutNode;)V
+	public final fun flatSemantics ()Ljava/util/List;
+	public final fun getPrimitives ()Ljava/util/List;
+	public final fun getRoot ()Lio/github/awakelab/awake/compose/ui/node/LayoutNode;
+	public final fun getSemantics ()Ljava/util/List;
+	public final fun onAllNodes (Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;)Lio/github/awakelab/awake/compose/testing/SemanticsNodeInteractionCollection;
+	public final fun onNode (Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;)Lio/github/awakelab/awake/compose/testing/SemanticsNodeInteraction;
+	public final fun onNodeWithTag (Ljava/lang/String;)Lio/github/awakelab/awake/compose/testing/SemanticsNodeInteraction;
+	public final fun printToString ()Ljava/lang/String;
+	public final fun semanticNodeWithTagOrNull (Ljava/lang/String;)Lio/github/awakelab/awake/compose/ui/semantics/SemanticsNode;
+}
+
+public final class io/github/awakelab/awake/compose/testing/ComposeComponentFrameKt {
+	public static final fun composeFrame (IILkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;
+	public static synthetic fun composeFrame$default (IILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;
+}
+
+public final class io/github/awakelab/awake/compose/testing/ComposeSemanticsSnapshot {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lio/github/awakelab/awake/compose/testing/ComposeSemanticsSnapshot;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/compose/testing/ComposeSemanticsSnapshot;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/testing/ComposeSemanticsSnapshot;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNodes ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun toJson ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/compose/testing/ComposeSemanticsSnapshotNode {
+	public fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/semantics/SemanticsRole;Ljava/lang/String;Lio/github/awakelab/awake/compose/testing/ComposeTestBounds;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/github/awakelab/awake/compose/testing/ComposeTestInsets;Ljava/lang/Float;Ljava/lang/Float;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lio/github/awakelab/awake/compose/ui/semantics/SemanticsRole;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lio/github/awakelab/awake/compose/testing/ComposeTestBounds;
+	public final fun component5 ()Ljava/lang/Boolean;
+	public final fun component6 ()Ljava/lang/Boolean;
+	public final fun component7 ()Lio/github/awakelab/awake/compose/testing/ComposeTestInsets;
+	public final fun component8 ()Ljava/lang/Float;
+	public final fun component9 ()Ljava/lang/Float;
+	public final fun copy (Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/semantics/SemanticsRole;Ljava/lang/String;Lio/github/awakelab/awake/compose/testing/ComposeTestBounds;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/github/awakelab/awake/compose/testing/ComposeTestInsets;Ljava/lang/Float;Ljava/lang/Float;)Lio/github/awakelab/awake/compose/testing/ComposeSemanticsSnapshotNode;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/compose/testing/ComposeSemanticsSnapshotNode;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/semantics/SemanticsRole;Ljava/lang/String;Lio/github/awakelab/awake/compose/testing/ComposeTestBounds;Ljava/lang/Boolean;Ljava/lang/Boolean;Lio/github/awakelab/awake/compose/testing/ComposeTestInsets;Ljava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/testing/ComposeSemanticsSnapshotNode;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBorderWidth ()Ljava/lang/Float;
+	public final fun getBounds ()Lio/github/awakelab/awake/compose/testing/ComposeTestBounds;
+	public final fun getContentPadding ()Lio/github/awakelab/awake/compose/testing/ComposeTestInsets;
+	public final fun getCornerRadius ()Ljava/lang/Float;
+	public final fun getDisabled ()Ljava/lang/Boolean;
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getRole ()Lio/github/awakelab/awake/compose/ui/semantics/SemanticsRole;
+	public final fun getSelected ()Ljava/lang/Boolean;
+	public final fun getTestTag ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/compose/testing/ComposeTestBounds {
+	public fun <init> (IIII)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun copy (IIII)Lio/github/awakelab/awake/compose/testing/ComposeTestBounds;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/compose/testing/ComposeTestBounds;IIIIILjava/lang/Object;)Lio/github/awakelab/awake/compose/testing/ComposeTestBounds;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()I
+	public final fun getHeight ()I
+	public final fun getLeft ()I
+	public final fun getRight ()I
+	public final fun getTop ()I
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/compose/testing/ComposeTestInsets {
+	public fun <init> (FFFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lio/github/awakelab/awake/compose/testing/ComposeTestInsets;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/compose/testing/ComposeTestInsets;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/compose/testing/ComposeTestInsets;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()F
+	public final fun getEnd ()F
+	public final fun getStart ()F
+	public final fun getTop ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/compose/testing/ComposeTestSession {
+	public final fun click (Ljava/lang/String;)Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;
+	public final fun frame (Lio/github/awakelab/awake/compose/ui/platform/FrameInput;)Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;
+	public static synthetic fun frame$default (Lio/github/awakelab/awake/compose/testing/ComposeTestSession;Lio/github/awakelab/awake/compose/ui/platform/FrameInput;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;
+}
+
+public abstract interface class io/github/awakelab/awake/compose/testing/SemanticsMatcher {
+	public abstract fun matches (Lio/github/awakelab/awake/compose/ui/semantics/SemanticsNode;)Z
+}
+
+public final class io/github/awakelab/awake/compose/testing/SemanticsNodeInteraction {
+	public final fun assert (Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;)Lio/github/awakelab/awake/compose/testing/SemanticsNodeInteraction;
+	public final fun assertBoundsInRoot (Lio/github/awakelab/awake/compose/testing/ComposeTestBounds;)Lio/github/awakelab/awake/compose/testing/SemanticsNodeInteraction;
+	public final fun assertExists ()Lio/github/awakelab/awake/compose/testing/SemanticsNodeInteraction;
+	public final fun fetchSemanticsNode ()Lio/github/awakelab/awake/compose/ui/semantics/SemanticsNode;
+	public final fun getBoundsInRoot ()Lio/github/awakelab/awake/compose/testing/ComposeTestBounds;
+}
+
+public final class io/github/awakelab/awake/compose/testing/SemanticsNodeInteractionCollection {
+	public final fun assertAll (Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;)Lio/github/awakelab/awake/compose/testing/SemanticsNodeInteractionCollection;
+	public final fun assertCountEquals (I)Lio/github/awakelab/awake/compose/testing/SemanticsNodeInteractionCollection;
+	public final fun fetchSemanticsNodes ()Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/compose/testing/SemanticsTestApiKt {
+	public static final fun and (Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;)Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;
+	public static final fun captureSemantics (Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;)Lio/github/awakelab/awake/compose/testing/ComposeSemanticsSnapshot;
+	public static final fun composeTestSession (IILkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/compose/testing/ComposeTestSession;
+	public static synthetic fun composeTestSession$default (IILkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/testing/ComposeTestSession;
+	public static final fun hasLabel (Ljava/lang/String;)Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;
+	public static final fun hasRole (Lio/github/awakelab/awake/compose/ui/semantics/SemanticsRole;)Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;
+	public static final fun hasTestTag (Ljava/lang/String;)Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;
+	public static final fun isDisabled ()Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;
+	public static final fun isSelected ()Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;
+	public static final fun or (Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;)Lio/github/awakelab/awake/compose/testing/SemanticsMatcher;
+	public static final fun rasterizeDebugOverlay (Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;IILio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/text/font/UiFont;)[B
+	public static synthetic fun rasterizeDebugOverlay$default (Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;IILio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/text/font/UiFont;ILjava/lang/Object;)[B
+}
+
+public final class io/github/awakelab/awake/compose/testing/UiRasterizerKt {
+	public static final fun rasterize (Ljava/util/List;IILio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/text/font/UiFont;)[B
+	public static synthetic fun rasterize$default (Ljava/util/List;IILio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/text/font/UiFont;ILjava/lang/Object;)[B
+}
+
+public final class io/github/awakelab/awake/compose/testing/UiSnapshotWriter_desktopKt {
+	public static final fun captureImage (Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;Ljava/io/File;IILio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/text/font/UiFont;)Ljava/io/File;
+	public static final fun captureImage (Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;Ljava/lang/String;IILio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/text/font/UiFont;)Ljava/io/File;
+	public static synthetic fun captureImage$default (Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;Ljava/io/File;IILio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/text/font/UiFont;ILjava/lang/Object;)Ljava/io/File;
+	public static synthetic fun captureImage$default (Lio/github/awakelab/awake/compose/testing/ComposeComponentFrame;Ljava/lang/String;IILio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/text/font/UiFont;ILjava/lang/Object;)Ljava/io/File;
+	public static final fun toBufferedImage ([BII)Ljava/awt/image/BufferedImage;
+}
+

@@ -7,7 +7,7 @@
 
 VkExtent3DMutator::VkExtent3DMutator(JNIEnv *env) : env(env) {
     this->env = env;
-    clazz = env->FindClass("io/github/ronjunevaldoz/awake/vulkan/models/VkExtent3D");
+    clazz = env->FindClass("io/github/awakelab/awake/vulkan/models/VkExtent3D");
     widthField = env->GetFieldID(clazz, "width", "I");
     heightField = env->GetFieldID(clazz, "height", "I");
     depthField = env->GetFieldID(clazz, "depth", "I");

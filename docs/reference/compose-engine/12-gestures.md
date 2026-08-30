@@ -75,12 +75,48 @@ Capture also ends if the holding node leaves the tree. A reconcile that removes 
 would otherwise strand the pointer, and every subsequent event would be delivered to something that
 is no longer laid out.
 
-## Not built
+## Modifier keys
 
-- **Multi-touch.** One pointer. Recorded rather than half-built; a second pointer changes capture
-  from a field to a map and every handler's assumptions with it.
-- **Long-press.** Needs a frame clock to synthesize, which arrives with `05-animation.md`.
-- **Enter/Exit.** Needs last frame's hover set to diff against, which belongs to the frame loop.
+**Done 2026-08-30.** `PointerEvent.modifiers` carries the Ctrl/Shift/Alt/Meta state held when the
+event happened, and `LocalPointerModifiers` exposes the same values to composition.
+
+Two entry points because a click handler is not a `PointerInputNode`. `clickable`'s callback is
+`() -> Unit`, and threading a modifier-aware overload through it — plus every component that
+forwards one — is a wide change to shared code for the handful of callers that ask. Reading the
+composition local inside a click handler is exact rather than approximate: the handler runs inside
+that frame's pointer dispatch, so "held now" and "held when the click landed" are the same instant.
+
+```kotlin
+data class PointerModifiers(
+    val isCtrlPressed: Boolean = false,
+    val isShiftPressed: Boolean = false,
+    val isAltPressed: Boolean = false,
+    val isMetaPressed: Boolean = false,
+) {
+    /** Ctrl on a PC, Command on a Mac — the "add to selection" chord on both. */
+    val isAccelPressed: Boolean get() = isCtrlPressed || isMetaPressed
+}
+```
+
+On the event rather than looked up separately, because "was Shift down when this click happened" is
+a property of the click: a handler reading a live keyboard answers for whenever it got around to
+asking. `InputSnapshot.pointerModifiers()` reads the held-key set the way `keyEvents()` already
+does, and returns the shared `PointerModifiers.None` when nothing is held — allocating
+unconditionally put an object on every frame of every app and tripped
+`InputAdapterAllocationProbe`.
+
+Separate from `FrameInput.keyEvents`, which reports key *transitions*: a shift-click involves no
+transition at all, because Shift went down on an earlier frame and is merely still held. That is
+why the editor's outliner could not express an additive click before this existed.
+
+## Built after the original plan
+
+- **Multi-touch.** Capture, long-press timing, and `PointerEvent` are keyed by pointer id;
+  `FrameInput.pointers` carries concurrent touch contacts through `ComposeHost`.
+- **Long-press.** **Done 2026-08-26.** `PointerInputDispatcher` owns held-press time and emits one
+  `LongPress` event after 500 ms; `combinedClickable` consumes it without storing state in a
+  rebuilt modifier link.
+- **Enter/Exit.** Implemented from the frame loop's hover-path diff.
 
 ## Watch
 

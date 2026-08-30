@@ -1,0 +1,24 @@
+[package]
+name = "awake-naga-bridge"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "awake_naga"
+# cdylib: desktop JVM dylib/so + Android .so (JNI symbols exported from Rust directly).
+# staticlib: iOS .a consumed through cinterop over the C ABI in include/awake_naga.h.
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+# Same translation library the build pipeline's naga-cli wraps. Keep this version in step
+# with the naga-cli the shader-pipeline convention shells out to -- a skew means runtime
+# compilation accepts/emits differently than the committed .spv path.
+naga = { version = "26", features = ["wgsl-in", "spv-out"] }
+
+[target.'cfg(any(target_os = "macos", target_os = "linux", target_os = "windows", target_os = "android"))'.dependencies]
+jni = "0.21"
+
+[profile.release]
+lto = true
+strip = "symbols"

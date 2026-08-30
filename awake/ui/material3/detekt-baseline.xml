@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>MatchingDeclarationName:Material3Theme.kt$Material3ColorScheme</ID>
+    <ID>MatchingDeclarationName:Scaffold.kt$ScaffoldPaddingValues</ID>
+  </CurrentIssues>
+</SmellBaseline>

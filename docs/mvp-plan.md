@@ -68,7 +68,7 @@ through a shared direct `ByteBuffer` / pinned memory is a later optimisation, no
 | iOS binding path is entirely different (cinterop, not JNI) | The common API is already `expect`/`actual`-shaped; Phase 6 only has to supply actuals |
 | Vulkan handles are raw `Long`s — leaks and use-after-free are silent | Wrapper classes own handles with explicit `Disposable` lifecycle; validation layers on in debug builds |
 | Driver allocation limits (~4096 `vkAllocateMemory` calls) | VMA sub-allocation in the C++ layer |
-| A rendering regression does not throw, it just looks slightly wrong | Pixel-baseline tests and the frame-timing harness in `awake:ui:testing` |
+| A rendering regression does not throw, it just looks slightly wrong | Pixel-baseline tests and the frame-timing harness in `:awake:compose:ui-testing` |
 
 ## Related
 

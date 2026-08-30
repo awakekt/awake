@@ -1,0 +1,53 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package io.github.awakelab.awake.asset.shaderpack
+
+import io.github.awakelab.awake.asset.shaders.ContentFeatureSource
+import io.github.awakelab.awake.asset.shaders.ShaderSet
+import io.github.awakelab.awake.asset.shaders.ShaderStage
+import io.github.awakelab.awake.asset.shaders.source
+import io.github.awakelab.awake.asset.shaders.stagesFor
+import io.github.awakelab.awake.core.geometry.VertexFormat
+import io.github.awakelab.awake.render.passes.ContentFeature
+import io.github.awakelab.awake.render.passes.SkyboxRenderFeature
+import io.github.awakelab.awake.render.pipeline.PipelineSpec
+import io.github.awakelab.awake.render.pipeline.PipelineVariant
+import io.github.awakelab.awake.render.renderer.SkyboxUniformLayout
+
+/**
+ * The procedural sky, as a feature an app opts into.
+ *
+ * Here in the shader pack, beside `skybox.wgsl` itself, rather than in either backend. Both used
+ * to carry a `SkyboxRenderPipeline` and a pass adapter -- the same feature written twice, and a
+ * GPU backend knowing what a sky is (see `docs/reference/render-extensibility.md`). This declares
+ * a pipeline instead of building one: `VertexFormat.None` for the generated full-screen triangle,
+ * [SkyboxUniformLayout] for the block the pipeline owns, and [PipelineVariant.Background] for
+ * depth test and write both off. The engine's registry compiles it, on either backend.
+ *
+ * Opt-in for a resource reason rather than a taste one: `skybox.wgsl` ships in this module's own
+ * shader directory, so only a consumer that syncs it has the compiled shader on its resource
+ * path. An app that omits this feature leaves `Renderer.showEnvironment` an inert flag.
+ *
+ * Returns a [ContentFeatureSource], not a [ContentFeature]: the backend half of [shaders] is
+ * picked when an engine resolves the plan, not when an app declares it. Taking the selector here
+ * is what used to force `contentFeatures = listOf(...)` to be written once per backend, since
+ * `ShaderSet::vulkan` cannot appear in `commonMain`.
+ *
+ * @param shaders The sky's shader set.
+ */
+fun skyboxContentFeature(shaders: ShaderSet): ContentFeatureSource = ContentFeatureSource { backend ->
+    val stages = shaders.stagesFor(backend)
+    ContentFeature(
+        name = "skybox",
+        spec = PipelineSpec(
+            vertexFormat = VertexFormat.None,
+            vertexShader = stages.source(ShaderStage.VERTEX),
+            fragmentShader = stages.source(ShaderStage.FRAGMENT),
+            variant = PipelineVariant.Background,
+            uniforms = SkyboxUniformLayout,
+        ),
+    ) { pipeline, uniforms, _ -> SkyboxRenderFeature(pipeline, uniforms) }
+}

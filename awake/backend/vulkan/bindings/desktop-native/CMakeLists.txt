@@ -76,9 +76,10 @@ add_subdirectory(../src/main/cpp/vulkan-kotlin vulkan-kotlin-desktop-build)
 # compiles, unmodified -- these Vulkan calls are identical on both platforms.
 add_library(awake-vulkan SHARED
         ../src/main/cpp/awake-vulkan.cpp
-        ../src/main/cpp/generated/io_github_ronjunevaldoz_awake_vulkan_gen_VulkanBuffers_jni.gen.cpp
-        ../src/main/cpp/generated/io_github_ronjunevaldoz_awake_vulkan_gen_VulkanDescriptors_jni.gen.cpp
-        ../src/main/cpp/generated/io_github_ronjunevaldoz_awake_vulkan_gen_VulkanImages_jni.gen.cpp
+        ../src/main/cpp/generated/io_github_awakelab_awake_vulkan_gen_VulkanBuffers_jni.gen.cpp
+        ../src/main/cpp/generated/io_github_awakelab_awake_vulkan_gen_VulkanDescriptors_jni.gen.cpp
+        ../src/main/cpp/generated/io_github_awakelab_awake_vulkan_gen_VulkanImages_jni.gen.cpp
+        ../src/main/cpp/VulkanImages_native.cpp
         ../src/main/cpp/generated/VulkanWindow_jni.gen.cpp)
 
 target_include_directories(awake-vulkan PRIVATE

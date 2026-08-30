@@ -19,9 +19,9 @@ implementation(project(":awake:core:animation"))
 ## Usage
 
 ```kotlin
-import io.github.ronjunevaldoz.awake.core.animation.Skeleton
-import io.github.ronjunevaldoz.awake.core.animation.AnimationClip
-import io.github.ronjunevaldoz.awake.core.animation.AnimationCrossfade
+import io.github.awakelab.awake.core.animation.Skeleton
+import io.github.awakelab.awake.core.animation.AnimationClip
+import io.github.awakelab.awake.core.animation.AnimationCrossfade
 
 // Sample pose at current playback time
 val walkPose = walkClip.sample(time = 0.5f, skeleton = skeleton)

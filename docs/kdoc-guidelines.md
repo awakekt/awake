@@ -88,6 +88,30 @@ level.
 data class CacheConfig(val maxEntries: Int, val evictOnLowMemory: Boolean)
 ```
 
+`OutdatedDocumentation` enforces two things beyond "document every parameter", and both fail the
+build rather than warn:
+
+* **The tag depends on visibility, not just on `val`.** A primary-constructor parameter is a
+  `@property` when it is `val`/`var` **and not private**, and a `@param` otherwise. A `private val`
+  is not part of the documented surface, so it takes `@param` — the same tag a plain constructor
+  parameter takes. A class mixing the two carries both tags.
+* **Tags follow declaration order, as one sequence.** `@param` and `@property` interleave in the
+  order the constructor declares them; they are not grouped by tag. Type parameters come first and
+  take `@param`.
+
+```kotlin
+/**
+ * @param graphicsDevice The device the slots allocate from.   // private val
+ * @param stageFlags Which stages read the uniform block.      // plain parameter
+ * @property bindings What this pipeline's group holds.        // internal val
+ */
+internal class PerFrameUniformSlots(
+    private val graphicsDevice: GraphicsDevice,
+    stageFlags: Int,
+    val bindings: GroupBindings? = null,
+)
+```
+
 ### C. Sealed Classes & Enums
 
 Document the top-level parent class context, and provide short, one-liner summaries for every

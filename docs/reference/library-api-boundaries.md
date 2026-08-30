@@ -75,8 +75,8 @@ Use the answers like this:
 
 - `awake:engine:game` should expose the neutral game contract first, then DSL sugar.
 - `awake:scene` should expose runtime/spec/install surfaces first, then scene-authoring DSL.
-- `awake:engine:ui-dsl` should expose runtime/spec/install surfaces first, then UI composition
-  DSL.
+- `awake:compose:*` should expose retained runtime/layout contracts first, while
+  `awake:ui:designsystem` exposes branded composition recipes.
 - sample modules should own debug shells, demo overlays, inspector mappings, and bootstrap
   shortcuts.
 

@@ -1,0 +1,9 @@
+public final class io/github/awakelab/awake/asset/meshoptimizer/GltfWriter {
+	public static final field INSTANCE Lio/github/awakelab/awake/asset/meshoptimizer/GltfWriter;
+	public final fun writePositionOnlyMesh ([F[I)Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/asset/meshoptimizer/MainKt {
+	public static final fun main ([Ljava/lang/String;)V
+}
+

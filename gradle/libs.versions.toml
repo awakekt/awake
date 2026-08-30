@@ -1,7 +1,6 @@
 [versions]
 kotlin = "2.4.10"
 agp = "9.2.1"
-compose-multiplatform = "1.11.1"
 detekt = "1.23.8"
 spotless = "7.0.2"
 dokka = "2.0.0"
@@ -16,20 +15,17 @@ kotlinx-serialization = "1.11.0"
 kotlinx-coroutines = "1.10.2"
 kotlinx-browser = "0.5.0"
 napier = "2.7.1"
-androidx-activity-compose = "1.9.3"
 androidx-core-ktx = "1.15.0"
 leakcanary = "2.14"
 # vanniktech-publish is applied directly in awake-core/build.gradle.kts.
 vanniktech-publish = "0.36.0"
+binary-compat = "0.17.0"
 # Phase 2.5 (Web/WebGPU) spike -- no stable release yet (last tag v0.1.1, June 2025), this
 # is a Sonatype snapshot build (see settings.gradle.kts's snapshot repo addition).
 wgpu4k = "0.2.0-SNAPSHOT"
 # Descriptor types (BufferDescriptor, BindGroupDescriptor, ...). On wasmJs these arrive via
 # wgpu4k-toolkit; the toolkit is wasm-only, so the desktop test target needs them declared.
 webgpu-ktypes = "0.0.10-SNAPSHOT"
-# MVP1a NavMesh slice -- pure-Java Recast/Detour port, JVM-only (desktop+Android), see
-# docs/MMORPG_ROADMAP.md's NavMesh decision.
-recast4j = "1.5.11"
 # Jolt Physics integration slice 1 (see docs/MVP_PLAN.md's decision log) -- stephengold's
 # jolt-jni provides JVM bindings for desktop+Android; confirmed current coordinates/version
 # via repo1.maven.org's maven-metadata.xml for jolt-jni-MacOSX_ARM64 (2026-07-07).
@@ -61,11 +57,7 @@ wgpu4k = { module = "io.ygdrasil:wgpu4k", version.ref = "wgpu4k" }
 # Surface.kt in the wgpu4k repo.
 wgpu4k-toolkit = { module = "io.ygdrasil:wgpu4k-toolkit", version.ref = "wgpu4k" }
 webgpu-ktypes-descriptors = { module = "io.ygdrasil:webgpu-ktypes-descriptors", version.ref = "webgpu-ktypes" }
-compose-runtime = { module = "org.jetbrains.compose.runtime:runtime", version.ref = "compose-multiplatform" }
-compose-foundation = { module = "org.jetbrains.compose.foundation:foundation", version.ref = "compose-multiplatform" }
-compose-components-resources = { module = "org.jetbrains.compose.components:components-resources", version.ref = "compose-multiplatform" }
 napier = { module = "io.github.aakira:napier", version.ref = "napier" }
-androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity-compose" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidx-core-ktx" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary" }
 fleks = { module = "io.github.quillraven.fleks:Fleks", version.ref = "fleks" }
@@ -93,8 +85,6 @@ lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
 lwjgl-glfw = { module = "org.lwjgl:lwjgl-glfw", version.ref = "lwjgl" }
 lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
 lwjgl-stb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl" }
-recast4j-recast = { module = "org.recast4j:recast", version.ref = "recast4j" }
-recast4j-detour = { module = "org.recast4j:detour", version.ref = "recast4j" }
 # JVM library (platform-independent Java classes) -- desktop build only, this machine is
 # macOS ARM64. jolt-jni's desktop JVM library is released under 8 interchangeable artifact
 # IDs (one per native platform); MacOSX_ARM64 is the one whose matching native classifier
@@ -125,12 +115,11 @@ material = { group = "com.google.android.material", name = "material", version.r
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 android-library-kmp = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
-compose-multiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanniktech-publish" }
+binary-compat = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binary-compat" }
 kotlinx-benchmark = { id = "org.jetbrains.kotlinx.benchmark", version.ref = "kotlinx-benchmark" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

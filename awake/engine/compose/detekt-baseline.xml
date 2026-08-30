@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:GraphicsLayerCompositor.kt$GraphicsLayerCompositor.FrameTargets$fun composite(renderer: Renderer, primitives: List&lt;UiDrawPrimitive>, font: UiFont): List&lt;UiDrawPrimitive></ID>
+    <ID>LongParameterList:GraphicsLayerCompositor.kt$GraphicsLayerCompositor$( renderer: Renderer, primitives: List&lt;UiDrawPrimitive>, layers: List&lt;GraphicsLayerFrame>, font: UiFont, viewportWidth: Int, viewportHeight: Int, )</ID>
+    <ID>MemberNameEqualsClassName:GraphicsLayerCompositor.kt$GraphicsLayerCompositor.FrameTargets.Target$val target = renderer.createRenderTarget(width, height)</ID>
+    <ID>NestedBlockDepth:GraphicsLayerCompositor.kt$GraphicsLayerCompositor.FrameTargets$fun composite(renderer: Renderer, primitives: List&lt;UiDrawPrimitive>, font: UiFont): List&lt;UiDrawPrimitive></ID>
+  </CurrentIssues>
+</SmellBaseline>

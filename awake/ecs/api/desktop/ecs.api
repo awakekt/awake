@@ -1,0 +1,323 @@
+public final class io/github/awakelab/awake/ecs/ComponentDelegate {
+	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/World;JLkotlin/reflect/KClass;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getEntity-bQ-FlKo ()J
+	public final fun getType ()Lkotlin/reflect/KClass;
+	public final fun getValue (Ljava/lang/Object;Lkotlin/reflect/KProperty;)Ljava/lang/Object;
+	public final fun getWorld ()Lio/github/awakelab/awake/ecs/World;
+	public final fun setValue (Ljava/lang/Object;Lkotlin/reflect/KProperty;Ljava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/ecs/ComponentPool {
+	public static final field CAPACITY_GROWTH_FACTOR I
+	public static final field DEFAULT_CAPACITY I
+	public fun <init> (Lkotlin/jvm/functions/Function0;)V
+	public final fun clear ()V
+	public final fun free (Ljava/lang/Object;)V
+	public final fun getItems ()[Ljava/lang/Object;
+	public final fun getSize ()I
+	public final fun obtain ()Ljava/lang/Object;
+	public final fun setItems ([Ljava/lang/Object;)V
+	public final fun setSize (I)V
+}
+
+public final class io/github/awakelab/awake/ecs/ComponentRegistry {
+	public fun <init> ()V
+	public final fun clear ()V
+	public final fun componentCount (Lkotlin/reflect/KClass;)I
+	public final fun pool (Lkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/ComponentPool;
+	public final fun pool-4O-s0VE (I)Lio/github/awakelab/awake/ecs/ComponentPool;
+	public final fun recycle (Ljava/lang/Object;)V
+	public final fun recycle (Lkotlin/reflect/KClass;Ljava/lang/Object;)V
+	public final fun recycle-OOzoxH0 (ILjava/lang/Object;)V
+	public final fun registerPool (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function0;)V
+	public final fun removeEntity-kNbRcPA (JJ)V
+	public final fun storageInfo ()Ljava/util/List;
+	public final fun storageInfo (J)Ljava/util/List;
+	public final fun storageKind (Lkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+	public final fun store-OOzoxH0 (ILkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/ComponentStore;
+	public final fun storeForKey-OOzoxH0 (ILkotlin/jvm/functions/Function0;)Lio/github/awakelab/awake/ecs/ComponentStore;
+	public final fun storeOrNull-4O-s0VE (I)Lio/github/awakelab/awake/ecs/ComponentStore;
+	public final fun typeId-NeIkzG4 (Lkotlin/reflect/KClass;)I
+	public final fun typeIdForKey-8G1ISlk (Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)I
+	public final fun typeIdForKeyOrNull-PUGF5Yw (Ljava/lang/Object;)Lio/github/awakelab/awake/ecs/ComponentTypeId;
+	public final fun typeIdOrNull-PUGF5Yw (Lkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/ComponentTypeId;
+}
+
+public final class io/github/awakelab/awake/ecs/ComponentStorageInfo {
+	public fun <init> (Lkotlin/reflect/KClass;Lio/github/awakelab/awake/ecs/ComponentStorageKind;I)V
+	public final fun component1 ()Lkotlin/reflect/KClass;
+	public final fun component2 ()Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+	public final fun component3 ()I
+	public final fun copy (Lkotlin/reflect/KClass;Lio/github/awakelab/awake/ecs/ComponentStorageKind;I)Lio/github/awakelab/awake/ecs/ComponentStorageInfo;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/ecs/ComponentStorageInfo;Lkotlin/reflect/KClass;Lio/github/awakelab/awake/ecs/ComponentStorageKind;IILjava/lang/Object;)Lio/github/awakelab/awake/ecs/ComponentStorageInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponentCount ()I
+	public final fun getKind ()Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+	public final fun getType ()Lkotlin/reflect/KClass;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/ecs/ComponentStorageKind : java/lang/Enum {
+	public static final field SparseSet Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+	public static final field TagSparseSet Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+	public static final field Uninitialized Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+	public static final field Unregistered Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+	public static fun values ()[Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+}
+
+public final class io/github/awakelab/awake/ecs/ComponentStore {
+	public fun <init> (Lkotlin/reflect/KClass;)V
+	public final fun add-kNbRcPA (JLjava/lang/Object;)Ljava/lang/Object;
+	public final fun clear ()V
+	public final fun contains-HhecgWM (J)Z
+	public final fun forEach (Lkotlin/jvm/functions/Function2;)V
+	public final fun get-HhecgWM (J)Ljava/lang/Object;
+	public final fun getEntities ()Ljava/util/List;
+	public final fun getSize ()I
+	public final fun getStorageKind ()Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+	public final fun remove-HhecgWM (J)Ljava/lang/Object;
+}
+
+public final class io/github/awakelab/awake/ecs/ComponentTypeId {
+	public static final synthetic fun box-impl (I)Lio/github/awakelab/awake/ecs/ComponentTypeId;
+	public static fun constructor-impl (I)I
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (ILjava/lang/Object;)Z
+	public static final fun equals-impl0 (II)Z
+	public final fun getValue ()I
+	public fun hashCode ()I
+	public static fun hashCode-impl (I)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (I)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()I
+}
+
+public abstract interface class io/github/awakelab/awake/ecs/EcsTag {
+}
+
+public final class io/github/awakelab/awake/ecs/Entity {
+	public static final field Companion Lio/github/awakelab/awake/ecs/Entity$Companion;
+	public static final synthetic fun box-impl (J)Lio/github/awakelab/awake/ecs/Entity;
+	public static fun constructor-impl (J)J
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (JLjava/lang/Object;)Z
+	public static final fun equals-impl0 (JJ)Z
+	public static final fun getGeneration-impl (J)I
+	public static final fun getId-impl (J)I
+	public final fun getPacked ()J
+	public fun hashCode ()I
+	public static fun hashCode-impl (J)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (J)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()J
+}
+
+public final class io/github/awakelab/awake/ecs/Entity$Companion {
+	public final fun of-WQEaLFA (II)J
+}
+
+public final class io/github/awakelab/awake/ecs/EntityArena {
+	public static final field DEFAULT_CAPACITY I
+	public fun <init> ()V
+	public final fun clear ()V
+	public final fun create-bQ-FlKo ()J
+	public final fun destroy-HhecgWM (J)Z
+	public final fun entity-K_ePn5Q (I)J
+	public final fun has-nrccQog (JI)Z
+	public final fun isAlive (I)Z
+	public final fun isAlive-HhecgWM (J)Z
+	public final fun markComponentAdded-lwnKFGo (II)V
+	public final fun markComponentRemoved-lwnKFGo (II)V
+	public final fun signature (I)J
+}
+
+public final class io/github/awakelab/awake/ecs/EntityStorageInfo {
+	public synthetic fun <init> (JLjava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-bQ-FlKo ()J
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy-kNbRcPA (JLjava/util/List;)Lio/github/awakelab/awake/ecs/EntityStorageInfo;
+	public static synthetic fun copy-kNbRcPA$default (Lio/github/awakelab/awake/ecs/EntityStorageInfo;JLjava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/ecs/EntityStorageInfo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getComponents ()Ljava/util/List;
+	public final fun getEntity-bQ-FlKo ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/ecs/Family {
+	public fun <init> (Lio/github/awakelab/awake/ecs/FamilySpecCache;)V
+	public final fun forEach (Lkotlin/jvm/functions/Function1;)V
+	public final fun getCache ()Lio/github/awakelab/awake/ecs/FamilySpecCache;
+	public final fun getSize ()I
+}
+
+public final class io/github/awakelab/awake/ecs/Family1 {
+	public fun <init> (Lio/github/awakelab/awake/ecs/Family1Cache;)V
+	public final fun componentAt (I)Ljava/lang/Object;
+	public final fun components ()[Ljava/lang/Object;
+	public final fun forEach (Lkotlin/jvm/functions/Function2;)V
+	public final fun forEachComponent (Lkotlin/jvm/functions/Function1;)V
+	public final fun getCache ()Lio/github/awakelab/awake/ecs/Family1Cache;
+	public final fun getSize ()I
+}
+
+public final class io/github/awakelab/awake/ecs/Family1Cache : io/github/awakelab/awake/ecs/FamilyCache {
+	public synthetic fun <init> (Lkotlin/reflect/KClass;ILio/github/awakelab/awake/ecs/ComponentStore;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add-kNbRcPA (JLjava/lang/Object;)V
+	public fun addComponent-y6xTdVI (Lio/github/awakelab/awake/ecs/World;JILjava/lang/Object;)V
+	public final fun componentAt (I)Ljava/lang/Object;
+	public final fun components ()[Ljava/lang/Object;
+	public final fun forEach (Lkotlin/jvm/functions/Function2;)V
+	public final fun forEachComponent (Lkotlin/jvm/functions/Function1;)V
+	public final fun getComponentValues ()Lio/github/awakelab/awake/ecs/FamilyValueColumn;
+	public final fun getCount ()I
+	public final fun getEntities ()[J
+	public final fun getSize ()I
+	public fun remove-HhecgWM (J)V
+	public fun removeComponent-HhraKrU (Lio/github/awakelab/awake/ecs/World;JI)V
+	public fun replaceComponent-y6xTdVI (Lio/github/awakelab/awake/ecs/World;JILjava/lang/Object;)V
+	public final fun setCount (I)V
+	public final fun setEntities ([J)V
+	public fun types ()Ljava/util/Set;
+}
+
+public final class io/github/awakelab/awake/ecs/Family2 {
+	public fun <init> (Lio/github/awakelab/awake/ecs/Family2Cache;)V
+	public final fun componentA (I)Ljava/lang/Object;
+	public final fun componentB (I)Ljava/lang/Object;
+	public final fun componentsA ()[Ljava/lang/Object;
+	public final fun componentsB ()[Ljava/lang/Object;
+	public final fun forEach (Lkotlin/jvm/functions/Function3;)V
+	public final fun forEachComponents (Lkotlin/jvm/functions/Function2;)V
+	public final fun getCache ()Lio/github/awakelab/awake/ecs/Family2Cache;
+	public final fun getSize ()I
+}
+
+public final class io/github/awakelab/awake/ecs/Family2Cache : io/github/awakelab/awake/ecs/FamilyCache {
+	public synthetic fun <init> (Lkotlin/reflect/KClass;ILio/github/awakelab/awake/ecs/ComponentStore;Lkotlin/reflect/KClass;ILio/github/awakelab/awake/ecs/ComponentStore;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun add-wwOmBMI (JLjava/lang/Object;Ljava/lang/Object;)V
+	public fun addComponent-y6xTdVI (Lio/github/awakelab/awake/ecs/World;JILjava/lang/Object;)V
+	public final fun componentA (I)Ljava/lang/Object;
+	public final fun componentB (I)Ljava/lang/Object;
+	public final fun componentsA ()[Ljava/lang/Object;
+	public final fun componentsB ()[Ljava/lang/Object;
+	public final fun forEach (Lkotlin/jvm/functions/Function3;)V
+	public final fun forEachComponents (Lkotlin/jvm/functions/Function2;)V
+	public final fun getComponentValuesA ()Lio/github/awakelab/awake/ecs/FamilyValueColumn;
+	public final fun getComponentValuesB ()Lio/github/awakelab/awake/ecs/FamilyValueColumn;
+	public final fun getCount ()I
+	public final fun getEntities ()[J
+	public final fun getSize ()I
+	public final fun iterateValues (Lkotlin/jvm/functions/Function3;)V
+	public fun remove-HhecgWM (J)V
+	public fun removeComponent-HhraKrU (Lio/github/awakelab/awake/ecs/World;JI)V
+	public fun replaceComponent-y6xTdVI (Lio/github/awakelab/awake/ecs/World;JILjava/lang/Object;)V
+	public final fun setCount (I)V
+	public final fun setEntities ([J)V
+	public fun types ()Ljava/util/Set;
+}
+
+public abstract class io/github/awakelab/awake/ecs/FamilyCache {
+	public abstract fun addComponent-y6xTdVI (Lio/github/awakelab/awake/ecs/World;JILjava/lang/Object;)V
+	public abstract fun remove-HhecgWM (J)V
+	public abstract fun removeComponent-HhraKrU (Lio/github/awakelab/awake/ecs/World;JI)V
+	public abstract fun replaceComponent-y6xTdVI (Lio/github/awakelab/awake/ecs/World;JILjava/lang/Object;)V
+	public abstract fun types ()Ljava/util/Set;
+}
+
+public final class io/github/awakelab/awake/ecs/FamilySpec {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
+	public synthetic fun <init> (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun component2 ()Ljava/util/Set;
+	public final fun component3 ()Ljava/util/Set;
+	public final fun copy (Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lio/github/awakelab/awake/ecs/FamilySpec;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/ecs/FamilySpec;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lio/github/awakelab/awake/ecs/FamilySpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAll ()Ljava/util/Set;
+	public final fun getExclude ()Ljava/util/Set;
+	public final fun getOne ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/ecs/FamilySpecBuilder {
+	public fun <init> ()V
+	public final fun all ([Lkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/FamilySpecBuilder;
+	public final fun build ()Lio/github/awakelab/awake/ecs/FamilySpec;
+	public final fun exclude ([Lkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/FamilySpecBuilder;
+	public final fun one ([Lkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/FamilySpecBuilder;
+}
+
+public final class io/github/awakelab/awake/ecs/FamilySpecCache : io/github/awakelab/awake/ecs/FamilyCache {
+	public static final field CAPACITY_GROWTH_FACTOR I
+	public static final field DEFAULT_FAMILY_CAPACITY I
+	public fun <init> (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/ecs/FamilySpec;)V
+	public final fun add-HhecgWM (J)V
+	public fun addComponent-y6xTdVI (Lio/github/awakelab/awake/ecs/World;JILjava/lang/Object;)V
+	public final fun forEach (Lkotlin/jvm/functions/Function1;)V
+	public final fun getCount ()I
+	public final fun getEntities ()[J
+	public final fun getSize ()I
+	public final fun matches-e36Nc9I (Lio/github/awakelab/awake/ecs/World;J)Z
+	public fun remove-HhecgWM (J)V
+	public fun removeComponent-HhraKrU (Lio/github/awakelab/awake/ecs/World;JI)V
+	public fun replaceComponent-y6xTdVI (Lio/github/awakelab/awake/ecs/World;JILjava/lang/Object;)V
+	public final fun setCount (I)V
+	public final fun setEntities ([J)V
+	public fun types ()Ljava/util/Set;
+}
+
+public final class io/github/awakelab/awake/ecs/FamilyValueColumn {
+	public fun <init> (Lkotlin/reflect/KClass;)V
+	public final fun payloadForIteration ()[Ljava/lang/Object;
+	public final fun tagForIteration ()Ljava/lang/Object;
+}
+
+public abstract interface class io/github/awakelab/awake/ecs/Poolable {
+	public abstract fun reset ()V
+}
+
+public abstract interface class io/github/awakelab/awake/ecs/System {
+	public abstract fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/ecs/World {
+	public fun <init> ()V
+	public final fun add-kNbRcPA (JLkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun add-wwOmBMI (JLkotlin/reflect/KClass;Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun addInternal-sX9M-OA (JILio/github/awakelab/awake/ecs/ComponentStore;Ljava/lang/Object;)Ljava/lang/Object;
+	public final fun clear ()V
+	public final fun componentCount (Lkotlin/reflect/KClass;)I
+	public final fun create-bQ-FlKo ()J
+	public final fun describeStorage ()Ljava/util/List;
+	public final fun destroy-HhecgWM (J)Z
+	public final fun family (Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/ecs/Family;
+	public final fun family (Lkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/Family1;
+	public final fun family (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/Family2;
+	public final fun get-kNbRcPA (JLkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun getComponents ()Lio/github/awakelab/awake/ecs/ComponentRegistry;
+	public final fun getEntities ()Lio/github/awakelab/awake/ecs/EntityArena;
+	public final fun getInternal-nrccQog (JI)Ljava/lang/Object;
+	public final fun has-kNbRcPA (JLkotlin/reflect/KClass;)Z
+	public final fun has-nrccQog (JI)Z
+	public final fun hasInternal-nrccQog (JI)Z
+	public final fun inspectStorage-HhecgWM (J)Lio/github/awakelab/awake/ecs/EntityStorageInfo;
+	public final fun isAlive-HhecgWM (J)Z
+	public final fun query ([Lkotlin/reflect/KClass;)Ljava/util/List;
+	public final fun queryEach (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function2;)V
+	public final fun queryEach (Lkotlin/reflect/KClass;Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function3;)V
+	public final fun registerPool (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function0;)V
+	public final fun remove-kNbRcPA (JLkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun removeInternal-nrccQog (JI)Ljava/lang/Object;
+	public final fun storageKind (Lkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/ComponentStorageKind;
+	public final fun store (Lkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/ComponentStore;
+	public final fun store-OOzoxH0 (ILkotlin/reflect/KClass;)Lio/github/awakelab/awake/ecs/ComponentStore;
+	public final fun storeOrNull-4O-s0VE (I)Lio/github/awakelab/awake/ecs/ComponentStore;
+	public final fun typeId-NeIkzG4 (Lkotlin/reflect/KClass;)I
+}
+

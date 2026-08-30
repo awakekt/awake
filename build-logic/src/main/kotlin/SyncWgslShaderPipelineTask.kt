@@ -1,10 +1,12 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import java.io.File
 import org.gradle.api.DefaultTask
-import org.gradle.api.GradleException
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.InputFiles
 import org.gradle.api.tasks.OutputDirectory
@@ -12,6 +14,14 @@ import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 
+/**
+ * Places the canonical WGSL where each backend's loader looks for it.
+ *
+ * Both backends now consume WGSL: WebGPU feeds it to the device directly, and Vulkan compiles it
+ * through the in-process naga binding (`VulkanShaderResolver`), which caches per path. This task
+ * therefore compiles nothing -- `validateAwakeShaders` is where naga still runs, and it only has
+ * to say yes or no.
+ */
 abstract class SyncWgslShaderPipelineTask : DefaultTask() {
 
     @get:InputDirectory
@@ -37,15 +47,6 @@ abstract class SyncWgslShaderPipelineTask : DefaultTask() {
     @get:OutputDirectory
     abstract val vulkanOutputDirectory: DirectoryProperty
 
-    @get:Input
-    abstract val nagaExecutable: Property<String>
-
-    @get:Input
-    abstract val vertexEntryPoint: Property<String>
-
-    @get:Input
-    abstract val fragmentEntryPoint: Property<String>
-
     @TaskAction
     fun sync() {
         val sourceRoot = sourceDirectory.asFile.get()
@@ -62,38 +63,28 @@ abstract class SyncWgslShaderPipelineTask : DefaultTask() {
 
         wgslFiles.forEach { (sourceFile, root) ->
             val relativePath = sourceFile.relativeTo(root).invariantSeparatorsPath
-            val outputName = sourceFile.nameWithoutExtension
 
             val webGpuTarget = File(webGpuRoot, relativePath)
             webGpuTarget.parentFile.mkdirs()
             sourceFile.copyTo(webGpuTarget, overwrite = true)
             expectedWebGpu += webGpuTarget.canonicalPath
 
-            val relativeParent = sourceFile.relativeTo(root).parentFile?.invariantSeparatorsPath
-            val vulkanParent = relativeParent?.let { File(vulkanRoot, it) } ?: vulkanRoot
-            vulkanParent.mkdirs()
-            val vertexOutput = File(vulkanParent, "$outputName.vert.spv")
-            val fragmentOutput = File(vulkanParent, "$outputName.frag.spv")
-
-            runNaga(
-                input = sourceFile,
-                output = vertexOutput,
-                entryPoint = vertexEntryPoint.get(),
-                stage = "vert"
-            )
-            runNaga(
-                input = sourceFile,
-                output = fragmentOutput,
-                entryPoint = fragmentEntryPoint.get(),
-                stage = "frag"
-            )
-
-            expectedVulkan += vertexOutput.canonicalPath
-            expectedVulkan += fragmentOutput.canonicalPath
+            // WGSL, not SPIR-V: VulkanShaderResolver compiles a .wgsl resource through the
+            // in-process naga binding and caches the result, so shipping source costs one
+            // compile per shader at load and removes a build artifact per stage. It also
+            // collapses the two naga copies this repo used to keep in version lockstep by hand
+            // (the CLI here and the awake-naga-bridge crate) down to the one that renders.
+            val vulkanTarget = File(vulkanRoot, relativePath)
+            vulkanTarget.parentFile.mkdirs()
+            sourceFile.copyTo(vulkanTarget, overwrite = true)
+            expectedVulkan += vulkanTarget.canonicalPath
         }
 
         pruneStaleOutputs(webGpuRoot, expectedWebGpu, "wgsl")
-        pruneStaleOutputs(vulkanRoot, expectedVulkan, "spv")
+        pruneStaleOutputs(vulkanRoot, expectedVulkan, "wgsl")
+        // Leftovers from when this task emitted SPIR-V; without this a stale pair sits in the
+        // resource tree forever, and the loader would still find it.
+        pruneStaleOutputs(vulkanRoot, emptySet(), "spv")
     }
 
     private fun pruneStaleOutputs(root: File, expectedPaths: Set<String>, extension: String) {
@@ -103,45 +94,4 @@ abstract class SyncWgslShaderPipelineTask : DefaultTask() {
             .forEach(File::delete)
     }
 
-    private fun runNaga(
-        input: File,
-        output: File,
-        entryPoint: String,
-        stage: String
-    ) {
-        val executable = nagaExecutable.get()
-        val process = try {
-            ProcessBuilder(
-                executable,
-                input.absolutePath,
-                output.absolutePath,
-                "--input-kind", "wgsl",
-                "--keep-coordinate-space",
-                "--entry-point", entryPoint,
-                "--shader-stage", stage
-            )
-                .directory(project.projectDir)
-                .redirectErrorStream(true)
-                .start()
-        } catch (error: Exception) {
-            throw GradleException(
-                "Unable to launch `$executable` while syncing shaders. " +
-                    "Install `naga-cli` and make sure `naga` is on PATH, or set " +
-                    "`-Pawake.shader.nagaBinary=/absolute/path/to/naga`.",
-                error
-            )
-        }
-
-        val outputText = process.inputStream.bufferedReader().readText()
-        val exitCode = process.waitFor()
-        if (exitCode != 0) {
-            throw GradleException(
-                buildString {
-                    appendLine("naga failed for ${input.invariantSeparatorsPath} [$stage:$entryPoint].")
-                    appendLine("Output file: ${output.invariantSeparatorsPath}")
-                    append(outputText.ifBlank { "No compiler output." })
-                }
-            )
-        }
-    }
 }

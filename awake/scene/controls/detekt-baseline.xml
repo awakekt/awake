@@ -1,5 +1,10 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <SmellBaseline>
   <ManuallySuppressedIssues/>
-  <CurrentIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:CameraInputProcessor.kt$CameraInputProcessor$config.allowOrbit &amp;&amp; isPrimary &amp;&amp; (dx != 0f || dy != 0f)</ID>
+    <ID>ComplexCondition:CameraInputProcessor.kt$CameraInputProcessor$config.allowPan &amp;&amp; isPrimary &amp;&amp; isShift &amp;&amp; (dx != 0f || dy != 0f)</ID>
+    <ID>CyclomaticComplexMethod:CameraInputProcessor.kt$CameraInputProcessor$fun process( poseState: CameraPoseState, config: CameraControlConfig, input: InputSnapshot, delta: Float, ): Boolean</ID>
+    <ID>LongMethod:CameraInputProcessor.kt$CameraInputProcessor$fun process( poseState: CameraPoseState, config: CameraControlConfig, input: InputSnapshot, delta: Float, ): Boolean</ID>
+  </CurrentIssues>
 </SmellBaseline>

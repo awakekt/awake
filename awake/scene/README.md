@@ -1,163 +1,75 @@
 # Awake Scene
 
-Published facade for scene-graph components and systems built on top of
-[`awake-ecs`](../ecs/README.md):
-`Transform` (with parent/child hierarchy), `MeshRenderer`, `Camera`, `Light`, plus the
-`Name`, `TransformSystem`/`RenderSystem`, and the scene runtime that turns `scene.json`
-into live ECS entities. This is the layer between the bare ECS and a real game — read
-`awake-ecs`'s README first if you haven't.
+`awake:scene` is the public facade for reusable ECS scene capabilities above `awake:ecs`: scene
+components and systems, serialized scene documents, runtime loading, and authoring helpers.
 
-Internally, the scene stack has started splitting by reusable capability. `awake-scene`
-still re-exports the stable public packages, while `:awake:scene:scene-core` owns
-`Transform`/`Name` and `:awake:scene:rendering` owns `Camera`/`Light`/`MeshRenderer` plus
-`RenderSystem` (plus `TransformSystem`). `:awake:scene:physics` owns
-`PhysicsBody`/`PhysicsSystem`, `:awake:scene:controls` owns `CameraComponent`/`ActiveCamera`/
-`MovementControl` plus `CameraSystem`/`CameraInputSystem`/`MatrixRelativeMovementSystem`/
-`PlayerInputSystem`, and `:awake:scene:runtime` owns `SceneGameRuntime`, `SceneGameSpec`,
-the scene document model, and `SceneAssetLibrary`. `:awake:scene-dsl` owns the DSL helpers
-that register those systems, which keeps `:awake:scene:controls` free of `ui-core`.
+## Capability modules
 
-## Installation
-
-```kotlin
-implementation("io.github.ronjunevaldoz:awake-scene:1.0.0-SNAPSHOT")
-
-repositories {
-    maven("https://s01.oss.sonatype.org/content/repositories/snapshots")
-}
+```text
+scene:scene-core   Transform, Name, generic transform/spin behavior
+scene:rendering    cameras, lights, mesh renderers, animation, render systems
+scene:physics      physics-facing components and synchronization
+scene:controls     reusable camera and movement controls
+scene:runtime      document loading, scene switching, runtime/session plumbing
+scene:authoring    scene/document/entity/assets DSL and convenience builders
+scene              public facade
 ```
 
-## Components
+Components and their primary systems stay together by capability. Do not split all components
+from all systems merely because one is data and the other behavior; `Transform` is in scene-core
+because it is shared, while `MeshRenderer` remains with rendering.
 
-- **`Transform`** — `position`/`rotation`/`scale` (each a `Vec3`), an optional `parent:
-  Entity?` for hierarchy, and a `worldMatrix: Mat4` that `TransformSystem` fills in every
-  frame. `localMatrix()` builds the local transform from position/rotation/scale.
-- **`Name`** — optional label for scene hierarchy/editor views. It is a small runtime
-  component, not part of the serialized document itself.
-- **`MeshRenderer`** — wraps a `Mesh` + `Material` (from `awake:engine:render-api`) for
-  `RenderSystem`
-  to turn into a `DrawCall`.
-- **`Camera`** — wraps `awake-core`'s math `Camera` (eye/center/up/fov/near/far) plus
-  `isPrimary: Boolean`; `RenderSystem` renders through whichever `Camera` has
-  `isPrimary = true`.
-- **`Light`** — `color`/`intensity`/`type` (`Directional` or `Point`). Not yet consumed by
-  `RenderSystem` — it's a data holder for a future lighting pass.
+## Current use
 
-## Systems
+`SceneDocument` is the serializable authored model. `SceneLoader` validates and instantiates it
+into a `World`; `SceneManager` owns safe replacement and teardown of the current scene. Renderer
+assets resolve after document instantiation through `SceneAssetLibrary`, which owns only the
+current mesh/material factory/cache role.
 
-- **`TransformSystem`** — walks every entity with a `Transform`, resolves `worldMatrix`
-  parent-before-child via a memoized depth-first traversal (with cycle detection: a
-  `Transform.parent` cycle throws `IllegalStateException`), and writes the result back onto
-  each `Transform`. Safe to call every frame — it re-derives from scratch each time (so
-  reparenting an entity by mutating `Transform.parent` directly is picked up next frame)
-  while reusing its own scratch arrays instead of allocating fresh state per call.
-- **`RenderSystem`** — finds the primary `Camera`, builds a `DrawCall` for every
-  `Transform`+`MeshRenderer` pair, and hands them to a `Renderer` (from `awake-core`) in one
-  `draw()` call per frame.
+`SceneAppLifecycleRuntime` is the current app-lifecycle bridge. It is supported, but new
+responsibilities should follow the transition below rather than accumulating there.
 
-## Runtime
+## Session model
 
-The scene runtime keeps the document format separate from the renderer-specific asset
-binding step. A `scene.json` file becomes a live `World` first; actual `MeshRenderer`
-components can be attached later once the app resolves meshes and materials.
+The [scene-session simplification plan](../../docs/tasks/2026-08-25-scene-session-simplification-plan.md)
+defines the target:
 
-```mermaid
-flowchart LR
-    "scene.json" --> "SceneLoader"
-    "SceneLoader" --> "SceneInstance"
-    "SceneInstance" --> "World"
-    "SceneInstance" --> "renderableRequests"
-    "renderableRequests" --> "MeshRenderer binder"
+```text
+composed app root
+  ├── engine:platform       lifecycle, input, window, backend frame handoff; no UI
+  ├── engine:compose        optional Compose app module
+  └── SceneSession          World, document load/switch, SceneSchedule, asset/extensions
 ```
 
-- `SceneDocument`, `SceneNode`, `SceneTransform`, `SceneCamera`, `SceneLight`, and
-  `SceneMeshRenderer` define the serializable scene contract.
-- `SceneLoader.loadFromResource(...)` parses bundled JSON, `SceneDocument.instantiate(...)`
-  builds entities and hierarchy, and `SceneInstance.attachRenderableComponents(...)` is the
-  handoff point for actual GPU-backed mesh/material construction.
-- `Name` keeps scene hierarchy labels available at runtime for editors and debug views.
-- `SceneGameRuntime` is the canonical game-loop integration path (in `:awake:scene:runtime`).
-- `NavMesh` (in `:awake:scene:scene-core`) defines the pathfinding navigation contract. Demo-specific navmesh
-  bootstrap and geometry belong in samples or games.
+Compose presents a session through locals; entities do not become composables. `SceneSession` and
+`SceneSchedule` now own ECS state and ordering, while `SceneAppLifecycleRuntime` remains the
+compatibility lifecycle bridge. The document model will gain versioned extension payloads so private
+asset, environment, animation, terrain, and generation providers can integrate without placing
+their policy in Awake.
 
-## Quick start
+For new UI-bearing scenes, install the app-level UI module before the scene session:
 
 ```kotlin
-import io.github.ronjunevaldoz.awake.core.math.Camera as MathCamera
-import io.github.ronjunevaldoz.awake.core.math.Vec3
-import io.github.ronjunevaldoz.awake.render.material.Material
-import io.github.ronjunevaldoz.awake.render.mesh.Mesh
-import io.github.ronjunevaldoz.awake.render.renderer.Renderer
-import io.github.ronjunevaldoz.awake.ecs.World
-import io.github.ronjunevaldoz.awake.scene.components.Camera
-import io.github.ronjunevaldoz.awake.scene.components.MeshRenderer
-import io.github.ronjunevaldoz.awake.scene.components.Transform
-import io.github.ronjunevaldoz.awake.scene.systems.RenderSystem
-import io.github.ronjunevaldoz.awake.scene.systems.TransformSystem
-
-fun buildScene(world: World, renderer: Renderer, mesh: Mesh, material: Material) {
-    // Camera
-    val cameraEntity = world.create()
-    world.add(
-        cameraEntity,
-        Camera(
-            camera = MathCamera(
-                eye = Vec3(0f, 0f, 5f),
-                center = Vec3(0f, 0f, 0f),
-                fovYRadians = 60f * (kotlin.math.PI.toFloat() / 180f),
-                near = 0.1f,
-                far = 100f
-            ),
-            isPrimary = true
-        )
-    )
-
-    // A parent/child pair -- the child's world matrix will include the parent's transform
-    val parent = world.create()
-    world.add(parent, Transform(position = Vec3(0f, 1f, 0f)))
-    world.add(parent, MeshRenderer(mesh, material))
-
-    val child = world.create()
-    world.add(child, Transform(position = Vec3(1f, 0f, 0f), parent = parent))
-    world.add(child, MeshRenderer(mesh, material))
-}
-
-val transformSystem = TransformSystem()
-lateinit var renderSystem: RenderSystem   // constructed once you have a Renderer
-
-fun onFrame(world: World, delta: Float) {
-    transformSystem.update(world, delta)   // must run before RenderSystem each frame
-    renderSystem.update(world, delta)
-}
-```
-
-`TransformSystem` must run before `RenderSystem` in your per-frame system order —
-`RenderSystem` reads `Transform.worldMatrix`, which only `TransformSystem` writes.
-When using `awake:scene-dsl`, those built-in systems are registered as frame systems for
-you and appended after user systems.
-
-## Building your own systems on top
-
-Scene systems are plain `awake-ecs` `System`s — there's nothing special about the two
-above beyond what components they read/write. `:awake:scene:scene-core` already ships
-`SpinControl`/`SpinSystem` for generic entity rotation and `:awake:scene:controls` ships
-`CameraComponent`/`MovementControl` and their camera and movement systems — check those
-first. For anything not already covered, a typical addition follows the same shape:
-
-```kotlin
-class OrbitLightSystem(private val radiansPerSecond: Float) : System {
-    override fun update(world: World, delta: Float) {
-        world.queryEach<Transform> { _, transform ->
-            transform.rotation.y += radiansPerSecond * delta
-        }
+app {
+    module(sceneComposeAppModule(content = { StudioEditor() }))
+    sceneSession {
+        scene(loadScene("island.scene.json"))
     }
 }
 ```
 
-If your system needs per-frame scratch state (a traversal buffer, a visited-set), keep it
-as reused instance fields rather than allocating fresh collections in `update()` — and if
-that state would otherwise be keyed by `Entity`, prefer indexing by `entity.id` into a
-plain array instead of a `Map<Entity, _>`/`Set<Entity>`. `Entity` is a value class, so
-using it as a hash-based collection key forces a box allocation and `hashCode()`/`equals()`
-per access; `TransformSystem` itself was rewritten this way after profiling showed it
-costing real CPU (see [docs/ecs-benchmark-scorecard.md](../../docs/ecs-benchmark-scorecard.md)).
+## Rules
+
+- A scene system belongs in Awake only when generic and reusable; authored gameplay belongs in a
+  game or sample.
+- `TransformSystem` precedes render systems; `SceneSchedule` owns that order.
+- Documents contain authored data, not GPU handles or generated-preview output.
+- Renderer and asset/provider resolution stay outside the serialized document.
+- Scene owns no `ComposeHost`; optional UI integration is composed above it.
+
+## Related modules
+
+- [`awake:ecs`](../ecs/README.md) — ECS storage, entities, components, and systems.
+- [`awake:engine:platform`](../engine/platform/README.md) — UI-free app lifecycle contracts.
+- [`awake:engine:bootstrap`](../engine/bootstrap/README.md) — app/module composition DSL.
+- [`awake:engine:compose`](../engine/compose/README.md) — optional app-level UI host integration.
