@@ -1,12 +1,34 @@
 public final class io/github/awakelab/awake/physics/jolt/JoltPhysicsWorld : io/github/awakelab/awake/physics/PhysicsWorld {
 	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun createBody-PNriADU (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/MotionType;)J
+	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayers;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayers;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun addImpulse-2JRFxmI (JLio/github/awakelab/awake/core/math/Vec3f;)V
+	public fun applyBuoyancy-EZ0ihm0 (JFLio/github/awakelab/awake/physics/Buoyancy;F)V
+	public fun createBody-FP6Etuo (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/physics/MotionType;IZ)J
+	public fun createConstraint-_1th6IU (Lio/github/awakelab/awake/physics/Constraint;)J
 	public fun destroy ()V
-	public fun destroyBody-g3LjJeE (J)V
-	public fun raycast (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/physics/RaycastHit;
+	public fun destroyBody-OdLkPKs (J)V
+	public fun destroyConstraint-vu58jQ4 (J)V
+	public fun drainContacts (Lkotlin/jvm/functions/Function1;)V
+	public fun forEachBodyTransform (Lkotlin/jvm/functions/Function3;)V
+	public fun getLayers ()Lio/github/awakelab/awake/physics/CollisionLayers;
+	public fun getLinearVelocity-OdLkPKs (J)Lio/github/awakelab/awake/core/math/Vec3f;
+	public fun isActive-OdLkPKs (J)Z
+	public fun moveKinematic-EZ0ihm0 (JLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;F)V
+	public fun overlapShape-eH70JwY (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function1;)V
+	public fun raycast-aeZ-CVc (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/physics/CollisionLayer;)Lio/github/awakelab/awake/physics/RaycastHit;
+	public fun setActive-2JRFxmI (JZ)V
+	public fun setAngularVelocity-2JRFxmI (JLio/github/awakelab/awake/core/math/Vec3f;)V
+	public fun setContactReporting-2JRFxmI (JZ)V
+	public fun setContinuousCollision-2JRFxmI (JZ)V
+	public fun setLinearVelocity-2JRFxmI (JLio/github/awakelab/awake/core/math/Vec3f;)V
+	public fun shapeCast-yEdDi50 (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayer;Lio/github/awakelab/awake/physics/BodyHandle;)Lio/github/awakelab/awake/physics/ShapeCastHit;
+	public fun shiftOrigin (Lio/github/awakelab/awake/core/math/Vec3f;)V
 	public fun step (F)V
-	public fun syncTransforms ()Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/physics/jolt/JoltPhysicsWorldFactoryKt {
+	public static final fun createJoltPhysicsWorld (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayers;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun createJoltPhysicsWorld$default (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayers;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 

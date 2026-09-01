@@ -5,6 +5,7 @@
  */
 package io.github.awakelab.awake.vulkan.mesh
 
+import io.github.awakelab.awake.core.math.Aabb
 import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.core.geometry.toByteArrayLE
 import io.github.awakelab.awake.vulkan.device.GraphicsDevice
@@ -42,6 +43,9 @@ class Mesh(
     vertices: FloatArray,
     indices: IntArray,
     override val format: VertexFormat = VertexFormat.PositionColorUv,
+    /** The box these vertices occupy -- see `Mesh.localBounds`; `createMesh` fills it from the
+     * geometry, which is the last point anything can. */
+    override val localBounds: Aabb? = null,
 ) : RenderMesh {
     private val graphicsDevice = graphicsDevice
     private val runOneTimeCommands = runOneTimeCommands

@@ -17,11 +17,14 @@ import io.github.awakelab.awake.render.passes.RenderPassSlot
 import io.github.awakelab.awake.render.passes.uniforms.SceneFrameUniforms
 import io.github.awakelab.awake.render.passes.uniforms.fogUniformFloats
 import io.github.awakelab.awake.render.passes.uniforms.litShadowUniforms
+import io.github.awakelab.awake.render.renderer.UNSHADOWED_CASCADES
 import io.github.awakelab.awake.render.passes.uniforms.sceneLightUniforms
 import io.github.awakelab.awake.render.passes.uniforms.texturedUniforms
 import io.github.awakelab.awake.render.pipeline.InstancedDrawKind
 import io.github.awakelab.awake.render.pipeline.instancedDrawKind
 import io.github.awakelab.awake.render.pipeline.resolveInstanced
+import io.github.awakelab.awake.render.renderer.ShadowCascadeUniforms
+import io.github.awakelab.awake.render.renderer.shadowCascades
 import io.github.awakelab.awake.render.renderer.DrawCall
 import io.github.awakelab.awake.render.renderer.InstancedUniformLayout
 import io.github.awakelab.awake.render.renderer.ParticleExtraUniformLayout
@@ -79,7 +82,7 @@ internal fun Renderer.performDraw(camera: Lens, drawCalls: List<DrawCall>, light
     val aspect = resolvedSceneViewport()?.aspect
         ?: (swapchainManager.extent.width.toFloat() / swapchainManager.extent.height.toFloat())
     val viewProjection = camera.viewProjectionMatrix(aspect, clipSpace)
-    val lightViewProjection = if (depthTarget != null) light.viewProjection else null
+    val cascades = if (depthTarget != null) light.shadowCascades() else null
     val materialUsage = mutableMapOf<RenderMaterial, Int>()
     val preparedDrawCalls =
         prepareDrawCalls(
@@ -87,7 +90,7 @@ internal fun Renderer.performDraw(camera: Lens, drawCalls: List<DrawCall>, light
             viewProjection,
             drawCalls,
             light,
-            lightViewProjection,
+            cascades,
             materialUsage,
             cameraPosition = camera.eye,
         )
@@ -213,10 +216,10 @@ internal data class PreparedDrawCall(
  * exactly matching what each format's own shader expects (`triangle.wgsl`/`textured.wgsl`
  * read light, `skinned.wgsl` doesn't).
  *
- * [lightViewProjection] is `null` for every [Renderer] not built with shadow support (see
+ * [cascades] is `null` for every [Renderer] not built with shadow support (see
  * [Renderer.depthTarget]'s doc comment) -- in that case the written uniform buffer is byte-for-
  * byte identical to before shadows existed (mvp + 8 light floats). Non-null only appends 16
- * more floats (`drawCall.model * lightViewProjection`, same "Kotlin order gives the
+ * more floats (the frame's cascade matrices, same "Kotlin order gives the
  * conventional product" convention as `mvp` itself) for [Renderer.renderPipeline]-resolved
  * calls, matching `lit_shadow.wgsl`'s `Uniforms.lightMvp`. */
 internal fun Renderer.prepareDrawCalls(
@@ -224,7 +227,7 @@ internal fun Renderer.prepareDrawCalls(
     viewProjection: Mat4,
     drawCalls: List<DrawCall>,
     light: SceneLight,
-    lightViewProjection: Mat4? = null,
+    cascades: ShadowCascadeUniforms? = null,
     materialUsage: MutableMap<RenderMaterial, Int> = mutableMapOf(),
     cameraPosition: Vec3f = Vec3f.ZERO,
 ): List<PreparedDrawCall> {
@@ -291,7 +294,7 @@ internal fun Renderer.prepareDrawCalls(
             val mvp = drawCall.model * viewProjection
             // Compared by FORMAT, not pipeline identity: wireframe's pipelineFor can resolve the
             // primary lit format to a different pipeline object than renderPipeline itself.
-            val uniformFloats = uniformBlockFor(drawCall, mvp, lightViewProjection, frame)
+            val uniformFloats = uniformBlockFor(drawCall, mvp, cascades, frame)
             val binding =
                 material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
             prepared += PreparedDrawCall(
@@ -413,7 +416,7 @@ private fun Renderer.prepareInstancedDrawCall(
 private fun Renderer.uniformBlockFor(
     drawCall: DrawCall,
     mvp: Mat4,
-    lightViewProjection: Mat4?,
+    cascades: ShadowCascadeUniforms?,
     frame: SceneFrameUniforms,
 ): FloatArray {
     // Compared by FORMAT, not pipeline identity: wireframe's pipelineFor can resolve the primary
@@ -424,11 +427,16 @@ private fun Renderer.uniformBlockFor(
     val isTextured = drawCall.mesh.format == VertexFormat.PositionNormalColorUv
     return when {
         isTextured -> texturedUniforms(drawCall, mvp, frame)
-        isPrimaryFormat && lightViewProjection != null ->
-            litShadowUniforms(drawCall, mvp, drawCall.model * lightViewProjection, frame)
-        // No depth target on the lit path: the block is just the light, directional only -- the
-        // unshadowed primary shader declares no point-light slots. Anything else supplies its own
-        // extras, e.g. a skinned mesh's joint palette.
+        isPrimaryFormat && cascades != null -> litShadowUniforms(drawCall, mvp, cascades, frame)
+        // Shadows off, but this renderer HAS a depth target -- so its primary pipeline is the
+        // shadowed shader, and it reads the whole block whatever `shadowsEnabled` says. Writing
+        // the short one here left material, camera position and fog reading stale buffer bytes,
+        // which rendered as a scene that got darker when shadows were switched off.
+        isPrimaryFormat && depthTarget != null ->
+            litShadowUniforms(drawCall, mvp, UNSHADOWED_CASCADES, frame)
+        // No depth target at all: the primary shader is the unshadowed one, whose block is the
+        // light, directional only. Anything else supplies its own extras, e.g. a skinned mesh's
+        // joint palette.
         isPrimaryFormat -> mvp.data + frame.light.directional
         else -> mvp.data + drawCall.extraUniformFloats
     }

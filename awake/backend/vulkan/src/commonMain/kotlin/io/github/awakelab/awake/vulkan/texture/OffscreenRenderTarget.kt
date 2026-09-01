@@ -22,6 +22,7 @@ import io.github.awakelab.awake.vulkan.models.info.VkImageUsageFlagBits2
 import io.github.awakelab.awake.vulkan.models.info.VkImageViewCreateInfo
 import io.github.awakelab.awake.vulkan.models.info.VkMemoryAllocateInfo
 import io.github.awakelab.awake.vulkan.models.info.VkSamplerCreateInfo
+import io.github.awakelab.awake.render.capture.FrameCapture
 
 /**
  * An offscreen color+depth render destination (`Renderer.createRenderTarget`) -- a

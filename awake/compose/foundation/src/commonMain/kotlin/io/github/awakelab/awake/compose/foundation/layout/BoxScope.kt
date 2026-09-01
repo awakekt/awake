@@ -5,6 +5,7 @@
  */
 package io.github.awakelab.awake.compose.foundation.layout
 
+import io.github.awakelab.awake.compose.ui.Alignment
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.ModifierNodeElement
 import io.github.awakelab.awake.compose.ui.layout.Measurable
@@ -25,10 +26,23 @@ interface BoxScope {
      * cover its slots without being what defines their extent.
      */
     fun Modifier.matchParentSize(): Modifier
+
+    /**
+     * Places this child at [alignment] instead of the box's own `contentAlignment`.
+     *
+     * What CSS's `position: absolute` plus an inset does, and what a viewport's floating chrome
+     * needs: tools in one corner, display toggles centred on an edge, a gizmo in another corner,
+     * all over a scene that keeps its whole area. Without it a Box can only stack every child at
+     * one anchor, and a panel wanting five has to spend layout bands on rows and weights -- which
+     * is a band of the 3D view it can no longer draw in.
+     */
+    fun Modifier.align(alignment: Alignment): Modifier
 }
 
 internal object BoxScopeInstance : BoxScope {
     override fun Modifier.matchParentSize(): Modifier = this then MatchParentSizeElement
+
+    override fun Modifier.align(alignment: Alignment): Modifier = this then BoxChildAlignElement(alignment)
 }
 
 /**
@@ -51,3 +65,23 @@ private class MatchParentSizeNode : Modifier.Node(), ParentDataModifierNode {
 }
 
 internal fun Measurable.matchesParentSize(): Boolean = parentData === MatchParentSizeParentData
+
+/** A child's own alignment, or null when it follows the box's [contentAlignment]. */
+internal fun Measurable.childAlignment(): Alignment? = (parentData as? BoxChildAlignment)?.alignment
+
+/** Carries one child's alignment to the measure policy. */
+internal data class BoxChildAlignment(val alignment: Alignment)
+
+private data class BoxChildAlignElement(val alignment: Alignment) : ModifierNodeElement<BoxChildAlignNode>() {
+    override fun create(): BoxChildAlignNode = BoxChildAlignNode(alignment)
+    override fun update(node: BoxChildAlignNode) {
+        node.alignment = alignment
+    }
+
+    override fun toString(): String = "align($alignment)"
+}
+
+private class BoxChildAlignNode(var alignment: Alignment) : Modifier.Node(), ParentDataModifierNode {
+    override fun modifyParentData(current: Any?): Any = BoxChildAlignment(alignment)
+    override fun toString(): String = "align($alignment)"
+}

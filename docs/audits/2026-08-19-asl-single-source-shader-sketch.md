@@ -40,7 +40,7 @@ This is a real, meaningfully smaller scope than either earlier draft.
 
 ## What ASL usage would look like — grounded against a real shader
 
-`triangle.wgsl` (`samples/studio/src/commonMain/shaders/triangle.wgsl`, verbatim) is the
+`triangle.wgsl` (`apps/studio/src/commonMain/shaders/triangle.wgsl`, verbatim) is the
 concrete target: ASL should be able to regenerate this exact shader (or a
 structurally-equivalent one naga accepts identically) from a Kotlin definition.
 

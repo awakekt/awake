@@ -59,7 +59,7 @@ jobs:
         run: ./gradlew compileTestKotlinDesktop
 
       - name: Jolt desktop physics tests
-        run: ./gradlew :awake:backend:jolt:desktopTest
+        run: ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest
 
       - name: Every wasmJs source set compiles
         run: ./gradlew compileKotlinWasmJs
@@ -81,7 +81,7 @@ jobs:
       # `desktopTest` touches VulkanEngine, GraphicsDevice or loadLibrary, which is why this
       # belongs in `build` rather than the lavapipe job.
       - name: Studio sample (tests and desktop jar)
-        run: ./gradlew :samples:studio:desktopTest :samples:studio:desktopJar
+        run: ./gradlew :apps:studio:desktopTest :apps:studio:desktopJar
 
       - name: Build vulkan generator
         run: ./gradlew :awake:backend:vulkan:generator:assemble
@@ -131,6 +131,42 @@ jobs:
       - name: Desktop Vulkan smoke test (real vkCreateInstance via lavapipe)
         run: ./gradlew :awake:backend:vulkan:desktopTest
 
+  # The only job on a macOS runner, and the only one that can build or run anything for iOS.
+  # It exists because of measured history, not symmetry: the JoltC backend reached four features
+  # deep while aborting on its very first `step` -- a fixed-size temp allocator sized under what
+  # Jolt asks for -- and it compiled cleanly throughout. Three of the four physics bugs found on
+  # 2026-08-31 were on this binding, which shares no code with any target covered above.
+  ios-physics:
+    runs-on: macos-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Not `submodules: recursive` on the checkout: that would also clone MoltenVK, which this
+      # job never builds. JoltC needs its own nested JoltPhysics, hence --recursive here.
+      - name: Check out JoltC (and its nested JoltPhysics)
+        run: git submodule update --init --recursive awake/backend/jolt/ios-native/JoltC
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      # On demand, like the desktop Vulkan library above: a CMake configure plus build of Jolt
+      # itself is far too slow to hang off every Kotlin compile, so nothing depends on it and the
+      # test below would fail to link without it.
+      - name: Build JoltC for the simulator
+        run: ./gradlew :awake:backend:jolt:buildJoltCIosSimulatorArm64
+
+      - name: Jolt iOS simulator physics tests
+        run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test
+
   web-verification:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -150,3 +186,10 @@ jobs:
 
       - name: Wasm/WebGPU browser verification (headless Chrome)
         run: ./gradlew :samples:ui-showcase:wasmJsBrowserTest
+
+      # The physics backend has four bindings and CI only ran one of them. This is the wasmJs
+      # binding executing the same commonTest suite as desktop, on the runner already here --
+      # it caught a body filter comparing an Emscripten pointer to a body id, which passed on
+      # every other target.
+      - name: Physics backend verification (wasmJs)
+        run: ./gradlew :awake:backend:jolt:wasmJsTest :awake:scene:physics:wasmJsTest

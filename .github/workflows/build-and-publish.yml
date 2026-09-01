@@ -1,5 +1,14 @@
 name: Publish
 
+# Two paths, deliberately different.
+#
+# A push to `main` publishes a snapshot: the version derives to `-SNAPSHOT`, and a consumer opts
+# into it by adding the snapshot repository. A `v*` tag publishes a release, which is immutable the
+# moment it lands on Central and cannot be replaced. So the release path carries every gate the
+# snapshot path does, plus the ones that only matter once something is permanent.
+#
+# The separation is structural rather than a convention someone remembers: the release job's `if`
+# tests the tag ref, so no branch push can reach it however the workflow is triggered.
 on:
   push:
     branches:
@@ -13,11 +22,11 @@ env:
 jobs:
   # A host compiles only its own native library, so a jar covering more than one platform has to be
   # assembled from several runners. Each uploads just its `natives/<platform>/` directory; the
-  # publish job below merges them before packaging.
+  # publish jobs below merge them before packaging.
   natives:
     strategy:
-      # One platform failing should not hide whether the others built -- the publish job's
-      # verifyDesktopNatives is what decides if the set is complete.
+      # One platform failing should not hide whether the others built -- verifyDesktopNatives is
+      # what decides if the set is complete.
       fail-fast: false
       matrix:
         include:
@@ -30,6 +39,12 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Every Gradle invocation derives the version from `git describe --tags`, including this
+          # one -- the native library is packaged under it. A shallow clone fetches no tags, so
+          # describe returns a bare SHA and the artifact is stamped 0.1.0-dev.0-SNAPSHOT no matter
+          # which tag triggered the run.
+          fetch-depth: 0
 
       - uses: actions/setup-java@v4
         with:
@@ -60,23 +75,110 @@ jobs:
           path: awake/backend/vulkan/bindings/build/generated/natives-resources/natives/${{ matrix.platform }}
           if-no-files-found: error
 
-  publish:
-    needs: natives
+  # What must hold before anything is uploaded anywhere. Runs for snapshots and releases alike:
+  # a snapshot nobody can resolve wastes the same afternoon a broken release does.
+  verify:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # MoltenVK and JoltC are submodules, and apiCheck pulls iOS cinterop into its task
+          # graph, so without them it fails on a missing header rather than on any API change.
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # apiCheck compiles every target, including the iOS ones.
+      - name: Install Vulkan (macOS)
+        run: brew install vulkan-loader molten-vk glfw
+
+      - uses: ./.github/actions/ios-native
+
+      # A published module whose POM names a project nobody uploaded resolves for us and fails for
+      # everyone else. Cheap enough to run before the build rather than after it.
+      - name: Verify the publication closure
+        run: python3 tools/verify_publication_closure.py
+
+      - name: Verify API surface
+        run: ./gradlew apiCheck
+
+      - name: Verify documented Maven coordinates
+        run: python3 tools/verify_doc_coordinates.py
+
+  # Builds awake-template against these artifacts, the way someone who clicked "Use this template"
+  # would. Every bug this has caught -- a package namespace the template never followed, two
+  # libraries claiming one Android namespace -- is invisible from inside either repository, because
+  # the template substitutes a sibling engine checkout whenever a developer has one.
+  #
+  # macOS because it is the only runner that can link the iOS framework, and iOS is otherwise
+  # untested anywhere in this repository.
+  consumer:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # `publishToMavenLocal -PisMainHost=true` below builds the iOS klibs, which cinterop
+          # against MoltenVK and JoltC. Both are submodules, and this job is the one that claims
+          # to link the iOS framework, so it is the last place that can afford to skip them.
+          submodules: recursive
+
+      - name: Check out the template beside nothing
+        uses: actions/checkout@v4
+        with:
+          repository: awake-lab/awake-template
+          # Deliberately not a sibling named `awaken`: the template's settings.gradle.kts
+          # substitutes engine projects for the published artifacts when one is next to it, and
+          # then this job would prove nothing.
+          path: consumer/awake-template
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Vulkan (macOS)
+        run: brew install vulkan-loader molten-vk glfw
+
+      - uses: ./.github/actions/ios-native
+
+      # Maven Local rather than the snapshot repository: this has to pass *before* anything is
+      # uploaded, including the snapshot a consumer would otherwise be the first to try.
+      - name: Publish this build locally
+        run: ./gradlew publishToMavenLocal -PisMainHost=true --no-configuration-cache
+
+      - name: Verify what was published
+        run: python3 tools/verify_published_artifacts.py
+
+      - name: Build the template against it
+        run: tools/check_template_consumer.sh consumer/awake-template "$RUNNER_TEMP/consumer"
+
+  # `main` builds. Resolvable only by a consumer who adds the snapshot repository, and replaced by
+  # the next push, so this path stays deliberately light.
+  snapshot:
+    if: github.ref == 'refs/heads/main'
+    needs: [natives, verify, consumer]
     runs-on: macos-14
     env:
       MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
       MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-      # No key id: vanniktech only needs one to disambiguate a key ring holding several
-      # subkeys, and passing it blank reads as set-but-empty rather than absent.
       SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
       SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
-          # The version comes from `git describe --tags`. checkout's default shallow clone
-          # fetches no tags, so describe would return a bare SHA and the build would publish
-          # 0.1.0-dev.0-SNAPSHOT no matter which tag triggered it.
           fetch-depth: 0
+          # `isMainHost=true` publishes the iOS klibs, which cinterop against MoltenVK and JoltC.
+          # Both are submodules; the default checkout leaves their directories empty.
+          submodules: recursive
 
       - uses: actions/setup-java@v4
         with:
@@ -88,6 +190,8 @@ jobs:
       # iOS cinterop needs the MoltenVK headers, and the iOS publications are built here too.
       - name: Install Vulkan (macOS)
         run: brew install vulkan-loader molten-vk glfw
+
+      - uses: ./.github/actions/ios-native
 
       - name: Collect the per-platform natives
         uses: actions/download-artifact@v4
@@ -104,6 +208,78 @@ jobs:
           for d in native-*; do mv "$d" "${d#native-}"; done
           ls -R .
 
+      - name: Verify every supported platform has a native library
+        run: |
+          ./gradlew :awake:backend:vulkan:bindings:verifyDesktopNatives \
+                    -Pawake.prebuiltNatives=$PWD/build/collected-natives
+
+      - name: Refuse to publish a snapshot from a tag build
+        run: |
+          case "${{ github.ref }}" in
+            refs/tags/*) echo "A tag must go through the release job." && exit 1 ;;
+          esac
+
+      - name: Publish snapshots
+        run: |
+          ./gradlew publishAllPublicationsToMavenCentralRepository \
+                    -PisMainHost=true \
+                    -Pawake.prebuiltNatives=$PWD/build/collected-natives \
+                    --no-configuration-cache
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ env.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ env.SIGNING_PASSWORD }}
+
+  # Tags only. What lands here is permanent: Central does not allow a version to be replaced, so
+  # every check that would be embarrassing to discover afterwards runs before the upload.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [natives, verify, consumer]
+    runs-on: macos-14
+    env:
+      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+      # No key id: vanniktech only needs one to disambiguate a key ring holding several
+      # subkeys, and passing it blank reads as set-but-empty rather than absent.
+      SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
+      SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The version comes from `git describe --tags`. checkout's default shallow clone
+          # fetches no tags, so describe would return a bare SHA and the build would publish
+          # 0.1.0-dev.0-SNAPSHOT no matter which tag triggered it.
+          fetch-depth: 0
+          # Same reason as the snapshot job: the iOS publications cinterop against MoltenVK and
+          # JoltC, and both are submodules.
+          submodules: recursive
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Vulkan (macOS)
+        run: brew install vulkan-loader molten-vk glfw
+
+      - uses: ./.github/actions/ios-native
+
+      - name: Collect the per-platform natives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: build/collected-natives/natives
+          merge-multiple: false
+
+      - name: Name the collected directories by platform
+        run: |
+          cd build/collected-natives/natives
+          for d in native-*; do mv "$d" "${d#native-}"; done
+          ls -R .
+
       # The gate this whole job exists for: the published jar carried only the host's library for
       # its entire life because nothing ever checked, and a consumer on another OS only finds out
       # at run time.
@@ -112,13 +288,34 @@ jobs:
           ./gradlew :awake:backend:vulkan:bindings:verifyDesktopNatives \
                     -Pawake.prebuiltNatives=$PWD/build/collected-natives
 
-      - name: Verify API surface
-        run: ./gradlew :awake:backend:vulkan:bindings:apiCheck
+      # A tag whose version derives to a snapshot means `git describe` did not see the tag -- a
+      # shallow clone, or a tag that never reached the runner. Publishing anyway would put a
+      # -SNAPSHOT on the release path and quietly produce no release at all.
+      - name: Refuse to release a snapshot version
+        run: |
+          VERSION=$(./gradlew -q :awake:backend:vulkan:bindings:properties --no-configuration-cache \
+                    | awk '/^version:/ { print $2 }')
+          echo "Releasing $VERSION from ${{ github.ref }}"
+          case "$VERSION" in
+            *-SNAPSHOT) echo "A tag build derived a snapshot version; the tag is not visible to git describe." && exit 1 ;;
+          esac
+          case "${{ github.ref_name }}" in
+            "v$VERSION") ;;
+            *) echo "Tag ${{ github.ref_name }} does not match derived version $VERSION." && exit 1 ;;
+          esac
+
+      # Local publication first: the same inspection a consumer's resolution would perform, run
+      # while it is still free to fail. Central accepts uploads it cannot later be told to forget.
+      - name: Verify what will be published
+        run: |
+          ./gradlew publishToMavenLocal -PisMainHost=true \
+                    -Pawake.prebuiltNatives=$PWD/build/collected-natives \
+                    --no-configuration-cache
+          python3 tools/verify_published_artifacts.py
 
       - name: Publish to Maven Central
         run: |
-          ./gradlew :awake:backend:vulkan:bindings:publishAllPublicationsToMavenCentralRepository \
-                    :awake:backend:vulkan:bindings:android-native:publishAllPublicationsToMavenCentralRepository \
+          ./gradlew publishAllPublicationsToMavenCentralRepository \
                     -PisMainHost=true \
                     -Pawake.prebuiltNatives=$PWD/build/collected-natives \
                     --no-configuration-cache

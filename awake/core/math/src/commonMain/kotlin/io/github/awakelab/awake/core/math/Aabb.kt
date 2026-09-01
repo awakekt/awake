@@ -136,3 +136,27 @@ data class Aabb(
         }
     }
 }
+
+/**
+ * Whether [this] and [other] overlap on every axis, touching included.
+ *
+ * Touching counts as overlapping, matching [Aabb.contains]'s closed ranges: a box is a bound, so
+ * two of them sharing a face describe geometry that may well share a pixel.
+ */
+fun Aabb.intersects(other: Aabb): Boolean =
+    min.x <= other.max.x && max.x >= other.min.x &&
+        min.y <= other.max.y && max.y >= other.min.y &&
+        min.z <= other.max.z && max.z >= other.min.z
+
+/**
+ * Squared distance from [point] to the nearest point of [this]; zero when [point] is inside.
+ *
+ * Squared because callers compare against a radius, and squaring the radius once beats a square
+ * root per box -- the same trade [Vec3f.length3] callers make by hand today.
+ */
+fun Aabb.squaredDistanceTo(point: Vec3f): Float {
+    val dx = max(0f, max(min.x - point.x, point.x - max.x))
+    val dy = max(0f, max(min.y - point.y, point.y - max.y))
+    val dz = max(0f, max(min.z - point.z, point.z - max.z))
+    return dx * dx + dy * dy + dz * dz
+}

@@ -6,6 +6,7 @@
 package io.github.awakelab.awake.scene.runtime.schedule
 
 import io.github.awakelab.awake.core.host.FixedTimestepLoop
+import io.github.awakelab.awake.ecs.InterpolatedSystem
 import io.github.awakelab.awake.ecs.System
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
@@ -26,6 +27,14 @@ class SceneSchedule internal constructor(
     private val fixedTimestepLoop = FixedTimestepLoop()
     private val registeredSystems = linkedMapOf<SceneSystemHandle<out System>, System>()
     private val fixedSystems = mutableListOf<System>()
+
+    /**
+     * The subset of [fixedSystems] that can show a partly-elapsed step.
+     *
+     * Held separately rather than filtered per frame: this runs once per rendered frame and a
+     * filter over every system would allocate at exactly that rate.
+     */
+    private val interpolatedSystems = mutableListOf<InterpolatedSystem>()
     private val frameSystems = mutableListOf<System>()
     private lateinit var infrastructureSystems: List<System>
 
@@ -35,7 +44,10 @@ class SceneSchedule internal constructor(
             val system = registration.factory(runtime)
             registeredSystems[registration.handle] = system
             when (registration.phase) {
-                SceneSystemPhase.Fixed -> fixedSystems += system
+                SceneSystemPhase.Fixed -> {
+                    fixedSystems += system
+                    if (system is InterpolatedSystem) interpolatedSystems += system
+                }
                 SceneSystemPhase.Frame -> frameSystems += system
             }
         }
@@ -56,7 +68,10 @@ class SceneSchedule internal constructor(
                 fixedSystems.forEach { it.update(world, step) }
                 fixedUpdate(step)
             },
-            render = {
+            render = { alpha ->
+                // Before the frame systems, because they are what reads a Transform to draw it:
+                // interpolating after them would show the blend one frame late.
+                interpolatedSystems.forEach { it.interpolate(world, alpha) }
                 runFrame(world, delta)
             },
         )
@@ -73,6 +88,7 @@ class SceneSchedule internal constructor(
     internal fun dispose() {
         registeredSystems.clear()
         fixedSystems.clear()
+        interpolatedSystems.clear()
         frameSystems.clear()
         if (::infrastructureSystems.isInitialized) infrastructureSystems = emptyList()
     }

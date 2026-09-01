@@ -8,6 +8,7 @@ import java.util.Base64
 
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.backend-layering-convention")
@@ -16,7 +17,12 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.vulkan"
+        // Not `...awake.vulkan`, which `:awake:backend:vulkan:bindings` already claims. AGP
+        // rejects two libraries sharing an Android namespace, and an app depending on both --
+        // which every Android consumer of this backend does -- fails to merge manifests with an
+        // error naming the namespace and neither owner. Invisible inside a composite build and
+        // fatal for a consumer resolving both from Maven, which is where it was found.
+        namespace = "io.github.awakelab.awake.vulkan.backend"
     }
 
     // iosX64 (Intel simulator) dropped: Compose Multiplatform stopped publishing it
@@ -27,9 +33,6 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:engine:render:passes2d"))
-            // Backend-owned headless UI capture uses the same render-target/readback contract
-            // as Vulkan pixel tests; it is not a common UI rendering dependency.
-            implementation(project(":awake:engine:render:testing"))
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
@@ -73,6 +76,11 @@ kotlin {
             api(project(":awake:engine:platform"))
             api(project(":awake:asset:shaders"))
             implementation(project(":awake:asset:shader-compiler"))
+            // HeadlessRenderSession, the shape `vulkanHeadlessUi` hands a windowless renderer
+            // back in -- shared with the WebGPU backend so a drawing can be sent to either.
+            api(project(":awake:engine:render:testing"))
+            // PackShaderSets.Triangle, the scene pipeline the headless UI fixture builds.
+            implementation(project(":awake:asset:shader-pack"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
@@ -83,6 +91,10 @@ kotlin {
             // same generated shader-pack artifacts as production; keep this test dependency for
             // the pack's uniform layouts and drift coverage.
             implementation(project(":awake:asset:shader-pack"))
+            // Test-only, and backend-neutral in both directions: the shadow tests render the
+            // showcase's own scene FILE rather than a copy of its numbers, so the scene drifting
+            // fails the test instead of silently leaving it checking something else.
+            implementation(project(":awake:scene:runtime"))
         }
         androidMain.dependencies {
             implementation(libs.leakcanary.android)
@@ -180,5 +192,12 @@ tasks.register("pixelBaselineReport") {
         out.parentFile.mkdirs()
         out.writeText(html)
         println("Pixel baseline report: file://${out.absolutePath}")
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Vulkan Backend")
+        description.set("The Vulkan renderer: swapchain, pipelines, descriptors and draw recording for desktop, Android and iOS")
     }
 }

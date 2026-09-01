@@ -11,6 +11,7 @@ import io.github.awakelab.awake.asset.shaders.RenderCapabilities
 import io.github.awakelab.awake.asset.shaders.RenderPlan
 import io.github.awakelab.awake.asset.shaders.ShaderSet
 import io.github.awakelab.awake.asset.shaders.ShaderStages
+import io.github.awakelab.awake.render.renderer.DEFAULT_SHADOW_CASCADES
 import io.github.awakelab.awake.render.pipeline.entryPoint
 import io.github.awakelab.awake.asset.shaders.narrowedTo
 import io.github.awakelab.awake.asset.shaders.resolveBytes
@@ -115,13 +116,20 @@ open class WebGpuEngine(
         // samples through lit_shadow.wgsl's own bindings.
         val depthPrePass = plan.depthPrePassShaderSet?.let { shadowShaders ->
             io.github.awakelab.awake.webgpu.pipeline.DepthPrePassFeature(
-                depthTarget = io.github.awakelab.awake.webgpu.texture.DepthTarget(graphicsDevice),
+                // Layered and arrayed: one cascade per layer, sampled as an array by lit_shadow.
+                depthTarget = io.github.awakelab.awake.webgpu.texture.DepthTarget(
+                    graphicsDevice,
+                    layers = DEFAULT_SHADOW_CASCADES,
+                    arrayed = true,
+                    comparison = true,
+                ),
                 depthOnlyPipeline = io.github.awakelab.awake.webgpu.pipeline.DepthOnlyPipeline(
                     graphicsDevice = graphicsDevice,
                     shaderCode = shadowShaders.wgsl(),
                     vertexFormat = vertexFormat,
                     vertexEntryPoint = shadowShaders.webGpu.entryPoint(ShaderProgramStage.VERTEX),
                     fragmentEntryPoint = shadowShaders.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                    cascadeCount = DEFAULT_SHADOW_CASCADES,
                 ),
             )
         }
@@ -233,6 +241,9 @@ open class WebGpuEngine(
                 val renderingContext = graphicsDevice.wgpuContext.renderingContext
                 renderingContext.width.toFloat() to renderingContext.height.toFloat()
             },
+            // The swapchain is sized in physical pixels, so leaving this at its 1f default laid the
+            // whole UI out as though a dp were a physical pixel -- half size on any 2x display.
+            density = { webGpuSurfaceDensity() },
         )
     }
 

@@ -1,0 +1,65 @@
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Build the iOS native dependencies
+description: >
+  Builds MoltenVK and JoltC for iOS device and simulator, so Kotlin/Native cinterop can find
+  their headers and static libraries. Any job that touches an iOS target needs this -- apiCheck
+  and publishing both pull cinterop into the task graph.
+
+runs:
+  using: composite
+  steps:
+    # MoltenVK's own build takes tens of minutes and its submodule is pinned, so the output is
+    # a pure function of that commit. Keyed on the submodule SHA rather than the workflow file:
+    # a bump to the pin must rebuild, an edit to this action must not.
+    - name: Resolve the pinned submodule commits
+      id: pins
+      shell: bash
+      run: |
+        echo "moltenvk=$(git rev-parse HEAD:awake/backend/vulkan/bindings/ios-native/MoltenVK)" >> "$GITHUB_OUTPUT"
+        echo "joltc=$(git rev-parse HEAD:awake/backend/jolt/ios-native/JoltC)" >> "$GITHUB_OUTPUT"
+
+    - name: Restore the MoltenVK build
+      id: moltenvk-cache
+      uses: actions/cache@v4
+      with:
+        path: awake/backend/vulkan/bindings/ios-native/MoltenVK/Package
+        key: moltenvk-ios-${{ runner.os }}-${{ steps.pins.outputs.moltenvk }}
+
+    # `make ios` and `make iossim` each replace Package/Release/MoltenVK/*.xcframework wholesale
+    # rather than merging into it, so the second one run is the one whose slice survives alongside
+    # the first. Running both in either order leaves both slices present; running only one does not.
+    - name: Build MoltenVK for iOS
+      if: steps.moltenvk-cache.outputs.cache-hit != 'true'
+      shell: bash
+      working-directory: awake/backend/vulkan/bindings/ios-native/MoltenVK
+      run: |
+        ./fetchDependencies --ios --iossim
+        make ios
+        make iossim
+
+    - name: Verify the xcframework carries both slices
+      shell: bash
+      working-directory: awake/backend/vulkan/bindings/ios-native/MoltenVK
+      run: |
+        framework=Package/Release/MoltenVK/static/MoltenVK.xcframework
+        # These two names are what awake/backend/vulkan/bindings/build.gradle.kts passes to
+        # cinterop as -L paths. Checking anything else here would pass while cinterop still fails.
+        for slice in ios-arm64 ios-arm64_x86_64-simulator; do
+          # A cache restored from a half-built run looks like a hit and fails much later, inside
+          # cinterop, as a missing-header error that says nothing about the real cause.
+          test -d "$framework/$slice" || {
+            echo "::error::$framework/$slice missing -- MoltenVK build incomplete"
+            exit 1
+          }
+        done
+
+    # Cheap next to MoltenVK, and the module already owns the CMake invocation, so there is no
+    # recipe to duplicate here -- just run the tasks.
+    - name: Build JoltC for iOS
+      shell: bash
+      run: |
+        ./gradlew :awake:backend:jolt:buildJoltCIosArm64 \
+                  :awake:backend:jolt:buildJoltCIosSimulatorArm64

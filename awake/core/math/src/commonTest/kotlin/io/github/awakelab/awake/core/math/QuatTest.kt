@@ -138,6 +138,45 @@ class QuatTest {
         assertApprox(1f, result.w)
     }
 
+    @Test
+    fun inPlaceToEulerAgreesWithTheMatrixBasedOne() {
+        // toEuler(target) is hand-expanded where toEuler() reads off the matrix, precisely so it
+        // can skip allocating that matrix per body per frame. This is the guard that keeps the
+        // two from drifting apart: a body rotating wrong is otherwise silent.
+        var seed = 0x5DEECE66DL
+        fun next(): Float {
+            seed = seed * 6364136223846793005L + 1442695040888963407L
+            return ((seed ushr 33).toFloat() / Int.MAX_VALUE.toFloat() - 0.5f) * 2f
+        }
+
+        val target = Vec3f()
+        repeat(400) {
+            val raw = Quat(next(), next(), next(), next())
+            val length = sqrt(raw.x * raw.x + raw.y * raw.y + raw.z * raw.z + raw.w * raw.w)
+            if (length < 1e-3f) return@repeat
+            val q = Quat(raw.x / length, raw.y / length, raw.z / length, raw.w / length)
+
+            val fromMatrix = q.toEuler()
+            q.toEuler(target)
+
+            assertApprox(fromMatrix.x, target.x)
+            assertApprox(fromMatrix.y, target.y)
+            assertApprox(fromMatrix.z, target.z)
+        }
+    }
+
+    @Test
+    fun inPlaceToEulerWritesIntoTheGivenVectorAndReturnsIt() {
+        val target = Vec3f(9f, 9f, 9f)
+
+        val returned = Quat.fromEuler(Vec3f(0.3f, -0.7f, 1.1f)).toEuler(target)
+
+        assertTrue(returned === target, "must write in place rather than allocate")
+        assertApprox(0.3f, target.x)
+        assertApprox(-0.7f, target.y)
+        assertApprox(1.1f, target.z)
+    }
+
     private fun assertApprox(expected: Float, actual: Float, epsilon: Float = 1e-4f) {
         assertTrue(kotlin.math.abs(expected - actual) < epsilon, "expected $expected, got $actual")
     }

@@ -25,6 +25,7 @@
 
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -51,5 +52,12 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Render Passes")
+        description.set("Render features and pipelines: shadow, opaque, transparent, skybox and content passes")
     }
 }

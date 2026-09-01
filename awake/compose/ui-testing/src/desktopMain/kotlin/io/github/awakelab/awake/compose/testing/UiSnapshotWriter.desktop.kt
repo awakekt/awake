@@ -7,7 +7,7 @@ package io.github.awakelab.awake.compose.testing
 
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.text.font.UiFont
-import io.github.awakelab.awake.render.testing.PixelMap
+import io.github.awakelab.awake.render.capture.PixelMap
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO

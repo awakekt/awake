@@ -41,7 +41,7 @@ import io.github.awakelab.awake.core.math2d.Dp as StrokeWidth
 import io.github.awakelab.awake.core.math2d.sp
 import io.github.awakelab.awake.core.text.font.UiFonts
 import io.github.awakelab.awake.render.testing.writePng
-import io.github.awakelab.awake.render.testing.PixelMap
+import io.github.awakelab.awake.render.capture.PixelMap
 import io.github.awakelab.awake.sample.uishowcase.state.UiShowcaseRuntimeState
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.TextFieldPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.TextareaPage

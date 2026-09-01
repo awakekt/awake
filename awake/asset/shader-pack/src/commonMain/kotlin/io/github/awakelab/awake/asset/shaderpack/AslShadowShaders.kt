@@ -7,7 +7,10 @@ package io.github.awakelab.awake.asset.shaderpack
 
 import io.github.awakelab.awake.render.pipeline.BindingLayout
 import io.github.awakelab.awake.render.pipeline.BindingSemantic
+import io.github.awakelab.awake.asset.shaderdsl.fieldsFrom
 import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
+import io.github.awakelab.awake.asset.shaderdsl.ndcToUv
+import io.github.awakelab.awake.core.math.ClipSpace
 import io.github.awakelab.awake.asset.shaderdsl.AslExpr
 import io.github.awakelab.awake.asset.shaderdsl.AslType
 import io.github.awakelab.awake.asset.shaderdsl.AslVertexBuilder
@@ -23,6 +26,7 @@ import io.github.awakelab.awake.asset.shaderdsl.gt
 import io.github.awakelab.awake.asset.shaderdsl.inputsFrom
 import io.github.awakelab.awake.asset.shaderdsl.le
 import io.github.awakelab.awake.asset.shaderdsl.length
+import io.github.awakelab.awake.asset.shaderdsl.min
 import io.github.awakelab.awake.asset.shaderdsl.lit
 import io.github.awakelab.awake.asset.shaderdsl.lt
 import io.github.awakelab.awake.asset.shaderdsl.max
@@ -34,14 +38,14 @@ import io.github.awakelab.awake.asset.shaderdsl.plus
 import io.github.awakelab.awake.asset.shaderdsl.pow
 import io.github.awakelab.awake.asset.shaderdsl.r
 import io.github.awakelab.awake.asset.shaderdsl.rgb
-import io.github.awakelab.awake.asset.shaderdsl.sampler
+import io.github.awakelab.awake.asset.shaderdsl.samplerComparison
 import io.github.awakelab.awake.asset.shaderdsl.saturate
 import io.github.awakelab.awake.asset.shaderdsl.sin
-import io.github.awakelab.awake.asset.shaderdsl.select
+import io.github.awakelab.awake.asset.shaderdsl.sqrt
 import io.github.awakelab.awake.asset.shaderdsl.shader
-import io.github.awakelab.awake.asset.shaderdsl.textureDepth2d
+import io.github.awakelab.awake.asset.shaderdsl.textureDepth2dArray
 import io.github.awakelab.awake.asset.shaderdsl.textureDimensions
-import io.github.awakelab.awake.asset.shaderdsl.textureSampleLevelDepth
+import io.github.awakelab.awake.asset.shaderdsl.textureSampleCompareLevel
 import io.github.awakelab.awake.asset.shaderdsl.times
 import io.github.awakelab.awake.asset.shaderdsl.toF32
 import io.github.awakelab.awake.asset.shaderdsl.unaryMinus
@@ -57,16 +61,28 @@ import io.github.awakelab.awake.asset.shaderdsl.z
 import io.github.awakelab.awake.core.geometry.GpuDataShape
 import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.core.geometry.VertexSemantic
+import io.github.awakelab.awake.render.renderer.CascadePassUniformLayout
+import io.github.awakelab.awake.render.renderer.SHADOW_CASCADE_PASS_GROUP
 import io.github.awakelab.awake.render.renderer.MAX_POINT_LIGHTS
+import io.github.awakelab.awake.render.renderer.MAX_SHADOW_CASCADES
 
 /** Depth-only shadow-map pre-pass: binds lit_shadow's buffer (hence the full prefix struct),
  * reads only lightMvp, writes no color -- depth comes from the fixed-function pipeline. The
  * unused inputs keep the vertex layout identical to the main pass. */
 val ShadowDepthShader: AslShaderDefinition = shader("shadow_depth") {
     val u = shadowUniforms(includeLitTail = false)
-    vertex { returnPosition(u.lightMvp * vec4(animatedPosition(u), 1f.lit)) }
+    // The cascade being rendered, from the pass rather than the draw: this shader runs once per
+    // cascade over the same meshes, and a per-draw uniform is written once a frame.
+    val pass = uniformBlock("Cascade", group = SHADOW_CASCADE_PASS_GROUP, binding = 0)
+    val cascadeViewProjection = pass.fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
+    vertex {
+        val world = u.model * vec4(animatedPosition(u), 1f.lit)
+        returnPosition(cascadeViewProjection * world)
+    }
     fragment { }
 }
+
+
 
 /**
  * The same depth-only pass rendered from the camera instead of the light -- the frame's own
@@ -80,6 +96,9 @@ val ShadowDepthShader: AslShaderDefinition = shader("shadow_depth") {
  */
 val SceneDepthShader: AslShaderDefinition = shader("scene_depth") {
     val u = shadowUniforms(includeLitTail = false)
+    // This draw's own mvp, not a pass-scoped matrix: the camera-space pass renders once, so
+    // there is nothing for a per-pass block to say. It therefore declares no group 1, and
+    // `DepthOnlyPipeline` must be built for it with no cascade block -- see that class.
     vertex { returnPosition(u.mvp * vec4(animatedPosition(u), 1f.lit)) }
     fragment { }
 }
@@ -88,17 +107,24 @@ val SceneDepthShader: AslShaderDefinition = shader("scene_depth") {
  * declared `texture_depth_2d` (not `texture_2d<f32>`): WebGPU's auto layout derives a
  * filterable-float binding from the float spelling, which a Depth32Float view fails
  * validation against, while the depth spelling is legal on Vulkan too -- one shared source.
- * Manual PCF because the Vulkan JNI sampler binding has no compareEnable/compareOp;
- * explicit-LOD sampling because implicit derivatives inside a loop are undefined control
- * flow. */
+ * Hardware-compare PCF (`textureSampleCompareLevel` on a `sampler_comparison`): each tap
+ * compares before filtering, so a linear sampler blends four COMPARISON RESULTS rather than
+ * four depths -- the near-tie a manual point-sampled `select` flips on averages out instead.
+ * Explicit-LOD (compare-level) sampling because implicit derivatives inside a loop are
+ * undefined control flow.
+ *
+ * @param clipSpace The convention this is emitted for. It decides the shadow lookup's V axis and
+ * nothing else -- see [ndcToUv], which is where that decision is made for every shader. With the
+ * wrong axis the lookup is mirrored about the map's centre, so a caster's shadow lands on the far
+ * side of the scene from the caster. */
 @Suppress("LongMethod")
-private fun litShadow(): AslShaderDefinition = shader("lit_shadow") {
+private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_shadow") {
     val u = shadowUniforms(includeLitTail = true)
-    val shadowMap by textureDepth2d(
+    val shadowMap by textureDepth2dArray(
         group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth),
         binding = 0,
     )
-    val shadowMapSampler by sampler(
+    val shadowMapSampler by samplerComparison(
         group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth),
         binding = 1,
     )
@@ -106,8 +132,7 @@ private fun litShadow(): AslShaderDefinition = shader("lit_shadow") {
     val out = varyings("VertexOutput")
     val color by out.varying(GpuDataShape.Vec3, location = 0)
     val normal by out.varying(GpuDataShape.Vec3, location = 1)
-    val shadowPos by out.varying(GpuDataShape.Vec4, location = 2)
-    val worldPos by out.varying(GpuDataShape.Vec3, location = 3)
+    val worldPos by out.varying(GpuDataShape.Vec3, location = 2)
 
     vertex {
         val ins = inputsFrom(VertexFormat.PositionNormalColor)
@@ -124,7 +149,6 @@ private fun litShadow(): AslShaderDefinition = shader("lit_shadow") {
         out.position set (u.mvp * vec4(animatedPosition, 1f.lit))
         color set ins.input(VertexSemantic.Color)
         normal set (u.model!! * vec4(animatedNormal, 0f.lit)).xyz
-        shadowPos set (u.lightMvp * vec4(animatedPosition, 1f.lit))
         worldPos set (u.model * vec4(animatedPosition, 1f.lit)).xyz
     }
 
@@ -134,40 +158,134 @@ private fun litShadow(): AslShaderDefinition = shader("lit_shadow") {
     val dielectricF0 = const("DIELECTRIC_F0", 0.04f)
     val minRoughness = const("MIN_ROUGHNESS", 0.05f)
     val invGamma = const("INV_GAMMA", 1.0f / 2.2f)
-    // Slope-scaled bias: grazing angles need more, face-on contact shadows need less.
-    val shadowBiasMin = const("SHADOW_BIAS_MIN", 0.0015f)
-    val shadowBiasMax = const("SHADOW_BIAS_MAX", 0.0090f)
+    // Bias measured in TEXELS of whichever cascade is sampled, not in metres and not in NDC.
+    //
+    // A texel is the only unit the error is actually in: the map stores one depth for a whole
+    // texel, so a surface crossing that texel is misrepresented by its own slope across it. A
+    // fixed distance is therefore too much in a near cascade (the shadow detaches) and too little
+    // in a far one (the surface scales), and NDC -- what this used to be -- is both at once,
+    // since every cascade maps a different world range into 0..1.
+    //
+    // These are the RECEIVER'S share of the bias only. The depth pass applies the source share
+    // with the rasterizer's own per-polygon slope (`SHADOW_DEPTH_BIAS_CONSTANT`/`_SLOPE` in the
+    // contract), which is why these are small: 2.5/3 was the floor while the receiver carried
+    // everything, and no receiver-side constant could remove the per-texel waffle a tilted face
+    // shows -- the receiver estimates slope from its own nDotL, the error lives in the MAP's
+    // polygons. Swept 2026-09-01 against the hardware comparison sampler: 1.5/2 with offset 1
+    // leaves the studio cube at worst 1 self-shadowed pixel per yaw on both backends, and
+    // 1.5/1 with offset 0.5 is the measured cliff where the grazing-face probe fails again.
+    val shadowBiasTexels = const("SHADOW_BIAS_TEXELS", 1.5f)
+    val shadowSlopeTexels = const("SHADOW_SLOPE_BIAS_TEXELS", 2f)
+    val maxSlopeScale = const("SHADOW_MAX_SLOPE_SCALE", 8f)
+    // How far along the surface normal the lookup moves, in shadow-map texels. Bias alone cannot
+    // fix a surface lit edge-on: its map texels store whatever stands above it (a box's own top
+    // face), which is not an approximation of this surface but a different one. Moving the
+    // LOOKUP samples clear of that shared texel, and unlike more bias it does not detach the
+    // shadow from the caster.
+    val normalOffsetTexels = const("SHADOW_NORMAL_OFFSET_TEXELS", 1f)
     val pcfRadius = constI32("PCF_RADIUS", 1)
 
+    /**
+     * How lit this fragment is, from whichever cascade contains it.
+     *
+     * Chosen by containment rather than by comparing a view distance against split planes: the
+     * boxes were fitted to spheres around frustum slices, so a distance test agrees with them
+     * only approximately, and where it disagrees a fragment samples a cascade that does not
+     * cover it -- which reads as a band of missing shadow at a cascade boundary. Testing the
+     * projection directly cannot disagree with the fit, because it IS the fit.
+     *
+     * Near cascade first, so the first containing cascade is also the highest-resolution one.
+     */
     val sampleShadow = fn("sampleShadow") {
-        val pos by param(GpuDataShape.Vec4)
+        val world by param(GpuDataShape.Vec3)
+        val normal by param(GpuDataShape.Vec3)
         val nDotL by param(F32)
-        iff(pos.w le 0f.lit) { returnValue(1f.lit) }
-        // NDC depth is already 0..1 (ClipSpace.depthZeroToOne) -- no *0.5+0.5 remap.
-        val ndc = let("ndc", pos.xyz / pos.w)
-        val uv = let("uv", ndc.xy * vec2(0.5f.lit, 0.5f.lit) + vec2(0.5f.lit, 0.5f.lit))
-        iff(
-            (uv.x lt 0f.lit) or (uv.x gt 1f.lit) or (uv.y lt 0f.lit) or (uv.y gt 1f.lit) or
-                (ndc.z lt 0f.lit) or (ndc.z gt 1f.lit),
-        ) { returnValue(1f.lit) }
-        val bias = let("bias", max(shadowBiasMax * (1f.lit - nDotL), shadowBiasMin))
+        // How much depth one texel of this surface covers, as the light gets glancing:
+        // tan(acos(nDotL)), written out as sqrt(1 - n^2)/n. Clamped because it runs to infinity at
+        // the horizon, where an unbounded bias would detach every shadow in the frame.
+        //
+        // This was (1 - n)/n, described as the same shape without the square root. It is not: the
+        // two differ by sqrt((1 + n)/(1 - n)), which is 1.7x at n = 0.5, 2.4x at 0.7 and 4.4x at
+        // 0.9. They agree only at grazing angles, so the cheap form was shortest exactly where a
+        // face points AT the light -- and a spinning cube sweeps its lit faces through that band,
+        // which is why the studio's cube stippled at some yaws and not others.
+        val slopeScale = let(
+            "slopeScale",
+            min(sqrt(max(1f.lit - nDotL * nDotL, 0f.lit)) / max(nDotL, epsilon), maxSlopeScale),
+        )
         val texSize = let("texSize", vec2(textureDimensions(shadowMap)))
         val texel = let("texel", 1f.lit / texSize)
-        val shadow = variable("shadow", 0f.lit)
-        val samples = variable("samples", 0f.lit)
-        loopI32("dx", -pcfRadius, pcfRadius) { dx ->
-            loopI32("dy", -pcfRadius, pcfRadius) { dy ->
-                val offset = let("offset", vec2(toF32(dx), toF32(dy)) * texel)
-                // Depth form returns f32 directly, and WGSL wants an INTEGER level here.
-                val closestDepth = let(
-                    "closestDepth",
-                    textureSampleLevelDepth(shadowMap, shadowMapSampler, uv + offset, 0.lit),
-                )
-                assign(shadow, shadow + select(1f.lit, 0f.lit, (ndc.z - bias) gt closestDepth))
-                assign(samples, samples + 1f.lit)
+        val lit = variable("lit", 1f.lit)
+        val resolved = variable("resolved", 0.lit)
+        loopI32("cascade", 0.lit, (MAX_SHADOW_CASCADES - 1).lit) { cascade ->
+            iff(resolved gt 0.lit) { continueLoop() }
+            // One texel as a distance: this cascade's world width times the map's own texel size.
+            // Derived rather than passed, so a map resized at runtime cannot leave it stale.
+            val texelWorld = let("texelWorld", u.cascadeDepthScales[cascade].y * texel.x)
+            // Bias sized to THIS cascade's texel, then converted to its depth range below. A far
+            // cascade gets a proportionally larger bias because its error is proportionally
+            // larger, which a single distance cannot express for both ends of the split scheme.
+            val worldBias = let(
+                "worldBias",
+                texelWorld * (shadowBiasTexels + shadowSlopeTexels * slopeScale),
+            )
+            // Divided by n dot l, not scaled by (1 - n dot l): one texel of the map covers
+            // texel/nDotL of THIS surface, so that is how far the lookup has to move to leave
+            // the texel it shares with whatever stands above it. The two agree for a surface
+            // facing the light and diverge exactly where the artefact lives -- at nDotL 0.2 the
+            // old form moved 1.6 texels and this moves 7.7.
+            val slide = let("slide", texelWorld * normalOffsetTexels / max(nDotL, epsilon))
+            // Containment answers for the FRAGMENT, not for the offset lookup. Selecting on the
+            // offset position couples the two: growing the offset can push a fragment out of one
+            // cascade into the next, and the artefact it was meant to fix then moves rather than
+            // shrinks -- which is what made this constant behave chaotically when swept.
+            val projected = let(
+                "projected",
+                u.cascadeViewProjections[cascade] * vec4(world, 1f.lit),
+            )
+            iff(projected.w le 0f.lit) { continueLoop() }
+            // NDC depth is already 0..1 (ClipSpace.depthZeroToOne) -- no *0.5+0.5 remap.
+            val ndc = let("ndc", projected.xyz / projected.w)
+            val offsetProjected = let(
+                "offsetProjected",
+                u.cascadeViewProjections[cascade] * vec4(world + normal * slide, 1f.lit),
+            )
+            val offsetNdcXy = let("offsetNdcXy", offsetProjected.xy / offsetProjected.w)
+            val sampleUv = let("sampleUv", ndcToUv(offsetNdcXy, clipSpace))
+            iff(
+                (sampleUv.x lt 0f.lit) or (sampleUv.x gt 1f.lit) or
+                    (sampleUv.y lt 0f.lit) or (sampleUv.y gt 1f.lit) or
+                    (ndc.z lt 0f.lit) or (ndc.z gt 1f.lit),
+            ) { continueLoop() }
+            assign(resolved, 1.lit)
+            val bias = let("bias", worldBias * u.cascadeDepthScales[cascade].x)
+            val offsetNdc = ndc
+            val shadow = variable("shadow", 0f.lit)
+            val samples = variable("samples", 0f.lit)
+            loopI32("dx", -pcfRadius, pcfRadius) { dx ->
+                loopI32("dy", -pcfRadius, pcfRadius) { dy ->
+                    val offset = let("offset", vec2(toF32(dx), toF32(dy)) * texel)
+                    // The GPU compares (LessEqual, set at sampler creation) and filters the
+                    // results: each tap is already a lit fraction, not a depth.
+                    val tapLit = let(
+                        "tapLit",
+                        textureSampleCompareLevel(
+                            shadowMap,
+                            shadowMapSampler,
+                            sampleUv + offset,
+                            cascade,
+                            offsetNdc.z - bias,
+                        ),
+                    )
+                    assign(shadow, shadow + tapLit)
+                    assign(samples, samples + 1f.lit)
+                }
             }
+            assign(lit, shadow / samples)
         }
-        returnValue(shadow / samples)
+        // Nothing contained it: beyond the last cascade, where an unshadowed fragment is the
+        // honest answer and a guessed one would flicker as the camera moves.
+        returnValue(lit)
     }
 
     // GGX/Trowbridge-Reitz normal distribution.
@@ -232,7 +350,7 @@ private fun litShadow(): AslShaderDefinition = shader("lit_shadow") {
                 max(4f.lit * nDotV * nDotL, epsilon),
         )
         val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * color / pi)
-        val shadowFactor = let("shadowFactor", sampleShadow(shadowPos, nDotL))
+        val shadowFactor = let("shadowFactor", sampleShadow(worldPos, n, nDotL))
         val direct = variable("direct", (diffuse + specular) * u.lightColor.xyz * nDotL * shadowFactor)
         // Point lights: same BRDF per slot, unshadowed (the one shadow map is directional).
         // Slot count is MAX_POINT_LIGHTS itself -- the same constant that sizes the layout's
@@ -268,7 +386,8 @@ private fun litShadow(): AslShaderDefinition = shader("lit_shadow") {
     }
 }
 
-val LitShadowShader: AslShaderDefinition = litShadow()
+/** `lit_shadow` for [clipSpace]. One definition; the emitted V axis follows the backend. */
+fun litShadowShader(clipSpace: ClipSpace): AslShaderDefinition = litShadow(clipSpace)
 
 /**
  * The vertex position both depth passes rasterise, with the scene's wave displacement applied.

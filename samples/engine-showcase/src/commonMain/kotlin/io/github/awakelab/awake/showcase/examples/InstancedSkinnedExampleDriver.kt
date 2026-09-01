@@ -18,8 +18,8 @@ import io.github.awakelab.awake.render.material.Material
 import io.github.awakelab.awake.render.mesh.Mesh
 import io.github.awakelab.awake.render.renderer.InstancedUniformLayout
 import io.github.awakelab.awake.render.renderer.createMaterial
-import io.github.awakelab.awake.scene.rendering.components.InstancedSkinnedMeshRenderer
-import io.github.awakelab.awake.scene.rendering.components.SkinnedInstance
+import io.github.awakelab.awake.scene.rendering.mesh.InstancedSkinnedMeshRenderer
+import io.github.awakelab.awake.scene.rendering.mesh.SkinnedInstance
 import io.github.awakelab.awake.scene.runtime.Scene
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
 
@@ -28,7 +28,7 @@ private const val SPACING = 1.2f
 
 /** CesiumMan.gltf, parsed once, resampled per instance each frame -- same shape
  * [SkinnedExampleDriver] uses for the single-instance case, but one [SkinnedInstance] per grid
- * cell instead of one [io.github.awakelab.awake.scene.rendering.components.SkinnedPose].
+ * cell instead of one [io.github.awakelab.awake.scene.rendering.animation.SkinnedPose].
  * Each instance's clock is phase-offset so their walk cycles visibly drift apart, proving the
  * per-instance POSE varies, not just the per-instance transform. `InstancedSkinnedMeshRenderer`
  * isn't an authorable scene component yet, same reason [InstancedCubesExampleDriver] attaches

@@ -20,6 +20,7 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 - [Awake Render Vulkan](.agents/skills/awake-render-vulkan/SKILL.md): Vulkan pipeline, swapchain, and Naga SPIR-V compilation
 - [Awake Render WebGPU](.agents/skills/awake-render-webgpu/SKILL.md): WebGPU pipeline and native WGSL execution
 - [Awake Render Pipeline](.agents/skills/awake-render-pipeline/SKILL.md): RenderPlan, ShaderSet, and pass orchestration
+- [Awake Render Headless Verification](.agents/skills/awake-render-headless-verification/SKILL.md): Measuring what the engine renders, without a window
 
 ### Physics & Asset Pipelines
 - [Awake Physics Jolt](.agents/skills/awake-physics-jolt/SKILL.md): Jolt physics bodies, collision shapes, and steps
@@ -39,10 +40,5 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 - [Awake Shadcn to Compose](.agents/skills/awake-shadcn-to-compose/SKILL.md): Porting Shadcn primitives
 - [Awake Shadcn Recipe Authoring](.agents/skills/awake-shadcn-recipe-authoring/SKILL.md): Custom Shadcn recipe authoring
 - [Awake Shadcn Recipe Consuming](.agents/skills/awake-shadcn-recipe-consuming/SKILL.md): Consuming recipes in UI
-
-UI verification is tiered: use focused compile/tests and CPU previews during iteration, complete
-the standalone state matrix before commit, and run showcase/reference/audit evidence before a
-parity claim. Use GPU capture only for backend paint, shader, blending, text-sampling, pacing, or
-anti-aliasing changes; see `docs/reference/ui-validation.md`.
 - [Awake Tailwind to Compose](.agents/skills/awake-tailwind-to-compose/SKILL.md): Tailwind classes to Compose modifiers
 - [Awake Web to Compose](.agents/skills/awake-web-to-compose/SKILL.md): Web layout patterns to Compose

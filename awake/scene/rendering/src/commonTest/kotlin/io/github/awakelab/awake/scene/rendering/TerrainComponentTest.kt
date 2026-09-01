@@ -11,9 +11,9 @@ import io.github.awakelab.awake.asset.terrain.splat.TerrainSplatWeightMap
 import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.rendering.components.Camera
-import io.github.awakelab.awake.scene.rendering.components.TerrainComponent
-import io.github.awakelab.awake.scene.rendering.systems.TerrainClipmapSystem
+import io.github.awakelab.awake.scene.rendering.Camera
+import io.github.awakelab.awake.scene.rendering.terrain.TerrainComponent
+import io.github.awakelab.awake.scene.rendering.terrain.TerrainClipmapSystem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

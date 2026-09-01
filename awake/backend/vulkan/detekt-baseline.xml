@@ -6,7 +6,7 @@
     <ID>LargeClass:UiRenderPipeline.kt$UiRenderPipeline</ID>
     <ID>LongMethod:LineRenderPipeline.kt$LineRenderPipeline$private fun createGraphicsPipeline(vertShaderCode: ByteArray, fragShaderCode: ByteArray)</ID>
     <ID>LongMethod:RendererCommandRecording.kt$internal fun Renderer.recordCommandBuffer( commandBuffer: Long, frameIndex: Int, acquiredImageIndex: Int, drawCalls: List&lt;PreparedDrawCall>, viewProjection: Mat4, cameraEye: Vec3f, light: SceneLight, )</ID>
-    <ID>LongMethod:RendererDraw3D.kt$internal fun Renderer.prepareDrawCalls( frameIndex: Int, viewProjection: Mat4, drawCalls: List&lt;DrawCall>, light: SceneLight, lightViewProjection: Mat4? = null, materialUsage: MutableMap&lt;RenderMaterial, Int> = mutableMapOf(), cameraPosition: Vec3f = Vec3f.ZERO, ): List&lt;PreparedDrawCall></ID>
+    <ID>LongMethod:RendererDraw3D.kt$internal fun Renderer.prepareDrawCalls( frameIndex: Int, viewProjection: Mat4, drawCalls: List&lt;DrawCall>, light: SceneLight, cascades: ShadowCascadeUniforms? = null, materialUsage: MutableMap&lt;RenderMaterial, Int> = mutableMapOf(), cameraPosition: Vec3f = Vec3f.ZERO, ): List&lt;PreparedDrawCall></ID>
     <ID>LongMethod:RendererDrawUi.kt$fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List&lt;UiDrawPrimitive>, font: UiFont?)</ID>
     <ID>LongMethod:RendererHeadlessContentTextureTest.kt$RendererHeadlessContentTextureTest.Companion$fun sharedRenderer(): Renderer</ID>
     <ID>LongMethod:RendererHeadlessFrameTimingTest.kt$RendererHeadlessFrameTimingTest$@Test fun headlessCubeRenderFrameTiming()</ID>

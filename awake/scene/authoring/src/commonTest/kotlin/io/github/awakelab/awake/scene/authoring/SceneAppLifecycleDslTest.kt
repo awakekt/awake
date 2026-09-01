@@ -41,7 +41,7 @@ import io.github.awakelab.awake.scene.authoring.blueprints.meshEntity
 import io.github.awakelab.awake.scene.authoring.dsl.camera
 import io.github.awakelab.awake.scene.authoring.dsl.transform
 import io.github.awakelab.awake.scene.authoring.infrastructure.cameraSystem
-import io.github.awakelab.awake.scene.controls.systems.CameraSystem
+import io.github.awakelab.awake.scene.controls.camera.CameraSystem
 import io.github.awakelab.awake.scene.runtime.LocalFrameStats
 import io.github.awakelab.awake.scene.runtime.LocalRenderer
 import io.github.awakelab.awake.scene.runtime.LocalWorld
@@ -252,6 +252,35 @@ class SceneAppLifecycleDslTest {
 
         assertEquals(1, fixedSystem.calls)
         assertEquals(2, frameSystem.calls)
+    }
+
+    @Test
+    fun anInterpolatedFixedSystemIsToldHowFarPastTheLastStepEachFrameIs() = runTest {
+        lateinit var handle: io.github.awakelab.awake.scene.runtime.SceneSystemHandle<InterpolatingSystem>
+        val game = app {
+            scene("interpolation") {
+                cameraEntity("camera")
+                handle = fixedSystem("interpolated") { InterpolatingSystem() }
+            }
+        }
+
+        game.ready(RecordingRenderer())
+        val runtime = game.requireService<SceneAppLifecycleRuntime>()
+        val system = runtime.system(handle)
+        system.reset()
+
+        // Three quarters of a step: too little to run one, which is exactly the frame that used to
+        // redraw the previous pose unchanged.
+        game.update(0.75f / 60f, 320f, 240f)
+
+        assertEquals(0, system.steps, "a partial step should not have advanced the simulation")
+        assertEquals(listOf(0.75f), system.alphas.map { round(it) })
+
+        // Another three quarters: one step runs and half a step is left over.
+        game.update(0.75f / 60f, 320f, 240f)
+
+        assertEquals(1, system.steps)
+        assertEquals(listOf(0.75f, 0.5f), system.alphas.map { round(it) })
     }
 
     @Test
@@ -473,4 +502,26 @@ internal class RecordingRenderer : Renderer {
     override fun drawDebugLines(lines: List<LineSegment>) = Unit
 
     override fun destroy() = Unit
+}
+
+/** Rounds to two places, so a float that is 0.7499999 reads as the 0.75 the arithmetic meant. */
+private fun round(value: Float): Float = kotlin.math.round(value * 100f) / 100f
+
+/** A fixed system that records the alpha it is drawn at, for the interpolation wiring. */
+private class InterpolatingSystem : io.github.awakelab.awake.ecs.InterpolatedSystem {
+    var steps = 0
+    val alphas = mutableListOf<Float>()
+
+    override fun update(world: World, delta: Float) {
+        steps += 1
+    }
+
+    override fun interpolate(world: World, alpha: Float) {
+        alphas += alpha
+    }
+
+    fun reset() {
+        steps = 0
+        alphas.clear()
+    }
 }

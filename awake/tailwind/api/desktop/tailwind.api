@@ -28,66 +28,66 @@ public final class io/github/awakelab/awake/tailwind/Tw {
 
 public final class io/github/awakelab/awake/tailwind/Tw$Radius {
 	public static final field INSTANCE Lio/github/awakelab/awake/tailwind/Tw$Radius;
-	public final fun get2xl-qYSJMHg ()F
-	public final fun get3xl-qYSJMHg ()F
-	public final fun getFull-qYSJMHg ()F
-	public final fun getLg-qYSJMHg ()F
-	public final fun getMd-qYSJMHg ()F
-	public final fun getNone-qYSJMHg ()F
-	public final fun getSm-qYSJMHg ()F
-	public final fun getXl-qYSJMHg ()F
+	public final fun get2xl-PExdcLc ()F
+	public final fun get3xl-PExdcLc ()F
+	public final fun getFull-PExdcLc ()F
+	public final fun getLg-PExdcLc ()F
+	public final fun getMd-PExdcLc ()F
+	public final fun getNone-PExdcLc ()F
+	public final fun getSm-PExdcLc ()F
+	public final fun getXl-PExdcLc ()F
 }
 
 public final class io/github/awakelab/awake/tailwind/Tw$Spacing {
 	public static final field INSTANCE Lio/github/awakelab/awake/tailwind/Tw$Spacing;
-	public final fun getPx-qYSJMHg ()F
-	public final fun getS0-qYSJMHg ()F
-	public final fun getS0_5-qYSJMHg ()F
-	public final fun getS1-qYSJMHg ()F
-	public final fun getS10-qYSJMHg ()F
-	public final fun getS11-qYSJMHg ()F
-	public final fun getS12-qYSJMHg ()F
-	public final fun getS14-qYSJMHg ()F
-	public final fun getS16-qYSJMHg ()F
-	public final fun getS1_5-qYSJMHg ()F
-	public final fun getS2-qYSJMHg ()F
-	public final fun getS20-qYSJMHg ()F
-	public final fun getS24-qYSJMHg ()F
-	public final fun getS28-qYSJMHg ()F
-	public final fun getS2_5-qYSJMHg ()F
-	public final fun getS3-qYSJMHg ()F
-	public final fun getS32-qYSJMHg ()F
-	public final fun getS36-qYSJMHg ()F
-	public final fun getS3_5-qYSJMHg ()F
-	public final fun getS4-qYSJMHg ()F
-	public final fun getS40-qYSJMHg ()F
-	public final fun getS44-qYSJMHg ()F
-	public final fun getS48-qYSJMHg ()F
-	public final fun getS5-qYSJMHg ()F
-	public final fun getS52-qYSJMHg ()F
-	public final fun getS56-qYSJMHg ()F
-	public final fun getS6-qYSJMHg ()F
-	public final fun getS60-qYSJMHg ()F
-	public final fun getS64-qYSJMHg ()F
-	public final fun getS7-qYSJMHg ()F
-	public final fun getS72-qYSJMHg ()F
-	public final fun getS8-qYSJMHg ()F
-	public final fun getS80-qYSJMHg ()F
-	public final fun getS9-qYSJMHg ()F
-	public final fun getS96-qYSJMHg ()F
+	public final fun getPx-PExdcLc ()F
+	public final fun getS0-PExdcLc ()F
+	public final fun getS0_5-PExdcLc ()F
+	public final fun getS1-PExdcLc ()F
+	public final fun getS10-PExdcLc ()F
+	public final fun getS11-PExdcLc ()F
+	public final fun getS12-PExdcLc ()F
+	public final fun getS14-PExdcLc ()F
+	public final fun getS16-PExdcLc ()F
+	public final fun getS1_5-PExdcLc ()F
+	public final fun getS2-PExdcLc ()F
+	public final fun getS20-PExdcLc ()F
+	public final fun getS24-PExdcLc ()F
+	public final fun getS28-PExdcLc ()F
+	public final fun getS2_5-PExdcLc ()F
+	public final fun getS3-PExdcLc ()F
+	public final fun getS32-PExdcLc ()F
+	public final fun getS36-PExdcLc ()F
+	public final fun getS3_5-PExdcLc ()F
+	public final fun getS4-PExdcLc ()F
+	public final fun getS40-PExdcLc ()F
+	public final fun getS44-PExdcLc ()F
+	public final fun getS48-PExdcLc ()F
+	public final fun getS5-PExdcLc ()F
+	public final fun getS52-PExdcLc ()F
+	public final fun getS56-PExdcLc ()F
+	public final fun getS6-PExdcLc ()F
+	public final fun getS60-PExdcLc ()F
+	public final fun getS64-PExdcLc ()F
+	public final fun getS7-PExdcLc ()F
+	public final fun getS72-PExdcLc ()F
+	public final fun getS8-PExdcLc ()F
+	public final fun getS80-PExdcLc ()F
+	public final fun getS9-PExdcLc ()F
+	public final fun getS96-PExdcLc ()F
 }
 
 public final class io/github/awakelab/awake/tailwind/Tw$Text {
 	public static final field INSTANCE Lio/github/awakelab/awake/tailwind/Tw$Text;
-	public final fun get2xl-VufuCH0 ()F
-	public final fun get3xl-VufuCH0 ()F
-	public final fun get4xl-VufuCH0 ()F
-	public final fun get5xl-VufuCH0 ()F
-	public final fun getBase-VufuCH0 ()F
-	public final fun getLg-VufuCH0 ()F
-	public final fun getSm-VufuCH0 ()F
-	public final fun getXl-VufuCH0 ()F
-	public final fun getXs-VufuCH0 ()F
+	public final fun get2xl-sgZBgvw ()F
+	public final fun get3xl-sgZBgvw ()F
+	public final fun get4xl-sgZBgvw ()F
+	public final fun get5xl-sgZBgvw ()F
+	public final fun getBase-sgZBgvw ()F
+	public final fun getLg-sgZBgvw ()F
+	public final fun getSm-sgZBgvw ()F
+	public final fun getXl-sgZBgvw ()F
+	public final fun getXs-sgZBgvw ()F
 }
 
 public final class io/github/awakelab/awake/tailwind/TwLayout {
@@ -99,26 +99,26 @@ public final class io/github/awakelab/awake/tailwind/TwLayout {
 }
 
 public final class io/github/awakelab/awake/tailwind/TwModifiersKt {
-	public static final fun h-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun h-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
 	public static final fun hFull (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun p-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun pb-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun pl-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun pr-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun pt-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun px-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun py-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun rounded-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun rounded-7O_KWEg$default (Lio/github/awakelab/awake/compose/ui/Modifier;FILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun p-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun pb-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun pl-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun pr-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun pt-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun px-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun py-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun rounded-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static synthetic fun rounded-bEoJtvI$default (Lio/github/awakelab/awake/compose/ui/Modifier;FILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
 	public static final fun roundedFull (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
 	public static final fun roundedLg (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
 	public static final fun roundedMd (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
 	public static final fun roundedSm (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
 	public static final fun roundedXl (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
 	public static final fun sizeFull (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun sz-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun sz-ZdAEvAI (Lio/github/awakelab/awake/compose/ui/Modifier;FF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun w-7O_KWEg (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun sz-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun sz-uuA1Jbk (Lio/github/awakelab/awake/compose/ui/Modifier;FF)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public static final fun w-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
 	public static final fun wFull (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
 }
 

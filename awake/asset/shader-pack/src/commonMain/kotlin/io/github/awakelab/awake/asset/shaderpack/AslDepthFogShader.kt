@@ -18,7 +18,9 @@ import io.github.awakelab.awake.asset.shaderdsl.plus
 import io.github.awakelab.awake.asset.shaderdsl.rgb
 import io.github.awakelab.awake.asset.shaderdsl.sampler
 import io.github.awakelab.awake.asset.shaderdsl.saturate
+import io.github.awakelab.awake.asset.shaderdsl.ndcToUv
 import io.github.awakelab.awake.asset.shaderdsl.shader
+import io.github.awakelab.awake.core.math.ClipSpace
 import io.github.awakelab.awake.asset.shaderdsl.step
 import io.github.awakelab.awake.asset.shaderdsl.textureDepth2d
 import io.github.awakelab.awake.asset.shaderdsl.textureSampleLevelDepth
@@ -58,13 +60,11 @@ private const val FAR_PLANE = 0.9999f
  * quantity `applyFog` measures in `lit_shadow`. Fogging by raw depth instead would make the
  * density mean something different at every field of view.
  *
- * @param flipDepthV Whether the sampled depth target's V axis runs opposite this fragment's NDC
- * Y. True for WebGPU (Y-up NDC into a top-left-origin texture) and false for Vulkan, whose
- * projection already flips Y -- see `ClipSpace`. Taken as a parameter because one emitted WGSL
- * source serves both backends, and this is the single line where their conventions differ; see
- * [depthFogContentFeature], which supplies it from the backend it is resolved against.
+ * @param clipSpace The convention this is emitted for. It decides how a fragment's NDC becomes a
+ * coordinate into the depth target and nothing else -- see [ndcToUv], where that decision is made
+ * for every shader that needs it.
  */
-fun depthFogShader(flipDepthV: Boolean): AslShaderDefinition = shader("depth_fog") {
+fun depthFogShader(clipSpace: ClipSpace): AslShaderDefinition = shader("depth_fog") {
     val u = uniformBlock(
         "Uniforms",
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -93,8 +93,7 @@ fun depthFogShader(flipDepthV: Boolean): AslShaderDefinition = shader("depth_fog
     val farPlane = const("FAR_PLANE", FAR_PLANE)
 
     fragment {
-        val v = if (flipDepthV) (1f.lit - ndc.y) * 0.5f.lit else (ndc.y + 1f.lit) * 0.5f.lit
-        val uv = let("uv", vec2((ndc.x + 1f.lit) * 0.5f.lit, v))
+        val uv = let("uv", ndcToUv(ndc, clipSpace))
         val depth = let("depth", textureSampleLevelDepth(sceneDepth, sceneDepthSampler, uv, 0.lit))
         val clip = let("clip", inverseViewProjection * vec4(ndc, depth, 1f.lit))
         val world = let("world", clip.xyz / clip.w)

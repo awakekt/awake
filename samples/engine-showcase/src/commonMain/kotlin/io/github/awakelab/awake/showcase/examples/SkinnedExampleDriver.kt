@@ -18,8 +18,8 @@ import io.github.awakelab.awake.render.material.Material
 import io.github.awakelab.awake.render.mesh.Mesh
 import io.github.awakelab.awake.render.renderer.SkinnedUniformLayout
 import io.github.awakelab.awake.render.renderer.createMaterial
-import io.github.awakelab.awake.scene.rendering.components.Animator
-import io.github.awakelab.awake.scene.rendering.components.SkinnedPose
+import io.github.awakelab.awake.scene.rendering.animation.Animator
+import io.github.awakelab.awake.scene.rendering.animation.SkinnedPose
 import io.github.awakelab.awake.scene.runtime.Scene
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
 
@@ -54,6 +54,12 @@ internal object SkinnedExampleDriver {
 
     fun createMaterial(runtime: SceneAppLifecycleRuntime): Material =
         runtime.renderer.createMaterial(SkinnedUniformLayout)
+
+    /** CesiumMan's bone hierarchy, shared with the ragdoll showcase rather than parsed twice. */
+    internal fun skeleton() = requireNotNull(animationLibrary).skeleton
+
+    /** CesiumMan's skinning joints, for turning a posed skeleton into a joint palette. */
+    internal fun skin() = requireNotNull(skin)
 
     /** Creates one independent player for the instantiated entity; clips/library remain shared
      * source data, while timing and pose state belong to this entity alone. */

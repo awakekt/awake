@@ -168,4 +168,38 @@ class ShadcnSliderTest {
             "the end thumb ended at ${endThumb.x + endThumb.w}, past the widget's 200px",
         )
     }
+
+    /**
+     * Reported as "the bar is not progressing but the numbers is changing".
+     *
+     * Every other test here composes a fresh tree per value, which builds the draw cache once and
+     * therefore cannot see this: the slider drew through `drawWithCache`, which rebuilds on size,
+     * density and layout direction only. Across a real drag none of those change, so the captured
+     * fraction stayed at whatever the first frame saw while `onValueChange` kept reporting the new
+     * value -- a number that moves above a bar that does not.
+     *
+     * So this reuses one root across two values, which is what a drag actually does.
+     */
+    @Test
+    fun theRangeFollowsAValueChangeOnAReusedTree() {
+        val root = LayoutNode(ColumnMeasurePolicy())
+        fun frameAt(value: Float): List<DrawCommand.RoundedQuad> {
+            composeInto(root) {
+                provideShadcnTheme(theme) {
+                    ShadcnSlider(value = value, modifier = Modifier.size(200.dp))
+                }
+            }
+            root.layoutTree(Constraints.of(0, 400, 0, 400))
+            return rounded(Painter().paint(root))
+        }
+
+        val quarter = frameAt(0.25f)[1].w
+        val threeQuarters = frameAt(0.75f)[1].w
+
+        assertTrue(
+            threeQuarters > quarter + 1f,
+            "the filled range stayed at ${quarter}px when the value went 0.25 -> 0.75 " +
+                "(redrew ${threeQuarters}px), so the bar is frozen while the value moves",
+        )
+    }
 }

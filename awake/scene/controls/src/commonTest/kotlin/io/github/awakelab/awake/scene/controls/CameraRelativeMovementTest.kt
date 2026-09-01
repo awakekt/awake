@@ -8,11 +8,11 @@ package io.github.awakelab.awake.scene.controls
 import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.controls.components.ActiveCamera
-import io.github.awakelab.awake.scene.controls.components.MovementControl
-import io.github.awakelab.awake.scene.controls.systems.MatrixRelativeMovementSystem
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.rendering.components.Camera
+import io.github.awakelab.awake.scene.controls.camera.ActiveCamera
+import io.github.awakelab.awake.scene.controls.movement.MovementControl
+import io.github.awakelab.awake.scene.controls.movement.MatrixRelativeMovementSystem
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.Camera
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -8,10 +8,10 @@ package io.github.awakelab.awake.scene.authoring.sugar
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.authoring.dsl.scene
-import io.github.awakelab.awake.scene.controls.components.CameraMode
-import io.github.awakelab.awake.scene.controls.components.CameraRig
-import io.github.awakelab.awake.scene.core.components.Name
-import io.github.awakelab.awake.scene.rendering.components.Light
+import io.github.awakelab.awake.scene.controls.camera.CameraMode
+import io.github.awakelab.awake.scene.controls.camera.CameraRig
+import io.github.awakelab.awake.scene.core.Name
+import io.github.awakelab.awake.scene.rendering.Light
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

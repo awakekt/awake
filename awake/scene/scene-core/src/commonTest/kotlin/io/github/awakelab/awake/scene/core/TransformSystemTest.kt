@@ -7,8 +7,8 @@ package io.github.awakelab.awake.scene.core
 
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.core.systems.TransformSystem
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.core.transform.TransformSystem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

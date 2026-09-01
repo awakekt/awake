@@ -5,8 +5,8 @@
  */
 package io.github.awakelab.awake.ecs.benchmark
 
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 
 /**
  * Benchmark-only pure-archetype storage for stable render components plus dynamic tag bits.

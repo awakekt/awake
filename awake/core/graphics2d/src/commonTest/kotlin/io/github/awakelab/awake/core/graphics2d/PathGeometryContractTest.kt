@@ -293,4 +293,21 @@ class PathGeometryContractTest {
             "a 400px-radius arc needs more than one chord to stay within tolerance",
         )
     }
+
+    @Test
+    fun aStrokedArcsOutlineIsNotConvexAndKeepsItsHole() {
+        // isConvex only compared turn signs, and a stroked arc's ring turns one way the whole way
+        // round while wrapping about twice: out along one side, round the cap, back along the
+        // other, cap again. It read as convex, tessellateFill centroid-fanned it, and the fan
+        // covered the hole -- Heroicons' user-circle and light-bulb rendered as solid discs.
+        val arc = DrawPath.build {
+            arcTo(2f, 2f, 18f, 18f, startDegrees = 0f, sweepDegrees = 300f)
+        }
+        val ring = arc.strokeToFillPath(DrawStroke(width = 1.5f.dp, cap = StrokeCap.Round, join = StrokeJoin.Round))
+
+        assertTrue(ring.flattenContours().none { isConvex(it.points) }, "a stroke ring is not convex")
+        assertTrue(!ring.containsPoint(10f, 10f), "the arc's centre stays empty")
+        // Mid-arc (150 degrees), clear of both endpoints: on the centreline, so inside the band.
+        assertTrue(ring.containsPoint(10f - 8f * 0.866f, 10f + 8f * 0.5f), "the band itself is filled")
+    }
 }

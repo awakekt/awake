@@ -24,6 +24,11 @@ public final class io/github/awakelab/awake/core/math/Aabb$Companion {
 	public final fun getEDGES ()Ljava/util/List;
 }
 
+public final class io/github/awakelab/awake/core/math/AabbKt {
+	public static final fun intersects (Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Aabb;)Z
+	public static final fun squaredDistanceTo (Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Vec3f;)F
+}
+
 public final class io/github/awakelab/awake/core/math/Angle {
 	public static final field Companion Lio/github/awakelab/awake/core/math/Angle$Companion;
 	public static final synthetic fun box-impl (F)Lio/github/awakelab/awake/core/math/Angle;
@@ -41,8 +46,8 @@ public final class io/github/awakelab/awake/core/math/Angle {
 }
 
 public final class io/github/awakelab/awake/core/math/Angle$Companion {
-	public final fun fromDegrees-h3c1Zdw (F)F
-	public final fun fromRadians-h3c1Zdw (F)F
+	public final fun fromDegrees-h8UeWro (F)F
+	public final fun fromRadians-h8UeWro (F)F
 }
 
 public final class io/github/awakelab/awake/core/math/AngleKt {
@@ -158,6 +163,7 @@ public final class io/github/awakelab/awake/core/math/Frustum {
 public final class io/github/awakelab/awake/core/math/FrustumKt {
 	public static final fun containsSphere (Ljava/util/List;Lio/github/awakelab/awake/core/math/Vec3f;F)Z
 	public static final fun intersects (Lio/github/awakelab/awake/core/math/Frustum;Lio/github/awakelab/awake/core/math/Lens;FLio/github/awakelab/awake/core/math/Aabb;)Z
+	public static final fun intersects (Ljava/util/List;Lio/github/awakelab/awake/core/math/Aabb;)Z
 	public static final fun planes (Lio/github/awakelab/awake/core/math/Frustum;Lio/github/awakelab/awake/core/math/Lens;F)Ljava/util/List;
 }
 
@@ -170,6 +176,14 @@ public final class io/github/awakelab/awake/core/math/Grid {
 	public static final field INSTANCE Lio/github/awakelab/awake/core/math/Grid;
 	public final fun lines (FIF)Ljava/util/List;
 	public static synthetic fun lines$default (Lio/github/awakelab/awake/core/math/Grid;FIFILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/core/math/GridOrigin : java/lang/Enum {
+	public static final field Centered Lio/github/awakelab/awake/core/math/GridOrigin;
+	public static final field Corner Lio/github/awakelab/awake/core/math/GridOrigin;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/math/GridOrigin;
+	public static fun values ()[Lio/github/awakelab/awake/core/math/GridOrigin;
 }
 
 public final class io/github/awakelab/awake/core/math/Lens {
@@ -263,6 +277,7 @@ public final class io/github/awakelab/awake/core/math/Mat4 {
 	public final fun setM32 (F)V
 	public final fun setM33 (F)V
 	public final fun setTranslationScale (FFFF)Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun setTrs (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Mat4;
 	public fun toString ()Ljava/lang/String;
 	public final fun translate (FFF)Lio/github/awakelab/awake/core/math/Mat4;
 }
@@ -335,12 +350,14 @@ public final class io/github/awakelab/awake/core/math/Quat {
 	public fun hashCode ()I
 	public final fun inverse ()Lio/github/awakelab/awake/core/math/Quat;
 	public final fun rotate (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun set (Lio/github/awakelab/awake/core/math/Quat;)Lio/github/awakelab/awake/core/math/Quat;
 	public final fun setW (F)V
 	public final fun setX (F)V
 	public final fun setY (F)V
 	public final fun setZ (F)V
 	public final fun times (Lio/github/awakelab/awake/core/math/Quat;)Lio/github/awakelab/awake/core/math/Quat;
 	public final fun toEuler ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun toEuler (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun toMat4 ()Lio/github/awakelab/awake/core/math/Mat4;
 	public fun toString ()Ljava/lang/String;
 }

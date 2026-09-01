@@ -10,8 +10,8 @@ import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.render.mesh.Mesh
 import io.github.awakelab.awake.render.testing.NoopRenderer
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 import io.github.awakelab.awake.scene.world.WorldCellCoord
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -57,7 +57,7 @@ class MeshCellStreamerTest {
         MeshCellStreamer(renderer, material, cellSize = 16f, geometryFor = geometryFor)
 
     @Test
-    fun aLoadedCellSpawnsAMeshAtThatCellsPosition() = runTest {
+    fun aLoadedCellSpawnsAMeshAtThatCellsCentre() = runTest {
         val world = World()
         val streamer = streamer()
 
@@ -66,8 +66,11 @@ class MeshCellStreamerTest {
         var found = 0
         world.family<Transform, MeshRenderer>().forEach { _, transform, _ ->
             found++
-            assertEquals(32f, transform.position.x)
-            assertEquals(-16f, transform.position.z)
+            // Cell (2, -1) at 16m spans x 32..48 and z -16..0, so its CENTRE is (40, _, -8).
+            // Corner would put this position outside the geometry it belongs to, which is what
+            // LOD distance and culling then measure.
+            assertEquals(40f, transform.position.x)
+            assertEquals(-8f, transform.position.z)
         }
         assertEquals(1, found, "One cell should spawn exactly one mesh entity.")
         assertEquals(1, renderer.created)

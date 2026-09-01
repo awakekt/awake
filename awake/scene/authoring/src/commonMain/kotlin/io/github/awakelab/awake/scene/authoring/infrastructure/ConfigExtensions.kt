@@ -8,10 +8,10 @@ package io.github.awakelab.awake.scene.authoring.infrastructure
 import io.github.awakelab.awake.core.input.Input
 import io.github.awakelab.awake.scene.authoring.SceneAppDsl
 import io.github.awakelab.awake.scene.controls.GameplayInput
-import io.github.awakelab.awake.scene.controls.systems.CameraInputSystem
-import io.github.awakelab.awake.scene.controls.systems.CameraSystem
-import io.github.awakelab.awake.scene.controls.systems.MatrixRelativeMovementSystem
-import io.github.awakelab.awake.scene.controls.systems.PlayerInputSystem
+import io.github.awakelab.awake.scene.controls.camera.CameraInputSystem
+import io.github.awakelab.awake.scene.controls.camera.CameraSystem
+import io.github.awakelab.awake.scene.controls.movement.MatrixRelativeMovementSystem
+import io.github.awakelab.awake.scene.controls.movement.PlayerInputSystem
 import io.github.awakelab.awake.scene.runtime.SceneSystemHandle
 
 fun SceneAppDsl.cameraSystem(

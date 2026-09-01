@@ -2,7 +2,7 @@
 
 Audited 2026-08-30 against `awake:editor`, `awake:editor:scene`, their only host
 (`samples:studio`), the scene document layer, and the rendered shell at
-`samples/studio/build/reports/studio-preview/studio-shell.png`.
+`apps/studio/build/reports/studio-preview/studio-shell.png`.
 
 Companion to [the editor plan](../tasks/editor/01-compose-editor-plan-todo.md), which marks Stages
 0–5 complete. That is accurate for the contracts. This audit covers what the stages did not claim
@@ -25,7 +25,7 @@ saves, nothing undoes, nothing creates or deletes, and the one host wires `start
 both exist and are correct. The only caller in the repository is `SceneLoaderTest`.
 
 **Landed:** Studio saves through `writeSceneDocument` and clears the dirty dot with
-`EditorHistory.markSaved` ([StudioFixtureSystem.kt:78](../../samples/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/systems/StudioFixtureSystem.kt)).
+`EditorHistory.markSaved` ([StudioFixtureSystem.kt:78](../../apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/systems/StudioFixtureSystem.kt)).
 
 **Still missing:** Open, Save As, and recent files. `writeSceneDocument` has no read counterpart, so
 a saved scene cannot be loaded back — which also blocks multi-document (#18).
@@ -37,7 +37,7 @@ override fun startPlay() = Unit
 override fun stopPlay() = studio.reloadFixture()
 ```
 
-[StudioEditorBridge.kt:28](../../samples/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/state/StudioEditorBridge.kt).
+[StudioEditorBridge.kt:28](../../apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/state/StudioEditorBridge.kt).
 
 `SceneDocumentEditorSession` and `SceneEditorHost` — the real snapshot-and-isolate path — are
 written, unit-tested, and wired to nothing. The plan's Stage 1 gate ("Edit and Play worlds are
@@ -77,9 +77,9 @@ nodes **per recomposition**, at frame rate
 ### 6. Two picking paths, one dead
 
 Studio passes `viewportPicker = { null }`
-([StudioEditorBridge.kt:31](../../samples/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/state/StudioEditorBridge.kt))
+([StudioEditorBridge.kt:31](../../apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/state/StudioEditorBridge.kt))
 and `viewportPickingEnabled = false`
-([StudioShell.kt:113](../../samples/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/ui/StudioShell.kt)).
+([StudioShell.kt:113](../../apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/ui/StudioShell.kt)).
 Real picking runs through `SceneGizmoSystem`.
 
 So `EditorEffect.ViewportPick`, `EditorViewportPicker`, and `ViewportPickInputElement` are roughly
@@ -174,7 +174,7 @@ The resize handle already does this, and the hierarchy has no equivalent.
 
 **i. The status bar is one reflowing string.**
 `"$mode - $count entities - ${ms}ms ${fps} fps - ui ..ms wait ..ms stage ..ms sim+render ..ms"`
-([StudioToolbar.kt:126](../../samples/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/ui/StudioToolbar.kt)) —
+([StudioToolbar.kt:126](../../apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/ui/StudioToolbar.kt)) —
 no segments, no fixed-width numerics, so the whole line shifts every frame as digits change width.
 Four developer-only perf figures permanently own the primary status line.
 

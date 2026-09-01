@@ -119,8 +119,8 @@ actual object VulkanImages {
             mipLodBias = 0f
             anisotropyEnable = if (createInfo.anisotropyEnable) 1u else 0u
             maxAnisotropy = createInfo.maxAnisotropy
-            compareEnable = 0u
-            compareOp = 0u
+            compareEnable = if (createInfo.compareEnable) 1u else 0u
+            compareOp = createInfo.compareOp.toUInt()
             minLod = createInfo.minLod
             maxLod = createInfo.maxLod
             borderColor = createInfo.borderColor.toUInt()

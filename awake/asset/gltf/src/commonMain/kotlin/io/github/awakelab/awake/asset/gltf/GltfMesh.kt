@@ -6,6 +6,8 @@
 package io.github.awakelab.awake.asset.gltf
 
 import io.github.awakelab.awake.core.geometry.GpuDataShape
+import io.github.awakelab.awake.core.geometry.InterleavedVertices
+import io.github.awakelab.awake.core.geometry.VertexSemantic
 import io.github.awakelab.awake.core.geometry.VertexFormat
 
 /**
@@ -76,32 +78,9 @@ data class GltfMesh(
      * wrong-looking geometry.
      */
     fun toInterleavedPositionColorUv(): FloatArray {
-        val result = FloatArray(vertexCount * VERTEX_STRIDE_COMPONENTS)
-        for (i in 0 until vertexCount) {
-            val out = i * VERTEX_STRIDE_COMPONENTS
-            result[out] = positions[i * POSITION_COMPONENTS]
-            result[out + 1] = positions[i * POSITION_COMPONENTS + 1]
-            result[out + 2] = positions[i * POSITION_COMPONENTS + 2]
-
-            if (colors != null) {
-                result[out + 3] = colors[i * COLOR_COMPONENTS]
-                result[out + 4] = colors[i * COLOR_COMPONENTS + 1]
-                result[out + 5] = colors[i * COLOR_COMPONENTS + 2]
-            } else {
-                result[out + 3] = 1f
-                result[out + 4] = 1f
-                result[out + 5] = 1f
-            }
-
-            if (uvs != null) {
-                result[out + 6] = uvs[i * UV_COMPONENTS]
-                result[out + 7] = uvs[i * UV_COMPONENTS + 1]
-            } else {
-                result[out + 6] = 0f
-                result[out + 7] = 0f
-            }
-        }
-        return result
+        val vertices = InterleavedVertices(VertexFormat.PositionColorUv, vertexCount)
+        writeCommonAttributes(vertices)
+        return vertices.toFloatArray()
     }
 
     /**
@@ -114,34 +93,9 @@ data class GltfMesh(
      * [toInterleavedPositionColorUv].
      */
     fun toInterleavedPositionNormalColor(): FloatArray {
-        val result = FloatArray(vertexCount * NORMAL_VERTEX_STRIDE_COMPONENTS)
-        for (i in 0 until vertexCount) {
-            val out = i * NORMAL_VERTEX_STRIDE_COMPONENTS
-            result[out] = positions[i * POSITION_COMPONENTS]
-            result[out + 1] = positions[i * POSITION_COMPONENTS + 1]
-            result[out + 2] = positions[i * POSITION_COMPONENTS + 2]
-
-            if (normals != null) {
-                result[out + 3] = normals[i * NORMAL_COMPONENTS]
-                result[out + 4] = normals[i * NORMAL_COMPONENTS + 1]
-                result[out + 5] = normals[i * NORMAL_COMPONENTS + 2]
-            } else {
-                result[out + 3] = 0f
-                result[out + 4] = 1f
-                result[out + 5] = 0f
-            }
-
-            if (colors != null) {
-                result[out + 6] = colors[i * COLOR_COMPONENTS]
-                result[out + 7] = colors[i * COLOR_COMPONENTS + 1]
-                result[out + 8] = colors[i * COLOR_COMPONENTS + 2]
-            } else {
-                result[out + 6] = 1f
-                result[out + 7] = 1f
-                result[out + 8] = 1f
-            }
-        }
-        return result
+        val vertices = InterleavedVertices(VertexFormat.PositionNormalColor, vertexCount)
+        writeCommonAttributes(vertices)
+        return vertices.toFloatArray()
     }
 
     /**
@@ -152,42 +106,9 @@ data class GltfMesh(
      * [uvs] default to `(0, 0)`, same as [toInterleavedPositionColorUv].
      */
     fun toInterleavedPositionNormalColorUv(): FloatArray {
-        val result = FloatArray(vertexCount * TEXTURED_VERTEX_STRIDE_COMPONENTS)
-        for (i in 0 until vertexCount) {
-            val out = i * TEXTURED_VERTEX_STRIDE_COMPONENTS
-            result[out] = positions[i * POSITION_COMPONENTS]
-            result[out + 1] = positions[i * POSITION_COMPONENTS + 1]
-            result[out + 2] = positions[i * POSITION_COMPONENTS + 2]
-
-            if (normals != null) {
-                result[out + 3] = normals[i * NORMAL_COMPONENTS]
-                result[out + 4] = normals[i * NORMAL_COMPONENTS + 1]
-                result[out + 5] = normals[i * NORMAL_COMPONENTS + 2]
-            } else {
-                result[out + 3] = 0f
-                result[out + 4] = 1f
-                result[out + 5] = 0f
-            }
-
-            if (colors != null) {
-                result[out + 6] = colors[i * COLOR_COMPONENTS]
-                result[out + 7] = colors[i * COLOR_COMPONENTS + 1]
-                result[out + 8] = colors[i * COLOR_COMPONENTS + 2]
-            } else {
-                result[out + 6] = 1f
-                result[out + 7] = 1f
-                result[out + 8] = 1f
-            }
-
-            if (uvs != null) {
-                result[out + 9] = uvs[i * UV_COMPONENTS]
-                result[out + 10] = uvs[i * UV_COMPONENTS + 1]
-            } else {
-                result[out + 9] = 0f
-                result[out + 10] = 0f
-            }
-        }
-        return result
+        val vertices = InterleavedVertices(VertexFormat.PositionNormalColorUv, vertexCount)
+        writeCommonAttributes(vertices)
+        return vertices.toFloatArray()
     }
 
     /**
@@ -202,41 +123,10 @@ data class GltfMesh(
      * pattern -- not the numeric float value -- has to equal the joint index.
      */
     fun toInterleavedSkinned(): FloatArray {
-        val joints = requireNotNull(jointIndices) { "toInterleavedSkinned() requires jointIndices (JOINTS_0)." }
-        val weights = requireNotNull(jointWeights) { "toInterleavedSkinned() requires jointWeights (WEIGHTS_0)." }
-        val result = FloatArray(vertexCount * SKINNED_VERTEX_STRIDE_COMPONENTS)
-        for (i in 0 until vertexCount) {
-            val out = i * SKINNED_VERTEX_STRIDE_COMPONENTS
-            result[out] = positions[i * POSITION_COMPONENTS]
-            result[out + 1] = positions[i * POSITION_COMPONENTS + 1]
-            result[out + 2] = positions[i * POSITION_COMPONENTS + 2]
-
-            if (normals != null) {
-                result[out + 3] = normals[i * NORMAL_COMPONENTS]
-                result[out + 4] = normals[i * NORMAL_COMPONENTS + 1]
-                result[out + 5] = normals[i * NORMAL_COMPONENTS + 2]
-            } else {
-                result[out + 3] = 0f
-                result[out + 4] = 1f
-                result[out + 5] = 0f
-            }
-
-            if (colors != null) {
-                result[out + 6] = colors[i * COLOR_COMPONENTS]
-                result[out + 7] = colors[i * COLOR_COMPONENTS + 1]
-                result[out + 8] = colors[i * COLOR_COMPONENTS + 2]
-            } else {
-                result[out + 6] = 1f
-                result[out + 7] = 1f
-                result[out + 8] = 1f
-            }
-
-            for (k in 0 until JOINT_COMPONENTS) {
-                result[out + 9 + k] = Float.fromBits(joints[i * JOINT_COMPONENTS + k])
-                result[out + 13 + k] = weights[i * JOINT_COMPONENTS + k]
-            }
-        }
-        return result
+        val vertices = InterleavedVertices(VertexFormat.PositionNormalColorSkin, vertexCount)
+        writeCommonAttributes(vertices)
+        writeJoints(vertices)
+        return vertices.toFloatArray()
     }
 
     /**
@@ -245,49 +135,60 @@ data class GltfMesh(
      * [io.github.awakelab.awake.core.geometry.VertexFormat.PositionNormalColorUvSkin].
      */
     fun toInterleavedPositionNormalColorUvSkin(): FloatArray {
-        val joints = requireNotNull(jointIndices) { "toInterleavedPositionNormalColorUvSkin() requires jointIndices (JOINTS_0)." }
-        val weights = requireNotNull(jointWeights) { "toInterleavedPositionNormalColorUvSkin() requires jointWeights (WEIGHTS_0)." }
-        val result = FloatArray(vertexCount * SKINNED_TEXTURED_VERTEX_STRIDE_COMPONENTS)
+        val vertices = InterleavedVertices(VertexFormat.PositionNormalColorUvSkin, vertexCount)
+        writeCommonAttributes(vertices)
+        writeJoints(vertices)
+        return vertices.toFloatArray()
+    }
+
+    /**
+     * Position, normal, colour and UV, for whichever of them the target format actually has.
+     *
+     * One method for five layouts, because the layouts differ only in which slots exist -- and
+     * `InterleavedVertices` skips a bulk copy for an attribute the format has no room for. The
+     * defaults are the glTF-absent ones: an up normal, white, and a zero UV, all visible and
+     * harmless rather than silently wrong-looking geometry.
+     */
+    private fun writeCommonAttributes(vertices: InterleavedVertices) {
+        vertices.copyOrFill(VertexSemantic.Position, positions, POSITION_COMPONENTS)
+        vertices.copyOrFill(VertexSemantic.Normal, normals, NORMAL_COMPONENTS, 0f, 1f, 0f)
+        vertices.copyOrFill(VertexSemantic.Color, colors, COLOR_COMPONENTS, 1f, 1f, 1f)
+        vertices.copyOrFill(VertexSemantic.Uv, uvs, UV_COMPONENTS, 0f, 0f)
+    }
+
+    /**
+     * Joint indices and weights, required rather than defaulted.
+     *
+     * A primitive with no `JOINTS_0` has no business in a skinned layout: zero-filling would hand
+     * the GPU joint 0 at weight 0 for every vertex, collapsing the mesh onto the root bone instead
+     * of saying what went wrong.
+     *
+     * Indices are written as bit patterns via [Float.fromBits]. The buffer is a `FloatArray` end
+     * to end, but the format declares this slot `UInt4`, so the GPU reads those four bytes back as
+     * a `uint32` -- writing the numeric value would hand a shader 0x3F800000 as joint 1.
+     */
+    private fun writeJoints(vertices: InterleavedVertices) {
+        val joints = requireNotNull(jointIndices) { "toInterleavedSkinned() requires jointIndices (JOINTS_0)." }
+        val weights = requireNotNull(jointWeights) { "toInterleavedSkinned() requires jointWeights (WEIGHTS_0)." }
         for (i in 0 until vertexCount) {
-            val out = i * SKINNED_TEXTURED_VERTEX_STRIDE_COMPONENTS
-            result[out] = positions[i * POSITION_COMPONENTS]
-            result[out + 1] = positions[i * POSITION_COMPONENTS + 1]
-            result[out + 2] = positions[i * POSITION_COMPONENTS + 2]
-
-            if (normals != null) {
-                result[out + 3] = normals[i * NORMAL_COMPONENTS]
-                result[out + 4] = normals[i * NORMAL_COMPONENTS + 1]
-                result[out + 5] = normals[i * NORMAL_COMPONENTS + 2]
-            } else {
-                result[out + 3] = 0f
-                result[out + 4] = 1f
-                result[out + 5] = 0f
-            }
-
-            if (colors != null) {
-                result[out + 6] = colors[i * COLOR_COMPONENTS]
-                result[out + 7] = colors[i * COLOR_COMPONENTS + 1]
-                result[out + 8] = colors[i * COLOR_COMPONENTS + 2]
-            } else {
-                result[out + 6] = 1f
-                result[out + 7] = 1f
-                result[out + 8] = 1f
-            }
-
-            if (uvs != null) {
-                result[out + 9] = uvs[i * UV_COMPONENTS]
-                result[out + 10] = uvs[i * UV_COMPONENTS + 1]
-            } else {
-                result[out + 9] = 0f
-                result[out + 10] = 0f
-            }
-
-            for (k in 0 until JOINT_COMPONENTS) {
-                result[out + 11 + k] = Float.fromBits(joints[i * JOINT_COMPONENTS + k])
-                result[out + 15 + k] = weights[i * JOINT_COMPONENTS + k]
-            }
+            val base = i * JOINT_COMPONENTS
+            vertices.put(
+                i,
+                VertexSemantic.JointIndices,
+                Float.fromBits(joints[base]),
+                Float.fromBits(joints[base + 1]),
+                Float.fromBits(joints[base + 2]),
+                Float.fromBits(joints[base + 3]),
+            )
+            vertices.put(
+                i,
+                VertexSemantic.JointWeights,
+                weights[base],
+                weights[base + 1],
+                weights[base + 2],
+                weights[base + 3],
+            )
         }
-        return result
     }
 
     private companion object {

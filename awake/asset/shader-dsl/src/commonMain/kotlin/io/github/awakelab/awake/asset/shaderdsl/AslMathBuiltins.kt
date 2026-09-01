@@ -89,6 +89,14 @@ fun cross(a: AslExpr, b: AslExpr): AslExpr {
 }
 
 /**
+ * WGSL `sqrt` builtin.
+ *
+ * @param value The expression.
+ * @return The square root of the value.
+ */
+fun sqrt(value: AslExpr): AslExpr = AslCall("sqrt", listOf(value), value.type)
+
+/**
  * WGSL `inverseSqrt` builtin.
  *
  * @param value The expression.

@@ -20,11 +20,11 @@ import io.github.awakelab.awake.render.mesh.Mesh
 import io.github.awakelab.awake.render.renderer.createMaterial
 import io.github.awakelab.awake.render.texture.PbrTextureSet
 import io.github.awakelab.awake.render.texture.TextureAsset
-import io.github.awakelab.awake.scene.rendering.components.ParticleDynamics
-import io.github.awakelab.awake.scene.rendering.components.ParticleEmitter
-import io.github.awakelab.awake.scene.rendering.components.ParticleMotion
-import io.github.awakelab.awake.scene.rendering.components.ParticleVisual
-import io.github.awakelab.awake.scene.rendering.components.PbrMaterial
+import io.github.awakelab.awake.scene.rendering.particles.ParticleDynamics
+import io.github.awakelab.awake.scene.rendering.particles.ParticleEmitter
+import io.github.awakelab.awake.scene.rendering.particles.ParticleMotion
+import io.github.awakelab.awake.scene.rendering.particles.ParticleVisual
+import io.github.awakelab.awake.scene.rendering.mesh.PbrMaterial
 import io.github.awakelab.awake.scene.runtime.Scene
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
 

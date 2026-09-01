@@ -83,6 +83,11 @@ class VkSamplerCreateInfo(
      * to level 0 regardless of how many levels the image actually has. */
     val minLod: Float = 0f,
     val maxLod: Float = 0f,
+    /** Depth-compare sampling (`sampler_comparison` in WGSL). Plain `Int` per the ordinal
+     * hazard rule above; values in [VkCompareOp2]. Defaults off, matching every plain
+     * sampler. */
+    val compareEnable: Boolean = false,
+    val compareOp: Int = VkCompareOp2.VK_COMPARE_OP_ALWAYS,
 )
 
 object VkFilter {
@@ -102,6 +107,13 @@ object VkSamplerMipmapMode {
 
 object VkBorderColor {
     const val VK_BORDER_COLOR_INT_OPAQUE_BLACK = 3
+}
+
+/** Plain-Int mirror of the enum-typed `VkCompareOp`, for this package's plain-`Int` structs --
+ * same reasoning as [VkImageLayout2]. */
+object VkCompareOp2 {
+    const val VK_COMPARE_OP_LESS_OR_EQUAL = 3
+    const val VK_COMPARE_OP_ALWAYS = 7
 }
 
 class VkDescriptorImageInfo(

@@ -81,7 +81,10 @@ class BoxMeasurePolicy(
             val space = IntSize(width, height)
             for (i in 0 until count) {
                 val placeable = placeables[i] ?: continue
-                val offset = alignment.align(IntSize(placeable.width, placeable.height), space, layoutDirection)
+                // A child's own alignment wins over the box's: five anchors in one Box is the
+                // whole reason `BoxScope.align` exists.
+                val anchor = measurables[i].childAlignment() ?: alignment
+                val offset = anchor.align(IntSize(placeable.width, placeable.height), space, layoutDirection)
                 placeable.placeAbsoluteAt(offset.x, offset.y)
             }
         }

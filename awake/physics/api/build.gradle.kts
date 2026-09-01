@@ -25,6 +25,7 @@
 
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -44,9 +45,20 @@ kotlin {
         commonMain.dependencies {
             // BodyTransform/RaycastHit/PhysicsWorld all take/return Vec3 (portable math).
             implementation(project(":awake:core:math"))
+            // For gridTriangleIndices alone: a heightfield expressed as triangles has to be wound
+            // the same way every other grid mesh in the engine is, and that winding is one
+            // definition shared, not four copies that agree until one of them does not.
+            implementation(project(":awake:core:geometry"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Physics API")
+        description.set("The physics facade: bodies, shapes, queries and stepping, with no backend attached")
     }
 }

@@ -25,6 +25,7 @@
 
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -61,5 +62,12 @@ kotlin {
             // multiplatform coroutine runner -- runBlocking does not exist on wasmJs.
             implementation(libs.kotlinx.coroutines.test)
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Render Contract")
+        description.set("The renderer-facing surface -- Renderer, Mesh, Material, RenderTarget -- that backends implement and engine code depends on")
     }
 }

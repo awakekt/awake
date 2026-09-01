@@ -25,6 +25,20 @@ data class VertexFormat(val attributes: List<VertexAttribute>) {
      * disagree with the format it claims to write. */
     val strideFloats: Int = strideBytes / Float.SIZE_BYTES
 
+    /**
+     * Where [semantic] starts within a vertex, counted in floats, or -1 when this format has no
+     * such attribute.
+     *
+     * For code that reads or edits an already-packed buffer, where [InterleavedVertices] does not
+     * apply -- tagging every vertex's colour channel after a merge, for instance. The alternative
+     * is a hand-maintained `COLOR_OFFSET = 6` beside a hand-maintained `STRIDE = 11`, which is two
+     * more restatements of this format to keep in step with it.
+     */
+    fun floatOffsetOf(semantic: VertexSemantic): Int =
+        entries.firstOrNull { it.attribute.semantic == semantic }
+            ?.let { it.offsetBytes / Float.SIZE_BYTES }
+            ?: -1
+
     companion object {
         /**
          * No vertex buffer at all -- the vertex shader generates its own positions from

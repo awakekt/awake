@@ -2,6 +2,8 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>LongParameterList:PixelMap.kt$PixelMap$(x: Int, y: Int, r: Float, g: Float, b: Float, srcA: Float)</ID>
+    <ID>ReturnCount:PixelMap.kt$PixelMap$fun blend(x: Int, y: Int, r: Float, g: Float, b: Float, srcA: Float)</ID>
     <ID>NestedBlockDepth:MipChain.kt$private fun TextureAsset.boxDownsample(newWidth: Int, newHeight: Int): TextureAsset</ID>
     <ID>SpreadOperator:ParticleUniforms.kt$( UniformFields.Mvp, *ParticleExtraUniformLayout.fields, )</ID>
   </CurrentIssues>

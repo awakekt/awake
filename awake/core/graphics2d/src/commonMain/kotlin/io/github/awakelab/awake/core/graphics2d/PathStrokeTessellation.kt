@@ -56,7 +56,15 @@ fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath {
     }
 
     contours.forEach { contour ->
-        if (contour.closed) {
+        // A contour that ends where it began is a loop, whether or not it said `Z`. It has to be
+        // stroked as one: the open path emits a single ring that walks the outer boundary and then
+        // the inner boundary the *same way round*, so under NonZero the windings add instead of
+        // cancelling and the hole fills. Heroicons' outline tier is full of these.
+        //
+        // The caps a truly open path would get at that point are dropped, which is the correct
+        // picture here: a cap drawn on top of the join it coincides with is invisible.
+        val loops = contour.points.size > 2 && unitDir(contour.points.last(), contour.points.first()) == null
+        if (contour.closed || loops) {
             emitRing(offsetClosedRing(contour.points, halfWidth, stroke.join))
             emitRing(offsetClosedRing(contour.points, -halfWidth, stroke.join).asReversed())
         } else {

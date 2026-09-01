@@ -6,8 +6,11 @@
 package io.github.awakelab.awake.asset.terrain
 
 import io.github.awakelab.awake.core.color.Color
+import io.github.awakelab.awake.core.geometry.gridTriangleIndices
+import io.github.awakelab.awake.core.geometry.InterleavedVertices
 import io.github.awakelab.awake.core.geometry.MeshGeometry
 import io.github.awakelab.awake.core.geometry.VertexFormat
+import io.github.awakelab.awake.core.geometry.VertexSemantic
 import io.github.awakelab.awake.core.math.Vec3f
 
 /**
@@ -21,43 +24,23 @@ fun Heightmap.toPositionNormalColorMesh(
     colorAt: (x: Int, z: Int, height: Float) -> Color,
 ): MeshGeometry {
     val scale = scale
-    val format = VertexFormat.PositionNormalColor
-    val vertices = FloatArray(width * depth * format.strideFloats)
-    var cursor = 0
+    // Wherever the map says its first sample is; centred unless the map opted out.
+    val offsetX = minX
+    val offsetZ = minZ
+    val vertices = InterleavedVertices(VertexFormat.PositionNormalColor, width * depth)
     for (z in 0 until depth) {
         for (x in 0 until width) {
+            val vertex = z * width + x
             val height = heightAt(x, z)
             val normal = normalAt(x, z, scale)
             val color = colorAt(x, z, height)
-            vertices[cursor++] = x * scale.x
-            vertices[cursor++] = height * scale.y
-            vertices[cursor++] = z * scale.z
-            vertices[cursor++] = normal.x
-            vertices[cursor++] = normal.y
-            vertices[cursor++] = normal.z
-            vertices[cursor++] = color.r
-            vertices[cursor++] = color.g
-            vertices[cursor++] = color.b
+            vertices.put(vertex, VertexSemantic.Position, offsetX + x * scale.x, height * scale.y, offsetZ + z * scale.z)
+            vertices.put(vertex, VertexSemantic.Normal, normal.x, normal.y, normal.z)
+            vertices.put(vertex, VertexSemantic.Color, color.r, color.g, color.b)
         }
     }
 
-    val indices = IntArray((width - 1) * (depth - 1) * INDICES_PER_CELL)
-    cursor = 0
-    for (z in 0 until depth - 1) {
-        for (x in 0 until width - 1) {
-            val topLeft = z * width + x
-            val topRight = topLeft + 1
-            val bottomLeft = topLeft + width
-            val bottomRight = bottomLeft + 1
-            indices[cursor++] = topLeft
-            indices[cursor++] = bottomLeft
-            indices[cursor++] = topRight
-            indices[cursor++] = topRight
-            indices[cursor++] = bottomLeft
-            indices[cursor++] = bottomRight
-        }
-    }
-    return MeshGeometry(vertices, indices, format)
+    return vertices.build(gridTriangleIndices(width, depth))
 }
 
 /** Builds a uniformly coloured [VertexFormat.PositionNormalColor] mesh. */
@@ -75,5 +58,3 @@ private fun Heightmap.normalAt(x: Int, z: Int, scale: Vec3f): Vec3f {
         ((farZ - nearZ) * scale.z)
     return Vec3f(-slopeX, 1f, -slopeZ).normalize()
 }
-
-private const val INDICES_PER_CELL = 6

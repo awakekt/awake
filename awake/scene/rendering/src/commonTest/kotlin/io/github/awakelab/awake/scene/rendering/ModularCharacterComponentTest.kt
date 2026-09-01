@@ -10,10 +10,10 @@ import io.github.awakelab.awake.core.animation.AnimationPlayer
 import io.github.awakelab.awake.core.animation.Skin
 import io.github.awakelab.awake.core.math.Mat4
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.rendering.components.Animator
-import io.github.awakelab.awake.scene.rendering.components.ModularCharacterComponent
-import io.github.awakelab.awake.scene.rendering.components.SkinnedPose
-import io.github.awakelab.awake.scene.rendering.systems.ModularSkeletalSystem
+import io.github.awakelab.awake.scene.rendering.animation.Animator
+import io.github.awakelab.awake.scene.rendering.animation.ModularCharacterComponent
+import io.github.awakelab.awake.scene.rendering.animation.SkinnedPose
+import io.github.awakelab.awake.scene.rendering.animation.ModularSkeletalSystem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

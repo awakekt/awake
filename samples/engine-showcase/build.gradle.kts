@@ -46,7 +46,12 @@ kotlin {
             implementation(project(":awake:engine:bootstrap"))
             implementation(project(":awake:engine:render:contract"))
             implementation(project(":awake:physics:api"))
+            // The heightfield-terrain showcase runs a real Jolt world, so it needs a backend and
+            // not just the contract -- this is the sample that proves physics is wired at all.
+            implementation(project(":awake:backend:jolt"))
             implementation(project(":awake:scene"))
+            implementation(project(":awake:scene:world"))
+            implementation(project(":awake:scene:ai"))
             implementation(project(":awake:scene:authoring"))
             // The nav-chase showcase bakes a walkability grid from its own heightmap.
             implementation(project(":awake:scene:navigation"))
@@ -108,7 +113,7 @@ tasks.register<JavaExec>("run") {
     group = "application"
     description = "Run the Awake engine showcase; pass -Pawake.showcase=<id> for a focused demo."
     dependsOn("desktopMainClasses")
-    dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
+    wireVulkanDesktopNatives(project(":awake:backend:vulkan:bindings"))
     // Shipped shaders are WGSL, so every pipeline this sample builds goes through naga.
     useNagaShaderCompiler(this)
     mainClass.set("io.github.awakelab.awake.showcase.app.MainKt")
@@ -118,7 +123,7 @@ tasks.register<JavaExec>("run") {
         kotlin.jvm("desktop").compilations.getByName("main").runtimeDependencyFiles,
     )
     environment(desktopVulkanEnv)
-    val jvmArgsList = mutableListOf("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
+    val jvmArgsList = mutableListOf<String>()
     if (HostOs.isMac) jvmArgsList += "-XstartOnFirstThread"
     providers.gradleProperty("awake.showcase").orNull?.let { showcaseId ->
         jvmArgsList += "-Dawake.showcase=$showcaseId"

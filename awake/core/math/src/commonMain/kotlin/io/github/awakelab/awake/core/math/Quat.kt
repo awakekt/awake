@@ -19,6 +19,22 @@ import kotlin.math.sqrt
  * `trsMatrix` already used inline; factored out here so animation playback (which only has a
  * rotation, no translation/scale to compose alongside it) doesn't need to fake a full TRS call. */
 data class Quat(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f, var w: Float = 1f) {
+    /**
+     * Copies [other]'s components into this quaternion.
+     *
+     * The counterpart of [Vec3f.set], and needed for the same reason: a per-frame readback hands
+     * out scratch values that the next caller overwrites, so anything keeping one has to copy it
+     * rather than hold the reference -- and copying without allocating means writing into a
+     * quaternion it already owns.
+     */
+    fun set(other: Quat): Quat {
+        x = other.x
+        y = other.y
+        z = other.z
+        w = other.w
+        return this
+    }
+
     fun toMat4(): Mat4 {
         val xx = x * x
         val yy = y * y
@@ -118,6 +134,29 @@ data class Quat(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f, var w: 
             Vec3f(0f, if (pitch > 0f) HALF_PI else -HALF_PI, atan2(-m.m01, m.m11))
         } else {
             Vec3f(atan2(m.m21, m.m22), asin(pitch.coerceIn(-1f, 1f)), atan2(m.m10, m.m00))
+        }
+    }
+
+    /**
+     * [toEuler] written into [target] instead of into a fresh [Vec3f], for callers that run
+     * once per body per frame and cannot afford either that or the [Mat4] the matrix-based
+     * extraction builds on the way.
+     *
+     * The formula is hand-expanded, which is exactly what [toEuler] refuses to do, so
+     * `QuatTest` pins the two against each other: if this drifts out of step with [fromEuler]'s
+     * composition order, that test fails rather than a body quietly rotating wrong.
+     */
+    fun toEuler(target: Vec3f): Vec3f {
+        val sinPitch = (2f * (w * y - z * x)).coerceIn(-1f, 1f)
+        return if (sinPitch >= 1f - GIMBAL_EPSILON || sinPitch <= -1f + GIMBAL_EPSILON) {
+            // Same pole convention as [toEuler]: X folded into Z.
+            target.set(0f, if (sinPitch > 0f) HALF_PI else -HALF_PI, atan2(-2f * (x * y - w * z), 1f - 2f * (x * x + z * z)))
+        } else {
+            target.set(
+                atan2(2f * (w * x + y * z), 1f - 2f * (x * x + y * y)),
+                asin(sinPitch),
+                atan2(2f * (w * z + x * y), 1f - 2f * (y * y + z * z)),
+            )
         }
     }
 

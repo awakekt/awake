@@ -67,10 +67,13 @@ public final class io/github/awakelab/awake/core/animation/AnimationPlayer {
 public final class io/github/awakelab/awake/core/animation/AnimationPose {
 	public fun <init> (Lio/github/awakelab/awake/core/animation/Skeleton;)V
 	public final fun blend (Lio/github/awakelab/awake/core/animation/AnimationPose;F)V
+	public final fun boneRotation (I)Lio/github/awakelab/awake/core/math/Quat;
+	public final fun boneTranslation (I)Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun copyFrom (Lio/github/awakelab/awake/core/animation/AnimationPose;)V
 	public final fun jointPalette (Lio/github/awakelab/awake/core/animation/Skin;)[F
 	public final fun resetToBindPose ()V
 	public final fun sample (Lio/github/awakelab/awake/core/animation/AnimationClip;F)V
+	public final fun setBoneTransform (ILio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;)V
 }
 
 public final class io/github/awakelab/awake/core/animation/AnimationProperty : java/lang/Enum {

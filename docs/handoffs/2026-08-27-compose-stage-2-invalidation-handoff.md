@@ -21,7 +21,7 @@ The broader ordered queue, including the app-level Compose/Scene bridge, is
 | Runtime scope correctness | `awake/compose/runtime/.../Composer.kt`, `RecomposeScopeTest.kt`, `FakeTree.kt` | Dirty descendants invalidate their ancestors so a stable parent cannot hide them. Keyed scopes now move their retained group identity with the keyed node and recompose the moved group to update applier order. |
 | Retained frame correctness | `awake/compose/foundation/.../ComposeHostTest.kt` | A skipped interactive scope retains its click target across press/release frames and preserves primitive and semantic output. |
 | Modifier-node regression | `awake/editor/.../AwakeEditor.kt` | `ViewportPickInput` is again a `ModifierNodeElement` with a retained `PointerInputNode`; the prior node-element split had left it appended directly as a modifier. |
-| First Studio consumer | `samples/studio/.../StudioShell.kt`, `StudioToolbar.kt` | The stable scene-picker chrome is scoped with `sceneTitle` and `StudioStore` as explicit inputs. Its local open state is `MutableState`, so pointer input invalidates the scope and the dropdown can open. |
+| First Studio consumer | `apps/studio/.../StudioShell.kt`, `StudioToolbar.kt` | The stable scene-picker chrome is scoped with `sceneTitle` and `StudioStore` as explicit inputs. Its local open state is `MutableState`, so pointer input invalidates the scope and the dropdown can open. |
 | Plan status | `docs/tasks/2026-08-25-compose-stage-2-invalidation-plan.md` | Records completed scope tests and the consumer/profiling status. |
 
 ## Evidence already passing
@@ -35,18 +35,18 @@ The broader ordered queue, including the app-level Compose/Scene bridge, is
 
 ./gradlew :awake:editor:desktopTest --no-daemon
 
-./gradlew :samples:studio:desktopTest \
+./gradlew :apps:studio:desktopTest \
   --tests io.github.awakelab.awake.studio.StudioShellChromeTest \
   --tests io.github.awakelab.awake.studio.ui.StudioFramePerfProbeTest --no-daemon
 
-./gradlew :samples:studio:wasmJsBrowserTest \
+./gradlew :apps:studio:wasmJsBrowserTest \
   --tests io.github.awakelab.awake.studio.ui.StudioFramePerfProbeTest --no-daemon
 
 ./gradlew :awake:compose:runtime:desktopTest \
   :awake:compose:foundation:desktopTest \
   :awake:compose:ui:desktopTest \
   :awake:editor:desktopTest \
-  :samples:studio:desktopTest --no-daemon
+  :apps:studio:desktopTest --no-daemon
 ```
 
 The desktop and wasm probes each reported `compositionPasses=300`, `scopeExecutions=0`, and
@@ -183,9 +183,9 @@ These unrelated untracked generated shader artifacts existed before this work. D
 or alter them in the Stage 2 commit:
 
 ```text
-samples/studio/src/appMain/resources/assets/shader/vulkan/skinned_textured.frag.spv
-samples/studio/src/appMain/resources/assets/shader/vulkan/skinned_textured.vert.spv
-samples/studio/src/wasmJsMain/resources/assets/shader/webgpu/skinned_textured.wgsl
+apps/studio/src/appMain/resources/assets/shader/vulkan/skinned_textured.frag.spv
+apps/studio/src/appMain/resources/assets/shader/vulkan/skinned_textured.vert.spv
+apps/studio/src/wasmJsMain/resources/assets/shader/webgpu/skinned_textured.wgsl
 ```
 
 ## Provenance note

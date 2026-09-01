@@ -12,6 +12,7 @@ import io.github.awakelab.awake.asset.shaderpack.depthFogShader
 import io.github.awakelab.awake.asset.shaders.ShaderStage
 import io.github.awakelab.awake.asset.shaders.entryPoint
 import io.github.awakelab.awake.core.color.Color
+import io.github.awakelab.awake.core.math.ClipSpace
 import io.github.awakelab.awake.core.geometry.MeshGeometry
 import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.core.math.Lens
@@ -163,8 +164,8 @@ class RendererHeadlessDepthFogTest {
          * so one channel answers "how fogged is this pixel" with no unmixing. */
         val FOG_COLOR = Color(r = 1f, g = 0f, b = 0f, a = FOG_DENSITY)
 
-        /** Vulkan's half of the shared definition -- see [depthFogShader]'s `flipDepthV`. */
-        val FogShader = depthFogShader(flipDepthV = false)
+        /** Vulkan's half of the shared definition -- see `ndcToUv`. */
+        val FogShader = depthFogShader(ClipSpace.Vulkan)
 
         /** Position, normal, colour -- `PositionNormalColor`, white. */
         fun quad() = MeshGeometry(

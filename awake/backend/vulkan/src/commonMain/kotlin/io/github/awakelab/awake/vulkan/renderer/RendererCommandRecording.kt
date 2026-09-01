@@ -9,6 +9,8 @@ import io.github.awakelab.awake.core.math.Mat4
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.render.command.sortForRecording
 import io.github.awakelab.awake.render.passes.RenderPassSlot
+import io.github.awakelab.awake.render.renderer.ShadowCascadeUniforms
+import io.github.awakelab.awake.render.renderer.shadowCascades
 import io.github.awakelab.awake.render.renderer.SceneLight
 import io.github.awakelab.awake.vulkan.Vulkan
 import io.github.awakelab.awake.vulkan.enums.VkSubpassContents
@@ -37,8 +39,9 @@ internal fun Renderer.recordCommandBuffer(
     // Before the scene pass begins, in the same buffer: its fragment shader samples the depth this
     // writes, and DepthTarget's outgoing subpass dependency orders the two on the GPU. This used
     // to be a separate submit the CPU blocked on.
-    recordDepthPrePass(commandBuffer, drawCalls)
-    recordSceneDepthPass(commandBuffer, drawCalls)
+    recordDepthPrePass(commandBuffer, drawCalls, light.shadowCascades())
+    // The camera's own depth, expressed as the one "cascade" this frame renders from the eye.
+    recordSceneDepthPass(commandBuffer, drawCalls, cameraDepthPass(viewProjection))
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
         VkRenderPassBeginInfo(
@@ -103,3 +106,8 @@ internal fun Renderer.recordCommandBuffer(
     }
     Vulkan.vkEndCommandBuffer(commandBuffer)
 }
+
+/** The camera's view-projection as a one-entry cascade set -- what the scene-depth pass renders
+ * from, through the same machinery the shadow pass uses. */
+internal fun cameraDepthPass(viewProjection: Mat4): ShadowCascadeUniforms =
+    ShadowCascadeUniforms(listOf(viewProjection), floatArrayOf(Float.MAX_VALUE))

@@ -56,4 +56,28 @@ class NavChaseExampleDriverTest {
             "The route should pass the ridge's far end: ${route.map { it.x.toInt() to it.z.toInt() }}",
         )
     }
+
+    /**
+     * The floor has to be under the things standing on it.
+     *
+     * The scene places its camera and both cubes in the heightmap's own coordinates, so the map's
+     * origin convention is not a detail of the mesh -- it decides whether the terrain is beneath
+     * the demonstration or half a map away from it. Sampling off the map returns NaN, which is
+     * the same answer a missing floor gives.
+     */
+    @Test
+    fun theTerrainIsUnderTheScenesAuthoredPositions() {
+        listOf(
+            "camera focus" to (8f to 8f),
+            "target start" to (3f to 3f),
+            "chaser start" to (3f to 14f),
+        ).forEach { (what, position) ->
+            val height = NavChaseExampleDriver.heightmap.heightAtWorld(position.first, position.second)
+            assertTrue(
+                !height.isNaN(),
+                "No terrain under the $what at ${position.first}, ${position.second}: the scene " +
+                    "is authored in this map's coordinates, and the map is somewhere else.",
+            )
+        }
+    }
 }

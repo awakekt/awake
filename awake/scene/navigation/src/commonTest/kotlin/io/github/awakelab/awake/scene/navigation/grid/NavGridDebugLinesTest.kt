@@ -7,7 +7,6 @@ package io.github.awakelab.awake.scene.navigation.grid
 
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.ai.ChaseBehavior
 import io.github.awakelab.awake.scene.world.WorldCellCoord
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -39,7 +38,7 @@ class NavGridDebugLinesTest {
 
     @Test
     fun onlyBlockedSamplesGetAMarker() {
-        val lines = navGridDebugLines(World(), tile("..", "#."), flat)
+        val lines = navGridDebugLines(tile("..", "#."), flat)
 
         // Two segments per cross, one blocked sample.
         assertEquals(2, lines.size, "$lines")
@@ -50,7 +49,7 @@ class NavGridDebugLinesTest {
         val grid = StreamedNavGrid(samplesPerCell = 2, sampleSize = 1f)
         grid.load(WorldCellCoord(2, 0), tile("#.", ".."))
 
-        val lines = navGridDebugLines(World(), grid, flat)
+        val lines = navGridDebugLines(grid, flat)
         val markers = lines.filter { it.color != outlineColorOf(lines) }
 
         assertTrue(
@@ -66,7 +65,7 @@ class NavGridDebugLinesTest {
         grid.load(WorldCellCoord(0, 0), tile("..", ".."))
         grid.load(WorldCellCoord(1, 0), tile("..", ".."))
 
-        val lines = navGridDebugLines(World(), grid, flat)
+        val lines = navGridDebugLines(grid, flat)
 
         // No blocked samples at all, so everything drawn is outline: four edges per cell.
         assertTrue(lines.isNotEmpty())
@@ -75,14 +74,14 @@ class NavGridDebugLinesTest {
     }
 
     @Test
-    fun twoChasersGetTwoRouteColours() {
+    fun twoAgentsGetTwoRouteColours() {
         val world = World()
-        val first = world.create()
-        val second = world.create()
-        world.add(first, ChaseBehavior().also { it.path = route() })
-        world.add(second, ChaseBehavior().also { it.path = route() })
+        val routes = listOf(
+            AgentRoute(world.create(), route()),
+            AgentRoute(world.create(), route()),
+        )
 
-        val colors = navGridDebugLines(world, tile("..", ".."), flat).map { it.color }.toSet()
+        val colors = navGridDebugLines(tile("..", ".."), flat, routes).map { it.color }.toSet()
 
         assertEquals(2, colors.size, "Both routes drew in the same colour: $colors")
     }
@@ -91,9 +90,9 @@ class NavGridDebugLinesTest {
     @Test
     fun aRouteEndsInAGoalMarker() {
         val world = World()
-        world.add(world.create(), ChaseBehavior().also { it.path = route() })
+        val routes = listOf(AgentRoute(world.create(), route()))
 
-        val lines = navGridDebugLines(world, tile("..", ".."), flat)
+        val lines = navGridDebugLines(tile("..", ".."), flat, routes)
 
         // One segment for the route itself, two for the cross on its goal.
         assertEquals(3, lines.size, "$lines")

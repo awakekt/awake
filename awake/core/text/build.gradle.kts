@@ -5,6 +5,7 @@
  */
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -23,5 +24,12 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Core Text")
+        description.set("Font atlases, glyph metrics and text shaping shared by every UI surface")
     }
 }

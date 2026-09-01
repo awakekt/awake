@@ -213,16 +213,21 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
     enumerateDeviceExtensionProperties(JNIEnv *env, jlong arg0, jstring arg1) {
         // process parameter??
         auto physicalDevice = reinterpret_cast<VkPhysicalDevice>(arg0);
+        // Released only AFTER the enumerate calls: releasing right after Get frees the chars
+        // while the loader still reads them -- a heap-reuse-dependent SIGSEGV that fires more
+        // often the more instances a process has churned through.
         const char *vkarg1 = nullptr;
         if (arg1 != nullptr) {
             vkarg1 = env->GetStringUTFChars(arg1, nullptr);
-            env->ReleaseStringUTFChars(arg1, vkarg1);
         }
         // process get??
         uint32_t count;
         vkEnumerateDeviceExtensionProperties(physicalDevice, vkarg1, &count, nullptr);
         std::vector<VkExtensionProperties> vkArray(count);
         vkEnumerateDeviceExtensionProperties(physicalDevice, vkarg1, &count, vkArray.data());
+        if (arg1 != nullptr) {
+            env->ReleaseStringUTFChars(arg1, vkarg1);
+        }
         jclass clazz = env->FindClass(
                 "io/github/awakelab/awake/vulkan/models/VkExtensionProperties");
         auto jArray = env->NewObjectArray(static_cast<jsize>(count), clazz, nullptr);
@@ -408,16 +413,21 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
     jobjectArray
     enumerateInstanceExtensionProperties(JNIEnv *env, jstring arg0) {
         // process parameter??
+        // Released only AFTER the enumerate calls -- same use-after-free as the device variant
+        // above; this one crashed the parity suite about one run in three once the suite grew
+        // enough instance churn to recycle the freed page.
         const char *vkarg0 = nullptr;
         if (arg0 != nullptr) {
             vkarg0 = env->GetStringUTFChars(arg0, nullptr);
-            env->ReleaseStringUTFChars(arg0, vkarg0);
         }
         // process get??
         uint32_t count;
         vkEnumerateInstanceExtensionProperties(vkarg0, &count, nullptr);
         std::vector<VkExtensionProperties> vkArray(count);
         vkEnumerateInstanceExtensionProperties(vkarg0, &count, vkArray.data());
+        if (arg0 != nullptr) {
+            env->ReleaseStringUTFChars(arg0, vkarg0);
+        }
         jclass clazz = env->FindClass(
                 "io/github/awakelab/awake/vulkan/models/VkExtensionProperties");
         auto jArray = env->NewObjectArray(static_cast<jsize>(count), clazz, nullptr);

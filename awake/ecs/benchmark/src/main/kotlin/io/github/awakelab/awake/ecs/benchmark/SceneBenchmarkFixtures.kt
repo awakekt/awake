@@ -15,9 +15,9 @@ import io.github.awakelab.awake.core.math.Mat4
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.core.math.times
 import io.github.awakelab.awake.ecs.ComponentTypeId
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.core.systems.TransformSystem
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.core.transform.TransformSystem
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 import io.github.awakelab.awake.vulkan.material.Material
 import io.github.awakelab.awake.vulkan.mesh.Mesh
 import org.openjdk.jmh.annotations.Level

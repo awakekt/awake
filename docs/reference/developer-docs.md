@@ -163,8 +163,9 @@ more than one is run at once). `.claude/launch.json`'s `port` field must match t
 | 8083 | `samples/ui-showcase` prod preview | `:samples:ui-showcase:wasmJsBrowserProductionRun` |
 | 8084 | `samples/starter-game` dev | `:samples:starter-game:wasmJsBrowserDevelopmentRun` |
 | 8085 | `samples/hello-cube` prod preview | `:samples:hello-cube:wasmJsBrowserProductionRun` |
-| 8086 | `samples/studio` dev | `:samples:studio:wasmJsBrowserDevelopmentRun` |
-| 8087 | `samples/studio` prod preview | `:samples:studio:wasmJsBrowserProductionRun` |
+| 8086 | `apps/studio` dev | `:apps:studio:wasmJsBrowserDevelopmentRun` |
+| 8087 | `apps/studio` prod preview | `:apps:studio:wasmJsBrowserProductionRun` |
+| 8088 | `samples/net-demo` dev (browser client; needs the desktop server on 9540) | `:samples:net-demo:wasmJsBrowserDevelopmentRun` |
 | 8090 | `skills/awake-ui-verification/scripts/ui_preview_watch.sh` / `ui_preview_server.py` | live-reload static file server |
 
 Convention: when adding a new dev-server tool (a new sample's wasmJs target, a new preview

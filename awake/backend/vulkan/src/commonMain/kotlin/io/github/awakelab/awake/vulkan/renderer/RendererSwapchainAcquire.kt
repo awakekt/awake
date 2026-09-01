@@ -23,6 +23,15 @@ internal fun Renderer.acquireSwapchainImage(currentFrame: Int): Int? {
         true,
         Long.MAX_VALUE,
     )
+    return if (swapchainManager.isHeadlessPresentable) {
+        headlessImageIndex(currentFrame)
+    } else {
+        acquirePresentedImage(currentFrame)
+    }
+}
+
+/** The window path: acquire from the presentation engine, recovering from a stale swapchain. */
+private fun Renderer.acquirePresentedImage(currentFrame: Int): Int? {
     // Reset only AFTER a successful acquire (not before) -- if acquire throws and this
     // frame bails out early (see the catch below), an already-reset-but-never-submitted
     // fence would stay unsignaled forever, hanging the NEXT draw() call's
@@ -56,4 +65,20 @@ internal fun Renderer.acquireSwapchainImage(currentFrame: Int): Int? {
     swapchainManager.imagesInFlight[imageIndex] = swapchainManager.inFlightFences[currentFrame]
     Vulkan.vkResetFences(device, longArrayOf(swapchainManager.inFlightFences[currentFrame]))
     return imageIndex
+}
+
+/**
+ * The stand-in image this frame draws into, when there is no presentation engine to acquire from.
+ *
+ * Round-robin rather than acquired, and no image-available semaphore: nothing signals one. The
+ * rest of the frame -- record, submit, fence -- is the path a window takes, which is the point of
+ * rendering headless at all.
+ */
+private fun Renderer.headlessImageIndex(currentFrame: Int): Int {
+    val index = currentFrame % swapchainManager.imageViews.size
+    val pending = swapchainManager.imagesInFlight[index]
+    if (pending != 0L) Vulkan.vkWaitForFences(device, longArrayOf(pending), true, Long.MAX_VALUE)
+    swapchainManager.imagesInFlight[index] = swapchainManager.inFlightFences[currentFrame]
+    Vulkan.vkResetFences(device, longArrayOf(swapchainManager.inFlightFences[currentFrame]))
+    return index
 }

@@ -182,6 +182,8 @@ struct JNI_VkSamplerCreateInfo {
     int32_t mipmapMode;
     float minLod;
     float maxLod;
+    bool compareEnable;
+    int32_t compareOp;
 };
 
 inline JNI_VkSamplerCreateInfo extract_VkSamplerCreateInfo(JNIEnv* env, jobject obj) {
@@ -200,6 +202,8 @@ inline JNI_VkSamplerCreateInfo extract_VkSamplerCreateInfo(JNIEnv* env, jobject 
     jfieldID fid_mipmapMode = env->GetFieldID(cls, "mipmapMode", "I");
     jfieldID fid_minLod = env->GetFieldID(cls, "minLod", "F");
     jfieldID fid_maxLod = env->GetFieldID(cls, "maxLod", "F");
+    jfieldID fid_compareEnable = env->GetFieldID(cls, "compareEnable", "Z");
+    jfieldID fid_compareOp = env->GetFieldID(cls, "compareOp", "I");
     env->DeleteLocalRef(cls);
     out.magFilter = static_cast<int32_t>(env->GetIntField(obj, fid_magFilter));
     out.minFilter = static_cast<int32_t>(env->GetIntField(obj, fid_minFilter));
@@ -213,15 +217,17 @@ inline JNI_VkSamplerCreateInfo extract_VkSamplerCreateInfo(JNIEnv* env, jobject 
     out.mipmapMode = static_cast<int32_t>(env->GetIntField(obj, fid_mipmapMode));
     out.minLod = static_cast<float>(env->GetFloatField(obj, fid_minLod));
     out.maxLod = static_cast<float>(env->GetFloatField(obj, fid_maxLod));
+    out.compareEnable = (env->GetBooleanField(obj, fid_compareEnable) == JNI_TRUE);
+    out.compareOp = static_cast<int32_t>(env->GetIntField(obj, fid_compareOp));
     return out;
 }
 
 inline jobject make_VkSamplerCreateInfo(JNIEnv* env, const JNI_VkSamplerCreateInfo& val) {
     jclass cls = env->FindClass("io/github/awakelab/awake/vulkan/models/info/VkSamplerCreateInfo");
     if (!cls) return nullptr;
-    jmethodID ctor = env->GetMethodID(cls, "<init>", "(IIIIIZFIZIFF)V");
+    jmethodID ctor = env->GetMethodID(cls, "<init>", "(IIIIIZFIZIFFZI)V");
     if (!ctor) { env->DeleteLocalRef(cls); return nullptr; }
-    jobject result = env->NewObject(cls, ctor, val.magFilter, val.minFilter, val.addressModeU, val.addressModeV, val.addressModeW, static_cast<jboolean>(val.anisotropyEnable ? JNI_TRUE : JNI_FALSE), val.maxAnisotropy, val.borderColor, static_cast<jboolean>(val.unnormalizedCoordinates ? JNI_TRUE : JNI_FALSE), val.mipmapMode, val.minLod, val.maxLod);
+    jobject result = env->NewObject(cls, ctor, val.magFilter, val.minFilter, val.addressModeU, val.addressModeV, val.addressModeW, static_cast<jboolean>(val.anisotropyEnable ? JNI_TRUE : JNI_FALSE), val.maxAnisotropy, val.borderColor, static_cast<jboolean>(val.unnormalizedCoordinates ? JNI_TRUE : JNI_FALSE), val.mipmapMode, val.minLod, val.maxLod, static_cast<jboolean>(val.compareEnable ? JNI_TRUE : JNI_FALSE), val.compareOp);
     if (!result) { env->DeleteLocalRef(cls); return nullptr; }
     env->DeleteLocalRef(cls);
     return result;
@@ -408,8 +414,8 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanImages_vkCreateSampler(
     samplerInfo.maxAnisotropy = createInfo_val.maxAnisotropy;
     samplerInfo.borderColor = static_cast<VkBorderColor>(createInfo_val.borderColor);
     samplerInfo.unnormalizedCoordinates = createInfo_val.unnormalizedCoordinates ? VK_TRUE : VK_FALSE;
-    samplerInfo.compareEnable = VK_FALSE;
-    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.compareEnable = createInfo_val.compareEnable ? VK_TRUE : VK_FALSE;
+    samplerInfo.compareOp = static_cast<VkCompareOp>(createInfo_val.compareOp);
     samplerInfo.mipmapMode = static_cast<VkSamplerMipmapMode>(createInfo_val.mipmapMode);
     samplerInfo.mipLodBias = 0.0f;
     samplerInfo.minLod = createInfo_val.minLod;

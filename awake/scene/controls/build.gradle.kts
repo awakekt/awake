@@ -5,6 +5,7 @@
  */
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -26,5 +27,12 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Scene Controls")
+        description.set("Camera rigs and input-driven controls for orbiting, flying and walking a scene")
     }
 }

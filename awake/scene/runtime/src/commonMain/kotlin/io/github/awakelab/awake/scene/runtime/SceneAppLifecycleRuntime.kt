@@ -32,15 +32,15 @@ import io.github.awakelab.awake.render.mesh.Mesh
 import io.github.awakelab.awake.render.renderer.DrawCall
 import io.github.awakelab.awake.render.renderer.Renderer
 import io.github.awakelab.awake.render.texture.TextureAsset
-import io.github.awakelab.awake.scene.core.components.Name
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.core.systems.TransformSystem
-import io.github.awakelab.awake.scene.rendering.components.Camera
-import io.github.awakelab.awake.scene.rendering.components.InstancedMeshRenderer
-import io.github.awakelab.awake.scene.rendering.components.InstancedSkinnedMeshRenderer
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
-import io.github.awakelab.awake.scene.rendering.systems.DebugVisualizationSystem
-import io.github.awakelab.awake.scene.rendering.systems.RenderSystem
+import io.github.awakelab.awake.scene.core.Name
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.core.transform.TransformSystem
+import io.github.awakelab.awake.scene.rendering.Camera
+import io.github.awakelab.awake.scene.rendering.mesh.InstancedMeshRenderer
+import io.github.awakelab.awake.scene.rendering.mesh.InstancedSkinnedMeshRenderer
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
+import io.github.awakelab.awake.scene.rendering.debug.DebugVisualizationSystem
+import io.github.awakelab.awake.scene.rendering.RenderSystem
 import io.github.awakelab.awake.scene.runtime.session.SceneSession
 import kotlin.math.roundToInt
 import kotlin.time.TimeSource
@@ -380,7 +380,7 @@ class SceneAppLifecycleRuntime internal constructor(
  * [SceneAppSpec.infrastructureSystemsFactory]'s doc comment for why this lives here instead
  * of being wired through the authoring DSL. [DebugVisualizationSystem] is a no-op (draws
  * nothing extra) unless a scene adds a
- * [io.github.awakelab.awake.scene.rendering.components.WorldDebugSettings] entity and
+ * [io.github.awakelab.awake.scene.rendering.debug.WorldDebugSettings] entity and
  * toggles it on -- every existing scene is unaffected by its presence here. */
 fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(): List<System> =
     listOf(TransformSystem(), RenderSystem(renderer), DebugVisualizationSystem(renderer))

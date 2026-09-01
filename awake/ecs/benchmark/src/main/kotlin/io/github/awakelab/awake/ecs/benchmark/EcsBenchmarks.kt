@@ -8,8 +8,8 @@ package io.github.awakelab.awake.ecs.benchmark
 import com.artemis.WorldConfigurationBuilder
 import com.github.quillraven.fleks.configureWorld
 import io.github.awakelab.awake.ecs.ComponentTypeId
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.Fork
 import org.openjdk.jmh.annotations.Level

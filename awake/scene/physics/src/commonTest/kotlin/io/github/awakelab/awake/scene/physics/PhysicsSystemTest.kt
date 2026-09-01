@@ -6,17 +6,25 @@
 package io.github.awakelab.awake.scene.physics
 
 import io.github.awakelab.awake.core.math.Vec3f
+import io.github.awakelab.awake.core.math.Quat
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.physics.BodyHandle
+import io.github.awakelab.awake.physics.Buoyancy
+import io.github.awakelab.awake.physics.Constraint
+import io.github.awakelab.awake.physics.ConstraintHandle
 import io.github.awakelab.awake.physics.BodyTransform
+import io.github.awakelab.awake.physics.CollisionLayer
+import io.github.awakelab.awake.physics.CollisionLayers
+import io.github.awakelab.awake.physics.ContactEvent
 import io.github.awakelab.awake.physics.MotionType
 import io.github.awakelab.awake.physics.PhysicsShape
 import io.github.awakelab.awake.physics.PhysicsWorld
 import io.github.awakelab.awake.physics.RaycastHit
+import io.github.awakelab.awake.physics.ShapeCastHit
 import io.github.awakelab.awake.physics.SphereShape
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.physics.components.PhysicsBody
-import io.github.awakelab.awake.scene.physics.systems.PhysicsSystem
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.physics.PhysicsBody
+import io.github.awakelab.awake.scene.physics.PhysicsSystem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -33,32 +41,102 @@ class PhysicsSystemTest {
         var syncTransformsCallCount = 0
             private set
         private var nextHandleId = 0L
+        override val layers: CollisionLayers = CollisionLayers.Default
+
         var scriptedTransforms: List<BodyTransform> = emptyList()
 
         override fun createBody(
             shape: PhysicsShape,
             position: Vec3f,
-            rotation: Vec3f,
+            rotation: Quat,
             motionType: MotionType,
+            layer: CollisionLayer,
+            sensor: Boolean,
         ): BodyHandle {
             createBodyCallCount++
+            builtWith += motionType
             return BodyHandle(nextHandleId++)
         }
 
-        override fun destroyBody(handle: BodyHandle) = Unit
+        /** The motion type of every body actually created, in order. */
+        val builtWith = mutableListOf<MotionType>()
+
+        val destroyed = mutableListOf<BodyHandle>()
+
+        /** Recorded, not ignored: a rebuild that forgets to destroy leaks a body that keeps
+         * simulating, and the only visible difference is a second handle appearing. */
+        override fun destroyBody(handle: BodyHandle) {
+            destroyed += handle
+        }
+
+        /** Unused here: PhysicsOriginShiftTest covers the rebase path. */
+        override fun shiftOrigin(offset: Vec3f) = Unit
+
+        override fun setLinearVelocity(handle: BodyHandle, velocity: Vec3f) = Unit
+        override fun setAngularVelocity(handle: BodyHandle, velocity: Vec3f) = Unit
+        override fun getLinearVelocity(handle: BodyHandle): Vec3f = Vec3f(0f, 0f, 0f)
+        override fun addImpulse(handle: BodyHandle, impulse: Vec3f) = Unit
+        override fun moveKinematic(
+            handle: BodyHandle,
+            position: Vec3f,
+            rotation: Quat,
+            deltaTime: Float,
+        ) = Unit
 
         override fun step(deltaTime: Float) {
             stepCallCount++
         }
 
-        override fun syncTransforms(): List<BodyTransform> {
+        override fun forEachBodyTransform(
+            action: (handle: BodyHandle, position: Vec3f, rotation: Quat) -> Unit,
+        ) {
             syncTransformsCallCount++
-            return scriptedTransforms
+            scriptedTransforms.forEach { action(it.handle, it.position, it.rotation) }
         }
 
-        override fun raycast(origin: Vec3f, direction: Vec3f, maxDistance: Float): RaycastHit? =
+        override fun raycast(
+            origin: Vec3f,
+            direction: Vec3f,
+            maxDistance: Float,
+            onlyLayer: CollisionLayer?,
+        ): RaycastHit? =
             null
 
+        override fun shapeCast(
+            shape: PhysicsShape,
+            from: Vec3f,
+            to: Vec3f,
+            onlyLayer: CollisionLayer?,
+            ignore: BodyHandle?,
+        ): ShapeCastHit? = null
+
+        override fun overlapShape(
+            shape: PhysicsShape,
+            position: Vec3f,
+            onlyLayer: CollisionLayer?,
+            onOverlap: (BodyHandle) -> Unit,
+        ) = Unit
+
+        override fun setActive(handle: BodyHandle, active: Boolean) = Unit
+
+        override fun isActive(handle: BodyHandle): Boolean = false
+
+        override fun createConstraint(constraint: Constraint): ConstraintHandle =
+            ConstraintHandle(0)
+
+        override fun destroyConstraint(handle: ConstraintHandle) = Unit
+
+        override fun applyBuoyancy(
+            handle: BodyHandle,
+            surfaceY: Float,
+            buoyancy: Buoyancy,
+            deltaTime: Float,
+        ) = Unit
+
+        override fun setContinuousCollision(handle: BodyHandle, enabled: Boolean) = Unit
+        override fun setContactReporting(handle: BodyHandle, enabled: Boolean) = Unit
+
+        override fun drainContacts(action: (ContactEvent) -> Unit) = Unit
         override fun destroy() = Unit
     }
 
@@ -93,7 +171,7 @@ class PhysicsSystemTest {
             BodyTransform(
                 handle = handle,
                 position = Vec3f(1f, 2f, 3f),
-                rotation = Vec3f(0f, 0.5f, 0f),
+                rotation = Quat.fromEuler(Vec3f(0f, 0.5f, 0f)),
             ),
         )
         system.update(world, 1f / 60f)
@@ -118,7 +196,7 @@ class PhysicsSystemTest {
             BodyTransform(
                 handle = BodyHandle(999L),
                 position = Vec3f(5f, 5f, 5f),
-                rotation = Vec3f(0f, 0f, 0f),
+                rotation = Quat.IDENTITY,
             ),
         )
         val system = PhysicsSystem(physicsWorld)
@@ -127,5 +205,44 @@ class PhysicsSystemTest {
 
         val transform = world.get<Transform>(entity)!!
         assertTrue(transform.position.x == 0f && transform.position.y == 0f && transform.position.z == 0f)
+    }
+
+    /**
+     * The gap the scene-editor audit recorded as blocking a `PhysicsBody` inspector: the body was
+     * created once and never rebuilt, so editing `motionType` would change the component while the
+     * simulation kept running the old body -- a control that silently does nothing.
+     */
+    @Test
+    fun changingMotionTypeRebuildsTheBodyAndDestroysTheOldOne() {
+        val world = World()
+        val entity = world.create()
+        world.add(entity, Transform(position = Vec3f(0f, 10f, 0f)))
+        val physicsBody =
+            PhysicsBody(shape = SphereShape(radius = 1f), motionType = MotionType.DYNAMIC)
+        world.add(entity, physicsBody)
+        val physicsWorld = FakePhysicsWorld()
+        val system = PhysicsSystem(physicsWorld)
+
+        system.update(world, 1f / 60f)
+        val first = physicsBody.handle
+        assertNotNull(first)
+
+        // What the inspector does.
+        physicsBody.motionType = MotionType.STATIC
+        system.update(world, 1f / 60f)
+
+        assertEquals(2, physicsWorld.createBodyCallCount, "the edit did not rebuild the body")
+        assertEquals(listOf(first), physicsWorld.destroyed, "the old body was left simulating")
+        assertEquals(
+            listOf(MotionType.DYNAMIC, MotionType.STATIC),
+            physicsWorld.builtWith,
+            "the rebuilt body was not created with the edited motion type",
+        )
+        assertNotNull(physicsBody.handle)
+        assertTrue(physicsBody.handle != first, "the component still points at the destroyed body")
+
+        // Steady state again: an unchanged motion type must not rebuild every frame.
+        system.update(world, 1f / 60f)
+        assertEquals(2, physicsWorld.createBodyCallCount, "a body was rebuilt without an edit")
     }
 }

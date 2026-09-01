@@ -9,12 +9,17 @@ import io.github.awakelab.awake.asset.terrain.Heightmap
 import io.github.awakelab.awake.asset.terrain.toPositionNormalColorMesh
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.geometry.MeshGeometry
+import io.github.awakelab.awake.core.math.GridOrigin
 import io.github.awakelab.awake.core.math.Vec3f
+import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.ai.ChaseAiSystem
 import io.github.awakelab.awake.scene.ai.ChaseBehavior
-import io.github.awakelab.awake.scene.core.components.Transform
+import io.github.awakelab.awake.scene.ai.FleeBehavior
+import io.github.awakelab.awake.scene.ai.PatrolBehavior
+import io.github.awakelab.awake.scene.core.transform.Transform
 import io.github.awakelab.awake.scene.navigation.PathRequest
 import io.github.awakelab.awake.scene.navigation.PathRequestSystem
+import io.github.awakelab.awake.scene.navigation.grid.AgentRoute
 import io.github.awakelab.awake.scene.navigation.grid.NavGrid
 import io.github.awakelab.awake.scene.navigation.grid.bakeNavGrid
 import io.github.awakelab.awake.scene.navigation.grid.navGridDebugLines
@@ -63,6 +68,10 @@ internal object NavChaseExampleDriver {
         width = EXTENT,
         depth = EXTENT,
         scale = Vec3f(1f, 1f, 1f),
+        origin = GridOrigin.Corner,
+        // Corner, because this scene is authored that way: the camera frames (8, 0, 8), the
+        // cubes stand at x 3..13, and the terrain node carries no transform. A centred map would
+        // put the floor at -8..8 and leave everything else where it is.
     )
 
     val geometry: MeshGeometry = heightmap.toPositionNormalColorMesh { _, _, height ->
@@ -112,7 +121,7 @@ internal object NavChaseExampleDriver {
         chaserTransform?.let(::settleOnGround)
         runtime.renderer.drawDebugLines(
             if (ShowcaseDebugToggles.showNavGrid) {
-                navGridDebugLines(runtime.world, navGridTile, ::groundAt)
+                navGridDebugLines(navGridTile, ::groundAt, agentRoutes(runtime.world))
             } else {
                 emptyList()
             },
@@ -135,4 +144,18 @@ internal object NavChaseExampleDriver {
         val surface = heightmap.heightAtWorld(x, z)
         return if (surface.isNaN()) 0f else surface
     }
+}
+
+/**
+ * Every route follower's current path, for the nav-grid overlay.
+ *
+ * The overlay used to read `ChaseBehavior` out of the world itself, which made `scene:navigation`
+ * depend on `scene:ai` and drew only chasers -- patrol and flee carry a `path` too and were
+ * silently missing. Supplying the routes here inverts that: the sample knows about behaviours, the
+ * navigation module does not.
+ */
+private fun agentRoutes(world: World): List<AgentRoute> = buildList {
+    world.queryEach<ChaseBehavior> { entity, chase -> add(AgentRoute(entity, chase.path)) }
+    world.queryEach<PatrolBehavior> { entity, patrol -> add(AgentRoute(entity, patrol.path)) }
+    world.queryEach<FleeBehavior> { entity, flee -> add(AgentRoute(entity, flee.path)) }
 }

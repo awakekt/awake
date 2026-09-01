@@ -2,11 +2,11 @@ public final class io/github/awakelab/awake/core/math2d/Dp : java/lang/Comparabl
 	public static final field Companion Lio/github/awakelab/awake/core/math2d/Dp$Companion;
 	public static final synthetic fun box-impl (F)Lio/github/awakelab/awake/core/math2d/Dp;
 	public synthetic fun compareTo (Ljava/lang/Object;)I
-	public fun compareTo-BhXgaJ4 (F)I
-	public static fun compareTo-BhXgaJ4 (FF)I
+	public fun compareTo-62jLhNU (F)I
+	public static fun compareTo-62jLhNU (FF)I
 	public static fun constructor-impl (F)F
-	public static final fun div-9VL9WZs (FF)F
-	public static final fun div-9VL9WZs (FI)F
+	public static final fun div-u3pm0pw (FF)F
+	public static final fun div-u3pm0pw (FI)F
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (FLjava/lang/Object;)Z
 	public static final fun equals-impl0 (FF)Z
@@ -14,16 +14,16 @@ public final class io/github/awakelab/awake/core/math2d/Dp : java/lang/Comparabl
 	public fun hashCode ()I
 	public static fun hashCode-impl (F)I
 	public static final fun isSpecified-impl (F)Z
-	public static final fun minus-0ibgsXg (FF)F
-	public static final fun plus-0ibgsXg (FF)F
-	public static final fun times-9VL9WZs (FF)F
+	public static final fun minus-n-Ys780 (FF)F
+	public static final fun plus-n-Ys780 (FF)F
+	public static final fun times-u3pm0pw (FF)F
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (F)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()F
 }
 
 public final class io/github/awakelab/awake/core/math2d/Dp$Companion {
-	public final fun getUnspecified-qYSJMHg ()F
+	public final fun getUnspecified-PExdcLc ()F
 }
 
 public final class io/github/awakelab/awake/core/math2d/DpKt {

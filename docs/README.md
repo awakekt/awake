@@ -6,7 +6,7 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-08-30` | **Total Tracked Docs**: `192`
+**Last Self-Healed**: `2026-09-01` | **Total Tracked Docs**: `200`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
@@ -14,6 +14,10 @@
 | **Decisions (ADR)** | [`D10 — jni-binding-generator de-risk findings (2026-07-07)`](decisions/D10-codegen-derisk-findings.md) | `Accepted` | Phase 1a of [mvp-plan.md](../mvp-plan.md) called for a week-one de-risk: run |
 | **Decisions (ADR)** | [`D11: JNI Native Implementation Boundary`](decisions/D11-jni-native-implementation-boundary.md) | `Accepted` | `jni-binding-generator` owns the JNI boundary only: exported JNI names, parameter |
 | **Decisions (ADR)** | [`D28: Open-World Subsystems — Awake vs Starter-Kit Boundary`](decisions/D28-open-world-framework-boundary.md) | `Accepted` | The open-world RFC's subsystems are split by the |
+| **Decisions (ADR)** | [`D29: Physics — When Awake Would Write Its Own Engine`](decisions/D29-physics-own-engine-exit-criteria.md) | `Accepted` | Awake builds on Jolt ([D5](../reference/decision-log.md)) and does **not** hold "write our own |
+| **Decisions (ADR)** | [`D30: Math — Which Numeric Primitive Variants Earn a Type`](decisions/D30-math-numeric-primitive-variants.md) | `Accepted` | `:awake:core:math` does **not** carry a variant of every vector/quaternion/matrix type for |
+| **Decisions (ADR)** | [`D31: Net — What the Transport Module Owns, and What Stays in the Game`](decisions/D31-net-api-extraction.md) | `Accepted` | `:awake:net:api` exists and carries exactly two things: the **transport port** and the |
+| **Decisions (ADR)** | [`D32 — The editor is a library, not Studio's UI (2026-08-31)`](decisions/D32-editor-is-a-library.md) | `Accepted` | **Status: Accepted.** `awake:editor` and its adapters are a published library whose consumers are |
 | **Audits** | [`Shadcn visual parity audit — 2026-08-15`](audits/2026-08-15-shadcn-visual-parity-audit.md) | `Active` | Live audit of `samples:ui-showcase` (wasmJs, WebGPU, dpr=2) against official shadcn/ui |
 | **Audits** | [`UI refactor plan — 2026-08-17`](audits/2026-08-17-ui-refactor-vs-recreate-audit.md) | `Active` | **Verdict: refactor in place. Do not recreate.** Recreate only 3 small units |
 | **Audits** | [`Application layer — full shape survey and options`](audits/2026-08-19-application-layer-shape-options.md) | `Active` | Status: draft, not implemented. Scope widened from |
@@ -53,6 +57,7 @@
 | **Active Task** | [`Behavior Tree & State Machine Plan — one hybrid runtime, and where an LLM fits`](tasks/2026-08-30-behavior-tree-state-machine-plan.md) | `Active` | Date: 2026-08-30 |
 | **Active Task** | [`Gizmo rotation: scoping audit gap #13`](tasks/2026-08-30-gizmo-rotation-scope.md) | `Active` | Scope for the scene-editor audit's P1 #13, *"Euler-radian rotation summed per component -- gimbal |
 | **Active Task** | [`Navigation Plan — a Heightmap-Derived NavGrid, in commonMain`](tasks/2026-08-30-navgrid-navigation-plan.md) | `Active` | Date: 2026-08-30 |
+| **Active Task** | [`2026-08-31: generate `ImageVector` icons from vendored SVGs at build time`](tasks/2026-08-31-icon-codegen-plan.md) | `Active` | Status: **done, 2026-09-01.** Heroicons is pinned at **v2.2.0** and all 78 committed icons |
 | **Active Task** | [`Awake Editor Plan — rebuild, do not port`](tasks/editor/01-compose-editor-plan-todo.md) | `Active` | Drafted 2026-08-22. Revised 2026-08-25. Status: Stages 0 and 1 foundations complete; |
 | **Active Task** | [``Vec3f` / `Vec3d` / `Vec3i` — precision variants`](tasks/math/01-vector-precision-variants-todo.md) | `Active` | Drafted 2026-08-22. Status: todo. Gated on a real consumer per variant; see Triggers. |
 | **Reference** | [`Agent Catalog`](reference/agent-catalog.md) | `Active` | This document is the canonical source for Awake's repo-local agent roster, naming convention, |
@@ -93,6 +98,7 @@
 | **Reference** | [`UI Testing Dictionary`](reference/glossary/ui-testing.md) | `Active` | Plain-English meanings for terms used in Awake UI code and tests. This page is for people who |
 | **Reference** | [`KMP Architecture Stance`](reference/kmp-architecture-stance.md) | `Active` | Awake is a Kotlin Multiplatform project that deliberately skips most of what people mean by |
 | **Reference** | [`Library API Boundaries`](reference/library-api-boundaries.md) | `Active` | This document is the canonical rule for how Awake splits public library surface from DSL |
+| **Reference** | [`Maven coordinates`](reference/maven-coordinates.md) | `Active` | The frozen publication surface: what an external consumer resolves, under what coordinates, and |
 | **Reference** | [`Mirror Map: Awake UI DSL vs. Jetpack Compose`](reference/mirror-map.md) | `Active` | Awake's retained Compose-shaped UI API (`Modifier`, `Row`/`Column`/`Box`, state hooks, |
 | **Reference** | [`Module Architecture`](reference/module-architecture.md) | `Active` | How Awake's 44 modules are grouped, why, and how to decide where a new one goes. |
 | **Reference** | [`Engine Performance Matrix & Scorecard`](reference/performance-matrix.md) | `Active` | High-level dashboard of Awake's performance baselines, micro-benchmark suites, algorithmic complexity guarantees, and co... |
@@ -133,7 +139,7 @@
 | **Tasks (Archive)** | [`Final Plan: UI API / Core / Headless Boundary`](tasks/archive/2026-08-11-ui-designsystem-headless-boundary-migration.md) | `Archived` | `ui-designsystem` compiles only against `ui-headless` and `ui-api`. It has no `ui-core` |
 | **Tasks (Archive)** | [`UI Showcase Parity Tracker`](tasks/archive/2026-08-12-ui-showcase-parity-tracker.md) | `Archived` | This is the execution tracker for the post-boundary-migration UI cleanup. It is intentionally |
 | **Tasks (Archive)** | [`UI implementation plan — from 2026-08-14`](tasks/archive/2026-08-14-ui-implementation-plan.md) | `Archived` | Ordered so each phase leaves the tree in a state the next one can trust. Phase 0 first because |
-| **Tasks (Archive)** | [`UI layout: weight distribution — parked 2026-08-14`](tasks/archive/2026-08-14-ui-layout-weight-parking.md) | `Archived` | Everything below came out of one report: "sidebar footer is not visible". It ended in the layout |
+| **Tasks (Archive)** | [`UI layout: weight distribution — parked 2026-08-14`](tasks/archive/2026-08-14-ui-layout-weight-parking.md) | `Archived` | **Superseded 2026-08-31.** The `awake:ui` module this bug lived in (`UiScope`, `ColumnScope.claimSlot`, |
 | **Tasks (Archive)** | [`UI roadmap — consolidated 2026-08-14`](tasks/archive/2026-08-14-ui-roadmap.md) | `Archived` | Supersedes `archive/2026-08-14-ui-implementation-plan.md` (phases 0–2 are done). Companion: |
 | **Tasks (Archive)** | [`UI tooling simplification plan`](tasks/archive/2026-08-16-ui-tooling-simplification.md) | `Archived` | Make Awake UI tooling easy to enter, trustworthy when it reports status, and small enough that |
 | **Tasks (Archive)** | [`2026-08-17: awake:core module split proposal`](tasks/archive/2026-08-17-awake-core-module-split-proposal.md) | `Archived` | Status: Active architecture guideline. Revised 2026-08-21 against real source — the original |
@@ -200,6 +206,8 @@
 | **General** | [`Lesson: AGP 9 / Kotlin 2.4 / Compose MP 1.11 / Gradle 9.6 migration (Awake)`](lessons/2026-07-07-agp9-kotlin24-migration.md) | `Active` | **Date:** 2026-07-07 · Same-day follow-up to the Kotlin 2.1/AGP 8.7 migration — |
 | **General** | [`Lesson: Kotlin 1.8 → 2.1 toolchain migration (Awake)`](lessons/2026-07-07-toolchain-migration.md) | `Active` | **Date:** 2026-07-07 · **Skill involved:** `kotlin-multiplatform-migration` |
 | **General** | [`Awake Engine — MVP Plan`](mvp-plan.md) | `Active` | The live roadmap. Completed work is summarised here in one line per phase and recorded in full |
+| **General** | [`Network Plan — Transport, Replication, Smoothing`](plans/network.md) | `Active` | Where networking lives in Awake, which transport and wire format to pick, and the order to |
+| **General** | [`Physics Plan — Open World & Character`](plans/physics-open-world.md) | `Active` | What the physics subsystem is missing before Awake can carry an open world with a |
 | **General** | [`Release Notes — vulkan-kmp v0.1.0 (MVP Release)`](release-notes-v0.1.0.md) | `Active` | `vulkan-kmp` is the first Kotlin Multiplatform library providing raw, high-performance Vulkan bindings across **Desktop ... |
 | **General** | [`Tasks`](tasks.md) | `Active` | Prototype and decision-gate adaptive bulk ECS structural mutation without changing the default |
 

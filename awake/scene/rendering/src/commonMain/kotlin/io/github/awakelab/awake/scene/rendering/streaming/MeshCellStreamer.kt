@@ -14,8 +14,8 @@ import io.github.awakelab.awake.render.material.Material
 import io.github.awakelab.awake.render.mesh.Mesh
 import io.github.awakelab.awake.render.renderer.CullMode
 import io.github.awakelab.awake.render.renderer.Renderer
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 import io.github.awakelab.awake.scene.world.AsyncWorldCellStreamListener
 import io.github.awakelab.awake.scene.world.CellContent
 import io.github.awakelab.awake.scene.world.WorldCellCoord
@@ -29,8 +29,11 @@ import io.github.awakelab.awake.scene.world.WorldCellCoord
  * suspending half with no renderer and no world in reach, and the upload and spawn run in the
  * [CellContent] the partition system applies on the frame thread.
  *
- * Geometry is built in the cell's **local** space — its own corner is the origin — and the entity
- * carries a [Transform] at the cell's world position. Building in world space would work until a
+ * Geometry is built in the cell's **local** space — its own CENTRE is the origin — and the entity
+ * carries a [Transform] at the cell's centre. Centre rather than corner so that a cell's position
+ * is where the cell is: LOD distance, culling spheres and origin rebasing all read that position,
+ * and a corner puts it most of a cell away from anything drawn. Building in world space would work
+ * until a
  * world large enough to matter loses float precision far from the origin, which is a bug that
  * shows up as jittering terrain a long way into a play session and nowhere near this code.
  *
@@ -128,7 +131,11 @@ class MeshCellStreamer(
         retire(world, coord)
         val mesh = renderer.createMesh(geometry)
         val entity = world.create()
-        world.add(entity, Transform(position = Vec3f(coord.x * cellSize, 0f, coord.z * cellSize)))
+        val half = cellSize * HALF
+        world.add(
+            entity,
+            Transform(position = Vec3f(coord.x * cellSize + half, 0f, coord.z * cellSize + half)),
+        )
         world.add(entity, MeshRenderer(mesh = mesh, material = material, cullMode = cullMode))
         spawned[coord] = CellMesh(entity, mesh)
     }
@@ -156,5 +163,6 @@ class MeshCellStreamer(
     private companion object {
         /** Covers double and triple buffering, which is every backend here. */
         const val DEFAULT_RETIRE_FRAMES = 3
+        private const val HALF = 0.5f
     }
 }

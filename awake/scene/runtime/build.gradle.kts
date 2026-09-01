@@ -6,6 +6,7 @@
 plugins {
     id("awake.kmp-library-convention")
     alias(libs.plugins.kotlin.serialization)
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -25,6 +26,8 @@ kotlin {
             implementation(project(":awake:core:input"))
             api(project(":awake:core:logging"))
             api(project(":awake:scene:scene-core"))
+            api(project(":awake:scene:world"))
+            api(project(":awake:scene:ai"))
             api(project(":awake:scene:rendering"))
             api(project(":awake:core:math"))
             api(project(":awake:ecs"))
@@ -57,4 +60,11 @@ kotlin {
 
 awakeTestResources {
     roots.from(layout.projectDirectory.dir("src/commonTest/resources"))
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Scene Runtime")
+        description.set("Scene documents, asset library, scheduling and the app lifecycle a scene runs inside")
+    }
 }

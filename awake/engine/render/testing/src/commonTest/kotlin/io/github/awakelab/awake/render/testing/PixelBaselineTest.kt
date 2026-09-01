@@ -5,8 +5,8 @@
  */
 package io.github.awakelab.awake.render.testing
 
-import io.github.awakelab.awake.render.testing.PixelMap
-import io.github.awakelab.awake.render.testing.RgbaSample
+import io.github.awakelab.awake.render.capture.PixelMap
+import io.github.awakelab.awake.render.capture.RgbaSample
 import io.github.awakelab.awake.render.testing.summarize
 import io.github.awakelab.awake.core.color.Color
 import kotlin.test.Test

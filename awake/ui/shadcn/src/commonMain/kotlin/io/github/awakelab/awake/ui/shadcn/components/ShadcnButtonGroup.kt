@@ -10,6 +10,7 @@ import io.github.awakelab.awake.compose.foundation.layout.Column
 import io.github.awakelab.awake.compose.foundation.layout.IntrinsicSize
 import io.github.awakelab.awake.compose.foundation.layout.Row
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
+import io.github.awakelab.awake.compose.foundation.layout.height
 import io.github.awakelab.awake.compose.foundation.layout.width
 import io.github.awakelab.awake.compose.foundation.BorderSides
 import io.github.awakelab.awake.compose.runtime.Composer
@@ -84,7 +85,12 @@ fun ShadcnButtonGroup(
         }
     }
     when (orientation) {
-        ShadcnButtonGroupOrientation.Horizontal -> Row(modifier) { render() }
+        // As tall as its tallest member, for the reason the vertical case is as wide as its widest:
+        // the separator between members is a hairline that fills the cross axis, and without the
+        // intrinsic it fills whatever the *parent* offered. In a height-constrained bar that is
+        // invisible; in a panel it made the group as tall as the panel and pushed everything below
+        // it off the screen.
+        ShadcnButtonGroupOrientation.Horizontal -> Row(modifier.height(IntrinsicSize.Min)) { render() }
         // As wide as its widest member, which is then what every member fills. Without the
         // intrinsic, `fillMaxWidth()` above reads the space the *parent* offered and the group
         // stretches across it -- the reference spells the pair the same way.

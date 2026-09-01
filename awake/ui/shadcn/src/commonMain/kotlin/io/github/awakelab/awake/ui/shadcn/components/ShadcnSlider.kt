@@ -17,7 +17,7 @@ import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.ModifierNodeElement
-import io.github.awakelab.awake.compose.ui.draw.drawWithCache
+import io.github.awakelab.awake.compose.ui.draw.drawBehind
 import io.github.awakelab.awake.compose.ui.graphics.drawscope.DrawScope
 import io.github.awakelab.awake.compose.ui.input.key.KeyEvent
 import io.github.awakelab.awake.compose.ui.input.key.KeyEventType
@@ -119,33 +119,36 @@ fun ShadcnSlider(
                 color = theme.palette.ring.withAlpha(0.5f),
                 cornerRadius = SliderTrackHeight / 2f,
             )
-            .drawWithCache {
+            // drawBehind, not drawWithCache: the cache rebuilds on size, density and layout
+            // direction only, and a drag changes none of them. It captured `fraction`, so the
+            // range and thumb stayed where the first frame put them while onValueChange kept
+            // reporting the new value -- a slider whose number moves and whose bar does not.
+            // Nothing here is worth caching anyway; it is six multiplications, not a tessellation.
+            .drawBehind {
                 val thumb = SliderThumbSize.value * density
                 state.thumbPx = thumb
-                val track = shadcnSliderTrack(0f, size.width, thumb)
+                val track = shadcnSliderTrack(0f, width.toFloat(), thumb)
                 val trackH = SliderTrackHeight.value * density
-                val trackY = (size.height - trackH) / 2f
+                val trackY = (height - trackH) / 2f
                 val ring = ThumbRingWidth.value * density
-                onDrawBehind {
-                    withAlpha(if (enabled) 1f else DISABLED_ALPHA) {
-                        drawRoundedRect(
-                            x = track.x,
-                            y = trackY,
-                            width = track.width,
-                            height = trackH,
-                            color = theme.palette.muted,
-                            radius = trackH / 2f,
-                        )
-                        drawRoundedRect(
-                            x = track.x,
-                            y = trackY,
-                            width = track.width * fraction,
-                            height = trackH,
-                            color = theme.palette.primary,
-                            radius = trackH / 2f,
-                        )
-                        drawSliderThumb(track, fraction, thumb, ring, theme.palette.primary)
-                    }
+                withAlpha(if (enabled) 1f else DISABLED_ALPHA) {
+                    drawRoundedRect(
+                        x = track.x,
+                        y = trackY,
+                        width = track.width,
+                        height = trackH,
+                        color = theme.palette.muted,
+                        radius = trackH / 2f,
+                    )
+                    drawRoundedRect(
+                        x = track.x,
+                        y = trackY,
+                        width = track.width * fraction,
+                        height = trackH,
+                        color = theme.palette.primary,
+                        radius = trackH / 2f,
+                    )
+                    drawSliderThumb(track, fraction, thumb, ring, theme.palette.primary)
                 }
             }
     )
@@ -230,36 +233,35 @@ fun ShadcnRangeSlider(
                 },
                 onDrag = { x -> if (enabled) state.pendingXPx = x },
             )
-            .drawWithCache {
+            // Same reason as ShadcnSlider: the captured fractions change on drag, the size does not.
+            .drawBehind {
                 val thumb = SliderThumbSize.value * density
                 state.thumbPx = thumb
-                val track = shadcnSliderTrack(0f, size.width, thumb)
+                val track = shadcnSliderTrack(0f, width.toFloat(), thumb)
                 val trackH = SliderTrackHeight.value * density
-                val trackY = (size.height - trackH) / 2f
+                val trackY = (height - trackH) / 2f
                 val ring = ThumbRingWidth.value * density
-                onDrawBehind {
-                    withAlpha(if (enabled) 1f else DISABLED_ALPHA) {
-                        drawRoundedRect(
-                            x = track.x,
-                            y = trackY,
-                            width = track.width,
-                            height = trackH,
-                            color = theme.palette.muted,
-                            radius = trackH / 2f,
-                        )
-                        val spanX = track.x + track.width * resolvedStartFraction
-                        val spanW = track.width * (resolvedEndFraction - resolvedStartFraction)
-                        drawRoundedRect(
-                            x = spanX,
-                            y = trackY,
-                            width = spanW,
-                            height = trackH,
-                            color = theme.palette.primary,
-                            radius = trackH / 2f,
-                        )
-                        drawSliderThumb(track, resolvedStartFraction, thumb, ring, theme.palette.primary)
-                        drawSliderThumb(track, resolvedEndFraction, thumb, ring, theme.palette.primary)
-                    }
+                withAlpha(if (enabled) 1f else DISABLED_ALPHA) {
+                    drawRoundedRect(
+                        x = track.x,
+                        y = trackY,
+                        width = track.width,
+                        height = trackH,
+                        color = theme.palette.muted,
+                        radius = trackH / 2f,
+                    )
+                    val spanX = track.x + track.width * resolvedStartFraction
+                    val spanW = track.width * (resolvedEndFraction - resolvedStartFraction)
+                    drawRoundedRect(
+                        x = spanX,
+                        y = trackY,
+                        width = spanW,
+                        height = trackH,
+                        color = theme.palette.primary,
+                        radius = trackH / 2f,
+                    )
+                    drawSliderThumb(track, resolvedStartFraction, thumb, ring, theme.palette.primary)
+                    drawSliderThumb(track, resolvedEndFraction, thumb, ring, theme.palette.primary)
                 }
             }
     )

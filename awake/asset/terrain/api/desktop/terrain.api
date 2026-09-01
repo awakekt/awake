@@ -1,11 +1,19 @@
 public final class io/github/awakelab/awake/asset/terrain/Heightmap {
-	public fun <init> ([FIILio/github/awakelab/awake/core/math/Vec3f;)V
+	public fun <init> ([FIILio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/GridOrigin;)V
+	public synthetic fun <init> ([FIILio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/GridOrigin;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun copySamples ()[F
 	public final fun getDepth ()I
+	public final fun getHalfExtentX ()F
+	public final fun getHalfExtentZ ()F
+	public final fun getMinX ()F
+	public final fun getMinZ ()F
+	public final fun getOrigin ()Lio/github/awakelab/awake/core/math/GridOrigin;
 	public final fun getScale ()Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun getWidth ()I
 	public final fun heightAt (II)F
+	public final fun heightAtWorld (FF)F
 	public final fun mutableCopy ()Lio/github/awakelab/awake/asset/terrain/MutableHeightmap;
+	public final fun withOrigin (Lio/github/awakelab/awake/core/math/GridOrigin;)Lio/github/awakelab/awake/asset/terrain/Heightmap;
 }
 
 public final class io/github/awakelab/awake/asset/terrain/HeightmapChange {
@@ -121,6 +129,8 @@ public final class io/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmap
 	public final fun buildAllClipmapMeshes (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Ljava/util/List;
 	public static synthetic fun buildAllClipmapMeshes$default (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapGeometry;Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;ILjava/lang/Object;)Ljava/util/List;
 	public final fun buildCoreMesh (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
+	public final fun buildMergedClipmapMesh (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
+	public static synthetic fun buildMergedClipmapMesh$default (Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapGeometry;Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;ILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
 	public final fun buildRingMesh (ILio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
 }
 

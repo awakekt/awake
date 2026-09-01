@@ -73,16 +73,16 @@ public abstract interface annotation class io/github/awakelab/awake/scene/author
 }
 
 public final class io/github/awakelab/awake/scene/authoring/dsl/EntityScope {
-	public final fun entity-WQEaLFA (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
-	public static synthetic fun entity-WQEaLFA$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
-	public final fun getEntity-bQ-FlKo ()J
+	public final fun entity-HwH1Vvk (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
+	public static synthetic fun entity-HwH1Vvk$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
+	public final fun getEntity-QVrgMZQ ()J
 	public final fun getWorld ()Lio/github/awakelab/awake/ecs/World;
 	public final fun with (Ljava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/scene/authoring/dsl/EntityScopeKt {
-	public static final fun camera-HGt9VLk (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/scene/controls/components/CameraMode;Lio/github/awakelab/awake/ecs/Entity;Lio/github/awakelab/awake/core/math/Lens;ZLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun camera-HGt9VLk$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/scene/controls/components/CameraMode;Lio/github/awakelab/awake/ecs/Entity;Lio/github/awakelab/awake/core/math/Lens;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun camera-HiOlQOo (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/scene/controls/camera/CameraMode;Lio/github/awakelab/awake/ecs/Entity;Lio/github/awakelab/awake/core/math/Lens;ZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun camera-HiOlQOo$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/scene/controls/camera/CameraMode;Lio/github/awakelab/awake/ecs/Entity;Lio/github/awakelab/awake/core/math/Lens;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static final fun meshRenderer (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;)V
 	public static synthetic fun meshRenderer$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;ILjava/lang/Object;)V
 	public static final fun transform (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;FFFFFFFFF)V
@@ -91,9 +91,9 @@ public final class io/github/awakelab/awake/scene/authoring/dsl/EntityScopeKt {
 
 public final class io/github/awakelab/awake/scene/authoring/dsl/SceneBuilder {
 	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/ecs/Entity;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun entity-WQEaLFA (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
-	public static synthetic fun entity-WQEaLFA$default (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
-	public final fun getParentEntity-ZvBj92Y ()Lio/github/awakelab/awake/ecs/Entity;
+	public final fun entity-HwH1Vvk (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
+	public static synthetic fun entity-HwH1Vvk$default (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
+	public final fun getParentEntity-Q1jxeiE ()Lio/github/awakelab/awake/ecs/Entity;
 }
 
 public final class io/github/awakelab/awake/scene/authoring/dsl/SceneBuilderKt {
@@ -114,15 +114,15 @@ public final class io/github/awakelab/awake/scene/authoring/infrastructure/Confi
 }
 
 public final class io/github/awakelab/awake/scene/authoring/sugar/LightingScope {
-	public final fun singleDirectionalLight-OC4T_6U (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)J
-	public static synthetic fun singleDirectionalLight-OC4T_6U$default (Lio/github/awakelab/awake/scene/authoring/sugar/LightingScope;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)J
+	public final fun singleDirectionalLight-FPFQ9uw (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)J
+	public static synthetic fun singleDirectionalLight-FPFQ9uw$default (Lio/github/awakelab/awake/scene/authoring/sugar/LightingScope;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)J
 }
 
 public final class io/github/awakelab/awake/scene/authoring/sugar/SceneConvenienceSugarKt {
-	public static final fun defaultOrbitCamera--XaSOMA (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static final fun defaultOrbitCamera--XaSOMA (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
-	public static synthetic fun defaultOrbitCamera--XaSOMA$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static synthetic fun defaultOrbitCamera--XaSOMA$default (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
+	public static final fun defaultOrbitCamera-Wo0fusk (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static final fun defaultOrbitCamera-Wo0fusk (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
+	public static synthetic fun defaultOrbitCamera-Wo0fusk$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun defaultOrbitCamera-Wo0fusk$default (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
 	public static final fun getLighting (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;)Lio/github/awakelab/awake/scene/authoring/sugar/LightingScope;
 	public static final fun getLighting (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;)Lio/github/awakelab/awake/scene/authoring/sugar/LightingScope;
 	public static final fun mesh (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;)V

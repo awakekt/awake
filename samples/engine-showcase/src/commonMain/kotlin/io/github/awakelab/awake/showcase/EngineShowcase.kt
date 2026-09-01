@@ -8,13 +8,17 @@ package io.github.awakelab.awake.showcase
 import io.github.awakelab.awake.scene.authoring.SceneAssetsDsl
 import io.github.awakelab.awake.scene.runtime.Scene
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
+import io.github.awakelab.awake.showcase.examples.CharacterExampleDriver
 import io.github.awakelab.awake.showcase.examples.GltfViewerAssets
 import io.github.awakelab.awake.showcase.examples.InstancedCubesExampleDriver
 import io.github.awakelab.awake.showcase.examples.InstancedSkinnedExampleDriver
 import io.github.awakelab.awake.showcase.examples.NavChaseExampleDriver
 import io.github.awakelab.awake.showcase.examples.ParticleEmitterExampleDriver
+import io.github.awakelab.awake.showcase.examples.RagdollExampleDriver
 import io.github.awakelab.awake.showcase.examples.SkinnedExampleDriver
+import io.github.awakelab.awake.showcase.examples.SkinnedRagdollExampleDriver
 import io.github.awakelab.awake.showcase.examples.StreamedNavExampleDriver
+import io.github.awakelab.awake.showcase.examples.TerrainPhysicsExampleDriver
 import io.github.awakelab.awake.showcase.terrain.TerrainExampleAsset
 
 /** A focused engine proof asset, independently owned by the engine-showcase sample. */
@@ -24,13 +28,40 @@ data class EngineShowcase(
     val scenePath: String,
     val driver: (SceneAppLifecycleRuntime.(delta: Float) -> Unit)? = null,
     val onActivated: ((instance: Scene, runtime: SceneAppLifecycleRuntime) -> Unit)? = null,
+    /**
+     * Called before this showcase's scene is closed, for anything it created outside that scene.
+     *
+     * Closing a scene destroys the entities the scene document produced. A showcase that spawns
+     * its own — streamed terrain, say — owns those, and without this they survive into whatever
+     * runs next: the ground of one demonstration hanging under another.
+     */
+    val onDeactivated: ((runtime: SceneAppLifecycleRuntime) -> Unit)? = null,
 )
 
 /** Public demonstrations moved out of the editor-integration sample. */
 val EngineShowcases = listOf(
     EngineShowcase("empty", "Empty", "assets/examples/empty.scene.json"),
     EngineShowcase("point-lights", "Point lights", "assets/examples/point-lights.scene.json"),
-    EngineShowcase("heightfield-terrain", "Heightfield terrain", "assets/examples/heightfield-terrain.scene.json"),
+    // The one showcase that runs a real Jolt world: four boxes fall onto the same heightfield
+    // samples the terrain mesh is built from, on a fixed timestep.
+    EngineShowcase(
+        id = "heightfield-terrain",
+        title = "Heightfield terrain",
+        scenePath = "assets/examples/heightfield-terrain.scene.json",
+        onActivated = { instance, runtime ->
+            TerrainPhysicsExampleDriver.attach(instance, runtime)
+            CharacterExampleDriver.attach(instance, runtime)
+        },
+        onDeactivated = { runtime ->
+            CharacterExampleDriver.detach(runtime.world)
+            TerrainPhysicsExampleDriver.detach(runtime)
+        },
+    ),
+    // Casters at 6, -6, -26 and -60 along the view: one per cascade, so the near shadow is sharp
+    // and the far one still exists. A single fixed shadow box covers only the first of them,
+    // which is the difference this demonstration is for -- turn on "Shadow cascades" to see the
+    // boxes the depth pass actually renders from.
+    EngineShowcase("cascaded-shadows", "Cascaded shadows", "assets/examples/cascaded-shadows.scene.json"),
     EngineShowcase(
         id = "gltf-viewer",
         title = "glTF viewer",
@@ -42,6 +73,26 @@ val EngineShowcases = listOf(
         title = "Skinned mesh",
         scenePath = "assets/examples/skinned-mesh.scene.json",
         onActivated = { instance, runtime -> SkinnedExampleDriver.attachPose(instance, runtime) },
+    ),
+    // The second showcase running a real Jolt world, and the one that shows what a joint limit is
+    // for: an eleven-limb figure collapsing, then dropped again once it has settled.
+    EngineShowcase(
+        id = "ragdoll",
+        title = "Ragdoll",
+        scenePath = "assets/examples/ragdoll.scene.json",
+        driver = { delta -> RagdollExampleDriver.advance(delta) },
+        onActivated = { instance, runtime -> RagdollExampleDriver.attach(instance, runtime) },
+        onDeactivated = { RagdollExampleDriver.detach() },
+    ),
+    // The ragdoll wearing its own mesh: bodies shaped from CesiumMan's bind pose, written back
+    // into the joint palette the skinned material reads.
+    EngineShowcase(
+        id = "skinned-ragdoll",
+        title = "Skinned ragdoll",
+        scenePath = "assets/examples/skinned-ragdoll.scene.json",
+        driver = { delta -> SkinnedRagdollExampleDriver.advance(this, delta) },
+        onActivated = { instance, runtime -> SkinnedRagdollExampleDriver.attach(instance, runtime) },
+        onDeactivated = { SkinnedRagdollExampleDriver.detach() },
     ),
     EngineShowcase(
         id = "instanced-cubes",
@@ -69,6 +120,7 @@ val EngineShowcases = listOf(
         scenePath = "assets/examples/streamed-nav.scene.json",
         driver = { delta -> StreamedNavExampleDriver.advance(this, delta) },
         onActivated = { instance, runtime -> StreamedNavExampleDriver.attach(instance, runtime) },
+        onDeactivated = { runtime -> StreamedNavExampleDriver.detach(runtime) },
     ),
     EngineShowcase(
         id = "particles",

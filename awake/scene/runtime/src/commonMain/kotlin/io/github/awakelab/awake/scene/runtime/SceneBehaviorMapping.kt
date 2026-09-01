@@ -11,7 +11,7 @@ import io.github.awakelab.awake.scene.ai.ChaseBehavior
 import io.github.awakelab.awake.scene.ai.FleeBehavior
 import io.github.awakelab.awake.scene.ai.PatrolBehavior
 import io.github.awakelab.awake.scene.ai.PatrolStyle
-import io.github.awakelab.awake.scene.core.components.Name
+import io.github.awakelab.awake.scene.core.Name
 
 // Both directions of the behaviour mapping live together: a field added on one side and forgotten
 // on the other is the failure these have, and it is easier to see in one file than across two.

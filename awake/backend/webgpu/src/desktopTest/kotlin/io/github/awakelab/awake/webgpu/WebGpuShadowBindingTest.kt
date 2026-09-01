@@ -6,7 +6,9 @@
 package io.github.awakelab.awake.webgpu
 
 import io.github.awakelab.awake.core.geometry.VertexFormat
-import io.github.awakelab.awake.core.host.readResourceBytes
+import io.github.awakelab.awake.asset.shaderpack.PackShaderSets
+import io.github.awakelab.awake.asset.shaders.ShaderStage
+import io.github.awakelab.awake.asset.shaders.resolveBytes
 import io.github.awakelab.awake.render.passes.uniforms.MaterialUniformLayouts
 import io.github.awakelab.awake.webgpu.device.GraphicsDevice
 import io.github.awakelab.awake.webgpu.handles.DescriptorSetLayoutHandle
@@ -47,7 +49,12 @@ class WebGpuShadowBindingTest {
         val swapchainManager = SwapchainManager(graphicsDevice, 1)
         swapchainManager.create()
 
-        val litShadow = readResourceBytes("assets/shader/webgpu/lit_shadow.wgsl")
+        // From the shader set, not a resource path: the packed shaders carry their WGSL inline
+        // now, and the file this used to read stopped existing -- which failed the test at its
+        // first line and left the binding it exists to check unverified.
+        val litShadow = checkNotNull(PackShaderSets.LitShadow.webGpu[ShaderStage.VERTEX]) {
+            "lit_shadow declares no WebGPU vertex stage."
+        }.resolveBytes()
         val pipeline = RenderPipeline(
             graphicsDevice,
             swapchainManager,
@@ -58,7 +65,9 @@ class WebGpuShadowBindingTest {
             "vertexMain",
             "fragmentMain",
         )
-        val depthTarget = DepthTarget(graphicsDevice)
+        // Comparison, as the renderer builds it: lit_shadow declares `sampler_comparison`, and
+        // the auto layout derived from that declaration rejects a plain sampler at bind time.
+        val depthTarget = DepthTarget(graphicsDevice, comparison = true)
 
         // The binding the renderer builds per shadowed draw. An invalid layout/resource pair
         // raises a WebGPU validation error rather than returning null, which the uncaptured
@@ -77,17 +86,19 @@ class WebGpuShadowBindingTest {
         // Depth-only companion: same vertex format, so the pre-pass draws the same meshes.
         val depthOnly = DepthOnlyPipeline(
             graphicsDevice = graphicsDevice,
-            shaderCode = readResourceBytes("assets/shader/webgpu/shadow_depth.wgsl"),
+            shaderCode = checkNotNull(PackShaderSets.ShadowDepth.webGpu[ShaderStage.VERTEX]) {
+                "shadow_depth declares no WebGPU vertex stage."
+            }.resolveBytes(),
             vertexFormat = VertexFormat.PositionNormalColor,
         )
-        assertNotNull(depthOnly.handle, "shadow_depth.wgsl must compile on WebGPU")
+        assertNotNull(depthOnly.handle, "shadow_depth must compile on WebGPU")
 
         // The slot the pool hands a shadowed draw must hold the whole block; a short buffer is
         // exactly how the old Primary-sized pool would have failed at write time.
         assertEquals(
-            104,
+            168,
             MaterialUniformLayouts.LitShadow.total,
-            "lit_shadow's Uniforms is 104 floats -- the pool sizes every primary slot for it",
+            "lit_shadow's Uniforms is 168 floats -- the pool sizes every primary slot for it",
         )
 
         depthOnly.destroy()

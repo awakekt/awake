@@ -1,5 +1,11 @@
 # UI layout: weight distribution — parked 2026-08-14
 
+**Superseded 2026-08-31.** The `awake:ui` module this bug lived in (`UiScope`, `ColumnScope.claimSlot`,
+`ShadcnSidebarRecipes.kt`) no longer exists — replaced by `awake/compose/foundation`, which has its
+own Column/Row weight machinery with passing tests (`ColumnMeasurePolicyTest`, `RowMeasurePolicyTest`,
+`FlowLayoutTest`). Flow-layout weight/alignment/maxLines landed in `9e4738cef`, merged into
+`dev/improvement`. Nothing below is actionable against current code; kept for history only.
+
 Everything below came out of one report: "sidebar footer is not visible". It ended in the layout
 engine, not the sidebar.
 

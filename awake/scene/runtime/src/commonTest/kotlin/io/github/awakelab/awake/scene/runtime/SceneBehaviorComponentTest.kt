@@ -11,8 +11,8 @@ import io.github.awakelab.awake.scene.ai.ChaseBehavior
 import io.github.awakelab.awake.scene.ai.FleeBehavior
 import io.github.awakelab.awake.scene.ai.PatrolBehavior
 import io.github.awakelab.awake.scene.ai.PatrolStyle
-import io.github.awakelab.awake.scene.core.components.Name
-import io.github.awakelab.awake.scene.core.components.Transform
+import io.github.awakelab.awake.scene.core.Name
+import io.github.awakelab.awake.scene.core.transform.Transform
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

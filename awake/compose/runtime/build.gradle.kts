@@ -6,6 +6,7 @@
 
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -21,5 +22,12 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Compose Runtime")
+        description.set("The Composer, composition locals and remember/state primitives the engine's UI is built from")
     }
 }

@@ -24,11 +24,11 @@ import io.github.awakelab.awake.render.renderer.SceneLight
 import io.github.awakelab.awake.render.texture.PbrTextureSet
 import io.github.awakelab.awake.render.texture.RenderTarget
 import io.github.awakelab.awake.render.texture.TextureAsset
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.rendering.components.MeshBounds
-import io.github.awakelab.awake.scene.rendering.components.WorldDebugSettings
-import io.github.awakelab.awake.scene.rendering.systems.CONSERVATIVE_ASPECT
-import io.github.awakelab.awake.scene.rendering.systems.DebugVisualizationSystem
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.mesh.MeshBounds
+import io.github.awakelab.awake.scene.rendering.debug.WorldDebugSettings
+import io.github.awakelab.awake.scene.rendering.CONSERVATIVE_ASPECT
+import io.github.awakelab.awake.scene.rendering.debug.DebugVisualizationSystem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -75,7 +75,7 @@ class DebugVisualizationSystemTest {
         val cameraEntity = world.create()
         world.add(
             cameraEntity,
-            io.github.awakelab.awake.scene.rendering.components.Camera(
+            io.github.awakelab.awake.scene.rendering.Camera(
                 Lens(
                     eye = Vec3f(0f, 0f, 5f),
                     center = Vec3f(0f, 0f, 0f),
@@ -90,7 +90,7 @@ class DebugVisualizationSystemTest {
 
     private fun World.primaryCameraEntityId(): Int {
         var id = -1
-        family<io.github.awakelab.awake.scene.rendering.components.Camera>().forEach { entity, _ ->
+        family<io.github.awakelab.awake.scene.rendering.Camera>().forEach { entity, _ ->
             id = entity.id
         }
         return id

@@ -308,10 +308,24 @@ private class ShapeClipNode : Modifier.Node(), DrawModifierNode {
     override fun DrawScope.draw(drawContent: () -> Unit) {
         when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density)) {
             is ShapeOutline.Rectangle -> clipped { drawContent() }
-            is ShapeOutline.Rounded -> clippedPath(
-                io.github.awakelab.awake.core.graphics2d.DrawShape.RoundedRectangle(outline.radius.dp)
-                    .toPath(outline.bounds),
-            ) { drawContent() }
+            is ShapeOutline.Rounded -> {
+                val b = outline.bounds
+                val r = outline.radius
+                // Inset-by-radius on every side always lands inside a uniform-radius rounded
+                // rect: at that inset, a corner's straight edges pass through the arc's own
+                // center, and every other point is past the curved region entirely. Lets the
+                // vast majority of content (everything but what's actually near a corner) skip
+                // real polygon clipping -- see `clippedPath`'s doc for why that matters.
+                val safeInterior = if (b.width > 2 * r && b.height > 2 * r) {
+                    io.github.awakelab.awake.core.math2d.Rectangle(b.x + r, b.y + r, b.width - 2 * r, b.height - 2 * r)
+                } else {
+                    null
+                }
+                clippedPath(
+                    io.github.awakelab.awake.core.graphics2d.DrawShape.RoundedRectangle(r.dp).toPath(b),
+                    safeInterior,
+                ) { drawContent() }
+            }
             is ShapeOutline.Generic -> clippedPath(outline.path) { drawContent() }
         }
     }

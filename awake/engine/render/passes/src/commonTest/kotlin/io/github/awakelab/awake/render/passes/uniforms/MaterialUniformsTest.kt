@@ -11,6 +11,7 @@ import io.github.awakelab.awake.core.math.Mat4
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.render.material.Material
 import io.github.awakelab.awake.render.mesh.Mesh
+import io.github.awakelab.awake.render.renderer.ShadowCascadeUniforms
 import io.github.awakelab.awake.render.renderer.DrawCall
 import io.github.awakelab.awake.render.renderer.SceneLight
 import io.github.awakelab.awake.render.renderer.UniformFields
@@ -117,7 +118,12 @@ class MaterialUniformsTest {
             fog = floatArrayOf(0f, 0f, 0f, 0f),
         )
 
-        val packed = litShadowUniforms(drawCall, Mat4(), Mat4(), frame)
+        val packed = litShadowUniforms(
+            drawCall,
+            Mat4(),
+            ShadowCascadeUniforms(listOf(Mat4()), floatArrayOf(Float.MAX_VALUE)),
+            frame,
+        )
         val offset = MaterialUniformLayouts.LitShadow.offsetOf(UniformFields.VertexAnimation)
 
         assertEquals(0.08f, packed[offset])

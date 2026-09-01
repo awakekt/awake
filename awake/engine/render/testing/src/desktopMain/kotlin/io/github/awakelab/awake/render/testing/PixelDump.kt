@@ -8,6 +8,7 @@ package io.github.awakelab.awake.render.testing
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
+import io.github.awakelab.awake.render.capture.PixelMap
 
 /** Writes a diagnostic PNG. Alpha is intentionally dropped so cleared frames appear black. */
 fun PixelMap.writePng(file: File): String {

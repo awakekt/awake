@@ -32,3 +32,12 @@ This project includes third-party software components and compiled binaries unde
 * **Copyright**: Copyright (c) 2021 Jorrit Rouwe
 * **License**: MIT License (https://opensource.org/licenses/MIT)
 * **Location**: `awake/backend/jolt/`
+
+---
+
+### Heroicons
+* **Description**: SVG icon set, vendored as codegen input and compiled into Kotlin vector data.
+* **Copyright**: Copyright (c) Tailwind Labs, Inc.
+* **License**: MIT License (https://opensource.org/licenses/MIT)
+* **Version**: v2.2.0
+* **Location**: `awake/heroicons/src/commonMain/svg/heroicons/` (license retained verbatim there)

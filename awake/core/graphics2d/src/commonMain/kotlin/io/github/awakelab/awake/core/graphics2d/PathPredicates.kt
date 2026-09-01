@@ -5,6 +5,9 @@
  */
 package io.github.awakelab.awake.core.graphics2d
 
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.atan2
 import kotlin.math.hypot
 
 /**
@@ -74,14 +77,35 @@ fun PathContour.windingContribution(x: Float, y: Float): Int {
 fun isLeft(a: DrawPoint, b: DrawPoint, x: Float, y: Float): Float =
     (b.x - a.x) * (y - a.y) - (x - a.x) * (b.y - a.y)
 
+/**
+ * A polygon is convex when it turns the same way at every vertex AND turns exactly once in total.
+ *
+ * Same-sign turns alone is not enough: a spiral turns one way the whole way round and still is not
+ * convex. Stroke outlines produce exactly that -- a stroked arc's ring runs the outer side, sweeps
+ * a cap, runs the inner side back and caps again, so it accumulates roughly twice the turning of
+ * the arc itself. Heroicons' `user-circle` and `light-bulb` cleared the sign test and were fanned
+ * from their centroid, which filled the hole the outline was supposed to leave.
+ */
 fun isConvex(points: List<DrawPoint>): Boolean {
     if (points.size < 3) return false
-    var sign = 0
+    // Edge directions, with zero-length edges dropped. A contour that draws back to its start
+    // before closing carries one, and pairing raw vertex triples across it silently discards the
+    // turn at that vertex -- enough to push a genuinely convex rounded rectangle out of tolerance.
+    val dirs = ArrayList<DrawPoint>(points.size)
     for (i in points.indices) {
         val a = points[i]
         val b = points[(i + 1) % points.size]
-        val c = points[(i + 2) % points.size]
-        val cross = (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x)
+        dirs += unitDir(a, b) ?: continue
+    }
+    if (dirs.size < 3) return false
+
+    var sign = 0
+    var turning = 0f
+    for (i in dirs.indices) {
+        val u = dirs[i]
+        val v = dirs[(i + 1) % dirs.size]
+        val cross = u.x * v.y - u.y * v.x
+        turning += atan2(cross, u.x * v.x + u.y * v.y)
         if (cross == 0f) continue
         val currentSign = if (cross > 0f) 1 else -1
         if (sign == 0) {
@@ -90,8 +114,14 @@ fun isConvex(points: List<DrawPoint>): Boolean {
             return false
         }
     }
-    return sign != 0
+    return sign != 0 && abs(abs(turning) - TWO_PI) < TURNING_EPSILON
 }
+
+private const val TWO_PI = 2f * PI.toFloat()
+
+/** Slack for float error accumulated over a finely flattened contour. The nearest non-convex
+ * turning total is 4*PI away, so this can be loose. */
+private const val TURNING_EPSILON = 0.1f
 
 fun polygonSignedArea(points: List<DrawPoint>): Float {
     var area = 0f

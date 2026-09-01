@@ -5,6 +5,9 @@
  */
 package io.github.awakelab.awake.render.testing
 
+import io.github.awakelab.awake.render.capture.RgbaSample
+import io.github.awakelab.awake.render.capture.PixelMap
+
 data class PixelProbeSummary(
     val width: Int,
     val height: Int,

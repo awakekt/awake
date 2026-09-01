@@ -81,8 +81,9 @@ class NavGridTileTest {
         assertEquals(3, tile.width)
         assertEquals(3, tile.depth)
         assertEquals(2f, tile.cellSize)
-        assertEquals(4f, tile.worldX(2))
-        assertEquals(4f, tile.worldZ(2))
+        // Centred: a 4m map spans -2..2, so its last navigation column is at +2, not at +4.
+        assertEquals(2f, tile.worldX(2))
+        assertEquals(2f, tile.worldZ(2))
     }
 
     @Test

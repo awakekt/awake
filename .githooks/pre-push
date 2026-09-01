@@ -26,6 +26,9 @@ quality_paths=(
   "config/detekt/**"
   "gradle/libs.versions.toml"
   ".github/workflows/**"
+  # A dump edited by hand rather than regenerated is the one API drift a `.kt` change does not
+  # imply, and it is the kind that looks deliberate in review.
+  ":(glob)**/api/**/*.api"
 )
 
 while read -r local_ref local_oid remote_ref remote_oid; do
@@ -57,6 +60,36 @@ if [[ "$run_detekt" == "1" ]]; then
   echo "Detekt pre-push hook: running ./gradlew detekt" >&2
   echo "Set AWAKE_SKIP_DETEKT_HOOK=1 only for an explicit, reviewed emergency bypass." >&2
   ./gradlew detekt
+fi
+
+# 2b. Public API surface
+#
+# `apiCheck` is a release gate: the publish workflow's `verify` job runs it before anything is
+# uploaded. Nothing ran it before a commit, so the dumps drifted every time an ordinary change
+# touched a public signature -- six re-dumps in one day, each discovered at push or release time by
+# whoever happened to be there rather than by whoever caused it.
+#
+# `desktopApiCheck`, not `apiCheck`. The aggregate pulls iOS cinterop into its task graph, which
+# needs the MoltenVK and JoltC submodules checked out *and built*; on a machine without them it
+# fails on a missing header having compared no API at all. The desktop dumps are what
+# `api/desktop/*.api` actually holds, so this checks exactly what is committed.
+#
+# `--continue` because the first failing module is rarely the only one, and a dev who fixes one at a
+# time pays the whole Gradle start-up each round.
+# Its own flag, not detekt's: they fail for unrelated reasons, and someone bypassing a style rule
+# in an emergency should not also stop checking whether they changed the published surface.
+if [[ "${AWAKE_SKIP_API_HOOK:-}" == "1" ]]; then
+  echo "Skipping the API surface check because AWAKE_SKIP_API_HOOK is set." >&2
+else
+  echo "API pre-push hook: running ./gradlew desktopApiCheck" >&2
+  if ! ./gradlew desktopApiCheck --continue; then
+    echo >&2
+    echo "The committed API dumps no longer match the code. Regenerate and commit them:" >&2
+    echo "  ./gradlew desktopApiDump" >&2
+    echo >&2
+    echo "Review the diff before committing -- a removal is a breaking change, not a re-dump." >&2
+    exit 1
+  fi
 fi
 
 # 3. Cost and appearance ratchets

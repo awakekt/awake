@@ -7,7 +7,7 @@ package io.github.awakelab.awake.scene.runtime
 
 import io.github.awakelab.awake.render.material.Material
 import io.github.awakelab.awake.render.mesh.Mesh
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 
 typealias SceneMeshFactory = SceneAppLifecycleRuntime.() -> Mesh
 typealias SceneMaterialFactory = SceneAppLifecycleRuntime.() -> Material

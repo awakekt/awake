@@ -25,6 +25,7 @@
 
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -57,5 +58,12 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Engine Platform")
+        description.set("Per-platform app lifecycle, windowing and surface handling behind one contract")
     }
 }

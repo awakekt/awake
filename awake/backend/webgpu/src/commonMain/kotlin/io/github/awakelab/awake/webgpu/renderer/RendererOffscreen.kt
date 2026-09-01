@@ -5,10 +5,17 @@
  */
 package io.github.awakelab.awake.webgpu.renderer
 
+import io.github.awakelab.awake.webgpu.pipeline.WebGpuPipelineHandle
+import io.github.awakelab.awake.render.passes.uniforms.litShadowUniforms
+import io.github.awakelab.awake.render.passes.uniforms.SceneFrameUniforms
 import io.github.awakelab.awake.core.geometry.MeshGeometry
 import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.math.Mat4
 import io.github.awakelab.awake.core.math.times
+import io.github.awakelab.awake.render.renderer.shadowCascades
+import io.github.awakelab.awake.render.passes.recordPassFeatures
+import io.github.awakelab.awake.render.passes.RenderPassSlot
+import io.github.awakelab.awake.render.renderer.ShadowCascadeUniforms
 import io.github.awakelab.awake.render.passes.uniforms.sceneLightUniforms
 import io.github.awakelab.awake.render.renderer.DrawCall
 import io.github.awakelab.awake.render.renderer.InstancedUniformLayout
@@ -48,7 +55,7 @@ import io.github.awakelab.awake.render.material.Material as RenderMaterial
 import io.github.awakelab.awake.render.mesh.Mesh as RenderMesh
 
 internal fun Renderer.performCreateMesh(geometry: MeshGeometry): RenderMesh =
-    Mesh(graphicsDevice, {}, geometry.vertices, geometry.indices, geometry.format)
+    Mesh(graphicsDevice, {}, geometry.vertices, geometry.indices, geometry.format, geometry.bounds)
 
 internal fun Renderer.performCreateMaterial(
     texture: TextureAsset?,
@@ -95,6 +102,19 @@ internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): Render
     return target
 }
 
+/**
+ * The same frame the screen gets, into [target] instead of the swapchain.
+ *
+ * This used to be a hand-written subset: primary-format draws only, a minimal uniform block
+ * written inline, and no render features at all. So an offscreen capture silently lacked the
+ * sky, debug lines, transparency, instancing, particles and every content feature -- and
+ * anything verified through it, which on this backend is everything (there is no window in a
+ * test), was verified against a renderer nobody ships.
+ *
+ * It now prepares draws and records features through exactly the calls [performDraw] uses. What
+ * legitimately differs is the attachments it renders into, the aspect it derives from them, and
+ * the absence of a UI overlay -- a capture is of the scene.
+ */
 internal fun Renderer.performRenderToTexture(
     target: RenderTarget,
     camera: Lens,
@@ -103,19 +123,19 @@ internal fun Renderer.performRenderToTexture(
 ) {
     val offscreen = target as OffscreenRenderTarget
     val device = graphicsDevice.wgpuContext.device
-    val pipeline = renderPipeline.handle.pipeline
+    val primary = PrimaryPipelineBinding(pipeline = renderPipeline.handle, wireframe = false)
 
     val aspect = offscreen.width.toFloat() / offscreen.height.toFloat()
     val viewProjection = camera.viewProjectionMatrix(aspect, clipSpace)
+    val lightUniforms = sceneLightUniforms(light, camera.eye)
+    val cascades = if (depthPrePass != null) light.shadowCascades() else null
+    val frame = FrameDrawContext(camera.eye, viewProjection, lightUniforms, cascades, light)
+    val opaqueDraws = prepareOpaqueDraws(drawCalls, frame, primary)
 
     val encoder = device.createCommandEncoder()
-    // Before the colour pass, as on screen: whatever draws below may sample the depth this
-    // writes. The on-screen path does this in RendererDraw3D; without it here, an offscreen
-    // render of a scene-depth-reading pipeline has no bind group for the group it declares.
-    val renderer = this
-    val sceneDepth = sceneDepthPass
-    val lightUniforms = sceneLightUniforms(light, camera.eye)
-    sceneDepth?.recordCommands(encoder, offscreenDepthDraws(drawCalls, viewProjection, lightUniforms))
+    // Before the colour pass, as on screen: whatever draws below may sample the depth these write.
+    recordDepthPasses(encoder, drawCalls, frame)
+
     encoder.beginRenderPass(
         RenderPassDescriptor(
             colorAttachments = listOf(
@@ -134,29 +154,17 @@ internal fun Renderer.performRenderToTexture(
             ),
         ),
     ) {
-        setPipeline(pipeline)
-        drawCalls
-            .filter { it.mesh.format == renderer.primaryVertexFormat }
-            .forEachIndexed { slotIndex, drawCall ->
-                // Per-draw slot, not one shared buffer -- see primaryDraw's own comment.
-                val slot = renderer.bufferPools.uniformSlotForDraw(pipeline, slotIndex)
-                device.queue.writeBuffer(
-                    slot.buffer,
-                    0uL,
-                    fastArrayBufferOf(
-                        UniformWriter(InstancedUniformLayout)
-                            .put((drawCall.model * viewProjection).data, UniformFields.Mvp)
-                            .let(lightUniforms::writeDirectionalTo)
-                            .build(),
-                    ),
-                )
-                setBindGroup(0u, slot.binding.bindGroup)
-                bindSceneDepthOn(renderer, sceneDepth)
-                val mesh = drawCall.mesh as Mesh
-                setVertexBuffer(0u, WebGpuHandles.resolve(mesh.vertexBuffer.handle))
-                setIndexBuffer(WebGpuHandles.resolve(mesh.indexBuffer.handle), meshIndexFormat)
-                drawIndexed(mesh.indexCount.toUInt())
-            }
+        recordPassFeatures(
+            renderFeatures,
+            RenderPassSlot.Scene,
+            sceneContext(
+                this,
+                opaqueDraws,
+                primary.pipeline,
+                frame,
+                SurfaceSize(offscreen.width, offscreen.height),
+            ),
+        )
         end()
     }
     device.queue.submit(listOf(encoder.finish()))
@@ -229,27 +237,46 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
  * and draws inline -- so the depth pass, which does take them, needs them built here. Its own
  * uniform slots, keyed off the depth pipeline, so nothing it writes disturbs the colour pass's.
  */
-private fun Renderer.offscreenDepthDraws(
+/**
+ * [drawCalls] prepared against [depthPipeline]'s own layout, for a depth pass.
+ *
+ * The scene's prepared draws cannot be reused here, and that is not a style preference: WebGPU's
+ * "auto" pipeline layout produces a bind group layout that belongs to ONE pipeline, so handing a
+ * depth pipeline a bind group built for the scene pipeline fails validation with "Exclusive
+ * pipelines don't match" -- which aborts the process rather than returning an error. Vulkan's
+ * binding-compatibility rules let its depth pass borrow the scene's descriptor set; this backend
+ * has to write its own.
+ *
+ * The block written is the one the depth shader reads: `shadow_depth` builds its clip position
+ * from `model` and the cascade block, so a shadowed frame needs lit_shadow's full block, while
+ * `scene_depth` reads only `mvp` and takes the small one.
+ */
+private fun Renderer.depthPassDraws(
+    depthPipeline: WebGpuPipelineHandle,
     drawCalls: List<DrawCall>,
-    viewProjection: Mat4,
-    lightUniforms: io.github.awakelab.awake.render.passes.uniforms.SceneLightUniforms,
+    frame: FrameDrawContext,
 ): List<WebGpuPreparedDraw> {
-    val depthPipeline = sceneDepthPass?.depthOnlyHandle ?: return emptyList()
     val device = graphicsDevice.wgpuContext.device
     return drawCalls
         .filter { it.mesh.format == primaryVertexFormat }
         .mapIndexed { index, drawCall ->
             val slot = bufferPools.uniformSlotForDraw(depthPipeline.pipeline, index)
-            device.queue.writeBuffer(
-                slot.buffer,
-                0uL,
-                fastArrayBufferOf(
-                    UniformWriter(InstancedUniformLayout)
-                        .put((drawCall.model * viewProjection).data, UniformFields.Mvp)
-                        .let(lightUniforms::writeDirectionalTo)
-                        .build(),
-                ),
-            )
+            val mvp = drawCall.model * frame.viewProjection
+            val cascades = frame.cascades
+            val floats = if (cascades != null) {
+                litShadowUniforms(
+                    drawCall = drawCall,
+                    mvp = mvp,
+                    cascades = cascades,
+                    frame = SceneFrameUniforms(frame.lightUniforms, frame.cameraEye, fogFloats()),
+                )
+            } else {
+                UniformWriter(InstancedUniformLayout)
+                    .put(mvp.data, UniformFields.Mvp)
+                    .let(frame.lightUniforms::writeDirectionalTo)
+                    .build()
+            }
+            device.queue.writeBuffer(slot.buffer, 0uL, fastArrayBufferOf(floats))
             val mesh = drawCall.mesh as Mesh
             WebGpuPreparedDraw(
                 pipeline = depthPipeline,
@@ -261,16 +288,28 @@ private fun Renderer.offscreenDepthDraws(
         }
 }
 
-/** Binds [pass]'s depth target at the group the primary pipeline declares for it, if any. */
-private fun io.ygdrasil.webgpu.GPURenderPassEncoder.bindSceneDepthOn(
-    renderer: Renderer,
-    pass: io.github.awakelab.awake.webgpu.pipeline.DepthPrePassFeature?,
+/** [depthPassDraws] for whichever depth passes this renderer has, recorded into [encoder]. */
+internal fun Renderer.recordDepthPasses(
+    encoder: io.ygdrasil.webgpu.GPUCommandEncoder,
+    drawCalls: List<DrawCall>,
+    frame: FrameDrawContext,
 ) {
-    val depth = pass?.depthTarget ?: return
-    val handle = renderer.renderPipeline.handle
-    val binding = renderer.bufferPools.sceneDepthBindingFor(handle, depth)
-    setBindGroup(
-        handle.bindingLayout.slot(BindingSemantic.SceneDepth).toUInt(),
-        (binding as WebGpuBindGroupHandle).bindGroup,
-    )
+    val cascades = frame.cascades
+    val shadowPass = depthPrePass
+    if (shadowsEnabled && shadowPass != null && cascades != null) {
+        shadowPass.recordCommands(encoder, depthPassDraws(shadowPass.depthOnlyHandle, drawCalls, frame), cascades)
+    }
+    // Not gated on shadowsEnabled -- that toggle is about shadows, and water or fog needs this
+    // either way. Its "cascade" is the camera's own view-projection, and it reads mvp, so the
+    // frame it prepares against carries no cascade set.
+    val scenePass = sceneDepthPass
+    if (scenePass != null) {
+        val cameraFrame = FrameDrawContext(frame.cameraEye, frame.viewProjection, frame.lightUniforms, null, frame.light)
+        scenePass.recordCommands(
+            encoder,
+            depthPassDraws(scenePass.depthOnlyHandle, drawCalls, cameraFrame),
+            ShadowCascadeUniforms(listOf(frame.viewProjection), floatArrayOf(Float.MAX_VALUE)),
+        )
+    }
 }
+

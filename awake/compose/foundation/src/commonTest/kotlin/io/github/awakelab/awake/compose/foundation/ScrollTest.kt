@@ -119,13 +119,22 @@ class ScrollLayoutTest {
     fun scrollingMovesTheContentUnderTheViewport() {
         val state = ScrollState()
         val root = scroller(state)
-        val before = Painter().paint(root).filterIsInstance<UiDrawPrimitive.Quad>().map { it.y }
+        // Rows fully outside the viewport are culled (see `DrawScope.isFullyOutsideActiveClip`),
+        // so the row count differs before/after and list position no longer identifies a row --
+        // its scroll-independent position (painted y + the scroll value at capture) still does.
+        val before = Painter().paint(root).filterIsInstance<UiDrawPrimitive.Quad>()
+            .associateBy({ it.y + state.value }, { it.y })
 
         state.scrollBy(60)
         root.layoutTree(Constraints.of(0, 200, 0, 200))
-        val after = Painter().paint(root).filterIsInstance<UiDrawPrimitive.Quad>().map { it.y }
+        val after = Painter().paint(root).filterIsInstance<UiDrawPrimitive.Quad>()
+            .associateBy({ it.y + state.value }, { it.y })
 
-        assertEquals(before.map { it - 60f }, after)
+        val visibleBeforeAndAfter = before.keys.intersect(after.keys)
+        assertTrue(visibleBeforeAndAfter.isNotEmpty(), "expected at least one row visible before and after scrolling")
+        visibleBeforeAndAfter.forEach { rowId ->
+            assertEquals(before.getValue(rowId) - 60f, after.getValue(rowId))
+        }
     }
 
     @Test

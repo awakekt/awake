@@ -23,6 +23,7 @@ import io.github.awakelab.awake.render.passes2d.UiRun
 import io.github.awakelab.awake.render.pipeline.BindingLayout
 import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.render.pipeline.resolve
+import io.github.awakelab.awake.render.renderer.ShadowCascadeUniforms
 import io.github.awakelab.awake.render.renderer.CullMode
 import io.github.awakelab.awake.render.renderer.DEFAULT_FOG_COLOR
 import io.github.awakelab.awake.render.renderer.DEFAULT_HORIZON_COLOR
@@ -401,10 +402,14 @@ class Renderer internal constructor(
      * A no-op when no pre-pass was opted into ([depthPrePass] is null) or it is runtime-disabled
      * ([shadowsEnabled]). Must be called outside an active render pass.
      */
-    internal fun recordDepthPrePass(commandBuffer: Long, drawCalls: List<PreparedDrawCall>) {
+    internal fun recordDepthPrePass(
+        commandBuffer: Long,
+        drawCalls: List<PreparedDrawCall>,
+        cascades: ShadowCascadeUniforms?,
+    ) {
         val feature = depthPrePass ?: return
-        if (!shadowsEnabled) return
-        feature.recordCommands(commandBuffer, drawCalls, renderPipeline.vertexFormat)
+        if (!shadowsEnabled || cascades == null) return
+        feature.recordCommands(commandBuffer, drawCalls, renderPipeline.vertexFormat, cascades)
     }
 
     /**
@@ -414,9 +419,15 @@ class Renderer internal constructor(
      * Not gated on [shadowsEnabled] -- that toggle is about shadows, and something reading scene
      * depth for water or fog still needs it when shadows are off.
      */
-    internal fun recordSceneDepthPass(commandBuffer: Long, drawCalls: List<PreparedDrawCall>) {
+    internal fun recordSceneDepthPass(
+        commandBuffer: Long,
+        drawCalls: List<PreparedDrawCall>,
+        camera: ShadowCascadeUniforms,
+    ) {
         val feature = sceneDepthPass ?: return
-        feature.recordCommands(commandBuffer, drawCalls, renderPipeline.vertexFormat)
+        // One "cascade": the camera's own view-projection. The pass machinery is the same, and
+        // saying so here is smaller than a second recording path that differs only in count.
+        feature.recordCommands(commandBuffer, drawCalls, renderPipeline.vertexFormat, camera)
     }
 
     override fun waitIdle() {

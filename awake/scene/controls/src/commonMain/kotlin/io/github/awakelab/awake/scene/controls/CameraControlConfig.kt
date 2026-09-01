@@ -6,7 +6,7 @@
 package io.github.awakelab.awake.scene.controls
 
 import io.github.awakelab.awake.core.math.CameraMathUtils
-import io.github.awakelab.awake.scene.controls.components.CameraMode
+import io.github.awakelab.awake.scene.controls.camera.CameraMode
 
 /**
  * Data-driven configuration for camera mouse, keyboard, and gesture controls.

@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "name": "skinned-ragdoll",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 2.2, "y": 1.4, "z": 2.8 },
+          "center": { "x": 0.0, "y": 0.5, "z": 0.0 },
+          "fovYDegrees": 45.0,
+          "near": 0.1,
+          "far": 100.0,
+          "primary": true
+        }
+      ]
+    },
+    {
+      "name": "ground",
+      "components": [
+        { "component": "meshRenderer", "mesh": "ground", "material": "lit-shadow" }
+      ]
+    },
+    {
+      "name": "skinned-ragdoll",
+      "components": [
+        { "component": "meshRenderer", "mesh": "skinned-mesh", "material": "skinned-material" }
+      ]
+    },
+    {
+      "name": "light",
+      "components": [{ "component": "light", "type": "Directional" }]
+    }
+  ]
+}

@@ -5,6 +5,10 @@
  */
 package io.github.awakelab.awake.webgpu
 
+import io.github.awakelab.awake.webgpu.pipeline.WebGpuUiPass
+import io.github.awakelab.awake.webgpu.pipeline.WebGpuLinePass
+import io.github.awakelab.awake.render.passes2d.UiRenderFeature
+import io.github.awakelab.awake.render.passes.OpaqueRenderFeature
 import io.github.awakelab.awake.asset.shaderpack.PackShaderSets
 import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
 import io.github.awakelab.awake.asset.shaderdsl.div
@@ -140,17 +144,7 @@ class WebGpuSceneDepthTest {
         val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
         swapchainManager.create()
 
-        val sceneDepthTarget = DepthTarget(graphicsDevice)
-        val sceneDepthPass = DepthPrePassFeature(
-            depthTarget = sceneDepthTarget,
-            depthOnlyPipeline = DepthOnlyPipeline(
-                graphicsDevice = graphicsDevice,
-                shaderCode = PackShaderSets.SceneDepth.webGpu.wgslBytes(),
-                vertexFormat = VertexFormat.PositionNormalColor,
-                vertexEntryPoint = PackShaderSets.SceneDepth.webGpu.entryPoint(ShaderStage.VERTEX),
-                fragmentEntryPoint = PackShaderSets.SceneDepth.webGpu.entryPoint(ShaderStage.FRAGMENT),
-            ),
-        )
+        val sceneDepthPass = sceneDepthPass(graphicsDevice)
         val primary = RenderPipeline(
             graphicsDevice,
             swapchainManager,
@@ -161,6 +155,11 @@ class WebGpuSceneDepthTest {
             "vertexMain",
             "fragmentMain",
         )
+        val lineRenderPipeline = io.github.awakelab.awake.webgpu.debug.LineRenderPipeline(
+            graphicsDevice,
+            swapchainManager,
+            EngineShaderSets.DebugLine.webGpu.wgslBytes(),
+        )
         val renderer = Renderer(
             graphicsDevice = graphicsDevice,
             swapchainManager = swapchainManager,
@@ -168,13 +167,17 @@ class WebGpuSceneDepthTest {
                 primary = primary,
                 primaryFormat = VertexFormat.PositionNormalColor,
             ),
-            lineRenderPipeline = io.github.awakelab.awake.webgpu.debug.LineRenderPipeline(
-                graphicsDevice,
-                swapchainManager,
-                EngineShaderSets.DebugLine.webGpu.wgslBytes(),
-            ),
+            lineRenderPipeline = lineRenderPipeline,
             uiShaderSources = uiSources(),
             maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
+            // The same feature list WebGpuEngine builds. Not optional any more: rendering to a
+            // texture records features exactly as the on-screen path does, so a renderer with an
+            // empty list draws nothing -- which is what a capture of a featureless renderer
+            // always meant, it just used to draw anyway through a second, hand-written path.
+            renderFeatures = listOf(
+                OpaqueRenderFeature(WebGpuLinePass(lineRenderPipeline)),
+                UiRenderFeature(WebGpuUiPass()),
+            ),
             sceneDepthPass = sceneDepthPass,
         )
         try {
@@ -184,6 +187,18 @@ class WebGpuSceneDepthTest {
             graphicsDevice.destroy()
         }
     }
+
+    /** The camera-space depth pass, wired the way `WebGpuEngine` wires one. */
+    private suspend fun sceneDepthPass(graphicsDevice: GraphicsDevice) = DepthPrePassFeature(
+        depthTarget = DepthTarget(graphicsDevice),
+        depthOnlyPipeline = DepthOnlyPipeline(
+            graphicsDevice = graphicsDevice,
+            shaderCode = PackShaderSets.SceneDepth.webGpu.wgslBytes(),
+            vertexFormat = VertexFormat.PositionNormalColor,
+            vertexEntryPoint = PackShaderSets.SceneDepth.webGpu.entryPoint(ShaderStage.VERTEX),
+            fragmentEntryPoint = PackShaderSets.SceneDepth.webGpu.entryPoint(ShaderStage.FRAGMENT),
+        ),
+    )
 
     private companion object {
         val SCENE_DEPTH_GROUP = BindingLayout.Standard.slot(BindingSemantic.SceneDepth)

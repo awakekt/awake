@@ -12,11 +12,11 @@ import io.github.awakelab.awake.ecs.ensure
 import io.github.awakelab.awake.render.material.Material
 import io.github.awakelab.awake.render.mesh.Mesh
 import io.github.awakelab.awake.render.renderer.CullMode
-import io.github.awakelab.awake.scene.controls.components.CameraMode
-import io.github.awakelab.awake.scene.controls.components.CameraRig
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.rendering.components.Camera
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
+import io.github.awakelab.awake.scene.controls.camera.CameraMode
+import io.github.awakelab.awake.scene.controls.camera.CameraRig
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.Camera
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 import kotlin.reflect.KClass
 
 /**

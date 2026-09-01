@@ -5,7 +5,7 @@
  */
 package io.github.awakelab.awake.scene.runtime
 
-import io.github.awakelab.awake.scene.rendering.components.Light
+import io.github.awakelab.awake.scene.rendering.Light
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -89,6 +89,16 @@ data class SceneLight(
     val color: SceneVec3 = SceneVec3(1f, 1f, 1f),
     val intensity: Float = 1f,
     val type: Type = Type.Point,
+    /**
+     * Which way a [Type.Directional] light points; ignored for a point light, which is placed by
+     * its node's transform instead.
+     *
+     * Scenes have been authoring this key since directional lights existed and it was dropped on
+     * the floor: the field was missing here, `SceneJson` ignores unknown keys, and every authored
+     * sun therefore lit its scene from the engine's default angle. Defaults to that same angle,
+     * so a scene that never set it renders exactly as before.
+     */
+    val direction: SceneVec3 = Light().direction.toSceneVec3(),
     /** Where a [Type.Point] light's contribution reaches zero, in world units. Ignored for a
      * directional light. Defaults to the component's own default rather than repeating the
      * number here, so raising it is a one-line change. */

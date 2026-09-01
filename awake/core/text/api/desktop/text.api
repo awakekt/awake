@@ -3,7 +3,7 @@ public final class io/github/awakelab/awake/core/text/font/BitmapFont : io/githu
 	public fun <init> (II)V
 	public synthetic fun <init> (IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun advanceFor (CF)F
-	public fun advanceFor-cUfFpOI (CFI)F
+	public fun advanceFor-KXIu0rk (CFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -17,7 +17,7 @@ public final class io/github/awakelab/awake/core/text/font/BitmapFont : io/githu
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
-	public fun glyphFor-s8pmIhY (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public fun glyphFor-aeoeaJ4 (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 	public fun uvFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 }
 
@@ -37,15 +37,15 @@ public final class io/github/awakelab/awake/core/text/font/FontWeight {
 }
 
 public final class io/github/awakelab/awake/core/text/font/FontWeight$Companion {
-	public final fun getBlack-yMQhXsk ()I
-	public final fun getBold-yMQhXsk ()I
-	public final fun getExtraBold-yMQhXsk ()I
-	public final fun getExtraLight-yMQhXsk ()I
-	public final fun getLight-yMQhXsk ()I
-	public final fun getMedium-yMQhXsk ()I
-	public final fun getNormal-yMQhXsk ()I
-	public final fun getSemiBold-yMQhXsk ()I
-	public final fun getThin-yMQhXsk ()I
+	public final fun getBlack-HEXW_wo ()I
+	public final fun getBold-HEXW_wo ()I
+	public final fun getExtraBold-HEXW_wo ()I
+	public final fun getExtraLight-HEXW_wo ()I
+	public final fun getLight-HEXW_wo ()I
+	public final fun getMedium-HEXW_wo ()I
+	public final fun getNormal-HEXW_wo ()I
+	public final fun getSemiBold-HEXW_wo ()I
+	public final fun getThin-HEXW_wo ()I
 }
 
 public final class io/github/awakelab/awake/core/text/font/GlyphRect {
@@ -79,7 +79,7 @@ public final class io/github/awakelab/awake/core/text/font/MsdfFont : io/github/
 	public fun <init> (IIF)V
 	public synthetic fun <init> (IIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun advanceFor (CF)F
-	public fun advanceFor-cUfFpOI (CFI)F
+	public fun advanceFor-KXIu0rk (CFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -93,14 +93,14 @@ public final class io/github/awakelab/awake/core/text/font/MsdfFont : io/github/
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
-	public fun glyphFor-s8pmIhY (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public fun glyphFor-aeoeaJ4 (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 	public fun uvFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 }
 
 public final class io/github/awakelab/awake/core/text/font/PackedUiFont : io/github/awakelab/awake/core/text/font/UiFont {
 	public static final field RGBA_CHANNELS I
 	public fun advanceFor (CF)F
-	public fun advanceFor-cUfFpOI (CFI)F
+	public fun advanceFor-KXIu0rk (CFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -114,7 +114,7 @@ public final class io/github/awakelab/awake/core/text/font/PackedUiFont : io/git
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
-	public fun glyphFor-s8pmIhY (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public fun glyphFor-aeoeaJ4 (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 	public final fun inkFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 	public fun uvFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 }
@@ -126,7 +126,7 @@ public final class io/github/awakelab/awake/core/text/font/UiAnchorKt {
 
 public abstract interface class io/github/awakelab/awake/core/text/font/UiFont {
 	public fun advanceFor (CF)F
-	public fun advanceFor-cUfFpOI (CFI)F
+	public fun advanceFor-KXIu0rk (CFI)F
 	public fun getAscentEm ()F
 	public abstract fun getAtlasHeight ()I
 	public abstract fun getAtlasPixelsRgba ()[B
@@ -140,13 +140,13 @@ public abstract interface class io/github/awakelab/awake/core/text/font/UiFont {
 	public abstract fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
-	public fun glyphFor-s8pmIhY (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public fun glyphFor-aeoeaJ4 (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 	public abstract fun uvFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 }
 
 public final class io/github/awakelab/awake/core/text/font/UiFont$DefaultImpls {
 	public static fun advanceFor (Lio/github/awakelab/awake/core/text/font/UiFont;CF)F
-	public static fun advanceFor-cUfFpOI (Lio/github/awakelab/awake/core/text/font/UiFont;CFI)F
+	public static fun advanceFor-KXIu0rk (Lio/github/awakelab/awake/core/text/font/UiFont;CFI)F
 	public static fun getAscentEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
 	public static fun getCapHeightEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
 	public static fun getDescentEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
@@ -154,12 +154,12 @@ public final class io/github/awakelab/awake/core/text/font/UiFont$DefaultImpls {
 	public static fun getLineHeightEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
 	public static fun getVisibleBottomEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
 	public static fun getVisibleTopEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
-	public static fun glyphFor-s8pmIhY (Lio/github/awakelab/awake/core/text/font/UiFont;CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public static fun glyphFor-aeoeaJ4 (Lio/github/awakelab/awake/core/text/font/UiFont;CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 }
 
 public final class io/github/awakelab/awake/core/text/font/UiFontKt {
-	public static final fun measureTextWidth-F9pTjtg (Lio/github/awakelab/awake/core/text/font/UiFont;Ljava/lang/String;FI)F
-	public static synthetic fun measureTextWidth-F9pTjtg$default (Lio/github/awakelab/awake/core/text/font/UiFont;Ljava/lang/String;FIILjava/lang/Object;)F
+	public static final fun measureTextWidth-t966K9Y (Lio/github/awakelab/awake/core/text/font/UiFont;Ljava/lang/String;FI)F
+	public static synthetic fun measureTextWidth-t966K9Y$default (Lio/github/awakelab/awake/core/text/font/UiFont;Ljava/lang/String;FIILjava/lang/Object;)F
 }
 
 public final class io/github/awakelab/awake/core/text/font/UiFontSamplingMode : java/lang/Enum {
@@ -189,7 +189,7 @@ public final class io/github/awakelab/awake/core/text/font/WeightedUiFont : io/g
 	public static final field RGBA_CHANNELS I
 	public fun <init> (Ljava/util/Map;)V
 	public fun advanceFor (CF)F
-	public fun advanceFor-cUfFpOI (CFI)F
+	public fun advanceFor-KXIu0rk (CFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -203,7 +203,7 @@ public final class io/github/awakelab/awake/core/text/font/WeightedUiFont : io/g
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
-	public fun glyphFor-s8pmIhY (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public fun glyphFor-aeoeaJ4 (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 	public fun uvFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
 }
 
@@ -217,20 +217,20 @@ public final class io/github/awakelab/awake/core/text/theme/TextStyle {
 	public synthetic fun <init> (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/math2d/Sp;Lio/github/awakelab/awake/core/math2d/Sp;FIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/math2d/Sp;Lio/github/awakelab/awake/core/math2d/Sp;FIFLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun component2-vsdi9CY ()Lio/github/awakelab/awake/core/math2d/Sp;
-	public final fun component3-vsdi9CY ()Lio/github/awakelab/awake/core/math2d/Sp;
+	public final fun component2-N37Q_40 ()Lio/github/awakelab/awake/core/math2d/Sp;
+	public final fun component3-N37Q_40 ()Lio/github/awakelab/awake/core/math2d/Sp;
 	public final fun component4 ()F
-	public final fun component5-yMQhXsk ()I
-	public final fun component6-VufuCH0 ()F
-	public final fun copy-oDC-_Ec (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/math2d/Sp;Lio/github/awakelab/awake/core/math2d/Sp;FIF)Lio/github/awakelab/awake/core/text/theme/TextStyle;
-	public static synthetic fun copy-oDC-_Ec$default (Lio/github/awakelab/awake/core/text/theme/TextStyle;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/math2d/Sp;Lio/github/awakelab/awake/core/math2d/Sp;FIFILjava/lang/Object;)Lio/github/awakelab/awake/core/text/theme/TextStyle;
+	public final fun component5-HEXW_wo ()I
+	public final fun component6-sgZBgvw ()F
+	public final fun copy-m3N6e7I (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/math2d/Sp;Lio/github/awakelab/awake/core/math2d/Sp;FIF)Lio/github/awakelab/awake/core/text/theme/TextStyle;
+	public static synthetic fun copy-m3N6e7I$default (Lio/github/awakelab/awake/core/text/theme/TextStyle;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/math2d/Sp;Lio/github/awakelab/awake/core/math2d/Sp;FIFILjava/lang/Object;)Lio/github/awakelab/awake/core/text/theme/TextStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun getLetterSpacing-VufuCH0 ()F
-	public final fun getLineHeight-vsdi9CY ()Lio/github/awakelab/awake/core/math2d/Sp;
+	public final fun getLetterSpacing-sgZBgvw ()F
+	public final fun getLineHeight-N37Q_40 ()Lio/github/awakelab/awake/core/math2d/Sp;
 	public final fun getScale ()F
-	public final fun getSize-vsdi9CY ()Lio/github/awakelab/awake/core/math2d/Sp;
-	public final fun getWeight-yMQhXsk ()I
+	public final fun getSize-N37Q_40 ()Lio/github/awakelab/awake/core/math2d/Sp;
+	public final fun getWeight-HEXW_wo ()I
 	public fun hashCode ()I
 	public final fun then (Lio/github/awakelab/awake/core/text/theme/TextStyle;)Lio/github/awakelab/awake/core/text/theme/TextStyle;
 	public fun toString ()Ljava/lang/String;

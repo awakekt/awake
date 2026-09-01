@@ -43,6 +43,14 @@ sealed interface BindingSemantic {
 }
 
 /**
+ * The group a depth pass reads its current cascade from.
+ *
+ * A [BindingSemantic.Custom] rather than a named case: it is meaningful only inside the depth
+ * pass, and the engine's own vocabulary describes what the SCENE pass binds.
+ */
+val ShadowCascadePassBinding = BindingSemantic.Custom("shadowCascadePass")
+
+/**
  * The backend-neutral binding ABI for one pipeline.
  *
  * The numeric slot is resolved once when a pipeline is authored. Recording code names the
@@ -85,6 +93,11 @@ data class BindingLayout private constructor(
             BindingSemantic.Material to 0,
             BindingSemantic.ShadowDepth to 1,
             BindingSemantic.JointPalette to 1,
+            // The depth pass's own cascade matrix. Shares the second group with the two above
+            // for the same reason they share it with each other: the passes are disjoint. A
+            // depth-only pass has no shadow map to sample and no skinned palette to read -- it
+            // IS the pass that writes the shadow map.
+            ShadowCascadePassBinding to 1,
             BindingSemantic.SceneDepth to 2,
         )
     }

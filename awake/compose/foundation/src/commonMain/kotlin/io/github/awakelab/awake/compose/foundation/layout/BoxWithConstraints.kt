@@ -22,7 +22,7 @@ import io.github.awakelab.awake.compose.ui.unit.IntSize
  * and density-independent pixels ([Dp]).
  */
 @LayoutScopeMarker
-interface BoxWithConstraintsScope {
+interface BoxWithConstraintsScope : BoxScope {
     val constraints: Constraints
     val minWidth: Dp
     val maxWidth: Dp
@@ -33,7 +33,7 @@ interface BoxWithConstraintsScope {
 internal class BoxWithConstraintsScopeImpl(
     private val density: Density,
     override val constraints: Constraints,
-) : BoxWithConstraintsScope {
+) : BoxWithConstraintsScope, BoxScope by BoxScopeInstance {
     override val minWidth: Dp get() = with(density) { constraints.minWidth.toDp() }
     override val maxWidth: Dp get() = with(density) { constraints.maxWidth.toDp() }
     override val minHeight: Dp get() = with(density) { constraints.minHeight.toDp() }
@@ -88,7 +88,10 @@ fun BoxWithConstraints(
             val space = IntSize(width, height)
             for (i in 0 until count) {
                 val placeable = placeables[i] ?: continue
-                val offset = contentAlignment.align(IntSize(placeable.width, placeable.height), space)
+                // A child's own alignment wins, exactly as in `Box` -- this scope is a `BoxScope`,
+                // so `align` has to mean the same thing here as it does there.
+                val anchor = measurables[i].childAlignment() ?: contentAlignment
+                val offset = anchor.align(IntSize(placeable.width, placeable.height), space)
                 placeable.placeAt(offset.x, offset.y)
             }
         }

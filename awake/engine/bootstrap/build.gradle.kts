@@ -7,6 +7,7 @@ import java.util.Base64
 
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -220,5 +221,12 @@ tasks.register("uiDslTutorialDocsReport") {
         out.parentFile.mkdirs()
         out.writeText(html)
         println("UI DSL tutorial docs: file://${out.absolutePath}")
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Engine Bootstrap")
+        description.set("Application and window bootstrap: the entry point a game calls to start the engine")
     }
 }

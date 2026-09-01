@@ -10,32 +10,39 @@ import io.github.awakelab.awake.asset.terrain.toPositionNormalColorMesh
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.geometry.MeshGeometry
 import io.github.awakelab.awake.core.math.Vec3f
+import io.github.awakelab.awake.ecs.Entity
+import io.github.awakelab.awake.ecs.World
+import io.github.awakelab.awake.render.renderer.LineSegment
 import io.github.awakelab.awake.scene.ai.ChaseAiSystem
 import io.github.awakelab.awake.scene.ai.ChaseBehavior
-import io.github.awakelab.awake.scene.core.components.Transform
+import io.github.awakelab.awake.scene.ai.FleeBehavior
+import io.github.awakelab.awake.scene.ai.PatrolBehavior
+import io.github.awakelab.awake.scene.core.transform.Transform
 import io.github.awakelab.awake.scene.navigation.PathRequest
 import io.github.awakelab.awake.scene.navigation.PathRequestSystem
+import io.github.awakelab.awake.scene.navigation.grid.AgentRoute
 import io.github.awakelab.awake.scene.navigation.grid.CoarseNavGraph
 import io.github.awakelab.awake.scene.navigation.grid.HierarchicalNavGrid
 import io.github.awakelab.awake.scene.navigation.grid.NavGridCellStreamer
 import io.github.awakelab.awake.scene.navigation.grid.StreamedNavGrid
+import io.github.awakelab.awake.scene.navigation.grid.bakeNavGridCell
 import io.github.awakelab.awake.scene.navigation.grid.navGridDebugLines
+import io.github.awakelab.awake.scene.navigation.grid.summarize
+import io.github.awakelab.awake.scene.rendering.Camera
+import io.github.awakelab.awake.scene.rendering.streaming.MeshCellStreamer
 import io.github.awakelab.awake.scene.runtime.Scene
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
-import io.github.awakelab.awake.showcase.ShowcaseDebugToggles
-import io.github.awakelab.awake.scene.rendering.streaming.MeshCellStreamer
 import io.github.awakelab.awake.scene.world.CompositeCellStreamListener
 import io.github.awakelab.awake.scene.world.StreamObserver
 import io.github.awakelab.awake.scene.world.WorldCellCoord
 import io.github.awakelab.awake.scene.world.WorldPartitionConfig
 import io.github.awakelab.awake.scene.world.WorldPartitionSystem
+import io.github.awakelab.awake.showcase.ShowcaseDebugToggles
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.sin
-import kotlin.math.sqrt
 
 /**
  * A chaser that follows a target across a world nobody baked in advance.
@@ -49,25 +56,36 @@ import kotlin.math.sqrt
  * Terrain streams with it. `MeshCellStreamer` builds each cell's mesh off the frame thread from
  * the same height function the navigation bake reads, and `CompositeCellStreamListener` runs both
  * from the partition system's single listener slot — which is the arrangement a real game needs
- * and the reason that composite exists. Ground appearing and disappearing at the streaming radius
- * is the demonstration; the navigation overlay behind the panel's checkbox shows what the chaser
- * is actually reasoning about over it.
+ * and the reason that composite exists.
+ *
+ * **The target is deliberately further away than the world is loaded.** It orbits at
+ * [TARGET_ORBIT_RADIUS] metres while only a few cells around the chaser exist, so the chaser cannot
+ * see a route to it and `HierarchicalNavGrid` has to plan one through cells that are described but
+ * not resident — a leg at a time, re-asked as the ground it is walking on streams in behind it.
+ * The chaser is the streaming observer for the same reason: cells should follow the thing that
+ * walks, not the thing it is walking towards.
+ *
+ * Coarse summaries for the whole demonstration area are seeded up front, which is what a real game
+ * ships as build output. Without them the coarse graph knows only cells that have been resident,
+ * and the first long walk has nothing to plan against.
  */
 internal object StreamedNavExampleDriver {
     private const val CELL_SAMPLES = 16
     private const val SAMPLE_SIZE = 1f
     private const val CELL_SIZE = CELL_SAMPLES * SAMPLE_SIZE
 
-    private const val GROUND_ROLL = 0.6f
-    private const val ROLL_FREQUENCY = 0.13f
-    private const val PILLAR_SPACING = 7f
-    private const val PILLAR_RADIUS = 1.6f
-    private const val PILLAR_HEIGHT = 6f
+    const val TARGET_ORBIT_RADIUS = 90f
+    private const val TARGET_ORBIT_SPEED = 0.035f
 
-    private const val TARGET_ORBIT_RADIUS = 26f
-    private const val TARGET_ORBIT_SPEED = 0.18f
-    private const val ORBIT_LANE_HALF_WIDTH = 2f
+    /** Cells summarised around the origin at startup: enough to cover the whole orbit and inside it. */
+    private const val SEEDED_CELL_RADIUS = 8
     private const val CUBE_HALF_HEIGHT = 0.5f
+
+    /** Metres to look outward for open ground when a spawn lands on a pillar. */
+    private const val OPEN_GROUND_SEARCH = 12
+
+    private const val CAMERA_HEIGHT = 34f
+    private const val CAMERA_BACK = 34f
 
     private const val CHASER_SPEED = 4f
     private const val CHASER_REPATH_INTERVAL = 0.5f
@@ -116,35 +134,8 @@ internal object StreamedNavExampleDriver {
 
     private var targetTransform: Transform? = null
     private var chaserTransform: Transform? = null
+    private var cameraEntity: Entity? = null
     private var elapsed = 0f
-
-    /**
-     * Rolling ground with pillars too steep to climb, as a pure function of world position.
-     *
-     * A function rather than stored terrain because a streamed world has no single heightmap to
-     * store: the same arithmetic answers for any cell, including one the observer has never
-     * visited, which is what lets a cell be baked the moment it is needed.
-     */
-    fun heightAt(worldX: Float, worldZ: Float): Float {
-        val ground = GROUND_ROLL * sin(worldX * ROLL_FREQUENCY) * cos(worldZ * ROLL_FREQUENCY)
-        if (onOrbitLane(worldX, worldZ)) return ground
-        val pillarX = worldX - round(worldX / PILLAR_SPACING) * PILLAR_SPACING
-        val pillarZ = worldZ - round(worldZ / PILLAR_SPACING) * PILLAR_SPACING
-        val onPillar = pillarX * pillarX + pillarZ * pillarZ < PILLAR_RADIUS * PILLAR_RADIUS
-        return if (onPillar) PILLAR_HEIGHT else ground
-    }
-
-    /**
-     * The ring the target walks is kept clear of pillars.
-     *
-     * Otherwise the lattice eventually puts one where the target is standing, and a target inside
-     * an obstacle reads as the chaser having given up. The chaser still crosses the pillar field
-     * to reach it, which is the part worth watching.
-     */
-    private fun onOrbitLane(worldX: Float, worldZ: Float): Boolean {
-        val distance = sqrt(worldX * worldX + worldZ * worldZ)
-        return abs(distance - TARGET_ORBIT_RADIUS) < ORBIT_LANE_HALF_WIDTH
-    }
 
     /**
      * One cell's terrain, in that cell's local coordinates.
@@ -160,7 +151,7 @@ internal object StreamedNavExampleDriver {
             samples = FloatArray(samples * samples) { index ->
                 val x = index % samples
                 val z = index / samples
-                heightAt(originX + x * SAMPLE_SIZE, originZ + z * SAMPLE_SIZE)
+                StreamedNavTerrain.heightAt(originX + x * SAMPLE_SIZE, originZ + z * SAMPLE_SIZE)
             },
             width = samples,
             depth = samples,
@@ -173,9 +164,11 @@ internal object StreamedNavExampleDriver {
         val chaser = instance.roots.find { it.name == "stream-chaser" } ?: return
         targetTransform = runtime.world.get<Transform>(target.entity)
         chaserTransform = runtime.world.get<Transform>(chaser.entity)
-        // Streaming follows the target: it is what moves, and the chaser stays within a cell or
-        // two of it. A camera-following observer would stream cells nobody walks on.
-        runtime.world.add(target.entity, StreamObserver)
+        // Streaming follows the chaser: it is the thing that walks, and the target is far outside
+        // the loaded set on purpose. Streaming around the target instead would load the ground at
+        // the destination and leave the walker on terrain nobody had baked.
+        runtime.world.add(chaser.entity, StreamObserver)
+        cameraEntity = instance.roots.find { it.name == "camera" }?.entity
         runtime.world.add(
             chaser.entity,
             ChaseBehavior(
@@ -186,14 +179,9 @@ internal object StreamedNavExampleDriver {
             ),
         )
         runtime.world.add(chaser.entity, PathRequest())
+        chaserTransform?.let(::standOnOpenGround)
         grid.clear()
-        // The previous activation's terrain, if any: its entities went with the closed scene, but
-        // its GPU meshes are this driver's to free. The material reference goes back too, or every
-        // switch away and back would leave the library holding one more than it handed out.
-        meshStreamer?.let {
-            it.dispose(runtime.world)
-            runtime.requireAssetLibrary().releaseMaterial(TERRAIN_MATERIAL)
-        }
+        seedCoarseSummaries()
         val terrain = MeshCellStreamer(
             renderer = runtime.renderer,
             material = runtime.requireAssetLibrary().requireMaterial(runtime, TERRAIN_MATERIAL),
@@ -221,8 +209,46 @@ internal object StreamedNavExampleDriver {
      */
     private fun cellGeometry(coord: WorldCellCoord): MeshGeometry =
         cellHeightmap(coord).toPositionNormalColorMesh { _, _, height ->
-            if (height > PILLAR_HEIGHT / 2f) ROCK_COLOR else GRASS_COLOR
+            if (height > StreamedNavTerrain.PILLAR_HEIGHT / 2f) ROCK_COLOR else GRASS_COLOR
         }
+
+    /**
+     * Describes the demonstration area to the coarse graph, without loading any of it.
+     *
+     * A real game bakes this offline and ships it; here the height function answers for any cell,
+     * so the same summaries are cheap to compute at startup. Tiles are summarised and dropped —
+     * keeping them would defeat the point, which is routing across ground that is *not* resident.
+     */
+    private fun seedCoarseSummaries() {
+        coarse.clear()
+        for (cz in -SEEDED_CELL_RADIUS..SEEDED_CELL_RADIUS) {
+            for (cx in -SEEDED_CELL_RADIUS..SEEDED_CELL_RADIUS) {
+                val coord = WorldCellCoord(cx, cz)
+                val tile = cellHeightmap(coord).bakeNavGridCell(CELL_SAMPLES, SAMPLE_SIZE)
+                coarse.put(coord, tile.summarize())
+            }
+        }
+    }
+
+    /**
+     * Takes back everything this showcase put in the world that the scene did not.
+     *
+     * Streamed terrain entities are spawned by [MeshCellStreamer], not by the scene document, so
+     * closing the scene leaves them drawing under whatever runs next. The navigation state goes
+     * too: a re-activation seeds it again, and holding stale cells would let a search answer from
+     * terrain that is no longer anywhere.
+     */
+    fun detach(runtime: SceneAppLifecycleRuntime) {
+        meshStreamer?.dispose(runtime.world)
+        meshStreamer = null
+        partitionSystem = null
+        grid.clear()
+        coarse.clear()
+        targetTransform = null
+        chaserTransform = null
+        cameraEntity = null
+        runtime.requireAssetLibrary().releaseMaterial(TERRAIN_MATERIAL)
+    }
 
     fun advance(runtime: SceneAppLifecycleRuntime, delta: Float) {
         val target = targetTransform ?: return
@@ -241,31 +267,85 @@ internal object StreamedNavExampleDriver {
         chaseSystem.update(runtime.world, delta)
         pathSystem.update(runtime.world, delta)
 
-        chaserTransform?.let(::settleOnGround)
-        // Cleared explicitly when off rather than skipped: drawDebugLines replaces the frame's
-        // line buffer, so not calling it leaves the last frame's markers on screen forever.
-        runtime.renderer.drawDebugLines(
-            if (ShowcaseDebugToggles.showNavGrid) {
-                navGridDebugLines(runtime.world, grid, ::heightAt)
-            } else {
-                emptyList()
-            },
+        val chaser = chaserTransform
+        chaser?.let(::settleOnGround)
+        chaser?.let { followWith(runtime, it) }
+        // One call with everything: drawDebugLines replaces the frame's line buffer, so a second
+        // call would erase the first, and not calling it at all leaves the last frame on screen.
+        runtime.renderer.drawDebugLines(debugLines(runtime, chaser, target))
+    }
+
+    /** Rides above and behind the chaser, so streaming is watched from the thing it follows. */
+    private fun followWith(runtime: SceneAppLifecycleRuntime, chaser: Transform) {
+        val entity = cameraEntity ?: return
+        val camera = runtime.world.get<Camera>(entity) ?: return
+        camera.lens.eye.set(chaser.position.x, chaser.position.y + CAMERA_HEIGHT, chaser.position.z + CAMERA_BACK)
+        camera.lens.center.set(chaser.position)
+    }
+
+    private fun debugLines(
+        runtime: SceneAppLifecycleRuntime,
+        chaser: Transform?,
+        target: Transform,
+    ): List<LineSegment> {
+        val lines = ArrayList<LineSegment>()
+        if (ShowcaseDebugToggles.showNavGrid) {
+            lines += navGridDebugLines(grid, StreamedNavTerrain::heightAt, agentRoutes(runtime.world))
+        }
+        if (ShowcaseDebugToggles.showCorridor && chaser != null) {
+            lines += corridorLines(
+                coarse,
+                cellOf(chaser.position, CELL_SIZE),
+                cellOf(target.position, CELL_SIZE),
+                CELL_SIZE,
+                StreamedNavTerrain::heightAt,
+            )
+        }
+        return lines
+    }
+
+    /**
+     * Nudges a spawn point off a pillar.
+     *
+     * The scene file places the chaser at a fixed spot and the terrain is a function, so nothing
+     * guarantees that spot is walkable — and a chaser standing on a pillar has an unwalkable start
+     * sample, which makes every search fail and reads as the demonstration being broken. Rather
+     * than hand-tuning a position against a formula, find the nearest open ground.
+     */
+    private fun standOnOpenGround(transform: Transform) {
+        val open = StreamedNavTerrain.nearestOpenGround(
+            transform.position.x,
+            transform.position.z,
+            OPEN_GROUND_SEARCH,
         )
+        if (open != null) transform.position.set(open.first, transform.position.y, open.second)
+        settleOnGround(transform)
     }
 
     /** Navigation carries X and Z only, so something has to put a moving cube back on the ground. */
     private fun settleOnGround(transform: Transform) {
-        transform.position.y = heightAt(transform.position.x, transform.position.z) + CUBE_HALF_HEIGHT
+        // The DRAWN surface, not the height function the mesh was sampled from: see
+        // StreamedNavTerrain.surfaceAt. The camera rides this cube, so a centimetre of
+        // disagreement here is the whole frame moving.
+        transform.position.y =
+            StreamedNavTerrain.surfaceAt(transform.position.x, transform.position.z, SAMPLE_SIZE) +
+                CUBE_HALF_HEIGHT
     }
-
-    /** `kotlin.math.round` returns a Double for Float input on some targets; keep it Float here. */
-    private fun round(value: Float): Float = (value + if (value < 0f) -HALF else HALF).toInt().toFloat()
-
-    private const val HALF = 0.5f
 
     /** Registered by the showcase module's asset block; streamed terrain borrows it. */
     private const val TERRAIN_MATERIAL = "lit-shadow"
 
     private val GRASS_COLOR = Color(r = 0.20f, g = 0.45f, b = 0.18f)
     private val ROCK_COLOR = Color(r = 0.45f, g = 0.43f, b = 0.47f)
+}
+
+/**
+ * Every route follower's current path, for the nav-grid overlay. See
+ * [io.github.awakelab.awake.scene.navigation.grid.AgentRoute] for why the overlay is given these
+ * rather than reading them out of the world itself.
+ */
+private fun agentRoutes(world: World): List<AgentRoute> = buildList {
+    world.queryEach<ChaseBehavior> { entity, chase -> add(AgentRoute(entity, chase.path)) }
+    world.queryEach<PatrolBehavior> { entity, patrol -> add(AgentRoute(entity, patrol.path)) }
+    world.queryEach<FleeBehavior> { entity, flee -> add(AgentRoute(entity, flee.path)) }
 }

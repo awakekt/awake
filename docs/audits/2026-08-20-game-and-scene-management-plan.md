@@ -24,7 +24,7 @@ just now:
 
 What's still missing: a place that *owns* "the current scene" and exposes switching as one
 safe operation. Right now that logic is hand-rolled inside Studio's `ExampleLoader`
-(`samples/studio/examples/ExampleLoader.kt`) — tied to `StudioExamples`, not reusable by any
+(`apps/studio/examples/ExampleLoader.kt`) — tied to `StudioExamples`, not reusable by any
 other game built on `SceneGameRuntime`.
 
 ## The clean shape: `SceneManager`, generic, in `scene/runtime`

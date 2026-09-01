@@ -16,8 +16,8 @@ import io.github.awakelab.awake.scene.authoring.dsl.EntityScope
 import io.github.awakelab.awake.scene.authoring.dsl.SceneBuilder
 import io.github.awakelab.awake.scene.authoring.dsl.camera
 import io.github.awakelab.awake.scene.authoring.dsl.meshRenderer
-import io.github.awakelab.awake.scene.controls.components.CameraMode
-import io.github.awakelab.awake.scene.rendering.components.Light
+import io.github.awakelab.awake.scene.controls.camera.CameraMode
+import io.github.awakelab.awake.scene.rendering.Light
 
 /**
  * Spawns a default orbit (third-person) camera entity.

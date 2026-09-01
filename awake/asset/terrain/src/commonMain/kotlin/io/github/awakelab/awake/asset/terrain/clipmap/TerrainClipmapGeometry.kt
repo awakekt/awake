@@ -6,6 +6,9 @@
 package io.github.awakelab.awake.asset.terrain.clipmap
 
 import io.github.awakelab.awake.core.geometry.MeshGeometry
+import io.github.awakelab.awake.core.geometry.InterleavedVertices
+import io.github.awakelab.awake.core.geometry.VertexSemantic
+import io.github.awakelab.awake.core.geometry.gridTriangleIndices
 import io.github.awakelab.awake.core.geometry.VertexFormat
 
 /**
@@ -53,10 +56,40 @@ data class TerrainClipmapConfig(
  */
 object TerrainClipmapGeometry {
 
-    /** Red channel of the colour attribute: Pos(3) + Normal(3) puts it at 6. */
-    private const val COLOR_OFFSET = 6
+    private val FORMAT = VertexFormat.PositionNormalColorUv
 
-    private const val STRIDE = 11 // VertexFormat.PositionNormalColorUv: Pos(3) + Normal(3) + Color(3) + UV(2)
+    /** Asked of the format rather than restated: both used to be hand-maintained constants. */
+    private val COLOR_OFFSET = FORMAT.floatOffsetOf(VertexSemantic.Color)
+    private val STRIDE = FORMAT.strideFloats
+
+    /**
+     * A flat, level, white `n` x `n` grid centred on the local origin, with UVs across the whole.
+     *
+     * The core mesh and every ring build the identical vertex; they differ only in [spacing] and
+     * in which cells they emit indices for. Two copies of this loop is how those two could have
+     * drifted apart without any test noticing.
+     */
+    private fun flatGridVertices(n: Int, spacing: Float, halfExtent: Float): InterleavedVertices {
+        val vertices = InterleavedVertices(FORMAT, n * n)
+        val lastIndex = (n - 1).toFloat()
+        for (z in 0 until n) {
+            for (x in 0 until n) {
+                val vertex = z * n + x
+                vertices.put(
+                    vertex,
+                    VertexSemantic.Position,
+                    x * spacing - halfExtent,
+                    0f,
+                    z * spacing - halfExtent,
+                )
+                vertices.put(vertex, VertexSemantic.Uv, x / lastIndex, z / lastIndex)
+            }
+        }
+        // Constant across the grid, so written once per attribute rather than once per vertex.
+        vertices.fill(VertexSemantic.Normal, 0f, 1f, 0f)
+        vertices.fill(VertexSemantic.Color, 1f, 1f, 1f)
+        return vertices
+    }
 
     /**
      * Builds the solid $(N \times N)$ Level 0 core grid centered at local origin $(0, 0)$.
@@ -66,56 +99,9 @@ object TerrainClipmapGeometry {
         val spacing = config.baseSpacing
         val halfExtent = (n - 1) * spacing * 0.5f
 
-        val vertexCount = n * n
-        val vertices = FloatArray(vertexCount * STRIDE)
-        var vCursor = 0
+        val vertices = flatGridVertices(n, spacing, halfExtent)
 
-        for (z in 0 until n) {
-            val localZ = z * spacing - halfExtent
-            val v = z.toFloat() / (n - 1).toFloat()
-            for (x in 0 until n) {
-                val localX = x * spacing - halfExtent
-                val u = x.toFloat() / (n - 1).toFloat()
-
-                // Position (X, Y, Z)
-                vertices[vCursor++] = localX
-                vertices[vCursor++] = 0.0f
-                vertices[vCursor++] = localZ
-                // Normal (NX, NY, NZ)
-                vertices[vCursor++] = 0.0f
-                vertices[vCursor++] = 1.0f
-                vertices[vCursor++] = 0.0f
-                // Color (R, G, B)
-                vertices[vCursor++] = 1.0f
-                vertices[vCursor++] = 1.0f
-                vertices[vCursor++] = 1.0f
-                // UV (U, V)
-                vertices[vCursor++] = u
-                vertices[vCursor++] = v
-            }
-        }
-
-        val quadCount = (n - 1) * (n - 1)
-        val indices = IntArray(quadCount * 6)
-        var iCursor = 0
-
-        for (z in 0 until n - 1) {
-            for (x in 0 until n - 1) {
-                val topLeft = z * n + x
-                val topRight = topLeft + 1
-                val bottomLeft = topLeft + n
-                val bottomRight = bottomLeft + 1
-
-                indices[iCursor++] = topLeft
-                indices[iCursor++] = bottomLeft
-                indices[iCursor++] = topRight
-                indices[iCursor++] = topRight
-                indices[iCursor++] = bottomLeft
-                indices[iCursor++] = bottomRight
-            }
-        }
-
-        return MeshGeometry(vertices, indices, VertexFormat.PositionNormalColorUv)
+        return vertices.build(gridTriangleIndices(n, n))
     }
 
     /**
@@ -134,61 +120,15 @@ object TerrainClipmapGeometry {
         val innerStart = n / 4
         val innerEnd = innerStart + (n / 2) // Inner hole bounds in grid units
 
-        val vertexCount = n * n
-        val vertices = FloatArray(vertexCount * STRIDE)
-        var vCursor = 0
+        val vertices = flatGridVertices(n, spacing, halfExtent)
 
-        for (z in 0 until n) {
-            val localZ = z * spacing - halfExtent
-            val v = z.toFloat() / (n - 1).toFloat()
-            for (x in 0 until n) {
-                val localX = x * spacing - halfExtent
-                val u = x.toFloat() / (n - 1).toFloat()
-
-                // Position (X, Y, Z)
-                vertices[vCursor++] = localX
-                vertices[vCursor++] = 0.0f
-                vertices[vCursor++] = localZ
-                // Normal (NX, NY, NZ)
-                vertices[vCursor++] = 0.0f
-                vertices[vCursor++] = 1.0f
-                vertices[vCursor++] = 0.0f
-                // Color (R, G, B)
-                vertices[vCursor++] = 1.0f
-                vertices[vCursor++] = 1.0f
-                vertices[vCursor++] = 1.0f
-                // UV (U, V)
-                vertices[vCursor++] = u
-                vertices[vCursor++] = v
-            }
+        // A ring is the same grid with its middle removed, which is exactly what the shared
+        // builder's cell filter is for.
+        val indices = gridTriangleIndices(n, n) { x, z ->
+            !((x >= innerStart && x < innerEnd) && (z >= innerStart && z < innerEnd))
         }
 
-        // Emit quads outside the inner hole [innerStart, innerEnd)
-        val maxQuads = (n - 1) * (n - 1) - (n / 2) * (n / 2)
-        val indices = IntArray(maxQuads * 6)
-        var iCursor = 0
-
-        for (z in 0 until n - 1) {
-            for (x in 0 until n - 1) {
-                // Check if this quad is inside the inner hole
-                val isInsideHole = (x >= innerStart && x < innerEnd) && (z >= innerStart && z < innerEnd)
-                if (isInsideHole) continue
-
-                val topLeft = z * n + x
-                val topRight = topLeft + 1
-                val bottomLeft = topLeft + n
-                val bottomRight = bottomLeft + 1
-
-                indices[iCursor++] = topLeft
-                indices[iCursor++] = bottomLeft
-                indices[iCursor++] = topRight
-                indices[iCursor++] = topRight
-                indices[iCursor++] = bottomLeft
-                indices[iCursor++] = bottomRight
-            }
-        }
-
-        return MeshGeometry(vertices, indices.copyOf(iCursor), VertexFormat.PositionNormalColorUv)
+        return vertices.build(indices)
     }
 
     /**

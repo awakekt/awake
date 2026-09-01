@@ -6,6 +6,9 @@
 package io.github.awakelab.awake.vulkan.pipeline
 
 import io.github.awakelab.awake.core.geometry.VertexFormat
+import io.github.awakelab.awake.render.renderer.SHADOW_CASCADE_PASS_GROUP
+import io.github.awakelab.awake.render.renderer.ShadowCascadeUniforms
+import io.github.awakelab.awake.vulkan.gen.VulkanDescriptors
 import io.github.awakelab.awake.vulkan.Vulkan
 import io.github.awakelab.awake.vulkan.enums.VkSubpassContents
 import io.github.awakelab.awake.vulkan.mesh.Mesh
@@ -42,16 +45,43 @@ internal class DepthPrePassFeature(
     internal val depthTarget: DepthTarget,
     private val depthOnlyPipeline: DepthOnlyPipeline,
 ) {
-    /** [commandBuffer] is the caller's already-begun one-time buffer (`Renderer` owns that
-     * runner); [castFormat] is the one vertex format this pipeline can bind. */
+    /**
+     * [commandBuffer] is the caller's already-begun one-time buffer (`Renderer` owns that
+     * runner); [castFormat] is the one vertex format this pipeline can bind; [cascades] is this
+     * frame's cascade set, one render pass each.
+     *
+     * A pass per cascade rather than one pass writing every layer: a framebuffer attaches one
+     * layer, and rendering them together needs multiview, which is a different feature with its
+     * own extension and its own device support question. The geometry is submitted N times, which
+     * is what the literature measures as faster than geometry-shader amplification anyway.
+     */
     fun recordCommands(
         commandBuffer: Long,
         drawCalls: List<PreparedDrawCall>,
         castFormat: VertexFormat,
+        cascades: ShadowCascadeUniforms,
+    ) {
+        // EVERY layer, not just the ones this frame's cascade set fills. A layer that is never
+        // rendered is never written, and sampling the array then reads an image subresource in an
+        // undefined layout -- which the validation layer rejects and a driver may render as
+        // anything. A configuration with fewer cascades than layers repeats its last one, so the
+        // extra passes are duplicates rather than holes.
+        for (cascade in 0 until depthTarget.layers) {
+            val source = cascades.viewProjections[minOf(cascade, cascades.count - 1)]
+            depthOnlyPipeline.writeCascade(cascade, source)
+            recordCascade(commandBuffer, drawCalls, castFormat, cascade)
+        }
+    }
+
+    private fun recordCascade(
+        commandBuffer: Long,
+        drawCalls: List<PreparedDrawCall>,
+        castFormat: VertexFormat,
+        cascade: Int,
     ) {
         val renderPassInfo = VkRenderPassBeginInfo(
             renderPass = depthTarget.renderPass,
-            framebuffer = depthTarget.framebuffer,
+            framebuffer = depthTarget.framebufferFor(cascade),
             renderArea = VkRect2D(extent = VkExtent2D(depthTarget.size, depthTarget.size)),
             pClearValues = arrayOf(Renderer.clearDepthValue),
         )
@@ -61,6 +91,16 @@ internal class DepthPrePassFeature(
             VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
         )
         depthOnlyPipeline.bind(commandBuffer)
+        // Set 1, once per cascade rather than per draw: every mesh in this pass renders through
+        // the same matrix, and only the pass knows which cascade it is.
+        if (depthOnlyPipeline.hasCascadeBlock) {
+            VulkanDescriptors.vkCmdBindDescriptorSet(
+                commandBuffer,
+                depthOnlyPipeline.pipelineLayout,
+                SHADOW_CASCADE_PASS_GROUP,
+                depthOnlyPipeline.cascadeBinding(cascade),
+            )
+        }
         val size = depthTarget.size.toFloat()
         Vulkan.vkCmdSetViewport(
             commandBuffer,

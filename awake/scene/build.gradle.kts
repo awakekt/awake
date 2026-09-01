@@ -40,6 +40,8 @@ kotlin {
         commonMain.dependencies {
             // Re-exported for facade consumers -- umbrella module for published awake-scene.
             api(project(":awake:scene:scene-core"))
+            api(project(":awake:scene:ai"))
+            api(project(":awake:scene:world"))
             api(project(":awake:scene:controls"))
             api(project(":awake:scene:physics"))
             api(project(":awake:scene:rendering"))

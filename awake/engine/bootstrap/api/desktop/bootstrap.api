@@ -68,7 +68,9 @@ public final class io/github/awakelab/awake/engine/bootstrap/dsl/WindowBackendDs
 
 public final class io/github/awakelab/awake/engine/bootstrap/dsl/WindowDsl {
 	public final fun getBackend ()Lio/github/awakelab/awake/engine/bootstrap/dsl/WindowBackendDsl;
+	public final fun getPresentMode ()Lio/github/awakelab/awake/engine/platform/config/PresentMode;
 	public final fun getTitle ()Ljava/lang/String;
+	public final fun setPresentMode (Lio/github/awakelab/awake/engine/platform/config/PresentMode;)V
 	public final fun setTitle (Ljava/lang/String;)V
 	public final fun size (II)V
 }

@@ -8,7 +8,7 @@ package io.github.awakelab.awake.scene.navigation.grid
 import io.github.awakelab.awake.asset.terrain.Heightmap
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.core.components.Transform
+import io.github.awakelab.awake.scene.core.transform.Transform
 import io.github.awakelab.awake.scene.world.StreamObserver
 import io.github.awakelab.awake.scene.world.WorldCellCoord
 import io.github.awakelab.awake.scene.world.WorldPartitionConfig

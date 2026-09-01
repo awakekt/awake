@@ -79,6 +79,19 @@ extern "C" void awake_vulkan_images_transition_image_layout(
         barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
         srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
         dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    } else if (oldVkLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR && newVkLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL) {
+        // Reading back a frame that the render pass already left in PRESENT_SRC. Only a headless
+        // stand-in image is ever read this way -- a real presented image belongs to the
+        // presentation engine by this point.
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        srcStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+        dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    } else if (oldVkLayout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && newVkLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR) {
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+        barrier.dstAccessMask = 0;
+        srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        dstStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
     } else {
         throw_illegal_argument(env, "vkTransitionImageLayout: unsupported layout transition");
         return;

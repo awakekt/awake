@@ -7,11 +7,11 @@ package io.github.awakelab.awake.scene.runtime
 
 import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.core.components.Name
-import io.github.awakelab.awake.scene.core.components.SpinControl
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.rendering.components.Light
-import io.github.awakelab.awake.scene.rendering.components.PbrMaterial
+import io.github.awakelab.awake.scene.core.Name
+import io.github.awakelab.awake.scene.core.transform.SpinControl
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.Light
+import io.github.awakelab.awake.scene.rendering.mesh.PbrMaterial
 import kotlinx.coroutines.test.runTest
 import kotlin.math.PI
 import kotlin.test.Test
@@ -19,7 +19,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import io.github.awakelab.awake.scene.rendering.components.Camera as SceneCameraComponent
+import io.github.awakelab.awake.scene.rendering.Camera as SceneCameraComponent
 
 class SceneLoaderTest {
     @Test

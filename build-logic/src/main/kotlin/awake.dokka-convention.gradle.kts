@@ -30,7 +30,7 @@ dokka {
     if (readme.isFile) {
         dokkaModuleDoc.parentFile.mkdirs()
         val demoted = readme.readLines().joinToString("\n") { line ->
-            if (line.startsWith("#")) "#$line" else line
+            if (line.startsWith("#")) "#${line.withoutSectionKeyword()}" else line
         }
         dokkaModuleDoc.writeText("# Module ${project.name}\n\n$demoted\n")
     }
@@ -63,4 +63,23 @@ dokka {
             remoteLineSuffix.set("#L")
         }
     }
+}
+
+/**
+ * Stops an ordinary README heading being read as a Dokka section declaration.
+ *
+ * Dokka's includes grammar treats `# Module <name>` and `# Package <name>` as structure, not
+ * prose, and it does not care what level the heading is at. So a README with `## Module layout`
+ * demotes to `### Module layout` and Dokka tries to parse it as the start of a module section,
+ * failing generation with `Wrong AST Tree. Header does not contain expected content` -- an error
+ * that names an offset in a generated file and nothing a reader could act on. Five READMEs in this
+ * repo have such a heading.
+ *
+ * The keyword is wrapped in backticks rather than reworded: the grammar no longer matches, the
+ * checked-in README is untouched, and the rendered heading still says what its author wrote.
+ */
+fun String.withoutSectionKeyword(): String {
+    val heading = Regex("^(#+\\s*)(Module|Package)(\\s+\\S.*)$").find(this) ?: return this
+    val (hashes, keyword, rest) = heading.destructured
+    return "$hashes`$keyword`$rest"
 }

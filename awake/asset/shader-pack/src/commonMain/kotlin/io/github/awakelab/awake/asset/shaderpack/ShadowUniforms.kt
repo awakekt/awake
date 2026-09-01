@@ -32,11 +32,23 @@ class ShadowUniforms internal constructor(
     /** xyz = world position, w = range; w <= 0 means the slot is off. */
     val pointLightPositions: AslArrayHandle,
     val pointLightColors: AslArrayHandle,
-    val lightMvp: AslExpr,
+    /**
+     * World space to each cascade's light clip space, near cascade first.
+     *
+     * Read by lit_shadow to choose and sample a cascade. shadow_depth declares it (a struct
+     * prefix has to match field for field) and ignores it: which cascade IT renders comes from
+     * its own pass-scoped block, since that changes between draws of one material.
+     */
+    val cascadeViewProjections: AslArrayHandle,
+    /** Per cascade, NDC depth per world unit -- what turns a world-space bias into this
+     * cascade's depth units. See `UniformFields.CascadeDepthScales`. */
+    val cascadeDepthScales: AslArrayHandle,
+    /** In the shared prefix: shadow_depth builds its clip position from this and the cascade it
+     * is rendering, rather than from a per-draw matrix that could describe only one cascade. */
+    val model: AslExpr,
     /** xyz = vertex-effect parameters; w = current frame time in seconds. */
     val vertexAnimation: AslExpr,
     /** Everything below exists only in lit_shadow; shadow_depth stops after vertexAnimation. */
-    val model: AslExpr?,
     val cameraPosition: AslExpr?,
     /** x = metallic, y = roughness. */
     val material: AslExpr?,
@@ -60,9 +72,10 @@ fun AslShaderBuilder.shadowUniforms(includeLitTail: Boolean): ShadowUniforms {
         lightColor = handles.value("lightColor"),
         pointLightPositions = handles.array("pointLightPositions"),
         pointLightColors = handles.array("pointLightColors"),
-        lightMvp = handles.value("lightMvp"),
+        cascadeViewProjections = handles.array("cascadeViewProjections"),
+        cascadeDepthScales = handles.array("cascadeDepthScales"),
+        model = handles.value("model"),
         vertexAnimation = handles.value("vertexAnimation"),
-        model = if (includeLitTail) handles.value("model") else null,
         cameraPosition = if (includeLitTail) handles.value("cameraPosition") else null,
         material = if (includeLitTail) handles.value("material") else null,
         fogColor = if (includeLitTail) handles.value("fogColor") else null,

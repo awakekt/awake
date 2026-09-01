@@ -117,6 +117,10 @@ val buildDesktopNative = registerCMakeLibrary(
     buildDir = desktopNativeBuildDir.get().asFile,
     description = "Build the desktop native library (.dylib/.so/.dll) and copy it where the " +
         "desktop JVM's System.loadLibrary(\"awake-vulkan\") can find it (-Djava.library.path).",
+    // desktop-native/CMakeLists.txt builds ../src/main/cpp/*.cpp -- outside its own sourceDir --
+    // so that tree has to be named explicitly or a real C++ change would never invalidate the
+    // cache Gradle now keeps for this task.
+    extraInputDirs = listOf(layout.projectDirectory.dir("src/main/cpp").asFile),
 )
 
 // The copy is this module's own: nothing else needs its output next to a java.library.path.

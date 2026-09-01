@@ -21,7 +21,6 @@ import io.github.awakelab.awake.core.graphics2d.bounds
 import io.github.awakelab.awake.core.graphics2d.clipToConvexPaths
 import io.github.awakelab.awake.core.graphics2d.convexClipContour
 import io.github.awakelab.awake.core.graphics2d.strokeToFillPath
-import io.github.awakelab.awake.core.graphics2d.tessellateStrokeAa
 import io.github.awakelab.awake.core.graphics2d.tessellateFillAa
 import io.github.awakelab.awake.core.graphics2d.toPath
 import io.github.awakelab.awake.core.graphics2d.writeGlyphVertex
@@ -48,6 +47,50 @@ object DrawRunCoalescer {
 
     private val UNBOUNDED_SAFE_INTERIOR_RECT = Rectangle(-1e9f, -1e9f, 2e9f, 2e9f)
     private val WHITE_COLOR = Color(1f, 1f, 1f, 1f)
+
+    /** Everything a rounded rectangle's local (0,0-origin) tessellation depends on -- radius is
+     * clamped against width/height by `toPath`, so raw (unclamped) values are still a valid key:
+     * two quads with the same radius/w/h clamp to the same shape regardless of position. */
+    private data class RoundedRectShapeKey(val radius: Float, val width: Float, val height: Float)
+
+    /** Corner-arc trig and AA-fringe geometry (`offsetPolygon`'s hypot/miter math) for a rounded
+     * rectangle only depend on radius and size, not position -- see `DrawShape.RoundedRectangle`.
+     * Baked at the origin with [WHITE_COLOR] so [placedAt] can recolor without re-tessellating.
+     * Eldest-evicted past [ROUNDED_RECT_CACHE_CAPACITY]; `linkedMapOf` iteration order is
+     * insertion order, and re-inserting on hit makes it least-recently-used (see
+     * `SceneAssetLibrary.retainedMeshes` for the same pattern). */
+    private val roundedRectMeshCache = linkedMapOf<RoundedRectShapeKey, ColoredTriangleMesh>()
+    private const val ROUNDED_RECT_CACHE_CAPACITY = 256
+
+    private fun localRoundedRectMesh(radius: Float, width: Float, height: Float): ColoredTriangleMesh {
+        val key = RoundedRectShapeKey(radius, width, height)
+        roundedRectMeshCache.remove(key)?.let { cached ->
+            roundedRectMeshCache[key] = cached
+            return cached
+        }
+        val mesh = DrawShape.RoundedRectangle(Dp(radius))
+            .toPath(Rectangle(0f, 0f, width, height))
+            .tessellateFillAa(WHITE_COLOR)
+        roundedRectMeshCache[key] = mesh
+        if (roundedRectMeshCache.size > ROUNDED_RECT_CACHE_CAPACITY) {
+            roundedRectMeshCache.remove(roundedRectMeshCache.keys.first())
+        }
+        return mesh
+    }
+
+    /** Translates a [localRoundedRectMesh] into place and bakes [color] in, reproducing exactly
+     * what `tessellateFillAa(color)` would have produced: fill vertices get [color], and the AA
+     * fringe's outer ring -- baked transparent (alpha 0) at [WHITE_COLOR] -- gets [color] with
+     * alpha forced back to 0, since `tessellateFillAa` only ever zeroes alpha, never touches RGB
+     * on the transparent ring. */
+    private fun ColoredTriangleMesh.placedAt(dx: Float, dy: Float, color: Color): ColoredTriangleMesh =
+        ColoredTriangleMesh(
+            vertices = vertices.map { v ->
+                val placedColor = if (v.color.a == 0f) color.withAlpha(0f) else color
+                ColoredVertex(DrawPoint(v.position.x + dx, v.position.y + dy), placedColor)
+            },
+            indices = indices,
+        )
 
     /**
      * Walks [primitives] in paint order and coalesces them into [StagedDrawRun] instances.
@@ -141,9 +184,8 @@ object DrawRunCoalescer {
                     val roundedSlice = slice as List<DrawCommand.RoundedQuad>
                     if (canExactClip(activePathClips)) {
                         val tessellated = roundedSlice.map { quad ->
-                            val triangleMesh = DrawShape.RoundedRectangle(Dp(quad.radius))
-                                .toPath(Rectangle(quad.x, quad.y, quad.w, quad.h))
-                                .tessellateFillAa(quad.color)
+                            val triangleMesh = localRoundedRectMesh(quad.radius, quad.w, quad.h)
+                                .placedAt(quad.x, quad.y, quad.color)
                             if (canSkipExactClip(safeInteriorRect, quad.x, quad.y, quad.w, quad.h)) {
                                 triangleMesh
                             } else {
@@ -180,7 +222,7 @@ object DrawRunCoalescer {
                     val tessellated = strokedSlice.map { primitive ->
                         val outlinedPath = primitive.path.strokeToFillPath(primitive.stroke)
                         val bounds = outlinedPath.bounds()
-                        val triangleMesh = primitive.path.tessellateStrokeAa(primitive.stroke, primitive.color)
+                        val triangleMesh = StrokedPathMeshCache.mesh(primitive.path, primitive.stroke, primitive.color)
                         if (canSkipExactClip(safeInteriorRect, bounds.x, bounds.y, bounds.width, bounds.height)) {
                             triangleMesh
                         } else {

@@ -57,27 +57,28 @@ internal fun NavField.findPath(startX: Int, startZ: Int, goalX: Int, goalZ: Int)
 
 /** [findPath] in world coordinates, over any field. */
 internal fun NavField.findPath(start: Vec3f, goal: Vec3f): List<Vec3f> = findPath(
-    startX = sampleAt(start.x),
-    startZ = sampleAt(start.z),
-    goalX = sampleAt(goal.x),
-    goalZ = sampleAt(goal.z),
+    startX = sampleAt(start.x, originX),
+    startZ = sampleAt(start.z, originZ),
+    goalX = sampleAt(goal.x, originX),
+    goalZ = sampleAt(goal.z, originZ),
 )
 
-private fun NavField.sampleAt(world: Float): Int = (world / sampleSize).roundToInt()
+private fun NavField.sampleAt(world: Float, origin: Float): Int =
+    ((world - origin) / sampleSize).roundToInt()
 
 /** [smoothPath] over any field. */
 internal fun NavField.smoothPath(path: List<Vec3f>): List<Vec3f> {
     if (path.size <= 2) return path
     val smoothed = ArrayList<Vec3f>(path.size)
     smoothed.add(path.first())
-    var anchorX = sampleAt(path.first().x)
-    var anchorZ = sampleAt(path.first().z)
+    var anchorX = sampleAt(path.first().x, originX)
+    var anchorZ = sampleAt(path.first().z, originZ)
     for (i in 2 until path.size) {
-        if (hasLineOfSight(anchorX, anchorZ, sampleAt(path[i].x), sampleAt(path[i].z))) continue
+        if (hasLineOfSight(anchorX, anchorZ, sampleAt(path[i].x, originX), sampleAt(path[i].z, originZ))) continue
         val corner = path[i - 1]
         smoothed.add(corner)
-        anchorX = sampleAt(corner.x)
-        anchorZ = sampleAt(corner.z)
+        anchorX = sampleAt(corner.x, originX)
+        anchorZ = sampleAt(corner.z, originZ)
     }
     smoothed.add(path.last())
     return smoothed

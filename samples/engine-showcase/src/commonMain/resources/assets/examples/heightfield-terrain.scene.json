@@ -7,8 +7,16 @@
       "components": [
         {
           "component": "camera",
-          "eye": { "x": 11.0, "y": 10.0, "z": 16.0 },
-          "center": { "x": 6.0, "y": 0.5, "z": 6.0 },
+          "eye": {
+            "x": 5.0,
+            "y": 10.0,
+            "z": 10.0
+          },
+          "center": {
+            "x": 0.0,
+            "y": 0.5,
+            "z": 0.0
+          },
           "fovYDegrees": 48.0,
           "near": 0.1,
           "far": 100.0,
@@ -19,13 +27,208 @@
     {
       "name": "heightfield-terrain",
       "components": [
-        { "component": "meshRenderer", "mesh": "heightfield-terrain", "material": "lit-shadow", "cullMode": "Back" }
+        {
+          "component": "meshRenderer",
+          "mesh": "heightfield-terrain",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
       ]
     },
     {
       "name": "light",
       "components": [
-        { "component": "light", "type": "Directional" }
+        {
+          "component": "light",
+          "type": "Directional"
+        }
+      ]
+    },
+    {
+      "name": "falling-box-0",
+      "transform": {
+        "position": {
+          "x": -1.5,
+          "y": 6.0,
+          "z": -1.5
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
+      ]
+    },
+    {
+      "name": "falling-box-1",
+      "transform": {
+        "position": {
+          "x": 1.5,
+          "y": 7.5,
+          "z": -1.5
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
+      ]
+    },
+    {
+      "name": "falling-box-2",
+      "transform": {
+        "position": {
+          "x": -1.5,
+          "y": 9.0,
+          "z": 1.5
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
+      ]
+    },
+    {
+      "name": "falling-box-3",
+      "transform": {
+        "position": {
+          "x": 1.5,
+          "y": 10.5,
+          "z": 1.5
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
+      ]
+    },
+    {
+      "name": "player",
+      "transform": {
+        "position": {
+          "x": 0.0,
+          "y": 5.0,
+          "z": 0.0
+        },
+        "scale": {
+          "x": 0.6,
+          "y": 2.4,
+          "z": 0.6
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
+      ]
+    },
+    {
+      "name": "platform",
+      "transform": {
+        "position": {
+          "x": 4.0,
+          "y": 1.6,
+          "z": 0.0
+        },
+        "scale": {
+          "x": 3.0,
+          "y": 0.3,
+          "z": 3.0
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
+      ]
+    },
+    {
+      "name": "goal-zone",
+      "transform": {
+        "position": {
+          "x": -4.0,
+          "y": 1.4,
+          "z": 0.0
+        },
+        "scale": {
+          "x": 0.4,
+          "y": 2.4,
+          "z": 0.4
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
+      ]
+    },
+    {
+      "name": "water",
+      "transform": {
+        "position": {
+          "x": -4.0,
+          "y": 0.6,
+          "z": -4.0
+        },
+        "scale": {
+          "x": 4.0,
+          "y": 2.0,
+          "z": 4.0
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
+      ]
+    },
+    {
+      "name": "floating-box",
+      "transform": {
+        "position": {
+          "x": -4.0,
+          "y": 6.0,
+          "z": -4.0
+        },
+        "scale": {
+          "x": 1.0,
+          "y": 1.0,
+          "z": 1.0
+        }
+      },
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "cube",
+          "material": "lit-shadow",
+          "cullMode": "Back"
+        }
       ]
     }
   ]

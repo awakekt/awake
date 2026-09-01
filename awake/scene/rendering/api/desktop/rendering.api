@@ -1,23 +1,10 @@
-public final class io/github/awakelab/awake/scene/rendering/components/Animator {
-	public fun <init> (Lio/github/awakelab/awake/core/animation/AnimationPlayer;Lio/github/awakelab/awake/core/animation/Skin;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/animation/AnimationPlayer;
-	public final fun component2 ()Lio/github/awakelab/awake/core/animation/Skin;
-	public final fun copy (Lio/github/awakelab/awake/core/animation/AnimationPlayer;Lio/github/awakelab/awake/core/animation/Skin;)Lio/github/awakelab/awake/scene/rendering/components/Animator;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/Animator;Lio/github/awakelab/awake/core/animation/AnimationPlayer;Lio/github/awakelab/awake/core/animation/Skin;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/Animator;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getPlayer ()Lio/github/awakelab/awake/core/animation/AnimationPlayer;
-	public final fun getSkin ()Lio/github/awakelab/awake/core/animation/Skin;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/Camera {
+public final class io/github/awakelab/awake/scene/rendering/Camera {
 	public fun <init> (Lio/github/awakelab/awake/core/math/Lens;Z)V
 	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Lens;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lio/github/awakelab/awake/core/math/Lens;
 	public final fun component2 ()Z
-	public final fun copy (Lio/github/awakelab/awake/core/math/Lens;Z)Lio/github/awakelab/awake/scene/rendering/components/Camera;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/Camera;Lio/github/awakelab/awake/core/math/Lens;ZILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/Camera;
+	public final fun copy (Lio/github/awakelab/awake/core/math/Lens;Z)Lio/github/awakelab/awake/scene/rendering/Camera;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/Camera;Lio/github/awakelab/awake/core/math/Lens;ZILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/Camera;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getLens ()Lio/github/awakelab/awake/core/math/Lens;
 	public fun hashCode ()I
@@ -26,13 +13,169 @@ public final class io/github/awakelab/awake/scene/rendering/components/Camera {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/components/InstancedMeshRenderer {
+public final class io/github/awakelab/awake/scene/rendering/Light {
+	public fun <init> ()V
+	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/scene/rendering/Light$Type;Lio/github/awakelab/awake/core/math/Vec3f;F)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/scene/rendering/Light$Type;Lio/github/awakelab/awake/core/math/Vec3f;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun component2 ()F
+	public final fun component3 ()Lio/github/awakelab/awake/scene/rendering/Light$Type;
+	public final fun component4 ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun component5 ()F
+	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/scene/rendering/Light$Type;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/scene/rendering/Light;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/Light;Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/scene/rendering/Light$Type;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/Light;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getDirection ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getIntensity ()F
+	public final fun getRange ()F
+	public final fun getType ()Lio/github/awakelab/awake/scene/rendering/Light$Type;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/Light$Type : java/lang/Enum {
+	public static final field Directional Lio/github/awakelab/awake/scene/rendering/Light$Type;
+	public static final field Point Lio/github/awakelab/awake/scene/rendering/Light$Type;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/scene/rendering/Light$Type;
+	public static fun values ()[Lio/github/awakelab/awake/scene/rendering/Light$Type;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/RenderSystem : io/github/awakelab/awake/ecs/System {
+	public fun <init> (Lio/github/awakelab/awake/render/renderer/Renderer;)V
+	public final fun getLastOccludedCount ()I
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/scene/rendering/animation/AnimationSystem : io/github/awakelab/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/scene/rendering/animation/Animator {
+	public fun <init> (Lio/github/awakelab/awake/core/animation/AnimationPlayer;Lio/github/awakelab/awake/core/animation/Skin;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/animation/AnimationPlayer;
+	public final fun component2 ()Lio/github/awakelab/awake/core/animation/Skin;
+	public final fun copy (Lio/github/awakelab/awake/core/animation/AnimationPlayer;Lio/github/awakelab/awake/core/animation/Skin;)Lio/github/awakelab/awake/scene/rendering/animation/Animator;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/animation/Animator;Lio/github/awakelab/awake/core/animation/AnimationPlayer;Lio/github/awakelab/awake/core/animation/Skin;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/animation/Animator;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPlayer ()Lio/github/awakelab/awake/core/animation/AnimationPlayer;
+	public final fun getSkin ()Lio/github/awakelab/awake/core/animation/Skin;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/animation/CharacterSlot {
+	public fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lio/github/awakelab/awake/render/mesh/Mesh;
+	public final fun component3 ()Lio/github/awakelab/awake/render/material/Material;
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Z)Lio/github/awakelab/awake/scene/rendering/animation/CharacterSlot;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/animation/CharacterSlot;Ljava/lang/String;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;ZILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/animation/CharacterSlot;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaterial ()Lio/github/awakelab/awake/render/material/Material;
+	public final fun getMesh ()Lio/github/awakelab/awake/render/mesh/Mesh;
+	public final fun getSlotName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun isVisible ()Z
+	public final fun setVisible (Z)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/animation/ModularCharacterComponent {
+	public fun <init> (Lio/github/awakelab/awake/core/animation/Skin;Ljava/util/Map;Z)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/animation/Skin;Ljava/util/Map;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/animation/Skin;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun component3 ()Z
+	public final fun copy (Lio/github/awakelab/awake/core/animation/Skin;Ljava/util/Map;Z)Lio/github/awakelab/awake/scene/rendering/animation/ModularCharacterComponent;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/animation/ModularCharacterComponent;Lio/github/awakelab/awake/core/animation/Skin;Ljava/util/Map;ZILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/animation/ModularCharacterComponent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSkin ()Lio/github/awakelab/awake/core/animation/Skin;
+	public final fun getSlots ()Ljava/util/Map;
+	public final fun getVisibleSlotCount ()I
+	public final fun hasSlot (Ljava/lang/String;)Z
+	public fun hashCode ()I
+	public final fun isVisible ()Z
+	public final fun removeSlot (Ljava/lang/String;)Lio/github/awakelab/awake/scene/rendering/animation/CharacterSlot;
+	public final fun setSlot (Lio/github/awakelab/awake/scene/rendering/animation/CharacterSlot;)V
+	public final fun setVisible (Z)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/animation/ModularSkeletalSystem : io/github/awakelab/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/scene/rendering/animation/SkinnedPose {
+	public fun <init> ([F)V
+	public final fun component1 ()[F
+	public final fun copy ([F)Lio/github/awakelab/awake/scene/rendering/animation/SkinnedPose;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/animation/SkinnedPose;[FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/animation/SkinnedPose;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getJointPalette ()[F
+	public fun hashCode ()I
+	public final fun setJointPalette ([F)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/debug/DebugSettingsAccessKt {
+	public static final fun debugSettings (Lio/github/awakelab/awake/ecs/World;)Lio/github/awakelab/awake/scene/rendering/debug/WorldDebugSettings;
+	public static final fun debugSettingsOrNull (Lio/github/awakelab/awake/ecs/World;)Lio/github/awakelab/awake/scene/rendering/debug/WorldDebugSettings;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/debug/DebugVisualizationSystem : io/github/awakelab/awake/ecs/System {
+	public fun <init> (Lio/github/awakelab/awake/render/renderer/Renderer;)V
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/scene/rendering/debug/DebugVisualizationSystemKt {
+	public static final fun debugVisualizationLines (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/render/renderer/Renderer;Lio/github/awakelab/awake/scene/rendering/debug/WorldDebugSettings;)Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/debug/WorldDebugSettings {
+	public fun <init> ()V
+	public fun <init> (ZZZZZZLjava/lang/Integer;)V
+	public synthetic fun <init> (ZZZZZZLjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun component7 ()Ljava/lang/Integer;
+	public final fun copy (ZZZZZZLjava/lang/Integer;)Lio/github/awakelab/awake/scene/rendering/debug/WorldDebugSettings;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/debug/WorldDebugSettings;ZZZZZZLjava/lang/Integer;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/debug/WorldDebugSettings;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCascadedShadows ()Z
+	public final fun getFrustumTargetEntityId ()Ljava/lang/Integer;
+	public final fun getShowBounds ()Z
+	public final fun getShowFrustum ()Z
+	public final fun getShowLights ()Z
+	public final fun getShowOcclusion ()Z
+	public final fun getShowShadowFrustum ()Z
+	public fun hashCode ()I
+	public final fun setCascadedShadows (Z)V
+	public final fun setFrustumTargetEntityId (Ljava/lang/Integer;)V
+	public final fun setShowBounds (Z)V
+	public final fun setShowFrustum (Z)V
+	public final fun setShowLights (Z)V
+	public final fun setShowOcclusion (Z)V
+	public final fun setShowShadowFrustum (Z)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/mesh/InstancedMeshRenderer {
 	public fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Ljava/util/List;)V
 	public final fun component1 ()Lio/github/awakelab/awake/render/mesh/Mesh;
 	public final fun component2 ()Lio/github/awakelab/awake/render/material/Material;
 	public final fun component3 ()Ljava/util/List;
-	public final fun copy (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Ljava/util/List;)Lio/github/awakelab/awake/scene/rendering/components/InstancedMeshRenderer;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/InstancedMeshRenderer;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/InstancedMeshRenderer;
+	public final fun copy (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Ljava/util/List;)Lio/github/awakelab/awake/scene/rendering/mesh/InstancedMeshRenderer;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/mesh/InstancedMeshRenderer;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/mesh/InstancedMeshRenderer;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMaterial ()Lio/github/awakelab/awake/render/material/Material;
 	public final fun getMesh ()Lio/github/awakelab/awake/render/mesh/Mesh;
@@ -41,13 +184,13 @@ public final class io/github/awakelab/awake/scene/rendering/components/Instanced
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/components/InstancedSkinnedMeshRenderer {
+public final class io/github/awakelab/awake/scene/rendering/mesh/InstancedSkinnedMeshRenderer {
 	public fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Ljava/util/List;)V
 	public final fun component1 ()Lio/github/awakelab/awake/render/mesh/Mesh;
 	public final fun component2 ()Lio/github/awakelab/awake/render/material/Material;
 	public final fun component3 ()Ljava/util/List;
-	public final fun copy (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Ljava/util/List;)Lio/github/awakelab/awake/scene/rendering/components/InstancedSkinnedMeshRenderer;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/InstancedSkinnedMeshRenderer;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/InstancedSkinnedMeshRenderer;
+	public final fun copy (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Ljava/util/List;)Lio/github/awakelab/awake/scene/rendering/mesh/InstancedSkinnedMeshRenderer;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/mesh/InstancedSkinnedMeshRenderer;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/mesh/InstancedSkinnedMeshRenderer;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getInstances ()Ljava/util/List;
 	public final fun getMaterial ()Lio/github/awakelab/awake/render/material/Material;
@@ -56,53 +199,34 @@ public final class io/github/awakelab/awake/scene/rendering/components/Instanced
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/components/Light {
-	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/scene/rendering/components/Light$Type;Lio/github/awakelab/awake/core/math/Vec3f;F)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/scene/rendering/components/Light$Type;Lio/github/awakelab/awake/core/math/Vec3f;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component2 ()F
-	public final fun component3 ()Lio/github/awakelab/awake/scene/rendering/components/Light$Type;
-	public final fun component4 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component5 ()F
-	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/scene/rendering/components/Light$Type;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/scene/rendering/components/Light;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/Light;Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/scene/rendering/components/Light$Type;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/Light;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getColor ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getDirection ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getIntensity ()F
-	public final fun getRange ()F
-	public final fun getType ()Lio/github/awakelab/awake/scene/rendering/components/Light$Type;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/Light$Type : java/lang/Enum {
-	public static final field Directional Lio/github/awakelab/awake/scene/rendering/components/Light$Type;
-	public static final field Point Lio/github/awakelab/awake/scene/rendering/components/Light$Type;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/scene/rendering/components/Light$Type;
-	public static fun values ()[Lio/github/awakelab/awake/scene/rendering/components/Light$Type;
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/LodGroup {
-	public fun <init> (Ljava/util/List;)V
+public final class io/github/awakelab/awake/scene/rendering/mesh/LodGroup {
+	public static final field UNSET I
+	public fun <init> (Ljava/util/List;F)V
+	public synthetic fun <init> (Ljava/util/List;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
-	public final fun copy (Ljava/util/List;)Lio/github/awakelab/awake/scene/rendering/components/LodGroup;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/LodGroup;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/LodGroup;
+	public final fun component2 ()F
+	public final fun copy (Ljava/util/List;F)Lio/github/awakelab/awake/scene/rendering/mesh/LodGroup;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/mesh/LodGroup;Ljava/util/List;FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/mesh/LodGroup;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getActiveLevel ()I
+	public final fun getHysteresis ()F
 	public final fun getLevels ()Ljava/util/List;
 	public fun hashCode ()I
+	public final fun selectLevel (F)Lio/github/awakelab/awake/scene/rendering/mesh/LodLevel;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/components/LodLevel {
+public final class io/github/awakelab/awake/scene/rendering/mesh/LodGroupKt {
+	public static final field DEFAULT_LOD_HYSTERESIS F
+}
+
+public final class io/github/awakelab/awake/scene/rendering/mesh/LodLevel {
 	public fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;F)V
 	public final fun component1 ()Lio/github/awakelab/awake/render/mesh/Mesh;
 	public final fun component2 ()Lio/github/awakelab/awake/render/material/Material;
 	public final fun component3 ()F
-	public final fun copy (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;F)Lio/github/awakelab/awake/scene/rendering/components/LodLevel;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/LodLevel;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/LodLevel;
+	public final fun copy (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;F)Lio/github/awakelab/awake/scene/rendering/mesh/LodLevel;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/mesh/LodLevel;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/mesh/LodLevel;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMaterial ()Lio/github/awakelab/awake/render/material/Material;
 	public final fun getMaxDistance ()F
@@ -111,182 +235,41 @@ public final class io/github/awakelab/awake/scene/rendering/components/LodLevel 
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/components/MeshBounds {
+public final class io/github/awakelab/awake/scene/rendering/mesh/MeshBounds {
 	public fun <init> (Lio/github/awakelab/awake/core/math/Aabb;)V
 	public final fun component1 ()Lio/github/awakelab/awake/core/math/Aabb;
-	public final fun copy (Lio/github/awakelab/awake/core/math/Aabb;)Lio/github/awakelab/awake/scene/rendering/components/MeshBounds;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/MeshBounds;Lio/github/awakelab/awake/core/math/Aabb;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/MeshBounds;
+	public final fun copy (Lio/github/awakelab/awake/core/math/Aabb;)Lio/github/awakelab/awake/scene/rendering/mesh/MeshBounds;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/mesh/MeshBounds;Lio/github/awakelab/awake/core/math/Aabb;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/mesh/MeshBounds;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getLocalBounds ()Lio/github/awakelab/awake/core/math/Aabb;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+	public final fun worldBounds (Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Aabb;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/components/MeshRenderer {
-	public fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;Lio/github/awakelab/awake/core/math/Vec3f;Z)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;Lio/github/awakelab/awake/core/math/Vec3f;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+public final class io/github/awakelab/awake/scene/rendering/mesh/MeshRenderer {
+	public fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;Lio/github/awakelab/awake/core/math/Vec3f;ZZ)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;Lio/github/awakelab/awake/core/math/Vec3f;ZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lio/github/awakelab/awake/render/mesh/Mesh;
 	public final fun component2 ()Lio/github/awakelab/awake/render/material/Material;
 	public final fun component3 ()Lio/github/awakelab/awake/render/renderer/CullMode;
 	public final fun component4 ()Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun component5 ()Z
-	public final fun copy (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;Lio/github/awakelab/awake/core/math/Vec3f;Z)Lio/github/awakelab/awake/scene/rendering/components/MeshRenderer;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/MeshRenderer;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;Lio/github/awakelab/awake/core/math/Vec3f;ZILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/MeshRenderer;
+	public final fun component6 ()Z
+	public final fun copy (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;Lio/github/awakelab/awake/core/math/Vec3f;ZZ)Lio/github/awakelab/awake/scene/rendering/mesh/MeshRenderer;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/mesh/MeshRenderer;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;Lio/github/awakelab/awake/core/math/Vec3f;ZZILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/mesh/MeshRenderer;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCullMode ()Lio/github/awakelab/awake/render/renderer/CullMode;
 	public final fun getMaterial ()Lio/github/awakelab/awake/render/material/Material;
 	public final fun getMesh ()Lio/github/awakelab/awake/render/mesh/Mesh;
 	public final fun getTransparent ()Z
 	public final fun getVertexAnimation ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getVisible ()Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/components/Occluder {
-	public fun <init> (Lio/github/awakelab/awake/core/math/Aabb;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/math/Aabb;
-	public final fun copy (Lio/github/awakelab/awake/core/math/Aabb;)Lio/github/awakelab/awake/scene/rendering/components/Occluder;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/Occluder;Lio/github/awakelab/awake/core/math/Aabb;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/Occluder;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getLocalBounds ()Lio/github/awakelab/awake/core/math/Aabb;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/ParticleDynamics {
-	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/Entity;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/Entity;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-ZvBj92Y ()Lio/github/awakelab/awake/ecs/Entity;
-	public final fun component2 ()Lkotlin/jvm/functions/Function0;
-	public final fun copy-T1SN8u8 (Lio/github/awakelab/awake/ecs/Entity;Lkotlin/jvm/functions/Function0;)Lio/github/awakelab/awake/scene/rendering/components/ParticleDynamics;
-	public static synthetic fun copy-T1SN8u8$default (Lio/github/awakelab/awake/scene/rendering/components/ParticleDynamics;Lio/github/awakelab/awake/ecs/Entity;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/ParticleDynamics;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getDynamicSpawnRate ()Lkotlin/jvm/functions/Function0;
-	public final fun getFollowEntity-ZvBj92Y ()Lio/github/awakelab/awake/ecs/Entity;
-	public fun hashCode ()I
-	public final fun setFollowEntity-cegOJ_c (Lio/github/awakelab/awake/ecs/Entity;)V
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/ParticleEmitter {
-	public fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/core/math/Vec3f;IFFFFLio/github/awakelab/awake/scene/rendering/components/ParticleMotion;Lio/github/awakelab/awake/scene/rendering/components/ParticleVisual;Lio/github/awakelab/awake/scene/rendering/components/ParticleGround;Lio/github/awakelab/awake/scene/rendering/components/ParticleLifecycle;Lio/github/awakelab/awake/scene/rendering/components/ParticleDynamics;Ljava/util/List;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/core/math/Vec3f;IFFFFLio/github/awakelab/awake/scene/rendering/components/ParticleMotion;Lio/github/awakelab/awake/scene/rendering/components/ParticleVisual;Lio/github/awakelab/awake/scene/rendering/components/ParticleGround;Lio/github/awakelab/awake/scene/rendering/components/ParticleLifecycle;Lio/github/awakelab/awake/scene/rendering/components/ParticleDynamics;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getChildren ()Ljava/util/List;
-	public final fun getDynamics ()Lio/github/awakelab/awake/scene/rendering/components/ParticleDynamics;
-	public final fun getGround ()Lio/github/awakelab/awake/scene/rendering/components/ParticleGround;
-	public final fun getLifecycle ()Lio/github/awakelab/awake/scene/rendering/components/ParticleLifecycle;
-	public final fun getLifetime ()F
-	public final fun getMaterial ()Lio/github/awakelab/awake/render/material/Material;
-	public final fun getMaxParticles ()I
-	public final fun getMesh ()Lio/github/awakelab/awake/render/mesh/Mesh;
-	public final fun getMotion ()Lio/github/awakelab/awake/scene/rendering/components/ParticleMotion;
-	public final fun getOrigin ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getScale ()F
-	public final fun getSpawnRate ()F
-	public final fun getStartAlpha ()F
-	public final fun getVisual ()Lio/github/awakelab/awake/scene/rendering/components/ParticleVisual;
-	public final fun setDynamics (Lio/github/awakelab/awake/scene/rendering/components/ParticleDynamics;)V
-	public final fun setGround (Lio/github/awakelab/awake/scene/rendering/components/ParticleGround;)V
-	public final fun setLifecycle (Lio/github/awakelab/awake/scene/rendering/components/ParticleLifecycle;)V
-	public final fun setLifetime (F)V
-	public final fun setMotion (Lio/github/awakelab/awake/scene/rendering/components/ParticleMotion;)V
-	public final fun setScale (F)V
-	public final fun setSpawnRate (F)V
-	public final fun setStartAlpha (F)V
-	public final fun setVisual (Lio/github/awakelab/awake/scene/rendering/components/ParticleVisual;)V
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/ParticleEmitterKt {
-	public static final field BOUNCE_STOP_VELOCITY F
-	public static final fun spawnParticleBurst-Rq19gyc (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/core/math/Vec3f;IFFFLio/github/awakelab/awake/core/math/Vec3f;FFLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Ljava/lang/Float;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/Float;)J
-	public static synthetic fun spawnParticleBurst-Rq19gyc$default (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/core/math/Vec3f;IFFFLio/github/awakelab/awake/core/math/Vec3f;FFLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Ljava/lang/Float;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/Float;ILjava/lang/Object;)J
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/ParticleGround {
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/Float;Lkotlin/jvm/functions/Function2;Ljava/util/List;FF)V
-	public synthetic fun <init> (Ljava/lang/Float;Lkotlin/jvm/functions/Function2;Ljava/util/List;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/Float;
-	public final fun component2 ()Lkotlin/jvm/functions/Function2;
-	public final fun component3 ()Ljava/util/List;
-	public final fun component4 ()F
-	public final fun component5 ()F
-	public final fun copy (Ljava/lang/Float;Lkotlin/jvm/functions/Function2;Ljava/util/List;FF)Lio/github/awakelab/awake/scene/rendering/components/ParticleGround;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/ParticleGround;Ljava/lang/Float;Lkotlin/jvm/functions/Function2;Ljava/util/List;FFILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/ParticleGround;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getColliders ()Ljava/util/List;
-	public final fun getFriction ()F
-	public final fun getGroundHeightProvider ()Lkotlin/jvm/functions/Function2;
-	public final fun getGroundY ()Ljava/lang/Float;
-	public final fun getRestitution ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/ParticleLifecycle {
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/Integer;Lkotlin/jvm/functions/Function2;)V
-	public synthetic fun <init> (Ljava/lang/Integer;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/Integer;
-	public final fun component2 ()Lkotlin/jvm/functions/Function2;
-	public final fun copy (Ljava/lang/Integer;Lkotlin/jvm/functions/Function2;)Lio/github/awakelab/awake/scene/rendering/components/ParticleLifecycle;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/ParticleLifecycle;Ljava/lang/Integer;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/ParticleLifecycle;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getBurstCount ()Ljava/lang/Integer;
-	public final fun getOnParticleDeath ()Lkotlin/jvm/functions/Function2;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/ParticleMotion {
-	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;FLjava/lang/Float;FZFF)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;FLjava/lang/Float;FZFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component2 ()F
-	public final fun component3 ()Ljava/lang/Float;
-	public final fun component4 ()F
-	public final fun component5 ()Z
-	public final fun component6 ()F
-	public final fun component7 ()F
-	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;FLjava/lang/Float;FZFF)Lio/github/awakelab/awake/scene/rendering/components/ParticleMotion;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/ParticleMotion;Lio/github/awakelab/awake/core/math/Vec3f;FLjava/lang/Float;FZFFILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/ParticleMotion;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getBaseVelocity ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getConeHalfAngleDegrees ()Ljava/lang/Float;
-	public final fun getConvergeToOrigin ()Z
-	public final fun getSpawnRadius ()F
-	public final fun getTurbulence ()F
-	public final fun getTurbulenceFrequency ()F
-	public final fun getVelocityJitter ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/ParticleVisual {
-	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;IFZF)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;IFZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component2 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component3 ()I
-	public final fun component4 ()F
-	public final fun component5 ()Z
-	public final fun component6 ()F
-	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;IFZF)Lio/github/awakelab/awake/scene/rendering/components/ParticleVisual;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/ParticleVisual;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;IFZFILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/ParticleVisual;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getEndColor ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getFrameCount ()I
-	public final fun getFrameRate ()F
-	public final fun getStartColor ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getStretchFactor ()F
-	public final fun getStretchWithVelocity ()Z
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/rendering/components/PbrMaterial {
+public final class io/github/awakelab/awake/scene/rendering/mesh/PbrMaterial {
 	public fun <init> ()V
 	public fun <init> (FF[F[F)V
 	public synthetic fun <init> (FF[F[FILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -294,8 +277,8 @@ public final class io/github/awakelab/awake/scene/rendering/components/PbrMateri
 	public final fun component2 ()F
 	public final fun component3 ()[F
 	public final fun component4 ()[F
-	public final fun copy (FF[F[F)Lio/github/awakelab/awake/scene/rendering/components/PbrMaterial;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/PbrMaterial;FF[F[FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/PbrMaterial;
+	public final fun copy (FF[F[F)Lio/github/awakelab/awake/scene/rendering/mesh/PbrMaterial;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/mesh/PbrMaterial;FF[F[FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/mesh/PbrMaterial;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBaseColorFactor ()[F
 	public final fun getEmissiveFactor ()[F
@@ -309,12 +292,12 @@ public final class io/github/awakelab/awake/scene/rendering/components/PbrMateri
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/components/SkinnedInstance {
+public final class io/github/awakelab/awake/scene/rendering/mesh/SkinnedInstance {
 	public fun <init> (Lio/github/awakelab/awake/core/math/Mat4;[F)V
 	public final fun component1 ()Lio/github/awakelab/awake/core/math/Mat4;
 	public final fun component2 ()[F
-	public final fun copy (Lio/github/awakelab/awake/core/math/Mat4;[F)Lio/github/awakelab/awake/scene/rendering/components/SkinnedInstance;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/SkinnedInstance;Lio/github/awakelab/awake/core/math/Mat4;[FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/SkinnedInstance;
+	public final fun copy (Lio/github/awakelab/awake/core/math/Mat4;[F)Lio/github/awakelab/awake/scene/rendering/mesh/SkinnedInstance;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/mesh/SkinnedInstance;Lio/github/awakelab/awake/core/math/Mat4;[FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/mesh/SkinnedInstance;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getJointPalette ()[F
 	public final fun getTransform ()Lio/github/awakelab/awake/core/math/Mat4;
@@ -322,69 +305,243 @@ public final class io/github/awakelab/awake/scene/rendering/components/SkinnedIn
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/components/SkinnedPose {
-	public fun <init> ([F)V
-	public final fun component1 ()[F
-	public final fun copy ([F)Lio/github/awakelab/awake/scene/rendering/components/SkinnedPose;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/SkinnedPose;[FILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/SkinnedPose;
+public final class io/github/awakelab/awake/scene/rendering/particles/ParticleDynamics {
+	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/Entity;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/Entity;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-Q1jxeiE ()Lio/github/awakelab/awake/ecs/Entity;
+	public final fun component2 ()Lkotlin/jvm/functions/Function0;
+	public final fun copy-KHt8nZ4 (Lio/github/awakelab/awake/ecs/Entity;Lkotlin/jvm/functions/Function0;)Lio/github/awakelab/awake/scene/rendering/particles/ParticleDynamics;
+	public static synthetic fun copy-KHt8nZ4$default (Lio/github/awakelab/awake/scene/rendering/particles/ParticleDynamics;Lio/github/awakelab/awake/ecs/Entity;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/particles/ParticleDynamics;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getJointPalette ()[F
+	public final fun getDynamicSpawnRate ()Lkotlin/jvm/functions/Function0;
+	public final fun getFollowEntity-Q1jxeiE ()Lio/github/awakelab/awake/ecs/Entity;
 	public fun hashCode ()I
-	public final fun setJointPalette ([F)V
+	public final fun setFollowEntity-ryvHbT0 (Lio/github/awakelab/awake/ecs/Entity;)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/components/WorldDebugSettings {
+public final class io/github/awakelab/awake/scene/rendering/particles/ParticleEmitter {
+	public fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/core/math/Vec3f;IFFFFLio/github/awakelab/awake/scene/rendering/particles/ParticleMotion;Lio/github/awakelab/awake/scene/rendering/particles/ParticleVisual;Lio/github/awakelab/awake/scene/rendering/particles/ParticleGround;Lio/github/awakelab/awake/scene/rendering/particles/ParticleLifecycle;Lio/github/awakelab/awake/scene/rendering/particles/ParticleDynamics;Ljava/util/List;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/core/math/Vec3f;IFFFFLio/github/awakelab/awake/scene/rendering/particles/ParticleMotion;Lio/github/awakelab/awake/scene/rendering/particles/ParticleVisual;Lio/github/awakelab/awake/scene/rendering/particles/ParticleGround;Lio/github/awakelab/awake/scene/rendering/particles/ParticleLifecycle;Lio/github/awakelab/awake/scene/rendering/particles/ParticleDynamics;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getChildren ()Ljava/util/List;
+	public final fun getDynamics ()Lio/github/awakelab/awake/scene/rendering/particles/ParticleDynamics;
+	public final fun getGround ()Lio/github/awakelab/awake/scene/rendering/particles/ParticleGround;
+	public final fun getLifecycle ()Lio/github/awakelab/awake/scene/rendering/particles/ParticleLifecycle;
+	public final fun getLifetime ()F
+	public final fun getMaterial ()Lio/github/awakelab/awake/render/material/Material;
+	public final fun getMaxParticles ()I
+	public final fun getMesh ()Lio/github/awakelab/awake/render/mesh/Mesh;
+	public final fun getMotion ()Lio/github/awakelab/awake/scene/rendering/particles/ParticleMotion;
+	public final fun getOrigin ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getScale ()F
+	public final fun getSpawnRate ()F
+	public final fun getStartAlpha ()F
+	public final fun getVisual ()Lio/github/awakelab/awake/scene/rendering/particles/ParticleVisual;
+	public final fun setDynamics (Lio/github/awakelab/awake/scene/rendering/particles/ParticleDynamics;)V
+	public final fun setGround (Lio/github/awakelab/awake/scene/rendering/particles/ParticleGround;)V
+	public final fun setLifecycle (Lio/github/awakelab/awake/scene/rendering/particles/ParticleLifecycle;)V
+	public final fun setLifetime (F)V
+	public final fun setMotion (Lio/github/awakelab/awake/scene/rendering/particles/ParticleMotion;)V
+	public final fun setScale (F)V
+	public final fun setSpawnRate (F)V
+	public final fun setStartAlpha (F)V
+	public final fun setVisual (Lio/github/awakelab/awake/scene/rendering/particles/ParticleVisual;)V
+}
+
+public final class io/github/awakelab/awake/scene/rendering/particles/ParticleEmitterKt {
+	public static final field BOUNCE_STOP_VELOCITY F
+	public static final fun spawnParticleBurst-6fdeFAE (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/core/math/Vec3f;IFFFLio/github/awakelab/awake/core/math/Vec3f;FFLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Ljava/lang/Float;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/Float;)J
+	public static synthetic fun spawnParticleBurst-6fdeFAE$default (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/core/math/Vec3f;IFFFLio/github/awakelab/awake/core/math/Vec3f;FFLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Ljava/lang/Float;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/Float;ILjava/lang/Object;)J
+}
+
+public final class io/github/awakelab/awake/scene/rendering/particles/ParticleGround {
 	public fun <init> ()V
-	public fun <init> (ZZZZZLjava/lang/Integer;)V
-	public synthetic fun <init> (ZZZZZLjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Z
-	public final fun component2 ()Z
-	public final fun component3 ()Z
-	public final fun component4 ()Z
+	public fun <init> (Ljava/lang/Float;Lkotlin/jvm/functions/Function2;Ljava/util/List;FF)V
+	public synthetic fun <init> (Ljava/lang/Float;Lkotlin/jvm/functions/Function2;Ljava/util/List;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Float;
+	public final fun component2 ()Lkotlin/jvm/functions/Function2;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun copy (Ljava/lang/Float;Lkotlin/jvm/functions/Function2;Ljava/util/List;FF)Lio/github/awakelab/awake/scene/rendering/particles/ParticleGround;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/particles/ParticleGround;Ljava/lang/Float;Lkotlin/jvm/functions/Function2;Ljava/util/List;FFILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/particles/ParticleGround;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColliders ()Ljava/util/List;
+	public final fun getFriction ()F
+	public final fun getGroundHeightProvider ()Lkotlin/jvm/functions/Function2;
+	public final fun getGroundY ()Ljava/lang/Float;
+	public final fun getRestitution ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/particles/ParticleLifecycle {
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/Integer;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Ljava/lang/Integer;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/Integer;
+	public final fun component2 ()Lkotlin/jvm/functions/Function2;
+	public final fun copy (Ljava/lang/Integer;Lkotlin/jvm/functions/Function2;)Lio/github/awakelab/awake/scene/rendering/particles/ParticleLifecycle;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/particles/ParticleLifecycle;Ljava/lang/Integer;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/particles/ParticleLifecycle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBurstCount ()Ljava/lang/Integer;
+	public final fun getOnParticleDeath ()Lkotlin/jvm/functions/Function2;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/particles/ParticleMotion {
+	public fun <init> ()V
+	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;FLjava/lang/Float;FZFF)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;FLjava/lang/Float;FZFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun component2 ()F
+	public final fun component3 ()Ljava/lang/Float;
+	public final fun component4 ()F
 	public final fun component5 ()Z
-	public final fun component6 ()Ljava/lang/Integer;
-	public final fun copy (ZZZZZLjava/lang/Integer;)Lio/github/awakelab/awake/scene/rendering/components/WorldDebugSettings;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/components/WorldDebugSettings;ZZZZZLjava/lang/Integer;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/components/WorldDebugSettings;
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;FLjava/lang/Float;FZFF)Lio/github/awakelab/awake/scene/rendering/particles/ParticleMotion;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/particles/ParticleMotion;Lio/github/awakelab/awake/core/math/Vec3f;FLjava/lang/Float;FZFFILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/particles/ParticleMotion;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFrustumTargetEntityId ()Ljava/lang/Integer;
-	public final fun getShowBounds ()Z
-	public final fun getShowFrustum ()Z
-	public final fun getShowLights ()Z
-	public final fun getShowOcclusion ()Z
-	public final fun getShowShadowFrustum ()Z
+	public final fun getBaseVelocity ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getConeHalfAngleDegrees ()Ljava/lang/Float;
+	public final fun getConvergeToOrigin ()Z
+	public final fun getSpawnRadius ()F
+	public final fun getTurbulence ()F
+	public final fun getTurbulenceFrequency ()F
+	public final fun getVelocityJitter ()F
 	public fun hashCode ()I
-	public final fun setFrustumTargetEntityId (Ljava/lang/Integer;)V
-	public final fun setShowBounds (Z)V
-	public final fun setShowFrustum (Z)V
-	public final fun setShowLights (Z)V
-	public final fun setShowOcclusion (Z)V
-	public final fun setShowShadowFrustum (Z)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/systems/AnimationSystem : io/github/awakelab/awake/ecs/System {
+public final class io/github/awakelab/awake/scene/rendering/particles/ParticleSystem : io/github/awakelab/awake/ecs/System {
 	public fun <init> ()V
 	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
 }
 
-public final class io/github/awakelab/awake/scene/rendering/systems/DebugVisualizationSystem : io/github/awakelab/awake/ecs/System {
-	public fun <init> (Lio/github/awakelab/awake/render/renderer/Renderer;)V
-	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+public final class io/github/awakelab/awake/scene/rendering/particles/ParticleVisual {
+	public fun <init> ()V
+	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;IFZF)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;IFZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun component2 ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun component3 ()I
+	public final fun component4 ()F
+	public final fun component5 ()Z
+	public final fun component6 ()F
+	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;IFZF)Lio/github/awakelab/awake/scene/rendering/particles/ParticleVisual;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/particles/ParticleVisual;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;IFZFILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/particles/ParticleVisual;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEndColor ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getFrameCount ()I
+	public final fun getFrameRate ()F
+	public final fun getStartColor ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getStretchFactor ()F
+	public final fun getStretchWithVelocity ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/systems/DebugVisualizationSystemKt {
-	public static final fun debugVisualizationLines (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/render/renderer/Renderer;Lio/github/awakelab/awake/scene/rendering/components/WorldDebugSettings;)Ljava/util/List;
+public final class io/github/awakelab/awake/scene/rendering/spatial/Occluder {
+	public fun <init> (Lio/github/awakelab/awake/core/math/Aabb;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/math/Aabb;
+	public final fun copy (Lio/github/awakelab/awake/core/math/Aabb;)Lio/github/awakelab/awake/scene/rendering/spatial/Occluder;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/spatial/Occluder;Lio/github/awakelab/awake/core/math/Aabb;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/spatial/Occluder;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLocalBounds ()Lio/github/awakelab/awake/core/math/Aabb;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/rendering/systems/ParticleSystem : io/github/awakelab/awake/ecs/System {
+public final class io/github/awakelab/awake/scene/rendering/spatial/SpatialGrid {
+	public static final field INITIAL_COLUMN_CAPACITY I
+	public static final field INITIAL_STAMP_CAPACITY I
+	public fun <init> ()V
+	public fun <init> (F)V
+	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
+	public final fun getCellSize ()F
+	public final fun getIds ()Ljava/util/Set;
+	public final fun getSize ()I
+	public final fun insert (ILio/github/awakelab/awake/core/math/Aabb;)V
+	public final fun queryAabb (Lio/github/awakelab/awake/core/math/Aabb;Ljava/util/Collection;)Ljava/util/Collection;
+	public final fun queryFrustum (Lio/github/awakelab/awake/core/math/Lens;FLjava/util/Collection;)Ljava/util/Collection;
+	public final fun queryRange (Lio/github/awakelab/awake/core/math/Vec3f;FLjava/util/Collection;)Ljava/util/Collection;
+	public final fun remove (I)V
+}
+
+public final class io/github/awakelab/awake/scene/rendering/spatial/SpatialGridKt {
+	public static final field DEFAULT_SPATIAL_CELL_SIZE F
+}
+
+public final class io/github/awakelab/awake/scene/rendering/spatial/SpatialIndex {
+	public fun <init> ()V
+	public fun <init> (Lio/github/awakelab/awake/scene/rendering/spatial/SpatialGrid;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/scene/rendering/spatial/SpatialGrid;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/scene/rendering/spatial/SpatialGrid;
+	public final fun copy (Lio/github/awakelab/awake/scene/rendering/spatial/SpatialGrid;)Lio/github/awakelab/awake/scene/rendering/spatial/SpatialIndex;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/spatial/SpatialIndex;Lio/github/awakelab/awake/scene/rendering/spatial/SpatialGrid;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/spatial/SpatialIndex;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGrid ()Lio/github/awakelab/awake/scene/rendering/spatial/SpatialGrid;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/spatial/SpatialIndexKt {
+	public static final fun findSpatialIndex (Lio/github/awakelab/awake/ecs/World;)Lio/github/awakelab/awake/scene/rendering/spatial/SpatialIndex;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/spatial/SpatialIndexSystem : io/github/awakelab/awake/ecs/System {
 	public fun <init> ()V
 	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
 }
 
-public final class io/github/awakelab/awake/scene/rendering/systems/RenderSystem : io/github/awakelab/awake/ecs/System {
-	public fun <init> (Lio/github/awakelab/awake/render/renderer/Renderer;)V
-	public final fun getLastOccludedCount ()I
+public final class io/github/awakelab/awake/scene/rendering/streaming/MeshCellStreamer : io/github/awakelab/awake/ecs/System, io/github/awakelab/awake/scene/world/AsyncWorldCellStreamListener {
+	public static final field DEFAULT_RETIRE_FRAMES I
+	public fun <init> (Lio/github/awakelab/awake/render/renderer/Renderer;Lio/github/awakelab/awake/render/material/Material;FLio/github/awakelab/awake/render/renderer/CullMode;ILkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/render/renderer/Renderer;Lio/github/awakelab/awake/render/material/Material;FLio/github/awakelab/awake/render/renderer/CullMode;ILkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun dispose (Lio/github/awakelab/awake/ecs/World;)V
+	public final fun getResidentCells ()Ljava/util/Set;
+	public final fun getRetiringMeshCount ()I
+	public fun loadCell (Lio/github/awakelab/awake/scene/world/WorldCellCoord;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun onCellUnload (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/scene/world/WorldCellCoord;)V
 	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/scene/rendering/terrain/TerrainClipmapSystem : io/github/awakelab/awake/ecs/System {
+	public fun <init> ()V
+	public final fun clear ()V
+	public final fun getTrackersByTerrain ()Ljava/util/HashMap;
+	public final fun trackerFor (Lio/github/awakelab/awake/scene/rendering/terrain/TerrainComponent;)Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapTracker;
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/scene/rendering/terrain/TerrainComponent {
+	public fun <init> (Lio/github/awakelab/awake/asset/terrain/Heightmap;Lio/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap;FLio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;Z)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/asset/terrain/Heightmap;Lio/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap;FLio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/asset/terrain/Heightmap;
+	public final fun component2 ()Lio/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public final fun component3 ()F
+	public final fun component4 ()Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;
+	public final fun component5 ()Z
+	public final fun copy (Lio/github/awakelab/awake/asset/terrain/Heightmap;Lio/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap;FLio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;Z)Lio/github/awakelab/awake/scene/rendering/terrain/TerrainComponent;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/rendering/terrain/TerrainComponent;Lio/github/awakelab/awake/asset/terrain/Heightmap;Lio/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap;FLio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;ZILjava/lang/Object;)Lio/github/awakelab/awake/scene/rendering/terrain/TerrainComponent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClipmapConfig ()Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;
+	public final fun getHeightmap ()Lio/github/awakelab/awake/asset/terrain/Heightmap;
+	public final fun getSplatMap ()Lio/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public final fun getTilingScale ()F
+	public fun hashCode ()I
+	public final fun isVisible ()Z
+	public final fun setHeightmap (Lio/github/awakelab/awake/asset/terrain/Heightmap;)V
+	public final fun setSplatMap (Lio/github/awakelab/awake/asset/terrain/splat/TerrainSplatWeightMap;)V
+	public final fun setTilingScale (F)V
+	public final fun setVisible (Z)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/rendering/terrain/TerrainComponentFeatureKt {
+	public static final fun terrainContentFeature (Lio/github/awakelab/awake/asset/shaders/ShaderSet;Lio/github/awakelab/awake/scene/rendering/terrain/TerrainComponent;)Lio/github/awakelab/awake/asset/shaders/ContentFeatureSource;
 }
 

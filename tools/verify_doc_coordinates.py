@@ -125,7 +125,11 @@ def main() -> int:
     checked = 0
     for path in sorted(REPO_ROOT.rglob("*.md")):
         relative = path.relative_to(REPO_ROOT).as_posix()
-        if "/build/" in relative or relative.startswith(("node_modules/", ".git/")):
+        # `.claude/worktrees/` holds sibling checkouts of this same repository. Their docs belong
+        # to whatever branch is checked out there, and scanning them fails this gate for everyone:
+        # a release note archived on another branch is not this working tree's to fix, and its path
+        # does not match the EXEMPT prefixes either, since those are relative to a repository root.
+        if "/build/" in relative or relative.startswith(("node_modules/", ".git/", ".claude/")):
             continue
         if is_exempt(path):
             continue

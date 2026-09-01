@@ -5,6 +5,7 @@
  */
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -36,5 +37,12 @@ kotlin {
             // uses with `ui-core`. Keeping the tests here also keeps this module's coverage its own.
             implementation(project(":awake:compose:foundation"))
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Compose UI")
+        description.set("Modifiers, layout nodes, input dispatch and semantics for the engine's Compose implementation")
     }
 }

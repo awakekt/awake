@@ -176,7 +176,7 @@ tasks.register<JavaExec>("run") {
     group = "application"
     description = "Run the Awake UI showcase sample."
     dependsOn("desktopMainClasses")
-    dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
+    wireVulkanDesktopNatives(project(":awake:backend:vulkan:bindings"))
     // Shipped shaders are WGSL, so every pipeline this sample builds goes through naga.
     useNagaShaderCompiler(this)
     mainClass.set("io.github.awakelab.awake.sample.uishowcase.app.MainKt")
@@ -189,8 +189,7 @@ tasks.register<JavaExec>("run") {
         environment("VK_ICD_FILENAMES", moltenVkIcdPath)
     }
     environment("DYLD_FALLBACK_LIBRARY_PATH", dyldFallbackLibraryPath)
-    val jvmArgsList =
-        mutableListOf("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
+    val jvmArgsList = mutableListOf<String>()
     if (HostOs.isMac) {
         jvmArgsList += "-XstartOnFirstThread"
     }

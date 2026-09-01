@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "name": "ragdoll",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": {
+            "x": 3.5,
+            "y": 2.0,
+            "z": 4.5
+          },
+          "center": {
+            "x": 0.0,
+            "y": 0.8,
+            "z": 0.0
+          },
+          "fovYDegrees": 45.0,
+          "near": 0.1,
+          "far": 100.0,
+          "primary": true
+        }
+      ]
+    },
+    {
+      "name": "ground",
+      "components": [
+        {
+          "component": "meshRenderer",
+          "mesh": "ground",
+          "material": "lit-shadow"
+        }
+      ]
+    },
+    {
+      "name": "ragdoll"
+    },
+    {
+      "name": "light",
+      "components": [
+        {
+          "component": "light",
+          "type": "Directional"
+        }
+      ]
+    }
+  ]
+}

@@ -57,14 +57,26 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 
 | Module | What it is |
 |---|---|
-| `scene:scene-core` | `Transform`, hierarchy, `TransformSystem` |
+| `scene:scene-core` | `Transform`, `Name`, hierarchy, `TransformSystem`, `SpinControl`. What every scene has |
 | `scene:rendering` | `MeshRenderer`, `Camera`, `Light`, `ParticleEmitter`, `RenderSystem` |
-| `scene:controls` | `CameraRig`, camera modes, input-driven movement |
-| `scene:physics` | Rigid-body/collider components, physics sync |
-| `scene:navigation` | `NavGridTile`, slope bake, A* + smoothing, `NavGrid` implementing `scene-core`'s `NavMesh` |
+| `scene:controls` | `camera` (rig, modes, input) and `movement` (control, player input, matrix-relative) |
+| `scene:physics` | `PhysicsBody` and `PhysicsSystem`, plus `character` and `streaming` |
+| `scene:navigation` | `NavMesh` and `PathRequest` (the contract), plus `NavGridTile`, slope bake, A* + smoothing |
+| `scene:world` | Cell coordinates, partitioning, async streaming, floating origin |
+| `scene:ai` | `PatrolBehavior`, `ChaseBehavior`, `FleeBehavior`, `RouteFollower` and their systems. Depends on navigation; navigation does not depend on it |
 | `scene:runtime` | Scene JSON load/save, entity instantiation |
 | `scene:authoring` | The `scene { }` DSL |
-| `scene` | Aggregator re-exporting the six above |
+| `scene` | Aggregator re-exporting the modules above |
+
+## editor — the scene editor and its extension points
+
+| Module | What it is |
+|---|---|
+| `editor` | Store, selection, tools, undo, providers, `EditorPlugin`. Knows nothing of ECS — `EditorEntityId` is a string, and `EditorFieldScope`/`EditorInspector<T>` name no entity or world |
+| `editor:scene` | The ECS adapter: gizmo, hierarchy, inspector sections, `SceneComponentInspector` |
+| `editor:physics` | Makes `PhysicsBody` inspectable. Exists because `editor:scene` must not depend on the physics backend and `scene:physics` must not depend on an editor |
+| `editor:ai` | Inspectors for `PatrolBehavior`, `ChaseBehavior`, `FleeBehavior` |
+| `editor:render` | Inspectors for `PbrMaterial`, `Light`, `MeshRenderer`, `Camera` |
 
 ## ui — component families and UI support
 

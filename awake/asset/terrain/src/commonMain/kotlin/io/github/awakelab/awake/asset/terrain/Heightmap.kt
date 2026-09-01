@@ -5,21 +5,34 @@
  */
 package io.github.awakelab.awake.asset.terrain
 
+import io.github.awakelab.awake.core.math.GridOrigin
 import io.github.awakelab.awake.core.math.Vec3f
 import kotlin.math.floor
 
 /**
  * Immutable rectangular terrain samples in row-major `z * width + x` order.
  *
- * Coordinates use a corner origin: sample `(x, z)` is at
- * `(x * scale.x, sample * scale.y, z * scale.z)`. The constructor takes ownership of both
- * mutable inputs, so later caller mutations cannot desynchronise a rendered mesh and a collider.
+ * Coordinates are **centred**: the map spans `-halfExtentX..halfExtentX` on X and the same on Z,
+ * so sample `(x, z)` is at `(x * scale.x - halfExtentX, sample * scale.y, z * scale.z - halfExtentZ)`.
+ * The origin is the middle of the map, matching `generate { cube() }` and `plane()`, and matching
+ * what a `Transform.position` means everywhere else: where the thing IS, not where its corner is.
+ * A corner origin put a 256m tile's position 181m from anything visible, which is measured by LOD
+ * distance, culling spheres and streaming alike.
+ *
+ * Content authored against the older corner convention passes [GridOrigin.Corner], which restores
+ * `(x * scale.x, _, z * scale.z)` exactly. The choice belongs here rather than at each consumer:
+ * the mesh builder, the navigation bake and `heightAtWorld` all read it from the map, so they
+ * cannot end up disagreeing by half a map.
+ *
+ * The constructor takes ownership of both mutable inputs, so later caller mutations cannot
+ * desynchronise a rendered mesh and a collider.
  */
 class Heightmap(
     samples: FloatArray,
     val width: Int,
     val depth: Int,
     scale: Vec3f,
+    val origin: GridOrigin = GridOrigin.Centered,
 ) {
     private val ownedSamples: FloatArray
     private val ownedScale: Vec3f
@@ -32,6 +45,18 @@ class Heightmap(
 
     /** A defensive scale copy; [Vec3f] is mutable. */
     val scale: Vec3f get() = ownedScale.copy()
+
+    /** Half the world width. */
+    val halfExtentX: Float get() = (width - 1) * ownedScale.x * HALF
+
+    /** Half the world depth. */
+    val halfExtentZ: Float get() = (depth - 1) * ownedScale.z * HALF
+
+    /** World X of sample column 0: `-halfExtentX` when centred, zero when corner-anchored. */
+    val minX: Float get() = if (origin == GridOrigin.Centered) -halfExtentX else 0f
+
+    /** World Z of sample row 0. */
+    val minZ: Float get() = if (origin == GridOrigin.Centered) -halfExtentZ else 0f
 
     /** Returns the height sample at [x], [z], rejecting out-of-range coordinates. */
     fun heightAt(x: Int, z: Int): Float {
@@ -53,8 +78,8 @@ class Heightmap(
      * [Float.isNaN].
      */
     fun heightAtWorld(worldX: Float, worldZ: Float): Float {
-        val gridX = worldX / ownedScale.x
-        val gridZ = worldZ / ownedScale.z
+        val gridX = (worldX - minX) / ownedScale.x
+        val gridZ = (worldZ - minZ) / ownedScale.z
         // Written as a positive range test so a NaN argument fails it. The negated form would
         // pass NaN through to floor(), whose Int conversion silently yields 0.
         val insideX = gridX >= 0f && gridX <= (width - 1).toFloat()
@@ -80,6 +105,10 @@ class Heightmap(
 
     /** Creates an independently editable heightmap; edits never mutate this immutable asset. */
     fun mutableCopy(): MutableHeightmap = MutableHeightmap(ownedSamples, width, depth, ownedScale)
+
+    /** The same samples read under a different [GridOrigin]. */
+    fun withOrigin(origin: GridOrigin): Heightmap =
+        Heightmap(ownedSamples, width, depth, ownedScale, origin)
 }
 
 internal fun validateHeightmap(samples: FloatArray, width: Int, depth: Int, scale: Vec3f) {
@@ -98,3 +127,4 @@ internal fun validateHeightmap(samples: FloatArray, width: Int, depth: Int, scal
 }
 
 private const val MIN_AXIS_SAMPLES = 2
+private const val HALF = 0.5f

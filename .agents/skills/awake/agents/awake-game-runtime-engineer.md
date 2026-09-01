@@ -66,5 +66,5 @@ shares state, with no compile-time signal).
 ## Validation
 
 - Compile engine runtime modules and consuming samples:
-  `./gradlew :awake:engine:platform:desktopTest :samples:studio:desktopTest`
+  `./gradlew :awake:engine:platform:desktopTest :apps:studio:desktopTest`
 - Run sample smoke checks when modifying game bootstrap or lifecycle ordering.

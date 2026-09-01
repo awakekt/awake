@@ -40,15 +40,73 @@ awake:scene       scene-core, rendering, controls, runtime, authoring
 awake:ui          graphics, text, ui-core, headless, designsystem, animation, heroicons, ...
 awake:asset       gltf, shaders, shader-pack, mesh-optimizer
 awake:app         platform, bootstrap, runtime
+awake:editor      scene, physics
 ```
+
+`awake:editor` is not in the regroup — it was named for its subsystem from the start and its
+sub-modules already follow the rule. Listed so the target is the whole graph rather than only the
+part that changes.
 
 `engine:` and `backend:` both disappear. `:awake:engine:render:contract` becomes
 `:awake:render:contract` — one segment shorter, and rendering stops being two groups.
 
-**Sequence this behind the extraction below.** It is a pure rename: ~12 modules, every
-`settings.gradle.kts` line, every `project(":awake:engine:...")` reference, every import path.
-High churn, zero behaviour change, fixes no bug. Do it in one pass — half-migrated is worse
-than either end state.
+**Sequence this behind the extraction below.** High churn, zero behaviour change, fixes no bug.
+
+### What it actually costs — measured 2026-08-31
+
+"Every import path" was the pessimistic guess and it is wrong for most of the work. Counted
+against the tree rather than estimated, the regroup is **two jobs with different risk**, and the
+cheap one is the larger.
+
+**A. Seven modules move without a single Kotlin edit.**
+
+| Module | → | Files | Package rename |
+|---|---|---|---|
+| `engine:render:contract` | `render:contract` | 53 | none |
+| `engine:render:passes` | `render:passes` | 31 | none |
+| `engine:render:passes2d` | `render:passes2d` | 13 | none |
+| `engine:render:testing` | `render:testing` | 11 | none |
+| `backend:vulkan` | `render:vulkan` | 463 | none |
+| `backend:webgpu` | `render:webgpu` | 55 | none |
+| `backend:jolt` | `physics:jolt` | 20 | none |
+
+646 files, and none of their contents change: these packages are already `awake.render.*` and
+`awake.physics.jolt`, with no layer word in them. The move is `git mv`, `settings.gradle.kts`,
+`project(...)` references and Android namespaces — and Gradle fails loudly on a wrong path, so the
+build checks nearly all of it.
+
+**B. Three modules also need a Kotlin package rename.** `engine:platform`, `engine:bootstrap` and
+`engine:compose` own eight packages containing `.engine.`, referenced by **150 imports across 64
+files**. That is a symbol rename, so it belongs in the IDE per `kmp-refactor`, not a textual sweep.
+
+### The part that is not mechanical
+
+Two moving modules **contain git submodules**:
+
+```
+awake/backend/vulkan/bindings/ios-native/MoltenVK
+awake/backend/jolt/ios-native/JoltC
+```
+
+A submodule does not move with `git mv`. It needs `.gitmodules` rewritten, `git submodule sync`,
+and `.git/modules` fixed up. Their paths are also hardcoded in CI — the `ios-native` composite
+action, three `actions/checkout` steps, and the natives artifact path in `build-and-publish.yml`.
+A wrong one fails during MoltenVK's build, tens of minutes into a run.
+
+Beyond that, **348 Gradle-path references across 89 files**, including `.agents/skills/*.md`,
+`README.md` and both workflows. Docs do not fail the build, so those rot silently.
+
+### Recommended sequence
+
+1. **`backend:jolt` → `physics:jolt` first.** 20 files, one submodule, one subsystem — the whole
+   job in miniature. If the submodule move is clean there, the pattern is proven before touching
+   vulkan's 463 files.
+2. **The render regroup** (contract, passes, passes2d, testing, vulkan, webgpu) as one commit.
+   Half-migrated is worse than either end state.
+3. **`engine:` → `app:`** separately, in the IDE.
+
+Wants a quiet tree: it touches every `settings.gradle.kts` line, so it conflicts with anything
+else in flight. **Deferred until after the current release** — 2026-08-31.
 
 
 ## The graph
@@ -604,6 +662,15 @@ extent and a placed rect are different facts.
    own public signatures — and know that it becomes every downstream consumer's dependency.
 4. **Justify the boundary against the withdrawn list.** ~100-line modules that force edits
    across dozens of consumers were already rejected once.
+   Two justifications that do hold, both narrow:
+   - **It joins two modules that must not depend on each other.** `awake:editor:physics` exists
+     because `awake:editor:scene` must not pull in the physics backend and `awake:scene:physics`
+     must not depend on an editor. Something has to name both types, and it cannot be either of
+     them. Size is irrelevant here — the module is ~70 lines and the boundary is still forced.
+   - **It must ship separately**, which for now means an editor plugin. Note that this is a
+     *build-time* split: `EditorPlugin` deliberately excludes dynamic loading because
+     Kotlin/Native and wasmJs cannot load code, so a marketplace would be a desktop host above
+     that contract rather than a property of the module graph.
 5. **Give it a README** and update [`awake/README.md`](../../awake/README.md)'s map in the same
    commit.
 

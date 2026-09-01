@@ -18,7 +18,7 @@ val ktlintVersion = if (project.path.startsWith(":awake:compose") ||
     project.path == ":awake:ui:benchmark" ||
     project.path == ":awake:editor" ||
     project.path == ":awake:ui:shadcn" ||
-    project.path == ":samples:studio" ||
+    project.path == ":apps:studio" ||
     project.path == ":samples:ui-showcase"
 ) {
     "1.7.1"

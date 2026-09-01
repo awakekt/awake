@@ -6,6 +6,7 @@
 plugins {
     id("awake.kmp-library-convention")
     alias(libs.plugins.kotlin.serialization)
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -41,5 +42,12 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Scene Authoring")
+        description.set("The scene and application DSL: entities, systems, assets and UI declared in Kotlin")
     }
 }

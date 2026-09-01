@@ -50,21 +50,43 @@ class HierarchicalNavGrid(
         val startCell = cellOf(start)
         val goalCell = cellOf(end)
         val corridor = if (startCell == goalCell) null else coarse.corridor(startCell, goalCell)
-        val exit = corridor?.let(::exitPoint)
-        return if (exit == null) emptyList() else grid.findPath(start, exit)
+        return if (corridor == null) emptyList() else furthestReachableLeg(start, corridor)
     }
 
     /**
-     * Where to aim: just inside the last loaded cell of the corridor, on the edge it leaves by.
+     * The longest leg along [corridor] the fine grid will actually confirm, trying far exits first.
+     *
+     * The two layers disagree in one direction and it has to be handled here: the coarse graph
+     * knows a route exists across cells, but at sample resolution the way through the *loaded* part
+     * may need a detour into a cell that is not loaded yet. Aiming at the furthest loaded corridor
+     * cell then fails, and an agent that treats one failure as "no route" stops dead a few metres
+     * into a journey the graph correctly says is possible.
+     *
+     * So each candidate exit is offered to the fine search and the first one it confirms wins. The
+     * near exits are the ones most likely to be reachable, which is why the fallback ends at the
+     * agent's own cell rather than giving up earlier.
+     */
+    private fun furthestReachableLeg(start: Vec3f, corridor: List<WorldCellCoord>): List<Vec3f> {
+        var index = corridor.indexOfLast { it in grid.residentCells }
+        var leg = emptyList<Vec3f>()
+        while (leg.isEmpty() && index >= 0) {
+            val exit = exitPoint(corridor, index)
+            if (exit != null) leg = grid.findPath(start, exit)
+            index--
+        }
+        return leg
+    }
+
+    /**
+     * Where to aim to leave `corridor[index]`: just inside it, on the edge it leaves by.
      *
      * Walking to the middle of that cell would be wrong at a boundary the corridor crosses at a
      * corner, and walking *onto* the border sample would put the agent on the first sample of a
-     * cell that has not loaded. One sample inside is both reachable and pointed the right way.
+     * cell that may not have loaded. One sample inside is both reachable and pointed the right way.
      */
-    private fun exitPoint(corridor: List<WorldCellCoord>): Vec3f? {
-        val lastResident = corridor.indexOfLast { it in grid.residentCells }
-        val cell = corridor.getOrNull(lastResident)
-        val next = corridor.getOrNull(lastResident + 1)
+    private fun exitPoint(corridor: List<WorldCellCoord>, index: Int): Vec3f? {
+        val cell = corridor.getOrNull(index)
+        val next = corridor.getOrNull(index + 1)
         val side = if (cell != null && next != null) sideTowards(cell, next) else null
         return if (cell != null && side != null) borderTarget(cell, side) else null
     }

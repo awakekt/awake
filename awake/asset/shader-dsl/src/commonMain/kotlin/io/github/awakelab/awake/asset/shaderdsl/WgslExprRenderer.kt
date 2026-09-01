@@ -26,7 +26,9 @@ internal fun wgslTypeName(type: AslType): String = when (type) {
     AslType.Texture2dF32 -> "texture_2d<f32>"
     AslType.Texture2dArrayF32 -> "texture_2d_array<f32>"
     AslType.TextureDepth2d -> "texture_depth_2d"
+    AslType.TextureDepth2dArray -> "texture_depth_2d_array"
     AslType.Sampler -> "sampler"
+    AslType.SamplerComparison -> "sampler_comparison"
 }
 
 internal fun floatWgsl(value: Float): String {

@@ -103,9 +103,14 @@ class UiFrameCostRatchetTest {
         const val CARD_HEIGHT = 96
         const val MAX_QUADS_PER_RUN = 1024
 
-        // Measured 2026-08-29 at 41,016 vertices over 42 runs. Headroom is deliberately narrow:
+        // Measured 2026-08-31 at 56,184 vertices over 42 runs. Headroom is deliberately narrow:
         // this is a ratchet, not a limit, and a change needing more room should say why.
-        const val MAX_MESH_VERTICES = 45_000
+        //
+        // Raised from 45,000 (41,016 measured 2026-08-29): `isConvex` used to call a stroke ring
+        // convex, and every icon here was centroid-fanned into a solid blob for ~2.5k vertices
+        // less each. Correcting it moved this work onto the scanline triangulator, which is what
+        // an outline actually costs. The cheaper number was measuring the wrong picture.
+        const val MAX_MESH_VERTICES = 58_000
         const val MAX_DRAW_RUNS = 46
     }
 }

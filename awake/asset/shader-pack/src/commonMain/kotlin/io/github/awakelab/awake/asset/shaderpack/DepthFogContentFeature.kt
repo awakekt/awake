@@ -45,7 +45,7 @@ private const val FULLSCREEN_TRIANGLE_VERTICES = 3
  *
  * The shader is emitted per backend rather than shared, because sampling a rendered depth target
  * by screen position is the one place the two clip-space conventions differ -- see
- * [depthFogShader]'s `flipDepthV`.
+ * [ndcToUv], which decides it from the clip space rather than from a flag someone remembered.
  *
  * @param color Fog colour. Its alpha is the density per world unit, packed the way `lit_shadow`'s
  * own `fogColor` is, so the two fogs are tuned in the same units.
@@ -55,7 +55,7 @@ fun depthFogContentFeature(
     color: Color,
     isVisible: () -> Boolean = { true },
 ): ContentFeatureSource = ContentFeatureSource { backend ->
-    val shaders = aslShaderSet(depthFogShader(flipDepthV = backend == RenderBackend.WebGpu))
+    val shaders = aslShaderSet(::depthFogShader)
     val stages = shaders.stagesFor(backend)
     ContentFeature(
         name = "depth_fog",

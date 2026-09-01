@@ -6,7 +6,10 @@
 package io.github.awakelab.awake.ui.shadcn
 
 import io.github.awakelab.awake.compose.foundation.BorderSides
+import io.github.awakelab.awake.compose.foundation.layout.Column
+import io.github.awakelab.awake.compose.foundation.layout.fillMaxHeight
 import io.github.awakelab.awake.compose.testing.composeFrame
+import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.core.graphics2d.PathCommand
 import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
 import io.github.awakelab.awake.core.graphics2d.bounds
@@ -88,5 +91,47 @@ class ShadcnButtonGroupTest {
             !paintsVerticalEdgeIn(endBand.first, endBand.second),
             "the first button still paints the shared end border",
         )
+    }
+
+    /**
+     * A separated group is as tall as its buttons, not as tall as whatever contains it.
+     *
+     * The separator is a hairline that fills the cross axis, so without an intrinsic height it read
+     * the space the *parent* offered: in the scene hierarchy's header the group became as tall as
+     * the panel and pushed every entity row off the bottom of the screen. A height-constrained bar
+     * hides this completely, which is why it survived in the toolbar for as long as it did.
+     */
+    @Test
+    fun aSeparatedGroupIsAsTallAsItsButtons() {
+        val primitives = composeFrame(FRAME_WIDTH, FRAME_HEIGHT) {
+            provideShadcnTheme(theme) {
+                // Inside a parent that offers its whole height, which is the case that broke: a
+                // sidebar header. A shrink-wrapping parent offers nothing to fill and hides this.
+                Column(Modifier.fillMaxHeight()) {
+                ShadcnButtonGroup {
+                    button("Left", variant = ShadcnButtonVariant.Outline)
+                    separator()
+                    button("Right", variant = ShadcnButtonVariant.Outline)
+                }
+                }
+            }
+        }.primitives
+
+        // The separator paints as a plain quad, not as a mesh -- measuring only the meshes was how
+        // the first version of this test passed with the fix removed.
+        val tallest = primitives.filterIsInstance<UiDrawPrimitive.Quad>().maxOf { it.h }
+
+        assertTrue(
+            tallest < FRAME_HEIGHT / 2,
+            "the group filled its parent instead of wrapping its buttons: tallest primitive " +
+                "$tallest in a $FRAME_HEIGHT-high frame",
+        )
+    }
+
+    private companion object {
+        const val FRAME_WIDTH = 200
+
+        /** Far taller than a button, so a separator that fills its parent is unmistakable. */
+        const val FRAME_HEIGHT = 400
     }
 }

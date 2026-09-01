@@ -5,6 +5,12 @@
  */
 package io.github.awakelab.awake.vulkan.swapchain
 
+import io.github.awakelab.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
+import io.github.awakelab.awake.vulkan.models.info.VkImageUsageFlagBits2
+import io.github.awakelab.awake.vulkan.models.info.VkMemoryAllocateInfo
+import io.github.awakelab.awake.vulkan.models.info.VkImageCreateInfo
+import io.github.awakelab.awake.vulkan.gen.VulkanImages
+import io.github.awakelab.awake.vulkan.gen.VulkanBuffers
 import io.github.awakelab.awake.vulkan.Vulkan
 import io.github.awakelab.awake.vulkan.device.GraphicsDevice
 import io.github.awakelab.awake.vulkan.enums.VkColorSpaceKHR
@@ -71,6 +77,10 @@ class SwapchainManager(
 
     val imageAvailableSemaphores = LongArray(maxFramesInFlight)
     var renderFinishedSemaphores = LongArray(0)
+    /** The stand-in images [createHeadlessPresentable] allocated; empty for a real swapchain. */
+    var headlessImages = LongArray(0)
+        private set
+    private var headlessImageMemory = LongArray(0)
     val inFlightFences = LongArray(maxFramesInFlight)
     internal var imagesInFlight = LongArray(0)
     var currentFrame = 0
@@ -147,6 +157,80 @@ class SwapchainManager(
      * [swapChain]/[imageViews] directly). [imageViews] stays empty -- nothing on the headless
      * path (`Renderer.renderToTexture`/`readPixels`) ever indexes into it; only `Renderer.draw`
      * (never called headless) does. */
+    /**
+     * Headless WITH images, so the on-screen path can run: acquire, record, submit, read back.
+     *
+     * [createHeadless] leaves [imageViews] empty, which is right for `renderToTexture` and wrong
+     * for `Renderer.draw` -- that one needs something to render into. This allocates images that
+     * stand in for a presentation engine's, so an app's real frame loop runs without a display
+     * and the frame it produces can be inspected. Nothing presents them; [readImagePixels] copies
+     * one back instead.
+     *
+     * Separate from [createHeadless] rather than a flag on it: every existing headless fixture
+     * depends on that one creating no images and no framebuffers, and this is opt-in for the
+     * engine's own headless boot.
+     */
+    fun createHeadlessPresentable(
+        width: Int,
+        height: Int,
+        format: VkFormat = VkFormat.VK_FORMAT_R8G8B8A8_UNORM,
+    ) {
+        imageFormat = format
+        extent = VkExtent2D(width, height)
+        headlessImages = LongArray(HEADLESS_IMAGE_COUNT) {
+            VulkanImages.vkCreateImage(
+                device,
+                VkImageCreateInfo(
+                    width = width,
+                    height = height,
+                    format = format.value,
+                    usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT or
+                        VkImageUsageFlagBits2.VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                ),
+            )
+        }
+        headlessImageMemory = LongArray(HEADLESS_IMAGE_COUNT) { index ->
+            val requirements = VulkanImages.vkGetImageMemoryRequirements(device, headlessImages[index])
+            val memory = VulkanBuffers.vkAllocateMemory(
+                device,
+                VkMemoryAllocateInfo(
+                    allocationSize = requirements.size,
+                    memoryTypeIndex = VulkanBuffers.findMemoryType(
+                        physicalDevice,
+                        requirements.memoryTypeBits,
+                        VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                    ),
+                ),
+            )
+            VulkanImages.vkBindImageMemory(device, headlessImages[index], memory, 0)
+            memory
+        }
+        imageViews = headlessImages.map { image ->
+            Vulkan.vkCreateImageView(
+                device,
+                VkImageViewCreateInfo(
+                    image = image,
+                    viewType = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
+                    format = format,
+                    subresourceRange = VkImageSubresourceRange(
+                        aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_COLOR_BIT.value,
+                        baseMipLevel = 0,
+                        levelCount = 1,
+                        baseArrayLayer = 0,
+                        layerCount = 1,
+                    ),
+                ),
+            )
+        }
+        imagesInFlight = LongArray(imageViews.size)
+        renderFinishedSemaphores = LongArray(imageViews.size) {
+            Vulkan.vkCreateSemaphore(device, VkSemaphoreCreateInfo())
+        }
+    }
+
+    /** Whether this manager stands in for a presentation engine rather than owning one. */
+    val isHeadlessPresentable: Boolean get() = swapChain == 0L && imageViews.isNotEmpty()
+
     fun createHeadless(width: Int, height: Int, format: VkFormat = VkFormat.VK_FORMAT_R8G8B8A8_UNORM) {
         imageFormat = format
         extent = VkExtent2D(width, height)
@@ -235,6 +319,11 @@ class SwapchainManager(
         imageViews.forEach { imageView ->
             Vulkan.vkDestroyImageView(device, imageView)
         }
+        // Stand-in images own their memory; a real swapchain's belong to the presentation engine.
+        headlessImages.forEach { VulkanImages.vkDestroyImage(device, it) }
+        headlessImageMemory.forEach { VulkanBuffers.vkFreeMemory(device, it) }
+        headlessImages = LongArray(0)
+        headlessImageMemory = LongArray(0)
         Vulkan.vkDestroySwapchainKHR(device, swapChain)
     }
 
@@ -299,3 +388,6 @@ internal fun chooseSwapPresentMode(
     }
     return VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR
 }
+
+/** Two, like a double-buffered swapchain: enough for the frame loop's in-flight logic. */
+private const val HEADLESS_IMAGE_COUNT = 2

@@ -1614,3 +1614,54 @@ contains them.
 Registering a custom pass is **not** a limitation: D27's `ContentFeature` /
 `RenderPlan.contentFeatures` already works and both samples use it. What a consumer cannot
 declare is that pipeline's texture bindings.
+
+### D29 — Physics: when Awake would write its own engine
+**DECIDED (2026-08-30).** Full record:
+[decisions/D29-physics-own-engine-exit-criteria.md](../decisions/D29-physics-own-engine-exit-criteria.md).
+
+Extends D5. "Write our own physics if Jolt can't do KMP" is not a usable trigger — the failure
+is always partial (one target, one entry point, almost certainly wasm), and a per-target gap is
+answered by a four-rung ladder: implement it in Kotlin above the facade, declare a capability
+gap via `PhysicsCapabilityException`, swap the backend on that target, and only then write our
+own. Math and geometry are ~5% of a rigid-body engine; the missing 95% (BVH broadphase,
+GJK/EPA, manifold persistence, solver, islands, CCD) is tuning work Jolt has already done.
+
+The one condition that does justify a hand-written engine is **cross-target determinism** —
+three Jolt builds will never agree bit-for-bit, and a fixed timestep buys determinism within a
+build, not across builds. That is a product decision to make before Phase 2, since it
+constrains API and iteration order.
+
+Consequence: policy over queries lives in commonMain above `PhysicsWorld`, not per backend.
+The kinematic character controller is the first case, needing only `shapeCast`.
+
+**Spike closed (2026-08-30):** `CastShape` is available on all four backends. wasmJs verified
+by *execution*, not by reading the `.d.ts` — a capsule sweep against a static wall under Node,
+on the exact bundle the default entrypoint resolves to, returned fraction 0.4200 and contact
+x 4.5000 against an expected 0.42 / 4.5. jolt-jni 5.2.0 exposes four `castShape` overloads
+(`javap`-verified); JoltC exposes `JPC_NarrowPhaseQuery_CastShape` plus `CollideShape`.
+`CharacterVirtual` turns out to be bound on wasm too, so the pure-Kotlin controller is chosen
+on merit rather than forced.
+
+One wrinkle recorded: JoltC ships no prebuilt collector, so iOS must build one via
+`JPC_CastShapeCollector_new` with a `staticCFunction` `AddHit` — same pattern the backend
+already uses for its layer filter tables, but its first collector. Budget for it in Phase 2.
+
+### D30 — Math: which numeric primitive variants earn a type
+**DECIDED (2026-08-30).** Full record:
+[decisions/D30-math-numeric-primitive-variants.md](../decisions/D30-math-numeric-primitive-variants.md).
+
+No variant of every math type for every primitive. Kotlin has no unboxed numeric generics, so
+each variant is hand-written permanent API — it must answer a concrete precision or semantic
+need, never symmetry. Admitted: Vec2f/Vec2i, Vec3f/Vec3d/Vec3i, Quat and Matrix in float only.
+Rejected: `Quatd` (rotations are unit-length, precision does not decay with distance), `Mat4d`
+(camera-relative rendering needs `Vec3d`, not a double matrix, and no GPU consumes one), and
+all Short/Byte/Long/UInt vectors (compression is a packing function at the buffer boundary —
+`VectorPacking.kt` — not an arithmetic type).
+
+Test before adding one: name the scenario, then check that packing or origin rebasing does not
+already solve it. Most proposals die to one of the two.
+
+**Noted, not fixed:** `WorldOrigin.toAbsolute` returns `Vec3f`. The absolute world coordinate
+is the one unbounded quantity in the engine — the thing floating origin exists to keep out of
+float32 — and `Vec3d` currently has no production user besides `MeshSimplifier`'s QEM
+quadrics. Revisit when world size grows or physics origin shifting lands.

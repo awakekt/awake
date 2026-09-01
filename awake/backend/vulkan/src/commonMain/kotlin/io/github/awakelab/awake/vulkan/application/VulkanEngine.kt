@@ -10,6 +10,7 @@ import io.github.awakelab.awake.asset.shaders.RenderBackend
 import io.github.awakelab.awake.asset.shaders.RenderPlan
 import io.github.awakelab.awake.asset.shaders.ResolvedShader
 import io.github.awakelab.awake.asset.shaders.ShaderSet
+import io.github.awakelab.awake.render.renderer.DEFAULT_SHADOW_CASCADES
 import io.github.awakelab.awake.render.pipeline.ShaderSource
 import io.github.awakelab.awake.asset.shaders.ShaderStage
 import io.github.awakelab.awake.asset.shaders.entryPoint
@@ -56,6 +57,8 @@ import io.github.awakelab.awake.vulkan.pipeline.VulkanRenderFrameContext
 import io.github.awakelab.awake.vulkan.pipeline.VulkanUiPass
 import io.github.awakelab.awake.vulkan.pipeline.createSceneRenderPass
 import io.github.awakelab.awake.vulkan.renderer.Renderer
+import io.github.awakelab.awake.engine.platform.HeadlessSurface
+import io.github.awakelab.awake.vulkan.models.VkExtent2D
 import io.github.awakelab.awake.vulkan.surfaceFramebufferExtent
 import io.github.awakelab.awake.vulkan.windowLogicalExtent
 import io.github.awakelab.awake.vulkan.swapchain.SwapchainManager
@@ -202,6 +205,7 @@ open class VulkanEngine(
                 map.size,
                 shaderSet.vulkan.entryPoint(ShaderStage.VERTEX),
                 shaderSet.vulkan.entryPoint(ShaderStage.FRAGMENT),
+                cascadeCount = map.layers,
             )
             DepthPrePassFeature(map, depthPipeline)
         }
@@ -226,6 +230,7 @@ open class VulkanEngine(
                 map.size,
                 shaderSet.vulkan.entryPoint(ShaderStage.VERTEX),
                 shaderSet.vulkan.entryPoint(ShaderStage.FRAGMENT),
+                cascadeCount = map.layers,
             )
             DepthPrePassFeature(map, depthPipeline)
         }
@@ -418,15 +423,24 @@ open class VulkanEngine(
         var sceneDepthPass: DepthPrePassFeature? = null
         var renderFeatures: List<RenderFeature<VulkanRenderFrameContext>> = emptyList()
         try {
+            val headless = window as? HeadlessSurface
             graphicsDevice = GraphicsDevice()
-            graphicsDevice.create(window)
+            if (headless == null) graphicsDevice.create(window) else graphicsDevice.createHeadless()
             swapchainManager = SwapchainManager(
                 graphicsDevice,
                 MAX_FRAMES_IN_FLIGHT,
-                surfaceExtentProvider = { surfaceFramebufferExtent(window) },
+                surfaceExtentProvider = {
+                    headless?.let { VkExtent2D(it.width, it.height) } ?: surfaceFramebufferExtent(window)
+                },
                 presentPreference = appLifecycle.windowConfig.presentMode,
             )
-            swapchainManager.create()
+            if (headless == null) {
+                swapchainManager.create()
+            } else {
+                // Presentable: the engine's own frame loop draws through the on-screen path, so
+                // it needs images to draw into even when nothing will display them.
+                swapchainManager.createHeadlessPresentable(headless.width, headless.height)
+            }
             // Reported, not assumed: a surface may not offer what was asked for, and a frame time
             // measured under a refresh-rate cap says more about the display than the engine.
             println(
@@ -435,7 +449,10 @@ open class VulkanEngine(
             )
             // No longer has to precede pipelineDescriptorSetLayout: the depth target owns its own
             // descriptor set now, so no material layout depends on whether it exists.
-            depthTarget = plan.depthPrePassShaderSet?.let { DepthTarget(graphicsDevice) }
+            // Layered and arrayed: one cascade per layer, sampled as an array by lit_shadow.
+            depthTarget = plan.depthPrePassShaderSet?.let {
+                DepthTarget(graphicsDevice, layers = DEFAULT_SHADOW_CASCADES, arrayed = true, comparison = true)
+            }
             sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice) }
             pipelineDescriptorSetLayout =
                 Material.createDescriptorSetLayout(graphicsDevice)

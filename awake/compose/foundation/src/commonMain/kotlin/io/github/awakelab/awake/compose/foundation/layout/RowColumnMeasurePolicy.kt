@@ -68,6 +68,7 @@ internal class RowColumnParentData(
     var fill: Boolean = true,
     var crossAxisAlign: CrossAxisAlign? = null,
     var alignmentLine: AlignmentLine? = null,
+    var flex: FlexItemData? = null,
 )
 
 internal class LayoutWeightElement(

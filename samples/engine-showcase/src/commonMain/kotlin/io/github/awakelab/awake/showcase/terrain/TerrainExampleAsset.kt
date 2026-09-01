@@ -18,7 +18,7 @@ import io.github.awakelab.awake.physics.HeightFieldShape
  * body use the same corner-origin coordinates instead of two independently authored terrains.
  *
  * The showcase currently has no `PhysicsWorld` lifecycle, so this object does not attach an inert
- * [io.github.awakelab.awake.scene.physics.components.PhysicsBody]. A game that installs a
+ * [io.github.awakelab.awake.scene.physics.PhysicsBody]. A game that installs a
  * physics world can pass [collisionShape] to it directly at the same entity position.
  */
 internal object TerrainExampleAsset {

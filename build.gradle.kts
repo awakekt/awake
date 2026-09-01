@@ -21,7 +21,22 @@ apiValidation {
     ignoredProjects += setOf(
         "ui-showcase", "engine-showcase", "studio", "server",
         "benchmark", "generator", "android-native", "font-atlas-generator",
-        "tailwind-generator", "editor", "testing",
+        // `editor` is deliberately absent: it is a library, not an application, and its plugin
+        // contract negotiates an EditorPluginApiVersion that means nothing if the surface it
+        // versions is untracked. See D32. Every remaining entry here is a sample or a build tool.
+        "tailwind-generator", "testing",
+        // ponytail: `webgpu` is published but unvalidated, because its `jvmToolchain(25)` (needed
+        // for the FFM API) emits class-file major 69 and binary-compatibility-validator 0.17.0
+        // bundles an ASM that cannot read it -- `desktopApiBuild` dies with "Unsupported class
+        // file major version 69" before comparing anything. This is the whole `verify` job, so
+        // the alternative was a release that cannot be cut. Drop this entry once BCV ships an
+        // ASM new enough, and run `./gradlew :awake:backend:webgpu:desktopApiDump` to seed the
+        // dump it has never had.
+        "webgpu",
+        // `parity` for the same reason, one step removed: it links the WebGPU backend, so its own
+        // toolchain is 25 too. It is a test harness rather than a shipped surface, so nothing is
+        // lost by leaving it untracked.
+        "parity",
     )
 }
 

@@ -161,8 +161,19 @@ interface DrawScope {
      */
     fun drawMesh(mesh: ColoredTriangleMesh)
 
-    /** Clips [block] to a node-local path, balancing the clip even if [block] throws. */
-    fun clippedPath(path: DrawPath, block: () -> Unit)
+    /**
+     * Clips [block] to a node-local path, balancing the clip even if [block] throws.
+     *
+     * [safeInteriorRect], node-local like [path], is a caller-provided rect guaranteed to lie
+     * entirely inside [path] -- e.g. a rounded rectangle's bounds inset by its corner radius.
+     * It lets the coalescer skip real polygon clipping for every primitive fully inside it
+     * (`DrawRunCoalescer.canSkipExactClip`), which is the majority of content under a shape
+     * clip: only primitives actually near the curved/irregular boundary need it. Omitting this
+     * (the default) is always correct, just slower -- every primitive under the clip pays for
+     * exact clipping against the full path, confirmed by profiling to dominate frame time on a
+     * clip that wraps a whole screen.
+     */
+    fun clippedPath(path: DrawPath, safeInteriorRect: Rectangle? = null, block: () -> Unit)
 
     /**
      * Emits an already-built primitive, **in tree space**.
@@ -450,6 +461,28 @@ internal class PaintScope : DrawScope, LayerDrawScope {
     // Reused: drawBoundsAt writes into it once per draw link per node per frame.
     private val bounds = IntArray(4)
 
+    /**
+     * True when [x]/[y]/[w]/[h] (already node-local-to-canvas transformed, same space as
+     * [clipStack]'s entries) cannot possibly be visible under the active clip.
+     *
+     * [clipStack]'s top is the intersected AABB of every enclosing rect clip *and* path clip's
+     * bounds -- a superset of the true visible region for a path clip (which can carve away
+     * corners inside that box), never a subset. So non-intersection here is a sound trivial
+     * reject: nothing that fails this check could have painted a pixel. It says nothing about
+     * primitives that DO intersect -- those still need real clipping if a path clip is active.
+     *
+     * Exists because a `verticalScroll` clips with a plain rect scissor (`clipped`), which -- unlike
+     * [safeInteriorRect] skipping the *cost* of an active path clip -- does nothing to stop
+     * scrolled-past content from being emitted at all: every primitive between the scissor push
+     * and its pop used to reach the coalescer regardless of scroll position, tessellated and
+     * clip-tested like anything on screen. A tall scrollable page pays for its off-screen rows
+     * every frame, not just its visible ones.
+     */
+    private fun isFullyOutsideActiveClip(x: Float, y: Float, w: Float, h: Float): Boolean {
+        val clip = clipStack.lastOrNull() ?: return false
+        return x + w <= clip.x || x >= clip.x + clip.width || y + h <= clip.y || y >= clip.y + clip.height
+    }
+
     fun enter(node: LayoutNode) = enter(node, depth = 0)
 
     /**
@@ -469,23 +502,21 @@ internal class PaintScope : DrawScope, LayerDrawScope {
     }
 
     override fun drawRect(x: Float, y: Float, width: Float, height: Float, color: Color) {
-        output += UiDrawPrimitive.Quad(
-            transform.mapX(originX + x),
-            transform.mapY(originY + y),
-            width * transform.scaleX,
-            height * transform.scaleY,
-            color.dimmedBy(alpha),
-        )
+        val px = transform.mapX(originX + x)
+        val py = transform.mapY(originY + y)
+        val pw = width * transform.scaleX
+        val ph = height * transform.scaleY
+        if (isFullyOutsideActiveClip(px, py, pw, ph)) return
+        output += UiDrawPrimitive.Quad(px, py, pw, ph, color.dimmedBy(alpha))
     }
 
     override fun drawTexture(material: Any, x: Float, y: Float, width: Float, height: Float) {
-        output += UiDrawPrimitive.Texture(
-            transform.mapX(originX + x),
-            transform.mapY(originY + y),
-            width * transform.scaleX,
-            height * transform.scaleY,
-            material,
-        )
+        val px = transform.mapX(originX + x)
+        val py = transform.mapY(originY + y)
+        val pw = width * transform.scaleX
+        val ph = height * transform.scaleY
+        if (isFullyOutsideActiveClip(px, py, pw, ph)) return
+        output += UiDrawPrimitive.Texture(px, py, pw, ph, material)
     }
 
     override fun drawRoundedRect(
@@ -502,11 +533,16 @@ internal class PaintScope : DrawScope, LayerDrawScope {
             drawRect(x, y, width, height, color)
             return
         }
+        val px = transform.mapX(originX + x)
+        val py = transform.mapY(originY + y)
+        val pw = width * transform.scaleX
+        val ph = height * transform.scaleY
+        if (isFullyOutsideActiveClip(px, py, pw, ph)) return
         output += UiDrawPrimitive.RoundedQuad(
-            transform.mapX(originX + x),
-            transform.mapY(originY + y),
-            width * transform.scaleX,
-            height * transform.scaleY,
+            px,
+            py,
+            pw,
+            ph,
             color.dimmedBy(alpha),
             // Scaled by the smaller axis: a radius is a single number, and taking the larger would
             // let a corner arc exceed the shorter side and invert.
@@ -556,17 +592,12 @@ internal class PaintScope : DrawScope, LayerDrawScope {
         v1: Float,
         color: Color,
     ) {
-        output += UiDrawPrimitive.Glyph(
-            transform.mapX(originX + x),
-            transform.mapY(originY + y),
-            width * transform.scaleX,
-            height * transform.scaleY,
-            u0,
-            v0,
-            u1,
-            v1,
-            color.dimmedBy(alpha),
-        )
+        val px = transform.mapX(originX + x)
+        val py = transform.mapY(originY + y)
+        val pw = width * transform.scaleX
+        val ph = height * transform.scaleY
+        if (isFullyOutsideActiveClip(px, py, pw, ph)) return
+        output += UiDrawPrimitive.Glyph(px, py, pw, ph, u0, v0, u1, v1, color.dimmedBy(alpha))
     }
 
     override fun clipped(inset: Float, block: () -> Unit) {
@@ -633,18 +664,28 @@ internal class PaintScope : DrawScope, LayerDrawScope {
         output += UiDrawPrimitive.StrokedPath(placed, scaledStroke, color.dimmedBy(alpha))
     }
 
-    override fun clippedPath(path: DrawPath, block: () -> Unit) {
+    override fun clippedPath(path: DrawPath, safeInteriorRect: Rectangle?, block: () -> Unit) {
+        val tx = transform.mapX(originX)
+        val ty = transform.mapY(originY)
         val placed = path.transform(
             scaleX = transform.scaleX,
             scaleY = transform.scaleY,
-            translateX = transform.mapX(originX),
-            translateY = transform.mapY(originY),
+            translateX = tx,
+            translateY = ty,
         )
         val bounds = placed.bounds()
         val previous = clipStack.lastOrNull() ?: fullClip
         val effective = bounds.intersect(previous)
         clipStack.addLast(effective)
-        output += UiDrawPrimitive.ClipPathPush(placed, effective)
+        val placedSafeInterior = safeInteriorRect?.let {
+            Rectangle(
+                x = it.x * transform.scaleX + tx,
+                y = it.y * transform.scaleY + ty,
+                width = it.width * transform.scaleX,
+                height = it.height * transform.scaleY,
+            )
+        }
+        output += UiDrawPrimitive.ClipPathPush(placed, effective, placedSafeInterior)
         try {
             block()
         } finally {

@@ -6,7 +6,7 @@
 package io.github.awakelab.awake.showcase.examples
 
 import io.github.awakelab.awake.core.math.Mat4
-import io.github.awakelab.awake.scene.rendering.components.InstancedMeshRenderer
+import io.github.awakelab.awake.scene.rendering.mesh.InstancedMeshRenderer
 import io.github.awakelab.awake.scene.runtime.Scene
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
 

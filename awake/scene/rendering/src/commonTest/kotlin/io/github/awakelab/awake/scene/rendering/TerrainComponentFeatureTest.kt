@@ -12,8 +12,8 @@ import io.github.awakelab.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.render.pipeline.ResourceKind
-import io.github.awakelab.awake.scene.rendering.components.TerrainComponent
-import io.github.awakelab.awake.scene.rendering.content.terrainContentFeature
+import io.github.awakelab.awake.scene.rendering.terrain.TerrainComponent
+import io.github.awakelab.awake.scene.rendering.terrain.terrainContentFeature
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

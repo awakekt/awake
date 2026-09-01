@@ -15,8 +15,8 @@ import io.github.awakelab.awake.core.host.readResourceBytes
 import io.github.awakelab.awake.core.text.font.UiFont
 import io.github.awakelab.awake.render.passes.OpaqueRenderFeature
 import io.github.awakelab.awake.render.passes2d.UiRenderFeature
-import io.github.awakelab.awake.render.testing.FrameCapture
-import io.github.awakelab.awake.render.testing.PixelMap
+import io.github.awakelab.awake.render.capture.FrameCapture
+import io.github.awakelab.awake.render.capture.PixelMap
 import io.github.awakelab.awake.render.testing.writePng
 import io.github.awakelab.awake.vulkan.commands.TransferContext
 import io.github.awakelab.awake.vulkan.debug.LineRenderPipeline

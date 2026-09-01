@@ -11,7 +11,7 @@ import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.layout.height
 import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.compose.ui.Modifier
-import io.github.awakelab.awake.compose.ui.draw.drawWithCache
+import io.github.awakelab.awake.compose.ui.draw.drawBehind
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -21,8 +21,12 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * `h-full bg-primary` indicator. The track is **the primary colour at 20%**, not `bg-muted` -- so a
  * progress bar tints with the theme's accent rather than reading as a grey groove.
  *
- * Drawn with [drawWithCache] rather than laid out as two boxes: the indicator is a fraction of the
- * track's measured width, and draw operations are cached across steady-state frames.
+ * Drawn rather than laid out as two boxes: the indicator is a fraction of the track's measured
+ * width.
+ *
+ * Not [drawBehind]'s caching sibling. `drawWithCache` rebuilds on size, density and layout
+ * direction only, so it captured a `progress` that changed while the bar stayed the same width and
+ * kept redrawing the first frame's fraction forever.
  */
 context(_: Composer)
 fun ShadcnProgress(
@@ -36,25 +40,27 @@ fun ShadcnProgress(
         modifier
             .fillMaxWidth()
             .height(height)
-            .drawWithCache {
+            .drawBehind {
                 val trackColor = theme.palette.primary.withAlpha(ShadcnProgressTrackAlpha)
                 val indicatorColor = theme.palette.primary
-                val radius = size.height / 2f
-                onDrawBehind {
+                // `this.` is load-bearing: the composable's own `height: Dp` parameter shadows the
+                // DrawScope's measured `height: Int`, and Dp compiles here as a silent wrong unit.
+                val drawnWidth = this.width.toFloat()
+                val drawnHeight = this.height.toFloat()
+                val radius = drawnHeight / 2f
+                drawRoundedRect(
+                    width = drawnWidth,
+                    height = drawnHeight,
+                    color = trackColor,
+                    radius = radius,
+                )
+                if (fraction > 0f) {
                     drawRoundedRect(
-                        width = size.width,
-                        height = size.height,
-                        color = trackColor,
+                        width = drawnWidth * fraction,
+                        height = drawnHeight,
+                        color = indicatorColor,
                         radius = radius,
                     )
-                    if (fraction > 0f) {
-                        drawRoundedRect(
-                            width = size.width * fraction,
-                            height = size.height,
-                            color = indicatorColor,
-                            radius = radius,
-                        )
-                    }
                 }
             }
     )

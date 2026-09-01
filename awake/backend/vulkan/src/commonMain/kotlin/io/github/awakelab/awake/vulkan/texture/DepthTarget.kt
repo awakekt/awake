@@ -38,6 +38,7 @@ import io.github.awakelab.awake.vulkan.models.info.VkImageUsageFlagBits2
 import io.github.awakelab.awake.vulkan.models.info.VkImageViewCreateInfo
 import io.github.awakelab.awake.vulkan.models.info.VkMemoryAllocateInfo
 import io.github.awakelab.awake.vulkan.models.info.VkRenderPassCreateInfo
+import io.github.awakelab.awake.vulkan.models.info.VkCompareOp2
 import io.github.awakelab.awake.vulkan.models.info.VkSamplerAddressMode
 import io.github.awakelab.awake.vulkan.models.info.VkSamplerCreateInfo
 import io.github.awakelab.awake.vulkan.models.info.VkSubpassDescription
@@ -56,16 +57,39 @@ import io.github.awakelab.awake.vulkan.pipeline.VulkanMaterialBinding
  * about why a caller wants depth rendered offscreen. A shadow map is the one use today; a
  * depth pre-pass for occlusion or SSAO would be the same object.
  *
- * Sampled as a plain (non-comparison) texture, not via a hardware comparison sampler: this
- * repo's `VkSamplerCreateInfo` JNI binding has no `compareEnable`/`compareOp` fields today
- * (extending the native binding generator is out of scope here), so a consumer does the depth
- * comparison in its own fragment shader. [sampler] is therefore `NEAREST`-filtered --
- * linear-filtering raw, un-compared depth values blends across a depth discontinuity, which
- * means nothing.
+ * [comparison] decides how [sampler] reads: a hardware comparison sampler (LessEqual,
+ * linear-filtered -- the GPU compares each texel BEFORE filtering, so the blend is over 0/1
+ * comparison results and is meaningful) for the shadow map, or a plain `NEAREST` sampler for a
+ * consumer that wants raw depth values, where linear filtering would blend across a depth
+ * discontinuity and mean nothing.
  */
 class DepthTarget(
     graphicsDevice: GraphicsDevice,
     val size: Int = DEFAULT_SIZE,
+    /**
+     * How many layers the image holds -- one shadow cascade each.
+     *
+     * Rendering targets ONE layer at a time ([framebufferFor]) while sampling reads the whole
+     * array through [imageView]. That split is the reason cascades are layers rather than tiles
+     * of one big map: a tile needs gutters and UV arithmetic to stop filtering bleeding between
+     * neighbours, and a layer cannot bleed into another by construction.
+     */
+    val layers: Int = 1,
+    /**
+     * Whether [imageView] is an ARRAY view.
+     *
+     * Not derived from `layers > 1`: a shader declares `texture_depth_2d` or
+     * `texture_depth_2d_array` at compile time, and a one-cascade configuration must still bind
+     * an array view to a shader that declares one. Deriving it would make a cascade count of 1
+     * fail at bind time with a message about view dimensions.
+     */
+    val arrayed: Boolean = false,
+    /**
+     * Whether [sampler] is a comparison sampler. A flag, not the default, because this class
+     * also serves the scene-depth target: `depth_fog` declares a plain `sampler` and reads raw
+     * depth, which a comparison sampler cannot produce.
+     */
+    private val comparison: Boolean = false,
 ) {
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
@@ -79,8 +103,17 @@ class DepthTarget(
         private set
     var sampler: Long = 0
         private set
-    var framebuffer: Long = 0
-        private set
+    /** Layer 0's framebuffer -- the only one a single-layer target has. */
+    val framebuffer: Long get() = framebuffers[0]
+
+    /** One per layer, each attaching that layer alone. */
+    private var framebuffers: LongArray = LongArray(0)
+
+    /** Per-layer views, kept for teardown; [framebuffers] reference them without owning them. */
+    private var layerViews: LongArray = LongArray(0)
+
+    /** The framebuffer that renders into [layer] -- a cascade's own slot. */
+    fun framebufferFor(layer: Int): Long = framebuffers[layer]
 
     /**
      * This map's own descriptor set -- image at binding 0 and sampler at binding 1 in the
@@ -108,6 +141,7 @@ class DepthTarget(
                 width = size,
                 height = size,
                 format = DEPTH_FORMAT.value,
+                arrayLayers = layers,
                 usage = VkImageUsageFlagBits2.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT or
                     VkImageUsageFlagBits2.VK_IMAGE_USAGE_SAMPLED_BIT,
             ),
@@ -127,37 +161,65 @@ class DepthTarget(
             device,
             VkImageViewCreateInfo(
                 image = image,
-                viewType = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
+                viewType = if (arrayed) {
+                    VkImageViewType.VK_IMAGE_VIEW_TYPE_2D_ARRAY
+                } else {
+                    VkImageViewType.VK_IMAGE_VIEW_TYPE_2D
+                },
                 format = DEPTH_FORMAT,
                 subresourceRange = VkImageSubresourceRange(
                     aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_DEPTH_BIT.value,
                     baseMipLevel = 0,
                     levelCount = 1,
                     baseArrayLayer = 0,
-                    layerCount = 1,
+                    layerCount = layers,
                 ),
             ),
         )
         sampler = VulkanImages.vkCreateSampler(
             device,
             VkSamplerCreateInfo(
-                magFilter = VkFilter.VK_FILTER_NEAREST,
-                minFilter = VkFilter.VK_FILTER_NEAREST,
+                magFilter = if (comparison) VkFilter.VK_FILTER_LINEAR else VkFilter.VK_FILTER_NEAREST,
+                minFilter = if (comparison) VkFilter.VK_FILTER_LINEAR else VkFilter.VK_FILTER_NEAREST,
                 addressModeU = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
                 addressModeV = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
                 addressModeW = VkSamplerAddressMode.VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+                compareEnable = comparison,
+                compareOp = VkCompareOp2.VK_COMPARE_OP_LESS_OR_EQUAL,
             ),
         )
-        framebuffer = Vulkan.vkCreateFramebuffer(
-            device,
-            VkFramebufferCreateInfo(
-                renderPass = renderPass,
-                pAttachments = arrayOf(imageView),
-                width = size,
-                height = size,
-                layers = 1,
-            ),
-        )
+        // A framebuffer attaches ONE layer, so each cascade needs its own view and its own
+        // framebuffer -- an array view here would render every layer at once through multiview,
+        // which is a different feature with its own extension.
+        layerViews = LongArray(layers) { layer ->
+            Vulkan.vkCreateImageView(
+                device,
+                VkImageViewCreateInfo(
+                    image = image,
+                    viewType = VkImageViewType.VK_IMAGE_VIEW_TYPE_2D,
+                    format = DEPTH_FORMAT,
+                    subresourceRange = VkImageSubresourceRange(
+                        aspectMask = VkImageAspectFlagBits.VK_IMAGE_ASPECT_DEPTH_BIT.value,
+                        baseMipLevel = 0,
+                        levelCount = 1,
+                        baseArrayLayer = layer,
+                        layerCount = 1,
+                    ),
+                ),
+            )
+        }
+        framebuffers = LongArray(layers) { layer ->
+            Vulkan.vkCreateFramebuffer(
+                device,
+                VkFramebufferCreateInfo(
+                    renderPass = renderPass,
+                    pAttachments = arrayOf(layerViews[layer]),
+                    width = size,
+                    height = size,
+                    layers = 1,
+                ),
+            )
+        }
         createDescriptorSet()
     }
 
@@ -264,7 +326,8 @@ class DepthTarget(
     )
 
     fun destroy() {
-        Vulkan.vkDestroyFramebuffer(device, framebuffer)
+        framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
+        layerViews.forEach { Vulkan.vkDestroyImageView(device, it) }
         VulkanImages.vkDestroySampler(device, sampler)
         Vulkan.vkDestroyImageView(device, imageView)
         VulkanImages.vkDestroyImage(device, image)

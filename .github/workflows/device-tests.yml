@@ -1,0 +1,75 @@
+# Tests that need a running device rather than a JVM, kept out of the per-PR pipeline.
+#
+# Android is the one physics backend that cannot be covered by a host test at all: jolt-jni's
+# Android artifact ships device ABIs and nothing for a JVM host, so `System.loadLibrary("joltjni")`
+# has nothing to load and every test fails with UnsatisfiedLinkError. `testAndroidHostTest` is
+# disabled in that module for exactly this reason.
+#
+# Nightly rather than per-PR, deliberately. Android runs jolt-jni -- the same binding the `build`
+# job already exercises with the same 44 tests on every push -- so the Android-only surface is
+# whether the AAR's natives load and how the ABI behaves, not the physics itself. That is worth
+# checking daily and is not worth several minutes of emulator boot, and its attendant flakiness,
+# on every change. iOS is the opposite case and runs per-PR in ci.yml: JoltC shares no code with
+# anything else, and it is where the bugs have actually been.
+name: Device tests
+
+on:
+  schedule:
+    # 03:00 UTC. Late enough that a day's merges are in, early enough to read with coffee.
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: device-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  android-physics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      # Without this the emulator falls back to software rendering and takes long enough to trip
+      # the job timeout. GitHub's Linux runners expose /dev/kvm but not to the runner user.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # x86_64 because the runner is: jolt-jni's AAR ships arm64-v8a, armeabi-v7a, riscv64, x86
+      # and x86_64, so the emulator's own architecture is the only constraint.
+      - name: Jolt Android physics tests (instrumented)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: default
+          disable-animations: true
+          script: ./gradlew :awake:backend:jolt:connectedAndroidDeviceTest :awake:scene:physics:connectedAndroidDeviceTest
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-device-test-results
+          path: |
+            awake/backend/jolt/build/outputs/androidTest-results/
+            awake/scene/physics/build/outputs/androidTest-results/
+          if-no-files-found: warn

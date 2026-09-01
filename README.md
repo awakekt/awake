@@ -27,10 +27,10 @@ Run **Awake Studio** (interactive 3D editor with live scene switching, glTF prev
 
 ```bash
 # Desktop JVM Target
-./gradlew :samples:studio:run
+./gradlew :apps:studio:run
 
 # Web Target (Chrome/Edge 113+ with WebGPU)
-./gradlew :samples:studio:wasmJsBrowserDevelopmentRun
+./gradlew :apps:studio:wasmJsBrowserDevelopmentRun
 ```
 
 Run the **UI Showcase Gallery** (complete catalog of Compose Shadcn components):

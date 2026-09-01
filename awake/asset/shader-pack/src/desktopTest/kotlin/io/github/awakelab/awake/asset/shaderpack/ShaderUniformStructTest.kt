@@ -8,6 +8,7 @@ package io.github.awakelab.awake.asset.shaderpack
 import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
 import io.github.awakelab.awake.core.geometry.GpuDataShape
 import io.github.awakelab.awake.render.renderer.UniformField
+import io.github.awakelab.awake.core.math.ClipSpace
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -48,7 +49,8 @@ class ShaderUniformStructTest {
     fun litShadowsStructIsExactlyWhatTheKotlinLayoutDeclares() {
         assertEquals(
             expectedFields(),
-            uniformStructFields(LitShadowShader),
+            // Either backend: the uniform block is the same in both, only the shadow lookup differs.
+            uniformStructFields(litShadowShader(ClipSpace.Vulkan)),
             "lit_shadow.wgsl's Uniforms struct and LitShadowUniformLayout disagree. They size " +
                 "and order the same buffer, so whichever one changed has to be matched in the " +
                 "other -- and check shadow_depth.wgsl too, it binds this same buffer.",

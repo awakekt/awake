@@ -355,10 +355,16 @@ class LayoutNode(
         modifier.foldIn(Unit) { _, declaredElement ->
             val element = retainModifierNode(modifierIndex, declaredElement)
             modifierIndex += 1
+            // Captured before adding `element` itself: `drawDepths` documents "how many layout
+            // links sit OUTSIDE each draw link", so a node that is both (ScrollNode: it clips its
+            // own viewport) must not count its own layout link as one of the links outside it --
+            // that walked drawBoundsAt one step too far in, landing on what IT placed (its
+            // unbounded-height content) instead of what it itself measured as (the viewport).
+            val layoutModifiersOutside = layoutModifiers.size
             if (element is LayoutModifierNode) layoutModifiers += element
             if (element is DrawModifierNode) {
                 drawNodes += element
-                drawDepthScratch += layoutModifiers.size
+                drawDepthScratch += layoutModifiersOutside
             }
             if (element is PointerInputNode) {
                 pointerNodes += element

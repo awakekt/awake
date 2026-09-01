@@ -93,7 +93,7 @@ Direct DSL usage (`entity(name, modifier) { }` / `EntityModifier()` chains) is c
 - `SceneGameDsl.kt` -- re-exports, import cleanup
 - `SceneDslTest.kt`, `SceneAppLifecycleDslTest.kt` -- rewritten call sites
 
-Consumers (`samples/studio`, `samples/ui-showcase`) call the `cameraEntity()`/`meshEntity()`
+Consumers (`apps/studio`, `samples/ui-showcase`) call the `cameraEntity()`/`meshEntity()`
 sugar or drive scenes through `SceneDocument`/glTF loading, not hand-authored `entity()` chains
 -- checked via repo-wide grep, zero direct `EntityModifier`/positional-`modifier` call sites
 outside `scene/authoring`. External blast radius is effectively zero right now; the whole cost

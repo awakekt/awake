@@ -29,7 +29,7 @@ class ShowcaseSwitcherTest {
         host.frame(
             FrameInput(viewportWidth = 1280, viewportHeight = 720, pointerX = x, pointerY = y, pointerDown = down),
         ) {
-            ShowcaseSwitcher(selection, EngineShowcases)
+            ShowcaseOverlay(selection, EngineShowcases)
         }
 
     /** Input is dispatched against the previous frame's placed tree, so the layout frame comes first. */

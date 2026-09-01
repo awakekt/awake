@@ -5,6 +5,10 @@
  */
 package io.github.awakelab.awake.webgpu
 
+import io.github.awakelab.awake.webgpu.pipeline.WebGpuUiPass
+import io.github.awakelab.awake.webgpu.pipeline.WebGpuLinePass
+import io.github.awakelab.awake.render.passes2d.UiRenderFeature
+import io.github.awakelab.awake.render.passes.OpaqueRenderFeature
 import io.github.awakelab.awake.core.geometry.MeshGeometry
 import io.github.awakelab.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import io.github.awakelab.awake.compose.ui.graphics.drawscope.GraphicsLayerPlaceholder
@@ -294,6 +298,11 @@ class WebGpuHeadlessPixelTest {
             "vertexMain",
             "fragmentMain",
         )
+        val lineRenderPipeline = LineRenderPipeline(
+            graphicsDevice,
+            swapchainManager,
+            engineWgsl(EngineShaderSets.DebugLine),
+        )
         val renderer = Renderer(
             graphicsDevice = graphicsDevice,
             swapchainManager = swapchainManager,
@@ -301,11 +310,7 @@ class WebGpuHeadlessPixelTest {
                 primary = primary,
                 primaryFormat = VertexFormat.PositionColorUv,
             ),
-            lineRenderPipeline = LineRenderPipeline(
-                graphicsDevice,
-                swapchainManager,
-                engineWgsl(EngineShaderSets.DebugLine),
-            ),
+            lineRenderPipeline = lineRenderPipeline,
             // Real sources, not empty arrays: the UI pipelines are built lazily on first
             // drawUi(), so this test never touches them, but handing the Renderer a stub would
             // make that laziness load-bearing for the harness rather than incidental.
@@ -317,6 +322,14 @@ class WebGpuHeadlessPixelTest {
                 targetComposite = engineWgsl(EngineShaderSets.UiTargetComposite),
             ),
             maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
+            // The same feature list WebGpuEngine builds. Not optional any more: rendering to a
+            // texture records features exactly as the on-screen path does, so a renderer with an
+            // empty list draws nothing -- which is what a capture of a featureless renderer
+            // always meant, it just used to draw anyway through a second, hand-written path.
+            renderFeatures = listOf(
+                OpaqueRenderFeature(WebGpuLinePass(lineRenderPipeline)),
+                UiRenderFeature(WebGpuUiPass()),
+            ),
         )
         try {
             block(renderer)

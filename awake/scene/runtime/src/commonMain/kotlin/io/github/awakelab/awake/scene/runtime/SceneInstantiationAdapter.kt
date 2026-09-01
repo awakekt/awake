@@ -10,13 +10,13 @@ import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.Entity
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.render.renderer.CullMode
-import io.github.awakelab.awake.scene.core.components.Name
-import io.github.awakelab.awake.scene.core.components.SpinControl
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.rendering.components.Light
-import io.github.awakelab.awake.scene.rendering.components.PbrMaterial
+import io.github.awakelab.awake.scene.core.Name
+import io.github.awakelab.awake.scene.core.transform.SpinControl
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.Light
+import io.github.awakelab.awake.scene.rendering.mesh.PbrMaterial
 import kotlin.math.PI
-import io.github.awakelab.awake.scene.rendering.components.Camera as SceneCameraComponent
+import io.github.awakelab.awake.scene.rendering.Camera as SceneCameraComponent
 
 data class SceneNodeHandle<T>(
     val name: String?,
@@ -128,6 +128,7 @@ internal fun SceneCamera.toComponent(): SceneCameraComponent = SceneCameraCompon
 internal fun SceneLight.toComponent(): Light = Light(
     color = color.toVec3(),
     intensity = intensity,
+    direction = direction.toVec3(),
     range = range,
     type = when (type) {
         SceneLight.Type.Directional -> Light.Type.Directional

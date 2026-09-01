@@ -17,15 +17,23 @@ import kotlin.math.tan
  * samples, which is 32KB packed and 256KB as bytes, and a streamed world holds a dozen or more
  * of these resident at once.
  *
- * Samples sit on a regular [cellSize] grid sharing the heightmap's corner origin, so sample
- * `(x, z)` is at world `(x * cellSize, _, z * cellSize)`. Immutable once baked, which is what
- * lets a search running off the frame thread read a tile the streaming system may be unloading.
+ * Samples sit on a regular [cellSize] grid starting at ([originX], [originZ]), so sample `(x, z)`
+ * is at world `(originX + x * cellSize, _, originZ + z * cellSize)`. A tile baked from a whole
+ * heightmap carries that map's own origin, which is centred; a tile baked for one streamed cell
+ * starts at zero and is placed by the cell it belongs to. Carrying the origin is what keeps those
+ * two apart -- assuming either one makes the other's paths land half a map away from the ground
+ * they were baked from. Immutable once baked, which is what lets a search running off the frame
+ * thread read a tile the streaming system may be unloading.
  */
 class NavGridTile internal constructor(
     val width: Int,
     val depth: Int,
     val cellSize: Float,
     private val walkable: LongArray,
+    /** World X of sample column 0. */
+    val originX: Float = 0f,
+    /** World Z of sample row 0. */
+    val originZ: Float = 0f,
 ) {
     /** Number of samples an agent can stand on. Useful mostly for asserting a bake did something. */
     val walkableCount: Int
@@ -44,10 +52,10 @@ class NavGridTile internal constructor(
     }
 
     /** World X of sample column [x]. */
-    fun worldX(x: Int): Float = x * cellSize
+    fun worldX(x: Int): Float = originX + x * cellSize
 
     /** World Z of sample row [z]. */
-    fun worldZ(z: Int): Float = z * cellSize
+    fun worldZ(z: Int): Float = originZ + z * cellSize
 
     internal companion object {
         const val LONG_SHIFT = 6
@@ -78,6 +86,8 @@ fun Heightmap.bakeNavGrid(
         navDepth = (extentZ / cellSize).toInt() + 1,
         cellSize = cellSize,
         maxSlopeDegrees = maxSlopeDegrees,
+        // The whole map, so the tile inherits the map's own origin.
+        wholeMap = true,
     )
 }
 
@@ -100,7 +110,9 @@ fun Heightmap.bakeNavGridCell(
     maxSlopeDegrees: Float = DEFAULT_MAX_SLOPE_DEGREES,
 ): NavGridTile {
     require(samples > 0) { "NavGrid samples must be positive; was $samples." }
-    return bake(samples, samples, sampleSize, maxSlopeDegrees)
+    // One cell, not the whole map: a streamed tile owns [0, samples * sampleSize) inside its
+    // cell, and the cell it belongs to supplies the world offset.
+    return bake(samples, samples, sampleSize, maxSlopeDegrees, wholeMap = false)
 }
 
 private fun Heightmap.bake(
@@ -108,6 +120,7 @@ private fun Heightmap.bake(
     navDepth: Int,
     cellSize: Float,
     maxSlopeDegrees: Float,
+    wholeMap: Boolean,
 ): NavGridTile {
     require(cellSize > 0f && cellSize.isFinite()) {
         "NavGrid cellSize must be positive and finite; was $cellSize."
@@ -116,26 +129,33 @@ private fun Heightmap.bake(
         "NavGrid maxSlopeDegrees must be in (0, $STRAIGHT_UP_DEGREES); was $maxSlopeDegrees."
     }
 
-    val scale = scale
     val probe = NavGridProbe(
         heightmap = this,
         cellSize = cellSize,
         // One tan for the whole bake rather than an atan per sample.
         maxGradient = tan(maxSlopeDegrees * PI.toFloat() / STRAIGHT_ANGLE_DEGREES),
-        extentX = (width - 1) * scale.x,
-        extentZ = (depth - 1) * scale.z,
     )
 
     val bits = LongArray((navWidth * navDepth + NavGridTile.LONG_MASK) ushr NavGridTile.LONG_SHIFT)
     for (z in 0 until navDepth) {
         for (x in 0 until navWidth) {
-            if (!probe.isStandable(x * cellSize, z * cellSize)) continue
+            // Tile cell (0, 0) is the map's first sample, wherever the map puts it.
+            val worldX = probe.minX + x * cellSize
+            val worldZ = probe.minZ + z * cellSize
+            if (!probe.isStandable(worldX, worldZ)) continue
             val bit = z * navWidth + x
             val word = bit ushr NavGridTile.LONG_SHIFT
             bits[word] = bits[word] or (1L shl (bit and NavGridTile.LONG_MASK))
         }
     }
-    return NavGridTile(navWidth, navDepth, cellSize, bits)
+    return NavGridTile(
+        navWidth,
+        navDepth,
+        cellSize,
+        bits,
+        originX = if (wholeMap) probe.minX else 0f,
+        originZ = if (wholeMap) probe.minZ else 0f,
+    )
 }
 
 /** Holds one bake's invariants so the per-sample slope test does not re-derive or re-pass them. */
@@ -143,9 +163,13 @@ private class NavGridProbe(
     private val heightmap: Heightmap,
     private val cellSize: Float,
     private val maxGradient: Float,
-    val extentX: Float,
-    val extentZ: Float,
 ) {
+    /** The map's own bounds, so a probe clamps to where the samples actually are. */
+    val minX: Float = heightmap.minX
+    val minZ: Float = heightmap.minZ
+    private val maxX: Float = minX + (heightmap.width - 1) * heightmap.scale.x
+    private val maxZ: Float = minZ + (heightmap.depth - 1) * heightmap.scale.z
+
     /**
      * Tests the steepest step from ([worldX], [worldZ]) to any of its four neighbours.
      *
@@ -174,8 +198,8 @@ private class NavGridProbe(
         offsetX: Float,
         offsetZ: Float,
     ): Boolean {
-        val probeX = (worldX + offsetX).coerceIn(0f, extentX)
-        val probeZ = (worldZ + offsetZ).coerceIn(0f, extentZ)
+        val probeX = (worldX + offsetX).coerceIn(minX, maxX)
+        val probeZ = (worldZ + offsetZ).coerceIn(minZ, maxZ)
         val run = abs(probeX - worldX) + abs(probeZ - worldZ)
         if (run == 0f) return true
         val there = heightmap.heightAtWorld(probeX, probeZ)

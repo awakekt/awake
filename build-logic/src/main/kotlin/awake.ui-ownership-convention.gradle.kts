@@ -15,7 +15,7 @@ val classifiedUiModules = setOf(
     ":awake:tailwind",
     ":awake:heroicons",
     ":samples:ui-showcase",
-    ":samples:studio",
+    ":apps:studio",
 )
 check(project.path in classifiedUiModules) {
     "Unclassified module applies awake.ui-ownership-convention: ${project.path}. " +
@@ -41,7 +41,7 @@ val forbiddenUiSourcePatterns = when (project.path) {
         "(?m)^import\\s+io\\.github\\.awakelab\\.awake\\.ui\\.context\\.(?!UiLocal\\b|uiLocalOf\\b)",
     )
     ":samples:ui-showcase",
-    ":samples:studio" -> listOf(
+    ":apps:studio" -> listOf(
         "(?m)^import\\s+io\\.github\\.awakelab\\.awake\\.ui\\.modifier\\.",
         "\\bStyle\\s*\\{",
     )

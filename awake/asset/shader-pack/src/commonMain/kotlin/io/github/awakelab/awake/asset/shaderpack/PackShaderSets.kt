@@ -21,7 +21,7 @@ import io.github.awakelab.awake.asset.shaders.aslShaderSet
  */
 object PackShaderSets {
     val Triangle = aslShaderSet(TriangleShader)
-    val LitShadow = aslShaderSet(LitShadowShader)
+    val LitShadow = aslShaderSet(::litShadowShader)
     val ShadowDepth = aslShaderSet(ShadowDepthShader)
     val SceneDepth = aslShaderSet(SceneDepthShader)
     val Textured = aslShaderSet(TexturedShader)

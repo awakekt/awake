@@ -1,7 +1,7 @@
 # Kotlin Package Namespace Migration Plan
 
 **Date:** 2026-08-29  
-**Status:** `Active`  
+**Status:** `Complete` — landed in `c7aa536a2`.  
 **Prerequisite for:** [Maven Central publication](2026-08-29-maven-central-publication-plan.md)
 
 ## Objective
@@ -9,7 +9,7 @@
 Move Awake's public Kotlin package namespace from:
 
 ```text
-io.github.awakelab.awake.*
+io.github.ronjunevaldoz.awake.*
 ```
 
 to:
@@ -17,6 +17,10 @@ to:
 ```text
 io.github.awakelab.awake.*
 ```
+
+The old spelling above is written out deliberately. The rename swept every file in the repository
+including this plan, which left its own objective reading "move from X to X" — a plan that no longer
+says what it did.
 
 The Gradle Maven group remains a separate concern:
 

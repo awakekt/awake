@@ -36,6 +36,24 @@ class AnimationPose(private val skeleton: Skeleton) {
         }
     }
 
+    /** This bone's current local translation -- whatever the last [sample], [blend] or
+     * [setBoneTransform] left there, or its bind pose if nothing has written to it yet. */
+    fun boneTranslation(bone: Int): Vec3f = translation[bone]
+
+    /** This bone's current local rotation; see [boneTranslation]. */
+    fun boneRotation(bone: Int): Quat = rotation[bone]
+
+    /** Overwrites one bone's local translation and rotation, leaving its scale alone.
+     *
+     * The seam for a pose driven by something other than a clip -- a ragdoll, an IK solver, a
+     * procedural head-turn. Scale is untouched because none of those produce one: a rigid body has
+     * no scale to report, and overwriting it with 1 would discard whatever the mesh was authored
+     * with. */
+    fun setBoneTransform(bone: Int, translation: Vec3f, rotation: Quat) {
+        this.translation[bone] = translation
+        this.rotation[bone] = rotation
+    }
+
     /** Samples [clip] at [timeSeconds] into this pose's working TRS arrays -- a bone with no
      * channel targeting it keeps whatever TRS it already had (its authored bind pose, until/
      * unless a previous [sample] call overwrote it). */

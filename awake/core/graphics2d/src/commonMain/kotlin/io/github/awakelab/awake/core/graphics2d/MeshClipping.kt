@@ -149,6 +149,12 @@ private fun clipPolygonToConvexContour(subject: List<DrawPoint>, clip: List<Draw
         val b = clip[(i + 1) % clip.size]
         if (output.isEmpty()) break
         val input = output
+        // A convex clip contour flattened from an arc (a rounded rect's corners) can carry 20-30
+        // edges, but any one small polygon is only ever near one or two of them -- most edges
+        // leave every point inside and would rebuild an identical list. Skipping the rebuild when
+        // nothing is outside turns that into a handful of cheap cross-product checks instead of
+        // an allocation + copy, without changing the result.
+        if (input.all { isInsideConvexEdge(it, a, b, isCounterClockwise) }) continue
         output = buildList {
             var prev = input.last()
             input.forEach { curr ->
@@ -179,6 +185,9 @@ private fun clipTexturedPolygonToConvexContour(subject: List<TexturedVertex>, cl
         val b = clip[(i + 1) % clip.size]
         if (output.isEmpty()) break
         val input = output
+        // See the plain-point clipPolygonToConvexContour's comment: most edges of a many-sided
+        // convex contour leave every point inside and would rebuild an unchanged list.
+        if (input.all { isInsideConvexEdge(it.position, a, b, isCounterClockwise) }) continue
         output = buildList {
             var prev = input.last()
             input.forEach { curr ->
@@ -209,6 +218,10 @@ private fun clipColoredPolygonToConvexContour(subject: List<ColoredVertex>, clip
         val b = clip[(i + 1) % clip.size]
         if (output.isEmpty()) break
         val input = output
+        // See the plain-point clipPolygonToConvexContour's comment: most edges of a many-sided
+        // convex contour leave every point inside and would rebuild an unchanged list. This is
+        // the hot path (profiled: dominates `exactClipColored` under a whole-shell rounded clip).
+        if (input.all { isInsideConvexEdge(it.position, a, b, isCounterClockwise) }) continue
         output = buildList {
             var prev = input.last()
             input.forEach { curr ->

@@ -6,6 +6,7 @@
 package io.github.awakelab.awake.render.mesh
 
 import io.github.awakelab.awake.core.geometry.VertexFormat
+import io.github.awakelab.awake.core.math.Aabb
 
 /**
  * Module restructuring slice 1 (see docs/mvp-plan.md): the backend-neutral surface
@@ -26,6 +27,21 @@ interface Mesh {
      * the renderer happens to have bound. Set once at [Renderer.createMesh] time from the
      * [MeshGeometry.format] the mesh was created from. */
     val format: VertexFormat
+
+    /**
+     * The box this mesh's own vertices occupy, in local space, or null when a backend built it
+     * without one.
+     *
+     * Here rather than left to a caller because a caller cannot recover it: `createMesh` takes
+     * `MeshGeometry` and returns GPU buffers, and the vertices are gone by the time anything
+     * wants to cull, index or draw a box around them. `MeshGeometry.bounds` already computes it;
+     * this is only where the answer is kept.
+     *
+     * The consequence of NOT having it was quiet: nothing attached `MeshBounds`, so frustum
+     * culling had nothing to test, the spatial index had nothing to index, and the bounds
+     * overlay had nothing to draw -- three features that looked implemented and were inert.
+     */
+    val localBounds: Aabb? get() = null
 
     /**
      * Bytes this mesh occupies on the GPU: its vertex buffer plus its index buffer.

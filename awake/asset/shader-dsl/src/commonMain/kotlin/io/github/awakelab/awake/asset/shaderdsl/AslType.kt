@@ -56,8 +56,25 @@ sealed interface AslType {
      */
     object TextureDepth2d : AslType
 
+    /**
+     * `texture_depth_2d_array` -- one shadow map per layer, which is how cascades are stored.
+     *
+     * Its own case rather than [Texture2dArrayF32] with a depth format, for the same reason
+     * [TextureDepth2d] is its own: WebGPU refuses to bind a depth view to a `texture_2d_array<f32>`
+     * declaration, and the error names a bind group rather than the shader that asked for it.
+     */
+    object TextureDepth2dArray : AslType
+
     /** Sampler resource. */
     object Sampler : AslType
+
+    /**
+     * `sampler_comparison` -- the hardware depth-compare sampler `textureSampleCompareLevel`
+     * needs. Its own case rather than [Sampler] because WebGPU's auto layout derives the bind
+     * group's sampler type from this spelling, and binding a comparison sampler against a plain
+     * `sampler` declaration (or vice versa) fails validation naming the bind group.
+     */
+    object SamplerComparison : AslType
 }
 
 /** Shorthand for the scalar float type -- the most common `param`/`fn` return type. */

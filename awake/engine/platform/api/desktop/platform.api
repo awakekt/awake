@@ -31,6 +31,19 @@ protected final class io/github/awakelab/awake/engine/platform/GraphicsEngine$Ba
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/awakelab/awake/engine/platform/HeadlessSurface {
+	public fun <init> (II)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun copy (II)Lio/github/awakelab/awake/engine/platform/HeadlessSurface;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/engine/platform/HeadlessSurface;IIILjava/lang/Object;)Lio/github/awakelab/awake/engine/platform/HeadlessSurface;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHeight ()I
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface class io/github/awakelab/awake/engine/platform/WindowLifecycle {
 	public abstract fun create (Ljava/lang/Object;)V
 	public static synthetic fun create$default (Lio/github/awakelab/awake/engine/platform/WindowLifecycle;Ljava/lang/Object;ILjava/lang/Object;)V
@@ -46,17 +59,30 @@ public final class io/github/awakelab/awake/engine/platform/WindowLifecycle$Defa
 	public static synthetic fun create$default (Lio/github/awakelab/awake/engine/platform/WindowLifecycle;Ljava/lang/Object;ILjava/lang/Object;)V
 }
 
+public final class io/github/awakelab/awake/engine/platform/config/PresentMode : java/lang/Enum {
+	public static final field Auto Lio/github/awakelab/awake/engine/platform/config/PresentMode;
+	public static final field LowLatency Lio/github/awakelab/awake/engine/platform/config/PresentMode;
+	public static final field NoVsync Lio/github/awakelab/awake/engine/platform/config/PresentMode;
+	public static final field Vsync Lio/github/awakelab/awake/engine/platform/config/PresentMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/engine/platform/config/PresentMode;
+	public static fun values ()[Lio/github/awakelab/awake/engine/platform/config/PresentMode;
+}
+
 public final class io/github/awakelab/awake/engine/platform/config/WindowConfig {
-	public fun <init> (Ljava/lang/String;IILio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;)V
+	public fun <init> (Ljava/lang/String;IILio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;Lio/github/awakelab/awake/engine/platform/config/PresentMode;)V
+	public synthetic fun <init> (Ljava/lang/String;IILio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;Lio/github/awakelab/awake/engine/platform/config/PresentMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()I
 	public final fun component3 ()I
 	public final fun component4 ()Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;
-	public final fun copy (Ljava/lang/String;IILio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;)Lio/github/awakelab/awake/engine/platform/config/WindowConfig;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/engine/platform/config/WindowConfig;Ljava/lang/String;IILio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;ILjava/lang/Object;)Lio/github/awakelab/awake/engine/platform/config/WindowConfig;
+	public final fun component5 ()Lio/github/awakelab/awake/engine/platform/config/PresentMode;
+	public final fun copy (Ljava/lang/String;IILio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;Lio/github/awakelab/awake/engine/platform/config/PresentMode;)Lio/github/awakelab/awake/engine/platform/config/WindowConfig;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/engine/platform/config/WindowConfig;Ljava/lang/String;IILio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;Lio/github/awakelab/awake/engine/platform/config/PresentMode;ILjava/lang/Object;)Lio/github/awakelab/awake/engine/platform/config/WindowConfig;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBackend ()Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;
 	public final fun getHeight ()I
+	public final fun getPresentMode ()Lio/github/awakelab/awake/engine/platform/config/PresentMode;
 	public final fun getTitle ()Ljava/lang/String;
 	public final fun getWidth ()I
 	public fun hashCode ()I
@@ -138,7 +164,9 @@ public final class io/github/awakelab/awake/engine/platform/dsl/AppWindowConfigB
 	public fun <init> ()V
 	public final fun build ()Lio/github/awakelab/awake/engine/platform/config/WindowConfig;
 	public final fun getBackend ()Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackendBuilder;
+	public final fun getPresentMode ()Lio/github/awakelab/awake/engine/platform/config/PresentMode;
 	public final fun getTitle ()Ljava/lang/String;
+	public final fun setPresentMode (Lio/github/awakelab/awake/engine/platform/config/PresentMode;)V
 	public final fun setTitle (Ljava/lang/String;)V
 	public final fun size (II)V
 }

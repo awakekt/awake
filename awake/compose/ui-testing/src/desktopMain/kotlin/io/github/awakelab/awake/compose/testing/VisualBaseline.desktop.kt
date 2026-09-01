@@ -89,7 +89,7 @@ private val OpaqueBackground = Color(1f, 1f, 1f, 1f)
 private fun readBaseline(name: String): BufferedImage? =
     object {}.javaClass.getResourceAsStream("/baselines/components/$name.png")?.use(ImageIO::read)
 
-/** RGBA8, the layout [io.github.awakelab.awake.render.testing.PixelMap] already packs. */
+/** RGBA8, the layout [io.github.awakelab.awake.render.capture.PixelMap] already packs. */
 private fun BufferedImage.toRgbaBytes(): ByteArray {
     val bytes = ByteArray(width * height * 4)
     var offset = 0

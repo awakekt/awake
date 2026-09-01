@@ -12,8 +12,28 @@ public final class io/github/awakelab/awake/core/geometry/GpuDataShape : java/la
 	public static fun values ()[Lio/github/awakelab/awake/core/geometry/GpuDataShape;
 }
 
+public final class io/github/awakelab/awake/core/geometry/GridTopologyKt {
+	public static final fun gridTriangleIndices (IILkotlin/jvm/functions/Function2;)[I
+	public static synthetic fun gridTriangleIndices$default (IILkotlin/jvm/functions/Function2;ILjava/lang/Object;)[I
+}
+
 public final class io/github/awakelab/awake/core/geometry/IndexBytesKt {
 	public static final fun toByteArrayLE ([I)[B
+}
+
+public final class io/github/awakelab/awake/core/geometry/InterleavedVertices {
+	public fun <init> (Lio/github/awakelab/awake/core/geometry/VertexFormat;I)V
+	public final fun build ([I)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
+	public final fun copyOrFill (Lio/github/awakelab/awake/core/geometry/VertexSemantic;[FI[F)V
+	public final fun fill (Lio/github/awakelab/awake/core/geometry/VertexSemantic;[F)V
+	public final fun getFormat ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
+	public final fun getVertexCount ()I
+	public final fun has (Lio/github/awakelab/awake/core/geometry/VertexSemantic;)Z
+	public final fun put (ILio/github/awakelab/awake/core/geometry/VertexSemantic;F)V
+	public final fun put (ILio/github/awakelab/awake/core/geometry/VertexSemantic;FF)V
+	public final fun put (ILio/github/awakelab/awake/core/geometry/VertexSemantic;FFF)V
+	public final fun put (ILio/github/awakelab/awake/core/geometry/VertexSemantic;FFFF)V
+	public final fun toFloatArray ()[F
 }
 
 public final class io/github/awakelab/awake/core/geometry/MeshGeometry {
@@ -111,6 +131,7 @@ public final class io/github/awakelab/awake/core/geometry/VertexFormat {
 	public final fun copy (Ljava/util/List;)Lio/github/awakelab/awake/core/geometry/VertexFormat;
 	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/geometry/VertexFormat;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/VertexFormat;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun floatOffsetOf (Lio/github/awakelab/awake/core/geometry/VertexSemantic;)I
 	public final fun getAttributes ()Ljava/util/List;
 	public final fun getEntries ()Ljava/util/List;
 	public final fun getStrideBytes ()I

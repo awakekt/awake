@@ -18,9 +18,9 @@ import io.github.awakelab.awake.core.math.Mat4
 import io.github.awakelab.awake.core.math.Quat
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.rendering.components.Animator
-import io.github.awakelab.awake.scene.rendering.components.SkinnedPose
-import io.github.awakelab.awake.scene.rendering.systems.AnimationSystem
+import io.github.awakelab.awake.scene.rendering.animation.Animator
+import io.github.awakelab.awake.scene.rendering.animation.SkinnedPose
+import io.github.awakelab.awake.scene.rendering.animation.AnimationSystem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

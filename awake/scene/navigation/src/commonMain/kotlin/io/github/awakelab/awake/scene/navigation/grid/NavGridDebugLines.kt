@@ -10,7 +10,6 @@ import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.Entity
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.render.renderer.LineSegment
-import io.github.awakelab.awake.scene.ai.ChaseBehavior
 import io.github.awakelab.awake.scene.world.WorldCellCoord
 
 /**
@@ -33,13 +32,14 @@ import io.github.awakelab.awake.scene.world.WorldCellCoord
  * Colours and sizes are fixed. A caller wanting its own builds the lines itself — this is a
  * diagnostic, and a palette parameter for one consumer would be a knob nobody turns.
  */
+
 fun navGridDebugLines(
-    world: World,
     tile: NavGridTile,
     surfaceAt: (x: Float, z: Float) -> Float,
+    routes: List<AgentRoute> = emptyList(),
 ): List<LineSegment> = NavGridDebugSink(surfaceAt).run {
     blockedMarkers(tile, originX = 0f, originZ = 0f, color = BLOCKED_COLOR)
-    routes(world)
+    routes(routes)
     lines
 }
 
@@ -58,9 +58,9 @@ fun navGridDebugLines(
  * navigation can answer questions about.
  */
 fun navGridDebugLines(
-    world: World,
     grid: StreamedNavGrid,
     surfaceAt: (x: Float, z: Float) -> Float,
+    routes: List<AgentRoute> = emptyList(),
 ): List<LineSegment> = NavGridDebugSink(surfaceAt).run {
     grid.residentCells.forEach { coord ->
         val tile = grid.tileAt(coord) ?: return@forEach
@@ -72,7 +72,7 @@ fun navGridDebugLines(
         )
         cellOutline(coord, grid.worldCellSize)
     }
-    routes(world)
+    routes(routes)
     lines
 }
 
@@ -97,15 +97,14 @@ private class NavGridDebugSink(private val surfaceAt: (Float, Float) -> Float) {
     }
 
     /**
-     * Every chaser's route, one colour each, ending in a cross on the goal.
+     * Every agent's route, one colour each, ending in a cross on the goal.
      *
      * The colour is picked by entity id rather than by iteration order: a family's order is not
      * promised to be stable across frames, and a route that changes colour when an unrelated
      * entity is destroyed is a diagnostic that lies.
      */
-    fun routes(world: World) {
-        world.family<ChaseBehavior>().forEach { entity, chase ->
-            val route = chase.path
+    fun routes(routes: List<AgentRoute>) {
+        routes.forEach { (entity, route) ->
             if (route.isEmpty()) return@forEach
             val color = routeColorFor(entity)
             for (index in 0 until route.size - 1) {

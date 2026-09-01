@@ -136,7 +136,7 @@ defects it had never been able to see:
 
 Both fixed. Gate result: **60 of 61 passing.** The one remaining failure is unrelated —
 `verify_detekt_baselines` reports 26 stale entries across four baseline files
-(`engine/bootstrap`, `ui/shadcn`, `samples/studio`, `samples/ui-showcase`), all referencing
+(`engine/bootstrap`, `ui/shadcn`, `apps/studio`, `samples/ui-showcase`), all referencing
 `UiScope`/`UiModifier`-era signatures. That is fallout from the `ui-core` to `:awake:compose`
 migration, predates this work, and is its own decision.
 

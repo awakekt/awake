@@ -12,7 +12,7 @@ import io.github.awakelab.awake.core.graphics2d.tessellateStrokeAa
 import io.github.awakelab.awake.core.graphics2d.tessellateFillAa
 import io.github.awakelab.awake.core.text.font.UiFont
 import io.github.awakelab.awake.core.text.font.UiFontSamplingMode
-import io.github.awakelab.awake.render.testing.PixelMap
+import io.github.awakelab.awake.render.capture.PixelMap
 import kotlin.math.ceil
 import kotlin.math.max
 import kotlin.math.min

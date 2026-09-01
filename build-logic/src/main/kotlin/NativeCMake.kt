@@ -5,6 +5,7 @@
  */
 import org.gradle.api.Project
 import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.register
 import java.io.File
@@ -81,6 +82,11 @@ fun Project.registerCMakeLibrary(
     defines: List<String> = emptyList(),
     buildArgs: List<String> = emptyList(),
     description: String,
+    // A CMakeLists.txt is free to add_library() files from outside its own directory --
+    // `desktop-native/CMakeLists.txt` builds `../src/main/cpp/*.cpp`, so sourceDir alone would
+    // miss every real source-change invalidation for that caller. Empty for callers (jolt) whose
+    // CMakeLists.txt only reaches into its own subdirectories.
+    extraInputDirs: List<File> = emptyList(),
 ): TaskProvider<Exec> {
     val configure = tasks.register<Exec>("configure$name") {
         group = NATIVE_GROUP
@@ -102,6 +108,20 @@ fun Project.registerCMakeLibrary(
                 }
             },
         )
+        // Declared so Gradle can skip re-running `cmake -S -B` when nothing changed -- same gap
+        // the naga cargo tasks had (shader-compiler/build.gradle.kts). Only CMakeCache.txt is
+        // claimed as output, not the whole buildDir: `build$name` writes into that same
+        // directory afterward (compiler_depend.make and friends, make/ninja's own dependency
+        // bookkeeping), and if both tasks claimed buildDir, build's own writes made configure
+        // look "changed" on the very next invocation -- confirmed by running this twice.
+        // CMakeCache.txt itself is untouched by a plain `cmake --build`.
+        inputs.dir(sourceDir).withPropertyName("cmakeSource").withPathSensitivity(PathSensitivity.RELATIVE)
+        extraInputDirs.forEachIndexed { index, dir ->
+            inputs.dir(dir).withPropertyName("cmakeExtraSource$index").withPathSensitivity(PathSensitivity.RELATIVE)
+        }
+        inputs.property("cmakeBuildType", buildType)
+        inputs.property("cmakeDefines", defines)
+        outputs.file(File(buildDir, "CMakeCache.txt")).withPropertyName("cmakeCache")
     }
 
     return tasks.register<Exec>("build$name") {
@@ -110,6 +130,15 @@ fun Project.registerCMakeLibrary(
         dependsOn(configure)
         workingDir = buildDir
         commandLine(buildList { add("cmake"); add("--build"); add(buildDir.absolutePath); addAll(buildArgs) })
+        // Same reasoning as configure's outputs above: rebuilding is only worth skipping once
+        // the C++ sources themselves are unchanged, and the compiled artifacts land back in
+        // buildDir regardless of which target this caller asked for.
+        inputs.dir(sourceDir).withPropertyName("cmakeSource").withPathSensitivity(PathSensitivity.RELATIVE)
+        extraInputDirs.forEachIndexed { index, dir ->
+            inputs.dir(dir).withPropertyName("cmakeExtraSource$index").withPathSensitivity(PathSensitivity.RELATIVE)
+        }
+        inputs.property("cmakeBuildArgs", buildArgs)
+        outputs.dir(buildDir).withPropertyName("cmakeBuildTree")
     }
 }
 

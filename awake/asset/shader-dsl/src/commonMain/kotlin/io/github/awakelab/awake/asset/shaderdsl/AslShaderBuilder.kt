@@ -473,6 +473,20 @@ fun AslShaderBuilder.textureDepth2d(group: Int, binding: Int): AslHandleProvider
     }
 
 /**
+ * Declares a `texture_depth_2d_array` resource at the specified [group] and [binding] -- the
+ * cascade set of a shadow map, sampled with [textureSampleArrayLevelDepth].
+ *
+ * @param group The bind group index.
+ * @param binding The binding index.
+ * @return A handle provider for the texture reference.
+ */
+fun AslShaderBuilder.textureDepth2dArray(group: Int, binding: Int): AslHandleProvider<AslRef> =
+    AslHandleProvider { name ->
+        textureBindings += AslTextureBinding(name, group, binding, AslType.TextureDepth2dArray)
+        AslRef(name, AslType.TextureDepth2dArray)
+    }
+
+/**
  * Declares a sampler resource at the specified [group] and [binding].
  *
  * @param group The bind group index.
@@ -483,6 +497,22 @@ fun AslShaderBuilder.sampler(group: Int, binding: Int): AslHandleProvider<AslRef
     AslHandleProvider { name ->
         textureBindings += AslTextureBinding(name, group, binding, AslType.Sampler)
         AslRef(name, AslType.Sampler)
+    }
+
+/**
+ * Declares a `sampler_comparison` resource at the specified [group] and [binding].
+ *
+ * The backend must bind a sampler created WITH a compare op here: WebGPU's auto layout derives
+ * a comparison-sampler binding from this declaration and rejects a plain sampler at bind time.
+ *
+ * @param group The bind group index.
+ * @param binding The binding index.
+ * @return A handle provider for the sampler reference.
+ */
+fun AslShaderBuilder.samplerComparison(group: Int, binding: Int): AslHandleProvider<AslRef> =
+    AslHandleProvider { name ->
+        textureBindings += AslTextureBinding(name, group, binding, AslType.SamplerComparison)
+        AslRef(name, AslType.SamplerComparison)
     }
 
 /**

@@ -1,0 +1,776 @@
+public final class io/github/awakelab/awake/core/graphics2d/BlendMode : java/lang/Enum {
+	public static final field Overlay Lio/github/awakelab/awake/core/graphics2d/BlendMode;
+	public static final field Plus Lio/github/awakelab/awake/core/graphics2d/BlendMode;
+	public static final field Screen Lio/github/awakelab/awake/core/graphics2d/BlendMode;
+	public static final field SourceOver Lio/github/awakelab/awake/core/graphics2d/BlendMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/graphics2d/BlendMode;
+	public static fun values ()[Lio/github/awakelab/awake/core/graphics2d/BlendMode;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh {
+	public fun <init> (Ljava/util/List;[I)V
+	public final fun bounds ()Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()[I
+	public final fun copy (Ljava/util/List;[I)Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;Ljava/util/List;[IILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIndices ()[I
+	public final fun getVertices ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/ColoredVertex {
+	public fun <init> (Lio/github/awakelab/awake/core/graphics2d/DrawPoint;Lio/github/awakelab/awake/core/color/Color;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/graphics2d/DrawPoint;
+	public final fun component2 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun copy (Lio/github/awakelab/awake/core/graphics2d/DrawPoint;Lio/github/awakelab/awake/core/color/Color;)Lio/github/awakelab/awake/core/graphics2d/ColoredVertex;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/ColoredVertex;Lio/github/awakelab/awake/core/graphics2d/DrawPoint;Lio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/ColoredVertex;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getPosition ()Lio/github/awakelab/awake/core/graphics2d/DrawPoint;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract class io/github/awakelab/awake/core/graphics2d/DrawCommand {
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPathPush : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/math2d/Rectangle;Lio/github/awakelab/awake/core/math2d/Rectangle;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/math2d/Rectangle;Lio/github/awakelab/awake/core/math2d/Rectangle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public final fun component2 ()Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public final fun component3 ()Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public final fun copy (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/math2d/Rectangle;Lio/github/awakelab/awake/core/math2d/Rectangle;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPathPush;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPathPush;Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/math2d/Rectangle;Lio/github/awakelab/awake/core/math2d/Rectangle;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPathPush;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBoundsRect ()Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public final fun getPath ()Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public final fun getSafeInteriorRect ()Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPop : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (Lio/github/awakelab/awake/core/math2d/Rectangle;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public final fun copy (Lio/github/awakelab/awake/core/math2d/Rectangle;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPop;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPop;Lio/github/awakelab/awake/core/math2d/Rectangle;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPop;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRestoreRect ()Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPush : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (Lio/github/awakelab/awake/core/math2d/Rectangle;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public final fun copy (Lio/github/awakelab/awake/core/math2d/Rectangle;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPush;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPush;Lio/github/awakelab/awake/core/math2d/Rectangle;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ClipPush;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRect ()Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$FilledPath : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/color/Color;Ljava/lang/String;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/color/Color;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public final fun component2 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/color/Color;Ljava/lang/String;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$FilledPath;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$FilledPath;Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/color/Color;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$FilledPath;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getPath ()Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public final fun getTokenId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$Glyph : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (FFFFFFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)V
+	public synthetic fun <init> (FFFFFFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun copy (FFFFFFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Glyph;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Glyph;FFFFFFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Glyph;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getH ()F
+	public final fun getTokenId ()Ljava/lang/String;
+	public final fun getTransform ()Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public final fun getU0 ()F
+	public final fun getU1 ()F
+	public final fun getV0 ()F
+	public final fun getV1 ()F
+	public final fun getW ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$GradientQuad : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (FFFFLio/github/awakelab/awake/core/graphics2d/LinearGradient;Ljava/lang/String;)V
+	public synthetic fun <init> (FFFFLio/github/awakelab/awake/core/graphics2d/LinearGradient;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Lio/github/awakelab/awake/core/graphics2d/LinearGradient;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (FFFFLio/github/awakelab/awake/core/graphics2d/LinearGradient;Ljava/lang/String;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$GradientQuad;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$GradientQuad;FFFFLio/github/awakelab/awake/core/graphics2d/LinearGradient;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$GradientQuad;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGradient ()Lio/github/awakelab/awake/core/graphics2d/LinearGradient;
+	public final fun getH ()F
+	public final fun getTokenId ()Ljava/lang/String;
+	public final fun getW ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$Mesh : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;FFFFFLjava/lang/String;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;FFFFFLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()Ljava/lang/String;
+	public final fun copy (Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;FFFFFLjava/lang/String;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Mesh;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Mesh;Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;FFFFFLjava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Mesh;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlpha ()F
+	public final fun getMesh ()Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+	public final fun getOffsetX ()F
+	public final fun getOffsetY ()F
+	public final fun getScaleX ()F
+	public final fun getScaleY ()F
+	public final fun getTokenId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public final fun placedMesh ()Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$Quad : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (FFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)V
+	public synthetic fun <init> (FFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun component7 ()Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public final fun copy (FFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Quad;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Quad;FFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Quad;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getH ()F
+	public final fun getTokenId ()Ljava/lang/String;
+	public final fun getTransform ()Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public final fun getW ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$RoundedQuad : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (FFFFLio/github/awakelab/awake/core/color/Color;FFLjava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)V
+	public synthetic fun <init> (FFFFLio/github/awakelab/awake/core/color/Color;FFLjava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public final fun copy (FFFFLio/github/awakelab/awake/core/color/Color;FFLjava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$RoundedQuad;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$RoundedQuad;FFFFLio/github/awakelab/awake/core/color/Color;FFLjava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$RoundedQuad;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getH ()F
+	public final fun getRadius ()F
+	public final fun getSmoothing ()F
+	public final fun getTokenId ()Ljava/lang/String;
+	public final fun getTransform ()Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public final fun getW ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$ShadowQuad : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (FFFFFFFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/LinearGradient;)V
+	public synthetic fun <init> (FFFFFFFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/LinearGradient;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component10 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun component11 ()Ljava/lang/String;
+	public final fun component12 ()Lio/github/awakelab/awake/core/graphics2d/LinearGradient;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()F
+	public final fun copy (FFFFFFFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/LinearGradient;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ShadowQuad;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ShadowQuad;FFFFFFFFFLio/github/awakelab/awake/core/color/Color;Ljava/lang/String;Lio/github/awakelab/awake/core/graphics2d/LinearGradient;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$ShadowQuad;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlurRadius ()F
+	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getGradient ()Lio/github/awakelab/awake/core/graphics2d/LinearGradient;
+	public final fun getH ()F
+	public final fun getOffsetX ()F
+	public final fun getOffsetY ()F
+	public final fun getRadius ()F
+	public final fun getSpread ()F
+	public final fun getTokenId ()Ljava/lang/String;
+	public final fun getW ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$StrokedPath : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/DrawStroke;Lio/github/awakelab/awake/core/color/Color;Ljava/lang/String;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/DrawStroke;Lio/github/awakelab/awake/core/color/Color;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public final fun component2 ()Lio/github/awakelab/awake/core/graphics2d/DrawStroke;
+	public final fun component3 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/DrawStroke;Lio/github/awakelab/awake/core/color/Color;Ljava/lang/String;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$StrokedPath;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$StrokedPath;Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/DrawStroke;Lio/github/awakelab/awake/core/color/Color;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$StrokedPath;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getPath ()Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public final fun getStroke ()Lio/github/awakelab/awake/core/graphics2d/DrawStroke;
+	public final fun getTokenId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommand$Texture : io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive {
+	public fun <init> (FFFFLjava/lang/Object;FFLio/github/awakelab/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)V
+	public synthetic fun <init> (FFFFLjava/lang/Object;FFLio/github/awakelab/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Ljava/lang/Object;
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()Lio/github/awakelab/awake/core/graphics2d/BlendMode;
+	public final fun component9 ()Z
+	public final fun copy (FFFFLjava/lang/Object;FFLio/github/awakelab/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Texture;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Texture;FFFFLjava/lang/Object;FFLio/github/awakelab/awake/core/graphics2d/BlendMode;ZLjava/lang/String;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand$Texture;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlpha ()F
+	public final fun getBlendMode ()Lio/github/awakelab/awake/core/graphics2d/BlendMode;
+	public final fun getH ()F
+	public final fun getMaterial ()Ljava/lang/Object;
+	public final fun getPremultiplied ()Z
+	public final fun getRotationDegrees ()F
+	public final fun getTokenId ()Ljava/lang/String;
+	public final fun getTransform ()Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public final fun getW ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawCommandKt {
+	public static final fun getRequiresDestinationSampling (Lio/github/awakelab/awake/core/graphics2d/BlendMode;)Z
+	public static final fun scaledByAlpha (Lio/github/awakelab/awake/core/graphics2d/DrawCommand;F)Lio/github/awakelab/awake/core/graphics2d/DrawCommand;
+	public static final fun translatedBy (Lio/github/awakelab/awake/core/graphics2d/UiDrawPrimitive;FF)Lio/github/awakelab/awake/core/graphics2d/UiDrawPrimitive;
+	public static final fun withTransform (Lio/github/awakelab/awake/core/graphics2d/DrawCommand;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)Lio/github/awakelab/awake/core/graphics2d/DrawCommand;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawPath {
+	public static final field Companion Lio/github/awakelab/awake/core/graphics2d/DrawPath$Companion;
+	public fun <init> (Lio/github/awakelab/awake/core/graphics2d/FillRule;Ljava/util/List;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/graphics2d/FillRule;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/graphics2d/FillRule;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Lio/github/awakelab/awake/core/graphics2d/FillRule;Ljava/util/List;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/FillRule;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCommands ()Ljava/util/List;
+	public final fun getFillRule ()Lio/github/awakelab/awake/core/graphics2d/FillRule;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawPath$Companion {
+	public final fun build (Lio/github/awakelab/awake/core/graphics2d/FillRule;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public static synthetic fun build$default (Lio/github/awakelab/awake/core/graphics2d/DrawPath$Companion;Lio/github/awakelab/awake/core/graphics2d/FillRule;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawPathKt {
+	public static final fun drawPath (Lio/github/awakelab/awake/core/graphics2d/FillRule;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public static synthetic fun drawPath$default (Lio/github/awakelab/awake/core/graphics2d/FillRule;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public static final fun uiPath (Lio/github/awakelab/awake/core/graphics2d/FillRule;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public static synthetic fun uiPath$default (Lio/github/awakelab/awake/core/graphics2d/FillRule;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawPoint {
+	public fun <init> (FF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lio/github/awakelab/awake/core/graphics2d/DrawPoint;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawPoint;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawPoint;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/awakelab/awake/core/graphics2d/DrawShape {
+	public static final field Companion Lio/github/awakelab/awake/core/graphics2d/DrawShape$Companion;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawShape$Circle : io/github/awakelab/awake/core/graphics2d/DrawShape {
+	public static final field INSTANCE Lio/github/awakelab/awake/core/graphics2d/DrawShape$Circle;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawShape$Companion {
+	public final fun CutCorner-62jLhNU (F)Lio/github/awakelab/awake/core/graphics2d/DrawShape$CutCorner;
+	public final fun RoundedCorners-hzScx4E (FFFF)Lio/github/awakelab/awake/core/graphics2d/DrawShape$RoundedCorners;
+	public final fun RoundedRectangle-62jLhNU (F)Lio/github/awakelab/awake/core/graphics2d/DrawShape$RoundedRectangle;
+	public final fun getCircle ()Lio/github/awakelab/awake/core/graphics2d/DrawShape$Circle;
+	public final fun getPill ()Lio/github/awakelab/awake/core/graphics2d/DrawShape$Pill;
+	public final fun getRectangle ()Lio/github/awakelab/awake/core/graphics2d/DrawShape$Rectangle;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawShape$CutCorner : io/github/awakelab/awake/core/graphics2d/DrawShape {
+	public synthetic fun <init> (FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-PExdcLc ()F
+	public final fun copy-62jLhNU (F)Lio/github/awakelab/awake/core/graphics2d/DrawShape$CutCorner;
+	public static synthetic fun copy-62jLhNU$default (Lio/github/awakelab/awake/core/graphics2d/DrawShape$CutCorner;FILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawShape$CutCorner;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getSize-PExdcLc ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawShape$Pill : io/github/awakelab/awake/core/graphics2d/DrawShape {
+	public static final field INSTANCE Lio/github/awakelab/awake/core/graphics2d/DrawShape$Pill;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawShape$Rectangle : io/github/awakelab/awake/core/graphics2d/DrawShape {
+	public static final field INSTANCE Lio/github/awakelab/awake/core/graphics2d/DrawShape$Rectangle;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawShape$RoundedCorners : io/github/awakelab/awake/core/graphics2d/DrawShape {
+	public synthetic fun <init> (FFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-PExdcLc ()F
+	public final fun component2-PExdcLc ()F
+	public final fun component3-PExdcLc ()F
+	public final fun component4-PExdcLc ()F
+	public final fun copy-hzScx4E (FFFF)Lio/github/awakelab/awake/core/graphics2d/DrawShape$RoundedCorners;
+	public static synthetic fun copy-hzScx4E$default (Lio/github/awakelab/awake/core/graphics2d/DrawShape$RoundedCorners;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawShape$RoundedCorners;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottomLeft-PExdcLc ()F
+	public final fun getBottomRight-PExdcLc ()F
+	public final fun getTopLeft-PExdcLc ()F
+	public final fun getTopRight-PExdcLc ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawShape$RoundedRectangle : io/github/awakelab/awake/core/graphics2d/DrawShape {
+	public synthetic fun <init> (FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-PExdcLc ()F
+	public final fun copy-62jLhNU (F)Lio/github/awakelab/awake/core/graphics2d/DrawShape$RoundedRectangle;
+	public static synthetic fun copy-62jLhNU$default (Lio/github/awakelab/awake/core/graphics2d/DrawShape$RoundedRectangle;FILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawShape$RoundedRectangle;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRadius-PExdcLc ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawShapeKt {
+	public static final fun safeInteriorMargin (Lio/github/awakelab/awake/core/graphics2d/DrawShape;Lio/github/awakelab/awake/core/math2d/Rectangle;F)F
+	public static synthetic fun safeInteriorMargin$default (Lio/github/awakelab/awake/core/graphics2d/DrawShape;Lio/github/awakelab/awake/core/math2d/Rectangle;FILjava/lang/Object;)F
+	public static final fun toPath (Lio/github/awakelab/awake/core/graphics2d/DrawShape;Lio/github/awakelab/awake/core/math2d/Rectangle;Lio/github/awakelab/awake/core/graphics2d/FillRule;F)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public static synthetic fun toPath$default (Lio/github/awakelab/awake/core/graphics2d/DrawShape;Lio/github/awakelab/awake/core/math2d/Rectangle;Lio/github/awakelab/awake/core/graphics2d/FillRule;FILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawStroke {
+	public synthetic fun <init> (FLio/github/awakelab/awake/core/graphics2d/StrokeCap;Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FLio/github/awakelab/awake/core/graphics2d/StrokeCap;Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-PExdcLc ()F
+	public final fun component2 ()Lio/github/awakelab/awake/core/graphics2d/StrokeCap;
+	public final fun component3 ()Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;
+	public final fun copy-EVavSyc (FLio/github/awakelab/awake/core/graphics2d/StrokeCap;Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;)Lio/github/awakelab/awake/core/graphics2d/DrawStroke;
+	public static synthetic fun copy-EVavSyc$default (Lio/github/awakelab/awake/core/graphics2d/DrawStroke;FLio/github/awakelab/awake/core/graphics2d/StrokeCap;Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawStroke;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCap ()Lio/github/awakelab/awake/core/graphics2d/StrokeCap;
+	public final fun getJoin ()Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;
+	public final fun getWidth-PExdcLc ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/DrawTransform {
+	public fun <init> (FFFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/DrawTransform;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPivotX ()F
+	public final fun getPivotY ()F
+	public final fun getScaleX ()F
+	public final fun getScaleY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/FillGroup {
+	public fun <init> (Ljava/util/List;Ljava/util/List;)V
+	public final fun getHoles ()Ljava/util/List;
+	public final fun getOuter ()Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/FillRule : java/lang/Enum {
+	public static final field EvenOdd Lio/github/awakelab/awake/core/graphics2d/FillRule;
+	public static final field NonZero Lio/github/awakelab/awake/core/graphics2d/FillRule;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/graphics2d/FillRule;
+	public static fun values ()[Lio/github/awakelab/awake/core/graphics2d/FillRule;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/LinearGradient {
+	public static final field Companion Lio/github/awakelab/awake/core/graphics2d/LinearGradient$Companion;
+	public fun <init> (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun component2 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun component3 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun component4 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun copy (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;)Lio/github/awakelab/awake/core/graphics2d/LinearGradient;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/LinearGradient;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/LinearGradient;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottomLeft ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getBottomRight ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getTopLeft ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getTopRight ()Lio/github/awakelab/awake/core/color/Color;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/LinearGradient$Companion {
+	public final fun horizontal (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;)Lio/github/awakelab/awake/core/graphics2d/LinearGradient;
+	public final fun vertical (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;)Lio/github/awakelab/awake/core/graphics2d/LinearGradient;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/MeshClippingKt {
+	public static final fun clipToConvexPath (Lio/github/awakelab/awake/core/graphics2d/TexturedTriangleMesh;Lio/github/awakelab/awake/core/graphics2d/DrawPath;)Lio/github/awakelab/awake/core/graphics2d/TexturedTriangleMesh;
+	public static final fun clipToConvexPath (Lio/github/awakelab/awake/core/graphics2d/TriangleMesh;Lio/github/awakelab/awake/core/graphics2d/DrawPath;)Lio/github/awakelab/awake/core/graphics2d/TriangleMesh;
+	public static final fun clipToConvexPaths (Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;Ljava/util/List;)Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+	public static final fun clipToConvexPaths (Lio/github/awakelab/awake/core/graphics2d/TexturedTriangleMesh;Ljava/util/List;)Lio/github/awakelab/awake/core/graphics2d/TexturedTriangleMesh;
+	public static final fun clipToConvexPaths (Lio/github/awakelab/awake/core/graphics2d/TriangleMesh;Ljava/util/List;)Lio/github/awakelab/awake/core/graphics2d/TriangleMesh;
+	public static final fun convexClipContour (Lio/github/awakelab/awake/core/graphics2d/DrawPath;)Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathBoundsKt {
+	public static final fun bounds (Lio/github/awakelab/awake/core/graphics2d/DrawPath;)Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public static final fun transform (Lio/github/awakelab/awake/core/graphics2d/DrawPath;FFFF)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public static synthetic fun transform$default (Lio/github/awakelab/awake/core/graphics2d/DrawPath;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathBuilder {
+	public final fun arcTo (FFFFFF)V
+	public final fun close ()V
+	public final fun cubicTo (FFFFFF)V
+	public final fun lineTo (FF)V
+	public final fun moveTo (FF)V
+	public final fun quadTo (FFFF)V
+}
+
+public abstract interface class io/github/awakelab/awake/core/graphics2d/PathCommand {
+	public static final field Companion Lio/github/awakelab/awake/core/graphics2d/PathCommand$Companion;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathCommand$ArcTo : io/github/awakelab/awake/core/graphics2d/PathCommand {
+	public fun <init> (FFFFFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun copy (FFFFFF)Lio/github/awakelab/awake/core/graphics2d/PathCommand$ArcTo;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/PathCommand$ArcTo;FFFFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/PathCommand$ArcTo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottom ()F
+	public final fun getLeft ()F
+	public final fun getRight ()F
+	public final fun getStartDegrees ()F
+	public final fun getSweepDegrees ()F
+	public final fun getTop ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathCommand$Close : io/github/awakelab/awake/core/graphics2d/PathCommand {
+	public static final field INSTANCE Lio/github/awakelab/awake/core/graphics2d/PathCommand$Close;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathCommand$Companion {
+	public final fun ArcTo (FFFFFF)Lio/github/awakelab/awake/core/graphics2d/PathCommand$ArcTo;
+	public final fun CubicTo (FFFFFF)Lio/github/awakelab/awake/core/graphics2d/PathCommand$CubicTo;
+	public final fun LineTo (FF)Lio/github/awakelab/awake/core/graphics2d/PathCommand$LineTo;
+	public final fun MoveTo (FF)Lio/github/awakelab/awake/core/graphics2d/PathCommand$MoveTo;
+	public final fun QuadTo (FFFF)Lio/github/awakelab/awake/core/graphics2d/PathCommand$QuadTo;
+	public final fun getClose ()Lio/github/awakelab/awake/core/graphics2d/PathCommand$Close;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathCommand$CubicTo : io/github/awakelab/awake/core/graphics2d/PathCommand {
+	public fun <init> (FFFFFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun copy (FFFFFF)Lio/github/awakelab/awake/core/graphics2d/PathCommand$CubicTo;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/PathCommand$CubicTo;FFFFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/PathCommand$CubicTo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getC1x ()F
+	public final fun getC1y ()F
+	public final fun getC2x ()F
+	public final fun getC2y ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathCommand$LineTo : io/github/awakelab/awake/core/graphics2d/PathCommand {
+	public fun <init> (FF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lio/github/awakelab/awake/core/graphics2d/PathCommand$LineTo;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/PathCommand$LineTo;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/PathCommand$LineTo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathCommand$MoveTo : io/github/awakelab/awake/core/graphics2d/PathCommand {
+	public fun <init> (FF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lio/github/awakelab/awake/core/graphics2d/PathCommand$MoveTo;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/PathCommand$MoveTo;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/PathCommand$MoveTo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathCommand$QuadTo : io/github/awakelab/awake/core/graphics2d/PathCommand {
+	public fun <init> (FFFF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lio/github/awakelab/awake/core/graphics2d/PathCommand$QuadTo;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/PathCommand$QuadTo;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/PathCommand$QuadTo;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCx ()F
+	public final fun getCy ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathContour {
+	public fun <init> (Ljava/util/List;Z)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Z
+	public final fun copy (Ljava/util/List;Z)Lio/github/awakelab/awake/core/graphics2d/PathContour;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/PathContour;Ljava/util/List;ZILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/PathContour;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClosed ()Z
+	public final fun getPoints ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathFillTessellationKt {
+	public static final field AA_FRINGE_PX F
+	public static final field MAX_MITER_SCALE F
+	public static final fun appendBoundaryFringe (Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Ljava/util/ArrayList;Ljava/util/ArrayList;)V
+	public static final fun offsetPolygon (Ljava/util/List;F)Ljava/util/List;
+	public static final fun resolveFillGroups (Ljava/util/List;Lio/github/awakelab/awake/core/graphics2d/FillRule;)Ljava/util/List;
+	public static final fun scanlineFillTriangulation (Ljava/util/List;Lio/github/awakelab/awake/core/graphics2d/FillRule;)Lkotlin/Pair;
+	public static final fun tessellateFill (Lio/github/awakelab/awake/core/graphics2d/DrawPath;)Lio/github/awakelab/awake/core/graphics2d/TriangleMesh;
+	public static final fun tessellateFillAa (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/color/Color;FF)Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+	public static synthetic fun tessellateFillAa$default (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/color/Color;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathFlatteningKt {
+	public static final fun flattenContours (Lio/github/awakelab/awake/core/graphics2d/DrawPath;IF)Ljava/util/List;
+	public static synthetic fun flattenContours$default (Lio/github/awakelab/awake/core/graphics2d/DrawPath;IFILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathPredicatesKt {
+	public static final fun containsContour (Lio/github/awakelab/awake/core/graphics2d/PathContour;Lio/github/awakelab/awake/core/graphics2d/PathContour;)Z
+	public static final fun containsPoint (Lio/github/awakelab/awake/core/graphics2d/DrawPath;FF)Z
+	public static final fun containsPoint (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/DrawPoint;)Z
+	public static final fun containsPoint (Lio/github/awakelab/awake/core/graphics2d/PathContour;FF)Z
+	public static final fun isConvex (Ljava/util/List;)Z
+	public static final fun isLeft (Lio/github/awakelab/awake/core/graphics2d/DrawPoint;Lio/github/awakelab/awake/core/graphics2d/DrawPoint;FF)F
+	public static final fun polygonSignedArea (Ljava/util/List;)F
+	public static final fun windingContribution (Lio/github/awakelab/awake/core/graphics2d/PathContour;FF)I
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/PathStrokeTessellationKt {
+	public static final fun strokeToFillPath (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/DrawStroke;)Lio/github/awakelab/awake/core/graphics2d/DrawPath;
+	public static final fun tessellateStroke (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/DrawStroke;F)Lio/github/awakelab/awake/core/graphics2d/TriangleMesh;
+	public static synthetic fun tessellateStroke$default (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/DrawStroke;FILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/TriangleMesh;
+	public static final fun tessellateStrokeAa (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/DrawStroke;Lio/github/awakelab/awake/core/color/Color;FF)Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+	public static synthetic fun tessellateStrokeAa$default (Lio/github/awakelab/awake/core/graphics2d/DrawPath;Lio/github/awakelab/awake/core/graphics2d/DrawStroke;Lio/github/awakelab/awake/core/color/Color;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/RendererVertexWritersKt {
+	public static final fun getIDENTITY_TRANSFORM ()Lio/github/awakelab/awake/core/graphics2d/DrawTransform;
+	public static final fun writeGlyphVertex ([FIFFFFLio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)V
+	public static synthetic fun writeGlyphVertex$default ([FIFFFFLio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILjava/lang/Object;)V
+	public static final fun writeRoundedQuadVertex ([FIFFFFFFFFLio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)V
+	public static final fun writeRoundedQuadVertex ([FIFFFFFFFLio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)V
+	public static synthetic fun writeRoundedQuadVertex$default ([FIFFFFFFFFLio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILjava/lang/Object;)V
+	public static synthetic fun writeRoundedQuadVertex$default ([FIFFFFFFFLio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILjava/lang/Object;)V
+	public static final fun writeVertex ([FIFFLio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;)V
+	public static synthetic fun writeVertex$default ([FIFFLio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/graphics2d/DrawTransform;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/StrokeCap : java/lang/Enum {
+	public static final field Butt Lio/github/awakelab/awake/core/graphics2d/StrokeCap;
+	public static final field Round Lio/github/awakelab/awake/core/graphics2d/StrokeCap;
+	public static final field Square Lio/github/awakelab/awake/core/graphics2d/StrokeCap;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/graphics2d/StrokeCap;
+	public static fun values ()[Lio/github/awakelab/awake/core/graphics2d/StrokeCap;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/StrokeJoin : java/lang/Enum {
+	public static final field Bevel Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;
+	public static final field Miter Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;
+	public static final field Round Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;
+	public static fun values ()[Lio/github/awakelab/awake/core/graphics2d/StrokeJoin;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/TextureCompositeMode {
+	public fun <init> (Lio/github/awakelab/awake/core/graphics2d/BlendMode;Z)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/graphics2d/BlendMode;
+	public final fun component2 ()Z
+	public final fun copy (Lio/github/awakelab/awake/core/graphics2d/BlendMode;Z)Lio/github/awakelab/awake/core/graphics2d/TextureCompositeMode;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/TextureCompositeMode;Lio/github/awakelab/awake/core/graphics2d/BlendMode;ZILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/TextureCompositeMode;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBlendMode ()Lio/github/awakelab/awake/core/graphics2d/BlendMode;
+	public final fun getPremultiplied ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/TexturedTriangleMesh {
+	public fun <init> (Ljava/util/List;[I)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()[I
+	public final fun copy (Ljava/util/List;[I)Lio/github/awakelab/awake/core/graphics2d/TexturedTriangleMesh;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/TexturedTriangleMesh;Ljava/util/List;[IILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/TexturedTriangleMesh;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIndices ()[I
+	public final fun getVertices ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/TexturedVertex {
+	public fun <init> (Lio/github/awakelab/awake/core/graphics2d/DrawPoint;FF)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/graphics2d/DrawPoint;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (Lio/github/awakelab/awake/core/graphics2d/DrawPoint;FF)Lio/github/awakelab/awake/core/graphics2d/TexturedVertex;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/TexturedVertex;Lio/github/awakelab/awake/core/graphics2d/DrawPoint;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/TexturedVertex;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPosition ()Lio/github/awakelab/awake/core/graphics2d/DrawPoint;
+	public final fun getU ()F
+	public final fun getV ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/TriangleMesh {
+	public fun <init> (Ljava/util/List;[I)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()[I
+	public final fun copy (Ljava/util/List;[I)Lio/github/awakelab/awake/core/graphics2d/TriangleMesh;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/graphics2d/TriangleMesh;Ljava/util/List;[IILjava/lang/Object;)Lio/github/awakelab/awake/core/graphics2d/TriangleMesh;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getIndices ()[I
+	public final fun getPoints ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/graphics2d/TriangleMeshKt {
+	public static final fun merge (Ljava/util/List;)Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;
+	public static final fun splitToCapacity (Lio/github/awakelab/awake/core/graphics2d/ColoredTriangleMesh;II)Ljava/util/List;
+}
+
+public abstract class io/github/awakelab/awake/core/graphics2d/UiDrawPrimitive : io/github/awakelab/awake/core/graphics2d/DrawCommand {
+}
+

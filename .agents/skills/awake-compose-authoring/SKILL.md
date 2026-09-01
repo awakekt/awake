@@ -115,8 +115,34 @@ multiple regions use named slots; add a scoped receiver only when callers genuin
 layout scope. Do not add text/icon/loading/position parameters that duplicate a caller-owned slot.
 Use a composition local instead of a slot only for deep, cross-cutting UI context.
 
-When emitting repeated or reorderable content, supply stable `key(...)` values. Positional identity
-otherwise attaches remembered state to the wrong item without an error.
+### Where a `remember` lives, and which node claims it
+
+`remember` stores its slots on the **nearest enclosing node** and indexes them by **call order**
+within that node. A `key(...)` gives a *node* its identity; it does not move a memo's slot. The two
+are separate mechanisms and a correct list needs both.
+
+The rule that follows: **nothing may `remember` after a variable-length sequence in the same node.**
+Add or remove one item and every memo after it shifts by one.
+
+Two failure modes, and the quiet one is worse:
+
+- Same type on both sides -- two sections' expanded flags, say -- and the state silently belongs to
+  the wrong item. Nothing throws. The scene editor shipped this: adding a component swapped which
+  inspector section was open.
+- Different types, and it is a `ClassCastException` from the slot table, usually named after a class
+  with no obvious relationship to the panel you were editing.
+
+What to do instead:
+
+- Give each repeated item **its own node** -- wrap its body in a `Column`/`Box` -- so its memos live
+  in that node rather than in the parent's list.
+- **And** key it, so an inserted sibling does not adopt the next node by position and read back its
+  remembered state.
+- Never make a subtree that remembers conditionally composed. An `if` around it shifts every slot
+  after it on the frame the branch flips. Draw the control always and disable it, or hoist the state
+  above the branch.
+
+A conditional subtree with no `remember` in it is fine. It is the memo, not the node, that moves.
 
 ## State placement guide
 

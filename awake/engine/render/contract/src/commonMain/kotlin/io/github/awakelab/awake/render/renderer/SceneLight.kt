@@ -57,7 +57,27 @@ data class SceneLight(
      * target sees.
      */
     val viewProjection: Mat4? = null,
+
+    /**
+     * This light's shadow cascades, when it casts them.
+     *
+     * `viewProjection` above is the one-box form and stays for callers that only ever wanted
+     * one -- the debug visualiser draws its wireframe, and a test that renders a fixed scene has
+     * no camera to fit cascades to. When both are set this wins; see [shadowCascades], which is
+     * what a backend actually reads.
+     */
+    val cascades: ShadowCascadeUniforms? = null,
 )
+
+/**
+ * The cascade set to render and sample, or null when this light casts no shadow.
+ *
+ * A lone [SceneLight.viewProjection] becomes a single cascade rather than a special case, so
+ * every backend has exactly one shadow path: a one-cascade shadow is a cascaded shadow whose
+ * first cascade covers everything.
+ */
+fun SceneLight.shadowCascades(): ShadowCascadeUniforms? = cascades
+    ?: viewProjection?.let { ShadowCascadeUniforms(listOf(it), floatArrayOf(Float.MAX_VALUE)) }
 
 /** Point-light slots the lit shaders declare. Raising this changes both shaders and the two
  * uniform layouts together -- the count is baked into the block's float total. */

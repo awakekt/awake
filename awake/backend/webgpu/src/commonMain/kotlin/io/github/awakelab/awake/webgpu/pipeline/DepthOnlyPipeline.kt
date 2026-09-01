@@ -6,8 +6,21 @@
 package io.github.awakelab.awake.webgpu.pipeline
 
 import io.github.awakelab.awake.core.geometry.VertexFormat
+import io.github.awakelab.awake.core.math.Mat4
+import io.github.awakelab.awake.render.command.MaterialBinding
+import io.github.awakelab.awake.render.renderer.CascadePassUniformLayout
+import io.github.awakelab.awake.render.renderer.SHADOW_CASCADE_PASS_GROUP
+import io.github.awakelab.awake.render.renderer.SHADOW_DEPTH_BIAS_CONSTANT
+import io.github.awakelab.awake.render.renderer.SHADOW_DEPTH_BIAS_SLOPE
 import io.github.awakelab.awake.webgpu.device.GraphicsDevice
+import io.github.awakelab.awake.webgpu.fastArrayBufferOf
+import io.ygdrasil.webgpu.BindGroupDescriptor
+import io.ygdrasil.webgpu.BindGroupEntry
+import io.ygdrasil.webgpu.BufferBinding
+import io.ygdrasil.webgpu.BufferDescriptor
 import io.ygdrasil.webgpu.DepthStencilState
+import io.ygdrasil.webgpu.GPUBuffer
+import io.ygdrasil.webgpu.GPUBufferUsage
 import io.ygdrasil.webgpu.FragmentState
 import io.ygdrasil.webgpu.GPUCompareFunction
 import io.ygdrasil.webgpu.GPUCullMode
@@ -33,9 +46,51 @@ class DepthOnlyPipeline(
     val vertexFormat: VertexFormat,
     vertexEntryPoint: String = "vertexMain",
     fragmentEntryPoint: String = "fragmentMain",
+    /** One slot per cascade in this pass's own group-1 block -- see Vulkan's twin for why the
+     * cascade matrix cannot live in the per-draw uniform. */
+    cascadeCount: Int = 0,
 ) {
     val pipeline: GPURenderPipeline
     val handle: WebGpuPipelineHandle
+
+    private val device = graphicsDevice.wgpuContext.device
+
+    /** One uniform buffer per cascade, written per frame. */
+    private val cascadeBuffers: List<GPUBuffer> = List(cascadeCount) {
+        device.createBuffer(
+            BufferDescriptor(
+                size = (CascadePassUniformLayout.total * Float.SIZE_BYTES).toULong(),
+                usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
+            ),
+        )
+    }
+
+    /** Whether this pipeline's shader declares the pass-scoped cascade block. `scene_depth`
+     * renders once from the camera and declares none -- and asking wgpu for the layout of a group
+     * a shader never declared aborts the process rather than returning an error. */
+    val hasCascadeBlock: Boolean = cascadeCount > 0
+
+    private val cascadeBindGroups: List<WebGpuBindGroupHandle> by lazy {
+        cascadeBuffers.map { buffer ->
+            WebGpuBindGroupHandle(
+                device.createBindGroup(
+                    BindGroupDescriptor(
+                        layout = pipeline.getBindGroupLayout(SHADOW_CASCADE_PASS_GROUP.toUInt()),
+                        entries = listOf(BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer))),
+                    ),
+                ),
+            )
+        }
+    }
+
+    /** [cascade]'s bind group, to bind at group 1 while rendering it. */
+    fun cascadeBinding(cascade: Int): MaterialBinding = cascadeBindGroups[cascade]
+
+    /** Writes [viewProjection] as the matrix [cascade] renders with; a no-op without a block. */
+    fun writeCascade(cascade: Int, viewProjection: Mat4) {
+        val buffer = cascadeBuffers.getOrNull(cascade) ?: return
+        device.queue.writeBuffer(buffer, 0uL, fastArrayBufferOf(viewProjection.data))
+    }
 
     init {
         val device = graphicsDevice.wgpuContext.device
@@ -71,12 +126,16 @@ class DepthOnlyPipeline(
                     cullMode = GPUCullMode.None,
                     frontFace = GPUFrontFace.CW,
                 ),
+                // Bias only the cascade (light-space) pass -- same reasoning and constants as
+                // Vulkan's twin: the scene-depth pass feeds depth_fog, which reads raw depth.
                 depthStencil = DepthStencilState(
                     format = GPUTextureFormat.Depth32Float,
                     depthWriteEnabled = true,
                     depthCompare = GPUCompareFunction.LessEqual,
                     stencilFront = StencilFaceState(),
                     stencilBack = StencilFaceState(),
+                    depthBias = if (hasCascadeBlock) SHADOW_DEPTH_BIAS_CONSTANT.toInt() else 0,
+                    depthBiasSlopeScale = if (hasCascadeBlock) SHADOW_DEPTH_BIAS_SLOPE else 0f,
                 ),
             ),
         )
@@ -84,6 +143,7 @@ class DepthOnlyPipeline(
     }
 
     fun destroy() {
-        // Garbage collected in JS runtime
+        cascadeBuffers.forEach { it.close() }
+        // Everything else is garbage collected in the JS runtime
     }
 }

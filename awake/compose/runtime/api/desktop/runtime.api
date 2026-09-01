@@ -13,8 +13,6 @@ public abstract interface class io/github/awakelab/awake/compose/runtime/Applier
 public final class io/github/awakelab/awake/compose/runtime/Composer {
 	public static final field INITIAL_DEPTH I
 	public final fun getLocalsSnapshot ()Lio/github/awakelab/awake/compose/runtime/ProvidedLocals;
-	public final fun getScopeExecutions ()I
-	public final fun getScopeSkips ()I
 	public final fun key (Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public final fun node (Ljava/lang/Object;Lio/github/awakelab/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
 	public static synthetic fun node$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Lio/github/awakelab/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
@@ -45,10 +43,6 @@ public final class io/github/awakelab/awake/compose/runtime/CompositionLocalKt {
 	public static final fun provides (Lio/github/awakelab/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;)Lio/github/awakelab/awake/compose/runtime/ProvidedValue;
 }
 
-public final class io/github/awakelab/awake/compose/runtime/MutableState {
-	public final fun set (Ljava/lang/Object;)V
-}
-
 public final class io/github/awakelab/awake/compose/runtime/ProvidedLocals {
 	public fun <init> ()V
 	public final fun provide (Lio/github/awakelab/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)V
@@ -76,14 +70,5 @@ public final class io/github/awakelab/awake/compose/runtime/Slot : java/lang/Enu
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/compose/runtime/Slot;
 	public static fun values ()[Lio/github/awakelab/awake/compose/runtime/Slot;
-}
-
-public final class io/github/awakelab/awake/compose/runtime/StateKt {
-	public static final fun getValue (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/runtime/MutableState;)Ljava/lang/Object;
-	public static final fun mutableStateOf (Ljava/lang/Object;)Lio/github/awakelab/awake/compose/runtime/MutableState;
-	public static final fun recomposeScope (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
-	public static final fun recomposeScope (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
-	public static final fun recomposeScope (Lio/github/awakelab/awake/compose/runtime/Composer;Lkotlin/jvm/functions/Function1;)V
-	public static final fun setValue (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/runtime/MutableState;Ljava/lang/Object;)V
 }
 

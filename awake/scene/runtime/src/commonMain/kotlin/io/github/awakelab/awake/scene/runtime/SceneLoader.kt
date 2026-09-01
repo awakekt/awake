@@ -8,7 +8,8 @@ package io.github.awakelab.awake.scene.runtime
 import io.github.awakelab.awake.core.host.readResourceBytes
 import io.github.awakelab.awake.ecs.Entity
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
+import io.github.awakelab.awake.scene.rendering.mesh.MeshBounds
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 import kotlinx.serialization.json.Json
 
 data class Scene(
@@ -120,10 +121,25 @@ object SceneLoader {
 fun SceneDocument.instantiate(world: World = World()): Scene =
     SceneLoader.instantiate(this, world)
 
+/**
+ * Turns each authored `meshRenderer` node into a real [MeshRenderer], and gives it the bounds its
+ * mesh already knows.
+ *
+ * The bounds are not decoration. `MeshBounds` is what frustum culling tests, what the spatial
+ * index indexes and what the debug overlay draws -- and nothing attached it, so all three were
+ * inert on every authored scene: culling had nothing to cull, the index nothing to index, the
+ * overlay nothing to draw. A scene should not have to author a box that its mesh's own vertices
+ * already describe.
+ *
+ * A mesh whose backend did not record bounds (or that a custom factory produced) simply gets no
+ * component, which is the same "never culled, always drawn" behaviour as before.
+ */
 fun Scene.attachRenderableComponents(
     factory: (SceneRenderableRequest) -> MeshRenderer,
 ) {
     renderableRequests.forEach { request ->
-        world.add(request.entity, factory(request))
+        val renderer = factory(request)
+        world.add(request.entity, renderer)
+        renderer.mesh.localBounds?.let { world.add(request.entity, MeshBounds(it)) }
     }
 }

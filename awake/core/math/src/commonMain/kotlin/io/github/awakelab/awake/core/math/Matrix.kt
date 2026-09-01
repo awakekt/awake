@@ -112,6 +112,49 @@ class Mat4 {
         identity()
     }
 
+    /**
+     * Overwrites this matrix with the same T * R * S composition [fromTrs] builds.
+     *
+     * The in-place form, for a caller rebuilding a matrix every frame: a set of instanced
+     * transforms recomputed per frame through [fromTrs] allocates one matrix per instance per
+     * frame, which is garbage produced at exactly the rate the game is drawn.
+     *
+     * The rotation terms are written straight from the quaternion rather than through
+     * [Quat.toMat4], which would itself allocate the matrix this exists to avoid.
+     */
+    fun setTrs(
+        translation: io.github.awakelab.awake.core.math.Vec3f,
+        rotation: Quat,
+        scale: io.github.awakelab.awake.core.math.Vec3f,
+    ): Mat4 {
+        val xx = rotation.x * rotation.x
+        val yy = rotation.y * rotation.y
+        val zz = rotation.z * rotation.z
+        val xy = rotation.x * rotation.y
+        val xz = rotation.x * rotation.z
+        val yz = rotation.y * rotation.z
+        val wx = rotation.w * rotation.x
+        val wy = rotation.w * rotation.y
+        val wz = rotation.w * rotation.z
+        m00 = (1f - 2f * (yy + zz)) * scale.x
+        m10 = (2f * (xy + wz)) * scale.x
+        m20 = (2f * (xz - wy)) * scale.x
+        m30 = 0f
+        m01 = (2f * (xy - wz)) * scale.y
+        m11 = (1f - 2f * (xx + zz)) * scale.y
+        m21 = (2f * (yz + wx)) * scale.y
+        m31 = 0f
+        m02 = (2f * (xz + wy)) * scale.z
+        m12 = (2f * (yz - wx)) * scale.z
+        m22 = (1f - 2f * (xx + yy)) * scale.z
+        m32 = 0f
+        m03 = translation.x
+        m13 = translation.y
+        m23 = translation.z
+        m33 = 1f
+        return this
+    }
+
     fun identity() {
         m00 = 1f
         m11 = 1f
@@ -569,27 +612,7 @@ class Mat4 {
             translation: io.github.awakelab.awake.core.math.Vec3f,
             rotation: Quat,
             scale: io.github.awakelab.awake.core.math.Vec3f,
-        ): Mat4 {
-            val r = rotation.toMat4()
-            return Mat4().apply {
-                m00 = r.m00 * scale.x
-                m10 = r.m10 * scale.x
-                m20 = r.m20 * scale.x
-                m30 = 0f
-                m01 = r.m01 * scale.y
-                m11 = r.m11 * scale.y
-                m21 = r.m21 * scale.y
-                m31 = 0f
-                m02 = r.m02 * scale.z
-                m12 = r.m12 * scale.z
-                m22 = r.m22 * scale.z
-                m32 = 0f
-                m03 = translation.x
-                m13 = translation.y
-                m23 = translation.z
-                m33 = 1f
-            }
-        }
+        ): Mat4 = Mat4().setTrs(translation, rotation, scale)
 
         /** `a * b` in the standard column-major row/col sense (applies [b] first, then [a]) --
          * unlike the [Mat4.times] operator above, whose chained-matrix convention doesn't match

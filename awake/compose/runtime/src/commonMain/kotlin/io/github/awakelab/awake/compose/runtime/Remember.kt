@@ -19,9 +19,19 @@ interface RememberHolder {
 /**
  * Computes [calculate] on the first pass and returns that same value on every pass after.
  *
- * Slots are positional within the enclosing node, exactly as node identity is positional within its
- * parent -- so the same caveat applies, and `key(...)` is the same escape hatch. Declaring a
- * remember inside a branch that can swap will hand the other branch the first one's value.
+ * **Slots are positional within the enclosing node**, and `key(...)` is *not* the escape hatch --
+ * a key fixes which node an item reuses, and this value does not live in that node, it lives in the
+ * nearest enclosing one, indexed by call order. The two are separate mechanisms.
+ *
+ * So: nothing may `remember` after a variable-length sequence in the same node. Add or remove one
+ * item and every slot after it shifts by one -- silently handing the wrong value over when the
+ * types match, and throwing a `ClassCastException` from the slot table when they do not. Give each
+ * repeated item its own node (a `Column`, a `Box`) so its slots are its own, *and* key that node so
+ * an inserted sibling does not adopt it by position.
+ *
+ * The same applies to a branch: a subtree that remembers must not be conditionally composed. Draw
+ * the control always and disable it, or hoist the state above the branch. A conditional subtree
+ * that remembers nothing is fine -- it is the slot that moves, not the node.
  */
 context(composer: Composer)
 fun <T> remember(calculate: () -> T): T = composer.remember(Unkeyed, calculate)

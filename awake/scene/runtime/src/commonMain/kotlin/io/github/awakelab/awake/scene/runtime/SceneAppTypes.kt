@@ -8,7 +8,7 @@ package io.github.awakelab.awake.scene.runtime
 import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.core.input.InputSnapshot
 import io.github.awakelab.awake.ecs.System
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 
 typealias SceneRenderableFactory = SceneAppLifecycleRuntime.(SceneRenderableRequest) -> MeshRenderer
 typealias SceneSystemFactory = SceneAppLifecycleRuntime.() -> System

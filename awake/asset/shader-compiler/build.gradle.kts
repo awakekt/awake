@@ -9,6 +9,7 @@
 // cargo tasks, same policy as jolt's buildJoltC* -- they only change when the Rust shim or
 // its pinned naga version does. wasmJs compiles a throwing actual: browsers take WGSL
 // directly.
+import org.gradle.api.tasks.PathSensitivity
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
@@ -22,21 +23,35 @@ plugins {
 val rustDir = layout.projectDirectory.dir("rust-native")
 val cargoBin = providers.systemProperty("user.home").map { "$it/.cargo/bin/cargo" }
 
-fun registerCargoTask(name: String, description: String, vararg cargoArgs: String) =
-    tasks.register<Exec>(name) {
-        group = "generation"
-        this.description = description
-        workingDir = rustDir.asFile
-        // PATH must carry ~/.cargo/bin for rustup's toolchain shims (and cargo-ndk).
-        environment("PATH", "${System.getProperty("user.home")}/.cargo/bin:" + System.getenv("PATH"))
-        commandLine(cargoBin.get(), *cargoArgs)
-    }
+// Inputs/outputs declared so Gradle itself can skip re-invoking cargo when nothing changed --
+// without them every task here is an unconditional Exec, same gap NativeCMake.kt had for the
+// Vulkan bindings. Cargo's own target/ cache already makes a warm rebuild a near-instant no-op
+// (see the desktopTest comment below); this just lets Gradle skip the process spawn entirely.
+fun registerCargoTask(
+    name: String,
+    description: String,
+    vararg cargoArgs: String,
+    configureOutputs: org.gradle.api.tasks.TaskOutputs.() -> Unit,
+) = tasks.register<Exec>(name) {
+    group = "generation"
+    this.description = description
+    workingDir = rustDir.asFile
+    // PATH must carry ~/.cargo/bin for rustup's toolchain shims (and cargo-ndk).
+    environment("PATH", "${System.getProperty("user.home")}/.cargo/bin:" + System.getenv("PATH"))
+    commandLine(cargoBin.get(), *cargoArgs)
+    inputs.dir(rustDir.dir("src")).withPropertyName("rustSource").withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(rustDir.file("Cargo.toml")).withPropertyName("cargoManifest")
+    inputs.file(rustDir.file("Cargo.lock")).withPropertyName("cargoLock")
+    outputs.configureOutputs()
+}
 
 val buildNagaDesktop = registerCargoTask(
     "buildNagaDesktop",
     "Build libawake_naga for this desktop host (cargo, release)",
     "build", "--release",
-)
+) {
+    file(rustDir.file("target/release/${HostOs.libraryFileName("awake_naga")}"))
+}
 
 // cargo-ndk writes build/naga-jniLibs/<abi>/libawake_naga.so; the androidMain jniLibs
 // convention directory is a symlink-free copy so the AAR packs it.
@@ -46,19 +61,25 @@ registerCargoTask(
     "ndk", "-t", "arm64-v8a", "-t", "x86_64",
     "-o", layout.projectDirectory.dir("src/androidMain/jniLibs").asFile.path,
     "build", "--release",
-)
+) {
+    dir(layout.projectDirectory.dir("src/androidMain/jniLibs"))
+}
 
 registerCargoTask(
     "buildNagaIosArm64",
     "Build libawake_naga.a for iOS devices (cargo, release)",
     "build", "--release", "--target", "aarch64-apple-ios",
-)
+) {
+    file(rustDir.file("target/aarch64-apple-ios/release/libawake_naga.a"))
+}
 
 registerCargoTask(
     "buildNagaIosSimulatorArm64",
     "Build libawake_naga.a for the Apple-Silicon iOS simulator (cargo, release)",
     "build", "--release", "--target", "aarch64-apple-ios-sim",
-)
+) {
+    file(rustDir.file("target/aarch64-apple-ios-sim/release/libawake_naga.a"))
+}
 
 kotlin {
     // expect object NagaShaderCompiler -- the classes flavor of expect/actual is Beta; the

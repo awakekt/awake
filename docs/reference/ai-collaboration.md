@@ -103,6 +103,12 @@ Rules:
 - when Detekt is already red, either fix the touched-module findings or deliberately
   re-baseline existing debt in a separate debt-tracking change before relying on the hook
 - keep broad legacy cleanup separate from feature/fix commits
+- the same push also runs `./gradlew desktopApiCheck`. When it fails, run `./gradlew desktopApiDump`
+  and **read the diff before committing it**: an added line is a re-dump, a removed one is a
+  breaking change that happens to make the gate green. `AWAKE_SKIP_API_HOOK=1` bypasses it, and is
+  separate from the Detekt flag on purpose
+- `desktopApiCheck`, not `apiCheck`: the aggregate pulls iOS cinterop into its graph and fails on a
+  machine without the MoltenVK and JoltC submodules built, having compared no API at all
 
 ## Model Selection Rule
 

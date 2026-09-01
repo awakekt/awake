@@ -7,6 +7,7 @@ package io.github.awakelab.awake.webgpu
 
 import io.github.awakelab.awake.asset.shaderpack.depthFogShader
 import io.github.awakelab.awake.core.geometry.VertexFormat
+import io.github.awakelab.awake.core.math.ClipSpace
 import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.render.pipeline.PipelineVariant
 import io.github.awakelab.awake.render.renderer.DepthFogUniformLayout
@@ -56,8 +57,8 @@ class WebGpuDepthFogTest {
                 graphicsDevice,
                 swapchainManager,
                 DescriptorSetLayoutHandle(0),
-                // WebGPU's half of the shared definition -- see depthFogShader's flipDepthV.
-                depthFogShader(flipDepthV = true).emitWgsl().encodeToByteArray(),
+                // WebGPU's half of the shared definition -- see ndcToUv.
+                depthFogShader(ClipSpace.WebGpu).emitWgsl().encodeToByteArray(),
                 ByteArray(0),
                 VertexFormat.None,
                 "vertexMain",

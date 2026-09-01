@@ -33,6 +33,12 @@ plugins {
 kotlin {
     android {
         namespace = "io.github.awakelab.awake.physics.jolt"
+        // Instrumented, not host, and the only way this backend can be tested at all: jolt-jni's
+        // Android artifact ships device ABIs, so `System.loadLibrary("joltjni")` has nothing to
+        // load in a JVM host test. `sourceSetTreeName = "test"` is what puts androidDeviceTest in
+        // the test tree, so it inherits commonTest rather than needing a copy of it.
+        withDeviceTestBuilder { sourceSetTreeName = "test" }
+            .configure { instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
     }
 
     // Jolt Physics integration slice 2 (see docs/reference/decision-log.md): real iOS
@@ -65,6 +71,25 @@ kotlin {
         "iosArm64" to "iphoneos",
         "iosSimulatorArm64" to "iphonesimulator",
     )
+    // Simulator only. Asserts are what make Jolt check its callers at all -- wrong body type,
+    // a body read without its lock, a layer out of range -- so with them off those are silent
+    // corruption rather than a stop. The simulator is where tests run, so it is where the checks
+    // are worth paying for.
+    //
+    // What they do NOT give you is the message. Jolt ships `DummyAssertFailed`, which returns true
+    // to breakpoint and prints nothing, and `DummyTrace`, which asserts. So a violation surfaces as
+    // `signal 5: Trace/BPT trap` and a stack trace, not as text -- read the crash report under
+    // ~/Library/Logs/DiagnosticReports and the frame below `JPH::DummyTrace` is the site. Seeing
+    // `DummyTrace` at the top is itself the tell: Jolt formatted a diagnostic and had nowhere to
+    // put it. Installing a real handler means setting the C++ globals `JPH::Trace` and
+    // `JPH::AssertFailed`, which cinterop cannot reach and JoltC does not expose.
+    //
+    // Left OFF for the device, which is shipped code: an assert there stops a player's game over
+    // something the simulator build should have caught, and the checks are not free.
+    val joltCAsserts = mapOf(
+        "iosArm64" to "OFF",
+        "iosSimulatorArm64" to "ON",
+    )
 
     listOf(
         "iosArm64",
@@ -72,6 +97,7 @@ kotlin {
     ).forEach { targetName ->
         val nativeBuildDir = joltCBuildDir.getValue(targetName)
         val sysroot = joltCSysroot.getValue(targetName)
+        val useAsserts = joltCAsserts.getValue(targetName)
         val capitalizedTargetName = targetName.replaceFirstChar { it.uppercase() }
         val target =
             kotlin.targets.getByName(targetName) as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
@@ -86,7 +112,10 @@ kotlin {
                 "CMAKE_OSX_SYSROOT=$sysroot",
                 "CMAKE_OSX_ARCHITECTURES=arm64",
                 "CMAKE_OSX_DEPLOYMENT_TARGET=13.0",
-                "USE_ASSERTS=OFF",
+                // Passed at the top level, which satisfies both the JoltC and the nested
+                // JoltPhysics `option(USE_ASSERTS)` -- one cache entry, one setting, so the
+                // wrapper and the engine cannot disagree about it.
+                "USE_ASSERTS=$useAsserts",
             ),
             // JoltPhysics is the slow half of a rebuild, so parallelise it. ccache is applied
             // by the shared helper.
@@ -135,8 +164,24 @@ kotlin {
             // QuatEuler.kt's pure quaternion-to-Euler conversion takes/returns Vec3.
             implementation(project(":awake:core:math"))
         }
+        named("androidDeviceTest") {
+            // Shared with desktopTest rather than duplicated: desktop and Android are the same
+            // jolt-jni binding, and these assert what that binding can do. The module's main
+            // sources are duplicated between the two for want of a shared JVM source set; there is
+            // no reason for its tests to be.
+            kotlin.srcDir("src/joltJniTest/kotlin")
+            dependencies {
+                implementation(libs.androidx.test.runner)
+            }
+        }
+        named("desktopTest") {
+            kotlin.srcDir("src/joltJniTest/kotlin")
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            // createJoltPhysicsWorld is suspend for wasmJs's Emscripten bootstrap, so every test
+            // that builds a real world needs runTest.
+            implementation(libs.kotlinx.coroutines.test)
         }
         // jolt-jni is a JVM-only native binding (desktop+Android) -- duplicated verbatim
         // between desktopMain/androidMain rather than a shared intermediate source set
@@ -192,3 +237,10 @@ kotlin {
         }
     }
 }
+
+// jolt-jni publishes device ABIs in its Android artifact and nothing for a JVM host, so
+// `System.loadLibrary("joltjni")` has nothing to load here: every test in this module's
+// `commonTest` fails with UnsatisfiedLinkError if run as an Android *host* test. The suite that
+// covers this target is `connectedAndroidDeviceTest`, which runs the same sources on a device.
+// Registered by AGP after this script runs, so matched lazily rather than looked up by name.
+tasks.matching { it.name == "testAndroidHostTest" }.configureEach { enabled = false }

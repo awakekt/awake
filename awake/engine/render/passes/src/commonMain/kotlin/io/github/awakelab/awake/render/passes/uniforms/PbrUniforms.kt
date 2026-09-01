@@ -9,6 +9,7 @@ import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.math.Mat4
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.render.renderer.DrawCall
+import io.github.awakelab.awake.render.renderer.ShadowCascadeUniforms
 import io.github.awakelab.awake.render.renderer.UniformFields
 import io.github.awakelab.awake.render.renderer.UniformWriter
 
@@ -114,23 +115,24 @@ fun texturedUniforms(
  *
  * @param drawCall The draw whose model matrix and material factors this writes.
  * @param mvp This draw's model-view-projection, already combined by the caller.
- * @param lightMvp This draw's model combined with the light's own view-projection -- what the
- * fragment shader projects into to sample the depth target. The light supplies that matrix; see
- * [SceneLight.viewProjection].
+ * @param cascades This frame's shadow cascades -- the matrices a fragment projects into to
+ * sample the shadow map, and the distances that decide which one it uses. Per frame, not per
+ * draw: the same set goes into every draw's block.
  * @param frame This frame's lights, eye position and fog.
  * @return The complete uniform block, sized exactly [MaterialUniformLayouts.LitShadow].
  */
 fun litShadowUniforms(
     drawCall: DrawCall,
     mvp: Mat4,
-    lightMvp: Mat4,
+    cascades: ShadowCascadeUniforms,
     frame: SceneFrameUniforms,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.LitShadow)
     .put(mvp.data, UniformFields.Mvp)
     .let(frame.light::writeTo)
-    .put(lightMvp.data, UniformFields.LightMvp)
-    .put(UniformFields.VertexAnimation, drawCall.vertexAnimation, drawCall.timeSeconds)
+    .put(cascades.matrixFloats(), UniformFields.CascadeViewProjections)
+    .put(cascades.depthScaleFloats(), UniformFields.CascadeDepthScales)
     .put(drawCall.model.data, UniformFields.Model)
+    .put(UniformFields.VertexAnimation, drawCall.vertexAnimation, drawCall.timeSeconds)
     .put(cameraPositionFloats(frame.cameraEye), UniformFields.CameraPosition)
     .put(pbrMaterialFloats(drawCall), UniformFields.Material)
     .put(frame.fog, UniformFields.FogColor)

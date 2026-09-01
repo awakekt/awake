@@ -10,6 +10,7 @@ import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.math.Mat4
 import io.github.awakelab.awake.render.command.sortForRecording
 import io.github.awakelab.awake.render.passes.RenderPassSlot
+import io.github.awakelab.awake.render.renderer.shadowCascades
 import io.github.awakelab.awake.render.renderer.DrawCall
 import io.github.awakelab.awake.render.renderer.SceneLight
 import io.github.awakelab.awake.render.texture.PbrTextureSet
@@ -19,6 +20,7 @@ import io.github.awakelab.awake.vulkan.Vulkan
 import io.github.awakelab.awake.vulkan.enums.VkSubpassContents
 import io.github.awakelab.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import io.github.awakelab.awake.vulkan.gen.VulkanBuffers
+import io.github.awakelab.awake.vulkan.enums.VkImageLayout
 import io.github.awakelab.awake.vulkan.gen.VulkanImages
 import io.github.awakelab.awake.vulkan.material.Material
 import io.github.awakelab.awake.vulkan.material.PbrImageViews
@@ -44,6 +46,7 @@ internal fun Renderer.performCreateMesh(geometry: MeshGeometry): RenderMesh =
         geometry.vertices,
         geometry.indices,
         geometry.format,
+        geometry.bounds,
     )
 
 internal fun Renderer.performCreateMaterial(
@@ -98,6 +101,28 @@ internal fun Renderer.pbrImageView(asset: TextureAsset?, neutral: TextureAsset):
             )
         }.imageView.handle
     }
+
+/**
+ * The frame the on-screen path just drew, when there is no screen.
+ *
+ * `readPixels` reads a `RenderTarget`, which is the OFFSCREEN path -- a different recording than
+ * `draw` produces. This reads what `draw` itself wrote, so a test can check the frame an app
+ * actually presents rather than a second rendering of the same scene.
+ *
+ * Waits on every in-flight fence first: the frame whose image this is may still be executing.
+ */
+suspend fun Renderer.readPresentedPixels(): TextureAsset {
+    require(swapchainManager.isHeadlessPresentable) {
+        "readPresentedPixels reads a headless stand-in image; this renderer presents to a surface."
+    }
+    Vulkan.vkWaitForFences(device, swapchainManager.inFlightFences, true, Long.MAX_VALUE)
+    val width = swapchainManager.extent.width
+    val height = swapchainManager.extent.height
+    // The frame just drawn is the one BEFORE the manager's current slot, which draw() advanced.
+    val drawn = (swapchainManager.currentFrame + swapchainManager.imageViews.size - 1) %
+        swapchainManager.imageViews.size
+    return readImageBytes(swapchainManager.headlessImages[drawn], width, height)
+}
 
 internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): RenderTarget {
     lateinit var target: OffscreenRenderTarget
@@ -165,7 +190,7 @@ internal fun Renderer.performRenderToTexture(
         viewProjection = viewProjection,
         drawCalls = drawCalls,
         light = light,
-        lightViewProjection = if (depthTarget != null) light.viewProjection else null,
+        cascades = if (depthTarget != null) light.shadowCascades() else null,
         cameraPosition = camera.eye,
     )
 
@@ -174,8 +199,8 @@ internal fun Renderer.performRenderToTexture(
     // here is why an offscreen render used to show unshadowed geometry -- and why nothing could
     // pixel-test the shadow map at all.
     runOffscreenCommands { commandBuffer ->
-        recordDepthPrePass(commandBuffer, preparedDrawCalls)
-        recordSceneDepthPass(commandBuffer, preparedDrawCalls)
+        recordDepthPrePass(commandBuffer, preparedDrawCalls, light.shadowCascades())
+        recordSceneDepthPass(commandBuffer, preparedDrawCalls, cameraDepthPass(viewProjection))
         offscreen.prepareForColorAttachment(commandBuffer)
         val renderPassInfo = VkRenderPassBeginInfo(
             renderPass = renderPipeline.renderPass,
@@ -210,7 +235,28 @@ internal fun Renderer.performRenderToTexture(
 
 internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAsset {
     val offscreen = target as OffscreenRenderTarget
-    val byteSize = (offscreen.width * offscreen.height * 4).toLong()
+    return readImageBytes(
+        offscreen.colorImage,
+        offscreen.width,
+        offscreen.height,
+        from = VkImageLayout2.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    )
+}
+
+/**
+ * Copies one image into host memory, transitioning it there and back.
+ *
+ * [from] is the layout the image is already in and returns to: an offscreen target's colour
+ * attachment is left readable by a shader, while a headless stand-in for a presented image is
+ * left where the frame loop put it.
+ */
+internal suspend fun Renderer.readImageBytes(
+    image: Long,
+    width: Int,
+    height: Int,
+    from: Int = VkImageLayout.VK_IMAGE_LAYOUT_PRESENT_SRC_KHR.value,
+): TextureAsset {
+    val byteSize = (width * height * 4).toLong()
     val stagingBuffer = VulkanBuffers.vkCreateBuffer(
         device,
         VkBufferCreateInfo(
@@ -239,21 +285,21 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
         runOffscreenCommands { commandBuffer ->
             VulkanImages.vkTransitionImageLayout(
                 commandBuffer,
-                offscreen.colorImage,
-                VkImageLayout2.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                image,
+                from,
                 VkImageLayout2.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
             )
             VulkanImages.vkCmdCopyImageToBuffer(
                 commandBuffer,
-                offscreen.colorImage,
+                image,
                 stagingBuffer,
-                VkBufferImageCopy(imageWidth = offscreen.width, imageHeight = offscreen.height),
+                VkBufferImageCopy(imageWidth = width, imageHeight = height),
             )
             VulkanImages.vkTransitionImageLayout(
                 commandBuffer,
-                offscreen.colorImage,
+                image,
                 VkImageLayout2.VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                VkImageLayout2.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                from,
             )
         }
         pixels = VulkanBuffers.readBufferMemoryBytes(device, stagingMemory, 0, byteSize.toInt())
@@ -261,5 +307,5 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
         VulkanBuffers.vkDestroyBuffer(device, stagingBuffer)
         VulkanBuffers.vkFreeMemory(device, stagingMemory)
     }
-    return TextureAsset(pixels, offscreen.width, offscreen.height)
+    return TextureAsset(pixels, width, height)
 }

@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>LongMethod:InspectorPanel.kt$internal fun UiScope.drawInspectorPanel( world: World, selectedEntityId: Int?, )</ID>
+    <ID>LongMethod:ParticleEmitterExampleDriver.kt$ParticleEmitterExampleDriver$fun attach(instance: Scene, runtime: SceneAppLifecycleRuntime)</ID>
+    <ID>LongMethod:StudioModule.kt$internal fun studioModule( store: StudioStore = StudioStore(), backend: AppWindowBackend = platformBackendPreference(), // Injectable so a test can assert what a save produced without writing to the real home // directory. Defaulted, so production wiring stays a one-liner. writeScene: (fileName: String, json: String) -> String = ::writeSceneDocument, ): AppModule</ID>
+    <ID>LongMethod:StudioPills.kt$internal fun UiScope.drawViewPill(state: ViewPillState, actions: ViewPillActions)</ID>
+    <ID>LongMethod:StudioShell.kt$private fun UiScope.drawStudioViewportPanel( store: StudioStore, world: World, renderer: Renderer, viewportRect: StudioViewportRect, orientationGizmo: StudioOrientationGizmo, cameraPreview: StudioCameraPreview, )</ID>
+    <ID>LongMethod:StudioShell.kt$private fun UiScope.drawStudioWorkspace( store: StudioStore, world: World, renderer: Renderer, heightPx: Float, viewportRect: StudioViewportRect, cameraPreview: StudioCameraPreview, orientationGizmo: StudioOrientationGizmo, )</ID>
+    <ID>LongParameterList:StudioShell.kt$( store: StudioStore, world: World, renderer: Renderer, heightPx: Float, viewportRect: StudioViewportRect, cameraPreview: StudioCameraPreview, orientationGizmo: StudioOrientationGizmo, )</ID>
+    <ID>LongParameterList:StudioShell.kt$( store: StudioStore, world: World, renderer: Renderer, viewportRect: StudioViewportRect, orientationGizmo: StudioOrientationGizmo, cameraPreview: StudioCameraPreview, )</ID>
+    <ID>ReturnCount:StudioExampleDriverSystem.kt$StudioExampleDriverSystem$private fun alignEditorCameraToAuthored(world: World)</ID>
+    <ID>UnusedParameter:StudioPills.kt$expanded: Boolean</ID>
+    <ID>UnusedPrivateProperty:StudioBottomDock.kt$private val BOTTOM_DOCK_INSET = 8f.dp</ID>
+    <ID>UnusedPrivateProperty:StudioShell.kt$// Dark neutral gray, not pure black -- Renderer.clearColor otherwise defaults to stark black, // which reads as "nothing rendered" rather than a real viewport background. Same reasoning // scene3d-playground's own VIEWPORT_CLEAR_COLOR documents. @Suppress("MagicNumber") // The literals define the constant; naming each channel adds nothing. private val ViewportClearColor = Color(r = 0.14f, g = 0.14f, b = 0.16f, a = 1f)</ID>
+  </CurrentIssues>
+</SmellBaseline>

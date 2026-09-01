@@ -14,6 +14,18 @@ import io.github.awakelab.awake.vulkan.utils.VkResultException
 
 /** Submits the recorded frame and presents it, including swapchain recovery. */
 internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
+    // Headless: nothing signalled an image-available semaphore, because nothing acquired an
+    // image -- so waiting on one would hang here rather than fail. Submit bare and return; the
+    // fence this frame already owns is what a reader waits on.
+    if (swapchainManager.isHeadlessPresentable) {
+        Vulkan.vkQueueSubmit(
+            graphicsQueue,
+            arrayOf(VkSubmitInfo(pCommandBuffers = arrayOf(commandBuffers[currentFrame]))),
+            swapchainManager.inFlightFences[currentFrame],
+        )
+        swapchainManager.currentFrame = (currentFrame + 1) % commandBuffers.size
+        return
+    }
     val waitSemaphores = arrayOf(swapchainManager.imageAvailableSemaphores[currentFrame])
     val waitStages =
         intArrayOf(VkPipelineStageFlagBits.VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT.value)

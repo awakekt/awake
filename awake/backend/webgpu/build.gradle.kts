@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.backend-layering-convention")
@@ -95,6 +96,8 @@ kotlin {
             // same runtime resource lookup used by Vulkan.
             implementation(project(":awake:asset:shader-pack"))
             implementation(project(":awake:scene"))
+            // HeadlessRenderSession, the shape both backends hand a windowless renderer back in.
+            api(project(":awake:engine:render:testing"))
             implementation(libs.kotlinx.coroutines.core)
             // Multiplatform: the same wgpu4k API backs both wasmJs and the desktop test target.
             // Only the toolkit (canvas bootstrap) and kotlinx-browser stay wasm-only.
@@ -136,3 +139,9 @@ kotlin {
     }
 }
 
+mavenPublishing {
+    pom {
+        name.set("Awake WebGPU Backend")
+        description.set("The WebGPU renderer for browser and desktop targets, running WGSL natively")
+    }
+}

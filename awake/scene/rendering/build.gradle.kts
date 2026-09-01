@@ -5,6 +5,7 @@
  */
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -22,6 +23,7 @@ kotlin {
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:animation"))
             api(project(":awake:scene:scene-core"))
+            api(project(":awake:scene:world"))
             api(project(":awake:engine:render:contract"))
             api(project(":awake:asset:terrain"))
             // terrainContentFeature(TerrainComponent) adapts the pack's feature to the ECS
@@ -35,5 +37,12 @@ kotlin {
             implementation(project(":awake:engine:render:testing"))
             implementation(libs.kotlinx.coroutines.test)
         }
+    }
+}
+
+mavenPublishing {
+    pom {
+        name.set("Awake Scene Rendering")
+        description.set("Camera, lights, mesh renderers, particles and the systems that turn a scene into draw calls")
     }
 }

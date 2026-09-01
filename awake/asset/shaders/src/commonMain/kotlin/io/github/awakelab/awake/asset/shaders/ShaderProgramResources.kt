@@ -6,6 +6,7 @@
 package io.github.awakelab.awake.asset.shaders
 
 import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
+import io.github.awakelab.awake.core.math.ClipSpace
 import io.github.awakelab.awake.core.host.readResourceBytes
 import io.github.awakelab.awake.render.pipeline.ShaderSource
 
@@ -95,11 +96,33 @@ fun shaderSet(name: String): ShaderSet = ShaderSet(
  * library's own resources. `emitWgsl()` is called once per set, at construction.
  */
 fun aslShaderSet(definition: AslShaderDefinition): ShaderSet {
-    val wgsl = definition.emitWgsl()
-    val stages = ShaderStages.graphics(
+    val stages = definition.graphicsStages()
+    return ShaderSet(vulkan = stages, webGpu = stages)
+}
+
+/**
+ * A shader set built once per backend, with that backend's [ClipSpace] in scope.
+ *
+ * The convention a shader is compiled against is not a property of the shader -- it is a property
+ * of the backend rendering it, and it decides real code: whether an NDC coordinate becomes a
+ * texture UV directly or flipped (see `ndcToUv`). Handing the definition its clip space removes
+ * the step where somebody has to remember to thread a flag through, which is the step `lit_shadow`
+ * skipped while `depth_fog` next door did not.
+ *
+ * The two emitted sources are usually identical, and that is fine: [build] simply never consulted
+ * its argument.
+ */
+fun aslShaderSet(build: (ClipSpace) -> AslShaderDefinition): ShaderSet = ShaderSet(
+    vulkan = build(ClipSpace.Vulkan).graphicsStages(),
+    webGpu = build(ClipSpace.WebGpu).graphicsStages(),
+)
+
+/** One emitted WGSL source, addressed by both entry points. */
+private fun AslShaderDefinition.graphicsStages(): ShaderStages {
+    val wgsl = emitWgsl()
+    return ShaderStages.graphics(
         vertex = ShaderSource.InlineText(wgsl, entryPoint = "vertexMain"),
         fragment = ShaderSource.InlineText(wgsl, entryPoint = "fragmentMain"),
     )
-    return ShaderSet(vulkan = stages, webGpu = stages)
 }
 

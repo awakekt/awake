@@ -24,8 +24,12 @@ class UniformLayoutsTest {
     }
 
     @Test
-    fun litShadowUniformLayoutTotalIncludesVertexAnimation() {
-        assertEquals(104, LitShadowUniformLayout.total)
+    fun litShadowUniformLayoutTotalIncludesEveryCascade() {
+        // 104 before cascades, when one lightMvp covered the whole shadow. The block now carries
+        // MAX_SHADOW_CASCADES world-to-light matrices instead of that one (+48), and one vec4 per
+        // cascade of depth scale (+16) so a world-space bias means the same offset in each --
+        // the price of the cascade set being uniform data rather than a second binding.
+        assertEquals(168, LitShadowUniformLayout.total)
     }
 
     @Test

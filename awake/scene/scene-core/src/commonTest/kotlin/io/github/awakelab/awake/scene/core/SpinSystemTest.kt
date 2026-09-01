@@ -6,10 +6,10 @@
 package io.github.awakelab.awake.scene.core
 
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.core.components.SpinControl
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.core.systems.SpinSystem
-import io.github.awakelab.awake.scene.core.systems.TransformSystem
+import io.github.awakelab.awake.scene.core.transform.SpinControl
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.core.transform.SpinSystem
+import io.github.awakelab.awake.scene.core.transform.TransformSystem
 import kotlin.math.PI
 import kotlin.test.Test
 import kotlin.test.assertEquals

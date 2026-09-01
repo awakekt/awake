@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
  * chaser never has to route around one.
  */
 class StreamedNavExampleDriverTest {
-    private val driver = StreamedNavExampleDriver
+    private val terrain = StreamedNavTerrain
 
     @Test
     fun theOrbitTheTargetWalksIsOnWalkableGround() {
@@ -29,7 +29,7 @@ class StreamedNavExampleDriverTest {
             val angle = step * (2f * PI / steps)
             val x = cos(angle) * ORBIT_RADIUS
             val z = sin(angle) * ORBIT_RADIUS
-            if (driver.heightAt(x, z) > PILLAR_THRESHOLD) blocked++
+            if (terrain.heightAt(x, z) > PILLAR_THRESHOLD) blocked++
         }
 
         assertTrue(blocked == 0, "$blocked of $steps orbit positions land on a pillar.")
@@ -40,7 +40,7 @@ class StreamedNavExampleDriverTest {
         var pillarSamples = 0
         for (x in -20..20) {
             for (z in -20..20) {
-                if (driver.heightAt(x.toFloat(), z.toFloat()) > PILLAR_THRESHOLD) pillarSamples++
+                if (terrain.heightAt(x.toFloat(), z.toFloat()) > PILLAR_THRESHOLD) pillarSamples++
             }
         }
 
@@ -49,15 +49,22 @@ class StreamedNavExampleDriverTest {
         assertTrue(pillarSamples < 41 * 41 / 4, "Too much of the world is pillar: $pillarSamples.")
     }
 
+    /** The chaser must start far enough inside the orbit that the target is not already loaded. */
+    @Test
+    fun theTargetOrbitsBeyondWhatTheWorldLoadsAround() {
+        // Two cells of loading radius at 16m cells: anything past ~32m needs the coarse graph.
+        assertTrue(ORBIT_RADIUS > 32f, "A target inside the loaded set never exercises long-range routing.")
+    }
+
     /** The grid the streamer fills is the one the chaser searches; a mismatch is a silent no-op. */
     @Test
     fun theGridCoversTheStreamingCell() {
-        assertTrue(driver.grid.worldCellSize > 0f)
-        assertTrue(driver.grid.findPath(Vec3f(0f, 0f, 0f), Vec3f(1f, 0f, 0f)).isEmpty(), "Nothing is resident yet.")
+        assertTrue(StreamedNavExampleDriver.grid.worldCellSize > 0f)
+        assertTrue(StreamedNavExampleDriver.grid.findPath(Vec3f(0f, 0f, 0f), Vec3f(1f, 0f, 0f)).isEmpty(), "Nothing is resident yet.")
     }
 
     private companion object {
-        const val ORBIT_RADIUS = 26f
+        const val ORBIT_RADIUS = 90f
         const val PILLAR_THRESHOLD = 3f
         const val PI = 3.1415927f
     }

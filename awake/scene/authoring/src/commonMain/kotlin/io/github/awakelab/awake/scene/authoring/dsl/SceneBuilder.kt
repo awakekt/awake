@@ -7,8 +7,8 @@ package io.github.awakelab.awake.scene.authoring.dsl
 
 import io.github.awakelab.awake.ecs.Entity
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.core.components.Name
-import io.github.awakelab.awake.scene.core.components.Transform
+import io.github.awakelab.awake.scene.core.Name
+import io.github.awakelab.awake.scene.core.transform.Transform
 
 /**
  * Structural orchestrator for building an ECS scene graph.

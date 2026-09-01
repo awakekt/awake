@@ -60,6 +60,10 @@ class UiRenderPipeline(
     private val blendMode: BlendMode = BlendMode.SourceOver,
     private val premultiplied: Boolean = false,
 ) {
+    /** The uniform block's two halves, kept so either can be rewritten without dropping the other. */
+    private var screenToNdc = floatArrayOf(0f, 0f, 0f, 0f)
+    private var fontInfo = floatArrayOf(0f, 0f)
+
     constructor(
         graphicsDevice: GraphicsDevice,
         swapchainManager: SwapchainManager,
@@ -129,8 +133,19 @@ class UiRenderPipeline(
                             blend = BlendState(
                                 color = BlendComponent(
                                     // ui_texture.wgsl normalizes both uploaded images and render
-                                    // targets to premultiplied output before this fixed blend stage.
-                                    srcFactor = GPUBlendFactor.One,
+                                    // targets to premultiplied output before this fixed blend
+                                    // stage, so those pipelines take the colour as it comes.
+                                    //
+                                    // The others -- quads, rounded quads and glyphs -- emit
+                                    // straight alpha, and their colour has to be scaled by coverage
+                                    // here or a half-covered pixel paints at full strength. That is
+                                    // what turned web text into blobs: this factor was `One` for
+                                    // every kind, while Vulkan has always picked per-kind.
+                                    srcFactor = if (premultiplied) {
+                                        GPUBlendFactor.One
+                                    } else {
+                                        GPUBlendFactor.SrcAlpha
+                                    },
                                     dstFactor = when (blendMode) {
                                         BlendMode.SourceOver -> GPUBlendFactor.OneMinusSrcAlpha
                                         BlendMode.Plus -> GPUBlendFactor.One
@@ -219,40 +234,50 @@ class UiRenderPipeline(
 
     /** Call once at construction and again whenever the canvas resizes. */
     fun writeScreenSize(width: Float, height: Float) {
+        screenToNdc = floatArrayOf(2f / width, -2f / height, -1f, 1f)
+        writeUniforms()
+    }
+
+    /**
+     * Sets the glyph shader's font fields.
+     *
+     * The glyph shader reads:
+     *   fontInfo.x — 1.0 for a distance-field atlas, 0.0 for a coverage-alpha atlas. Zero takes
+     *                the coverage branch, which samples an MTSDF atlas's alpha as if it were ink
+     *                and turns every glyph edge into a wide linear ramp.
+     *   fontInfo.y — distanceFieldRangePx, in atlas texels. Zero collapses `screenPxRange` to 1,
+     *                which is the same soft ramp by a different route.
+     *
+     * Call once when the glyph pipeline is built or the font changes.
+     */
+    fun writeFontInfo(isDistanceField: Boolean, rangePx: Float) {
+        fontInfo = floatArrayOf(if (isDistanceField) 1f else 0f, rangePx)
+        writeUniforms()
+    }
+
+    /**
+     * Writes the whole uniform block from offset zero, the way the Vulkan pipeline does.
+     *
+     * Not two partial writes at their own offsets: a partial write of `fontInfo` alone reached the
+     * buffer but never the shader, so glyphs took the coverage branch and rendered two pixels wider
+     * on every side than Vulkan's. Holding both halves and writing them together costs one extra
+     * `writeBuffer` at startup and removes the whole class of question.
+     */
+    private fun writeUniforms() {
         device.queue.writeBuffer(
             screenSizeBuffer,
             0uL,
             fastArrayBufferOf(
                 floatArrayOf(
-                    2f / width,
-                    -2f / height,
-                    -1f,
-                    1f,
+                    screenToNdc[0],
+                    screenToNdc[1],
+                    screenToNdc[2],
+                    screenToNdc[3],
+                    fontInfo[0],
+                    fontInfo[1],
+                    0f,
+                    0f,
                 ),
-            ),
-        )
-    }
-
-    /**
-     * Writes the glyph-shader font-info fields (bytes 8–15 of the shared UBO).
-     *
-     * The glyph WGSL shader reads:
-     *   fontInfo.x — 1.0 for a distance-field atlas, 0.0 for a coverage-alpha atlas.
-     *   fontInfo.y — distanceFieldRangePx (atlas texels). The shader divides by atlasSize
-     *                to recover UV-space range; zero collapses the anti-aliased SDF edge
-     *                to a 1px hard band, making large text look pixelated.
-     *
-     * Call once after [writeScreenSize] when the glyph pipeline is first constructed or
-     * when the font changes. Canvas-resize events only need to re-call [writeScreenSize].
-     */
-    fun writeFontInfo(isDistanceField: Boolean, rangePx: Float) {
-        // UBO: {screenSize: vec2, fontInfo: vec2} = 4 floats = 16 bytes total.
-        // fontInfo starts at byte 8.
-        device.queue.writeBuffer(
-            screenSizeBuffer,
-            16uL,
-            fastArrayBufferOf(
-                floatArrayOf(if (isDistanceField) 1f else 0f, rangePx, 0f, 0f),
             ),
         )
     }

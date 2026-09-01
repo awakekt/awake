@@ -2,8 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>LongParameterList:PixelMap.kt$PixelMap$(x: Int, y: Int, r: Float, g: Float, b: Float, srcA: Float)</ID>
     <ID>MatchingDeclarationName:PixelBaseline.kt$PixelDiffResult</ID>
-    <ID>ReturnCount:PixelMap.kt$PixelMap$fun blend(x: Int, y: Int, r: Float, g: Float, b: Float, srcA: Float)</ID>
   </CurrentIssues>
 </SmellBaseline>

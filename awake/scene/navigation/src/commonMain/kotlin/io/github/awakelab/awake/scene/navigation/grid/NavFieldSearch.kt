@@ -100,7 +100,11 @@ internal class NavFieldSearch(private val field: NavField) {
         var node = goal
         while (node != NO_PARENT) {
             reversed.add(
-                Vec3f(unpackX(node) * field.sampleSize, 0f, unpackZ(node) * field.sampleSize),
+                Vec3f(
+                    field.originX + unpackX(node) * field.sampleSize,
+                    0f,
+                    field.originZ + unpackZ(node) * field.sampleSize,
+                ),
             )
             if (node == start) break
             node = nodes.parent(nodes.slotOf(node))

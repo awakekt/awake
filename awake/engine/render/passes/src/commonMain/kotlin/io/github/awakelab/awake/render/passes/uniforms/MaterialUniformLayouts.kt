@@ -49,9 +49,13 @@ object MaterialUniformLayouts {
         UniformFields.LightColor,
         UniformFields.PointLightPositions,
         UniformFields.PointLightColors,
-        UniformFields.LightMvp,
-        UniformFields.VertexAnimation,
+        UniformFields.CascadeViewProjections,
+        UniformFields.CascadeDepthScales,
+        // Ahead of vertexAnimation so shadow_depth's prefix reaches it: that pass now builds its
+        // own clip position from model and the cascade it is rendering, rather than reading a
+        // per-draw matrix that could only ever describe one cascade.
         UniformFields.Model,
+        UniformFields.VertexAnimation,
         UniformFields.CameraPosition,
         UniformFields.Material,
         UniformFields.FogColor,

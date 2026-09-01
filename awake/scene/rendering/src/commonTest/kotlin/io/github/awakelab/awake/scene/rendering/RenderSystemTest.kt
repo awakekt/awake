@@ -26,24 +26,25 @@ import io.github.awakelab.awake.render.renderer.SceneLight
 import io.github.awakelab.awake.render.texture.PbrTextureSet
 import io.github.awakelab.awake.render.texture.RenderTarget
 import io.github.awakelab.awake.render.texture.TextureAsset
-import io.github.awakelab.awake.scene.core.components.Transform
-import io.github.awakelab.awake.scene.rendering.components.InstancedMeshRenderer
-import io.github.awakelab.awake.scene.rendering.components.Light
-import io.github.awakelab.awake.scene.rendering.components.LodGroup
-import io.github.awakelab.awake.scene.rendering.components.LodLevel
-import io.github.awakelab.awake.scene.rendering.components.MeshBounds
-import io.github.awakelab.awake.scene.rendering.components.MeshRenderer
-import io.github.awakelab.awake.scene.rendering.components.Occluder
-import io.github.awakelab.awake.scene.rendering.components.ParticleEmitter
-import io.github.awakelab.awake.scene.rendering.components.ParticleVisual
-import io.github.awakelab.awake.scene.rendering.systems.RenderSystem
+import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.mesh.InstancedMeshRenderer
+import io.github.awakelab.awake.scene.rendering.Light
+import io.github.awakelab.awake.scene.rendering.mesh.LodGroup
+import io.github.awakelab.awake.scene.rendering.mesh.LodLevel
+import io.github.awakelab.awake.scene.rendering.mesh.MeshBounds
+import io.github.awakelab.awake.scene.rendering.debug.debugSettings
+import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
+import io.github.awakelab.awake.scene.rendering.spatial.Occluder
+import io.github.awakelab.awake.scene.rendering.particles.ParticleEmitter
+import io.github.awakelab.awake.scene.rendering.particles.ParticleVisual
+import io.github.awakelab.awake.scene.rendering.RenderSystem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 
-/** [io.github.awakelab.awake.scene.rendering.systems.RenderSystem] doesn't shade anything itself -- it just resolves the scene's [io.github.awakelab.awake.scene.rendering.components.Light] entity
+/** [io.github.awakelab.awake.scene.rendering.RenderSystem] doesn't shade anything itself -- it just resolves the scene's [io.github.awakelab.awake.scene.rendering.Light] entity
  * (or [io.github.awakelab.awake.render.renderer.DEFAULT_SCENE_LIGHT] when there isn't one) into the backend-neutral [io.github.awakelab.awake.render.renderer.SceneLight]
  * [io.github.awakelab.awake.render.renderer.Renderer.draw] expects, same "world state in, render-api call out" shape the mesh/camera
  * side already has. A recording fake [io.github.awakelab.awake.render.renderer.Renderer] (matching [Scene3DPlaygroundUiTest]'s own
@@ -94,7 +95,7 @@ class RenderSystemTest {
         val cameraEntity = world.create()
         world.add(
             cameraEntity,
-            io.github.awakelab.awake.scene.rendering.components.Camera(
+            io.github.awakelab.awake.scene.rendering.Camera(
                 Lens(
                     eye = Vec3f(
                         0f,
@@ -146,6 +147,43 @@ class RenderSystemTest {
         // Not just unused -- not built. Building it costs a matrix per frame, and a renderer with
         // shadows off never reads it.
         assertNull(renderer.lastLight?.viewProjection)
+    }
+
+    /**
+     * The debug toggle really switches the fit, rather than only the wireframe drawn over it.
+     *
+     * "Shadow cascades" in a debug panel used to draw cascade outlines; there was no way to turn
+     * the cascades themselves OFF and see the single fixed box for comparison, which is the only
+     * way to see what the cascaded fit is doing to a scene rather than read that it is on.
+     */
+    @Test
+    fun theDebugToggleFallsBackToTheSingleShadowBox() {
+        val world = worldWithPrimaryCamera()
+        world.debugSettings().cascadedShadows = false
+        val renderer = RecordingRenderer()
+
+        RenderSystem(renderer).update(world, 1f / 60f)
+
+        assertNull(
+            renderer.lastLight?.cascades,
+            "Cascades were still fitted with the toggle off, so the comparison shows the same " +
+                "picture twice.",
+        )
+        assertNotNull(
+            renderer.lastLight?.viewProjection,
+            "The fallback still has to supply a matrix -- without one the scene casts nothing " +
+                "at all, which is not what the old single box did.",
+        )
+    }
+
+    @Test
+    fun cascadesAreFittedUnlessTheToggleSaysOtherwise() {
+        val world = worldWithPrimaryCamera()
+        val renderer = RecordingRenderer()
+
+        RenderSystem(renderer).update(world, 1f / 60f)
+
+        assertNotNull(renderer.lastLight?.cascades, "Cascades are the default, not the opt-in.")
     }
 
     @Test

@@ -11,6 +11,7 @@ import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.core.host.readResourceBytes
 import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.math.Vec3f
+import io.github.awakelab.awake.render.renderer.DEFAULT_SHADOW_CASCADES
 import io.github.awakelab.awake.render.passes.OpaqueRenderFeature
 import io.github.awakelab.awake.render.passes2d.UiRenderFeature
 import io.github.awakelab.awake.render.renderer.DrawCall
@@ -213,7 +214,10 @@ class RendererHeadlessShadowMapTest {
             graphicsDevice.createHeadless()
             val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
             swapchainManager.createHeadless(TARGET_SIZE, TARGET_SIZE)
-            val depthTarget = DepthTarget(graphicsDevice)
+            // Layered and arrayed like VulkanEngine builds it: lit_shadow declares
+            // texture_depth_2d_array now, and a 2D view against that declaration is a validation
+            // error rather than a wrong picture.
+            val depthTarget = DepthTarget(graphicsDevice, layers = DEFAULT_SHADOW_CASCADES, arrayed = true, comparison = true)
             val descriptorSetLayout = Material.createDescriptorSetLayout(graphicsDevice)
             val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
             val depthPrePass = depthPrePass(graphicsDevice, depthTarget, descriptorSetLayout)
@@ -283,6 +287,7 @@ class RendererHeadlessShadowMapTest {
                 depthTarget.size,
                 vertexEntryPoint = "vertexMain",
                 fragmentEntryPoint = "fragmentMain",
+                cascadeCount = depthTarget.layers,
             ),
         )
 

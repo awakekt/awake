@@ -5,6 +5,7 @@
  */
 package io.github.awakelab.awake.webgpu.mesh
 
+import io.github.awakelab.awake.core.math.Aabb
 import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.webgpu.WebGpuHandles
 import io.github.awakelab.awake.webgpu.device.GraphicsDevice
@@ -45,6 +46,8 @@ class Mesh(
     vertices: FloatArray,
     indices: IntArray,
     override val format: VertexFormat = VertexFormat.PositionColorUv,
+    /** The box these vertices occupy -- Vulkan's twin, same reason. */
+    override val localBounds: Aabb? = null,
 ) : RenderMesh {
     var vertexBuffer: BufferHandle
     var vertexBufferMemory: DeviceMemoryHandle

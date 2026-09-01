@@ -7,6 +7,8 @@ package io.github.awakelab.awake.webgpu.renderer
 
 import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.math.Mat4
+import io.github.awakelab.awake.render.renderer.ShadowCascadeUniforms
+import io.github.awakelab.awake.render.renderer.shadowCascades
 import io.github.awakelab.awake.render.command.PipelineHandle
 import io.github.awakelab.awake.render.passes.RenderPassSlot
 import io.github.awakelab.awake.render.passes.debug.lineSegmentVertices
@@ -67,26 +69,16 @@ internal fun Renderer.performDraw(camera: Lens, drawCalls: List<DrawCall>, light
     // The light's own view-projection: what lit_shadow.wgsl projects a vertex into to sample
     // the depth target. Identity when no depth target exists -- primaryDraw ignores it then,
     // matching Vulkan's own null-lightViewProjection branch.
-    val lightViewProjection = (if (depthPrePass != null) light.viewProjection else null) ?: Mat4()
-    val opaqueDraws = prepareOpaqueDraws(
-        drawCalls,
-        FrameDrawContext(camera.eye, viewProjection, lightUniforms, lightViewProjection),
-        primary,
-    )
+    val cascades = if (depthPrePass != null) light.shadowCascades() else null
+    val frame = FrameDrawContext(camera.eye, viewProjection, lightUniforms, cascades, light)
+    val opaqueDraws = prepareOpaqueDraws(drawCalls, frame, primary)
 
     val encoder = device.createCommandEncoder()
     val colorView = renderingContext.getCurrentTexture().createView()
 
-    // Shadow depth pre-pass (directional light point of view)
-    if (shadowsEnabled && depthPrePass != null) {
-        val allDraws = opaqueDraws.opaque.values.flatten()
-        depthPrePass.recordCommands(encoder, allDraws)
-    }
-    // Camera-space depth, for whatever samples what is already in front of it. Not gated on
-    // shadowsEnabled -- that toggle is about shadows, and water or fog needs this either way.
-    if (sceneDepthPass != null) {
-        sceneDepthPass.recordCommands(encoder, opaqueDraws.opaque.values.flatten())
-    }
+    // Both depth passes, each with draws prepared against its OWN pipeline -- see
+    // recordDepthPasses for why this backend cannot reuse the scene's prepared draws here.
+    recordDepthPasses(encoder, drawCalls, frame)
 
     encoder.beginRenderPass(
         RenderPassDescriptor(
@@ -126,25 +118,14 @@ internal fun Renderer.performDraw(camera: Lens, drawCalls: List<DrawCall>, light
                 this,
                 opaqueDraws,
                 primary.pipeline,
-                viewProjection,
-                camera.eye,
-                light,
-                renderingContext,
+                frame,
+                SurfaceSize(renderingContext.width.toInt(), renderingContext.height.toInt()),
             ),
         )
         end()
     }
 
-    recordUiOverlay(
-        encoder,
-        colorView,
-        renderingContext,
-        opaqueDraws,
-        primary.pipeline,
-        viewProjection,
-        camera.eye,
-        light,
-    )
+    recordUiOverlay(encoder, colorView, opaqueDraws, primary.pipeline, frame)
 
     device.queue.submit(listOf(encoder.finish()))
 }
@@ -153,13 +134,11 @@ internal fun Renderer.performDraw(camera: Lens, drawCalls: List<DrawCall>, light
 private fun Renderer.recordUiOverlay(
     encoder: io.ygdrasil.webgpu.GPUCommandEncoder,
     colorView: io.ygdrasil.webgpu.GPUTextureView,
-    renderingContext: io.ygdrasil.webgpu.RenderingContext,
     opaqueDraws: PreparedDraws,
     primaryPipeline: PipelineHandle,
-    viewProjection: Mat4,
-    cameraEye: io.github.awakelab.awake.core.math.Vec3f,
-    light: SceneLight,
+    frame: FrameDrawContext,
 ) {
+    val renderingContext = graphicsDevice.wgpuContext.renderingContext
     val quadPipeline = uiRenderPipeline
     if (quadPipeline == null || uiRuns.isEmpty()) return
 
@@ -190,10 +169,8 @@ private fun Renderer.recordUiOverlay(
                 this,
                 opaqueDraws,
                 primaryPipeline,
-                viewProjection,
-                cameraEye,
-                light,
-                renderingContext,
+                frame,
+                SurfaceSize(renderingContext.width.toInt(), renderingContext.height.toInt()),
             ),
         )
         end()
@@ -206,26 +183,30 @@ private fun Renderer.recordUiOverlay(
  * `performDrawDebugLines`, not `drawDebugLines` -- see [performDraw]'s doc comment for why. */
 /** One pass's context. Built per pass, not per frame -- a WebGPU pass encoder is only valid
  * inside the `beginRenderPass` that made it. */
-private fun Renderer.sceneContext(
+internal fun Renderer.sceneContext(
     encoder: io.ygdrasil.webgpu.GPURenderPassEncoder,
     opaqueDraws: PreparedDraws,
     primaryPipeline: PipelineHandle,
-    viewProjection: io.github.awakelab.awake.core.math.Mat4,
-    cameraEye: io.github.awakelab.awake.core.math.Vec3f,
-    light: SceneLight,
-    renderingContext: io.ygdrasil.webgpu.RenderingContext,
+    /** This frame's camera, light and prepared uniforms -- already assembled by the caller,
+     * which had to build them to prepare the draws above. */
+    frame: FrameDrawContext,
+    /** The surface being drawn into: the canvas on screen, the target's own size offscreen. */
+    surface: SurfaceSize,
 ): WebGpuFrameContext = WebGpuFrameContext(
     renderer = this,
     encoder = encoder,
     groupedDrawCalls = opaqueDraws.opaque,
     transparentDrawCalls = opaqueDraws.transparent,
     primaryPipeline = primaryPipeline,
-    viewProjection = viewProjection,
-    cameraEye = cameraEye,
-    light = light,
-    surfaceWidth = renderingContext.width.toInt(),
-    surfaceHeight = renderingContext.height.toInt(),
+    viewProjection = frame.viewProjection,
+    cameraEye = frame.cameraEye,
+    light = frame.light,
+    surfaceWidth = surface.width,
+    surfaceHeight = surface.height,
 )
+
+/** What a pass is drawing into, so [sceneContext] takes one argument for it rather than two. */
+internal class SurfaceSize(val width: Int, val height: Int)
 
 internal fun Renderer.performDrawDebugLines(lines: List<LineSegment>) {
     // No capacity guard: LineMesh grows to fit and enforces DebugLineLayout's ceiling itself.

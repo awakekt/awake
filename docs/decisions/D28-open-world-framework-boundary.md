@@ -49,6 +49,57 @@ Deferred on the same test, in this order once the above lands: `AssetManager`/`A
 with refcounting and VRAM eviction; async cell streaming and cell entity lifecycle; cascaded
 shadow maps; a spatial index; floating origin; LOD hysteresis.
 
+**Floating origin, physics leg landed (2026-08-30).** `PhysicsWorld.shiftOrigin` on all three
+Jolt backends, joined to `FloatingOriginSystem` by a listener in `:awake:scene:physics` rather
+than by scene-core reaching into physics. Verified against real Jolt, not a fake: bodies are
+moved, then STEPPED, because the simulation gets the last word on a position and a shift that
+does not survive a step has not happened -- which is precisely what shifting only the ECS
+transform looked like.
+
+**Shadow texel size, half fixed (2026-08-31).** Fitting cascades with the real viewport aspect
+instead of `CONSERVATIVE_ASPECT` took the near cascade from 1.91cm to 1.34cm per texel. The other
+half -- capping the shadow DISTANCE rather than fitting out to the camera's far plane, worth
+another 2.4x -- is NOT in. It is standard practice and the arithmetic is right, but it made the
+shadow disappear entirely in `RendererHeadlessCascadedShadowTest`'s top-down probe scene (a
+camera 14m up, a 40m cap): every fragment still lands inside a cascade that contains it, and the
+shadow is gone anyway. Something about the fit at short shadow distances is wrong, and shipping
+the speedup while that is unexplained would trade a visible artefact for an invisible one.
+
+**Cascaded shadows, landed (2026-08-30).** The last of D28's deferred rows. Depth targets carry
+layers, the depth pass renders one per cascade through a pass-scoped matrix block, and
+`lit_shadow` samples the array. Two things are worth carrying forward: the cascade a fragment
+uses is decided by CONTAINMENT rather than by comparing a view distance against split planes,
+because the boxes are fitted to spheres and a distance test agrees with that fit only
+approximately -- where it disagrees, a band of shadow goes missing. And every layer is rendered
+every frame even when fewer cascades are configured, because an unrendered layer is an image
+subresource in an undefined layout and sampling it is a validation error rather than a dark
+pixel.
+
+**Spatial index, landed as an opt-in (2026-08-30).** `SpatialGrid` plus `SpatialIndexSystem`,
+with `RenderSystem` culling through the index when a scene installs one. The benchmark that came
+with it is the part worth keeping: the query is five times faster than scanning every entity, and
+maintaining the index costs twice what the scan does, because this ECS reports neither movement
+nor destruction and the only way to know an entity moved is to look at it. So the index is not a
+free upgrade for culling; it pays when culling, AI range queries and picking share one pass.
+Deferring it "until a real query load exists" was the right call -- one query is not enough.
+
+**LOD hysteresis, landed (2026-08-30).** `LodGroup` selection carries a band and the level it
+last drew, so an entity sitting on a threshold stops alternating between two meshes. Terrain's
+clipmap needed nothing: its rings are concentric and always present, and the shader morphs
+between them -- there is no discrete switch there to debounce.
+
+**Floating origin, landed for transforms (2026-08-30).** `FloatingOriginSystem` rebases every
+root `Transform` in whole steps once the `StreamObserver` passes a threshold, and `WorldOrigin`
+records where the local frame sits so absolute coordinates survive the shift.
+`WorldPartitionSystem` reads it and streams in absolute space, so which cells are loaded does not
+depend on where the origin happens to be.
+
+Physics is the stated gap. `PhysicsSystem` reads Jolt bodies back into transforms every frame, so
+a body overwrites its shifted position on the next step, and `PhysicsWorld` has no reposition or
+shift-origin call to fix that with. A scene mixing physics bodies with a shifting origin is
+unsupported until it does. `OriginShiftListener` is the seam anything else holding world
+coordinates -- a nav grid, a spatial index, a cached path -- follows the shift through.
+
 **Streaming, partially landed (2026-08-29).** `WorldPartitionSystem.update` was an empty body, so
 the grid and its hysteresis band only ran when something called `updateObserverPosition` by hand
 and nothing did. It now drives itself from a `StreamObserver`-tagged entity's `Transform` -- a tag

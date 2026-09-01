@@ -19,9 +19,18 @@ object Frustum {
         val right = forward.cross(camera.up).normalized()
         val up = right.cross(forward)
 
-        val nearHalfHeight = tan(camera.fovYRadians / 2f) * camera.near
+        // An orthographic lens is a BOX: the same half-height at the near plane and the far one,
+        // and it comes from `orthoHalfHeight`, not from a field of view the projection never
+        // reads. Deriving a cone from `fovYRadians` regardless of projection made every consumer
+        // of this wrong for such a camera at once -- culling kept whatever the cone happened to
+        // cover, and a cascade fit for a 5m-wide top-down view came out 480m across, whose texels
+        // are coarse enough that lit surfaces self-shadow.
+        val orthographic = camera.projection == Lens.Projection.Orthographic
+        val nearHalfHeight =
+            if (orthographic) camera.orthoHalfHeight else tan(camera.fovYRadians / 2f) * camera.near
+        val farHalfHeight =
+            if (orthographic) camera.orthoHalfHeight else tan(camera.fovYRadians / 2f) * camera.far
         val nearHalfWidth = nearHalfHeight * aspect
-        val farHalfHeight = tan(camera.fovYRadians / 2f) * camera.far
         val farHalfWidth = farHalfHeight * aspect
 
         val nearCenter = camera.eye + forward * camera.near
@@ -100,6 +109,16 @@ fun List<Plane>.containsSphere(
     radius: Float,
 ): Boolean =
     none { plane -> plane.signedDistanceTo(point) < -radius }
+
+/**
+ * Whether [box] is at least partly inside the frustum these planes bound.
+ *
+ * The box half of [containsSphere]'s bargain: identical to [intersects] for the same camera, but
+ * against planes the caller computed once. A test that runs per entity per frame -- or per grid
+ * column and then per entity, as `SpatialGrid.queryFrustum` does -- would otherwise rebuild six
+ * planes each time and spend more on the frustum than on the geometry.
+ */
+fun List<Plane>.intersects(box: Aabb): Boolean = none { plane -> box.isFullyBehind(plane) }
 
 /** The box is outside when its most-positive corner along the plane normal still sits behind it. */
 private fun Aabb.isFullyBehind(plane: Plane): Boolean {

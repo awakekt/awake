@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Awake Net Demo</title>
+    <style>
+        html, body { margin: 0; padding: 24px; background: #050816; color: #d8e0ff; }
+        body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+        h1 { font-size: 14px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #7c8cc4; }
+        #status { margin: 12px 0; color: #8ce99a; }
+        #grid { font-size: 14px; line-height: 1.15; white-space: pre; }
+        #hint { margin-top: 20px; color: #55608c; font-size: 12px; }
+    </style>
+</head>
+<body>
+<h1>Awake Net Demo &mdash; browser client</h1>
+<div id="status">starting...</div>
+<div id="grid"></div>
+<div id="hint">
+    Start the authoritative server first:
+    <code>./gradlew :samples:net-demo:desktopRun --args="server 9540"</code><br>
+    Override with <code>?port=9540&amp;name=browser</code>.<br><br>
+    For <code>wss://</code>, run the server with <code>--tls</code> and add <code>&amp;tls=1</code> here.
+    The demo's certificate is self-signed, and a page cannot ask the browser to trust one:
+    open <code>https://localhost:&lt;port&gt;</code> once and accept the warning first, or issue a
+    locally-trusted certificate with mkcert. A refused certificate looks exactly like a server
+    that is down.
+</div>
+<script src="net-demo.js"></script>
+</body>
+</html>

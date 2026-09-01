@@ -6,6 +6,13 @@
 package io.github.awakelab.awake.vulkan.pipeline
 
 import io.github.awakelab.awake.core.geometry.VertexFormat
+import io.github.awakelab.awake.core.math.Mat4
+import io.github.awakelab.awake.render.renderer.CascadePassUniformLayout
+import io.github.awakelab.awake.render.renderer.SHADOW_DEPTH_BIAS_CONSTANT
+import io.github.awakelab.awake.render.renderer.SHADOW_DEPTH_BIAS_SLOPE
+import io.github.awakelab.awake.render.renderer.UniformFields
+import io.github.awakelab.awake.render.renderer.UniformWriter
+import io.github.awakelab.awake.vulkan.debug.PerFrameUniformSlots
 import io.github.awakelab.awake.vulkan.Vulkan
 import io.github.awakelab.awake.vulkan.device.GraphicsDevice
 import io.github.awakelab.awake.vulkan.enums.VkCullModeFlagBits
@@ -48,8 +55,9 @@ import io.github.awakelab.awake.vulkan.models.info.pipeline.VkVertexInputBinding
  * `cullMode = NONE`, not front-face culling. Culling either winding is only safe when a mesh's
  * winding is guaranteed outward-consistent per face, and this repo's are not (see
  * [RenderPipeline]'s own rasterization-state comment) -- culling would punch holes in the
- * rendered geometry. A consumer that needs depth-bias-style mitigation applies it in its own
- * shader.
+ * rendered geometry. The cascade pass instead applies the contract's rasterizer depth bias --
+ * see `SHADOW_DEPTH_BIAS_CONSTANT` for why the source pass, not the sampling shader, is where
+ * slope belongs.
  */
 class DepthOnlyPipeline(
     graphicsDevice: GraphicsDevice,
@@ -60,8 +68,47 @@ class DepthOnlyPipeline(
     targetSize: Int,
     vertexEntryPoint: String = "vertexMain",
     fragmentEntryPoint: String = "fragmentMain",
+    /**
+     * How many cascades this pass renders -- one slot each in its own set-1 block.
+     *
+     * The block exists because the pass draws the same meshes once per cascade, and the matrix
+     * differs between those draws. A per-draw uniform is written once a frame and cannot say
+     * two things.
+     */
+    cascadeCount: Int = 0,
 ) {
     private val device = graphicsDevice.device
+
+    /** One slot per cascade: its matrix, and the descriptor set naming it. */
+    private val cascadeSlots: PerFrameUniformSlots? = if (cascadeCount > 0) {
+        PerFrameUniformSlots(
+            graphicsDevice,
+            CascadePassUniformLayout.total * Float.SIZE_BYTES,
+            VkShaderStageFlagBits.VERTEX.value,
+            cascadeCount,
+        )
+    } else {
+        null
+    }
+
+    /** Whether this pipeline's shader declares the pass-scoped cascade block. `scene_depth`
+     * renders once from the camera and declares none. */
+    val hasCascadeBlock: Boolean get() = cascadeSlots != null
+
+    /** [cascade]'s descriptor set, to bind at set 1 before rendering it. */
+    fun cascadeBinding(cascade: Int): Long =
+        requireNotNull(cascadeSlots) { "This depth pipeline has no cascade block to bind." }[cascade]
+            .descriptorSetHandle
+
+    /** Writes [viewProjection] as the matrix [cascade] renders with; a no-op without a block. */
+    fun writeCascade(cascade: Int, viewProjection: Mat4) {
+        cascadeSlots?.write(
+            cascade,
+            UniformWriter(CascadePassUniformLayout)
+                .put(viewProjection.data, UniformFields.CascadeViewProjection)
+                .build(),
+        )
+    }
 
     var pipelineLayout: Long = 0
         private set
@@ -128,10 +175,15 @@ class DepthOnlyPipeline(
                     primitiveRestartEnable = false,
                 ),
             )
+            // Bias only the cascade (light-space) pass: the scene-depth pass feeds depth_fog,
+            // which reads raw depth, and a biased fog plane reads as the whole world shifted.
             val rasterizationInfo = arrayOf(
                 VkPipelineRasterizationStateCreateInfo(
                     cullMode = VkCullModeFlagBits.VK_CULL_MODE_NONE.value,
                     lineWidth = 1f,
+                    depthBiasEnable = cascadeCount > 0,
+                    depthBiasConstantFactor = if (cascadeCount > 0) SHADOW_DEPTH_BIAS_CONSTANT else 0f,
+                    depthBiasSlopeFactor = if (cascadeCount > 0) SHADOW_DEPTH_BIAS_SLOPE else 0f,
                 ),
             )
             // No color attachments in DepthTarget's render pass, so no blend attachments either.
@@ -139,7 +191,12 @@ class DepthOnlyPipeline(
 
             pipelineLayout = Vulkan.vkCreatePipelineLayout(
                 device,
-                VkPipelineLayoutCreateInfo(pSetLayouts = arrayOf(descriptorSetLayout.handle)),
+                VkPipelineLayoutCreateInfo(
+                    pSetLayouts = listOfNotNull(
+                        descriptorSetLayout.handle,
+                        cascadeSlots?.descriptorSetLayout,
+                    ).toTypedArray(),
+                ),
             )
 
             val createInfos = arrayOf(
@@ -176,6 +233,7 @@ class DepthOnlyPipeline(
     }
 
     fun destroy() {
+        cascadeSlots?.destroy()
         graphicsPipeline.forEach { Vulkan.vkDestroyPipeline(device, it) }
         Vulkan.vkDestroyPipelineLayout(device, pipelineLayout)
         Vulkan.vkDestroyPipelineCache(device, pipelineCache)

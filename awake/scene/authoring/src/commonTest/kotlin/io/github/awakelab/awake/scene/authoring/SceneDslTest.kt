@@ -9,9 +9,9 @@ import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.authoring.dsl.camera
 import io.github.awakelab.awake.scene.authoring.dsl.scene
 import io.github.awakelab.awake.scene.authoring.dsl.transform
-import io.github.awakelab.awake.scene.controls.components.CameraRig
-import io.github.awakelab.awake.scene.core.components.Name
-import io.github.awakelab.awake.scene.core.components.Transform
+import io.github.awakelab.awake.scene.controls.camera.CameraRig
+import io.github.awakelab.awake.scene.core.Name
+import io.github.awakelab.awake.scene.core.transform.Transform
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

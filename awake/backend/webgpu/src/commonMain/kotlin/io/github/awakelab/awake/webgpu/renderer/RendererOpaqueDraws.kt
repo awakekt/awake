@@ -9,6 +9,8 @@ import io.github.awakelab.awake.core.math.Mat4
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.core.math.squaredDistanceFrom
 import io.github.awakelab.awake.core.math.times
+import io.github.awakelab.awake.render.renderer.SceneLight
+import io.github.awakelab.awake.render.renderer.ShadowCascadeUniforms
 import io.github.awakelab.awake.render.command.BufferHandle
 import io.github.awakelab.awake.render.command.MaterialBinding
 import io.github.awakelab.awake.render.command.PipelineHandle
@@ -17,6 +19,7 @@ import io.github.awakelab.awake.render.command.sortForRecording
 import io.github.awakelab.awake.render.passes.uniforms.SceneFrameUniforms
 import io.github.awakelab.awake.render.passes.uniforms.SceneLightUniforms
 import io.github.awakelab.awake.render.passes.uniforms.litShadowUniforms
+import io.github.awakelab.awake.render.renderer.UNSHADOWED_CASCADES
 import io.github.awakelab.awake.render.passes.uniforms.texturedUniforms
 import io.github.awakelab.awake.render.pipeline.InstancedDrawKind
 import io.github.awakelab.awake.render.pipeline.instancedDrawKind
@@ -103,7 +106,12 @@ internal class FrameDrawContext(
     val viewProjection: Mat4,
     val lightUniforms: SceneLightUniforms,
     /** Identity when this renderer has no depth target -- primaryDraw ignores it then. */
-    val lightViewProjection: Mat4,
+    /** This frame's shadow cascades, or a one-entry set when the light supplied only a
+     * single box. Null when nothing renders shadows. */
+    val cascades: ShadowCascadeUniforms?,
+    /** The light itself, for a feature that reads direction or colour rather than the packed
+     * uniforms -- the sky does. Carried here so a pass takes one frame argument, not four. */
+    val light: SceneLight,
 )
 
 internal class PrimaryPipelineBinding(
@@ -205,11 +213,16 @@ private fun Renderer.primaryDraw(
     // Shadowed renderers write lit_shadow.wgsl's whole block (the shared packer both backends
     // use); everyone else writes the 24-float primary block into the same, larger slot.
     val shadowTarget = depthPrePass?.depthTarget
+    val cascades = frame.cascades
     val uniformFloats = if (shadowTarget != null) {
+        // Whatever `shadowsEnabled` says: a shadowed renderer's primary pipeline is the shadowed
+        // SHADER, and it reads the whole block regardless. Writing the short one when shadows are
+        // off left material, camera position and fog reading stale bytes -- which renders as a
+        // scene that gets darker when shadows are switched off.
         litShadowUniforms(
             drawCall = drawCall,
             mvp = mvp,
-            lightMvp = drawCall.model * frame.lightViewProjection,
+            cascades = cascades ?: UNSHADOWED_CASCADES,
             frame = SceneFrameUniforms(frame.lightUniforms, frame.cameraEye, fogFloats()),
         )
     } else {
