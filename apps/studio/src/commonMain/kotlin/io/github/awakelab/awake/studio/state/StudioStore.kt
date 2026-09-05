@@ -5,6 +5,7 @@
  */
 package io.github.awakelab.awake.studio.state
 
+import io.github.awakelab.awake.studio.fixture.StudioSceneRegistry
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,6 +48,11 @@ internal class StudioStore {
                 _state.update { it.copy(selectedFile = intent.path) }
             }
 
+            is StudioContract.Intent.SelectScene -> {
+                val descriptor = StudioSceneRegistry.findById(intent.sceneId) ?: return
+                _state.update { it.copy(activeSceneId = intent.sceneId) }
+                effects.trySend(StudioContract.Effect.LoadScene(descriptor))
+            }
         }
     }
 
@@ -67,5 +73,9 @@ internal class StudioStore {
 
     fun reloadFixture() {
         effects.trySend(StudioContract.Effect.ReloadFixture)
+    }
+
+    fun selectScene(sceneId: String) {
+        dispatch(StudioContract.Intent.SelectScene(sceneId))
     }
 }

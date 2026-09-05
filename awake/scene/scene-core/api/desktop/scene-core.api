@@ -13,6 +13,54 @@ public final class io/github/awakelab/awake/scene/core/Name : io/github/awakelab
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class io/github/awakelab/awake/scene/core/plugin/GamePlugin {
+	public abstract fun getMetadata ()Lio/github/awakelab/awake/scene/core/plugin/PluginMetadata;
+	public abstract fun install (Lio/github/awakelab/awake/ecs/World;)V
+}
+
+public final class io/github/awakelab/awake/scene/core/plugin/GamePluginRegistry {
+	public fun <init> ()V
+	public final fun getInstalled ()Ljava/util/List;
+	public final fun getPlugin-dCjgcLA (Ljava/lang/String;)Lio/github/awakelab/awake/scene/core/plugin/GamePlugin;
+	public final fun install (Lio/github/awakelab/awake/scene/core/plugin/GamePlugin;Lio/github/awakelab/awake/ecs/World;)V
+	public static synthetic fun install$default (Lio/github/awakelab/awake/scene/core/plugin/GamePluginRegistry;Lio/github/awakelab/awake/scene/core/plugin/GamePlugin;Lio/github/awakelab/awake/ecs/World;ILjava/lang/Object;)V
+	public final fun installAll (Ljava/lang/Iterable;Lio/github/awakelab/awake/ecs/World;)V
+	public static synthetic fun installAll$default (Lio/github/awakelab/awake/scene/core/plugin/GamePluginRegistry;Ljava/lang/Iterable;Lio/github/awakelab/awake/ecs/World;ILjava/lang/Object;)V
+	public final fun isInstalled-dCjgcLA (Ljava/lang/String;)Z
+}
+
+public final class io/github/awakelab/awake/scene/core/plugin/PluginId {
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/github/awakelab/awake/scene/core/plugin/PluginId;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/core/plugin/PluginMetadata {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-5bU2Udw ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy-DSQ0Mcw (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/github/awakelab/awake/scene/core/plugin/PluginMetadata;
+	public static synthetic fun copy-DSQ0Mcw$default (Lio/github/awakelab/awake/scene/core/plugin/PluginMetadata;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/core/plugin/PluginMetadata;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDisplayName ()Ljava/lang/String;
+	public final fun getId-5bU2Udw ()Ljava/lang/String;
+	public final fun getVersion ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/awakelab/awake/scene/core/transform/SpinControl : io/github/awakelab/awake/ecs/Poolable {
 	public fun <init> ()V
 	public final fun getRadians ()F
@@ -54,6 +102,11 @@ public final class io/github/awakelab/awake/scene/core/transform/Transform : io/
 	public final fun setScale (Lio/github/awakelab/awake/core/math/Vec3f;)V
 	public final fun setWorldMatrix (Lio/github/awakelab/awake/core/math/Mat4;)V
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/core/transform/TransformExtensionsKt {
+	public static final fun setTransform-eDxvBEM (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/scene/core/transform/Transform;
+	public static synthetic fun setTransform-eDxvBEM$default (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/core/transform/Transform;
 }
 
 public final class io/github/awakelab/awake/scene/core/transform/TransformSystem : io/github/awakelab/awake/ecs/System {

@@ -6,6 +6,8 @@
 package io.github.awakelab.awake.studio.state
 
 import io.github.awakelab.awake.scene.controls.camera.CameraMode
+import io.github.awakelab.awake.studio.fixture.StudioSceneDescriptor
+import io.github.awakelab.awake.studio.fixture.StudioSceneRegistry
 
 internal object StudioContract {
     enum class Projection { Perspective, Orthographic }
@@ -31,11 +33,13 @@ internal object StudioContract {
         val dockTab: String = DOCK_TAB_CONSOLE,
         /** The selected file's path, or null. Host state for the same reason [dockTab] is. */
         val selectedFile: String? = null,
+        val activeSceneId: String = StudioSceneRegistry.defaultScene.id,
     )
 
     sealed interface Intent {
         data class SetCameraMode(val mode: CameraMode) : Intent
         data class SetProjection(val projection: Projection) : Intent
+
         // One-shot: snaps the editor (Scene-view) camera's pose to match the scene's own
         // authored camera, like Blender's "View from Camera" -- not a live lock, the editor
         // camera is free to orbit away again right after.
@@ -51,11 +55,13 @@ internal object StudioContract {
 
         /** Which file the Files tab is previewing. Null clears the preview. */
         data class SelectFile(val path: String?) : Intent
+        data class SelectScene(val sceneId: String) : Intent
     }
 
     sealed interface Effect {
         // Rebuilding the fixture mutates the live scene and therefore stays outside the reducer.
         data object ReloadFixture : Effect
+        data class LoadScene(val descriptor: StudioSceneDescriptor) : Effect
 
         // Mutating the editor camera's CameraRig orbit state is a side effect too.
         data object AlignViewToCamera : Effect

@@ -7,7 +7,6 @@ package io.github.awakelab.awake.ui.shadcn.components
 
 import io.github.awakelab.awake.compose.foundation.layout.Box
 import io.github.awakelab.awake.compose.foundation.layout.height
-import io.github.awakelab.awake.compose.foundation.layout.heightIn
 import io.github.awakelab.awake.compose.foundation.layout.widthIn
 import io.github.awakelab.awake.compose.foundation.style.Style
 import io.github.awakelab.awake.compose.foundation.style.StyleState
@@ -34,7 +33,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * width of its glyph.
  */
 context(_: Composer)
-fun shadcnKbd(
+fun ShadcnKbd(
     key: String,
     modifier: Modifier = Modifier,
 ) {

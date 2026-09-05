@@ -6,13 +6,11 @@
     <ID>CyclomaticComplexMethod:Vulkan.kt$@OptIn(ExperimentalForeignApi::class) private fun NativeVkPhysicalDeviceFeatures.fromKotlinModel(model: VkPhysicalDeviceFeatures)</ID>
     <ID>CyclomaticComplexMethod:Vulkan.kt$Vulkan$actual fun vkCreateGraphicsPipelines( device: Long, pipelineCache: Long, createInfos: Array&lt;VkGraphicsPipelineCreateInfo>, ): LongArray</ID>
     <ID>CyclomaticComplexMethod:VulkanImages.kt$VulkanImages$actual fun vkTransitionImageLayout( commandBuffer: Long, image: Long, oldLayout: Int, newLayout: Int, levelCount: Int, layerCount: Int, )</ID>
-    <ID>CyclomaticComplexMethod:VulkanNativeLoader.kt$VulkanNativeLoader$@Synchronized fun load()</ID>
     <ID>LargeClass:Vulkan.kt$Vulkan</ID>
     <ID>LongMethod:Vulkan.kt$@OptIn(ExperimentalForeignApi::class) private fun platform.MoltenVK.VkPhysicalDeviceLimits.toKotlinModel(): VkPhysicalDeviceLimits</ID>
     <ID>LongMethod:Vulkan.kt$Vulkan$actual fun vkCreateGraphicsPipelines( device: Long, pipelineCache: Long, createInfos: Array&lt;VkGraphicsPipelineCreateInfo>, ): LongArray</ID>
     <ID>LongMethod:Vulkan.kt$Vulkan$actual fun vkCreateRenderPass(device: Long, createInfo: VkRenderPassCreateInfo): Long</ID>
     <ID>LongMethod:VulkanImages.kt$VulkanImages$actual fun vkTransitionImageLayout( commandBuffer: Long, image: Long, oldLayout: Int, newLayout: Int, levelCount: Int, layerCount: Int, )</ID>
-    <ID>LongMethod:VulkanNativeLoader.kt$VulkanNativeLoader$@Synchronized fun load()</ID>
     <ID>LongParameterList:VulkanBuffers.kt$VulkanBuffers$( commandBuffer: Long, indexCount: Int, instanceCount: Int, firstIndex: Int, vertexOffset: Int, firstInstance: Int, )</ID>
     <ID>LongParameterList:VulkanImages.kt$VulkanImages$( commandBuffer: Long, image: Long, oldLayout: Int, newLayout: Int, levelCount: Int, layerCount: Int, )</ID>
     <ID>MatchingDeclarationName:AwkEnum.kt$VkEnum</ID>
@@ -20,8 +18,6 @@
     <ID>MatchingDeclarationName:Queue.kt$QueueFamilyIndices</ID>
     <ID>MatchingDeclarationName:SwapChain.kt$SwapChainSupportDetails</ID>
     <ID>MatchingDeclarationName:VDeviceQueueCreateFlagBits.kt$VkDeviceQueueCreateFlagBits</ID>
-    <ID>NestedBlockDepth:VulkanNativeLoader.kt$VulkanNativeLoader$@Synchronized fun load()</ID>
-    <ID>SwallowedException:VulkanNativeLoader.kt$VulkanNativeLoader$loadErr: UnsatisfiedLinkError</ID>
     <ID>TooGenericExceptionCaught:VulkanNativeLoader.kt$VulkanNativeLoader$e: Exception</ID>
     <ID>TooManyFunctions:Vulkan.kt$Vulkan</ID>
     <ID>TooManyFunctions:VulkanBuffers.kt$VulkanBuffers</ID>

@@ -4,15 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
+import io.github.awakelab.awake.compose.foundation.BorderSides
 import io.github.awakelab.awake.compose.foundation.clickable
 import io.github.awakelab.awake.compose.foundation.hoverable
-import io.github.awakelab.awake.compose.foundation.BorderSides
 import io.github.awakelab.awake.compose.foundation.interaction.InteractionSource
+import io.github.awakelab.awake.compose.foundation.layout.Arrangement
 import io.github.awakelab.awake.compose.foundation.layout.Box
 import io.github.awakelab.awake.compose.foundation.layout.Row
-import io.github.awakelab.awake.compose.foundation.layout.Arrangement
 import io.github.awakelab.awake.compose.foundation.layout.height
 import io.github.awakelab.awake.compose.foundation.layout.width
 import io.github.awakelab.awake.compose.foundation.style.Style
@@ -21,8 +22,8 @@ import io.github.awakelab.awake.compose.foundation.style.styleable
 import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.compose.runtime.CompositionLocalProvider
 import io.github.awakelab.awake.compose.runtime.current
-import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.compose.runtime.provides
+import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.compose.ui.Alignment
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.graphics.Shape
@@ -32,19 +33,28 @@ import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
 
 /**
- * shadcn's button.
+ * `ShadcnButton`: Primary action button component.
  *
- * The first ported recipe with real interaction, so it is where `Style`'s state rules earn
- * themselves: rest, hover, press and disabled are four branches inside one style rather than four
- * things a caller assembles.
+ * **Tailwind Reference**: `inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors`.
  *
- * **Destructive's label is `text-white`, literally** -- the fourth place upstream hardcodes white
- * where a semantic token would look right, after the slider thumb and the badge. Treat any
- * `-white` in a shadcn class string as deliberate.
+ * Use cases:
+ * - Form submit triggers, primary/secondary actions, icon-only buttons.
  *
- * Press is Awake's, not upstream's: `button.tsx` has no `active:` class, because a browser gives a
- * pressed affordance for free and a canvas does not. Darkening on press is the smallest thing that
- * restores it, and it is marked here so nobody hunts for the class it came from.
+ * **Example Usage**:
+ * ```kotlin
+ * ShadcnButton("Submit", variant = ShadcnButtonVariant.Default) { handleSubmit() }
+ * ```
+ *
+ * @param label Button text label.
+ * @param modifier Custom layout modifier.
+ * @param variant Visual style variant (`Default`, `Destructive`, `Outline`, `Secondary`, `Ghost`, `Link`).
+ * @param size Button dimensions (`Default`, `Sm`, `Lg`, `Icon`).
+ * @param enabled Whether the button is interactive.
+ * @param onClick Click action handler.
+ * @param shape Custom corner clip shape.
+ * @param leadingIcon Optional leading vector icon.
+ *
+ * Keywords: button, action, cta, primary button, outline button, ghost button, icon button.
  */
 context(_: Composer)
 fun ShadcnButton(
@@ -56,8 +66,17 @@ fun ShadcnButton(
     onClick: () -> Unit = {},
     shape: Shape? = null,
     leadingIcon: ImageVector? = null,
-) = shadcnButtonContent(modifier, variant, size, enabled, onClick, shape, BorderSides.All, hasIcon = leadingIcon != null) {
-    if (leadingIcon != null) shadcnIcon(leadingIcon)
+) = shadcnButtonContent(
+    modifier,
+    variant,
+    size,
+    enabled,
+    onClick,
+    shape,
+    BorderSides.All,
+    hasIcon = leadingIcon != null,
+) {
+    if (leadingIcon != null) ShadcnIcon(leadingIcon)
     ShadcnText(label, variant = size.text, color = shadcnTheme.buttonForeground(variant))
 }
 
@@ -77,7 +96,17 @@ fun ShadcnButton(
     onClick: () -> Unit = {},
     shape: Shape? = null,
     content: context(Composer) () -> Unit,
-) = shadcnButtonContent(modifier, variant, size, enabled, onClick, shape, BorderSides.All, hasIcon = false, content)
+) = shadcnButtonContent(
+    modifier,
+    variant,
+    size,
+    enabled,
+    onClick,
+    shape,
+    BorderSides.All,
+    hasIcon = false,
+    content,
+)
 
 context(_: Composer)
 internal fun shadcnButtonContent(
@@ -107,13 +136,13 @@ internal fun shadcnButtonContent(
         contentPadding(horizontal + inset, size.paddingY + inset)
     }
     val interactive = sized
-            // The border is folded into the inset, not added beside it. shadcn is `border-box`, so
-            // an outline button's 1px border consumes layout space and the button ends up 2px wider
-            // than the same label unbordered; Awake's border paints inside the bounds and reserves
-            // nothing, which left outline 2.53px narrow against the reference while every unbordered
-            // variant matched. Same fix as `popoverSurfaceStyle`.
-            .hoverable(interaction, enabled = enabled)
-            .clickable(interaction) { if (enabled) onClick() }
+        // The border is folded into the inset, not added beside it. shadcn is `border-box`, so
+        // an outline button's 1px border consumes layout space and the button ends up 2px wider
+        // than the same label unbordered; Awake's border paints inside the bounds and reserves
+        // nothing, which left outline 2.53px narrow against the reference while every unbordered
+        // variant matched. Same fix as `popoverSurfaceStyle`.
+        .hoverable(interaction, enabled = enabled)
+        .clickable(interaction) { if (enabled) onClick() }
     val surface = if (shape == null) {
         interactive.styleable(state, borderSides, style, boxModel)
     } else {
@@ -131,9 +160,16 @@ internal fun shadcnButtonContent(
         // LocalTextStyle is Awake's existing composition-scoped content-colour mechanism; icons
         // consume it unless an explicit tint asks to opt out.
         CompositionLocalProvider(
-            LocalTextStyle provides LocalTextStyle.current.copy(color = theme.buttonForeground(variant)),
+            LocalTextStyle provides LocalTextStyle.current.copy(
+                color = theme.buttonForeground(
+                    variant,
+                ),
+            ),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedByHorizontal(ShadcnButtonIconLabelGap)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedByHorizontal(ShadcnButtonIconLabelGap),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 content()
             }
         }

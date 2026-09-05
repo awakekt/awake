@@ -40,7 +40,8 @@ class SpatialFocusTest {
     @Test
     fun spatial2DNavigationNavigatesGrid() {
         val host = ComposeHost(density = 1f)
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(
                 nodeType = "grid",
                 modifier = Modifier,
@@ -85,7 +86,8 @@ class SpatialFocusTest {
     @Test
     fun arrowKeysTriggerSpatialFocusMovement() {
         val host = ComposeHost(density = 1f)
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(
                 nodeType = "grid",
                 modifier = Modifier,
@@ -119,7 +121,8 @@ class SpatialFocusTest {
     fun explicitSpatialFocusPropertiesOverrideGeometry() {
         val host = ComposeHost(density = 1f)
         val req3 = FocusRequester()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(
                 nodeType = "grid",
                 modifier = Modifier,

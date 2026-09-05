@@ -5,13 +5,13 @@
  */
 package io.github.awakelab.awake.asset.shaderpack
 
-import io.github.awakelab.awake.render.pipeline.BindingLayout
-import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.asset.shaderdsl.AslArrayHandle
 import io.github.awakelab.awake.asset.shaderdsl.AslExpr
 import io.github.awakelab.awake.asset.shaderdsl.AslShaderBuilder
 import io.github.awakelab.awake.asset.shaderdsl.fieldsFrom
 import io.github.awakelab.awake.render.passes.uniforms.MaterialUniformLayouts
+import io.github.awakelab.awake.render.pipeline.BindingLayout
+import io.github.awakelab.awake.render.pipeline.BindingSemantic
 
 /**
  * The shadow pair's uniform struct handles. shadow_depth binds the SAME per-draw uniform

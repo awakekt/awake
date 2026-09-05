@@ -11,8 +11,8 @@ import io.github.awakelab.awake.compose.testing.ComposeTestBounds
 import io.github.awakelab.awake.compose.testing.composeTestSession
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.platform.FrameInput
-import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
 import io.github.awakelab.awake.compose.ui.semantics.testTag
+import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnRangeSlider
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnResizablePanel
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSlider

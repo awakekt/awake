@@ -23,9 +23,9 @@ import io.github.awakelab.awake.scene.physics.PhysicsBody
 import io.github.awakelab.awake.scene.physics.PhysicsSystem
 import io.github.awakelab.awake.scene.rendering.RenderSystem
 import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
-import io.github.awakelab.awake.scene.runtime.SceneCamera
+import io.github.awakelab.awake.scene.document.SceneCamera
 import io.github.awakelab.awake.scene.runtime.attachRenderableComponents
-import io.github.awakelab.awake.scene.runtime.SceneLoader
+import io.github.awakelab.awake.scene.document.SceneLoader
 import io.github.awakelab.awake.showcase.app.EngineShowcaseRenderPlan
 import io.github.awakelab.awake.showcase.terrain.TerrainExampleAsset
 import io.github.awakelab.awake.vulkan.application.VulkanEngine

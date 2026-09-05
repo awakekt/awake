@@ -1,148 +1,89 @@
-# Game DSL
+# Application & Game DSL
 
-This page is the quick guide for Awake's root authored game shell.
+This page is the quick guide for Awake's root application and game shell DSL.
 
 ## Goal
 
-Keep the application shell small while letting reusable game content live in modules instead
-of private sample helpers.
+Keep the application shell small, readable, and transparent while letting reusable game content live in modules.
 
-## The Two Main Shapes
+## The Two Core Concepts
 
-### One-off root
+### 1. Root Application (`app { ... }`)
 
-Use `game { ... }` when everything belongs in one local composition root:
+Use `app { ... }` at application entrypoints (`main()`) to configure the window shell and install feature modules:
 
 ```kotlin
-val game = game {
-    window {
-        title = "Example"
-        size(1280, 720)
-        backend.vulkan()
+fun main() {
+    val game = app {
+        window {
+            title = "My Awake Application"
+            size(1280, 720)
+            backend.vulkan()
+        }
+        render { frame ->
+            // Update game state
+        }
     }
+
+    game.run()
 }
 ```
 
-### Reusable authored content
+### 2. Reusable Feature Modules (`appModule { ... }`)
 
-Use `gameModule { ... }` when the authored content should be reused, tested, or moved across
-samples and future game modules:
-
-```kotlin
-val feature = gameModule {
-    service(String::class, "hello-cube")
-}
-
-val game = feature.createGame {
-    title = "Hello Cube"
-    size(1600, 900)
-    backend.vulkan()
-}
-```
-
-That keeps:
-
-- the root shell responsible for window and platform concerns
-- the reusable module responsible for authored content and runtime wiring
-
-### Stateful authored game
-
-Use `gameDefinition(...) { ... }` when the reusable content also owns a runtime state
-factory and a default window shell:
+Use `appModule { ... }` (or `gameModule { ... }`) to package scene ECS content, Compose UI features, and services into reusable, testable slices:
 
 ```kotlin
-val definition = gameDefinition(createState = ::HelloCubeRuntimeState) {
-    window {
-        title = "Hello Cube"
-        size(1600, 900)
-        backend.vulkan()
-    }
-    module { state ->
-        helloCubeGameModule(state)
-    }
+fun myFeatureModule(state: MyRuntimeState) = appModule {
+    ecs(mySceneSpec(state))
+    ui(myUiFeature(state))
 }
 
-val game = definition.createGame()
-```
+// Composed at the application root:
+fun main() {
+    val state = MyRuntimeState()
 
-That keeps:
-
-- the library responsible for the repeated `state -> module -> windowed game` pattern
-- the sample responsible only for its scene/UI/debug composition
-
-## Routed Scene Flow
-
-When a game owns multiple authored scenes, prefer `flow { ... }` or `sceneFlow { ... }`
-instead of a sample-local router:
-
-```kotlin
-val spec = gameSpec {
-    window {
-        title = "Starter"
-        size(1600, 900)
-        backend.vulkan()
+    val game = app {
+        window {
+            title = "Engine Showcase"
+            size(1600, 900)
+            backend.vulkan()
+        }
+        module(myFeatureModule(state))
     }
-    flow {
-        start("overview")
-        scene("overview", label = "Overview") { ... }
-        scene("editor", label = "Editor") { ... }
-    }
-    ui { ... }
+
+    game.run()
 }
 ```
 
-That keeps scene switching as a reusable engine contract instead of demo glue.
+This keeps:
+- The **application root** responsible for window configuration and platform lifecycle.
+- The **feature module** responsible for scene composition, UI features, and runtime state wiring.
 
-## Compose Modules
+---
 
-Modules can stack other modules:
+## Composing Multiple Modules
+
+Modules can stack other sub-modules seamlessly:
 
 ```kotlin
-val debugModule = gameModule { ... }
-val hudModule = gameModule { ... }
+val debugModule = appModule { ... }
+val hudModule = appModule { ... }
 
-val feature = gameModule {
+val mainModule = appModule {
     module(debugModule)
     module(hudModule)
 }
-
-val spec = feature.createGameSpec {
-    title = "Composable"
-    size(960, 540)
-    backend.webGpu()
-}
 ```
 
-### Multi-feature sample shape
+## Proof & Verification
 
-When a sample grows beyond one authored concern, keep the composition slices separate and
-compose them at the app layer:
+The application DSL is backed by tests in `:awake:engine:bootstrap`:
 
-```kotlin
-fun starterGameModule(state: StarterGameRuntimeState): GameModule = gameModule {
-    module(starterSceneModule())
-    module(starterUiModule(state))
-    module(starterDebugModule(state))
-}
-```
+- [AppLifecycleDslTest.kt](../../awake/engine/bootstrap/src/commonTest/kotlin/io/github/awakelab/awake/engine/bootstrap/AppLifecycleDslTest.kt)
 
-That keeps:
-
-- scene flow in a scene-owned feature module
-- overlays in a UI-owned feature module
-- debug wiring in a debug-owned feature module
-- the app shell responsible only for choosing how those pieces are assembled
-
-## Proof
-
-The cookbook examples above are backed by executable tests and a generated report:
-
-- [awake/engine/bootstrap/src/commonTest/kotlin/io/github/awakelab/awake/engine/bootstrap/AppLifecycleUiDslTest.kt](../../awake/engine/bootstrap/src/commonTest/kotlin/io/github/awakelab/awake/engine/bootstrap/AppLifecycleUiDslTest.kt)
-- `awake/engine/game-authoring/build/reports/game-dsl-tutorials/index.html`
-- `samples/starter-game` was retired; `samples/ui-showcase` is the live consumer of this DSL
-
-Regenerate with:
+Run tests with:
 
 ```bash
-./gradlew :awake:engine:bootstrap:desktopTest :awake:engine:bootstrap:gameDslTutorialDocsReport
+./gradlew :awake:engine:bootstrap:desktopTest
 ```

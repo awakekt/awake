@@ -5,23 +5,23 @@
  */
 package io.github.awakelab.awake.compose.ui.graphics.drawscope
 
-import io.github.awakelab.awake.compose.ui.node.LayoutNode
 import io.github.awakelab.awake.compose.ui.graphics.RenderEffect
 import io.github.awakelab.awake.compose.ui.graphics.Shape
 import io.github.awakelab.awake.compose.ui.graphics.ShapeOutline
+import io.github.awakelab.awake.compose.ui.node.LayoutNode
 import io.github.awakelab.awake.core.color.Color
+import io.github.awakelab.awake.core.graphics2d.BlendMode
 import io.github.awakelab.awake.core.graphics2d.ColoredTriangleMesh
 import io.github.awakelab.awake.core.graphics2d.DrawPath
-import io.github.awakelab.awake.core.graphics2d.BlendMode
 import io.github.awakelab.awake.core.graphics2d.DrawStroke
 import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
 import io.github.awakelab.awake.core.graphics2d.UiLinearGradient
 import io.github.awakelab.awake.core.graphics2d.bounds
 import io.github.awakelab.awake.core.graphics2d.transform
 import io.github.awakelab.awake.core.graphics2d.translatedBy
+import io.github.awakelab.awake.core.math2d.Dp
 import io.github.awakelab.awake.core.math2d.Rectangle
 import io.github.awakelab.awake.core.math2d.intersect
-import io.github.awakelab.awake.core.math2d.Dp
 
 /**
  * Where a node paints itself.
@@ -261,7 +261,9 @@ internal interface LayerDrawScope {
 // count is the interface rather than a class doing too much. Splitting it would mean two objects
 // sharing one origin/alpha/transform triple, which is worse.
 @Suppress("TooManyFunctions")
-internal class PaintScope : DrawScope, LayerDrawScope {
+internal class PaintScope :
+    DrawScope,
+    LayerDrawScope {
     private val clipStack = ArrayDeque<Rectangle>()
     private val fullClip = Rectangle(-1e9f, -1e9f, 2e9f, 2e9f)
     private var output = mutableListOf<UiDrawPrimitive>()
@@ -375,18 +377,20 @@ internal class PaintScope : DrawScope, LayerDrawScope {
                     blurRadius = elevation,
                     rotationDegrees = rotationDegrees,
                 )
-            } else parentOutput += UiDrawPrimitive.ShadowQuad(
-                x = compositeX,
-                y = compositeY,
-                w = layerWidth * scaleX,
-                h = layerHeight * scaleY,
-                radius = shadowRadius * minOf(scaleX, scaleY),
-                offsetX = 0f,
-                offsetY = elevation / 2f,
-                blurRadius = elevation,
-                spread = 0f,
-                color = Color(0f, 0f, 0f, layerAlpha * 0.25f),
-            )
+            } else {
+                parentOutput += UiDrawPrimitive.ShadowQuad(
+                    x = compositeX,
+                    y = compositeY,
+                    w = layerWidth * scaleX,
+                    h = layerHeight * scaleY,
+                    radius = shadowRadius * minOf(scaleX, scaleY),
+                    offsetX = 0f,
+                    offsetY = elevation / 2f,
+                    blurRadius = elevation,
+                    spread = 0f,
+                    color = Color(0f, 0f, 0f, layerAlpha * 0.25f),
+                )
+            }
         }
         parentOutput += UiDrawPrimitive.Texture(
             x = compositeX - effectInsetX * scaleX,

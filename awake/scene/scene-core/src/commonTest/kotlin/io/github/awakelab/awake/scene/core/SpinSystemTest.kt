@@ -7,8 +7,8 @@ package io.github.awakelab.awake.scene.core
 
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.core.transform.SpinControl
-import io.github.awakelab.awake.scene.core.transform.Transform
 import io.github.awakelab.awake.scene.core.transform.SpinSystem
+import io.github.awakelab.awake.scene.core.transform.Transform
 import io.github.awakelab.awake.scene.core.transform.TransformSystem
 import kotlin.math.PI
 import kotlin.test.Test

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.sample.uishowcase.ui.pages.layout
 
 import io.github.awakelab.awake.compose.foundation.layout.Column

@@ -53,6 +53,26 @@ val buildNagaDesktop = registerCargoTask(
     file(rustDir.file("target/release/${HostOs.libraryFileName("awake_naga")}"))
 }
 
+buildNagaDesktop.configure {
+    doLast {
+        val platformTag = when {
+            HostOs.isMac && (System.getProperty("os.arch").lowercase().contains("arm64") || System.getProperty("os.arch").lowercase().contains("aarch64")) -> "macos-arm64"
+            HostOs.isMac -> "macos-x86_64"
+            HostOs.isLinux && (System.getProperty("os.arch").lowercase().contains("arm64") || System.getProperty("os.arch").lowercase().contains("aarch64")) -> "linux-arm64"
+            HostOs.isLinux -> "linux-x86_64"
+            HostOs.isWindows -> "windows-x86_64"
+            else -> HostOs.slug
+        }
+        val libName = HostOs.libraryFileName("awake_naga")
+        val built = rustDir.file("target/release/$libName").asFile
+        if (built.exists()) {
+            val nativesResDir = layout.buildDirectory.dir("generated/natives-resources/natives/$platformTag").get().asFile.also { it.mkdirs() }
+            built.copyTo(File(nativesResDir, built.name), overwrite = true)
+            println("Desktop Naga native library packaged for resources: ${File(nativesResDir, built.name)}")
+        }
+    }
+}
+
 // cargo-ndk writes build/naga-jniLibs/<abi>/libawake_naga.so; the androidMain jniLibs
 // convention directory is a symlink-free copy so the AAR packs it.
 registerCargoTask(
@@ -111,6 +131,12 @@ kotlin {
     }
 
     sourceSets {
+        named("desktopMain") {
+            resources.srcDir(layout.buildDirectory.dir("generated/natives-resources"))
+            (findProperty("awake.prebuiltNatives") as String?)
+                ?.takeIf { it.isNotBlank() }
+                ?.let { resources.srcDir(it) }
+        }
         commonTest.dependencies {
             // The pack's ASL definitions are the naga binding's real workload; compiling the
             // terrain shader here is what proves vertex-stage texture sampling validates at all.
@@ -136,4 +162,8 @@ tasks.named<Test>("desktopTest") {
         "awake.naga.library",
         rustDir.dir("target/release").asFile.resolve(HostOs.libraryFileName("awake_naga")).path,
     )
+}
+
+tasks.named("desktopProcessResources") {
+    dependsOn(buildNagaDesktop)
 }

@@ -4,15 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
+import io.github.awakelab.awake.compose.foundation.BorderSides
 import io.github.awakelab.awake.compose.foundation.layout.Column
 import io.github.awakelab.awake.compose.foundation.layout.IntrinsicSize
 import io.github.awakelab.awake.compose.foundation.layout.Row
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.layout.height
 import io.github.awakelab.awake.compose.foundation.layout.width
-import io.github.awakelab.awake.compose.foundation.BorderSides
 import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.compose.ui.Modifier
@@ -47,17 +48,18 @@ fun ShadcnButtonGroup(
     val buttonCount = items.count { it is ButtonGroupMember.Button }
     var buttonIndex = 0
     fun render() {
-        items.forEach { member ->
+        items.forEachIndexed { itemIndex, member ->
             when (member) {
                 is ButtonGroupMember.Button -> {
                     val index = buttonIndex++
                     val modifier = if (orientation == ShadcnButtonGroupOrientation.Vertical) {
-                            member.modifier.fillMaxWidth()
-                        } else {
-                            member.modifier
+                        member.modifier.fillMaxWidth()
+                    } else {
+                        member.modifier
                     }
                     val shape = memberShape(orientation, index, buttonCount, shadcnTheme.radii.md)
-                    val borderSides = memberBorderSides(orientation, index, buttonCount)
+                    val nextIsSeparator = items.getOrNull(itemIndex + 1) is ButtonGroupMember.Separator
+                    val borderSides = memberBorderSides(orientation, index, buttonCount, nextIsSeparator)
                     val memberContent = member.content
                     shadcnButtonContent(
                         modifier = modifier,
@@ -108,7 +110,10 @@ class ShadcnButtonGroupScope internal constructor() {
         size: ShadcnButtonSizeVariant = ShadcnButtonSizeVariant.Default,
         enabled: Boolean = true,
         onClick: () -> Unit = {},
-        content: (context(Composer) () -> Unit)? = null,
+        content: (
+            context(Composer)
+            () -> Unit
+        )? = null,
     ) {
         items += ButtonGroupMember.Button(label, modifier, variant, size, enabled, onClick, content)
     }
@@ -126,12 +131,15 @@ internal sealed interface ButtonGroupMember {
         val size: ShadcnButtonSizeVariant,
         val enabled: Boolean,
         val onClick: () -> Unit,
-        val content: (context(Composer) () -> Unit)?,
+        val content: (
+            context(Composer)
+            () -> Unit
+        )?,
     ) : ButtonGroupMember
     data class Separator(val modifier: Modifier) : ButtonGroupMember
 }
 
-private fun memberShape(
+internal fun memberShape(
     orientation: ShadcnButtonGroupOrientation,
     index: Int,
     count: Int,
@@ -159,17 +167,18 @@ internal fun memberBorderSides(
     orientation: ShadcnButtonGroupOrientation,
     index: Int,
     count: Int,
+    followedBySeparator: Boolean = false,
 ): BorderSides = when (orientation) {
     ShadcnButtonGroupOrientation.Horizontal -> BorderSides(
         top = true,
-        end = index == count - 1,
+        end = !followedBySeparator,
         bottom = true,
         start = index == 0,
     )
     ShadcnButtonGroupOrientation.Vertical -> BorderSides(
         top = index == 0,
         end = true,
-        bottom = index == count - 1,
+        bottom = !followedBySeparator,
         start = true,
     )
 }

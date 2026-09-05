@@ -55,11 +55,18 @@ public final class io/github/awakelab/awake/core/animation/AnimationPlayer {
 	public final fun crossFadeTo (Ljava/lang/String;FLio/github/awakelab/awake/core/animation/AnimationPlayback;)V
 	public static synthetic fun crossFadeTo$default (Lio/github/awakelab/awake/core/animation/AnimationPlayer;Ljava/lang/String;FLio/github/awakelab/awake/core/animation/AnimationPlayback;ILjava/lang/Object;)V
 	public final fun getActiveClipId ()Ljava/lang/String;
+	public final fun getClipEntries ()Ljava/util/Map;
+	public final fun getClips ()Ljava/util/List;
+	public final fun getCurrentClip ()Lio/github/awakelab/awake/core/animation/AnimationClip;
 	public final fun getSpeed ()F
+	public final fun getTime ()F
 	public final fun isFinished ()Z
 	public final fun isPlaying ()Z
+	public final fun pause ()V
 	public final fun play (Ljava/lang/String;Lio/github/awakelab/awake/core/animation/AnimationPlayback;Z)V
 	public static synthetic fun play$default (Lio/github/awakelab/awake/core/animation/AnimationPlayer;Ljava/lang/String;Lio/github/awakelab/awake/core/animation/AnimationPlayback;ZILjava/lang/Object;)V
+	public final fun resume ()V
+	public final fun seek (F)V
 	public final fun setSpeed (F)V
 	public final fun update (F)Lio/github/awakelab/awake/core/animation/AnimationPose;
 }

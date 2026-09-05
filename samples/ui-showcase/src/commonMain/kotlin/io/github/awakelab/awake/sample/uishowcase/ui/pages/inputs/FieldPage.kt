@@ -9,15 +9,15 @@ import io.github.awakelab.awake.compose.foundation.text.rememberTextFieldState
 import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnFieldLabel
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnInput
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelectTrigger
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSwitch
 import io.github.awakelab.awake.ui.shadcn.components.shadcnField
 import io.github.awakelab.awake.ui.shadcn.components.shadcnFieldGroup
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnFieldLabel
 import io.github.awakelab.awake.ui.shadcn.components.shadcnFieldLegend
 import io.github.awakelab.awake.ui.shadcn.components.shadcnFieldSeparator
 import io.github.awakelab.awake.ui.shadcn.components.shadcnFieldSet
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnInput
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelectTrigger
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSwitch
 
 /** Which plan the hero demo's subscription dropdown currently shows. */
 private class PlanIndex {
@@ -67,7 +67,7 @@ internal val FieldPage = ShowcasePage(
                 }
                 shadcnField {
                     ShadcnFieldLabel("Email me receipts")
-                    shadcnSwitch(receipts.value, onCheckedChange = { receipts.value = it })
+                    ShadcnSwitch(receipts.value, onCheckedChange = { receipts.value = it })
                 }
             }
         }

@@ -417,8 +417,8 @@ public final class io/github/awakelab/awake/vulkan/swapchain/SwapchainManager {
 public final class io/github/awakelab/awake/vulkan/texture/DepthTarget {
 	public static final field Companion Lio/github/awakelab/awake/vulkan/texture/DepthTarget$Companion;
 	public static final field DEFAULT_SIZE I
-	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IIZ)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IIZZ)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/vulkan/device/GraphicsDevice;IIZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun binding ()Lio/github/awakelab/awake/vulkan/pipeline/VulkanMaterialBinding;
 	public final fun destroy ()V
 	public final fun framebufferFor (I)J

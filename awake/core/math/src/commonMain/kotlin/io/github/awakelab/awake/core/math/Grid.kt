@@ -5,16 +5,23 @@
  */
 package io.github.awakelab.awake.core.math
 
+import kotlin.math.abs
+import kotlin.math.round
+
+/** Specification for an infinite or extended editor reference grid. */
+data class GridSpec(
+    val size: Float = 100f,
+    val primaryStep: Float = 1.0f,
+    val subStep: Float = 0.1f,
+    val showAxisLines: Boolean = true,
+)
+
 /**
- * A square reference/floor grid on the XZ plane at a fixed height -- the same "pure geometry
- * helper, zero GPU dependency, unit-tested" role [Frustum] plays for the debug-line wireframe.
+ * A square reference/floor grid on the XZ plane at a fixed height -- pure geometry helper, zero GPU dependency.
  *
  * Returns `(start, end)` point pairs rather than the renderer's own `LineSegment`, mirroring
  * [Frustum.corners]/[Frustum.EDGES]: points here, and a caller that already depends on both this
- * module and the renderer assembles the line type with its own colour. `awake:core:math` has no
- * dependencies at all, so returning a render type is not possible without inverting that.
- *
- * No caller today. Kept as debug-rendering surface, not wired to anything.
+ * module and the renderer assembles the line type with its own colour.
  */
 object Grid {
     /**
@@ -27,14 +34,11 @@ object Grid {
         size: Float,
         divisions: Int,
         y: Float = 0f,
-    ): List<Pair<io.github.awakelab.awake.core.math.Vec3f, io.github.awakelab.awake.core.math.Vec3f>> {
+    ): List<Pair<Vec3f, Vec3f>> {
         require(divisions >= 1) { "divisions must be >= 1, was $divisions" }
         val half = size / 2f
         val step = size / divisions
-        val result =
-            ArrayList<Pair<io.github.awakelab.awake.core.math.Vec3f, io.github.awakelab.awake.core.math.Vec3f>>(
-                (divisions + 1) * 2,
-            )
+        val result = ArrayList<Pair<Vec3f, Vec3f>>((divisions + 1) * 2)
 
         // Lines parallel to X, one per Z coordinate.
         for (i in 0..divisions) {
@@ -47,6 +51,58 @@ object Grid {
             result += Vec3f(x, y, -half) to Vec3f(x, y, half)
         }
 
+        return result
+    }
+
+    /**
+     * Intersects a ray starting at [rayOrigin] with direction [rayDir] with the horizontal plane at [y].
+     * Returns the world-space intersection point, or null if the ray is parallel to the plane or points away.
+     */
+    fun intersectGroundPlane(rayOrigin: Vec3f, rayDir: Vec3f, y: Float = 0f): Vec3f? {
+        val denom = rayDir.y
+        if (abs(denom) < 1e-6f) return null
+        val t = (y - rayOrigin.y) / denom
+        return if (t >= 0f) rayOrigin + rayDir * t else null
+    }
+
+    /** Snaps [value] to the nearest multiple of [step]. */
+    fun snapToGrid(value: Float, step: Float): Float {
+        if (step <= 0f) return value
+        return round(value / step) * step
+    }
+
+    /**
+     * Generates world-space line pairs for an editor reference grid centered optionally around [center].
+     * Emits primary grid lines spaced by [step] spanning `[-extent, extent]` around snapped center.
+     */
+    fun generateGridLines(
+        extent: Float = 50f,
+        step: Float = 1.0f,
+        center: Vec3f = Vec3f.ZERO,
+        y: Float = 0f,
+    ): List<Pair<Vec3f, Vec3f>> {
+        require(step > 0f) { "step must be > 0, was $step" }
+        val cx = snapToGrid(center.x, step)
+        val cz = snapToGrid(center.z, step)
+        val count = (extent / step).toInt()
+        val totalLines = (count * 2 + 1) * 2
+        val result = ArrayList<Pair<Vec3f, Vec3f>>(totalLines)
+
+        val minX = cx - count * step
+        val maxX = cx + count * step
+        val minZ = cz - count * step
+        val maxZ = cz + count * step
+
+        // Lines parallel to X (stepping along Z)
+        for (i in -count..count) {
+            val z = cz + i * step
+            result += Vec3f(minX, y, z) to Vec3f(maxX, y, z)
+        }
+        // Lines parallel to Z (stepping along X)
+        for (i in -count..count) {
+            val x = cx + i * step
+            result += Vec3f(x, y, minZ) to Vec3f(x, y, maxZ)
+        }
         return result
     }
 }

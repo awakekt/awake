@@ -16,7 +16,7 @@ plugins {
 // compose engine's ComposeHost, so they need the same bump.
 val ktlintVersion = if (project.path.startsWith(":awake:compose") ||
     project.path == ":awake:ui:benchmark" ||
-    project.path == ":awake:editor" ||
+    project.path.startsWith(":awake:editor") ||
     project.path == ":awake:ui:shadcn" ||
     project.path == ":apps:studio" ||
     project.path == ":samples:ui-showcase"
@@ -59,7 +59,10 @@ extensions.configure<SpotlessExtension> {
                 "ktlint_standard_value-parameter-comment" to "disabled",
                 // Off: vulkan-generator's packages mirror the Vulkan spec's own underscored
                 // names so generated output stays traceable to the header it came from.
-                "ktlint_standard_package-name" to "disabled"
+                "ktlint_standard_package-name" to "disabled",
+                // Off: Compose components use PascalCase naming convention (e.g. ShadcnButton, BasicTextField).
+                "ktlint_standard_function-naming" to "disabled",
+                "ktlint_standard_property-naming" to "disabled"
             )
         )
         targetExclude(

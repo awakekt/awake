@@ -51,10 +51,10 @@ kotlin {
             implementation(project(":awake:backend:jolt"))
             implementation(project(":awake:scene"))
             implementation(project(":awake:scene:world"))
-            implementation(project(":awake:scene:ai"))
+            implementation(project(":awake:ai:behavior"))
             implementation(project(":awake:scene:authoring"))
             // The nav-chase showcase bakes a walkability grid from its own heightmap.
-            implementation(project(":awake:scene:navigation"))
+            implementation(project(":awake:navigation"))
             // The streamed-nav showcase owns the scope its cell bakes and path searches run on.
             implementation(libs.kotlinx.coroutines.core)
             // The showcase switcher, and nothing else: this sample has one panel, not a shell.

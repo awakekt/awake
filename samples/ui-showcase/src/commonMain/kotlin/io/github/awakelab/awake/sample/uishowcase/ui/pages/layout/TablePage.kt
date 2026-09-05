@@ -7,14 +7,10 @@ package io.github.awakelab.awake.sample.uishowcase.ui.pages.layout
 
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTable
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnTableCellAlign
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTable
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableBody
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableCaption
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableCell
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableHead
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableHeader
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableRow
+import io.github.awakelab.awake.ui.shadcn.components.cell
+import io.github.awakelab.awake.ui.shadcn.components.head
 
 private val InvoiceHeaders = listOf("Invoice", "Status", "Method", "Amount")
 
@@ -29,31 +25,49 @@ internal val TablePage = ShowcasePage(
     title = "Table",
     category = ShowcaseCategory.Layout,
     description = "A responsive table component with weighted columns and an optional caption.",
-    usageCode = """shadcnTable { shadcnTableHeader { ... }; shadcnTableBody { row { shadcnTableCell("INV001") } } }""",
+    usageCode = """
+ShadcnTable {
+    header {
+        row {
+            head("Invoice")
+            head("Amount", align = ShadcnTableCellAlign.End)
+        }
+    }
+    body {
+        row {
+            cell("INV001")
+            cell("$250.00", align = ShadcnTableCellAlign.End)
+        }
+    }
+    caption("A list of your recent invoices.")
+}
+    """.trimIndent(),
     referenceExample = "registry/new-york-v4/examples/table-demo.tsx",
     previewHeight = 420,
     notes = listOf("Cells are text-only by contract; richer cells compose a row directly."),
     hero = {
-        shadcnTable {
-            shadcnTableHeader {
-                shadcnTableRow(bordered = true) {
-                    InvoiceHeaders.forEachIndexed { index, header ->
-                        val align = if (index == InvoiceHeaders.lastIndex) ShadcnTableCellAlign.End else ShadcnTableCellAlign.Start
-                        shadcnTableHead(header, align = align)
+        ShadcnTable {
+            header {
+                row(bordered = true) {
+                    InvoiceHeaders.forEachIndexed { index, title ->
+                        val align =
+                            if (index == InvoiceHeaders.lastIndex) ShadcnTableCellAlign.End else ShadcnTableCellAlign.Start
+                        head(title, align = align)
                     }
                 }
             }
-            shadcnTableBody {
+            body {
                 InvoiceRows.forEach { values ->
                     row {
                         values.forEachIndexed { index, value ->
-                            val align = if (index == values.lastIndex) ShadcnTableCellAlign.End else ShadcnTableCellAlign.Start
-                            shadcnTableCell(value, align = align)
+                            val align =
+                                if (index == values.lastIndex) ShadcnTableCellAlign.End else ShadcnTableCellAlign.Start
+                            cell(value, align = align)
                         }
                     }
                 }
             }
-            shadcnTableCaption("A list of your recent invoices.")
+            caption("A list of your recent invoices.")
         }
     },
 )

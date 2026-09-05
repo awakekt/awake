@@ -6,7 +6,7 @@
 package io.github.awakelab.awake.showcase
 
 import io.github.awakelab.awake.physics.jolt.createJoltPhysicsWorld
-import io.github.awakelab.awake.scene.runtime.SceneLoader
+import io.github.awakelab.awake.scene.document.SceneLoader
 import io.github.awakelab.awake.scene.runtime.destroy
 import io.github.awakelab.awake.showcase.examples.RagdollExampleDriver
 import io.github.awakelab.awake.showcase.examples.ShowcasePhysics

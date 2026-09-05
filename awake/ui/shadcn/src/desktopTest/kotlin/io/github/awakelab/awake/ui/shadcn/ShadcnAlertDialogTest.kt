@@ -12,7 +12,7 @@ import io.github.awakelab.awake.compose.testing.composeTestSession
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.core.input.Key
-import io.github.awakelab.awake.ui.shadcn.components.shadcnAlertDialog
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlertDialog
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,7 +35,10 @@ class ShadcnAlertDialogTest {
         world.session.clickAt(EDGE, EDGE)
 
         assertEquals(0, world.dismissed, "the backdrop dismissed an alert dialog")
-        assertNotNull(world.session.frame().onNodeWithTag(ID).getBoundsInRoot(), "the panel vanished")
+        assertNotNull(
+            world.session.frame().onNodeWithTag(ID).getBoundsInRoot(),
+            "the panel vanished",
+        )
     }
 
     @Test
@@ -81,7 +84,10 @@ class ShadcnAlertDialogTest {
         val world = alertWorld(visible = false)
         val frame = world.session.frame()
 
-        assertNull(frame.semantics.firstOrNull { it.testTag == ID }, "a hidden alert dialog rendered")
+        assertNull(
+            frame.semantics.firstOrNull { it.testTag == ID },
+            "a hidden alert dialog rendered",
+        )
         world.session.clickAt(EDGE, EDGE)
         assertEquals(1, world.behind, "the page must be interactive with no dialog open")
     }
@@ -98,7 +104,7 @@ class ShadcnAlertDialogTest {
         world.session = composeTestSession(VIEWPORT, VIEWPORT) {
             provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
                 Box(Modifier.fillMaxSize().clickable { world.behind++ }.testTag("page"))
-                shadcnAlertDialog(
+                ShadcnAlertDialog(
                     visible = visible,
                     title = "Delete this scene?",
                     description = "This cannot be undone.",

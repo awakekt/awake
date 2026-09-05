@@ -9,7 +9,7 @@ import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
 import io.github.awakelab.awake.sample.uishowcase.ui.showcaseMatrix
-import io.github.awakelab.awake.ui.shadcn.components.shadcnToggle
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnToggle
 
 private class ToggleCheckedState(initial: Boolean) {
     var checked: Boolean = initial
@@ -25,11 +25,11 @@ internal val TogglePage = ShowcasePage(
     previewHeight = 280,
     hero = {
         val state = remember { ToggleCheckedState(false) }
-        state.checked = shadcnToggle("Bold", checked = state.checked)
+        state.checked = ShadcnToggle("Bold", checked = state.checked)
     },
     states = {
         showcaseMatrix(listOf("On" to true, "Off" to false)) { (label, checked) ->
-            shadcnToggle(label, checked = checked)
+            ShadcnToggle(label, checked = checked)
         }
     },
 )

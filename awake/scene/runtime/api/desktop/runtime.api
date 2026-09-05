@@ -1,32 +1,92 @@
-public final class io/github/awakelab/awake/scene/runtime/AwakeWorldSceneAdapter : io/github/awakelab/awake/scene/runtime/SceneInstantiationAdapter {
+public final class io/github/awakelab/awake/scene/audio/AudioListener {
 	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/ecs/World;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/World;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun attachComponent (Ljava/lang/Object;Lio/github/awakelab/awake/scene/runtime/SceneComponent;)V
-	public fun attachComponent-PTsxN7A (JLio/github/awakelab/awake/scene/runtime/SceneComponent;)V
-	public synthetic fun attachName (Ljava/lang/Object;Ljava/lang/String;)V
-	public fun attachName-PTsxN7A (JLjava/lang/String;)V
-	public synthetic fun attachTransform (Ljava/lang/Object;Lio/github/awakelab/awake/scene/runtime/SceneTransform;Ljava/lang/Object;)V
-	public fun attachTransform-_GiUF9Q (JLio/github/awakelab/awake/scene/runtime/SceneTransform;Lio/github/awakelab/awake/ecs/Entity;)V
-	public fun complete (Ljava/util/List;)Lio/github/awakelab/awake/scene/runtime/Scene;
-	public synthetic fun complete (Ljava/util/List;)Ljava/lang/Object;
-	public synthetic fun createNode (Lio/github/awakelab/awake/scene/runtime/SceneNode;Ljava/lang/Object;)Ljava/lang/Object;
-	public fun createNode-tv_fPAE (Lio/github/awakelab/awake/scene/runtime/SceneNode;Lio/github/awakelab/awake/ecs/Entity;)J
 }
 
-public final class io/github/awakelab/awake/scene/runtime/Scene {
-	public fun <init> (Lio/github/awakelab/awake/ecs/World;Ljava/util/List;Ljava/util/List;)V
-	public final fun component1 ()Lio/github/awakelab/awake/ecs/World;
-	public final fun component2 ()Ljava/util/List;
-	public final fun component3 ()Ljava/util/List;
-	public final fun copy (Lio/github/awakelab/awake/ecs/World;Ljava/util/List;Ljava/util/List;)Lio/github/awakelab/awake/scene/runtime/Scene;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/Scene;Lio/github/awakelab/awake/ecs/World;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/Scene;
+public final class io/github/awakelab/awake/scene/audio/AudioSource {
+	public fun <init> (Lio/github/awakelab/awake/core/audio/AudioClip;FZFZZ)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/core/audio/AudioClip;FZFZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/audio/AudioClip;
+	public final fun component2 ()F
+	public final fun component3 ()Z
+	public final fun component4 ()F
+	public final fun component5 ()Z
+	public final fun component6 ()Z
+	public final fun copy (Lio/github/awakelab/awake/core/audio/AudioClip;FZFZZ)Lio/github/awakelab/awake/scene/audio/AudioSource;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/audio/AudioSource;Lio/github/awakelab/awake/core/audio/AudioClip;FZFZZILjava/lang/Object;)Lio/github/awakelab/awake/scene/audio/AudioSource;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getRenderableRequests ()Ljava/util/List;
-	public final fun getRoots ()Ljava/util/List;
-	public final fun getWorld ()Lio/github/awakelab/awake/ecs/World;
+	public final fun getAutoPlay ()Z
+	public final fun getClip ()Lio/github/awakelab/awake/core/audio/AudioClip;
+	public final fun getLoop ()Z
+	public final fun getMaxDistance ()F
+	public final fun getPlayingHandle ()Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public final fun getVolume ()F
 	public fun hashCode ()I
+	public final fun isPlaying ()Z
+	public final fun isSpatial3D ()Z
+	public final fun setAutoPlay (Z)V
+	public final fun setLoop (Z)V
+	public final fun setMaxDistance (F)V
+	public final fun setPlayingHandle (Lio/github/awakelab/awake/core/audio/SoundHandle;)V
+	public final fun setSpatial3D (Z)V
+	public final fun setVolume (F)V
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/scene/audio/AudioSystem : io/github/awakelab/awake/ecs/System {
+	public fun <init> (Lio/github/awakelab/awake/core/audio/AudioPlayer;)V
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/scene/runtime/CameraBinding : io/github/awakelab/awake/scene/document/SceneComponentBinding {
+	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/CameraBinding;
+	public fun attach-f3JRkQ0 (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/scene/document/SceneComponent;Lio/github/awakelab/awake/scene/document/SceneResolutionContext;)V
+	public fun canResolve (Lio/github/awakelab/awake/scene/document/SceneComponent;)Z
+	public fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/scene/rendering/Camera;)Lio/github/awakelab/awake/scene/document/SceneCamera;
+	public synthetic fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLjava/lang/Object;)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneCamera;
+	public synthetic fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public final fun toComponent (Lio/github/awakelab/awake/scene/document/SceneCamera;)Lio/github/awakelab/awake/scene/rendering/Camera;
+	public final fun toSceneComponent (Lio/github/awakelab/awake/scene/rendering/Camera;)Lio/github/awakelab/awake/scene/document/SceneCamera;
+}
+
+public final class io/github/awakelab/awake/scene/runtime/DefaultSceneComponentResolvers {
+	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/DefaultSceneComponentResolvers;
+	public final fun getAll ()Ljava/util/List;
+	public final fun getBindings ()Ljava/util/List;
+	public final fun getCameraResolver ()Lio/github/awakelab/awake/scene/document/SceneComponentBinding;
+	public final fun getLightResolver ()Lio/github/awakelab/awake/scene/document/SceneComponentBinding;
+	public final fun getMeshRendererResolver ()Lio/github/awakelab/awake/scene/document/SceneComponentResolver;
+	public final fun getPbrMaterialResolver ()Lio/github/awakelab/awake/scene/document/SceneComponentBinding;
+	public final fun getPrefabLinkResolver ()Lio/github/awakelab/awake/scene/document/SceneComponentResolver;
+	public final fun getSpinControlResolver ()Lio/github/awakelab/awake/scene/document/SceneComponentBinding;
+	public final fun install ()V
+}
+
+public final class io/github/awakelab/awake/scene/runtime/LightBinding : io/github/awakelab/awake/scene/document/SceneComponentBinding {
+	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/LightBinding;
+	public fun attach-f3JRkQ0 (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/scene/document/SceneComponent;Lio/github/awakelab/awake/scene/document/SceneResolutionContext;)V
+	public fun canResolve (Lio/github/awakelab/awake/scene/document/SceneComponent;)Z
+	public fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/scene/rendering/Light;)Lio/github/awakelab/awake/scene/document/SceneLight;
+	public synthetic fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLjava/lang/Object;)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneLight;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public final fun toComponent (Lio/github/awakelab/awake/scene/document/SceneLight;)Lio/github/awakelab/awake/scene/rendering/Light;
+	public final fun toSceneComponent (Lio/github/awakelab/awake/scene/rendering/Light;)Lio/github/awakelab/awake/scene/document/SceneLight;
+}
+
+public final class io/github/awakelab/awake/scene/runtime/MaterialBinding : io/github/awakelab/awake/scene/document/SceneComponentBinding {
+	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/MaterialBinding;
+	public fun attach-f3JRkQ0 (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/scene/document/SceneComponent;Lio/github/awakelab/awake/scene/document/SceneResolutionContext;)V
+	public fun canResolve (Lio/github/awakelab/awake/scene/document/SceneComponent;)Z
+	public fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/scene/rendering/mesh/PbrMaterial;)Lio/github/awakelab/awake/scene/document/ScenePbrMaterial;
+	public synthetic fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLjava/lang/Object;)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/ScenePbrMaterial;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public final fun toComponent (Lio/github/awakelab/awake/scene/document/ScenePbrMaterial;)Lio/github/awakelab/awake/scene/rendering/mesh/PbrMaterial;
+	public final fun toSceneComponent (Lio/github/awakelab/awake/scene/rendering/mesh/PbrMaterial;)Lio/github/awakelab/awake/scene/document/ScenePbrMaterial;
 }
 
 public final class io/github/awakelab/awake/scene/runtime/SceneAppFrameKt {
@@ -100,8 +160,8 @@ public final class io/github/awakelab/awake/scene/runtime/SceneAppSpec : io/gith
 }
 
 public final class io/github/awakelab/awake/scene/runtime/SceneAssetLibrary {
-	public fun <init> (Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;J)V
-	public synthetic fun <init> (Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/List;J)V
+	public synthetic fun <init> (Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/List;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun dispose ()V
 	public final fun isMeshRetained (Ljava/lang/String;)Z
 	public final fun materialHolderCount (Ljava/lang/String;)I
@@ -110,268 +170,22 @@ public final class io/github/awakelab/awake/scene/runtime/SceneAssetLibrary {
 	public final fun releaseMesh (Ljava/lang/String;)Z
 	public final fun requireMaterial (Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lio/github/awakelab/awake/render/material/Material;
 	public final fun requireMesh (Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lio/github/awakelab/awake/render/mesh/Mesh;
-	public final fun resolve (Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;Lio/github/awakelab/awake/scene/runtime/SceneRenderableRequest;)Lio/github/awakelab/awake/scene/rendering/mesh/MeshRenderer;
+	public final fun resolve (Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;Lio/github/awakelab/awake/scene/document/SceneRenderableRequest;)Lio/github/awakelab/awake/scene/rendering/mesh/MeshRenderer;
 	public final fun retainedMeshBytes ()J
 }
 
-public final class io/github/awakelab/awake/scene/runtime/SceneCamera : io/github/awakelab/awake/scene/runtime/SceneComponent {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneCamera$Companion;
-	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;FFFZ)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;FFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun component2 ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun component3 ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun component4 ()F
-	public final fun component5 ()F
-	public final fun component6 ()F
-	public final fun component7 ()Z
-	public final fun copy (Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;FFFZ)Lio/github/awakelab/awake/scene/runtime/SceneCamera;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneCamera;Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;FFFZILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneCamera;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCenter ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun getEye ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun getFar ()F
-	public final fun getFovYDegrees ()F
-	public final fun getNear ()F
-	public final fun getPrimary ()Z
-	public final fun getUp ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
+public abstract interface class io/github/awakelab/awake/scene/runtime/SceneAssetResolver {
+	public fun canResolveMaterial (Ljava/lang/String;)Z
+	public fun canResolveMesh (Ljava/lang/String;)Z
+	public fun createMaterial (Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lio/github/awakelab/awake/render/material/Material;
+	public fun createMesh (Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lio/github/awakelab/awake/render/mesh/Mesh;
 }
 
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneCamera$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneCamera$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneCamera;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneCamera;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneCamera$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneChase : io/github/awakelab/awake/scene/runtime/SceneComponent {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneChase$Companion;
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;FFF)V
-	public synthetic fun <init> (Ljava/lang/String;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()F
-	public final fun component3 ()F
-	public final fun component4 ()F
-	public final fun copy (Ljava/lang/String;FFF)Lio/github/awakelab/awake/scene/runtime/SceneChase;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneChase;Ljava/lang/String;FFFILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneChase;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getRepathInterval ()F
-	public final fun getSpeed ()F
-	public final fun getTarget ()Ljava/lang/String;
-	public final fun getWaypointRadius ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneChase$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneChase$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneChase;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneChase;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneChase$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public abstract interface class io/github/awakelab/awake/scene/runtime/SceneComponent {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneComponent$Companion;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneComponent$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneDocument {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneDocument$Companion;
-	public fun <init> ()V
-	public fun <init> (ILjava/lang/String;Ljava/util/List;Ljava/util/List;)V
-	public synthetic fun <init> (ILjava/lang/String;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()I
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Ljava/util/List;
-	public final fun component4 ()Ljava/util/List;
-	public final fun copy (ILjava/lang/String;Ljava/util/List;Ljava/util/List;)Lio/github/awakelab/awake/scene/runtime/SceneDocument;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneDocument;ILjava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneDocument;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getExtensions ()Ljava/util/List;
-	public final fun getName ()Ljava/lang/String;
-	public final fun getNodes ()Ljava/util/List;
-	public final fun getVersion ()I
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneDocument$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneDocument$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneDocument;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneDocument;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneDocument$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneDocumentKt {
-	public static final field SCENE_SCHEMA_VERSION I
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneExtensionId {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneExtensionId$Companion;
-	public static final synthetic fun box-impl (Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/SceneExtensionId;
-	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
-	public fun equals (Ljava/lang/Object;)Z
-	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
-	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
-	public final fun getValue ()Ljava/lang/String;
-	public fun hashCode ()I
-	public static fun hashCode-impl (Ljava/lang/String;)I
-	public fun toString ()Ljava/lang/String;
-	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
-	public final synthetic fun unbox-impl ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneExtensionId$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneExtensionId$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun deserialize-fdEJpfE (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/String;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public final fun serialize-pcsxIrs (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/String;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneExtensionId$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public abstract interface class io/github/awakelab/awake/scene/runtime/SceneExtensionProvider {
-	public abstract fun getId-N4F9Dh4 ()Ljava/lang/String;
-	public abstract fun validate (Lio/github/awakelab/awake/scene/runtime/SceneExtensionRecord;)Ljava/util/List;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneExtensionRecord {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneExtensionRecord$Companion;
-	public synthetic fun <init> (Ljava/lang/String;ILkotlinx/serialization/json/JsonElement;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-N4F9Dh4 ()Ljava/lang/String;
-	public final fun component2 ()I
-	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
-	public final fun copy-u5REt78 (Ljava/lang/String;ILkotlinx/serialization/json/JsonElement;)Lio/github/awakelab/awake/scene/runtime/SceneExtensionRecord;
-	public static synthetic fun copy-u5REt78$default (Lio/github/awakelab/awake/scene/runtime/SceneExtensionRecord;Ljava/lang/String;ILkotlinx/serialization/json/JsonElement;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneExtensionRecord;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getId-N4F9Dh4 ()Ljava/lang/String;
-	public final fun getPayload ()Lkotlinx/serialization/json/JsonElement;
-	public final fun getVersion ()I
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneExtensionRecord$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneExtensionRecord$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneExtensionRecord;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneExtensionRecord;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneExtensionRecord$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneExtensionRegistry {
-	public fun <init> ()V
-	public final fun find-ibIk9ds (Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/SceneExtensionProvider;
-	public final fun getAll ()Ljava/util/List;
-	public final fun register (Lio/github/awakelab/awake/scene/runtime/SceneExtensionProvider;)V
-	public final fun validate (Lio/github/awakelab/awake/scene/runtime/SceneDocument;)Ljava/util/List;
-	public final fun validate (Lio/github/awakelab/awake/scene/runtime/SceneExtensionRecord;)Ljava/util/List;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneExtensionValidationMessage {
-	public fun <init> (Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationSeverity;Ljava/lang/String;)V
-	public final fun component1 ()Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationSeverity;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationSeverity;Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationMessage;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationMessage;Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationSeverity;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationMessage;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getMessage ()Ljava/lang/String;
-	public final fun getSeverity ()Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationSeverity;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneExtensionValidationSeverity : java/lang/Enum {
-	public static final field Error Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationSeverity;
-	public static final field Warning Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationSeverity;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationSeverity;
-	public static fun values ()[Lio/github/awakelab/awake/scene/runtime/SceneExtensionValidationSeverity;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneFlee : io/github/awakelab/awake/scene/runtime/SceneComponent {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneFlee$Companion;
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;FFFFFF)V
-	public synthetic fun <init> (Ljava/lang/String;FFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()F
-	public final fun component3 ()F
-	public final fun component4 ()F
-	public final fun component5 ()F
-	public final fun component6 ()F
-	public final fun component7 ()F
-	public final fun copy (Ljava/lang/String;FFFFFF)Lio/github/awakelab/awake/scene/runtime/SceneFlee;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneFlee;Ljava/lang/String;FFFFFFILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneFlee;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFleeDistance ()F
-	public final fun getPanicRadius ()F
-	public final fun getRepathInterval ()F
-	public final fun getSafeRadius ()F
-	public final fun getSpeed ()F
-	public final fun getThreat ()Ljava/lang/String;
-	public final fun getWaypointRadius ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneFlee$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneFlee$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneFlee;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneFlee;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneFlee$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+public final class io/github/awakelab/awake/scene/runtime/SceneAssetResolver$DefaultImpls {
+	public static fun canResolveMaterial (Lio/github/awakelab/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Z
+	public static fun canResolveMesh (Lio/github/awakelab/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Z
+	public static fun createMaterial (Lio/github/awakelab/awake/scene/runtime/SceneAssetResolver;Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lio/github/awakelab/awake/render/material/Material;
+	public static fun createMesh (Lio/github/awakelab/awake/scene/runtime/SceneAssetResolver;Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lio/github/awakelab/awake/render/mesh/Mesh;
 }
 
 public final class io/github/awakelab/awake/scene/runtime/SceneFrameStats {
@@ -398,84 +212,6 @@ public final class io/github/awakelab/awake/scene/runtime/SceneFrameStats {
 	public fun toString ()Ljava/lang/String;
 }
 
-public abstract interface class io/github/awakelab/awake/scene/runtime/SceneInstantiationAdapter {
-	public abstract fun attachComponent (Ljava/lang/Object;Lio/github/awakelab/awake/scene/runtime/SceneComponent;)V
-	public abstract fun attachName (Ljava/lang/Object;Ljava/lang/String;)V
-	public abstract fun attachTransform (Ljava/lang/Object;Lio/github/awakelab/awake/scene/runtime/SceneTransform;Ljava/lang/Object;)V
-	public abstract fun complete (Ljava/util/List;)Ljava/lang/Object;
-	public abstract fun createNode (Lio/github/awakelab/awake/scene/runtime/SceneNode;Ljava/lang/Object;)Ljava/lang/Object;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneLight : io/github/awakelab/awake/scene/runtime/SceneComponent {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneLight$Companion;
-	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/scene/runtime/SceneVec3;FLio/github/awakelab/awake/scene/runtime/SceneLight$Type;Lio/github/awakelab/awake/scene/runtime/SceneVec3;F)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/scene/runtime/SceneVec3;FLio/github/awakelab/awake/scene/runtime/SceneLight$Type;Lio/github/awakelab/awake/scene/runtime/SceneVec3;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun component2 ()F
-	public final fun component3 ()Lio/github/awakelab/awake/scene/runtime/SceneLight$Type;
-	public final fun component4 ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun component5 ()F
-	public final fun copy (Lio/github/awakelab/awake/scene/runtime/SceneVec3;FLio/github/awakelab/awake/scene/runtime/SceneLight$Type;Lio/github/awakelab/awake/scene/runtime/SceneVec3;F)Lio/github/awakelab/awake/scene/runtime/SceneLight;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneLight;Lio/github/awakelab/awake/scene/runtime/SceneVec3;FLio/github/awakelab/awake/scene/runtime/SceneLight$Type;Lio/github/awakelab/awake/scene/runtime/SceneVec3;FILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneLight;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getColor ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun getDirection ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun getIntensity ()F
-	public final fun getRange ()F
-	public final fun getType ()Lio/github/awakelab/awake/scene/runtime/SceneLight$Type;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneLight$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneLight$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneLight;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneLight;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneLight$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneLight$Type : java/lang/Enum {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneLight$Type$Companion;
-	public static final field Directional Lio/github/awakelab/awake/scene/runtime/SceneLight$Type;
-	public static final field Point Lio/github/awakelab/awake/scene/runtime/SceneLight$Type;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/SceneLight$Type;
-	public static fun values ()[Lio/github/awakelab/awake/scene/runtime/SceneLight$Type;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneLight$Type$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneLoader {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneLoader;
-	public final fun decode (Ljava/lang/String;Lkotlinx/serialization/json/Json;)Lio/github/awakelab/awake/scene/runtime/SceneDocument;
-	public static synthetic fun decode$default (Lio/github/awakelab/awake/scene/runtime/SceneLoader;Ljava/lang/String;Lkotlinx/serialization/json/Json;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneDocument;
-	public final fun encode (Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lkotlinx/serialization/json/Json;)Ljava/lang/String;
-	public static synthetic fun encode$default (Lio/github/awakelab/awake/scene/runtime/SceneLoader;Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lkotlinx/serialization/json/Json;ILjava/lang/Object;)Ljava/lang/String;
-	public final fun instantiate (Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/ecs/World;)Lio/github/awakelab/awake/scene/runtime/Scene;
-	public final fun instantiate (Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/scene/runtime/SceneInstantiationAdapter;)Ljava/lang/Object;
-	public static synthetic fun instantiate$default (Lio/github/awakelab/awake/scene/runtime/SceneLoader;Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/ecs/World;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/Scene;
-	public final fun loadFromResource (Ljava/lang/String;Lkotlinx/serialization/json/Json;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun loadFromResource$default (Lio/github/awakelab/awake/scene/runtime/SceneLoader;Ljava/lang/String;Lkotlinx/serialization/json/Json;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneLoaderKt {
-	public static final fun attachRenderableComponents (Lio/github/awakelab/awake/scene/runtime/Scene;Lkotlin/jvm/functions/Function1;)V
-	public static final fun destroy (Lio/github/awakelab/awake/scene/runtime/Scene;)V
-	public static final fun instantiate (Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/ecs/World;)Lio/github/awakelab/awake/scene/runtime/Scene;
-	public static synthetic fun instantiate$default (Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/ecs/World;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/Scene;
-}
-
 public final class io/github/awakelab/awake/scene/runtime/SceneLocalsKt {
 	public static final fun getLocalFrameStats ()Lio/github/awakelab/awake/compose/runtime/CompositionLocal;
 	public static final fun getLocalRenderer ()Lio/github/awakelab/awake/compose/runtime/CompositionLocal;
@@ -485,198 +221,8 @@ public final class io/github/awakelab/awake/scene/runtime/SceneLocalsKt {
 public final class io/github/awakelab/awake/scene/runtime/SceneManager {
 	public fun <init> (Lio/github/awakelab/awake/ecs/World;)V
 	public final fun close ()V
-	public final fun getCurrent ()Lio/github/awakelab/awake/scene/runtime/Scene;
-	public final fun switchTo (Lio/github/awakelab/awake/scene/runtime/SceneDocument;)Lio/github/awakelab/awake/scene/runtime/Scene;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneMeshRenderer : io/github/awakelab/awake/scene/runtime/SceneComponent {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;)Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer;Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCullMode ()Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;
-	public final fun getMaterial ()Ljava/lang/String;
-	public final fun getMesh ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneMeshRenderer$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneMeshRenderer$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode : java/lang/Enum {
-	public static final field Back Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;
-	public static final field Front Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;
-	public static final field None Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;
-	public static fun values ()[Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer$CullMode;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneNode {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneNode$Companion;
-	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneTransform;Ljava/util/List;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneTransform;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Lio/github/awakelab/awake/scene/runtime/SceneTransform;
-	public final fun component3 ()Ljava/util/List;
-	public final fun component4 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneTransform;Ljava/util/List;Ljava/util/List;)Lio/github/awakelab/awake/scene/runtime/SceneNode;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneNode;Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneTransform;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneNode;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getChildren ()Ljava/util/List;
-	public final fun getComponents ()Ljava/util/List;
-	public final fun getName ()Ljava/lang/String;
-	public final fun getTransform ()Lio/github/awakelab/awake/scene/runtime/SceneTransform;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneNode$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneNode$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneNode;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneNode;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneNode$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneNodeHandle {
-	public fun <init> (Ljava/lang/String;Ljava/lang/Object;Ljava/util/List;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/Object;
-	public final fun component3 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/lang/Object;Ljava/util/List;)Lio/github/awakelab/awake/scene/runtime/SceneNodeHandle;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneNodeHandle;Ljava/lang/String;Ljava/lang/Object;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneNodeHandle;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getChildren ()Ljava/util/List;
-	public final fun getName ()Ljava/lang/String;
-	public final fun getValue ()Ljava/lang/Object;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneNodeInstance {
-	public synthetic fun <init> (Ljava/lang/String;JLjava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2-QVrgMZQ ()J
-	public final fun component3 ()Ljava/util/List;
-	public final fun copy-RyQZpco (Ljava/lang/String;JLjava/util/List;)Lio/github/awakelab/awake/scene/runtime/SceneNodeInstance;
-	public static synthetic fun copy-RyQZpco$default (Lio/github/awakelab/awake/scene/runtime/SceneNodeInstance;Ljava/lang/String;JLjava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneNodeInstance;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getChildren ()Ljava/util/List;
-	public final fun getEntity-QVrgMZQ ()J
-	public final fun getName ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/ScenePatrol : io/github/awakelab/awake/scene/runtime/SceneComponent {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Companion;
-	public fun <init> ()V
-	public fun <init> (Ljava/util/List;Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;FFFF)V
-	public synthetic fun <init> (Ljava/util/List;Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/util/List;
-	public final fun component2 ()Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;
-	public final fun component3 ()F
-	public final fun component4 ()F
-	public final fun component5 ()F
-	public final fun component6 ()F
-	public final fun copy (Ljava/util/List;Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;FFFF)Lio/github/awakelab/awake/scene/runtime/ScenePatrol;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/ScenePatrol;Ljava/util/List;Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/ScenePatrol;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getDwellSeconds ()F
-	public final fun getRepathInterval ()F
-	public final fun getSpeed ()F
-	public final fun getStops ()Ljava/util/List;
-	public final fun getStyle ()Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;
-	public final fun getWaypointRadius ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/ScenePatrol$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/ScenePatrol$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/ScenePatrol;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/ScenePatrol;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/ScenePatrol$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/ScenePatrol$Style : java/lang/Enum {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style$Companion;
-	public static final field Loop Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;
-	public static final field Once Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;
-	public static final field PingPong Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;
-	public static fun values ()[Lio/github/awakelab/awake/scene/runtime/ScenePatrol$Style;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/ScenePatrol$Style$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/ScenePbrMaterial : io/github/awakelab/awake/scene/runtime/SceneComponent {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/ScenePbrMaterial$Companion;
-	public fun <init> ()V
-	public fun <init> (FF)V
-	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()F
-	public final fun component2 ()F
-	public final fun copy (FF)Lio/github/awakelab/awake/scene/runtime/ScenePbrMaterial;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/ScenePbrMaterial;FFILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/ScenePbrMaterial;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getMetallic ()F
-	public final fun getRoughness ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/ScenePbrMaterial$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/ScenePbrMaterial$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/ScenePbrMaterial;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/ScenePbrMaterial;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/ScenePbrMaterial$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public final fun getCurrent ()Lio/github/awakelab/awake/scene/document/Scene;
+	public final fun switchTo (Lio/github/awakelab/awake/scene/document/SceneDocument;)Lio/github/awakelab/awake/scene/document/Scene;
 }
 
 public final class io/github/awakelab/awake/scene/runtime/ScenePhaseStats {
@@ -703,6 +249,10 @@ public final class io/github/awakelab/awake/scene/runtime/ScenePhaseStats {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/awakelab/awake/scene/runtime/SceneRenderableAttachmentKt {
+	public static final fun attachRenderableComponents (Lio/github/awakelab/awake/scene/document/Scene;Lkotlin/jvm/functions/Function1;)V
+}
+
 public final class io/github/awakelab/awake/scene/runtime/SceneRenderableKey {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
@@ -712,19 +262,6 @@ public final class io/github/awakelab/awake/scene/runtime/SceneRenderableKey {
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMaterial ()Ljava/lang/String;
 	public final fun getMesh ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneRenderableRequest {
-	public synthetic fun <init> (JLio/github/awakelab/awake/scene/runtime/SceneMeshRenderer;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-QVrgMZQ ()J
-	public final fun component2 ()Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer;
-	public final fun copy-PTsxN7A (JLio/github/awakelab/awake/scene/runtime/SceneMeshRenderer;)Lio/github/awakelab/awake/scene/runtime/SceneRenderableRequest;
-	public static synthetic fun copy-PTsxN7A$default (Lio/github/awakelab/awake/scene/runtime/SceneRenderableRequest;JLio/github/awakelab/awake/scene/runtime/SceneMeshRenderer;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneRenderableRequest;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getEntity-QVrgMZQ ()J
-	public final fun getMeshRenderer ()Lio/github/awakelab/awake/scene/runtime/SceneMeshRenderer;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -777,47 +314,11 @@ public final class io/github/awakelab/awake/scene/runtime/SceneRouterSpec : io/g
 	public fun install (Lio/github/awakelab/awake/engine/platform/dsl/AppSpecBuilder;)V
 }
 
-public final class io/github/awakelab/awake/scene/runtime/SceneSchemaVersionException : java/lang/IllegalArgumentException {
-	public fun <init> (I)V
-	public final fun getDocumentVersion ()I
-}
-
 public final class io/github/awakelab/awake/scene/runtime/SceneServiceRegistration {
 	public fun <init> (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function1;)V
 	public final fun getFactory ()Lkotlin/jvm/functions/Function1;
 	public final fun getType ()Lkotlin/reflect/KClass;
 	public final fun install (Lio/github/awakelab/awake/engine/platform/dsl/AppSpecBuilder;Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;)V
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneSpinControl : io/github/awakelab/awake/scene/runtime/SceneComponent {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneSpinControl$Companion;
-	public fun <init> ()V
-	public fun <init> (FF)V
-	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()F
-	public final fun component2 ()F
-	public final fun copy (FF)Lio/github/awakelab/awake/scene/runtime/SceneSpinControl;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneSpinControl;FFILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneSpinControl;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getRadians ()F
-	public final fun getSpeed ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneSpinControl$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneSpinControl$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneSpinControl;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneSpinControl;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneSpinControl$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class io/github/awakelab/awake/scene/runtime/SceneSystemHandle {
@@ -840,119 +341,30 @@ public final class io/github/awakelab/awake/scene/runtime/SceneSystemRegistratio
 	public final fun getPhase ()Lio/github/awakelab/awake/scene/runtime/SceneSystemPhase;
 }
 
-public final class io/github/awakelab/awake/scene/runtime/SceneTransform {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneTransform$Companion;
-	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun component2 ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun component3 ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun copy (Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;)Lio/github/awakelab/awake/scene/runtime/SceneTransform;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneTransform;Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;Lio/github/awakelab/awake/scene/runtime/SceneVec3;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneTransform;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getPosition ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun getRotation ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public final fun getScale ()Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
+public abstract interface class io/github/awakelab/awake/scene/runtime/TerrainDriver {
+	public abstract fun attach (Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;)V
+	public abstract fun dispose (Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;)V
+	public static synthetic fun dispose$default (Lio/github/awakelab/awake/scene/runtime/TerrainDriver;Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;ILjava/lang/Object;)V
+	public abstract fun isMounted ()Z
+	public abstract fun update (Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;Lio/github/awakelab/awake/core/math/Vec3f;)V
 }
 
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneTransform$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneTransform$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneTransform;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneTransform;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneTransform$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneValidationException : java/lang/IllegalArgumentException {
-	public fun <init> (Ljava/util/List;)V
-	public final fun getIssues ()Ljava/util/List;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneValidationIssue {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/SceneValidationIssue;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneValidationIssue;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneValidationIssue;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getMessage ()Ljava/lang/String;
-	public final fun getPath ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneValidator {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneValidator;
-	public final fun requireValid (Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/scene/runtime/SceneExtensionRegistry;)V
-	public static synthetic fun requireValid$default (Lio/github/awakelab/awake/scene/runtime/SceneValidator;Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/scene/runtime/SceneExtensionRegistry;ILjava/lang/Object;)V
-	public final fun validate (Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/scene/runtime/SceneExtensionRegistry;)Ljava/util/List;
-	public static synthetic fun validate$default (Lio/github/awakelab/awake/scene/runtime/SceneValidator;Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/scene/runtime/SceneExtensionRegistry;ILjava/lang/Object;)Ljava/util/List;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneVec3 {
-	public static final field Companion Lio/github/awakelab/awake/scene/runtime/SceneVec3$Companion;
-	public fun <init> ()V
-	public fun <init> (FFF)V
-	public synthetic fun <init> (FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()F
-	public final fun component2 ()F
-	public final fun component3 ()F
-	public final fun copy (FFF)Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/runtime/SceneVec3;FFFILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getX ()F
-	public final fun getY ()F
-	public final fun getZ ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class io/github/awakelab/awake/scene/runtime/SceneVec3$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/scene/runtime/SceneVec3$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/scene/runtime/SceneVec3;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/scene/runtime/SceneVec3;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneVec3$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneWorldExportKt {
-	public static final fun fromWorld (Lio/github/awakelab/awake/scene/runtime/SceneLoader;Lio/github/awakelab/awake/ecs/World;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lio/github/awakelab/awake/scene/runtime/SceneDocument;
-	public static synthetic fun fromWorld$default (Lio/github/awakelab/awake/scene/runtime/SceneLoader;Lio/github/awakelab/awake/ecs/World;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneDocument;
-}
-
-public final class io/github/awakelab/awake/scene/runtime/SceneWriter_desktopKt {
-	public static final fun writeSceneDocument (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+public final class io/github/awakelab/awake/scene/runtime/TerrainDriver$DefaultImpls {
+	public static synthetic fun dispose$default (Lio/github/awakelab/awake/scene/runtime/TerrainDriver;Lio/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/scene/runtime/schedule/SceneSchedule {
 }
 
 public final class io/github/awakelab/awake/scene/runtime/session/SceneDocumentEditSession {
-	public fun <init> (Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/scene/runtime/SceneExtensionRegistry;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/scene/runtime/SceneDocument;Lio/github/awakelab/awake/scene/runtime/SceneExtensionRegistry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun applyAuthoredDocument (Lio/github/awakelab/awake/scene/runtime/SceneDocument;)V
+	public fun <init> (Lio/github/awakelab/awake/scene/document/SceneDocument;Lio/github/awakelab/awake/scene/document/SceneExtensionRegistry;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/scene/document/SceneDocument;Lio/github/awakelab/awake/scene/document/SceneExtensionRegistry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun applyAuthoredDocument (Lio/github/awakelab/awake/scene/document/SceneDocument;)V
 	public final fun close ()V
-	public final fun getAuthoredDocument ()Lio/github/awakelab/awake/scene/runtime/SceneDocument;
+	public final fun getAuthoredDocument ()Lio/github/awakelab/awake/scene/document/SceneDocument;
 	public final fun getMode ()Lio/github/awakelab/awake/scene/runtime/session/SceneDocumentSessionMode;
 	public final fun getWorld ()Lio/github/awakelab/awake/ecs/World;
-	public final fun startPlay ()Lio/github/awakelab/awake/scene/runtime/Scene;
+	public final fun startPlay ()Lio/github/awakelab/awake/scene/document/Scene;
 	public final fun stopPlay ()V
 }
 

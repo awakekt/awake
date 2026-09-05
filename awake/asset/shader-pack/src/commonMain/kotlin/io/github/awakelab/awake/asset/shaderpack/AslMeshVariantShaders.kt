@@ -5,8 +5,6 @@
  */
 package io.github.awakelab.awake.asset.shaderpack
 
-import io.github.awakelab.awake.render.pipeline.BindingLayout
-import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.asset.shaderdsl.AslExpr
 import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
 import io.github.awakelab.awake.asset.shaderdsl.a
@@ -27,7 +25,6 @@ import io.github.awakelab.awake.asset.shaderdsl.storageArrayOfArrays
 import io.github.awakelab.awake.asset.shaderdsl.texture2d
 import io.github.awakelab.awake.asset.shaderdsl.textureSample
 import io.github.awakelab.awake.asset.shaderdsl.times
-import io.github.awakelab.awake.asset.shaderdsl.vec2
 import io.github.awakelab.awake.asset.shaderdsl.vec3
 import io.github.awakelab.awake.asset.shaderdsl.vec4
 import io.github.awakelab.awake.asset.shaderdsl.w
@@ -38,6 +35,8 @@ import io.github.awakelab.awake.asset.shaderdsl.z
 import io.github.awakelab.awake.core.geometry.GpuDataShape
 import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.core.geometry.VertexSemantic
+import io.github.awakelab.awake.render.pipeline.BindingLayout
+import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.render.renderer.InstancedUniformLayout
 import io.github.awakelab.awake.render.renderer.MAX_JOINTS
 import io.github.awakelab.awake.render.renderer.SkinnedUniformLayout

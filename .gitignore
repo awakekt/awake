@@ -57,3 +57,6 @@ shared/shared.podspec
 # JVM crash dumps -- a headless Vulkan test that aborts drops these beside the module.
 hs_err_pid*.log
 replay_pid*.log
+
+# MkDocs build directory
+/website/site/

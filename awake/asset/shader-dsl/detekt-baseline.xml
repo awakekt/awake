@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>TooManyFunctions:AslConstructors.kt$io.github.awakelab.awake.asset.shaderdsl.AslConstructors.kt</ID>
     <ID>TooManyFunctions:AslMathBuiltins.kt$io.github.awakelab.awake.asset.shaderdsl.AslMathBuiltins.kt</ID>
   </CurrentIssues>
 </SmellBaseline>

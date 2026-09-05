@@ -4,7 +4,11 @@
   <CurrentIssues>
     <ID>ForbiddenComment:AspectRatioPage.kt$// TODO: Render component here</ID>
     <ID>LargeClass:ShadcnComposeParityPreviewTest.kt$ShadcnComposeParityPreviewTest</ID>
+    <ID>LongMethod:RpgUnitFrame.kt$fun RpgUnitFrame( name: String, level: Int, currentHp: Int, maxHp: Int, currentMp: Int, maxMp: Int, theme: RpgHudTheme = RpgHudTheme.DEFAULT, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:ShadcnComposeParityPreviewTest.kt$ShadcnComposeParityPreviewTest$@Test fun renderStrokeAaDiagnostic()</ID>
+    <ID>LongParameterList:RpgHudLayout.kt$( playerName: String, playerLevel: Int, currentHp: Int, maxHp: Int, currentMp: Int, maxMp: Int, zoneName: String, playerX: Float, playerZ: Float, actionSlots: List&lt;RpgActionSlot>, onTriggerActionSlot: (Int) -> Unit, theme: RpgHudTheme = RpgHudTheme.DEFAULT, modifier: Modifier = Modifier, )</ID>
+    <ID>LongParameterList:RpgUnitFrame.kt$( name: String, level: Int, currentHp: Int, maxHp: Int, currentMp: Int, maxMp: Int, theme: RpgHudTheme = RpgHudTheme.DEFAULT, modifier: Modifier = Modifier, )</ID>
     <ID>LongParameterList:ShadcnComposeParityPreviewTest.kt$ShadcnComposeParityPreviewTest$( previewName: String, outDir: File, width: Int, height: Int, frame: ComposeComponentFrame, bg: Color, )</ID>
+    <ID>MatchingDeclarationName:RpgActionBar.kt$RpgActionSlot</ID>
   </CurrentIssues>
 </SmellBaseline>

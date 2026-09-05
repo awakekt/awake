@@ -25,7 +25,7 @@ class ShadcnCardTest {
     private fun card(
         content: (
             context(io.github.awakelab.awake.compose.runtime.Composer)
-            () -> Unit
+            io.github.awakelab.awake.ui.shadcn.components.ShadcnCardScope.() -> Unit
         )? = null,
     ) =
         composeFrame(300, 200) {
@@ -53,15 +53,16 @@ class ShadcnCardTest {
         val radius = card().primitivesOf<DrawCommand.RoundedQuad>().first().radius
 
         assertEquals(theme.radii.xl.value, radius, 0.5f, "the card is not rounded-xl")
-        assertTrue(theme.radii.xl.value > theme.radii.lg.value, "the scale itself collapsed xl into lg")
+        assertTrue(
+            theme.radii.xl.value > theme.radii.lg.value,
+            "the scale itself collapsed xl into lg",
+        )
     }
 
     @Test
     fun contentIsInsetByTheTailwindStepNotARawNumber() {
-        // `py-6` is spacing step 6, vertical only -- upstream's Card container carries no
-        // horizontal inset at all; that lives on CardHeader/CardContent/CardFooter children.
-        // Asserting against Tw rather than 24 means a scale change moves this with it instead of
-        // silently disagreeing.
+        // Uniform Tw.Spacing.s6 padding across both horizontal and vertical axes ensures
+        // raw content and sectioned items have proper resilient insets.
         val frame = composeFrame(300, 200) {
             provideShadcnTheme(theme) {
                 ShadcnCard(Modifier.size(200.dp, 100.dp)) { ShadcnText("Inside") }
@@ -72,7 +73,11 @@ class ShadcnCardTest {
 
         assertTrue(
             firstGlyph.y >= fill.y + Tw.Spacing.s6.value - 0.5f,
-            "content started at ${firstGlyph.y}, inside the card's own py-6 inset",
+            "content started at ${firstGlyph.y}, inside the card's own vertical inset",
+        )
+        assertTrue(
+            firstGlyph.x >= fill.x + Tw.Spacing.s6.value - 0.5f,
+            "content started at ${firstGlyph.x}, inside the card's own horizontal inset",
         )
     }
 }

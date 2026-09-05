@@ -5,24 +5,109 @@
  */
 package io.github.awakelab.awake.studio.app
 
-import io.github.awakelab.awake.engine.bootstrap.dsl.WindowDsl
-import io.github.awakelab.awake.engine.bootstrap.dsl.appDefinition
+import io.github.awakelab.awake.editor.EditorPlugin
+import io.github.awakelab.awake.editor.keybinding.EditorKeymapBuilder
+import io.github.awakelab.awake.engine.bootstrap.dsl.app
 import io.github.awakelab.awake.engine.bootstrap.dsl.select
 import io.github.awakelab.awake.engine.platform.lifecycle.AwakeAppLifecycle
+import io.github.awakelab.awake.studio.fixture.StudioSceneDescriptor
+import io.github.awakelab.awake.studio.fixture.StudioSceneRegistry
 import io.github.awakelab.awake.studio.studioModule
 
-private val studioDefinition = appDefinition(createState = {}) {
+/**
+ * Creates and configures the Awake Studio runtime with optional consumer plugins and window settings.
+ */
+fun studioApp(
+    plugins: List<EditorPlugin> = emptyList(),
+    title: String = "Awake Studio",
+    width: Int = 1600,
+    height: Int = 900,
+    includeDefaultFixture: Boolean = true,
+    keymap: EditorKeymapBuilder? = null,
+): AwakeAppLifecycle = app {
     window {
-        configureStudioWindow()
+        this.title = title
+        @Suppress("MagicNumber")
+        size(width, height)
+        backend.select(platformBackendPreference())
     }
-    module(studioModule())
+    install(
+        studioModule(
+            plugins = plugins,
+            includeDefaultFixture = includeDefaultFixture,
+            keymap = keymap,
+        ),
+    )
 }
 
-fun studioApp(): AwakeAppLifecycle = studioDefinition.createApp()
+/**
+ * Builder configuration for [studioApp].
+ */
+class StudioAppConfig {
+    var title: String = "Awake Studio"
+    var width: Int = 1600
+    var height: Int = 900
+    var includeDefaultFixture: Boolean = true
+    val plugins = mutableListOf<EditorPlugin>()
+    var keymapBuilder: EditorKeymapBuilder? = null
+    val customScenes = mutableListOf<StudioSceneDescriptor>()
 
-private fun WindowDsl.configureStudioWindow() {
-    title = "Awake Studio"
-    @Suppress("MagicNumber") // Default window size, used exactly once.
-    size(1600, 900)
-    backend.select(platformBackendPreference())
+    /** Installs an [EditorPlugin] (e.g. data inspectors, scene systems, or asset converters). */
+    fun install(plugin: EditorPlugin) {
+        plugins += plugin
+    }
+
+    /** Installs multiple [EditorPlugin]s. */
+    fun installAll(vararg plugins: EditorPlugin) {
+        this.plugins += plugins
+    }
+
+    /** Configures custom keybindings or rebinds existing actions. */
+    fun keymap(block: EditorKeymapBuilder.() -> Unit) {
+        val builder = keymapBuilder ?: EditorKeymapBuilder().also { keymapBuilder = it }
+        builder.apply(block)
+    }
+
+    /** Registers an authored scene into the Studio scene selector and files view. */
+    fun scene(id: String, title: String, path: String, description: String = "") {
+        customScenes += StudioSceneDescriptor(id = id, title = title, path = path, description = description)
+    }
+
+    /** Registers an existing [StudioSceneDescriptor]. */
+    fun scene(descriptor: StudioSceneDescriptor) {
+        customScenes += descriptor
+    }
+}
+
+/**
+ * DSL entry point for configuring and launching Awake Studio.
+ *
+ * Example:
+ * ```kotlin
+ * fun main() = studioApp {
+ *     title = "My Game Studio"
+ *     includeDefaultFixture = false
+ *     scene("level-1", "Dungeon Level 1", "scenes/level1.scene.json")
+ *     install(CombatGamePlugin())
+ *     install(InventoryGamePlugin())
+ *     keymap {
+ *         rebind(EditorStandardActions.TOOL_TRANSLATE, KeyChord(Key.G))
+ *     }
+ * }.start()
+ * ```
+ */
+fun studioApp(configure: StudioAppConfig.() -> Unit): AwakeAppLifecycle {
+    val config = StudioAppConfig().apply(configure)
+    if (!config.includeDefaultFixture) {
+        StudioSceneRegistry.clear()
+    }
+    config.customScenes.forEach { StudioSceneRegistry.register(it) }
+    return studioApp(
+        plugins = config.plugins,
+        title = config.title,
+        width = config.width,
+        height = config.height,
+        includeDefaultFixture = config.includeDefaultFixture,
+        keymap = config.keymapBuilder,
+    )
 }

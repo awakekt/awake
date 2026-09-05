@@ -22,8 +22,12 @@ class StreamObserverDrivenTest {
     private class RecordingListener : WorldCellStreamListener {
         val loaded = mutableListOf<WorldCellCoord>()
         val unloaded = mutableListOf<WorldCellCoord>()
-        override fun onCellLoad(world: World, coord: WorldCellCoord) { loaded += coord }
-        override fun onCellUnload(world: World, coord: WorldCellCoord) { unloaded += coord }
+        override fun onCellLoad(world: World, coord: WorldCellCoord) {
+            loaded += coord
+        }
+        override fun onCellUnload(world: World, coord: WorldCellCoord) {
+            unloaded += coord
+        }
     }
 
     private val config = WorldPartitionConfig(

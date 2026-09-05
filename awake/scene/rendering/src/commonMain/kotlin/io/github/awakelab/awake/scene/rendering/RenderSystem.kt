@@ -27,19 +27,20 @@ import io.github.awakelab.awake.render.renderer.SceneLight
 import io.github.awakelab.awake.render.renderer.directionalShadowBox
 import io.github.awakelab.awake.render.renderer.shadowCascadeUniforms
 import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.animation.ModularCharacterComponent
 import io.github.awakelab.awake.scene.rendering.animation.SkinnedPose
-import io.github.awakelab.awake.scene.rendering.spatial.Occluder
 import io.github.awakelab.awake.scene.rendering.debug.debugSettingsOrNull
-import io.github.awakelab.awake.scene.rendering.mesh.PbrMaterial
 import io.github.awakelab.awake.scene.rendering.mesh.InstancedMeshRenderer
 import io.github.awakelab.awake.scene.rendering.mesh.InstancedSkinnedMeshRenderer
 import io.github.awakelab.awake.scene.rendering.mesh.LodGroup
 import io.github.awakelab.awake.scene.rendering.mesh.MeshBounds
 import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
+import io.github.awakelab.awake.scene.rendering.mesh.PbrMaterial
 import io.github.awakelab.awake.scene.rendering.particles.ParticleEmitter
 import io.github.awakelab.awake.scene.rendering.particles.currentAlpha
 import io.github.awakelab.awake.scene.rendering.particles.currentColor
 import io.github.awakelab.awake.scene.rendering.particles.currentFrame
+import io.github.awakelab.awake.scene.rendering.spatial.Occluder
 import io.github.awakelab.awake.scene.rendering.spatial.SpatialIndex
 import io.github.awakelab.awake.scene.rendering.spatial.findSpatialIndex
 
@@ -172,6 +173,29 @@ class RenderSystem(
                     instanceJointPalettes = instanced.instances.map { it.jointPalette },
                 ),
             )
+        }
+        // Modular character loop: all equipped visible slots on an entity are drawn using the
+        // entity's transform and shared SkinnedPose joint palette without requiring dummy child entities.
+        world.family<Transform, ModularCharacterComponent>().forEach { entity, transform, modularCharacter ->
+            if (!modularCharacter.isVisible) return@forEach
+            val bounds = world.get<MeshBounds>(entity)
+            if (bounds != null && !passesCulling(entity.id, transform, bounds, culling)) return@forEach
+
+            val pose = world.get<SkinnedPose>(entity)
+            val extras = pose?.jointPalette ?: EMPTY_EXTRAS
+
+            for (slot in modularCharacter.slots.values) {
+                if (!slot.isVisible) continue
+                drawCalls.add(
+                    DrawCall(
+                        mesh = slot.mesh,
+                        material = slot.material,
+                        model = transform.worldMatrix,
+                        extraUniformFloats = extras,
+                        timeSeconds = elapsedTimeSeconds,
+                    ),
+                )
+            }
         }
         // Billboard particles -- one DrawCall per emitter, instanceModels/instanceColors carry
         // one entry per LIVE particle (dead pool slots are skipped, not drawn as invisible

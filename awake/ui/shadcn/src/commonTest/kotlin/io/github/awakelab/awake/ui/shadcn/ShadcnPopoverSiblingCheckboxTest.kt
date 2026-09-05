@@ -20,7 +20,7 @@ import io.github.awakelab.awake.compose.ui.semantics.SemanticsTreeBuilder
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.Constraints
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCheckbox
-import io.github.awakelab.awake.ui.shadcn.components.shadcnPopover
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnPopover
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -46,7 +46,7 @@ class ShadcnPopoverSiblingCheckboxTest {
         val content: context(Composer)
         () -> Unit = {
             provideShadcnTheme(shadcnThemeValues(dark = true)) {
-                shadcnPopover {
+                ShadcnPopover {
                     Column(Modifier) {
                         repeat(checked.size) { index ->
                             ShadcnCheckbox(

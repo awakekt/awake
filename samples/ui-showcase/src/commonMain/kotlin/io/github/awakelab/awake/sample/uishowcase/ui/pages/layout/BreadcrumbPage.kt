@@ -7,7 +7,7 @@ package io.github.awakelab.awake.sample.uishowcase.ui.pages.layout
 
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.shadcnBreadcrumb
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnBreadcrumb
 
 internal val BreadcrumbPage = ShowcasePage(
     id = "breadcrumb",
@@ -19,6 +19,6 @@ internal val BreadcrumbPage = ShowcasePage(
     previewHeight = 240,
     notes = listOf("Compact path trail for deep page hierarchies."),
     hero = {
-        shadcnBreadcrumb(crumbs = listOf("Docs", "Components", "Button"))
+        ShadcnBreadcrumb(crumbs = listOf("Docs", "Components", "Button"))
     },
 )

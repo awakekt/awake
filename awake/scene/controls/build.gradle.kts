@@ -18,7 +18,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(project(":awake:core:input"))
+            api(project(":awake:core:input"))
             api(project(":awake:scene:scene-core"))
             implementation(project(":awake:core:math"))
             api(project(":awake:scene:rendering"))

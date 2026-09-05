@@ -7,11 +7,14 @@ package io.github.awakelab.awake.asset.terrain
 
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.geometry.VertexFormat
+import io.github.awakelab.awake.core.geometry.facesUpward
+import io.github.awakelab.awake.core.geometry.validate
 import io.github.awakelab.awake.core.math.GridOrigin
 import io.github.awakelab.awake.core.math.Vec3f
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class HeightmapMeshBuilderTest {
     @Test
@@ -36,7 +39,38 @@ class HeightmapMeshBuilderTest {
         assertEquals(0f, mesh.vertices[lastOffset + 3], absoluteTolerance = 0.00001f)
         assertEquals(1f, mesh.vertices[lastOffset + 4])
         assertEquals(0f, mesh.vertices[lastOffset + 5], absoluteTolerance = 0.00001f)
-        assertContentEquals(intArrayOf(0, 3, 1, 1, 3, 4, 1, 4, 2, 2, 4, 5), mesh.indices)
+        // Each quad is cut on its MAIN diagonal (0-4, 1-5), matching what a Jolt heightfield does
+        // -- see gridTriangleIndices. Cut the other way and the drawn ground and the ground things
+        // land on are two different surfaces inside every quad.
+        assertContentEquals(intArrayOf(0, 3, 4, 0, 4, 1, 1, 4, 5, 1, 5, 2), mesh.indices)
+    }
+
+    /**
+     * Every heightmap mesh is well-formed, and faces up.
+     *
+     * The cheap guard on the whole builder. A heightmap wound the wrong way is invisible under
+     * back-face culling -- not dark, not inside-out, absent -- which reads as a missing draw call
+     * and gets debugged in the renderer. Changing which diagonal a quad is cut on is exactly the
+     * kind of edit that can flip it, and one landed recently.
+     */
+    @Test
+    fun everyHeightmapMeshIsWellFormedAndFacesUp() {
+        val heightmap = Heightmap(
+            samples = FloatArray(SAMPLES * SAMPLES) { index ->
+                val x = index % SAMPLES
+                val z = index / SAMPLES
+                // Not flat: a flat grid has no winding to get wrong and no normals worth checking.
+                (x - z).toFloat() * 0.25f + (x % 3) * 0.4f
+            },
+            width = SAMPLES,
+            depth = SAMPLES,
+            scale = Vec3f(1.5f, 0.65f, 1.5f),
+        )
+
+        val mesh = heightmap.toPositionNormalColorMesh(Color.White)
+
+        assertEquals(emptyList(), mesh.validate(), "the heightmap mesh reported problems")
+        assertTrue(mesh.facesUpward(), "a heightmap that does not face up is invisible when culled")
     }
 
     /**
@@ -103,5 +137,9 @@ class HeightmapMeshBuilderTest {
         assertEquals(0.40824828f, mesh.vertices[4], absoluteTolerance = 0.00001f)
         assertEquals(-0.81649655f, mesh.vertices[5], absoluteTolerance = 0.00001f)
         assertEquals(1f, mesh.vertices[VertexFormat.PositionNormalColor.strideFloats + 6])
+    }
+
+    private companion object {
+        const val SAMPLES = 9
     }
 }

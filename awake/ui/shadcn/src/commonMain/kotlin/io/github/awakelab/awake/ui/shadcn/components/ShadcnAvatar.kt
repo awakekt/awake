@@ -27,7 +27,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * this component later, not a different one.
  */
 context(_: Composer)
-fun shadcnAvatar(
+fun ShadcnAvatar(
     initials: String,
     modifier: Modifier = Modifier,
     size: ShadcnAvatarSizeVariant = ShadcnAvatarSizeVariant.Default,
@@ -44,7 +44,7 @@ fun shadcnAvatar(
 
 /** Branded avatar status indicator badge. */
 context(_: Composer)
-fun shadcnAvatarBadge(
+fun ShadcnAvatarBadge(
     modifier: Modifier = Modifier,
     size: Dp = 10f.dp,
     color: Color? = null,
@@ -58,7 +58,7 @@ fun shadcnAvatarBadge(
 
 /** Branded avatar group with overlapping items. */
 context(_: Composer)
-fun shadcnAvatarGroup(
+fun ShadcnAvatarGroup(
     initials: List<String>,
     modifier: Modifier = Modifier,
     size: ShadcnAvatarSizeVariant = ShadcnAvatarSizeVariant.Default,
@@ -66,10 +66,17 @@ fun shadcnAvatarGroup(
 ) {
     Row(modifier = modifier) {
         initials.forEachIndexed { index, value ->
-            shadcnAvatar(
+            ShadcnAvatar(
                 initials = value,
                 size = size,
-                modifier = if (index > 0) Modifier.offset((-overlap.value * index).dp, 0f.dp) else Modifier,
+                modifier = if (index > 0) {
+                    Modifier.offset(
+                        (-overlap.value * index).dp,
+                        0f.dp,
+                    )
+                } else {
+                    Modifier
+                },
             )
         }
     }

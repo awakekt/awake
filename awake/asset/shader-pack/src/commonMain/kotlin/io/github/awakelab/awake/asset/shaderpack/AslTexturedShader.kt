@@ -5,8 +5,6 @@
  */
 package io.github.awakelab.awake.asset.shaderpack
 
-import io.github.awakelab.awake.render.pipeline.BindingLayout
-import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
 import io.github.awakelab.awake.asset.shaderdsl.AslType
 import io.github.awakelab.awake.asset.shaderdsl.F32
@@ -55,6 +53,8 @@ import io.github.awakelab.awake.core.geometry.GpuDataShape
 import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.core.geometry.VertexSemantic
 import io.github.awakelab.awake.render.passes.uniforms.MaterialUniformLayouts
+import io.github.awakelab.awake.render.pipeline.BindingLayout
+import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.render.renderer.MAX_POINT_LIGHTS
 
 /**

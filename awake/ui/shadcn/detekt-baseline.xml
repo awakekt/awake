@@ -5,29 +5,75 @@
     <ID>CyclomaticComplexMethod:ShadcnInputOtp.kt$fun ShadcnInputOtp( state: TextFieldState, length: Int = 6, modifier: Modifier = Modifier, enabled: Boolean = true, isError: Boolean = false, groupSize: Int = 0, pattern: Regex? = null, )</ID>
     <ID>CyclomaticComplexMethod:ShadcnSelect.kt$private fun ShadcnSelectContent( items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, highlightedIndex: Int?, modifier: Modifier, id: String, ): Int?</ID>
     <ID>CyclomaticComplexMethod:ShadcnSelect.kt$private fun handleSelectKey( event: KeyEvent, items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, expanded: Boolean, state: SelectKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, ): Boolean</ID>
+    <ID>CyclomaticComplexMethod:ShadcnToggleGroup.kt$private fun ToggleGroupItem( item: ShadcnToggleGroupItem, index: Int, count: Int, selected: Set&lt;String>, spec: ToggleGroupSpec, onSelectedChange: (Set&lt;String>) -> Unit, )</ID>
+    <ID>FunctionNaming:ShadcnAlertDialog.kt$fun ShadcnAlertDialog( visible: Boolean, title: String, onDismissRequest: () -> Unit, modifier: Modifier = Modifier, description: String? = null, confirmLabel: String = "Continue", cancelLabel: String = "Cancel", destructive: Boolean = false, onConfirm: () -> Unit = {}, id: String? = null, )</ID>
+    <ID>FunctionNaming:ShadcnAvatar.kt$fun ShadcnAvatar( initials: String, modifier: Modifier = Modifier, size: ShadcnAvatarSizeVariant = ShadcnAvatarSizeVariant.Default, )</ID>
+    <ID>FunctionNaming:ShadcnAvatar.kt$fun ShadcnAvatarBadge( modifier: Modifier = Modifier, size: Dp = 10f.dp, color: Color? = null, )</ID>
+    <ID>FunctionNaming:ShadcnAvatar.kt$fun ShadcnAvatarGroup( initials: List&lt;String>, modifier: Modifier = Modifier, size: ShadcnAvatarSizeVariant = ShadcnAvatarSizeVariant.Default, overlap: Dp = 8f.dp, )</ID>
+    <ID>FunctionNaming:ShadcnBreadcrumb.kt$fun ShadcnBreadcrumb( crumbs: List&lt;String>, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ShadcnCollapsible.kt$fun ShadcnCollapsible( title: String, expanded: Boolean, modifier: Modifier = Modifier, onExpandedChange: (Boolean) -> Unit = {}, content: ( context(Composer) () -> Unit )? = null, )</ID>
+    <ID>FunctionNaming:ShadcnDropdownMenu.kt$fun ShadcnDropdownMenu( entries: List&lt;ShadcnMenuEntry>, expanded: Boolean, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, modifier: Modifier = Modifier, menuModifier: Modifier = Modifier, id: String? = null, trigger: context(Composer) (onClick: () -> Unit) -> Unit, )</ID>
+    <ID>FunctionNaming:ShadcnDropdownMenu.kt$fun ShadcnDropdownMenu( entries: List&lt;ShadcnMenuEntry>, modifier: Modifier = Modifier, id: String? = null, highlightedIndex: Int? = null, ): Int?</ID>
+    <ID>FunctionNaming:ShadcnEmpty.kt$fun ShadcnEmpty( title: String, modifier: Modifier = Modifier, description: String? = null, content: ( context(Composer) () -> Unit )? = null, )</ID>
+    <ID>FunctionNaming:ShadcnIcon.kt$fun ShadcnIcon( icon: ImageVector, modifier: Modifier = Modifier, size: Dp = IconSize, tint: Color? = null, )</ID>
+    <ID>FunctionNaming:ShadcnKbd.kt$fun ShadcnKbd( key: String, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ShadcnLabel.kt$fun ShadcnLabel( text: String, modifier: Modifier = Modifier, enabled: Boolean = true, )</ID>
+    <ID>FunctionNaming:ShadcnPopover.kt$fun ShadcnPopover( modifier: Modifier = Modifier, /** * `w-72` by default, and a parameter because upstream treats it as one: the popover case in the * reference app is `className="w-[260px]"`. A fixed width with no way to state another forces * every caller that wants a different one to reach around the recipe. */ width: Dp = PopoverWidth, content: ( context(Composer) BoxScope.() -> Unit )? = null, )</ID>
+    <ID>FunctionNaming:ShadcnPopover.kt$fun ShadcnPopover( visible: Boolean, onVisibleChange: (Boolean) -> Unit, modifier: Modifier = Modifier, panelModifier: Modifier = Modifier, width: Dp = PopoverWidth, id: String? = null, trigger: context(Composer) (onClick: () -> Unit) -> Unit, content: ( context(Composer) BoxScope.() -> Unit )? = null, )</ID>
+    <ID>FunctionNaming:ShadcnSheet.kt$fun ShadcnSheet( visible: Boolean, onDismissRequest: () -> Unit, modifier: Modifier = Modifier, side: ShadcnSheetSide = ShadcnSheetSide.Right, title: String? = null, description: String? = null, id: String? = null, content: ( context(Composer) () -> Unit )? = null, )</ID>
+    <ID>FunctionNaming:ShadcnSidebar.kt$fun ShadcnSidebar( modifier: Modifier = Modifier, header: ( context(Composer) () -> Unit )? = null, footer: ( context(Composer) () -> Unit )? = null, content: context(Composer) () -> Unit, )</ID>
+    <ID>FunctionNaming:ShadcnSidebar.kt$fun ShadcnSidebarGroup( modifier: Modifier = Modifier, label: String? = null, content: context(Composer) () -> Unit, )</ID>
+    <ID>FunctionNaming:ShadcnSidebar.kt$fun ShadcnSidebarGroupContent( modifier: Modifier = Modifier, content: context(Composer) () -> Unit, )</ID>
+    <ID>FunctionNaming:ShadcnSidebar.kt$fun ShadcnSidebarMenu( modifier: Modifier = Modifier, content: context(Composer) () -> Unit, )</ID>
+    <ID>FunctionNaming:ShadcnSidebar.kt$fun ShadcnSidebarMenuCollapsibleItem( label: String, modifier: Modifier = Modifier, active: Boolean = false, leadingIcon: ImageVector? = null, trailing: ( context(Composer) () -> Unit )? = null, defaultExpanded: Boolean = false, onClick: (() -> Unit)? = null, items: context(Composer) () -> Unit, )</ID>
+    <ID>FunctionNaming:ShadcnSidebar.kt$fun ShadcnSidebarMenuItem( label: String, modifier: Modifier = Modifier, active: Boolean = false, leadingIcon: ImageVector? = null, trailing: ( context(Composer) () -> Unit )? = null, onClick: () -> Unit = {}, )</ID>
+    <ID>FunctionNaming:ShadcnSidebar.kt$fun ShadcnSidebarMenuSub( modifier: Modifier = Modifier, content: context(Composer) () -> Unit, )</ID>
+    <ID>FunctionNaming:ShadcnSidebar.kt$fun ShadcnSidebarMenuSubItem( label: String, modifier: Modifier = Modifier, active: Boolean = false, onClick: () -> Unit = {}, )</ID>
+    <ID>FunctionNaming:ShadcnSkeleton.kt$fun ShadcnSkeleton(modifier: Modifier = Modifier)</ID>
+    <ID>FunctionNaming:ShadcnSpinner.kt$fun ShadcnSpinner( modifier: Modifier = Modifier, size: Dp = SpinnerSize, )</ID>
+    <ID>FunctionNaming:ShadcnSwitch.kt$fun ShadcnSwitch( checked: Boolean, modifier: Modifier = Modifier, enabled: Boolean = true, /** * Supplied when a caller needs to drive the visual state -- a state-matrix preview renders the * same control hovered, pressed and focused without a pointer ever being there. * * Compose's own seam: its components take an `interactionSource` for exactly this. Nullable * rather than a `remember {}` default because a default argument that allocates a slot would * shift the slot table depending on whether a caller passed one. */ interactionSource: InteractionSource? = null, onCheckedChange: (Boolean) -> Unit = {}, )</ID>
+    <ID>FunctionNaming:ShadcnTextarea.kt$fun ShadcnTextarea( state: TextFieldState, modifier: Modifier = Modifier, enabled: Boolean = true, )</ID>
+    <ID>FunctionNaming:ShadcnToaster.kt$fun ShadcnToaster( state: ShadcnToastState, modifier: Modifier = Modifier, id: String? = null, )</ID>
+    <ID>FunctionNaming:ShadcnToggle.kt$fun ShadcnToggle( label: String, checked: Boolean, modifier: Modifier = Modifier, enabled: Boolean = true, /** * Supplied when a caller needs to drive the visual state -- a state-matrix preview renders the * same control hovered, pressed and focused without a pointer ever being there. * * Compose's own seam: its components take an `interactionSource` for exactly this. Nullable * rather than a `remember {}` default because a default argument that allocates a slot would * shift the slot table depending on whether a caller passed one. */ interactionSource: InteractionSource? = null, ): Boolean</ID>
+    <ID>FunctionNaming:ShadcnTooltip.kt$fun ShadcnTooltip( text: String, modifier: Modifier = Modifier, )</ID>
+    <ID>FunctionNaming:ShadcnTooltip.kt$fun ShadcnTooltipped( text: String, modifier: Modifier = Modifier, content: context(Composer) () -> Unit, )</ID>
+    <ID>LongMethod:ShadcnCalendar.kt$fun ShadcnCalendar( selectedDate: ShadcnCalendarDate?, onDateSelected: (ShadcnCalendarDate) -> Unit, modifier: Modifier = Modifier, initialMonth: Int = 10, initialYear: Int = 2026, )</ID>
     <ID>LongMethod:ShadcnCombobox.kt$private fun ShadcnComboboxContent( items: List&lt;ShadcnComboboxItem>, selectedIndex: Int?, searchState: TextFieldState, emptyText: String, modifier: Modifier, id: String, ): Int?</ID>
+    <ID>LongMethod:ShadcnDropdownMenu.kt$fun ShadcnDropdownMenu( entries: List&lt;ShadcnMenuEntry>, modifier: Modifier = Modifier, id: String? = null, highlightedIndex: Int? = null, ): Int?</ID>
     <ID>LongMethod:ShadcnInputOtp.kt$fun ShadcnInputOtp( state: TextFieldState, length: Int = 6, modifier: Modifier = Modifier, enabled: Boolean = true, isError: Boolean = false, groupSize: Int = 0, pattern: Regex? = null, )</ID>
+    <ID>LongMethod:ShadcnSelect.kt$fun ShadcnSelect( items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, expanded: Boolean, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, id: String, modifier: Modifier = Modifier, placeholder: String = "Select...", enabled: Boolean = true, )</ID>
     <ID>LongMethod:ShadcnSelect.kt$private fun ShadcnSelectContent( items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, highlightedIndex: Int?, modifier: Modifier, id: String, ): Int?</ID>
     <ID>LongMethod:ShadcnSlider.kt$fun ShadcnRangeSlider( start: Float, end: Float, modifier: Modifier = Modifier, min: Float = 0f, max: Float = 1f, steps: Int = 0, enabled: Boolean = true, onStartChange: (Float) -> Unit = {}, onEndChange: (Float) -> Unit = {}, )</ID>
     <ID>LongMethod:ShadcnSlider.kt$fun ShadcnSlider( value: Float, modifier: Modifier = Modifier, min: Float = 0f, max: Float = 1f, steps: Int = 0, enabled: Boolean = true, onValueChange: (Float) -> Unit = {}, )</ID>
+    <ID>LongMethod:ShadcnToggleGroup.kt$private fun ToggleGroupItem( item: ShadcnToggleGroupItem, index: Int, count: Int, selected: Set&lt;String>, spec: ToggleGroupSpec, onSelectedChange: (Set&lt;String>) -> Unit, )</ID>
     <ID>LongParameterList:ShadcnButton.kt$( modifier: Modifier, variant: ShadcnButtonVariant, size: ShadcnButtonSizeVariant, enabled: Boolean, onClick: () -> Unit, shape: Shape?, borderSides: BorderSides, hasIcon: Boolean, content: context(Composer) () -> Unit, )</ID>
     <ID>LongParameterList:ShadcnCombobox.kt$( items: List&lt;ShadcnComboboxItem>, selectedIndex: Int?, searchState: TextFieldState, emptyText: String, modifier: Modifier, id: String, )</ID>
     <ID>LongParameterList:ShadcnDropdownMenu.kt$( event: KeyEvent, entries: List&lt;ShadcnMenuEntry>, expanded: Boolean, state: MenuKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, )</ID>
     <ID>LongParameterList:ShadcnSelect.kt$( event: KeyEvent, items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, expanded: Boolean, state: SelectKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, )</ID>
     <ID>LongParameterList:ShadcnSelect.kt$( items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, expanded: Boolean, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, id: String, modifier: Modifier = Modifier, placeholder: String = "Select...", enabled: Boolean = true, )</ID>
+    <ID>LongParameterList:ShadcnToggleGroup.kt$( item: ShadcnToggleGroupItem, index: Int, count: Int, selected: Set&lt;String>, spec: ToggleGroupSpec, onSelectedChange: (Set&lt;String>) -> Unit, )</ID>
     <ID>MatchingDeclarationName:ShadcnCombobox.kt$ShadcnComboboxItem</ID>
+    <ID>MatchingDeclarationName:ShadcnCommand.kt$ShadcnCommandItem</ID>
     <ID>MatchingDeclarationName:ShadcnSelect.kt$ShadcnSelectItem</ID>
     <ID>MatchingDeclarationName:ShadcnSidebarShell.kt$SidebarState</ID>
     <ID>NestedBlockDepth:ShadcnStylePresetVerificationTest.kt$ShadcnStylePresetVerificationTest$@Test fun everyPresetResolvesACompleteThemeAcrossEveryBaseColorAndMode()</ID>
+    <ID>OutdatedDocumentation:ShadcnCalendar.kt$ShadcnCalendarDate</ID>
+    <ID>OutdatedDocumentation:ShadcnCalendar.kt$ShadcnDateRange</ID>
+    <ID>OutdatedDocumentation:ShadcnChart.kt$ShadcnChartSeries</ID>
+    <ID>OutdatedDocumentation:ShadcnChart.kt$ShadcnPieSlice</ID>
+    <ID>OutdatedDocumentation:ShadcnCommand.kt$ShadcnCommandItem</ID>
     <ID>ReturnCount:ShadcnDropdownMenu.kt$private fun List&lt;ShadcnMenuEntry>.nextEnabledIndex(current: Int?, forward: Boolean): Int?</ID>
     <ID>ReturnCount:ShadcnDropdownMenu.kt$private fun handleMenuKey( event: KeyEvent, entries: List&lt;ShadcnMenuEntry>, expanded: Boolean, state: MenuKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, ): Boolean</ID>
     <ID>ReturnCount:ShadcnSelect.kt$private fun List&lt;ShadcnSelectItem>.nextEnabledIndex(current: Int?, forward: Boolean): Int?</ID>
     <ID>ReturnCount:ShadcnSelect.kt$private fun handleSelectKey( event: KeyEvent, items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, expanded: Boolean, state: SelectKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, ): Boolean</ID>
     <ID>ReturnCount:ShadcnSlider.kt$private fun handleSliderKey(event: KeyEvent, min: Float, max: Float, steps: Int, state: SliderDragState): Boolean</ID>
     <ID>TooManyFunctions:ShadcnSidebarShell.kt$io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarShell.kt</ID>
+    <ID>TooManyFunctions:ShadcnTable.kt$io.github.awakelab.awake.ui.shadcn.components.ShadcnTable.kt</ID>
     <ID>TopLevelPropertyNaming:ShadcnCheckboxStyle.kt$/** Source Checkbox's `disabled:opacity-50`. */ internal const val ShadcnCheckboxDisabledAlpha = 0.5f</ID>
     <ID>TopLevelPropertyNaming:ShadcnProgressStyle.kt$/** Source Progress track's `bg-primary/20`. */ internal const val ShadcnProgressTrackAlpha = 0.2f</ID>
     <ID>TopLevelPropertyNaming:ShadcnTabsStyle.kt$/** Source inactive TabsTrigger's `text-foreground/60`. */ internal const val ShadcnTabsInactiveAlpha = 0.6f</ID>
+    <ID>UnusedParameter:ShadcnButtonGroup.kt$count: Int</ID>
+    <ID>UnusedParameter:ShadcnForm.kt$onSubmit: () -> Unit = {}</ID>
     <ID>VariableNaming:ShadcnVisualBaselineTest.kt$ShadcnVisualBaselineTest$/** Long enough for a toggled overlay to reach full opacity before it is captured. */ private val SETTLE_FRAMES = 20</ID>
     <ID>VariableNaming:ShadcnVisualBaselineTest.kt$ShadcnVisualBaselineTest$private val OVERLAY_HEIGHT = 220</ID>
     <ID>VariableNaming:ShadcnVisualBaselineTest.kt$ShadcnVisualBaselineTest$private val OVERLAY_WIDTH = 360</ID>

@@ -9,14 +9,13 @@ import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.scene.controls.camera.CameraMode
 import io.github.awakelab.awake.scene.controls.camera.ActiveCamera
 import io.github.awakelab.awake.scene.controls.camera.CameraRig
+import io.github.awakelab.awake.scene.controls.camera.aimAt
 import io.github.awakelab.awake.scene.rendering.Camera
-import io.github.awakelab.awake.scene.runtime.Scene
+import io.github.awakelab.awake.scene.document.Scene
+import io.github.awakelab.awake.scene.document.SceneDocument
+import io.github.awakelab.awake.scene.document.SceneLoader
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
 import io.github.awakelab.awake.scene.runtime.attachRenderableComponents
-import kotlin.math.asin
-import kotlin.math.atan2
-import io.github.awakelab.awake.scene.runtime.SceneDocument
-import io.github.awakelab.awake.scene.runtime.SceneLoader
 
 /** Owns the loaded showcase documents and activates them through the shared scene lifecycle. */
 internal class EngineShowcaseLoader {
@@ -80,7 +79,6 @@ private fun Scene.attachOrbitCamera() {
     world.queryEach<Camera> { entity, camera ->
         if (!camera.isPrimary) return@queryEach
         world.add(entity, ActiveCamera())
-        val toEye = camera.lens.eye - camera.lens.center
         world.add(
             entity,
             CameraRig().apply {
@@ -92,9 +90,11 @@ private fun Scene.attachOrbitCamera() {
                 // sends the camera into orbit. Harmless while nothing was targeted, which is why
                 // it sat here until something was.
                 offsetPosition = Vec3f(camera.lens.center.x, camera.lens.center.y, camera.lens.center.z)
-                distance = maxOf(toEye.length3(), EPSILON)
-                pitch = asin((toEye.y / maxOf(toEye.length3(), EPSILON)).coerceIn(-1f, 1f))
-                yaw = atan2(toEye.x, toEye.z)
+                // Through `aimAt`, not by hand. The angles have to be the exact inverse of the
+                // forward vector CameraSystem builds, and the hand-written version here had both
+                // signs the wrong way round -- so every showcase asked its camera to glide to the
+                // mirror image of its authored shot, below the ground it was framing.
+                aimAt(camera.lens.eye, camera.lens.center)
                 // Last: assigning `mode` above asks for a reset, which would throw the angles
                 // just computed away and reframe every showcase to the mode's own defaults.
                 needsReset = false
@@ -103,4 +103,3 @@ private fun Scene.attachOrbitCamera() {
     }
 }
 
-private const val EPSILON = 0.0001f

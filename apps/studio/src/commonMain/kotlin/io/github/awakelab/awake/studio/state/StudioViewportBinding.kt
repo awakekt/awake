@@ -5,9 +5,9 @@
  */
 package io.github.awakelab.awake.studio.state
 
+import io.github.awakelab.awake.editor.scene.gizmo.SceneOrientationGizmo
 import io.github.awakelab.awake.editor.scene.viewport.SceneCameraPreview
 import io.github.awakelab.awake.editor.scene.viewport.SceneCameraProjection
-import io.github.awakelab.awake.editor.scene.gizmo.SceneOrientationGizmo
 import io.github.awakelab.awake.editor.scene.viewport.SceneViewportControlActions
 import io.github.awakelab.awake.editor.scene.viewport.SceneViewportControlState
 import io.github.awakelab.awake.render.renderer.Renderer
@@ -47,6 +47,8 @@ internal fun viewportControlBinding(
         debugShadowFrustum = debugSettings?.showShadowFrustum ?: false,
         cameraPreview = cameraPreview.enabled,
         orientationGizmo = orientationGizmo.enabled,
+        debugGrid = debugSettings?.showGrid ?: false,
+        debugAxisLines = debugSettings?.showAxisLines ?: false,
     )
     val viewActions = SceneViewportControlActions(
         onCycleCameraMode = {
@@ -72,6 +74,11 @@ internal fun viewportControlBinding(
         onDebugShadowFrustumChange = { debugSettings?.showShadowFrustum = it },
         onCameraPreviewChange = { cameraPreview.enabled = it },
         onOrientationGizmoChange = { orientationGizmo.enabled = it },
+        onDebugGridChange = {
+            debugSettings?.showGrid = it
+            debugSettings?.showAxisLines = it
+        },
+        onDebugAxisLinesChange = { debugSettings?.showAxisLines = it },
     )
     return viewState to viewActions
 }

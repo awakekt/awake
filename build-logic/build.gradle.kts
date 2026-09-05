@@ -5,7 +5,11 @@
  */
 plugins {
     `kotlin-dsl`
+    `maven-publish`
 }
+
+group = "io.github.awake-lab.build"
+version = "0.1.0-dev.9-SNAPSHOT"
 
 repositories {
     gradlePluginPortal()

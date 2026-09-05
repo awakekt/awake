@@ -7,6 +7,7 @@ package io.github.awakelab.awake.ui.shadcn.components
 
 import io.github.awakelab.awake.compose.foundation.layout.Box
 import io.github.awakelab.awake.compose.foundation.layout.BoxMeasurePolicy
+import io.github.awakelab.awake.compose.foundation.layout.BoxScope
 import io.github.awakelab.awake.compose.foundation.layout.width
 import io.github.awakelab.awake.compose.foundation.style.StyleState
 import io.github.awakelab.awake.compose.foundation.style.styleable
@@ -40,7 +41,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * own -- see `07-overlay-layering`.
  */
 context(_: Composer)
-fun shadcnPopover(
+fun ShadcnPopover(
     modifier: Modifier = Modifier,
     /**
      * `w-72` by default, and a parameter because upstream treats it as one: the popover case in the
@@ -50,7 +51,7 @@ fun shadcnPopover(
     width: Dp = PopoverWidth,
     content: (
         context(Composer)
-        () -> Unit
+        BoxScope.() -> Unit
     )? = null,
 ) {
     val theme = shadcnTheme
@@ -81,7 +82,7 @@ fun shadcnPopover(
  * the only difference is what goes inside.
  */
 context(_: Composer)
-fun shadcnPopover(
+fun ShadcnPopover(
     visible: Boolean,
     onVisibleChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
@@ -89,7 +90,10 @@ fun shadcnPopover(
     width: Dp = PopoverWidth,
     id: String? = null,
     trigger: context(Composer) (onClick: () -> Unit) -> Unit,
-    content: (context(Composer) () -> Unit)? = null,
+    content: (
+        context(Composer)
+        BoxScope.() -> Unit
+    )? = null,
 ) {
     val anchor = remember { PopupAnchor() }
     val density = LocalDensity.current
@@ -106,7 +110,7 @@ fun shadcnPopover(
                 },
                 measurePolicy = BoxMeasurePolicy(),
             ) {
-                shadcnPopover(
+                ShadcnPopover(
                     modifier = panelModifier.alpha(alpha).semantics {
                         if (id != null) this[SemanticsProperties.TestTag] = id
                     },

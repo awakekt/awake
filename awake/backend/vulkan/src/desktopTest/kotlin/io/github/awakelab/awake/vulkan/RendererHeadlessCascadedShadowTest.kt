@@ -39,13 +39,13 @@ import io.github.awakelab.awake.vulkan.pipeline.createSceneRenderPass
 import io.github.awakelab.awake.vulkan.renderer.Renderer
 import io.github.awakelab.awake.vulkan.swapchain.SwapchainManager
 import io.github.awakelab.awake.vulkan.texture.DepthTarget
-import io.github.awakelab.awake.scene.runtime.SceneCamera
-import io.github.awakelab.awake.scene.runtime.SceneDocument
-import io.github.awakelab.awake.scene.runtime.SceneLoader
-import io.github.awakelab.awake.scene.runtime.SceneMeshRenderer
+import io.github.awakelab.awake.scene.document.SceneCamera
+import io.github.awakelab.awake.scene.document.SceneDocument
+import io.github.awakelab.awake.scene.document.SceneLoader
+import io.github.awakelab.awake.scene.document.SceneMeshRenderer
 import kotlinx.coroutines.runBlocking
 import java.io.File
-import io.github.awakelab.awake.scene.runtime.SceneLight as SceneDocumentLight
+import io.github.awakelab.awake.scene.document.SceneLight as SceneDocumentLight
 import org.junit.AfterClass
 import kotlin.test.Ignore
 import kotlin.test.Test

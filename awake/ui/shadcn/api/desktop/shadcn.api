@@ -265,8 +265,8 @@ public final class io/github/awakelab/awake/ui/shadcn/ShadcnThemeValues : io/git
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnAlertDialogKt {
-	public static final fun shadcnAlertDialog (Lio/github/awakelab/awake/compose/runtime/Composer;ZLjava/lang/String;Lkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Ljava/lang/String;)V
-	public static synthetic fun shadcnAlertDialog$default (Lio/github/awakelab/awake/compose/runtime/Composer;ZLjava/lang/String;Lkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Ljava/lang/String;ILjava/lang/Object;)V
+	public static final fun ShadcnAlertDialog (Lio/github/awakelab/awake/compose/runtime/Composer;ZLjava/lang/String;Lkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Ljava/lang/String;)V
+	public static synthetic fun ShadcnAlertDialog$default (Lio/github/awakelab/awake/compose/runtime/Composer;ZLjava/lang/String;Lkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Ljava/lang/String;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnAlertKt {
@@ -285,12 +285,12 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnAlertVari
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnAvatarKt {
-	public static final fun shadcnAvatar (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnAvatarSizeVariant;)V
-	public static synthetic fun shadcnAvatar$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnAvatarSizeVariant;ILjava/lang/Object;)V
-	public static final fun shadcnAvatarBadge-Ua56fmQ (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;)V
-	public static synthetic fun shadcnAvatarBadge-Ua56fmQ$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)V
-	public static final fun shadcnAvatarGroup-u_AxkWI (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnAvatarSizeVariant;F)V
-	public static synthetic fun shadcnAvatarGroup-u_AxkWI$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnAvatarSizeVariant;FILjava/lang/Object;)V
+	public static final fun ShadcnAvatar (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnAvatarSizeVariant;)V
+	public static synthetic fun ShadcnAvatar$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnAvatarSizeVariant;ILjava/lang/Object;)V
+	public static final fun ShadcnAvatarBadge-Ua56fmQ (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;)V
+	public static synthetic fun ShadcnAvatarBadge-Ua56fmQ$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)V
+	public static final fun ShadcnAvatarGroup-u_AxkWI (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnAvatarSizeVariant;F)V
+	public static synthetic fun ShadcnAvatarGroup-u_AxkWI$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnAvatarSizeVariant;FILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnAvatarSizeVariant : java/lang/Enum {
@@ -320,8 +320,8 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnBadgeVari
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnBreadcrumbKt {
-	public static final fun shadcnBreadcrumb (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;)V
-	public static synthetic fun shadcnBreadcrumb$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public static final fun ShadcnBreadcrumb (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun ShadcnBreadcrumb$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnButtonGroupKt {
@@ -382,15 +382,93 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnButtonVar
 	public static fun values ()[Lio/github/awakelab/awake/ui/shadcn/components/ShadcnButtonVariant;
 }
 
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate {
+	public static final field Companion Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate$Companion;
+	public fun <init> (III)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()I
+	public final fun copy (III)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;IIIILjava/lang/Object;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDay ()I
+	public final fun getMonth ()I
+	public final fun getYear ()I
+	public fun hashCode ()I
+	public final fun toEpochMillis ()J
+	public final fun toShortString ()Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate$Companion {
+	public final fun daysInMonth (II)I
+	public final fun firstDayWeekday (II)I
+	public final fun fromEpochMillis (J)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;
+	public final fun isLeapYear (I)Z
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarKt {
+	public static final fun ShadcnCalendar (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;II)V
+	public static final fun ShadcnCalendar (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Long;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;II)V
+	public static synthetic fun ShadcnCalendar$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;IIILjava/lang/Object;)V
+	public static synthetic fun ShadcnCalendar$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Long;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;IIILjava/lang/Object;)V
+	public static final fun ShadcnDatePicker (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;)V
+	public static final fun ShadcnDatePicker (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Long;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;)V
+	public static synthetic fun ShadcnDatePicker$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;ILjava/lang/Object;)V
+	public static synthetic fun ShadcnDatePicker$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Long;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;ILjava/lang/Object;)V
+}
+
+public abstract interface annotation class io/github/awakelab/awake/ui/shadcn/components/ShadcnCardDsl : java/lang/annotation/Annotation {
+}
+
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCardKt {
-	public static final fun ShadcnCard-Ua56fmQ (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun ShadcnCard-Ua56fmQ$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun ShadcnCardContent (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun ShadcnCardContent$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun ShadcnCardFooter (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun ShadcnCardFooter$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-	public static final fun ShadcnCardHeader (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun ShadcnCardHeader$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun ShadcnCard-Ua56fmQ (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLkotlin/jvm/functions/Function2;)V
+	public static synthetic fun ShadcnCard-Ua56fmQ$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCardScope : io/github/awakelab/awake/compose/foundation/layout/ColumnScope {
+	public fun align (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public fun alignBy (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/layout/VerticalAlignmentLine;)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public final fun content (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun content$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCardScope;Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public final fun footer (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun footer$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCardScope;Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public final fun header (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun header$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCardScope;Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public fun weight (Lio/github/awakelab/awake/compose/ui/Modifier;FZ)Lio/github/awakelab/awake/compose/ui/Modifier;
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCarouselKt {
+	public static final fun ShadcnCarousel (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;ILkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun ShadcnCarousel$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;ILkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnChartKt {
+	public static final fun ShadcnBarChart-u_AxkWI (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;F)V
+	public static synthetic fun ShadcnBarChart-u_AxkWI$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;FILjava/lang/Object;)V
+	public static final fun ShadcnChartContainer (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnChartContainer$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnChartLegend (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun ShadcnChartLegend$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public static final fun ShadcnLineChart-VaQ4v9I (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;FZ)V
+	public static synthetic fun ShadcnLineChart-VaQ4v9I$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;FZILjava/lang/Object;)V
+	public static final fun ShadcnPieChart-jN54Gqc (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;FZLjava/lang/String;Ljava/lang/String;)V
+	public static synthetic fun ShadcnPieChart-jN54Gqc$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;FZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnChartSeries {
+	public fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/core/color/Color;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Lio/github/awakelab/awake/core/color/Color;Ljava/util/List;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnChartSeries;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnChartSeries;Ljava/lang/String;Lio/github/awakelab/awake/core/color/Color;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnChartSeries;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getValues ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCheckboxKt {
@@ -399,6 +477,8 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCheckboxK
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCollapsibleKt {
+	public static final fun ShadcnCollapsible (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnCollapsible$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static final fun shadcnCollapsible (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun shadcnCollapsible$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
@@ -424,14 +504,85 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnComboboxK
 	public static synthetic fun ShadcnCombobox$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Ljava/lang/Integer;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)V
 }
 
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCommandItem {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCommandItem;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCommandItem;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCommandItem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getShortcut ()Ljava/lang/String;
+	public final fun getTitle ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnCommandKt {
+	public static final fun ShadcnCommand-fPIrVcA (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;F)V
+	public static synthetic fun ShadcnCommand-fPIrVcA$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;FILjava/lang/Object;)V
+	public static final fun ShadcnCommandDialog (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun ShadcnCommandDialog$default (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+}
+
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnContextMenuKt {
+	public static final fun ShadcnContextMenu (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnContextMenu$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static final fun shadcnContextMenu (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun shadcnContextMenu$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnDateRange {
+	public fun <init> ()V
+	public fun <init> (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;
+	public final fun component2 ()Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;
+	public final fun copy (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnDateRange;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnDateRange;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnDateRange;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEnd ()Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;
+	public final fun getStart ()Lio/github/awakelab/awake/ui/shadcn/components/ShadcnCalendarDate;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface annotation class io/github/awakelab/awake/ui/shadcn/components/ShadcnDialogDsl : java/lang/annotation/Annotation {
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnDialogHeaderScope : io/github/awakelab/awake/compose/foundation/layout/ColumnScope {
+	public fun align (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public fun alignBy (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/layout/VerticalAlignmentLine;)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public final fun description (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun description$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnDialogHeaderScope;Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public final fun title (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun title$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnDialogHeaderScope;Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public fun weight (Lio/github/awakelab/awake/compose/ui/Modifier;FZ)Lio/github/awakelab/awake/compose/ui/Modifier;
+}
+
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnDialogKt {
-	public static final fun shadcnDialog-VaQ4v9I (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;FLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnDialog-VaQ4v9I$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;FLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnDialog-L4y4j0U (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun ShadcnDialog-L4y4j0U$default (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnDialogScope : io/github/awakelab/awake/compose/foundation/layout/ColumnScope {
+	public fun align (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public fun alignBy (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/layout/VerticalAlignmentLine;)Lio/github/awakelab/awake/compose/ui/Modifier;
+	public final fun content (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun content$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnDialogScope;Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public final fun description (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun description$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnDialogScope;Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public final fun footer (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun footer$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnDialogScope;Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public final fun header (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun header$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnDialogScope;Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public final fun title (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun title$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnDialogScope;Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public fun weight (Lio/github/awakelab/awake/compose/ui/Modifier;FZ)Lio/github/awakelab/awake/compose/ui/Modifier;
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnDrawerKt {
@@ -440,15 +591,15 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnDrawerKt 
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnDropdownMenuKt {
-	public static final fun shadcnDropdownMenu (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/Integer;)Ljava/lang/Integer;
-	public static final fun shadcnDropdownMenu (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun shadcnDropdownMenu$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Ljava/lang/Integer;
-	public static synthetic fun shadcnDropdownMenu$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun ShadcnDropdownMenu (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/Integer;)Ljava/lang/Integer;
+	public static final fun ShadcnDropdownMenu (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun ShadcnDropdownMenu$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/Integer;ILjava/lang/Object;)Ljava/lang/Integer;
+	public static synthetic fun ShadcnDropdownMenu$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/List;ZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnEmptyKt {
-	public static final fun shadcnEmpty (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnEmpty$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnEmpty (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnEmpty$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public abstract interface annotation class io/github/awakelab/awake/ui/shadcn/components/ShadcnFieldDsl : java/lang/annotation/Annotation {
@@ -510,9 +661,23 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnFocusRing
 	public static fun values ()[Lio/github/awakelab/awake/ui/shadcn/components/ShadcnFocusRingMode;
 }
 
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnFormKt {
+	public static final fun ShadcnForm (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnForm$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnFormField (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnFormField$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnHoverCardKt {
+	public static final fun ShadcnHoverCard-cAlXEyc (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnHoverCard-cAlXEyc$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnHoverCardContent-Ua56fmQ (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnHoverCardContent-Ua56fmQ$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnIconKt {
-	public static final fun shadcnIcon-2T-hAlw (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;)V
-	public static synthetic fun shadcnIcon-2T-hAlw$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)V
+	public static final fun ShadcnIcon-2T-hAlw (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;)V
+	public static synthetic fun ShadcnIcon-2T-hAlw$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnIcons {
@@ -533,6 +698,11 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnIcons {
 	public final fun setChevronsUpDown (Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;)V
 	public final fun setGalleryVerticalEnd (Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;)V
 	public final fun setSave (Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;)V
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnInputGroupKt {
+	public static final fun ShadcnInputGroup (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;Lio/github/awakelab/awake/compose/ui/Modifier;ZLjava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnFocusRingMode;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun ShadcnInputGroup$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;Lio/github/awakelab/awake/compose/ui/Modifier;ZLjava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnFocusRingMode;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnInputKt {
@@ -556,14 +726,21 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnInputOtpP
 	public final fun getDigitsAndChars ()Lkotlin/text/Regex;
 }
 
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnItemKt {
+	public static final fun ShadcnItem (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
+	public static final fun ShadcnItem (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnItem$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static synthetic fun ShadcnItem$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnKbdKt {
-	public static final fun shadcnKbd (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
-	public static synthetic fun shadcnKbd$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public static final fun ShadcnKbd (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun ShadcnKbd$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnLabelKt {
-	public static final fun shadcnLabel (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Z)V
-	public static synthetic fun shadcnLabel$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZILjava/lang/Object;)V
+	public static final fun ShadcnLabel (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Z)V
+	public static synthetic fun ShadcnLabel$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZILjava/lang/Object;)V
 }
 
 public abstract interface class io/github/awakelab/awake/ui/shadcn/components/ShadcnMenuEntry {
@@ -592,6 +769,25 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnMenuSepar
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnMenubarKt {
+	public static final fun ShadcnMenubar (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnMenubar$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnMenubarMenu (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;)V
+	public static synthetic fun ShadcnMenubarMenu$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Ljava/util/List;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnNavigationMenuKt {
+	public static final fun ShadcnNavigationMenu (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnNavigationMenu$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnNavigationMenuTrigger (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnNavigationMenuTrigger$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnPaginationKt {
+	public static final fun ShadcnPagination (Lio/github/awakelab/awake/compose/runtime/Composer;IILkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun ShadcnPagination$default (Lio/github/awakelab/awake/compose/runtime/Composer;IILkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+}
+
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnPanelLimits {
 	public fun <init> (FF)V
 	public final fun component1 ()F
@@ -618,11 +814,26 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnPanelSpli
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnPieSlice {
+	public fun <init> (Ljava/lang/String;FLio/github/awakelab/awake/core/color/Color;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()F
+	public final fun component3 ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun copy (Ljava/lang/String;FLio/github/awakelab/awake/core/color/Color;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnPieSlice;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnPieSlice;Ljava/lang/String;FLio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnPieSlice;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getValue ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnPopoverKt {
-	public static final fun shadcnPopover-Ua56fmQ (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnPopover-Ua56fmQ$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnPopover-h6If0h4 (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnPopover-h6If0h4$default (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnPopover-Ua56fmQ (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLkotlin/jvm/functions/Function2;)V
+	public static synthetic fun ShadcnPopover-Ua56fmQ$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun ShadcnPopover-h6If0h4 (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun ShadcnPopover-h6If0h4$default (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Modifier;FLjava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnProgressKt {
@@ -719,8 +930,8 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSeparator
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSheetKt {
-	public static final fun shadcnSheet (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnSheetSide;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnSheet$default (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnSheetSide;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSheet (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnSheetSide;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnSheet$default (Lio/github/awakelab/awake/compose/runtime/Composer;ZLkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnSheetSide;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSheetSide : java/lang/Enum {
@@ -734,24 +945,24 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSheetSide
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSidebarKt {
-	public static final fun shadcnSidebar (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnSidebar$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnSidebarGroup (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnSidebarGroup$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnSidebarGroupContent (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnSidebarGroupContent$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSidebar (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnSidebar$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSidebarGroup (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnSidebarGroup$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSidebarGroupContent (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnSidebarGroupContent$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSidebarMenu (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnSidebarMenu$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSidebarMenuCollapsibleItem (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnSidebarMenuCollapsibleItem$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSidebarMenuItem (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun ShadcnSidebarMenuItem$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static final fun ShadcnSidebarMenuSub (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnSidebarMenuSub$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSidebarMenuSubItem (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZLkotlin/jvm/functions/Function0;)V
+	public static synthetic fun ShadcnSidebarMenuSubItem$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 	public static final fun shadcnSidebarGroupLabel (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
 	public static synthetic fun shadcnSidebarGroupLabel$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
-	public static final fun shadcnSidebarMenu (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnSidebarMenu$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnSidebarMenuCollapsibleItem (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;ZLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnSidebarMenuCollapsibleItem$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnSidebarMenuItem (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
-	public static synthetic fun shadcnSidebarMenuItem$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
-	public static final fun shadcnSidebarMenuSub (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnSidebarMenuSub$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnSidebarMenuSubItem (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZLkotlin/jvm/functions/Function0;)V
-	public static synthetic fun shadcnSidebarMenuSubItem$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSidebarShellKt {
@@ -777,8 +988,8 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSidebarSh
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSkeletonKt {
-	public static final fun shadcnSkeleton (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;)V
-	public static synthetic fun shadcnSkeleton$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public static final fun ShadcnSkeleton (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun ShadcnSkeleton$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSliderKt {
@@ -819,18 +1030,18 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSliderTra
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSpinnerKt {
-	public static final fun shadcnSpinner-5qrf3kc (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;F)V
-	public static synthetic fun shadcnSpinner-5qrf3kc$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FILjava/lang/Object;)V
+	public static final fun ShadcnSpinner-5qrf3kc (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;F)V
+	public static synthetic fun ShadcnSpinner-5qrf3kc$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSurfaceKt {
-	public static final fun shadcnSurface-xyV5QFU (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FZLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnSurface-xyV5QFU$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun shadcnSurface-Xf3iQ_M (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FFZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun shadcnSurface-Xf3iQ_M$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;FFZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnSwitchKt {
-	public static final fun shadcnSwitch (Lio/github/awakelab/awake/compose/runtime/Composer;ZLio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnSwitch$default (Lio/github/awakelab/awake/compose/runtime/Composer;ZLio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSwitch (Lio/github/awakelab/awake/compose/runtime/Composer;ZLio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnSwitch$default (Lio/github/awakelab/awake/compose/runtime/Composer;ZLio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnTab {
@@ -849,48 +1060,51 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnTableCell
 	public static fun values ()[Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;
 }
 
-public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnTableColumn {
-	public fun <init> (Ljava/lang/String;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;)V
-	public synthetic fun <init> (Ljava/lang/String;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()F
-	public final fun component3 ()Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;
-	public final fun copy (Ljava/lang/String;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableColumn;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableColumn;Ljava/lang/String;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableColumn;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAlign ()Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;
-	public final fun getHeader ()Ljava/lang/String;
-	public final fun getWeight ()F
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
 public abstract interface annotation class io/github/awakelab/awake/ui/shadcn/components/ShadcnTableDsl : java/lang/annotation/Annotation {
 }
 
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnTableHeaderScope {
+	public final fun row (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;)V
+	public static synthetic fun row$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableHeaderScope;Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnTableKt {
-	public static final fun shadcnTable (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnTable$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnTableBody (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnTableBody$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnTableCaption (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
-	public static synthetic fun shadcnTableCaption$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
-	public static final fun shadcnTableCell-rKBb2r8 (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;Lio/github/awakelab/awake/core/text/font/FontWeight;)V
-	public static synthetic fun shadcnTableCell-rKBb2r8$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;Lio/github/awakelab/awake/core/text/font/FontWeight;ILjava/lang/Object;)V
-	public static final fun shadcnTableColumnWidthsPx (Ljava/util/List;F)Ljava/util/List;
-	public static final fun shadcnTableFooter (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnTableFooter$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnTableHead (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;)V
-	public static synthetic fun shadcnTableHead$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;ILjava/lang/Object;)V
-	public static final fun shadcnTableHeader (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnTableHeader$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnTableRow (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;)V
-	public static synthetic fun shadcnTableRow$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun ShadcnTable (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun ShadcnTable$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun ShadcnTableBody (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnTableBody$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnTableCaption (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun ShadcnTableCaption$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public static final fun ShadcnTableCell-rKBb2r8 (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;Lio/github/awakelab/awake/core/text/font/FontWeight;)V
+	public static synthetic fun ShadcnTableCell-rKBb2r8$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;Lio/github/awakelab/awake/core/text/font/FontWeight;ILjava/lang/Object;)V
+	public static final fun ShadcnTableFooter (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnTableFooter$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnTableHead (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;)V
+	public static synthetic fun ShadcnTableHead$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;ILjava/lang/Object;)V
+	public static final fun ShadcnTableHeader (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun ShadcnTableHeader$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun ShadcnTableRow (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;)V
+	public static synthetic fun ShadcnTableRow$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun cell-rKBb2r8 (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;Lio/github/awakelab/awake/core/text/font/FontWeight;)V
+	public static synthetic fun cell-rKBb2r8$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;Lio/github/awakelab/awake/core/text/font/FontWeight;ILjava/lang/Object;)V
+	public static final fun head (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;)V
+	public static synthetic fun head$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/ui/shadcn/components/ShadcnTableCellAlign;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnTableRowsScope {
 	public final fun row (ZLkotlin/jvm/functions/Function2;)V
 	public static synthetic fun row$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableRowsScope;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
+public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnTableScope {
+	public final fun body (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun body$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableScope;Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun caption (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun caption$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableScope;Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public final fun footer (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun footer$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableScope;Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun header (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun header$default (Lio/github/awakelab/awake/ui/shadcn/components/ShadcnTableScope;Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
 public abstract interface annotation class io/github/awakelab/awake/ui/shadcn/components/ShadcnTabsDsl : java/lang/annotation/Annotation {
@@ -944,8 +1158,8 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnTextVaria
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnTextareaKt {
-	public static final fun shadcnTextarea (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;Lio/github/awakelab/awake/compose/ui/Modifier;Z)V
-	public static synthetic fun shadcnTextarea$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;Lio/github/awakelab/awake/compose/ui/Modifier;ZILjava/lang/Object;)V
+	public static final fun ShadcnTextarea (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;Lio/github/awakelab/awake/compose/ui/Modifier;Z)V
+	public static synthetic fun ShadcnTextarea$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;Lio/github/awakelab/awake/compose/ui/Modifier;ZILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnToastEntry {
@@ -971,8 +1185,8 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnToastStat
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnToasterKt {
 	public static final field DEFAULT_TOAST_SECONDS F
 	public static final field MAX_VISIBLE_TOASTS I
-	public static final fun shadcnToaster (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToastState;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;)V
-	public static synthetic fun shadcnToaster$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToastState;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;ILjava/lang/Object;)V
+	public static final fun ShadcnToaster (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToastState;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;)V
+	public static synthetic fun ShadcnToaster$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToastState;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;ILjava/lang/Object;)V
 }
 
 public abstract interface annotation class io/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupDsl : java/lang/annotation/Annotation {
@@ -988,10 +1202,10 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGro
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupKt {
-	public static final fun shadcnToggleGroup-eFubSJQ (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnButtonGroupOrientation;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSelection;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupVariant;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSize;FLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnToggleGroup-eFubSJQ$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnButtonGroupOrientation;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSelection;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupVariant;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSize;FLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun shadcnToggleGroup-xs1ikBk (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnButtonGroupOrientation;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupVariant;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSize;FLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnToggleGroup-xs1ikBk$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnButtonGroupOrientation;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupVariant;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSize;FLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnToggleGroup-eFubSJQ (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnButtonGroupOrientation;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSelection;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupVariant;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSize;FLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnToggleGroup-eFubSJQ$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnButtonGroupOrientation;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSelection;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupVariant;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSize;FLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnToggleGroup-xs1ikBk (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnButtonGroupOrientation;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupVariant;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSize;FLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnToggleGroup-xs1ikBk$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnButtonGroupOrientation;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupVariant;Lio/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupSize;FLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGroupScope {
@@ -1025,15 +1239,15 @@ public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnToggleGro
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnToggleKt {
-	public static final fun shadcnToggle (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;)Z
-	public static synthetic fun shadcnToggle$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;ILjava/lang/Object;)Z
+	public static final fun ShadcnToggle (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;)Z
+	public static synthetic fun ShadcnToggle$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ZLio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;ILjava/lang/Object;)Z
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/ShadcnTooltipKt {
-	public static final fun shadcnTooltip (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
-	public static synthetic fun shadcnTooltip$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
-	public static final fun shadcnTooltipped (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun shadcnTooltipped$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnTooltip (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;)V
+	public static synthetic fun ShadcnTooltip$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+	public static final fun ShadcnTooltipped (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnTooltipped$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class io/github/awakelab/awake/ui/shadcn/components/SidebarState {

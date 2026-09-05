@@ -13,9 +13,9 @@ import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnResizableOrientation
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
 import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 import io.github.awakelab.awake.ui.shadcn.components.shadcnResizablePanelGroup
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
 
 internal val ResizablePage = ShowcasePage(
     id = "resizable",

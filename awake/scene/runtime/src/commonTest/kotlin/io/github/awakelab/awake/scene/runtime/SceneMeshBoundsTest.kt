@@ -10,6 +10,10 @@ import io.github.awakelab.awake.core.math.Aabb
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.render.material.Material
 import io.github.awakelab.awake.render.mesh.Mesh
+import io.github.awakelab.awake.scene.document.SceneDocument
+import io.github.awakelab.awake.scene.document.SceneMeshRenderer
+import io.github.awakelab.awake.scene.document.SceneNode
+import io.github.awakelab.awake.scene.document.instantiate
 import io.github.awakelab.awake.scene.rendering.mesh.MeshBounds
 import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 import kotlin.test.Test

@@ -6,33 +6,31 @@
 package io.github.awakelab.awake.scene.rendering.debug
 
 import io.github.awakelab.awake.core.color.Color
-import kotlin.math.abs
 import io.github.awakelab.awake.core.math.Aabb
+import io.github.awakelab.awake.core.math.Grid
 import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.core.math.inverse
 import io.github.awakelab.awake.ecs.System
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.render.renderer.cascadeShadowBoxes
 import io.github.awakelab.awake.render.renderer.DEFAULT_SCENE_LIGHT
 import io.github.awakelab.awake.render.renderer.LineSegment
 import io.github.awakelab.awake.render.renderer.Renderer
-import io.github.awakelab.awake.render.renderer.SHADOW_FAR
-import io.github.awakelab.awake.render.renderer.SHADOW_NEAR
-import io.github.awakelab.awake.render.renderer.SHADOW_ORTHO_HALF_SIZE
 import io.github.awakelab.awake.render.renderer.boundsDebugLines
+import io.github.awakelab.awake.render.renderer.cascadeShadowBoxes
 import io.github.awakelab.awake.render.renderer.directionalShadowBox
 import io.github.awakelab.awake.render.renderer.frustumDebugLines
 import io.github.awakelab.awake.render.renderer.lightGizmoLines
 import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.CONSERVATIVE_ASPECT
 import io.github.awakelab.awake.scene.rendering.Camera
 import io.github.awakelab.awake.scene.rendering.Light
-import io.github.awakelab.awake.scene.rendering.spatial.Occluder
+import io.github.awakelab.awake.scene.rendering.RenderSystem
 import io.github.awakelab.awake.scene.rendering.mesh.InstancedMeshRenderer
 import io.github.awakelab.awake.scene.rendering.mesh.LodGroup
 import io.github.awakelab.awake.scene.rendering.mesh.MeshBounds
-import io.github.awakelab.awake.scene.rendering.CONSERVATIVE_ASPECT
-import io.github.awakelab.awake.scene.rendering.RenderSystem
+import io.github.awakelab.awake.scene.rendering.spatial.Occluder
+import kotlin.math.abs
 import kotlin.math.min
 
 /**
@@ -72,12 +70,7 @@ fun debugVisualizationLines(
     renderer: Renderer,
     settings: WorldDebugSettings,
 ): List<LineSegment> {
-    if (!settings.showFrustum &&
-        !settings.showBounds &&
-        !settings.showOcclusion &&
-        !settings.showLights &&
-        !settings.showShadowFrustum
-    ) {
+    if (!settings.hasAnyDebugLines()) {
         return emptyList()
     }
     val lines = ArrayList<LineSegment>()
@@ -142,7 +135,31 @@ fun debugVisualizationLines(
             )
         }
     }
+    if (settings.showGrid) emitGridLines(lines, settings)
+    if (settings.showAxisLines) emitAxisLines(lines, settings)
     return lines
+}
+
+private fun WorldDebugSettings.hasAnyDebugLines(): Boolean =
+    showFrustum || showBounds || showOcclusion || showLights || showShadowFrustum || showGrid || showAxisLines
+
+private fun emitGridLines(lines: MutableList<LineSegment>, settings: WorldDebugSettings) {
+    val extent = settings.gridFadeDistance.coerceAtLeast(10f)
+    val step = settings.gridScale.coerceAtLeast(0.1f)
+    val gridPairs = Grid.generateGridLines(extent = extent, step = step)
+    val majorInterval = 5
+    gridPairs.forEachIndexed { index, (start, end) ->
+        val isMajor = (index % majorInterval) == 0
+        val color = if (isMajor) GRID_MAJOR_COLOR else GRID_LINE_COLOR
+        lines += LineSegment(start, end, color)
+    }
+}
+
+private fun emitAxisLines(lines: MutableList<LineSegment>, settings: WorldDebugSettings) {
+    val extent = settings.gridFadeDistance.coerceAtLeast(50f)
+    lines += LineSegment(Vec3f(-extent, 0f, 0f), Vec3f(extent, 0f, 0f), AXIS_X_COLOR)
+    lines += LineSegment(Vec3f(0f, 0f, -extent), Vec3f(0f, 0f, extent), AXIS_Z_COLOR)
+    lines += LineSegment(Vec3f(0f, 0f, 0f), Vec3f(0f, 1.5f, 0f), AXIS_Y_COLOR)
 }
 
 /** The [Camera] component on the entity with [entityId], or `null` when that entity has none --
@@ -175,6 +192,12 @@ private val FRUSTUM_COLOR = Color(r = 1f, g = 1f, b = 0f, a = 1f)
 private val BOUNDS_COLOR = Color(r = 0f, g = 1f, b = 0f, a = 1f)
 private val OCCLUDER_COLOR = Color(r = 1f, g = 0.5f, b = 0f, a = 1f)
 private val LIGHT_COLOR = Color(r = 1f, g = 0.75f, b = 0f, a = 1f)
+private val GRID_LINE_COLOR = Color(r = 0.25f, g = 0.25f, b = 0.28f, a = 0.45f)
+private val GRID_MAJOR_COLOR = Color(r = 0.38f, g = 0.38f, b = 0.42f, a = 0.7f)
+private val AXIS_X_COLOR = Color(r = 0.9f, g = 0.22f, b = 0.22f, a = 0.9f)
+private val AXIS_Z_COLOR = Color(r = 0.22f, g = 0.45f, b = 0.95f, a = 0.9f)
+private val AXIS_Y_COLOR = Color(r = 0.22f, g = 0.85f, b = 0.22f, a = 0.9f)
+
 /**
  * One per cascade, near to far, so the overlay says WHICH box a shadow came from.
  *

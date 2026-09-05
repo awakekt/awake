@@ -1,0 +1,1 @@
+--8<-- "awake/scene/authoring/README.md"

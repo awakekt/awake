@@ -5,62 +5,59 @@
  */
 package io.github.awakelab.awake.ui.shadcn
 
+import io.github.awakelab.awake.compose.foundation.layout.Arrangement
 import io.github.awakelab.awake.compose.foundation.layout.Column
 import io.github.awakelab.awake.compose.foundation.layout.Row
-import io.github.awakelab.awake.compose.foundation.layout.Arrangement
+import io.github.awakelab.awake.compose.foundation.layout.Spacer
+import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
+import io.github.awakelab.awake.compose.foundation.layout.height
 import io.github.awakelab.awake.compose.foundation.layout.padding
 import io.github.awakelab.awake.compose.foundation.layout.size
-import io.github.awakelab.awake.compose.foundation.layout.Spacer
-import io.github.awakelab.awake.compose.foundation.layout.height
 import io.github.awakelab.awake.compose.foundation.layout.width
-import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.text.TextFieldState
 import io.github.awakelab.awake.compose.runtime.Composer
-import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.compose.testing.ComposeComponentFrame
+import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.compose.testing.composeTestSession
 import io.github.awakelab.awake.compose.testing.rasterize
 import io.github.awakelab.awake.compose.testing.toBufferedImage
-import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.Alignment
+import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.dp
-import io.github.awakelab.awake.core.graphics2d.bounds
 import io.github.awakelab.awake.core.text.font.UiFonts
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlert
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlertVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnAvatar
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnAvatarSizeVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadge
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadgeVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnBreadcrumb
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonSizeVariant
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnCard
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnCheckbox
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCombobox
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnComboboxItem
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnDropdownMenu
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnIcon
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnIcons
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnInput
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuItem
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuSeparator
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnPopover
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelect
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelectItem
-import io.github.awakelab.awake.ui.shadcn.components.shadcnAlert
-import io.github.awakelab.awake.ui.shadcn.components.shadcnAvatar
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadge
-import io.github.awakelab.awake.ui.shadcn.components.shadcnBreadcrumb
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnCard
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnCheckbox
-import io.github.awakelab.awake.ui.shadcn.components.shadcnDropdownMenu
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnInput
-import io.github.awakelab.awake.ui.shadcn.components.shadcnIcon
-import io.github.awakelab.awake.ui.shadcn.components.shadcnPopover
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelectTrigger
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSlider
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSpinner
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSwitch
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSpinner
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSwitch
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnTabs
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTextarea
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTooltip
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextarea
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTooltip
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import java.io.File
 import javax.imageio.ImageIO
@@ -80,7 +77,12 @@ class ShadcnComposeRenderPreview {
 
     private val theme = ShadcnThemeValues(ShadcnTheme)
 
-    private fun write(name: String, width: Int, height: Int, frame: io.github.awakelab.awake.compose.testing.ComposeComponentFrame) {
+    private fun write(
+        name: String,
+        width: Int,
+        height: Int,
+        frame: ComposeComponentFrame,
+    ) {
         assertTrue(frame.primitives.isNotEmpty(), "$name drew nothing")
         val out = File("build/reports/compose-preview").apply { mkdirs() }
         val file = File(out, "$name.png")
@@ -98,11 +100,18 @@ class ShadcnComposeRenderPreview {
     }
 
     private fun composeOpenedSelectFrame(width: Int, height: Int): ComposeComponentFrame {
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Column {
                 Spacer(Modifier.height(80.dp))
                 ShadcnSelect(
-                    items = listOf("Apple", "Banana", "Blueberry", "Grapes", "Pineapple").map(::ShadcnSelectItem),
+                    items = listOf(
+                        "Apple",
+                        "Banana",
+                        "Blueberry",
+                        "Grapes",
+                        "Pineapple",
+                    ).map(::ShadcnSelectItem),
                     selectedIndex = 1,
                     expanded = previewSelectExpanded,
                     onExpandedChange = { previewSelectExpanded = it },
@@ -120,7 +129,8 @@ class ShadcnComposeRenderPreview {
     }
 
     private fun composeOpenedComboboxFrame(width: Int, height: Int): ComposeComponentFrame {
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             ShadcnCombobox(
                 items = listOf("Kotlin", "Java", "Swift", "Rust").map(::ShadcnComboboxItem),
                 selectedIndex = null,
@@ -139,14 +149,15 @@ class ShadcnComposeRenderPreview {
     private var previewSelectExpanded = false
 
     private fun composeFocusedFieldAndSpinnerFrame(width: Int, height: Int): ComposeComponentFrame {
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             provideShadcnTheme(theme) {
                 Column(Modifier.padding(16.dp)) {
                     ShadcnInput(
                         state = TextFieldState("Focused input"),
                         modifier = Modifier.width(220.dp).testTag("preview.focused-input"),
                     )
-                    shadcnSpinner(Modifier.padding(top = 16.dp))
+                    ShadcnSpinner(Modifier.padding(top = 16.dp))
                 }
             }
         }
@@ -187,7 +198,7 @@ class ShadcnComposeRenderPreview {
                 provideShadcnTheme(theme) {
                     Column(Modifier.padding(16.dp)) {
                         ShadcnAlertVariant.entries.forEach { variant ->
-                            shadcnAlert(
+                            ShadcnAlert(
                                 title = variant.name,
                                 description = "Something happened.",
                                 variant = variant,
@@ -196,10 +207,10 @@ class ShadcnComposeRenderPreview {
                         }
                         Row {
                             ShadcnAvatarSizeVariant.entries.forEach { size ->
-                                shadcnAvatar("AB", Modifier.padding(end = 8.dp), size = size)
+                                ShadcnAvatar("AB", Modifier.padding(end = 8.dp), size = size)
                             }
                         }
-                        shadcnTooltip("Copy to clipboard")
+                        ShadcnTooltip("Copy to clipboard")
                     }
                 }
             },
@@ -217,7 +228,7 @@ class ShadcnComposeRenderPreview {
             composeFrame(width, height) {
                 provideShadcnTheme(theme) {
                     Column(Modifier.padding(16.dp)) {
-                        shadcnBreadcrumb(listOf("Home", "Docs", "Components"))
+                        ShadcnBreadcrumb(listOf("Home", "Docs", "Components"))
                         ShadcnTabs(
                             selectedValue = "0",
                             onSelectedChange = {},
@@ -226,10 +237,18 @@ class ShadcnComposeRenderPreview {
                             tab(value = "0", label = "Account")
                             tab(value = "1", label = "Password")
                         }
-                        ShadcnText("Email", variant = ShadcnTextVariant.Muted, modifier = Modifier.padding(top = 12.dp))
+                        ShadcnText(
+                            "Email",
+                            variant = ShadcnTextVariant.Muted,
+                            modifier = Modifier.padding(top = 12.dp),
+                        )
                         ShadcnInput(TextFieldState("hello@example.com"))
-                        ShadcnText("Message", variant = ShadcnTextVariant.Muted, modifier = Modifier.padding(top = 8.dp))
-                        shadcnTextarea(TextFieldState("Tell us more."))
+                        ShadcnText(
+                            "Message",
+                            variant = ShadcnTextVariant.Muted,
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                        ShadcnTextarea(TextFieldState("Tell us more."))
                     }
                 }
             },
@@ -249,7 +268,7 @@ class ShadcnComposeRenderPreview {
                     Column(Modifier.padding(16.dp)) {
                         ShadcnSelectTrigger(null, Modifier.padding(bottom = 8.dp))
                         ShadcnSelectTrigger("Apple", Modifier.padding(bottom = 12.dp))
-                        shadcnDropdownMenu(
+                        ShadcnDropdownMenu(
                             listOf(
                                 ShadcnMenuItem("Profile"),
                                 ShadcnMenuItem("Settings"),
@@ -259,7 +278,12 @@ class ShadcnComposeRenderPreview {
                             ),
                             Modifier.padding(bottom = 12.dp),
                         )
-                        shadcnPopover { ShadcnText("A popover body.", variant = ShadcnTextVariant.Small) }
+                        ShadcnPopover {
+                            ShadcnText(
+                                "A popover body.",
+                                variant = ShadcnTextVariant.Small,
+                            )
+                        }
                     }
                 }
             },
@@ -351,12 +375,22 @@ class ShadcnComposeRenderPreview {
             height,
             composeFrame(width, height) {
                 provideShadcnTheme(theme) {
-                    Row(horizontalArrangement = Arrangement.spacedByHorizontal(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        ShadcnButton(size = ShadcnButtonSizeVariant.Icon) { shadcnIcon(ShadcnIcons.camera) }
-                        ShadcnButton(variant = ShadcnButtonVariant.Outline, size = ShadcnButtonSizeVariant.IconSm) {
-                            shadcnIcon(ShadcnIcons.save)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedByHorizontal(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        ShadcnButton(size = ShadcnButtonSizeVariant.Icon) { ShadcnIcon(ShadcnIcons.camera) }
+                        ShadcnButton(
+                            variant = ShadcnButtonVariant.Outline,
+                            size = ShadcnButtonSizeVariant.IconSm,
+                        ) {
+                            ShadcnIcon(ShadcnIcons.save)
                         }
-                        ShadcnButton("Save scene", variant = ShadcnButtonVariant.Outline, leadingIcon = ShadcnIcons.save)
+                        ShadcnButton(
+                            "Save scene",
+                            variant = ShadcnButtonVariant.Outline,
+                            leadingIcon = ShadcnIcons.save,
+                        )
                     }
                 }
             },
@@ -375,8 +409,8 @@ class ShadcnComposeRenderPreview {
                 provideShadcnTheme(theme) {
                     Column(Modifier.padding(16.dp)) {
                         ShadcnText("Switch", variant = ShadcnTextVariant.Muted)
-                        shadcnSwitch(checked = true)
-                        shadcnSwitch(checked = false)
+                        ShadcnSwitch(checked = true)
+                        ShadcnSwitch(checked = false)
                         ShadcnText("Checkbox", variant = ShadcnTextVariant.Muted)
                         ShadcnCheckbox(checked = true)
                         ShadcnCheckbox(checked = false)
@@ -420,7 +454,10 @@ class ShadcnComposeRenderPreview {
                         ShadcnCard(Modifier.size(240.dp, 130.dp)) {
                             Column {
                                 ShadcnText("Card title", variant = ShadcnTextVariant.Large)
-                                ShadcnText("A bordered, filled panel.", variant = ShadcnTextVariant.Muted)
+                                ShadcnText(
+                                    "A bordered, filled panel.",
+                                    variant = ShadcnTextVariant.Muted,
+                                )
                             }
                         }
                     }
@@ -440,9 +477,12 @@ class ShadcnComposeRenderPreview {
             composeFrame(width, height) {
                 provideShadcnTheme(theme) {
                     ShadcnCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(
+                            Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
                             ShadcnInput(TextFieldState("Full name"))
-                            shadcnTextarea(TextFieldState("Biography"))
+                            ShadcnTextarea(TextFieldState("Biography"))
                         }
                     }
                 }
@@ -489,7 +529,13 @@ class ShadcnComposeRenderPreview {
             ring.indices,
         ).bounds()
 
-        val pixels = frame.primitives.rasterize(width, height, background = theme.palette.background, font = UiFonts.default())
+        val pixels = frame.primitives.rasterize(
+            width,
+            height,
+            background = theme.palette.background,
+            font = UiFonts.default(),
+        )
+
         fun brightnessAt(px: Int, py: Int): Float {
             val i = (py.coerceIn(0, height - 1) * width + px.coerceIn(0, width - 1)) * 4
             val r = pixels[i].toUByte().toInt() / 255f
@@ -503,7 +549,8 @@ class ShadcnComposeRenderPreview {
         // rather than the raw (unblended) token.
         val emptyBrightness = with(theme.palette.background) { (r + g + b) / 3f }
         val cornerBrightness = brightnessAt(bounds.x.toInt(), bounds.y.toInt())
-        val topEdgeBrightness = brightnessAt((bounds.x + bounds.width / 2f).toInt(), bounds.y.toInt())
+        val topEdgeBrightness =
+            brightnessAt((bounds.x + bounds.width / 2f).toInt(), bounds.y.toInt())
 
         assertTrue(
             topEdgeBrightness > emptyBrightness + 0.05f,
@@ -533,7 +580,11 @@ class ShadcnComposeRenderPreview {
                     listOf(0f, 0.25f, 0.5f, 0.75f, 1f).forEach { value ->
                         ShadcnSlider(value = value, modifier = Modifier.size(220.dp, 26.dp))
                     }
-                    ShadcnSlider(value = 0.4f, modifier = Modifier.size(220.dp, 26.dp), enabled = false)
+                    ShadcnSlider(
+                        value = 0.4f,
+                        modifier = Modifier.size(220.dp, 26.dp),
+                        enabled = false,
+                    )
                 }
             }
         }

@@ -15,7 +15,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.floor
-import kotlin.math.sqrt
 
 /**
  * Callbacks invoked when a spatial world cell enters or leaves the active streaming radius.

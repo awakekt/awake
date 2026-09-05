@@ -25,10 +25,10 @@ import io.github.awakelab.awake.render.texture.PbrTextureSet
 import io.github.awakelab.awake.render.texture.RenderTarget
 import io.github.awakelab.awake.render.texture.TextureAsset
 import io.github.awakelab.awake.scene.core.transform.Transform
-import io.github.awakelab.awake.scene.rendering.mesh.MeshBounds
-import io.github.awakelab.awake.scene.rendering.debug.WorldDebugSettings
 import io.github.awakelab.awake.scene.rendering.CONSERVATIVE_ASPECT
 import io.github.awakelab.awake.scene.rendering.debug.DebugVisualizationSystem
+import io.github.awakelab.awake.scene.rendering.debug.WorldDebugSettings
+import io.github.awakelab.awake.scene.rendering.mesh.MeshBounds
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -171,5 +171,41 @@ class DebugVisualizationSystemTest {
             CONSERVATIVE_ASPECT > 1f,
             "sanity: the shared conservative aspect constant is importable here",
         )
+    }
+
+    @Test
+    fun showGridDrawsGridLines() {
+        val world = worldWithPrimaryCamera()
+        world.add(
+            world.create(),
+            WorldDebugSettings(
+                showGrid = true,
+                gridFadeDistance = 10f,
+                gridScale = 1f,
+            ),
+        )
+        val renderer = RecordingRenderer()
+        DebugVisualizationSystem(renderer).update(world, 1f / 60f)
+
+        val lines = renderer.lastDebugLines
+        assertTrue(lines != null && lines.isNotEmpty(), "Grid lines should be drawn")
+        assertEquals(42, lines.size)
+    }
+
+    @Test
+    fun showAxisLinesDrawsThreeColoredAxes() {
+        val world = worldWithPrimaryCamera()
+        world.add(
+            world.create(),
+            WorldDebugSettings(
+                showAxisLines = true,
+                gridFadeDistance = 50f,
+            ),
+        )
+        val renderer = RecordingRenderer()
+        DebugVisualizationSystem(renderer).update(world, 1f / 60f)
+
+        val lines = renderer.lastDebugLines
+        assertTrue(lines != null && lines.size == 3, "Should draw X, Z, and Y axis lines")
     }
 }

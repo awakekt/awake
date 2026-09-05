@@ -6,6 +6,7 @@
 package io.github.awakelab.awake.ui.shadcn
 
 import io.github.awakelab.awake.compose.foundation.layout.Column
+import io.github.awakelab.awake.compose.foundation.layout.fillMaxSize
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.layout.padding
 import io.github.awakelab.awake.compose.runtime.Composer
@@ -13,29 +14,28 @@ import io.github.awakelab.awake.compose.testing.ComposeComponentFrame
 import io.github.awakelab.awake.compose.testing.assertMatchesBaseline
 import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.compose.testing.composeTestSession
-import io.github.awakelab.awake.compose.foundation.layout.fillMaxSize
-import io.github.awakelab.awake.compose.ui.platform.FrameInput
-import io.github.awakelab.awake.ui.shadcn.components.shadcnContextMenu
 import io.github.awakelab.awake.compose.ui.Modifier
+import io.github.awakelab.awake.compose.ui.platform.FrameInput
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.core.text.font.UiFonts
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnInputOtp
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlertDialog
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnDropdownMenu
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnInputOtp
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuItem
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnPopover
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnRangeSlider
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnResizablePanel
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnSlider
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSheet
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSheetSide
-import io.github.awakelab.awake.ui.shadcn.components.shadcnAlertDialog
-import io.github.awakelab.awake.ui.shadcn.components.shadcnDrawer
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSlider
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSpinner
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnToastState
-import io.github.awakelab.awake.ui.shadcn.components.shadcnPopover
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSheet
-import io.github.awakelab.awake.ui.shadcn.components.shadcnToaster
-import io.github.awakelab.awake.ui.shadcn.components.shadcnDropdownMenu
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnToaster
+import io.github.awakelab.awake.ui.shadcn.components.shadcnContextMenu
+import io.github.awakelab.awake.ui.shadcn.components.shadcnDrawer
 import io.github.awakelab.awake.ui.shadcn.components.shadcnResizablePanelGroup
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSpinner
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 
@@ -50,7 +50,7 @@ class ShadcnVisualBaselineTest {
 
     @Test
     fun spinner() = baseline("spinner", 48, 48) {
-        shadcnSpinner()
+        ShadcnSpinner()
     }
 
     @Test
@@ -99,7 +99,7 @@ class ShadcnVisualBaselineTest {
     /** Pins the reported full-width menu: the surface's own width is what the baseline records. */
     @Test
     fun dropdownMenu() = baseline("dropdown-menu", 360, 160) {
-        shadcnDropdownMenu(
+        ShadcnDropdownMenu(
             entries = listOf("Profile", "Billing", "Settings").map(::ShadcnMenuItem),
             modifier = Modifier.padding(all = 12.dp),
         )
@@ -110,7 +110,7 @@ class ShadcnVisualBaselineTest {
     fun alertDialog() {
         val session = composeTestSession(360, 220) {
             provideShadcnTheme(Theme) {
-                shadcnAlertDialog(
+                ShadcnAlertDialog(
                     visible = true,
                     title = "Delete this scene?",
                     description = "This cannot be undone.",
@@ -130,7 +130,7 @@ class ShadcnVisualBaselineTest {
 
     @Test
     fun sheet() = overlayBaseline("sheet") {
-        shadcnSheet(
+        ShadcnSheet(
             visible = true,
             onDismissRequest = {},
             side = ShadcnSheetSide.Right,
@@ -153,12 +153,12 @@ class ShadcnVisualBaselineTest {
     fun toaster() {
         val state = ShadcnToastState()
         state.show("Scene saved.", title = "Saved")
-        overlayBaseline("toaster") { shadcnToaster(state) }
+        overlayBaseline("toaster") { ShadcnToaster(state) }
     }
 
     @Test
     fun popover() = overlayBaseline("popover") {
-        shadcnPopover(
+        ShadcnPopover(
             visible = true,
             onVisibleChange = {},
             trigger = { onClick -> ShadcnButton("Open", onClick = onClick) },
@@ -181,7 +181,13 @@ class ShadcnVisualBaselineTest {
         }
         session.frame()
         session.frame(
-            FrameInput(OVERLAY_WIDTH, OVERLAY_HEIGHT, pointerX = 40, pointerY = 30, secondaryPointerPressed = true),
+            FrameInput(
+                OVERLAY_WIDTH,
+                OVERLAY_HEIGHT,
+                pointerX = 40,
+                pointerY = 30,
+                secondaryPointerPressed = true,
+            ),
         )
         // Settled, not mid fade-in: a menu opened by a flag animates up from zero, and a baseline
         // caught part-way through would be a timing measurement wearing an appearance test's name.

@@ -19,8 +19,8 @@ import io.github.awakelab.awake.compose.ui.node.ParentDataModifierNode
 import io.github.awakelab.awake.compose.ui.unit.Constraints
 import io.github.awakelab.awake.compose.ui.unit.dp
 import kotlin.test.Test
-import kotlin.test.assertFalse
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 private class FixedSize(private val width: Int, private val height: Int) : MeasurePolicy {
@@ -190,7 +190,9 @@ private data class TestParentDataElement(val label: String) : ModifierNodeElemen
     }
 }
 
-private class TestParentDataNode : Modifier.Node(), ParentDataModifierNode {
+private class TestParentDataNode :
+    Modifier.Node(),
+    ParentDataModifierNode {
     lateinit var label: String
 
     override fun modifyParentData(current: Any?): Any? = TestParentData(label)

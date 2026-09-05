@@ -14,13 +14,13 @@ import io.github.awakelab.awake.compose.ui.semantics.SemanticsNode
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsTreeBuilder
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.Constraints
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTable
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableBody
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableCaption
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableCell
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableHead
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableHeader
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTableRow
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTable
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTableBody
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTableCaption
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTableCell
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTableHead
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTableHeader
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTableRow
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -55,14 +55,14 @@ class ShadcnTableTest {
     @Test
     fun aHeaderRowIs40AndABodyRowIs37() {
         val nodes = frame {
-            shadcnTable {
-                shadcnTableHeader {
-                    shadcnTableRow(io.github.awakelab.awake.compose.ui.Modifier.testTag("header-row")) {
-                        shadcnTableHead("Invoice")
+            ShadcnTable {
+                ShadcnTableHeader {
+                    ShadcnTableRow(io.github.awakelab.awake.compose.ui.Modifier.testTag("header-row")) {
+                        ShadcnTableHead("Invoice")
                     }
                 }
-                shadcnTableBody {
-                    row { shadcnTableCell("INV001") }
+                ShadcnTableBody {
+                    row { ShadcnTableCell("INV001") }
                 }
             }
         }
@@ -70,22 +70,26 @@ class ShadcnTableTest {
         // The body row is found by walking to the one row that isn't tagged -- there is exactly
         // one, and the header row is excluded by tag.
         val header = nodes.tag("header-row")
-        assertEquals(HEADER_ROW_HEIGHT, header.height, "a header row (TableHead's own h-10) must be 40px")
+        assertEquals(
+            HEADER_ROW_HEIGHT,
+            header.height,
+            "a header row (TableHead's own h-10) must be 40px",
+        )
     }
 
     @Test
     fun aCaptionSitsSixteenPixelsBelowTheLastRow() {
         val nodes = frame {
-            shadcnTable {
-                shadcnTableBody {
+            ShadcnTable {
+                ShadcnTableBody {
                     row {
-                        shadcnTableCell(
+                        ShadcnTableCell(
                             "row",
                             modifier = io.github.awakelab.awake.compose.ui.Modifier.testTag("row"),
                         )
                     }
                 }
-                shadcnTableCaption(
+                ShadcnTableCaption(
                     "A list of your recent invoices.",
                     io.github.awakelab.awake.compose.ui.Modifier.testTag("caption"),
                 )

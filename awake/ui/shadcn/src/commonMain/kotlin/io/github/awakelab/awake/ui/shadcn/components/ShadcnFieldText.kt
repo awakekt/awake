@@ -64,7 +64,7 @@ enum class ShadcnFieldLegendVariant { Legend, Label }
 /**
  * `FieldLabel`: the name of a control.
  *
- * Renders its own text rather than delegating to [shadcnLabel], because upstream's `FieldLabel` is
+ * Renders its own text rather than delegating to [ShadcnLabel], because upstream's `FieldLabel` is
  * `Label` *plus* `leading-snug` -- 1.375 against `text-sm`'s own 1.43, a 1px shorter line box. A
  * plain label elsewhere keeps its own leading, so the override belongs here and not there.
  */

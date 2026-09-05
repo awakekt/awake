@@ -49,6 +49,7 @@ public final class io/github/awakelab/awake/core/math2d/Rectangle {
 }
 
 public final class io/github/awakelab/awake/core/math2d/RectangleKt {
+	public static final fun contains (Lio/github/awakelab/awake/core/math2d/Rectangle;FF)Z
 	public static final fun contains (Lio/github/awakelab/awake/core/math2d/Rectangle;Lio/github/awakelab/awake/core/math2d/Rectangle;)Z
 	public static final fun intersect (Lio/github/awakelab/awake/core/math2d/Rectangle;Lio/github/awakelab/awake/core/math2d/Rectangle;)Lio/github/awakelab/awake/core/math2d/Rectangle;
 	public static final fun pixelPerfectPixel (F)F

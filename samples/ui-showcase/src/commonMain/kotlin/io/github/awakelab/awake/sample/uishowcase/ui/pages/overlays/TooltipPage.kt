@@ -13,10 +13,10 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTooltipped
 import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTooltipped
 
 internal val TooltipPage = ShowcasePage(
     id = "tooltip",
@@ -34,7 +34,7 @@ internal val TooltipPage = ShowcasePage(
         shadcnMuted("Hover the button to reveal the tooltip.")
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedByHorizontal(12.dp)) {
-            shadcnTooltipped("Scene stats stay live here when the cursor rests on the trigger.") {
+            ShadcnTooltipped("Scene stats stay live here when the cursor rests on the trigger.") {
                 ShadcnButton("Hover target", modifier = Modifier.height(36.dp))
             }
             ShadcnButton(

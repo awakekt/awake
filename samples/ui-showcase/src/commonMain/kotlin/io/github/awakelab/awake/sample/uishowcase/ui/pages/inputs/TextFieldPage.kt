@@ -20,9 +20,9 @@ import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCard
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnFieldLabel
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnInput
-import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTextarea
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextarea
+import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 
 internal val TextFieldPage = ShowcasePage(
     id = "text-input",
@@ -60,7 +60,10 @@ internal val TextFieldPage = ShowcasePage(
         val bio = rememberTextFieldState()
         shadcnMuted("Single-line and multi-line keyboard-driven text input controls with focus ring bounds.")
         Spacer(Modifier.height(8.dp))
-        ShadcnCard(modifier = Modifier.fillMaxWidth().heightIn(min = 300.dp), contentPadding = 0.dp) {
+        ShadcnCard(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 300.dp),
+            contentPadding = 0.dp,
+        ) {
             Column(
                 Modifier.fillMaxWidth().padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -71,7 +74,7 @@ internal val TextFieldPage = ShowcasePage(
                 ShadcnFieldLabel("Email Address")
                 ShadcnInput(email)
                 ShadcnFieldLabel("Biography")
-                shadcnTextarea(bio)
+                ShadcnTextarea(bio)
             }
         }
     },

@@ -5,13 +5,13 @@
  */
 package io.github.awakelab.awake.compose.ui.platform
 
+import io.github.awakelab.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import io.github.awakelab.awake.compose.ui.input.key.KeyEvent
 import io.github.awakelab.awake.compose.ui.input.pointer.PointerModifiers
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsNode
 import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
-import io.github.awakelab.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
-import io.github.awakelab.awake.core.input.PointerCursor
 import io.github.awakelab.awake.core.input.ImeComposition
+import io.github.awakelab.awake.core.input.PointerCursor
 import io.github.awakelab.awake.core.input.TextEditAction
 
 /**
@@ -93,8 +93,8 @@ data class InputOwnership(
     val isModalOpen: Boolean = false,
 )
 
-/** Gameplay must ignore keys when the UI owns the pointer **or** is taking text. */
-val InputOwnership.blocksGameplayKeys: Boolean get() = isCaptured || isTextInputFocused
+/** Gameplay must ignore keys when the UI owns the pointer, is taking text, or a modal is open. */
+val InputOwnership.blocksGameplayKeys: Boolean get() = isCaptured || isTextInputFocused || isModalOpen
 
 /** Things only the platform can do, requested rather than performed. */
 data class PlatformEffects(

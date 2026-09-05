@@ -5,14 +5,13 @@
  */
 package io.github.awakelab.awake.ui.shadcn.components
 
-import io.github.awakelab.awake.compose.foundation.background
 import io.github.awakelab.awake.compose.foundation.BorderSides
+import io.github.awakelab.awake.compose.foundation.background
 import io.github.awakelab.awake.compose.foundation.border
 import io.github.awakelab.awake.compose.foundation.clickable
 import io.github.awakelab.awake.compose.foundation.hoverable
 import io.github.awakelab.awake.compose.foundation.interaction.InteractionSource
 import io.github.awakelab.awake.compose.foundation.layout.Arrangement
-import io.github.awakelab.awake.compose.foundation.layout.Box
 import io.github.awakelab.awake.compose.foundation.layout.Column
 import io.github.awakelab.awake.compose.foundation.layout.Row
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxHeight
@@ -57,7 +56,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * bottom of a tall panel while the menu above it stays reachable.
  */
 context(_: Composer)
-fun shadcnSidebar(
+fun ShadcnSidebar(
     modifier: Modifier = Modifier,
     header: (
         context(Composer)
@@ -109,7 +108,7 @@ fun shadcnSidebar(
 
 /** `SidebarMenu`: `flex w-full min-w-0 flex-col gap-1`. */
 context(_: Composer)
-fun shadcnSidebarMenu(
+fun ShadcnSidebarMenu(
     modifier: Modifier = Modifier,
     content: context(Composer) () -> Unit,
 ) {
@@ -131,7 +130,7 @@ fun shadcnSidebarMenu(
  * handler runs a build later than the press, against whatever state that build happens to see.
  */
 context(_: Composer)
-fun shadcnSidebarMenuItem(
+fun ShadcnSidebarMenuItem(
     label: String,
     modifier: Modifier = Modifier,
     active: Boolean = false,
@@ -176,7 +175,7 @@ fun shadcnSidebarMenuItem(
         },
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        leadingIcon?.let { shadcnIcon(it) }
+        leadingIcon?.let { ShadcnIcon(it) }
         if (!collapsed) {
             ShadcnText(
                 label,
@@ -191,14 +190,14 @@ fun shadcnSidebarMenuItem(
 }
 
 /**
- * A [shadcnSidebarMenuItem] that expands into a [shadcnSidebarMenuSub] of its own items --
+ * A [ShadcnSidebarMenuItem] that expands into a [ShadcnSidebarMenuSub] of its own items --
  * upstream's `nav-main.tsx` pattern, `SidebarMenuButton` as `CollapsibleTrigger` around a
  * `Collapsible` wrapping `SidebarMenuSub`.
  *
- * Reuses [shadcnCollapsible]'s *behavior* (an `expanded` boolean the caller doesn't have to own,
+ * Reuses [ShadcnCollapsible]'s *behavior* (an `expanded` boolean the caller doesn't have to own,
  * a chevron that swaps direction) rather than its trigger row: that row has no leading-icon slot
  * and doesn't carry the sidebar's own hover/active styling, so the trigger here is a real
- * [shadcnSidebarMenuItem] with the chevron passed as its `trailing` slot instead.
+ * [ShadcnSidebarMenuItem] with the chevron passed as its `trailing` slot instead.
  *
  * Collapsed sidebar hides the chevron and sub-items entirely -- upstream shows a hover flyout of
  * the sub-items in icon mode; that needs the overlay-layering work this engine doesn't have yet
@@ -206,48 +205,76 @@ fun shadcnSidebarMenuItem(
  * of a half-built flyout.
  */
 context(_: Composer)
-fun shadcnSidebarMenuCollapsibleItem(
+fun ShadcnSidebarMenuCollapsibleItem(
     label: String,
     modifier: Modifier = Modifier,
+    active: Boolean = false,
     leadingIcon: ImageVector? = null,
+    trailing: (
+        context(Composer)
+        () -> Unit
+    )? = null,
     defaultExpanded: Boolean = false,
+    onClick: (() -> Unit)? = null,
     items: context(Composer) () -> Unit,
 ) {
     val collapsed = LocalSidebarCollapsed.current
     val group = remember { CollapsibleGroupState(defaultExpanded) }
 
     if (collapsed) {
-        shadcnSidebarMenuItem(label, modifier, leadingIcon = leadingIcon)
+        ShadcnSidebarMenuItem(
+            label = label,
+            modifier = modifier,
+            active = active,
+            leadingIcon = leadingIcon,
+            trailing = trailing,
+            onClick = onClick ?: {},
+        )
         return
     }
 
     Column(modifier.fillMaxWidth()) {
-        shadcnSidebarMenuItem(
-            label,
+        ShadcnSidebarMenuItem(
+            label = label,
+            modifier = modifier,
+            active = active,
             leadingIcon = leadingIcon,
             trailing = {
-                // Upstream rotates one ChevronRight 90 degrees open. Rotation is the blocked part,
-                // not `graphicsLayer`: `DrawTransform` carries scaleX/scaleY/pivot and nothing else,
-                // so `Modifier.rotate` needs a wider vertex layout and shader changes across four
-                // shaders on both backends (`17-modifier-parity.md`, batch 2). chevronDown is
-                // chevronRight's exact 90-degree-rotated shape, so swapping glyphs reads identically
-                // without depending on that.
-                shadcnIcon(
-                    if (group.expanded) ShadcnIcons.chevronDown else ShadcnIcons.chevronRight,
-                    tint = shadcnTheme.palette.mutedForeground,
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedByHorizontal(Tw.Spacing.s1),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val end = trailing
+                    if (end != null) end()
+                    ShadcnButton(
+                        variant = ShadcnButtonVariant.Ghost,
+                        size = ShadcnButtonSizeVariant.IconXs,
+                        onClick = { group.expanded = !group.expanded },
+                    ) {
+                        ShadcnIcon(
+                            if (group.expanded) ShadcnIcons.chevronDown else ShadcnIcons.chevronRight,
+                            tint = shadcnTheme.palette.mutedForeground,
+                        )
+                    }
+                }
             },
-            onClick = { group.expanded = !group.expanded },
+            onClick = {
+                if (onClick != null) {
+                    onClick()
+                } else {
+                    group.expanded = !group.expanded
+                }
+            },
         )
         if (group.expanded) {
-            shadcnSidebarMenuSub { items() }
+            ShadcnSidebarMenuSub { items() }
         }
     }
 }
 
 /** `SidebarGroup`: group with optional uppercase label. */
 context(_: Composer)
-fun shadcnSidebarGroup(
+fun ShadcnSidebarGroup(
     modifier: Modifier = Modifier,
     label: String? = null,
     content: context(Composer) () -> Unit,
@@ -263,7 +290,7 @@ fun shadcnSidebarGroup(
         verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s1),
     ) {
         if (!collapsed) label?.let { shadcnSidebarGroupLabel(it) }
-        shadcnSidebarGroupContent { content() }
+        ShadcnSidebarGroupContent { content() }
     }
 }
 
@@ -284,7 +311,7 @@ fun shadcnSidebarGroupLabel(
 
 /** `SidebarGroupContent`: the layout region containing the group's menu. */
 context(_: Composer)
-fun shadcnSidebarGroupContent(
+fun ShadcnSidebarGroupContent(
     modifier: Modifier = Modifier,
     content: context(Composer) () -> Unit,
 ) {
@@ -296,7 +323,7 @@ fun shadcnSidebarGroupContent(
 
 /** `SidebarMenuSub`: sub-menu indented with a vertical line. */
 context(_: Composer)
-fun shadcnSidebarMenuSub(
+fun ShadcnSidebarMenuSub(
     modifier: Modifier = Modifier,
     content: context(Composer) () -> Unit,
 ) {
@@ -320,13 +347,13 @@ fun shadcnSidebarMenuSub(
 
 /** `SidebarMenuSubItem`: a nested menu item with the same button state rules as its parent menu. */
 context(_: Composer)
-fun shadcnSidebarMenuSubItem(
+fun ShadcnSidebarMenuSubItem(
     label: String,
     modifier: Modifier = Modifier,
     active: Boolean = false,
     onClick: () -> Unit = {},
 ) {
-    shadcnSidebarMenuItem(label, modifier, active = active, onClick = onClick)
+    ShadcnSidebarMenuItem(label, modifier, active = active, onClick = onClick)
 }
 
 /** `p-2`. */

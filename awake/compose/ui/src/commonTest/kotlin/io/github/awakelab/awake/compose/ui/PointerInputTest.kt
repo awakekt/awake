@@ -69,7 +69,9 @@ private class TestPointerInputElement(
     }
 }
 
-private class TestPointerInputNode : Modifier.Node(), PointerInputNode {
+private class TestPointerInputNode :
+    Modifier.Node(),
+    PointerInputNode {
     lateinit var onEvent: (PointerEvent, PointerEventPass) -> Unit
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) = onEvent(event, pass)
@@ -147,12 +149,14 @@ class PointerInputTest {
         var seenY = -1
         val root = tree {
             hit(Modifier.padding(10.dp)) {
-                hit(Modifier.size(30.dp).testPointerInput { event, pass ->
-                    if (pass == PointerEventPass.Main) {
-                        seenX = event.x
-                        seenY = event.y
-                    }
-                })
+                hit(
+                    Modifier.size(30.dp).testPointerInput { event, pass ->
+                        if (pass == PointerEventPass.Main) {
+                            seenX = event.x
+                            seenY = event.y
+                        }
+                    },
+                )
             }
         }
         PointerInputDispatcher().dispatch(root, PointerEvent(PointerEventType.Press), 25, 25)
@@ -193,9 +197,11 @@ class PointerInputTest {
         // container stealing a drag from a button inside it is exactly this shape.
         var childClicks = 0
         val root = tree {
-            hit(Modifier.size(60.dp).testPointerInput { event, pass ->
-                if (pass == PointerEventPass.Initial) event.consume()
-            }) {
+            hit(
+                Modifier.size(60.dp).testPointerInput { event, pass ->
+                    if (pass == PointerEventPass.Initial) event.consume()
+                },
+            ) {
                 hit(Modifier.size(40.dp).clickable { childClicks++ })
             }
         }
@@ -294,14 +300,16 @@ class PointerInputTest {
     fun concurrentPointersKeepIndependentCaptures() {
         val capturedMoves = mutableListOf<Long>()
         val root = tree {
-            hit(Modifier.size(20.dp).testPointerInput { event, pass ->
-                if (pass != PointerEventPass.Main) return@testPointerInput
-                when (event.type) {
-                    PointerEventType.Press -> event.consume()
-                    PointerEventType.Move -> if (event.isCaptureHolder) capturedMoves += event.pointerId
-                    else -> Unit
-                }
-            })
+            hit(
+                Modifier.size(20.dp).testPointerInput { event, pass ->
+                    if (pass != PointerEventPass.Main) return@testPointerInput
+                    when (event.type) {
+                        PointerEventType.Press -> event.consume()
+                        PointerEventType.Move -> if (event.isCaptureHolder) capturedMoves += event.pointerId
+                        else -> Unit
+                    }
+                },
+            )
         }
         val dispatcher = PointerInputDispatcher()
 
@@ -425,12 +433,14 @@ class GestureAcrossFramesTest {
                     pointers = touches.toList(),
                 ),
             ) {
-                hit(Modifier.size(50.dp).testPointerInput { event, pass ->
-                    if (pass == PointerEventPass.Main && event.type == PointerEventType.Move && event.isCaptureHolder) {
-                        seen += event.pointerId
-                    }
-                    if (pass == PointerEventPass.Main && event.type == PointerEventType.Press) event.consume()
-                })
+                hit(
+                    Modifier.size(50.dp).testPointerInput { event, pass ->
+                        if (pass == PointerEventPass.Main && event.type == PointerEventType.Move && event.isCaptureHolder) {
+                            seen += event.pointerId
+                        }
+                        if (pass == PointerEventPass.Main && event.type == PointerEventType.Press) event.consume()
+                    },
+                )
             }
         }
 

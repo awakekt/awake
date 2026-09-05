@@ -136,7 +136,9 @@ private class SemanticsNodeElement(
     override fun toString(): String = "semantics(${semanticsConfiguration.keys})"
 }
 
-private class SemanticsModifierNodeImpl : Modifier.Node(), SemanticsModifierNode {
+private class SemanticsModifierNodeImpl :
+    Modifier.Node(),
+    SemanticsModifierNode {
     override lateinit var semanticsConfiguration: SemanticsConfiguration
 }
 

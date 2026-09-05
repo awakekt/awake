@@ -43,7 +43,9 @@ private class KeyInputElement(
     }
 }
 
-private class KeyInputNodeImpl : Modifier.Node(), KeyInputNode {
+private class KeyInputNodeImpl :
+    Modifier.Node(),
+    KeyInputNode {
     lateinit var handler: (KeyEvent) -> Boolean
     lateinit var pass: KeyEventPass
     override fun onKeyEvent(event: KeyEvent, pass: KeyEventPass) {

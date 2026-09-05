@@ -19,12 +19,12 @@ import io.github.awakelab.awake.compose.ui.semantics.SemanticsTreeBuilder
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.Constraints
 import io.github.awakelab.awake.compose.ui.unit.dp
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnFieldLabel
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnFieldOrientation
 import io.github.awakelab.awake.ui.shadcn.components.shadcnField
 import io.github.awakelab.awake.ui.shadcn.components.shadcnFieldContent
 import io.github.awakelab.awake.ui.shadcn.components.shadcnFieldError
 import io.github.awakelab.awake.ui.shadcn.components.shadcnFieldGroup
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnFieldLabel
 import io.github.awakelab.awake.ui.shadcn.components.shadcnFieldSet
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test

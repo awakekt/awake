@@ -15,7 +15,7 @@ import io.github.awakelab.awake.render.renderer.Renderer
 import io.github.awakelab.awake.scene.rendering.RenderSystem
 import io.github.awakelab.awake.scene.rendering.debug.debugSettings
 import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
-import io.github.awakelab.awake.scene.runtime.SceneLoader
+import io.github.awakelab.awake.scene.document.SceneLoader
 import io.github.awakelab.awake.scene.runtime.attachRenderableComponents
 import io.github.awakelab.awake.showcase.app.EngineShowcaseRenderPlan
 import io.github.awakelab.awake.vulkan.application.VulkanEngine

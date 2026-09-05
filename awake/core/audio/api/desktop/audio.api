@@ -1,0 +1,165 @@
+public final class io/github/awakelab/awake/core/audio/AdsrEnvelope {
+	public fun <init> ()V
+	public fun <init> (FFFF)V
+	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun amplitudeAt (FF)F
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lio/github/awakelab/awake/core/audio/AdsrEnvelope;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/audio/AdsrEnvelope;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/audio/AdsrEnvelope;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAttack ()F
+	public final fun getDecay ()F
+	public final fun getRelease ()F
+	public final fun getSustain ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/audio/AudioClip {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;[BIII)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;[BIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()[B
+	public final fun component4 ()I
+	public final fun component5 ()I
+	public final fun component6 ()I
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;[BIII)Lio/github/awakelab/awake/core/audio/AudioClip;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/audio/AudioClip;Ljava/lang/String;Ljava/lang/String;[BIIIILjava/lang/Object;)Lio/github/awakelab/awake/core/audio/AudioClip;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBitsPerSample ()I
+	public final fun getChannels ()I
+	public final fun getDurationSeconds ()F
+	public final fun getId ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPcmBytes ()[B
+	public final fun getSampleRate ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/awakelab/awake/core/audio/AudioPlayer {
+	public abstract fun dispose ()V
+	public abstract fun getMasterVolume ()F
+	public abstract fun getMusicVolume ()F
+	public abstract fun getSfxVolume ()F
+	public abstract fun playMusic (Lio/github/awakelab/awake/core/audio/AudioClip;FZ)V
+	public static synthetic fun playMusic$default (Lio/github/awakelab/awake/core/audio/AudioPlayer;Lio/github/awakelab/awake/core/audio/AudioClip;FZILjava/lang/Object;)V
+	public abstract fun playSound (Lio/github/awakelab/awake/core/audio/AudioClip;FF)Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public static synthetic fun playSound$default (Lio/github/awakelab/awake/core/audio/AudioPlayer;Lio/github/awakelab/awake/core/audio/AudioClip;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public fun playSound3D (Lio/github/awakelab/awake/core/audio/AudioClip;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public static synthetic fun playSound3D$default (Lio/github/awakelab/awake/core/audio/AudioPlayer;Lio/github/awakelab/awake/core/audio/AudioClip;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public abstract fun setMasterVolume (F)V
+	public abstract fun setMusicVolume (F)V
+	public abstract fun setSfxVolume (F)V
+	public abstract fun stopMusic ()V
+}
+
+public final class io/github/awakelab/awake/core/audio/AudioPlayer$DefaultImpls {
+	public static synthetic fun playMusic$default (Lio/github/awakelab/awake/core/audio/AudioPlayer;Lio/github/awakelab/awake/core/audio/AudioClip;FZILjava/lang/Object;)V
+	public static synthetic fun playSound$default (Lio/github/awakelab/awake/core/audio/AudioPlayer;Lio/github/awakelab/awake/core/audio/AudioClip;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public static fun playSound3D (Lio/github/awakelab/awake/core/audio/AudioPlayer;Lio/github/awakelab/awake/core/audio/AudioClip;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public static synthetic fun playSound3D$default (Lio/github/awakelab/awake/core/audio/AudioPlayer;Lio/github/awakelab/awake/core/audio/AudioClip;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Lio/github/awakelab/awake/core/audio/SoundHandle;
+}
+
+public final class io/github/awakelab/awake/core/audio/AudioPlayerFactory {
+	public static final field INSTANCE Lio/github/awakelab/awake/core/audio/AudioPlayerFactory;
+	public final fun create ()Lio/github/awakelab/awake/core/audio/AudioPlayer;
+	public final fun getProvider ()Lkotlin/jvm/functions/Function0;
+	public final fun setProvider (Lkotlin/jvm/functions/Function0;)V
+}
+
+public final class io/github/awakelab/awake/core/audio/JvmAudioPlayer : io/github/awakelab/awake/core/audio/AudioPlayer {
+	public fun <init> ()V
+	public fun dispose ()V
+	public fun getMasterVolume ()F
+	public fun getMusicVolume ()F
+	public fun getSfxVolume ()F
+	public fun playMusic (Lio/github/awakelab/awake/core/audio/AudioClip;FZ)V
+	public fun playSound (Lio/github/awakelab/awake/core/audio/AudioClip;FF)Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public fun playSound3D (Lio/github/awakelab/awake/core/audio/AudioClip;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public fun setMasterVolume (F)V
+	public fun setMusicVolume (F)V
+	public fun setSfxVolume (F)V
+	public fun stopMusic ()V
+}
+
+public final class io/github/awakelab/awake/core/audio/NoOpAudioPlayer : io/github/awakelab/awake/core/audio/AudioPlayer {
+	public fun <init> ()V
+	public fun dispose ()V
+	public fun getMasterVolume ()F
+	public fun getMusicVolume ()F
+	public fun getSfxVolume ()F
+	public fun playMusic (Lio/github/awakelab/awake/core/audio/AudioClip;FZ)V
+	public fun playSound (Lio/github/awakelab/awake/core/audio/AudioClip;FF)Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public fun playSound3D (Lio/github/awakelab/awake/core/audio/AudioClip;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/audio/SoundHandle;
+	public fun setMasterVolume (F)V
+	public fun setMusicVolume (F)V
+	public fun setSfxVolume (F)V
+	public fun stopMusic ()V
+}
+
+public final class io/github/awakelab/awake/core/audio/PositionalAudioMath {
+	public static final field INSTANCE Lio/github/awakelab/awake/core/audio/PositionalAudioMath;
+	public final fun computeAttenuation (FFF)F
+	public static synthetic fun computeAttenuation$default (Lio/github/awakelab/awake/core/audio/PositionalAudioMath;FFFILjava/lang/Object;)F
+	public final fun computePan (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)F
+}
+
+public abstract interface class io/github/awakelab/awake/core/audio/SoundHandle {
+	public abstract fun isPlaying ()Z
+	public abstract fun stop ()V
+}
+
+public final class io/github/awakelab/awake/core/audio/SoundSpecBuilder {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun getDuration ()F
+	public final fun getEndFrequencyHz ()Ljava/lang/Float;
+	public final fun getEnvelope ()Lio/github/awakelab/awake/core/audio/AdsrEnvelope;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getLowPassFilter ()F
+	public final fun getName ()Ljava/lang/String;
+	public final fun getSampleRate ()I
+	public final fun getStartFrequencyHz ()F
+	public final fun getVolume ()F
+	public final fun getWaveform ()Lio/github/awakelab/awake/core/audio/Waveform;
+	public final fun setDuration (F)V
+	public final fun setEndFrequencyHz (Ljava/lang/Float;)V
+	public final fun setEnvelope (Lio/github/awakelab/awake/core/audio/AdsrEnvelope;)V
+	public final fun setLowPassFilter (F)V
+	public final fun setSampleRate (I)V
+	public final fun setStartFrequencyHz (F)V
+	public final fun setVolume (F)V
+	public final fun setWaveform (Lio/github/awakelab/awake/core/audio/Waveform;)V
+}
+
+public final class io/github/awakelab/awake/core/audio/SoundSynthesizer {
+	public static final field INSTANCE Lio/github/awakelab/awake/core/audio/SoundSynthesizer;
+	public final fun arpeggio (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;F)Lio/github/awakelab/awake/core/audio/AudioClip;
+	public static synthetic fun arpeggio$default (Lio/github/awakelab/awake/core/audio/SoundSynthesizer;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;FILjava/lang/Object;)Lio/github/awakelab/awake/core/audio/AudioClip;
+	public final fun build (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/core/audio/AudioClip;
+	public final fun noise (Ljava/lang/String;Ljava/lang/String;FF)Lio/github/awakelab/awake/core/audio/AudioClip;
+	public static synthetic fun noise$default (Lio/github/awakelab/awake/core/audio/SoundSynthesizer;Ljava/lang/String;Ljava/lang/String;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/audio/AudioClip;
+	public final fun tone (Ljava/lang/String;Ljava/lang/String;FFLio/github/awakelab/awake/core/audio/Waveform;)Lio/github/awakelab/awake/core/audio/AudioClip;
+	public static synthetic fun tone$default (Lio/github/awakelab/awake/core/audio/SoundSynthesizer;Ljava/lang/String;Ljava/lang/String;FFLio/github/awakelab/awake/core/audio/Waveform;ILjava/lang/Object;)Lio/github/awakelab/awake/core/audio/AudioClip;
+}
+
+public final class io/github/awakelab/awake/core/audio/WavDecoder {
+	public static final field INSTANCE Lio/github/awakelab/awake/core/audio/WavDecoder;
+	public final fun decode (Ljava/lang/String;Ljava/lang/String;[B)Lio/github/awakelab/awake/core/audio/AudioClip;
+}
+
+public final class io/github/awakelab/awake/core/audio/Waveform : java/lang/Enum {
+	public static final field NOISE Lio/github/awakelab/awake/core/audio/Waveform;
+	public static final field SAWTOOTH Lio/github/awakelab/awake/core/audio/Waveform;
+	public static final field SINE Lio/github/awakelab/awake/core/audio/Waveform;
+	public static final field SQUARE Lio/github/awakelab/awake/core/audio/Waveform;
+	public static final field TRIANGLE Lio/github/awakelab/awake/core/audio/Waveform;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/audio/Waveform;
+	public static fun values ()[Lio/github/awakelab/awake/core/audio/Waveform;
+}
+

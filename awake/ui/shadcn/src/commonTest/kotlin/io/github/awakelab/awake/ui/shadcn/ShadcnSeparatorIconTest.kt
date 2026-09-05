@@ -8,18 +8,16 @@ package io.github.awakelab.awake.ui.shadcn
 import io.github.awakelab.awake.compose.foundation.layout.Row
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.layout.height
-import io.github.awakelab.awake.compose.foundation.layout.size
 import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.Dp
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.graphics2d.DrawCommand
-import io.github.awakelab.awake.core.graphics2d.PathCommand
 import io.github.awakelab.awake.heroicons.icon.HeroIcons
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnSeparatorOrientation
-import io.github.awakelab.awake.ui.shadcn.components.shadcnIcon
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnIcon
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSeparator
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSeparatorOrientation
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -67,7 +65,7 @@ class ShadcnSeparatorIconTest {
         // rather than a path because `rememberVectorPainter` tessellates it once and redraws that;
         // see VectorPainter for why an icon must not be re-tessellated per frame.
         val frame = composeFrame(64, 64) {
-            provideShadcnTheme(theme) { shadcnIcon(HeroIcons.Solid20Mini.chevronDown) }
+            provideShadcnTheme(theme) { ShadcnIcon(HeroIcons.Solid20Mini.chevronDown) }
         }
 
         assertTrue(
@@ -80,7 +78,7 @@ class ShadcnSeparatorIconTest {
     fun anIconTakesItsTint() {
         val red = Color(1f, 0f, 0f, 1f)
         val frame = composeFrame(64, 64) {
-            provideShadcnTheme(theme) { shadcnIcon(HeroIcons.Solid20Mini.chevronDown, tint = red) }
+            provideShadcnTheme(theme) { ShadcnIcon(HeroIcons.Solid20Mini.chevronDown, tint = red) }
         }
 
         assertEquals(listOf(red), frame.meshColors())
@@ -93,7 +91,12 @@ class ShadcnSeparatorIconTest {
         // draw wrong.
         fun extent(size: Dp): Float {
             val frame = composeFrame(128, 128) {
-                provideShadcnTheme(theme) { shadcnIcon(HeroIcons.Solid20Mini.chevronDown, size = size) }
+                provideShadcnTheme(theme) {
+                    ShadcnIcon(
+                        HeroIcons.Solid20Mini.chevronDown,
+                        size = size,
+                    )
+                }
             }
             val xs = frame.meshPoints().map { it.x }
             return xs.max() - xs.min()

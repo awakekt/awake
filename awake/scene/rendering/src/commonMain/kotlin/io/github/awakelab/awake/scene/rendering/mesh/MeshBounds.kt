@@ -7,8 +7,8 @@ package io.github.awakelab.awake.scene.rendering.mesh
 
 import io.github.awakelab.awake.core.math.Aabb
 import io.github.awakelab.awake.core.math.Mat4
-import io.github.awakelab.awake.scene.rendering.animation.SkinnedPose
 import io.github.awakelab.awake.scene.rendering.RenderSystem
+import io.github.awakelab.awake.scene.rendering.animation.SkinnedPose
 
 /** Optional add-on for a [MeshRenderer] entity -- [localBounds] is that mesh's bounds in its
  * own local (pre-transform) space, typically built from the same `MeshGeometry.vertices`

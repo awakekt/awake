@@ -78,7 +78,8 @@ private class DrawWithCacheElement(
 
 private class DrawWithCacheNode(
     var onBuildDrawCache: CacheDrawScope.() -> DrawResult,
-) : Modifier.Node(), DrawModifierNode {
+) : Modifier.Node(),
+    DrawModifierNode {
     private val cacheScope = CacheDrawScope()
     private var cachedResult: DrawResult? = null
     private var lastWidth: Int = -1

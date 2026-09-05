@@ -14,14 +14,14 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.platform.FrameInput
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.dp
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebar
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebar
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * A [shadcnSidebar] taller than its frame must be reachable.
+ * A [ShadcnSidebar] taller than its frame must be reachable.
  *
  * The panel clipped and did not scroll, which a scene outliner and a component inspector are the
  * two panels guaranteed to hit -- and which no fixture small enough to fit ever demonstrates. The
@@ -37,7 +37,7 @@ class ShadcnSidebarScrollTest {
     fun contentTallerThanThePanelScrollsItsLastRowIntoView() {
         val session = composeTestSession(width = 200, height = 300) {
             provideShadcnTheme(theme) {
-                shadcnSidebar {
+                ShadcnSidebar {
                     // A Column, because the content slot is a Box: two Spacers dropped straight in
                     // would stack at the same origin and the "last" row would never be below the
                     // fold. Real callers reach this through shadcnSidebarMenu, which is a Column.

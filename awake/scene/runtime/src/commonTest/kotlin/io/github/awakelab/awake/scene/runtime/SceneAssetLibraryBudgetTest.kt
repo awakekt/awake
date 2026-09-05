@@ -6,7 +6,6 @@
 package io.github.awakelab.awake.scene.runtime
 
 import io.github.awakelab.awake.core.geometry.VertexFormat
-import io.github.awakelab.awake.render.material.Material
 import io.github.awakelab.awake.render.mesh.Mesh
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -24,7 +23,9 @@ class SceneAssetLibraryBudgetTest {
     private class FakeMesh(override val sizeBytes: Long) : Mesh {
         override val format = VertexFormat.PositionColorUv
         var destroyCount = 0
-        override fun destroy() { destroyCount++ }
+        override fun destroy() {
+            destroyCount++
+        }
     }
 
     private val built = mutableMapOf<String, MutableList<FakeMesh>>()

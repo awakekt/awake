@@ -27,3 +27,26 @@ Classify the proposal as **Awake capability**, **consumer/game code**, or **defe
    authored world policy.
 
 Use `awake-architecture-auditor` for the decision. Use implementation skills only after it.
+
+## What Belongs in `awake:scene:*` (The Scene-Binding Boundary)
+
+**`awake:scene:*` = the scene-binding layer only.**
+A module belongs under `awake:scene:*` if and only if its primary job is to **bind an engine capability into the ECS scene graph** as components and systems. The capability's own API lives outside `scene/`; the `scene:*` module is only the ECS glue.
+
+### The Admission Test (Two Questions)
+
+1. **Does it manipulate the scene graph or scene document directly?**
+   (Transform, Entity hierarchy, scene serialization, scene lifecycle)
+2. **Is it the binding layer between `scene-core` and an external capability?**
+   (e.g. `scene:physics` = ECS glue between `physics:api` and ECS entities)
+
+- If **yes to either** → belongs in `awake:scene:*` (e.g., `scene:scene-core`, `scene:physics`, `scene:rendering`, `scene:runtime`, `scene:authoring`).
+- If **no to both** → top-level module (e.g., `awake:navigation`, `awake:ai`, `awake:ai:behavior`).
+
+```
+New capability X:
+  Has its own API contract independent of the scene? -> awake:X (top-level)
+  Needs to bind X into ECS entities/components?     -> awake:scene:X (scene binding layer)
+  Both?                                              -> awake:X:api + awake:scene:X
+```
+

@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:UiCodeGenerator.kt$UiCodeGenerator$private fun StringBuilder.appendNode(node: UiNode, indent: String)</ID>
+    <ID>CyclomaticComplexMethod:UiLivePreview.kt$fun UiLivePreviewNode( node: UiNode, selectedNodeId: String? = null, isEditMode: Boolean = false, onSelectNode: (String) -> Unit = {}, )</ID>
+    <ID>LongMethod:UiBuilderHost.kt$fun UiBuilderHost( store: UiBuilderStore, id: String = "uiBuilderHost", )</ID>
+    <ID>LongMethod:UiLivePreview.kt$fun UiLivePreviewNode( node: UiNode, selectedNodeId: String? = null, isEditMode: Boolean = false, onSelectNode: (String) -> Unit = {}, )</ID>
+    <ID>ReturnCount:UiNode.kt$UiNode$fun findNode(targetId: String): UiNode?</ID>
+    <ID>UnusedParameter:UiBuilderCanvas.kt$id: String = "canvas"</ID>
+    <ID>UnusedParameter:UiComponentPalette.kt$id: String = "palette"</ID>
+    <ID>UnusedParameter:UiInspectorPanel.kt$onUpdateProps: (Map&lt;String, String>) -> Unit = {}</ID>
+    <ID>UnusedParameter:UiInspectorPanel.kt$onUpdateStyle: (UiStyleSpec) -> Unit = {}</ID>
+  </CurrentIssues>
+</SmellBaseline>

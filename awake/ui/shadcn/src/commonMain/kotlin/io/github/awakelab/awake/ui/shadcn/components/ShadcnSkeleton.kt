@@ -27,7 +27,7 @@ import kotlin.math.sin
  * frame-clock subscription the engine already has.
  */
 context(_: Composer)
-fun shadcnSkeleton(modifier: Modifier = Modifier) {
+fun ShadcnSkeleton(modifier: Modifier = Modifier) {
     val theme = shadcnTheme
     val phase = rememberLoopingPhase(PULSE_SECONDS)
     // sin over a full turn is +/-1; mapped to 1.0 .. 0.5 it is Tailwind's own opacity curve.

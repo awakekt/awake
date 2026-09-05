@@ -24,7 +24,7 @@ import io.github.awakelab.awake.render.renderer.SceneLight
 import io.github.awakelab.awake.render.texture.PbrTextureSet
 import io.github.awakelab.awake.render.texture.RenderTarget
 import io.github.awakelab.awake.render.texture.TextureAsset
-import io.github.awakelab.awake.scene.authoring.blueprints.cameraEntity
+import io.github.awakelab.awake.scene.authoring.dsl.cameraEntity
 import io.github.awakelab.awake.scene.runtime.SceneRouterRuntime
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test

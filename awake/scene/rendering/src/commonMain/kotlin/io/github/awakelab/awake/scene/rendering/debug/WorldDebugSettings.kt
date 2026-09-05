@@ -18,6 +18,10 @@ data class WorldDebugSettings(
     var showOcclusion: Boolean = false,
     var showLights: Boolean = false,
     var showShadowFrustum: Boolean = false,
+    var showGrid: Boolean = false,
+    var showAxisLines: Boolean = false,
+    var gridScale: Float = 1.0f,
+    var gridFadeDistance: Float = 100.0f,
     /**
      * Whether the sun's shadow is fitted in cascades, or as the one fixed box that predates them.
      *

@@ -6,6 +6,10 @@
 package io.github.awakelab.awake.scene.runtime
 
 import io.github.awakelab.awake.ecs.World
+import io.github.awakelab.awake.scene.document.Scene
+import io.github.awakelab.awake.scene.document.SceneDocument
+import io.github.awakelab.awake.scene.document.SceneLoader
+import io.github.awakelab.awake.scene.document.destroy
 
 /**
  * Owns the currently-loaded [Scene], if any -- the only thing that may create or destroy one
@@ -17,6 +21,10 @@ import io.github.awakelab.awake.ecs.World
  * switch which [World] it targets.
  */
 class SceneManager(private val world: World) {
+    init {
+        DefaultSceneComponentResolvers.install()
+    }
+
     var current: Scene? = null
         private set
 

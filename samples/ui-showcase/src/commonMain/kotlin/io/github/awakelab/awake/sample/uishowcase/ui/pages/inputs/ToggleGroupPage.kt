@@ -8,7 +8,7 @@ package io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs
 import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.shadcnToggleGroup
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnToggleGroup
 
 private class SelectedValue(initial: String?) {
     var value: String? = initial
@@ -34,7 +34,7 @@ shadcnToggleGroup(selected = "left", onSelectedChange = { }) {
     notes = listOf("Single-select and multi-select forms share one recipe."),
     hero = {
         val selected = remember { SelectedValue("left") }
-        shadcnToggleGroup(
+        ShadcnToggleGroup(
             selected = selected.value,
             onSelectedChange = { selected.value = it },
         ) {
@@ -45,7 +45,7 @@ shadcnToggleGroup(selected = "left", onSelectedChange = { }) {
     },
     states = {
         val picked = remember { SelectedValues(setOf("bold", "underline")) }
-        shadcnToggleGroup(
+        ShadcnToggleGroup(
             selected = picked.value,
             onSelectedChange = { picked.value = it },
         ) {

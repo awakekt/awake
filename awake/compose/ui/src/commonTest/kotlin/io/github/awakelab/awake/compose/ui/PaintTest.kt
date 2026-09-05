@@ -13,11 +13,11 @@ import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.compose.ui.draw.clip
 import io.github.awakelab.awake.compose.ui.draw.clipToBounds
 import io.github.awakelab.awake.compose.ui.draw.graphicsLayer
-import io.github.awakelab.awake.compose.ui.graphics.Painter
 import io.github.awakelab.awake.compose.ui.graphics.BlendMode
 import io.github.awakelab.awake.compose.ui.graphics.CircleShape
-import io.github.awakelab.awake.compose.ui.graphics.RenderEffect
+import io.github.awakelab.awake.compose.ui.graphics.Painter
 import io.github.awakelab.awake.compose.ui.graphics.RectangleShape
+import io.github.awakelab.awake.compose.ui.graphics.RenderEffect
 import io.github.awakelab.awake.compose.ui.graphics.RoundedCornerShape
 import io.github.awakelab.awake.compose.ui.layout.Layer
 import io.github.awakelab.awake.compose.ui.layout.LayerKind
@@ -31,8 +31,8 @@ import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.graphics2d.ColoredTriangleMesh
 import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
-import io.github.awakelab.awake.core.math2d.Rectangle
 import io.github.awakelab.awake.core.graphics2d.bounds
+import io.github.awakelab.awake.core.math2d.Rectangle
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

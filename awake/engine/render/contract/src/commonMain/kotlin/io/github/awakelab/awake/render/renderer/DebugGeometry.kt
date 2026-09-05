@@ -33,6 +33,62 @@ fun boundsDebugLines(bounds: Aabb, worldMatrix: Mat4, color: Color): List<LineSe
     return Aabb.EDGES.map { (a, b) -> LineSegment(corners[a], corners[b], color) }
 }
 
+/**
+ * Produces 3D aura outline lines around [bounds] transformed by [worldMatrix]:
+ * - Luminous corner brackets (arms wrapping each of the 8 corners)
+ * - Ground/base circular aura ring
+ * - Subtle connecting contour edges
+ */
+fun objectAuraLines(
+    bounds: Aabb,
+    worldMatrix: Mat4,
+    color: Color,
+    includeGroundRing: Boolean = true,
+): List<LineSegment> {
+    val transformed = bounds.transformed(worldMatrix)
+    val corners = transformed.corners()
+    val lines = ArrayList<LineSegment>(48)
+
+    // 1. Subtle full edge outlines (35% alpha)
+    val subtleColor = color.copy(a = color.a * 0.35f)
+    Aabb.EDGES.forEach { (a, b) ->
+        lines += LineSegment(corners[a], corners[b], subtleColor)
+    }
+
+    // 2. High-intensity corner bracket arms (25% length from each corner)
+    val bracketFraction = 0.25f
+    Aabb.EDGES.forEach { (a, b) ->
+        val ca = corners[a]
+        val cb = corners[b]
+        val armA = ca + (cb - ca) * bracketFraction
+        val armB = cb + (ca - cb) * bracketFraction
+        lines += LineSegment(ca, armA, color)
+        lines += LineSegment(cb, armB, color)
+    }
+
+    // 3. Ground / base circular aura ring
+    if (includeGroundRing) {
+        val center = (transformed.min + transformed.max) * 0.5f
+        val baseY = transformed.min.y
+        val rx = (transformed.max.x - transformed.min.x) * 0.55f
+        val rz = (transformed.max.z - transformed.min.z) * 0.55f
+        val segments = 24
+        var prev = Vec3f(center.x + rx, baseY, center.z)
+        for (i in 1..segments) {
+            val angle = (i * 2.0 * kotlin.math.PI / segments).toFloat()
+            val curr = Vec3f(
+                center.x + rx * kotlin.math.cos(angle),
+                baseY,
+                center.z + rz * kotlin.math.sin(angle),
+            )
+            lines += LineSegment(prev, curr, color)
+            prev = curr
+        }
+    }
+
+    return lines
+}
+
 /** A directional-light gizmo at [origin]: one line pointing along [direction] (fixed visual
  * length, not to scale with the scene) plus a small cross of 4 perpendicular segments at
  * [origin] -- reads as a light icon even from an angle where the direction line foreshortens

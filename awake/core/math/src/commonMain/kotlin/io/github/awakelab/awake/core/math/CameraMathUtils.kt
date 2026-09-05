@@ -38,9 +38,7 @@ data class CameraPoseState(
     }
 
     /** Recomputes [eye] position around [center] given current [yaw], [pitch], and [distance]. */
-    fun recomputeEye(): Vec3f {
-        return CameraMathUtils.computeOrbitEye(center, yaw, pitch, distance, eye)
-    }
+    fun recomputeEye(): Vec3f = CameraMathUtils.computeOrbitEye(center, yaw, pitch, distance, eye)
 }
 
 /**
@@ -143,9 +141,13 @@ object CameraMathUtils {
         val dot = fx * ux + fy * uy + fz * uz
         if (abs(dot) > 0.999f) {
             if (abs(fy) > 0.9f) {
-                ux = 0f; uy = 0f; uz = 1f
+                ux = 0f
+                uy = 0f
+                uz = 1f
             } else {
-                ux = 0f; uy = 1f; uz = 0f
+                ux = 0f
+                uy = 1f
+                uz = 0f
             }
         }
 
@@ -165,13 +167,22 @@ object CameraMathUtils {
         val realUz = sx * fy - sy * fx
 
         out.apply {
-            m00 = sx; m01 = sy; m02 = sz
-            m10 = realUx; m11 = realUy; m12 = realUz
-            m20 = -fx; m21 = -fy; m22 = -fz
+            m00 = sx
+            m01 = sy
+            m02 = sz
+            m10 = realUx
+            m11 = realUy
+            m12 = realUz
+            m20 = -fx
+            m21 = -fy
+            m22 = -fz
             m03 = -(sx * eye.x + sy * eye.y + sz * eye.z)
             m13 = -(realUx * eye.x + realUy * eye.y + realUz * eye.z)
             m23 = (fx * eye.x + fy * eye.y + fz * eye.z)
-            m30 = 0f; m31 = 0f; m32 = 0f; m33 = 1f
+            m30 = 0f
+            m31 = 0f
+            m32 = 0f
+            m33 = 1f
         }
         return out
     }

@@ -20,17 +20,49 @@ theme:
         name: Switch to light mode
   features:
     - navigation.sections
+    - navigation.indexes
     - content.code.copy
     - content.tabs.link
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
-  - Vulkan KMP: vulkan-kmp.md
+  - Awake Studio: studio.md
+  - Editor Suite:
+      - Overview: editor/index.md
+      - Scene Editor: editor/scene.md
+      - Physics Editor: editor/physics.md
+      - AI Editor: editor/ai.md
+      - Render Editor: editor/render.md
+  - Core & ECS:
+      - Core: engine/core.md
+      - Core Math: core/math.md
+      - ECS Runtime: engine/ecs.md
+      - Scene Runtime: engine/scene.md
+      - Scene Navigation: scene/navigation.md
+      - Scene Authoring: scene/authoring.md
+      - Scene Rendering: scene/rendering.md
+      - Scene AI: scene/ai.md
+      - Scene World: scene/world.md
+      - App & Bootstrap: engine/bootstrap.md
+  - Rendering & Backends:
+      - Vulkan Backend: rendering/vulkan.md
+      - WebGPU Backend: rendering/webgpu.md
+      - Terrain Authoring: asset/terrain.md
+      - Shader DSL: asset/shader-dsl.md
+      - Shaders & Pipelines: rendering/shaders.md
+      - Naga Shader Compiler: rendering/shader-compiler.md
+  - Physics:
+      - Physics API: physics/api.md
+      - Jolt Bridge: physics/jolt.md
+  - UI & Compose:
+      - Compose Runtime: ui/compose.md
+      - Design System: ui/index.md
+      - Shadcn Components: ui/shadcn.md
+      - Material 3: ui/material3.md
   - Guides:
       - Theming: guides/theming.md
       - UI Components:
           - Buttons: guides/components/button.md
-  - API Reference: api/index.html
 markdown_extensions:
   - pymdownx.superfences:
       custom_fences:
@@ -38,7 +70,11 @@ markdown_extensions:
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.snippets:
-      base_path: [..] # Allow snippets from project root
+      base_path:
+        - .
+        - ..
+        - website/docs
+      check_paths: true
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.emoji:

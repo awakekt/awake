@@ -7,6 +7,7 @@
 
 package io.github.awakelab.awake.ui.shadcn.components
 
+import io.github.awakelab.awake.compose.foundation.BorderSides
 import io.github.awakelab.awake.compose.foundation.clickable
 import io.github.awakelab.awake.compose.foundation.hoverable
 import io.github.awakelab.awake.compose.foundation.interaction.InteractionSource
@@ -14,7 +15,9 @@ import io.github.awakelab.awake.compose.foundation.layout.Arrangement
 import io.github.awakelab.awake.compose.foundation.layout.Box
 import io.github.awakelab.awake.compose.foundation.layout.Column
 import io.github.awakelab.awake.compose.foundation.layout.Row
+import io.github.awakelab.awake.compose.foundation.layout.defaultMinSize
 import io.github.awakelab.awake.compose.foundation.layout.height
+import io.github.awakelab.awake.compose.foundation.layout.padding
 import io.github.awakelab.awake.compose.foundation.layout.size
 import io.github.awakelab.awake.compose.foundation.style.Style
 import io.github.awakelab.awake.compose.foundation.style.disabled
@@ -25,6 +28,8 @@ import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.compose.ui.Alignment
 import io.github.awakelab.awake.compose.ui.Modifier
+import io.github.awakelab.awake.compose.ui.graphics.RoundedCornerShape
+import io.github.awakelab.awake.compose.ui.graphics.Shape
 import io.github.awakelab.awake.compose.ui.graphics.vector.ImageVector
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsProperties
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsRole
@@ -32,6 +37,7 @@ import io.github.awakelab.awake.compose.ui.semantics.semantics
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.Dp
 import io.github.awakelab.awake.compose.ui.unit.dp
+import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.ui.shadcn.ShadcnThemeValues
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
 
@@ -40,20 +46,14 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  *
  * **Not [ShadcnButtonGroup].** Upstream's own rule, stated in the ButtonGroup docs: a button group
  * groups buttons that *perform an action*, a toggle group groups buttons that *toggle a state*.
- * Studio's viewport pills were button groups faking pressed with `variant = Secondary/Ghost` --
- * thirteen states and one action, all reporting to a screen reader as unrelated buttons. The
- * difference is visible in the accessibility tree the moment this is used: [Single] reports a
- * radio group of radio buttons, which is what modal tool selection actually is.
  *
- * **Joined ends are not drawn yet.** Upstream squares every inner corner and rounds only the two
- * outer ones. `Style` carries a single `cornerRadius`, not four, so every item rounds all four --
- * the same limitation [ShadcnButtonGroup] states, and the same fix unblocks both (per-corner radii,
- * see `docs/audits/` on button-group intrinsics). Stated rather than approximated: faking it with
- * insets would move the geometry to hide a paint difference. Until then a caller that wants the
- * strip to read as deliberate can pass [spacing], which is upstream's own prop for a gapped group.
+ * Joined ends and seamless 1px dividers are drawn when [spacing] is 0 (upstream's default):
+ * outer corners are rounded via [memberShape] while inner corners are squared, and outline
+ * items drop their duplicate start borders via [memberBorderSides]. When [spacing] is greater
+ * than 0, each item draws its own 4-corner rounded shape and full border.
  */
 context(_: Composer)
-fun shadcnToggleGroup(
+fun ShadcnToggleGroup(
     selected: Set<String>,
     onSelectedChange: (Set<String>) -> Unit,
     modifier: Modifier = Modifier,
@@ -67,7 +67,7 @@ fun shadcnToggleGroup(
     val items = remember(content) { ShadcnToggleGroupScope().apply(content).items }
     // One value rather than three parallel arguments threaded to every item: they are the group's
     // appearance and behaviour, and an item never varies one without the others.
-    val spec = remember(selection, variant to size) { ToggleGroupSpec(selection, variant, size) }
+    val spec = ToggleGroupSpec(selection, variant, size, orientation, spacing)
     val arrangement = Arrangement.spacedBy(spacing)
     val group = modifier.semantics {
         // What makes a strip of radios *one* choice rather than several independent ones.
@@ -75,16 +75,22 @@ fun shadcnToggleGroup(
             this[SemanticsProperties.SelectableGroup] = true
         }
     }
+    val count = items.size
     when (orientation) {
         ShadcnButtonGroupOrientation.Horizontal -> Row(
             group,
             horizontalArrangement = Arrangement.spacedByHorizontal(spacing),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            items.forEach { ToggleGroupItem(it, selected, spec, onSelectedChange) }
+            items.forEachIndexed { index, item ->
+                ToggleGroupItem(item, index, count, selected, spec, onSelectedChange)
+            }
         }
+
         ShadcnButtonGroupOrientation.Vertical -> Column(group, verticalArrangement = arrangement) {
-            items.forEach { ToggleGroupItem(it, selected, spec, onSelectedChange) }
+            items.forEachIndexed { index, item ->
+                ToggleGroupItem(item, index, count, selected, spec, onSelectedChange)
+            }
         }
     }
 }
@@ -97,7 +103,7 @@ fun shadcnToggleGroup(
  * is a statement about that screen and not about toggle groups.
  */
 context(_: Composer)
-fun shadcnToggleGroup(
+fun ShadcnToggleGroup(
     selected: String?,
     onSelectedChange: (String?) -> Unit,
     modifier: Modifier = Modifier,
@@ -106,7 +112,7 @@ fun shadcnToggleGroup(
     size: ShadcnToggleGroupSize = ShadcnToggleGroupSize.Default,
     spacing: Dp = 0.dp,
     content: ShadcnToggleGroupScope.() -> Unit,
-) = shadcnToggleGroup(
+) = ShadcnToggleGroup(
     selected = selected?.let { setOf(it) } ?: emptySet(),
     onSelectedChange = { onSelectedChange(it.firstOrNull()) },
     modifier = modifier,
@@ -131,7 +137,7 @@ enum class ShadcnToggleGroupSize(internal val extent: Dp) {
     Lg(40.dp),
 }
 
-/** One item in a [shadcnToggleGroup]. */
+/** One item in a [ShadcnToggleGroup]. */
 class ShadcnToggleGroupItem internal constructor(
     val value: String,
     /** Named even when only an icon is drawn: it is what a reader hears and what a test finds. */
@@ -145,7 +151,7 @@ class ShadcnToggleGroupItem internal constructor(
     )?,
 )
 
-/** Declares the items of a [shadcnToggleGroup], in order. */
+/** Declares the items of a [ShadcnToggleGroup], in order. */
 @ShadcnToggleGroupDsl
 class ShadcnToggleGroupScope internal constructor() {
     internal val items = mutableListOf<ShadcnToggleGroupItem>()
@@ -173,11 +179,15 @@ private class ToggleGroupSpec(
     val selection: ShadcnToggleGroupSelection,
     val variant: ShadcnToggleGroupVariant,
     val size: ShadcnToggleGroupSize,
+    val orientation: ShadcnButtonGroupOrientation,
+    val spacing: Dp,
 )
 
 context(_: Composer)
 private fun ToggleGroupItem(
     item: ShadcnToggleGroupItem,
+    index: Int,
+    count: Int,
     selected: Set<String>,
     spec: ToggleGroupSpec,
     onSelectedChange: (Set<String>) -> Unit,
@@ -185,27 +195,45 @@ private fun ToggleGroupItem(
     val selection = spec.selection
     val variant = spec.variant
     val size = spec.size
+    val orientation = spec.orientation
+    val spacing = spec.spacing
     val theme = shadcnTheme
     val interaction = remember { InteractionSource() }
     val styleState = rememberStyleState(interaction, enabled = item.enabled)
     val on = item.value in selected
-    // Two keys, not three: `remember` has no three-key overload, and the pair (on, variant) is a
-    // single value anyway -- the style depends on which of four combinations it is.
-    val style = remember(theme, on to variant) { theme.toggleGroupItemStyle(on, variant) }
+
+    val shape = if (spacing == 0.dp) {
+        memberShape(orientation, index, count, theme.radii.md)
+    } else {
+        RoundedCornerShape(theme.radii.md)
+    }
+    val borderSides = if (spacing == 0.dp && variant == ShadcnToggleGroupVariant.Outline) {
+        memberBorderSides(orientation, index, count)
+    } else {
+        BorderSides.All
+    }
+    val style = remember(theme, Triple(on, variant, shape)) {
+        theme.toggleGroupItemStyle(on, variant, shape)
+    }
 
     // An item that draws a glyph instead of its label is only discoverable on hover, so it gets a
     // tooltip; one that draws its own text already says what it is. The rule is exact, so it is
     // applied rather than left to a flag every caller would have to remember.
     val labelled = item.icon == null && item.content == null
+    val sizingModifier = if (labelled) {
+        Modifier.defaultMinSize(minWidth = size.extent).height(size.extent)
+            .padding(horizontal = Tw.Spacing.s2_5)
+    } else {
+        Modifier.size(size.extent)
+    }
     TooltipIf(!labelled, item.label) {
         Box(
-            Modifier
-                .size(size.extent)
+            sizingModifier
                 .hoverable(interaction, enabled = item.enabled)
                 .clickable(interaction) {
                     if (item.enabled) onSelectedChange(selected.toggling(item.value, selection))
                 }
-                .styleable(styleState, style)
+                .styleable(styleState, borderSides, style)
                 .semantics {
                     // A single-select item is a radio, not a button that happens to look pressed.
                     this[SemanticsProperties.Role] = when (selection) {
@@ -224,7 +252,7 @@ private fun ToggleGroupItem(
             val tint = if (on) theme.palette.accentForeground else theme.palette.foreground
             when {
                 body != null -> body()
-                item.icon != null -> shadcnIcon(item.icon, tint = tint)
+                item.icon != null -> ShadcnIcon(item.icon, tint = tint)
                 else -> ShadcnText(item.label, variant = ShadcnTextVariant.Small, color = tint)
             }
         }
@@ -240,7 +268,7 @@ private fun ToggleGroupItem(
  */
 context(_: Composer)
 private fun TooltipIf(enabled: Boolean, text: String, content: context(Composer) () -> Unit) {
-    if (enabled) shadcnTooltipped(text) { content() } else content()
+    if (enabled) ShadcnTooltipped(text) { content() } else content()
 }
 
 /**
@@ -262,8 +290,9 @@ private fun Set<String>.toggling(
 private fun ShadcnThemeValues.toggleGroupItemStyle(
     on: Boolean,
     variant: ShadcnToggleGroupVariant,
+    shape: Shape,
 ): Style = Style {
-    cornerRadius(radii.md)
+    shape(shape)
     if (variant == ShadcnToggleGroupVariant.Outline) border(ItemBorderWidth, palette.border)
     // `data-[state=on]:bg-accent`, the same on-state both variants share.
     if (on) background(palette.accent)

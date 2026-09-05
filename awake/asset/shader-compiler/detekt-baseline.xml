@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>NestedBlockDepth:NagaNativeLoader.kt$NagaNativeLoader$@Synchronized fun load()</ID>
+    <ID>ReturnCount:NagaNativeLoader.kt$NagaNativeLoader$@Synchronized fun load()</ID>
+    <ID>TooGenericExceptionCaught:NagaNativeLoader.kt$NagaNativeLoader$e: Exception</ID>
+  </CurrentIssues>
+</SmellBaseline>

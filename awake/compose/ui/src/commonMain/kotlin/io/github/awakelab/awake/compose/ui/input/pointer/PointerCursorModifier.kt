@@ -28,7 +28,9 @@ private class PointerCursorElement(
     }
 }
 
-private class PointerCursorNodeImpl : Modifier.Node(), PointerCursorNode {
+private class PointerCursorNodeImpl :
+    Modifier.Node(),
+    PointerCursorNode {
     override lateinit var cursor: PointerCursor
     override fun toString(): String = "pointerCursor($cursor)"
 }

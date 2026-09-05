@@ -12,7 +12,7 @@ import io.github.awakelab.awake.compose.ui.platform.ViewportSize
 import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
 import io.github.awakelab.awake.engine.bootstrap.dsl.app
 import io.github.awakelab.awake.engine.platform.dsl.requireService
-import io.github.awakelab.awake.scene.authoring.blueprints.cameraEntity
+import io.github.awakelab.awake.scene.authoring.dsl.cameraEntity
 import io.github.awakelab.awake.scene.runtime.LocalRenderer
 import io.github.awakelab.awake.scene.runtime.LocalWorld
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime

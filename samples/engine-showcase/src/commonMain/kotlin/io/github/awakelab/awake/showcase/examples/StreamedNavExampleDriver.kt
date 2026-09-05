@@ -13,21 +13,21 @@ import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.Entity
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.render.renderer.LineSegment
-import io.github.awakelab.awake.scene.ai.ChaseAiSystem
-import io.github.awakelab.awake.scene.ai.ChaseBehavior
-import io.github.awakelab.awake.scene.ai.FleeBehavior
-import io.github.awakelab.awake.scene.ai.PatrolBehavior
+import io.github.awakelab.awake.ai.behavior.ChaseAiSystem
+import io.github.awakelab.awake.ai.behavior.ChaseBehavior
+import io.github.awakelab.awake.ai.behavior.FleeBehavior
+import io.github.awakelab.awake.ai.behavior.PatrolBehavior
 import io.github.awakelab.awake.scene.core.transform.Transform
-import io.github.awakelab.awake.scene.navigation.PathRequest
-import io.github.awakelab.awake.scene.navigation.PathRequestSystem
-import io.github.awakelab.awake.scene.navigation.grid.AgentRoute
-import io.github.awakelab.awake.scene.navigation.grid.CoarseNavGraph
-import io.github.awakelab.awake.scene.navigation.grid.HierarchicalNavGrid
-import io.github.awakelab.awake.scene.navigation.grid.NavGridCellStreamer
-import io.github.awakelab.awake.scene.navigation.grid.StreamedNavGrid
-import io.github.awakelab.awake.scene.navigation.grid.bakeNavGridCell
-import io.github.awakelab.awake.scene.navigation.grid.navGridDebugLines
-import io.github.awakelab.awake.scene.navigation.grid.summarize
+import io.github.awakelab.awake.navigation.PathRequest
+import io.github.awakelab.awake.navigation.PathRequestSystem
+import io.github.awakelab.awake.navigation.grid.AgentRoute
+import io.github.awakelab.awake.navigation.grid.CoarseNavGraph
+import io.github.awakelab.awake.navigation.grid.HierarchicalNavGrid
+import io.github.awakelab.awake.navigation.grid.NavGridCellStreamer
+import io.github.awakelab.awake.navigation.grid.StreamedNavGrid
+import io.github.awakelab.awake.navigation.grid.bakeNavGridCell
+import io.github.awakelab.awake.navigation.grid.navGridDebugLines
+import io.github.awakelab.awake.navigation.grid.summarize
 import io.github.awakelab.awake.scene.rendering.Camera
 import io.github.awakelab.awake.scene.rendering.streaming.MeshCellStreamer
 import io.github.awakelab.awake.scene.runtime.Scene
@@ -341,7 +341,7 @@ internal object StreamedNavExampleDriver {
 
 /**
  * Every route follower's current path, for the nav-grid overlay. See
- * [io.github.awakelab.awake.scene.navigation.grid.AgentRoute] for why the overlay is given these
+ * [io.github.awakelab.awake.navigation.grid.AgentRoute] for why the overlay is given these
  * rather than reading them out of the world itself.
  */
 private fun agentRoutes(world: World): List<AgentRoute> = buildList {

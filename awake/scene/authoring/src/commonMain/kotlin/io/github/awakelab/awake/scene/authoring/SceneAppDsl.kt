@@ -11,12 +11,13 @@ import io.github.awakelab.awake.scene.authoring.dsl.AwakeSceneDsl
 import io.github.awakelab.awake.scene.authoring.dsl.EntityScope
 import io.github.awakelab.awake.scene.authoring.dsl.SceneBuilder
 import io.github.awakelab.awake.scene.authoring.dsl.scene
+import io.github.awakelab.awake.scene.document.SceneDocument
+import io.github.awakelab.awake.scene.document.instantiate
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
 import io.github.awakelab.awake.scene.runtime.SceneAppSpec
 import io.github.awakelab.awake.scene.runtime.SceneAssetLibrary
 import io.github.awakelab.awake.scene.runtime.SceneContent
 import io.github.awakelab.awake.scene.runtime.SceneDisposeBlock
-import io.github.awakelab.awake.scene.runtime.SceneDocument
 import io.github.awakelab.awake.scene.runtime.SceneReadyBlock
 import io.github.awakelab.awake.scene.runtime.SceneRenderableFactory
 import io.github.awakelab.awake.scene.runtime.SceneServiceRegistration
@@ -26,7 +27,6 @@ import io.github.awakelab.awake.scene.runtime.SceneSystemRegistration
 import io.github.awakelab.awake.scene.runtime.SceneUpdateBlock
 import io.github.awakelab.awake.scene.runtime.attachRenderableComponents
 import io.github.awakelab.awake.scene.runtime.defaultInfrastructureSystems
-import io.github.awakelab.awake.scene.runtime.instantiate
 import kotlin.reflect.KClass
 
 fun AppSpecDsl.ecs(block: SceneAppDsl.() -> Unit) {
@@ -57,12 +57,10 @@ fun AppSpecDsl.scene(spec: SceneAppSpec) {
 
 fun sceneApp(block: SceneAppDsl.() -> Unit): SceneAppSpec = SceneAppDsl().apply(block).build()
 
-/**
- * Primary name for an installed ECS scene. The returned compatibility spec remains source
- * compatible while the app lifecycle adapter is retired.
- */
+@Deprecated("Use ecs { ... } or scene { ... } instead.", ReplaceWith("ecs(block)"))
 fun sceneSession(block: SceneAppDsl.() -> Unit): SceneAppSpec = SceneAppDsl().apply(block).build()
 
+@Deprecated("Use ecs { ... } or scene { ... } instead.", ReplaceWith("ecs(block)"))
 fun AppSpecDsl.sceneSession(block: SceneAppDsl.() -> Unit) {
     install(SceneAppDsl().apply(block).build())
 }
@@ -108,7 +106,7 @@ class SceneAppDsl internal constructor() {
     }
 
     /**
-     * Integrates an existing [io.github.awakelab.awake.scene.runtime.SceneDocument] into the population block.
+     * Integrates an existing [SceneDocument] into the population block.
      */
     fun scene(document: SceneDocument) {
         this.sceneName = document.name
@@ -144,10 +142,6 @@ class SceneAppDsl internal constructor() {
         }
     }
 
-    fun renderables(factory: SceneRenderableFactory) {
-        renderableFactory = factory
-    }
-
     fun <T : System> system(
         name: String,
         phase: SceneSystemPhase,
@@ -172,9 +166,14 @@ class SceneAppDsl internal constructor() {
         updateBlock = block
     }
 
-    /** The scene's UI. Compose's `setContent`, declared rather than called. */
-    fun content(block: SceneContent) {
+    /** Declares scene-level Compose UI overlay content. */
+    fun ui(block: SceneContent) {
         ui = block
+    }
+
+    @Deprecated("Use ui { ... } instead.", ReplaceWith("ui(block)"))
+    fun content(block: SceneContent) {
+        ui(block)
     }
 
     fun onReady(block: SceneReadyBlock) {

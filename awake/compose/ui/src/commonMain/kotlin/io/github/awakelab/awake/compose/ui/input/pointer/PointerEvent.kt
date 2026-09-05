@@ -42,6 +42,7 @@ enum class PointerEventPass {
  * Consumption is a flag rather than a return value so a later pass can see what an earlier one
  * took, which is the whole point of having passes.
  */
+
 /**
  * Modifier keys held at the moment of a pointer event.
  *

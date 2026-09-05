@@ -10,6 +10,7 @@ import io.github.awakelab.awake.core.geometry.generate.MeshGenerateScope
 import io.github.awakelab.awake.core.geometry.generate.generate
 import io.github.awakelab.awake.scene.authoring.dsl.AwakeSceneDsl
 import io.github.awakelab.awake.scene.runtime.SceneAssetLibrary
+import io.github.awakelab.awake.scene.runtime.SceneAssetResolver
 import io.github.awakelab.awake.scene.runtime.SceneMaterialFactory
 import io.github.awakelab.awake.scene.runtime.SceneMeshFactory
 import io.github.awakelab.awake.scene.runtime.SceneMeshRendererFactory
@@ -20,6 +21,11 @@ class SceneAssetsDsl internal constructor() {
     private val meshFactories = linkedMapOf<String, SceneMeshFactory>()
     private val materialFactories = linkedMapOf<String, SceneMaterialFactory>()
     private val rendererFactories = linkedMapOf<SceneRenderableKey, SceneMeshRendererFactory>()
+    private val resolvers = mutableListOf<SceneAssetResolver>()
+
+    fun resolver(resolver: SceneAssetResolver) {
+        resolvers += resolver
+    }
 
     fun mesh(name: String, factory: SceneMeshFactory) {
         require(name.isNotBlank()) { "Scene mesh names must not be blank." }
@@ -51,5 +57,6 @@ class SceneAssetsDsl internal constructor() {
         meshFactories = meshFactories.toMap(),
         materialFactories = materialFactories.toMap(),
         rendererFactories = rendererFactories.toMap(),
+        dynamicResolvers = resolvers.toList(),
     )
 }

@@ -13,7 +13,7 @@ import io.github.awakelab.awake.physics.BodyTransform
 import io.github.awakelab.awake.physics.MotionType
 import io.github.awakelab.awake.physics.SphereShape
 import io.github.awakelab.awake.scene.core.transform.Transform
-import io.github.awakelab.awake.scene.physics.streaming.RecordingPhysicsWorld
+import io.github.awakelab.awake.scene.physics.RecordingPhysicsWorld
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.test.Test

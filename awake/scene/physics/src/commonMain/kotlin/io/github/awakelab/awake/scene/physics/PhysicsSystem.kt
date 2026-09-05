@@ -11,7 +11,6 @@ import io.github.awakelab.awake.ecs.Entity
 import io.github.awakelab.awake.ecs.InterpolatedSystem
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.physics.BodyHandle
-import io.github.awakelab.awake.physics.BodyTransform
 import io.github.awakelab.awake.physics.MotionType
 import io.github.awakelab.awake.physics.PhysicsWorld
 import io.github.awakelab.awake.scene.core.transform.Transform

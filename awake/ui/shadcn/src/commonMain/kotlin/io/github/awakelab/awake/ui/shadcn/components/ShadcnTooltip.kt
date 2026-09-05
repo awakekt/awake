@@ -40,10 +40,10 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * `palette.popover` -- which is what a popover uses and what "a small floating panel" suggests --
  * gives a tooltip that looks like a menu.
  *
- * This is the content only -- the bubble. [shadcnTooltipped] is what anchors it to something.
+ * This is the content only -- the bubble. [ShadcnTooltipped] is what anchors it to something.
  */
 context(_: Composer)
-fun shadcnTooltip(
+fun ShadcnTooltip(
     text: String,
     modifier: Modifier = Modifier,
 ) {
@@ -82,7 +82,7 @@ private fun ShadcnThemeValues.tooltipStyle(): Style = Style {
  * the recipe does not have, and it is the kind of thing that is better absent than approximated.
  */
 context(_: Composer)
-fun shadcnTooltipped(
+fun ShadcnTooltipped(
     text: String,
     modifier: Modifier = Modifier,
     content: context(Composer) () -> Unit,
@@ -115,7 +115,7 @@ fun shadcnTooltipped(
                     TooltipPlacementPolicy(anchor, viewport, (TOOLTIP_GAP.value * density).toInt())
                 },
             ) {
-                shadcnTooltip(text)
+                ShadcnTooltip(text)
             }
         }
     }
@@ -132,7 +132,7 @@ private class TooltipAnchor {
 /**
  * Places the bubble above its trigger, centred, flipping below when there is no room.
  *
- * Reports zero size and places the child outside itself -- see [shadcnTooltipped] for why. Offsets
+ * Reports zero size and places the child outside itself -- see [ShadcnTooltipped] for why. Offsets
  * are relative to the declaring node, which is where `LayoutTree` puts a layer, so the anchor's own
  * absolute position only enters through the viewport clamp.
  */
@@ -146,7 +146,8 @@ private class TooltipPlacementPolicy(
         measurables: List<Measurable>,
         constraints: Constraints,
     ): MeasureResult {
-        val bubble = measurables.firstOrNull()?.measure(Constraints.of(0, constraints.maxWidth, 0, constraints.maxHeight))
+        val bubble = measurables.firstOrNull()
+            ?.measure(Constraints.of(0, constraints.maxWidth, 0, constraints.maxHeight))
             ?: return layout(0, 0) {}
 
         // Above by preference, below when the bubble would leave the top of the viewport. Radix

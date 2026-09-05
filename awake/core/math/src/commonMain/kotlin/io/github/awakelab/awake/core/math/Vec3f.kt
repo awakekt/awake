@@ -9,6 +9,7 @@ import io.github.awakelab.awake.core.math.Vec3f.Companion.FORWARD
 import io.github.awakelab.awake.core.math.Vec3f.Companion.RIGHT
 import io.github.awakelab.awake.core.math.Vec3f.Companion.UP
 import io.github.awakelab.awake.core.math2d.Vec2
+import kotlin.math.atan2
 import kotlin.math.sqrt
 
 /**
@@ -80,6 +81,45 @@ data class Vec3f(var x: Float = 1f, var y: Float = 1f, var z: Float = 1f) {
      * Length over x/y/z only: `sqrt(x * x + y * y + z * z)`.
      */
     fun length3(): Float = sqrt(x * x + y * y + z * z)
+
+    /** Distance between this point and [other]. */
+    fun distanceTo(other: Vec3f): Float = sqrt(squaredDistanceTo(other))
+
+    /** Squared distance between this point and [other] on the XZ horizontal plane. */
+    fun horizontalSquaredDistanceTo(other: Vec3f): Float {
+        val dx = x - other.x
+        val dz = z - other.z
+        return dx * dx + dz * dz
+    }
+
+    /** Distance between this point and [other] on the XZ horizontal plane. */
+    fun horizontalDistanceTo(other: Vec3f): Float = sqrt(horizontalSquaredDistanceTo(other))
+
+    /**
+     * Moves this point in-place towards [target] by at most [maxDistanceDelta] without overshoot.
+     * Returns this instance for chaining.
+     */
+    fun moveTowards(target: Vec3f, maxDistanceDelta: Float): Vec3f {
+        val dx = target.x - x
+        val dy = target.y - y
+        val dz = target.z - z
+        val distSq = dx * dx + dy * dy + dz * dz
+        if (distSq == 0f || (maxDistanceDelta >= 0f && distSq <= maxDistanceDelta * maxDistanceDelta)) {
+            return set(target)
+        }
+        val dist = sqrt(distSq)
+        val step = maxDistanceDelta / dist
+        x += dx * step
+        y += dy * step
+        z += dz * step
+        return this
+    }
+
+    /**
+     * Calculates the Y-axis yaw angle in radians to look from this position towards [target]
+     * on the XZ ground plane.
+     */
+    fun yawTowards(target: Vec3f): Float = atan2(target.x - x, target.z - z)
 
     /** Squared distance between this point and [other] -- for comparing or ordering distances,
      * where the sqrt in `(a - b).length3()` changes nothing and that subtraction allocates a

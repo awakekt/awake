@@ -43,7 +43,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * axis fills.
  */
 context(_: Composer)
-fun shadcnSheet(
+fun ShadcnSheet(
     visible: Boolean,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
@@ -51,7 +51,10 @@ fun shadcnSheet(
     title: String? = null,
     description: String? = null,
     id: String? = null,
-    content: (context(Composer) () -> Unit)? = null,
+    content: (
+        context(Composer)
+        () -> Unit
+    )? = null,
 ) {
     shadcnModalLayer(
         visible = visible,
@@ -69,7 +72,10 @@ private fun sheetPanel(
     side: ShadcnSheetSide,
     title: String?,
     description: String?,
-    content: (context(Composer) () -> Unit)?,
+    content: (
+        context(Composer)
+        () -> Unit
+    )?,
 ) {
     val theme = shadcnTheme
     // Two boxes because `w-3/4 sm:max-w-sm` is a minimum of two rules, and no single chain says it:
@@ -77,29 +83,34 @@ private fun sheetPanel(
     // instead makes the fraction a fraction *of the cap*. The outer box is the three quarters, the
     // panel fills it up to the maximum, and the edge the sheet is pinned to is where it settles.
     Box(Modifier.sizeForSide(side), horizontalAlignment = side.panelAlignment()) {
-    Box(
-        modifier
-            .panelSize(side)
-            .background(theme.palette.background)
-            .border(SheetBorderWidth, theme.palette.border, sides = side.borderSides()),
-    ) {
-        CompositionLocalProvider(
-            LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.foreground),
+        Box(
+            modifier
+                .panelSize(side)
+                .background(theme.palette.background)
+                .border(SheetBorderWidth, theme.palette.border, sides = side.borderSides()),
         ) {
-            Column(
-                Modifier.padding(SheetPadding),
-                verticalArrangement = Arrangement.spacedBy(SheetSectionGap),
+            CompositionLocalProvider(
+                LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.foreground),
             ) {
-                if (title != null || description != null) {
-                    Column(verticalArrangement = Arrangement.spacedBy(SheetHeaderGap)) {
-                        if (title != null) ShadcnText(title, weight = SheetTitleWeight)
-                        if (description != null) ShadcnText(description, variant = ShadcnTextVariant.Muted)
+                Column(
+                    Modifier.padding(SheetPadding),
+                    verticalArrangement = Arrangement.spacedBy(SheetSectionGap),
+                ) {
+                    if (title != null || description != null) {
+                        Column(verticalArrangement = Arrangement.spacedBy(SheetHeaderGap)) {
+                            if (title != null) ShadcnText(title, weight = SheetTitleWeight)
+                            if (description != null) {
+                                ShadcnText(
+                                    description,
+                                    variant = ShadcnTextVariant.Muted,
+                                )
+                            }
+                        }
                     }
+                    content?.let { it() }
                 }
-                content?.let { it() }
             }
         }
-    }
     }
 }
 
@@ -126,6 +137,7 @@ private fun Modifier.sizeForSide(side: ShadcnSheetSide): Modifier = when (side) 
 private fun Modifier.panelSize(side: ShadcnSheetSide): Modifier = when (side) {
     ShadcnSheetSide.Left, ShadcnSheetSide.Right ->
         fillMaxHeight().widthIn(max = SheetSideMaxWidth).fillMaxWidth()
+
     ShadcnSheetSide.Top, ShadcnSheetSide.Bottom -> fillMaxWidth()
 }
 

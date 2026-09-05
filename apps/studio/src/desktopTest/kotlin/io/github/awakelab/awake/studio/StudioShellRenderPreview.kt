@@ -4,18 +4,22 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package io.github.awakelab.awake.studio
-
 import io.github.awakelab.awake.compose.testing.rasterize
 import io.github.awakelab.awake.compose.testing.toBufferedImage
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
 import io.github.awakelab.awake.core.text.font.UiFont
 import io.github.awakelab.awake.core.text.font.UiFonts
+import io.github.awakelab.awake.editor.core.store.EditorEntityId
+import io.github.awakelab.awake.editor.core.store.EditorIntent
+import io.github.awakelab.awake.editor.core.store.EditorStore
 import io.github.awakelab.awake.engine.bootstrap.dsl.app
-import io.github.awakelab.awake.engine.platform.lifecycle.AppFrame
 import io.github.awakelab.awake.engine.bootstrap.dsl.module
+import io.github.awakelab.awake.engine.platform.lifecycle.AppFrame
 import io.github.awakelab.awake.render.renderer.Renderer
 import io.github.awakelab.awake.render.testing.NoopRenderer
+import io.github.awakelab.awake.studio.state.DOCK_TAB_TIMELINE
+import io.github.awakelab.awake.studio.state.StudioContract
 import io.github.awakelab.awake.studio.state.StudioStore
 import kotlinx.coroutines.test.runTest
 import java.io.File
@@ -37,7 +41,7 @@ import kotlin.test.assertTrue
  */
 class StudioShellRenderPreview {
 
-    private val DENSITY = 2f
+    private val density = 2f
 
     private class CapturingRenderer : NoopRenderer() {
         var primitives: List<UiDrawPrimitive> = emptyList()
@@ -54,20 +58,22 @@ class StudioShellRenderPreview {
     @Test
     fun writeStudioShell() = runTest {
         val width = 1440
-        val height = 900
+        val height = 1200
         val renderer: Renderer = CapturingRenderer()
-        val game = app { module(studioModule(StudioStore())) }
+        val store = StudioStore()
+        val bridge = io.github.awakelab.awake.studio.state.StudioEditorBridge(store)
+        val game = app { module(studioModule(store = store, editorBridge = bridge)) }
         game.ready(renderer)
-        // Two frames: the first has no placed geometry to hit-test, so anything hover-driven is
-        // resolved against nothing. The second is a steady-state frame.
-        repeat(2) {
+        // Select entity 3 (Cube) so the Inspector renders Transform with Position, Rotation, Scale!
+        bridge.store.dispatch(EditorIntent.SelectEntity(EditorEntityId("3")))
+        repeat(3) {
             game.update(
                 AppFrame(
                     delta = 1f / 60f,
                     viewportWidth = width.toFloat(),
                     viewportHeight = height.toFloat(),
                     input = game.input.currentSnapshot,
-                    density = DENSITY,
+                    density = density,
                 ),
             )
         }
@@ -89,4 +95,41 @@ class StudioShellRenderPreview {
         println("studio-preview: ${file.absolutePath} (${captured.primitives.size} primitives)")
     }
 
+    @Test
+    fun writeStudioShellCesiumTimeline() = runTest {
+        val width = 1440
+        val height = 900
+        val store = StudioStore()
+        store.selectScene("cesium-man")
+        store.dispatch(StudioContract.Intent.SelectDockTab(DOCK_TAB_TIMELINE))
+        val renderer: Renderer = CapturingRenderer()
+        val module = studioModule(store)
+        val game = app { module(module) }
+        game.ready(renderer)
+        repeat(5) {
+            game.update(
+                AppFrame(
+                    delta = 1f / 60f,
+                    viewportWidth = width.toFloat(),
+                    viewportHeight = height.toFloat(),
+                    input = game.input.currentSnapshot,
+                    density = density,
+                ),
+            )
+        }
+
+        val captured = renderer as CapturingRenderer
+        assertTrue(captured.primitives.isNotEmpty(), "the studio shell drew nothing")
+
+        val out = File("build/reports/studio-preview").apply { mkdirs() }
+        val file = File(out, "studio-shell-cesium-timeline.png")
+        val pixels = captured.primitives.rasterize(
+            width,
+            height,
+            background = Color(0.09f, 0.09f, 0.11f, 1f),
+            font = captured.font ?: UiFonts.default(),
+        )
+        ImageIO.write(pixels.toBufferedImage(width, height), "png", file)
+        println("studio-preview-cesium: ${file.absolutePath} (${captured.primitives.size} primitives)")
+    }
 }

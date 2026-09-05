@@ -5,7 +5,6 @@
  */
 package io.github.awakelab.awake.scene.controls.camera
 
-import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.Entity
 import io.github.awakelab.awake.ecs.Poolable

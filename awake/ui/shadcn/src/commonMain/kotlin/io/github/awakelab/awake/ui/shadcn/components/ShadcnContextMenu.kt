@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("FunctionNaming", "MatchingDeclarationName", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
 import io.github.awakelab.awake.compose.foundation.gestures.onSecondaryPress
@@ -27,6 +29,33 @@ import io.github.awakelab.awake.compose.ui.layout.onPlaced
  * [content] is whatever the menu belongs to. It is wrapped, not replaced, so the right-click target
  * is the caller's own subtree.
  */
+/**
+ * `ShadcnContextMenu`: Displays a menu to the user — such as a set of actions or functions — triggered by a right-click.
+ *
+ * **Tailwind Reference**: `z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-80`.
+ */
+context(_: Composer)
+fun ShadcnContextMenu(
+    entries: List<ShadcnMenuEntry>,
+    onItemSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    menuModifier: Modifier = Modifier,
+    id: String? = null,
+    content: (
+        context(Composer)
+        () -> Unit
+    )? = null,
+) {
+    shadcnContextMenu(
+        entries = entries,
+        onItemSelected = onItemSelected,
+        modifier = modifier,
+        menuModifier = menuModifier,
+        id = id,
+        content = content,
+    )
+}
+
 context(_: Composer)
 fun shadcnContextMenu(
     entries: List<ShadcnMenuEntry>,
@@ -34,7 +63,10 @@ fun shadcnContextMenu(
     modifier: Modifier = Modifier,
     menuModifier: Modifier = Modifier,
     id: String? = null,
-    content: (context(Composer) () -> Unit)? = null,
+    content: (
+        context(Composer)
+        () -> Unit
+    )? = null,
 ) {
     val state = remember { ContextMenuState() }
     val origin = remember { PopupAnchor() }
@@ -60,10 +92,19 @@ fun shadcnContextMenu(
                 dismissOnOutsideClick = true,
                 onDismissRequest = { state.open = false },
                 // A zero-sized anchor at the pointer: "below" a point is at the point.
-                positionProvider = remember { AnchoredBelowPositionProvider(state.anchor, gap = 0) },
+                positionProvider = remember {
+                    AnchoredBelowPositionProvider(
+                        state.anchor,
+                        gap = 0,
+                    )
+                },
                 measurePolicy = BoxMeasurePolicy(),
             ) {
-                shadcnDropdownMenu(entries, modifier = menuModifier.alpha(alpha), id = id)?.let { selected ->
+                ShadcnDropdownMenu(
+                    entries,
+                    modifier = menuModifier.alpha(alpha),
+                    id = id,
+                )?.let { selected ->
                     onItemSelected(selected)
                     state.open = false
                 }

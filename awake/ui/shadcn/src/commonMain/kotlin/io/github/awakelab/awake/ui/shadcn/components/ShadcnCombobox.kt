@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
 import io.github.awakelab.awake.compose.foundation.background
@@ -32,9 +33,6 @@ import io.github.awakelab.awake.compose.ui.Alignment
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.layout.Layer
 import io.github.awakelab.awake.compose.ui.layout.LayerKind
-import io.github.awakelab.awake.compose.ui.layout.LayerPosition
-import io.github.awakelab.awake.compose.ui.layout.LayerPositionProvider
-import io.github.awakelab.awake.compose.ui.layout.onPlaced
 import io.github.awakelab.awake.compose.ui.layout.onSizeChanged
 import io.github.awakelab.awake.compose.ui.platform.LocalDensity
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsProperties
@@ -178,7 +176,9 @@ private fun ShadcnComboboxContent(
                                 Modifier
                                     .fillMaxWidth()
                                     .hoverable(interaction, enabled = item.enabled)
-                                    .clickable(interaction) { if (item.enabled) state.clicked = originalIndex }
+                                    .clickable(interaction) {
+                                        if (item.enabled) state.clicked = originalIndex
+                                    }
                                     .let {
                                         if (isHovered || isSelected) {
                                             it.background(theme.palette.accent, theme.radii.sm)
@@ -195,7 +195,8 @@ private fun ShadcnComboboxContent(
                                     .semantics {
                                         this[SemanticsProperties.Role] = SemanticsRole.Button
                                         this[SemanticsProperties.Label] = item.label
-                                        this[SemanticsProperties.TestTag] = "$id.item.$originalIndex"
+                                        this[SemanticsProperties.TestTag] =
+                                            "$id.item.$originalIndex"
                                         if (!item.enabled) this[SemanticsProperties.Disabled] = true
                                     },
                                 horizontalArrangement = Arrangement.SpaceBetweenHorizontal,
@@ -212,7 +213,7 @@ private fun ShadcnComboboxContent(
                                     weight = FontWeight.Normal,
                                 )
                                 if (isSelected) {
-                                    shadcnIcon(
+                                    ShadcnIcon(
                                         ShadcnIcons.check,
                                         tint = theme.palette.popoverForeground,
                                     )
@@ -227,7 +228,10 @@ private fun ShadcnComboboxContent(
     return clicked
 }
 
-private class ComboboxContentState { var clicked: Int? = null }
+private class ComboboxContentState {
+    var clicked: Int? = null
+}
+
 /** Matches shadcn's current Base UI ComboboxContent `sideOffset={6}`. */
 private val ComboboxPopupGap = 6.dp
 

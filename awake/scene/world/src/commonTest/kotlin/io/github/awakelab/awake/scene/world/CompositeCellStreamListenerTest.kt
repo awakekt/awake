@@ -19,8 +19,7 @@ import kotlin.test.assertTrue
  */
 class CompositeCellStreamListenerTest {
 
-    private class Recorder(private val name: String, private val log: MutableList<String>) :
-        AsyncWorldCellStreamListener {
+    private class Recorder(private val name: String, private val log: MutableList<String>) : AsyncWorldCellStreamListener {
         override suspend fun loadCell(coord: WorldCellCoord): CellContent {
             log += "load:$name"
             return CellContent { log += "apply:$name" }

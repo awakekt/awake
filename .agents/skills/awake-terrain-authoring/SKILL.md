@@ -1,9 +1,9 @@
 ---
 name: awake-terrain-authoring
-description: Author Awake heightmaps, dynamic terrain edits, grid meshes, and terrain collision composition. Use before changing `asset:terrain`, creating terrain patches, or consuming terrain from a game; excludes water, biomes, vegetation, and placement packs.
+description: Author Awake heightmaps, dynamic terrain edits, geometry clipmaps, texture splatting, and terrain collision composition. Trigger keywords - clipmap, geometry clipmap, concentric rings, terrain driver, worldstream, cell streaming, heightfield tile, splat map, texture array, terrain splatting, tile streaming.
 metadata:
   author: awake
-  last-updated: '2026-08-24'
+  last-updated: '2026-09-04'
 ---
 
 # Awake Terrain Authoring
@@ -12,12 +12,32 @@ Read [the terrain plan](../../docs/tasks/2026-08-24-terrain-rendering-plan.md) a
 [the framework/game boundary](../../docs/reference/framework-game-boundary.md) before adding a
 terrain capability.
 
+## Terrain Paradigms: Geometry Clipmaps vs Cell Worldstream
+
+Awake provides two complementary "cousin" paradigms for rendering terrains at scale:
+
+1. **Geometry Clipmaps (`awake:asset:terrain:clipmap`)**:
+   - Camera-centric nested concentric rings (`TerrainClipmapGeometry`, `TerrainClipmapTracker`).
+   - Rings snap to discrete grid increments as the camera moves; meshes are created once on attach and displaced on the GPU.
+   - **$O(1)$ constant VRAM footprint** with zero chunk boundary seams or pop-in. Best for continuous single-zone landscapes, island maps, and heightmap-driven regions.
+2. **Cell-Based Worldstream (`awake-pro:plugins:worldstream`)**:
+   - Spatial partitioning across discrete $(x, z)$ world coordinates (`MeshCellStreamer`, `HeightFieldCellStreaming`).
+   - Asynchronously streams cell mesh geometry and Jolt physics colliders (`heightFieldTile`) off the frame thread.
+   - Best for massive multi-kilometer MMOs, multi-region worlds, and background tile streaming.
+
+## Multi-Texture Splatting
+
+- Multi-layer ground blending uses `TerrainSplatWeightMap` (4-channel RGBA weights) in `awake:asset:terrain:splat`.
+- Rendered on the GPU using `PackShaderSets.TerrainSplat` (`AslTerrainSplatShader` in `awake:asset:shader-pack`) via a 4-layer `texture_2d_array` diffuse texture.
+
 ## Ownership
 
-`awake:asset:terrain` owns backend-neutral terrain source data and geometry only:
+`awake:asset:terrain` owns backend-neutral terrain source data, clipmap geometry, and splat weights only:
 
 - `Heightmap`: immutable rectangular samples, row-major `z * width + x`, Y-up, corner origin.
 - `MutableHeightmap`: explicit runtime edits, revisioned dirty regions, and immutable snapshots.
+- `TerrainClipmapGeometry` & `TerrainClipmapTracker`: concentric ring generation and grid snapping.
+- `TerrainSplatWeightMap`: 4-channel ground weight data.
 - Grid/patch mesh construction and local surface queries.
 
 It must not own GPU handles, ECS entities, materials, Jolt bodies, water, biomes, vegetation, or

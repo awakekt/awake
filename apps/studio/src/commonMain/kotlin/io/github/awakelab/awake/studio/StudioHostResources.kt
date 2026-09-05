@@ -53,4 +53,3 @@ internal fun studioHostResources(
     logBuffer: LogRingBuffer = LogRingBuffer(),
     files: StudioFileContents = StudioFileContents(),
 ): StudioHostResources = StudioHostResources(viewportRect, cameraPreview, orientationGizmo, logBuffer, files)
-

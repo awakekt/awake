@@ -7,21 +7,21 @@ package io.github.awakelab.awake.compose.ui.draw
 
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.ModifierNodeElement
+import io.github.awakelab.awake.compose.ui.graphics.BlendMode
+import io.github.awakelab.awake.compose.ui.graphics.Brush
 import io.github.awakelab.awake.compose.ui.graphics.RectangleShape
+import io.github.awakelab.awake.compose.ui.graphics.RenderEffect
 import io.github.awakelab.awake.compose.ui.graphics.Shape
 import io.github.awakelab.awake.compose.ui.graphics.ShapeOutline
-import io.github.awakelab.awake.compose.ui.graphics.Brush
-import io.github.awakelab.awake.compose.ui.graphics.BlendMode
-import io.github.awakelab.awake.compose.ui.graphics.RenderEffect
 import io.github.awakelab.awake.compose.ui.graphics.drawscope.DrawScope
 import io.github.awakelab.awake.compose.ui.graphics.drawscope.LayerDrawScope
 import io.github.awakelab.awake.compose.ui.graphics.shadow.Shadow
 import io.github.awakelab.awake.compose.ui.node.DrawModifierNode
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.graphics2d.toPath
+import io.github.awakelab.awake.core.math2d.Dp
 import io.github.awakelab.awake.core.math2d.Size2D
 import io.github.awakelab.awake.core.math2d.dp
-import io.github.awakelab.awake.core.math2d.Dp
 
 /**
  * Draws underneath this node's content, in node-local coordinates.
@@ -124,11 +124,15 @@ private class DrawBehindElement(
     private val onDraw: DrawScope.() -> Unit,
 ) : ModifierNodeElement<DrawBehindNode>() {
     override fun create(): DrawBehindNode = DrawBehindNode()
-    override fun update(node: DrawBehindNode) { node.onDraw = onDraw }
+    override fun update(node: DrawBehindNode) {
+        node.onDraw = onDraw
+    }
     override fun toString(): String = "drawBehind()"
 }
 
-private class DrawBehindNode : Modifier.Node(), DrawModifierNode {
+private class DrawBehindNode :
+    Modifier.Node(),
+    DrawModifierNode {
     lateinit var onDraw: DrawScope.() -> Unit
     override fun DrawScope.draw(drawContent: () -> Unit) {
         onDraw()
@@ -143,11 +147,16 @@ private class DropShadowElement(
     private val shadow: Shadow,
 ) : ModifierNodeElement<DropShadowNode>() {
     override fun create(): DropShadowNode = DropShadowNode()
-    override fun update(node: DropShadowNode) { node.shape = shape; node.shadow = shadow }
+    override fun update(node: DropShadowNode) {
+        node.shape = shape
+        node.shadow = shadow
+    }
     override fun toString(): String = "dropShadow($shape, $shadow)"
 }
 
-private class DropShadowNode : Modifier.Node(), DrawModifierNode {
+private class DropShadowNode :
+    Modifier.Node(),
+    DrawModifierNode {
     lateinit var shape: Shape
     lateinit var shadow: Shadow
     override fun DrawScope.draw(drawContent: () -> Unit) {
@@ -203,11 +212,15 @@ private class DrawWithContentElement(
     private val onDraw: ContentDrawScope.() -> Unit,
 ) : ModifierNodeElement<DrawWithContentNode>() {
     override fun create(): DrawWithContentNode = DrawWithContentNode()
-    override fun update(node: DrawWithContentNode) { node.onDraw = onDraw }
+    override fun update(node: DrawWithContentNode) {
+        node.onDraw = onDraw
+    }
     override fun toString(): String = "drawWithContent()"
 }
 
-private class DrawWithContentNode : Modifier.Node(), DrawModifierNode {
+private class DrawWithContentNode :
+    Modifier.Node(),
+    DrawModifierNode {
     lateinit var onDraw: ContentDrawScope.() -> Unit
     override fun DrawScope.draw(drawContent: () -> Unit) {
         // Allocated per draw link per frame, which is once per node that uses this modifier -- the
@@ -224,11 +237,16 @@ private class ScaleElement(
     private val scaleY: Float,
 ) : ModifierNodeElement<ScaleNode>() {
     override fun create(): ScaleNode = ScaleNode()
-    override fun update(node: ScaleNode) { node.scaleX = scaleX; node.scaleY = scaleY }
+    override fun update(node: ScaleNode) {
+        node.scaleX = scaleX
+        node.scaleY = scaleY
+    }
     override fun toString(): String = "scale($scaleX, $scaleY)"
 }
 
-private class ScaleNode : Modifier.Node(), DrawModifierNode {
+private class ScaleNode :
+    Modifier.Node(),
+    DrawModifierNode {
     var scaleX: Float = 1f
     var scaleY: Float = 1f
     override fun DrawScope.draw(drawContent: () -> Unit) {
@@ -252,16 +270,24 @@ private class GraphicsLayerElement(
 ) : ModifierNodeElement<GraphicsLayerNode>() {
     override fun create(): GraphicsLayerNode = GraphicsLayerNode()
     override fun update(node: GraphicsLayerNode) {
-        node.alpha = alpha; node.scaleX = scaleX; node.scaleY = scaleY
-        node.translationX = translationX; node.translationY = translationY
-        node.rotationDegrees = rotationDegrees; node.blendMode = blendMode
-        node.renderEffect = renderEffect; node.shadowElevation = shadowElevation; node.shape = shape
+        node.alpha = alpha
+        node.scaleX = scaleX
+        node.scaleY = scaleY
+        node.translationX = translationX
+        node.translationY = translationY
+        node.rotationDegrees = rotationDegrees
+        node.blendMode = blendMode
+        node.renderEffect = renderEffect
+        node.shadowElevation = shadowElevation
+        node.shape = shape
     }
     override fun toString(): String =
         "graphicsLayer(alpha=$alpha, scaleX=$scaleX, scaleY=$scaleY, rotation=$rotationDegrees, blendMode=$blendMode, renderEffect=$renderEffect)"
 }
 
-private class GraphicsLayerNode : Modifier.Node(), DrawModifierNode {
+private class GraphicsLayerNode :
+    Modifier.Node(),
+    DrawModifierNode {
     var alpha: Float = 1f
     var scaleX: Float = 1f
     var scaleY: Float = 1f
@@ -287,7 +313,9 @@ private object ClipElement : ModifierNodeElement<ClipNode>() {
     override fun toString(): String = "clip()"
 }
 
-private class ClipNode : Modifier.Node(), DrawModifierNode {
+private class ClipNode :
+    Modifier.Node(),
+    DrawModifierNode {
     override fun DrawScope.draw(drawContent: () -> Unit) {
         clipped { drawContent() }
     }
@@ -299,11 +327,15 @@ private class ShapeClipElement(
     private val shape: Shape,
 ) : ModifierNodeElement<ShapeClipNode>() {
     override fun create(): ShapeClipNode = ShapeClipNode()
-    override fun update(node: ShapeClipNode) { node.shape = shape }
+    override fun update(node: ShapeClipNode) {
+        node.shape = shape
+    }
     override fun toString(): String = "clip($shape)"
 }
 
-private class ShapeClipNode : Modifier.Node(), DrawModifierNode {
+private class ShapeClipNode :
+    Modifier.Node(),
+    DrawModifierNode {
     lateinit var shape: Shape
     override fun DrawScope.draw(drawContent: () -> Unit) {
         when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density)) {
@@ -349,11 +381,15 @@ private class AlphaElement(
     private val alpha: Float,
 ) : ModifierNodeElement<AlphaNode>() {
     override fun create(): AlphaNode = AlphaNode()
-    override fun update(node: AlphaNode) { node.alpha = alpha }
+    override fun update(node: AlphaNode) {
+        node.alpha = alpha
+    }
     override fun toString(): String = "alpha($alpha)"
 }
 
-private class AlphaNode : Modifier.Node(), DrawModifierNode {
+private class AlphaNode :
+    Modifier.Node(),
+    DrawModifierNode {
     var alpha: Float = 1f
     override fun DrawScope.draw(drawContent: () -> Unit) {
         withAlpha(alpha) { drawContent() }
@@ -366,14 +402,16 @@ private class ZIndexElement(
     private val zIndex: Float,
 ) : ModifierNodeElement<ZIndexNode>() {
     override fun create(): ZIndexNode = ZIndexNode(zIndex)
-    override fun update(node: ZIndexNode) { node.zIndex = zIndex }
+    override fun update(node: ZIndexNode) {
+        node.zIndex = zIndex
+    }
     override fun toString(): String = "zIndex($zIndex)"
 }
 
 private class ZIndexNode(
     var zIndex: Float,
-) : Modifier.Node(), io.github.awakelab.awake.compose.ui.node.ZIndexModifierNode {
+) : Modifier.Node(),
+    io.github.awakelab.awake.compose.ui.node.ZIndexModifierNode {
     override fun modifyZIndex(current: Float): Float = zIndex
     override fun toString(): String = "zIndex($zIndex)"
 }
-

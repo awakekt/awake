@@ -572,6 +572,8 @@ public final class io/github/awakelab/awake/render/renderer/DebugGeometryKt {
 	public static final fun boundsDebugLines (Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/color/Color;)Ljava/util/List;
 	public static final fun frustumDebugLines (Lio/github/awakelab/awake/core/math/Lens;FLio/github/awakelab/awake/core/color/Color;)Ljava/util/List;
 	public static final fun lightGizmoLines (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/color/Color;)Ljava/util/List;
+	public static final fun objectAuraLines (Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/color/Color;Z)Ljava/util/List;
+	public static synthetic fun objectAuraLines$default (Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/color/Color;ZILjava/lang/Object;)Ljava/util/List;
 }
 
 public final class io/github/awakelab/awake/render/renderer/DepthFogFields {
@@ -643,6 +645,21 @@ public final class io/github/awakelab/awake/render/renderer/DrawCall {
 	public final fun getVertexAnimation ()Lio/github/awakelab/awake/core/math/Vec3f;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/render/renderer/InfiniteGridFields {
+	public static final field INSTANCE Lio/github/awakelab/awake/render/renderer/InfiniteGridFields;
+	public final fun getAxisColorX ()Lio/github/awakelab/awake/render/renderer/UniformField;
+	public final fun getAxisColorZ ()Lio/github/awakelab/awake/render/renderer/UniformField;
+	public final fun getCameraEye ()Lio/github/awakelab/awake/render/renderer/UniformField;
+	public final fun getGridColor ()Lio/github/awakelab/awake/render/renderer/UniformField;
+	public final fun getGridParams ()Lio/github/awakelab/awake/render/renderer/UniformField;
+	public final fun getInverseViewProjection ()Lio/github/awakelab/awake/render/renderer/UniformField;
+	public final fun getSubGridColor ()Lio/github/awakelab/awake/render/renderer/UniformField;
+}
+
+public final class io/github/awakelab/awake/render/renderer/InfiniteGridFieldsKt {
+	public static final fun getInfiniteGridUniformLayout ()Lio/github/awakelab/awake/render/renderer/UniformLayout;
 }
 
 public final class io/github/awakelab/awake/render/renderer/LineSegment {
@@ -823,6 +840,8 @@ public final class io/github/awakelab/awake/render/renderer/ShadowCascadesKt {
 	public static final field DEFAULT_SHADOW_CASCADES I
 	public static final field DEFAULT_SHADOW_DISTANCE F
 	public static final field DEFAULT_SHADOW_MAP_SIZE I
+	public static final field SHADOW_DEPTH_BIAS_CONSTANT F
+	public static final field SHADOW_DEPTH_BIAS_SLOPE F
 	public static final fun cascadeShadowBoxes (Lio/github/awakelab/awake/core/math/Lens;FLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/ClipSpace;[FI)Ljava/util/List;
 	public static synthetic fun cascadeShadowBoxes$default (Lio/github/awakelab/awake/core/math/Lens;FLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/ClipSpace;[FIILjava/lang/Object;)Ljava/util/List;
 	public static final fun cascadeSplitDistances (FFIF)[F

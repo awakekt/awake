@@ -6,18 +6,19 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-09-01` | **Total Tracked Docs**: `200`
+**Last Self-Healed**: `2026-09-05` | **Total Tracked Docs**: `199`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
 | **Strategy & Roadmap** | [`MMORPG Engine Roadmap`](mmorpg-roadmap.md) | `In Progress` | Companion to [mvp-plan.md](./mvp-plan.md). That document covers the near-term "spinning |
-| **Decisions (ADR)** | [`D10 — jni-binding-generator de-risk findings (2026-07-07)`](decisions/D10-codegen-derisk-findings.md) | `Accepted` | Phase 1a of [mvp-plan.md](../mvp-plan.md) called for a week-one de-risk: run |
-| **Decisions (ADR)** | [`D11: JNI Native Implementation Boundary`](decisions/D11-jni-native-implementation-boundary.md) | `Accepted` | `jni-binding-generator` owns the JNI boundary only: exported JNI names, parameter |
-| **Decisions (ADR)** | [`D28: Open-World Subsystems — Awake vs Starter-Kit Boundary`](decisions/D28-open-world-framework-boundary.md) | `Accepted` | The open-world RFC's subsystems are split by the |
-| **Decisions (ADR)** | [`D29: Physics — When Awake Would Write Its Own Engine`](decisions/D29-physics-own-engine-exit-criteria.md) | `Accepted` | Awake builds on Jolt ([D5](../reference/decision-log.md)) and does **not** hold "write our own |
-| **Decisions (ADR)** | [`D30: Math — Which Numeric Primitive Variants Earn a Type`](decisions/D30-math-numeric-primitive-variants.md) | `Accepted` | `:awake:core:math` does **not** carry a variant of every vector/quaternion/matrix type for |
-| **Decisions (ADR)** | [`D31: Net — What the Transport Module Owns, and What Stays in the Game`](decisions/D31-net-api-extraction.md) | `Accepted` | `:awake:net:api` exists and carries exactly two things: the **transport port** and the |
-| **Decisions (ADR)** | [`D32 — The editor is a library, not Studio's UI (2026-08-31)`](decisions/D32-editor-is-a-library.md) | `Accepted` | **Status: Accepted.** `awake:editor` and its adapters are a published library whose consumers are |
+| **Architecture** | [`Architecture`](architecture/architecture.md) | `Stable` | Awake is a Kotlin Multiplatform game engine library: a Vulkan-first cross-platform renderer |
+| **Architecture** | [`D10 — jni-binding-generator de-risk findings (2026-07-07)`](architecture/decisions/D10-codegen-derisk-findings.md) | `Stable` | Phase 1a of [mvp-plan.md](../mvp-plan.md) called for a week-one de-risk: run |
+| **Architecture** | [`D11: JNI Native Implementation Boundary`](architecture/decisions/D11-jni-native-implementation-boundary.md) | `Stable` | `jni-binding-generator` owns the JNI boundary only: exported JNI names, parameter |
+| **Architecture** | [`D28: Open-World Subsystems — Awake vs Starter-Kit Boundary`](architecture/decisions/D28-open-world-framework-boundary.md) | `Stable` | The open-world RFC's subsystems are split by the |
+| **Architecture** | [`D29: Physics — When Awake Would Write Its Own Engine`](architecture/decisions/D29-physics-own-engine-exit-criteria.md) | `Stable` | Awake builds on Jolt ([D5](../reference/decision-log.md)) and does **not** hold "write our own |
+| **Architecture** | [`D30: Math — Which Numeric Primitive Variants Earn a Type`](architecture/decisions/D30-math-numeric-primitive-variants.md) | `Stable` | `:awake:core:math` does **not** carry a variant of every vector/quaternion/matrix type for |
+| **Architecture** | [`D31: Net — What the Transport Module Owns, and What Stays in the Game`](architecture/decisions/D31-net-api-extraction.md) | `Stable` | `:awake:net:api` exists and carries exactly two things: the **transport port** and the |
+| **Architecture** | [`D32 — The editor is a library, not Studio's UI (2026-08-31)`](architecture/decisions/D32-editor-is-a-library.md) | `Stable` | **Status: Accepted.** `awake:editor` and its adapters are a published library whose consumers are |
 | **Audits** | [`Shadcn visual parity audit — 2026-08-15`](audits/2026-08-15-shadcn-visual-parity-audit.md) | `Active` | Live audit of `samples:ui-showcase` (wasmJs, WebGPU, dpr=2) against official shadcn/ui |
 | **Audits** | [`UI refactor plan — 2026-08-17`](audits/2026-08-17-ui-refactor-vs-recreate-audit.md) | `Active` | **Verdict: refactor in place. Do not recreate.** Recreate only 3 small units |
 | **Audits** | [`Application layer — full shape survey and options`](audits/2026-08-19-application-layer-shape-options.md) | `Active` | Status: draft, not implemented. Scope widened from |
@@ -42,22 +43,6 @@
 | **Audits** | [`Scene editor — production-readiness audit`](audits/2026-08-30-scene-editor-production-readiness-audit.md) | `Active` | Audited 2026-08-30 against `awake:editor`, `awake:editor:scene`, their only host |
 | **Audits** | [`Tooling Consolidation, Duplicate Audit, and 2D/3D Decoupling (2026-08-30)`](audits/2026-08-30-tooling-consolidation-plan.md) | `Active` | **Date:** 2026-08-30 |
 | **Audits** | [`Button group: intrinsic cross-axis sizing + per-corner radii`](audits/button-group-intrinsics-handoff.md) | `Active` | Handoff for a fresh session. Reference implementation is the user's own |
-| **Active Task** | [`2026-08-25: a real `Shape` abstraction for `background`/`border`/`clip``](tasks/2026-08-25-compose-shape-abstraction-plan.md) | `Active` | Status: **superseded — landed independently, more completely than this plan proposed.** |
-| **Active Task** | [`JNI Native Implementation Migration Plan`](tasks/2026-08-28-jni-native-implementation-migration-plan.md) | `Active` | **Status:** Open |
-| **Active Task** | [`Pluggable Compose Editor Architecture for Awake Engine`](tasks/2026-08-28-pluggable-editor-architecture-plan.md) | `Active` | **Date:** 2026-08-28 |
-| **Active Task** | [`Texture Resource Manager Plan`](tasks/2026-08-28-texture-resource-manager-plan.md) | `Active` | Date: 2026-08-28 |
-| **Active Task** | [`UI Antialiasing Capability Plan`](tasks/2026-08-28-ui-antialiasing-plan.md) | `Active` | Date: 2026-08-28 |
-| **Active Task** | [`UI Render Pipeline Contract Plan`](tasks/2026-08-28-ui-render-pipeline-contract-plan.md) | `Active` | Date: 2026-08-28 |
-| **Active Task** | [`Async Cell Streaming Plan`](tasks/2026-08-29-async-cell-streaming-plan.md) | `Active` | Date: 2026-08-29 |
-| **Active Task** | [`Content Feature Textures Plan`](tasks/2026-08-29-content-feature-textures-plan.md) | `Active` | Date: 2026-08-29 |
-| **Active Task** | [`Kotlin Package Namespace Migration Plan`](tasks/2026-08-29-kotlin-package-namespace-migration-plan.md) | `Active` | **Date:** 2026-08-29 |
-| **Active Task** | [`Material Binding Declaration Plan`](tasks/2026-08-29-material-binding-declaration-plan.md) | `Active` | Date: 2026-08-29 |
-| **Active Task** | [`Maven Central Publication Plan`](tasks/2026-08-29-maven-central-publication-plan.md) | `Active` | **Date:** 2026-08-29 |
-| **Active Task** | [`Terrain Clipmap Draw Plan`](tasks/2026-08-29-terrain-clipmap-draw-plan.md) | `Active` | Date: 2026-08-29 |
-| **Active Task** | [`Behavior Tree & State Machine Plan — one hybrid runtime, and where an LLM fits`](tasks/2026-08-30-behavior-tree-state-machine-plan.md) | `Active` | Date: 2026-08-30 |
-| **Active Task** | [`Gizmo rotation: scoping audit gap #13`](tasks/2026-08-30-gizmo-rotation-scope.md) | `Active` | Scope for the scene-editor audit's P1 #13, *"Euler-radian rotation summed per component -- gimbal |
-| **Active Task** | [`Navigation Plan — a Heightmap-Derived NavGrid, in commonMain`](tasks/2026-08-30-navgrid-navigation-plan.md) | `Active` | Date: 2026-08-30 |
-| **Active Task** | [`2026-08-31: generate `ImageVector` icons from vendored SVGs at build time`](tasks/2026-08-31-icon-codegen-plan.md) | `Active` | Status: **done, 2026-09-01.** Heroicons is pinned at **v2.2.0** and all 78 committed icons |
 | **Active Task** | [`Awake Editor Plan — rebuild, do not port`](tasks/editor/01-compose-editor-plan-todo.md) | `Active` | Drafted 2026-08-22. Revised 2026-08-25. Status: Stages 0 and 1 foundations complete; |
 | **Active Task** | [``Vec3f` / `Vec3d` / `Vec3i` — precision variants`](tasks/math/01-vector-precision-variants-todo.md) | `Active` | Drafted 2026-08-22. Status: todo. Gated on a real consumer per variant; see Triggers. |
 | **Reference** | [`Agent Catalog`](reference/agent-catalog.md) | `Active` | This document is the canonical source for Awake's repo-local agent roster, naming convention, |
@@ -90,7 +75,7 @@
 | **Reference** | [`Ecs Scene Simplification`](reference/ecs-scene-simplification.md) | `Active` | Instead of using a generic mutableListOf<Any>() which creates extra garbage collection allocations, your EntityModifier ... |
 | **Reference** | [`Engineering Change Summaries`](reference/engineering-change-summaries.md) | `Active` | Use this format when handing off non-trivial Awake changes: renderer fixes, ECS/runtime |
 | **Reference** | [`Framework and Game Boundary`](reference/framework-game-boundary.md) | `Active` | Awake is a reusable engine/framework. A future MMORPG is a separate consumer repository. |
-| **Reference** | [`Game DSL`](reference/game-dsl.md) | `Active` | This page is the quick guide for Awake's root authored game shell. |
+| **Reference** | [`Application & Game DSL`](reference/game-dsl.md) | `Active` | This page is the quick guide for Awake's root application and game shell DSL. |
 | **Reference** | [`Game Structure`](reference/game-structure.md) | `Active` | This document is the canonical source for how Awake organizes state and folders when |
 | **Reference** | [`2D rendering glossary`](reference/glossary/2d.md) | `Active` | UI rendering terms — how a widget becomes pixels. See [3d.md](3d.md) for the scene pass and |
 | **Reference** | [`3D rendering glossary`](reference/glossary/3d.md) | `Active` | Scene rendering terms. See [2d.md](2d.md) for the UI pass and |
@@ -134,8 +119,6 @@
 | **Tasks (Archive)** | [`Application seam and module naming plan`](tasks/archive/2026-08-09-application-seam-and-module-naming-plan.md) | `Archived` | Date: 2026-08-09 |
 | **Tasks (Archive)** | [`Glyphs render ~0.6x their own metrics -- RETRACTED; real ~0.9x residual FIXED`](tasks/archive/2026-08-10-glyph-scale-regression.md) | `Archived` | Status: **the 0.6x report was a measurement artifact; behind it sat a real, smaller defect, |
 | **Tasks (Archive)** | [`MTSDF atlas migration`](tasks/archive/2026-08-10-mtsdf-atlas-migration.md) | `Archived` | Status: **implemented**. The generated Roboto faces use committed MTSDF atlases, the default |
-| **Tasks (Archive)** | [`Studio layout audit`](tasks/archive/2026-08-11-studio-layout-audit.md) | `Archived` | Audited 2026-08-11 against `samples/studio/src/commonMain/kotlin/.../ui/`. Findings are from |
-| **Tasks (Archive)** | [`Studio layout -- proposed design`](tasks/archive/2026-08-11-studio-layout-design.md) | `Archived` | Companion to `2026-08-11-studio-layout-audit.md`, which found three inert controls and a left |
 | **Tasks (Archive)** | [`Final Plan: UI API / Core / Headless Boundary`](tasks/archive/2026-08-11-ui-designsystem-headless-boundary-migration.md) | `Archived` | `ui-designsystem` compiles only against `ui-headless` and `ui-api`. It has no `ui-core` |
 | **Tasks (Archive)** | [`UI Showcase Parity Tracker`](tasks/archive/2026-08-12-ui-showcase-parity-tracker.md) | `Archived` | This is the execution tracker for the post-boundary-migration UI cleanup. It is intentionally |
 | **Tasks (Archive)** | [`UI implementation plan — from 2026-08-14`](tasks/archive/2026-08-14-ui-implementation-plan.md) | `Archived` | Ordered so each phase leaves the tree in a state the next one can trust. Phase 0 first because |
@@ -178,7 +161,7 @@
 | **Tasks (Archive)** | [`vulkan-kmp: publishing Awake's Vulkan bindings as the first maintained KMP Vulkan library`](tasks/archive/2026-08-24-vulkan-kmp-bindings-publish-plan.md) | `Archived` | Decision (2026-08-24): **core profile first, vk.xml later; published from this repo.** The |
 | **Tasks (Archive)** | [`What nothing checks`](tasks/archive/2026-08-24-what-nothing-checks-plan.md) | `Archived` | Status: **in progress. Step 1 done, 2-4 open.** Written 2026-08-24. |
 | **Tasks (Archive)** | [`Compose node-local shadow plan`](tasks/archive/2026-08-25-compose-node-local-shadow-plan.md) | `Archived` | Status: implemented |
-| **Tasks (Archive)** | [`2026-08-25: a real `Shape` abstraction for `background`/`border`/`clip``](tasks/archive/2026-08-25-compose-shape-abstraction-plan.md) | `Archived` | Found while fixing a real border-rendering bug (committed `f617e5fbe`): Awake's compose engine has |
+| **Tasks (Archive)** | [`2026-08-25: a real `Shape` abstraction for `background`/`border`/`clip``](tasks/archive/2026-08-25-compose-shape-abstraction-plan.md) | `Archived` | Status: **superseded — landed independently, more completely than this plan proposed.** |
 | **Tasks (Archive)** | [`Compose Stage 2 — state invalidation and retained skip scopes`](tasks/archive/2026-08-25-compose-stage-2-invalidation-plan.md) | `Archived` | Status: completed — runtime scopes, state invalidation, host retention, focused tests, Studio chrome |
 | **Tasks (Archive)** | [`Scene Session Simplification Plan`](tasks/archive/2026-08-25-scene-session-simplification-plan.md) | `Archived` | Date: 2026-08-25 |
 | **Tasks (Archive)** | [`Shadcn parity handoff — 2026-08-25`](tasks/archive/2026-08-25-shadcn-parity-handoff.md) | `Archived` | Status: active handoff |
@@ -187,13 +170,29 @@
 | **Tasks (Archive)** | [`Compose generic-shape shadow plan`](tasks/archive/2026-08-27-compose-generic-shape-shadow-plan.md) | `Archived` | Status: planned |
 | **Tasks (Archive)** | [`Compose Modifier node lifecycle plan`](tasks/archive/2026-08-27-compose-modifier-node-lifecycle-plan.md) | `Archived` | Move retained modifier behavior from per-pass `Modifier.Element` instances into Compose-shaped |
 | **Tasks (Archive)** | [`Compose next stages plan`](tasks/archive/2026-08-27-compose-next-stages-plan.md) | `Archived` | Status: in progress — Stage A (bridge) and Stage B (retained scope closure) completed. This plan |
+| **Tasks (Archive)** | [`JNI Native Implementation Migration Plan`](tasks/archive/2026-08-28-jni-native-implementation-migration-plan.md) | `Archived` | **Status:** Open |
+| **Tasks (Archive)** | [`Pluggable Compose Editor Architecture for Awake Engine`](tasks/archive/2026-08-28-pluggable-editor-architecture-plan.md) | `Archived` | **Date:** 2026-08-28 |
+| **Tasks (Archive)** | [`Texture Resource Manager Plan`](tasks/archive/2026-08-28-texture-resource-manager-plan.md) | `Archived` | Date: 2026-08-28 |
+| **Tasks (Archive)** | [`UI Antialiasing Capability Plan`](tasks/archive/2026-08-28-ui-antialiasing-plan.md) | `Archived` | Date: 2026-08-28 |
+| **Tasks (Archive)** | [`UI Render Pipeline Contract Plan`](tasks/archive/2026-08-28-ui-render-pipeline-contract-plan.md) | `Archived` | Date: 2026-08-28 |
+| **Tasks (Archive)** | [`Async Cell Streaming Plan`](tasks/archive/2026-08-29-async-cell-streaming-plan.md) | `Archived` | Date: 2026-08-29 |
+| **Tasks (Archive)** | [`Content Feature Textures Plan`](tasks/archive/2026-08-29-content-feature-textures-plan.md) | `Archived` | Date: 2026-08-29 |
+| **Tasks (Archive)** | [`Kotlin Package Namespace Migration Plan`](tasks/archive/2026-08-29-kotlin-package-namespace-migration-plan.md) | `Archived` | **Date:** 2026-08-29 |
+| **Tasks (Archive)** | [`Material Binding Declaration Plan`](tasks/archive/2026-08-29-material-binding-declaration-plan.md) | `Archived` | Date: 2026-08-29 |
+| **Tasks (Archive)** | [`Maven Central Publication Plan`](tasks/archive/2026-08-29-maven-central-publication-plan.md) | `Archived` | **Date:** 2026-08-29 |
+| **Tasks (Archive)** | [`Terrain Clipmap Draw Plan`](tasks/archive/2026-08-29-terrain-clipmap-draw-plan.md) | `Archived` | Date: 2026-08-29 |
+| **Tasks (Archive)** | [`Behavior Tree & State Machine Plan — one hybrid runtime, and where an LLM fits`](tasks/archive/2026-08-30-behavior-tree-state-machine-plan.md) | `Archived` | Date: 2026-08-30 |
+| **Tasks (Archive)** | [`Gizmo rotation: scoping audit gap #13`](tasks/archive/2026-08-30-gizmo-rotation-scope.md) | `Archived` | Scope for the scene-editor audit's P1 #13, *"Euler-radian rotation summed per component -- gimbal |
+| **Tasks (Archive)** | [`Navigation Plan — a Heightmap-Derived NavGrid, in commonMain`](tasks/archive/2026-08-30-navgrid-navigation-plan.md) | `Archived` | Date: 2026-08-30 |
+| **Tasks (Archive)** | [`2026-08-31: generate `ImageVector` icons from vendored SVGs at build time`](tasks/archive/2026-08-31-icon-codegen-plan.md) | `Archived` | Status: **done, 2026-09-01.** Heroicons is pinned at **v2.2.0** and all 78 committed icons |
+| **Tasks (Archive)** | [`Studio Infinite Grid with Infinite Axis Lines`](tasks/archive/2026-08-31-studio-infinite-grid-plan.md) | `Archived` | Formalize an unprojected, multi-scale **Infinite Grid** with **Infinite Axis Lines** (X red / Z blue / Y green) in Awake... |
 | **General** | [`RFC: Open-World Terrain, Modular Character, and Environment Subsystems`](RFC_OPEN_WORLD_ENGINE_SUBSYSTEMS.md) | `Active` | Awake has established a solid Vulkan-first renderer, entity-component system (ECS), and cross-platform shader architectu... |
 | **General** | [`About Awake`](about.md) | `Active` | Unreal and Unity are editor-first: huge surface area, and it wasn't clear where |
-| **General** | [`Architecture`](architecture.md) | `Active` | Awake is a Kotlin Multiplatform game engine library: a Vulkan-first cross-platform renderer |
 | **General** | [`Archived: Immediate-Mode UI Ownership`](archive/2026-08-28-immediate-mode-ui-ownership.md) | `Archived` | This document is retained for history only. The ownership model below was replaced by the |
 | **General** | [`Archived: DSL Modules`](archive/2026-08-28-retired-dsl-modules.md) | `Archived` | This document is retained for history only. It describes the deleted immediate-mode DSL module |
 | **General** | [`Archived: UI component coverage matrix`](archive/2026-08-28-retired-ui-component-coverage.md) | `Archived` | This document is retained for history only. Its inventory describes deleted `ui-headless` and |
 | **General** | [`Archived: UI status report`](archive/2026-08-28-retired-ui-status.md) | `Archived` | This document is retained for history only. It describes the deleted immediate-mode UI module |
+| **General** | [`Changelog Archive (v0.1.0-dev.1 to v0.1.0-dev.7)`](archive/CHANGELOG-v0.1-archive.md) | `Archived` | This archive documents historical pre-releases of Awake Engine. |
 | **General** | [`Awake Engine — MVP phase log (archive)`](archive/mvp-phase-log.md) | `Archived` | Historical record of how phases 0–8 were executed, kept verbatim. Superseded as a planning |
 | **General** | [`ECS Benchmark Scorecard`](ecs-benchmark-scorecard.md) | `Active` | Latest rerun: `2026-08-21`, from the working tree based on commit `851663afb`, using the exact |
 | **General** | [`Compose parity handoff — 2026-08-27`](handoffs/2026-08-27-compose-parity-handoff.md) | `Active` | The open objective is **“implement remaining items”** from the Compose parity inventory. It is |

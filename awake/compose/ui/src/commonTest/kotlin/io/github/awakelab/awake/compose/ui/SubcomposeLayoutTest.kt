@@ -31,7 +31,8 @@ class SubcomposeLayoutTest {
     @Test
     fun subcomposeComposesDuringMeasureAndPlacesChildren() {
         val host = ComposeHost()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             SubcomposeLayout { constraints ->
                 val measurables = subcompose("header") {
                     fixedChild(40, 20)
@@ -59,7 +60,8 @@ class SubcomposeLayoutTest {
     @Test
     fun subcomposeReusesSameSlotNodeAcrossPasses() {
         val host = ComposeHost()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             SubcomposeLayout { constraints ->
                 val measurables = subcompose("slot") {
                     fixedChild(50, 50)
@@ -83,7 +85,8 @@ class SubcomposeLayoutTest {
     @Test
     fun subcomposeCanBranchBasedOnIncomingConstraints() {
         val host = ComposeHost()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             SubcomposeLayout { constraints ->
                 val measurables = subcompose("dynamic") {
                     if (constraints.maxWidth > 100) {

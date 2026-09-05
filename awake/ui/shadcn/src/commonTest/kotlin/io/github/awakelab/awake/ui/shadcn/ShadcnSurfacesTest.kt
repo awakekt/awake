@@ -7,11 +7,11 @@ package io.github.awakelab.awake.ui.shadcn
 
 import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.core.graphics2d.DrawCommand
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlert
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlertVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnAvatar
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnAvatarSizeVariant
-import io.github.awakelab.awake.ui.shadcn.components.shadcnAlert
-import io.github.awakelab.awake.ui.shadcn.components.shadcnAvatar
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTooltip
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTooltip
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -25,7 +25,7 @@ class ShadcnSurfacesTest {
 
     private fun alert(variant: ShadcnAlertVariant) = composeFrame(300, 120) {
         provideShadcnTheme(theme) {
-            shadcnAlert("Heads up", description = "Something happened.", variant = variant)
+            ShadcnAlert("Heads up", description = "Something happened.", variant = variant)
         }
     }
 
@@ -33,7 +33,8 @@ class ShadcnSurfacesTest {
     fun aDestructiveAlertKeepsTheCardFill() {
         // `bg-card text-destructive` -- only the type turns red. A red box is the obvious wrong
         // guess and looks deliberate once shipped.
-        val default = alert(ShadcnAlertVariant.Default).primitivesOf<DrawCommand.RoundedQuad>().first()
+        val default =
+            alert(ShadcnAlertVariant.Default).primitivesOf<DrawCommand.RoundedQuad>().first()
         val destructive = alert(ShadcnAlertVariant.Destructive)
             .primitivesOf<DrawCommand.RoundedQuad>().first()
 
@@ -68,7 +69,7 @@ class ShadcnSurfacesTest {
         // 40dp default that shadcn does not have; it does not, and has not for a while.
         ShadcnAvatarSizeVariant.entries.forEach { size ->
             val quad = composeFrame(120, 80) {
-                provideShadcnTheme(theme) { shadcnAvatar("AB", size = size) }
+                provideShadcnTheme(theme) { ShadcnAvatar("AB", size = size) }
             }.primitivesOf<DrawCommand.RoundedQuad>().first()
 
             assertEquals(size.size.value, quad.w, 0.5f, "$size is the wrong width")
@@ -79,7 +80,7 @@ class ShadcnSurfacesTest {
     @Test
     fun anAvatarIsAFullCircle() {
         val quad = composeFrame(120, 80) {
-            provideShadcnTheme(theme) { shadcnAvatar("AB") }
+            provideShadcnTheme(theme) { ShadcnAvatar("AB") }
         }.primitivesOf<DrawCommand.RoundedQuad>().first()
 
         assertTrue(quad.radius >= quad.h / 2f - 0.5f, "rounded-full did not reach a circle")
@@ -88,12 +89,15 @@ class ShadcnSurfacesTest {
     @Test
     fun theInitialsAreCentred() {
         val frame = composeFrame(120, 80) {
-            provideShadcnTheme(theme) { shadcnAvatar("AB") }
+            provideShadcnTheme(theme) { ShadcnAvatar("AB") }
         }
         val circle = frame.primitivesOf<DrawCommand.RoundedQuad>().first()
         val glyphs = frame.primitivesOf<DrawCommand.Glyph>()
 
-        assertTrue(glyphs.minOf { it.x } > circle.x, "the initials start flush at the circle's edge")
+        assertTrue(
+            glyphs.minOf { it.x } > circle.x,
+            "the initials start flush at the circle's edge",
+        )
         assertTrue(glyphs.maxOf { it.x + it.w } < circle.x + circle.w, "the initials overflow")
     }
 
@@ -104,7 +108,7 @@ class ShadcnSurfacesTest {
         // `bg-foreground text-background`. Reaching for `popover` -- what "a small floating panel"
         // suggests -- gives a tooltip that looks like a menu.
         val frame = composeFrame(200, 60) {
-            provideShadcnTheme(theme) { shadcnTooltip("Copy to clipboard") }
+            provideShadcnTheme(theme) { ShadcnTooltip("Copy to clipboard") }
         }
 
         assertEquals(
@@ -124,7 +128,7 @@ class ShadcnSurfacesTest {
         // The specific wrong answer this guards: popover is the token a menu uses, and a tooltip
         // filled with it is indistinguishable from one until you see them side by side.
         val fill = composeFrame(200, 60) {
-            provideShadcnTheme(theme) { shadcnTooltip("Copy") }
+            provideShadcnTheme(theme) { ShadcnTooltip("Copy") }
         }.primitivesOf<DrawCommand.RoundedQuad>().first().color
 
         assertTrue(fill != theme.palette.popover, "the tooltip took the popover fill")

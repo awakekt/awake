@@ -13,45 +13,53 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.core.graphics2d.PathCommand
 import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
 import io.github.awakelab.awake.core.graphics2d.bounds
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonGroupOrientation
-import io.github.awakelab.awake.ui.shadcn.components.memberBorderSides
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonGroup
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonGroupOrientation
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
+import io.github.awakelab.awake.ui.shadcn.components.memberBorderSides
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.math.abs
 
 class ShadcnButtonGroupTest {
 
     private val theme = ShadcnThemeValues(ShadcnTheme)
 
     @Test
-    fun horizontalMembersKeepOnlyTheOuterStartAndEndBorders() {
+    fun horizontalMembersRetainEndBordersForSeamlessDividers() {
         assertEquals(
-            BorderSides(top = true, end = false, bottom = true, start = true),
+            BorderSides(top = true, end = true, bottom = true, start = true),
             memberBorderSides(ShadcnButtonGroupOrientation.Horizontal, index = 0, count = 3),
         )
         assertEquals(
-            BorderSides(top = true, end = false, bottom = true, start = false),
+            BorderSides(top = true, end = true, bottom = true, start = false),
             memberBorderSides(ShadcnButtonGroupOrientation.Horizontal, index = 1, count = 3),
         )
         assertEquals(
             BorderSides(top = true, end = true, bottom = true, start = false),
             memberBorderSides(ShadcnButtonGroupOrientation.Horizontal, index = 2, count = 3),
         )
+        assertEquals(
+            BorderSides(top = true, end = false, bottom = true, start = true),
+            memberBorderSides(ShadcnButtonGroupOrientation.Horizontal, index = 0, count = 3, followedBySeparator = true),
+        )
     }
 
     @Test
-    fun verticalMembersKeepOnlyTheOuterTopAndBottomBorders() {
+    fun verticalMembersRetainBottomBordersForSeamlessDividers() {
         assertEquals(
-            BorderSides(top = true, end = true, bottom = false, start = true),
+            BorderSides(top = true, end = true, bottom = true, start = true),
             memberBorderSides(ShadcnButtonGroupOrientation.Vertical, index = 0, count = 2),
         )
         assertEquals(
             BorderSides(top = false, end = true, bottom = true, start = true),
             memberBorderSides(ShadcnButtonGroupOrientation.Vertical, index = 1, count = 2),
+        )
+        assertEquals(
+            BorderSides(top = true, end = true, bottom = false, start = true),
+            memberBorderSides(ShadcnButtonGroupOrientation.Vertical, index = 0, count = 2, followedBySeparator = true),
         )
     }
 
@@ -68,28 +76,43 @@ class ShadcnButtonGroupTest {
 
         assertEquals(2, paths.size)
         val first = paths.first().placedMesh()
-        val bounds = first.bounds()
-        // A stroked ring has no vertex on its centreline -- they sit half a stroke width either
-        // side of it, plus the fringe -- so this asks whether any painted vertex lies within the
-        // 2px band at an edge, over a y range well clear of the horizontal edges' own bands.
-        fun paintsVerticalEdgeIn(from: Float, to: Float) = first.vertices.any { vertex ->
+        val boundsFirst = first.bounds()
+        val second = paths.last().placedMesh()
+        val boundsSecond = second.bounds()
+
+        fun paintsVerticalEdgeIn(
+            mesh: io.github.awakelab.awake.core.graphics2d.ColoredTriangleMesh,
+            bounds: io.github.awakelab.awake.core.math2d.Rectangle,
+            from: Float,
+            to: Float,
+        ): Boolean = mesh.vertices.any { vertex ->
             vertex.color.a > 0f &&
                 vertex.position.x >= from && vertex.position.x <= to &&
                 vertex.position.y > bounds.y + 4f &&
                 vertex.position.y < bounds.y + bounds.height - 4f
         }
-        val startBand = bounds.x to bounds.x + 2f
-        val endBand = bounds.x + bounds.width - 2f to bounds.x + bounds.width
+        val firstStart = boundsFirst.x to boundsFirst.x + 2f
+        val firstEnd = boundsFirst.x + boundsFirst.width - 2f to boundsFirst.x + boundsFirst.width
+        val secondStart = boundsSecond.x to boundsSecond.x + 2f
+        val secondEnd = boundsSecond.x + boundsSecond.width - 2f to boundsSecond.x + boundsSecond.width
 
-        // Positive control: the same predicate must find the edge that IS painted, or the negative
-        // assertion below would hold for a mesh that painted nothing at all.
+        // The first button paints both its outer start border and its shared end divider
         assertTrue(
-            paintsVerticalEdgeIn(startBand.first, startBand.second),
+            paintsVerticalEdgeIn(first, boundsFirst, firstStart.first, firstStart.second),
             "the first button lost its outer start border",
         )
         assertTrue(
-            !paintsVerticalEdgeIn(endBand.first, endBand.second),
-            "the first button still paints the shared end border",
+            paintsVerticalEdgeIn(first, boundsFirst, firstEnd.first, firstEnd.second),
+            "the first button must paint the shared divider border",
+        )
+        // The second button omits its start border so there is no duplicate 2px divider
+        assertTrue(
+            !paintsVerticalEdgeIn(second, boundsSecond, secondStart.first, secondStart.second),
+            "the second button must not paint a duplicate start border",
+        )
+        assertTrue(
+            paintsVerticalEdgeIn(second, boundsSecond, secondEnd.first, secondEnd.second),
+            "the second button must paint its outer end border",
         )
     }
 
@@ -108,11 +131,11 @@ class ShadcnButtonGroupTest {
                 // Inside a parent that offers its whole height, which is the case that broke: a
                 // sidebar header. A shrink-wrapping parent offers nothing to fill and hides this.
                 Column(Modifier.fillMaxHeight()) {
-                ShadcnButtonGroup {
-                    button("Left", variant = ShadcnButtonVariant.Outline)
-                    separator()
-                    button("Right", variant = ShadcnButtonVariant.Outline)
-                }
+                    ShadcnButtonGroup {
+                        button("Left", variant = ShadcnButtonVariant.Outline)
+                        separator()
+                        button("Right", variant = ShadcnButtonVariant.Outline)
+                    }
                 }
             }
         }.primitives

@@ -27,9 +27,9 @@ import io.github.awakelab.awake.render.texture.RenderTarget
 import io.github.awakelab.awake.render.texture.TextureAsset
 import io.github.awakelab.awake.scene.core.transform.Transform
 import io.github.awakelab.awake.scene.rendering.Camera
+import io.github.awakelab.awake.scene.rendering.RenderSystem
 import io.github.awakelab.awake.scene.rendering.mesh.MeshBounds
 import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
-import io.github.awakelab.awake.scene.rendering.RenderSystem
 import io.github.awakelab.awake.scene.rendering.spatial.SpatialIndexSystem
 import io.github.awakelab.awake.scene.rendering.spatial.findSpatialIndex
 import kotlin.random.Random

@@ -5,9 +5,9 @@
  */
 package io.github.awakelab.awake.compose.ui
 
-import io.github.awakelab.awake.compose.ui.layout.MeasurePolicy
 import io.github.awakelab.awake.compose.ui.focus.FocusRequester
 import io.github.awakelab.awake.compose.ui.focus.focusRequester
+import io.github.awakelab.awake.compose.ui.layout.MeasurePolicy
 import io.github.awakelab.awake.compose.ui.node.LayoutNode
 import kotlin.test.Test
 import kotlin.test.assertEquals

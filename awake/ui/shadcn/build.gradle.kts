@@ -6,6 +6,7 @@
 
 plugins {
     id("awake.kmp-library-convention")
+    id("awake.publish-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
     id("awake.spotless-convention")
@@ -15,11 +16,6 @@ plugins {
 }
 
 kotlin {
-    compilerOptions {
-        // Example: Only add flags that are actually needed and not redundant
-        freeCompilerArgs.add("-Xcontext-parameters")
-    }
-
     android {
         namespace = "io.github.awakelab.awake.ui.shadcn"
     }
@@ -43,10 +39,8 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
             implementation(kotlin("test"))
         }
-        val desktopTest by getting {
-            dependencies {
-                implementation(project(":awake:compose:ui-testing"))
-            }
+        desktopTest.dependencies {
+            implementation(project(":awake:compose:ui-testing"))
         }
     }
 }

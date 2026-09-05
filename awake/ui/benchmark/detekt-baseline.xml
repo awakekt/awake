@@ -2,6 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>InvalidPackageDeclaration:FlexLayoutBenchmark.kt$package io.github.awakelab.awake.core.text.benchmark</ID>
     <ID>InvalidPackageDeclaration:LayoutNestingBenchmark.kt$package io.github.awakelab.awake.core.text.benchmark</ID>
   </CurrentIssues>
 </SmellBaseline>

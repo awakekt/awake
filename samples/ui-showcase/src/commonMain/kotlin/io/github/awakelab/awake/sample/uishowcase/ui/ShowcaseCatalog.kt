@@ -6,6 +6,9 @@
 package io.github.awakelab.awake.sample.uishowcase.ui
 
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.blocks.BlockPlaceholderPages
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.blocks.CarouselPage
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.blocks.FormPage
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.blocks.ItemPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.gettingstarted.IntroductionPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.gettingstarted.ThemingPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.BadgePage
@@ -13,6 +16,7 @@ import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.ButtonGroupPag
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.ButtonPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.CheckboxPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.ComboboxPage
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.DatePickerPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.FieldPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.InputGroupPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.InputOtpPage
@@ -26,11 +30,15 @@ import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.TextareaPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.ToggleGroupPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.TogglePage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.AccordionPage
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.AspectRatioPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.BreadcrumbPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.CanvasPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.CardPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.CollapsibleCardPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.CollapsiblePage
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.MenubarPage
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.NavigationMenuPage
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.PaginationPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.ResizablePage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.ScrollAreaPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.SeparatorPage
@@ -39,15 +47,18 @@ import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.SurfacePage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.TablePage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.TabsPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.overlays.AlertDialogPage
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.overlays.CommandPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.overlays.ContextMenuPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.overlays.DialogPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.overlays.DrawerPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.overlays.DropdownMenuPage
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.overlays.HoverCardPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.overlays.PopoverPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.overlays.SheetPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.overlays.TooltipPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.status.AlertPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.status.AvatarPage
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.status.ChartPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.status.EmptyPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.status.KbdPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.status.ProgressPage
@@ -55,7 +66,6 @@ import io.github.awakelab.awake.sample.uishowcase.ui.pages.status.SkeletonPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.status.SpinnerPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.status.ToastPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.typography.TypographyPage
-import io.github.awakelab.awake.sample.uishowcase.ui.pages.layout.AspectRatioPage
 
 /**
  * The single showcase catalog. The app renders it, the preview/layout-signature tests derive
@@ -83,6 +93,7 @@ internal val ShowcasePages: List<ShowcasePage> = listOf(
     RangeSliderPage,
     SelectPage,
     ComboboxPage,
+    DatePickerPage,
     FieldPage,
 
     CardPage,
@@ -92,6 +103,9 @@ internal val ShowcasePages: List<ShowcasePage> = listOf(
     CollapsiblePage,
     BreadcrumbPage,
     SidebarPage,
+    MenubarPage,
+    NavigationMenuPage,
+    PaginationPage,
     ResizablePage,
     TablePage,
     ScrollAreaPage,
@@ -104,12 +118,15 @@ internal val ShowcasePages: List<ShowcasePage> = listOf(
     DrawerPage,
     SheetPage,
     PopoverPage,
+    HoverCardPage,
+    CommandPage,
     DropdownMenuPage,
     ContextMenuPage,
     TooltipPage,
 
     AlertPage,
     AvatarPage,
+    ChartPage,
     ProgressPage,
     SkeletonPage,
     SpinnerPage,
@@ -118,6 +135,9 @@ internal val ShowcasePages: List<ShowcasePage> = listOf(
     EmptyPage,
 
     TypographyPage,
+    FormPage,
+    ItemPage,
+    CarouselPage,
 ) + BlockPlaceholderPages
 
 internal val ShowcasePagesByCategory: Map<ShowcaseCategory, List<ShowcasePage>> =

@@ -17,8 +17,18 @@ Checks:
 5. Deployment Mirror: every .agents/skills/<name> is mirrored byte-for-byte at .claude/skills/<name>.
 
 Exit code 0 on success, 1 on validation error.
+
+Editing a skill under .agents/skills/ makes check 5 fail on the next push. The mirror is gitignored,
+so it exists only on a developer's disk and no clone starts with one -- rebuild it with:
+
+    python3 tools/verify_agent_skills_sync.py --fix-mirror
+
+which copies .agents/skills over .claude/skills, deletes what has no source, prints what moved, and
+then runs the full verification.
 """
 
+import argparse
+import shutil
 import sys
 import re
 from pathlib import Path
@@ -206,6 +216,51 @@ def check_symlinks() -> list[str]:
     return errors
 
 
+def fix_mirror() -> list[str]:
+    """Rebuild `.claude/skills/` from `.agents/skills/`, and report what moved.
+
+    The mirror is gitignored, so it exists only on a developer's disk and no clone starts with one.
+    Nothing in the repository produced it: the gate demanded a mirror that had to be maintained by
+    hand, which is why it had drifted across four skills before anyone tried to push. A checker that
+    can repair what it checks is the difference between a gate and an obstacle.
+
+    Prints the changed files rather than working silently -- a skill edit reaching agents is the
+    point of the mirror, so it is worth seeing which ones did.
+    """
+    changes = []
+    canonical_names = {path.name for path in DEPLOYED_SKILLS_DIR.iterdir() if path.is_dir()}
+    MIRROR_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
+
+    for name in sorted({path.name for path in MIRROR_SKILLS_DIR.iterdir() if path.is_dir()} - canonical_names):
+        shutil.rmtree(MIRROR_SKILLS_DIR / name)
+        changes.append(f"removed .claude/skills/{name} (no source in .agents/skills)")
+
+    for name in sorted(canonical_names):
+        canonical_root = DEPLOYED_SKILLS_DIR / name
+        mirror_root = MIRROR_SKILLS_DIR / name
+        canonical_files = mirrored_files(canonical_root)
+        mirror_files = mirrored_files(mirror_root) if mirror_root.exists() else set()
+
+        for relative_path in sorted(mirror_files - canonical_files):
+            (mirror_root / relative_path).unlink()
+            changes.append(f"removed {name}/{relative_path}")
+
+        for relative_path in sorted(canonical_files):
+            source = canonical_root / relative_path
+            target = mirror_root / relative_path
+            existed = target.exists()
+            if existed and target.read_bytes() == source.read_bytes():
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            # copy2, not copy: the mirror keeps the source's mode, so an executable script stays
+            # executable on the other side.
+            shutil.copy2(source, target)
+            # Read before the copy -- asking afterwards always answers "it exists".
+            changes.append(f"{'updated' if existed else 'added'} {name}/{relative_path}")
+
+    return changes
+
+
 def check_module_readmes() -> list[str]:
     errors = []
     primary_modules = [
@@ -260,8 +315,22 @@ def check_performance_matrix() -> list[str]:
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--fix-mirror",
+        action="store_true",
+        help="rebuild the gitignored .claude/skills mirror from .agents/skills, then verify",
+    )
+    args = parser.parse_args()
+
     print("Verifying Awake Agents, Skills, Module Docs & Performance Matrix Synchronization...")
     all_errors = []
+
+    if args.fix_mirror:
+        changes = fix_mirror()
+        print(f"Mirror: {len(changes)} file(s) synchronized" if changes else "Mirror: already in sync")
+        for change in changes:
+            print(f"  {change}")
 
     if not AGENTS_DIR.exists():
         print(f"ERROR: Agents directory not found at {AGENTS_DIR}", file=sys.stderr)

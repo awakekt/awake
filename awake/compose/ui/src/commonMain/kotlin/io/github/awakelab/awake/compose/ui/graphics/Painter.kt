@@ -5,11 +5,11 @@
  */
 package io.github.awakelab.awake.compose.ui.graphics
 
+import io.github.awakelab.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import io.github.awakelab.awake.compose.ui.graphics.drawscope.PaintScope
 import io.github.awakelab.awake.compose.ui.layout.LayerKind
 import io.github.awakelab.awake.compose.ui.node.DrawModifierNode
 import io.github.awakelab.awake.compose.ui.node.LayoutNode
-import io.github.awakelab.awake.compose.ui.graphics.drawscope.GraphicsLayerFrame
 import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
 
 data class PaintOutput(

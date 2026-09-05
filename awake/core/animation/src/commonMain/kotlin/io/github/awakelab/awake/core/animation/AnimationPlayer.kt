@@ -56,6 +56,30 @@ class AnimationPlayer(
     val isFinished: Boolean
         get() = !isPlaying && activeClipId != null && playback == AnimationPlayback.Once
 
+    val time: Float get() = elapsedSeconds
+
+    val currentClip: AnimationClip? get() = activeClipId?.let { library.clips[it] }
+
+    val clips: List<AnimationClip> get() = library.clips.values.toList()
+
+    val clipEntries: Map<String, AnimationClip> get() = library.clips
+
+    fun pause() {
+        isPlaying = false
+    }
+
+    fun resume() {
+        if (activeClipId != null) {
+            isPlaying = true
+        }
+    }
+
+    fun seek(timeSeconds: Float) {
+        val clipId = activeClipId ?: return
+        val clip = clip(clipId)
+        elapsedSeconds = timeSeconds.coerceIn(0f, clip.duration)
+    }
+
     fun play(
         clipId: String,
         playback: AnimationPlayback = AnimationPlayback.Loop,

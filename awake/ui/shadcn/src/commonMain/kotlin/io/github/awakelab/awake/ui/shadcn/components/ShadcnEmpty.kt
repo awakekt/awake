@@ -31,7 +31,7 @@ import io.github.awakelab.awake.tailwind.Tw
  * reports `borderWidth: 0`. Drawing a dashed border here would be inventing one.
  */
 context(_: Composer)
-fun shadcnEmpty(
+fun ShadcnEmpty(
     title: String,
     modifier: Modifier = Modifier,
     description: String? = null,

@@ -75,6 +75,37 @@ fun textureSampleArrayLevel(
 }
 
 /**
+ * WGSL `textureSample` builtin for 2D array textures with implicit level-of-detail.
+ *
+ * @param texture The array texture expression.
+ * @param sampler The sampler expression.
+ * @param uv The texture coordinates.
+ * @param layer The array layer index (must be integer).
+ * @return The sampled `vec4f` value.
+ */
+fun textureSampleArray(
+    texture: AslExpr,
+    sampler: AslExpr,
+    uv: AslExpr,
+    layer: AslExpr,
+): AslExpr {
+    if (texture.type != AslType.Texture2dArrayF32 || sampler.type != AslType.Sampler) {
+        throw AslDefinitionException(
+            "textureSampleArray needs (array texture, sampler), got " +
+                "${texture.type}/${sampler.type}.",
+        )
+    }
+    if (layer.type != AslType.I32 && layer.type != AslType.U32) {
+        throw AslDefinitionException("A layer index is an integer, got ${layer.type}.")
+    }
+    return AslCall(
+        "textureSample",
+        listOf(texture, sampler, uv, layer),
+        AslType.Data(GpuDataShape.Vec4),
+    )
+}
+
+/**
  * WGSL `textureSampleLevel` builtin for depth textures.
  *
  * Returns the stored depth as `f32` directly.

@@ -4,9 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
 import io.github.awakelab.awake.compose.foundation.BorderSides
+import io.github.awakelab.awake.compose.foundation.animation.rememberLoopingPhase
 import io.github.awakelab.awake.compose.foundation.background
 import io.github.awakelab.awake.compose.foundation.border
 import io.github.awakelab.awake.compose.foundation.interaction.InteractionSource
@@ -17,12 +19,11 @@ import io.github.awakelab.awake.compose.foundation.layout.size
 import io.github.awakelab.awake.compose.foundation.text.BasicTextField
 import io.github.awakelab.awake.compose.foundation.text.TextFieldState
 import io.github.awakelab.awake.compose.foundation.text.rememberTextFieldState
-import io.github.awakelab.awake.compose.foundation.animation.rememberLoopingPhase
-import io.github.awakelab.awake.compose.ui.draw.alpha
 import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.compose.ui.Alignment
 import io.github.awakelab.awake.compose.ui.Modifier
+import io.github.awakelab.awake.compose.ui.draw.alpha
 import io.github.awakelab.awake.compose.ui.draw.zIndex
 import io.github.awakelab.awake.compose.ui.graphics.RoundedCornerShape
 import io.github.awakelab.awake.compose.ui.graphics.Shape

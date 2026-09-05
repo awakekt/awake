@@ -5,16 +5,15 @@
  */
 package io.github.awakelab.awake.scene.physics
 
-import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.core.math.Quat
+import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.physics.BodyHandle
 import io.github.awakelab.awake.physics.Buoyancy
-import io.github.awakelab.awake.physics.Constraint
-import io.github.awakelab.awake.physics.ConstraintHandle
-import io.github.awakelab.awake.physics.BodyTransform
 import io.github.awakelab.awake.physics.CollisionLayer
 import io.github.awakelab.awake.physics.CollisionLayers
+import io.github.awakelab.awake.physics.Constraint
+import io.github.awakelab.awake.physics.ConstraintHandle
 import io.github.awakelab.awake.physics.ContactEvent
 import io.github.awakelab.awake.physics.MotionType
 import io.github.awakelab.awake.physics.PhysicsShape

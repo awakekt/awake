@@ -11,8 +11,8 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlert
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlertVariant
-import io.github.awakelab.awake.ui.shadcn.components.shadcnAlert
 
 internal val AlertPage = ShowcasePage(
     id = "alert",
@@ -24,14 +24,14 @@ internal val AlertPage = ShowcasePage(
     previewHeight = 380,
     notes = listOf("Default and Destructive alert callout boxes."),
     hero = {
-        shadcnAlert(
+        ShadcnAlert(
             title = "Heads up!",
             description = "You can add components to your app using the CLI.",
         )
     },
     variants = {
         ShadcnAlertVariant.entries.forEach { variant ->
-            shadcnAlert(
+            ShadcnAlert(
                 title = variant.name,
                 description = "Alert variant ${variant.name}.",
                 variant = variant,

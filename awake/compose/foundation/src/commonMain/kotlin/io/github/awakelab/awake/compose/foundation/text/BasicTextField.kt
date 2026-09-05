@@ -95,45 +95,47 @@ fun BasicTextField(
             .then(TextFieldInputElement(state, singleLine, policy, density, horizontalOffset, onClick))
             .clickable { }
             .drawBehind {
-                val paintColor = color()
-                val run = policy.runFor(density, 1f)
-                val textOffsetY = if (singleLine) {
-                    ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f)
-                } else {
-                    0f
-                }
-                val caret = TextRunOf(state, policy, density).position()
-                val textOffsetX = if (singleLine) {
-                    val maxOffset = (run.offsetAt(policy.text.length) - width).coerceAtLeast(0f)
-                    horizontalOffset.maxValue = maxOffset.roundToInt()
-                    val visibleStart = horizontalOffset.value.toFloat()
-                    val visibleEnd = visibleStart + width
-                    when {
-                        caret.x < visibleStart -> horizontalOffset.scrollTo(caret.x.roundToInt())
-                        caret.x > visibleEnd -> horizontalOffset.scrollTo((caret.x - width).roundToInt())
+                clipped {
+                    val paintColor = color()
+                    val run = policy.runFor(density, 1f)
+                    val textOffsetY = if (singleLine) {
+                        ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f)
+                    } else {
+                        0f
                     }
-                    -horizontalOffset.value.toFloat()
-                } else {
-                    0f
-                }
-                run.forEachSelectionSegment(state.displayedSelectionStart, state.displayedSelectionEnd) { x, y, width, height ->
-                    drawRect(
-                        x = x + textOffsetX,
-                        y = y + textOffsetY,
-                        width = width,
-                        height = height,
-                        color = paintColor.withAlpha(0.35f),
-                    )
-                }
-                run.paint(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY)
-                if (source.isFocused && isCaretVisible(clock.totalSeconds)) {
-                    drawRect(
-                        x = caret.x + textOffsetX,
-                        y = if (singleLine) textOffsetY else caret.y,
-                        width = CARET_WIDTH,
-                        height = run.lineHeightPx,
-                        color = paintColor,
-                    )
+                    val caret = TextRunOf(state, policy, density).position()
+                    val textOffsetX = if (singleLine) {
+                        val maxOffset = (run.offsetAt(policy.text.length) - width).coerceAtLeast(0f)
+                        horizontalOffset.maxValue = maxOffset.roundToInt()
+                        val visibleStart = horizontalOffset.value.toFloat()
+                        val visibleEnd = visibleStart + width
+                        when {
+                            caret.x < visibleStart -> horizontalOffset.scrollTo(caret.x.roundToInt())
+                            caret.x > visibleEnd -> horizontalOffset.scrollTo((caret.x - width).roundToInt())
+                        }
+                        -horizontalOffset.value.toFloat()
+                    } else {
+                        0f
+                    }
+                    run.forEachSelectionSegment(state.displayedSelectionStart, state.displayedSelectionEnd) { x, y, width, height ->
+                        drawRect(
+                            x = x + textOffsetX,
+                            y = y + textOffsetY,
+                            width = width,
+                            height = height,
+                            color = paintColor.withAlpha(0.35f),
+                        )
+                    }
+                    run.paint(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY)
+                    if (source.isFocused && isCaretVisible(clock.totalSeconds)) {
+                        drawRect(
+                            x = caret.x + textOffsetX,
+                            y = if (singleLine) textOffsetY else caret.y,
+                            width = CARET_WIDTH,
+                            height = run.lineHeightPx,
+                            color = paintColor,
+                        )
+                    }
                 }
             },
         measurePolicy = policy,

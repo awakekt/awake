@@ -6,5 +6,7 @@
     <ID>ComplexCondition:CameraInputProcessor.kt$CameraInputProcessor$config.allowPan &amp;&amp; isPrimary &amp;&amp; isShift &amp;&amp; (dx != 0f || dy != 0f)</ID>
     <ID>CyclomaticComplexMethod:CameraInputProcessor.kt$CameraInputProcessor$fun process( poseState: CameraPoseState, config: CameraControlConfig, input: InputSnapshot, delta: Float, ): Boolean</ID>
     <ID>LongMethod:CameraInputProcessor.kt$CameraInputProcessor$fun process( poseState: CameraPoseState, config: CameraControlConfig, input: InputSnapshot, delta: Float, ): Boolean</ID>
+    <ID>OutdatedDocumentation:KeybindingProfile.kt$KeybindingProfile$fun rebind(action: A, newKey: Key, isSecondary: Boolean = false)</ID>
+    <ID>OutdatedDocumentation:KeybindingProfile.kt$KeybindingProfile&lt;A : Any></ID>
   </CurrentIssues>
 </SmellBaseline>

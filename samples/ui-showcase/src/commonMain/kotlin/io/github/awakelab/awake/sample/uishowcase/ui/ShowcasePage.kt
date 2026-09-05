@@ -17,7 +17,7 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.Dp
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.state.UiShowcaseRuntimeState
-import io.github.awakelab.awake.ui.shadcn.components.shadcnEmpty
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnEmpty
 import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 
 internal typealias ShowcaseRenderer = context(Composer)
@@ -93,7 +93,7 @@ private fun drawShowcasePlaceholder(
     missing: String,
     referenceExample: String,
 ) {
-    shadcnEmpty(title = "$title is not implemented", description = missing)
+    ShadcnEmpty(title = "$title is not implemented", description = missing)
     if (referenceExample.isNotBlank()) {
         Spacer(Modifier.height(8.dp))
         shadcnMuted("Reference: $referenceExample")

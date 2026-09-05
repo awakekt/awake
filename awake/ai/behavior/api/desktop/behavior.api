@@ -1,0 +1,203 @@
+public final class io/github/awakelab/awake/ai/behavior/AiBehaviorBindings {
+	public static final field INSTANCE Lio/github/awakelab/awake/ai/behavior/AiBehaviorBindings;
+	public final fun getAll ()Ljava/util/List;
+	public final fun getBindings ()Ljava/util/List;
+	public final fun getChaseResolver ()Lio/github/awakelab/awake/scene/document/SceneComponentBinding;
+	public final fun getFleeResolver ()Lio/github/awakelab/awake/scene/document/SceneComponentBinding;
+	public final fun getPatrolResolver ()Lio/github/awakelab/awake/scene/document/SceneComponentBinding;
+}
+
+public final class io/github/awakelab/awake/ai/behavior/BehaviorBindingsKt {
+	public static final fun registerAiBehaviors (Lio/github/awakelab/awake/scene/document/SceneComponentRegistry;)Lio/github/awakelab/awake/scene/document/SceneComponentRegistry;
+}
+
+public final class io/github/awakelab/awake/ai/behavior/ChaseAiSystem : io/github/awakelab/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/ai/behavior/ChaseBehavior : io/github/awakelab/awake/ai/behavior/RouteFollower, io/github/awakelab/awake/ecs/Poolable {
+	public static final field Companion Lio/github/awakelab/awake/ai/behavior/ChaseBehavior$Companion;
+	public static final field DEFAULT_REPATH_INTERVAL F
+	public static final field DEFAULT_SPEED F
+	public static final field DEFAULT_WAYPOINT_RADIUS F
+	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/Entity;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/Entity;FFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getPath ()Ljava/util/List;
+	public fun getRepathInterval ()F
+	public fun getSpeed ()F
+	public final fun getTarget-Q1jxeiE ()Lio/github/awakelab/awake/ecs/Entity;
+	public fun getTimeSinceRepath ()F
+	public fun getWaypointIndex ()I
+	public fun getWaypointRadius ()F
+	public fun reset ()V
+	public fun setPath (Ljava/util/List;)V
+	public fun setRepathInterval (F)V
+	public fun setSpeed (F)V
+	public final fun setTarget-ryvHbT0 (Lio/github/awakelab/awake/ecs/Entity;)V
+	public fun setTimeSinceRepath (F)V
+	public fun setWaypointIndex (I)V
+	public fun setWaypointRadius (F)V
+}
+
+public final class io/github/awakelab/awake/ai/behavior/ChaseBehavior$Companion {
+}
+
+public final class io/github/awakelab/awake/ai/behavior/ChaseBinding : io/github/awakelab/awake/scene/document/SceneComponentBinding {
+	public static final field INSTANCE Lio/github/awakelab/awake/ai/behavior/ChaseBinding;
+	public fun attach-f3JRkQ0 (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/scene/document/SceneComponent;Lio/github/awakelab/awake/scene/document/SceneResolutionContext;)V
+	public fun canResolve (Lio/github/awakelab/awake/scene/document/SceneComponent;)Z
+	public fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/ai/behavior/ChaseBehavior;)Lio/github/awakelab/awake/scene/document/SceneChase;
+	public synthetic fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLjava/lang/Object;)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneChase;
+	public synthetic fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public final fun toComponent (Lio/github/awakelab/awake/scene/document/SceneChase;)Lio/github/awakelab/awake/ai/behavior/ChaseBehavior;
+	public final fun toSceneComponent-OAfKtGY (Lio/github/awakelab/awake/ai/behavior/ChaseBehavior;Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneChase;
+}
+
+public final class io/github/awakelab/awake/ai/behavior/FleeAiSystem : io/github/awakelab/awake/ecs/System {
+	public static final field MIN_SEPARATION F
+	public fun <init> ()V
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/ai/behavior/FleeBehavior : io/github/awakelab/awake/ai/behavior/RouteFollower, io/github/awakelab/awake/ecs/Poolable {
+	public static final field Companion Lio/github/awakelab/awake/ai/behavior/FleeBehavior$Companion;
+	public static final field DEFAULT_FLEE_DISTANCE F
+	public static final field DEFAULT_PANIC_RADIUS F
+	public static final field DEFAULT_REPATH_INTERVAL F
+	public static final field DEFAULT_SAFE_RADIUS F
+	public static final field DEFAULT_SPEED F
+	public static final field DEFAULT_WAYPOINT_RADIUS F
+	public static final field ESCAPE_FAN_RADIANS F
+	public static final field MAX_ESCAPE_ATTEMPTS I
+	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/Entity;FFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/Entity;FFFFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getEscapeAttempt ()I
+	public final fun getFleeDistance ()F
+	public final fun getFleeing ()Z
+	public final fun getPanicRadius ()F
+	public fun getPath ()Ljava/util/List;
+	public fun getRepathInterval ()F
+	public final fun getSafeRadius ()F
+	public fun getSpeed ()F
+	public final fun getThreat-Q1jxeiE ()Lio/github/awakelab/awake/ecs/Entity;
+	public fun getTimeSinceRepath ()F
+	public fun getWaypointIndex ()I
+	public fun getWaypointRadius ()F
+	public fun reset ()V
+	public final fun setEscapeAttempt (I)V
+	public final fun setFleeDistance (F)V
+	public final fun setFleeing (Z)V
+	public final fun setPanicRadius (F)V
+	public fun setPath (Ljava/util/List;)V
+	public fun setRepathInterval (F)V
+	public final fun setSafeRadius (F)V
+	public fun setSpeed (F)V
+	public final fun setThreat-ryvHbT0 (Lio/github/awakelab/awake/ecs/Entity;)V
+	public fun setTimeSinceRepath (F)V
+	public fun setWaypointIndex (I)V
+	public fun setWaypointRadius (F)V
+}
+
+public final class io/github/awakelab/awake/ai/behavior/FleeBehavior$Companion {
+}
+
+public final class io/github/awakelab/awake/ai/behavior/FleeBinding : io/github/awakelab/awake/scene/document/SceneComponentBinding {
+	public static final field INSTANCE Lio/github/awakelab/awake/ai/behavior/FleeBinding;
+	public fun attach-f3JRkQ0 (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/scene/document/SceneComponent;Lio/github/awakelab/awake/scene/document/SceneResolutionContext;)V
+	public fun canResolve (Lio/github/awakelab/awake/scene/document/SceneComponent;)Z
+	public fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/ai/behavior/FleeBehavior;)Lio/github/awakelab/awake/scene/document/SceneFlee;
+	public synthetic fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLjava/lang/Object;)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneFlee;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public final fun toComponent (Lio/github/awakelab/awake/scene/document/SceneFlee;)Lio/github/awakelab/awake/ai/behavior/FleeBehavior;
+	public final fun toSceneComponent-OAfKtGY (Lio/github/awakelab/awake/ai/behavior/FleeBehavior;Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneFlee;
+}
+
+public final class io/github/awakelab/awake/ai/behavior/PatrolAiSystem : io/github/awakelab/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/ai/behavior/PatrolBehavior : io/github/awakelab/awake/ai/behavior/RouteFollower, io/github/awakelab/awake/ecs/Poolable {
+	public static final field Companion Lio/github/awakelab/awake/ai/behavior/PatrolBehavior$Companion;
+	public static final field DEFAULT_DWELL_SECONDS F
+	public static final field DEFAULT_REPATH_INTERVAL F
+	public static final field DEFAULT_SPEED F
+	public static final field DEFAULT_WAYPOINT_RADIUS F
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Lio/github/awakelab/awake/ai/behavior/PatrolStyle;FFFF)V
+	public synthetic fun <init> (Ljava/util/List;Lio/github/awakelab/awake/ai/behavior/PatrolStyle;FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCurrentStop ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getDirection ()I
+	public final fun getDwellRemaining ()F
+	public final fun getDwellSeconds ()F
+	public final fun getFinished ()Z
+	public fun getPath ()Ljava/util/List;
+	public fun getRepathInterval ()F
+	public fun getSpeed ()F
+	public final fun getStopIndex ()I
+	public final fun getStops ()Ljava/util/List;
+	public final fun getStyle ()Lio/github/awakelab/awake/ai/behavior/PatrolStyle;
+	public fun getTimeSinceRepath ()F
+	public fun getWaypointIndex ()I
+	public fun getWaypointRadius ()F
+	public fun reset ()V
+	public final fun setDirection (I)V
+	public final fun setDwellRemaining (F)V
+	public final fun setDwellSeconds (F)V
+	public final fun setFinished (Z)V
+	public fun setPath (Ljava/util/List;)V
+	public fun setRepathInterval (F)V
+	public fun setSpeed (F)V
+	public final fun setStopIndex (I)V
+	public final fun setStops (Ljava/util/List;)V
+	public final fun setStyle (Lio/github/awakelab/awake/ai/behavior/PatrolStyle;)V
+	public fun setTimeSinceRepath (F)V
+	public fun setWaypointIndex (I)V
+	public fun setWaypointRadius (F)V
+}
+
+public final class io/github/awakelab/awake/ai/behavior/PatrolBehavior$Companion {
+}
+
+public final class io/github/awakelab/awake/ai/behavior/PatrolBinding : io/github/awakelab/awake/scene/document/SceneComponentBinding {
+	public static final field INSTANCE Lio/github/awakelab/awake/ai/behavior/PatrolBinding;
+	public fun attach-f3JRkQ0 (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/scene/document/SceneComponent;Lio/github/awakelab/awake/scene/document/SceneResolutionContext;)V
+	public fun canResolve (Lio/github/awakelab/awake/scene/document/SceneComponent;)Z
+	public fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLio/github/awakelab/awake/ai/behavior/PatrolBehavior;)Lio/github/awakelab/awake/scene/document/ScenePatrol;
+	public synthetic fun export-RyQZpco (Lio/github/awakelab/awake/ecs/World;JLjava/lang/Object;)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/SceneComponent;
+	public fun exportFrom-mzE-bEs (Lio/github/awakelab/awake/ecs/World;J)Lio/github/awakelab/awake/scene/document/ScenePatrol;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public final fun toComponent (Lio/github/awakelab/awake/scene/document/ScenePatrol;)Lio/github/awakelab/awake/ai/behavior/PatrolBehavior;
+	public final fun toSceneComponent (Lio/github/awakelab/awake/ai/behavior/PatrolBehavior;)Lio/github/awakelab/awake/scene/document/ScenePatrol;
+}
+
+public final class io/github/awakelab/awake/ai/behavior/PatrolStyle : java/lang/Enum {
+	public static final field Loop Lio/github/awakelab/awake/ai/behavior/PatrolStyle;
+	public static final field Once Lio/github/awakelab/awake/ai/behavior/PatrolStyle;
+	public static final field PingPong Lio/github/awakelab/awake/ai/behavior/PatrolStyle;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/ai/behavior/PatrolStyle;
+	public static fun values ()[Lio/github/awakelab/awake/ai/behavior/PatrolStyle;
+}
+
+public abstract interface class io/github/awakelab/awake/ai/behavior/RouteFollower {
+	public abstract fun getPath ()Ljava/util/List;
+	public abstract fun getRepathInterval ()F
+	public abstract fun getSpeed ()F
+	public abstract fun getTimeSinceRepath ()F
+	public abstract fun getWaypointIndex ()I
+	public abstract fun getWaypointRadius ()F
+	public abstract fun setPath (Ljava/util/List;)V
+	public abstract fun setRepathInterval (F)V
+	public abstract fun setSpeed (F)V
+	public abstract fun setTimeSinceRepath (F)V
+	public abstract fun setWaypointIndex (I)V
+	public abstract fun setWaypointRadius (F)V
+}
+

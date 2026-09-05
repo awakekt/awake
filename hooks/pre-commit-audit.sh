@@ -49,8 +49,10 @@ if [[ -n "$STAGED_ALL" ]]; then
   echo "  $FILE_COUNT files changed${STAT_TAIL:+, }$STAT_TAIL"
   echo "  by area: $AREAS"
   echo ""
+  # 2026-09-01: the ui-refactor audit pointer was removed, not ticked off -- its package 6 plans
+  # sweeps over `ui-headless` widgets that no longer exist, so it had been directing every reader at
+  # a week of work against deleted modules. Closing note is at the top of that file.
   echo "  Open pointers (update this list by hand when something opens/closes):"
-  echo "    - docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md (package 6 pending)"
   echo "    - github.com/ronjunevaldoz/kmp-agent-skills#6 (docs-hygiene consumer-project gap, open)"
 fi
 

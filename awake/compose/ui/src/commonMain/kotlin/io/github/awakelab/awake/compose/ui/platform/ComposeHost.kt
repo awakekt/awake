@@ -10,20 +10,21 @@ import io.github.awakelab.awake.compose.runtime.CompositionLocalProvider
 import io.github.awakelab.awake.compose.runtime.provides
 import io.github.awakelab.awake.compose.ui.focus.FocusOwner
 import io.github.awakelab.awake.compose.ui.graphics.Painter
-import io.github.awakelab.awake.compose.ui.input.key.KeyInputDispatcher
 import io.github.awakelab.awake.compose.ui.input.key.KeyEventType
+import io.github.awakelab.awake.compose.ui.input.key.KeyInputDispatcher
 import io.github.awakelab.awake.compose.ui.input.pointer.PointerEvent
 import io.github.awakelab.awake.compose.ui.input.pointer.PointerEventType
-import io.github.awakelab.awake.compose.ui.input.pointer.PointerModifiers
 import io.github.awakelab.awake.compose.ui.input.pointer.PointerInputDispatcher
+import io.github.awakelab.awake.compose.ui.input.pointer.PointerModifiers
+import io.github.awakelab.awake.compose.ui.layout.LayoutComposition
 import io.github.awakelab.awake.compose.ui.layout.Measurable
 import io.github.awakelab.awake.compose.ui.layout.MeasurePolicy
 import io.github.awakelab.awake.compose.ui.layout.MeasureResult
 import io.github.awakelab.awake.compose.ui.layout.MeasureScope
-import io.github.awakelab.awake.compose.ui.layout.LayoutComposition
 import io.github.awakelab.awake.compose.ui.layout.layoutTree
 import io.github.awakelab.awake.compose.ui.node.LayoutNode
 import io.github.awakelab.awake.compose.ui.node.activeEscapeDismissLayer
+import io.github.awakelab.awake.compose.ui.node.activeModalLayer
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsTreeBuilder
 import io.github.awakelab.awake.compose.ui.unit.Constraints
 import io.github.awakelab.awake.core.input.Key
@@ -134,7 +135,7 @@ class ComposeHost(
                 isOverScrollable = dispatcher.isOverScrollable,
                 isScrollConsumed = scrollConsumed,
                 isTextInputFocused = textFocused,
-                isModalOpen = dispatcher.isModalOpen,
+                isModalOpen = root.activeModalLayer() != null || dispatcher.isModalOpen,
             ),
             // The platform raises a soft keyboard while a field holds focus; on desktop nothing
             // acts on it, which is why it is a request rather than a call.

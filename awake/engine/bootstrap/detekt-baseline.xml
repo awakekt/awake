@@ -2,9 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>LongMethod:AppLifecycleUiDslTest.kt$AppLifecycleUiDslTest$@Test fun nestedSlotColumnInsideRuntimeReceiverUsesCurrentUiScopeOverlayPass()</ID>
-    <ID>MatchingDeclarationName:AppUiPerfOverlay.kt$AppFrameStats</ID>
     <ID>TooManyFunctions:AppDsl.kt$AppSpecDsl</ID>
-    <ID>TooManyFunctions:AppUiRuntime.kt$AppUiRuntime</ID>
   </CurrentIssues>
 </SmellBaseline>

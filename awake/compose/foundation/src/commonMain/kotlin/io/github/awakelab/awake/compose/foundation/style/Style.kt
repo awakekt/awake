@@ -158,7 +158,7 @@ internal class ResolvingStyleScope(
  * The six rules below differ only in which flag they read, so the application itself lives here
  * once. `inline` keeps it free: a rule is a branch, not a call.
  */
-private inline fun StyleScope.applyWhen(condition: Boolean, style: Style) {
+private fun StyleScope.applyWhen(condition: Boolean, style: Style) {
     if (condition) with(style) { applyStyle() }
 }
 

@@ -18,7 +18,7 @@ import io.github.awakelab.awake.physics.MotionType
 import io.github.awakelab.awake.physics.PhysicsWorld
 import io.github.awakelab.awake.scene.physics.PhysicsBody
 import io.github.awakelab.awake.scene.physics.PhysicsSystem
-import io.github.awakelab.awake.scene.runtime.Scene
+import io.github.awakelab.awake.scene.document.Scene
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
 import io.github.awakelab.awake.showcase.terrain.TerrainExampleAsset
 

@@ -3,11 +3,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("FunctionNaming", "MatchingDeclarationName", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
 import io.github.awakelab.awake.compose.foundation.layout.Arrangement
 import io.github.awakelab.awake.compose.foundation.layout.Box
 import io.github.awakelab.awake.compose.foundation.layout.Column
+import io.github.awakelab.awake.compose.foundation.layout.ColumnScope
+import io.github.awakelab.awake.compose.foundation.layout.Row
+import io.github.awakelab.awake.compose.foundation.layout.RowScope
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.layout.width
 import io.github.awakelab.awake.compose.foundation.style.Style
@@ -21,6 +26,9 @@ import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.compose.ui.Alignment
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.platform.LocalTextStyle
+import io.github.awakelab.awake.compose.ui.semantics.SemanticsProperties
+import io.github.awakelab.awake.compose.ui.semantics.SemanticsRole
+import io.github.awakelab.awake.compose.ui.semantics.semantics
 import io.github.awakelab.awake.compose.ui.unit.Dp
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.core.math2d.sp
@@ -28,49 +36,196 @@ import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.ui.shadcn.ShadcnThemeValues
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
 
+@DslMarker
+annotation class ShadcnDialogDsl
+
 /**
- * shadcn's dialog panel: `bg-background rounded-lg border p-6 shadow-lg gap-4`.
+ * DSL Scope for composing dialog header contents inside [ShadcnDialogScope.header].
+ */
+@ShadcnDialogDsl
+class ShadcnDialogHeaderScope internal constructor(
+    private val columnScope: ColumnScope,
+) : ColumnScope by columnScope {
+
+    context(_: Composer)
+    fun title(
+        text: String,
+        modifier: Modifier = Modifier,
+    ) {
+        ShadcnText(
+            text = text,
+            modifier = modifier,
+            variant = ShadcnTextVariant.Large,
+            lineHeight = DialogTitleLeading,
+        )
+    }
+
+    context(_: Composer)
+    fun description(
+        text: String,
+        modifier: Modifier = Modifier,
+    ) {
+        ShadcnText(
+            text = text,
+            modifier = modifier,
+            variant = ShadcnTextVariant.Muted,
+        )
+    }
+}
+
+/**
+ * DSL Scope for composing dialog sections inside [ShadcnDialog].
+ */
+@ShadcnDialogDsl
+class ShadcnDialogScope internal constructor(
+    private val columnScope: ColumnScope,
+) : ColumnScope by columnScope {
+
+    context(_: Composer)
+    fun header(
+        modifier: Modifier = Modifier,
+        content: context(Composer) ShadcnDialogHeaderScope.() -> Unit,
+    ) {
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(DialogHeaderGap),
+        ) {
+            val scope = remember(this) { ShadcnDialogHeaderScope(this) }
+            scope.content()
+        }
+    }
+
+    context(_: Composer)
+    fun title(
+        text: String,
+        modifier: Modifier = Modifier,
+    ) {
+        ShadcnText(
+            text = text,
+            modifier = modifier,
+            variant = ShadcnTextVariant.Large,
+            lineHeight = DialogTitleLeading,
+        )
+    }
+
+    context(_: Composer)
+    fun description(
+        text: String,
+        modifier: Modifier = Modifier,
+    ) {
+        ShadcnText(
+            text = text,
+            modifier = modifier,
+            variant = ShadcnTextVariant.Muted,
+        )
+    }
+
+    context(_: Composer)
+    fun content(
+        modifier: Modifier = Modifier,
+        content: context(Composer) ColumnScope.() -> Unit,
+    ) {
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(DialogSectionGap),
+        ) {
+            content()
+        }
+    }
+
+    context(_: Composer)
+    fun footer(
+        modifier: Modifier = Modifier,
+        content: context(Composer) RowScope.() -> Unit,
+    ) {
+        Box(
+            modifier = modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.End,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedByHorizontal(DialogActionGap),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                content()
+            }
+        }
+    }
+}
+
+/**
+ * `ShadcnDialog`: Modal dialog overlay with full-viewport animated scrim backdrop.
  *
- * The panel only. Upstream's `Dialog` is the panel plus an overlay, a portal and focus capture, and
- * those belong to whatever owns the overlay layer -- a recipe that dimmed the screen from inside
- * itself would be un-composable with any other overlay. `07-overlay-layering.md` is where that lives.
+ * **Tailwind Reference**: `fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out`.
  *
- * `DialogHeader` is `flex flex-col gap-2` and `DialogFooter` is `flex justify-end`, which is why the
- * title and description sit closer to each other than the footer does to either.
+ * Use cases:
+ * - Studio marketplace extensions browser, pro licensing dialog, modal settings dialogs.
+ *
+ * **Example Usage**:
+ * ```kotlin
+ * ShadcnDialog(visible = isDialogOpen, onDismissRequest = { isDialogOpen = false }) {
+ *     header {
+ *         title("Edit profile")
+ *         description("Make changes to your profile here.")
+ *     }
+ *     content {
+ *         // Dialog body content
+ *     }
+ *     footer {
+ *         ShadcnButton("Save Changes", onClick = { isDialogOpen = false })
+ *     }
+ * }
+ * ```
+ *
+ * @param visible Controls whether the dialog is displayed.
+ * @param onDismissRequest Callback invoked when clicking the scrim backdrop or pressing Escape.
+ * @param modifier Custom layout modifier for the panel container.
+ * @param width Width of the dialog container (defaults to `sm:max-w-lg` 512.dp).
+ * @param id Optional test tag or identifier.
+ * @param content The composable dialog body slot with [ShadcnDialogScope] receiver.
+ *
+ * Keywords: dialog, modal, popup, scrim, overlay, window.
  */
 context(_: Composer)
-fun shadcnDialog(
-    title: String,
+fun ShadcnDialog(
+    visible: Boolean,
+    onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
-    description: String? = null,
     width: Dp = DialogWidth,
-    actions: (
+    id: String? = null,
+    content: (
         context(Composer)
-        () -> Unit
+        ShadcnDialogScope.() -> Unit
     )? = null,
 ) {
     val theme = shadcnTheme
     val style = remember(theme) { theme.dialogStyle() }
 
-    Box(modifier.width(width).styleable(StyleState.Default, style)) {
-        // Children inherit `text-foreground` from the panel. `styleable` records a style's text
-        // colour for `resolveTextColor` rather than propagating it, so without this the body takes
-        // the engine's default grey -- the same gap the popover had.
-        CompositionLocalProvider(
-            LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.foreground),
+    shadcnModalLayer(
+        visible = visible,
+        alignment = Alignment.Center,
+        onDismissRequest = onDismissRequest,
+        scrimModifier = scrimModifier(id, onScrimClick = onDismissRequest),
+    ) {
+        Box(
+            modifier = modifier
+                .width(width)
+                .styleable(StyleState.Default, style)
+                .semantics {
+                    this[SemanticsProperties.Role] = SemanticsRole.Dialog
+                    if (id != null) this[SemanticsProperties.TestTag] = id
+                },
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(DialogSectionGap)) {
-                Column(verticalArrangement = Arrangement.spacedBy(DialogHeaderGap)) {
-                    // `leading-none` on the title: its line box is the font size, not the `text-lg` pair's 28.
-                    ShadcnText(title, variant = ShadcnTextVariant.Large, lineHeight = DialogTitleLeading)
-                    if (description != null) {
-                        ShadcnText(description, variant = ShadcnTextVariant.Muted)
+            CompositionLocalProvider(
+                LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.foreground),
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(DialogSectionGap),
+                ) {
+                    if (content != null) {
+                        val scope = remember(this) { ShadcnDialogScope(this) }
+                        scope.content()
                     }
-                }
-                val footer = actions
-                if (footer != null) {
-                    // `justify-end` -- the footer's buttons sit against the right edge.
-                    Box(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) { footer() }
                 }
             }
         }
@@ -88,14 +243,17 @@ internal fun ShadcnThemeValues.dialogStyle(): Style = Style {
 /** `leading-none` -- equal to `text-lg`'s own 18px size. */
 private val DialogTitleLeading = 18f.sp
 
-/** shadcn's `sm:max-w-lg`, narrowed to the width the parity capture pins. */
-private val DialogWidth: Dp = 320.dp
+/** shadcn's `sm:max-w-lg`. */
+private val DialogWidth: Dp = 512.dp
 
 /** `gap-4` between header and footer. */
 private val DialogSectionGap: Dp = Tw.Spacing.s4
 
 /** `gap-2` inside the header. */
 private val DialogHeaderGap: Dp = Tw.Spacing.s2
+
+/** `gap-2` between footer actions. */
+private val DialogActionGap: Dp = Tw.Spacing.s2
 
 /** Tailwind's bare `border` is 1px; the width scale is not generated -- see `ShadcnCard`. */
 private val DialogBorderWidth: Dp = 1.dp

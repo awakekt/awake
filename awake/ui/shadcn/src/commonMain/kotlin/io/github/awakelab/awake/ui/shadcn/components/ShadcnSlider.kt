@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
 import io.github.awakelab.awake.compose.foundation.animation.animateFloat
@@ -150,7 +151,7 @@ fun ShadcnSlider(
                     )
                     drawSliderThumb(track, fraction, thumb, ring, theme.palette.primary)
                 }
-            }
+            },
     )
 }
 
@@ -263,7 +264,7 @@ fun ShadcnRangeSlider(
                     drawSliderThumb(track, resolvedStartFraction, thumb, ring, theme.palette.primary)
                     drawSliderThumb(track, resolvedEndFraction, thumb, ring, theme.palette.primary)
                 }
-            }
+            },
     )
 }
 
@@ -388,7 +389,9 @@ private class RangeDraggableElement(
     override fun toString(): String = "rangeDraggable()"
 }
 
-private class RangeDraggableNode : Modifier.Node(), PointerInputNode {
+private class RangeDraggableNode :
+    Modifier.Node(),
+    PointerInputNode {
     lateinit var onPress: (Int) -> Unit
     lateinit var onDrag: (Int) -> Unit
 

@@ -17,11 +17,11 @@ import io.github.awakelab.awake.scene.rendering.particles.ParticleEmitter
 import io.github.awakelab.awake.scene.rendering.particles.ParticleGround
 import io.github.awakelab.awake.scene.rendering.particles.ParticleLifecycle
 import io.github.awakelab.awake.scene.rendering.particles.ParticleMotion
-import io.github.awakelab.awake.scene.rendering.particles.ParticleVisual
-import io.github.awakelab.awake.scene.rendering.particles.spawnParticleBurst
 import io.github.awakelab.awake.scene.rendering.particles.ParticleSystem
+import io.github.awakelab.awake.scene.rendering.particles.ParticleVisual
 import io.github.awakelab.awake.scene.rendering.particles.currentAlpha
 import io.github.awakelab.awake.scene.rendering.particles.currentColor
+import io.github.awakelab.awake.scene.rendering.particles.spawnParticleBurst
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals

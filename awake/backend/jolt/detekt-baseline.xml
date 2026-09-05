@@ -2,23 +2,8 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>DestructuringDeclarationWithTooManyEntries:JoltPhysicsWorld.kt$JoltPhysicsWorld$val (qw, qx, qy, qz) = eulerVec3ToQuatWxyz(rotation)</ID>
-    <ID>FunctionOnlyReturningConstant:JoltPhysicsWorld.kt$@OptIn(ExperimentalForeignApi::class) private fun getNumBroadPhaseLayers(self: COpaquePointer?): UInt</ID>
-    <ID>LongParameterList:JoltPhysicsWorld.kt$( world: JsAny, isBox: Boolean, halfExtentX: Double, halfExtentY: Double, halfExtentZ: Double, radius: Double, positionX: Double, positionY: Double, positionZ: Double, rotationW: Double, rotationX: Double, rotationY: Double, rotationZ: Double, motionTypeCode: Int, isStatic: Boolean, )</ID>
-    <ID>LongParameterList:JoltPhysicsWorld.kt$( world: JsAny, originX: Double, originY: Double, originZ: Double, directionX: Double, directionY: Double, directionZ: Double, )</ID>
-    <ID>MagicNumber:JoltPhysicsWorld.kt$JoltPhysicsWorld$10</ID>
-    <ID>MagicNumber:JoltPhysicsWorld.kt$JoltPhysicsWorld$1024</ID>
-    <ID>MagicNumber:JoltPhysicsWorld.kt$JoltPhysicsWorld$3</ID>
-    <ID>MagicNumber:JoltPhysicsWorld.kt$JoltPhysicsWorld$4</ID>
-    <ID>MagicNumber:JoltPhysicsWorld.kt$JoltPhysicsWorld$5</ID>
-    <ID>MagicNumber:JoltPhysicsWorld.kt$JoltPhysicsWorld$6</ID>
-    <ID>MagicNumber:JoltPhysicsWorld.kt$JoltPhysicsWorld$9.81f</ID>
-    <ID>MagicNumber:JoltPhysicsWorld.kt$JoltPhysicsWorld.Companion$9.81f</ID>
-    <ID>MagicNumber:QuatEuler.kt$0.5f</ID>
     <ID>UnusedParameter:JoltPhysicsWorld.kt$broadPhaseLayer: JPC_BroadPhaseLayer</ID>
-    <ID>UnusedParameter:JoltPhysicsWorld.kt$layer: JPC_ObjectLayer</ID>
     <ID>UnusedParameter:JoltPhysicsWorld.kt$objectLayer: JPC_ObjectLayer</ID>
     <ID>UnusedParameter:JoltPhysicsWorld.kt$self: COpaquePointer?</ID>
-    <ID>UnusedPrivateMember:JoltPhysicsWorld.kt$@OptIn(ExperimentalForeignApi::class) private fun quatValue(w: Float, x: Float, y: Float, z: Float): CValue&lt;JPC_Quat></ID>
   </CurrentIssues>
 </SmellBaseline>

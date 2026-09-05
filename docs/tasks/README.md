@@ -183,7 +183,6 @@ confirming each survives, rather than asserting it.
   are live, superseded or done. Adding one to each is cheap and makes this index honest.
 - **`AGENTS.md`/`GEMINI.md` drift from `CLAUDE.md`.** Pre-existing; `verify_agent_skills_sync.py`
   checks the mandatory-skill lists match but not the rest of the content.
-- **`docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md`** — package 6 pending.
 - **`ronjunevaldoz/kmp-agent-skills#6`** — docs-hygiene consumer-project gap, open.
 - **Figma design tokens** — deferred deletion of `design-tokens.json` and the Figma test utilities
   from `ui-shadcn`, waiting on the module rename.
@@ -194,5 +193,9 @@ Recorded so they are not re-investigated:
 
 - **`RotatingCubeDemo` "blinking"** — exhaustively investigated, never reproduced. Needs a specific
   trigger before anyone spends time on it again.
+- **The 2026-08-17 UI refactor audit** — closed 2026-09-01 without finishing package 6. It plans
+  sweeps over `ui-core`/`ui-headless` widgets that `awake:compose` deleted, and its central item
+  (replacing callbacks with a return-value idiom) is the opposite of what retained-mode Compose
+  wants. Contrary to the current design, not merely stale.
 - **Spotless** — not a gate here. Only detekt runs in CI and hooks; roughly 26 modules already fail
   spotless, so a spotless failure is almost certainly not caused by your change.

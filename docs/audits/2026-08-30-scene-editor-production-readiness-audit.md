@@ -249,7 +249,7 @@ transform remain follow-up work.
 
 ### Layout: build the four-dock target already specified
 
-[The 2026-08-11 layout design](../tasks/archive/2026-08-11-studio-layout-design.md) already
+The React Shadcn studio reference () already
 specifies it, and it matches where Unity, Godot, Unreal, and Blender converged. The implementation
 stopped at three panels. Missing: the bottom tabbed dock (console, assets, timeline) and a real
 top bar.

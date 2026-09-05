@@ -6,7 +6,6 @@
 package io.github.awakelab.awake.asset.shaderpack
 
 import io.github.awakelab.awake.asset.shaders.ContentFeatureSource
-import io.github.awakelab.awake.asset.shaders.RenderBackend
 import io.github.awakelab.awake.asset.shaders.ShaderStage
 import io.github.awakelab.awake.asset.shaders.aslShaderSet
 import io.github.awakelab.awake.asset.shaders.source

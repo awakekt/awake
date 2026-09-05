@@ -8,7 +8,7 @@ package io.github.awakelab.awake.sample.uishowcase.ui.pages.status
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSpinner
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSpinner
 
 internal val SpinnerPage = ShowcasePage(
     id = "spinner",
@@ -20,6 +20,6 @@ internal val SpinnerPage = ShowcasePage(
     previewHeight = 260,
     notes = listOf("Continuous rotation loading indicator."),
     hero = {
-        shadcnSpinner(size = 24.dp)
+        ShadcnSpinner(size = 24.dp)
     },
 )

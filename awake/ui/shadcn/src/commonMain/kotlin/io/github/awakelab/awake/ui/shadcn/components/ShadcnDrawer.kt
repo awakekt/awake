@@ -20,8 +20,8 @@ import io.github.awakelab.awake.compose.runtime.current
 import io.github.awakelab.awake.compose.runtime.provides
 import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.compose.ui.Alignment
-import io.github.awakelab.awake.compose.ui.platform.LocalDensity
 import io.github.awakelab.awake.compose.ui.Modifier
+import io.github.awakelab.awake.compose.ui.platform.LocalDensity
 import io.github.awakelab.awake.compose.ui.platform.LocalTextStyle
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsProperties
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsRole
@@ -51,7 +51,10 @@ fun shadcnDrawer(
     title: String? = null,
     description: String? = null,
     id: String? = null,
-    content: (context(Composer) () -> Unit)? = null,
+    content: (
+        context(Composer)
+        () -> Unit
+    )? = null,
 ) {
     val theme = shadcnTheme
     val density = LocalDensity.current
@@ -68,8 +71,14 @@ fun shadcnDrawer(
     shadcnModalLayer(
         visible = visible,
         alignment = Alignment.BottomCenter,
-        onDismissRequest = { drag.travelPx = 0f; onDismissRequest() },
-        scrimModifier = scrimModifier(id) { drag.travelPx = 0f; onDismissRequest() },
+        onDismissRequest = {
+            drag.travelPx = 0f
+            onDismissRequest()
+        },
+        scrimModifier = scrimModifier(id) {
+            drag.travelPx = 0f
+            onDismissRequest()
+        },
     ) {
         Box(
             modifier

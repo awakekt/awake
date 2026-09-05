@@ -4,25 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
-import io.github.awakelab.awake.compose.foundation.background
 import io.github.awakelab.awake.compose.foundation.BorderSides
+import io.github.awakelab.awake.compose.foundation.background
 import io.github.awakelab.awake.compose.foundation.border
 import io.github.awakelab.awake.compose.foundation.hoverable
-import io.github.awakelab.awake.compose.foundation.rememberInteractionSource
 import io.github.awakelab.awake.compose.foundation.layout.Arrangement
 import io.github.awakelab.awake.compose.foundation.layout.Box
 import io.github.awakelab.awake.compose.foundation.layout.Column
 import io.github.awakelab.awake.compose.foundation.layout.ColumnScope
 import io.github.awakelab.awake.compose.foundation.layout.Row
 import io.github.awakelab.awake.compose.foundation.layout.RowScope
+import io.github.awakelab.awake.compose.foundation.layout.Spacer
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxHeight
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxSize
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.layout.padding
 import io.github.awakelab.awake.compose.foundation.layout.width
-import io.github.awakelab.awake.compose.foundation.layout.Spacer
+import io.github.awakelab.awake.compose.foundation.rememberInteractionSource
 import io.github.awakelab.awake.compose.foundation.rememberScrollState
 import io.github.awakelab.awake.compose.foundation.verticalScroll
 import io.github.awakelab.awake.compose.runtime.Composer
@@ -79,7 +80,7 @@ private val LocalSidebarProviderScope = compositionLocalOf<SidebarProviderScope?
  * Upstream's `collapsible="icon"` toggles a `group-data-[collapsible=icon]` CSS selector that
  * each consumer opts into individually -- a menu item hides its own label text, a caller's own
  * header/footer content decides for itself whether it has anything meaningful to show collapsed.
- * This local is the same seam: [shadcnSidebarMenuItem] reads it directly (a recipe this module
+ * This local is the same seam: [ShadcnSidebarMenuItem] reads it directly (a recipe this module
  * owns), while [SidebarHeader]/[SidebarFooter] content is caller-authored and free to read it too.
  *
  * Found missing 2026-08-29 by rendering the actual collapsed state: without it, every slot kept
@@ -150,7 +151,10 @@ private object SidebarProviderRootNodeType
  * offset().
  */
 private class SidebarProviderRootMeasurePolicy(private val state: SidebarState) : MeasurePolicy {
-    override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+    override fun MeasureScope.measure(
+        measurables: List<Measurable>,
+        constraints: Constraints,
+    ): MeasureResult {
         val contentPlaceable = measurables[0].measure(constraints)
         val sidebarWidth = (if (state.isOpen) state.width else state.collapsedWidth).roundToPx()
         val hitWidth = SidebarRailHitWidth.roundToPx()
@@ -294,7 +298,7 @@ fun SidebarTrigger(
     )
 }
 
-private context(_: Composer)
-fun requireSidebarState(): SidebarState = requireNotNull(LocalSidebarState.current) {
+context(_: Composer)
+private fun requireSidebarState(): SidebarState = requireNotNull(LocalSidebarState.current) {
     "Sidebar must be declared inside SidebarProvider { ... }."
 }

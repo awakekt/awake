@@ -12,7 +12,7 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSkeleton
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSkeleton
 
 internal val SkeletonPage = ShowcasePage(
     id = "skeleton",
@@ -24,10 +24,10 @@ internal val SkeletonPage = ShowcasePage(
     previewHeight = 300,
     notes = listOf("Muted background box indicating content loading."),
     hero = {
-        shadcnSkeleton(modifier = Modifier.width(260.dp).height(20.dp))
+        ShadcnSkeleton(modifier = Modifier.width(260.dp).height(20.dp))
         Spacer(Modifier.height(8.dp))
-        shadcnSkeleton(modifier = Modifier.width(320.dp).height(12.dp))
+        ShadcnSkeleton(modifier = Modifier.width(320.dp).height(12.dp))
         Spacer(Modifier.height(8.dp))
-        shadcnSkeleton(modifier = Modifier.width(200.dp).height(12.dp))
+        ShadcnSkeleton(modifier = Modifier.width(200.dp).height(12.dp))
     },
 )

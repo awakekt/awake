@@ -17,8 +17,8 @@ import io.github.awakelab.awake.render.passes2d.UiRunCoalescer
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCard
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnIcon
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
-import io.github.awakelab.awake.ui.shadcn.components.shadcnIcon
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -85,7 +85,7 @@ class UiFrameCostRatchetTest {
                 repeat(CARDS) {
                     ShadcnCard(Modifier.size(CARD_WIDTH.dp, CARD_HEIGHT.dp)) {
                         Row {
-                            shadcnIcon(HeroIcons.Outline24.arrowPath)
+                            ShadcnIcon(HeroIcons.Outline24.arrowPath)
                             ShadcnText("Ordinary label text")
                             ShadcnButton("Action", variant = ShadcnButtonVariant.Outline)
                         }

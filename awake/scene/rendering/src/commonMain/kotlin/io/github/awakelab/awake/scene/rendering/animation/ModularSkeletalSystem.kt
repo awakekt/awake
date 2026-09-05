@@ -19,6 +19,12 @@ import io.github.awakelab.awake.ecs.World
  */
 class ModularSkeletalSystem : System {
 
+    /**
+     * Updates all animated [ModularCharacterComponent] entities in [world] by [delta] seconds.
+     *
+     * @param world Active ECS world containing modular character and animator components.
+     * @param delta Elapsed time in seconds since the previous frame.
+     */
     override fun update(world: World, delta: Float) {
         world.queryEach(ModularCharacterComponent::class, Animator::class) { entity, character, animator ->
             if (!character.isVisible) return@queryEach

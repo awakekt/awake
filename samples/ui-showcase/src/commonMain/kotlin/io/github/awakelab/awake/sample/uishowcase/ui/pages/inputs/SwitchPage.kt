@@ -13,7 +13,7 @@ import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnFieldLabel
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSwitch
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSwitch
 
 private class SwitchCheckedState(initial: Boolean) {
     var checked: Boolean = initial
@@ -34,7 +34,7 @@ internal val SwitchPage = ShowcasePage(
             horizontalArrangement = Arrangement.spacedByHorizontal(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            shadcnSwitch(state.checked, onCheckedChange = { state.checked = it })
+            ShadcnSwitch(state.checked, onCheckedChange = { state.checked = it })
             ShadcnFieldLabel("Airplane mode")
         }
     },

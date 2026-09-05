@@ -5,21 +5,21 @@
  */
 package io.github.awakelab.awake.ui.shadcn
 
-import io.github.awakelab.awake.compose.foundation.text.TextFieldState
 import io.github.awakelab.awake.compose.foundation.layout.Column
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
+import io.github.awakelab.awake.compose.foundation.text.TextFieldState
 import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.platform.ComposeHost
 import io.github.awakelab.awake.compose.ui.platform.FrameInput
+import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.core.graphics2d.DrawCommand
-import io.github.awakelab.awake.ui.shadcn.components.shadcnBreadcrumb
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnInput
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnBreadcrumb
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCard
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnInput
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnTabs
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTextarea
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextarea
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -59,7 +59,9 @@ class ShadcnFieldsTest {
     fun inputFocusRoutesTypingAndMovesItsCaret() {
         val state = TextFieldState("ac", cursor = 1)
         val host = ComposeHost()
-        val content: context(Composer) () -> Unit = { provideShadcnTheme(theme) { ShadcnInput(state) } }
+        val content: context(Composer)
+        () -> Unit =
+            { provideShadcnTheme(theme) { ShadcnInput(state) } }
         val idle = FrameInput(200, 100, 5, 5)
         host.frame(idle, content)
         host.frame(FrameInput(200, 100, 5, 5, pointerDown = true), content)
@@ -88,7 +90,7 @@ class ShadcnFieldsTest {
         // `min-h-16` with `field-sizing-content`: two lines to start, growing with the content. A
         // fixed height would cap a long note with no scroll.
         fun height(text: String) = composeFrame(300, 200) {
-            provideShadcnTheme(theme) { shadcnTextarea(TextFieldState(text)) }
+            provideShadcnTheme(theme) { ShadcnTextarea(TextFieldState(text)) }
         }.primitivesOf<DrawCommand.RoundedQuad>().first().h
 
         assertTrue(height("one line") >= 64f - 0.5f, "the textarea is under its min-h-16")
@@ -100,11 +102,14 @@ class ShadcnFieldsTest {
         // They share one style; this is what catches the two drifting apart if someone edits one.
         fun border(input: Boolean) = composeFrame(300, 200) {
             provideShadcnTheme(theme) {
-                if (input) ShadcnInput(TextFieldState("x")) else shadcnTextarea(TextFieldState("x"))
+                if (input) ShadcnInput(TextFieldState("x")) else ShadcnTextarea(TextFieldState("x"))
             }
         }.meshColors()
 
-        assertTrue(border(true).any { it == theme.palette.input }, "the input has no border-input edge")
+        assertTrue(
+            border(true).any { it == theme.palette.input },
+            "the input has no border-input edge",
+        )
         assertTrue(border(false).any { it == theme.palette.input }, "the textarea's border drifted")
     }
 
@@ -112,20 +117,22 @@ class ShadcnFieldsTest {
     fun fieldsInsideAFullWidthCardKeepTheirAvailableWidth() {
         val quads = composeFrame(300, 180) {
             provideShadcnTheme(theme) {
-                ShadcnCard(Modifier.fillMaxWidth()) {
+                ShadcnCard(Modifier.fillMaxWidth(), contentPadding = 0.dp) {
                     Column(Modifier.fillMaxWidth()) {
                         ShadcnInput(TextFieldState("name"))
-                        shadcnTextarea(TextFieldState("bio"))
+                        ShadcnTextarea(TextFieldState("bio"))
                     }
                 }
             }
         }.primitivesOf<DrawCommand.RoundedQuad>()
 
-        // 300px card, minus only the 1px border on each side: ShadcnCard's own container carries
-        // no horizontal inset (upstream's Card is py-6 only), so a raw content slot's fields get
-        // near-full width. A caller wanting real px-6 uses ShadcnCardContent instead.
+        // 300px card with contentPadding = 0.dp, minus only the 1px border on each side:
+        // fields get full available width (296px+).
         assertTrue(quads.any { it.w >= 296f && it.h == 36f }, "the input collapsed inside the card")
-        assertTrue(quads.any { it.w >= 296f && it.h >= 64f }, "the textarea collapsed inside the card")
+        assertTrue(
+            quads.any { it.w >= 296f && it.h >= 64f },
+            "the textarea collapsed inside the card",
+        )
     }
 
     // -- tabs -----------------------------------------------------------------------------------
@@ -185,17 +192,21 @@ class ShadcnFieldsTest {
         // Upstream marks it aria-current="page" and styles it `text-foreground`. A uniformly muted
         // trail is the obvious wrong version and reads as all-disabled.
         val glyphs = composeFrame(400, 60) {
-            provideShadcnTheme(theme) { shadcnBreadcrumb(listOf("Home", "Docs", "Components")) }
+            provideShadcnTheme(theme) { ShadcnBreadcrumb(listOf("Home", "Docs", "Components")) }
         }.primitivesOf<DrawCommand.Glyph>()
 
         assertEquals(theme.palette.foreground, glyphs.last().color, "the current page is muted")
-        assertEquals(theme.palette.mutedForeground, glyphs.first().color, "an ancestor is not muted")
+        assertEquals(
+            theme.palette.mutedForeground,
+            glyphs.first().color,
+            "an ancestor is not muted",
+        )
     }
 
     @Test
     fun aSingleCrumbIsTheCurrentPage() {
         val glyphs = composeFrame(400, 60) {
-            provideShadcnTheme(theme) { shadcnBreadcrumb(listOf("Home")) }
+            provideShadcnTheme(theme) { ShadcnBreadcrumb(listOf("Home")) }
         }.primitivesOf<DrawCommand.Glyph>()
 
         assertTrue(glyphs.all { it.color == theme.palette.foreground }, "a lone crumb was muted")

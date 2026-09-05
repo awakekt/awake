@@ -36,7 +36,8 @@ class ZIndexTest {
     @Test
     fun higherZIndexPaintsAfterLowerZIndex() {
         val host = ComposeHost()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(
                 nodeType = "root",
                 measurePolicy = stackPolicy,
@@ -69,7 +70,8 @@ class ZIndexTest {
     fun higherZIndexReceivesPointerClickFirst() {
         var clicked = ""
         val host = ComposeHost()
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(
                 nodeType = "root",
                 measurePolicy = stackPolicy,
@@ -120,7 +122,9 @@ class ZIndexTest {
     }
 }
 
-private class ZIndexPointerInputNode : Modifier.Node(), PointerInputNode {
+private class ZIndexPointerInputNode :
+    Modifier.Node(),
+    PointerInputNode {
     lateinit var onEvent: (PointerEvent, PointerEventPass) -> Unit
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) = onEvent(event, pass)
@@ -130,7 +134,9 @@ private class ZIndexPointerInputElement(
     private val onEvent: (PointerEvent, PointerEventPass) -> Unit,
 ) : ModifierNodeElement<ZIndexPointerInputNode>() {
     override fun create(): ZIndexPointerInputNode = ZIndexPointerInputNode()
-    override fun update(node: ZIndexPointerInputNode) { node.onEvent = onEvent }
+    override fun update(node: ZIndexPointerInputNode) {
+        node.onEvent = onEvent
+    }
 }
 
 private fun Modifier.zIndexPointerInput(

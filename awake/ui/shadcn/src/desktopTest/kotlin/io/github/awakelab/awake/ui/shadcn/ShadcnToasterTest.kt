@@ -17,7 +17,7 @@ import io.github.awakelab.awake.compose.ui.semantics.SemanticsNode
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.ui.shadcn.components.MAX_VISIBLE_TOASTS
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnToastState
-import io.github.awakelab.awake.ui.shadcn.components.shadcnToaster
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnToaster
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -95,7 +95,7 @@ class ShadcnToasterTest {
         val session = composeTestSession(VIEWPORT, VIEWPORT) {
             provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
                 Box(Modifier.fillMaxSize().clickable { clicks++ }.testTag("page"))
-                shadcnToaster(state, id = TOASTER)
+                ShadcnToaster(state, id = TOASTER)
             }
         }
         session.frame(tick())
@@ -117,7 +117,7 @@ class ShadcnToasterTest {
     private fun toaster(state: ShadcnToastState): ComposeTestSession =
         composeTestSession(VIEWPORT, VIEWPORT) {
             provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
-                shadcnToaster(state, id = TOASTER)
+                ShadcnToaster(state, id = TOASTER)
             }
         }
 

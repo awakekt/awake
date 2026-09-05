@@ -29,7 +29,9 @@ private class OnPlacedElement(
     override fun toString(): String = "onPlaced()"
 }
 
-private class OnPlacedNode : Modifier.Node(), OnPlacedModifierNode {
+private class OnPlacedNode :
+    Modifier.Node(),
+    OnPlacedModifierNode {
     lateinit var callback: (Int, Int, Int, Int) -> Unit
     override fun onPlaced(x: Int, y: Int, width: Int, height: Int) = callback.invoke(x, y, width, height)
 
@@ -61,7 +63,9 @@ private class OnSizeChangedElement(
     override fun toString(): String = "onSizeChanged()"
 }
 
-private class OnSizeChangedNode : Modifier.Node(), OnPlacedModifierNode {
+private class OnSizeChangedNode :
+    Modifier.Node(),
+    OnPlacedModifierNode {
     lateinit var callback: (Int, Int) -> Unit
     private var lastWidth = -1
     private var lastHeight = -1

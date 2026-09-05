@@ -27,17 +27,29 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * bare modifiers in the same change would bury the layout migration in unrelated diffs. New code
  * should use the modifiers; this exists so that migration is one step rather than two.
  */
+@Deprecated("Should utilize shadcn Card")
 context(_: Composer)
 fun shadcnSurface(
     modifier: Modifier = Modifier,
     contentPadding: Dp = SurfacePadding,
+    cornerRadius: Dp = shadcnTheme.radii.lg,
     bordered: Boolean = true,
     content: context(Composer) () -> Unit,
 ) {
     val theme = shadcnTheme
-    val base = modifier.background(theme.palette.card, theme.radii.lg)
+    val base = modifier.background(theme.palette.card, cornerRadius)
     Column(
-        (if (bordered) base.border(SurfaceBorderWidth, theme.palette.border, theme.radii.lg) else base)
+        (
+            if (bordered) {
+                base.border(
+                    SurfaceBorderWidth,
+                    theme.palette.border,
+                    cornerRadius,
+                )
+            } else {
+                base
+            }
+            )
             .padding(contentPadding),
     ) { content() }
 }

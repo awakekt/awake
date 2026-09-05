@@ -46,7 +46,9 @@ private class LayoutModifierElement(
     }
 }
 
-private class LayoutModifierNodeImpl : Modifier.Node(), LayoutModifierNode {
+private class LayoutModifierNodeImpl :
+    Modifier.Node(),
+    LayoutModifierNode {
     lateinit var measureBlock: MeasureScope.(Measurable, Constraints) -> MeasureResult
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult =
         measureBlock(measurable, constraints)
@@ -66,7 +68,9 @@ private class LayoutIdElement(
     }
 }
 
-private class LayoutIdNode : Modifier.Node(), ParentDataModifierNode {
+private class LayoutIdNode :
+    Modifier.Node(),
+    ParentDataModifierNode {
     lateinit var id: Any
     override fun modifyParentData(current: Any?): Any? = LayoutIdParentData(id)
 

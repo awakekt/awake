@@ -13,6 +13,7 @@ import io.github.awakelab.awake.asset.shaderdsl.div
 import io.github.awakelab.awake.asset.shaderdsl.dot
 import io.github.awakelab.awake.asset.shaderdsl.fieldsFrom
 import io.github.awakelab.awake.asset.shaderdsl.floor
+import io.github.awakelab.awake.asset.shaderdsl.inputsFrom
 import io.github.awakelab.awake.asset.shaderdsl.lit
 import io.github.awakelab.awake.asset.shaderdsl.max
 import io.github.awakelab.awake.asset.shaderdsl.minus
@@ -23,7 +24,6 @@ import io.github.awakelab.awake.asset.shaderdsl.sampler
 import io.github.awakelab.awake.asset.shaderdsl.shader
 import io.github.awakelab.awake.asset.shaderdsl.texture2d
 import io.github.awakelab.awake.asset.shaderdsl.textureSampleLevel
-import io.github.awakelab.awake.asset.shaderdsl.inputsFrom
 import io.github.awakelab.awake.asset.shaderdsl.times
 import io.github.awakelab.awake.asset.shaderdsl.toU32
 import io.github.awakelab.awake.asset.shaderdsl.unaryMinus
@@ -123,7 +123,7 @@ object TerrainUniformLayout {
  * this is strictly better than the single-channel encoding it replaces, including at the
  * boundaries where it is least accurate.
  */
-private fun decodeHeight(sample: AslExpr): AslExpr = (sample.x * 256f.lit + sample.y) / 257f.lit
+internal fun decodeHeight(sample: AslExpr): AslExpr = (sample.x * 256f.lit + sample.y) / 257f.lit
 
 val TerrainShader: AslShaderDefinition = shader("terrain") {
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)

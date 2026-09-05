@@ -1,9 +1,9 @@
 # Awake Shader DSL (ASL)
 
-Procedural shader authoring for [Awake](../../../README.md): shaders are defined in Kotlin,
+Procedural shader authoring for Awake: shaders are defined in Kotlin,
 emitted as WGSL text, and fed into the existing naga shader pipeline unchanged. This module is
 pure text generation — no render contract, no GPU backend, no UI dependency. Plan and
-decisions: [2026-08-23-asl-procedural-shader-plan.md](../../../docs/tasks/2026-08-23-asl-procedural-shader-plan.md).
+decisions: [2026-08-23-asl-procedural-shader-plan.md](../../docs/tasks/archive/2026-08-23-asl-procedural-shader-plan.md).
 
 ## Where ASL sits
 

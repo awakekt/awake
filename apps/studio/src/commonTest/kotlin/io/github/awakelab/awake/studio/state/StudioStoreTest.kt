@@ -34,5 +34,4 @@ class StudioStoreTest {
         store.dispatch(StudioContract.Intent.SetProjection(StudioContract.Projection.Perspective))
         assertEquals(StudioContract.Projection.Perspective, store.state.value.camera.projection)
     }
-
 }

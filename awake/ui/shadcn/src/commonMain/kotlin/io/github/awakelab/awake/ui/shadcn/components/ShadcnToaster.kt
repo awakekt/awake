@@ -33,7 +33,7 @@ class ShadcnToastEntry internal constructor(
 )
 
 /**
- * The queue behind [shadcnToaster], owned by the app rather than by a call site.
+ * The queue behind [ShadcnToaster], owned by the app rather than by a call site.
  *
  * A toast outlives whatever raised it -- the button that fired one is usually gone by the time it
  * fades -- so the queue cannot live in the raising composable's `remember`. Hold one of these
@@ -91,7 +91,7 @@ class ShadcnToastState {
  * emitted at all while the queue is empty, so an idle toaster costs no layer.
  */
 context(_: Composer)
-fun shadcnToaster(
+fun ShadcnToaster(
     state: ShadcnToastState,
     modifier: Modifier = Modifier,
     id: String? = null,
@@ -110,7 +110,10 @@ fun shadcnToaster(
         },
         measurePolicy = BoxMeasurePolicy(),
     ) {
-        Box(modifier.padding(ToasterInset).semantics { if (id != null) this[SemanticsProperties.TestTag] = id }) {
+        Box(
+            modifier.padding(ToasterInset)
+                .semantics { if (id != null) this[SemanticsProperties.TestTag] = id },
+        ) {
             Column(verticalArrangement = Arrangement.spacedBy(ToastGap)) {
                 for (toast in toasts) {
                     shadcnToast(
@@ -118,7 +121,10 @@ fun shadcnToaster(
                         modifier = Modifier
                             .widthIn(max = ToastMaxWidth)
                             .semantics {
-                                if (id != null) this[SemanticsProperties.TestTag] = "$id.${toast.key}"
+                                if (id != null) {
+                                    this[SemanticsProperties.TestTag] =
+                                        "$id.${toast.key}"
+                                }
                             },
                         title = toast.title,
                     )

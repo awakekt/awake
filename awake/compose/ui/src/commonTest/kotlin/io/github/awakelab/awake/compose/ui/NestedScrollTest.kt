@@ -54,7 +54,8 @@ class NestedScrollTest {
         val childDispatcher = NestedScrollDispatcher()
         val host = ComposeHost()
 
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(
                 nodeType = "parent",
                 modifier = Modifier.nestedScroll(parentConnection),

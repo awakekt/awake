@@ -68,7 +68,10 @@ class LodHysteresisTest {
 
         assertEquals(
             2,
-            group.let { it.selectLevel(5_000f); it.activeLevel },
+            group.let {
+                it.selectLevel(5_000f)
+                it.activeLevel
+            },
             "Outside its band the plain threshold decides, so one frame is enough to reach the " +
                 "coarsest level -- a level per frame would take three.",
         )

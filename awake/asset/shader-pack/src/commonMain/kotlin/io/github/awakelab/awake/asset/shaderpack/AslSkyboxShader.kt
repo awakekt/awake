@@ -5,8 +5,6 @@
  */
 package io.github.awakelab.awake.asset.shaderpack
 
-import io.github.awakelab.awake.render.pipeline.BindingLayout
-import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
 import io.github.awakelab.awake.asset.shaderdsl.div
 import io.github.awakelab.awake.asset.shaderdsl.dot
@@ -23,12 +21,13 @@ import io.github.awakelab.awake.asset.shaderdsl.shader
 import io.github.awakelab.awake.asset.shaderdsl.smoothstep
 import io.github.awakelab.awake.asset.shaderdsl.times
 import io.github.awakelab.awake.asset.shaderdsl.unaryMinus
-import io.github.awakelab.awake.asset.shaderdsl.vec2
 import io.github.awakelab.awake.asset.shaderdsl.vec4
 import io.github.awakelab.awake.asset.shaderdsl.w
 import io.github.awakelab.awake.asset.shaderdsl.xyz
 import io.github.awakelab.awake.asset.shaderdsl.y
 import io.github.awakelab.awake.core.geometry.GpuDataShape
+import io.github.awakelab.awake.render.pipeline.BindingLayout
+import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.render.renderer.SkyboxUniformLayout
 
 /**

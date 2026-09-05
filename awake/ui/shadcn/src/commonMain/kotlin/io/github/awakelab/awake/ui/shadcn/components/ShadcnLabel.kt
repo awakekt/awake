@@ -18,7 +18,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * interaction source. A label has no interactions of its own to track.
  */
 context(_: Composer)
-fun shadcnLabel(
+fun ShadcnLabel(
     text: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,

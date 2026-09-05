@@ -67,7 +67,7 @@ For a scene or Compose UI, add those published feature modules and install them 
 The repository's executable example is:
 
 ```kotlin
---8<-- "samples/hello-cube/src/commonMain/kotlin/io/github/awakelab/awake/sample/hellocube/app/HelloCubeGame.kt"
+--8<-- "samples/engine-showcase/src/commonMain/kotlin/io/github/awakelab/awake/showcase/app/EngineShowcaseApp.kt"
 ```
 
 > [!NOTE]

@@ -5,8 +5,6 @@
  */
 package io.github.awakelab.awake.asset.shaderpack
 
-import io.github.awakelab.awake.render.pipeline.BindingLayout
-import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
 import io.github.awakelab.awake.asset.shaderdsl.a
 import io.github.awakelab.awake.asset.shaderdsl.column
@@ -34,6 +32,8 @@ import io.github.awakelab.awake.asset.shaderdsl.y
 import io.github.awakelab.awake.core.geometry.GpuDataShape
 import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.core.geometry.VertexSemantic
+import io.github.awakelab.awake.render.pipeline.BindingLayout
+import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.render.renderer.ParticleUniformLayout
 
 /**

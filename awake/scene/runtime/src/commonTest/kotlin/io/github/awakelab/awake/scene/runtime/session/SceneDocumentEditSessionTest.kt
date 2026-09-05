@@ -5,11 +5,11 @@
  */
 package io.github.awakelab.awake.scene.runtime.session
 
-import io.github.awakelab.awake.scene.runtime.SceneDocument
-import io.github.awakelab.awake.scene.runtime.SceneMeshRenderer
-import io.github.awakelab.awake.scene.runtime.SceneNode
-import io.github.awakelab.awake.scene.runtime.SceneTransform
-import io.github.awakelab.awake.scene.runtime.SceneVec3
+import io.github.awakelab.awake.scene.document.SceneDocument
+import io.github.awakelab.awake.scene.document.SceneMeshRenderer
+import io.github.awakelab.awake.scene.document.SceneNode
+import io.github.awakelab.awake.scene.document.SceneTransform
+import io.github.awakelab.awake.scene.document.SceneVec3
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

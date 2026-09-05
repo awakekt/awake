@@ -3072,6 +3072,12 @@ public final class io/github/awakelab/awake/vulkan/models/info/VkCommandPoolCrea
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/awakelab/awake/vulkan/models/info/VkCompareOp2 {
+	public static final field INSTANCE Lio/github/awakelab/awake/vulkan/models/info/VkCompareOp2;
+	public static final field VK_COMPARE_OP_ALWAYS I
+	public static final field VK_COMPARE_OP_LESS_OR_EQUAL I
+}
+
 public final class io/github/awakelab/awake/vulkan/models/info/VkComponentMapping {
 	public fun <init> ()V
 	public fun <init> (Lio/github/awakelab/awake/vulkan/enums/VkComponentSwizzle;Lio/github/awakelab/awake/vulkan/enums/VkComponentSwizzle;Lio/github/awakelab/awake/vulkan/enums/VkComponentSwizzle;Lio/github/awakelab/awake/vulkan/enums/VkComponentSwizzle;)V
@@ -3401,13 +3407,15 @@ public final class io/github/awakelab/awake/vulkan/models/info/VkSamplerAddressM
 
 public final class io/github/awakelab/awake/vulkan/models/info/VkSamplerCreateInfo {
 	public fun <init> ()V
-	public fun <init> (IIIIIZFIZIFF)V
-	public synthetic fun <init> (IIIIIZFIZIFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IIIIIZFIZIFFZI)V
+	public synthetic fun <init> (IIIIIZFIZIFFZIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAddressModeU ()I
 	public final fun getAddressModeV ()I
 	public final fun getAddressModeW ()I
 	public final fun getAnisotropyEnable ()Z
 	public final fun getBorderColor ()I
+	public final fun getCompareEnable ()Z
+	public final fun getCompareOp ()I
 	public final fun getMagFilter ()I
 	public final fun getMaxAnisotropy ()F
 	public final fun getMaxLod ()F

@@ -4,16 +4,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
+import io.github.awakelab.awake.compose.foundation.ScrollState
+import io.github.awakelab.awake.compose.foundation.animation.animateFloat
 import io.github.awakelab.awake.compose.foundation.background
 import io.github.awakelab.awake.compose.foundation.clickable
 import io.github.awakelab.awake.compose.foundation.focusable
 import io.github.awakelab.awake.compose.foundation.hoverable
 import io.github.awakelab.awake.compose.foundation.interaction.InteractionSource
-import io.github.awakelab.awake.compose.foundation.animation.animateFloat
-import io.github.awakelab.awake.compose.foundation.ScrollState
-import io.github.awakelab.awake.compose.foundation.verticalScroll
 import io.github.awakelab.awake.compose.foundation.layout.Arrangement
 import io.github.awakelab.awake.compose.foundation.layout.Box
 import io.github.awakelab.awake.compose.foundation.layout.BoxMeasurePolicy
@@ -28,6 +28,7 @@ import io.github.awakelab.awake.compose.foundation.layout.widthIn
 import io.github.awakelab.awake.compose.foundation.style.StyleState
 import io.github.awakelab.awake.compose.foundation.style.rememberStyleState
 import io.github.awakelab.awake.compose.foundation.style.styleable
+import io.github.awakelab.awake.compose.foundation.verticalScroll
 import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.compose.runtime.current
 import io.github.awakelab.awake.compose.runtime.remember
@@ -41,15 +42,14 @@ import io.github.awakelab.awake.compose.ui.layout.Layer
 import io.github.awakelab.awake.compose.ui.layout.LayerKind
 import io.github.awakelab.awake.compose.ui.layout.LayerPosition
 import io.github.awakelab.awake.compose.ui.layout.LayerPositionProvider
-import io.github.awakelab.awake.compose.ui.layout.onPlaced
 import io.github.awakelab.awake.compose.ui.platform.LocalDensity
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsProperties
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsRole
 import io.github.awakelab.awake.compose.ui.semantics.semantics
 import io.github.awakelab.awake.compose.ui.unit.dp
-import io.github.awakelab.awake.tailwind.Tw
-import io.github.awakelab.awake.core.text.font.FontWeight
 import io.github.awakelab.awake.core.input.Key
+import io.github.awakelab.awake.core.text.font.FontWeight
+import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
 
 /** An option in [ShadcnSelect]. */
@@ -113,7 +113,8 @@ fun ShadcnSelect(
                 },
                 measurePolicy = BoxMeasurePolicy(),
             ) {
-                val triggerWidth = (anchor.width / density).coerceAtLeast(POPOVER_MIN_WIDTH.value).dp
+                val triggerWidth =
+                    (anchor.width / density).coerceAtLeast(POPOVER_MIN_WIDTH.value).dp
                 ShadcnSelectContent(
                     items = items,
                     selectedIndex = selectedIndex,
@@ -169,7 +170,7 @@ fun ShadcnSelectTrigger(
             color = if (value == null) theme.palette.mutedForeground else theme.palette.foreground,
             weight = FontWeight.Normal,
         )
-        shadcnIcon(ShadcnIcons.chevronDown, tint = theme.palette.mutedForeground)
+        ShadcnIcon(ShadcnIcons.chevronDown, tint = theme.palette.mutedForeground)
     }
 }
 
@@ -238,7 +239,7 @@ private fun ShadcnSelectContent(
                     horizontalArrangement = Arrangement.CenterHorizontally,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    shadcnIcon(ShadcnIcons.chevronUp, size = ShadcnSelectScrollIconSize)
+                    ShadcnIcon(ShadcnIcons.chevronUp, size = ShadcnSelectScrollIconSize)
                 }
             }
             // The initial item-aligned offset must be present before the first popup layout. The
@@ -289,7 +290,7 @@ private fun ShadcnSelectContent(
                                 weight = FontWeight.Normal,
                             )
                             if (selectedItem) {
-                                shadcnIcon(
+                                ShadcnIcon(
                                     ShadcnIcons.check,
                                     size = ShadcnSelectIndicatorSize,
                                     tint = theme.palette.accentForeground,
@@ -312,7 +313,7 @@ private fun ShadcnSelectContent(
                     horizontalArrangement = Arrangement.CenterHorizontally,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    shadcnIcon(ShadcnIcons.chevronDown, size = ShadcnSelectScrollIconSize)
+                    ShadcnIcon(ShadcnIcons.chevronDown, size = ShadcnSelectScrollIconSize)
                 }
             }
         }
@@ -320,11 +321,15 @@ private fun ShadcnSelectContent(
     return clicked
 }
 
-private class SelectContentState { var clicked: Int? = null }
+private class SelectContentState {
+    var clicked: Int? = null
+}
 
 private const val DISABLED_ALPHA = 0.5f
 
-private class SelectKeyboardState { var highlightedIndex: Int? = null }
+private class SelectKeyboardState {
+    var highlightedIndex: Int? = null
+}
 
 private fun handleSelectKey(
     event: KeyEvent,
@@ -342,10 +347,12 @@ private fun handleSelectKey(
             state.highlightedIndex = items.nextEnabledIndex(current, forward = true)
             onExpandedChange(true)
         }
+
         Key.ArrowUp -> {
             state.highlightedIndex = items.nextEnabledIndex(current, forward = false)
             onExpandedChange(true)
         }
+
         Key.Home -> if (expanded) state.highlightedIndex = items.firstEnabledIndex()
         Key.End -> if (expanded) state.highlightedIndex = items.lastEnabledIndex()
         Key.Enter, Key.Space -> {
@@ -360,10 +367,12 @@ private fun handleSelectKey(
                 }
             }
         }
+
         Key.Escape -> if (expanded) {
             state.highlightedIndex = null
             onExpandedChange(false)
         }
+
         else -> return false
     }
     return true
@@ -412,7 +421,13 @@ private class SelectPositionProvider(
         }
         val itemAligned = anchor.y + anchor.height / 2f - selectedRowOffset - gap
         val y = if (selected == null) {
-            if (below + layerHeight <= viewportHeight) below else (anchor.y - gap - layerHeight).coerceAtLeast(0)
+            if (below + layerHeight <= viewportHeight) {
+                below
+            } else {
+                (anchor.y - gap - layerHeight).coerceAtLeast(
+                    0,
+                )
+            }
         } else {
             itemAligned.toInt().coerceIn(0, (viewportHeight - layerHeight).coerceAtLeast(0))
         }

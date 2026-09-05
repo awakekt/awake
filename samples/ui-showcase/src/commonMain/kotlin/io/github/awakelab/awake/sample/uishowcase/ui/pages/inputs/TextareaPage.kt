@@ -19,9 +19,9 @@ import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCard
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnFieldLabel
-import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTextarea
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextarea
+import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 
 internal val TextareaPage = ShowcasePage(
     id = "text-area",
@@ -51,14 +51,17 @@ internal val TextareaPage = ShowcasePage(
         val bio = rememberTextFieldState()
         shadcnMuted("Multi-line expandable text input field for longform content.")
         Spacer(Modifier.height(8.dp))
-        ShadcnCard(modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp), contentPadding = 0.dp) {
+        ShadcnCard(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 240.dp),
+            contentPadding = 0.dp,
+        ) {
             Column(
                 Modifier.fillMaxWidth().padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 ShadcnText("Text Area Preview")
                 ShadcnFieldLabel("Biography")
-                shadcnTextarea(bio)
+                ShadcnTextarea(bio)
             }
         }
     },

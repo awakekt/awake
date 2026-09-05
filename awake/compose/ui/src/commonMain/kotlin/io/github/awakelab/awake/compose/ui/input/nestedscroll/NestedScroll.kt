@@ -135,7 +135,8 @@ private class NestedScrollElement(
 internal class NestedScrollNode(
     var connection: NestedScrollConnection,
     var dispatcher: NestedScrollDispatcher?,
-) : Modifier.Node(), NestedScrollModifierNode {
+) : Modifier.Node(),
+    NestedScrollModifierNode {
 
     override fun onAttachedTo(node: LayoutNode) {
         dispatcher?.node = node

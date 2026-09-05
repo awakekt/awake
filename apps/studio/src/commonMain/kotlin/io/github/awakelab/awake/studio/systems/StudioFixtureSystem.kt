@@ -8,10 +8,10 @@ package io.github.awakelab.awake.studio.systems
 import io.github.awakelab.awake.ecs.System
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.editor.EditorHistory
+import io.github.awakelab.awake.scene.document.SceneDocument
+import io.github.awakelab.awake.scene.document.SceneLoader
+import io.github.awakelab.awake.scene.document.writeSceneDocument
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
-import io.github.awakelab.awake.scene.runtime.SceneDocument
-import io.github.awakelab.awake.scene.runtime.SceneLoader
-import io.github.awakelab.awake.scene.runtime.writeSceneDocument
 import io.github.awakelab.awake.studio.fixture.StudioFixture
 import io.github.awakelab.awake.studio.state.StudioContract
 import io.github.awakelab.awake.studio.state.StudioStore
@@ -31,6 +31,11 @@ internal class StudioFixtureSystem(
         store.drainEffects().forEach { effect ->
             when (effect) {
                 StudioContract.Effect.ReloadFixture -> fixture.load(runtime)
+                is StudioContract.Effect.LoadScene -> {
+                    fixture.selectScene(runtime, effect.descriptor)
+                    history.clear()
+                    alignViewToAuthoredCamera(world)
+                }
                 StudioContract.Effect.AlignViewToCamera -> alignViewToAuthoredCamera(world)
                 StudioContract.Effect.SaveScene -> save()
                 StudioContract.Effect.StartPlay -> startPlay()

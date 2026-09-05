@@ -9,15 +9,27 @@ import io.github.awakelab.awake.compose.runtime.key
 import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.shadcnCollapsible
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnCollapsible
 import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 
 private data class AccordionItem(val id: String, val title: String, val body: String)
 
 private val SampleAccordionItems = listOf(
-    AccordionItem("item-1", "Is it accessible?", "Yes. It adheres to the WAI-ARIA design pattern for accordion components."),
-    AccordionItem("item-2", "Is it headless?", "Yes. It's headless by default, giving you full control over the visual presentation."),
-    AccordionItem("item-3", "Can it be animated?", "Yes. Height transitions animate smoothly between collapsed and expanded states."),
+    AccordionItem(
+        "item-1",
+        "Is it accessible?",
+        "Yes. It adheres to the WAI-ARIA design pattern for accordion components.",
+    ),
+    AccordionItem(
+        "item-2",
+        "Is it headless?",
+        "Yes. It's headless by default, giving you full control over the visual presentation.",
+    ),
+    AccordionItem(
+        "item-3",
+        "Can it be animated?",
+        "Yes. Height transitions animate smoothly between collapsed and expanded states.",
+    ),
 )
 
 /** Which single item is expanded -- an accordion is a set of collapsibles sharing one selection. */
@@ -38,7 +50,7 @@ internal val AccordionPage = ShowcasePage(
         val selection = remember { AccordionSelection() }
         SampleAccordionItems.forEach { item ->
             key(item.id) {
-                shadcnCollapsible(
+                ShadcnCollapsible(
                     title = item.title,
                     expanded = selection.selectedId == item.id,
                     onExpandedChange = {

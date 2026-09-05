@@ -5,7 +5,7 @@
  */
 package io.github.awakelab.awake.showcase.examples
 
-import io.github.awakelab.awake.scene.navigation.grid.findPath
+import io.github.awakelab.awake.navigation.grid.findPath
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue

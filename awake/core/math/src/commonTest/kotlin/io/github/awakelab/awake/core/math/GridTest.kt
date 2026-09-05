@@ -7,70 +7,67 @@ package io.github.awakelab.awake.core.math
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class GridTest {
 
     @Test
-    fun returnsTwoTimesDivisionsPlusOneLines() {
-        val lines = Grid.lines(size = 10f, divisions = 4)
-        assertEquals(2 * (4 + 1), lines.size)
-    }
-
-    /** `size = 2f`, `divisions = 2` -- step is `1f`, so lines fall on the clean coordinates
-     * `-1, 0, 1` on both axes. Hand-computed expected lines below. */
-    @Test
-    fun smallGridMatchesHandComputedLines() {
-        val lines = Grid.lines(size = 2f, divisions = 2, y = 0.5f)
-
-        assertEquals(6, lines.size)
-
-        // Lines parallel to X, one per Z in {-1, 0, 1}.
-        assertVec3PairEquals(Vec3f(-1f, 0.5f, -1f), Vec3f(1f, 0.5f, -1f), lines[0])
-        assertVec3PairEquals(Vec3f(-1f, 0.5f, 0f), Vec3f(1f, 0.5f, 0f), lines[1])
-        assertVec3PairEquals(Vec3f(-1f, 0.5f, 1f), Vec3f(1f, 0.5f, 1f), lines[2])
-
-        // Lines parallel to Z, one per X in {-1, 0, 1}.
-        assertVec3PairEquals(Vec3f(-1f, 0.5f, -1f), Vec3f(-1f, 0.5f, 1f), lines[3])
-        assertVec3PairEquals(Vec3f(0f, 0.5f, -1f), Vec3f(0f, 0.5f, 1f), lines[4])
-        assertVec3PairEquals(Vec3f(1f, 0.5f, -1f), Vec3f(1f, 0.5f, 1f), lines[5])
+    fun intersectGroundPlaneDirectlyBelow() {
+        val origin = Vec3f(0f, 10f, 0f)
+        val dir = Vec3f(0f, -1f, 0f)
+        val hit = Grid.intersectGroundPlane(origin, dir, y = 0f)
+        assertNotNull(hit)
+        assertEquals(0f, hit.x, 1e-4f)
+        assertEquals(0f, hit.y, 1e-4f)
+        assertEquals(0f, hit.z, 1e-4f)
     }
 
     @Test
-    fun defaultsToYZero() {
-        val lines = Grid.lines(size = 4f, divisions = 1)
-        for ((start, end) in lines) {
-            assertEquals(0f, start.y)
-            assertEquals(0f, end.y)
-        }
+    fun intersectGroundPlaneAtAngle() {
+        val origin = Vec3f(0f, 5f, 0f)
+        val dir = Vec3f(1f, -1f, 2f).normalized()
+        val hit = Grid.intersectGroundPlane(origin, dir, y = 0f)
+        assertNotNull(hit)
+        assertEquals(0f, hit.y, 1e-4f)
+        assertEquals(5f, hit.x, 1e-4f)
+        assertEquals(10f, hit.z, 1e-4f)
     }
 
-    private fun assertVec3PairEquals(
-        expectedStart: io.github.awakelab.awake.core.math.Vec3f,
-        expectedEnd: io.github.awakelab.awake.core.math.Vec3f,
-        actual: Pair<io.github.awakelab.awake.core.math.Vec3f, io.github.awakelab.awake.core.math.Vec3f>,
-        epsilon: Float = 1e-4f,
-    ) {
-        assertVec3Equals(expectedStart, actual.first, epsilon)
-        assertVec3Equals(expectedEnd, actual.second, epsilon)
+    @Test
+    fun intersectGroundPlaneParallelReturnsNull() {
+        val origin = Vec3f(0f, 5f, 0f)
+        val dir = Vec3f(1f, 0f, 0f)
+        val hit = Grid.intersectGroundPlane(origin, dir, y = 0f)
+        assertNull(hit)
     }
 
-    private fun assertVec3Equals(
-        expected: io.github.awakelab.awake.core.math.Vec3f,
-        actual: io.github.awakelab.awake.core.math.Vec3f,
-        epsilon: Float = 1e-4f,
-    ) {
-        assertTrue(
-            kotlin.math.abs(expected.x - actual.x) < epsilon,
-            "x: expected ${expected.x}, got ${actual.x}",
-        )
-        assertTrue(
-            kotlin.math.abs(expected.y - actual.y) < epsilon,
-            "y: expected ${expected.y}, got ${actual.y}",
-        )
-        assertTrue(
-            kotlin.math.abs(expected.z - actual.z) < epsilon,
-            "z: expected ${expected.z}, got ${actual.z}",
-        )
+    @Test
+    fun intersectGroundPlanePointingAwayReturnsNull() {
+        val origin = Vec3f(0f, 5f, 0f)
+        val dir = Vec3f(0f, 1f, 0f)
+        val hit = Grid.intersectGroundPlane(origin, dir, y = 0f)
+        assertNull(hit)
+    }
+
+    @Test
+    fun snapToGridSnapsCorrectly() {
+        assertEquals(0f, Grid.snapToGrid(0.2f, 1.0f))
+        assertEquals(1.0f, Grid.snapToGrid(0.8f, 1.0f))
+        assertEquals(-2.0f, Grid.snapToGrid(-1.9f, 1.0f))
+        assertEquals(0.5f, Grid.snapToGrid(0.48f, 0.5f))
+    }
+
+    @Test
+    fun generateGridLinesProducesSymmetricGrid() {
+        val lines = Grid.generateGridLines(extent = 10f, step = 1f, center = Vec3f.ZERO, y = 0f)
+        assertTrue(lines.isNotEmpty())
+        // Count for extent 10 step 1: 10 in each direction = 21 lines parallel to X, 21 parallel to Z = 42
+        assertEquals(42, lines.size)
+        // Check extent bounds
+        val firstX = lines.first()
+        assertEquals(-10f, firstX.first.x)
+        assertEquals(10f, firstX.second.x)
     }
 }

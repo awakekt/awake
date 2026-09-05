@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    id("awake.publish-convention")
     id("awake.test-resources-convention")
     id("awake.dokka-convention")
     id("awake.detekt-convention")
@@ -47,6 +48,7 @@ kotlin {
             // PackShaderSets and the uniform layouts beside them. A real dependency now, not a
             // static file path: the shaders are Kotlin, so nothing reads a .wgsl off disk.
             implementation(project(":awake:asset:shader-pack"))
+            implementation(project(":awake:asset:gltf"))
             implementation(project(":awake:ecs"))
             implementation(project(":awake:scene"))
             implementation(project(":awake:scene:authoring"))
@@ -56,10 +58,12 @@ kotlin {
             implementation(project(":awake:editor:ai"))
             implementation(project(":awake:editor:render"))
             implementation(project(":awake:ui:shadcn"))
+            implementation(project(":awake:ui:builder"))
             // Outline glyphs directly, not through ShadcnIcons: that registry is pinned to the
             // 20px "mini" solid tier, and studio's chrome is outline at 24.
             implementation(project(":awake:heroicons"))
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

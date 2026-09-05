@@ -4,10 +4,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
-import io.github.awakelab.awake.compose.foundation.interaction.InteractionSource
 import io.github.awakelab.awake.compose.foundation.animation.animateFloat
+import io.github.awakelab.awake.compose.foundation.interaction.InteractionSource
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.layout.height
 import io.github.awakelab.awake.compose.foundation.style.rememberStyleState
@@ -23,11 +24,26 @@ import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
 
 /**
- * shadcn's single-line input: `h-9 w-full rounded-md border border-input bg-transparent px-3 py-1`.
+ * `ShadcnInput`: Single-line text input control field.
  *
- * The type is `text-base` with a `md:text-sm` breakpoint -- 16 shrinking to 14 on a wider viewport.
- * There is no breakpoint system here, so this takes `text-sm`, matching what the component looks
- * like on the desktop widths every parity capture is taken at.
+ * **Tailwind Reference**: `h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors`.
+ *
+ * Use cases:
+ * - Search inputs, login fields, user name entries, form text inputs.
+ *
+ * **Example Usage**:
+ * ```kotlin
+ * ShadcnInput(state = usernameState, placeholder = "m@example.com")
+ * ```
+ *
+ * @param state State holder [TextFieldState] managing input text and selection.
+ * @param modifier Custom layout modifier.
+ * @param enabled Whether the input field is interactive.
+ * @param placeholder Optional placeholder hint text when empty.
+ * @param focusRingMode Focus indicator ring drawing mode.
+ * @param onClick Optional click handler.
+ *
+ * Keywords: input, textfield, text input, single line input, search field, form input.
  */
 context(_: Composer)
 fun ShadcnInput(

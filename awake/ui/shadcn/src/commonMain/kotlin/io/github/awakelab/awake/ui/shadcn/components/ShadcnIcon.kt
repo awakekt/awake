@@ -36,7 +36,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * was declared after.
  */
 context(_: Composer)
-fun shadcnIcon(
+fun ShadcnIcon(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     size: Dp = IconSize,

@@ -5,11 +5,11 @@
  */
 package io.github.awakelab.awake.scene.physics.character
 
-import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.core.math.Quat
+import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.physics.BodyHandle
-import io.github.awakelab.awake.physics.MotionType
 import io.github.awakelab.awake.physics.CapsuleShape
+import io.github.awakelab.awake.physics.MotionType
 import io.github.awakelab.awake.physics.PhysicsWorld
 import kotlin.math.cos
 import kotlin.math.max

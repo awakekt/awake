@@ -9,8 +9,7 @@ import io.github.awakelab.awake.compose.testing.ComposeTestSession
 import io.github.awakelab.awake.compose.testing.composeTestSession
 import io.github.awakelab.awake.compose.ui.platform.FrameInput
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsNode
-import io.github.awakelab.awake.compose.ui.semantics.testTag
-import io.github.awakelab.awake.ui.shadcn.components.shadcnAlertDialog
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlertDialog
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -34,7 +33,10 @@ class ShadcnOverlayExitTest {
 
         visible = false
         // Still there on the very next frame: this is the frame it used to disappear on.
-        assertNotNull(panel(session.frame(tick())), "the dialog vanished the instant it was dismissed")
+        assertNotNull(
+            panel(session.frame(tick())),
+            "the dialog vanished the instant it was dismissed",
+        )
 
         repeat(FADE_FRAMES) { session.frame(tick()) }
         assertNull(panel(session.frame(tick())), "the dialog never finished leaving")
@@ -66,7 +68,7 @@ class ShadcnOverlayExitTest {
     private fun dialog(visible: () -> Boolean): ComposeTestSession =
         composeTestSession(VIEWPORT, VIEWPORT) {
             provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
-                shadcnAlertDialog(
+                ShadcnAlertDialog(
                     visible = visible(),
                     title = "Delete this scene?",
                     onDismissRequest = {},

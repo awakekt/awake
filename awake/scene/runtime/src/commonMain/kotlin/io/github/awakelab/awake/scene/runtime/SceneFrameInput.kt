@@ -10,15 +10,7 @@ import io.github.awakelab.awake.core.input.InputSnapshot
 import kotlin.math.roundToInt
 
 /**
- * This frame's input, in the shape the compose host takes.
- *
- * A field copy, not a translation: `FrameInput` takes `core.input`'s own `TextEditAction`, so the
- * mirror enum `ui-core` needed -- `UiTextEditAction`, plus a nine-branch `when` to convert -- has
- * nothing to do here.
- *
- * Pointer coordinates round to whole pixels because hit-testing is integer. `ui-core` carried them
- * as floats and compared against float bounds, which put a hit exactly on a boundary on either side
- * depending on rounding no one had chosen.
+ * Converts an [InputSnapshot] into a [FrameInput] for Compose UI frame composition.
  */
 internal fun InputSnapshot.toFrameInput(
     viewportWidth: Int,

@@ -26,7 +26,7 @@ import io.github.awakelab.awake.compose.ui.semantics.SemanticsTreeBuilder
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.Constraints
 import io.github.awakelab.awake.compose.ui.unit.dp
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTooltipped
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTooltipped
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertNull
@@ -50,7 +50,14 @@ class ShadcnTooltippedTest {
                     provideShadcnTheme(shadcnThemeValues(dark = true)) { content() }
                 }
             }
-            root.layoutTree(Constraints.of(viewport.width, viewport.width, viewport.height, viewport.height))
+            root.layoutTree(
+                Constraints.of(
+                    viewport.width,
+                    viewport.width,
+                    viewport.height,
+                    viewport.height,
+                ),
+            )
             return SemanticsTreeBuilder().build(root)
         }
     }
@@ -77,7 +84,7 @@ class ShadcnTooltippedTest {
     private fun content(top: Int): context(Composer)
     () -> Unit = {
         Spacer(Modifier.size(top.dp))
-        shadcnTooltipped("Wireframe") {
+        ShadcnTooltipped("Wireframe") {
             Box(Modifier.size(TRIGGER_SIZE.dp).testTag("trigger")) {}
         }
     }

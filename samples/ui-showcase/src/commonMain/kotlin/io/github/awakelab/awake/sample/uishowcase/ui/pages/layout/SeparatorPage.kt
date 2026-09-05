@@ -14,11 +14,11 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnSeparatorOrientation
-import io.github.awakelab.awake.ui.shadcn.components.shadcnKbd
-import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnKbd
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSeparator
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSeparatorOrientation
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
+import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 
 internal val SeparatorPage = ShowcasePage(
     id = "separator",
@@ -35,7 +35,7 @@ internal val SeparatorPage = ShowcasePage(
         ShadcnSeparator()
         Spacer(Modifier.height(12.dp))
         Row(Modifier.height(20.dp), horizontalArrangement = Arrangement.spacedByHorizontal(8.dp)) {
-            shadcnKbd("⌘K")
+            ShadcnKbd("⌘K")
             ShadcnSeparator(
                 modifier = Modifier.width(1.dp),
                 orientation = ShadcnSeparatorOrientation.Vertical,

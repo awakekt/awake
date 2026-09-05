@@ -12,12 +12,11 @@ import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.rendering.Camera
-import io.github.awakelab.awake.scene.rendering.terrain.TerrainComponent
 import io.github.awakelab.awake.scene.rendering.terrain.TerrainClipmapSystem
+import io.github.awakelab.awake.scene.rendering.terrain.TerrainComponent
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 class TerrainComponentTest {
 
@@ -34,7 +33,7 @@ class TerrainComponentTest {
                 heightmap = heightmap,
                 splatMap = splatMap,
                 tilingScale = 32.0f,
-            )
+            ),
         )
 
         val retrieved = world.get<TerrainComponent>(entity)

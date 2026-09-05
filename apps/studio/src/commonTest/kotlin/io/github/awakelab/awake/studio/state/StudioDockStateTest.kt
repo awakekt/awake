@@ -99,4 +99,3 @@ private class MarkdownPlugin : EditorPlugin {
 
     override fun createProviders(): List<EditorProvider> = listOf(MarkdownDock())
 }
-

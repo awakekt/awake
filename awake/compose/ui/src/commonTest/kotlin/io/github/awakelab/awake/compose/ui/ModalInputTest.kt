@@ -235,7 +235,9 @@ private class HoverCounterElement(
     }
 }
 
-private class HoverCounterNode : Modifier.Node(), PointerInputNode {
+private class HoverCounterNode :
+    Modifier.Node(),
+    PointerInputNode {
     lateinit var onEnter: () -> Unit
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {

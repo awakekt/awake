@@ -36,9 +36,9 @@ import io.github.awakelab.awake.render.renderer.SceneLight
 import io.github.awakelab.awake.render.texture.PbrTextureSet
 import io.github.awakelab.awake.render.texture.RenderTarget
 import io.github.awakelab.awake.render.texture.TextureAsset
-import io.github.awakelab.awake.scene.authoring.blueprints.cameraEntity
-import io.github.awakelab.awake.scene.authoring.blueprints.meshEntity
 import io.github.awakelab.awake.scene.authoring.dsl.camera
+import io.github.awakelab.awake.scene.authoring.dsl.cameraEntity
+import io.github.awakelab.awake.scene.authoring.dsl.meshEntity
 import io.github.awakelab.awake.scene.authoring.dsl.transform
 import io.github.awakelab.awake.scene.authoring.infrastructure.cameraSystem
 import io.github.awakelab.awake.scene.controls.camera.CameraSystem

@@ -9,8 +9,8 @@ import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.controls.camera.ActiveCamera
-import io.github.awakelab.awake.scene.controls.movement.MovementControl
 import io.github.awakelab.awake.scene.controls.movement.MatrixRelativeMovementSystem
+import io.github.awakelab.awake.scene.controls.movement.MovementControl
 import io.github.awakelab.awake.scene.core.transform.Transform
 import io.github.awakelab.awake.scene.rendering.Camera
 import kotlin.math.abs

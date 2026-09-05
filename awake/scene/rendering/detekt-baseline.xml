@@ -2,7 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComplexCondition:DebugVisualizationSystem.kt$!settings.showFrustum &amp;&amp; !settings.showBounds &amp;&amp; !settings.showOcclusion &amp;&amp; !settings.showLights &amp;&amp; !settings.showShadowFrustum</ID>
+    <ID>ComplexCondition:SocketAttachmentSystem.kt$SocketAttachmentSystem$targetTransform.worldMatrix.data[12] == 0f &amp;&amp; targetTransform.worldMatrix.data[13] == 0f &amp;&amp; targetTransform.worldMatrix.data[14] == 0f &amp;&amp; (targetTransform.position.x != 0f || targetTransform.position.y != 0f || targetTransform.position.z != 0f)</ID>
     <ID>CyclomaticComplexMethod:DebugVisualizationSystem.kt$fun debugVisualizationLines( world: World, renderer: Renderer, settings: WorldDebugSettings, ): List&lt;LineSegment></ID>
     <ID>CyclomaticComplexMethod:RenderSystem.kt$RenderSystem$override fun update(world: World, delta: Float)</ID>
     <ID>LargeClass:ParticleSystemTest.kt$ParticleSystemTest</ID>

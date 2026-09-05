@@ -28,5 +28,9 @@ fun Rectangle.contains(other: Rectangle): Boolean =
         other.x + other.width <= x + width &&
         other.y + other.height <= y + height
 
+/** True when the point ([px], [py]) lies within this rect (on-edge counts as contained). */
+fun Rectangle.contains(px: Float, py: Float): Boolean =
+    px >= x && px <= x + width && py >= y && py <= y + height
+
 /** Snaps a coordinate to the nearest integer pixel to avoid subpixel rendering blur. */
 fun pixelPerfectPixel(value: Float): Float = value.roundToInt().toFloat()

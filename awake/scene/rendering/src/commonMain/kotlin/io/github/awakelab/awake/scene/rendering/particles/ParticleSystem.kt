@@ -11,10 +11,10 @@ import io.github.awakelab.awake.ecs.Entity
 import io.github.awakelab.awake.ecs.System
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.rendering.RenderSystem
 import io.github.awakelab.awake.scene.rendering.mesh.InstancedMeshRenderer
 import io.github.awakelab.awake.scene.rendering.mesh.LodGroup
 import io.github.awakelab.awake.scene.rendering.particles.BOUNCE_STOP_VELOCITY
-import io.github.awakelab.awake.scene.rendering.RenderSystem
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random

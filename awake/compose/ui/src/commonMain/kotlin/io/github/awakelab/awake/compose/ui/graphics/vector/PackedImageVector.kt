@@ -107,8 +107,12 @@ private fun PathBuilder.decodeCommands(commands: String) {
             'L' -> lineTo(scanner.number(), scanner.number())
             'Q' -> quadTo(scanner.number(), scanner.number(), scanner.number(), scanner.number())
             'C' -> cubicTo(
-                scanner.number(), scanner.number(), scanner.number(),
-                scanner.number(), scanner.number(), scanner.number(),
+                scanner.number(),
+                scanner.number(),
+                scanner.number(),
+                scanner.number(),
+                scanner.number(),
+                scanner.number(),
             )
             'Z' -> close()
             else -> error("unknown packed command '$op'")

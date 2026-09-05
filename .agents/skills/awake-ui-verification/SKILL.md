@@ -473,9 +473,22 @@ Named for the invariant, never the incident. `CenteredTextOpticalAlignmentTest`,
 `WrapContentScrollLeakProbeTest`, no. Must fail with its fix removed -- verify that explicitly,
 then delete it if it does not.
 
-**3. Snapshot & parity -- pixels only.**
+**3. Snapshot & parity -- pixels only (Optional / Regression Locks).**
 Baselines and shadcn comparison. Kept separate because they need periodic re-recording, so they
 cannot double as correctness gates.
+
+#### Headless Component Visual Captures (`assertMatchesBaseline`) -- NOT Mandatory
+Headless pixel baseline captures (`composeFrame(...) { ... }.assertMatchesBaseline(...)`) are **not mandatory** for general UI testing.
+- **When to use**: Use them selectively as an intentional regression lock on critical UI chrome (such as editor tool palettes, console, or dock panels) or for headlessly capturing and auditing a specific isolated layout part without launching an interactive desktop window.
+- **Why they are not mandatory**: Routine component and layout tests should rely on semantic nodes, bounds, text-fit, and interaction matrices (`composeTestSession`). Pixel baselines are zero-tolerance raster locks; requiring them for every layout iteration creates unnecessary golden churn when design tokens or layouts evolve.
+- **Workflow**:
+  ```bash
+  # Headlessly record/update baseline PNGs (saved to src/desktopTest/resources/baselines/components/):
+  ./gradlew <module>:desktopTest -DAWAKE_RECORD_SNAPSHOTS=true --tests "*<TestClass>*"
+
+  # Verify visual regression headlessly:
+  ./gradlew <module>:desktopTest --tests "*<TestClass>*"
+  ```
 
 ### Which module
 

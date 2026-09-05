@@ -7,8 +7,8 @@ package io.github.awakelab.awake.asset.shaderpack
 
 import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
 import io.github.awakelab.awake.core.geometry.GpuDataShape
-import io.github.awakelab.awake.render.renderer.UniformField
 import io.github.awakelab.awake.core.math.ClipSpace
+import io.github.awakelab.awake.render.renderer.UniformField
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.fail
@@ -86,14 +86,12 @@ class ShaderUniformStructTest {
     }
 
     /** Each `name : type` inside the shader's `Uniforms` struct, comments and spacing removed. */
-    private fun uniformStructFields(shader: AslShaderDefinition): List<String> {
-        return shader.emitWgsl()
-            .substringAfter("struct Uniforms {")
-            .substringBefore("}")
-            .lineSequence()
-            .map { it.substringBefore("//").trim().removeSuffix(",") }
-            .filter { it.contains(':') }
-            .map { "${it.substringBefore(':').trim()} : ${it.substringAfter(':').trim()}" }
-            .toList()
-    }
+    private fun uniformStructFields(shader: AslShaderDefinition): List<String> = shader.emitWgsl()
+        .substringAfter("struct Uniforms {")
+        .substringBefore("}")
+        .lineSequence()
+        .map { it.substringBefore("//").trim().removeSuffix(",") }
+        .filter { it.contains(':') }
+        .map { "${it.substringBefore(':').trim()} : ${it.substringAfter(':').trim()}" }
+        .toList()
 }

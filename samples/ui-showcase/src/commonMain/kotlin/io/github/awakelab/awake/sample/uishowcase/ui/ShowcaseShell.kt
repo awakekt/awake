@@ -29,13 +29,13 @@ import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadge
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadgeVariant
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCard
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSeparator
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarGroup
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarGroupContent
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarMenu
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarMenuItem
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnTabs
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextVariant
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebarGroup
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebarGroupContent
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebarMenu
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebarMenuItem
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
 
 /** Floor for a page hero so short samples keep the preview card a consistent size. */
@@ -88,7 +88,11 @@ internal fun ShowcasePageContent(
     Spacer(Modifier.height(8.dp))
     ShadcnText(page.title, variant = ShadcnTextVariant.H2)
     Spacer(Modifier.height(4.dp))
-    ShadcnText(page.description, variant = ShadcnTextVariant.Muted, color = theme.palette.mutedForeground)
+    ShadcnText(
+        page.description,
+        variant = ShadcnTextVariant.Muted,
+        color = theme.palette.mutedForeground,
+    )
 
     Spacer(Modifier.height(16.dp))
     ShowcasePreviewCodeSection(page, state)
@@ -138,9 +142,9 @@ private fun ShowcaseSidebarMenu(
 ) {
     ShowcasePagesByCategory.forEach { (category, pages) ->
         if (compact) {
-            shadcnSidebarMenu {
+            ShadcnSidebarMenu {
                 pages.forEach { page ->
-                    shadcnSidebarMenuItem(
+                    ShadcnSidebarMenuItem(
                         page.title,
                         active = page.id == selectedPageId,
                         onClick = { onSelect(page) },
@@ -148,13 +152,14 @@ private fun ShowcaseSidebarMenu(
                 }
             }
         } else {
-            shadcnSidebarGroup(label = category.title) {
-                shadcnSidebarGroupContent {
-                    shadcnSidebarMenu {
+            ShadcnSidebarGroup(label = category.title) {
+                ShadcnSidebarGroupContent {
+                    ShadcnSidebarMenu {
                         pages.forEach { page ->
-                            shadcnSidebarMenuItem(
+                            ShadcnSidebarMenuItem(
                                 page.title,
-                                modifier = Modifier.height(SubmenuButtonHeight).testTag("showcase.sidebar.page.${page.id}"),
+                                modifier = Modifier.height(SubmenuButtonHeight)
+                                    .testTag("showcase.sidebar.page.${page.id}"),
                                 active = page.id == selectedPageId,
                                 onClick = { onSelect(page) },
                             )
@@ -196,7 +201,7 @@ private fun ShowcasePreviewCodeSection(page: ShowcasePage, state: UiShowcaseRunt
                     Modifier
                         .fillMaxWidth()
                         .background(theme.palette.muted.withAlpha(0.25f))
-                        .padding(Tw.Spacing.s4)
+                        .padding(Tw.Spacing.s4),
                 ) {
                     ShowcaseCodeBlock(page.usageCode.trimIndent())
                 }
@@ -208,7 +213,7 @@ private fun ShowcasePreviewCodeSection(page: ShowcasePage, state: UiShowcaseRunt
                 Column(
                     Modifier
                         .fillMaxWidth()
-                        .padding(Tw.Spacing.s6)
+                        .padding(Tw.Spacing.s6),
                 ) {
                     ShowcasePagePreview(page, state)
                 }
@@ -226,7 +231,11 @@ internal fun ShowcaseSectionTitle(title: String, description: String? = null) {
     ShadcnText(title, variant = ShadcnTextVariant.H3)
     if (description != null) {
         Spacer(Modifier.height(2.dp))
-        ShadcnText(description, variant = ShadcnTextVariant.Muted, color = shadcnTheme.palette.mutedForeground)
+        ShadcnText(
+            description,
+            variant = ShadcnTextVariant.Muted,
+            color = shadcnTheme.palette.mutedForeground,
+        )
     }
 }
 
@@ -249,7 +258,11 @@ internal fun ShowcaseNotesList(lines: List<String>) {
                 verticalAlignment = Alignment.Top,
             ) {
                 ShadcnText("•", color = theme.palette.mutedForeground)
-                ShadcnText(line, variant = ShadcnTextVariant.Small, color = theme.palette.foreground)
+                ShadcnText(
+                    line,
+                    variant = ShadcnTextVariant.Small,
+                    color = theme.palette.foreground,
+                )
             }
         }
     }

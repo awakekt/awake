@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
 import io.github.awakelab.awake.compose.foundation.layout.Arrangement
@@ -18,7 +19,6 @@ import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.Dp
 import io.github.awakelab.awake.compose.ui.unit.dp
-import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.ui.shadcn.ShadcnThemeValues
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
@@ -34,7 +34,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * single-column grid is just a column.
  */
 context(_: Composer)
-fun shadcnAlert(
+fun ShadcnAlert(
     title: String,
     modifier: Modifier = Modifier,
     description: String? = null,
@@ -87,10 +87,11 @@ private const val DESCRIPTION_ALPHA = 0.9f
 /** Tailwind's bare `border` is 1px; the width scale is not generated -- see `ShadcnCard`. */
 private val AlertBorderWidth: Dp = 1.dp
 
+@Deprecated("Use ShadcnAlert instead", ReplaceWith("ShadcnAlert(title, modifier, description, variant)"))
 context(_: Composer)
-fun ShadcnAlert(
+fun shadcnAlert(
     title: String,
     modifier: Modifier = Modifier,
     description: String? = null,
     variant: ShadcnAlertVariant = ShadcnAlertVariant.Default,
-) = shadcnAlert(title, modifier, description, variant)
+) = ShadcnAlert(title, modifier, description, variant)

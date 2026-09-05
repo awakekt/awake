@@ -8,8 +8,8 @@ package io.github.awakelab.awake.ui.shadcn
 import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.semantics.testTag
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnDropdownMenu
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuItem
-import io.github.awakelab.awake.ui.shadcn.components.shadcnDropdownMenu
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -38,7 +38,11 @@ class DropdownMenuIntrinsicWidthTest {
     @Test
     fun theMenuNeverNarrowsBelowThePopoverMinimum() {
         // `min-w-[8rem]`, 128dp at density 1.
-        assertEquals(MIN_WIDTH, menuWidth(listOf("A", "B")), "short labels should stop at the minimum")
+        assertEquals(
+            MIN_WIDTH,
+            menuWidth(listOf("A", "B")),
+            "short labels should stop at the minimum",
+        )
     }
 
     @Test
@@ -49,7 +53,11 @@ class DropdownMenuIntrinsicWidthTest {
         val long = frame.onNodeWithTag("menu.item.1").getBoundsInRoot()
         println("PROBE menu=${menu.width} short=${short.width} long=${long.width}")
 
-        assertEquals(short.width, long.width, "rows must all be the same width or the highlight steps")
+        assertEquals(
+            short.width,
+            long.width,
+            "rows must all be the same width or the highlight steps",
+        )
         assertTrue(short.width <= menu.width, "a row cannot be wider than the menu holding it")
     }
 
@@ -58,7 +66,7 @@ class DropdownMenuIntrinsicWidthTest {
 
     private fun frameFor(labels: List<String>) = composeFrame(VIEWPORT, VIEWPORT) {
         provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
-            shadcnDropdownMenu(
+            ShadcnDropdownMenu(
                 entries = labels.map(::ShadcnMenuItem),
                 modifier = Modifier.testTag("menu"),
                 id = "menu",

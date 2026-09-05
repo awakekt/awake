@@ -19,18 +19,28 @@ import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
 
 /**
- * shadcn's switch: a pill track with a circular thumb that slides.
+ * `ShadcnSwitch`: Sliding pill switch control for binary settings.
  *
- * Upstream's default track is `h-[1.15rem] w-8` -- **18.4px by 32px**, an arbitrary-value class
- * rather than a scale step, so there is no `Tw` step to name here. The thumb is `size-4` (16px),
- * which is *larger than the track is tall*: it overhangs by 1.2px on each edge, and that overhang is
- * the design rather than a rounding error.
+ * **Tailwind Reference**: `peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors`.
  *
- * Checked is `bg-primary`, unchecked `bg-input` -- not `bg-muted`, which would read as disabled.
+ * Use cases:
+ * - Feature toggles, settings switches (e.g. Notifications, Dark Mode, 2FA).
  *
+ * **Example Usage**:
+ * ```kotlin
+ * ShadcnSwitch(checked = isDarkMode, onCheckedChange = { isDarkMode = it })
+ * ```
+ *
+ * @param checked Whether the switch is currently ON (checked).
+ * @param modifier Custom layout modifier.
+ * @param enabled Whether the switch is interactive.
+ * @param interactionSource Optional custom [InteractionSource].
+ * @param onCheckedChange Callback triggered when toggling the switch state.
+ *
+ * Keywords: switch, toggle, toggle switch, pill switch, feature flag switch.
  */
 context(_: Composer)
-fun shadcnSwitch(
+fun ShadcnSwitch(
     checked: Boolean,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,

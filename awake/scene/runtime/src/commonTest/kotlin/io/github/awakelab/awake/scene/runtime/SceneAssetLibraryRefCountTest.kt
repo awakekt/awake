@@ -24,13 +24,17 @@ class SceneAssetLibraryRefCountTest {
     private class FakeMesh(override val sizeBytes: Long = 100) : Mesh {
         override val format = VertexFormat.PositionColorUv
         var destroyCount = 0
-        override fun destroy() { destroyCount++ }
+        override fun destroy() {
+            destroyCount++
+        }
     }
 
     private class FakeMaterial : Material {
         var destroyCount = 0
         override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
-        override fun destroy() { destroyCount++ }
+        override fun destroy() {
+            destroyCount++
+        }
     }
 
     private var meshesBuilt = 0
@@ -38,7 +42,10 @@ class SceneAssetLibraryRefCountTest {
 
     private fun library() = SceneAssetLibrary(
         meshFactories = mapOf(
-            "rock" to { meshesBuilt++; FakeMesh().also { builtMeshes += it } },
+            "rock" to {
+                meshesBuilt++
+                FakeMesh().also { builtMeshes += it }
+            },
         ),
         materialFactories = mapOf("stone" to { FakeMaterial() }),
         rendererFactories = emptyMap(),

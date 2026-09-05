@@ -6,6 +6,7 @@
 package io.github.awakelab.awake.scene.runtime
 
 import io.github.awakelab.awake.ecs.World
+import io.github.awakelab.awake.scene.document.SceneLoader
 import io.github.awakelab.awake.scene.rendering.Light
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -76,6 +77,10 @@ class SceneLightDirectionTest {
     }
 
     private companion object {
+        init {
+            DefaultSceneComponentResolvers.install()
+        }
+
         const val TOLERANCE = 0.0001f
     }
 }

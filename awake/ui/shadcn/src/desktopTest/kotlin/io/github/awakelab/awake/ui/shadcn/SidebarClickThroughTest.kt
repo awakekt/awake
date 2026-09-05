@@ -9,12 +9,12 @@ import io.github.awakelab.awake.compose.testing.composeTestSession
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.dp
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarMenuItem
 import io.github.awakelab.awake.ui.shadcn.components.Sidebar
 import io.github.awakelab.awake.ui.shadcn.components.SidebarContent
 import io.github.awakelab.awake.ui.shadcn.components.SidebarProvider
 import io.github.awakelab.awake.ui.shadcn.components.SidebarRail
 import io.github.awakelab.awake.ui.shadcn.components.rememberSidebarState
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebarMenuItem
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -38,7 +38,7 @@ class SidebarClickThroughTest {
                 SidebarProvider(state) {
                     Sidebar {
                         SidebarContent {
-                            shadcnSidebarMenuItem(
+                            ShadcnSidebarMenuItem(
                                 "Card",
                                 modifier = Modifier.testTag("card-item"),
                                 onClick = { clicks++ },
@@ -51,6 +51,10 @@ class SidebarClickThroughTest {
         }
         session.frame()
         session.click("card-item")
-        assertEquals(1, clicks, "clicking a real shadcnSidebarMenuItem inside Sidebar/SidebarContent did not fire onClick")
+        assertEquals(
+            1,
+            clicks,
+            "clicking a real shadcnSidebarMenuItem inside Sidebar/SidebarContent did not fire onClick",
+        )
     }
 }

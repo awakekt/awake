@@ -4,16 +4,21 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package io.github.awakelab.awake.studio
-
-import io.github.awakelab.awake.editor.scene.toEditorEntityId
 import io.github.awakelab.awake.core.input.Input
+import io.github.awakelab.awake.editor.core.store.EditorEffect
+import io.github.awakelab.awake.editor.core.store.EditorEntityId
+import io.github.awakelab.awake.editor.core.store.EditorIntent
+import io.github.awakelab.awake.editor.core.store.EditorMode
+import io.github.awakelab.awake.editor.core.store.EditorStore
+import io.github.awakelab.awake.editor.core.store.EditorTool
+import io.github.awakelab.awake.editor.core.store.EditorViewportPoint
+import io.github.awakelab.awake.editor.scene.gizmo.GizmoAxis
+import io.github.awakelab.awake.editor.scene.toEditorEntityId
 import io.github.awakelab.awake.engine.bootstrap.dsl.app
 import io.github.awakelab.awake.engine.bootstrap.dsl.module
 import io.github.awakelab.awake.engine.platform.dsl.requireService
 import io.github.awakelab.awake.engine.platform.lifecycle.AppFrame
 import io.github.awakelab.awake.engine.platform.lifecycle.AppLifecycle
-import io.github.awakelab.awake.editor.EditorEntityId
-import io.github.awakelab.awake.editor.EditorIntent
 import io.github.awakelab.awake.scene.core.Name
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
 import io.github.awakelab.awake.studio.state.StudioEditorBridge
@@ -147,12 +152,11 @@ class StudioGizmoWiringTest {
         editor.store.dispatch(EditorIntent.SelectEntity(cube.toEditorEntityId()))
         game.update(1f / 60f, FRAME_WIDTH, FRAME_HEIGHT)
 
-        // By colour, not by segment count. Each axis owns a colour, but a move handle is a shaft
-        // plus an arrowhead, so counting lines counts geometry rather than handles.
-        assertEquals(
-            3,
-            renderer.debugLines.map { it.color }.toSet().size,
-            "one handle per translate axis, was ${renderer.debugLines.size} lines",
-        )
+        // Each axis and planar handle owns a distinct color, and the selected entity emits its aura.
+        assertTrue(renderer.debugLines.any { it.color == GizmoAxis.X.color }, "must draw X handle")
+        assertTrue(renderer.debugLines.any { it.color == GizmoAxis.Y.color }, "must draw Y handle")
+        assertTrue(renderer.debugLines.any { it.color == GizmoAxis.Z.color }, "must draw Z handle")
+        assertTrue(renderer.debugLines.any { it.color == GizmoAxis.PlaneXZ.color }, "must draw PlaneXZ handle")
+        assertTrue(renderer.debugLines.isNotEmpty(), "staged ${renderer.debugLines.size} lines")
     }
 }

@@ -1,0 +1,1 @@
+--8<-- "awake/core/README.md"

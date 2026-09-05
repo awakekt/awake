@@ -10,9 +10,9 @@ import io.github.awakelab.awake.ecs.System
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.controls.GameplayInput
 import io.github.awakelab.awake.scene.controls.camera.ActiveCamera
+import io.github.awakelab.awake.scene.controls.camera.CameraInputSystem.Companion.DEFAULT_MODE_KEYS
 import io.github.awakelab.awake.scene.controls.camera.CameraMode
 import io.github.awakelab.awake.scene.controls.camera.CameraRig
-import io.github.awakelab.awake.scene.controls.camera.CameraInputSystem.Companion.DEFAULT_MODE_KEYS
 
 /**
  * Switches the [CameraMode] on the [ActiveCamera] via hotkeys, so only one mode consumes

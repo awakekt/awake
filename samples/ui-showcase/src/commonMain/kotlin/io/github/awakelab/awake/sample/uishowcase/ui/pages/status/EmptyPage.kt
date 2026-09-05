@@ -9,7 +9,7 @@ import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
-import io.github.awakelab.awake.ui.shadcn.components.shadcnEmpty
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnEmpty
 
 internal val EmptyPage = ShowcasePage(
     id = "empty",
@@ -20,7 +20,7 @@ internal val EmptyPage = ShowcasePage(
     referenceExample = "registry/new-york-v4/examples/empty-demo.tsx",
     previewHeight = 380,
     hero = {
-        shadcnEmpty(
+        ShadcnEmpty(
             title = "No projects yet",
             description = "Create your first project to see it listed here.",
         ) {

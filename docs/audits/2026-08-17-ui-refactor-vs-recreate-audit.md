@@ -1,5 +1,21 @@
 # UI refactor plan — 2026-08-17
 
+> **Closed 2026-09-01. Do not work from this document.** It plans a refactor of `ui-core`,
+> `ui-headless` and `ui:designsystem`, none of which exist any more -- `awake:compose` replaced
+> them, and `settings.gradle.kts` now lists only `ui:shadcn`, `ui:material3`,
+> `ui:font-atlas-generator` and `ui:benchmark` under `awake/ui/`.
+>
+> Package 6 was the last one left open, and it cannot be done as written: its central item is
+> replacing callbacks with a return-value idiom (`if (button(id))`), described in its own text as
+> "immediate-mode native". `awake:compose` is retained-mode, where `onClick` is the correct shape --
+> `ui:shadcn` uses it in 26 places today. Its other items name `UiPrimitiveScope`,
+> `interactiveSurface` and `headless/ModifierExports.kt`; a repo-wide grep finds none of them.
+>
+> So the remaining work is not merely stale, it is contrary to the design that replaced it. Kept as
+> a record of what was decided in August and why, not as a plan. The pre-commit pointer to it was
+> removed at the same time -- it printed on every commit and directed anyone who followed it at a
+> week of work against deleted modules.
+
 **Verdict: refactor in place. Do not recreate.** Recreate only 3 small units
 (`shadcnEmpty`, `shadcnTabs`, `ShadcnComponentStyles`, ~170 lines total) plus ~800 lines
 of pure dead-code deletion.
@@ -483,6 +499,11 @@ labels, wrapped width, filled members, per-corner radii; regression surface
 ---
 
 ## Package 6 — uniform signatures (~1 week, mechanical) · rows C1–C8, C4, B8, E6, B12
+
+**Closed 2026-09-01, not done.** See the note at the top of this file: the widgets these sweeps
+would rewrite were deleted with `ui-headless`, and the return-value idiom below is the opposite of
+what retained-mode `awake:compose` wants. The two partially-landed items ([x] below) shipped before
+that migration and stay landed; nothing here is worth carrying forward.
 
 Compiler-driven sweeps. Boring by design.
 

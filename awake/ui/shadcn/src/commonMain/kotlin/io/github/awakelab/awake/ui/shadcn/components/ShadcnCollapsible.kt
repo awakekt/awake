@@ -34,7 +34,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * Returns the open state after this frame's click.
  */
 context(_: Composer)
-fun shadcnCollapsible(
+fun ShadcnCollapsible(
     title: String,
     expanded: Boolean,
     modifier: Modifier = Modifier,
@@ -45,10 +45,10 @@ fun shadcnCollapsible(
     )? = null,
 ) {
     val theme = shadcnTheme
-    val interaction = remember { InteractionSource() }
     val open = expanded
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s2)) {
+        val interaction = remember { InteractionSource() }
         Row(
             Modifier
                 .fillMaxWidth()
@@ -62,7 +62,7 @@ fun shadcnCollapsible(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             ShadcnText(title, Modifier.weight(1f), variant = ShadcnTextVariant.Small)
-            shadcnIcon(
+            ShadcnIcon(
                 if (open) ShadcnIcons.chevronUp else ShadcnIcons.chevronDown,
                 tint = theme.palette.mutedForeground,
             )
@@ -74,3 +74,16 @@ fun shadcnCollapsible(
 
 /** The capture's trigger row height. */
 private val TriggerHeight: Dp = 36.dp
+
+@Deprecated("Use ShadcnCollapsible instead", ReplaceWith("ShadcnCollapsible(title, expanded, modifier, onExpandedChange, content)"))
+context(_: Composer)
+fun shadcnCollapsible(
+    title: String,
+    expanded: Boolean,
+    modifier: Modifier = Modifier,
+    onExpandedChange: (Boolean) -> Unit = {},
+    content: (
+        context(Composer)
+        () -> Unit
+    )? = null,
+) = ShadcnCollapsible(title, expanded, modifier, onExpandedChange, content)

@@ -11,9 +11,9 @@ import io.github.awakelab.awake.core.graphics2d.DrawPath
 import io.github.awakelab.awake.core.graphics2d.DrawShape
 import io.github.awakelab.awake.core.graphics2d.bounds
 import io.github.awakelab.awake.core.graphics2d.toPath
-import io.github.awakelab.awake.core.math2d.Rectangle as BoundsRectangle
 import io.github.awakelab.awake.core.math2d.Size2D
 import kotlin.math.min
+import io.github.awakelab.awake.core.math2d.Rectangle as BoundsRectangle
 
 /** A reusable geometry definition for `background`, `border`, and `clip`. */
 interface Shape {

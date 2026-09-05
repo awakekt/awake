@@ -9,6 +9,7 @@ import io.github.awakelab.awake.engine.platform.core.AppModule
 import io.github.awakelab.awake.engine.platform.core.AppSpec
 import io.github.awakelab.awake.engine.platform.lifecycle.AwakeAppLifecycle
 
+@Deprecated("Use app { module(...) } directly instead.", ReplaceWith("app"))
 fun <State> appDefinition(
     createState: () -> State,
     block: AppDefinitionDsl<State>.() -> Unit,

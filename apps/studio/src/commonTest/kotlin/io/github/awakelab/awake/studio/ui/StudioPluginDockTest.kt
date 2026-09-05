@@ -12,10 +12,10 @@ import io.github.awakelab.awake.editor.EditorPlugin
 import io.github.awakelab.awake.editor.EditorPluginApi
 import io.github.awakelab.awake.editor.EditorPluginId
 import io.github.awakelab.awake.editor.EditorPluginMetadata
+import io.github.awakelab.awake.editor.EditorPluginRegistry
 import io.github.awakelab.awake.editor.EditorProvider
 import io.github.awakelab.awake.editor.EditorProviderId
 import io.github.awakelab.awake.editor.EditorProviderMetadata
-import io.github.awakelab.awake.editor.EditorPluginRegistry
 import io.github.awakelab.awake.editor.shell.EditorDockContribution
 import io.github.awakelab.awake.editor.shell.EditorDockTab
 import io.github.awakelab.awake.studio.state.StudioEditorBridge

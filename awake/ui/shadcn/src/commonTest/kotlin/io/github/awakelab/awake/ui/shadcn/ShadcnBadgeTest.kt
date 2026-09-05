@@ -8,8 +8,8 @@ package io.github.awakelab.awake.ui.shadcn
 import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.graphics2d.DrawCommand
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadgeVariant
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadge
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadgeVariant
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals

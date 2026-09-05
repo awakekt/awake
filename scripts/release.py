@@ -9,6 +9,37 @@ Handles:
   2. Multi-channel lifecycle tagging (dev, rc, alpha, beta, stable)
   3. CHANGELOG.md generation and release section prepending
   4. Git tag creation and release notes output
+
+NOT USED FOR THE dev LINE, and it should not be until the three faults below are
+fixed. 0.1.0-dev.8 was cut by hand on 2026-09-01 after a --dry-run showed:
+
+  1. It discards the release notes. This repo writes `## [Unreleased]` by hand,
+     in prose, as the work lands. `generate_changelog` ignores that section and
+     synthesizes one from `git log --oneline` -- so the release would ship 105
+     raw commit subjects while the real notes stayed orphaned under Unreleased
+     forever. Cutting a release here means renaming Unreleased to the version,
+     not generating a new section.
+  2. `bump auto` leaves the dev line. Any `feat` commit reads as a minor bump,
+     so with the previous tag at v0.1.0-dev.7 it proposed **v0.2.0-dev.1** --
+     a new minor AND a restarted channel counter. Passing `patch` does not help:
+     that gives v0.1.1-dev.1. There is no argument that continues 0.1.0-dev.N.
+  3. `git add CHANGELOG.md docs/` stages every unrelated change under docs/.
+     Other agents work in this tree; staging by directory picks up their
+     in-flight edits and commits them under a release message.
+
+Fixing 2 is a `--base` flag or a `--continue-channel` mode; fixing 1 means
+reading the Unreleased section instead of git log; fixing 3 is naming the files.
+Until then, cut a dev release by hand:
+
+    - rename `## [Unreleased]` to `## [X.Y.Z-dev.N] - <date>`, add a fresh
+      empty `## [Unreleased]` above it
+    - commit CHANGELOG.md alone
+    - `git tag -a vX.Y.Z-dev.N -m "Release vX.Y.Z-dev.N"`
+
+The version the build publishes comes from the tag (see the root build file), so
+the tag is the release; a CHANGELOG section without one releases nothing. That
+happened to dev.7: its section landed 2026-08-30 with no tag, and the tag was
+only created retroactively while cutting dev.8.
 """
 
 import argparse

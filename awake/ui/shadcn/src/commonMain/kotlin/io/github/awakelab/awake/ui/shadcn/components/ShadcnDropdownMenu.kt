@@ -12,9 +12,9 @@ import io.github.awakelab.awake.compose.foundation.interaction.InteractionSource
 import io.github.awakelab.awake.compose.foundation.layout.Box
 import io.github.awakelab.awake.compose.foundation.layout.BoxMeasurePolicy
 import io.github.awakelab.awake.compose.foundation.layout.Column
+import io.github.awakelab.awake.compose.foundation.layout.IntrinsicSize
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.layout.padding
-import io.github.awakelab.awake.compose.foundation.layout.IntrinsicSize
 import io.github.awakelab.awake.compose.foundation.layout.width
 import io.github.awakelab.awake.compose.foundation.layout.widthIn
 import io.github.awakelab.awake.compose.foundation.style.Style
@@ -30,18 +30,15 @@ import io.github.awakelab.awake.compose.ui.input.key.KeyEventType
 import io.github.awakelab.awake.compose.ui.input.key.onKeyEvent
 import io.github.awakelab.awake.compose.ui.layout.Layer
 import io.github.awakelab.awake.compose.ui.layout.LayerKind
-import io.github.awakelab.awake.compose.ui.layout.LayerPosition
-import io.github.awakelab.awake.compose.ui.layout.LayerPositionProvider
-import io.github.awakelab.awake.compose.ui.layout.onPlaced
 import io.github.awakelab.awake.compose.ui.platform.LocalDensity
-import io.github.awakelab.awake.compose.ui.unit.Dp
-import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsProperties
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsRole
 import io.github.awakelab.awake.compose.ui.semantics.semantics
+import io.github.awakelab.awake.compose.ui.unit.Dp
+import io.github.awakelab.awake.compose.ui.unit.dp
+import io.github.awakelab.awake.core.input.Key
 import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
-import io.github.awakelab.awake.core.input.Key
 
 /** Public Shadcn menu entries. */
 sealed interface ShadcnMenuEntry
@@ -89,7 +86,7 @@ data object ShadcnMenuSeparator : ShadcnMenuEntry
  * the index counts entries, not items -- the caller passed the list and can index it directly.
  */
 context(_: Composer)
-fun shadcnDropdownMenu(
+fun ShadcnDropdownMenu(
     entries: List<ShadcnMenuEntry>,
     modifier: Modifier = Modifier,
     id: String? = null,
@@ -110,7 +107,8 @@ fun shadcnDropdownMenu(
                 }
                 val item = entry as ShadcnMenuItem
                 val interaction = remember { InteractionSource() }
-                val highlighted = item.enabled && (interaction.isHovered || index == highlightedIndex)
+                val highlighted =
+                    item.enabled && (interaction.isHovered || index == highlightedIndex)
                 Box(
                     Modifier
                         .fillMaxWidth()
@@ -124,7 +122,9 @@ fun shadcnDropdownMenu(
                             } else {
                                 it.background(
                                     if (item.destructive) {
-                                        theme.palette.destructive.withAlpha(DESTRUCTIVE_HIGHLIGHT_ALPHA)
+                                        theme.palette.destructive.withAlpha(
+                                            DESTRUCTIVE_HIGHLIGHT_ALPHA,
+                                        )
                                     } else {
                                         theme.palette.accent
                                     },
@@ -167,7 +167,7 @@ fun shadcnDropdownMenu(
  * trigger again requests a close.
  */
 context(_: Composer)
-fun shadcnDropdownMenu(
+fun ShadcnDropdownMenu(
     entries: List<ShadcnMenuEntry>,
     expanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
@@ -202,7 +202,7 @@ fun shadcnDropdownMenu(
                 },
                 measurePolicy = BoxMeasurePolicy(),
             ) {
-                shadcnDropdownMenu(
+                ShadcnDropdownMenu(
                     entries,
                     modifier = menuModifier,
                     id = id,
@@ -242,10 +242,12 @@ private fun handleMenuKey(
             state.highlightedIndex = entries.nextEnabledIndex(current, forward = true)
             if (!expanded) onExpandedChange(true)
         }
+
         Key.ArrowUp -> {
             state.highlightedIndex = entries.nextEnabledIndex(current, forward = false)
             if (!expanded) onExpandedChange(true)
         }
+
         Key.Home -> if (expanded) state.highlightedIndex = entries.firstEnabledIndex()
         Key.End -> if (expanded) state.highlightedIndex = entries.lastEnabledIndex()
         Key.Enter, Key.Space -> {
@@ -259,6 +261,7 @@ private fun handleMenuKey(
                 }
             }
         }
+
         else -> return false
     }
     return true

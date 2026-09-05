@@ -6,8 +6,8 @@
 package io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs
 
 import io.github.awakelab.awake.compose.runtime.remember
-import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
+import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelect
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelectItem
 

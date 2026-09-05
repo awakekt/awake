@@ -7,8 +7,8 @@ package io.github.awakelab.awake.compose.ui.focus
 
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.ModifierNodeElement
-import io.github.awakelab.awake.compose.ui.node.FocusTargetNode
 import io.github.awakelab.awake.compose.ui.node.FocusPropertiesNode
+import io.github.awakelab.awake.compose.ui.node.FocusTargetNode
 import io.github.awakelab.awake.compose.ui.node.LayoutNode
 
 /**
@@ -67,7 +67,6 @@ private class FocusRequesterNode : Modifier.Node() {
     override fun onDetach() {
         if (requester?.node === layoutNode) requester?.node = null
     }
-
 }
 
 /**
@@ -91,7 +90,9 @@ private class OnFocusChangedElement(
     override fun toString(): String = "onFocusChanged()"
 }
 
-private class OnFocusChangedNode : Modifier.Node(), FocusTargetNode {
+private class OnFocusChangedNode :
+    Modifier.Node(),
+    FocusTargetNode {
     // False: observing focus is not the same as accepting it. A node that reported focus changes
     // while silently joining the tab ring would put unfocusable containers in the Tab order.
     override val canFocus: Boolean get() = false
@@ -122,7 +123,9 @@ private class FocusTargetElement(
     }
 }
 
-private class FocusTargetNodeImpl : Modifier.Node(), FocusTargetNode {
+private class FocusTargetNodeImpl :
+    Modifier.Node(),
+    FocusTargetNode {
     var enabled: Boolean = true
     override val canFocus: Boolean get() = enabled
 
@@ -172,7 +175,9 @@ private class FocusPropertiesElement(
     override fun toString(): String = "focusProperties()"
 }
 
-private class FocusPropertiesNodeImpl : Modifier.Node(), FocusPropertiesNode {
+private class FocusPropertiesNodeImpl :
+    Modifier.Node(),
+    FocusPropertiesNode {
     override var canFocusOverride: Boolean? = null
     override var nextRequester: Any? = null
     override var previousRequester: Any? = null

@@ -3,6 +3,7 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>DestructuringDeclarationWithTooManyEntries:Mat4TranslationScaleTest.kt$Mat4TranslationScaleTest$val (x, y, z, scale) = case.toList()</ID>
+    <ID>LongMethod:CameraMathUtils.kt$CameraMathUtils$fun safeLookAt( eye: Vec3f, center: Vec3f, up: Vec3f = Vec3f.UP, out: Mat4 = Mat4(), ): Mat4</ID>
     <ID>LongParameterList:CameraMathUtils.kt$CameraMathUtils$( currentPos: Vec3f, yaw: Float, pitch: Float, moveInput: Vec3f, speed: Float, dt: Float, outPos: Vec3f, )</ID>
     <ID>LongParameterList:CameraMathUtils.kt$CameraMathUtils$( targetPos: Vec3f, targetOffset: Vec3f, yaw: Float, pitch: Float, distance: Float, outCenter: Vec3f, outEye: Vec3f, )</ID>
     <ID>MatchingDeclarationName:LensTest.kt$CameraTest</ID>

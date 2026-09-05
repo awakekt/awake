@@ -32,7 +32,7 @@ import kotlin.math.sin
  * avoids the lumpy dot-ring result produced by independent rounded quads at small sizes.
  */
 context(_: Composer)
-fun shadcnSpinner(
+fun ShadcnSpinner(
     modifier: Modifier = Modifier,
     size: Dp = SpinnerSize,
 ) {

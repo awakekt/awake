@@ -270,6 +270,7 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
     private companion object {
         const val INITIAL_STAMP_CAPACITY = 64
         const val INITIAL_COLUMN_CAPACITY = 4
+
         /** A column with no members has no height; an empty range contains nothing, which is
          * what a query should find there. */
         val EMPTY_HEIGHT = floatArrayOf(0f, 0f)

@@ -2,7 +2,7 @@
 name: awake-shadcn-recipe-consuming
 description: >
   Consume Awake's in-repository shadcn design system from a sample, game, or application.
-  Use whenever a task adds or changes a screen that calls shadcn* components, installs a
+  Use whenever a task adds or changes a screen that calls Shadcn* components, installs a
   Shadcn theme, or asks how an Awake app should style UI. Do not use for the external
   io.github.ronjunevaldoz:shadcn-compose Maven library, or for maintaining ui-designsystem
   recipes themselves.
@@ -11,91 +11,120 @@ description: >
 # Consuming Awake Shadcn Recipes
 
 Use this skill at call sites: games, samples, tools, and feature UI that consume Awake's
-in-repository `:awake:ui:designsystem` module on the retained Compose UI runtime. For implementation inside the design system,
+in-repository `:awake:ui:shadcn` module on the Compose UI runtime. For implementation inside the design system,
 use `awake-shadcn-recipe-authoring` instead; for choosing the ownership layer of a new behavior, use
 `awake-ui-authoring`.
 
 When a component is being compared with official shadcn, also use
-[`awake-shadcn-parity-workflow`](../awake-shadcn-parity-workflow/SKILL.md). A passing isolated
-recipe fixture does not prove the real showcase/catalog route.
+[`awake-shadcn-parity-workflow`](../awake-shadcn-parity-workflow/SKILL.md).
 
-**The rule in one line, checked against real Compose module boundaries:** render visible UI
-only through `shadcn*` recipes; `:awake:compose:foundation` layout/state (`Column`, `Row`, `Box`,
-`Modifier`, `Arrangement`, and state helpers) stays fine to import for structure; `:awake:compose:ui` is never
-imported by consumer code. `Column`/`Row`/`Box`/`Arrangement` live in Compose's
-`compose-foundation` artifact — the same module as unstyled interaction behavior — not split
-into their own module, and not owned by Material.
+---
 
-That settles the consumer rule. Foundation owns the neutral layout and control behavior used by
-the design system, while `:awake:compose:ui` owns retained runtime mechanics. Full rationale,
-including why this matters for the
-"no new API unless Compose has it" rule: `docs/reference/ui-ownership.md`'s
-"`ui-headless` is not `compose-foundation`" section.
+## 1. Component Discovery by Keywords
 
-## Start with the named design-system theme
+Every public component in `:awake:ui:shadcn` includes explicit KDoc `Keywords:` to make component discovery instant via IDE code completion or agent symbol search:
 
-Install a named design-system theme at the application root. Do not rely on Core's neutral
-fallback theme in a sample or game.
+| Intent / Use Case | Search Keywords | Component / Recipe |
+|---|---|---|
+| Action buttons, CTAs, icon buttons | `button`, `cta`, `action` | `ShadcnButton` |
+| Form text entry, search fields | `input`, `textfield` | `ShadcnInput` |
+| Grouped content, setting panels | `card`, `panel`, `surface` | `ShadcnCard` (`ShadcnCardHeader`, `ShadcnCardContent`, `ShadcnCardFooter`) |
+| Structured data grids, list rows | `table`, `data grid` | `ShadcnTable` (`header`, `body`, `row`, `head`, `cell`, `caption`) |
+| List item row with avatar & actions | `item`, `media object`, `row` | `ShadcnItem` |
+| Validated input field wrapper | `form`, `field`, `error` | `ShadcnForm`, `ShadcnFormField` |
+| `Cmd+K` action & search palette | `command`, `cmd+k`, `palette` | `ShadcnCommand`, `ShadcnCommandDialog` |
+| Page numbers & pagination bar | `pagination`, `page numbers` | `ShadcnPagination` |
+| Month grid view & date selection | `calendar`, `date picker` | `ShadcnCalendar`, `ShadcnDatePicker` |
+| Horizontal slide decks | `carousel`, `slider` | `ShadcnCarousel` |
+| Bar, line, area, & donut charts | `chart`, `bar chart`, `line chart` | `ShadcnBarChart`, `ShadcnLineChart`, `ShadcnPieChart` |
+
+---
+
+## 2. PascalCase Naming Convention
+
+All public visual recipes are **PascalCase Compose functions** (`ShadcnButton`, `ShadcnCard`, `ShadcnTable`).
+Never use legacy lowercase functions (`shadcnButton`).
 
 ```kotlin
-uiScope.shadcnTheme(theme = ShadcnDefaultTheme) {
-    shadcnButton(id = "save") { text("Save") }
-}
+// Correct: PascalCase Component Name
+ShadcnButton(
+    label = "Save Changes",
+    variant = ShadcnButtonVariant.Default,
+    onClick = { handleSave() }
+)
 ```
 
-Use `shadcnThemeValues(...)` when a complete immutable `ShadcnThemeValues` value is required
-before a `UiScope` exists, such as application state or a host configuration. It implements
-`UiThemeValues` for Core compatibility, but it is not the scoped provider:
+---
+
+## 3. Container DSL Scopes & Layout Composition
+
+### A. `ShadcnCard` (Slot & Block DSL)
+Supports both block composition and optional slot parameters (`header`, `footer`, `content`):
 
 ```kotlin
-val appTheme = shadcnThemeValues(dark = isDark)
-```
-
-Pass that complete [ShadcnThemeValues] value at the same scoped boundary when the product needs
-custom Shadcn metrics. It never changes one component ad hoc:
-
-```kotlin
-uiScope.shadcnTheme(
-    theme = ShadcnThemeValues(
-        core = appTheme,
-        metrics = ShadcnTheme.metrics,
-    ),
+// Option 1: Slot API (Concise)
+ShadcnCard(
+    modifier = Modifier.width(360.dp),
+    header = { ShadcnText("Security Overview", variant = ShadcnTextVariant.H3) },
+    footer = { ShadcnButton("Save Changes") }
 ) {
-    shadcnButton(id = "save", label = "Save")
+    ShadcnText("Manage 2FA and active tokens.")
+}
+
+// Option 2: Block DSL API
+ShadcnCard(modifier = Modifier.width(360.dp)) {
+    ShadcnCardHeader {
+        ShadcnText("Security Overview", variant = ShadcnTextVariant.H3)
+    }
+    ShadcnCardContent {
+        ShadcnText("Manage 2FA and active tokens.")
+    }
+    ShadcnCardFooter {
+        ShadcnButton("Save Changes")
+    }
 }
 ```
 
-## Consume recipes; do not restyle Headless in app code
+### B. `ShadcnTable` (Concise Table DSL)
+Provides clean scope extension methods (`header`, `body`, `row`, `head`, `cell`, `caption`) to eliminate repetitive `Shadcn*` prefixes:
 
-Use `shadcnButton`, `shadcnSurface`, `shadcnInput`, and other `shadcn*` recipes for visible UI.
-Choose their named variant and size. An app or sample must not build its own `Style { ... }`
-for a component or call a Headless widget merely to establish a custom look. If the needed
-variant does not exist, add it in `ui-designsystem` with the official shadcn reference and
-parity coverage.
+```kotlin
+ShadcnTable {
+    header {
+        row {
+            head("Invoice")
+            head("Status")
+            head("Amount", align = ShadcnTableCellAlign.End)
+        }
+    }
+    body {
+        row {
+            cell("INV-001")
+            cell("Paid")
+            cell("$250.00", align = ShadcnTableCellAlign.End)
+        }
+    }
+    caption("A list of recent invoices.")
+}
+```
 
-Shadcn recipes do not expose a public `Style` override. Express local intent with their named
-parameters (`variant`, `size`, `tone`, `emphasis`); put a product-wide visual change in a complete
-`ShadcnThemeValues` value.
+---
 
-Headless remains appropriate for generic structure and behavior when a design-system recipe
-already supplies the visible component. Never make an application theme provider or a local
-visual-token registry to compensate for a missing recipe.
+## 4. Theme Provider at App Root
 
-## Keep imports and dependencies one-way
+Install `provideShadcnTheme` at the application or showcase root:
 
-Depend on `ui-designsystem` to access named themes and recipes. It brings the required Headless
-behavior boundary with it. Application code may use public Headless layout/interaction APIs when
-needed, but should not import Core primitives or style its own component surfaces.
+```kotlin
+provideShadcnTheme(theme = ShadcnThemeValues(ShadcnTheme)) {
+    ShadcnButton("Save")
+}
+```
 
-## Before finishing
+---
 
-- Use a named design-system theme at the app or sample root.
-- Use `UiScope.shadcnTheme(...)` for scoped provision and `shadcnThemeValues(...)` to create an
-  immutable complete theme value.
-- Use named `shadcn*` variants instead of app-authored component `Style` blocks.
-- Use `ShadcnThemeValues` at the root for Shadcn metric customization, never as a
-  per-component visual escape hatch.
-- Keep behavior gaps in `ui-headless`; keep new look/variants in `ui-designsystem`.
-- Compile the affected sample or game target and run its focused UI tests.
+## Checklist Before Finishing
 
-Read [UI ownership](../../docs/reference/ui-ownership.md) for the canonical module boundaries.
+- All components called use **PascalCase** (`ShadcnButton`, `ShadcnCard`, `ShadcnTable`).
+- Tables use concise DSL methods (`header`, `body`, `row`, `head`, `cell`).
+- Cards use `ShadcnCardScope` or `header`/`footer` slot parameters.
+- Built and tested with `./gradlew :awake:ui:shadcn:desktopTest` and `./gradlew :samples:ui-showcase:desktopTest`.

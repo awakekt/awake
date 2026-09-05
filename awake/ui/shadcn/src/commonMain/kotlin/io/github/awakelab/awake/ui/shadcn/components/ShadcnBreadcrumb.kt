@@ -25,7 +25,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * for `HeroIcons.chevronRight` is a one-line change now that `shadcnIcon` exists.
  */
 context(_: Composer)
-fun shadcnBreadcrumb(
+fun ShadcnBreadcrumb(
     crumbs: List<String>,
     modifier: Modifier = Modifier,
 ) {
@@ -50,5 +50,5 @@ fun shadcnBreadcrumb(
     }
 }
 
-/** Upstream uses a chevron; see the note on [shadcnBreadcrumb]. */
+/** Upstream uses a chevron; see the note on [ShadcnBreadcrumb]. */
 private const val SEPARATOR = "/"

@@ -26,7 +26,10 @@ typealias UiMeshUploader<M> = DrawMeshUploader<M>
  * @param uploader The backend's mesh fetch-and-fill.
  * @return Runs ready for [SharedRenderFeature2D].
  */
-fun <M> uploadDrawRuns(staged: List<StagedDrawRun>, uploader: DrawMeshUploader<M>): List<DrawRun<M>> {
+fun <M> uploadDrawRuns(
+    staged: List<StagedDrawRun>,
+    uploader: DrawMeshUploader<M>
+): List<DrawRun<M>> {
     val runs = ArrayList<DrawRun<M>>(staged.size)
     var quadRunCount = 0
     var roundedQuadRunCount = 0
@@ -35,7 +38,13 @@ fun <M> uploadDrawRuns(staged: List<StagedDrawRun>, uploader: DrawMeshUploader<M
     while (index < staged.size) {
         when (val run = staged[index]) {
             is StagedDrawRun.QuadRun ->
-                runs += DrawRun.QuadRun(uploader.quadMesh(quadRunCount++, run.vertices, run.indices))
+                runs += DrawRun.QuadRun(
+                    uploader.quadMesh(
+                        quadRunCount++,
+                        run.vertices,
+                        run.indices
+                    )
+                )
 
             is StagedDrawRun.RoundedQuadRun ->
                 runs += DrawRun.RoundedQuadRun(
@@ -43,7 +52,13 @@ fun <M> uploadDrawRuns(staged: List<StagedDrawRun>, uploader: DrawMeshUploader<M
                 )
 
             is StagedDrawRun.GlyphRun ->
-                runs += DrawRun.GlyphRun(uploader.glyphMesh(glyphRunCount++, run.vertices, run.indices))
+                runs += DrawRun.GlyphRun(
+                    uploader.glyphMesh(
+                        glyphRunCount++,
+                        run.vertices,
+                        run.indices
+                    )
+                )
 
             is StagedDrawRun.TextureRun -> runs += DrawRun.TextureRun(run.primitives)
 
@@ -54,5 +69,5 @@ fun <M> uploadDrawRuns(staged: List<StagedDrawRun>, uploader: DrawMeshUploader<M
     return runs
 }
 
-inline fun <M> uploadUiRuns(staged: List<StagedDrawRun>, uploader: DrawMeshUploader<M>): List<DrawRun<M>> =
+fun <M> uploadUiRuns(staged: List<StagedDrawRun>, uploader: DrawMeshUploader<M>): List<DrawRun<M>> =
     uploadDrawRuns(staged, uploader)

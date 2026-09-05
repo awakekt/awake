@@ -314,6 +314,7 @@ public final class io/github/awakelab/awake/asset/shaderdsl/AslShaderBuilder {
 public final class io/github/awakelab/awake/asset/shaderdsl/AslShaderBuilderKt {
 	public static final fun fullScreenTriangleCorner (Lio/github/awakelab/awake/asset/shaderdsl/AslVertexBuilder;)Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
 	public static final fun sampler (Lio/github/awakelab/awake/asset/shaderdsl/AslShaderBuilder;II)Lio/github/awakelab/awake/asset/shaderdsl/AslHandleProvider;
+	public static final fun samplerComparison (Lio/github/awakelab/awake/asset/shaderdsl/AslShaderBuilder;II)Lio/github/awakelab/awake/asset/shaderdsl/AslHandleProvider;
 	public static final fun shader (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun storageArrayOfArrays (Lio/github/awakelab/awake/asset/shaderdsl/AslShaderBuilder;Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;Lio/github/awakelab/awake/core/geometry/GpuDataShape;I)Lio/github/awakelab/awake/asset/shaderdsl/AslStorageArrays;
 	public static final fun texture2d (Lio/github/awakelab/awake/asset/shaderdsl/AslShaderBuilder;II)Lio/github/awakelab/awake/asset/shaderdsl/AslHandleProvider;
@@ -364,8 +365,10 @@ public final class io/github/awakelab/awake/asset/shaderdsl/AslTextureBinding {
 public final class io/github/awakelab/awake/asset/shaderdsl/AslTextureBuiltinsKt {
 	public static final fun textureDimensions (Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;)Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
 	public static final fun textureSample (Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;)Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+	public static final fun textureSampleArray (Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;)Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
 	public static final fun textureSampleArrayLevel (Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;)Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
 	public static final fun textureSampleArrayLevelDepth (Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;)Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+	public static final fun textureSampleCompareLevel (Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;)Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
 	public static final fun textureSampleLevel (Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;)Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
 	public static final fun textureSampleLevelDepth (Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;)Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
 }
@@ -407,6 +410,10 @@ public final class io/github/awakelab/awake/asset/shaderdsl/AslType$I32 : io/git
 
 public final class io/github/awakelab/awake/asset/shaderdsl/AslType$Sampler : io/github/awakelab/awake/asset/shaderdsl/AslType {
 	public static final field INSTANCE Lio/github/awakelab/awake/asset/shaderdsl/AslType$Sampler;
+}
+
+public final class io/github/awakelab/awake/asset/shaderdsl/AslType$SamplerComparison : io/github/awakelab/awake/asset/shaderdsl/AslType {
+	public static final field INSTANCE Lio/github/awakelab/awake/asset/shaderdsl/AslType$SamplerComparison;
 }
 
 public final class io/github/awakelab/awake/asset/shaderdsl/AslType$Texture2dArrayF32 : io/github/awakelab/awake/asset/shaderdsl/AslType {

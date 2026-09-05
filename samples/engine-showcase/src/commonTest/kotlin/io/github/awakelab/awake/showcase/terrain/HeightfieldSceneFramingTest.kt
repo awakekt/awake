@@ -5,8 +5,8 @@
  */
 package io.github.awakelab.awake.showcase.terrain
 
-import io.github.awakelab.awake.scene.runtime.SceneCamera
-import io.github.awakelab.awake.scene.runtime.SceneLoader
+import io.github.awakelab.awake.scene.document.SceneCamera
+import io.github.awakelab.awake.scene.document.SceneLoader
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull

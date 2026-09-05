@@ -101,6 +101,30 @@ data class Ray(
         return (-plane.signedDistanceTo(origin) / denominator).takeIf { it >= 0f }
     }
 
+    /**
+     * Intersects this ray with a horizontal ground plane at [groundY].
+     *
+     * If the ray intersects the plane in front of its origin, returns the 3D world intersection point.
+     * If the ray is parallel to the ground or points away, returns a point projected along the ray
+     * at [fallbackDistance].
+     *
+     * @param groundY The vertical Y coordinate of the horizontal ground plane (defaults to 0.0).
+     * @param fallbackDistance Fallback distance along the ray if no forward intersection exists.
+     * @return World coordinates of the hit point.
+     */
+    fun intersectGroundPlane(
+        groundY: Float = 0f,
+        fallbackDistance: Float = 10f,
+    ): Vec3f {
+        if (abs(direction.y) > EPSILON) {
+            val t = (groundY - origin.y) / direction.y
+            if (t > 0f) {
+                return pointAt(t)
+            }
+        }
+        return pointAt(fallbackDistance)
+    }
+
     companion object {
         private const val EPSILON = 1e-6f
 

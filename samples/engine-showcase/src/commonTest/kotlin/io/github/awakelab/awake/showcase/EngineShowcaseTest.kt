@@ -5,7 +5,7 @@
  */
 package io.github.awakelab.awake.showcase
 
-import io.github.awakelab.awake.scene.runtime.SceneLoader
+import io.github.awakelab.awake.scene.document.SceneLoader
 import io.github.awakelab.awake.scene.runtime.destroy
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test

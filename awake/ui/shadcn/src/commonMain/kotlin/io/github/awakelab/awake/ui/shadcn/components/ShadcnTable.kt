@@ -31,73 +31,202 @@ import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
 
 /**
- * shadcn's `Table` family: eight parts, matching upstream's eight exports.
- *
- * Upstream nests freely -- a `TableRow` can appear directly under a hand-rolled `<tbody>`, and
- * `[&_tr:last-child]:border-0` finds the last one however it got there. There is no descendant
- * selector here, so "which row is last" is answered by declaring, not by asking the tree after the
- * fact: [shadcnTableBody] and [shadcnTableFooter] take a builder scope that collects rows before
- * placing any of them, the same shape [shadcnResizablePanelGroup] and [shadcnToggleGroup] already
- * use for "this container needs to know its children before any of them draw."
- *
- * There is no `<table>` layout model -- no column measured from the widest cell across every row.
- * Cells take an explicit `weight`, the same contract the `ui-core` recipe this replaces already
- * settled on, and the fix if a real one is ever needed is the same one every fixed-column list in
- * this codebase would want.
+ * Receiver scope for declaring table sections inside [ShadcnTable].
  */
-context(_: Composer)
-fun shadcnTable(
-    modifier: Modifier = Modifier,
-    content: context(Composer) () -> Unit,
-) {
-    Column(modifier.fillMaxWidth()) { content() }
+@ShadcnTableDsl
+class ShadcnTableScope internal constructor() {
+
+    context(_: Composer)
+    fun header(
+        modifier: Modifier = Modifier,
+        content: (
+            context(Composer)
+            ShadcnTableHeaderScope.() -> Unit
+        )? = null,
+    ) = ShadcnTableHeader(modifier, content)
+
+    context(_: Composer)
+    fun body(
+        modifier: Modifier = Modifier,
+        content: ShadcnTableRowsScope.() -> Unit,
+    ) = ShadcnTableBody(modifier, content)
+
+    context(_: Composer)
+    fun footer(
+        modifier: Modifier = Modifier,
+        content: ShadcnTableRowsScope.() -> Unit,
+    ) = ShadcnTableFooter(modifier, content)
+
+    context(_: Composer)
+    fun caption(
+        text: String,
+        modifier: Modifier = Modifier,
+    ) = ShadcnTableCaption(text, modifier)
 }
 
-/** `TableHeader`: usually one [shadcnTableRow] of [shadcnTableHead] cells. */
-context(_: Composer)
-fun shadcnTableHeader(
-    modifier: Modifier = Modifier,
-    content: context(Composer) () -> Unit,
-) = Column(modifier.fillMaxWidth()) { content() }
+/**
+ * Receiver scope for declaring header rows inside [ShadcnTableHeader].
+ */
+@ShadcnTableDsl
+class ShadcnTableHeaderScope internal constructor() {
+
+    context(_: Composer)
+    fun row(
+        modifier: Modifier = Modifier,
+        selected: Boolean = false,
+        bordered: Boolean = true,
+        content: (
+            context(Composer)
+            RowScope.() -> Unit
+        )? = null,
+    ) = ShadcnTableRow(modifier, selected, bordered, content)
+}
 
 /**
- * `TableBody`: rows, declared through [ShadcnTableRowsScope.row] so the last one can drop its own
- * bottom rule -- `[&_tr:last-child]:border-0` upstream.
+ * `ShadcnTable`: Root table container for structured data display.
+ *
+ * **Tailwind Reference**: `w-full caption-bottom text-sm`.
+ *
+ * Use cases:
+ * - Data grids, invoice tables, transaction histories, user rosters.
+ *
+ * **Example Usage (Concise DSL)**:
+ * ```kotlin
+ * ShadcnTable {
+ *     header {
+ *         row {
+ *             head("Invoice")
+ *             head("Amount", align = ShadcnTableCellAlign.End)
+ *         }
+ *     }
+ *     body {
+ *         row {
+ *             cell("INV-001")
+ *             cell("$250.00", align = ShadcnTableCellAlign.End)
+ *         }
+ *     }
+ *     caption("A list of recent invoices.")
+ * }
+ * ```
+ *
+ * @param modifier Custom layout modifier applied to the table container.
+ * @param header Optional header slot automatically wrapped in `ShadcnTableHeader`.
+ * @param footer Optional footer slot automatically wrapped in `ShadcnTableFooter`.
+ * @param caption Optional caption string automatically wrapped in `ShadcnTableCaption`.
+ * @param content Receiver scope slot for table body or explicit sections.
+ *
+ * Keywords: table, data table, grid, data grid, rows, columns, invoice list.
  */
 context(_: Composer)
-fun shadcnTableBody(
+fun ShadcnTable(
+    modifier: Modifier = Modifier,
+    header: (
+        context(Composer)
+        ShadcnTableHeaderScope.() -> Unit
+    )? = null,
+    footer: (ShadcnTableRowsScope.() -> Unit)? = null,
+    caption: String? = null,
+    content: (
+        context(Composer)
+        ShadcnTableScope.() -> Unit
+    )? = null,
+) {
+    val scope = remember { ShadcnTableScope() }
+    Column(modifier.fillMaxWidth()) {
+        if (header != null) {
+            ShadcnTableHeader { header() }
+        }
+        if (content != null) {
+            content(scope)
+        }
+        if (footer != null) {
+            ShadcnTableFooter { footer() }
+        }
+        if (caption != null) {
+            ShadcnTableCaption(caption)
+        }
+    }
+}
+
+/**
+ * `ShadcnTableHeader`: Header section containing header row and column titles.
+ *
+ * **Tailwind Reference**: `[&_tr]:border-b`.
+ *
+ * @param modifier Custom layout modifier.
+ * @param content Receiver scope slot containing header rows (`ShadcnTableRow` with `ShadcnTableHead` cells).
+ *
+ * Keywords: table header, column headers, header row.
+ */
+context(_: Composer)
+fun ShadcnTableHeader(
+    modifier: Modifier = Modifier,
+    content: (
+        context(Composer)
+        ShadcnTableHeaderScope.() -> Unit
+    )? = null,
+) {
+    val scope = remember { ShadcnTableHeaderScope() }
+    Column(modifier.fillMaxWidth()) {
+        content?.let { it(scope) }
+    }
+}
+
+/**
+ * `ShadcnTableBody`: Table body section holding data rows.
+ *
+ * Automatically removes the bottom border rule on the last data row (`[&_tr:last-child]:border-0`).
+ *
+ * @param modifier Custom layout modifier.
+ * @param content Builder scope for declaring rows via `row { ... }`.
+ *
+ * Keywords: table body, data rows, table rows.
+ */
+context(_: Composer)
+fun ShadcnTableBody(
     modifier: Modifier = Modifier,
     content: ShadcnTableRowsScope.() -> Unit,
 ) {
     val rows = remember(content) { ShadcnTableRowsScope().apply(content).rows }
     Column(modifier.fillMaxWidth()) {
         rows.forEachIndexed { index, row ->
-            shadcnTableRow(selected = row.selected, bordered = index < rows.lastIndex, content = row.content)
+            ShadcnTableRow(
+                selected = row.selected,
+                bordered = index < rows.lastIndex,
+                content = row.content,
+            )
         }
     }
 }
 
 /**
- * `TableFooter`: `border-t bg-muted/50 font-medium`, with a top rule of its own rather than
- * inheriting the body's bottom one, and every row's own bottom rule dropped except the last kept
- * -- upstream's `[&>tr]:last:border-b-0` reads backwards from [shadcnTableBody]'s rule, and only
- * the *last* footer row loses its border because a footer sits at the bottom of the table and
- * nothing needs separating it from what is below.
+ * `ShadcnTableFooter`: Table footer section with top separator and medium-weight cell styling.
  *
- * `font-medium` reaches every cell through [LocalTableCellWeight] -- see [shadcnTableCell].
+ * **Tailwind Reference**: `border-t bg-muted/50 font-medium [&>tr]:last:border-b-0`.
+ *
+ * @param modifier Custom layout modifier.
+ * @param content Builder scope for declaring footer rows via `row { ... }`.
+ *
+ * Keywords: table footer, total row, summary row.
  */
 context(_: Composer)
-fun shadcnTableFooter(
+fun ShadcnTableFooter(
     modifier: Modifier = Modifier,
     content: ShadcnTableRowsScope.() -> Unit,
 ) {
     val theme = shadcnTheme
     val rows = remember(content) { ShadcnTableRowsScope().apply(content).rows }
     CompositionLocalProvider(LocalTableCellWeight provides FontWeight.Medium) {
-        Column(modifier.fillMaxWidth().background(theme.palette.muted.withAlpha(FOOTER_MUTED_ALPHA))) {
+        Column(
+            modifier.fillMaxWidth().background(theme.palette.muted.withAlpha(FOOTER_MUTED_ALPHA)),
+        ) {
             ShadcnSeparator(Modifier.fillMaxWidth().height(RowBorderThickness))
             rows.forEachIndexed { index, row ->
-                shadcnTableRow(selected = row.selected, bordered = index < rows.lastIndex, content = row.content)
+                ShadcnTableRow(
+                    selected = row.selected,
+                    bordered = index < rows.lastIndex,
+                    content = row.content,
+                )
             }
         }
     }
@@ -106,12 +235,21 @@ fun shadcnTableFooter(
 /** `font-medium` inherited from an ancestor `<tfoot>`; [FontWeight.Normal] everywhere else. */
 private val LocalTableCellWeight = compositionLocalOf { FontWeight.Normal }
 
-/** Declares the rows of a [shadcnTableBody] or [shadcnTableFooter], in order. */
+/** DSL Scope for declaring rows in [ShadcnTableBody] or [ShadcnTableFooter]. */
 @ShadcnTableDsl
 class ShadcnTableRowsScope internal constructor() {
     internal val rows = mutableListOf<ShadcnTableRowSpec>()
 
-    fun row(selected: Boolean = false, content: context(Composer) RowScope.() -> Unit) {
+    /**
+     * Declares a data row in the table body or footer.
+     *
+     * @param selected Whether the row is highlighted in selected state (`bg-muted`).
+     * @param content Cell content slot with [RowScope] access for cell weighting.
+     */
+    fun row(
+        selected: Boolean = false,
+        content: context(Composer) RowScope.() -> Unit,
+    ) {
         rows += ShadcnTableRowSpec(selected, content)
     }
 }
@@ -126,22 +264,26 @@ internal class ShadcnTableRowSpec(
 )
 
 /**
- * `TableRow`: `border-b`, `hover:bg-muted/50`, `data-[state=selected]:bg-muted`.
+ * `ShadcnTableRow`: Individual table row container.
  *
- * No fixed height. A body row is 37px in the browser and a header row is 40 -- not because rows
- * differ, but because [shadcnTableHead] carries its own `h-10` and [shadcnTableCell] does not,
- * and a row is only ever as tall as the cells inside it. Giving the row itself a height would
- * make every row 40px and the body rows measurably too tall.
+ * **Tailwind Reference**: `border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted`.
  *
- * [bordered] is what [shadcnTableBody]/[shadcnTableFooter] set to `false` on the last row, rather
- * than a CSS pseudo-selector reaching for it after the fact.
+ * @param modifier Custom layout modifier.
+ * @param selected Whether the row is in selected state.
+ * @param bordered Whether to draw a bottom border separator line below the row.
+ * @param content Row content slot with [RowScope] access for cell weighting.
+ *
+ * Keywords: table row, tr, row.
  */
 context(_: Composer)
-fun shadcnTableRow(
+fun ShadcnTableRow(
     modifier: Modifier = Modifier,
     selected: Boolean = false,
     bordered: Boolean = true,
-    content: context(Composer) RowScope.() -> Unit,
+    content: (
+        context(Composer)
+        RowScope.() -> Unit
+    )? = null,
 ) {
     val theme = shadcnTheme
     val interaction = remember { InteractionSource() }
@@ -157,14 +299,27 @@ fun shadcnTableRow(
                 .let { if (background == null) it else it.background(background) }
                 .hoverable(interaction),
             verticalAlignment = Alignment.CenterVertically,
-        ) { content() }
+        ) {
+            content?.let { it() }
+        }
         if (bordered) ShadcnSeparator(Modifier.fillMaxWidth().height(RowBorderThickness))
     }
 }
 
-/** `TableHead`: `h-10 px-2 text-left align-middle font-medium`. */
+/**
+ * `ShadcnTableHead`: Table header cell container.
+ *
+ * **Tailwind Reference**: `h-10 px-2 text-left align-middle font-medium text-muted-foreground`.
+ *
+ * @param text Header text label.
+ * @param modifier Custom layout modifier.
+ * @param weight Cell width proportion weight within the row (`1f` by default).
+ * @param align Alignment of cell content (`Start` or `End`).
+ *
+ * Keywords: table head, th, column title, header cell.
+ */
 context(_: Composer)
-fun RowScope.shadcnTableHead(
+fun RowScope.ShadcnTableHead(
     text: String,
     modifier: Modifier = Modifier,
     weight: Float = 1f,
@@ -172,28 +327,34 @@ fun RowScope.shadcnTableHead(
 ) {
     val theme = shadcnTheme
     Box(
-        // `h-10 px-2` -- height on the head cell itself, not the row: this is the only reason a
-        // header row measures 40px while a body row measures 37.
         modifier.weight(weight).height(RowHeight).padding(horizontal = Tw.Spacing.s2),
         horizontalAlignment = align.boxAlignment(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ShadcnText(text, variant = ShadcnTextVariant.Small, weight = HeadWeight, color = theme.palette.foreground)
+        ShadcnText(
+            text,
+            variant = ShadcnTextVariant.Small,
+            weight = HeadWeight,
+            color = theme.palette.foreground,
+        )
     }
 }
 
 /**
- * `TableCell`: `p-2 align-middle`.
+ * `ShadcnTableCell`: Individual table data cell container.
  *
- * [fontWeight] defaults to [LocalTableCellWeight] rather than `null`. Upstream's `font-medium` on
- * `TableFooter` is a class on the `<tfoot>`, and every cell inside inherits it through the
- * cascade -- measured on the reference case at weight 500 with no `font-medium` on the cell
- * itself. There is no cascade here, so [shadcnTableFooter] provides the same default the way
- * `LocalTextStyle` already provides text colour and size, and a caller can still override any one
- * cell by passing [fontWeight] explicitly.
+ * **Tailwind Reference**: `p-2 align-middle`.
+ *
+ * @param text Data cell text label.
+ * @param modifier Custom layout modifier.
+ * @param weight Cell width proportion weight within the row (`1f` by default).
+ * @param align Alignment of cell content (`Start` or `End`).
+ * @param fontWeight Optional font weight override (inherits `Medium` in footer, `Normal` elsewhere).
+ *
+ * Keywords: table cell, td, cell, data cell.
  */
 context(_: Composer)
-fun RowScope.shadcnTableCell(
+fun RowScope.ShadcnTableCell(
     text: String,
     modifier: Modifier = Modifier,
     weight: Float = 1f,
@@ -205,13 +366,43 @@ fun RowScope.shadcnTableCell(
         horizontalAlignment = align.boxAlignment(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ShadcnText(text, variant = ShadcnTextVariant.Small, weight = fontWeight ?: LocalTableCellWeight.current)
+        ShadcnText(
+            text,
+            variant = ShadcnTextVariant.Small,
+            weight = fontWeight ?: LocalTableCellWeight.current,
+        )
     }
 }
 
-/** `TableCaption`: `mt-4 text-sm text-muted-foreground`, centred under the table. */
 context(_: Composer)
-fun shadcnTableCaption(
+fun RowScope.head(
+    text: String,
+    modifier: Modifier = Modifier,
+    weight: Float = 1f,
+    align: ShadcnTableCellAlign = ShadcnTableCellAlign.Start,
+) = ShadcnTableHead(text, modifier, weight, align)
+
+context(_: Composer)
+fun RowScope.cell(
+    text: String,
+    modifier: Modifier = Modifier,
+    weight: Float = 1f,
+    align: ShadcnTableCellAlign = ShadcnTableCellAlign.Start,
+    fontWeight: FontWeight? = null,
+) = ShadcnTableCell(text, modifier, weight, align, fontWeight)
+
+/**
+ * `ShadcnTableCaption`: Table caption text displayed centered below the table.
+ *
+ * **Tailwind Reference**: `mt-4 text-sm text-muted-foreground`.
+ *
+ * @param text Caption description text.
+ * @param modifier Custom layout modifier.
+ *
+ * Keywords: table caption, caption, table footnote.
+ */
+context(_: Composer)
+fun ShadcnTableCaption(
     text: String,
     modifier: Modifier = Modifier,
 ) {
@@ -225,38 +416,14 @@ fun shadcnTableCaption(
 
 enum class ShadcnTableCellAlign { Start, End }
 
-/** Table column metadata is policy, while row/cell layout is layout behavior. */
-data class ShadcnTableColumn(
-    val header: String,
-    val weight: Float = 1f,
-    val align: ShadcnTableCellAlign = ShadcnTableCellAlign.Start,
-)
-
-fun shadcnTableColumnWidthsPx(columns: List<ShadcnTableColumn>, availableWidthPx: Float): List<Float> {
-    val totalWeight = columns.sumOf { it.weight.toDouble() }.toFloat()
-    if (totalWeight <= 0f) return columns.map { 0f }
-    return columns.map { (it.weight / totalWeight) * availableWidthPx }
-}
-
 private fun ShadcnTableCellAlign.boxAlignment(): Alignment.Horizontal = when (this) {
     ShadcnTableCellAlign.Start -> Alignment.Start
     ShadcnTableCellAlign.End -> Alignment.End
 }
 
-/** `h-10`. */
 private val RowHeight: Dp = Tw.Spacing.s10
-
-/** `font-medium`. */
 private val HeadWeight = FontWeight.Medium
-
-/** Tailwind's bare `border`. */
 private val RowBorderThickness: Dp = Dp(1f)
-
-/** `hover:bg-muted/50`. */
 private const val ROW_HOVER_ALPHA = 0.5f
-
-/** `bg-muted/50` on the footer. */
 private const val FOOTER_MUTED_ALPHA = 0.5f
-
-/** `mt-4`. */
 private val CaptionTopMargin: Dp = Tw.Spacing.s4

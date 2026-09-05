@@ -31,7 +31,8 @@ class DrawWithCacheTest {
         var buildCount = 0
         val host = ComposeHost()
 
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(
                 nodeType = "cached_box",
                 modifier = Modifier.drawWithCache {
@@ -71,7 +72,8 @@ class DrawWithCacheTest {
         var currentWidth = 50
         val host = ComposeHost()
 
-        val content: context(Composer) () -> Unit = {
+        val content: context(Composer)
+        () -> Unit = {
             Layout(
                 nodeType = "dynamic_box",
                 modifier = Modifier.drawWithCache {

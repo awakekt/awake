@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
 import io.github.awakelab.awake.compose.foundation.background
@@ -114,7 +115,10 @@ class ShadcnTab internal constructor(
     val label: String,
     val enabled: Boolean,
     val tag: String?,
-    val content: (context(Composer) () -> Unit)?,
+    val content: (
+        context(Composer)
+        () -> Unit
+    )?,
 )
 
 /** Declares Tab triggers in their source order. */
@@ -127,7 +131,10 @@ class ShadcnTabsScope internal constructor() {
         label: String,
         enabled: Boolean = true,
         tag: String? = null,
-        content: (context(Composer) () -> Unit)? = null,
+        content: (
+            context(Composer)
+            () -> Unit
+        )? = null,
     ) {
         items += ShadcnTab(value, label, enabled, tag, content)
     }

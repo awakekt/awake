@@ -5,5 +5,5 @@
  */
 package io.github.awakelab.awake.ui.shadcn.components
 
-/** Which edge a [shadcnSheet] is pinned to. Upstream's `side`. */
+/** Which edge a [ShadcnSheet] is pinned to. Upstream's `side`. */
 enum class ShadcnSheetSide { Left, Right, Top, Bottom }

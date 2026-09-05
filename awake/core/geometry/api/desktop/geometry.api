@@ -76,6 +76,37 @@ public final class io/github/awakelab/awake/core/geometry/MeshHealer$Result {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class io/github/awakelab/awake/core/geometry/MeshProblem {
+	public fun <init> (Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;Ljava/lang/String;)V
+	public final fun component1 ()Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;Ljava/lang/String;)Lio/github/awakelab/awake/core/geometry/MeshProblem;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/geometry/MeshProblem;Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/MeshProblem;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDetail ()Ljava/lang/String;
+	public final fun getKind ()Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/core/geometry/MeshProblem$Kind : java/lang/Enum {
+	public static final field Degenerate Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public static final field Indices Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public static final field NormalLength Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public static final field NotFinite Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public static final field Stride Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public static final field Winding Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public static fun values ()[Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+}
+
+public final class io/github/awakelab/awake/core/geometry/MeshProblemKt {
+	public static final fun facesUpward (Lio/github/awakelab/awake/core/geometry/MeshGeometry;)Z
+	public static final fun validate (Lio/github/awakelab/awake/core/geometry/MeshGeometry;F)Ljava/util/List;
+	public static synthetic fun validate$default (Lio/github/awakelab/awake/core/geometry/MeshGeometry;FILjava/lang/Object;)Ljava/util/List;
+}
+
 public final class io/github/awakelab/awake/core/geometry/MeshSimplifier {
 	public static final field INSTANCE Lio/github/awakelab/awake/core/geometry/MeshSimplifier;
 	public final fun simplify ([F[IFZ)Lio/github/awakelab/awake/core/geometry/MeshSimplifier$Result;

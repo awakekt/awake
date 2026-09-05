@@ -10,7 +10,6 @@ import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.core.Name
 import io.github.awakelab.awake.scene.core.transform.Transform
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -135,7 +134,9 @@ class AsyncCellStreamingTest {
         val world = World()
         val loaded = mutableListOf<WorldCellCoord>()
         val listener = object : WorldCellStreamListener {
-            override fun onCellLoad(world: World, coord: WorldCellCoord) { loaded += coord }
+            override fun onCellLoad(world: World, coord: WorldCellCoord) {
+                loaded += coord
+            }
             override fun onCellUnload(world: World, coord: WorldCellCoord) = Unit
         }
         val system = WorldPartitionSystem(config, streamListener = listener)

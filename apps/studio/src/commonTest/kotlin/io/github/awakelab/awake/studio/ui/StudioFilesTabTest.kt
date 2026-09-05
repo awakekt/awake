@@ -16,8 +16,8 @@ import io.github.awakelab.awake.editor.EditorPluginRegistry
 import io.github.awakelab.awake.editor.EditorProvider
 import io.github.awakelab.awake.editor.EditorProviderId
 import io.github.awakelab.awake.editor.EditorProviderMetadata
-import io.github.awakelab.awake.editor.files.EditorFileEntry
-import io.github.awakelab.awake.editor.files.EditorFileViewer
+import io.github.awakelab.awake.editor.panels.files.EditorFileEntry
+import io.github.awakelab.awake.editor.panels.files.EditorFileViewer
 import io.github.awakelab.awake.studio.StudioHostResources
 import io.github.awakelab.awake.studio.state.DOCK_TAB_FILES
 import io.github.awakelab.awake.studio.state.StudioContract

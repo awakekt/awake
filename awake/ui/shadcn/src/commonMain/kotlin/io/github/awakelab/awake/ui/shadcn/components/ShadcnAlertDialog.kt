@@ -10,21 +10,20 @@ import io.github.awakelab.awake.compose.foundation.layout.Box
 import io.github.awakelab.awake.compose.foundation.layout.Column
 import io.github.awakelab.awake.compose.foundation.layout.Row
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
-import io.github.awakelab.awake.compose.foundation.layout.padding
 import io.github.awakelab.awake.compose.foundation.layout.widthIn
 import io.github.awakelab.awake.compose.foundation.style.StyleState
 import io.github.awakelab.awake.compose.foundation.style.styleable
 import io.github.awakelab.awake.compose.runtime.Composer
-import io.github.awakelab.awake.compose.runtime.remember
-import io.github.awakelab.awake.compose.ui.Alignment
 import io.github.awakelab.awake.compose.runtime.CompositionLocalProvider
 import io.github.awakelab.awake.compose.runtime.current
 import io.github.awakelab.awake.compose.runtime.provides
+import io.github.awakelab.awake.compose.runtime.remember
+import io.github.awakelab.awake.compose.ui.Alignment
 import io.github.awakelab.awake.compose.ui.Modifier
+import io.github.awakelab.awake.compose.ui.platform.LocalTextStyle
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsProperties
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsRole
 import io.github.awakelab.awake.compose.ui.semantics.semantics
-import io.github.awakelab.awake.compose.ui.platform.LocalTextStyle
 import io.github.awakelab.awake.compose.ui.unit.Dp
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.core.math2d.sp
@@ -44,7 +43,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * page still covers the page.
  */
 context(_: Composer)
-fun shadcnAlertDialog(
+fun ShadcnAlertDialog(
     visible: Boolean,
     title: String,
     onDismissRequest: () -> Unit,
@@ -84,7 +83,11 @@ fun shadcnAlertDialog(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(AlertDialogSectionGap)) {
                     Column(verticalArrangement = Arrangement.spacedBy(AlertDialogHeaderGap)) {
-                        ShadcnText(title, variant = ShadcnTextVariant.Large, lineHeight = AlertDialogTitleLeading)
+                        ShadcnText(
+                            title,
+                            variant = ShadcnTextVariant.Large,
+                            lineHeight = AlertDialogTitleLeading,
+                        )
                         if (description != null) {
                             ShadcnText(description, variant = ShadcnTextVariant.Muted)
                         }
@@ -92,19 +95,23 @@ fun shadcnAlertDialog(
                     // `sm:justify-end`, cancel before action -- upstream stacks them reversed on a
                     // narrow viewport, which this does not model yet.
                     Box(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
-                        Row(horizontalArrangement = Arrangement.spacedByHorizontal(AlertDialogActionGap)) {
-                        ShadcnButton(
-                            cancelLabel,
-                            variant = ShadcnButtonVariant.Outline,
-                            onClick = onDismissRequest,
-                            modifier = Modifier.taggedAction(id, "cancel"),
-                        )
-                        ShadcnButton(
-                            confirmLabel,
-                            variant = if (destructive) ShadcnButtonVariant.Destructive else ShadcnButtonVariant.Default,
-                            onClick = onConfirm,
-                            modifier = Modifier.taggedAction(id, "confirm"),
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedByHorizontal(
+                                AlertDialogActionGap,
+                            ),
+                        ) {
+                            ShadcnButton(
+                                cancelLabel,
+                                variant = ShadcnButtonVariant.Outline,
+                                onClick = onDismissRequest,
+                                modifier = Modifier.taggedAction(id, "cancel"),
+                            )
+                            ShadcnButton(
+                                confirmLabel,
+                                variant = if (destructive) ShadcnButtonVariant.Destructive else ShadcnButtonVariant.Default,
+                                onClick = onConfirm,
+                                modifier = Modifier.taggedAction(id, "confirm"),
+                            )
                         }
                     }
                 }

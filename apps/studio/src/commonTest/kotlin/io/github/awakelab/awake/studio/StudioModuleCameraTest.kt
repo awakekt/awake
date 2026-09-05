@@ -18,6 +18,7 @@ import io.github.awakelab.awake.render.renderer.Renderer
 import io.github.awakelab.awake.render.renderer.SceneLight
 import io.github.awakelab.awake.render.testing.NoopRenderer
 import io.github.awakelab.awake.scene.controls.camera.CameraMode
+import io.github.awakelab.awake.scene.rendering.Camera
 import io.github.awakelab.awake.scene.rendering.debug.WorldDebugSettings
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
 import io.github.awakelab.awake.studio.state.StudioContract
@@ -84,8 +85,6 @@ class StudioModuleCameraTest {
         val topEye =
             assertNotNull(renderer.lastEye, "No draw() call captured after SetCameraMode(Top).")
 
-        // The regression: before the fix, the driver system applied the preset to a camera
-        // object the renderer never reads, so this eye position never moved.
         assertNotEquals(orbitEye, topEye)
 
         // And it moved to CameraSystem's engine-owned TopDown pose -- not just "somewhere
@@ -162,7 +161,8 @@ class StudioModuleCameraTest {
         // And it is framed to match what the perspective lens showed at CameraSystem's
         // third-person distance,
         // so the toggle changes the projection without resizing the subject.
-        val fovYRadians = assertNotNull(runtime.findCamera("camera")).lens.fovYRadians
+        val cameraComp = runtime.world.family<Camera>().components().firstOrNull() ?: runtime.findCamera("camera")
+        val fovYRadians = assertNotNull(cameraComp).lens.fovYRadians
         val expectedHalfHeight = THIRD_PERSON_DISTANCE * tan(fovYRadians / 2f)
         assertEquals(expectedHalfHeight, renderer.lastOrthoHalfHeight, TOLERANCE)
     }

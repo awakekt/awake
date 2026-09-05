@@ -5,10 +5,10 @@
  */
 package io.github.awakelab.awake.scene.rendering.mesh
 
+import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.render.material.Material
 import io.github.awakelab.awake.render.mesh.Mesh
 import io.github.awakelab.awake.render.renderer.CullMode
-import io.github.awakelab.awake.core.math.Vec3f
 
 /** [cullMode] defaults to [CullMode.None] -- exactly this mesh's behavior before per-mesh
  * culling existed, so adding this field changes nothing for an existing scene until an author

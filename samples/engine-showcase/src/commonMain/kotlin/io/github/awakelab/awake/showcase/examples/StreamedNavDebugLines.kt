@@ -8,7 +8,7 @@ package io.github.awakelab.awake.showcase.examples
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.render.renderer.LineSegment
-import io.github.awakelab.awake.scene.navigation.grid.CoarseNavGraph
+import io.github.awakelab.awake.navigation.grid.CoarseNavGraph
 import io.github.awakelab.awake.scene.world.WorldCellCoord
 import kotlin.math.floor
 

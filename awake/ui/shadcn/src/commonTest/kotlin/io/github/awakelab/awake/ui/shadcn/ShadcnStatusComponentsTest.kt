@@ -10,10 +10,10 @@ import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.core.graphics2d.DrawCommand
-import io.github.awakelab.awake.ui.shadcn.components.shadcnKbd
-import io.github.awakelab.awake.ui.shadcn.components.shadcnLabel
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnKbd
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnLabel
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnProgress
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSkeleton
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSkeleton
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -30,7 +30,7 @@ class ShadcnStatusComponentsTest {
         // The drift the re-vendor exposed: the hand-copied reference said `bg-muted`, so every
         // skeleton parity number was measured against the wrong background. Upstream is `bg-accent`.
         val quad = composeFrame(120, 40) {
-            provideShadcnTheme(theme) { shadcnSkeleton(Modifier.size(100.dp, 20.dp)) }
+            provideShadcnTheme(theme) { ShadcnSkeleton(Modifier.size(100.dp, 20.dp)) }
         }.primitivesOf<DrawCommand.RoundedQuad>().first()
 
         assertEquals(theme.palette.accent.r, quad.color.r, 0.001f, "the skeleton is not bg-accent")
@@ -42,7 +42,7 @@ class ShadcnStatusComponentsTest {
     fun aSkeletonPulsesBetweenFullAndHalfOpacity() {
         // Tailwind's `animate-pulse` bottoms out at 50%, not at zero -- a skeleton never disappears.
         val quad = composeFrame(120, 40) {
-            provideShadcnTheme(theme) { shadcnSkeleton(Modifier.size(100.dp, 20.dp)) }
+            provideShadcnTheme(theme) { ShadcnSkeleton(Modifier.size(100.dp, 20.dp)) }
         }.primitivesOf<DrawCommand.RoundedQuad>().first()
 
         assertTrue(quad.color.a in 0.5f..1.0f, "opacity ${quad.color.a} left the pulse range")
@@ -89,7 +89,7 @@ class ShadcnStatusComponentsTest {
         // The live parity failure this port fixes: kbdStatesStyleMatchesShadcn reported 4 against
         // upstream's 6, because the old recipe used the `xs` step where upstream says `rounded-sm`.
         val quad = composeFrame(120, 40) {
-            provideShadcnTheme(theme) { shadcnKbd("K") }
+            provideShadcnTheme(theme) { ShadcnKbd("K") }
         }.primitivesOf<DrawCommand.RoundedQuad>().first()
 
         assertEquals(theme.radii.sm.value, quad.radius, 0.5f, "kbd is not rounded-sm")
@@ -100,7 +100,7 @@ class ShadcnStatusComponentsTest {
     fun aSingleCharacterKeyStaysSquare() {
         // `h-5 min-w-5` -- without the min width a one-glyph key collapses to the glyph.
         val quad = composeFrame(120, 40) {
-            provideShadcnTheme(theme) { shadcnKbd("K") }
+            provideShadcnTheme(theme) { ShadcnKbd("K") }
         }.primitivesOf<DrawCommand.RoundedQuad>().first()
 
         assertTrue(quad.w >= 20f - 0.5f, "the key collapsed to ${quad.w}, under its min-w-5")
@@ -112,7 +112,7 @@ class ShadcnStatusComponentsTest {
     fun aDisabledLabelIsDimmedNotHidden() {
         // `peer-disabled:opacity-50` -- the label reacts to its control's state, and stays readable.
         fun alpha(enabled: Boolean) = composeFrame(200, 40) {
-            provideShadcnTheme(theme) { shadcnLabel("Email", enabled = enabled) }
+            provideShadcnTheme(theme) { ShadcnLabel("Email", enabled = enabled) }
         }.primitivesOf<DrawCommand.Glyph>().first().color.a
 
         assertTrue(alpha(false) < alpha(true), "a disabled label was not dimmed")

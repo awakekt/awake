@@ -39,7 +39,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * state without a callback.
  */
 context(_: Composer)
-fun shadcnToggle(
+fun ShadcnToggle(
     label: String,
     checked: Boolean,
     modifier: Modifier = Modifier,

@@ -15,8 +15,8 @@ import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.core.input.Key
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnPopover
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
-import io.github.awakelab.awake.ui.shadcn.components.shadcnPopover
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -75,8 +75,15 @@ class ShadcnPopoverTest {
         println("PROBE trigger=$trigger panel=$panel")
 
         assertEquals(triggerWhenClosed.top, trigger.top, "opening the popover moved its trigger")
-        assertEquals(triggerWhenClosed.height, trigger.height, "opening the popover resized its trigger")
-        assertTrue(panel.top >= trigger.top + trigger.height, "the panel did not sit below the trigger")
+        assertEquals(
+            triggerWhenClosed.height,
+            trigger.height,
+            "opening the popover resized its trigger",
+        )
+        assertTrue(
+            panel.top >= trigger.top + trigger.height,
+            "the panel did not sit below the trigger",
+        )
         assertEquals(PANEL_WIDTH, panel.width, "`w-72` is a fixed width")
     }
 
@@ -98,12 +105,16 @@ class ShadcnPopoverTest {
             provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
                 Column {
                     Spacer(Modifier.height(TRIGGER_INSET.dp))
-                    shadcnPopover(
+                    ShadcnPopover(
                         visible = world.visible,
                         onVisibleChange = { world.visible = it },
                         id = PANEL,
                         trigger = { onClick ->
-                            ShadcnButton("Open", modifier = Modifier.testTag(TRIGGER), onClick = onClick)
+                            ShadcnButton(
+                                "Open",
+                                modifier = Modifier.testTag(TRIGGER),
+                                onClick = onClick,
+                            )
                         },
                     ) {
                         ShadcnText("Dimensions")

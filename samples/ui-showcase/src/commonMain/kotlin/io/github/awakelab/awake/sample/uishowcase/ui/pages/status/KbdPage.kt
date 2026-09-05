@@ -12,7 +12,7 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.shadcnKbd
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnKbd
 
 internal val KbdPage = ShowcasePage(
     id = "kbd",
@@ -24,10 +24,13 @@ internal val KbdPage = ShowcasePage(
     previewHeight = 260,
     notes = listOf("Subtle border box representing physical keys."),
     hero = {
-        Row(horizontalArrangement = Arrangement.spacedByHorizontal(8.dp), modifier = Modifier.height(24.dp)) {
-            shadcnKbd("⌘")
-            shadcnKbd("K")
-            shadcnKbd("Shift")
+        Row(
+            horizontalArrangement = Arrangement.spacedByHorizontal(8.dp),
+            modifier = Modifier.height(24.dp),
+        ) {
+            ShadcnKbd("⌘")
+            ShadcnKbd("K")
+            ShadcnKbd("Shift")
         }
     },
 )

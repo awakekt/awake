@@ -108,7 +108,12 @@ private fun encodeCommands(commands: List<PathCommand>): String {
             is PathCommand.LineTo -> 'L' to listOf(command.x, command.y)
             is PathCommand.QuadTo -> 'Q' to listOf(command.cx, command.cy, command.x, command.y)
             is PathCommand.CubicTo -> 'C' to listOf(
-                command.c1x, command.c1y, command.c2x, command.c2y, command.x, command.y,
+                command.c1x,
+                command.c1y,
+                command.c2x,
+                command.c2y,
+                command.x,
+                command.y,
             )
             is PathCommand.Close -> 'Z' to emptyList()
             // Codegen resolves arcs into cubics, so one reaching here means an icon was hand-written.

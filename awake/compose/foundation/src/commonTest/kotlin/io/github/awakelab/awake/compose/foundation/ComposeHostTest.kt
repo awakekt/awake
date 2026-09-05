@@ -353,4 +353,24 @@ class GestureAcrossFramesTest {
 
         assertEquals(1, clicks)
     }
+
+    @Test
+    fun modalLayerSetsIsModalOpenOnOutputEvenWithoutPointerEvents() {
+        val host = ComposeHost()
+        val outputWithoutModal = host.frame(at(0, 0)) {
+            Spacer(Modifier.size(50.dp))
+        }
+        assertFalse(outputWithoutModal.ownership.isModalOpen)
+
+        val outputWithModal = host.frame(at(0, 0)) {
+            io.github.awakelab.awake.compose.ui.layout.Layer(
+                kind = io.github.awakelab.awake.compose.ui.layout.LayerKind.Dialog,
+                modal = true,
+                measurePolicy = io.github.awakelab.awake.compose.foundation.layout.BoxMeasurePolicy(),
+            ) {
+                Spacer(Modifier.size(50.dp))
+            }
+        }
+        assertTrue(outputWithModal.ownership.isModalOpen, "opening a modal layer must immediately set isModalOpen")
+    }
 }

@@ -1,0 +1,219 @@
+public final class io/github/awakelab/awake/navigation/AliasesKt {
+	public static final field DEFAULT_MAX_SLOPE_DEGREES F
+	public static final fun bakeNavGrid (Lio/github/awakelab/awake/asset/terrain/Heightmap;FF)Lio/github/awakelab/awake/navigation/grid/NavGridTile;
+	public static synthetic fun bakeNavGrid$default (Lio/github/awakelab/awake/asset/terrain/Heightmap;FFILjava/lang/Object;)Lio/github/awakelab/awake/navigation/grid/NavGridTile;
+	public static final fun bakeNavGridCell (Lio/github/awakelab/awake/asset/terrain/Heightmap;IFF)Lio/github/awakelab/awake/navigation/grid/NavGridTile;
+	public static synthetic fun bakeNavGridCell$default (Lio/github/awakelab/awake/asset/terrain/Heightmap;IFFILjava/lang/Object;)Lio/github/awakelab/awake/navigation/grid/NavGridTile;
+	public static final fun findPath (Lio/github/awakelab/awake/navigation/grid/NavField;IIII)Ljava/util/List;
+	public static final fun findPath (Lio/github/awakelab/awake/navigation/grid/NavField;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Ljava/util/List;
+	public static final fun findPath (Lio/github/awakelab/awake/navigation/grid/NavGridTile;IIII)Ljava/util/List;
+	public static final fun findPath (Lio/github/awakelab/awake/navigation/grid/NavGridTile;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Ljava/util/List;
+	public static final fun getBLOCKED_COLOR ()Lio/github/awakelab/awake/core/color/Color;
+	public static final fun getBLOCKED_COLOR_ALTERNATE ()Lio/github/awakelab/awake/core/color/Color;
+	public static final fun getROUTE_COLORS ()Ljava/util/List;
+	public static final fun navGridDebugLines (Lio/github/awakelab/awake/navigation/grid/NavGridTile;Lkotlin/jvm/functions/Function2;Ljava/util/List;)Ljava/util/List;
+	public static synthetic fun navGridDebugLines$default (Lio/github/awakelab/awake/navigation/grid/NavGridTile;Lkotlin/jvm/functions/Function2;Ljava/util/List;ILjava/lang/Object;)Ljava/util/List;
+	public static final fun smoothPath (Lio/github/awakelab/awake/navigation/grid/NavField;Ljava/util/List;)Ljava/util/List;
+	public static final fun smoothPath (Lio/github/awakelab/awake/navigation/grid/NavGridTile;Ljava/util/List;)Ljava/util/List;
+}
+
+public abstract interface class io/github/awakelab/awake/navigation/NavMesh {
+	public abstract fun findPath (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/navigation/PathRequest : io/github/awakelab/awake/ecs/Poolable {
+	public fun <init> ()V
+	public final fun cancel ()V
+	public final fun getGoal ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getQueryGeneration ()I
+	public final fun getStart ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getStatus ()Lio/github/awakelab/awake/navigation/PathStatus;
+	public final fun getWaypoints ()Ljava/util/List;
+	public final fun requestPath (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)V
+	public fun reset ()V
+	public final fun setStatus (Lio/github/awakelab/awake/navigation/PathStatus;)V
+	public final fun setWaypoints (Ljava/util/List;)V
+}
+
+public final class io/github/awakelab/awake/navigation/PathRequestSystem : io/github/awakelab/awake/ecs/System {
+	public fun <init> (Lio/github/awakelab/awake/navigation/NavMesh;Lkotlinx/coroutines/CoroutineScope;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/navigation/NavMesh;Lkotlinx/coroutines/CoroutineScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+}
+
+public final class io/github/awakelab/awake/navigation/PathStatus : java/lang/Enum {
+	public static final field Idle Lio/github/awakelab/awake/navigation/PathStatus;
+	public static final field Pending Lio/github/awakelab/awake/navigation/PathStatus;
+	public static final field Ready Lio/github/awakelab/awake/navigation/PathStatus;
+	public static final field Unreachable Lio/github/awakelab/awake/navigation/PathStatus;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/navigation/PathStatus;
+	public static fun values ()[Lio/github/awakelab/awake/navigation/PathStatus;
+}
+
+public final class io/github/awakelab/awake/navigation/grid/AgentRoute {
+	public synthetic fun <init> (JLjava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-QVrgMZQ ()J
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy-PTsxN7A (JLjava/util/List;)Lio/github/awakelab/awake/navigation/grid/AgentRoute;
+	public static synthetic fun copy-PTsxN7A$default (Lio/github/awakelab/awake/navigation/grid/AgentRoute;JLjava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/navigation/grid/AgentRoute;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntity-QVrgMZQ ()J
+	public final fun getPath ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/awakelab/awake/navigation/grid/CellSide : java/lang/Enum {
+	public static final field East Lio/github/awakelab/awake/navigation/grid/CellSide;
+	public static final field North Lio/github/awakelab/awake/navigation/grid/CellSide;
+	public static final field South Lio/github/awakelab/awake/navigation/grid/CellSide;
+	public static final field West Lio/github/awakelab/awake/navigation/grid/CellSide;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getOpposite ()Lio/github/awakelab/awake/navigation/grid/CellSide;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/navigation/grid/CellSide;
+	public static fun values ()[Lio/github/awakelab/awake/navigation/grid/CellSide;
+}
+
+public final class io/github/awakelab/awake/navigation/grid/CoarseNavGraph {
+	public fun <init> (F)V
+	public final fun clear ()V
+	public final fun corridor (Lio/github/awakelab/awake/scene/world/WorldCellCoord;Lio/github/awakelab/awake/scene/world/WorldCellCoord;)Ljava/util/List;
+	public final fun getKnownCells ()Ljava/util/Set;
+	public final fun put (Lio/github/awakelab/awake/scene/world/WorldCellCoord;Lio/github/awakelab/awake/navigation/grid/NavCellSummary;)V
+	public final fun remove (Lio/github/awakelab/awake/scene/world/WorldCellCoord;)V
+	public final fun summaryAt (Lio/github/awakelab/awake/scene/world/WorldCellCoord;)Lio/github/awakelab/awake/navigation/grid/NavCellSummary;
+}
+
+public final class io/github/awakelab/awake/navigation/grid/HierarchicalNavGrid : io/github/awakelab/awake/navigation/NavMesh {
+	public fun <init> (Lio/github/awakelab/awake/navigation/grid/StreamedNavGrid;Lio/github/awakelab/awake/navigation/grid/CoarseNavGraph;)V
+	public fun findPath (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavCellSummary {
+	public static final field Companion Lio/github/awakelab/awake/navigation/grid/NavCellSummary$Companion;
+	public static final field NO_REGION I
+	public final fun getRegionCount ()I
+	public final fun getSamplesPerSide ()I
+	public final fun isOpen (Lio/github/awakelab/awake/navigation/grid/CellSide;)Z
+	public final fun regionAt (Lio/github/awakelab/awake/navigation/grid/CellSide;I)I
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavCellSummary$Companion {
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavCellSummaryKt {
+	public static final fun summarize (Lio/github/awakelab/awake/navigation/grid/NavGridTile;)Lio/github/awakelab/awake/navigation/grid/NavCellSummary;
+}
+
+public abstract interface class io/github/awakelab/awake/navigation/grid/NavField {
+	public fun getOriginX ()F
+	public fun getOriginZ ()F
+	public abstract fun getSampleSize ()F
+	public abstract fun isWalkable (II)Z
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavField$DefaultImpls {
+	public static fun getOriginX (Lio/github/awakelab/awake/navigation/grid/NavField;)F
+	public static fun getOriginZ (Lio/github/awakelab/awake/navigation/grid/NavField;)F
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavFieldSearch {
+	public fun <init> (Lio/github/awakelab/awake/navigation/grid/NavField;)V
+	public final fun run (IIII)Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavGrid : io/github/awakelab/awake/navigation/NavMesh {
+	public fun <init> (Lio/github/awakelab/awake/navigation/grid/NavGridTile;)V
+	public fun findPath (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Ljava/util/List;
+	public final fun getTile ()Lio/github/awakelab/awake/navigation/grid/NavGridTile;
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavGridCellStreamer : io/github/awakelab/awake/scene/world/AsyncWorldCellStreamListener {
+	public fun <init> (Lio/github/awakelab/awake/navigation/grid/StreamedNavGrid;Lio/github/awakelab/awake/scene/world/WorldPartitionConfig;Lkotlin/jvm/functions/Function2;FLio/github/awakelab/awake/navigation/grid/CoarseNavGraph;)V
+	public synthetic fun <init> (Lio/github/awakelab/awake/navigation/grid/StreamedNavGrid;Lio/github/awakelab/awake/scene/world/WorldPartitionConfig;Lkotlin/jvm/functions/Function2;FLio/github/awakelab/awake/navigation/grid/CoarseNavGraph;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun loadCell (Lio/github/awakelab/awake/scene/world/WorldCellCoord;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun onCellUnload (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/scene/world/WorldCellCoord;)V
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavGridDebugLinesKt {
+	public static final fun blockedColorFor (Lio/github/awakelab/awake/scene/world/WorldCellCoord;)Lio/github/awakelab/awake/core/color/Color;
+	public static final fun getBLOCKED_COLOR ()Lio/github/awakelab/awake/core/color/Color;
+	public static final fun getBLOCKED_COLOR_ALTERNATE ()Lio/github/awakelab/awake/core/color/Color;
+	public static final fun getROUTE_COLORS ()Ljava/util/List;
+	public static final fun navGridDebugLines (Lio/github/awakelab/awake/navigation/grid/NavGridTile;Lkotlin/jvm/functions/Function2;Ljava/util/List;)Ljava/util/List;
+	public static final fun navGridDebugLines (Lio/github/awakelab/awake/navigation/grid/StreamedNavGrid;Lkotlin/jvm/functions/Function2;Ljava/util/List;)Ljava/util/List;
+	public static synthetic fun navGridDebugLines$default (Lio/github/awakelab/awake/navigation/grid/NavGridTile;Lkotlin/jvm/functions/Function2;Ljava/util/List;ILjava/lang/Object;)Ljava/util/List;
+	public static synthetic fun navGridDebugLines$default (Lio/github/awakelab/awake/navigation/grid/StreamedNavGrid;Lkotlin/jvm/functions/Function2;Ljava/util/List;ILjava/lang/Object;)Ljava/util/List;
+	public static final fun routeColorFor-CFq8rmY (J)Lio/github/awakelab/awake/core/color/Color;
+}
+
+public class io/github/awakelab/awake/navigation/grid/NavGridDebugSink {
+	public fun <init> (Lkotlin/jvm/functions/Function2;)V
+	public final fun blockedMarkers (Lio/github/awakelab/awake/navigation/grid/NavGridTile;FFLio/github/awakelab/awake/core/color/Color;)V
+	public final fun cellOutline (Lio/github/awakelab/awake/scene/world/WorldCellCoord;F)V
+	public final fun cross (FFFFLio/github/awakelab/awake/core/color/Color;)V
+	public final fun getLines ()Ljava/util/List;
+	public final fun getSurfaceAt ()Lkotlin/jvm/functions/Function2;
+	protected final fun onSurface (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun routes (Ljava/util/List;)V
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavGridPathKt {
+	public static final fun findPath (Lio/github/awakelab/awake/navigation/grid/NavField;IIII)Ljava/util/List;
+	public static final fun findPath (Lio/github/awakelab/awake/navigation/grid/NavField;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Ljava/util/List;
+	public static final fun findPath (Lio/github/awakelab/awake/navigation/grid/NavGridTile;IIII)Ljava/util/List;
+	public static final fun findPath (Lio/github/awakelab/awake/navigation/grid/NavGridTile;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Ljava/util/List;
+	public static final fun smoothPath (Lio/github/awakelab/awake/navigation/grid/NavField;Ljava/util/List;)Ljava/util/List;
+	public static final fun smoothPath (Lio/github/awakelab/awake/navigation/grid/NavGridTile;Ljava/util/List;)Ljava/util/List;
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavGridTile {
+	public static final field Companion Lio/github/awakelab/awake/navigation/grid/NavGridTile$Companion;
+	public static final field LONG_MASK I
+	public static final field LONG_SHIFT I
+	public fun <init> (IIF[JFF)V
+	public synthetic fun <init> (IIF[JFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCellSize ()F
+	public final fun getDepth ()I
+	public final fun getOriginX ()F
+	public final fun getOriginZ ()F
+	public final fun getWalkableCount ()I
+	public final fun getWidth ()I
+	public final fun isWalkable (II)Z
+	public final fun worldX (I)F
+	public final fun worldZ (I)F
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavGridTile$Companion {
+}
+
+public final class io/github/awakelab/awake/navigation/grid/NavGridTileKt {
+	public static final field DEFAULT_MAX_SLOPE_DEGREES F
+	public static final fun bakeNavGrid (Lio/github/awakelab/awake/asset/terrain/Heightmap;FF)Lio/github/awakelab/awake/navigation/grid/NavGridTile;
+	public static synthetic fun bakeNavGrid$default (Lio/github/awakelab/awake/asset/terrain/Heightmap;FFILjava/lang/Object;)Lio/github/awakelab/awake/navigation/grid/NavGridTile;
+	public static final fun bakeNavGridCell (Lio/github/awakelab/awake/asset/terrain/Heightmap;IFF)Lio/github/awakelab/awake/navigation/grid/NavGridTile;
+	public static synthetic fun bakeNavGridCell$default (Lio/github/awakelab/awake/asset/terrain/Heightmap;IFFILjava/lang/Object;)Lio/github/awakelab/awake/navigation/grid/NavGridTile;
+}
+
+public final class io/github/awakelab/awake/navigation/grid/StreamedNavGrid : io/github/awakelab/awake/navigation/NavMesh {
+	public fun <init> (IF)V
+	public final fun clear ()V
+	public fun findPath (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Ljava/util/List;
+	public final fun getResidentCells ()Ljava/util/Set;
+	public final fun getSampleSize ()F
+	public final fun getSamplesPerCell ()I
+	public final fun getWorldCellSize ()F
+	public final fun load (Lio/github/awakelab/awake/scene/world/WorldCellCoord;Lio/github/awakelab/awake/navigation/grid/NavGridTile;)V
+	public final fun tileAt (Lio/github/awakelab/awake/scene/world/WorldCellCoord;)Lio/github/awakelab/awake/navigation/grid/NavGridTile;
+	public final fun unload (Lio/github/awakelab/awake/scene/world/WorldCellCoord;)V
+}
+
+public final class io/github/awakelab/awake/navigation/grid/TileField : io/github/awakelab/awake/navigation/grid/NavField {
+	public fun <init> (Lio/github/awakelab/awake/navigation/grid/NavGridTile;)V
+	public fun getOriginX ()F
+	public fun getOriginZ ()F
+	public fun getSampleSize ()F
+	public fun isWalkable (II)Z
+}
+

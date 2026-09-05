@@ -27,7 +27,9 @@ private object PassThroughElement : ModifierNodeElement<PassThroughNode>() {
     override fun update(node: PassThroughNode) = Unit
 }
 
-private class PassThroughNode : Modifier.Node(), LayoutModifierNode {
+private class PassThroughNode :
+    Modifier.Node(),
+    LayoutModifierNode {
     override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
         val placeable = measurable.measure(constraints)
         return layout(placeable.width, placeable.height) { placeable.placeAt(0, 0) }

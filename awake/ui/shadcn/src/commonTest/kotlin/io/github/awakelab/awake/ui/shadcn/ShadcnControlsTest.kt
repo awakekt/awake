@@ -9,12 +9,11 @@ import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.graphics2d.DrawCommand
 import io.github.awakelab.awake.heroicons.icon.HeroIcons
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonSizeVariant
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCheckbox
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSwitch
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSwitch
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -133,7 +132,7 @@ class ShadcnControlsTest {
     // -- switch ---------------------------------------------------------------------------------
 
     private fun switchFrame(checked: Boolean) = composeFrame(120, 60) {
-        provideShadcnTheme(theme) { shadcnSwitch(checked) }
+        provideShadcnTheme(theme) { ShadcnSwitch(checked) }
     }
 
     @Test

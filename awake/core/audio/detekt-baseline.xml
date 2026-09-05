@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:WavDecoder.kt$WavDecoder$bytes[0].toInt() != 'R'.code || bytes[1].toInt() != 'I'.code || bytes[2].toInt() != 'F'.code || bytes[3].toInt() != 'F'.code</ID>
+    <ID>ComplexCondition:WavDecoder.kt$WavDecoder$bytes[8].toInt() != 'W'.code || bytes[9].toInt() != 'A'.code || bytes[10].toInt() != 'V'.code || bytes[11].toInt() != 'E'.code</ID>
+    <ID>CyclomaticComplexMethod:WavDecoder.kt$WavDecoder$fun decode(id: String, name: String, bytes: ByteArray): AudioClip?</ID>
+    <ID>EmptyFunctionBlock:NoOpAudioPlayer.kt$NoOpAudioPlayer${}</ID>
+    <ID>EmptyFunctionBlock:NoOpAudioPlayer.kt$NoOpAudioPlayer.&lt;no name provided>${}</ID>
+    <ID>ReturnCount:AudioPlayer.kt$PositionalAudioMath$fun computeAttenuation(distance: Float, maxDistance: Float, rollOff: Float = 1f): Float</ID>
+    <ID>ReturnCount:SoundSynthesizer.kt$AdsrEnvelope$fun amplitudeAt(timeSeconds: Float, totalDuration: Float): Float</ID>
+    <ID>ReturnCount:WavDecoder.kt$WavDecoder$fun decode(id: String, name: String, bytes: ByteArray): AudioClip?</ID>
+    <ID>UnusedPrivateProperty:WavDecoder.kt$WavDecoder$val audioFormat = readShortLe(bytes, offset)</ID>
+  </CurrentIssues>
+</SmellBaseline>

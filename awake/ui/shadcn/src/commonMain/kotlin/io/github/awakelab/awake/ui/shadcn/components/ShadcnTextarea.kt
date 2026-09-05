@@ -5,8 +5,8 @@
  */
 package io.github.awakelab.awake.ui.shadcn.components
 
-import io.github.awakelab.awake.compose.foundation.interaction.InteractionSource
 import io.github.awakelab.awake.compose.foundation.animation.animateFloat
+import io.github.awakelab.awake.compose.foundation.interaction.InteractionSource
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.layout.heightIn
 import io.github.awakelab.awake.compose.foundation.style.rememberStyleState
@@ -34,7 +34,7 @@ import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
  * the height rule and the vertical pad.
  */
 context(_: Composer)
-fun shadcnTextarea(
+fun ShadcnTextarea(
     state: TextFieldState,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,

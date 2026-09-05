@@ -32,6 +32,7 @@ interface RuntimeShaderCompiler {
 expect object NagaShaderCompiler : RuntimeShaderCompiler {
     /** Compiles [wgsl] to a SPIR-V module. */
     override fun wgslToSpirv(wgsl: String): ByteArray
+
     /** Validates [wgsl] and returns a diagnostic or null. */
     override fun validate(wgsl: String): String?
 }

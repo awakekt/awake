@@ -8,27 +8,26 @@
 package io.github.awakelab.awake.studio.ui
 
 import io.github.awakelab.awake.compose.runtime.Composer
-import io.github.awakelab.awake.core.logging.LogRingBuffer
-import io.github.awakelab.awake.studio.StudioHostResources
 import io.github.awakelab.awake.compose.runtime.current
+import io.github.awakelab.awake.core.logging.LogRingBuffer
 import io.github.awakelab.awake.editor.LocalEditorProviders
-import io.github.awakelab.awake.editor.capability.EditorAnimationPanel
 import io.github.awakelab.awake.editor.capability.EditorAssetItem
 import io.github.awakelab.awake.editor.capability.EditorAssetPanel
-import io.github.awakelab.awake.editor.console.EditorConsolePanel
+import io.github.awakelab.awake.editor.capability.EditorAssetState
+import io.github.awakelab.awake.editor.panels.console.EditorConsolePanel
 import io.github.awakelab.awake.editor.shell.EditorDock
 import io.github.awakelab.awake.editor.shell.EditorDockTab
 import io.github.awakelab.awake.editor.shell.dockContributions
+import io.github.awakelab.awake.studio.StudioHostResources
 import io.github.awakelab.awake.studio.fixture.StudioFixtureBounds
 import io.github.awakelab.awake.studio.state.DOCK_TAB_ASSETS
 import io.github.awakelab.awake.studio.state.DOCK_TAB_CONSOLE
 import io.github.awakelab.awake.studio.state.DOCK_TAB_FILES
-import io.github.awakelab.awake.studio.state.DOCK_TAB_TIMELINE
 import io.github.awakelab.awake.studio.state.StudioContract
 import io.github.awakelab.awake.studio.state.StudioStore
 
 /**
- * Studio's bottom dock: console, assets, timeline.
+ * Studio's bottom dock: console, assets, files, and installed plugin tabs.
  *
  * Composed here rather than configured, which is the shape `AwakePluggableWorkbench` got wrong.
  * That component derived its tabs from data presence -- an empty asset list meant no Assets tab --
@@ -55,36 +54,22 @@ internal fun StudioDock(store: StudioStore, resources: StudioHostResources) {
             EditorDockTab(DOCK_TAB_CONSOLE, "Console"),
             EditorDockTab(DOCK_TAB_ASSETS, "Assets"),
             EditorDockTab(DOCK_TAB_FILES, "Files"),
-            EditorDockTab(DOCK_TAB_TIMELINE, "Timeline"),
         ) + contributions.map { it.tab },
         selectedId = selected,
         onSelectedChange = { store.dispatch(StudioContract.Intent.SelectDockTab(it)) },
     ) { tab ->
         when (tab.id) {
             DOCK_TAB_ASSETS -> EditorAssetPanel(
-                assets = StudioFixtureBounds.meshIds.map {
-                    EditorAssetItem(id = it, name = it, category = "Mesh")
-                },
-                selectedAssetId = null,
-                // Selecting an asset does nothing yet: there is nowhere for it to go until
-                // drag-to-viewport or an assign-to-selection action exists. Wired as a no-op
-                // rather than omitting the panel, so the gap is visible instead of hidden.
-                onSelectAsset = {},
+                state = EditorAssetState(
+                    assets = StudioFixtureBounds.meshIds.map {
+                        EditorAssetItem(id = it, name = it, category = "Mesh")
+                    },
+                    selectedAssetId = null,
+                ),
+                onAction = {},
             )
 
             DOCK_TAB_FILES -> StudioFilesTab(store, resources.files)
-
-            DOCK_TAB_TIMELINE -> EditorAnimationPanel(
-                // Studio's fixture has no animation clips. The panel's own empty state says so,
-                // which is more honest than a tab that vanishes when there is nothing to show.
-                clips = emptyList(),
-                selectedClipId = null,
-                onSelectClip = {},
-                currentTimeSeconds = 0f,
-                onSeekSeconds = {},
-                isPlaying = false,
-                onTogglePlay = {},
-            )
 
             DOCK_TAB_CONSOLE -> EditorConsolePanel(
                 logBuffer,

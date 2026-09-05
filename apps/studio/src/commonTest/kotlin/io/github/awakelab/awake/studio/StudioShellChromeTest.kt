@@ -80,5 +80,4 @@ class StudioShellChromeTest {
             "hovering the left panel handle must publish the horizontal resize cursor to the host",
         )
     }
-
 }

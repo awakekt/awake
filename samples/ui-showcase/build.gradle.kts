@@ -105,6 +105,7 @@ kotlin {
             implementation(project(":awake:engine:bootstrap"))
             implementation(project(":awake:scene:authoring"))
             implementation(project(":awake:ui:shadcn"))
+            implementation(project(":awake:tailwind"))
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
         }

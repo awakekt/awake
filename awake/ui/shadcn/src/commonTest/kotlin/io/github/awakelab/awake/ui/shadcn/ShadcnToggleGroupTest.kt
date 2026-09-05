@@ -7,6 +7,7 @@ package io.github.awakelab.awake.ui.shadcn
 
 import io.github.awakelab.awake.compose.foundation.layout.ColumnMeasurePolicy
 import io.github.awakelab.awake.compose.runtime.Composer
+import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.compose.ui.input.pointer.PointerEvent
 import io.github.awakelab.awake.compose.ui.input.pointer.PointerEventType
 import io.github.awakelab.awake.compose.ui.input.pointer.PointerInputDispatcher
@@ -18,11 +19,17 @@ import io.github.awakelab.awake.compose.ui.semantics.SemanticsProperties
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsRole
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsTreeBuilder
 import io.github.awakelab.awake.compose.ui.unit.Constraints
+import io.github.awakelab.awake.core.graphics2d.ColoredTriangleMesh
+import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
+import io.github.awakelab.awake.core.graphics2d.bounds
+import io.github.awakelab.awake.core.math2d.Rectangle
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnToggleGroup
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnToggleGroupSelection
-import io.github.awakelab.awake.ui.shadcn.components.shadcnToggleGroup
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnToggleGroupVariant
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * What a toggle group is for, in two parts: it reports its kind, and it toggles.
@@ -53,7 +60,7 @@ class ShadcnToggleGroupTest {
     fun singleSelectReportsRadioButtons() {
         val host = Host()
         val semantics = host.frame {
-            shadcnToggleGroup(selected = "move", onSelectedChange = {}) {
+            ShadcnToggleGroup(selected = "move", onSelectedChange = {}) {
                 item("select", "Select")
                 item("move", "Move")
             }
@@ -68,7 +75,7 @@ class ShadcnToggleGroupTest {
     fun multiSelectReportsButtons() {
         val host = Host()
         val semantics = host.frame {
-            shadcnToggleGroup(
+            ShadcnToggleGroup(
                 selected = setOf("shadows"),
                 onSelectedChange = {},
                 selection = ShadcnToggleGroupSelection.Multiple,
@@ -89,7 +96,7 @@ class ShadcnToggleGroupTest {
         val host = Host()
         val content: context(Composer)
         () -> Unit = {
-            shadcnToggleGroup(selected = selected, onSelectedChange = { selected = it }) {
+            ShadcnToggleGroup(selected = selected, onSelectedChange = { selected = it }) {
                 item("select", "Select")
                 item("move", "Move")
             }
@@ -114,7 +121,7 @@ class ShadcnToggleGroupTest {
         val host = Host()
         val content: context(Composer)
         () -> Unit = {
-            shadcnToggleGroup(selected = selected, onSelectedChange = { selected = it }) {
+            ShadcnToggleGroup(selected = selected, onSelectedChange = { selected = it }) {
                 item("select", "Select")
                 item("move", "Move")
             }
@@ -137,7 +144,7 @@ class ShadcnToggleGroupTest {
         val host = Host()
         val content: context(Composer)
         () -> Unit = {
-            shadcnToggleGroup(
+            ShadcnToggleGroup(
                 selected = selected,
                 onSelectedChange = { selected = it },
                 selection = ShadcnToggleGroupSelection.Multiple,
@@ -156,5 +163,64 @@ class ShadcnToggleGroupTest {
         dispatcher.dispatch(host.root, PointerEvent(PointerEventType.Release), x, y)
 
         assertEquals(setOf("shadows", "wireframe"), selected)
+    }
+
+    @Test
+    fun outlineToggleGroupRendersSeamlessBordersWithoutDuplicates() {
+        val paths = composeFrame(200, 50) {
+            provideShadcnTheme(shadcnThemeValues(dark = true)) {
+                ShadcnToggleGroup(
+                    selected = "a",
+                    onSelectedChange = {},
+                    variant = ShadcnToggleGroupVariant.Outline,
+                ) {
+                    item("a", "Alpha")
+                    item("b", "Beta")
+                }
+            }
+        }.primitives.filterIsInstance<UiDrawPrimitive.Mesh>()
+
+        assertEquals(2, paths.size)
+        val first = paths.first().placedMesh()
+        val boundsFirst = first.bounds()
+        val second = paths.last().placedMesh()
+        val boundsSecond = second.bounds()
+
+        fun paintsVerticalEdgeIn(
+            mesh: ColoredTriangleMesh,
+            bounds: Rectangle,
+            from: Float,
+            to: Float,
+        ): Boolean = mesh.vertices.any { vertex ->
+            vertex.color.a > 0f &&
+                vertex.position.x >= from && vertex.position.x <= to &&
+                vertex.position.y > bounds.y + 4f &&
+                vertex.position.y < bounds.y + bounds.height - 4f
+        }
+
+        val firstStart = boundsFirst.x to boundsFirst.x + 2f
+        val firstEnd = boundsFirst.x + boundsFirst.width - 2f to boundsFirst.x + boundsFirst.width
+        val secondStart = boundsSecond.x to boundsSecond.x + 2f
+        val secondEnd =
+            boundsSecond.x + boundsSecond.width - 2f to boundsSecond.x + boundsSecond.width
+
+        // The first toggle item paints its start border and its shared divider border
+        assertTrue(
+            paintsVerticalEdgeIn(first, boundsFirst, firstStart.first, firstStart.second),
+            "the first toggle item lost its outer start border",
+        )
+        assertTrue(
+            paintsVerticalEdgeIn(first, boundsFirst, firstEnd.first, firstEnd.second),
+            "the first toggle item must paint the shared divider border",
+        )
+        // The second toggle item omits its start border so there is no 2px double border
+        assertTrue(
+            !paintsVerticalEdgeIn(second, boundsSecond, secondStart.first, secondStart.second),
+            "the second toggle item must not paint a duplicate start border",
+        )
+        assertTrue(
+            paintsVerticalEdgeIn(second, boundsSecond, secondEnd.first, secondEnd.second),
+            "the second toggle item must paint its outer end border",
+        )
     }
 }

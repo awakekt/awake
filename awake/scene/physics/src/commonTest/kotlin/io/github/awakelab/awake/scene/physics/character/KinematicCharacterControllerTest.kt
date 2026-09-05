@@ -9,13 +9,12 @@ import io.github.awakelab.awake.core.math.Quat
 import io.github.awakelab.awake.core.math.Vec3f
 import io.github.awakelab.awake.physics.BodyHandle
 import io.github.awakelab.awake.physics.Buoyancy
-import io.github.awakelab.awake.physics.Constraint
-import io.github.awakelab.awake.physics.ConstraintHandle
-import io.github.awakelab.awake.physics.BodyTransform
+import io.github.awakelab.awake.physics.CapsuleShape
 import io.github.awakelab.awake.physics.CollisionLayer
 import io.github.awakelab.awake.physics.CollisionLayers
+import io.github.awakelab.awake.physics.Constraint
+import io.github.awakelab.awake.physics.ConstraintHandle
 import io.github.awakelab.awake.physics.ContactEvent
-import io.github.awakelab.awake.physics.CapsuleShape
 import io.github.awakelab.awake.physics.MotionType
 import io.github.awakelab.awake.physics.PhysicsShape
 import io.github.awakelab.awake.physics.PhysicsWorld
@@ -76,6 +75,7 @@ class KinematicCharacterControllerTest {
         override fun step(deltaTime: Float) = error("not needed for this test")
         override fun setLinearVelocity(handle: BodyHandle, velocity: Vec3f) = error("not needed")
         override fun setAngularVelocity(handle: BodyHandle, velocity: Vec3f) = error("not needed")
+
         /** What the body underfoot is doing; the default is a world that holds still. */
         var velocities: Map<BodyHandle, Vec3f> = emptyMap()
 

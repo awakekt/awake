@@ -6,6 +6,8 @@
 package io.github.awakelab.awake.scene.controls.camera
 
 import io.github.awakelab.awake.core.math.Vec3f
+import io.github.awakelab.awake.core.math2d.Rectangle
+import io.github.awakelab.awake.core.math2d.contains
 import io.github.awakelab.awake.ecs.System
 import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.controls.GameplayInput
@@ -25,7 +27,11 @@ import kotlin.math.sin
 class CameraSystem(
     /** This frame's input, with whatever the UI claimed already taken out. */
     private val inputProvider: () -> GameplayInput,
+    /** Optional screen boundaries the 3D scene is confined to. */
+    private val viewportBounds: () -> Rectangle?,
 ) : System {
+    constructor(inputProvider: () -> GameplayInput) : this(inputProvider, { null })
+
     private var lastPointerX = 0f
     private var lastPointerY = 0f
     private var wasDragging = false
@@ -40,7 +46,9 @@ class CameraSystem(
     override fun update(world: World, delta: Float) {
         val input = inputProvider()
 
-        val dragging = input.pointerDown
+        val bounds = viewportBounds()
+        val inViewport = bounds?.contains(input.pointerX, input.pointerY) ?: true
+        val dragging = if (wasDragging) input.pointerDown else (input.pointerDown && inViewport)
         val dx = if (dragging && wasDragging) input.pointerX - lastPointerX else 0f
         val dy = if (dragging && wasDragging) input.pointerY - lastPointerY else 0f
         lastPointerX = input.pointerX
@@ -57,20 +65,29 @@ class CameraSystem(
                 config.needsReset = false
             }
 
-            if (config.mode.usesYaw) {
-                config.yaw += dx * LOOK_SENSITIVITY
-            }
-            if (config.mode.usesPitch) {
-                config.pitch = (config.pitch - dy * LOOK_SENSITIVITY)
-                    .coerceIn(-PITCH_LIMIT, PITCH_LIMIT)
-            }
-            if (config.mode.usesZoom) {
-                val scroll = input.scrollDeltaY
-                config.distance = (config.distance - scroll * ZOOM_SENSITIVITY)
-                    .coerceIn(config.minDistance, config.maxDistance)
-            }
-
+            applyCameraRigInput(config, input, dx, dy, inViewport)
             updateCameraPose(config, camera, targetTransform, delta)
+        }
+    }
+
+    private fun applyCameraRigInput(
+        config: CameraRig,
+        input: GameplayInput,
+        dx: Float,
+        dy: Float,
+        inViewport: Boolean,
+    ) {
+        if (config.mode.usesYaw) {
+            config.yaw += dx * LOOK_SENSITIVITY
+        }
+        if (config.mode.usesPitch) {
+            config.pitch = (config.pitch - dy * LOOK_SENSITIVITY)
+                .coerceIn(-PITCH_LIMIT, PITCH_LIMIT)
+        }
+        if (config.mode.usesZoom && inViewport) {
+            val scroll = input.scrollDeltaY
+            config.distance = (config.distance - scroll * ZOOM_SENSITIVITY)
+                .coerceIn(config.minDistance, config.maxDistance)
         }
     }
 

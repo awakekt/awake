@@ -5,19 +5,13 @@
  */
 package io.github.awakelab.awake.asset.shadercompiler
 
-import java.io.File
-
-/** Desktop JNI actual. The dylib/so is built on demand by `buildNagaDesktop` (cargo) into
- * `build/desktop-native-libs`; loaded from `awake.naga.library` (set by this module's test
- * task) or `java.library.path` -- same wiring as `awake:backend:vulkan:bindings`. */
+/** Desktop JNI actual. The dylib/so is built by `buildNagaDesktop` (cargo) into
+ * `rust-native/target/release` and packaged into `/natives/<platform>/` in the desktop jar.
+ * Loaded via explicit `awake.naga.library`, `java.library.path`, or automated classpath
+ * extraction by [NagaNativeLoader]. */
 actual object NagaShaderCompiler : RuntimeShaderCompiler {
     init {
-        val explicit = System.getProperty("awake.naga.library")
-        if (explicit != null) {
-            System.load(File(explicit).absolutePath)
-        } else {
-            System.loadLibrary("awake_naga")
-        }
+        NagaNativeLoader.load()
     }
 
     actual override fun wgslToSpirv(wgsl: String): ByteArray = NagaJni.wgslToSpirv(wgsl)

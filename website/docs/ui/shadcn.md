@@ -1,0 +1,1 @@
+--8<-- "awake/ui/shadcn/README.md"

@@ -18,25 +18,25 @@ import io.github.awakelab.awake.compose.runtime.Composer
 import io.github.awakelab.awake.compose.ui.Alignment
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.dp
-import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.sample.uishowcase.state.UiShowcaseRuntimeState
 import io.github.awakelab.awake.sample.uishowcase.state.UiShowcaseThemeMode
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseSectionTitle
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseTextLines
+import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.ui.shadcn.ShadcnAccent
 import io.github.awakelab.awake.ui.shadcn.ShadcnBaseColor
 import io.github.awakelab.awake.ui.shadcn.ShadcnStylePreset
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadgeVariant
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadge
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadgeVariant
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCard
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnFieldLabel
-import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSlider
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSurface
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSwitch
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSwitch
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
+import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
+import io.github.awakelab.awake.ui.shadcn.components.shadcnSurface
 
 context(_: Composer)
 internal fun ShowcaseOverviewPreview() {
@@ -96,25 +96,42 @@ internal fun ShowcaseControlsPreview(state: UiShowcaseRuntimeState) {
             ThemeCycleRow(
                 "Style",
                 ShowcaseStyleOptions[state.showcaseStylePresetIndex],
-            ) { state.showcaseStylePresetIndex = (state.showcaseStylePresetIndex + 1) % ShowcaseStyleOptions.size }
+            ) {
+                state.showcaseStylePresetIndex =
+                    (state.showcaseStylePresetIndex + 1) % ShowcaseStyleOptions.size
+            }
             ThemeCycleRow(
                 "Base",
                 ShowcaseBaseColorOptions[state.showcaseBaseColorIndex],
-            ) { state.showcaseBaseColorIndex = (state.showcaseBaseColorIndex + 1) % ShowcaseBaseColorOptions.size }
+            ) {
+                state.showcaseBaseColorIndex =
+                    (state.showcaseBaseColorIndex + 1) % ShowcaseBaseColorOptions.size
+            }
             ThemeCycleRow(
                 "Mode",
                 ShowcaseThemeModeOptions[state.showcaseThemeModeIndex],
-            ) { state.showcaseThemeModeIndex = (state.showcaseThemeModeIndex + 1) % ShowcaseThemeModeOptions.size }
+            ) {
+                state.showcaseThemeModeIndex =
+                    (state.showcaseThemeModeIndex + 1) % ShowcaseThemeModeOptions.size
+            }
             ThemeCycleRow(
                 "Accent",
                 ShowcaseAccentOptions[state.showcaseAccentIndex],
-            ) { state.showcaseAccentIndex = (state.showcaseAccentIndex + 1) % ShowcaseAccentOptions.size }
+            ) {
+                state.showcaseAccentIndex =
+                    (state.showcaseAccentIndex + 1) % ShowcaseAccentOptions.size
+            }
 
             Spacer(Modifier.height(8.dp))
             shadcnMuted("Mode auto-resolves to ${if (state.showcaseResolvedDarkMode()) "dark" else "light"} on this platform.")
             Spacer(Modifier.height(12.dp))
-            ThemeSwitchRow("Live animation", state.showcaseLiveBadge) { state.showcaseLiveBadge = it }
-            ThemeSwitchRow("Danger treatment", state.showcaseDangerMode) { state.showcaseDangerMode = it }
+            ThemeSwitchRow("Live animation", state.showcaseLiveBadge) {
+                state.showcaseLiveBadge = it
+            }
+            ThemeSwitchRow(
+                "Danger treatment",
+                state.showcaseDangerMode,
+            ) { state.showcaseDangerMode = it }
         }
 
         ShowcaseColumnPreview(state)
@@ -129,7 +146,12 @@ private fun ThemeCycleRow(label: String, value: String, onCycle: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ShadcnFieldLabel(label, Modifier.width(72.dp))
-        ShadcnButton(value, Modifier.width(180.dp), variant = ShadcnButtonVariant.Outline, onClick = onCycle)
+        ShadcnButton(
+            value,
+            Modifier.width(180.dp),
+            variant = ShadcnButtonVariant.Outline,
+            onClick = onCycle,
+        )
     }
 }
 
@@ -141,7 +163,7 @@ private fun ThemeSwitchRow(label: String, checked: Boolean, onChecked: (Boolean)
         verticalAlignment = Alignment.CenterVertically,
     ) {
         ShadcnFieldLabel(label, Modifier.width(132.dp))
-        shadcnSwitch(checked, onCheckedChange = onChecked)
+        ShadcnSwitch(checked, onCheckedChange = onChecked)
     }
 }
 

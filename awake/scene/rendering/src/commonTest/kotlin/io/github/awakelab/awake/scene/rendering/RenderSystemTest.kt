@@ -5,6 +5,7 @@
  */
 package io.github.awakelab.awake.scene.rendering
 
+import io.github.awakelab.awake.core.animation.Skin
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.geometry.MeshGeometry
 import io.github.awakelab.awake.core.geometry.VertexFormat
@@ -27,17 +28,19 @@ import io.github.awakelab.awake.render.texture.PbrTextureSet
 import io.github.awakelab.awake.render.texture.RenderTarget
 import io.github.awakelab.awake.render.texture.TextureAsset
 import io.github.awakelab.awake.scene.core.transform.Transform
-import io.github.awakelab.awake.scene.rendering.mesh.InstancedMeshRenderer
 import io.github.awakelab.awake.scene.rendering.Light
+import io.github.awakelab.awake.scene.rendering.RenderSystem
+import io.github.awakelab.awake.scene.rendering.animation.ModularCharacterComponent
+import io.github.awakelab.awake.scene.rendering.animation.SkinnedPose
+import io.github.awakelab.awake.scene.rendering.debug.debugSettings
+import io.github.awakelab.awake.scene.rendering.mesh.InstancedMeshRenderer
 import io.github.awakelab.awake.scene.rendering.mesh.LodGroup
 import io.github.awakelab.awake.scene.rendering.mesh.LodLevel
 import io.github.awakelab.awake.scene.rendering.mesh.MeshBounds
-import io.github.awakelab.awake.scene.rendering.debug.debugSettings
 import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
-import io.github.awakelab.awake.scene.rendering.spatial.Occluder
 import io.github.awakelab.awake.scene.rendering.particles.ParticleEmitter
 import io.github.awakelab.awake.scene.rendering.particles.ParticleVisual
-import io.github.awakelab.awake.scene.rendering.RenderSystem
+import io.github.awakelab.awake.scene.rendering.spatial.Occluder
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -535,6 +538,37 @@ class RenderSystemTest {
         emitter.particles[0].position.set(position.x, position.y, position.z)
         emitter.particles[0].lifetime = 10f
         return emitter
+    }
+
+    @Test
+    fun modularCharacterEmitsDrawCallsForEquippedVisibleSlots() {
+        val world = worldWithPrimaryCamera()
+        val renderer = RecordingRenderer()
+
+        val charEntity = world.create()
+        val character = ModularCharacterComponent(
+            skin = Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4())),
+        )
+        val hairMesh = fakeMesh()
+        val hairMat = fakeMaterial()
+        character.equip("hair", hairMesh, hairMat)
+
+        val chestMesh = fakeMesh()
+        val chestMat = fakeMaterial()
+        character.equip("chest", chestMesh, chestMat)
+
+        world.add(charEntity, character)
+        world.add(charEntity, Transform(position = Vec3f(0f, 0f, 0f)))
+        val poseFloats = FloatArray(16) { 1f }
+        world.add(charEntity, SkinnedPose(poseFloats))
+
+        RenderSystem(renderer).update(world, 1f / 60f)
+
+        assertEquals(2, renderer.lastDrawCalls.size)
+        assertEquals(hairMesh, renderer.lastDrawCalls[0].mesh)
+        assertEquals(chestMesh, renderer.lastDrawCalls[1].mesh)
+        assertEquals(poseFloats, renderer.lastDrawCalls[0].extraUniformFloats)
+        assertEquals(poseFloats, renderer.lastDrawCalls[1].extraUniformFloats)
     }
 
     private fun fakeMesh(): Mesh = object : Mesh {

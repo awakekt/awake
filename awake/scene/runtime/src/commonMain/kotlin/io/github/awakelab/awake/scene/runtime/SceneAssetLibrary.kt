@@ -7,6 +7,9 @@ package io.github.awakelab.awake.scene.runtime
 
 import io.github.awakelab.awake.render.material.Material
 import io.github.awakelab.awake.render.mesh.Mesh
+import io.github.awakelab.awake.render.renderer.CullMode
+import io.github.awakelab.awake.scene.document.SceneMeshRenderer
+import io.github.awakelab.awake.scene.document.SceneRenderableRequest
 import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
 
 typealias SceneMeshFactory = SceneAppLifecycleRuntime.() -> Mesh
@@ -56,6 +59,7 @@ class SceneAssetLibrary(
     private val meshFactories: Map<String, SceneMeshFactory>,
     private val materialFactories: Map<String, SceneMaterialFactory>,
     private val rendererFactories: Map<SceneRenderableKey, SceneMeshRendererFactory>,
+    private val dynamicResolvers: List<SceneAssetResolver> = emptyList(),
     /** Bytes of released-but-kept mesh to hold before evicting. Zero destroys on last release. */
     private val retainedMeshBudgetBytes: Long = 0,
 ) {
@@ -79,10 +83,15 @@ class SceneAssetLibrary(
             return revived
         }
         return meshes.getOrPut(name) {
-            val factory = checkNotNull(meshFactories[name]) {
-                "No scene mesh named '$name' is registered."
+            val factory = meshFactories[name]
+            if (factory != null) return@getOrPut runtime.factory()
+            for (resolver in dynamicResolvers) {
+                if (resolver.canResolveMesh(name)) {
+                    val resolved = resolver.createMesh(runtime, name)
+                    if (resolved != null) return@getOrPut resolved
+                }
             }
-            runtime.factory()
+            error("No scene mesh named '$name' is registered or could be resolved by installed plugins.")
         }
     }
 
@@ -90,10 +99,15 @@ class SceneAssetLibrary(
     fun requireMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material {
         materialHolders[name] = (materialHolders[name] ?: 0) + 1
         return materials.getOrPut(name) {
-            val factory = checkNotNull(materialFactories[name]) {
-                "No scene material named '$name' is registered."
+            val factory = materialFactories[name]
+            if (factory != null) return@getOrPut runtime.factory()
+            for (resolver in dynamicResolvers) {
+                if (resolver.canResolveMaterial(name)) {
+                    val resolved = resolver.createMaterial(runtime, name)
+                    if (resolved != null) return@getOrPut resolved
+                }
             }
-            runtime.factory()
+            error("No scene material named '$name' is registered or could be resolved by installed plugins.")
         }
     }
 
@@ -185,6 +199,12 @@ class SceneAssetLibrary(
             material = requireMaterial(runtime, key.material),
             cullMode = request.meshRenderer.cullMode.toCullMode(),
         )
+    }
+
+    private fun SceneMeshRenderer.CullMode.toCullMode(): CullMode = when (this) {
+        SceneMeshRenderer.CullMode.None -> CullMode.None
+        SceneMeshRenderer.CullMode.Back -> CullMode.Back
+        SceneMeshRenderer.CullMode.Front -> CullMode.Front
     }
 
     /**

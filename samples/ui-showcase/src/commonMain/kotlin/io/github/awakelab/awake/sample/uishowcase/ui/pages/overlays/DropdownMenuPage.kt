@@ -14,12 +14,12 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnDropdownMenu
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuEntry
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuItem
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuSeparator
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
-import io.github.awakelab.awake.ui.shadcn.components.shadcnDropdownMenu
 import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 
 private val MenuItems: List<ShadcnMenuEntry> = listOf(
@@ -51,7 +51,7 @@ internal val DropdownMenuPage = ShowcasePage(
         shadcnMuted("Rendered inline so row spacing, grouping, and disabled/destructive rows stay reviewable.")
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedByHorizontal(12.dp)) {
-            shadcnDropdownMenu(
+            ShadcnDropdownMenu(
                 entries = MenuItems,
                 expanded = selected.expanded,
                 onExpandedChange = { selected.expanded = it },

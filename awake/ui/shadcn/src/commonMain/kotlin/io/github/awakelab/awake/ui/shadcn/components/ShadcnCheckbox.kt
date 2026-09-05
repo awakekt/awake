@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package io.github.awakelab.awake.ui.shadcn.components
 
 import io.github.awakelab.awake.compose.foundation.Canvas
@@ -19,18 +20,24 @@ import io.github.awakelab.awake.core.math2d.Rectangle
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
 
 /**
- * shadcn's checkbox: `size-4 rounded-[4px] border border-input`, filling with `bg-primary` when
- * checked and showing a check glyph in `text-primary-foreground`.
+ * `ShadcnCheckbox`: Selection toggle control for boolean choices.
  *
- * **The check mark is a registry icon, not hand-drawn coordinates.** The recipe this replaces built
- * one from transcribed points in `ShapePainter.drawCheckmark` while the icon registry already held
- * a generated vector -- which `awake-ui-authoring` records as a live example of a "second path", and
- * which also evaded the icons skill's hand-transcription ban purely by being typed `UiPath` rather
- * than an image vector. Drawing it from the registry closes both.
+ * **Tailwind Reference**: `size-4 rounded-[4px] border border-primary bg-primary text-primary-foreground shadow-sm`.
  *
- * Its radius is `rounded-[4px]`, an arbitrary value rather than a scale step, so it is a literal
- * here with the class beside it -- and notably *not* the theme's `sm`, which moves with the base
- * radius while upstream's 4px does not.
+ * Use cases:
+ * - Terms of service agreement, multi-selection list options, form checkboxes.
+ *
+ * **Example Usage**:
+ * ```kotlin
+ * ShadcnCheckbox(checked = isAgreed, onCheckedChange = { isAgreed = it })
+ * ```
+ *
+ * @param checked Whether the checkbox is currently checked.
+ * @param modifier Custom layout modifier.
+ * @param enabled Whether the checkbox is interactive.
+ * @param onCheckedChange Callback triggered when toggling the checked state.
+ *
+ * Keywords: checkbox, check, boolean input, selection toggle, form checkbox.
  */
 context(_: Composer)
 fun ShadcnCheckbox(

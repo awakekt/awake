@@ -13,15 +13,14 @@ import io.github.awakelab.awake.compose.foundation.layout.Spacer
 import io.github.awakelab.awake.compose.foundation.layout.fillMaxWidth
 import io.github.awakelab.awake.compose.foundation.layout.height
 import io.github.awakelab.awake.compose.foundation.layout.padding
-import io.github.awakelab.awake.compose.foundation.layout.size
 import io.github.awakelab.awake.compose.foundation.layout.width
 import io.github.awakelab.awake.compose.foundation.rememberScrollState
-import io.github.awakelab.awake.compose.foundation.verticalScroll
 import io.github.awakelab.awake.compose.foundation.text.TextFieldState
+import io.github.awakelab.awake.compose.foundation.verticalScroll
 import io.github.awakelab.awake.compose.runtime.Composer
+import io.github.awakelab.awake.compose.testing.ComposeComponentFrame
 import io.github.awakelab.awake.compose.testing.captureImage
 import io.github.awakelab.awake.compose.testing.captureSemantics
-import io.github.awakelab.awake.compose.testing.ComposeComponentFrame
 import io.github.awakelab.awake.compose.testing.composeFrame
 import io.github.awakelab.awake.compose.testing.composeTestSession
 import io.github.awakelab.awake.compose.testing.rasterizeLayoutOverlay
@@ -29,71 +28,68 @@ import io.github.awakelab.awake.compose.ui.Alignment
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.draw.drawWithContent
 import io.github.awakelab.awake.compose.ui.platform.FrameInput
-import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsProperties
+import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.core.graphics2d.DrawShape
 import io.github.awakelab.awake.core.graphics2d.DrawStroke
 import io.github.awakelab.awake.core.graphics2d.toPath
 import io.github.awakelab.awake.core.math2d.Rectangle
-import io.github.awakelab.awake.core.math2d.Dp as StrokeWidth
 import io.github.awakelab.awake.core.math2d.sp
 import io.github.awakelab.awake.core.text.font.UiFonts
-import io.github.awakelab.awake.render.testing.writePng
 import io.github.awakelab.awake.render.capture.PixelMap
+import io.github.awakelab.awake.render.testing.writePng
 import io.github.awakelab.awake.sample.uishowcase.state.UiShowcaseRuntimeState
+import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.ComboboxPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.TextFieldPage
 import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.TextareaPage
-import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.ComboboxPage
-import io.github.awakelab.awake.sample.uishowcase.ui.pages.inputs.TextareaPage
 import io.github.awakelab.awake.tailwind.Tw
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlert
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnAlertVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadge
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadgeVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonGroup
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonGroupOrientation
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonSizeVariant
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonVariant
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButtonGroup
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCard
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuItem
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextVariant
-import io.github.awakelab.awake.ui.shadcn.components.shadcnAlert
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnBadge
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCheckbox
-import io.github.awakelab.awake.ui.shadcn.components.shadcnDropdownMenu
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnDropdownMenu
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnFieldLabel
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnFocusRingMode
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnIcon
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnIcons
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnInput
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnInputOtp
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnIcons
-import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
-import io.github.awakelab.awake.ui.shadcn.components.shadcnIcon
-import io.github.awakelab.awake.ui.shadcn.components.shadcnPopover
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuItem
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnPopover
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnProgress
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnRadioGroup
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnRangeSlider
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelect
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelectItem
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnRangeSlider
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelectTrigger
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebar
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarMenuItem
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSlider
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelectTrigger
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSwitch
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSwitch
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnTabs
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
-import io.github.awakelab.awake.ui.shadcn.components.shadcnTextarea
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextVariant
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextarea
+import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 import io.github.awakelab.awake.ui.shadcn.components.shadcnSurface
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebar
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebarMenuItem
 import io.github.awakelab.awake.ui.shadcn.shadcnThemeValues
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import io.github.awakelab.awake.vulkan.renderer.VulkanUiPreviewCapture
 import io.github.awakelab.awake.vulkan.utils.VkResultException
-import java.io.File
 import kotlinx.coroutines.runBlocking
+import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import io.github.awakelab.awake.core.math2d.Dp as StrokeWidth
 
 class ShadcnComposeParityPreviewTest {
 
@@ -125,15 +121,24 @@ class ShadcnComposeParityPreviewTest {
 
         val clicked = session.click(cardTag)
         val card = clicked.flatSemantics().single { it.testTag == cardTag }
-        assertTrue(clicked.flatSemantics().any { it.testTag == "showcase.page.card" }, "clicked sidebar item did not update page content")
-        assertTrue(card.config[SemanticsProperties.Selected] == true, "clicked sidebar item did not become active: card=$cardBefore")
+        assertTrue(
+            clicked.flatSemantics().any { it.testTag == "showcase.page.card" },
+            "clicked sidebar item did not update page content",
+        )
+        assertTrue(
+            card.config[SemanticsProperties.Selected] == true,
+            "clicked sidebar item did not become active: card=$cardBefore",
+        )
 
         session.frame(FrameInput(1200, 900, pointerX = 140, pointerY = 380, scrollDeltaY = -1f))
         val scrolled = session.frame()
         val firstItemAfter = scrolled.onNodeWithTag(aspectRatioTag).getBoundsInRoot()
         val headerAfter = scrolled.onNodeWithTag("showcase.sidebar.header").getBoundsInRoot()
         val footerAfter = scrolled.onNodeWithTag("showcase.sidebar.footer").getBoundsInRoot()
-        assertTrue(firstItemAfter.top < firstItemBefore.top, "sidebar content did not move after wheel input")
+        assertTrue(
+            firstItemAfter.top < firstItemBefore.top,
+            "sidebar content did not move after wheel input",
+        )
         assertTrue(headerAfter == headerBefore, "sidebar header moved with scrollable content")
         assertTrue(footerAfter == footerBefore, "sidebar footer moved with scrollable content")
     }
@@ -246,7 +251,8 @@ class ShadcnComposeParityPreviewTest {
             val cornerRadius = node.cornerRadius?.let { ",\"borderRadius\":$it" }.orEmpty()
             """{"id":"$tag","bounds":{"x":${node.bounds.left}.0,"y":${node.bounds.top}.0,"w":${node.bounds.width}.0,"h":${node.bounds.height}.0}$inset$borderWidth$cornerRadius}"""
         }
-        val jsonContent = """{"width":$width,"height":$height,"semantics":[${semanticsList.joinToString(",")}]}"""
+        val jsonContent =
+            """{"width":$width,"height":$height,"semantics":[${semanticsList.joinToString(",")}]}"""
         jsonFile.writeText(jsonContent)
         println("Generated preview: ${pngFile.absolutePath}")
     }
@@ -265,10 +271,26 @@ class ShadcnComposeParityPreviewTest {
                     horizontalArrangement = Arrangement.spacedByHorizontal(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ShadcnBadge("Default", modifier = Modifier.testTag("badge.Default"), variant = ShadcnBadgeVariant.Default)
-                    ShadcnBadge("Secondary", modifier = Modifier.testTag("badge.Secondary"), variant = ShadcnBadgeVariant.Secondary)
-                    ShadcnBadge("Destructive", modifier = Modifier.testTag("badge.Destructive"), variant = ShadcnBadgeVariant.Destructive)
-                    ShadcnBadge("Outline", modifier = Modifier.testTag("badge.Outline"), variant = ShadcnBadgeVariant.Outline)
+                    ShadcnBadge(
+                        "Default",
+                        modifier = Modifier.testTag("badge.Default"),
+                        variant = ShadcnBadgeVariant.Default,
+                    )
+                    ShadcnBadge(
+                        "Secondary",
+                        modifier = Modifier.testTag("badge.Secondary"),
+                        variant = ShadcnBadgeVariant.Secondary,
+                    )
+                    ShadcnBadge(
+                        "Destructive",
+                        modifier = Modifier.testTag("badge.Destructive"),
+                        variant = ShadcnBadgeVariant.Destructive,
+                    )
+                    ShadcnBadge(
+                        "Outline",
+                        modifier = Modifier.testTag("badge.Outline"),
+                        variant = ShadcnBadgeVariant.Outline,
+                    )
                 }
             }
         }
@@ -288,12 +310,36 @@ class ShadcnComposeParityPreviewTest {
                     horizontalArrangement = Arrangement.spacedByHorizontal(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ShadcnButton("Default", modifier = Modifier.testTag("parity-default"), variant = ShadcnButtonVariant.Default)
-                    ShadcnButton("Secondary", modifier = Modifier.testTag("parity-secondary"), variant = ShadcnButtonVariant.Secondary)
-                    ShadcnButton("Outline", modifier = Modifier.testTag("parity-outline"), variant = ShadcnButtonVariant.Outline)
-                    ShadcnButton("Ghost", modifier = Modifier.testTag("parity-ghost"), variant = ShadcnButtonVariant.Ghost)
-                    ShadcnButton("Destructive", modifier = Modifier.testTag("parity-destructive"), variant = ShadcnButtonVariant.Destructive)
-                    ShadcnButton("Link", modifier = Modifier.testTag("parity-link"), variant = ShadcnButtonVariant.Link)
+                    ShadcnButton(
+                        "Default",
+                        modifier = Modifier.testTag("parity-default"),
+                        variant = ShadcnButtonVariant.Default,
+                    )
+                    ShadcnButton(
+                        "Secondary",
+                        modifier = Modifier.testTag("parity-secondary"),
+                        variant = ShadcnButtonVariant.Secondary,
+                    )
+                    ShadcnButton(
+                        "Outline",
+                        modifier = Modifier.testTag("parity-outline"),
+                        variant = ShadcnButtonVariant.Outline,
+                    )
+                    ShadcnButton(
+                        "Ghost",
+                        modifier = Modifier.testTag("parity-ghost"),
+                        variant = ShadcnButtonVariant.Ghost,
+                    )
+                    ShadcnButton(
+                        "Destructive",
+                        modifier = Modifier.testTag("parity-destructive"),
+                        variant = ShadcnButtonVariant.Destructive,
+                    )
+                    ShadcnButton(
+                        "Link",
+                        modifier = Modifier.testTag("parity-link"),
+                        variant = ShadcnButtonVariant.Link,
+                    )
                 }
             }
         }
@@ -304,12 +350,22 @@ class ShadcnComposeParityPreviewTest {
         listOf(false, true).forEach { dark ->
             val themeSuffix = if (dark) "dark" else "light"
             writePreview("awake-button-icons-$themeSuffix", width = 300, height = 80, dark = dark) {
-                Row(horizontalArrangement = Arrangement.spacedByHorizontal(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    ShadcnButton(Modifier.testTag("parity-icon-default"), size = ShadcnButtonSizeVariant.Icon) {
-                        shadcnIcon(ShadcnIcons.camera)
+                Row(
+                    horizontalArrangement = Arrangement.spacedByHorizontal(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ShadcnButton(
+                        Modifier.testTag("parity-icon-default"),
+                        size = ShadcnButtonSizeVariant.Icon,
+                    ) {
+                        ShadcnIcon(ShadcnIcons.camera)
                     }
-                    ShadcnButton(Modifier.testTag("parity-icon-outline"), variant = ShadcnButtonVariant.Outline, size = ShadcnButtonSizeVariant.IconSm) {
-                        shadcnIcon(ShadcnIcons.save)
+                    ShadcnButton(
+                        Modifier.testTag("parity-icon-outline"),
+                        variant = ShadcnButtonVariant.Outline,
+                        size = ShadcnButtonSizeVariant.IconSm,
+                    ) {
+                        ShadcnIcon(ShadcnIcons.save)
                     }
                     ShadcnButton(
                         "Save scene",
@@ -331,9 +387,17 @@ class ShadcnComposeParityPreviewTest {
                     horizontalArrangement = Arrangement.spacedByHorizontal(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ShadcnButton("Small", modifier = Modifier.testTag("parity-size-small"), size = ShadcnButtonSizeVariant.Sm)
+                    ShadcnButton(
+                        "Small",
+                        modifier = Modifier.testTag("parity-size-small"),
+                        size = ShadcnButtonSizeVariant.Sm,
+                    )
                     ShadcnButton("Default", modifier = Modifier.testTag("parity-size-default"))
-                    ShadcnButton("Large", modifier = Modifier.testTag("parity-size-large"), size = ShadcnButtonSizeVariant.Lg)
+                    ShadcnButton(
+                        "Large",
+                        modifier = Modifier.testTag("parity-size-large"),
+                        size = ShadcnButtonSizeVariant.Lg,
+                    )
                 }
             }
         }
@@ -343,14 +407,33 @@ class ShadcnComposeParityPreviewTest {
     fun renderDisabledButtons() {
         listOf(false, true).forEach { dark ->
             val themeSuffix = if (dark) "dark" else "light"
-            writePreview("awake-button-disabled-$themeSuffix", width = 260, height = 80, dark = dark) {
+            writePreview(
+                "awake-button-disabled-$themeSuffix",
+                width = 260,
+                height = 80,
+                dark = dark,
+            ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedByHorizontal(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ShadcnButton("Default", modifier = Modifier.testTag("parity-disabled-default"), enabled = false)
-                    ShadcnButton("Outline", modifier = Modifier.testTag("parity-disabled-outline"), variant = ShadcnButtonVariant.Outline, enabled = false)
-                    ShadcnButton("Destructive", modifier = Modifier.testTag("parity-disabled-destructive"), variant = ShadcnButtonVariant.Destructive, enabled = false)
+                    ShadcnButton(
+                        "Default",
+                        modifier = Modifier.testTag("parity-disabled-default"),
+                        enabled = false,
+                    )
+                    ShadcnButton(
+                        "Outline",
+                        modifier = Modifier.testTag("parity-disabled-outline"),
+                        variant = ShadcnButtonVariant.Outline,
+                        enabled = false,
+                    )
+                    ShadcnButton(
+                        "Destructive",
+                        modifier = Modifier.testTag("parity-disabled-destructive"),
+                        variant = ShadcnButtonVariant.Destructive,
+                        enabled = false,
+                    )
                 }
             }
         }
@@ -367,8 +450,16 @@ class ShadcnComposeParityPreviewTest {
                 dark = dark,
             ) {
                 ShadcnButtonGroup(modifier = Modifier.testTag("parity-button-group")) {
-                    button("Archive", modifier = Modifier.testTag("parity-button-group.archive"), variant = ShadcnButtonVariant.Outline)
-                    button("Report", modifier = Modifier.testTag("parity-button-group.report"), variant = ShadcnButtonVariant.Outline)
+                    button(
+                        "Archive",
+                        modifier = Modifier.testTag("parity-button-group.archive"),
+                        variant = ShadcnButtonVariant.Outline,
+                    )
+                    button(
+                        "Report",
+                        modifier = Modifier.testTag("parity-button-group.report"),
+                        variant = ShadcnButtonVariant.Outline,
+                    )
                 }
             }
             writePreview(
@@ -381,8 +472,16 @@ class ShadcnComposeParityPreviewTest {
                     modifier = Modifier.testTag("parity-button-group-vertical").width(156.dp),
                     orientation = ShadcnButtonGroupOrientation.Vertical,
                 ) {
-                    button("Archive", modifier = Modifier.testTag("parity-button-group-vertical.archive"), variant = ShadcnButtonVariant.Outline)
-                    button("Report", modifier = Modifier.testTag("parity-button-group-vertical.report"), variant = ShadcnButtonVariant.Outline)
+                    button(
+                        "Archive",
+                        modifier = Modifier.testTag("parity-button-group-vertical.archive"),
+                        variant = ShadcnButtonVariant.Outline,
+                    )
+                    button(
+                        "Report",
+                        modifier = Modifier.testTag("parity-button-group-vertical.report"),
+                        variant = ShadcnButtonVariant.Outline,
+                    )
                 }
             }
         }
@@ -437,7 +536,11 @@ class ShadcnComposeParityPreviewTest {
                 height = 100,
                 dark = dark,
             ) {
-                ShadcnInputOtp(value = "482910", length = 6, modifier = Modifier.testTag("parity-input-otp"))
+                ShadcnInputOtp(
+                    value = "482910",
+                    length = 6,
+                    modifier = Modifier.testTag("parity-input-otp"),
+                )
             }
             writePreview(
                 previewName = "awake-input-otp-grouped-$themeSuffix",
@@ -445,7 +548,12 @@ class ShadcnComposeParityPreviewTest {
                 height = 100,
                 dark = dark,
             ) {
-                ShadcnInputOtp(value = "934182", length = 6, groupSize = 3, modifier = Modifier.testTag("parity-input-otp-grouped"))
+                ShadcnInputOtp(
+                    value = "934182",
+                    length = 6,
+                    groupSize = 3,
+                    modifier = Modifier.testTag("parity-input-otp-grouped"),
+                )
             }
         }
     }
@@ -464,7 +572,8 @@ class ShadcnComposeParityPreviewTest {
                     verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s6),
                 ) {
                     Box(
-                        Modifier.fillMaxWidth().height(Tw.Spacing.s6).padding(horizontal = Tw.Spacing.s6),
+                        Modifier.fillMaxWidth().height(Tw.Spacing.s6)
+                            .padding(horizontal = Tw.Spacing.s6),
                     ) {
                         ShadcnText(
                             "Login to your account",
@@ -474,7 +583,8 @@ class ShadcnComposeParityPreviewTest {
                         )
                     }
                     Column(
-                        Modifier.fillMaxWidth().padding(horizontal = Tw.Spacing.s6).testTag("parity-card.content"),
+                        Modifier.fillMaxWidth().padding(horizontal = Tw.Spacing.s6)
+                            .testTag("parity-card.content"),
                         verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s3),
                     ) {
                         ShadcnText(
@@ -505,7 +615,7 @@ class ShadcnComposeParityPreviewTest {
             height = 250,
             dark = false,
         ) {
-            shadcnDropdownMenu(
+            ShadcnDropdownMenu(
                 listOf(
                     ShadcnMenuItem("My Account"),
                     ShadcnMenuItem("Edit"),
@@ -536,8 +646,14 @@ class ShadcnComposeParityPreviewTest {
                     variant = ShadcnButtonVariant.Outline,
                     modifier = Modifier.testTag("parity-popover.trigger"),
                 )
-                shadcnPopover(modifier = Modifier.testTag("parity-popover.content"), width = 260.dp) {
-                    ShadcnText("Place content for the popover here.", variant = ShadcnTextVariant.Small)
+                ShadcnPopover(
+                    modifier = Modifier.testTag("parity-popover.content"),
+                    width = 260.dp,
+                ) {
+                    ShadcnText(
+                        "Place content for the popover here.",
+                        variant = ShadcnTextVariant.Small,
+                    )
                 }
             }
         }
@@ -555,12 +671,12 @@ class ShadcnComposeParityPreviewTest {
                 Modifier.width(272.dp),
                 verticalArrangement = Arrangement.spacedBy(Tw.Spacing.s4),
             ) {
-                shadcnAlert(
+                ShadcnAlert(
                     title = "You can add components",
                     description = "Use the CLI to add components to your project.",
                     modifier = Modifier.testTag("parity-alert-default"),
                 )
-                shadcnAlert(
+                ShadcnAlert(
                     title = "Unable to process your payment.",
                     description = "Please verify your billing information and try again.",
                     variant = ShadcnAlertVariant.Destructive,
@@ -574,18 +690,42 @@ class ShadcnComposeParityPreviewTest {
     fun renderSwitchAndCheckbox() {
         listOf(false, true).forEach { dark ->
             val themeSuffix = if (dark) "dark" else "light"
-            writePreview("awake-switch-variants-$themeSuffix", width = 200, height = 100, dark = dark) {
+            writePreview(
+                "awake-switch-variants-$themeSuffix",
+                width = 200,
+                height = 100,
+                dark = dark,
+            ) {
                 Row(horizontalArrangement = Arrangement.spacedByHorizontal(16.dp)) {
-                    shadcnSwitch(checked = false, modifier = Modifier.testTag("parity-switch-off"))
-                    shadcnSwitch(checked = true, modifier = Modifier.testTag("parity-switch-on"))
-                    shadcnSwitch(checked = false, enabled = false, modifier = Modifier.testTag("parity-switch-disabled"))
+                    ShadcnSwitch(checked = false, modifier = Modifier.testTag("parity-switch-off"))
+                    ShadcnSwitch(checked = true, modifier = Modifier.testTag("parity-switch-on"))
+                    ShadcnSwitch(
+                        checked = false,
+                        enabled = false,
+                        modifier = Modifier.testTag("parity-switch-disabled"),
+                    )
                 }
             }
-            writePreview("awake-checkbox-states-$themeSuffix", width = 200, height = 100, dark = dark) {
+            writePreview(
+                "awake-checkbox-states-$themeSuffix",
+                width = 200,
+                height = 100,
+                dark = dark,
+            ) {
                 Row(horizontalArrangement = Arrangement.spacedByHorizontal(16.dp)) {
-                    ShadcnCheckbox(checked = false, modifier = Modifier.testTag("parity-checkbox-unchecked"))
-                    ShadcnCheckbox(checked = true, modifier = Modifier.testTag("parity-checkbox-checked"))
-                    ShadcnCheckbox(checked = false, enabled = false, modifier = Modifier.testTag("parity-checkbox-disabled"))
+                    ShadcnCheckbox(
+                        checked = false,
+                        modifier = Modifier.testTag("parity-checkbox-unchecked"),
+                    )
+                    ShadcnCheckbox(
+                        checked = true,
+                        modifier = Modifier.testTag("parity-checkbox-checked"),
+                    )
+                    ShadcnCheckbox(
+                        checked = false,
+                        enabled = false,
+                        modifier = Modifier.testTag("parity-checkbox-disabled"),
+                    )
                 }
             }
         }
@@ -612,14 +752,22 @@ class ShadcnComposeParityPreviewTest {
     @Test
     fun renderInputStates() {
         listOf(false, true).forEach { dark ->
-            writePreview("awake-textfield-states-${if (dark) "dark" else "light"}", 300, 200, dark) {
+            writePreview(
+                "awake-textfield-states-${if (dark) "dark" else "light"}",
+                300,
+                200,
+                dark,
+            ) {
                 Column(Modifier.width(256.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ShadcnInput(
                         TextFieldState(""),
                         placeholder = "Placeholder",
                         modifier = Modifier.testTag("parity-field-1"),
                     )
-                    ShadcnInput(TextFieldState("Typed text"), modifier = Modifier.testTag("parity-field-2"))
+                    ShadcnInput(
+                        TextFieldState("Typed text"),
+                        modifier = Modifier.testTag("parity-field-2"),
+                    )
                     ShadcnInput(
                         TextFieldState(""),
                         enabled = false,
@@ -703,7 +851,12 @@ class ShadcnComposeParityPreviewTest {
                             drawContent()
                             drawStrokedPath(
                                 DrawShape.RoundedRectangle(StrokeWidth(13.dp.value)).toPath(
-                                    Rectangle(-1.5f, -1.5f, width.toFloat() + 1.5f, height.toFloat() + 1.5f),
+                                    Rectangle(
+                                        -1.5f,
+                                        -1.5f,
+                                        width.toFloat() + 1.5f,
+                                        height.toFloat() + 1.5f,
+                                    ),
                                 ),
                                 DrawStroke(width = StrokeWidth(3.dp.value)),
                                 accent,
@@ -725,7 +878,12 @@ class ShadcnComposeParityPreviewTest {
                             )
                             drawStrokedPath(
                                 DrawShape.RoundedRectangle(StrokeWidth(13.dp.value)).toPath(
-                                    Rectangle(-1.5f, -1.5f, width.toFloat() + 1.5f, height.toFloat() + 1.5f),
+                                    Rectangle(
+                                        -1.5f,
+                                        -1.5f,
+                                        width.toFloat() + 1.5f,
+                                        height.toFloat() + 1.5f,
+                                    ),
                                 ),
                                 DrawStroke(width = StrokeWidth(3.dp.value)),
                                 accent,
@@ -744,7 +902,11 @@ class ShadcnComposeParityPreviewTest {
             height = 100,
             dark = false,
         ) {
-            ShadcnSelectTrigger(null, placeholder = "Select a fruit", modifier = Modifier.testTag("parity-select").width(172.dp))
+            ShadcnSelectTrigger(
+                null,
+                placeholder = "Select a fruit",
+                modifier = Modifier.testTag("parity-select").width(172.dp),
+            )
         }
     }
 
@@ -759,7 +921,13 @@ class ShadcnComposeParityPreviewTest {
                 settleFrames = 3,
             ) {
                 ShadcnSelect(
-                    items = listOf("Apple", "Banana", "Blueberry", "Grapes", "Pineapple").map(::ShadcnSelectItem),
+                    items = listOf(
+                        "Apple",
+                        "Banana",
+                        "Blueberry",
+                        "Grapes",
+                        "Pineapple",
+                    ).map(::ShadcnSelectItem),
                     selectedIndex = 1,
                     expanded = true,
                     onExpandedChange = {},
@@ -800,8 +968,14 @@ class ShadcnComposeParityPreviewTest {
             val themeSuffix = if (dark) "dark" else "light"
             writePreview("awake-progress-$themeSuffix", width = 300, height = 120, dark = dark) {
                 Column(Modifier.width(212.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    ShadcnProgress(progress = 0.25f, modifier = Modifier.testTag("parity-progress-1"))
-                    ShadcnProgress(progress = 0.65f, modifier = Modifier.testTag("parity-progress-2"))
+                    ShadcnProgress(
+                        progress = 0.25f,
+                        modifier = Modifier.testTag("parity-progress-1"),
+                    )
+                    ShadcnProgress(
+                        progress = 0.65f,
+                        modifier = Modifier.testTag("parity-progress-2"),
+                    )
                 }
             }
         }
@@ -857,20 +1031,23 @@ class ShadcnComposeParityPreviewTest {
             val name = TextFieldState("dsdsadasdasdasdas")
             val email = TextFieldState("asdasdasd")
             val bio = TextFieldState(
-                "A longer biography that must remain inside the full-width textarea.\n"
-                    + "This second line proves multiline layout and caret line metrics.",
+                "A longer biography that must remain inside the full-width textarea.\n" +
+                    "This second line proves multiline layout and caret line metrics.",
             )
             shadcnMuted("Single-line and multi-line keyboard-driven text input controls with focus ring bounds.")
             Column(Modifier.fillMaxWidth()) {
                 ShadcnCard(modifier = Modifier.fillMaxWidth().height(300.dp)) {
-                    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(
+                        Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
                         ShadcnText("Text Input & Area Interactive Preview")
                         ShadcnFieldLabel("Full Name")
                         ShadcnInput(name)
                         ShadcnFieldLabel("Email Address")
                         ShadcnInput(email)
                         ShadcnFieldLabel("Biography")
-                        shadcnTextarea(bio)
+                        ShadcnTextarea(bio)
                     }
                 }
             }
@@ -981,7 +1158,7 @@ class ShadcnComposeParityPreviewTest {
             Column {
                 ShadcnText("OUTSIDE TOP")
                 Spacer(Modifier.height(8.dp))
-                shadcnSidebar(
+                ShadcnSidebar(
                     Modifier.width(360.dp).height(560.dp),
                     header = {
                         ShadcnButton("PINNED HEADER", modifier = Modifier.fillMaxWidth())
@@ -993,7 +1170,7 @@ class ShadcnComposeParityPreviewTest {
                     Column(Modifier.fillMaxWidth().verticalScroll(menuScroll)) {
                         Spacer(Modifier.height(72.dp))
                         repeat(14) { index ->
-                            shadcnSidebarMenuItem("Menu item $index")
+                            ShadcnSidebarMenuItem("Menu item $index")
                             if (index == 4 || index == 9) Spacer(Modifier.height(56.dp))
                         }
                         Spacer(Modifier.height(72.dp))
@@ -1026,5 +1203,4 @@ class ShadcnComposeParityPreviewTest {
             }
         }
     }
-
 }

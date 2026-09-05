@@ -12,9 +12,9 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebar
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebarMenu
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSidebarMenuItem
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebar
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarMenu
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarMenuItem
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
 
 private val SidebarSampleItems = listOf("Overview", "Analytics", "Projects", "Settings")
@@ -34,14 +34,14 @@ internal val SidebarPage = ShowcasePage(
     notes = listOf("Header and footer stay pinned while the menu region scrolls."),
     hero = {
         val active = remember { SidebarActiveItem() }
-        shadcnSidebar(
+        ShadcnSidebar(
             modifier = Modifier.width(264.dp).height(360.dp),
             header = { ShadcnText("Acme Inc") },
             footer = { ShadcnText("shadcn") },
         ) {
-            shadcnSidebarMenu {
+            ShadcnSidebarMenu {
                 SidebarSampleItems.forEachIndexed { index, label ->
-                    shadcnSidebarMenuItem(
+                    ShadcnSidebarMenuItem(
                         label = label,
                         active = index == active.index,
                         onClick = { active.index = index },

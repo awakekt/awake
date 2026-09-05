@@ -10,7 +10,7 @@ import io.github.awakelab.awake.compose.testing.rasterize
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.heroicons.icon.HeroIcons
-import io.github.awakelab.awake.ui.shadcn.components.shadcnIcon
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnIcon
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -29,7 +29,13 @@ class OutlineIconStrokeTest {
 
     private fun interiorCoverage(icon: io.github.awakelab.awake.compose.ui.graphics.vector.ImageVector): Float {
         val pixels = composeFrame(SIZE, SIZE) {
-            provideShadcnTheme(theme) { shadcnIcon(icon, size = SIZE.dp, tint = Color(1f, 1f, 1f, 1f)) }
+            provideShadcnTheme(theme) {
+                ShadcnIcon(
+                    icon,
+                    size = SIZE.dp,
+                    tint = Color(1f, 1f, 1f, 1f),
+                )
+            }
         }.primitives.rasterize(SIZE, SIZE, background = Color(0f, 0f, 0f, 0f))
 
         var covered = 0
@@ -53,7 +59,10 @@ class OutlineIconStrokeTest {
         val unexpectedBlobs = measured.filter { (name, coverage) ->
             coverage > MAX_INTERIOR && name !in KNOWN_FILLED
         }
-        assertTrue(unexpectedBlobs.isEmpty(), "these outline icons render as filled shapes: $unexpectedBlobs")
+        assertTrue(
+            unexpectedBlobs.isEmpty(),
+            "these outline icons render as filled shapes: $unexpectedBlobs",
+        )
     }
 
     /**

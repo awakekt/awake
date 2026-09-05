@@ -2,6 +2,10 @@ public final class io/github/awakelab/awake/asset/shaderpack/AslDepthFogShaderKt
 	public static final fun depthFogShader (Lio/github/awakelab/awake/core/math/ClipSpace;)Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class io/github/awakelab/awake/asset/shaderpack/AslInfiniteGridShaderKt {
+	public static final fun getInfiniteGridShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
 public final class io/github/awakelab/awake/asset/shaderpack/AslMeshVariantShadersKt {
 	public static final fun getInstancedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getSkinnedInstancedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
@@ -28,6 +32,10 @@ public final class io/github/awakelab/awake/asset/shaderpack/AslTerrainShaderKt 
 	public static final fun getTerrainShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class io/github/awakelab/awake/asset/shaderpack/AslTerrainSplatShaderKt {
+	public static final fun getTerrainSplatShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
 public final class io/github/awakelab/awake/asset/shaderpack/AslTexturedShaderKt {
 	public static final fun getTexturedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
 }
@@ -51,6 +59,7 @@ public final class io/github/awakelab/awake/asset/shaderpack/LitShadowUniformLay
 
 public final class io/github/awakelab/awake/asset/shaderpack/PackShaderSets {
 	public static final field INSTANCE Lio/github/awakelab/awake/asset/shaderpack/PackShaderSets;
+	public final fun getInfiniteGrid ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
 	public final fun getInstanced ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
 	public final fun getLitShadow ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
 	public final fun getParticle ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
@@ -61,6 +70,7 @@ public final class io/github/awakelab/awake/asset/shaderpack/PackShaderSets {
 	public final fun getSkinnedTextured ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
 	public final fun getSkybox ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
 	public final fun getTerrain ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+	public final fun getTerrainSplat ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
 	public final fun getTextured ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
 	public final fun getTriangle ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
 }

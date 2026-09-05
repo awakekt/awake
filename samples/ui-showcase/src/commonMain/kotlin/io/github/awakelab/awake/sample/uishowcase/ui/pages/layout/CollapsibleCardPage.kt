@@ -9,7 +9,7 @@ import io.github.awakelab.awake.compose.runtime.remember
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnCard
-import io.github.awakelab.awake.ui.shadcn.components.shadcnCollapsible
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnCollapsible
 import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 
 /** No `shadcnCollapsibleCard` recipe in compose yet -- compose it from card + collapsible. */
@@ -28,7 +28,7 @@ internal val CollapsibleCardPage = ShowcasePage(
     hero = {
         val state = remember { CollapsibleCardExpanded() }
         ShadcnCard {
-            shadcnCollapsible(
+            ShadcnCollapsible(
                 title = "Deployment settings",
                 expanded = state.open,
                 onExpandedChange = { state.open = it },

@@ -7,10 +7,10 @@ package io.github.awakelab.awake.studio.systems
 
 import io.github.awakelab.awake.ecs.System
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.core.transform.SpinControl
-import io.github.awakelab.awake.scene.core.transform.SpinSystem
 import io.github.awakelab.awake.editor.EditorMode
 import io.github.awakelab.awake.editor.EditorStore
+import io.github.awakelab.awake.scene.core.transform.SpinControl
+import io.github.awakelab.awake.scene.core.transform.SpinSystem
 
 /** Advances every [SpinControl] by its own rate, which is the half [SpinSystem] deliberately
  * does not do. Runs before it, so the composed transform is this frame's angle. */

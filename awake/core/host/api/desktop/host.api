@@ -1,3 +1,8 @@
+public final class io/github/awakelab/awake/core/host/BinaryExtensionsKt {
+	public static final fun readLittleEndianInt ([BI)I
+	public static final fun readLittleEndianShort ([BI)S
+}
+
 public final class io/github/awakelab/awake/core/host/DesktopFrameLoop : io/github/awakelab/awake/core/host/FrameLoop {
 	public static final field INSTANCE Lio/github/awakelab/awake/core/host/DesktopFrameLoop;
 	public fun tick (Lkotlin/jvm/functions/Function1;)V

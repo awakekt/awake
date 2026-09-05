@@ -34,6 +34,7 @@ value class Entity(val packed: Long) {
     companion object {
         /** Shift amount for the generation bits. */
         private const val GENERATION_SHIFT = 32
+
         /** Mask for the ID bits. */
         private const val ID_MASK = 0xFFFF_FFFFL
 

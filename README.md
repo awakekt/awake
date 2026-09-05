@@ -16,8 +16,11 @@
 - **High-Performance Rendering** — Vulkan (Desktop JVM, Android, iOS via MoltenVK) and WebGPU (Web/Wasm). Runtime WGSL shader compilation via Naga, cascaded shadows, PBR materials, and glTF GPU skeletal animation.
 - **Sparse-Set ECS Runtime** — Cache-friendly entity iteration, archetype queries, and zero-allocation 3D transform math.
 - **Compose Multiplatform UI Stack** — Modern declarative UI powered by Compose runtime, custom design tokens, and a complete Shadcn component suite.
-- **Physics Engine** — Backend-neutral physics abstraction with a hardware-accelerated Jolt Physics bridge.
-- **Extensible Architecture** — Core runtime decoupled from modular game extensions ([`awake-lab/starter-kits`](https://github.com/awake-lab/starter-kits)).
+- **Physics Engine** — Hardware-accelerated Jolt Physics bridge with static heightfield colliders, raycasts, and kinematic character controllers.
+- **Microkernel & Universal Plugin Architecture** — `GamePlugin` (runtime systems) and `EditorPlugin` (Shadcn studio panels) SPIs allow modular engine and game extensions.
+- **Generic Keybindings & Controls** — Type-safe `KeybindingProfile<A>` mapping semantic actions to hardware keys with normalized 2D axis querying.
+- **Behavior Tree & State Machine AI** — High-performance 60fps code-first AI runtime with sequences, selectors, conditions, and blackboard memory.
+- **Modular Character Equipment & Sockets** — Skinned mesh modular slot composition (`ModularCharacterComponent`) and zero-allocation bone socket tracking (`SocketAttachmentSystem`).
 
 ---
 
@@ -109,7 +112,20 @@ Awake is organized into clean, modular subprojects:
 - **[`awake:compose:*`](awake/compose)** — Compose Multiplatform UI runtime, layout nodes, and rendering passes.
 - **[`awake:asset:*`](awake/asset)** — glTF parser, Naga runtime shader compiler, and texture loaders.
 - **[`awake:engine:*`](awake/engine)** — Frame loops, render-pass orchestration, and window lifecycle.
+- **[`awake:scene:*`](awake/scene)** — Microkernel `GamePlugin` SPI, transforms, Jolt physics, `KeybindingProfile`, Behavior Tree AI, and modular slot rendering.
+- **[`awake:editor:*`](awake/editor)** — Studio editor shell, docking layout, scene hierarchy, inspector, and `EditorPlugin` SPI.
 - **[`awake:backend:*`](awake/backend)** — Platform renderers (`vulkan`, `webgpu`, `jolt`).
+
+---
+
+## Commercial Pro Extensions (`com.awakekt.pro`)
+
+Advanced algorithmic and enterprise-grade simulation modules are maintained separately under the private commercial [`awakekt/awake-pro`](https://github.com/awakekt/awake-pro) repository:
+- **`com.awakekt.pro:physics-ragdoll`** — Multi-body humanoid ragdoll solvers, cone-twist joint angle limits, and vehicle physics.
+- **`com.awakekt.pro:worldstream`** — Multi-tile clipmap infinite terrain streaming and GPU virtual texturing.
+- **`com.awakekt.pro:navigation`** — 2-level hierarchical A* pathfinder and streamed navmesh graphs.
+- **`com.awakekt.pro:character-studio`** — Boundary-locked QEM mesh decimation and dynamic UV atlas packing.
+- **`com.awakekt.pro:visual-blueprints`** — Drag-and-drop node graph canvas and live execution wire debugger.
 
 ---
 

@@ -174,8 +174,13 @@ public final class io/github/awakelab/awake/core/math/GeometryKt {
 
 public final class io/github/awakelab/awake/core/math/Grid {
 	public static final field INSTANCE Lio/github/awakelab/awake/core/math/Grid;
+	public final fun generateGridLines (FFLio/github/awakelab/awake/core/math/Vec3f;F)Ljava/util/List;
+	public static synthetic fun generateGridLines$default (Lio/github/awakelab/awake/core/math/Grid;FFLio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Ljava/util/List;
+	public final fun intersectGroundPlane (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/math/Vec3f;
+	public static synthetic fun intersectGroundPlane$default (Lio/github/awakelab/awake/core/math/Grid;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun lines (FIF)Ljava/util/List;
 	public static synthetic fun lines$default (Lio/github/awakelab/awake/core/math/Grid;FIFILjava/lang/Object;)Ljava/util/List;
+	public final fun snapToGrid (FF)F
 }
 
 public final class io/github/awakelab/awake/core/math/GridOrigin : java/lang/Enum {
@@ -184,6 +189,25 @@ public final class io/github/awakelab/awake/core/math/GridOrigin : java/lang/Enu
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/math/GridOrigin;
 	public static fun values ()[Lio/github/awakelab/awake/core/math/GridOrigin;
+}
+
+public final class io/github/awakelab/awake/core/math/GridSpec {
+	public fun <init> ()V
+	public fun <init> (FFFZ)V
+	public synthetic fun <init> (FFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()Z
+	public final fun copy (FFFZ)Lio/github/awakelab/awake/core/math/GridSpec;
+	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/GridSpec;FFFZILjava/lang/Object;)Lio/github/awakelab/awake/core/math/GridSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPrimaryStep ()F
+	public final fun getShowAxisLines ()Z
+	public final fun getSize ()F
+	public final fun getSubStep ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/awakelab/awake/core/math/Lens {
@@ -304,6 +328,13 @@ public final class io/github/awakelab/awake/core/math/MatrixKt {
 	public static final fun transpose (Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Mat4;
 }
 
+public final class io/github/awakelab/awake/core/math/Noise {
+	public static final field INSTANCE Lio/github/awakelab/awake/core/math/Noise;
+	public final fun fractalNoise2D (FFIIFF)F
+	public static synthetic fun fractalNoise2D$default (Lio/github/awakelab/awake/core/math/Noise;FFIIFFILjava/lang/Object;)F
+	public final fun valueNoise2D (FFI)F
+}
+
 public final class io/github/awakelab/awake/core/math/OcclusionKt {
 	public static final fun isOccludedBy (Lio/github/awakelab/awake/core/math/ScreenBounds;Lio/github/awakelab/awake/core/math/ScreenBounds;)Z
 	public static final fun screenBounds (Lio/github/awakelab/awake/core/math/Lens;Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Mat4;FF)Lio/github/awakelab/awake/core/math/ScreenBounds;
@@ -381,6 +412,8 @@ public final class io/github/awakelab/awake/core/math/Ray {
 	public final fun getOrigin ()Lio/github/awakelab/awake/core/math/Vec3f;
 	public fun hashCode ()I
 	public final fun intersectAabb (Lio/github/awakelab/awake/core/math/Aabb;)Ljava/lang/Float;
+	public final fun intersectGroundPlane (FF)Lio/github/awakelab/awake/core/math/Vec3f;
+	public static synthetic fun intersectGroundPlane$default (Lio/github/awakelab/awake/core/math/Ray;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun intersectPlane (Lio/github/awakelab/awake/core/math/Plane;)Ljava/lang/Float;
 	public final fun intersectSphere (Lio/github/awakelab/awake/core/math/Vec3f;F)Ljava/lang/Float;
 	public final fun pointAt (F)Lio/github/awakelab/awake/core/math/Vec3f;
@@ -389,6 +422,13 @@ public final class io/github/awakelab/awake/core/math/Ray {
 
 public final class io/github/awakelab/awake/core/math/Ray$Companion {
 	public final fun through (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Ray;
+}
+
+public final class io/github/awakelab/awake/core/math/ScalarMathKt {
+	public static final fun clamp (DDD)D
+	public static final fun clamp (FFF)F
+	public static final fun lerp (DDD)D
+	public static final fun lerp (FFF)F
 }
 
 public final class io/github/awakelab/awake/core/math/ScreenBounds {
@@ -475,15 +515,19 @@ public final class io/github/awakelab/awake/core/math/Vec3f {
 	public final fun copy (FFF)Lio/github/awakelab/awake/core/math/Vec3f;
 	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/Vec3f;FFFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun cross (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun distanceTo (Lio/github/awakelab/awake/core/math/Vec3f;)F
 	public final fun dot (Lio/github/awakelab/awake/core/math/Vec3f;)F
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getX ()F
 	public final fun getY ()F
 	public final fun getZ ()F
 	public fun hashCode ()I
+	public final fun horizontalDistanceTo (Lio/github/awakelab/awake/core/math/Vec3f;)F
+	public final fun horizontalSquaredDistanceTo (Lio/github/awakelab/awake/core/math/Vec3f;)F
 	public final fun length3 ()F
 	public final fun lerp (Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun minus (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun moveTowards (Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun normalize ()Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun normalized ()Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun plus (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
@@ -497,6 +541,7 @@ public final class io/github/awakelab/awake/core/math/Vec3f {
 	public final fun sub (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
 	public final fun times (F)Lio/github/awakelab/awake/core/math/Vec3f;
 	public fun toString ()Ljava/lang/String;
+	public final fun yawTowards (Lio/github/awakelab/awake/core/math/Vec3f;)F
 }
 
 public final class io/github/awakelab/awake/core/math/Vec3f$Companion {

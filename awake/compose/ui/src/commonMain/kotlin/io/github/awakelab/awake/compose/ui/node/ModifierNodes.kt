@@ -19,8 +19,8 @@ import io.github.awakelab.awake.compose.ui.layout.onPlaced
 import io.github.awakelab.awake.compose.ui.semantics.SemanticsConfiguration
 import io.github.awakelab.awake.compose.ui.unit.Constraints
 import io.github.awakelab.awake.compose.ui.unit.Density
-import io.github.awakelab.awake.core.input.PointerCursor
 import io.github.awakelab.awake.core.input.ImeComposition
+import io.github.awakelab.awake.core.input.PointerCursor
 import io.github.awakelab.awake.core.input.TextEditAction
 
 // Every `*ModifierNode` interface lives here, as in Compose: a modifier's link type is a node

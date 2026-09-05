@@ -8,8 +8,8 @@ package io.github.awakelab.awake.scene.physics
 import io.github.awakelab.awake.physics.BodyHandle
 import io.github.awakelab.awake.physics.CollisionLayer
 import io.github.awakelab.awake.physics.MotionType
-import io.github.awakelab.awake.physics.defaultLayerFor
 import io.github.awakelab.awake.physics.PhysicsShape
+import io.github.awakelab.awake.physics.defaultLayerFor
 
 /**
  * Declares that an entity should have a live physics body -- same "declared in scene JSON,

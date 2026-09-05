@@ -10,6 +10,20 @@ import io.github.awakelab.awake.ecs.World
 import io.github.awakelab.awake.scene.core.Name
 import io.github.awakelab.awake.scene.core.transform.SpinControl
 import io.github.awakelab.awake.scene.core.transform.Transform
+import io.github.awakelab.awake.scene.document.SCENE_SCHEMA_VERSION
+import io.github.awakelab.awake.scene.document.SceneCamera
+import io.github.awakelab.awake.scene.document.SceneDocument
+import io.github.awakelab.awake.scene.document.SceneLight
+import io.github.awakelab.awake.scene.document.SceneLoader
+import io.github.awakelab.awake.scene.document.SceneMeshRenderer
+import io.github.awakelab.awake.scene.document.SceneNode
+import io.github.awakelab.awake.scene.document.ScenePbrMaterial
+import io.github.awakelab.awake.scene.document.SceneSchemaVersionException
+import io.github.awakelab.awake.scene.document.SceneSpinControl
+import io.github.awakelab.awake.scene.document.SceneTransform
+import io.github.awakelab.awake.scene.document.SceneVec3
+import io.github.awakelab.awake.scene.document.fromWorld
+import io.github.awakelab.awake.scene.document.instantiate
 import io.github.awakelab.awake.scene.rendering.Light
 import io.github.awakelab.awake.scene.rendering.mesh.PbrMaterial
 import kotlinx.coroutines.test.runTest
@@ -22,6 +36,10 @@ import kotlin.test.assertTrue
 import io.github.awakelab.awake.scene.rendering.Camera as SceneCameraComponent
 
 class SceneLoaderTest {
+    init {
+        DefaultSceneComponentResolvers.install()
+    }
+
     @Test
     fun fromWorldExportsLocalTransformsComponentsAndHierarchy() {
         val world = World()

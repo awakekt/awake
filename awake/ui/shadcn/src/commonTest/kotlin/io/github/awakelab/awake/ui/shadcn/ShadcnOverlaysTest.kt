@@ -5,28 +5,29 @@
  */
 package io.github.awakelab.awake.ui.shadcn
 
-import io.github.awakelab.awake.compose.testing.composeFrame
-import io.github.awakelab.awake.compose.testing.composeTestSession
-import io.github.awakelab.awake.compose.foundation.layout.width
-import io.github.awakelab.awake.compose.foundation.layout.height
 import io.github.awakelab.awake.compose.foundation.layout.Column
 import io.github.awakelab.awake.compose.foundation.layout.Spacer
+import io.github.awakelab.awake.compose.foundation.layout.height
+import io.github.awakelab.awake.compose.foundation.layout.width
+import io.github.awakelab.awake.compose.testing.composeFrame
+import io.github.awakelab.awake.compose.testing.composeTestSession
 import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.input.key.KeyEvent
 import io.github.awakelab.awake.compose.ui.input.key.KeyEventType
 import io.github.awakelab.awake.compose.ui.platform.FrameInput
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.dp
-import io.github.awakelab.awake.core.input.Key
 import io.github.awakelab.awake.core.graphics2d.DrawCommand
+import io.github.awakelab.awake.core.input.Key
 import io.github.awakelab.awake.tailwind.Tw
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnDialog
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnDropdownMenu
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuItem
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnMenuSeparator
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnPopover
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelect
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelectItem
-import io.github.awakelab.awake.ui.shadcn.components.shadcnDropdownMenu
-import io.github.awakelab.awake.ui.shadcn.components.ShadcnButton
-import io.github.awakelab.awake.ui.shadcn.components.shadcnPopover
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSelectTrigger
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
@@ -45,11 +46,11 @@ class ShadcnOverlaysTest {
         // Upstream spells them identically: `bg-popover text-popover-foreground`. Reaching for
         // `card` gives a menu that matches the page's panels instead of floating above them.
         val popover = composeFrame(400, 200) {
-            provideShadcnTheme(theme) { shadcnPopover { ShadcnText("Body") } }
+            provideShadcnTheme(theme) { ShadcnPopover { ShadcnText("Body") } }
         }.primitivesOf<DrawCommand.RoundedQuad>().first()
 
         val menu = composeFrame(400, 200) {
-            provideShadcnTheme(theme) { shadcnDropdownMenu(listOf(ShadcnMenuItem("One"))) }
+            provideShadcnTheme(theme) { ShadcnDropdownMenu(listOf(ShadcnMenuItem("One"))) }
         }.primitivesOf<DrawCommand.RoundedQuad>().first()
 
         assertEquals(theme.palette.popover, popover.color)
@@ -62,7 +63,7 @@ class ShadcnOverlaysTest {
         // this wrong put the old menu's items at x=4 in a 160px surface where the reference says
         // x=5 -- one pixel a side, invisible by eye, caught only by the parity report.
         val frame = composeFrame(400, 200) {
-            provideShadcnTheme(theme) { shadcnDropdownMenu(listOf(ShadcnMenuItem("One"))) }
+            provideShadcnTheme(theme) { ShadcnDropdownMenu(listOf(ShadcnMenuItem("One"))) }
         }
         val surface = frame.primitivesOf<DrawCommand.RoundedQuad>().first()
         val firstGlyph = frame.primitivesOf<DrawCommand.Glyph>().first()
@@ -79,7 +80,7 @@ class ShadcnOverlaysTest {
     fun aPopoverIsAFixedWidthNotAMinimum() {
         // `w-72`. A popover is 288 whatever is in it, which is what keeps a row of them aligned.
         fun width(text: String) = composeFrame(500, 200) {
-            provideShadcnTheme(theme) { shadcnPopover { ShadcnText(text) } }
+            provideShadcnTheme(theme) { ShadcnPopover { ShadcnText(text) } }
         }.primitivesOf<DrawCommand.RoundedQuad>().first().w
 
         assertEquals(288f, width("x"), 0.5f, "a short popover shrank below w-72")
@@ -94,7 +95,7 @@ class ShadcnOverlaysTest {
         // unfocused destructive row is red type on the normal surface, not a red band.
         val frame = composeFrame(400, 200) {
             provideShadcnTheme(theme) {
-                shadcnDropdownMenu(listOf(ShadcnMenuItem("Delete", destructive = true)))
+                ShadcnDropdownMenu(listOf(ShadcnMenuItem("Delete", destructive = true)))
             }
         }
         val label = frame.primitivesOf<DrawCommand.Glyph>().first()
@@ -114,7 +115,7 @@ class ShadcnOverlaysTest {
     fun aDisabledItemIsDimmedNotRemoved() {
         val glyphs = composeFrame(400, 200) {
             provideShadcnTheme(theme) {
-                shadcnDropdownMenu(listOf(ShadcnMenuItem("Nope", enabled = false)))
+                ShadcnDropdownMenu(listOf(ShadcnMenuItem("Nope", enabled = false)))
             }
         }.primitivesOf<DrawCommand.Glyph>()
 
@@ -128,7 +129,7 @@ class ShadcnOverlaysTest {
         // menu genuinely has separators, and a List<String> cannot say so.
         val frame = composeFrame(400, 200) {
             provideShadcnTheme(theme) {
-                shadcnDropdownMenu(
+                ShadcnDropdownMenu(
                     listOf(ShadcnMenuItem("One"), ShadcnMenuSeparator, ShadcnMenuItem("Two")),
                 )
             }
@@ -144,10 +145,13 @@ class ShadcnOverlaysTest {
     fun theMenuHonoursItsMinimumWidth() {
         // `min-w-[8rem]` -- a one-word menu is still 128 wide, so a set of them lines up.
         val surface = composeFrame(400, 200) {
-            provideShadcnTheme(theme) { shadcnDropdownMenu(listOf(ShadcnMenuItem("Hi"))) }
+            provideShadcnTheme(theme) { ShadcnDropdownMenu(listOf(ShadcnMenuItem("Hi"))) }
         }.primitivesOf<DrawCommand.RoundedQuad>().first()
 
-        assertTrue(surface.w >= 128f - 0.5f, "the menu collapsed to ${surface.w}, under min-w-[8rem]")
+        assertTrue(
+            surface.w >= 128f - 0.5f,
+            "the menu collapsed to ${surface.w}, under min-w-[8rem]",
+        )
     }
 
     @Test
@@ -156,14 +160,18 @@ class ShadcnOverlaysTest {
         var selected: Int? = null
         val session = composeTestSession(width = 300, height = 200) {
             provideShadcnTheme(theme) {
-                shadcnDropdownMenu(
+                ShadcnDropdownMenu(
                     entries = listOf(ShadcnMenuItem("One"), ShadcnMenuItem("Two")),
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
                     onItemSelected = { selected = it },
                     id = "menu",
                 ) { onClick ->
-                    ShadcnButton("Open", modifier = Modifier.testTag("menu.trigger"), onClick = onClick)
+                    ShadcnButton(
+                        "Open",
+                        modifier = Modifier.testTag("menu.trigger"),
+                        onClick = onClick,
+                    )
                 }
             }
         }
@@ -188,14 +196,18 @@ class ShadcnOverlaysTest {
         var expanded = false
         val session = composeTestSession(width = 300, height = 200) {
             provideShadcnTheme(theme) {
-                shadcnDropdownMenu(
+                ShadcnDropdownMenu(
                     entries = listOf(ShadcnMenuItem("One")),
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
                     onItemSelected = {},
                     id = "menu",
                 ) { onClick ->
-                    ShadcnButton("Open", modifier = Modifier.testTag("menu.trigger"), onClick = onClick)
+                    ShadcnButton(
+                        "Open",
+                        modifier = Modifier.testTag("menu.trigger"),
+                        onClick = onClick,
+                    )
                 }
             }
         }
@@ -221,24 +233,46 @@ class ShadcnOverlaysTest {
         var selected: Int? = null
         val session = composeTestSession(width = 300, height = 200) {
             provideShadcnTheme(theme) {
-                shadcnDropdownMenu(
+                ShadcnDropdownMenu(
                     entries = listOf(ShadcnMenuItem("One"), ShadcnMenuItem("Two")),
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
                     onItemSelected = { selected = it },
                 ) { onClick ->
-                    ShadcnButton("Open", modifier = Modifier.testTag("menu.trigger"), onClick = onClick)
+                    ShadcnButton(
+                        "Open",
+                        modifier = Modifier.testTag("menu.trigger"),
+                        onClick = onClick,
+                    )
                 }
             }
         }
 
         session.frame()
         session.click("menu.trigger")
-        session.frame(FrameInput(300, 200, keyEvents = listOf(KeyEvent(Key.ArrowDown, KeyEventType.Down))))
+        session.frame(
+            FrameInput(
+                300,
+                200,
+                keyEvents = listOf(KeyEvent(Key.ArrowDown, KeyEventType.Down)),
+            ),
+        )
         session.frame()
-        session.frame(FrameInput(300, 200, keyEvents = listOf(KeyEvent(Key.ArrowDown, KeyEventType.Down))))
+        session.frame(
+            FrameInput(
+                300,
+                200,
+                keyEvents = listOf(KeyEvent(Key.ArrowDown, KeyEventType.Down)),
+            ),
+        )
         session.frame()
-        session.frame(FrameInput(300, 200, keyEvents = listOf(KeyEvent(Key.Enter, KeyEventType.Down))))
+        session.frame(
+            FrameInput(
+                300,
+                200,
+                keyEvents = listOf(KeyEvent(Key.Enter, KeyEventType.Down)),
+            ),
+        )
         val closed = session.frame()
 
         assertEquals(1, selected)
@@ -255,7 +289,11 @@ class ShadcnOverlaysTest {
             provideShadcnTheme(theme) { ShadcnSelectTrigger(value) }
         }.primitivesOf<DrawCommand.Glyph>().first().color
 
-        assertEquals(theme.palette.mutedForeground, labelColour(null), "the placeholder is not muted")
+        assertEquals(
+            theme.palette.mutedForeground,
+            labelColour(null),
+            "the placeholder is not muted",
+        )
         assertEquals(theme.palette.foreground, labelColour("Apple"), "a chosen value is muted")
     }
 
@@ -302,7 +340,11 @@ class ShadcnOverlaysTest {
         session.frame(FrameInput(300, 80, pointerX = x, pointerY = y, pointerDown = true))
         session.frame(FrameInput(300, 80, pointerX = x, pointerY = y))
 
-        assertEquals(1, clicks, "the select trigger ignored a click in its right-side field padding")
+        assertEquals(
+            1,
+            clicks,
+            "the select trigger ignored a click in its right-side field padding",
+        )
     }
 
     @Test
@@ -314,7 +356,13 @@ class ShadcnOverlaysTest {
                 Column {
                     Spacer(Modifier.height(80.dp))
                     ShadcnSelect(
-                        items = listOf("Apple", "Banana", "Blueberry", "Grapes", "Pineapple").map(::ShadcnSelectItem),
+                        items = listOf(
+                            "Apple",
+                            "Banana",
+                            "Blueberry",
+                            "Grapes",
+                            "Pineapple",
+                        ).map(::ShadcnSelectItem),
                         selectedIndex = selected,
                         expanded = expanded,
                         onExpandedChange = { expanded = it },
@@ -331,8 +379,14 @@ class ShadcnOverlaysTest {
         val open = session.frame()
         val trigger = open.onNodeWithTag("select.trigger").getBoundsInRoot()
         val selectedItem = open.onNodeWithTag("select.item.1").getBoundsInRoot()
-        assertTrue(open.flatSemantics().any { it.testTag == "select.item.0" }, "the prior option was not retained in the scrollable Select viewport")
-        assertTrue(open.flatSemantics().any { it.testTag == "select.item.2" }, "the later option was not retained in the Select viewport")
+        assertTrue(
+            open.flatSemantics().any { it.testTag == "select.item.0" },
+            "the prior option was not retained in the scrollable Select viewport",
+        )
+        assertTrue(
+            open.flatSemantics().any { it.testTag == "select.item.2" },
+            "the later option was not retained in the Select viewport",
+        )
         assertTrue(
             selectedItem.top < trigger.bottom && selectedItem.bottom > trigger.top,
             "the selected option was not item-aligned with the trigger: trigger=$trigger item=$selectedItem",
@@ -341,7 +395,10 @@ class ShadcnOverlaysTest {
         session.click("select.item.2")
         val closed = session.frame()
         assertEquals(2, selected)
-        assertTrue(closed.flatSemantics().none { it.testTag == "select.content" }, "Select content remained after selection")
+        assertTrue(
+            closed.flatSemantics().none { it.testTag == "select.content" },
+            "Select content remained after selection",
+        )
     }
 
     @Test
@@ -407,6 +464,74 @@ class ShadcnOverlaysTest {
 
         session.click("scroll-select.scroll-up")
         val afterUp = session.frame().onNodeWithTag("scroll-select.item.0").getBoundsInRoot()
-        assertTrue(afterUp.top > afterDown.top, "the scroll-up control did not move the options back")
+        assertTrue(
+            afterUp.top > afterDown.top,
+            "the scroll-up control did not move the options back",
+        )
+    }
+
+    // -- dialog ---------------------------------------------------------------------------------
+
+    @Test
+    fun dialogRendersContentWithScrimAndDismissesOnOutsideClick() {
+        var visible = true
+        var dismissed = false
+        val session = composeTestSession(width = 600, height = 400) {
+            provideShadcnTheme(theme) {
+                ShadcnDialog(
+                    visible = visible,
+                    onDismissRequest = {
+                        dismissed = true
+                        visible = false
+                    },
+                    id = "test-dialog",
+                ) {
+                    header {
+                        title("Test Title")
+                        description("Test Description")
+                    }
+                    footer {
+                        ShadcnButton("Close", onClick = {})
+                    }
+                }
+            }
+        }
+
+        val frame = session.frame()
+        val scrim = frame.flatSemantics().find { it.testTag == "test-dialog.scrim" }
+        assertTrue(scrim != null, "scrim backdrop was not rendered")
+
+        // Click outside the dialog content (e.g. at 20, 20)
+        session.frame(FrameInput(600, 400, pointerX = 20, pointerY = 20, pointerDown = true))
+        session.frame(FrameInput(600, 400, pointerX = 20, pointerY = 20))
+
+        assertTrue(dismissed, "outside click did not trigger onDismissRequest")
+    }
+
+    @Test
+    fun dialogDismissesOnEscapeKey() {
+        var visible = true
+        var dismissed = false
+        val session = composeTestSession(width = 600, height = 400) {
+            provideShadcnTheme(theme) {
+                ShadcnDialog(
+                    visible = visible,
+                    onDismissRequest = {
+                        dismissed = true
+                        visible = false
+                    },
+                ) {
+                    header {
+                        title("Escape Test")
+                    }
+                }
+            }
+        }
+
+        session.frame()
+        session.pressKey(Key.Escape)
+        session.frame()
+
+        assertTrue(dismissed, "Escape key did not dismiss dialog")
     }
 }

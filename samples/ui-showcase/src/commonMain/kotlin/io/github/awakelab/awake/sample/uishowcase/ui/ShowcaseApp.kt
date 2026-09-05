@@ -36,10 +36,10 @@ import io.github.awakelab.awake.compose.ui.platform.LocalDensity
 import io.github.awakelab.awake.compose.ui.platform.LocalViewportSize
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.compose.ui.unit.dp
-import io.github.awakelab.awake.core.color.Color
 import io.github.awakelab.awake.sample.uishowcase.state.UiShowcaseRuntimeState
 import io.github.awakelab.awake.tailwind.Tw
 import io.github.awakelab.awake.ui.shadcn.components.LocalSidebarCollapsed
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnIcon
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnIcons
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnTextVariant
@@ -51,7 +51,6 @@ import io.github.awakelab.awake.ui.shadcn.components.SidebarInset
 import io.github.awakelab.awake.ui.shadcn.components.SidebarProvider
 import io.github.awakelab.awake.ui.shadcn.components.SidebarRail
 import io.github.awakelab.awake.ui.shadcn.components.rememberSidebarState
-import io.github.awakelab.awake.ui.shadcn.components.shadcnIcon
 import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import io.github.awakelab.awake.ui.shadcn.theme.shadcnTheme
@@ -180,16 +179,24 @@ private fun ShowcaseTeamSwitcher() {
             .fillMaxWidth()
             .height(48.dp)
             .let {
-                if (interaction.isHovered) it.background(
-                    theme.palette.accent,
-                    theme.radii.md
-                ) else it
+                if (interaction.isHovered) {
+                    it.background(
+                        theme.palette.accent,
+                        theme.radii.md,
+                    )
+                } else {
+                    it
+                }
             }
             .hoverable(interaction)
             .clickable(interaction) {},
-        horizontalArrangement = if (collapsed) Arrangement.CenterHorizontally else Arrangement.spacedByHorizontal(
-            8.dp
-        ),
+        horizontalArrangement = if (collapsed) {
+            Arrangement.CenterHorizontally
+        } else {
+            Arrangement.spacedByHorizontal(
+                8.dp,
+            )
+        },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // `bg-sidebar-primary rounded-lg size-8` -- upstream's own team-mark box, not a bordered
@@ -199,9 +206,9 @@ private fun ShowcaseTeamSwitcher() {
             Modifier.width(32.dp).height(32.dp).background(theme.palette.sidebarPrimary, 8.dp),
             contentAlignment = Alignment.Center,
         ) {
-            shadcnIcon(
+            ShadcnIcon(
                 ShadcnIcons.galleryVerticalEnd,
-                tint = theme.palette.sidebarPrimaryForeground
+                tint = theme.palette.sidebarPrimaryForeground,
             )
         }
         if (!collapsed) {
@@ -211,7 +218,7 @@ private fun ShowcaseTeamSwitcher() {
                 ShadcnText("Acme Inc", variant = ShadcnTextVariant.Small)
                 shadcnMuted("Enterprise")
             }
-            shadcnIcon(ShadcnIcons.chevronsUpDown, tint = theme.palette.mutedForeground)
+            ShadcnIcon(ShadcnIcons.chevronsUpDown, tint = theme.palette.mutedForeground)
         }
     }
 }
@@ -229,16 +236,24 @@ private fun ShowcaseUserProfile() {
             .fillMaxWidth()
             .height(48.dp)
             .let {
-                if (interaction.isHovered) it.background(
-                    theme.palette.accent,
-                    theme.radii.md
-                ) else it
+                if (interaction.isHovered) {
+                    it.background(
+                        theme.palette.accent,
+                        theme.radii.md,
+                    )
+                } else {
+                    it
+                }
             }
             .hoverable(interaction)
             .clickable(interaction) {},
-        horizontalArrangement = if (collapsed) Arrangement.CenterHorizontally else Arrangement.spacedByHorizontal(
-            8.dp
-        ),
+        horizontalArrangement = if (collapsed) {
+            Arrangement.CenterHorizontally
+        } else {
+            Arrangement.spacedByHorizontal(
+                8.dp,
+            )
+        },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Same mark-box fix as ShowcaseTeamSwitcher -- `Avatar` is `rounded-lg size-8`, not the
@@ -249,7 +264,7 @@ private fun ShowcaseUserProfile() {
                 ShadcnText("shadcn", variant = ShadcnTextVariant.Small)
                 shadcnMuted("m@example.com")
             }
-            shadcnIcon(ShadcnIcons.chevronsUpDown, tint = theme.palette.mutedForeground)
+            ShadcnIcon(ShadcnIcons.chevronsUpDown, tint = theme.palette.mutedForeground)
         }
     }
 }

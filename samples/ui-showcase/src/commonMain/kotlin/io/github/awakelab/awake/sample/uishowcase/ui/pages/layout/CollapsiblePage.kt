@@ -19,10 +19,10 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.unit.dp
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
 import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.shadcnCollapsible
-import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnCollapsible
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSeparator
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnText
+import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
 
 private class CollapsibleExpanded {
     var open: Boolean = true
@@ -39,7 +39,7 @@ internal val CollapsiblePage = ShowcasePage(
     notes = listOf("Smooth expand/collapse animation for hidden content."),
     hero = {
         val state = remember { CollapsibleExpanded() }
-        shadcnCollapsible(
+        ShadcnCollapsible(
             title = "@radix-ui/primitives",
             expanded = state.open,
             onExpandedChange = { state.open = it },
@@ -50,7 +50,7 @@ internal val CollapsiblePage = ShowcasePage(
     states = {
         // Rendered open on purpose so revealed-content spacing and separators stay reviewable
         // without live interaction.
-        shadcnCollapsible(
+        ShadcnCollapsible(
             title = "@radix-ui/primitives",
             expanded = true,
             onExpandedChange = {},

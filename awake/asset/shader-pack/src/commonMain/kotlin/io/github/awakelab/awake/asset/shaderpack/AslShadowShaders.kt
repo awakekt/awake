@@ -5,13 +5,8 @@
  */
 package io.github.awakelab.awake.asset.shaderpack
 
-import io.github.awakelab.awake.render.pipeline.BindingLayout
-import io.github.awakelab.awake.render.pipeline.BindingSemantic
-import io.github.awakelab.awake.asset.shaderdsl.fieldsFrom
-import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
-import io.github.awakelab.awake.asset.shaderdsl.ndcToUv
-import io.github.awakelab.awake.core.math.ClipSpace
 import io.github.awakelab.awake.asset.shaderdsl.AslExpr
+import io.github.awakelab.awake.asset.shaderdsl.AslShaderDefinition
 import io.github.awakelab.awake.asset.shaderdsl.AslType
 import io.github.awakelab.awake.asset.shaderdsl.AslVertexBuilder
 import io.github.awakelab.awake.asset.shaderdsl.F32
@@ -21,28 +16,29 @@ import io.github.awakelab.awake.asset.shaderdsl.cos
 import io.github.awakelab.awake.asset.shaderdsl.div
 import io.github.awakelab.awake.asset.shaderdsl.dot
 import io.github.awakelab.awake.asset.shaderdsl.exp
+import io.github.awakelab.awake.asset.shaderdsl.fieldsFrom
 import io.github.awakelab.awake.asset.shaderdsl.ge
 import io.github.awakelab.awake.asset.shaderdsl.gt
 import io.github.awakelab.awake.asset.shaderdsl.inputsFrom
 import io.github.awakelab.awake.asset.shaderdsl.le
 import io.github.awakelab.awake.asset.shaderdsl.length
-import io.github.awakelab.awake.asset.shaderdsl.min
 import io.github.awakelab.awake.asset.shaderdsl.lit
 import io.github.awakelab.awake.asset.shaderdsl.lt
 import io.github.awakelab.awake.asset.shaderdsl.max
+import io.github.awakelab.awake.asset.shaderdsl.min
 import io.github.awakelab.awake.asset.shaderdsl.minus
 import io.github.awakelab.awake.asset.shaderdsl.mix
+import io.github.awakelab.awake.asset.shaderdsl.ndcToUv
 import io.github.awakelab.awake.asset.shaderdsl.normalize
 import io.github.awakelab.awake.asset.shaderdsl.or
 import io.github.awakelab.awake.asset.shaderdsl.plus
 import io.github.awakelab.awake.asset.shaderdsl.pow
-import io.github.awakelab.awake.asset.shaderdsl.r
 import io.github.awakelab.awake.asset.shaderdsl.rgb
 import io.github.awakelab.awake.asset.shaderdsl.samplerComparison
 import io.github.awakelab.awake.asset.shaderdsl.saturate
+import io.github.awakelab.awake.asset.shaderdsl.shader
 import io.github.awakelab.awake.asset.shaderdsl.sin
 import io.github.awakelab.awake.asset.shaderdsl.sqrt
-import io.github.awakelab.awake.asset.shaderdsl.shader
 import io.github.awakelab.awake.asset.shaderdsl.textureDepth2dArray
 import io.github.awakelab.awake.asset.shaderdsl.textureDimensions
 import io.github.awakelab.awake.asset.shaderdsl.textureSampleCompareLevel
@@ -61,10 +57,13 @@ import io.github.awakelab.awake.asset.shaderdsl.z
 import io.github.awakelab.awake.core.geometry.GpuDataShape
 import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.core.geometry.VertexSemantic
+import io.github.awakelab.awake.core.math.ClipSpace
+import io.github.awakelab.awake.render.pipeline.BindingLayout
+import io.github.awakelab.awake.render.pipeline.BindingSemantic
 import io.github.awakelab.awake.render.renderer.CascadePassUniformLayout
-import io.github.awakelab.awake.render.renderer.SHADOW_CASCADE_PASS_GROUP
 import io.github.awakelab.awake.render.renderer.MAX_POINT_LIGHTS
 import io.github.awakelab.awake.render.renderer.MAX_SHADOW_CASCADES
+import io.github.awakelab.awake.render.renderer.SHADOW_CASCADE_PASS_GROUP
 
 /** Depth-only shadow-map pre-pass: binds lit_shadow's buffer (hence the full prefix struct),
  * reads only lightMvp, writes no color -- depth comes from the fixed-function pipeline. The
@@ -74,15 +73,14 @@ val ShadowDepthShader: AslShaderDefinition = shader("shadow_depth") {
     // The cascade being rendered, from the pass rather than the draw: this shader runs once per
     // cascade over the same meshes, and a per-draw uniform is written once a frame.
     val pass = uniformBlock("Cascade", group = SHADOW_CASCADE_PASS_GROUP, binding = 0)
-    val cascadeViewProjection = pass.fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
+    val cascadeViewProjection =
+        pass.fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
     vertex {
         val world = u.model * vec4(animatedPosition(u), 1f.lit)
         returnPosition(cascadeViewProjection * world)
     }
     fragment { }
 }
-
-
 
 /**
  * The same depth-only pass rendered from the camera instead of the light -- the frame's own
@@ -143,12 +141,14 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
         val cross = (inPosition.x - inPosition.z) / wavelength * 0.7f.lit + phase * 0.8f.lit
         val wave = (sin(diagonal) + cos(cross)) * u.vertexAnimation.x * 0.5f.lit
         val animatedPosition = vec3(inPosition.x, inPosition.y + wave, inPosition.z)
-        val dX = (cos(diagonal) - sin(cross) * 0.7f.lit) * u.vertexAnimation.x * 0.5f.lit / wavelength
-        val dZ = (cos(diagonal) + sin(cross) * 0.7f.lit) * u.vertexAnimation.x * 0.5f.lit / wavelength
+        val dX =
+            (cos(diagonal) - sin(cross) * 0.7f.lit) * u.vertexAnimation.x * 0.5f.lit / wavelength
+        val dZ =
+            (cos(diagonal) + sin(cross) * 0.7f.lit) * u.vertexAnimation.x * 0.5f.lit / wavelength
         val animatedNormal = normalize(vec3(-dX, 1f.lit, -dZ))
         out.position set (u.mvp * vec4(animatedPosition, 1f.lit))
         color set ins.input(VertexSemantic.Color)
-        normal set (u.model!! * vec4(animatedNormal, 0f.lit)).xyz
+        normal set (u.model * vec4(animatedNormal, 0f.lit)).xyz
         worldPos set (u.model * vec4(animatedPosition, 1f.lit)).xyz
     }
 
@@ -313,7 +313,12 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
     val fresnelSchlick = fn("fresnelSchlick", returns = AslType.Data(GpuDataShape.Vec3)) {
         val cosTheta by param(F32)
         val f0 by param(GpuDataShape.Vec3)
-        returnValue(f0 + (vec3(1f.lit) - f0) * pow(clamp(1f.lit - cosTheta, 0f.lit, 1f.lit), 5f.lit))
+        returnValue(
+            f0 + (vec3(1f.lit) - f0) * pow(
+                clamp(1f.lit - cosTheta, 0f.lit, 1f.lit),
+                5f.lit,
+            ),
+        )
     }
 
     // Gamma 2.2, not exact sRGB -- matches the rest of the pipeline's colour (im)precision.
@@ -351,7 +356,8 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
         )
         val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * color / pi)
         val shadowFactor = let("shadowFactor", sampleShadow(worldPos, n, nDotL))
-        val direct = variable("direct", (diffuse + specular) * u.lightColor.xyz * nDotL * shadowFactor)
+        val direct =
+            variable("direct", (diffuse + specular) * u.lightColor.xyz * nDotL * shadowFactor)
         // Point lights: same BRDF per slot, unshadowed (the one shadow map is directional).
         // Slot count is MAX_POINT_LIGHTS itself -- the same constant that sizes the layout's
         // arrays, so the loop and the struct cannot disagree.
@@ -365,18 +371,29 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
             val pNdotL = let("pNdotL", max(dot(n, pl), 0f.lit))
             iff(pNdotL le 0f.lit) { continueLoop() }
             // Windowed inverse-square: reaches exactly zero at range.
-            val falloff = let("falloff", clamp(1f.lit - (dist * dist) / (slot.w * slot.w), 0f.lit, 1f.lit))
+            val falloff =
+                let("falloff", clamp(1f.lit - (dist * dist) / (slot.w * slot.w), 0f.lit, 1f.lit))
             val attenuation = let("attenuation", falloff * falloff / max(dist * dist, epsilon))
             val ph = let("ph", normalize(v + pl))
             val pNdotH = let("pNdotH", max(dot(n, ph), 0f.lit))
             val pFresnel = let("pFresnel", fresnelSchlick(max(dot(ph, v), 0f.lit), f0))
             val pSpecular = let(
                 "pSpecular",
-                (distributionGgx(pNdotH, roughness) * geometrySmith(nDotV, pNdotL, roughness) * pFresnel) /
+                (
+                    distributionGgx(pNdotH, roughness) * geometrySmith(
+                        nDotV,
+                        pNdotL,
+                        roughness,
+                    ) * pFresnel
+                    ) /
                     max(4f.lit * nDotV * pNdotL, epsilon),
             )
-            val pDiffuse = let("pDiffuse", (vec3(1f.lit) - pFresnel) * (1f.lit - metallic) * color / pi)
-            assign(direct, direct + (pDiffuse + pSpecular) * u.pointLightColors[i].xyz * pNdotL * attenuation)
+            val pDiffuse =
+                let("pDiffuse", (vec3(1f.lit) - pFresnel) * (1f.lit - metallic) * color / pi)
+            assign(
+                direct,
+                direct + (pDiffuse + pSpecular) * u.pointLightColors[i].xyz * pNdotL * attenuation,
+            )
         }
         val ambient = let("ambient", color * ambientStrength)
         // Reinhard: the specular lobe blows past 1.0 at low roughness.

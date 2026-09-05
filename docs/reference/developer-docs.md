@@ -158,11 +158,11 @@ more than one is run at once). `.claude/launch.json`'s `port` field must match t
 
 | Port | Owner | Task |
 |------|-------|------|
-| 8081 | `samples/hello-cube` dev | `:samples:hello-cube:wasmJsBrowserDevelopmentRun` |
+| 8081 | `samples/engine-showcase` dev | `:samples:engine-showcase:wasmJsBrowserDevelopmentRun` |
 | 8082 | `samples/ui-showcase` dev | `:samples:ui-showcase:wasmJsBrowserDevelopmentRun` |
 | 8083 | `samples/ui-showcase` prod preview | `:samples:ui-showcase:wasmJsBrowserProductionRun` |
 | 8084 | `samples/starter-game` dev | `:samples:starter-game:wasmJsBrowserDevelopmentRun` |
-| 8085 | `samples/hello-cube` prod preview | `:samples:hello-cube:wasmJsBrowserProductionRun` |
+| 8085 | `samples/engine-showcase` prod preview | `:samples:engine-showcase:wasmJsBrowserProductionRun` |
 | 8086 | `apps/studio` dev | `:apps:studio:wasmJsBrowserDevelopmentRun` |
 | 8087 | `apps/studio` prod preview | `:apps:studio:wasmJsBrowserProductionRun` |
 | 8088 | `samples/net-demo` dev (browser client; needs the desktop server on 9540) | `:samples:net-demo:wasmJsBrowserDevelopmentRun` |

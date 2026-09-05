@@ -41,12 +41,21 @@ fun gridTriangleIndices(
             val topRight = topLeft + 1
             val bottomLeft = topLeft + width
             val bottomRight = bottomLeft + 1
+            // Split on the main diagonal -- topLeft to bottomRight -- and not the other one.
+            //
+            // Which diagonal a quad is cut along changes the surface *inside* that quad, and this
+            // grid is what a terrain collider is drawn against. Jolt's heightfield takes its
+            // diagonal through (x, z) and (x+1, z+1) (HeightFieldShape.cpp: the pair it tests for
+            // no-collision), so cutting the other way makes the rendered ground and the ground
+            // things land on two different surfaces. Measured on the showcase terrain: matching it
+            // agrees to 0.003, the anti-diagonal disagrees by up to 0.16 -- a box resting visibly
+            // above or below the slope it is standing on.
             indices[cursor++] = topLeft
             indices[cursor++] = bottomLeft
-            indices[cursor++] = topRight
-            indices[cursor++] = topRight
-            indices[cursor++] = bottomLeft
             indices[cursor++] = bottomRight
+            indices[cursor++] = topLeft
+            indices[cursor++] = bottomRight
+            indices[cursor++] = topRight
         }
     }
     return if (cursor == indices.size) indices else indices.copyOf(cursor)

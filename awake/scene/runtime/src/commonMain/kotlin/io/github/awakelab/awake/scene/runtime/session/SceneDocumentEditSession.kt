@@ -6,12 +6,12 @@
 package io.github.awakelab.awake.scene.runtime.session
 
 import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.scene.runtime.Scene
-import io.github.awakelab.awake.scene.runtime.SceneDocument
-import io.github.awakelab.awake.scene.runtime.SceneExtensionRegistry
-import io.github.awakelab.awake.scene.runtime.SceneLoader
-import io.github.awakelab.awake.scene.runtime.SceneValidator
-import io.github.awakelab.awake.scene.runtime.destroy
+import io.github.awakelab.awake.scene.document.Scene
+import io.github.awakelab.awake.scene.document.SceneDocument
+import io.github.awakelab.awake.scene.document.SceneExtensionRegistry
+import io.github.awakelab.awake.scene.document.SceneLoader
+import io.github.awakelab.awake.scene.document.SceneValidator
+import io.github.awakelab.awake.scene.document.destroy
 
 enum class SceneDocumentSessionMode { Edit, Play }
 

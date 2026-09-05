@@ -14,8 +14,8 @@ import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
 import io.github.awakelab.awake.core.input.Input
 import io.github.awakelab.awake.core.input.InputSnapshot
 import io.github.awakelab.awake.core.input.Key
-import io.github.awakelab.awake.core.logging.Log
 import io.github.awakelab.awake.core.input.PointerCursor
+import io.github.awakelab.awake.core.logging.Log
 import io.github.awakelab.awake.core.math.Lens
 import io.github.awakelab.awake.core.text.font.UiFont
 import io.github.awakelab.awake.core.text.font.UiFonts
@@ -36,11 +36,11 @@ import io.github.awakelab.awake.scene.core.Name
 import io.github.awakelab.awake.scene.core.transform.Transform
 import io.github.awakelab.awake.scene.core.transform.TransformSystem
 import io.github.awakelab.awake.scene.rendering.Camera
+import io.github.awakelab.awake.scene.rendering.RenderSystem
+import io.github.awakelab.awake.scene.rendering.debug.DebugVisualizationSystem
 import io.github.awakelab.awake.scene.rendering.mesh.InstancedMeshRenderer
 import io.github.awakelab.awake.scene.rendering.mesh.InstancedSkinnedMeshRenderer
 import io.github.awakelab.awake.scene.rendering.mesh.MeshRenderer
-import io.github.awakelab.awake.scene.rendering.debug.DebugVisualizationSystem
-import io.github.awakelab.awake.scene.rendering.RenderSystem
 import io.github.awakelab.awake.scene.runtime.session.SceneSession
 import kotlin.math.roundToInt
 import kotlin.time.TimeSource

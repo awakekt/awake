@@ -11,9 +11,9 @@ import io.github.awakelab.awake.compose.ui.Modifier
 import io.github.awakelab.awake.compose.ui.platform.FrameInput
 import io.github.awakelab.awake.compose.ui.semantics.testTag
 import io.github.awakelab.awake.core.input.Key
+import io.github.awakelab.awake.ui.shadcn.components.ShadcnSheet
 import io.github.awakelab.awake.ui.shadcn.components.ShadcnSheetSide
 import io.github.awakelab.awake.ui.shadcn.components.shadcnDrawer
-import io.github.awakelab.awake.ui.shadcn.components.shadcnSheet
 import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -40,7 +40,10 @@ class ShadcnSheetAndDrawerTest {
 
         assertEquals(VIEWPORT, left.height, "`inset-y-0`: a side sheet is full height")
         assertEquals(VIEWPORT, bottom.width, "`inset-x-0`: a bottom sheet is full width")
-        assertTrue(bottom.height < VIEWPORT, "`h-auto`: a bottom sheet is only as tall as its content")
+        assertTrue(
+            bottom.height < VIEWPORT,
+            "`h-auto`: a bottom sheet is only as tall as its content",
+        )
     }
 
     /** `w-3/4 sm:max-w-sm` -- three quarters, but never past 384dp. */
@@ -75,16 +78,42 @@ class ShadcnSheetAndDrawerTest {
 
         val x = handle.left + handle.width / 2
         val y = handle.top + handle.height / 2
-        session.frame(FrameInput(VIEWPORT, VIEWPORT, pointerX = x, pointerY = y, pointerDown = false))
-        session.frame(FrameInput(VIEWPORT, VIEWPORT, pointerX = x, pointerY = y, pointerDown = true))
+        session.frame(
+            FrameInput(
+                VIEWPORT,
+                VIEWPORT,
+                pointerX = x,
+                pointerY = y,
+                pointerDown = false,
+            ),
+        )
+        session.frame(
+            FrameInput(
+                VIEWPORT,
+                VIEWPORT,
+                pointerX = x,
+                pointerY = y,
+                pointerDown = true,
+            ),
+        )
         for (step in 1..DRAG_STEPS) {
             session.frame(
-                FrameInput(VIEWPORT, VIEWPORT, pointerX = x, pointerY = y + step * DRAG_STEP_PX, pointerDown = true),
+                FrameInput(
+                    VIEWPORT,
+                    VIEWPORT,
+                    pointerX = x,
+                    pointerY = y + step * DRAG_STEP_PX,
+                    pointerDown = true,
+                ),
             )
         }
         session.frame()
 
-        assertEquals(1, dismissed, "dragging the handle ${DRAG_STEPS * DRAG_STEP_PX}px down did not dismiss")
+        assertEquals(
+            1,
+            dismissed,
+            "dragging the handle ${DRAG_STEPS * DRAG_STEP_PX}px down did not dismiss",
+        )
     }
 
     @Test
@@ -94,9 +123,33 @@ class ShadcnSheetAndDrawerTest {
         val handle = session.frame().onNodeWithTag("$DRAWER.handle").getBoundsInRoot()
         val x = handle.left + handle.width / 2
         val y = handle.top + handle.height / 2
-        session.frame(FrameInput(VIEWPORT, VIEWPORT, pointerX = x, pointerY = y, pointerDown = false))
-        session.frame(FrameInput(VIEWPORT, VIEWPORT, pointerX = x, pointerY = y, pointerDown = true))
-        session.frame(FrameInput(VIEWPORT, VIEWPORT, pointerX = x, pointerY = y + SHORT_DRAG_PX, pointerDown = true))
+        session.frame(
+            FrameInput(
+                VIEWPORT,
+                VIEWPORT,
+                pointerX = x,
+                pointerY = y,
+                pointerDown = false,
+            ),
+        )
+        session.frame(
+            FrameInput(
+                VIEWPORT,
+                VIEWPORT,
+                pointerX = x,
+                pointerY = y,
+                pointerDown = true,
+            ),
+        )
+        session.frame(
+            FrameInput(
+                VIEWPORT,
+                VIEWPORT,
+                pointerX = x,
+                pointerY = y + SHORT_DRAG_PX,
+                pointerDown = true,
+            ),
+        )
         session.frame()
 
         assertEquals(0, dismissed, "a ${SHORT_DRAG_PX}px nudge closed the drawer")
@@ -111,7 +164,7 @@ class ShadcnSheetAndDrawerTest {
         onDismissRequest: () -> Unit = {},
     ): ComposeTestSession = composeTestSession(viewport, viewport) {
         provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
-            shadcnSheet(
+            ShadcnSheet(
                 visible = true,
                 onDismissRequest = onDismissRequest,
                 side = side,

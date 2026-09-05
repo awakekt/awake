@@ -8,12 +8,15 @@ package io.github.awakelab.awake.scene.rendering
 import io.github.awakelab.awake.core.animation.AnimationLibrary
 import io.github.awakelab.awake.core.animation.AnimationPlayer
 import io.github.awakelab.awake.core.animation.Skin
+import io.github.awakelab.awake.core.geometry.VertexFormat
 import io.github.awakelab.awake.core.math.Mat4
 import io.github.awakelab.awake.ecs.World
+import io.github.awakelab.awake.render.material.Material
+import io.github.awakelab.awake.render.mesh.Mesh
 import io.github.awakelab.awake.scene.rendering.animation.Animator
 import io.github.awakelab.awake.scene.rendering.animation.ModularCharacterComponent
-import io.github.awakelab.awake.scene.rendering.animation.SkinnedPose
 import io.github.awakelab.awake.scene.rendering.animation.ModularSkeletalSystem
+import io.github.awakelab.awake.scene.rendering.animation.SkinnedPose
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -23,15 +26,48 @@ class ModularCharacterComponentTest {
 
     private val testSkin = Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4()))
 
+    private fun fakeMesh(): Mesh = object : Mesh {
+        override val format = VertexFormat.PositionNormalColor
+        override val sizeBytes: Long = 0
+        override fun destroy() = Unit
+    }
+
+    private fun fakeMaterial(): Material = object : Material {
+        override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
+        override fun destroy() = Unit
+    }
+
     @Test
     fun modularCharacterComponentEquipsAndUnequipsSlots() {
         val character = ModularCharacterComponent(skin = testSkin)
         assertEquals(0, character.slots.size)
         assertEquals(0, character.visibleSlotCount)
 
-        // Slot checks
-        assertTrue(!character.hasSlot("hair"))
-        assertTrue(!character.hasSlot("chest"))
+        val hairMesh = fakeMesh()
+        val hairMat = fakeMaterial()
+        character.equip("hair", hairMesh, hairMat)
+
+        assertTrue(character.hasSlot("hair"))
+        assertEquals(1, character.slots.size)
+        assertEquals(1, character.visibleSlotCount)
+        assertNotNull(character.getSlot("hair"))
+
+        val chestMesh = fakeMesh()
+        val chestMat = fakeMaterial()
+        character.equip("chest", chestMesh, chestMat)
+        assertEquals(2, character.slots.size)
+        assertEquals(2, character.visibleSlotCount)
+
+        // Toggle visibility
+        character.getSlot("hair")!!.isVisible = false
+        assertEquals(1, character.visibleSlotCount)
+
+        val unequipped = character.unequip("hair")
+        assertNotNull(unequipped)
+        assertEquals(1, character.slots.size)
+
+        character.clearSlots()
+        assertEquals(0, character.slots.size)
     }
 
     @Test
@@ -42,7 +78,6 @@ class ModularCharacterComponentTest {
         val entity = world.create()
         val character = ModularCharacterComponent(skin = testSkin)
 
-        // A minimal Skeleton with one bone (index 0) is all testSkin references.
         val bone = io.github.awakelab.awake.core.animation.Bone(
             translation = io.github.awakelab.awake.core.math.Vec3f.ZERO,
             rotation = io.github.awakelab.awake.core.math.Quat(),
@@ -65,12 +100,10 @@ class ModularCharacterComponentTest {
         world.add(entity, character)
         world.add(entity, animator)
 
-        // Update system — should produce one joint * 16 floats = 16 floats
         system.update(world, delta = 0.016f)
 
         val pose = world.get<SkinnedPose>(entity)
         assertNotNull(pose, "ModularSkeletalSystem must attach SkinnedPose to the entity.")
-        // skin has 1 joint → jointPalette is 16 floats
         assertEquals(16, pose.jointPalette.size)
     }
 }

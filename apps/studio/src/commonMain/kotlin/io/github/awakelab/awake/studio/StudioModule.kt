@@ -6,14 +6,13 @@
 package io.github.awakelab.awake.studio
 
 import io.github.awakelab.awake.asset.shaderpack.LitShadowUniformLayout
-import io.github.awakelab.awake.core.geometry.MeshGeometry
-import io.github.awakelab.awake.core.geometry.generate.generate
 import io.github.awakelab.awake.core.input.Input
 import io.github.awakelab.awake.core.logging.Log
 import io.github.awakelab.awake.core.logging.LogLevel
 import io.github.awakelab.awake.core.logging.LogRingBuffer
 import io.github.awakelab.awake.core.logging.Logger
 import io.github.awakelab.awake.core.logging.PrintLogSink
+import io.github.awakelab.awake.editor.EditorPlugin
 import io.github.awakelab.awake.editor.scene.gizmo.EditorGizmoController
 import io.github.awakelab.awake.editor.scene.gizmo.SceneGizmo
 import io.github.awakelab.awake.editor.scene.gizmo.SceneGizmoSystem
@@ -35,19 +34,15 @@ import io.github.awakelab.awake.scene.authoring.scene
 import io.github.awakelab.awake.scene.controls.GameplayInput
 import io.github.awakelab.awake.scene.controls.camera.CameraInputSystem
 import io.github.awakelab.awake.scene.controls.camera.CameraSystem
-import io.github.awakelab.awake.scene.core.transform.SpinSystem
 import io.github.awakelab.awake.scene.rendering.debug.WorldDebugSettings
 import io.github.awakelab.awake.scene.runtime.SceneAppLifecycleRuntime
 import io.github.awakelab.awake.scene.runtime.defaultInfrastructureSystems
 import io.github.awakelab.awake.studio.app.platformBackendPreference
 import io.github.awakelab.awake.studio.fixture.StudioFixture
-import io.github.awakelab.awake.studio.fixture.StudioFixtureBounds
 import io.github.awakelab.awake.studio.state.StudioEditorBridge
 import io.github.awakelab.awake.studio.state.StudioEditorBridgeSystem
 import io.github.awakelab.awake.studio.state.StudioSceneEditorCameraController
 import io.github.awakelab.awake.studio.state.StudioStore
-import io.github.awakelab.awake.studio.systems.PlayModeSystem
-import io.github.awakelab.awake.studio.systems.SpinClockSystem
 import io.github.awakelab.awake.studio.systems.StudioFixtureSystem
 import io.github.awakelab.awake.studio.ui.StudioShell
 import io.github.awakelab.awake.studio.ui.StudioTheme
@@ -57,6 +52,22 @@ import io.github.awakelab.awake.ui.shadcn.theme.provideShadcnTheme
  * here, so adding a field to that shader can't leave this call site silently short. */
 internal val LIT_SHADOW_UNIFORM_FLOAT_COUNT = LitShadowUniformLayout.total
 
+/**
+ * Creates an Awake Studio [AppModule] configured with consumer [plugins] and [backend].
+ */
+fun studioModule(
+    plugins: List<EditorPlugin> = emptyList(),
+    backend: AppWindowBackend = platformBackendPreference(),
+    includeDefaultFixture: Boolean = true,
+    keymap: io.github.awakelab.awake.editor.keybinding.EditorKeymapBuilder? = null,
+): AppModule = studioModule(
+    store = StudioStore(),
+    backend = backend,
+    plugins = plugins,
+    includeDefaultFixture = includeDefaultFixture,
+    keymap = keymap,
+)
+
 /** [backend] is only a status-bar label. It is the backend this game asks its window for (see
  * `configureStudioWindow`), which is the closest honest answer available: `Renderer` exposes no
  * identity of its own. */
@@ -64,7 +75,14 @@ internal val LIT_SHADOW_UNIFORM_FLOAT_COUNT = LitShadowUniformLayout.total
 internal fun studioModule(
     store: StudioStore = StudioStore(),
     backend: AppWindowBackend = platformBackendPreference(),
-    editorBridge: StudioEditorBridge = StudioEditorBridge(store),
+    plugins: List<EditorPlugin> = emptyList(),
+    includeDefaultFixture: Boolean = true,
+    keymap: io.github.awakelab.awake.editor.keybinding.EditorKeymapBuilder? = null,
+    editorBridge: StudioEditorBridge = StudioEditorBridge(
+        store,
+        customPlugins = plugins,
+        keymapBuilder = keymap,
+    ),
 ): AppModule {
     val fixture = StudioFixture()
     val backendLabel = backend.label()
@@ -85,22 +103,30 @@ internal fun studioModule(
     return appModule {
         scene("studio") {
             assets {
-                mesh("cube") { renderer.createMesh(generate { cube(size = 1f, colored = true) }.alsoRecordBounds("cube")) }
-                mesh("ground") { renderer.createMesh(generate { plane(size = 10f, colored = false) }.alsoRecordBounds("ground")) }
                 material("lit-shadow") { renderer.createMaterial(uniformFloatCount = LIT_SHADOW_UNIFORM_FLOAT_COUNT) }
+                editorBridge.registerAssets(this)
+            }
+
+            systems {
+                editorBridge.registerSystems(this)
             }
 
             // Direct construction: merges UI and gizmo handle drag ownership to prevent double-orbiting.
             frameSystem("editor-bridge") { StudioEditorBridgeSystem(editorBridge) }
             frameSystem("cameraInput") { CameraInputSystem(inputProvider = { gameplayInput(gizmo) }) }
-            // Advance rotating cube SpinControl only during Play mode.
-            frameSystem("spin-clock") { PlayModeSystem(SpinClockSystem(), editorBridge.store) }
-            frameSystem("spin") { PlayModeSystem(SpinSystem(), editorBridge.store) }
-            frameSystem("studio-fixture") {
-                StudioFixtureSystem(this, store, fixture, editorBridge.history, editorCameraSystem::alignToAuthoredCamera)
+
+            if (includeDefaultFixture) {
+                frameSystem("studio-fixture") {
+                    StudioFixtureSystem(this, store, fixture, editorBridge.history, editorCameraSystem::alignToAuthoredCamera)
+                }
             }
             frameSystem("scene-editor-camera") { editorCameraSystem }
-            frameSystem("camera") { CameraSystem(inputProvider = { gameplayInput(gizmo) }) }
+            frameSystem("camera") {
+                CameraSystem(
+                    inputProvider = { gameplayInput(gizmo) },
+                    viewportBounds = { resources.viewportRect.bounds },
+                )
+            }
             // Runs after default infrastructure systems so gizmo lines are not cleared by debug visualization passes.
             infrastructureSystems {
                 defaultInfrastructureSystems() +
@@ -118,8 +144,7 @@ internal fun studioModule(
                         resources.orientationGizmo,
                         selectedEntityId = { editorBridge.store.state.selection.primary?.toLiveEntity(world)?.id },
                         drawCalls = { collectDrawCalls() },
-                    ) +
-                    StudioEditorBridgeSystem(editorBridge)
+                    )
             }
 
             onReady {
@@ -135,16 +160,20 @@ internal fun studioModule(
                 Log.install(logBuffer)
                 Log.minimumLevel = LogLevel.Debug
                 studioLog.info { "Studio ready on $backendLabel" }
-                fixture.preload()
+                if (includeDefaultFixture) {
+                    fixture.preload()
+                }
                 resources.files.preload()
                 // Persistent entity surviving scene reloads to preserve debug visualization toggles.
                 world.entity { with(WorldDebugSettings()) }
                 // Persistent scene-view editor camera surviving scene reloads.
                 editorCamera.entity = createSceneEditorCameraEntity(world)
-                fixture.load(this)
+                if (includeDefaultFixture) {
+                    fixture.load(this)
+                }
             }
 
-            content {
+            ui {
                 provideShadcnTheme(StudioTheme) {
                     StudioShell(
                         store,
@@ -182,11 +211,6 @@ private fun SceneAppLifecycleRuntime.gameplayInput(gizmo: SceneGizmo): GameplayI
  */
 private fun SceneAppLifecycleRuntime.gizmoInput(): GameplayInput =
     GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership)
-
-/** Records [meshId]'s local bounds for picking, and returns the geometry unchanged. */
-private fun MeshGeometry.alsoRecordBounds(meshId: String): MeshGeometry = also {
-    StudioFixtureBounds.register(meshId, it)
-}
 
 // Spelled out rather than derived from `name`: enum-case text ("WEBGPU") is not how any of these
 // backends is written.
