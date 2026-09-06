@@ -109,7 +109,7 @@ kotlin {
     }
 
     android {
-        namespace = "io.github.awakelab.awake.asset.shadercompiler"
+        namespace = "com.awakekt.awake.asset.shadercompiler"
     }
 
     // Same generated-def cinterop shape as jolt: linker flags are build-directory paths known

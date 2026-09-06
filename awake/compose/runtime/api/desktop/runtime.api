@@ -1,74 +1,74 @@
-public abstract interface class io/github/awakelab/awake/compose/runtime/Applier {
-	public abstract fun childCount (Lio/github/awakelab/awake/compose/runtime/Slot;)I
-	public abstract fun createAt (Lio/github/awakelab/awake/compose/runtime/Slot;ILjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
-	public abstract fun down (Lio/github/awakelab/awake/compose/runtime/Slot;I)V
-	public abstract fun keyAt (Lio/github/awakelab/awake/compose/runtime/Slot;I)Ljava/lang/Object;
-	public abstract fun moveTo (Lio/github/awakelab/awake/compose/runtime/Slot;II)V
-	public abstract fun nodeAt (Lio/github/awakelab/awake/compose/runtime/Slot;I)Ljava/lang/Object;
-	public abstract fun truncateFrom (Lio/github/awakelab/awake/compose/runtime/Slot;I)V
-	public abstract fun typeAt (Lio/github/awakelab/awake/compose/runtime/Slot;I)Ljava/lang/Object;
+public abstract interface class com/awakekt/awake/compose/runtime/Applier {
+	public abstract fun childCount (Lcom/awakekt/awake/compose/runtime/Slot;)I
+	public abstract fun createAt (Lcom/awakekt/awake/compose/runtime/Slot;ILjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+	public abstract fun down (Lcom/awakekt/awake/compose/runtime/Slot;I)V
+	public abstract fun keyAt (Lcom/awakekt/awake/compose/runtime/Slot;I)Ljava/lang/Object;
+	public abstract fun moveTo (Lcom/awakekt/awake/compose/runtime/Slot;II)V
+	public abstract fun nodeAt (Lcom/awakekt/awake/compose/runtime/Slot;I)Ljava/lang/Object;
+	public abstract fun truncateFrom (Lcom/awakekt/awake/compose/runtime/Slot;I)V
+	public abstract fun typeAt (Lcom/awakekt/awake/compose/runtime/Slot;I)Ljava/lang/Object;
 	public abstract fun up ()V
 }
 
-public final class io/github/awakelab/awake/compose/runtime/Composer {
+public final class com/awakekt/awake/compose/runtime/Composer {
 	public static final field INITIAL_DEPTH I
-	public final fun getLocalsSnapshot ()Lio/github/awakelab/awake/compose/runtime/ProvidedLocals;
+	public final fun getLocalsSnapshot ()Lcom/awakekt/awake/compose/runtime/ProvidedLocals;
 	public final fun key (Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public final fun node (Ljava/lang/Object;Lio/github/awakelab/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
-	public static synthetic fun node$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Lio/github/awakelab/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public final fun node (Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun node$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/compose/runtime/ComposerKt {
-	public static final fun key (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public static final fun node (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Lio/github/awakelab/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun node$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Lio/github/awakelab/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun reconcile (Lio/github/awakelab/awake/compose/runtime/Applier;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/compose/runtime/Composer;
-	public static final fun reconcile (Lio/github/awakelab/awake/compose/runtime/Applier;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/compose/runtime/Composer;
+public final class com/awakekt/awake/compose/runtime/ComposerKt {
+	public static final fun key (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static final fun node (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun node$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/Slot;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun reconcile (Lcom/awakekt/awake/compose/runtime/Applier;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/runtime/Composer;
+	public static final fun reconcile (Lcom/awakekt/awake/compose/runtime/Applier;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/runtime/Composer;
 }
 
-public final class io/github/awakelab/awake/compose/runtime/Composition {
-	public fun <init> (Lio/github/awakelab/awake/compose/runtime/Applier;Ljava/lang/Object;Lio/github/awakelab/awake/compose/runtime/ProvidedLocals;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/compose/runtime/Applier;Ljava/lang/Object;Lio/github/awakelab/awake/compose/runtime/ProvidedLocals;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun reconcile (Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/compose/runtime/Composer;
+public final class com/awakekt/awake/compose/runtime/Composition {
+	public fun <init> (Lcom/awakekt/awake/compose/runtime/Applier;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/ProvidedLocals;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/compose/runtime/Applier;Ljava/lang/Object;Lcom/awakekt/awake/compose/runtime/ProvidedLocals;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun reconcile (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/runtime/Composer;
 }
 
-public final class io/github/awakelab/awake/compose/runtime/CompositionLocal {
+public final class com/awakekt/awake/compose/runtime/CompositionLocal {
 }
 
-public final class io/github/awakelab/awake/compose/runtime/CompositionLocalKt {
-	public static final fun CompositionLocalProvider (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
-	public static final fun CompositionLocalProvider (Lio/github/awakelab/awake/compose/runtime/Composer;[Lio/github/awakelab/awake/compose/runtime/ProvidedValue;Lkotlin/jvm/functions/Function1;)V
-	public static final fun compositionLocalOf (Lkotlin/jvm/functions/Function0;)Lio/github/awakelab/awake/compose/runtime/CompositionLocal;
-	public static final fun getCurrent (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/runtime/CompositionLocal;)Ljava/lang/Object;
-	public static final fun provides (Lio/github/awakelab/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;)Lio/github/awakelab/awake/compose/runtime/ProvidedValue;
+public final class com/awakekt/awake/compose/runtime/CompositionLocalKt {
+	public static final fun CompositionLocalProvider (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;Lkotlin/jvm/functions/Function1;)V
+	public static final fun CompositionLocalProvider (Lcom/awakekt/awake/compose/runtime/Composer;[Lcom/awakekt/awake/compose/runtime/ProvidedValue;Lkotlin/jvm/functions/Function1;)V
+	public static final fun compositionLocalOf (Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+	public static final fun getCurrent (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/runtime/CompositionLocal;)Ljava/lang/Object;
+	public static final fun provides (Lcom/awakekt/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;)Lcom/awakekt/awake/compose/runtime/ProvidedValue;
 }
 
-public final class io/github/awakelab/awake/compose/runtime/ProvidedLocals {
+public final class com/awakekt/awake/compose/runtime/ProvidedLocals {
 	public fun <init> ()V
-	public final fun provide (Lio/github/awakelab/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)V
-	public final fun provideAll ([Lio/github/awakelab/awake/compose/runtime/ProvidedValue;Lkotlin/jvm/functions/Function0;)V
-	public final fun read (Lio/github/awakelab/awake/compose/runtime/CompositionLocal;)Ljava/lang/Object;
-	public final fun snapshot ()Lio/github/awakelab/awake/compose/runtime/ProvidedLocals;
+	public final fun provide (Lcom/awakekt/awake/compose/runtime/CompositionLocal;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)V
+	public final fun provideAll ([Lcom/awakekt/awake/compose/runtime/ProvidedValue;Lkotlin/jvm/functions/Function0;)V
+	public final fun read (Lcom/awakekt/awake/compose/runtime/CompositionLocal;)Ljava/lang/Object;
+	public final fun snapshot ()Lcom/awakekt/awake/compose/runtime/ProvidedLocals;
 }
 
-public final class io/github/awakelab/awake/compose/runtime/ProvidedValue {
+public final class com/awakekt/awake/compose/runtime/ProvidedValue {
 }
 
-public abstract interface class io/github/awakelab/awake/compose/runtime/RememberHolder {
+public abstract interface class com/awakekt/awake/compose/runtime/RememberHolder {
 	public abstract fun getRememberSlots ()Ljava/util/List;
 }
 
-public final class io/github/awakelab/awake/compose/runtime/RememberKt {
-	public static final fun remember (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public static final fun remember (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
-	public static final fun remember (Lio/github/awakelab/awake/compose/runtime/Composer;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+public final class com/awakekt/awake/compose/runtime/RememberKt {
+	public static final fun remember (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static final fun remember (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+	public static final fun remember (Lcom/awakekt/awake/compose/runtime/Composer;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 }
 
-public final class io/github/awakelab/awake/compose/runtime/Slot : java/lang/Enum {
-	public static final field Children Lio/github/awakelab/awake/compose/runtime/Slot;
-	public static final field Layers Lio/github/awakelab/awake/compose/runtime/Slot;
+public final class com/awakekt/awake/compose/runtime/Slot : java/lang/Enum {
+	public static final field Children Lcom/awakekt/awake/compose/runtime/Slot;
+	public static final field Layers Lcom/awakekt/awake/compose/runtime/Slot;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/compose/runtime/Slot;
-	public static fun values ()[Lio/github/awakelab/awake/compose/runtime/Slot;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/runtime/Slot;
+	public static fun values ()[Lcom/awakekt/awake/compose/runtime/Slot;
 }
 

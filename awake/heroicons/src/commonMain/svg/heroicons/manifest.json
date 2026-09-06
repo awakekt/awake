@@ -1,5 +1,5 @@
 {
-  "package": "io.github.awakelab.awake.heroicons.icon",
+  "package": "com.awakekt.awake.heroicons.icon",
   "interface": "HeroIcons",
   "source": {
     "name": "Heroicons",

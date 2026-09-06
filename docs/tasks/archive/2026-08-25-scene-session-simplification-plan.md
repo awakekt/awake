@@ -137,7 +137,7 @@ Keep the current `scene:runtime` Gradle module during the first extraction. Orga
 owner, not by historical file placement:
 
 ```text
-io.github.awakelab.awake.scene
+com.awakekt.awake.scene
   document/     SceneDocument, loader, validator, writer, export model
   session/      SceneSession, SceneManager, session lifetime
   schedule/     SceneSchedule, phase/handles, system registrations

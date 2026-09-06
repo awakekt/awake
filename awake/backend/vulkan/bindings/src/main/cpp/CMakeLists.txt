@@ -33,9 +33,9 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         # Generated via jni-binding-generator (see D10 in docs/decisions/), not the
         # legacy awake-vulkan-generator that backs the rest of this target's sources.
         # See that file's own header comment for the hand-edit workflow.
-        generated/io_github_awakelab_awake_vulkan_gen_VulkanBuffers_jni.gen.cpp
-        generated/io_github_awakelab_awake_vulkan_gen_VulkanDescriptors_jni.gen.cpp
-        generated/io_github_awakelab_awake_vulkan_gen_VulkanImages_jni.gen.cpp
+        generated/com_awakekt_awake_vulkan_gen_VulkanBuffers_jni.gen.cpp
+        generated/com_awakekt_awake_vulkan_gen_VulkanDescriptors_jni.gen.cpp
+        generated/com_awakekt_awake_vulkan_gen_VulkanImages_jni.gen.cpp
         VulkanImages_native.cpp)
 
 # jni-utils.h (vendored jni-binding-generator helper header the generated file needs).

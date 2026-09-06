@@ -22,8 +22,8 @@
 ## 2. Actionable Backlog Items (Parked for Future Refactoring)
 
 ### Encapsulation & Mutability Polish
-- [ ] [`LayoutNode.kt:50`](../../awake/compose/ui/src/commonMain/kotlin/io/github/awakelab/awake/compose/ui/node/LayoutNode.kt#L50): Expose read-only `List<Any?>` backed by private `MutableList`.
-- [ ] [`Remember.kt:16`](../../awake/compose/runtime/src/commonMain/kotlin/io/github/awakelab/awake/compose/runtime/Remember.kt#L16): Expose read-only `val rememberSlots: List<Any?>`.
+- [ ] [`LayoutNode.kt:50`](../../awake/compose/ui/src/commonMain/kotlin/com/awakekt/awake/compose/ui/node/LayoutNode.kt#L50): Expose read-only `List<Any?>` backed by private `MutableList`.
+- [ ] [`Remember.kt:16`](../../awake/compose/runtime/src/commonMain/kotlin/com/awakekt/awake/compose/runtime/Remember.kt#L16): Expose read-only `val rememberSlots: List<Any?>`.
 
 ### UI Animation Nuances
 - [ ] `ShadcnSelect.kt:84`: Add smooth fade/scale animation for popup dropdown instead of raw conditional collapse.
@@ -33,13 +33,13 @@
 
 ## 3. Intentional Engine Exceptions (No Action Required)
 
-1. **[`Mat4.kt`](../../awake/core/math/src/commonMain/kotlin/io/github/awakelab/awake/core/math/Matrix.kt#L12) (801 lines)**:
+1. **[`Mat4.kt`](../../awake/core/math/src/commonMain/kotlin/com/awakekt/awake/core/math/Matrix.kt#L12) (801 lines)**:
    - *Rationale*: High-performance 3D graphics matrix math implementation. Kept in a single contiguous unit for SIMD cache locality.
-2. **[`AslBlockBuilder.kt`](../../awake/asset/shader-dsl/src/commonMain/kotlin/io/github/awakelab/awake/asset/shaderdsl/AslShaderBuilder.kt#L26) (497 lines)**:
+2. **[`AslBlockBuilder.kt`](../../awake/asset/shader-dsl/src/commonMain/kotlin/com/awakekt/awake/asset/shaderdsl/AslShaderBuilder.kt#L26) (497 lines)**:
    - *Rationale*: Type-safe ASL shader AST builder DSL.
-3. **[`Renderer.kt`](../../awake/backend/vulkan/src/commonMain/kotlin/io/github/awakelab/awake/vulkan/renderer/Renderer.kt#L87) (445 lines)**:
+3. **[`Renderer.kt`](../../awake/backend/vulkan/src/commonMain/kotlin/com/awakekt/awake/vulkan/renderer/Renderer.kt#L87) (445 lines)**:
    - *Rationale*: Vulkan low-level render pass and swapchain loop coordinator.
-4. **[`HybridArchetypeBenchmarks.kt`](../../awake/ecs/benchmark/src/main/kotlin/io/github/awakelab/awake/ecs/benchmark/HybridArchetypeBenchmarks.kt#L42) (404 lines)**:
+4. **[`HybridArchetypeBenchmarks.kt`](../../awake/ecs/benchmark/src/main/kotlin/com/awakekt/awake/ecs/benchmark/HybridArchetypeBenchmarks.kt#L42) (404 lines)**:
    - *Rationale*: JMH performance benchmark matrix.
 
 ---

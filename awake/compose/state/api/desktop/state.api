@@ -1,0 +1,11 @@
+public final class com/awakekt/awake/compose/state/ComposeStateKt {
+	public static final fun ProvideStore (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/core/state/Store;Lkotlin/jvm/functions/Function1;)V
+	public static final fun getLocalStore ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+	public static final fun rememberReducerStore (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/core/state/Reducer;)Lcom/awakekt/awake/core/state/ReducerStore;
+	public static final fun rememberReducerStore (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/core/state/ReducerStore;
+	public static synthetic fun rememberReducerStore$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/core/state/Reducer;ILjava/lang/Object;)Lcom/awakekt/awake/core/state/ReducerStore;
+	public static synthetic fun rememberReducerStore$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/core/state/ReducerStore;
+	public static final fun rememberStore (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/core/state/Store;
+	public static synthetic fun rememberStore$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/core/state/Store;
+}
+

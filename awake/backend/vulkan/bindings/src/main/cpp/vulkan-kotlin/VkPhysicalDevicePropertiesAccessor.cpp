@@ -13,13 +13,13 @@ VkPhysicalDevicePropertiesAccessor::VkPhysicalDevicePropertiesAccessor(JNIEnv *e
     vendorIDField = env->GetFieldID(clazz, "vendorID", "I");
     deviceIDField = env->GetFieldID(clazz, "deviceID", "I");
     deviceTypeField = env->GetFieldID(clazz, "deviceType",
-                                      "Lio/github/awakelab/awake/vulkan/enums/VkPhysicalDeviceType;");
+                                      "Lcom/awakekt/awake/vulkan/enums/VkPhysicalDeviceType;");
     deviceNameField = env->GetFieldID(clazz, "deviceName", "[C");
     pipelineCacheUUIDField = env->GetFieldID(clazz, "pipelineCacheUUID", "[B");
     limitsField = env->GetFieldID(clazz, "limits",
-                                  "Lio/github/awakelab/awake/vulkan/models/physicaldevice/VkPhysicalDeviceLimits;");
+                                  "Lcom/awakekt/awake/vulkan/models/physicaldevice/VkPhysicalDeviceLimits;");
     sparsePropertiesField = env->GetFieldID(clazz, "sparseProperties",
-                                            "Lio/github/awakelab/awake/vulkan/models/physicaldevice/VkPhysicalDeviceSparseProperties;");
+                                            "Lcom/awakekt/awake/vulkan/models/physicaldevice/VkPhysicalDeviceSparseProperties;");
 }
 
 void

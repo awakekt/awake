@@ -1,0 +1,9 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.ui.shadcn.components
+
+/** Which way a [ShadcnSeparator] runs. */
+enum class ShadcnSeparatorOrientation { Horizontal, Vertical }

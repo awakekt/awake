@@ -8,9 +8,9 @@
 VkRect2DAccessor::VkRect2DAccessor(JNIEnv *env, jobject obj) : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     offsetField = env->GetFieldID(clazz, "offset",
-                                  "Lio/github/awakelab/awake/vulkan/models/VkOffset2D;");
+                                  "Lcom/awakekt/awake/vulkan/models/VkOffset2D;");
     extentField = env->GetFieldID(clazz, "extent",
-                                  "Lio/github/awakelab/awake/vulkan/models/VkExtent2D;");
+                                  "Lcom/awakekt/awake/vulkan/models/VkExtent2D;");
 }
 
 void

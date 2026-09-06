@@ -184,7 +184,7 @@ Use these first:
   `TypographyPaddingProbeTest` for the pattern). Keep the probe as permanent regression
   coverage when it proves something worth locking in, delete it when it was purely diagnostic
 - `UiAnimationFrameCapture` (`awake:backend:vulkan:desktopTest`,
-  `io.github.awakelab.awake.vulkan.UiAnimationFrameCapture`) for "does this animation
+  `com.awakekt.awake.vulkan.UiAnimationFrameCapture`) for "does this animation
   actually render right, frame by frame, through the real backend" questions -- the gap none of
   the tools above can close: a throwaway `Rectangle` probe (like the one above) proves the
   *logical* sequence is smooth, but never asks a renderer to draw anything, so it structurally

@@ -50,10 +50,10 @@ Current structural evidence (including the final node-local placement correction
 
 ```text
 ./gradlew :awake:compose:ui:desktopTest \
-  --tests io.github.awakelab.awake.compose.ui.DropShadowTest \
-  --tests io.github.awakelab.awake.compose.ui.PaintTest \
+  --tests com.awakekt.awake.compose.ui.DropShadowTest \
+  --tests com.awakekt.awake.compose.ui.PaintTest \
   :awake:engine:compose:desktopTest \
-  --tests io.github.awakelab.awake.engine.compose.GraphicsLayerCompositorTest --no-daemon
+  --tests com.awakekt.awake.engine.compose.GraphicsLayerCompositorTest --no-daemon
 BUILD SUCCESSFUL
 ```
 

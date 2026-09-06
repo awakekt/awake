@@ -13,7 +13,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.ai"
+        namespace = "com.awakekt.awake.ai"
     }
 
     sourceSets {

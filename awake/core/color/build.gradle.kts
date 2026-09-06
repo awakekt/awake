@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.core.color"
+        namespace = "com.awakekt.awake.core.color"
     }
 
     sourceSets {

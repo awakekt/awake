@@ -12,14 +12,14 @@ implementation(project(":awake:core"))
 
 ## Packages
 
-- `io.github.awakelab.awake.core.math` — Vector3, Matrix4, Quaternion, Ray, fixed-point
+- `com.awakekt.awake.core.math` — Vector3, Matrix4, Quaternion, Ray, fixed-point
   math, trig lookup tables.
-- `io.github.awakelab.awake.core.input` — input event types and mapping, platform-neutral.
-- `io.github.awakelab.awake.core.application` — the fixed-timestep game loop and
+- `com.awakekt.awake.core.input` — input event types and mapping, platform-neutral.
+- `com.awakekt.awake.core.application` — the fixed-timestep game loop and
   application lifecycle hooks.
-- `io.github.awakelab.awake.core.graphics` — bitmap and low-level resource I/O.
-- `io.github.awakelab.awake.core.colors` — color types and conversions.
-- `io.github.awakelab.awake.core.utils` — shared dependency-free helpers.
+- `com.awakekt.awake.core.graphics` — bitmap and low-level resource I/O.
+- `com.awakekt.awake.core.colors` — color types and conversions.
+- `com.awakekt.awake.core.utils` — shared dependency-free helpers.
 
 ## Related modules
 

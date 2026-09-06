@@ -16,7 +16,7 @@
 * No manual `-Djava.library.path` or C++ compilation required for consumers.
 
 ### 3. Multi-ABI Android Packaging
-* Ships companion AAR (`io.github.awake-lab:vulkan-kmp-android-native`) bundling NDK-built JNI libraries for `arm64-v8a` and `x86_64` alongside Khronos validation layer binaries.
+* Ships companion AAR (`com.awakekt.awake:vulkan-kmp-android-native`) bundling NDK-built JNI libraries for `arm64-v8a` and `x86_64` alongside Khronos validation layer binaries.
 * Automatically resolved and packaged into the final APK by AGP.
 
 ### 4. iOS Support via MoltenVK
@@ -36,7 +36,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.awake-lab:vulkan-kmp:0.1.0")
+    implementation("com.awakekt.awake:vulkan-kmp:0.1.0")
 }
 ```
 
@@ -45,17 +45,17 @@ dependencies {
 ## Quickstart
 
 ```kotlin
-import io.github.awakelab.awake.vulkan.Version
-import io.github.awakelab.awake.vulkan.Version.Companion.vkVersion
-import io.github.awakelab.awake.vulkan.Vulkan
-import io.github.awakelab.awake.vulkan.enums.VkCommandBufferLevel
-import io.github.awakelab.awake.vulkan.enums.VkQueueFlagBits
-import io.github.awakelab.awake.vulkan.models.info.VkApplicationInfo
-import io.github.awakelab.awake.vulkan.models.info.VkCommandBufferAllocateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkCommandPoolCreateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkDeviceCreateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkDeviceQueueCreateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkInstanceCreateInfo
+import com.awakekt.awake.vulkan.Version
+import com.awakekt.awake.vulkan.Version.Companion.vkVersion
+import com.awakekt.awake.vulkan.Vulkan
+import com.awakekt.awake.vulkan.enums.VkCommandBufferLevel
+import com.awakekt.awake.vulkan.enums.VkQueueFlagBits
+import com.awakekt.awake.vulkan.models.info.VkApplicationInfo
+import com.awakekt.awake.vulkan.models.info.VkCommandBufferAllocateInfo
+import com.awakekt.awake.vulkan.models.info.VkCommandPoolCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkDeviceCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkDeviceQueueCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkInstanceCreateInfo
 
 fun main() {
     // 1. Initialize Vulkan Instance

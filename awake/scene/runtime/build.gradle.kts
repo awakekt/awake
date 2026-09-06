@@ -15,7 +15,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.scene.runtime"
+        namespace = "com.awakekt.awake.scene.runtime"
     }
 
     sourceSets {

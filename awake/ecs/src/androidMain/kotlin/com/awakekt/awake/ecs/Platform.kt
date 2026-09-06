@@ -1,0 +1,24 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.ecs
+
+import kotlin.reflect.KClass
+
+internal actual fun <T : Any> newComponentArray(type: KClass<T>, capacity: Int): Array<Any?> = java.lang.reflect.Array.newInstance(type.java, capacity) as Array<Any?>
+
+internal actual fun <T : Any> createComponentInstance(type: KClass<T>): T {
+    // KClass<T>.javaObjectType always returns the Class object for that exact T; the
+    // platform API just types it as Class<*> instead of Class<T>.
+    @Suppress("UNCHECKED_CAST")
+    val clazz = type.javaObjectType as Class<T>
+    return clazz.getDeclaredConstructor().newInstance()
+}
+
+// Same reasoning as the desktop actual -- see the commonMain expect declaration's doc comment.
+@PublishedApi
+internal actual inline fun <reified T : Any> componentTypeKey(): Any = T::class.java
+
+internal actual fun <T : Any> componentTypeKeyOf(type: KClass<T>): Any = type.java

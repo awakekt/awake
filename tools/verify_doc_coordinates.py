@@ -16,7 +16,7 @@ exist until the day after `v0.1.0-dev.6` was cut.
 What it checks, per snippet:
 
   group:artifact  must match a module that actually publishes. Derived the same
-                  way the build derives it -- `io.github.awake-lab` plus the
+                  way the build derives it -- `com.awakekt.awake` plus the
                   parent path with the leading `awake` dropped -- and overridden
                   where a module calls `coordinates(...)`, which is what makes
                   `vulkan-kmp` a real artifact id and not a typo.
@@ -43,7 +43,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SNIPPET = re.compile(r'(?:implementation|api|testImplementation|compileOnly)\(\s*"([^"]+)"\s*\)')
 
 # A version catalog splits the coordinate from the version:
-#   vulkan-kmp = { module = "io.github.awake-lab:vulkan-kmp", version.ref = "vulkan-kmp" }
+#   vulkan-kmp = { module = "com.awakekt.awake:vulkan-kmp", version.ref = "vulkan-kmp" }
 # The first pass missed this entirely, so a catalog block in the bindings README kept advertising a
 # version that no build state produces while the gate reported the file clean.
 CATALOG_MODULE = re.compile(r'module\s*=\s*"([^"]+)"')
@@ -83,7 +83,7 @@ def published_coordinates() -> dict[str, set[str]]:
             # parent path with the leading `awake` segment dropped.
             parts = module.relative_to(REPO_ROOT).parts[:-1]  # drop the module's own name
             trimmed = [p for p in parts[1:]] if parts and parts[0] == "awake" else list(parts)
-            group = "io.github.awake-lab" + ("." + ".".join(trimmed) if trimmed else "")
+            group = "com.awakekt.awake" + ("." + ".".join(trimmed) if trimmed else "")
             artifact = module.name
         coordinates.setdefault(group, set()).add(artifact)
     return coordinates

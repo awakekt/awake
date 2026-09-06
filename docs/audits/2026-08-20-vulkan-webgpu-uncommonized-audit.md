@@ -10,7 +10,7 @@ Related Plans: [`2026-08-19-vulkan-webgpu-common-backend-plan.md`](2026-08-19-vu
 ## Executive Summary
 
 Awake targets Vulkan (Desktop/Android/iOS via MoltenVK) and WebGPU (Wasm/Web via wgpu4k/Dawn).  
-While the public engine API [`Renderer`](../../awake/engine/render/contract/src/commonMain/kotlin/io/github/awakelab/awake/render/renderer/Renderer.kt) and scene runtime are backend-agnostic, substantial rendering pipeline logic, staging algorithms, and data packing remain duplicated across `:awake:backend:vulkan` and `:awake:backend:webgpu`.
+While the public engine API [`Renderer`](../../awake/engine/render/contract/src/commonMain/kotlin/com/awakekt/awake/render/renderer/Renderer.kt) and scene runtime are backend-agnostic, substantial rendering pipeline logic, staging algorithms, and data packing remain duplicated across `:awake:backend:vulkan` and `:awake:backend:webgpu`.
 
 This audit catalogs every rendering component into:
 1. **Already Commonized in KMP** (shared contracts and abstractions in `:awake:engine:render:contract` and `:awake:engine:render:passes`).
@@ -39,11 +39,11 @@ This audit catalogs every rendering component into:
 ## Detailed Breakdown of Un-Commonized Areas
 
 ### 1. UI Vertex Buffer Packing (`RendererVertexWriters.kt`)
-- **Vulkan**: `awake/backend/vulkan/src/commonMain/kotlin/io/github/awakelab/awake/vulkan/renderer/RendererVertexWriters.kt` (100 lines)
-- **WebGPU**: `awake/backend/webgpu/src/wasmJsMain/kotlin/io/github/awakelab/awake/webgpu/renderer/RendererVertexWriters.kt` (99 lines)
+- **Vulkan**: `awake/backend/vulkan/src/commonMain/kotlin/com/awakekt/awake/vulkan/renderer/RendererVertexWriters.kt` (100 lines)
+- **WebGPU**: `awake/backend/webgpu/src/wasmJsMain/kotlin/com/awakekt/awake/webgpu/renderer/RendererVertexWriters.kt` (99 lines)
 - **Finding**: These functions are 100% pure CPU float-packing math into `FloatArray`. They contain 0 GPU calls and 0 backend-specific imports.
 - **Drift Detected**: Vulkan supports `smoothing: Float` on rounded quads (16 floats/vert), while WebGPU omits smoothing (15 floats/vert).
-- **Target**: Extract into `awake:engine:render:passes` (`io.github.awakelab.awake.render.passes.ui.RendererVertexWriters.kt`).
+- **Target**: Extract into `awake:engine:render:passes` (`com.awakekt.awake.render.passes.ui.RendererVertexWriters.kt`).
 
 ### 2. UI Mesh Staging & Batch Coalescing (`RendererDrawUi.kt`)
 - **Vulkan**: 1,023 lines in `vulkan/renderer/RendererDrawUi.kt`
@@ -78,7 +78,7 @@ This audit catalogs every rendering component into:
   - `skinnedJointPaletteFloats(jointMatrices)`: flattens `Array<Mat4>` into uniform float array.
   - `fogUniformFloats(fogColor, near, far, density)`: packs fog parameters.
 - **Target**:
-  - Extract pure uniform packing functions into `awake:engine:render:passes` under `io.github.awakelab.awake.render.passes.uniforms`.
+  - Extract pure uniform packing functions into `awake:engine:render:passes` under `com.awakekt.awake.render.passes.uniforms`.
 
 ### 6. Shadow Map Pipeline & Capabilities
 - **Current State**:

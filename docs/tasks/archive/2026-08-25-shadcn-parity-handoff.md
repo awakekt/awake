@@ -84,9 +84,9 @@ These focused suites passed before the handoff commits:
 
 ```bash
 ./gradlew :awake:compose:runtime:desktopTest \
-  --tests io.github.awakelab.awake.compose.runtime.RecomposeScopeTest --no-daemon
+  --tests com.awakekt.awake.compose.runtime.RecomposeScopeTest --no-daemon
 ./gradlew :awake:compose:ui:desktopTest \
-  --tests io.github.awakelab.awake.compose.ui.ComposeFrameStatsTest --no-daemon
+  --tests com.awakekt.awake.compose.ui.ComposeFrameStatsTest --no-daemon
 ```
 
 An earlier full Studio probe attempt compiled the Compose/UI path but was blocked by compilation
@@ -95,7 +95,7 @@ and shader commits; re-run it before treating it as a current blocker:
 
 ```bash
 ./gradlew :samples:studio:desktopTest \
-  --tests io.github.awakelab.awake.studio.ui.StudioFramePerfProbeTest --rerun-tasks --no-daemon
+  --tests com.awakekt.awake.studio.ui.StudioFramePerfProbeTest --rerun-tasks --no-daemon
 ```
 
 The probe prints frame time, composition time, composition passes, explicit scope executions, and

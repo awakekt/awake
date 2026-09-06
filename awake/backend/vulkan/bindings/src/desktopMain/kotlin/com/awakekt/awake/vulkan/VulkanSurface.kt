@@ -1,0 +1,34 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.vulkan
+
+import com.awakekt.awake.vulkan.gen.VulkanWindow
+import com.awakekt.awake.vulkan.models.VkExtent2D
+
+actual fun createSurface(instance: Long, window: Any): Long =
+    VulkanWindow.glfwCreateWindowSurface(instance, window as Long)
+
+actual fun surfaceFramebufferExtent(window: Any): VkExtent2D? {
+    val handle = window as Long
+    return VkExtent2D(
+        width = VulkanWindow.glfwGetFramebufferWidth(handle),
+        height = VulkanWindow.glfwGetFramebufferHeight(handle),
+    )
+}
+
+actual fun windowLogicalExtent(window: Any): VkExtent2D? {
+    val handle = window as Long
+    return VkExtent2D(
+        width = VulkanWindow.glfwGetWindowWidth(handle),
+        height = VulkanWindow.glfwGetWindowHeight(handle),
+    )
+}
+
+actual fun destroySurfaceWindow(window: Any) {
+    val handle = window as Long
+    VulkanWindow.glfwDestroyWindow(handle)
+    VulkanWindow.glfwTerminate()
+}

@@ -16,7 +16,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.engine.bootstrap"
+        namespace = "com.awakekt.awake.engine.bootstrap"
     }
 
     sourceSets {

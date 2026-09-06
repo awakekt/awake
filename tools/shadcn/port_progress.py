@@ -28,7 +28,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SHADCN = REPO_ROOT / (
-    "awake/ui/shadcn/src/commonMain/kotlin/io/github/awakelab/awake/ui/shadcn"
+    "awake/ui/shadcn/src/commonMain/kotlin/com/awakekt/awake/ui/shadcn"
 )
 
 # The layers Stage 3 deletes. An import of one of these packages is what "not ported yet" means.

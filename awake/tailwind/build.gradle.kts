@@ -15,7 +15,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.tailwind"
+        namespace = "com.awakekt.awake.tailwind"
     }
 
     sourceSets {

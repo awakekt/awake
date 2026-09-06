@@ -56,7 +56,7 @@ GENERATORS: list[Generator] = [
     Generator(
         name="tailwind-scale",
         command=["./gradlew", ":awake:ui:tailwind-generator:generateTailwindScale", "-q"],
-        outputs=["awake/ui/tailwind/src/commonMain/kotlin/io/github/awakelab/awake/ui/tailwind/Tw.kt"],
+        outputs=["awake/ui/tailwind/src/commonMain/kotlin/com/awakekt/awake/ui/tailwind/Tw.kt"],
         what="Tailwind spacing/radius scale",
     ),
     Generator(
@@ -71,7 +71,7 @@ GENERATORS: list[Generator] = [
         name="font-atlas",
         command=["./gradlew", ":awake:ui:font-atlas-generator:generateFontAtlas", "-q"],
         outputs=[
-            "awake/ui/text/src/commonMain/kotlin/io/github/awakelab/awake/ui/font/RobotoRegularUiFontData.kt",
+            "awake/ui/text/src/commonMain/kotlin/com/awakekt/awake/ui/font/RobotoRegularUiFontData.kt",
         ],
         what="packed glyph atlas and metrics",
     ),

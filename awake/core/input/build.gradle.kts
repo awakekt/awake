@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.core.input"
+        namespace = "com.awakekt.awake.core.input"
     }
 
     sourceSets {

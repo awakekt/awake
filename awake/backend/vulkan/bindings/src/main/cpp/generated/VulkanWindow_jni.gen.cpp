@@ -50,7 +50,7 @@ static void awake_glfwScrollCallback(GLFWwindow* window, double xoffset, double 
 
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwInit(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwInit(
         JNIEnv* env,
         jclass clazz) {
     return glfwInit() ? JNI_TRUE : JNI_FALSE;
@@ -58,7 +58,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwInit(
 
 
 extern "C" JNIEXPORT void JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwTerminate(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwTerminate(
         JNIEnv* env,
         jclass clazz) {
     glfwTerminate();
@@ -66,7 +66,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwTerminate(
 
 
 extern "C" JNIEXPORT void JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwWindowHint(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwWindowHint(
         JNIEnv* env,
         jclass clazz,
         jint hint,
@@ -80,7 +80,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwWindowHint(
 
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwCreateWindow(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwCreateWindow(
         JNIEnv* env,
         jclass clazz,
         jint width,
@@ -108,7 +108,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwCreateWindow(
 
 
 extern "C" JNIEXPORT void JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwDestroyWindow(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwDestroyWindow(
         JNIEnv* env,
         jclass clazz,
         jlong window) {
@@ -126,7 +126,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwDestroyWindow(
 
 
 extern "C" JNIEXPORT void JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwFocusWindow(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwFocusWindow(
         JNIEnv* env,
         jclass clazz,
         jlong window) {
@@ -144,7 +144,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwFocusWindow(
 
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwWindowShouldClose(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwWindowShouldClose(
         JNIEnv* env,
         jclass clazz,
         jlong window) {
@@ -162,7 +162,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwWindowShouldClose(
 
 
 extern "C" JNIEXPORT void JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwPollEvents(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwPollEvents(
         JNIEnv* env,
         jclass clazz) {
     glfwPollEvents();
@@ -170,7 +170,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwPollEvents(
 
 
 extern "C" JNIEXPORT jint JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetFramebufferWidth(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetFramebufferWidth(
         JNIEnv* env,
         jclass clazz,
         jlong window) {
@@ -190,7 +190,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetFramebufferWidth(
 
 
 extern "C" JNIEXPORT jint JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetFramebufferHeight(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetFramebufferHeight(
         JNIEnv* env,
         jclass clazz,
         jlong window) {
@@ -210,7 +210,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetFramebufferHeight(
 
 
 extern "C" JNIEXPORT jint JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetWindowWidth(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetWindowWidth(
         JNIEnv* env,
         jclass clazz,
         jlong window) {
@@ -230,7 +230,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetWindowWidth(
 
 
 extern "C" JNIEXPORT jint JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetWindowHeight(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetWindowHeight(
         JNIEnv* env,
         jclass clazz,
         jlong window) {
@@ -250,7 +250,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetWindowHeight(
 
 
 extern "C" JNIEXPORT jlong JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwCreateWindowSurface(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwCreateWindowSurface(
         JNIEnv* env,
         jclass clazz,
         jlong instance,
@@ -285,7 +285,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwCreateWindowSurface(
 
 
 extern "C" JNIEXPORT jobjectArray JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetRequiredInstanceExtensions(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetRequiredInstanceExtensions(
         JNIEnv* env,
         jclass clazz) {
     uint32_t count = 0;
@@ -305,7 +305,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetRequiredInstanceExt
 
 
 extern "C" JNIEXPORT jint JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetKey(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetKey(
         JNIEnv* env,
         jclass clazz,
         jlong window,
@@ -325,7 +325,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetKey(
 
 
 extern "C" JNIEXPORT jint JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetMouseButton(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetMouseButton(
         JNIEnv* env,
         jclass clazz,
         jlong window,
@@ -345,7 +345,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetMouseButton(
 
 
 extern "C" JNIEXPORT jdoubleArray JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetCursorPos(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetCursorPos(
         JNIEnv* env,
         jclass clazz,
         jlong window) {
@@ -368,7 +368,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwGetCursorPos(
 
 
 extern "C" JNIEXPORT void JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwSetScrollCallback(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwSetScrollCallback(
         JNIEnv* env,
         jclass clazz,
         jlong window) {
@@ -386,7 +386,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwSetScrollCallback(
 
 
 extern "C" JNIEXPORT jdouble JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwConsumeScrollDeltaY(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwConsumeScrollDeltaY(
         JNIEnv* env,
         jclass clazz,
         jlong window) {
@@ -415,7 +415,7 @@ Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwConsumeScrollDeltaY(
 static std::unordered_map<int32_t, GLFWcursor*> g_cursorCache;
 
 extern "C" JNIEXPORT void JNICALL
-Java_io_github_awakelab_awake_vulkan_gen_VulkanWindow_glfwSetCursorShape(
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwSetCursorShape(
         JNIEnv* env,
         jclass clazz,
         jlong window,

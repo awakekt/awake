@@ -98,7 +98,7 @@ existed, only 3 files pulled in `vulkan.*` (`Renderer.kt`, `DrawCall.kt`,
 `VulkanTextureLoader.kt`), and only 1 file pulled in Compose (`glExt.kt`, deep in the legacy
 OpenGL path). New module `:awake-base` (modeled on `:awake-ecs`'s already-lean template) now
 holds math, `Input`, `FixedTimestepLoop`, glTF parsing, and bitmap/resource I/O — moved with
-package names unchanged (`io.github.awakelab.awake.core.*`), so `awake-core`'s
+package names unchanged (`com.awakekt.awake.core.*`), so `awake-core`'s
 `api(project(":awake-base"))` re-export needed zero downstream import changes. The 3
 Vulkan-coupled files moved (and were repackaged) into `:awake-vulkan` itself, which now
 depends on `:awake-base` for `Camera`/`Mat4`; `awake-core` dropped its `:awake-vulkan`
@@ -141,7 +141,7 @@ pattern — plain interfaces have no constructors, so there's no "same call, dif
 implementation per platform" left; fixing that properly would mean splitting
 `VulkanApplication.kt` per-platform, a much larger change than what was asked for.
 
-**Resolution**: `expect class Foo(...) : io.github.awakelab.awake.render.foo.Foo { }`
+**Resolution**: `expect class Foo(...) : com.awakekt.awake.render.foo.Foo { }`
 is fully valid Kotlin — an `expect` class can implement an interface declared in a
 *different* module, and Kotlin requires only the `actual` implementations (already in
 `awake-vulkan`'s `vulkanMain`/`wasmJsMain`) to also declare the same supertype. This means
@@ -218,10 +218,10 @@ VkExtent2D` (also confirmed dead on closer inspection — despite its own doc co
 claiming `RenderPipeline`/`Renderer` read it, they don't) were both dropped from the new
 `awake-backend-webgpu` module.
 
-**Package naming**: `awake-backend-vulkan` keeps the `io.github.awakelab.awake.vulkan`
+**Package naming**: `awake-backend-vulkan` keeps the `com.awakekt.awake.vulkan`
 package unchanged (only the Gradle module id changed) — matches `awake-engine-render-api`'s
 existing precedent (module id ≠ package root) and meant zero import changes anywhere.
-`awake-backend-webgpu`'s moved files were repackaged to `io.github.awakelab.awake.webgpu`
+`awake-backend-webgpu`'s moved files were repackaged to `com.awakekt.awake.webgpu`
 — safe since grep confirmed no file outside the old `awake-vulkan` module ever imported a
 wasmJs-specific symbol. Its own tiny `handles/Handles.kt` (9 `@JvmInline value class`
 wrappers) is a local copy, not a dependency on `awake-backend-vulkan`, to keep the two
@@ -291,8 +291,8 @@ planning, each resolved with the user before implementation:
 
 `SceneRuntimeHost` (used by every platform, including the new wasmJs one) needed two
 changes to become genuinely shared: its `Renderer` import switched from the concrete
-`io.github.awakelab.awake.vulkan.renderer.Renderer` to the backend-neutral
-`io.github.awakelab.awake.render.renderer.Renderer` interface (a pre-existing bug —
+`com.awakekt.awake.vulkan.renderer.Renderer` to the backend-neutral
+`com.awakekt.awake.render.renderer.Renderer` interface (a pre-existing bug —
 `RenderSystem` already expected the interface), and its constructor became `private` +
 a `companion object suspend fun create(...)` factory, since `SceneLoader.loadFromResource`
 is now `suspend` and Kotlin forbids `suspend` calls inside `init {}`/property initializers.
@@ -369,7 +369,7 @@ layer that doesn't need `awake-scene` for anything.
 **Resolution**: renamed `awake-core` → `awake-engine` as a plain Gradle module id +
 directory rename (`git mv`), no dependency changes — matches the precedent already set by
 `awake-engine-render-api` (module id ≠ Kotlin package root is fine) and `awake-backend-
-vulkan` (D13): package name `io.github.awakelab.awake.core` and the iOS framework
+vulkan` (D13): package name `com.awakekt.awake.core` and the iOS framework
 `baseName = "awake-core"` were left unchanged, since neither is tied to any native
 toolchain or external consumer that would break, and touching them isn't necessary to fix
 the actual issue (the module id/name). Updated all 3 consumers'

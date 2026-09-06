@@ -7,7 +7,7 @@
 
 VkExtensionPropertiesMutator::VkExtensionPropertiesMutator(JNIEnv *env) : env(env) {
     this->env = env;
-    clazz = env->FindClass("io/github/awakelab/awake/vulkan/models/VkExtensionProperties");
+    clazz = env->FindClass("com/awakekt/awake/vulkan/models/VkExtensionProperties");
     extensionNameField = env->GetFieldID(clazz, "extensionName", "Ljava/lang/String;");
     specVersionField = env->GetFieldID(clazz, "specVersion", "I");
 }

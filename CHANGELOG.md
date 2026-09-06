@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-dev.10] - 2026-09-06
+
+### Changed
+
+- **Migrated coordinates, packages, and namespaces to `com.awakekt`.** Updated Maven group to `com.awakekt`, moved package root to `com.awakekt.awake`, and transferred repository to `awakekt/awake`.
+
+### Added
+
+- **GitHub issue templates.** Added structured YAML forms for bug reports, feature requests, and engine tasks under `.github/ISSUE_TEMPLATE/`.
+
+### Fixed
+
+- **Console log column overlap & text bleeding.** Resolved text collisions in `EditorConsolePanel` where long subsystem tags (such as `studio.plugins` and `studio.repository`) overflowed the hardcoded 72.dp column and painted over log messages. Increased default tag column width to 120.dp, added bounds clipping (`clipToBounds()`), and added a vertical column divider.
+
+- **Marketplace dialog extension misclassification and post-install UX.** Fixed an issue where newly installed extensions were misclassified as built-in engine subsystems (`RealInstalledPluginCard`) without controls. The Installed tab now clearly partitions user-installed extensions from engine core subsystems, surfacing full management controls (`Enable`/`Disable`, `Details`, `Uninstall`) for extensions, correctly counting installed extensions in the tab badge, and resetting import form states cleanly.
+
+### Added
+
+- **Resizable console tag column.** Added interactive horizontal column resizing in `EditorConsolePanel`. Users can drag the column divider handle in the header or table rows with `PointerCursor.ResizeHorizontal` to smoothly widen or narrow the tag column between 50.dp and 320.dp.
+
+- **Studio execution & transaction logging.** Connected all Studio state intents, plugin lifecycle events, repository mutations, and file operations to Awake's `LogRingBuffer`, surfacing a complete, frame-indexed audit trail in the bottom Console dock tab.
+
+- **Floating toast notifications (`ShadcnToaster`).** Wired `ShadcnToastState` and `ShadcnToaster` into Studio root, displaying non-modal, transient bottom-right toasts on scene save, project folder open, asset import, and extension lifecycle changes.
+
+- **Dynamic project directory scanning (`StudioFileOps`).** Added multiplatform `StudioFileOps` contract and desktop file walker to scan opened project directories, populating project assets dynamically into the Studio Files dock tab.
+
+- **Real scene serialization on save.** Connected "Save Scene" and "Save Scene As..." in the Studio top bar to live `SceneLoader.fromWorld(world)` and `SceneLoader.encode(document)`, serializing and writing the scene document directly to disk.
+
+- **Extension manifest validation.** Added schema validation for imported plugin manifests (`id` format, `version` semver, non-blank `name`), logging validation issues and displaying inline errors.
+
+- **Directory selection and file save dialog support (`EditorFileChooser`).** Added `openDirectory` and `saveFile` APIs to multiplatform `EditorFileChooser`, backed on desktop by out-of-process native platform dialogs (`osascript` on macOS, `zenity` on Linux, and PowerShell/.NET `FolderBrowserDialog`/`SaveFileDialog` on Windows) with automatic fallback to AWT `FileDialog`. Wired into Studio toolbar as "Open Project Folder..." and "Save Scene As...".
+
+- **Studio extension plugin enable/disable lifecycle.** Added `isEnabled` flag, `PluginLifecycleListener`, and `setEnabled(id, enabled)` to `StudioPluginRepository` and `DefaultStudioPluginRepository`. Studio now persists disabled plugin state across sessions and dynamically registers or tears down dock tabs and engine systems without requiring full uninstallation. Added Enable/Disable toggles to `StudioMarketplaceDialog`.
+
+- **Dependency injection migration for Studio dialogs.** Migrated `StudioSettingsDialog` and `StudioLicenseDialog` to ambient DI (`rememberResolveOrNull<StudioThemeState>()` and `rememberResolveOrNull<AwakeLicenseRegistry>()`), registering singletons in `StudioDi.kt` and refactoring `StudioLicenseDialog` to an immutable `rememberReducerStore`.
+
+### Changed
+
+- **`StudioStore` refactored to `ReducerStore`.** Migrated `StudioStore` to delegate to Awake's canonical `reducerStore`, adding pure intents `StartPlay`, `StopPlay`, and `ReloadFixture` while preserving synchronous effect draining for frame-loop fidelity.
+
 ## [0.1.0-dev.9] - 2026-09-05
 
 ### Added
@@ -608,7 +648,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so the quickstart is `./gradlew :apps:studio:run`. It was never a sample: it is the product the
   README points a new user at, and the only host every editor seam is proven through. `samples/`
   now holds only illustrative code. No Kotlin changed -- the package was already
-  `io.github.awakelab.awake.studio`.
+  `com.awakekt.awake.studio`.
 - **Body poses are read back by visitor, and only while they are awake.**
   `PhysicsWorld.syncTransforms()` became `forEachBodyTransform`, which hands out scratch values
   instead of allocating a list plus a vector and a quaternion per body per frame, and on jolt-jni
@@ -847,6 +887,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 For releases prior to `0.1.0-dev.8` (`v0.1.0-dev.1` through `v0.1.0-dev.7`), see [CHANGELOG Archive](docs/archive/CHANGELOG-v0.1-archive.md).
 
-[unreleased]: https://github.com/awake-lab/awake/compare/v0.1.0-dev.9...HEAD
-[0.1.0-dev.9]: https://github.com/awake-lab/awake/compare/v0.1.0-dev.8...v0.1.0-dev.9
-[0.1.0-dev.8]: https://github.com/awake-lab/awake/compare/v0.1.0-dev.7...v0.1.0-dev.8
+[unreleased]: https://github.com/awakekt/awake/compare/v0.1.0-dev.9...HEAD
+[0.1.0-dev.9]: https://github.com/awakekt/awake/compare/v0.1.0-dev.8...v0.1.0-dev.9
+[0.1.0-dev.8]: https://github.com/awakekt/awake/compare/v0.1.0-dev.7...v0.1.0-dev.8

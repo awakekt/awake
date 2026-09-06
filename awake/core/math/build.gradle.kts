@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.core.math"
+        namespace = "com.awakekt.awake.core.math"
     }
 
     sourceSets {

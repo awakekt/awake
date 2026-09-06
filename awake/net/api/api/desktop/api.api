@@ -1,66 +1,66 @@
-public abstract interface class io/github/awakelab/awake/net/ConnectionState {
+public abstract interface class com/awakekt/awake/net/ConnectionState {
 }
 
-public final class io/github/awakelab/awake/net/ConnectionState$Connected : io/github/awakelab/awake/net/ConnectionState {
+public final class com/awakekt/awake/net/ConnectionState$Connected : com/awakekt/awake/net/ConnectionState {
 	public synthetic fun <init> (JLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-jXeR2yA ()J
-	public final fun copy-gYG0rqs (J)Lio/github/awakelab/awake/net/ConnectionState$Connected;
-	public static synthetic fun copy-gYG0rqs$default (Lio/github/awakelab/awake/net/ConnectionState$Connected;JILjava/lang/Object;)Lio/github/awakelab/awake/net/ConnectionState$Connected;
+	public final fun component1-H4EDovs ()J
+	public final fun copy-74lNNTM (J)Lcom/awakekt/awake/net/ConnectionState$Connected;
+	public static synthetic fun copy-74lNNTM$default (Lcom/awakekt/awake/net/ConnectionState$Connected;JILjava/lang/Object;)Lcom/awakekt/awake/net/ConnectionState$Connected;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getSessionId-jXeR2yA ()J
+	public final fun getSessionId-H4EDovs ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/net/ConnectionState$Connecting : io/github/awakelab/awake/net/ConnectionState {
-	public static final field INSTANCE Lio/github/awakelab/awake/net/ConnectionState$Connecting;
-	public fun equals (Ljava/lang/Object;)Z
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/net/ConnectionState$Disconnected : io/github/awakelab/awake/net/ConnectionState {
-	public static final field INSTANCE Lio/github/awakelab/awake/net/ConnectionState$Disconnected;
+public final class com/awakekt/awake/net/ConnectionState$Connecting : com/awakekt/awake/net/ConnectionState {
+	public static final field INSTANCE Lcom/awakekt/awake/net/ConnectionState$Connecting;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/net/ConnectionState$Failed : io/github/awakelab/awake/net/ConnectionState {
+public final class com/awakekt/awake/net/ConnectionState$Disconnected : com/awakekt/awake/net/ConnectionState {
+	public static final field INSTANCE Lcom/awakekt/awake/net/ConnectionState$Disconnected;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/net/ConnectionState$Failed : com/awakekt/awake/net/ConnectionState {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lio/github/awakelab/awake/net/ConnectionState$Failed;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/net/ConnectionState$Failed;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/net/ConnectionState$Failed;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/net/ConnectionState$Failed;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/ConnectionState$Failed;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/net/ConnectionState$Failed;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getReason ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/net/CountingViolationSink : io/github/awakelab/awake/net/ViolationSink {
+public final class com/awakekt/awake/net/CountingViolationSink : com/awakekt/awake/net/ViolationSink {
 	public static final field DEFAULT_MAX_SAMPLES I
 	public fun <init> ()V
 	public fun <init> (I)V
 	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun count-vKAxXJ4 (JLjava/lang/String;)I
-	public final fun forget-gYG0rqs (J)V
-	public fun report-vKAxXJ4 (JLio/github/awakelab/awake/net/NetViolation;)V
+	public final fun count-siqYpkk (JLjava/lang/String;)I
+	public final fun forget-74lNNTM (J)V
+	public fun report-siqYpkk (JLcom/awakekt/awake/net/NetViolation;)V
 	public final fun retainedSamples ()I
 	public final fun sample (Ljava/lang/String;)Ljava/util/List;
-	public final fun summary-gYG0rqs (J)Ljava/lang/String;
+	public final fun summary-74lNNTM (J)Ljava/lang/String;
 	public final fun total ()I
 }
 
-public final class io/github/awakelab/awake/net/DeliveryChannel : java/lang/Enum {
-	public static final field Reliable Lio/github/awakelab/awake/net/DeliveryChannel;
-	public static final field Unreliable Lio/github/awakelab/awake/net/DeliveryChannel;
+public final class com/awakekt/awake/net/DeliveryChannel : java/lang/Enum {
+	public static final field Reliable Lcom/awakekt/awake/net/DeliveryChannel;
+	public static final field Unreliable Lcom/awakekt/awake/net/DeliveryChannel;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/net/DeliveryChannel;
-	public static fun values ()[Lio/github/awakelab/awake/net/DeliveryChannel;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/net/DeliveryChannel;
+	public static fun values ()[Lcom/awakekt/awake/net/DeliveryChannel;
 }
 
-public final class io/github/awakelab/awake/net/NetId {
-	public static final synthetic fun box-impl (J)Lio/github/awakelab/awake/net/NetId;
+public final class com/awakekt/awake/net/NetId {
+	public static final synthetic fun box-impl (J)Lcom/awakekt/awake/net/NetId;
 	public static fun constructor-impl (J)J
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (JLjava/lang/Object;)Z
@@ -73,16 +73,16 @@ public final class io/github/awakelab/awake/net/NetId {
 	public final synthetic fun unbox-impl ()J
 }
 
-public abstract interface class io/github/awakelab/awake/net/NetViolation {
+public abstract interface class com/awakekt/awake/net/NetViolation {
 	public abstract fun getTick ()J
 }
 
-public final class io/github/awakelab/awake/net/NetViolation$InputFlood : io/github/awakelab/awake/net/NetViolation {
+public final class com/awakekt/awake/net/NetViolation$InputFlood : com/awakekt/awake/net/NetViolation {
 	public fun <init> (JI)V
 	public final fun component1 ()J
 	public final fun component2 ()I
-	public final fun copy (JI)Lio/github/awakelab/awake/net/NetViolation$InputFlood;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/net/NetViolation$InputFlood;JIILjava/lang/Object;)Lio/github/awakelab/awake/net/NetViolation$InputFlood;
+	public final fun copy (JI)Lcom/awakekt/awake/net/NetViolation$InputFlood;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/NetViolation$InputFlood;JIILjava/lang/Object;)Lcom/awakekt/awake/net/NetViolation$InputFlood;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCount ()I
 	public fun getTick ()J
@@ -90,13 +90,13 @@ public final class io/github/awakelab/awake/net/NetViolation$InputFlood : io/git
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/net/NetViolation$MalformedPacket : io/github/awakelab/awake/net/NetViolation {
+public final class com/awakekt/awake/net/NetViolation$MalformedPacket : com/awakekt/awake/net/NetViolation {
 	public fun <init> (JILjava/lang/String;)V
 	public final fun component1 ()J
 	public final fun component2 ()I
 	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (JILjava/lang/String;)Lio/github/awakelab/awake/net/NetViolation$MalformedPacket;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/net/NetViolation$MalformedPacket;JILjava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/net/NetViolation$MalformedPacket;
+	public final fun copy (JILjava/lang/String;)Lcom/awakekt/awake/net/NetViolation$MalformedPacket;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/NetViolation$MalformedPacket;JILjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/net/NetViolation$MalformedPacket;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBytes ()I
 	public final fun getReason ()Ljava/lang/String;
@@ -105,12 +105,12 @@ public final class io/github/awakelab/awake/net/NetViolation$MalformedPacket : i
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/net/NetViolation$MoveTooFar : io/github/awakelab/awake/net/NetViolation {
+public final class com/awakekt/awake/net/NetViolation$MoveTooFar : com/awakekt/awake/net/NetViolation {
 	public fun <init> (JF)V
 	public final fun component1 ()J
 	public final fun component2 ()F
-	public final fun copy (JF)Lio/github/awakelab/awake/net/NetViolation$MoveTooFar;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/net/NetViolation$MoveTooFar;JFILjava/lang/Object;)Lio/github/awakelab/awake/net/NetViolation$MoveTooFar;
+	public final fun copy (JF)Lcom/awakekt/awake/net/NetViolation$MoveTooFar;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/NetViolation$MoveTooFar;JFILjava/lang/Object;)Lcom/awakekt/awake/net/NetViolation$MoveTooFar;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMeters ()F
 	public fun getTick ()J
@@ -118,25 +118,25 @@ public final class io/github/awakelab/awake/net/NetViolation$MoveTooFar : io/git
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/net/NetViolation$NotOwner : io/github/awakelab/awake/net/NetViolation {
+public final class com/awakekt/awake/net/NetViolation$NotOwner : com/awakekt/awake/net/NetViolation {
 	public synthetic fun <init> (JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()J
-	public final fun component2-kEEcA4w ()J
-	public final fun copy-iIA18Co (JJ)Lio/github/awakelab/awake/net/NetViolation$NotOwner;
-	public static synthetic fun copy-iIA18Co$default (Lio/github/awakelab/awake/net/NetViolation$NotOwner;JJILjava/lang/Object;)Lio/github/awakelab/awake/net/NetViolation$NotOwner;
+	public final fun component2-9GPf_ic ()J
+	public final fun copy-3Mx35h0 (JJ)Lcom/awakekt/awake/net/NetViolation$NotOwner;
+	public static synthetic fun copy-3Mx35h0$default (Lcom/awakekt/awake/net/NetViolation$NotOwner;JJILjava/lang/Object;)Lcom/awakekt/awake/net/NetViolation$NotOwner;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getTarget-kEEcA4w ()J
+	public final fun getTarget-9GPf_ic ()J
 	public fun getTick ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/net/NetViolation$TickOutOfWindow : io/github/awakelab/awake/net/NetViolation {
+public final class com/awakekt/awake/net/NetViolation$TickOutOfWindow : com/awakekt/awake/net/NetViolation {
 	public fun <init> (JJ)V
 	public final fun component1 ()J
 	public final fun component2 ()J
-	public final fun copy (JJ)Lio/github/awakelab/awake/net/NetViolation$TickOutOfWindow;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/net/NetViolation$TickOutOfWindow;JJILjava/lang/Object;)Lio/github/awakelab/awake/net/NetViolation$TickOutOfWindow;
+	public final fun copy (JJ)Lcom/awakekt/awake/net/NetViolation$TickOutOfWindow;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/net/NetViolation$TickOutOfWindow;JJILjava/lang/Object;)Lcom/awakekt/awake/net/NetViolation$TickOutOfWindow;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getServerTick ()J
 	public fun getTick ()J
@@ -144,11 +144,11 @@ public final class io/github/awakelab/awake/net/NetViolation$TickOutOfWindow : i
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/net/NetViolationKt {
-	public static final fun kind (Lio/github/awakelab/awake/net/NetViolation;)Ljava/lang/String;
+public final class com/awakekt/awake/net/NetViolationKt {
+	public static final fun kind (Lcom/awakekt/awake/net/NetViolation;)Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/net/PacketReader {
+public final class com/awakekt/awake/net/PacketReader {
 	public static final field BYTE_MASK I
 	public static final field CONTINUATION_BIT I
 	public static final field CONTINUATION_MASK I
@@ -163,10 +163,10 @@ public final class io/github/awakelab/awake/net/PacketReader {
 	public final fun readVarLong ()J
 	public final fun readZigZagInt ()I
 	public final fun reset ([BI)V
-	public static synthetic fun reset$default (Lio/github/awakelab/awake/net/PacketReader;[BIILjava/lang/Object;)V
+	public static synthetic fun reset$default (Lcom/awakekt/awake/net/PacketReader;[BIILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/net/PacketWriter {
+public final class com/awakekt/awake/net/PacketWriter {
 	public static final field CONTINUATION_BIT I
 	public static final field CONTINUATION_MASK I
 	public static final field SHIFT I
@@ -183,8 +183,8 @@ public final class io/github/awakelab/awake/net/PacketWriter {
 	public final fun writeZigZagInt (I)V
 }
 
-public final class io/github/awakelab/awake/net/SessionId {
-	public static final synthetic fun box-impl (J)Lio/github/awakelab/awake/net/SessionId;
+public final class com/awakekt/awake/net/SessionId {
+	public static final synthetic fun box-impl (J)Lcom/awakekt/awake/net/SessionId;
 	public static fun constructor-impl (J)J
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (JLjava/lang/Object;)Z
@@ -197,27 +197,27 @@ public final class io/github/awakelab/awake/net/SessionId {
 	public final synthetic fun unbox-impl ()J
 }
 
-public abstract interface class io/github/awakelab/awake/net/Transport {
+public abstract interface class com/awakekt/awake/net/Transport {
 	public abstract fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun getState ()Lkotlinx/coroutines/flow/StateFlow;
 	public abstract fun incoming ()Lkotlinx/coroutines/channels/ReceiveChannel;
-	public abstract fun send (Lio/github/awakelab/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun send (Lcom/awakekt/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public abstract interface class io/github/awakelab/awake/net/TransportServer {
+public abstract interface class com/awakekt/awake/net/TransportServer {
 	public abstract fun getPort ()I
 	public abstract fun sessions ()Lkotlinx/coroutines/channels/ReceiveChannel;
 	public abstract fun stop (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public abstract interface class io/github/awakelab/awake/net/TransportSession {
+public abstract interface class com/awakekt/awake/net/TransportSession {
 	public abstract fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public abstract fun getId-jXeR2yA ()J
+	public abstract fun getId-H4EDovs ()J
 	public abstract fun incoming ()Lkotlinx/coroutines/channels/ReceiveChannel;
-	public abstract fun send (Lio/github/awakelab/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun send (Lcom/awakekt/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public abstract interface class io/github/awakelab/awake/net/ViolationSink {
-	public abstract fun report-vKAxXJ4 (JLio/github/awakelab/awake/net/NetViolation;)V
+public abstract interface class com/awakekt/awake/net/ViolationSink {
+	public abstract fun report-siqYpkk (JLcom/awakekt/awake/net/NetViolation;)V
 }
 

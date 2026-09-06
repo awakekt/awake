@@ -467,7 +467,7 @@ Goal: same `commonMain` demo renders on Android + macOS/Windows/Linux.
 > supports `Int` fields trivially.
 
 - [x] **First real function wired end-to-end (2026-07-08):** `vkCreateBuffer`/
-      `vkDestroyBuffer`, in a new dedicated `io.github.awakelab.awake.vulkan.gen`
+      `vkDestroyBuffer`, in a new dedicated `com.awakekt.awake.vulkan.gen`
       package/`VulkanBuffers` object (not the legacy `Vulkan` object — see below),
       generated via the vendored jni-binding-generator
       (`tools/jni-binding-generator/`) into `awake-vulkan/src/main/cpp/generated/`,
@@ -797,7 +797,7 @@ Goal: same `commonMain` demo renders on Android + macOS/Windows/Linux.
 Goal: nobody writes 795 lines of raw Vulkan to draw a cube.
 
 - [x] **`GraphicsDevice` — instance/device/queue lifecycle (2026-07-08):** new
-      `io.github.awakelab.awake.vulkan.device.GraphicsDevice` (awake-vulkan, not the
+      `com.awakekt.awake.vulkan.device.GraphicsDevice` (awake-vulkan, not the
       demo — this is genuinely reusable engine infra), extracted verbatim from
       `VulkanApplication`'s four private functions (`createInstance`/`setupDebugMessenger`/
       `pickPhysicalDevice`/`createLogicalDevice`) plus the `instance`/`debugUtilsMessenger`/
@@ -814,7 +814,7 @@ Goal: nobody writes 795 lines of raw Vulkan to draw a cube.
       pixel-identical to before it — same cube, same colors, same depth occlusion — proving
       the extraction changed structure without changing behavior.
 - [x] **`SwapchainManager` — swapchain + frames-in-flight sync (2026-07-08):** new
-      `io.github.awakelab.awake.vulkan.swapchain.SwapchainManager` (awake-vulkan),
+      `com.awakekt.awake.vulkan.swapchain.SwapchainManager` (awake-vulkan),
       extracted verbatim from `VulkanApplication`'s `swapChain`/`createImageViews`/
       `chooseSwap*`/`cleanSwapChain`/`createSyncObjects` functions and their backing fields
       (swapchain handle, extent, image format, image views, per-frame-in-flight semaphores/
@@ -831,7 +831,7 @@ Goal: nobody writes 795 lines of raw Vulkan to draw a cube.
       **Confirmed on real hardware** (Galaxy S25 Ultra): screenshot after the extraction is
       pixel-identical to before it.
 - [x] **`Mesh` — vertex/index buffer upload from common code (2026-07-08):** new
-      `io.github.awakelab.awake.vulkan.mesh.Mesh` (awake-vulkan), extracted verbatim
+      `com.awakekt.awake.vulkan.mesh.Mesh` (awake-vulkan), extracted verbatim
       from `VulkanApplication`'s `createDeviceLocalBuffer`/`createVertexBuffer`/
       `createIndexBuffer` functions and their backing fields — same staging-buffer pattern
       (Phase 1d), same `vkCmdCopyBuffer` upload. Takes `vertices`/`indices` directly in its
@@ -858,7 +858,7 @@ Goal: nobody writes 795 lines of raw Vulkan to draw a cube.
     correctness, but a genuine future compatibility item for devices that enforce 16KB
     pages — not addressed here, just noted.
 - [x] **`Texture` — image upload, sampler, mipmaps (2026-07-08):** new
-      `io.github.awakelab.awake.vulkan.texture.Texture` (awake-vulkan), extracted
+      `com.awakekt.awake.vulkan.texture.Texture` (awake-vulkan), extracted
       verbatim from `VulkanApplication`'s `createTextureImage`/`createTextureImageView`/
       `createTextureSampler` functions and their four backing fields (`textureImage`,
       `textureImageMemory`, `textureImageView`, `textureSampler`). Same staging-buffer ->
@@ -876,7 +876,7 @@ Goal: nobody writes 795 lines of raw Vulkan to draw a cube.
     blended with the per-vertex RGB colors) in both — same visual result as before the
     extraction, confirming it changed structure without changing behavior.
 - [x] **`Material` — uniform buffer + descriptor set/pool/layout (2026-07-08):** new
-      `io.github.awakelab.awake.vulkan.material.Material` (awake-vulkan), extracted
+      `com.awakekt.awake.vulkan.material.Material` (awake-vulkan), extracted
       verbatim from `VulkanApplication`'s `createDescriptorSetLayout`/`createUniformBuffer`/
       `createDescriptorPool`/`createDescriptorSet`/`updateUniformBuffer` functions and their
       five backing fields. Unlike `Mesh`/`Texture` (single lazy construction point),
@@ -896,7 +896,7 @@ Goal: nobody writes 795 lines of raw Vulkan to draw a cube.
     with the textured/colored cube rendering identically to before the extraction.
 - [x] **Code-quality pass across `Mesh`/`Texture`/`Material` + a new `TransferContext`
       (2026-07-08):**
-  - **`TransferContext`** — new `io.github.awakelab.awake.vulkan.commands.TransferContext`
+  - **`TransferContext`** — new `com.awakekt.awake.vulkan.commands.TransferContext`
     (awake-vulkan), extracted verbatim from `VulkanApplication`'s `createCommandPool`/
     `runOneTimeCommands` functions. `Mesh`/`Texture` now take
     `transferContext::runOneTimeCommands` (a bound method reference on a real object) instead
@@ -904,7 +904,7 @@ Goal: nobody writes 795 lines of raw Vulkan to draw a cube.
     (as a typed handle, see below) since `VulkanApplication` still allocates its per-frame
     render command buffers from the same pool — that's a swapchain-frame concern, not a
     transfer concern, so it wasn't pulled in too.
-  - **Typed Vulkan handles** — new `io.github.awakelab.awake.vulkan.handles` package
+  - **Typed Vulkan handles** — new `com.awakekt.awake.vulkan.handles` package
     (`BufferHandle`, `DeviceMemoryHandle`, `ImageHandle`, `ImageViewHandle`, `SamplerHandle`,
     `DescriptorSetLayoutHandle`, `DescriptorPoolHandle`, `DescriptorSetHandle`,
     `CommandPoolHandle` — all `@JvmInline value class`es around a `Long`, zero runtime cost).
@@ -927,7 +927,7 @@ Goal: nobody writes 795 lines of raw Vulkan to draw a cube.
     fields are API surface that need a major-version bump to change later. Also deleted two
     now-genuinely-dead delegating properties (`debugUtilsMessenger`, `instance`) that nothing
     read even internally.
-  - **`Camera`** — new `io.github.awakelab.awake.core.math.Camera` (awake-core, not
+  - **`Camera`** — new `com.awakekt.awake.core.math.Camera` (awake-core, not
     awake-vulkan: it's pure view/projection math with no GPU dependency, so any future
     backend — WebGPU, Metal — needs the same class, and it's unit-testable without a GPU).
     Extracted out of `VulkanApplication.updateUniformBuffer`, which previously mixed the
@@ -952,7 +952,7 @@ Goal: nobody writes 795 lines of raw Vulkan to draw a cube.
     "Fps: 60" in logcat, two screenshots 5 seconds apart show different cube orientations
     with the textured/colored cube rendering identically to before this pass.
 - [x] **`RenderPipeline` — render pass + graphics pipeline (2026-07-09):** new
-      `io.github.awakelab.awake.vulkan.pipeline.RenderPipeline` (awake-vulkan),
+      `com.awakekt.awake.vulkan.pipeline.RenderPipeline` (awake-vulkan),
       extracted verbatim from `VulkanApplication`'s `createRenderPass`/
       `createGraphicsPipeline`/`createShaderModule` functions and their backing fields
       (`renderPass`, `pipelineLayout`, `pipelineCache`, `graphicsPipeline`). Same two
@@ -971,7 +971,7 @@ Goal: nobody writes 795 lines of raw Vulkan to draw a cube.
     with the textured/colored cube and depth occlusion rendering identically to before the
     extraction.
 - [x] **`Renderer.draw(camera, List<DrawCall>)` entry point (2026-07-09):** new
-      `io.github.awakelab.awake.core.renderer.Renderer` + `DrawCall` (in **`awake-core`**,
+      `com.awakekt.awake.core.renderer.Renderer` + `DrawCall` (in **`awake-core`**,
       not `awake-vulkan` — it needs `Camera`/`Mat4` (backend-agnostic math) to combine a
       camera's view/projection with each draw call's model matrix, and `awake-core` already
       depends on `awake-vulkan`, so putting it here avoids a circular module dependency).

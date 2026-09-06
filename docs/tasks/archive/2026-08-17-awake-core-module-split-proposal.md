@@ -66,7 +66,7 @@ Two facts drive the revised plan below:
 
 - **Scope**: Pure linear algebra and geometric primitives. Zero dependencies.
 - **Types**: `Vec2`/`Vec3`/`Vec4`, `Mat3`/`Mat4`, `Quaternion`, `Camera`, `Ray`, `Frustum`, `MathUtils`.
-- **Current Home**: `io.github.awakelab.awake.core.math` inside `awake:core`.
+- **Current Home**: `com.awakekt.awake.core.math` inside `awake:core`.
 - **Target**: `:awake:core:math` subproject.
 - **Why this one is worth it**: it is the only package a consumer genuinely wants *without* the
   rest. A leaf module needing `Vec3` currently also drags in `GameLoop`, `Input`, `Bitmap`, and

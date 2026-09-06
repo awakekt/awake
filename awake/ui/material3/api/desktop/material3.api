@@ -1,51 +1,51 @@
-public final class io/github/awakelab/awake/ui/material3/Material3ColorScheme {
-	public fun <init> (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun component2 ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun component3 ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun component4 ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun component5 ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun component6 ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun copy (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;)Lio/github/awakelab/awake/ui/material3/Material3ColorScheme;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/material3/Material3ColorScheme;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/material3/Material3ColorScheme;
+public final class com/awakekt/awake/ui/material3/Material3ColorScheme {
+	public fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component2 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component4 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component5 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component6 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun copy (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/ui/material3/Material3ColorScheme;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/material3/Material3ColorScheme;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)Lcom/awakekt/awake/ui/material3/Material3ColorScheme;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getBackground ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun getOnBackground ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun getOnPrimary ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun getOnSurface ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun getPrimary ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun getSurface ()Lio/github/awakelab/awake/core/color/Color;
+	public final fun getBackground ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getOnBackground ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getOnPrimary ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getOnSurface ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getPrimary ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getSurface ()Lcom/awakekt/awake/core/color/Color;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/material3/Material3ThemeKt {
-	public static final fun getLightMaterial3ColorScheme ()Lio/github/awakelab/awake/ui/material3/Material3ColorScheme;
-	public static final fun getLocalMaterial3ColorScheme ()Lio/github/awakelab/awake/compose/runtime/CompositionLocal;
-	public static final fun getMaterial3ColorScheme (Lio/github/awakelab/awake/compose/runtime/Composer;)Lio/github/awakelab/awake/ui/material3/Material3ColorScheme;
-	public static final fun provideMaterial3Theme (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/material3/Material3ColorScheme;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun provideMaterial3Theme$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/material3/Material3ColorScheme;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+public final class com/awakekt/awake/ui/material3/Material3ThemeKt {
+	public static final fun getLightMaterial3ColorScheme ()Lcom/awakekt/awake/ui/material3/Material3ColorScheme;
+	public static final fun getLocalMaterial3ColorScheme ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+	public static final fun getMaterial3ColorScheme (Lcom/awakekt/awake/compose/runtime/Composer;)Lcom/awakekt/awake/ui/material3/Material3ColorScheme;
+	public static final fun provideMaterial3Theme (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/material3/Material3ColorScheme;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun provideMaterial3Theme$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/material3/Material3ColorScheme;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/ui/material3/ScaffoldKt {
-	public static final fun Scaffold (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun Scaffold$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+public final class com/awakekt/awake/ui/material3/ScaffoldKt {
+	public static final fun Scaffold (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun Scaffold$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/ui/material3/ScaffoldPaddingValues {
+public final class com/awakekt/awake/ui/material3/ScaffoldPaddingValues {
 	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public synthetic fun <init> (FFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-PExdcLc ()F
-	public final fun component2-PExdcLc ()F
-	public final fun component3-PExdcLc ()F
-	public final fun component4-PExdcLc ()F
-	public final fun copy-hzScx4E (FFFF)Lio/github/awakelab/awake/ui/material3/ScaffoldPaddingValues;
-	public static synthetic fun copy-hzScx4E$default (Lio/github/awakelab/awake/ui/material3/ScaffoldPaddingValues;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/ui/material3/ScaffoldPaddingValues;
+	public final fun component1-LGk54g8 ()F
+	public final fun component2-LGk54g8 ()F
+	public final fun component3-LGk54g8 ()F
+	public final fun component4-LGk54g8 ()F
+	public final fun copy-Zt3hnP8 (FFFF)Lcom/awakekt/awake/ui/material3/ScaffoldPaddingValues;
+	public static synthetic fun copy-Zt3hnP8$default (Lcom/awakekt/awake/ui/material3/ScaffoldPaddingValues;FFFFILjava/lang/Object;)Lcom/awakekt/awake/ui/material3/ScaffoldPaddingValues;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getBottom-PExdcLc ()F
-	public final fun getEnd-PExdcLc ()F
-	public final fun getStart-PExdcLc ()F
-	public final fun getTop-PExdcLc ()F
+	public final fun getBottom-LGk54g8 ()F
+	public final fun getEnd-LGk54g8 ()F
+	public final fun getStart-LGk54g8 ()F
+	public final fun getTop-LGk54g8 ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

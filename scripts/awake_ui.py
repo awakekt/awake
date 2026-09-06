@@ -331,7 +331,7 @@ def file_digest(path: Path) -> str:
 
 def write_inspect_provenance(spec: ComponentSpec, cases: Iterable[dict], states: Iterable[str], theme: str) -> Path:
     """Record exactly the newly generated evidence an inspect review refers to."""
-    files = [REFERENCE_CASES, PARITY_CASES, REPO_ROOT / "samples/ui-showcase/src/desktopTest/kotlin/io/github/awakelab/awake/sample/uishowcase/ui/ShadcnComposeParityPreviewTest.kt"]
+    files = [REFERENCE_CASES, PARITY_CASES, REPO_ROOT / "samples/ui-showcase/src/desktopTest/kotlin/com/awakekt/awake/sample/uishowcase/ui/ShadcnComposeParityPreviewTest.kt"]
     files.extend(REPO_ROOT / case[key] for case in cases for key in ("referencePng", "referenceJson", "awakePng", "semanticJson"))
     evidence = []
     for path in files:

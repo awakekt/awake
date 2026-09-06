@@ -554,12 +554,12 @@ _LICENSE_HEADER = """/*
 # Imports only pulled in when the emitted icons actually reference them -- an unused import is a
 # detekt failure, and which of these a tier needs depends on whether it strokes or has holes.
 _CONDITIONAL_IMPORTS = {
-    "DrawStroke(": "io.github.awakelab.awake.core.graphics2d.DrawStroke",
-    "UiFillRule.": "io.github.awakelab.awake.core.graphics2d.UiFillRule",
-    "UiStrokeCap.": "io.github.awakelab.awake.core.graphics2d.UiStrokeCap",
-    "UiStrokeJoin.": "io.github.awakelab.awake.core.graphics2d.UiStrokeJoin",
-    "packedImageVector(": "io.github.awakelab.awake.compose.ui.graphics.vector.packedImageVector",
-    "imageVector(\n": "io.github.awakelab.awake.compose.ui.graphics.vector.imageVector",
+    "DrawStroke(": "com.awakekt.awake.core.graphics2d.DrawStroke",
+    "UiFillRule.": "com.awakekt.awake.core.graphics2d.UiFillRule",
+    "UiStrokeCap.": "com.awakekt.awake.core.graphics2d.UiStrokeCap",
+    "UiStrokeJoin.": "com.awakekt.awake.core.graphics2d.UiStrokeJoin",
+    "packedImageVector(": "com.awakekt.awake.compose.ui.graphics.vector.packedImageVector",
+    "imageVector(\n": "com.awakekt.awake.compose.ui.graphics.vector.imageVector",
 }
 
 
@@ -597,8 +597,8 @@ def emit_file(manifest, svg_root, args):
     text = "\n".join(body)
 
     imports = sorted(
-        {"io.github.awakelab.awake.compose.ui.graphics.vector.ImageVector",
-         "io.github.awakelab.awake.core.math2d.dp"}
+        {"com.awakekt.awake.compose.ui.graphics.vector.ImageVector",
+         "com.awakekt.awake.core.math2d.dp"}
         | {module for marker, module in _CONDITIONAL_IMPORTS.items() if marker in text}
     )
     head = [_LICENSE_HEADER, f"package {manifest['package']}", ""]

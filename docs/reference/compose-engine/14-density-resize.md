@@ -3,10 +3,10 @@
 ## Units: where `Dp` and `Sp` live
 
 `Dp` and `Sp` are the real types declared in `:awake:core:math2d`
-(`io.github.awakelab.awake.core.math2d.Dp`/`Sp`) — a math/geometry primitive module, not a
+(`com.awakekt.awake.core.math2d.Dp`/`Sp`) — a math/geometry primitive module, not a
 UI-framework one, so non-UI consumers (render-pass code, `DrawShape.kt`, `DrawStroke.kt`) use them
 without depending on the compose engine at all. `:awake:compose:ui`'s `unit` package
-(`io.github.awakelab.awake.compose.ui.unit`) re-exports them as `typealias Dp = GraphicsDp`
+(`com.awakekt.awake.compose.ui.unit`) re-exports them as `typealias Dp = GraphicsDp`
 (an import-aliased re-export, see `Units.kt`) so `:awake:compose:*` code can write `Dp` the same
 way upstream Compose does, with zero new type and zero conversion — there is exactly one `Dp` in
 the tree.
@@ -16,12 +16,12 @@ assumed the pre-migration module layout (`:awake:ui:graphics`'s `ui.api` package
 along with the rest of `ui-core`). The real landing spot (`core:math2d`, aliased through
 `compose:ui:unit`) is the equivalent decision, made during that migration rather than as a
 dedicated pass — the reasoning (`api` bundled unrelated things, 242 call sites, avoid touching
-them twice before the `io.github.awakelab.*` rename) still holds and is documented in `Units.kt`'s
-own comment.
+them twice before the `com.awakekt.awake.*` rename) still holds and is documented in `Units.kt`'s
+package comment.
 
-**Still deferred**: `Density`, `IntSize`/`IntOffset` are not yet unified alongside `Dp`/`Sp` in one
-package the way upstream Compose's `androidx.compose.ui.unit` groups them. That consolidation, and
-the `io.github.awakelab.*` rename itself, remain open.
+The four other gaps flagged in the audit -- the missing font metrics file, the dead
+`CanvasDrawScopeTest` file, the lack of an upstream Compose multiplatform dependency audit, and
+the `com.awakekt.awake.*` rename itself, remain open.
 
 ## Density
 

@@ -1,56 +1,56 @@
-public abstract interface class io/github/awakelab/awake/sample/netdemo/ClientFrame {
-	public static final field Companion Lio/github/awakelab/awake/sample/netdemo/ClientFrame$Companion;
+public abstract interface class com/awakekt/awake/sample/netdemo/ClientFrame {
+	public static final field Companion Lcom/awakekt/awake/sample/netdemo/ClientFrame$Companion;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/ClientFrame$Companion {
+public final class com/awakekt/awake/sample/netdemo/ClientFrame$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/ClientFrame$Join : io/github/awakelab/awake/sample/netdemo/ClientFrame {
-	public static final field Companion Lio/github/awakelab/awake/sample/netdemo/ClientFrame$Join$Companion;
+public final class com/awakekt/awake/sample/netdemo/ClientFrame$Join : com/awakekt/awake/sample/netdemo/ClientFrame {
+	public static final field Companion Lcom/awakekt/awake/sample/netdemo/ClientFrame$Join$Companion;
 	public fun <init> (Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lio/github/awakelab/awake/sample/netdemo/ClientFrame$Join;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/sample/netdemo/ClientFrame$Join;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/sample/netdemo/ClientFrame$Join;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/sample/netdemo/ClientFrame$Join;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/sample/netdemo/ClientFrame$Join;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/sample/netdemo/ClientFrame$Join;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDisplayName ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/sample/netdemo/ClientFrame$Join$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/sample/netdemo/ClientFrame$Join$$serializer;
+public final synthetic class com/awakekt/awake/sample/netdemo/ClientFrame$Join$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/sample/netdemo/ClientFrame$Join$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/sample/netdemo/ClientFrame$Join;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/sample/netdemo/ClientFrame$Join;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/sample/netdemo/ClientFrame$Join;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/sample/netdemo/ClientFrame$Join;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/ClientFrame$Join$Companion {
+public final class com/awakekt/awake/sample/netdemo/ClientFrame$Join$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/DevTls {
+public final class com/awakekt/awake/sample/netdemo/DevTls {
 	public static final field ALIAS Ljava/lang/String;
-	public static final field INSTANCE Lio/github/awakelab/awake/sample/netdemo/DevTls;
+	public static final field INSTANCE Lcom/awakekt/awake/sample/netdemo/DevTls;
 	public final fun getKeyStoreFile ()Ljava/io/File;
 	public final fun keyStore ()Ljava/security/KeyStore;
 	public final fun passwordChars ()[C
 	public final fun trustManager ()Ljavax/net/ssl/X509TrustManager;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/GridView {
+public final class com/awakekt/awake/sample/netdemo/GridView {
 	public static final field HEIGHT I
-	public static final field INSTANCE Lio/github/awakelab/awake/sample/netdemo/GridView;
+	public static final field INSTANCE Lcom/awakekt/awake/sample/netdemo/GridView;
 	public static final field WIDTH I
-	public final fun render-n0ovIkI (Lio/github/awakelab/awake/sample/netdemo/SnapshotBuffer;Lio/github/awakelab/awake/net/NetId;)Ljava/lang/String;
-	public final fun status (Lio/github/awakelab/awake/sample/netdemo/SnapshotBuffer;)Ljava/lang/String;
+	public final fun render-MoiWevk (Lcom/awakekt/awake/sample/netdemo/SnapshotBuffer;Lcom/awakekt/awake/net/NetId;)Ljava/lang/String;
+	public final fun status (Lcom/awakekt/awake/sample/netdemo/SnapshotBuffer;)Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/InputBuffer {
+public final class com/awakekt/awake/sample/netdemo/InputBuffer {
 	public fun <init> ()V
 	public final fun getMoveX ()F
 	public final fun getMoveY ()F
@@ -62,21 +62,21 @@ public final class io/github/awakelab/awake/sample/netdemo/InputBuffer {
 	public final fun setTick (J)V
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/KtorWebSocketClient : io/github/awakelab/awake/net/Transport {
+public final class com/awakekt/awake/sample/netdemo/KtorWebSocketClient : com/awakekt/awake/net/Transport {
 	public fun <init> (Ljava/lang/String;ILjava/lang/String;Z)V
 	public synthetic fun <init> (Ljava/lang/String;ILjava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun connect (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun getState ()Lkotlinx/coroutines/flow/StateFlow;
 	public fun incoming ()Lkotlinx/coroutines/channels/ReceiveChannel;
-	public fun send (Lio/github/awakelab/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun send (Lcom/awakekt/awake/net/DeliveryChannel;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/KtorWebSocketClientKt {
+public final class com/awakekt/awake/sample/netdemo/KtorWebSocketClientKt {
 	public static final field MAX_PACKET_BYTES I
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/KtorWebSocketServer : io/github/awakelab/awake/net/TransportServer {
+public final class com/awakekt/awake/sample/netdemo/KtorWebSocketServer : com/awakekt/awake/net/TransportServer {
 	public static final field GRACE_MILLIS J
 	public static final field TIMEOUT_MILLIS J
 	public fun <init> ()V
@@ -88,41 +88,41 @@ public final class io/github/awakelab/awake/sample/netdemo/KtorWebSocketServer :
 	public fun stop (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/MainKt {
+public final class com/awakekt/awake/sample/netdemo/MainKt {
 	public static final fun main ([Ljava/lang/String;)V
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/NetDemoClient {
+public final class com/awakekt/awake/sample/netdemo/NetDemoClient {
 	public static final field MICROS_PER_SECOND F
-	public fun <init> (Lio/github/awakelab/awake/sample/netdemo/KtorWebSocketClient;)V
+	public fun <init> (Lcom/awakekt/awake/sample/netdemo/KtorWebSocketClient;)V
 	public final fun close (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun connect (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun getMalformedPackets ()I
-	public final fun getNetId-vEhUJN0 ()Lio/github/awakelab/awake/net/NetId;
-	public final fun getSnapshot ()Lio/github/awakelab/awake/sample/netdemo/SnapshotBuffer;
-	public final fun indexOf-ea8MoL4 (J)I
-	public final fun interpolated ()Lio/github/awakelab/awake/sample/netdemo/SnapshotBuffer;
+	public final fun getNetId-N4jWgiA ()Lcom/awakekt/awake/net/NetId;
+	public final fun getSnapshot ()Lcom/awakekt/awake/sample/netdemo/SnapshotBuffer;
+	public final fun indexOf-73ENbek (J)I
+	public final fun interpolated ()Lcom/awakekt/awake/sample/netdemo/SnapshotBuffer;
 	public final fun receiveLoop (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun receiveUntil (Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun sendInput (JFFLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/NetDemoServer {
+public final class com/awakekt/awake/sample/netdemo/NetDemoServer {
 	public static final field DEFAULT_MAX_INPUTS_PER_TICK I
 	public static final field DEFAULT_MOVE_SPEED F
 	public static final field DEFAULT_TICK_RATE I
 	public static final field MILLIS_PER_SECOND I
-	public fun <init> (Lio/github/awakelab/awake/sample/netdemo/KtorWebSocketServer;IIFLio/github/awakelab/awake/net/CountingViolationSink;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/sample/netdemo/KtorWebSocketServer;IIFLio/github/awakelab/awake/net/CountingViolationSink;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/sample/netdemo/KtorWebSocketServer;IIFLcom/awakekt/awake/net/CountingViolationSink;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/sample/netdemo/KtorWebSocketServer;IIFLcom/awakekt/awake/net/CountingViolationSink;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getBytesSent ()J
 	public final fun getPort ()I
-	public final fun getViolations ()Lio/github/awakelab/awake/net/CountingViolationSink;
+	public final fun getViolations ()Lcom/awakekt/awake/net/CountingViolationSink;
 	public final fun start ()V
 	public final fun stop (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/OrbitInput {
-	public static final field Companion Lio/github/awakelab/awake/sample/netdemo/OrbitInput$Companion;
+public final class com/awakekt/awake/sample/netdemo/OrbitInput {
+	public static final field Companion Lcom/awakekt/awake/sample/netdemo/OrbitInput$Companion;
 	public static final field SEND_HZ I
 	public fun <init> ()V
 	public fun <init> (FF)V
@@ -131,51 +131,51 @@ public final class io/github/awakelab/awake/sample/netdemo/OrbitInput {
 	public final fun getTick ()J
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/OrbitInput$Companion {
+public final class com/awakekt/awake/sample/netdemo/OrbitInput$Companion {
 }
 
-public abstract interface class io/github/awakelab/awake/sample/netdemo/ServerFrame {
-	public static final field Companion Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Companion;
+public abstract interface class com/awakekt/awake/sample/netdemo/ServerFrame {
+	public static final field Companion Lcom/awakekt/awake/sample/netdemo/ServerFrame$Companion;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/ServerFrame$Companion {
+public final class com/awakekt/awake/sample/netdemo/ServerFrame$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/ServerFrame$Rejected : io/github/awakelab/awake/sample/netdemo/ServerFrame {
-	public static final field Companion Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Rejected$Companion;
+public final class com/awakekt/awake/sample/netdemo/ServerFrame$Rejected : com/awakekt/awake/sample/netdemo/ServerFrame {
+	public static final field Companion Lcom/awakekt/awake/sample/netdemo/ServerFrame$Rejected$Companion;
 	public fun <init> (Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Rejected;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Rejected;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Rejected;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/sample/netdemo/ServerFrame$Rejected;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/sample/netdemo/ServerFrame$Rejected;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/sample/netdemo/ServerFrame$Rejected;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getReason ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/sample/netdemo/ServerFrame$Rejected$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Rejected$$serializer;
+public final synthetic class com/awakekt/awake/sample/netdemo/ServerFrame$Rejected$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/sample/netdemo/ServerFrame$Rejected$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Rejected;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/sample/netdemo/ServerFrame$Rejected;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Rejected;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/sample/netdemo/ServerFrame$Rejected;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/ServerFrame$Rejected$Companion {
+public final class com/awakekt/awake/sample/netdemo/ServerFrame$Rejected$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome : io/github/awakelab/awake/sample/netdemo/ServerFrame {
-	public static final field Companion Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome$Companion;
+public final class com/awakekt/awake/sample/netdemo/ServerFrame$Welcome : com/awakekt/awake/sample/netdemo/ServerFrame {
+	public static final field Companion Lcom/awakekt/awake/sample/netdemo/ServerFrame$Welcome$Companion;
 	public fun <init> (JI)V
 	public final fun component1 ()J
 	public final fun component2 ()I
-	public final fun copy (JI)Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome;JIILjava/lang/Object;)Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome;
+	public final fun copy (JI)Lcom/awakekt/awake/sample/netdemo/ServerFrame$Welcome;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/sample/netdemo/ServerFrame$Welcome;JIILjava/lang/Object;)Lcom/awakekt/awake/sample/netdemo/ServerFrame$Welcome;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getNetId ()J
 	public final fun getTickRate ()I
@@ -183,28 +183,28 @@ public final class io/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome :
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome$$serializer;
+public final synthetic class com/awakekt/awake/sample/netdemo/ServerFrame$Welcome$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/sample/netdemo/ServerFrame$Welcome$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/sample/netdemo/ServerFrame$Welcome;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/sample/netdemo/ServerFrame$Welcome;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/ServerFrame$Welcome$Companion {
+public final class com/awakekt/awake/sample/netdemo/ServerFrame$Welcome$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/SnapshotBuffer {
+public final class com/awakekt/awake/sample/netdemo/SnapshotBuffer {
 	public fun <init> ()V
 	public fun <init> (I)V
 	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun add (JFF)V
 	public final fun clear ()V
-	public final fun copyFrom (Lio/github/awakelab/awake/sample/netdemo/SnapshotBuffer;)V
+	public final fun copyFrom (Lcom/awakekt/awake/sample/netdemo/SnapshotBuffer;)V
 	public final fun getCount ()I
 	public final fun getNetIds ()[J
 	public final fun getTick ()J
@@ -214,29 +214,29 @@ public final class io/github/awakelab/awake/sample/netdemo/SnapshotBuffer {
 	public final fun reset (JI)V
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/SnapshotInterpolator {
+public final class com/awakekt/awake/sample/netdemo/SnapshotInterpolator {
 	public static final field DEFAULT_DELAY_SECONDS F
 	public fun <init> ()V
 	public fun <init> (F)V
 	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun accept (Lio/github/awakelab/awake/sample/netdemo/SnapshotBuffer;F)V
+	public final fun accept (Lcom/awakekt/awake/sample/netdemo/SnapshotBuffer;F)V
 	public final fun getHasBothEnds ()Z
-	public final fun getOutput ()Lio/github/awakelab/awake/sample/netdemo/SnapshotBuffer;
-	public final fun sample (F)Lio/github/awakelab/awake/sample/netdemo/SnapshotBuffer;
+	public final fun getOutput ()Lcom/awakekt/awake/sample/netdemo/SnapshotBuffer;
+	public final fun sample (F)Lcom/awakekt/awake/sample/netdemo/SnapshotBuffer;
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/TickCodec {
-	public static final field INSTANCE Lio/github/awakelab/awake/sample/netdemo/TickCodec;
+public final class com/awakekt/awake/sample/netdemo/TickCodec {
+	public static final field INSTANCE Lcom/awakekt/awake/sample/netdemo/TickCodec;
 	public static final field MAX_PLAYERS_PER_SNAPSHOT I
-	public final fun decodeInput (Lio/github/awakelab/awake/net/PacketReader;Lio/github/awakelab/awake/sample/netdemo/InputBuffer;)Z
-	public final fun decodeSnapshot (Lio/github/awakelab/awake/net/PacketReader;Lio/github/awakelab/awake/sample/netdemo/SnapshotBuffer;)Z
-	public final fun encodeInput (Lio/github/awakelab/awake/net/PacketWriter;JJFF)V
-	public final fun encodeSnapshot (Lio/github/awakelab/awake/net/PacketWriter;JLio/github/awakelab/awake/sample/netdemo/SnapshotBuffer;)V
+	public final fun decodeInput (Lcom/awakekt/awake/net/PacketReader;Lcom/awakekt/awake/sample/netdemo/InputBuffer;)Z
+	public final fun decodeSnapshot (Lcom/awakekt/awake/net/PacketReader;Lcom/awakekt/awake/sample/netdemo/SnapshotBuffer;)Z
+	public final fun encodeInput (Lcom/awakekt/awake/net/PacketWriter;JJFF)V
+	public final fun encodeSnapshot (Lcom/awakekt/awake/net/PacketWriter;JLcom/awakekt/awake/sample/netdemo/SnapshotBuffer;)V
 }
 
-public final class io/github/awakelab/awake/sample/netdemo/TickCodec$Opcode {
+public final class com/awakekt/awake/sample/netdemo/TickCodec$Opcode {
 	public static final field INPUT B
-	public static final field INSTANCE Lio/github/awakelab/awake/sample/netdemo/TickCodec$Opcode;
+	public static final field INSTANCE Lcom/awakekt/awake/sample/netdemo/TickCodec$Opcode;
 	public static final field JSON B
 	public static final field SNAPSHOT B
 }

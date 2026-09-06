@@ -1,129 +1,129 @@
-public final class io/github/awakelab/awake/asset/shaderpack/AslDepthFogShaderKt {
-	public static final fun depthFogShader (Lio/github/awakelab/awake/core/math/ClipSpace;)Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+public final class com/awakekt/awake/asset/shaderpack/AslDepthFogShaderKt {
+	public static final fun depthFogShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/AslInfiniteGridShaderKt {
-	public static final fun getInfiniteGridShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+public final class com/awakekt/awake/asset/shaderpack/AslInfiniteGridShaderKt {
+	public static final fun getInfiniteGridShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/AslMeshVariantShadersKt {
-	public static final fun getInstancedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
-	public static final fun getSkinnedInstancedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
-	public static final fun getSkinnedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
-	public static final fun getSkinnedTexturedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+public final class com/awakekt/awake/asset/shaderpack/AslMeshVariantShadersKt {
+	public static final fun getInstancedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getSkinnedInstancedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getSkinnedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getSkinnedTexturedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/AslParticleShaderKt {
-	public static final fun getParticleShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+public final class com/awakekt/awake/asset/shaderpack/AslParticleShaderKt {
+	public static final fun getParticleShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/AslShadowShadersKt {
-	public static final fun getSceneDepthShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
-	public static final fun getShadowDepthShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
-	public static final fun litShadowShader (Lio/github/awakelab/awake/core/math/ClipSpace;)Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+public final class com/awakekt/awake/asset/shaderpack/AslShadowShadersKt {
+	public static final fun getSceneDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun litShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/AslSkyboxShaderKt {
-	public static final fun getSkyboxShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+public final class com/awakekt/awake/asset/shaderpack/AslSkyboxShaderKt {
+	public static final fun getSkyboxShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/AslTerrainShaderKt {
+public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 	public static final field MAX_CLIPMAP_RINGS I
-	public static final fun getTerrainShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getTerrainShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/AslTerrainSplatShaderKt {
-	public static final fun getTerrainSplatShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+public final class com/awakekt/awake/asset/shaderpack/AslTerrainSplatShaderKt {
+	public static final fun getTerrainSplatShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/AslTexturedShaderKt {
-	public static final fun getTexturedShader ()Lio/github/awakelab/awake/asset/shaderdsl/AslShaderDefinition;
+public final class com/awakekt/awake/asset/shaderpack/AslTexturedShaderKt {
+	public static final fun getTexturedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/DepthFogContentFeatureKt {
-	public static final fun depthFogContentFeature (Lio/github/awakelab/awake/core/color/Color;Lkotlin/jvm/functions/Function0;)Lio/github/awakelab/awake/asset/shaders/ContentFeatureSource;
-	public static synthetic fun depthFogContentFeature$default (Lio/github/awakelab/awake/core/color/Color;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/shaders/ContentFeatureSource;
+public final class com/awakekt/awake/asset/shaderpack/DepthFogContentFeatureKt {
+	public static final fun depthFogContentFeature (Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun depthFogContentFeature$default (Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/DepthFogRenderFeature : io/github/awakelab/awake/render/passes/RenderFeature {
-	public fun <init> (Lio/github/awakelab/awake/render/command/PipelineHandle;Lio/github/awakelab/awake/render/command/UniformBlock;Lio/github/awakelab/awake/core/color/Color;Lkotlin/jvm/functions/Function0;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/render/command/PipelineHandle;Lio/github/awakelab/awake/render/command/UniformBlock;Lio/github/awakelab/awake/core/color/Color;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+public final class com/awakekt/awake/asset/shaderpack/DepthFogRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
+	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun destroy ()V
-	public fun getPass ()Lio/github/awakelab/awake/render/passes/RenderPassSlot;
-	public fun recordCommands (Lio/github/awakelab/awake/render/passes/RenderFrameContext;)V
+	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/LitShadowUniformLayoutKt {
-	public static final fun getLitShadowUniformLayout ()Lio/github/awakelab/awake/render/renderer/UniformLayout;
+public final class com/awakekt/awake/asset/shaderpack/LitShadowUniformLayoutKt {
+	public static final fun getLitShadowUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/PackShaderSets {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/shaderpack/PackShaderSets;
-	public final fun getInfiniteGrid ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getInstanced ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getLitShadow ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getParticle ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getSceneDepth ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getShadowDepth ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getSkinned ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getSkinnedInstanced ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getSkinnedTextured ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getSkybox ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getTerrain ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getTerrainSplat ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getTextured ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
-	public final fun getTriangle ()Lio/github/awakelab/awake/asset/shaders/ShaderSet;
+public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/PackShaderSets;
+	public final fun getInfiniteGrid ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getInstanced ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getLitShadow ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getParticle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSceneDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkinned ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkinnedInstanced ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkinnedTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkybox ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getTerrainSplat ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getTriangle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/ShadowUniforms {
-	public final fun getCameraPosition ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
-	public final fun getCascadeDepthScales ()Lio/github/awakelab/awake/asset/shaderdsl/AslArrayHandle;
-	public final fun getCascadeViewProjections ()Lio/github/awakelab/awake/asset/shaderdsl/AslArrayHandle;
-	public final fun getFogColor ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
-	public final fun getLightColor ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
-	public final fun getLightDirection ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
-	public final fun getMaterial ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
-	public final fun getModel ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
-	public final fun getMvp ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
-	public final fun getPointLightColors ()Lio/github/awakelab/awake/asset/shaderdsl/AslArrayHandle;
-	public final fun getPointLightPositions ()Lio/github/awakelab/awake/asset/shaderdsl/AslArrayHandle;
-	public final fun getVertexAnimation ()Lio/github/awakelab/awake/asset/shaderdsl/AslExpr;
+public final class com/awakekt/awake/asset/shaderpack/ShadowUniforms {
+	public final fun getCameraPosition ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getCascadeDepthScales ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
+	public final fun getCascadeViewProjections ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
+	public final fun getFogColor ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getLightColor ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getLightDirection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getMaterial ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getModel ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getMvp ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getPointLightColors ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
+	public final fun getPointLightPositions ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
+	public final fun getVertexAnimation ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/ShadowUniformsKt {
-	public static final fun shadowUniforms (Lio/github/awakelab/awake/asset/shaderdsl/AslShaderBuilder;Z)Lio/github/awakelab/awake/asset/shaderpack/ShadowUniforms;
+public final class com/awakekt/awake/asset/shaderpack/ShadowUniformsKt {
+	public static final fun shadowUniforms (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;Z)Lcom/awakekt/awake/asset/shaderpack/ShadowUniforms;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/SkyboxContentFeatureKt {
-	public static final fun skyboxContentFeature (Lio/github/awakelab/awake/asset/shaders/ShaderSet;)Lio/github/awakelab/awake/asset/shaders/ContentFeatureSource;
+public final class com/awakekt/awake/asset/shaderpack/SkyboxContentFeatureKt {
+	public static final fun skyboxContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/TerrainContentFeatureKt {
-	public static final fun terrainContentFeature (Lio/github/awakelab/awake/asset/shaders/ShaderSet;Lio/github/awakelab/awake/asset/terrain/Heightmap;Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lkotlin/jvm/functions/Function0;)Lio/github/awakelab/awake/asset/shaders/ContentFeatureSource;
-	public static synthetic fun terrainContentFeature$default (Lio/github/awakelab/awake/asset/shaders/ShaderSet;Lio/github/awakelab/awake/asset/terrain/Heightmap;Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/shaders/ContentFeatureSource;
+public final class com/awakekt/awake/asset/shaderpack/TerrainContentFeatureKt {
+	public static final fun terrainContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun terrainContentFeature$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/TerrainRenderFeature : io/github/awakelab/awake/render/passes/RenderFeature {
+public final class com/awakekt/awake/asset/shaderpack/TerrainRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
 	public static final field AMBIENT F
 	public static final field VEC4 I
-	public fun <init> (Lio/github/awakelab/awake/render/command/PipelineHandle;Lio/github/awakelab/awake/render/command/UniformBlock;Lio/github/awakelab/awake/render/passes/ContentGeometry;Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/render/command/PipelineHandle;Lio/github/awakelab/awake/render/command/UniformBlock;Lio/github/awakelab/awake/render/passes/ContentGeometry;Lio/github/awakelab/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun destroy ()V
-	public fun getPass ()Lio/github/awakelab/awake/render/passes/RenderPassSlot;
-	public fun recordCommands (Lio/github/awakelab/awake/render/passes/RenderFrameContext;)V
+	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/TerrainUniformLayout {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/shaderpack/TerrainUniformLayout;
-	public final fun getLayout ()Lio/github/awakelab/awake/render/renderer/UniformLayout;
-	public final fun getRingParams ()Lio/github/awakelab/awake/render/renderer/UniformField;
-	public final fun getSunDirection ()Lio/github/awakelab/awake/render/renderer/UniformField;
-	public final fun getTerrainParams ()Lio/github/awakelab/awake/render/renderer/UniformField;
-	public final fun getTerrainSampling ()Lio/github/awakelab/awake/render/renderer/UniformField;
-	public final fun getViewProjection ()Lio/github/awakelab/awake/render/renderer/UniformField;
+public final class com/awakekt/awake/asset/shaderpack/TerrainUniformLayout {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/TerrainUniformLayout;
+	public final fun getLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getRingParams ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getSunDirection ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getTerrainParams ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getTerrainSampling ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getViewProjection ()Lcom/awakekt/awake/render/renderer/UniformField;
 }
 
-public final class io/github/awakelab/awake/asset/shaderpack/TexturedUniformLayoutKt {
-	public static final fun getTexturedUniformLayout ()Lio/github/awakelab/awake/render/renderer/UniformLayout;
+public final class com/awakekt/awake/asset/shaderpack/TexturedUniformLayoutKt {
+	public static final fun getTexturedUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
 

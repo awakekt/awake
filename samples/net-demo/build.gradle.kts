@@ -24,7 +24,7 @@ kotlin {
 
     jvm("desktop") {
         @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
-        mainRun { mainClass.set("io.github.awakelab.awake.sample.netdemo.MainKt") }
+        mainRun { mainClass.set("com.awakekt.awake.sample.netdemo.MainKt") }
     }
 
     // Fixed dev-server port so this sample does not collide with the others (webpack defaults

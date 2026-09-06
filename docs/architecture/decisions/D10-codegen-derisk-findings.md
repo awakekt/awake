@@ -271,9 +271,9 @@ before every type lookup for both function params/returns and struct fields.
 known limitation ("assumed to be in the same package as the struct that contains it");
 wiring against the real codebase showed it's not an edge case here — it's the norm (enums
 live in `enums/`, structs in `models/info/`). `VkBufferCreateInfo.sharingMode: VkSharingMode`
-was marshalled with `Lio/github/awakelab/awake/vulkan/models/info/VkSharingMode;` — the
+was marshalled with `Lcom/awakekt/awake/vulkan/models/info/VkSharingMode;` — the
 struct's package, not the enum's real one
-(`io/github/awakelab/awake/vulkan/enums/VkSharingMode`). Fixed generically:
+(`com/awakekt/awake/vulkan/enums/VkSharingMode`). Fixed generically:
 `collect_enum_packages()` tracks each enum's actual declaring package (mirroring how
 `KotlinStruct.package` already works); the struct generator uses it, falling back to the
 referencing struct's package only if genuinely unknown. Both gaps fixed and verified

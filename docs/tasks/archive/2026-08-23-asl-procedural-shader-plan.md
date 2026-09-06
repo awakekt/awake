@@ -40,14 +40,14 @@ the pipeline for that shader, not a base-language change.
 ```
 awake:asset:shader-dsl          (new)
 └── commonMain
-    └── io.github.awakelab.awake.asset.shaderdsl
+    └── com.awakekt.awake.asset.shaderdsl
 ```
 
 - Flat sibling, not a nested `shaders:asl` submodule — the asset group is flat
   (`gltf`, `mesh-optimizer`, `shaders`, `shader-pack`), and the package collapses the hyphen
   the way `shaderpack` already does.
 - Dependencies: `api(":awake:core:geometry")` for `GpuDataShape`
-  ([VertexAttribute.kt:15](../../awake/core/geometry/src/commonMain/kotlin/io/github/awakelab/awake/core/geometry/VertexAttribute.kt))
+  ([VertexAttribute.kt:15](../../awake/core/geometry/src/commonMain/kotlin/com/awakekt/awake/core/geometry/VertexAttribute.kt))
   — shapes are reused, not redeclared. Nothing else: the module turns Kotlin definitions into
   WGSL text; it needs no `ShaderSet`, no render contract, no backend.
 - Group/package follow the current `io.github.awakelab` convention; the pre-publish

@@ -22,7 +22,7 @@
     <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$fun dispatch(root: LayoutNode, event: PointerEvent, x: Int, y: Int, dx: Int = 0, dy: Int = 0): Boolean</ID>
     <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$private fun descendInto(into: MutableList&lt;LayoutNode>, node: LayoutNode, x: Int, y: Int)</ID>
     <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$private fun hitDetachedLayer(into: MutableList&lt;LayoutNode>, node: LayoutNode, x: Int, y: Int): Boolean</ID>
-    <ID>TooManyFunctions:DrawModifiers.kt$io.github.awakelab.awake.compose.ui.draw.DrawModifiers.kt</ID>
+    <ID>TooManyFunctions:DrawModifiers.kt$com.awakekt.awake.compose.ui.draw.DrawModifiers.kt</ID>
     <ID>TooManyFunctions:DrawScope.kt$DrawScope</ID>
     <ID>TooManyFunctions:LayoutNode.kt$LayoutNode : PlaceableMeasurableRememberHolder</ID>
     <ID>TooManyFunctions:PointerInputDispatcher.kt$PointerInputDispatcher</ID>

@@ -37,7 +37,7 @@ sourceSets["main"].kotlin.srcDir("src/main/kotlin")
 sourceSets["main"].resources.srcDir("../bindings/src/main/cpp/vulkan-kotlin/")
 
 application { // Specify the main class using the application plugin
-    mainClass.set("io.github.awakelab.awake.vulkan_generator.MainKt")
+    mainClass.set("com.awakekt.awake.vulkan_generator.MainKt")
 }
 
 dependencies {

@@ -15,7 +15,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.heroicons"
+        namespace = "com.awakekt.awake.heroicons"
     }
 
     sourceSets {

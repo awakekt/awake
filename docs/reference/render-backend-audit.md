@@ -7,14 +7,14 @@ a different concern; this doc is scoped to the two render backends' own behavior
 intentionally kept separate from it, per explicit instruction). Every row below is backed by
 a direct read of:
 
-- `awake/backend/vulkan/src/commonMain/kotlin/io/github/awakelab/awake/vulkan/renderer/Renderer.kt`
-- `awake/backend/webgpu/src/wasmJsMain/kotlin/io/github/awakelab/awake/webgpu/renderer/Renderer.kt`
-- `awake/backend/vulkan/src/commonMain/kotlin/io/github/awakelab/awake/vulkan/ui/UiTextureRenderPipeline.kt`
-- `awake/backend/webgpu/src/wasmJsMain/kotlin/io/github/awakelab/awake/webgpu/ui/UiTextureRenderPipeline.kt`
-- `awake/backend/webgpu/src/wasmJsMain/kotlin/io/github/awakelab/awake/webgpu/material/Material.kt`
-- `awake/backend/vulkan/src/commonMain/kotlin/io/github/awakelab/awake/vulkan/material/Material.kt`
-- `awake/engine/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/UiDrawPrimitive.kt`
-- `awake/engine/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/layout/Rectangle.kt`
+- `awake/backend/vulkan/src/commonMain/kotlin/com/awakekt/awake/vulkan/renderer/Renderer.kt`
+- `awake/backend/webgpu/src/wasmJsMain/kotlin/com/awakekt/awake/webgpu/renderer/Renderer.kt`
+- `awake/backend/vulkan/src/commonMain/kotlin/com/awakekt/awake/vulkan/ui/UiTextureRenderPipeline.kt`
+- `awake/backend/webgpu/src/wasmJsMain/kotlin/com/awakekt/awake/webgpu/ui/UiTextureRenderPipeline.kt`
+- `awake/backend/webgpu/src/wasmJsMain/kotlin/com/awakekt/awake/webgpu/material/Material.kt`
+- `awake/backend/vulkan/src/commonMain/kotlin/com/awakekt/awake/vulkan/material/Material.kt`
+- `awake/engine/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/UiDrawPrimitive.kt`
+- `awake/engine/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layout/Rectangle.kt`
 
 not memory of either graphics API or of this codebase from an earlier session.
 
@@ -49,7 +49,7 @@ crash or leak -- flagging per this audit's scope, not fixing.
 
 `git show 22d72f33 -- <path>` for both files shows an identical 3-hunk diff per file:
 
-1. Import: `io.github.awakelab.awake.ui.scope.UiSlot` -> `io.github.awakelab.awake.ui.layout.Rectangle`
+1. Import: `com.awakekt.awake.ui.scope.UiSlot` -> `com.awakekt.awake.ui.layout.Rectangle`
 2. `UiRun.ClipRun(val rect: UiSlot)` -> `UiRun.ClipRun(val rect: Rectangle)`
 3. `UiShapeSpec.RoundedRectangle(quad.radius.px).toPath(UiSlot(quad.x, quad.y, quad.w, quad.h))` -> `...toPath(Rectangle(quad.x, quad.y, quad.w, quad.h))`
 

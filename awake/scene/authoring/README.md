@@ -5,7 +5,7 @@ The `:awake:scene:authoring` module provides a component-agnostic, type-safe DSL
 ## Core Concepts
 
 1. **`EntityScope`**: Pure, component-agnostic configurator managing an entity ID and attaching components via `with(component)` or `configure(::Component)`.
-2. **Domain-Specific DSL Extensions (`io.github.awakelab.awake.scene.authoring.dsl.*`)**:
+2. **Domain-Specific DSL Extensions (`com.awakekt.awake.scene.authoring.dsl.*`)**:
    - **`SceneTransformDsl`**: `transform(x, y, z, sx, sy, sz)` / `transform(position)`
    - **`SceneLightingDsl`**: `sun()`, `lamp()`, `directionalLight(...)`, `pointLight(...)`
    - **`SceneCameraDsl`**: `camera(...)`, `defaultOrbitCamera(...)`, `cameraEntity(...)`

@@ -18,7 +18,7 @@ minimizing visual error, given only `positions`/`indices` (the same shape
 `MeshGeometry`/`GltfMesh` already use).
 
 ```kotlin
-import io.github.awakelab.awake.core.geometry.MeshSimplifier
+import com.awakekt.awake.core.geometry.MeshSimplifier
 
 // positions: FloatArray (x,y,z per vertex), indices: IntArray (triangle list)
 val result = MeshSimplifier.simplify(positions, indices, targetTriangleRatio = 0.5f)
@@ -59,7 +59,7 @@ accessor flag) share: an integer packed into `[-1, 1]` (signed) or `[0, 1]` (uns
 whatever bit width it was stored in.
 
 ```kotlin
-import io.github.awakelab.awake.core.geometry.NormalizedInt
+import com.awakekt.awake.core.geometry.NormalizedInt
 
 NormalizedInt.signedByte(127)      // 1f
 NormalizedInt.unsignedByte(255)    // 1f

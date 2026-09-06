@@ -21,7 +21,7 @@ If you only need raw Vulkan API bindings without engine dependencies:
 
 ```kotlin
 // commonMain
-implementation("io.github.awake-lab:vulkan-kmp:<version>")
+implementation("com.awakekt.awake:vulkan-kmp:<version>")
 ```
 
 See [`bindings/README.md`](bindings/README.md) for full setup instructions across Desktop JVM, Android, and iOS.

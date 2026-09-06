@@ -21,7 +21,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.asset.terrain"
+        namespace = "com.awakekt.awake.asset.terrain"
     }
 
     sourceSets {

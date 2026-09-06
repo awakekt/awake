@@ -30,19 +30,19 @@ Formalize an unprojected, multi-scale **Infinite Grid** with **Infinite Axis Lin
 
 ### Core Math (`awake:core:math`)
 
-#### [MODIFY] [Grid.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/core/math/src/commonMain/kotlin/io/github/awakelab/awake/core/math/Grid.kt)
+#### [MODIFY] [Grid.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/core/math/src/commonMain/kotlin/com/awakekt/awake/core/math/Grid.kt)
 - Expand `Grid` object to include plane intersection math helpers (`intersectGroundPlane(rayOrigin, rayDir, y = 0f)`).
 - Add typed data model `GridSpec(size = 1.0f, subdivisions = 10, fadeDistance = 100f, showAxisLines = true)` for infinite grid shader uniform packing.
 - Retain `lines(...)` for backward compatibility with bounded wireframe diagnostic calls.
 
-#### [NEW] [GridTest.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/core/math/src/commonTest/kotlin/io/github/awakelab/awake/core/math/GridTest.kt)
+#### [NEW] [GridTest.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/core/math/src/commonTest/kotlin/com/awakekt/awake/core/math/GridTest.kt)
 - Add unit tests verifying `intersectGroundPlane` math and `snapToGrid` rounding across positive, negative, and edge-case ray directions.
 
 ---
 
 ### Shaders & Shader Pack (`awake:asset:shaders` & `awake:asset:shader-pack`)
 
-#### [NEW] [AslInfiniteGridShader.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/asset/shader-pack/src/commonMain/kotlin/io/github/awakelab/awake/asset/shaderpack/AslInfiniteGridShader.kt)
+#### [NEW] [AslInfiniteGridShader.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/asset/shader-pack/src/commonMain/kotlin/com/awakekt/awake/asset/shaderpack/AslInfiniteGridShader.kt)
 - Define `InfiniteGridShader: AslShaderDefinition` using ASL DSL:
   - **Vertex stage:** Emits a full-screen triangle (`fullScreenTriangleCorner()`) at $z = 1.0$ far clip depth. Passes unprojected NDC coordinates to fragment stage.
   - **Fragment stage:**
@@ -53,18 +53,18 @@ Formalize an unprojected, multi-scale **Infinite Grid** with **Infinite Axis Lin
     5. Applies distance-based falloff `exp(-distance * falloff)` to smoothly fade into background before clip plane.
     6. Outputs blended color and computes fragment depth.
 
-#### [MODIFY] [EngineShaderSets.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/asset/shaders/src/commonMain/kotlin/io/github/awakelab/awake/asset/shaders/EngineShaderSets.kt)
+#### [MODIFY] [EngineShaderSets.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/asset/shaders/src/commonMain/kotlin/com/awakekt/awake/asset/shaders/EngineShaderSets.kt)
 - Register `InfiniteGrid = aslShaderSet(InfiniteGridShader)` for Vulkan and WebGPU backend compilation.
 
 ---
 
 ### Scene & Rendering (`awake:scene:rendering`)
 
-#### [MODIFY] [WorldDebugSettings.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/scene/rendering/src/commonMain/kotlin/io/github/awakelab/awake/scene/rendering/debug/WorldDebugSettings.kt)
+#### [MODIFY] [WorldDebugSettings.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/scene/rendering/src/commonMain/kotlin/com/awakekt/awake/scene/rendering/debug/WorldDebugSettings.kt)
 - Add `showGrid: Boolean = true` and `showAxisLines: Boolean = true` to `WorldDebugSettings`.
 - Add configurable grid properties: `gridScale: Float = 1.0f`, `gridFadeDistance: Float = 100.0f`.
 
-#### [MODIFY] [DebugVisualizationSystem.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/scene/rendering/src/commonMain/kotlin/io/github/awakelab/awake/scene/rendering/debug/DebugVisualizationSystem.kt)
+#### [MODIFY] [DebugVisualizationSystem.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/scene/rendering/src/commonMain/kotlin/com/awakekt/awake/scene/rendering/debug/DebugVisualizationSystem.kt)
 - Integrate infinite grid and infinite axis line parameters into `debugVisualizationLines` and the renderer pipeline pass execution.
 - Maintain axis line accents (Red X-axis line, Blue Z-axis line, Green Y-axis origin indicator) as infinite line features.
 
@@ -72,14 +72,14 @@ Formalize an unprojected, multi-scale **Infinite Grid** with **Infinite Axis Lin
 
 ### Editor & Studio Shell (`awake:editor:scene` & `apps:studio`)
 
-#### [MODIFY] [EditorToolbar.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/editor/src/commonMain/kotlin/io/github/awakelab/awake/editor/toolbar/EditorToolbar.kt)
+#### [MODIFY] [EditorToolbar.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/editor/src/commonMain/kotlin/com/awakekt/awake/editor/toolbar/EditorToolbar.kt)
 - Wire the inert "Grid" rail button to toggle `WorldDebugSettings.showGrid`.
 
-#### [MODIFY] [SceneViewportPanel.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/editor/scene/src/commonMain/kotlin/io/github/awakelab/awake/editor/scene/viewport/SceneViewportPanel.kt)
+#### [MODIFY] [SceneViewportPanel.kt](file:///Users/ronvaldoz/StudioProjects/awaken/awake/editor/scene/src/commonMain/kotlin/com/awakekt/awake/editor/scene/viewport/SceneViewportPanel.kt)
 - Add grid toggle button to viewport header pill controls alongside Wireframe and Shadow toggles.
 - Connect grid visibility and axis line toggles to live `WorldDebugSettings`.
 
-#### [MODIFY] [StudioShell.kt](file:///Users/ronvaldoz/StudioProjects/awaken/apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/ui/StudioShell.kt)
+#### [MODIFY] [StudioShell.kt](file:///Users/ronvaldoz/StudioProjects/awaken/apps/studio/src/commonMain/kotlin/com/awakekt/awake/studio/ui/StudioShell.kt)
 - Ensure `WorldDebugSettings` initialized on studio startup has `showGrid = true` and `showAxisLines = true` by default.
 
 ---

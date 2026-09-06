@@ -40,7 +40,7 @@ dokka {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.vulkan"
+        namespace = "com.awakekt.awake.vulkan"
     }
 
     // See :awake:backend:vulkan's build.gradle.kts history for the full MoltenVK rationale
@@ -221,7 +221,7 @@ mavenPublishing {
     // audience types) -- distinct from the path-derived group other modules keep for
     // capability-collision safety; "vulkan-kmp" is unique so the projectsEvaluated duplicate
     // check stays satisfied.
-    coordinates("io.github.awake-lab", "vulkan-kmp", version.toString())
+    coordinates("com.awakekt.awake", "vulkan-kmp", version.toString())
     pom {
         name.set("Vulkan KMP Bindings")
         description.set(

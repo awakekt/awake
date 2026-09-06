@@ -10,17 +10,17 @@ VkPipelineColorBlendAttachmentStateAccessor::VkPipelineColorBlendAttachmentState
     clazz = env->GetObjectClass(obj);
     blendEnableField = env->GetFieldID(clazz, "blendEnable", "Z");
     srcColorBlendFactorField = env->GetFieldID(clazz, "srcColorBlendFactor",
-                                               "Lio/github/awakelab/awake/vulkan/enums/VkBlendFactor;");
+                                               "Lcom/awakekt/awake/vulkan/enums/VkBlendFactor;");
     dstColorBlendFactorField = env->GetFieldID(clazz, "dstColorBlendFactor",
-                                               "Lio/github/awakelab/awake/vulkan/enums/VkBlendFactor;");
+                                               "Lcom/awakekt/awake/vulkan/enums/VkBlendFactor;");
     colorBlendOpField = env->GetFieldID(clazz, "colorBlendOp",
-                                        "Lio/github/awakelab/awake/vulkan/enums/VkBlendOp;");
+                                        "Lcom/awakekt/awake/vulkan/enums/VkBlendOp;");
     srcAlphaBlendFactorField = env->GetFieldID(clazz, "srcAlphaBlendFactor",
-                                               "Lio/github/awakelab/awake/vulkan/enums/VkBlendFactor;");
+                                               "Lcom/awakekt/awake/vulkan/enums/VkBlendFactor;");
     dstAlphaBlendFactorField = env->GetFieldID(clazz, "dstAlphaBlendFactor",
-                                               "Lio/github/awakelab/awake/vulkan/enums/VkBlendFactor;");
+                                               "Lcom/awakekt/awake/vulkan/enums/VkBlendFactor;");
     alphaBlendOpField = env->GetFieldID(clazz, "alphaBlendOp",
-                                        "Lio/github/awakelab/awake/vulkan/enums/VkBlendOp;");
+                                        "Lcom/awakekt/awake/vulkan/enums/VkBlendOp;");
     colorWriteMaskField = env->GetFieldID(clazz, "colorWriteMask", "I");
 }
 

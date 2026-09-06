@@ -1,110 +1,110 @@
-public abstract interface class io/github/awakelab/awake/heroicons/icon/HeroIcons {
+public abstract interface class com/awakekt/awake/heroicons/icon/HeroIcons {
 }
 
-public final class io/github/awakelab/awake/heroicons/icon/HeroIcons$Outline24 : io/github/awakelab/awake/heroicons/icon/HeroIcons {
-	public static final field INSTANCE Lio/github/awakelab/awake/heroicons/icon/HeroIcons$Outline24;
-	public final fun getAcademicCap ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getAdjustmentsHorizontal ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getArrowPath ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getArrowsPointingIn ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getArrowsPointingOut ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getCamera ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getCheck ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronDown ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronLeft ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronRight ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronUp ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getClock ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getCommandLine ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getCube ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getCursorArrowRays ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getEllipsisHorizontal ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getExclamationTriangle ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getEye ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getEyeSlash ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getFilm ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getGlobeAlt ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getLightBulb ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getMagnifyingGlass ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getMap ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getMoon ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getPlus ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSparkles ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSquare2Stack ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSquare3Stack3d ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSquares2x2 ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSun ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getTrash ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getUserCircle ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getVideoCamera ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getViewfinderCircle ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getXCircle ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getXMark ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
+public final class com/awakekt/awake/heroicons/icon/HeroIcons$Outline24 : com/awakekt/awake/heroicons/icon/HeroIcons {
+	public static final field INSTANCE Lcom/awakekt/awake/heroicons/icon/HeroIcons$Outline24;
+	public final fun getAcademicCap ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getAdjustmentsHorizontal ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getArrowPath ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getArrowsPointingIn ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getArrowsPointingOut ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getCamera ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getCheck ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronDown ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronLeft ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronRight ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronUp ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getClock ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getCommandLine ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getCube ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getCursorArrowRays ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getEllipsisHorizontal ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getExclamationTriangle ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getEye ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getEyeSlash ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getFilm ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getGlobeAlt ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getLightBulb ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getMagnifyingGlass ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getMap ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getMoon ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getPlus ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSparkles ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSquare2Stack ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSquare3Stack3d ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSquares2x2 ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSun ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getTrash ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getUserCircle ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getVideoCamera ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getViewfinderCircle ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getXCircle ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getXMark ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 }
 
-public final class io/github/awakelab/awake/heroicons/icon/HeroIcons$Solid20Mini : io/github/awakelab/awake/heroicons/icon/HeroIcons {
-	public static final field INSTANCE Lio/github/awakelab/awake/heroicons/icon/HeroIcons$Solid20Mini;
-	public final fun getAdjustmentsHorizontal ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getArrowDownTray ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getArrowPath ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getArrowUpTray ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getBars3 ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getCamera ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronDown ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronLeft ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronRight ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronUp ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getClock ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getCog6Tooth ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getCube ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getDocumentText ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getExclamationTriangle ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getEye ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getEyeSlash ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getFunnel ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getGlobeAlt ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getLockClosed ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getMagnifyingGlass ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getPause ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getPencilSquare ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getPlay ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getPlus ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getPuzzlePiece ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSparkles ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSquare2Stack ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSquare3Stack3d ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSquares2x2 ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getStop ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSun ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getTableCells ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getTrash ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getUser ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getVideoCamera ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getXCircle ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getXMark ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
+public final class com/awakekt/awake/heroicons/icon/HeroIcons$Solid20Mini : com/awakekt/awake/heroicons/icon/HeroIcons {
+	public static final field INSTANCE Lcom/awakekt/awake/heroicons/icon/HeroIcons$Solid20Mini;
+	public final fun getAdjustmentsHorizontal ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getArrowDownTray ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getArrowPath ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getArrowUpTray ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getBars3 ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getCamera ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronDown ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronLeft ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronRight ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronUp ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getClock ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getCog6Tooth ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getCube ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getDocumentText ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getExclamationTriangle ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getEye ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getEyeSlash ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getFunnel ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getGlobeAlt ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getLockClosed ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getMagnifyingGlass ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getPause ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getPencilSquare ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getPlay ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getPlus ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getPuzzlePiece ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSparkles ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSquare2Stack ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSquare3Stack3d ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSquares2x2 ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getStop ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSun ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getTableCells ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getTrash ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getUser ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getVideoCamera ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getXCircle ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getXMark ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 }
 
-public final class io/github/awakelab/awake/heroicons/icon/HeroIcons$Solid24 : io/github/awakelab/awake/heroicons/icon/HeroIcons {
-	public static final field INSTANCE Lio/github/awakelab/awake/heroicons/icon/HeroIcons$Solid24;
-	public final fun getArrowDownOnSquareStack ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getArrowUpOnSquareStack ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getCircleStack ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getInboxStack ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getRectangleStack ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getServerStack ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSquare2Stack ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSquare3Stack3d ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
+public final class com/awakekt/awake/heroicons/icon/HeroIcons$Solid24 : com/awakekt/awake/heroicons/icon/HeroIcons {
+	public static final field INSTANCE Lcom/awakekt/awake/heroicons/icon/HeroIcons$Solid24;
+	public final fun getArrowDownOnSquareStack ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getArrowUpOnSquareStack ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getCircleStack ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getInboxStack ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getRectangleStack ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getServerStack ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSquare2Stack ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSquare3Stack3d ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 }
 
-public final class io/github/awakelab/awake/lucide/icon/LucideIcons {
-	public static final field INSTANCE Lio/github/awakelab/awake/lucide/icon/LucideIcons;
-	public final fun getCamera ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getCheck ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronDown ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronRight ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronUp ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getChevronsUpDown ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getGalleryVerticalEnd ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
-	public final fun getSave ()Lio/github/awakelab/awake/compose/ui/graphics/vector/ImageVector;
+public final class com/awakekt/awake/lucide/icon/LucideIcons {
+	public static final field INSTANCE Lcom/awakekt/awake/lucide/icon/LucideIcons;
+	public final fun getCamera ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getCheck ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronDown ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronRight ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronUp ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getChevronsUpDown ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getGalleryVerticalEnd ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public final fun getSave ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 }
 

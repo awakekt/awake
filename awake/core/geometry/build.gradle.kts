@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.core.geometry"
+        namespace = "com.awakekt.awake.core.geometry"
     }
 
     sourceSets {

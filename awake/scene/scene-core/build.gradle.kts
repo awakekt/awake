@@ -13,7 +13,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.scene.core"
+        namespace = "com.awakekt.awake.scene.core"
     }
 
     sourceSets {

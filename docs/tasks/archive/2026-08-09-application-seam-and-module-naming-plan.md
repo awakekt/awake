@@ -202,8 +202,8 @@ backend **selection and configuration** duplication, not the platform bootstrap 
   correct concrete backend with the parameters preserved (unit-testable without a real GPU —
   assert on the `BackendResources`/constructor-forwarding shape, not a live render).
 - A regression test asserting no sample's `commonMain` imports
-  `io.github.awakelab.awake.vulkan.*`
-  or `io.github.awakelab.awake.webgpu.*` directly — this is the architectural property the
+  `com.awakekt.awake.vulkan.*`
+  or `com.awakekt.awake.webgpu.*` directly — this is the architectural property the
   whole plan exists to establish, so it should be a real, permanently-enforced check (a Konsist-
   style test or a grep-based CI step), not just a one-time cleanup.
 

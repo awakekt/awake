@@ -10,7 +10,7 @@ VkSpecializationInfoAccessor::VkSpecializationInfoAccessor(JNIEnv *env, jobject 
     clazz = env->GetObjectClass(obj);
     mapEntryCountField = env->GetFieldID(clazz, "mapEntryCount", "I");
     pMapEntriesField = env->GetFieldID(clazz, "pMapEntries",
-                                       "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkSpecializationMapEntry;");
+                                       "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkSpecializationMapEntry;");
     dataSizeField = env->GetFieldID(clazz, "dataSize", "J");
     pDataField = env->GetFieldID(clazz, "pData", "[Ljava/lang/Object;");
 }

@@ -13,8 +13,8 @@ primitive against Compose's real current public shape and calls out three states
 since it passes a glance-review and then causes a layout/render bug later), and
 **Not implemented** (a real gap, not necessarily a deviation). Every row below is backed
 by a direct read of the current source under
-`awake/compose/ui/src/commonMain/kotlin/io/github/awakelab/awake/compose/ui/` (runtime and state hooks)
-and `awake/ui/animation/src/commonMain/kotlin/io/github/awakelab/awake/ui/`
+`awake/compose/ui/src/commonMain/kotlin/com/awakekt/awake/compose/ui/` (runtime and state hooks)
+and `awake/ui/animation/src/commonMain/kotlin/com/awakekt/awake/ui/`
 (animation primitives) -- corrected 2026-08-21, the previous `awake/engine/ui/ui-core/...`
 path does not exist in this repo (verified: `awake/engine/ui/` contains only an empty
 `ui-shadcn/` leftover) -- not

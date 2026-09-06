@@ -1,0 +1,21 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.navigation.grid
+
+import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.navigation.NavMesh
+
+/**
+ * A [NavMesh] over one baked [NavGridTile]: search, then smooth.
+ *
+ * One tile, for a world that is one heightmap. A streamed world uses a streamed navigation grid
+ * instead, which holds a tile per world cell and searches across the resident set; both read the same
+ * search, so the only difference is where walkability comes from.
+ */
+class NavGrid(val tile: NavGridTile) : NavMesh {
+    override fun findPath(start: Vec3f, end: Vec3f): List<Vec3f> =
+        tile.smoothPath(tile.findPath(start, end))
+}

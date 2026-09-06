@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-29  
 **Status:** `Active`  
-**Consumer:** [awake-template](https://github.com/awake-lab/awake-template)
+**Consumer:** [awake-template](https://github.com/awakekt/awake-template)
 
 **Prerequisite:** [Kotlin package namespace migration](2026-08-29-kotlin-package-namespace-migration-plan.md)
 
@@ -35,10 +35,10 @@ The current workflow publishes Vulkan binding artifacts only:
 That is not enough for the public template, which directly consumes:
 
 ```text
-io.github.awake-lab.engine:bootstrap
-io.github.awake-lab.asset:shaders
-io.github.awake-lab.backend:vulkan
-io.github.awake-lab.backend:webgpu
+com.awakekt.awake.engine:bootstrap
+com.awakekt.awake.asset:shaders
+com.awakekt.awake.backend:vulkan
+com.awakekt.awake.backend:webgpu
 ```
 
 Every transitive `api` dependency of those artifacts must also be published and resolvable.
@@ -49,10 +49,10 @@ Every transitive `api` dependency of those artifacts must also be published and 
 
 | Coordinate | Source module | Current publication state |
 |---|---|---|
-| `io.github.awake-lab.engine:bootstrap` | `:awake:engine:bootstrap` | Must enable |
-| `io.github.awake-lab.asset:shaders` | `:awake:asset:shaders` | Verify and publish |
-| `io.github.awake-lab.backend:vulkan` | `:awake:backend:vulkan` | Must enable |
-| `io.github.awake-lab.backend:webgpu` | `:awake:backend:webgpu` | Must enable |
+| `com.awakekt.awake.engine:bootstrap` | `:awake:engine:bootstrap` | Must enable |
+| `com.awakekt.awake.asset:shaders` | `:awake:asset:shaders` | Verify and publish |
+| `com.awakekt.awake.backend:vulkan` | `:awake:backend:vulkan` | Must enable |
+| `com.awakekt.awake.backend:webgpu` | `:awake:backend:webgpu` | Must enable |
 
 ### Required dependency closure
 
@@ -87,7 +87,7 @@ Three decisions came out of it and belong to Phase 2 rather than here:
    layout API. Both should be added to the surface deliberately.
 3. `:awake:backend:webgpu` depends on snapshot `wgpu4k` artifacts, which a stable release must not.
 
-- ~~Confirm `io.github.awake-lab` as the Maven namespace.~~
+- ~~Confirm `com.awakekt.awake` as the Maven namespace.~~
 - ~~Confirm artifact IDs and module-to-coordinate mapping.~~
 - ~~Mark public API modules separately from internal implementation modules.~~
 - ~~Keep the version derived from `v*` tags and use `-SNAPSHOT` for post-tag development builds.~~
@@ -100,8 +100,8 @@ Three decisions came out of it and belong to Phase 2 rather than here:
 publication — it is a plain Android library, so the KMP convention cannot apply to it, and adding
 it there fails the build outright.
 
-Verified by publishing to Maven Local: `io.github.awake-lab.core:text` and
-`io.github.awake-lab.scene:navigation` produce a POM with the right coordinates, licence, SCM and
+Verified by publishing to Maven Local: `com.awakekt.awake.core:text` and
+`com.awakekt.awake.scene:navigation` produce a POM with the right coordinates, licence, SCM and
 developer metadata, plus sources, Dokka javadoc and Gradle module metadata. Every project still
 configures.
 
@@ -156,7 +156,7 @@ unresolved in `RenderSystem` — so those two steps are blocked on that landing,
 
 ### 4. Configure Central and Signing
 
-- Register and verify the `io.github.awake-lab` namespace in Sonatype Central Portal.
+- Register and verify the `com.awakekt.awake` namespace in Sonatype Central Portal.
 - Create or select a GPG signing key and publish its public key.
 - Configure GitHub Actions secrets:
 
@@ -225,12 +225,12 @@ Two things it found that nothing inside this repository could:
    engine and the template was never swept, so it fails to compile against its own dependency.
    Confirmed by rewriting the imports in the throwaway copy, after which every target compiles.
    The fix belongs to the template repository.
-2. **`io.github.awake-lab.backend:vulkan-android` and `io.github.awake-lab:vulkan-kmp-android`
-   both declared the Android namespace `io.github.awakelab.awake.vulkan`.** AGP refuses to merge
+2. **`com.awakekt.awake.backend:vulkan-android` and `com.awakekt.awake:vulkan-kmp-android`
+   both declared the Android namespace `com.awakekt.awake.vulkan`.** AGP refuses to merge
    manifests for two libraries sharing a namespace, so *every* Android consumer of the Vulkan
    backend would fail with an error naming the namespace and neither owner. Inside the composite
    build they are projects and it never surfaces. `:awake:backend:vulkan` now uses
-   `io.github.awakelab.awake.vulkan.backend`; the already-published `vulkan-kmp` keeps its
+   `com.awakekt.awake.vulkan.backend`; the already-published `vulkan-kmp` keeps its
    namespace, so no existing consumer is affected.
 
 **Now a CI gate rather than a thing someone remembers to do.** `tools/check_template_consumer.sh`

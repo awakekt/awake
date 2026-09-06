@@ -12,7 +12,7 @@ VkQueueFamilyPropertiesAccessor::VkQueueFamilyPropertiesAccessor(JNIEnv *env, jo
     queueCountField = env->GetFieldID(clazz, "queueCount", "I");
     timestampValidBitsField = env->GetFieldID(clazz, "timestampValidBits", "I");
     minImageTransferGranularityField = env->GetFieldID(clazz, "minImageTransferGranularity",
-                                                       "Lio/github/awakelab/awake/vulkan/models/VkExtent3D;");
+                                                       "Lcom/awakekt/awake/vulkan/models/VkExtent3D;");
 }
 
 uint32_t

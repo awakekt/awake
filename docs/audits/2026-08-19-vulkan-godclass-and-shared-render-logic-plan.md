@@ -74,7 +74,7 @@ not state" shape. Both, plus `runOffscreenCommands` (already an extension at
 they only talk to each other.
 
 ```kotlin
-// New file: RendererOffscreen.kt, package io.github.awakelab.awake.vulkan.renderer
+// New file: RendererOffscreen.kt, package com.awakekt.awake.vulkan.renderer
 // Move verbatim: Renderer.renderToTexture, Renderer.readPixels, runOffscreenCommands
 // (already an extension — just relocate). Same internal-field-access trade as every other
 // sibling file; no field needs a new internal flip beyond what recordShadowPass already needs.
@@ -119,7 +119,7 @@ the class's own doc comment for the first time since this audit started tracking
 WebGPU has no `RenderFeature`, no `RenderPassSlot`, no `RenderFrameContext`, no shadow pass at
 all (`webgpu/renderer/Renderer.kt:177-180`: `shadowsEnabled` is stored but never read). Its
 whole frame is one 328-line function
-(`awake/backend/webgpu/src/wasmJsMain/kotlin/io/github/awakelab/awake/webgpu/renderer/RendererDraw3D.kt:41-369`).
+(`awake/backend/webgpu/src/wasmJsMain/kotlin/com/awakekt/awake/webgpu/renderer/RendererDraw3D.kt:41-369`).
 Part A's refactor made the two backends *less* alike, and nothing would have caught it.
 
 ### What's genuinely backend-specific (don't share)
@@ -166,7 +166,7 @@ to abstract from. That's a much bigger, separate bet.
 **Do** move pure functions into the shared render module — no new abstraction, just
 relocating code that already doesn't touch backend types. Real precedent already exists and
 is already tested: `SkyboxUniforms.kt`
-(`awake/engine/render/contract/src/commonMain/kotlin/io/github/awakelab/awake/render/renderer/SkyboxUniforms.kt`)
+(`awake/engine/render/contract/src/commonMain/kotlin/com/awakekt/awake/render/renderer/SkyboxUniforms.kt`)
 already lives in `render:contract` today, already shared by both backends
 (`webgpu/RendererDraw3D.kt:11,72`), already has `SkyboxUniformsTest.kt`. **Naming update**
 (see [the common-backend plan](2026-08-19-vulkan-webgpu-common-backend-plan.md)'s "Module

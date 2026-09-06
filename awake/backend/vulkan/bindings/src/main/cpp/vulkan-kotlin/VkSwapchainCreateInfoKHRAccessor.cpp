@@ -9,28 +9,28 @@ VkSwapchainCreateInfoKHRAccessor::VkSwapchainCreateInfoKHRAccessor(JNIEnv *env, 
         env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     surfaceField = env->GetFieldID(clazz, "surface", "J");
     minImageCountField = env->GetFieldID(clazz, "minImageCount", "I");
     imageFormatField = env->GetFieldID(clazz, "imageFormat",
-                                       "Lio/github/awakelab/awake/vulkan/enums/VkFormat;");
+                                       "Lcom/awakekt/awake/vulkan/enums/VkFormat;");
     imageColorSpaceField = env->GetFieldID(clazz, "imageColorSpace",
-                                           "Lio/github/awakelab/awake/vulkan/enums/VkColorSpaceKHR;");
+                                           "Lcom/awakekt/awake/vulkan/enums/VkColorSpaceKHR;");
     imageExtentField = env->GetFieldID(clazz, "imageExtent",
-                                       "Lio/github/awakelab/awake/vulkan/models/VkExtent2D;");
+                                       "Lcom/awakekt/awake/vulkan/models/VkExtent2D;");
     imageArrayLayersField = env->GetFieldID(clazz, "imageArrayLayers", "I");
     imageUsageField = env->GetFieldID(clazz, "imageUsage", "I");
     imageSharingModeField = env->GetFieldID(clazz, "imageSharingMode",
-                                            "Lio/github/awakelab/awake/vulkan/enums/VkSharingMode;");
+                                            "Lcom/awakekt/awake/vulkan/enums/VkSharingMode;");
     pQueueFamilyIndicesField = env->GetFieldID(clazz, "pQueueFamilyIndices", "[I");
     preTransformField = env->GetFieldID(clazz, "preTransform",
-                                        "Lio/github/awakelab/awake/vulkan/enums/VkSurfaceTransformFlagBitsKHR;");
+                                        "Lcom/awakekt/awake/vulkan/enums/VkSurfaceTransformFlagBitsKHR;");
     compositeAlphaField = env->GetFieldID(clazz, "compositeAlpha",
-                                          "Lio/github/awakelab/awake/vulkan/enums/VkCompositeAlphaFlagBitsKHR;");
+                                          "Lcom/awakekt/awake/vulkan/enums/VkCompositeAlphaFlagBitsKHR;");
     presentModeField = env->GetFieldID(clazz, "presentMode",
-                                       "Lio/github/awakelab/awake/vulkan/enums/VkPresentModeKHR;");
+                                       "Lcom/awakekt/awake/vulkan/enums/VkPresentModeKHR;");
     clippedField = env->GetFieldID(clazz, "clipped", "Z");
     oldSwapchainField = env->GetFieldID(clazz, "oldSwapchain", "J");
 }

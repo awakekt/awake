@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
     id("awake.publish-convention")
     id("awake.test-resources-convention")
     id("awake.dokka-convention")
@@ -42,6 +43,11 @@ kotlin {
             implementation(project(":awake:core:host"))
             implementation(project(":awake:core:image"))
             implementation(project(":awake:core:input"))
+            implementation(project(":awake:core:di"))
+            implementation(project(":awake:core:config"))
+            implementation(project(":awake:core:state"))
+            implementation(project(":awake:compose:di"))
+            implementation(project(":awake:compose:state"))
             implementation(project(":awake:engine:bootstrap"))
             implementation(project(":awake:engine:render:contract"))
             implementation(project(":awake:core:math"))
@@ -126,7 +132,7 @@ tasks.register<JavaExec>("run") {
     dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
     // Shipped shaders are WGSL, so every pipeline this sample builds goes through naga.
     useNagaShaderCompiler(this)
-    mainClass.set("io.github.awakelab.awake.studio.app.MainKt")
+    mainClass.set("com.awakekt.awake.studio.app.MainKt")
     classpath = files(
         layout.buildDirectory.dir("classes/kotlin/desktop/main"),
         layout.buildDirectory.dir("processedResources/desktop/main"),

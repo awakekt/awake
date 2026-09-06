@@ -1,0 +1,6 @@
+public final class com/awakekt/awake/compose/di/ComposeDiKt {
+	public static final fun ProvideContainer (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/core/di/Container;Lkotlin/jvm/functions/Function1;)V
+	public static final fun currentContainer (Lcom/awakekt/awake/compose/runtime/Composer;)Lcom/awakekt/awake/core/di/Container;
+	public static final fun getLocalContainer ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
+}
+

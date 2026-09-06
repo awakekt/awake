@@ -1,12 +1,12 @@
-public final class io/github/awakelab/awake/core/math2d/Dp : java/lang/Comparable {
-	public static final field Companion Lio/github/awakelab/awake/core/math2d/Dp$Companion;
-	public static final synthetic fun box-impl (F)Lio/github/awakelab/awake/core/math2d/Dp;
+public final class com/awakekt/awake/core/math2d/Dp : java/lang/Comparable {
+	public static final field Companion Lcom/awakekt/awake/core/math2d/Dp$Companion;
+	public static final synthetic fun box-impl (F)Lcom/awakekt/awake/core/math2d/Dp;
 	public synthetic fun compareTo (Ljava/lang/Object;)I
-	public fun compareTo-62jLhNU (F)I
-	public static fun compareTo-62jLhNU (FF)I
+	public fun compareTo-Jha-xPg (F)I
+	public static fun compareTo-Jha-xPg (FF)I
 	public static fun constructor-impl (F)F
-	public static final fun div-u3pm0pw (FF)F
-	public static final fun div-u3pm0pw (FI)F
+	public static final fun div-ggnb7VQ (FF)F
+	public static final fun div-ggnb7VQ (FI)F
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (FLjava/lang/Object;)Z
 	public static final fun equals-impl0 (FF)Z
@@ -14,31 +14,31 @@ public final class io/github/awakelab/awake/core/math2d/Dp : java/lang/Comparabl
 	public fun hashCode ()I
 	public static fun hashCode-impl (F)I
 	public static final fun isSpecified-impl (F)Z
-	public static final fun minus-n-Ys780 (FF)F
-	public static final fun plus-n-Ys780 (FF)F
-	public static final fun times-u3pm0pw (FF)F
+	public static final fun minus-475ynyo (FF)F
+	public static final fun plus-475ynyo (FF)F
+	public static final fun times-ggnb7VQ (FF)F
 	public fun toString ()Ljava/lang/String;
 	public static fun toString-impl (F)Ljava/lang/String;
 	public final synthetic fun unbox-impl ()F
 }
 
-public final class io/github/awakelab/awake/core/math2d/Dp$Companion {
-	public final fun getUnspecified-PExdcLc ()F
+public final class com/awakekt/awake/core/math2d/Dp$Companion {
+	public final fun getUnspecified-LGk54g8 ()F
 }
 
-public final class io/github/awakelab/awake/core/math2d/DpKt {
+public final class com/awakekt/awake/core/math2d/DpKt {
 	public static final fun getDp (F)F
 	public static final fun getDp (I)F
 }
 
-public final class io/github/awakelab/awake/core/math2d/Rectangle {
+public final class com/awakekt/awake/core/math2d/Rectangle {
 	public fun <init> (FFFF)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()F
-	public final fun copy (FFFF)Lio/github/awakelab/awake/core/math2d/Rectangle;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math2d/Rectangle;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/math2d/Rectangle;
+	public final fun copy (FFFF)Lcom/awakekt/awake/core/math2d/Rectangle;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math2d/Rectangle;FFFFILjava/lang/Object;)Lcom/awakekt/awake/core/math2d/Rectangle;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getHeight ()F
 	public final fun getWidth ()F
@@ -48,40 +48,40 @@ public final class io/github/awakelab/awake/core/math2d/Rectangle {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math2d/RectangleKt {
-	public static final fun contains (Lio/github/awakelab/awake/core/math2d/Rectangle;FF)Z
-	public static final fun contains (Lio/github/awakelab/awake/core/math2d/Rectangle;Lio/github/awakelab/awake/core/math2d/Rectangle;)Z
-	public static final fun intersect (Lio/github/awakelab/awake/core/math2d/Rectangle;Lio/github/awakelab/awake/core/math2d/Rectangle;)Lio/github/awakelab/awake/core/math2d/Rectangle;
+public final class com/awakekt/awake/core/math2d/RectangleKt {
+	public static final fun contains (Lcom/awakekt/awake/core/math2d/Rectangle;FF)Z
+	public static final fun contains (Lcom/awakekt/awake/core/math2d/Rectangle;Lcom/awakekt/awake/core/math2d/Rectangle;)Z
+	public static final fun intersect (Lcom/awakekt/awake/core/math2d/Rectangle;Lcom/awakekt/awake/core/math2d/Rectangle;)Lcom/awakekt/awake/core/math2d/Rectangle;
 	public static final fun pixelPerfectPixel (F)F
 }
 
-public final class io/github/awakelab/awake/core/math2d/Size2D {
-	public static final field Companion Lio/github/awakelab/awake/core/math2d/Size2D$Companion;
+public final class com/awakekt/awake/core/math2d/Size2D {
+	public static final field Companion Lcom/awakekt/awake/core/math2d/Size2D$Companion;
 	public fun <init> (FF)V
 	public final fun component1 ()F
 	public final fun component2 ()F
-	public final fun copy (FF)Lio/github/awakelab/awake/core/math2d/Size2D;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math2d/Size2D;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/math2d/Size2D;
+	public final fun copy (FF)Lcom/awakekt/awake/core/math2d/Size2D;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math2d/Size2D;FFILjava/lang/Object;)Lcom/awakekt/awake/core/math2d/Size2D;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getHeight ()F
 	public final fun getWidth ()F
 	public fun hashCode ()I
 	public final fun isEmpty ()Z
-	public final fun times (F)Lio/github/awakelab/awake/core/math2d/Size2D;
+	public final fun times (F)Lcom/awakekt/awake/core/math2d/Size2D;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math2d/Size2D$Companion {
-	public final fun getZero ()Lio/github/awakelab/awake/core/math2d/Size2D;
+public final class com/awakekt/awake/core/math2d/Size2D$Companion {
+	public final fun getZero ()Lcom/awakekt/awake/core/math2d/Size2D;
 }
 
-public final class io/github/awakelab/awake/core/math2d/Size2DKt {
-	public static final fun at (Lio/github/awakelab/awake/core/math2d/Size2D;FF)Lio/github/awakelab/awake/core/math2d/Rectangle;
-	public static final fun getSize (Lio/github/awakelab/awake/core/math2d/Rectangle;)Lio/github/awakelab/awake/core/math2d/Size2D;
+public final class com/awakekt/awake/core/math2d/Size2DKt {
+	public static final fun at (Lcom/awakekt/awake/core/math2d/Size2D;FF)Lcom/awakekt/awake/core/math2d/Rectangle;
+	public static final fun getSize (Lcom/awakekt/awake/core/math2d/Rectangle;)Lcom/awakekt/awake/core/math2d/Size2D;
 }
 
-public final class io/github/awakelab/awake/core/math2d/Sp {
-	public static final synthetic fun box-impl (F)Lio/github/awakelab/awake/core/math2d/Sp;
+public final class com/awakekt/awake/core/math2d/Sp {
+	public static final synthetic fun box-impl (F)Lcom/awakekt/awake/core/math2d/Sp;
 	public static fun constructor-impl (F)F
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (FLjava/lang/Object;)Z
@@ -94,32 +94,32 @@ public final class io/github/awakelab/awake/core/math2d/Sp {
 	public final synthetic fun unbox-impl ()F
 }
 
-public final class io/github/awakelab/awake/core/math2d/SpKt {
+public final class com/awakekt/awake/core/math2d/SpKt {
 	public static final fun getSp (F)F
 	public static final fun getSp (I)F
 }
 
-public final class io/github/awakelab/awake/core/math2d/Vec2 {
+public final class com/awakekt/awake/core/math2d/Vec2 {
 	public static final field DEGENERATE_SEGMENT F
 	public fun <init> (FF)V
 	public fun <init> (II)V
 	public final fun component1 ()F
 	public final fun component2 ()F
-	public final fun copy (FF)Lio/github/awakelab/awake/core/math2d/Vec2;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math2d/Vec2;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/math2d/Vec2;
-	public final fun distanceTo (Lio/github/awakelab/awake/core/math2d/Vec2;)F
-	public final fun distanceToSegment (Lio/github/awakelab/awake/core/math2d/Vec2;Lio/github/awakelab/awake/core/math2d/Vec2;)F
-	public final fun dot (Lio/github/awakelab/awake/core/math2d/Vec2;)F
+	public final fun copy (FF)Lcom/awakekt/awake/core/math2d/Vec2;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math2d/Vec2;FFILjava/lang/Object;)Lcom/awakekt/awake/core/math2d/Vec2;
+	public final fun distanceTo (Lcom/awakekt/awake/core/math2d/Vec2;)F
+	public final fun distanceToSegment (Lcom/awakekt/awake/core/math2d/Vec2;Lcom/awakekt/awake/core/math2d/Vec2;)F
+	public final fun dot (Lcom/awakekt/awake/core/math2d/Vec2;)F
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getX ()F
 	public final fun getY ()F
 	public fun hashCode ()I
 	public final fun length ()F
-	public final fun minus (Lio/github/awakelab/awake/core/math2d/Vec2;)Lio/github/awakelab/awake/core/math2d/Vec2;
-	public final fun plus (Lio/github/awakelab/awake/core/math2d/Vec2;)Lio/github/awakelab/awake/core/math2d/Vec2;
+	public final fun minus (Lcom/awakekt/awake/core/math2d/Vec2;)Lcom/awakekt/awake/core/math2d/Vec2;
+	public final fun plus (Lcom/awakekt/awake/core/math2d/Vec2;)Lcom/awakekt/awake/core/math2d/Vec2;
 	public final fun setX (F)V
 	public final fun setY (F)V
-	public final fun times (F)Lio/github/awakelab/awake/core/math2d/Vec2;
+	public final fun times (F)Lcom/awakekt/awake/core/math2d/Vec2;
 	public fun toString ()Ljava/lang/String;
 }
 

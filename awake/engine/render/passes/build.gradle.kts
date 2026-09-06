@@ -33,7 +33,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.render.passes"
+        namespace = "com.awakekt.awake.render.passes"
     }
 
     // Backend-neutral by construction: nothing here may reference a Vulkan or WebGPU type (see

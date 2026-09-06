@@ -19,7 +19,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.asset.shaderdsl"
+        namespace = "com.awakekt.awake.asset.shaderdsl"
     }
 
     sourceSets {
@@ -51,7 +51,7 @@ tasks.register<JavaExec>("previewShader") {
     group = "generation"
     description = "Render the sample checker shader to the terminal via CPU evaluation"
     dependsOn("desktopMainClasses")
-    mainClass.set("io.github.awakelab.awake.asset.shaderdsl.preview.PreviewKt")
+    mainClass.set("com.awakekt.awake.asset.shaderdsl.preview.PreviewKt")
     classpath = files(
         kotlin.targets.getByName("desktop").compilations.getByName("main").output.allOutputs,
         configurations.getByName("desktopRuntimeClasspath"),

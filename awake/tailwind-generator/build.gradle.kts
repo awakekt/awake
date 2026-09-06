@@ -15,7 +15,7 @@ plugins {
 }
 
 application {
-    mainClass.set("io.github.awakelab.awake.tailwindgenerator.MainKt")
+    mainClass.set("com.awakekt.awake.tailwindgenerator.MainKt")
 }
 
 dependencies {
@@ -32,6 +32,6 @@ tasks.register<JavaExec>("generateTailwindScale") {
         "commit the diff if the vendored scale changes."
     dependsOn("classes")
     workingDir = projectDir
-    mainClass.set("io.github.awakelab.awake.tailwindgenerator.MainKt")
+    mainClass.set("com.awakekt.awake.tailwindgenerator.MainKt")
     classpath = sourceSets.main.get().runtimeClasspath
 }

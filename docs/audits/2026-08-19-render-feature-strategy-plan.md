@@ -7,7 +7,7 @@ the real source disagreed with the sketch. Follow-up work this implementation su
 [2026-08-19-vulkan-godclass-and-shared-render-logic-plan.md](2026-08-19-vulkan-godclass-and-shared-render-logic-plan.md).
 Pairs with [skills/awake-render-pipeline/SKILL.md](../../skills/awake-render-pipeline/SKILL.md)
 (§1) and the `Renderer.kt` god-class finding (702 lines / 19 functions,
-`awake/backend/vulkan/src/commonMain/kotlin/io/github/awakelab/awake/vulkan/renderer/Renderer.kt:91`)
+`awake/backend/vulkan/src/commonMain/kotlin/com/awakekt/awake/vulkan/renderer/Renderer.kt:91`)
 from the 2026-08-19 vulkan-backend audit. Independent of, but eventually consumed by, the ASL
 shader-DSL sketch — see "Relationship to ASL" near the end of this doc.
 

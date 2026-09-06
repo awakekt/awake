@@ -1,151 +1,151 @@
-public final class io/github/awakelab/awake/scene/authoring/SceneAppDsl {
+public final class com/awakekt/awake/scene/authoring/SceneAppDsl {
 	public final fun assets (Lkotlin/jvm/functions/Function1;)V
 	public final fun content (Lkotlin/jvm/functions/Function1;)V
 	public final fun entity (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun entity$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public final fun fixedSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
-	public final fun frameSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
+	public static synthetic fun entity$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun fixedSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public final fun frameSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun infrastructureSystems (Lkotlin/jvm/functions/Function1;)V
 	public final fun name (Ljava/lang/String;)V
 	public final fun onDispose (Lkotlin/jvm/functions/Function1;)V
 	public final fun onReady (Lkotlin/jvm/functions/Function2;)V
-	public final fun scene (Lio/github/awakelab/awake/scene/document/SceneDocument;)V
+	public final fun scene (Lcom/awakekt/awake/scene/document/SceneDocument;)V
 	public final fun scene (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun scene$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun scene$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun service (Lkotlin/reflect/KClass;Lkotlin/jvm/functions/Function1;)V
-	public final fun system (Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneSystemPhase;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
+	public final fun system (Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public final fun systems (Lkotlin/jvm/functions/Function1;)V
 	public final fun ui (Lkotlin/jvm/functions/Function1;)V
 	public final fun update (Lkotlin/jvm/functions/Function3;)V
 }
 
-public final class io/github/awakelab/awake/scene/authoring/SceneAppDslKt {
-	public static final fun ecs (Lio/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl;Lio/github/awakelab/awake/scene/runtime/SceneAppSpec;)V
-	public static final fun ecs (Lio/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl;Lkotlin/jvm/functions/Function1;)V
-	public static final fun scene (Lio/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl;Lio/github/awakelab/awake/scene/runtime/SceneAppSpec;)V
-	public static final fun scene (Lio/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun scene$default (Lio/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun sceneApp (Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/scene/runtime/SceneAppSpec;
-	public static final fun sceneSession (Lio/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl;Lkotlin/jvm/functions/Function1;)V
-	public static final fun sceneSession (Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/scene/runtime/SceneAppSpec;
+public final class com/awakekt/awake/scene/authoring/SceneAppDslKt {
+	public static final fun ecs (Lcom/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl;Lcom/awakekt/awake/scene/runtime/SceneAppSpec;)V
+	public static final fun ecs (Lcom/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl;Lkotlin/jvm/functions/Function1;)V
+	public static final fun scene (Lcom/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl;Lcom/awakekt/awake/scene/runtime/SceneAppSpec;)V
+	public static final fun scene (Lcom/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun scene$default (Lcom/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun sceneApp (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneAppSpec;
+	public static final fun sceneSession (Lcom/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl;Lkotlin/jvm/functions/Function1;)V
+	public static final fun sceneSession (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneAppSpec;
 }
 
-public final class io/github/awakelab/awake/scene/authoring/SceneAssetsDsl {
+public final class com/awakekt/awake/scene/authoring/SceneAssetsDsl {
 	public final fun material (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public final fun mesh (Ljava/lang/String;Lio/github/awakelab/awake/core/geometry/MeshGeometry;)V
+	public final fun mesh (Ljava/lang/String;Lcom/awakekt/awake/core/geometry/MeshGeometry;)V
 	public final fun mesh (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun proceduralMesh (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public final fun renderer (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public final fun resolver (Lio/github/awakelab/awake/scene/runtime/SceneAssetResolver;)V
+	public final fun resolver (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;)V
 }
 
-public final class io/github/awakelab/awake/scene/authoring/SceneFlowDsl {
+public final class com/awakekt/awake/scene/authoring/SceneFlowDsl {
 	public final fun initial (Ljava/lang/String;)V
-	public final fun route (Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneAppSpec;)V
+	public final fun route (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneAppSpec;)V
 	public final fun route (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun route$default (Lio/github/awakelab/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneAppSpec;ILjava/lang/Object;)V
-	public static synthetic fun route$default (Lio/github/awakelab/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public final fun scene (Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneAppSpec;)V
+	public static synthetic fun route$default (Lcom/awakekt/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneAppSpec;ILjava/lang/Object;)V
+	public static synthetic fun route$default (Lcom/awakekt/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public final fun scene (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneAppSpec;)V
 	public final fun scene (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun scene$default (Lio/github/awakelab/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneAppSpec;ILjava/lang/Object;)V
-	public static synthetic fun scene$default (Lio/github/awakelab/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun scene$default (Lcom/awakekt/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneAppSpec;ILjava/lang/Object;)V
+	public static synthetic fun scene$default (Lcom/awakekt/awake/scene/authoring/SceneFlowDsl;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public final fun start (Ljava/lang/String;)V
 }
 
-public final class io/github/awakelab/awake/scene/authoring/SceneRouterDslKt {
-	public static final fun sceneFlow (Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/scene/runtime/SceneRouterSpec;
-	public static final fun scenes (Lio/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl;Lkotlin/jvm/functions/Function1;)V
+public final class com/awakekt/awake/scene/authoring/SceneRouterDslKt {
+	public static final fun sceneFlow (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneRouterSpec;
+	public static final fun scenes (Lcom/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl;Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class io/github/awakelab/awake/scene/authoring/SceneSystemsDsl {
-	public final fun fixedSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
-	public final fun frameSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
-	public final fun system (Ljava/lang/String;Lio/github/awakelab/awake/scene/runtime/SceneSystemPhase;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
+public final class com/awakekt/awake/scene/authoring/SceneSystemsDsl {
+	public final fun fixedSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public final fun frameSystem (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public final fun system (Ljava/lang/String;Lcom/awakekt/awake/scene/runtime/SceneSystemPhase;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 }
 
-public abstract interface annotation class io/github/awakelab/awake/scene/authoring/dsl/AwakeSceneDsl : java/lang/annotation/Annotation {
+public abstract interface annotation class com/awakekt/awake/scene/authoring/dsl/AwakeSceneDsl : java/lang/annotation/Annotation {
 }
 
-public final class io/github/awakelab/awake/scene/authoring/dsl/EntityScope {
-	public final fun entity-HwH1Vvk (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
-	public static synthetic fun entity-HwH1Vvk$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
-	public final fun getEntity-QVrgMZQ ()J
-	public final fun getWorld ()Lio/github/awakelab/awake/ecs/World;
+public final class com/awakekt/awake/scene/authoring/dsl/EntityScope {
+	public final fun entity-s2mF4Vo (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
+	public static synthetic fun entity-s2mF4Vo$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
+	public final fun getEntity-LaMO_uA ()J
+	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
 	public final fun with (Ljava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/scene/authoring/dsl/SceneAudioDslKt {
-	public static final fun audioListener (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;)V
-	public static final fun audioSource (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/core/audio/AudioClip;FZFZZ)V
-	public static synthetic fun audioSource$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/core/audio/AudioClip;FZFZZILjava/lang/Object;)V
-	public static final fun sound (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Lio/github/awakelab/awake/core/audio/AudioClip;Ljava/lang/String;FF)V
-	public static final fun sound (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Lio/github/awakelab/awake/core/audio/AudioClip;Ljava/lang/String;FF)J
-	public static synthetic fun sound$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Lio/github/awakelab/awake/core/audio/AudioClip;Ljava/lang/String;FFILjava/lang/Object;)V
-	public static synthetic fun sound$default (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Lio/github/awakelab/awake/core/audio/AudioClip;Ljava/lang/String;FFILjava/lang/Object;)J
+public final class com/awakekt/awake/scene/authoring/dsl/SceneAudioDslKt {
+	public static final fun audioListener (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;)V
+	public static final fun audioSource (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/audio/AudioClip;FZFZZ)V
+	public static synthetic fun audioSource$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/audio/AudioClip;FZFZZILjava/lang/Object;)V
+	public static final fun sound (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/core/audio/AudioClip;Ljava/lang/String;FF)V
+	public static final fun sound (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Lcom/awakekt/awake/core/audio/AudioClip;Ljava/lang/String;FF)J
+	public static synthetic fun sound$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/core/audio/AudioClip;Ljava/lang/String;FFILjava/lang/Object;)V
+	public static synthetic fun sound$default (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Lcom/awakekt/awake/core/audio/AudioClip;Ljava/lang/String;FFILjava/lang/Object;)J
 }
 
-public final class io/github/awakelab/awake/scene/authoring/dsl/SceneBuilder {
-	public synthetic fun <init> (Lio/github/awakelab/awake/ecs/World;Lio/github/awakelab/awake/ecs/Entity;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun entity-HwH1Vvk (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
-	public static synthetic fun entity-HwH1Vvk$default (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
-	public final fun getParentEntity-Q1jxeiE ()Lio/github/awakelab/awake/ecs/Entity;
+public final class com/awakekt/awake/scene/authoring/dsl/SceneBuilder {
+	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/ecs/Entity;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun entity-s2mF4Vo (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
+	public static synthetic fun entity-s2mF4Vo$default (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
+	public final fun getParentEntity-L99-wGo ()Lcom/awakekt/awake/ecs/Entity;
 }
 
-public final class io/github/awakelab/awake/scene/authoring/dsl/SceneBuilderKt {
-	public static final fun entity (Lio/github/awakelab/awake/ecs/World;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
-	public static synthetic fun entity$default (Lio/github/awakelab/awake/ecs/World;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
-	public static final fun scene (Lio/github/awakelab/awake/ecs/World;Lkotlin/jvm/functions/Function1;)V
+public final class com/awakekt/awake/scene/authoring/dsl/SceneBuilderKt {
+	public static final fun entity (Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
+	public static synthetic fun entity$default (Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
+	public static final fun scene (Lcom/awakekt/awake/ecs/World;Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class io/github/awakelab/awake/scene/authoring/dsl/SceneCameraDslKt {
-	public static final fun camera-HiOlQOo (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/scene/controls/camera/CameraMode;Lio/github/awakelab/awake/ecs/Entity;Lio/github/awakelab/awake/core/math/Lens;ZLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun camera-HiOlQOo$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/scene/controls/camera/CameraMode;Lio/github/awakelab/awake/ecs/Entity;Lio/github/awakelab/awake/core/math/Lens;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun cameraEntity (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun cameraEntity$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun defaultOrbitCamera-Wo0fusk (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static final fun defaultOrbitCamera-Wo0fusk (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
-	public static synthetic fun defaultOrbitCamera-Wo0fusk$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static synthetic fun defaultOrbitCamera-Wo0fusk$default (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Lio/github/awakelab/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
+public final class com/awakekt/awake/scene/authoring/dsl/SceneCameraDslKt {
+	public static final fun camera-zaBA18Q (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/scene/controls/camera/CameraMode;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Lens;ZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun camera-zaBA18Q$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/scene/controls/camera/CameraMode;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/core/math/Lens;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun cameraEntity (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun cameraEntity$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun defaultOrbitCamera-ukifZrg (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static final fun defaultOrbitCamera-ukifZrg (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Lcom/awakekt/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)J
+	public static synthetic fun defaultOrbitCamera-ukifZrg$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun defaultOrbitCamera-ukifZrg$default (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Lcom/awakekt/awake/ecs/Entity;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)J
 }
 
-public final class io/github/awakelab/awake/scene/authoring/dsl/SceneLightingDslKt {
-	public static final fun directionalLight (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)V
-	public static synthetic fun directionalLight$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)V
-	public static final fun lamp (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FF)V
-	public static final fun lamp (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FF)J
-	public static synthetic fun lamp$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FFILjava/lang/Object;)V
-	public static synthetic fun lamp$default (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FFILjava/lang/Object;)J
-	public static final fun pointLight (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/core/math/Vec3f;FF)V
-	public static synthetic fun pointLight$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/core/math/Vec3f;FFILjava/lang/Object;)V
-	public static final fun sun (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)V
-	public static final fun sun (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)J
-	public static synthetic fun sun$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)V
-	public static synthetic fun sun$default (Lio/github/awakelab/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)J
+public final class com/awakekt/awake/scene/authoring/dsl/SceneLightingDslKt {
+	public static final fun directionalLight (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)V
+	public static synthetic fun directionalLight$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)V
+	public static final fun lamp (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FF)V
+	public static final fun lamp (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FF)J
+	public static synthetic fun lamp$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFILjava/lang/Object;)V
+	public static synthetic fun lamp$default (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFILjava/lang/Object;)J
+	public static final fun pointLight (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/math/Vec3f;FF)V
+	public static synthetic fun pointLight$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/math/Vec3f;FFILjava/lang/Object;)V
+	public static final fun sun (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)V
+	public static final fun sun (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)J
+	public static synthetic fun sun$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)V
+	public static synthetic fun sun$default (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)J
 }
 
-public final class io/github/awakelab/awake/scene/authoring/dsl/SceneMeshDslKt {
-	public static final fun mesh (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;)V
-	public static synthetic fun mesh$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;ILjava/lang/Object;)V
-	public static final fun meshEntity (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun meshEntity$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun meshRenderer (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;)V
-	public static synthetic fun meshRenderer$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/render/mesh/Mesh;Lio/github/awakelab/awake/render/material/Material;Lio/github/awakelab/awake/render/renderer/CullMode;ILjava/lang/Object;)V
+public final class com/awakekt/awake/scene/authoring/dsl/SceneMeshDslKt {
+	public static final fun mesh (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/renderer/CullMode;)V
+	public static synthetic fun mesh$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/renderer/CullMode;ILjava/lang/Object;)V
+	public static final fun meshEntity (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/renderer/CullMode;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun meshEntity$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/renderer/CullMode;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun meshRenderer (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/renderer/CullMode;)V
+	public static synthetic fun meshRenderer$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Lcom/awakekt/awake/render/renderer/CullMode;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/scene/authoring/dsl/SceneTransformDslKt {
-	public static final fun transform (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;FFFFFFFFF)V
-	public static final fun transform (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;Lio/github/awakelab/awake/core/math/Vec3f;)V
-	public static synthetic fun transform$default (Lio/github/awakelab/awake/scene/authoring/dsl/EntityScope;FFFFFFFFFILjava/lang/Object;)V
+public final class com/awakekt/awake/scene/authoring/dsl/SceneTransformDslKt {
+	public static final fun transform (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;FFFFFFFFF)V
+	public static final fun transform (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public static synthetic fun transform$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;FFFFFFFFFILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/scene/authoring/infrastructure/ConfigExtensionsKt {
-	public static final fun cameraInputSystem (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
-	public static synthetic fun cameraInputSystem$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
-	public static final fun cameraSystem (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
-	public static synthetic fun cameraSystem$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
-	public static final fun matrixRelativeMovementSystem (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;F)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
-	public static synthetic fun matrixRelativeMovementSystem$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;FILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
-	public static final fun playerInputSystem (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
-	public static synthetic fun playerInputSystem$default (Lio/github/awakelab/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/runtime/SceneSystemHandle;
+public final class com/awakekt/awake/scene/authoring/infrastructure/ConfigExtensionsKt {
+	public static final fun cameraInputSystem (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public static synthetic fun cameraInputSystem$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public static final fun cameraSystem (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public static synthetic fun cameraSystem$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public static final fun matrixRelativeMovementSystem (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;F)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public static synthetic fun matrixRelativeMovementSystem$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;FILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public static final fun playerInputSystem (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public static synthetic fun playerInputSystem$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 }
 

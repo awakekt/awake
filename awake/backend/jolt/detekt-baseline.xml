@@ -2,6 +2,7 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>LongMethod:JoltPhysicsWorld.kt$JoltPhysicsWorld$override fun shapeCast( shape: PhysicsShape, from: Vec3f, to: Vec3f, onlyLayer: CollisionLayer?, ignore: BodyHandle?, ): ShapeCastHit?</ID>
     <ID>UnusedParameter:JoltPhysicsWorld.kt$broadPhaseLayer: JPC_BroadPhaseLayer</ID>
     <ID>UnusedParameter:JoltPhysicsWorld.kt$objectLayer: JPC_ObjectLayer</ID>
     <ID>UnusedParameter:JoltPhysicsWorld.kt$self: COpaquePointer?</ID>

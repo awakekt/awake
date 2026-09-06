@@ -15,7 +15,7 @@ io.github.ronjunevaldoz.awake.*
 to:
 
 ```text
-io.github.awakelab.awake.*
+com.awakekt.awake.*
 ```
 
 The old spelling above is written out deliberately. The rename swept every file in the repository
@@ -25,7 +25,7 @@ says what it did.
 The Gradle Maven group remains a separate concern:
 
 ```text
-io.github.awake-lab
+com.awakekt.awake
 ```
 
 The hyphen is valid in a Maven group ID but not in a Kotlin package. The package and Maven group
@@ -54,8 +54,8 @@ The existing naming work already separates this from Gradle module-path changes:
 - Native interop package references and generated-source inputs
 - Tests, samples, benchmarks, tools, and build-logic source references
 - Documentation, examples, skills, and scripts that name the old package
-- Source directory moves from `io/github/awakelab/awake` to
-  `io/github/awakelab/awake`
+- Source directory moves from `com/awakekt/awake` to
+  `com/awakekt/awake`
 
 ### Excluded
 
@@ -69,8 +69,8 @@ The existing naming work already separates this from Gradle module-path changes:
 
 Add a deterministic script at `tools/refactor_package_namespace.py`. It should:
 
-- Replace only the exact token `io.github.awakelab.awake` with
-  `io.github.awakelab.awake`.
+- Replace only the exact token `com.awakekt.awake` with
+  `com.awakekt.awake`.
 - Scan tracked text files through Git rather than walking generated output.
 - Include Kotlin, Java, Gradle Kotlin DSL, XML, Markdown, scripts, and configuration files.
 - Preserve line endings and file encoding.
@@ -87,14 +87,14 @@ refactor tooling archive with a clear note that the migration has landed.
 
 ### 1. Freeze the Target Namespace
 
-- Confirm `io.github.awakelab.awake.*` as the final public package root.
+- Confirm `com.awakekt.awake.*` as the final public package root.
 - Record the decision before editing source files.
 - Freeze unrelated package and module renames until this pass is complete.
 - Capture a baseline of the current compile and test commands.
 
 ### 2. Inventory the Rename
 
-- Run `git grep` for `io.github.awakelab.awake`.
+- Run `git grep` for `com.awakekt.awake`.
 - Classify matches as source, build configuration, generated input, documentation, historical
   record, or third-party reference.
 - Produce a checked-in or CI-readable inventory so missed package surfaces are visible.

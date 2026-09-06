@@ -15,7 +15,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.compose.foundation"
+        namespace = "com.awakekt.awake.compose.foundation"
     }
 
     sourceSets {

@@ -12,7 +12,7 @@ that finished the remaining ~63% of the `ui-designsystem` recipe port and the mo
 moves in one pass. Combined result, verified 2026-08-24:
 
 - **`ui-core`, `ui-headless`, old `ui-testing`: deleted.** Zero files anywhere import
-  `io.github.awakelab.awake.ui.headless` or the ui-core packages
+  `com.awakekt.awake.ui.headless` or the ui-core packages
   (`context`/`layout`/`layouts`/`modifier`/`foundation`) in `commonMain`. `settings.gradle.kts` no
   longer includes those modules.
 - **`ui-designsystem`: 75/75 recipes ported (100%)**, per `python3 tools/shadcn/port_progress.py`.

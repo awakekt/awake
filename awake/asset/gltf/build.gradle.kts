@@ -33,7 +33,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.asset.gltf"
+        namespace = "com.awakekt.awake.asset.gltf"
     }
 
     sourceSets {

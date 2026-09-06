@@ -1,11 +1,11 @@
-public final class io/github/awakelab/awake/core/input/ImeComposition {
+public final class com/awakekt/awake/core/input/ImeComposition {
 	public fun <init> (Ljava/lang/String;II)V
 	public synthetic fun <init> (Ljava/lang/String;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()I
 	public final fun component3 ()I
-	public final fun copy (Ljava/lang/String;II)Lio/github/awakelab/awake/core/input/ImeComposition;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/input/ImeComposition;Ljava/lang/String;IIILjava/lang/Object;)Lio/github/awakelab/awake/core/input/ImeComposition;
+	public final fun copy (Ljava/lang/String;II)Lcom/awakekt/awake/core/input/ImeComposition;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;IIILjava/lang/Object;)Lcom/awakekt/awake/core/input/ImeComposition;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getSelectionEnd ()I
 	public final fun getSelectionStart ()I
@@ -14,11 +14,11 @@ public final class io/github/awakelab/awake/core/input/ImeComposition {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/input/Input {
+public final class com/awakekt/awake/core/input/Input {
 	public fun <init> ()V
 	public final fun clearKeys ()V
 	public final fun commitImeText (Ljava/lang/String;)V
-	public final fun getCurrentSnapshot ()Lio/github/awakelab/awake/core/input/InputSnapshot;
+	public final fun getCurrentSnapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
 	public final fun getPointerDown ()Z
 	public final fun getPointerX ()F
 	public final fun getPointerY ()F
@@ -26,30 +26,30 @@ public final class io/github/awakelab/awake/core/input/Input {
 	public final fun getScrollDeltaY ()F
 	public final fun getSecondaryPointerDown ()Z
 	public final fun getTextInputFocused ()Z
-	public final fun isKeyDown (Lio/github/awakelab/awake/core/input/Key;)Z
-	public final fun pushEditAction (Lio/github/awakelab/awake/core/input/TextEditAction;)V
+	public final fun isKeyDown (Lcom/awakekt/awake/core/input/Key;)Z
+	public final fun pushEditAction (Lcom/awakekt/awake/core/input/TextEditAction;)V
 	public final fun pushTypedText (Ljava/lang/String;)V
-	public final fun setButton (Lio/github/awakelab/awake/core/input/PointerButton;Z)V
-	public final fun setImeComposition (Lio/github/awakelab/awake/core/input/ImeComposition;)V
-	public final fun setKeyDown (Lio/github/awakelab/awake/core/input/Key;Z)V
+	public final fun setButton (Lcom/awakekt/awake/core/input/PointerButton;Z)V
+	public final fun setImeComposition (Lcom/awakekt/awake/core/input/ImeComposition;)V
+	public final fun setKeyDown (Lcom/awakekt/awake/core/input/Key;Z)V
 	public final fun setPointer (ZFF)V
 	public final fun setScrollDeltaX (F)V
 	public final fun setScrollDeltaY (F)V
 	public final fun setSecondaryPointer (Z)V
 	public final fun setTextInputFocused (Z)V
-	public final fun snapshot ()Lio/github/awakelab/awake/core/input/InputSnapshot;
-	public final fun updateSnapshot ()Lio/github/awakelab/awake/core/input/InputSnapshot;
+	public final fun snapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
+	public final fun updateSnapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
 }
 
-public final class io/github/awakelab/awake/core/input/InputSnapshot {
-	public fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLio/github/awakelab/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
-	public synthetic fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLio/github/awakelab/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+public final class com/awakekt/awake/core/input/InputSnapshot {
+	public fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)V
+	public synthetic fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component10 ()Ljava/util/List;
 	public final fun component11 ()Z
 	public final fun component12 ()Z
 	public final fun component13 ()Z
-	public final fun component14 ()Lio/github/awakelab/awake/core/input/ImeComposition;
+	public final fun component14 ()Lcom/awakekt/awake/core/input/ImeComposition;
 	public final fun component15 ()Ljava/lang/String;
 	public final fun component16 ()Ljava/util/Set;
 	public final fun component17 ()Ljava/util/Set;
@@ -62,15 +62,15 @@ public final class io/github/awakelab/awake/core/input/InputSnapshot {
 	public final fun component7 ()Ljava/util/Set;
 	public final fun component8 ()Ljava/util/Set;
 	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLio/github/awakelab/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lio/github/awakelab/awake/core/input/InputSnapshot;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/input/InputSnapshot;FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLio/github/awakelab/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lio/github/awakelab/awake/core/input/InputSnapshot;
+	public final fun copy (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;)Lcom/awakekt/awake/core/input/InputSnapshot;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputSnapshot;FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputSnapshot;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getButtonsDown ()Ljava/util/Set;
 	public final fun getButtonsPressed ()Ljava/util/Set;
 	public final fun getButtonsReleased ()Ljava/util/Set;
 	public final fun getEditActions ()Ljava/util/List;
 	public final fun getImeCommit ()Ljava/lang/String;
-	public final fun getImeComposition ()Lio/github/awakelab/awake/core/input/ImeComposition;
+	public final fun getImeComposition ()Lcom/awakekt/awake/core/input/ImeComposition;
 	public final fun getKeysDown ()Ljava/util/Set;
 	public final fun getKeysPressed ()Ljava/util/Set;
 	public final fun getKeysReleased ()Ljava/util/Set;
@@ -84,114 +84,114 @@ public final class io/github/awakelab/awake/core/input/InputSnapshot {
 	public final fun getSecondaryPointerDown ()Z
 	public final fun getTypedText ()Ljava/lang/String;
 	public fun hashCode ()I
-	public final fun isDown (Lio/github/awakelab/awake/core/input/Key;)Z
-	public final fun isDown (Lio/github/awakelab/awake/core/input/PointerButton;)Z
+	public final fun isDown (Lcom/awakekt/awake/core/input/Key;)Z
+	public final fun isDown (Lcom/awakekt/awake/core/input/PointerButton;)Z
 	public fun toString ()Ljava/lang/String;
-	public final fun wasPressed (Lio/github/awakelab/awake/core/input/Key;)Z
-	public final fun wasPressed (Lio/github/awakelab/awake/core/input/PointerButton;)Z
-	public final fun wasReleased (Lio/github/awakelab/awake/core/input/PointerButton;)Z
+	public final fun wasPressed (Lcom/awakekt/awake/core/input/Key;)Z
+	public final fun wasPressed (Lcom/awakekt/awake/core/input/PointerButton;)Z
+	public final fun wasReleased (Lcom/awakekt/awake/core/input/PointerButton;)Z
 }
 
-public final class io/github/awakelab/awake/core/input/Key : java/lang/Enum {
-	public static final field A Lio/github/awakelab/awake/core/input/Key;
-	public static final field Alt Lio/github/awakelab/awake/core/input/Key;
-	public static final field ArrowDown Lio/github/awakelab/awake/core/input/Key;
-	public static final field ArrowLeft Lio/github/awakelab/awake/core/input/Key;
-	public static final field ArrowRight Lio/github/awakelab/awake/core/input/Key;
-	public static final field ArrowUp Lio/github/awakelab/awake/core/input/Key;
-	public static final field B Lio/github/awakelab/awake/core/input/Key;
-	public static final field Backspace Lio/github/awakelab/awake/core/input/Key;
-	public static final field C Lio/github/awakelab/awake/core/input/Key;
-	public static final field Ctrl Lio/github/awakelab/awake/core/input/Key;
-	public static final field D Lio/github/awakelab/awake/core/input/Key;
-	public static final field Delete Lio/github/awakelab/awake/core/input/Key;
-	public static final field Digit0 Lio/github/awakelab/awake/core/input/Key;
-	public static final field Digit1 Lio/github/awakelab/awake/core/input/Key;
-	public static final field Digit2 Lio/github/awakelab/awake/core/input/Key;
-	public static final field Digit3 Lio/github/awakelab/awake/core/input/Key;
-	public static final field Digit4 Lio/github/awakelab/awake/core/input/Key;
-	public static final field Digit5 Lio/github/awakelab/awake/core/input/Key;
-	public static final field Digit6 Lio/github/awakelab/awake/core/input/Key;
-	public static final field Digit7 Lio/github/awakelab/awake/core/input/Key;
-	public static final field Digit8 Lio/github/awakelab/awake/core/input/Key;
-	public static final field Digit9 Lio/github/awakelab/awake/core/input/Key;
-	public static final field E Lio/github/awakelab/awake/core/input/Key;
-	public static final field End Lio/github/awakelab/awake/core/input/Key;
-	public static final field Enter Lio/github/awakelab/awake/core/input/Key;
-	public static final field Escape Lio/github/awakelab/awake/core/input/Key;
-	public static final field F Lio/github/awakelab/awake/core/input/Key;
-	public static final field F1 Lio/github/awakelab/awake/core/input/Key;
-	public static final field F2 Lio/github/awakelab/awake/core/input/Key;
-	public static final field F3 Lio/github/awakelab/awake/core/input/Key;
-	public static final field F4 Lio/github/awakelab/awake/core/input/Key;
-	public static final field F5 Lio/github/awakelab/awake/core/input/Key;
-	public static final field G Lio/github/awakelab/awake/core/input/Key;
-	public static final field H Lio/github/awakelab/awake/core/input/Key;
-	public static final field Home Lio/github/awakelab/awake/core/input/Key;
-	public static final field I Lio/github/awakelab/awake/core/input/Key;
-	public static final field J Lio/github/awakelab/awake/core/input/Key;
-	public static final field K Lio/github/awakelab/awake/core/input/Key;
-	public static final field L Lio/github/awakelab/awake/core/input/Key;
-	public static final field M Lio/github/awakelab/awake/core/input/Key;
-	public static final field Meta Lio/github/awakelab/awake/core/input/Key;
-	public static final field N Lio/github/awakelab/awake/core/input/Key;
-	public static final field O Lio/github/awakelab/awake/core/input/Key;
-	public static final field P Lio/github/awakelab/awake/core/input/Key;
-	public static final field PageDown Lio/github/awakelab/awake/core/input/Key;
-	public static final field PageUp Lio/github/awakelab/awake/core/input/Key;
-	public static final field Q Lio/github/awakelab/awake/core/input/Key;
-	public static final field R Lio/github/awakelab/awake/core/input/Key;
-	public static final field S Lio/github/awakelab/awake/core/input/Key;
-	public static final field Shift Lio/github/awakelab/awake/core/input/Key;
-	public static final field Space Lio/github/awakelab/awake/core/input/Key;
-	public static final field T Lio/github/awakelab/awake/core/input/Key;
-	public static final field Tab Lio/github/awakelab/awake/core/input/Key;
-	public static final field U Lio/github/awakelab/awake/core/input/Key;
-	public static final field Unknown Lio/github/awakelab/awake/core/input/Key;
-	public static final field V Lio/github/awakelab/awake/core/input/Key;
-	public static final field W Lio/github/awakelab/awake/core/input/Key;
-	public static final field X Lio/github/awakelab/awake/core/input/Key;
-	public static final field Y Lio/github/awakelab/awake/core/input/Key;
-	public static final field Z Lio/github/awakelab/awake/core/input/Key;
+public final class com/awakekt/awake/core/input/Key : java/lang/Enum {
+	public static final field A Lcom/awakekt/awake/core/input/Key;
+	public static final field Alt Lcom/awakekt/awake/core/input/Key;
+	public static final field ArrowDown Lcom/awakekt/awake/core/input/Key;
+	public static final field ArrowLeft Lcom/awakekt/awake/core/input/Key;
+	public static final field ArrowRight Lcom/awakekt/awake/core/input/Key;
+	public static final field ArrowUp Lcom/awakekt/awake/core/input/Key;
+	public static final field B Lcom/awakekt/awake/core/input/Key;
+	public static final field Backspace Lcom/awakekt/awake/core/input/Key;
+	public static final field C Lcom/awakekt/awake/core/input/Key;
+	public static final field Ctrl Lcom/awakekt/awake/core/input/Key;
+	public static final field D Lcom/awakekt/awake/core/input/Key;
+	public static final field Delete Lcom/awakekt/awake/core/input/Key;
+	public static final field Digit0 Lcom/awakekt/awake/core/input/Key;
+	public static final field Digit1 Lcom/awakekt/awake/core/input/Key;
+	public static final field Digit2 Lcom/awakekt/awake/core/input/Key;
+	public static final field Digit3 Lcom/awakekt/awake/core/input/Key;
+	public static final field Digit4 Lcom/awakekt/awake/core/input/Key;
+	public static final field Digit5 Lcom/awakekt/awake/core/input/Key;
+	public static final field Digit6 Lcom/awakekt/awake/core/input/Key;
+	public static final field Digit7 Lcom/awakekt/awake/core/input/Key;
+	public static final field Digit8 Lcom/awakekt/awake/core/input/Key;
+	public static final field Digit9 Lcom/awakekt/awake/core/input/Key;
+	public static final field E Lcom/awakekt/awake/core/input/Key;
+	public static final field End Lcom/awakekt/awake/core/input/Key;
+	public static final field Enter Lcom/awakekt/awake/core/input/Key;
+	public static final field Escape Lcom/awakekt/awake/core/input/Key;
+	public static final field F Lcom/awakekt/awake/core/input/Key;
+	public static final field F1 Lcom/awakekt/awake/core/input/Key;
+	public static final field F2 Lcom/awakekt/awake/core/input/Key;
+	public static final field F3 Lcom/awakekt/awake/core/input/Key;
+	public static final field F4 Lcom/awakekt/awake/core/input/Key;
+	public static final field F5 Lcom/awakekt/awake/core/input/Key;
+	public static final field G Lcom/awakekt/awake/core/input/Key;
+	public static final field H Lcom/awakekt/awake/core/input/Key;
+	public static final field Home Lcom/awakekt/awake/core/input/Key;
+	public static final field I Lcom/awakekt/awake/core/input/Key;
+	public static final field J Lcom/awakekt/awake/core/input/Key;
+	public static final field K Lcom/awakekt/awake/core/input/Key;
+	public static final field L Lcom/awakekt/awake/core/input/Key;
+	public static final field M Lcom/awakekt/awake/core/input/Key;
+	public static final field Meta Lcom/awakekt/awake/core/input/Key;
+	public static final field N Lcom/awakekt/awake/core/input/Key;
+	public static final field O Lcom/awakekt/awake/core/input/Key;
+	public static final field P Lcom/awakekt/awake/core/input/Key;
+	public static final field PageDown Lcom/awakekt/awake/core/input/Key;
+	public static final field PageUp Lcom/awakekt/awake/core/input/Key;
+	public static final field Q Lcom/awakekt/awake/core/input/Key;
+	public static final field R Lcom/awakekt/awake/core/input/Key;
+	public static final field S Lcom/awakekt/awake/core/input/Key;
+	public static final field Shift Lcom/awakekt/awake/core/input/Key;
+	public static final field Space Lcom/awakekt/awake/core/input/Key;
+	public static final field T Lcom/awakekt/awake/core/input/Key;
+	public static final field Tab Lcom/awakekt/awake/core/input/Key;
+	public static final field U Lcom/awakekt/awake/core/input/Key;
+	public static final field Unknown Lcom/awakekt/awake/core/input/Key;
+	public static final field V Lcom/awakekt/awake/core/input/Key;
+	public static final field W Lcom/awakekt/awake/core/input/Key;
+	public static final field X Lcom/awakekt/awake/core/input/Key;
+	public static final field Y Lcom/awakekt/awake/core/input/Key;
+	public static final field Z Lcom/awakekt/awake/core/input/Key;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/input/Key;
-	public static fun values ()[Lio/github/awakelab/awake/core/input/Key;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/Key;
+	public static fun values ()[Lcom/awakekt/awake/core/input/Key;
 }
 
-public final class io/github/awakelab/awake/core/input/PointerButton : java/lang/Enum {
-	public static final field Back Lio/github/awakelab/awake/core/input/PointerButton;
-	public static final field Forward Lio/github/awakelab/awake/core/input/PointerButton;
-	public static final field Middle Lio/github/awakelab/awake/core/input/PointerButton;
-	public static final field Primary Lio/github/awakelab/awake/core/input/PointerButton;
-	public static final field Secondary Lio/github/awakelab/awake/core/input/PointerButton;
+public final class com/awakekt/awake/core/input/PointerButton : java/lang/Enum {
+	public static final field Back Lcom/awakekt/awake/core/input/PointerButton;
+	public static final field Forward Lcom/awakekt/awake/core/input/PointerButton;
+	public static final field Middle Lcom/awakekt/awake/core/input/PointerButton;
+	public static final field Primary Lcom/awakekt/awake/core/input/PointerButton;
+	public static final field Secondary Lcom/awakekt/awake/core/input/PointerButton;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/input/PointerButton;
-	public static fun values ()[Lio/github/awakelab/awake/core/input/PointerButton;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/PointerButton;
+	public static fun values ()[Lcom/awakekt/awake/core/input/PointerButton;
 }
 
-public final class io/github/awakelab/awake/core/input/PointerCursor : java/lang/Enum {
-	public static final field Default Lio/github/awakelab/awake/core/input/PointerCursor;
-	public static final field Pointer Lio/github/awakelab/awake/core/input/PointerCursor;
-	public static final field ResizeHorizontal Lio/github/awakelab/awake/core/input/PointerCursor;
-	public static final field ResizeVertical Lio/github/awakelab/awake/core/input/PointerCursor;
-	public static final field Text Lio/github/awakelab/awake/core/input/PointerCursor;
+public final class com/awakekt/awake/core/input/PointerCursor : java/lang/Enum {
+	public static final field Default Lcom/awakekt/awake/core/input/PointerCursor;
+	public static final field Pointer Lcom/awakekt/awake/core/input/PointerCursor;
+	public static final field ResizeHorizontal Lcom/awakekt/awake/core/input/PointerCursor;
+	public static final field ResizeVertical Lcom/awakekt/awake/core/input/PointerCursor;
+	public static final field Text Lcom/awakekt/awake/core/input/PointerCursor;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/input/PointerCursor;
-	public static fun values ()[Lio/github/awakelab/awake/core/input/PointerCursor;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/PointerCursor;
+	public static fun values ()[Lcom/awakekt/awake/core/input/PointerCursor;
 }
 
-public final class io/github/awakelab/awake/core/input/TextEditAction : java/lang/Enum {
-	public static final field ArrowDown Lio/github/awakelab/awake/core/input/TextEditAction;
-	public static final field ArrowLeft Lio/github/awakelab/awake/core/input/TextEditAction;
-	public static final field ArrowRight Lio/github/awakelab/awake/core/input/TextEditAction;
-	public static final field ArrowUp Lio/github/awakelab/awake/core/input/TextEditAction;
-	public static final field Backspace Lio/github/awakelab/awake/core/input/TextEditAction;
-	public static final field Delete Lio/github/awakelab/awake/core/input/TextEditAction;
-	public static final field End Lio/github/awakelab/awake/core/input/TextEditAction;
-	public static final field Enter Lio/github/awakelab/awake/core/input/TextEditAction;
-	public static final field Home Lio/github/awakelab/awake/core/input/TextEditAction;
+public final class com/awakekt/awake/core/input/TextEditAction : java/lang/Enum {
+	public static final field ArrowDown Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field ArrowLeft Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field ArrowRight Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field ArrowUp Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field Backspace Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field Delete Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field End Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field Enter Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field Home Lcom/awakekt/awake/core/input/TextEditAction;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/input/TextEditAction;
-	public static fun values ()[Lio/github/awakelab/awake/core/input/TextEditAction;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/TextEditAction;
+	public static fun values ()[Lcom/awakekt/awake/core/input/TextEditAction;
 }
 

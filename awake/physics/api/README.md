@@ -20,9 +20,9 @@ implementation(project(":awake:physics:api"))
 ## Usage Example
 
 ```kotlin
-import io.github.awakelab.awake.physics.PhysicsWorld
-import io.github.awakelab.awake.physics.PhysicsShape
-import io.github.awakelab.awake.physics.MotionType
+import com.awakekt.awake.physics.PhysicsWorld
+import com.awakekt.awake.physics.PhysicsShape
+import com.awakekt.awake.physics.MotionType
 
 // Create dynamic body
 val body = physicsWorld.createBody(

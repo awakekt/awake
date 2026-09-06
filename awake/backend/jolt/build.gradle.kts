@@ -33,7 +33,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.physics.jolt"
+        namespace = "com.awakekt.awake.physics.jolt"
         // Instrumented, not host, and the only way this backend can be tested at all: jolt-jni's
         // Android artifact ships device ABIs, so `System.loadLibrary("joltjni")` has nothing to
         // load in a JVM host test. `sourceSetTreeName = "test"` is what puts androidDeviceTest in

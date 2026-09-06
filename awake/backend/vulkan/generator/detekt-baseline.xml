@@ -22,30 +22,30 @@
     <ID>NestedBlockDepth:CreateVulkanAccessor.kt$fun CppFunctionBodyBuilder.processArrayAccessor( void: Boolean, clazz: Class&lt;*>, javaMember: Field, returnType: String, import: (dependency: String) -> Unit, )</ID>
     <ID>NestedBlockDepth:CreateVulkanAccessor.kt$fun CppFunctionBodyBuilder.processObjectAccessor( void: Boolean, javaMember: Field, returnType: String, import: (dependency: String) -> Unit, )</ID>
     <ID>NestedBlockDepth:CreateVulkanAccessor.kt$private fun CppClassBuilder.generateVulkanGetters( clazz: Class&lt;*>, declareMembers: Array&lt;Field>, )</ID>
-    <ID>PackageNaming:ClassMember.kt$package io.github.awakelab.awake.vulkan_generator.tool</ID>
-    <ID>PackageNaming:CppBuilder.kt$package io.github.awakelab.awake.vulkan_generator.tool</ID>
-    <ID>PackageNaming:CppClassBuilder.kt$package io.github.awakelab.awake.vulkan_generator.tool.builder</ID>
-    <ID>PackageNaming:CppClassDSL.kt$package io.github.awakelab.awake.vulkan_generator.tool.dsl</ID>
-    <ID>PackageNaming:CppConstructorBuilder.kt$package io.github.awakelab.awake.vulkan_generator.tool.builder</ID>
-    <ID>PackageNaming:CppDestructorBuilder.kt$package io.github.awakelab.awake.vulkan_generator.tool.builder</ID>
-    <ID>PackageNaming:CppFunctionBodyBuilder.kt$package io.github.awakelab.awake.vulkan_generator.tool.builder</ID>
-    <ID>PackageNaming:CppFunctionBuilder.kt$package io.github.awakelab.awake.vulkan_generator.tool.builder</ID>
-    <ID>PackageNaming:CppFunctionDSL.kt$package io.github.awakelab.awake.vulkan_generator.tool.dsl</ID>
-    <ID>PackageNaming:CreateVulkanAccessor.kt$package io.github.awakelab.awake.vulkan_generator.vulkan</ID>
-    <ID>PackageNaming:CreateVulkanMutator.kt$package io.github.awakelab.awake.vulkan_generator.vulkan</ID>
-    <ID>PackageNaming:CreateVulkanUtils.kt$package io.github.awakelab.awake.vulkan_generator.vulkan</ID>
-    <ID>PackageNaming:FieldExt.kt$package io.github.awakelab.awake.vulkan_generator.tool</ID>
-    <ID>PackageNaming:GenerateVulkanFromObject.kt$package io.github.awakelab.awake.vulkan_generator.vulkan</ID>
-    <ID>PackageNaming:Main.kt$package io.github.awakelab.awake.vulkan_generator</ID>
-    <ID>PackageNaming:VulkanCppBuilder.kt$package io.github.awakelab.awake.vulkan_generator.vulkan</ID>
-    <ID>PackageNaming:WriteFile.kt$package io.github.awakelab.awake.vulkan_generator.tool</ID>
+    <ID>PackageNaming:ClassMember.kt$package com.awakekt.awake.vulkan_generator.tool</ID>
+    <ID>PackageNaming:CppBuilder.kt$package com.awakekt.awake.vulkan_generator.tool</ID>
+    <ID>PackageNaming:CppClassBuilder.kt$package com.awakekt.awake.vulkan_generator.tool.builder</ID>
+    <ID>PackageNaming:CppClassDSL.kt$package com.awakekt.awake.vulkan_generator.tool.dsl</ID>
+    <ID>PackageNaming:CppConstructorBuilder.kt$package com.awakekt.awake.vulkan_generator.tool.builder</ID>
+    <ID>PackageNaming:CppDestructorBuilder.kt$package com.awakekt.awake.vulkan_generator.tool.builder</ID>
+    <ID>PackageNaming:CppFunctionBodyBuilder.kt$package com.awakekt.awake.vulkan_generator.tool.builder</ID>
+    <ID>PackageNaming:CppFunctionBuilder.kt$package com.awakekt.awake.vulkan_generator.tool.builder</ID>
+    <ID>PackageNaming:CppFunctionDSL.kt$package com.awakekt.awake.vulkan_generator.tool.dsl</ID>
+    <ID>PackageNaming:CreateVulkanAccessor.kt$package com.awakekt.awake.vulkan_generator.vulkan</ID>
+    <ID>PackageNaming:CreateVulkanMutator.kt$package com.awakekt.awake.vulkan_generator.vulkan</ID>
+    <ID>PackageNaming:CreateVulkanUtils.kt$package com.awakekt.awake.vulkan_generator.vulkan</ID>
+    <ID>PackageNaming:FieldExt.kt$package com.awakekt.awake.vulkan_generator.tool</ID>
+    <ID>PackageNaming:GenerateVulkanFromObject.kt$package com.awakekt.awake.vulkan_generator.vulkan</ID>
+    <ID>PackageNaming:Main.kt$package com.awakekt.awake.vulkan_generator</ID>
+    <ID>PackageNaming:VulkanCppBuilder.kt$package com.awakekt.awake.vulkan_generator.vulkan</ID>
+    <ID>PackageNaming:WriteFile.kt$package com.awakekt.awake.vulkan_generator.tool</ID>
     <ID>ReturnCount:FieldExt.kt$fun Field.toVulkanType(useVector: Boolean = true): String</ID>
     <ID>TooGenericExceptionCaught:WriteFile.kt$FileWriter$e: Exception</ID>
     <ID>TooGenericExceptionThrown:CreateVulkanAccessor.kt$throw RuntimeException("Nested array not supported")</ID>
     <ID>TooGenericExceptionThrown:FieldExt.kt$throw Exception("Not yet supported")</ID>
     <ID>TooGenericExceptionThrown:FieldExt.kt$throw RuntimeException("getArrayElement not supported (use getArrayRegion instead) ${type.simpleName}")</ID>
     <ID>TooGenericExceptionThrown:FieldExt.kt$throw RuntimeException("getArrayRegion not supported ${type.simpleName}")</ID>
-    <ID>TooManyFunctions:FieldExt.kt$io.github.awakelab.awake.vulkan_generator.tool.FieldExt.kt</ID>
+    <ID>TooManyFunctions:FieldExt.kt$com.awakekt.awake.vulkan_generator.tool.FieldExt.kt</ID>
     <ID>UnusedPrivateMember:CreateVulkanAccessor.kt$private fun getMergedClassName(clazz: Class&lt;*>): String</ID>
   </CurrentIssues>
 </SmellBaseline>

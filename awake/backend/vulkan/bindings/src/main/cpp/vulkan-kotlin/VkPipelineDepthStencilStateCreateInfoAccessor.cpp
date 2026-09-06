@@ -9,19 +9,19 @@ VkPipelineDepthStencilStateCreateInfoAccessor::VkPipelineDepthStencilStateCreate
         JNIEnv *env, jobject obj) : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     depthTestEnableField = env->GetFieldID(clazz, "depthTestEnable", "Z");
     depthWriteEnableField = env->GetFieldID(clazz, "depthWriteEnable", "Z");
     depthCompareOpField = env->GetFieldID(clazz, "depthCompareOp",
-                                          "Lio/github/awakelab/awake/vulkan/enums/VkCompareOp;");
+                                          "Lcom/awakekt/awake/vulkan/enums/VkCompareOp;");
     depthBoundsTestEnableField = env->GetFieldID(clazz, "depthBoundsTestEnable", "Z");
     stencilTestEnableField = env->GetFieldID(clazz, "stencilTestEnable", "Z");
     frontField = env->GetFieldID(clazz, "front",
-                                 "Lio/github/awakelab/awake/vulkan/models/VkStencilOpState;");
+                                 "Lcom/awakekt/awake/vulkan/models/VkStencilOpState;");
     backField = env->GetFieldID(clazz, "back",
-                                "Lio/github/awakelab/awake/vulkan/models/VkStencilOpState;");
+                                "Lcom/awakekt/awake/vulkan/models/VkStencilOpState;");
     minDepthBoundsField = env->GetFieldID(clazz, "minDepthBounds", "F");
     maxDepthBoundsField = env->GetFieldID(clazz, "maxDepthBounds", "F");
 }

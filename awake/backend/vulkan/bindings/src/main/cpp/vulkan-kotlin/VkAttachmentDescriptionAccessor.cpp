@@ -10,21 +10,21 @@ VkAttachmentDescriptionAccessor::VkAttachmentDescriptionAccessor(JNIEnv *env, jo
     clazz = env->GetObjectClass(obj);
     flagsField = env->GetFieldID(clazz, "flags", "I");
     formatField = env->GetFieldID(clazz, "format",
-                                  "Lio/github/awakelab/awake/vulkan/enums/VkFormat;");
+                                  "Lcom/awakekt/awake/vulkan/enums/VkFormat;");
     samplesField = env->GetFieldID(clazz, "samples",
-                                   "Lio/github/awakelab/awake/vulkan/enums/VkSampleCountFlagBits;");
+                                   "Lcom/awakekt/awake/vulkan/enums/VkSampleCountFlagBits;");
     loadOpField = env->GetFieldID(clazz, "loadOp",
-                                  "Lio/github/awakelab/awake/vulkan/enums/VkAttachmentLoadOp;");
+                                  "Lcom/awakekt/awake/vulkan/enums/VkAttachmentLoadOp;");
     storeOpField = env->GetFieldID(clazz, "storeOp",
-                                   "Lio/github/awakelab/awake/vulkan/enums/VkAttachmentStoreOp;");
+                                   "Lcom/awakekt/awake/vulkan/enums/VkAttachmentStoreOp;");
     stencilLoadOpField = env->GetFieldID(clazz, "stencilLoadOp",
-                                         "Lio/github/awakelab/awake/vulkan/enums/VkAttachmentLoadOp;");
+                                         "Lcom/awakekt/awake/vulkan/enums/VkAttachmentLoadOp;");
     stencilStoreOpField = env->GetFieldID(clazz, "stencilStoreOp",
-                                          "Lio/github/awakelab/awake/vulkan/enums/VkAttachmentStoreOp;");
+                                          "Lcom/awakekt/awake/vulkan/enums/VkAttachmentStoreOp;");
     initialLayoutField = env->GetFieldID(clazz, "initialLayout",
-                                         "Lio/github/awakelab/awake/vulkan/enums/VkImageLayout;");
+                                         "Lcom/awakekt/awake/vulkan/enums/VkImageLayout;");
     finalLayoutField = env->GetFieldID(clazz, "finalLayout",
-                                       "Lio/github/awakelab/awake/vulkan/enums/VkImageLayout;");
+                                       "Lcom/awakekt/awake/vulkan/enums/VkImageLayout;");
 }
 
 uint32_t

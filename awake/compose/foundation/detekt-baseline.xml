@@ -16,8 +16,8 @@
     <ID>MatchingDeclarationName:Transformable.kt$TransformableState</ID>
     <ID>NestedBlockDepth:TextLineBreaker.kt$internal fun breakIntoLineLayouts( text: String, maxWidthPx: Float, widthOf: (String) -> Float, ): List&lt;TextLineLayout></ID>
     <ID>NestedBlockDepth:Transformable.kt$TransformableNode$override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass)</ID>
-    <ID>TooManyFunctions:LayoutModifiers.kt$io.github.awakelab.awake.compose.foundation.layout.LayoutModifiers.kt</ID>
-    <ID>TooManyFunctions:OffsetAndSizing.kt$io.github.awakelab.awake.compose.foundation.layout.OffsetAndSizing.kt</ID>
+    <ID>TooManyFunctions:LayoutModifiers.kt$com.awakekt.awake.compose.foundation.layout.LayoutModifiers.kt</ID>
+    <ID>TooManyFunctions:OffsetAndSizing.kt$com.awakekt.awake.compose.foundation.layout.OffsetAndSizing.kt</ID>
     <ID>TooManyFunctions:Style.kt$ResolvingStyleScope : StyleScope</ID>
     <ID>TooManyFunctions:Style.kt$StyleScope</ID>
     <ID>TooManyFunctions:TextFieldState.kt$TextFieldState</ID>

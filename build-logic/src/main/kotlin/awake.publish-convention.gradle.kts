@@ -57,7 +57,7 @@ extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
     )
 
     pom {
-        url.set("https://awake-lab.github.io/awake")
+        url.set("https://awakekt.github.io/awake")
         licenses {
             license {
                 name.set("Apache License, Version 2.0")
@@ -66,12 +66,12 @@ extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
         }
         issueManagement {
             system.set("Github")
-            url.set("https://github.com/awake-lab/awake/issues")
+            url.set("https://github.com/awakekt/awake/issues")
         }
         scm {
-            connection.set("scm:git:git://github.com/awake-lab/awake.git")
-            developerConnection.set("scm:git:ssh://github.com:awake-lab/awake.git")
-            url.set("https://github.com/awake-lab/awake")
+            connection.set("scm:git:git://github.com/awakekt/awake.git")
+            developerConnection.set("scm:git:ssh://github.com:awakekt/awake.git")
+            url.set("https://github.com/awakekt/awake")
         }
         developers {
             developer {

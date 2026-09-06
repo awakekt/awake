@@ -1,0 +1,80 @@
+public abstract interface class com/awakekt/awake/core/di/Binding {
+	public abstract fun resolve (Lcom/awakekt/awake/core/di/Container;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/core/di/Container {
+	public abstract fun createChild (Lcom/awakekt/awake/core/di/Module;)Lcom/awakekt/awake/core/di/Container;
+	public abstract fun createChild (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/di/Container;
+	public static synthetic fun createChild$default (Lcom/awakekt/awake/core/di/Container;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/di/Container;
+	public abstract fun get (Lcom/awakekt/awake/core/di/Key;)Ljava/lang/Object;
+	public abstract fun getOrNull (Lcom/awakekt/awake/core/di/Key;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/di/Container$DefaultImpls {
+	public static synthetic fun createChild$default (Lcom/awakekt/awake/core/di/Container;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/di/Container;
+}
+
+public final class com/awakekt/awake/core/di/ContainerKt {
+	public static final fun container (Ljava/lang/Iterable;)Lcom/awakekt/awake/core/di/Container;
+	public static final fun container ([Lcom/awakekt/awake/core/di/Module;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/di/Container;
+	public static synthetic fun container$default ([Lcom/awakekt/awake/core/di/Module;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/di/Container;
+}
+
+public final class com/awakekt/awake/core/di/CyclicDependencyException : java/lang/RuntimeException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/core/di/DefaultContainer : com/awakekt/awake/core/di/Container {
+	public fun createChild (Lcom/awakekt/awake/core/di/Module;)Lcom/awakekt/awake/core/di/Container;
+	public fun createChild (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/di/Container;
+	public fun get (Lcom/awakekt/awake/core/di/Key;)Ljava/lang/Object;
+	public fun getOrNull (Lcom/awakekt/awake/core/di/Key;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/di/FactoryBinding : com/awakekt/awake/core/di/Binding {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public fun resolve (Lcom/awakekt/awake/core/di/Container;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/di/InstanceBinding : com/awakekt/awake/core/di/Binding {
+	public fun <init> (Ljava/lang/Object;)V
+	public fun resolve (Lcom/awakekt/awake/core/di/Container;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/di/Key {
+	public fun <init> (Lkotlin/reflect/KClass;Ljava/lang/String;)V
+	public synthetic fun <init> (Lkotlin/reflect/KClass;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lkotlin/reflect/KClass;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lkotlin/reflect/KClass;Ljava/lang/String;)Lcom/awakekt/awake/core/di/Key;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/di/Key;Lkotlin/reflect/KClass;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/di/Key;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getQualifier ()Ljava/lang/String;
+	public final fun getType ()Lkotlin/reflect/KClass;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/di/MissingBindingException : java/lang/RuntimeException {
+	public fun <init> (Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/core/di/Module {
+	public final fun plus (Lcom/awakekt/awake/core/di/Module;)Lcom/awakekt/awake/core/di/Module;
+}
+
+public final class com/awakekt/awake/core/di/ModuleBuilder {
+	public fun <init> ()V
+	public final fun bind (Lcom/awakekt/awake/core/di/Key;Lcom/awakekt/awake/core/di/Binding;)V
+	public final fun include (Lcom/awakekt/awake/core/di/Module;)V
+}
+
+public final class com/awakekt/awake/core/di/ModuleKt {
+	public static final fun module (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/di/Module;
+}
+
+public final class com/awakekt/awake/core/di/SingletonBinding : com/awakekt/awake/core/di/Binding {
+	public fun <init> (Lkotlin/jvm/functions/Function1;)V
+	public fun resolve (Lcom/awakekt/awake/core/di/Container;)Ljava/lang/Object;
+}
+

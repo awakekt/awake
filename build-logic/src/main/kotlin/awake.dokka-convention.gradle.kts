@@ -59,7 +59,7 @@ dokka {
         sourceLink {
             localDirectory.set(projectDir.resolve("src"))
             val relativePath = project.path.removePrefix(":").replace(":", "/")
-            remoteUrl.set(URI("https://github.com/awake-lab/awake/blob/main/$relativePath/src"))
+            remoteUrl.set(URI("https://github.com/awakekt/awake/blob/main/$relativePath/src"))
             remoteLineSuffix.set("#L")
         }
     }

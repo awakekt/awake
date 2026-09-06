@@ -67,8 +67,8 @@
     <ID>ReturnCount:ShadcnSelect.kt$private fun List&lt;ShadcnSelectItem>.nextEnabledIndex(current: Int?, forward: Boolean): Int?</ID>
     <ID>ReturnCount:ShadcnSelect.kt$private fun handleSelectKey( event: KeyEvent, items: List&lt;ShadcnSelectItem>, selectedIndex: Int?, expanded: Boolean, state: SelectKeyboardState, onExpandedChange: (Boolean) -> Unit, onItemSelected: (Int) -> Unit, ): Boolean</ID>
     <ID>ReturnCount:ShadcnSlider.kt$private fun handleSliderKey(event: KeyEvent, min: Float, max: Float, steps: Int, state: SliderDragState): Boolean</ID>
-    <ID>TooManyFunctions:ShadcnSidebarShell.kt$io.github.awakelab.awake.ui.shadcn.components.ShadcnSidebarShell.kt</ID>
-    <ID>TooManyFunctions:ShadcnTable.kt$io.github.awakelab.awake.ui.shadcn.components.ShadcnTable.kt</ID>
+    <ID>TooManyFunctions:ShadcnSidebarShell.kt$com.awakekt.awake.ui.shadcn.components.ShadcnSidebarShell.kt</ID>
+    <ID>TooManyFunctions:ShadcnTable.kt$com.awakekt.awake.ui.shadcn.components.ShadcnTable.kt</ID>
     <ID>TopLevelPropertyNaming:ShadcnCheckboxStyle.kt$/** Source Checkbox's `disabled:opacity-50`. */ internal const val ShadcnCheckboxDisabledAlpha = 0.5f</ID>
     <ID>TopLevelPropertyNaming:ShadcnProgressStyle.kt$/** Source Progress track's `bg-primary/20`. */ internal const val ShadcnProgressTrackAlpha = 0.2f</ID>
     <ID>TopLevelPropertyNaming:ShadcnTabsStyle.kt$/** Source inactive TabsTrigger's `text-foreground/60`. */ internal const val ShadcnTabsInactiveAlpha = 0.6f</ID>

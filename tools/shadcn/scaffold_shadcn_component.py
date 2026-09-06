@@ -29,13 +29,13 @@ def generate_component_code(name: str, category: str) -> str:
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package io.github.awakelab.awake.ui.shadcn.components
+package com.awakekt.awake.ui.shadcn.components
 
-import io.github.awakelab.awake.compose.foundation.layout.Box
-import io.github.awakelab.awake.compose.runtime.Composable
-import io.github.awakelab.awake.compose.runtime.Composer
-import io.github.awakelab.awake.compose.ui.Modifier
-import io.github.awakelab.awake.ui.shadcn.ShadcnTheme
+import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.runtime.Composable
+import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.ui.shadcn.ShadcnTheme
 
 /**
  * Shadcn {name} component in Compose Multiplatform.
@@ -60,19 +60,19 @@ def generate_page_code(name: str, category_enum: str, category_dir: str) -> str:
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package io.github.awakelab.awake.sample.uishowcase.ui.pages.{category_dir}
+package com.awakekt.awake.sample.uishowcase.ui.pages.{category_dir}
 
-import io.github.awakelab.awake.compose.foundation.layout.Column
-import io.github.awakelab.awake.compose.foundation.layout.Spacer
-import io.github.awakelab.awake.compose.foundation.layout.height
-import io.github.awakelab.awake.compose.runtime.Composer
-import io.github.awakelab.awake.compose.ui.Modifier
-import io.github.awakelab.awake.compose.ui.unit.dp
-import io.github.awakelab.awake.sample.uishowcase.state.UiShowcaseRuntimeState
-import io.github.awakelab.awake.sample.uishowcase.ui.ShowcaseCategory
-import io.github.awakelab.awake.sample.uishowcase.ui.ShowcasePage
-import io.github.awakelab.awake.ui.shadcn.components.Shadcn{name}
-import io.github.awakelab.awake.ui.shadcn.components.shadcnMuted
+import com.awakekt.awake.compose.foundation.layout.Column
+import com.awakekt.awake.compose.foundation.layout.Spacer
+import com.awakekt.awake.compose.foundation.layout.height
+import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.sample.uishowcase.state.UiShowcaseRuntimeState
+import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
+import com.awakekt.awake.sample.uishowcase.ui.ShowcasePage
+import com.awakekt.awake.ui.shadcn.components.Shadcn{name}
+import com.awakekt.awake.ui.shadcn.components.shadcnMuted
 
 internal val {name}Page = ShowcasePage(
     id = "{page_id}",
@@ -102,7 +102,7 @@ def generate_test_code(name: str) -> str:
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package io.github.awakelab.awake.ui.shadcn.components
+package com.awakekt.awake.ui.shadcn.components
 
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -157,13 +157,13 @@ def scaffold_component_slice(project_root: Path, name: str, category_key: str, d
     # Register in catalog if present
     if catalog_file.exists():
         content = catalog_file.read_text(encoding="utf-8")
-        import_stmt = f"import io.github.awakelab.awake.sample.uishowcase.ui.pages.{category_dir}.{name}Page"
+        import_stmt = f"import com.awakekt.awake.sample.uishowcase.ui.pages.{category_dir}.{name}Page"
         page_entry = f"    {name}Page,"
         if import_stmt not in content:
             lines = content.splitlines()
             import_idx = -1
             for idx, line in enumerate(lines):
-                if line.startswith("import io.github.awakelab.awake.sample.uishowcase.ui.pages."):
+                if line.startswith("import com.awakekt.awake.sample.uishowcase.ui.pages."):
                     import_idx = idx
             if import_idx != -1:
                 lines.insert(import_idx + 1, import_stmt)

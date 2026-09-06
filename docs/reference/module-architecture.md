@@ -447,7 +447,7 @@ is per-module but every reader assumes per-package. Moved to `awake.engine.platf
 
 This is not isolated. Seven packages in the `ui` group are split across two or more modules, the
 bare `ui` package across **five**, and `ui:heroicons` publishes under
-`io.github.awakelab.ui.*` -- missing the `awake` segment entirely, on a coordinate that is
+`com.awakekt.awake.ui.*` -- missing the `awake` segment entirely, on a coordinate that is
 already published. Recorded here; not fixed in this pass.
 
 ## Withdrawn — **Decided, do not revisit without new evidence**

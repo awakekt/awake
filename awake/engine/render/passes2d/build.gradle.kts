@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.render.passes2d"
+        namespace = "com.awakekt.awake.render.passes2d"
     }
 
     sourceSets {

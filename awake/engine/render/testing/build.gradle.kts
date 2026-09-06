@@ -32,7 +32,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.render.testing"
+        namespace = "com.awakekt.awake.render.testing"
     }
 
     sourceSets {

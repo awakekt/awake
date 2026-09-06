@@ -1,81 +1,81 @@
-public final class io/github/awakelab/awake/core/logging/Log {
-	public static final field INSTANCE Lio/github/awakelab/awake/core/logging/Log;
+public final class com/awakekt/awake/core/logging/Log {
+	public static final field INSTANCE Lcom/awakekt/awake/core/logging/Log;
 	public final fun advanceFrame ()V
-	public final fun emit (Lio/github/awakelab/awake/core/logging/LogLevel;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
-	public static synthetic fun emit$default (Lio/github/awakelab/awake/core/logging/Log;Lio/github/awakelab/awake/core/logging/LogLevel;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
+	public final fun emit (Lcom/awakekt/awake/core/logging/LogLevel;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)V
+	public static synthetic fun emit$default (Lcom/awakekt/awake/core/logging/Log;Lcom/awakekt/awake/core/logging/LogLevel;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;ILjava/lang/Object;)V
 	public final fun getFrame ()J
 	public final fun getHasSinks ()Z
-	public final fun getMinimumLevel ()Lio/github/awakelab/awake/core/logging/LogLevel;
-	public final fun install (Lio/github/awakelab/awake/core/logging/LogSink;)V
-	public final fun isEnabled (Lio/github/awakelab/awake/core/logging/LogLevel;)Z
-	public final fun remove (Lio/github/awakelab/awake/core/logging/LogSink;)V
+	public final fun getMinimumLevel ()Lcom/awakekt/awake/core/logging/LogLevel;
+	public final fun install (Lcom/awakekt/awake/core/logging/LogSink;)V
+	public final fun isEnabled (Lcom/awakekt/awake/core/logging/LogLevel;)Z
+	public final fun remove (Lcom/awakekt/awake/core/logging/LogSink;)V
 	public final fun reset ()V
-	public final fun setMinimumLevel (Lio/github/awakelab/awake/core/logging/LogLevel;)V
+	public final fun setMinimumLevel (Lcom/awakekt/awake/core/logging/LogLevel;)V
 }
 
-public final class io/github/awakelab/awake/core/logging/LogLevel : java/lang/Enum {
-	public static final field Debug Lio/github/awakelab/awake/core/logging/LogLevel;
-	public static final field Error Lio/github/awakelab/awake/core/logging/LogLevel;
-	public static final field Info Lio/github/awakelab/awake/core/logging/LogLevel;
-	public static final field Trace Lio/github/awakelab/awake/core/logging/LogLevel;
-	public static final field Warn Lio/github/awakelab/awake/core/logging/LogLevel;
+public final class com/awakekt/awake/core/logging/LogLevel : java/lang/Enum {
+	public static final field Debug Lcom/awakekt/awake/core/logging/LogLevel;
+	public static final field Error Lcom/awakekt/awake/core/logging/LogLevel;
+	public static final field Info Lcom/awakekt/awake/core/logging/LogLevel;
+	public static final field Trace Lcom/awakekt/awake/core/logging/LogLevel;
+	public static final field Warn Lcom/awakekt/awake/core/logging/LogLevel;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/logging/LogLevel;
-	public static fun values ()[Lio/github/awakelab/awake/core/logging/LogLevel;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/logging/LogLevel;
+	public static fun values ()[Lcom/awakekt/awake/core/logging/LogLevel;
 }
 
-public final class io/github/awakelab/awake/core/logging/LogRecord {
-	public fun <init> (Lio/github/awakelab/awake/core/logging/LogLevel;Ljava/lang/String;Ljava/lang/String;JLjava/lang/Throwable;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/core/logging/LogLevel;Ljava/lang/String;Ljava/lang/String;JLjava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+public final class com/awakekt/awake/core/logging/LogRecord {
+	public fun <init> (Lcom/awakekt/awake/core/logging/LogLevel;Ljava/lang/String;Ljava/lang/String;JLjava/lang/Throwable;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/logging/LogLevel;Ljava/lang/String;Ljava/lang/String;JLjava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getCause ()Ljava/lang/Throwable;
 	public final fun getFrame ()J
-	public final fun getLevel ()Lio/github/awakelab/awake/core/logging/LogLevel;
+	public final fun getLevel ()Lcom/awakekt/awake/core/logging/LogLevel;
 	public final fun getMessage ()Ljava/lang/String;
 	public final fun getTag ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/logging/LogRingBuffer : io/github/awakelab/awake/core/logging/LogSink {
-	public static final field Companion Lio/github/awakelab/awake/core/logging/LogRingBuffer$Companion;
+public final class com/awakekt/awake/core/logging/LogRingBuffer : com/awakekt/awake/core/logging/LogSink {
+	public static final field Companion Lcom/awakekt/awake/core/logging/LogRingBuffer$Companion;
 	public static final field DEFAULT_CAPACITY I
 	public fun <init> ()V
 	public fun <init> (I)V
 	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun clear ()V
-	public final fun countAtLeast (Lio/github/awakelab/awake/core/logging/LogLevel;)I
-	public fun emit (Lio/github/awakelab/awake/core/logging/LogRecord;)V
+	public final fun countAtLeast (Lcom/awakekt/awake/core/logging/LogLevel;)I
+	public fun emit (Lcom/awakekt/awake/core/logging/LogRecord;)V
 	public final fun forEach (Lkotlin/jvm/functions/Function1;)V
-	public final fun get (I)Lio/github/awakelab/awake/core/logging/LogRecord;
+	public final fun get (I)Lcom/awakekt/awake/core/logging/LogRecord;
 	public final fun getCapacity ()I
 	public final fun getDroppedCount ()J
 	public final fun getSize ()I
 	public final fun snapshot ()Ljava/util/List;
 }
 
-public final class io/github/awakelab/awake/core/logging/LogRingBuffer$Companion {
+public final class com/awakekt/awake/core/logging/LogRingBuffer$Companion {
 }
 
-public abstract interface class io/github/awakelab/awake/core/logging/LogSink {
-	public abstract fun emit (Lio/github/awakelab/awake/core/logging/LogRecord;)V
+public abstract interface class com/awakekt/awake/core/logging/LogSink {
+	public abstract fun emit (Lcom/awakekt/awake/core/logging/LogRecord;)V
 }
 
-public final class io/github/awakelab/awake/core/logging/Logger {
+public final class com/awakekt/awake/core/logging/Logger {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun debug (Lkotlin/jvm/functions/Function0;)V
 	public final fun error (Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;)V
-	public static synthetic fun error$default (Lio/github/awakelab/awake/core/logging/Logger;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static synthetic fun error$default (Lcom/awakekt/awake/core/logging/Logger;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 	public final fun getTag ()Ljava/lang/String;
 	public final fun info (Lkotlin/jvm/functions/Function0;)V
 	public final fun trace (Lkotlin/jvm/functions/Function0;)V
 	public final fun warn (Lkotlin/jvm/functions/Function0;)V
 }
 
-public final class io/github/awakelab/awake/core/logging/PrintLogSink : io/github/awakelab/awake/core/logging/LogSink {
+public final class com/awakekt/awake/core/logging/PrintLogSink : com/awakekt/awake/core/logging/LogSink {
 	public static final field FRAME_DIGITS I
 	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/core/logging/LogLevel;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/core/logging/LogLevel;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun emit (Lio/github/awakelab/awake/core/logging/LogRecord;)V
-	public final fun getMinimumLevel ()Lio/github/awakelab/awake/core/logging/LogLevel;
-	public final fun setMinimumLevel (Lio/github/awakelab/awake/core/logging/LogLevel;)V
+	public fun <init> (Lcom/awakekt/awake/core/logging/LogLevel;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/logging/LogLevel;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun emit (Lcom/awakekt/awake/core/logging/LogRecord;)V
+	public final fun getMinimumLevel ()Lcom/awakekt/awake/core/logging/LogLevel;
+	public final fun setMinimumLevel (Lcom/awakekt/awake/core/logging/LogLevel;)V
 }
 

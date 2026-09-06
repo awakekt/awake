@@ -18,7 +18,7 @@ kotlin {
     jvmToolchain(25)
 
     android {
-        namespace = "io.github.awakelab.awake.render.parity"
+        namespace = "com.awakekt.awake.render.parity"
     }
 
     // detekt's compiler frontend tops out at JVM target 22 and this module's toolchain is 25. The

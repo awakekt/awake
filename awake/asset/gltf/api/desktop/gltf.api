@@ -1,5 +1,5 @@
-public final class io/github/awakelab/awake/asset/gltf/GltfAccessor {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfAccessor$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfAccessor {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfAccessor$Companion;
 	public fun <init> (Ljava/lang/Integer;IIILjava/lang/String;Z)V
 	public synthetic fun <init> (Ljava/lang/Integer;IIILjava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Integer;
@@ -8,8 +8,8 @@ public final class io/github/awakelab/awake/asset/gltf/GltfAccessor {
 	public final fun component4 ()I
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Z
-	public final fun copy (Ljava/lang/Integer;IIILjava/lang/String;Z)Lio/github/awakelab/awake/asset/gltf/GltfAccessor;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfAccessor;Ljava/lang/Integer;IIILjava/lang/String;ZILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfAccessor;
+	public final fun copy (Ljava/lang/Integer;IIILjava/lang/String;Z)Lcom/awakekt/awake/asset/gltf/GltfAccessor;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfAccessor;Ljava/lang/Integer;IIILjava/lang/String;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfAccessor;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBufferView ()Ljava/lang/Integer;
 	public final fun getByteOffset ()I
@@ -21,31 +21,31 @@ public final class io/github/awakelab/awake/asset/gltf/GltfAccessor {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfAccessor$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfAccessor$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfAccessor$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfAccessor$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfAccessor;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfAccessor;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfAccessor;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfAccessor;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfAccessor$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfAccessor$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfAnimation {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfAnimation$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfAnimation {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfAnimation$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun component2 ()Ljava/util/List;
 	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/lang/String;)Lio/github/awakelab/awake/asset/gltf/GltfAnimation;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfAnimation;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfAnimation;
+	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/lang/String;)Lcom/awakekt/awake/asset/gltf/GltfAnimation;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfAnimation;Ljava/util/List;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfAnimation;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getChannels ()Ljava/util/List;
 	public final fun getName ()Ljava/lang/String;
@@ -54,59 +54,59 @@ public final class io/github/awakelab/awake/asset/gltf/GltfAnimation {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfAnimation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfAnimation$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfAnimation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfAnimation$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfAnimation;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfAnimation;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfAnimation;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfAnimation;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfAnimation$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfAnimation$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfAnimationChannel {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfAnimationChannel$Companion;
-	public fun <init> (ILio/github/awakelab/awake/asset/gltf/GltfAnimationTarget;)V
+public final class com/awakekt/awake/asset/gltf/GltfAnimationChannel {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfAnimationChannel$Companion;
+	public fun <init> (ILcom/awakekt/awake/asset/gltf/GltfAnimationTarget;)V
 	public final fun component1 ()I
-	public final fun component2 ()Lio/github/awakelab/awake/asset/gltf/GltfAnimationTarget;
-	public final fun copy (ILio/github/awakelab/awake/asset/gltf/GltfAnimationTarget;)Lio/github/awakelab/awake/asset/gltf/GltfAnimationChannel;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfAnimationChannel;ILio/github/awakelab/awake/asset/gltf/GltfAnimationTarget;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfAnimationChannel;
+	public final fun component2 ()Lcom/awakekt/awake/asset/gltf/GltfAnimationTarget;
+	public final fun copy (ILcom/awakekt/awake/asset/gltf/GltfAnimationTarget;)Lcom/awakekt/awake/asset/gltf/GltfAnimationChannel;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfAnimationChannel;ILcom/awakekt/awake/asset/gltf/GltfAnimationTarget;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfAnimationChannel;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getSampler ()I
-	public final fun getTarget ()Lio/github/awakelab/awake/asset/gltf/GltfAnimationTarget;
+	public final fun getTarget ()Lcom/awakekt/awake/asset/gltf/GltfAnimationTarget;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfAnimationChannel$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfAnimationChannel$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfAnimationChannel$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfAnimationChannel$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfAnimationChannel;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfAnimationChannel;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfAnimationChannel;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfAnimationChannel;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfAnimationChannel$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfAnimationChannel$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfAnimationSampler {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfAnimationSampler$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfAnimationSampler {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfAnimationSampler$Companion;
 	public fun <init> (IILjava/lang/String;)V
 	public synthetic fun <init> (IILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (IILjava/lang/String;)Lio/github/awakelab/awake/asset/gltf/GltfAnimationSampler;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfAnimationSampler;IILjava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfAnimationSampler;
+	public final fun copy (IILjava/lang/String;)Lcom/awakekt/awake/asset/gltf/GltfAnimationSampler;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfAnimationSampler;IILjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfAnimationSampler;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getInput ()I
 	public final fun getInterpolation ()Ljava/lang/String;
@@ -115,29 +115,29 @@ public final class io/github/awakelab/awake/asset/gltf/GltfAnimationSampler {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfAnimationSampler$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfAnimationSampler$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfAnimationSampler$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfAnimationSampler$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfAnimationSampler;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfAnimationSampler;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfAnimationSampler;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfAnimationSampler;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfAnimationSampler$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfAnimationSampler$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfAnimationTarget {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfAnimationTarget$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfAnimationTarget {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfAnimationTarget$Companion;
 	public fun <init> (Ljava/lang/Integer;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/Integer;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Integer;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/Integer;Ljava/lang/String;)Lio/github/awakelab/awake/asset/gltf/GltfAnimationTarget;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfAnimationTarget;Ljava/lang/Integer;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfAnimationTarget;
+	public final fun copy (Ljava/lang/Integer;Ljava/lang/String;)Lcom/awakekt/awake/asset/gltf/GltfAnimationTarget;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfAnimationTarget;Ljava/lang/Integer;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfAnimationTarget;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getNode ()Ljava/lang/Integer;
 	public final fun getPath ()Ljava/lang/String;
@@ -145,30 +145,30 @@ public final class io/github/awakelab/awake/asset/gltf/GltfAnimationTarget {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfAnimationTarget$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfAnimationTarget$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfAnimationTarget$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfAnimationTarget$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfAnimationTarget;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfAnimationTarget;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfAnimationTarget;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfAnimationTarget;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfAnimationTarget$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfAnimationTarget$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfBuffer {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfBuffer$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfBuffer {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfBuffer$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;I)V
 	public synthetic fun <init> (Ljava/lang/String;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()I
-	public final fun copy (Ljava/lang/String;I)Lio/github/awakelab/awake/asset/gltf/GltfBuffer;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfBuffer;Ljava/lang/String;IILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfBuffer;
+	public final fun copy (Ljava/lang/String;I)Lcom/awakekt/awake/asset/gltf/GltfBuffer;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfBuffer;Ljava/lang/String;IILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfBuffer;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getByteLength ()I
 	public final fun getUri ()Ljava/lang/String;
@@ -176,31 +176,31 @@ public final class io/github/awakelab/awake/asset/gltf/GltfBuffer {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfBuffer$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfBuffer$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfBuffer$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfBuffer$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfBuffer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfBuffer;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfBuffer;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfBuffer;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfBuffer$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfBuffer$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfBufferView {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfBufferView$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfBufferView {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfBufferView$Companion;
 	public fun <init> (IIILjava/lang/Integer;)V
 	public synthetic fun <init> (IIILjava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()I
 	public final fun component4 ()Ljava/lang/Integer;
-	public final fun copy (IIILjava/lang/Integer;)Lio/github/awakelab/awake/asset/gltf/GltfBufferView;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfBufferView;IIILjava/lang/Integer;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfBufferView;
+	public final fun copy (IIILjava/lang/Integer;)Lcom/awakekt/awake/asset/gltf/GltfBufferView;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfBufferView;IIILjava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfBufferView;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBuffer ()I
 	public final fun getByteLength ()I
@@ -210,23 +210,23 @@ public final class io/github/awakelab/awake/asset/gltf/GltfBufferView {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfBufferView$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfBufferView$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfBufferView$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfBufferView$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfBufferView;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfBufferView;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfBufferView;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfBufferView;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfBufferView$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfBufferView$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfDocument {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfDocument$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfDocument {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfDocument$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
 	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -242,8 +242,8 @@ public final class io/github/awakelab/awake/asset/gltf/GltfDocument {
 	public final fun component7 ()Ljava/util/List;
 	public final fun component8 ()Ljava/util/List;
 	public final fun component9 ()Ljava/util/List;
-	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lio/github/awakelab/awake/asset/gltf/GltfDocument;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfDocument;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfDocument;
+	public final fun copy (Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/GltfDocument;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfDocument;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfDocument;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAccessors ()Ljava/util/List;
 	public final fun getAnimations ()Ljava/util/List;
@@ -261,30 +261,30 @@ public final class io/github/awakelab/awake/asset/gltf/GltfDocument {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfDocument$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfDocument$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfDocument$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfDocument$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfDocument;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfDocument;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfDocument;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfDocument;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfDocument$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfDocument$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfImage {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfImage$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfImage {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfImage$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lio/github/awakelab/awake/asset/gltf/GltfImage;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfImage;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfImage;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/asset/gltf/GltfImage;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfImage;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfImage;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMimeType ()Ljava/lang/String;
 	public final fun getUri ()Ljava/lang/String;
@@ -292,61 +292,61 @@ public final class io/github/awakelab/awake/asset/gltf/GltfImage {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfImage$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfImage$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfImage$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfImage$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfImage;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfImage;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfImage;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfImage;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfImage$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfImage$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfMaterial {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfMaterial$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfMaterial {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfMaterial$Companion;
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;
-	public final fun component3 ()Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
-	public final fun component4 ()Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
-	public final fun component5 ()Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
+	public final fun component2 ()Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;
+	public final fun component3 ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
+	public final fun component4 ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
+	public final fun component5 ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public final fun component6 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/util/List;)Lio/github/awakelab/awake/asset/gltf/GltfMaterial;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfMaterial;Ljava/lang/String;Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfMaterial;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/GltfMaterial;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfMaterial;Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMaterial;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getEmissiveFactor ()Ljava/util/List;
-	public final fun getEmissiveTexture ()Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
+	public final fun getEmissiveTexture ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public final fun getName ()Ljava/lang/String;
-	public final fun getNormalTexture ()Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
-	public final fun getOcclusionTexture ()Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
-	public final fun getPbrMetallicRoughness ()Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;
+	public final fun getNormalTexture ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
+	public final fun getOcclusionTexture ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
+	public final fun getPbrMetallicRoughness ()Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfMaterial$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfMaterial$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfMaterial$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfMaterial$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfMaterial;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfMaterial;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfMaterial;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfMaterial;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfMaterial$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfMaterial$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfMesh {
+public final class com/awakekt/awake/asset/gltf/GltfMesh {
 	public fun <init> ([F[F[F[F[I[I[F[B[B[B[B[B[FFF[F)V
 	public synthetic fun <init> ([F[F[F[F[I[I[F[B[B[B[B[B[FFF[FILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()[F
@@ -365,8 +365,8 @@ public final class io/github/awakelab/awake/asset/gltf/GltfMesh {
 	public final fun component7 ()[F
 	public final fun component8 ()[B
 	public final fun component9 ()[B
-	public final fun copy ([F[F[F[F[I[I[F[B[B[B[B[B[FFF[F)Lio/github/awakelab/awake/asset/gltf/GltfMesh;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfMesh;[F[F[F[F[I[I[F[B[B[B[B[B[FFF[FILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfMesh;
+	public final fun copy ([F[F[F[F[I[I[F[B[B[B[B[B[FFF[F)Lcom/awakekt/awake/asset/gltf/GltfMesh;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfMesh;[F[F[F[F[I[I[F[B[B[B[B[B[FFF[FILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBaseColorFactor ()[F
 	public final fun getBaseColorImageBytes ()[B
@@ -394,15 +394,15 @@ public final class io/github/awakelab/awake/asset/gltf/GltfMesh {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfMeshDef {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfMeshDef$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfMeshDef {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfMeshDef$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lio/github/awakelab/awake/asset/gltf/GltfMeshDef;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfMeshDef;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfMeshDef;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/GltfMeshDef;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfMeshDef;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMeshDef;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getName ()Ljava/lang/String;
 	public final fun getPrimitives ()Ljava/util/List;
@@ -410,23 +410,23 @@ public final class io/github/awakelab/awake/asset/gltf/GltfMeshDef {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfMeshDef$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfMeshDef$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfMeshDef$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfMeshDef$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfMeshDef;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfMeshDef;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfMeshDef;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfMeshDef;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfMeshDef$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfMeshDef$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfNode {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfNode$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfNode {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfNode$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -438,8 +438,8 @@ public final class io/github/awakelab/awake/asset/gltf/GltfNode {
 	public final fun component6 ()Ljava/util/List;
 	public final fun component7 ()Ljava/util/List;
 	public final fun component8 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lio/github/awakelab/awake/asset/gltf/GltfNode;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfNode;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfNode;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/GltfNode;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfNode;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfNode;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getChildren ()Ljava/util/List;
 	public final fun getMatrix ()Ljava/util/List;
@@ -453,103 +453,103 @@ public final class io/github/awakelab/awake/asset/gltf/GltfNode {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfNode$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfNode$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfNode$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfNode$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfNode;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfNode;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfNode;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfNode;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfNode$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfNode$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfParser {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfParser;
+public final class com/awakekt/awake/asset/gltf/GltfParser {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfParser;
 	public final fun externalUris (Ljava/lang/String;)Ljava/util/List;
-	public final fun parse (Ljava/lang/String;Ljava/util/Map;)Lio/github/awakelab/awake/asset/gltf/GltfMesh;
-	public static synthetic fun parse$default (Lio/github/awakelab/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfMesh;
-	public final fun parseScene ([BLjava/util/Map;)Lio/github/awakelab/awake/asset/gltf/LoadedScene;
-	public static synthetic fun parseScene$default (Lio/github/awakelab/awake/asset/gltf/GltfParser;[BLjava/util/Map;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/LoadedScene;
-	public final fun parseSkinned (Ljava/lang/String;Ljava/util/Map;)Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedScene;
-	public static synthetic fun parseSkinned$default (Lio/github/awakelab/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedScene;
+	public final fun parse (Ljava/lang/String;Ljava/util/Map;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
+	public static synthetic fun parse$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
+	public final fun parseScene ([BLjava/util/Map;)Lcom/awakekt/awake/asset/gltf/LoadedScene;
+	public static synthetic fun parseScene$default (Lcom/awakekt/awake/asset/gltf/GltfParser;[BLjava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedScene;
+	public final fun parseSkinned (Ljava/lang/String;Ljava/util/Map;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public static synthetic fun parseSkinned$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness$Companion;
 	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/lang/Float;Ljava/lang/Float;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/lang/Float;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
+	public fun <init> (Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/lang/Float;Ljava/lang/Float;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/lang/Float;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public final fun component2 ()Ljava/util/List;
-	public final fun component3 ()Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
+	public final fun component3 ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public final fun component4 ()Ljava/lang/Float;
 	public final fun component5 ()Ljava/lang/Float;
-	public final fun copy (Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/lang/Float;Ljava/lang/Float;)Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;Ljava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;
+	public final fun copy (Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBaseColorFactor ()Ljava/util/List;
-	public final fun getBaseColorTexture ()Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
+	public final fun getBaseColorTexture ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public final fun getMetallicFactor ()Ljava/lang/Float;
-	public final fun getMetallicRoughnessTexture ()Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
+	public final fun getMetallicRoughnessTexture ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public final fun getRoughnessFactor ()Ljava/lang/Float;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfPbrMetallicRoughness$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfPrimitive {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfPrimitive$Companion;
-	public fun <init> (Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;Ljava/lang/Integer;Ljava/lang/Integer;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;
+public final class com/awakekt/awake/asset/gltf/GltfPrimitive {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfPrimitive$Companion;
+	public fun <init> (Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;Ljava/lang/Integer;Ljava/lang/Integer;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;
 	public final fun component2 ()Ljava/lang/Integer;
 	public final fun component3 ()Ljava/lang/Integer;
-	public final fun copy (Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;Ljava/lang/Integer;Ljava/lang/Integer;)Lio/github/awakelab/awake/asset/gltf/GltfPrimitive;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfPrimitive;Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfPrimitive;
+	public final fun copy (Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/awakekt/awake/asset/gltf/GltfPrimitive;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfPrimitive;Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfPrimitive;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAttributes ()Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;
+	public final fun getAttributes ()Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;
 	public final fun getIndices ()Ljava/lang/Integer;
 	public final fun getMaterial ()Ljava/lang/Integer;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfPrimitive$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfPrimitive$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfPrimitive$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfPrimitive$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfPrimitive;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfPrimitive;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfPrimitive;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfPrimitive;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfPrimitive$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfPrimitive$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfPrimitiveAttributes {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)V
 	public synthetic fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -559,8 +559,8 @@ public final class io/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes {
 	public final fun component4 ()Ljava/lang/Integer;
 	public final fun component5 ()Ljava/lang/Integer;
 	public final fun component6 ()Ljava/lang/Integer;
-	public final fun copy (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;
+	public final fun copy (Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColor0 ()Ljava/lang/Integer;
 	public final fun getJoints0 ()Ljava/lang/Integer;
@@ -572,60 +572,60 @@ public final class io/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfPrimitiveAttributes$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfPrimitiveAttributes;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfPrimitiveAttributes$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfPrimitiveAttributes$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfScene {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfScene$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfScene {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfScene$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/util/List;)V
 	public synthetic fun <init> (Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
-	public final fun copy (Ljava/util/List;)Lio/github/awakelab/awake/asset/gltf/GltfScene;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfScene;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfScene;
+	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/GltfScene;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfScene;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfScene;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getNodes ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfScene$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfScene$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfScene$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfScene$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfScene;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfScene;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfScene;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfScene;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfScene$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfScene$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfSkin {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfSkin$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfSkin {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfSkin$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/Integer;Ljava/util/List;Ljava/lang/Integer;)V
 	public synthetic fun <init> (Ljava/lang/Integer;Ljava/util/List;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Integer;
 	public final fun component2 ()Ljava/util/List;
 	public final fun component3 ()Ljava/lang/Integer;
-	public final fun copy (Ljava/lang/Integer;Ljava/util/List;Ljava/lang/Integer;)Lio/github/awakelab/awake/asset/gltf/GltfSkin;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfSkin;Ljava/lang/Integer;Ljava/util/List;Ljava/lang/Integer;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfSkin;
+	public final fun copy (Ljava/lang/Integer;Ljava/util/List;Ljava/lang/Integer;)Lcom/awakekt/awake/asset/gltf/GltfSkin;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfSkin;Ljava/lang/Integer;Ljava/util/List;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfSkin;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getInverseBindMatrices ()Ljava/lang/Integer;
 	public final fun getJoints ()Ljava/util/List;
@@ -634,36 +634,36 @@ public final class io/github/awakelab/awake/asset/gltf/GltfSkin {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfSkin$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfSkin$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfSkin$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfSkin$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfSkin;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfSkin;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfSkin;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfSkin;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfSkin$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfSkin$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfSkinningKt {
-	public static final fun firstSkinnedAsset (Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedScene;)Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedAsset;
-	public static final fun resolve (Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedScene;Lio/github/awakelab/awake/asset/gltf/SkinnedNodeRef;)Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedAsset;
-	public static final fun toAnimationLibrary (Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedScene;)Lio/github/awakelab/awake/core/animation/AnimationLibrary;
+public final class com/awakekt/awake/asset/gltf/GltfSkinningKt {
+	public static final fun firstSkinnedAsset (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedAsset;
+	public static final fun resolve (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;Lcom/awakekt/awake/asset/gltf/SkinnedNodeRef;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedAsset;
+	public static final fun toAnimationLibrary (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;)Lcom/awakekt/awake/core/animation/AnimationLibrary;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfTexture {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfTexture$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfTexture {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfTexture$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;)V
 	public synthetic fun <init> (Ljava/lang/Integer;Ljava/lang/Integer;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/Integer;
 	public final fun component2 ()Ljava/lang/Integer;
-	public final fun copy (Ljava/lang/Integer;Ljava/lang/Integer;)Lio/github/awakelab/awake/asset/gltf/GltfTexture;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfTexture;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfTexture;
+	public final fun copy (Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/awakekt/awake/asset/gltf/GltfTexture;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfTexture;Ljava/lang/Integer;Ljava/lang/Integer;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfTexture;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getSampler ()Ljava/lang/Integer;
 	public final fun getSource ()Ljava/lang/Integer;
@@ -671,29 +671,29 @@ public final class io/github/awakelab/awake/asset/gltf/GltfTexture {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfTexture$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfTexture$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfTexture$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfTexture$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfTexture;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfTexture;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfTexture;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfTexture;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfTexture$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfTexture$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfTextureRef {
-	public static final field Companion Lio/github/awakelab/awake/asset/gltf/GltfTextureRef$Companion;
+public final class com/awakekt/awake/asset/gltf/GltfTextureRef {
+	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfTextureRef$Companion;
 	public fun <init> (II)V
 	public synthetic fun <init> (IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()I
-	public final fun copy (II)Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;IIILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
+	public final fun copy (II)Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfTextureRef;IIILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getIndex ()I
 	public final fun getTexCoordSet ()I
@@ -701,27 +701,27 @@ public final class io/github/awakelab/awake/asset/gltf/GltfTextureRef {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/asset/gltf/GltfTextureRef$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/asset/gltf/GltfTextureRef$$serializer;
+public final synthetic class com/awakekt/awake/asset/gltf/GltfTextureRef$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfTextureRef$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/asset/gltf/GltfTextureRef;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/GltfTextureRef$Companion {
+public final class com/awakekt/awake/asset/gltf/GltfTextureRef$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/LoadedMesh {
+public final class com/awakekt/awake/asset/gltf/LoadedMesh {
 	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lio/github/awakelab/awake/asset/gltf/LoadedMesh;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/LoadedMesh;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/LoadedMesh;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/LoadedMesh;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/LoadedMesh;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedMesh;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getName ()Ljava/lang/String;
 	public final fun getPrimitives ()Ljava/util/List;
@@ -729,30 +729,30 @@ public final class io/github/awakelab/awake/asset/gltf/LoadedMesh {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/LoadedPrimitive {
-	public fun <init> ([F[ILio/github/awakelab/awake/core/math/Mat4;[B[B[B[B[B[FFF[F)V
-	public synthetic fun <init> ([F[ILio/github/awakelab/awake/core/math/Mat4;[B[B[B[B[B[FFF[FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+public final class com/awakekt/awake/asset/gltf/LoadedPrimitive {
+	public fun <init> ([F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[F)V
+	public synthetic fun <init> ([F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[FILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()[F
 	public final fun component10 ()F
 	public final fun component11 ()F
 	public final fun component12 ()[F
 	public final fun component2 ()[I
-	public final fun component3 ()Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun component3 ()Lcom/awakekt/awake/core/math/Mat4;
 	public final fun component4 ()[B
 	public final fun component5 ()[B
 	public final fun component6 ()[B
 	public final fun component7 ()[B
 	public final fun component8 ()[B
 	public final fun component9 ()[F
-	public final fun copy ([F[ILio/github/awakelab/awake/core/math/Mat4;[B[B[B[B[B[FFF[F)Lio/github/awakelab/awake/asset/gltf/LoadedPrimitive;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/LoadedPrimitive;[F[ILio/github/awakelab/awake/core/math/Mat4;[B[B[B[B[B[FFF[FILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/LoadedPrimitive;
+	public final fun copy ([F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[F)Lcom/awakekt/awake/asset/gltf/LoadedPrimitive;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/LoadedPrimitive;[F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[FILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedPrimitive;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBaseColorFactor ()[F
 	public final fun getBaseColorImageBytes ()[B
 	public final fun getEmissiveFactor ()[F
 	public final fun getEmissiveImageBytes ()[B
 	public final fun getIndices ()[I
-	public final fun getLocalTransform ()Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun getLocalTransform ()Lcom/awakekt/awake/core/math/Mat4;
 	public final fun getMetallicFactor ()F
 	public final fun getMetallicRoughnessImageBytes ()[B
 	public final fun getNormalImageBytes ()[B
@@ -763,60 +763,60 @@ public final class io/github/awakelab/awake/asset/gltf/LoadedPrimitive {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/LoadedScene {
+public final class com/awakekt/awake/asset/gltf/LoadedScene {
 	public fun <init> (Ljava/util/List;)V
 	public final fun component1 ()Ljava/util/List;
-	public final fun copy (Ljava/util/List;)Lio/github/awakelab/awake/asset/gltf/LoadedScene;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/LoadedScene;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/LoadedScene;
+	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/LoadedScene;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/LoadedScene;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedScene;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMeshes ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/LoadedSkinnedAsset {
-	public fun <init> (Lio/github/awakelab/awake/core/animation/Skeleton;Lio/github/awakelab/awake/asset/gltf/GltfMesh;Lio/github/awakelab/awake/core/animation/Skin;Lio/github/awakelab/awake/core/animation/AnimationClip;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/animation/Skeleton;
-	public final fun component2 ()Lio/github/awakelab/awake/asset/gltf/GltfMesh;
-	public final fun component3 ()Lio/github/awakelab/awake/core/animation/Skin;
-	public final fun component4 ()Lio/github/awakelab/awake/core/animation/AnimationClip;
-	public final fun copy (Lio/github/awakelab/awake/core/animation/Skeleton;Lio/github/awakelab/awake/asset/gltf/GltfMesh;Lio/github/awakelab/awake/core/animation/Skin;Lio/github/awakelab/awake/core/animation/AnimationClip;)Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedAsset;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedAsset;Lio/github/awakelab/awake/core/animation/Skeleton;Lio/github/awakelab/awake/asset/gltf/GltfMesh;Lio/github/awakelab/awake/core/animation/Skin;Lio/github/awakelab/awake/core/animation/AnimationClip;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedAsset;
+public final class com/awakekt/awake/asset/gltf/LoadedSkinnedAsset {
+	public fun <init> (Lcom/awakekt/awake/core/animation/Skeleton;Lcom/awakekt/awake/asset/gltf/GltfMesh;Lcom/awakekt/awake/core/animation/Skin;Lcom/awakekt/awake/core/animation/AnimationClip;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/animation/Skeleton;
+	public final fun component2 ()Lcom/awakekt/awake/asset/gltf/GltfMesh;
+	public final fun component3 ()Lcom/awakekt/awake/core/animation/Skin;
+	public final fun component4 ()Lcom/awakekt/awake/core/animation/AnimationClip;
+	public final fun copy (Lcom/awakekt/awake/core/animation/Skeleton;Lcom/awakekt/awake/asset/gltf/GltfMesh;Lcom/awakekt/awake/core/animation/Skin;Lcom/awakekt/awake/core/animation/AnimationClip;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedAsset;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedAsset;Lcom/awakekt/awake/core/animation/Skeleton;Lcom/awakekt/awake/asset/gltf/GltfMesh;Lcom/awakekt/awake/core/animation/Skin;Lcom/awakekt/awake/core/animation/AnimationClip;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedAsset;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getClip ()Lio/github/awakelab/awake/core/animation/AnimationClip;
-	public final fun getMesh ()Lio/github/awakelab/awake/asset/gltf/GltfMesh;
-	public final fun getSkeleton ()Lio/github/awakelab/awake/core/animation/Skeleton;
-	public final fun getSkin ()Lio/github/awakelab/awake/core/animation/Skin;
+	public final fun getClip ()Lcom/awakekt/awake/core/animation/AnimationClip;
+	public final fun getMesh ()Lcom/awakekt/awake/asset/gltf/GltfMesh;
+	public final fun getSkeleton ()Lcom/awakekt/awake/core/animation/Skeleton;
+	public final fun getSkin ()Lcom/awakekt/awake/core/animation/Skin;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/LoadedSkinnedScene {
-	public fun <init> (Lio/github/awakelab/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/animation/Skeleton;
+public final class com/awakekt/awake/asset/gltf/LoadedSkinnedScene {
+	public fun <init> (Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/animation/Skeleton;
 	public final fun component2 ()Ljava/util/List;
 	public final fun component3 ()Ljava/util/List;
 	public final fun component4 ()Ljava/util/List;
 	public final fun component5 ()Ljava/util/List;
-	public final fun copy (Lio/github/awakelab/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedScene;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedScene;Lio/github/awakelab/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/LoadedSkinnedScene;
+	public final fun copy (Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getClips ()Ljava/util/List;
 	public final fun getMeshes ()Ljava/util/List;
-	public final fun getSkeleton ()Lio/github/awakelab/awake/core/animation/Skeleton;
+	public final fun getSkeleton ()Lcom/awakekt/awake/core/animation/Skeleton;
 	public final fun getSkinnedNodes ()Ljava/util/List;
 	public final fun getSkins ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/asset/gltf/SkinnedNodeRef {
+public final class com/awakekt/awake/asset/gltf/SkinnedNodeRef {
 	public fun <init> (III)V
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()I
-	public final fun copy (III)Lio/github/awakelab/awake/asset/gltf/SkinnedNodeRef;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/asset/gltf/SkinnedNodeRef;IIIILjava/lang/Object;)Lio/github/awakelab/awake/asset/gltf/SkinnedNodeRef;
+	public final fun copy (III)Lcom/awakekt/awake/asset/gltf/SkinnedNodeRef;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/SkinnedNodeRef;IIIILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/SkinnedNodeRef;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBoneIndex ()I
 	public final fun getMeshIndex ()I

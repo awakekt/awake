@@ -141,7 +141,7 @@ def build_rows() -> list[tuple[str, str, str, str, str]]:
     ))
 
     # --- Design tokens ---------------------------------------------------
-    expanded = DS / "commonTest/kotlin/io/github/awakelab/awake/ui/designsystem/ShadcnReferenceTokenExpandedTest.kt"
+    expanded = DS / "commonTest/kotlin/com/awakekt/awake/ui/designsystem/ShadcnReferenceTokenExpandedTest.kt"
     drifted: list[str] = []
     if expanded.exists():
         block = re.search(r"KNOWN_DRIFTED[^(]*\(([^)]*)\)", expanded.read_text(), re.S)
@@ -205,7 +205,7 @@ def build_rows() -> list[tuple[str, str, str, str, str]]:
         "Compose Foundation widget tests", "",
     ))
 
-    semantics_file = COMPOSE_UI / "commonMain/kotlin/io/github/awakelab/awake/compose/ui/semantics/SemanticsProperties.kt"
+    semantics_file = COMPOSE_UI / "commonMain/kotlin/com/awakekt/awake/compose/ui/semantics/SemanticsProperties.kt"
     role_match = re.search(r"enum class SemanticsRole\s*\{([^}]*)\}", semantics_file.read_text(), re.S) if semantics_file.exists() else None
     declared = len([entry for entry in (role_match.group(1).split(",") if role_match else []) if entry.strip()])
     wired = grep_count(FOUNDATION, r"SemanticsRole\.")

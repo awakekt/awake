@@ -16,7 +16,7 @@ implementation(project(":awake:asset:shaders"))
 ## Usage Example
 
 ```kotlin
-import io.github.awakelab.awake.asset.shaders.LitShadowUniformLayout
+import com.awakekt.awake.asset.shaders.LitShadowUniformLayout
 
 // Pack uniform buffer data for GPU upload
 val uniformBytes = LitShadowUniformLayout.pack(

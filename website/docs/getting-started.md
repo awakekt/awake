@@ -13,9 +13,9 @@ Add the following to your `libs.versions.toml`:
 awake = "1.0.0-SNAPSHOT"
 
 [libraries]
-awake-bootstrap = { group = "io.github.awake-lab.engine", name = "bootstrap", version.ref = "awake" }
-awake-shaders = { group = "io.github.awake-lab.asset", name = "shaders", version.ref = "awake" }
-awake-vulkan = { group = "io.github.awake-lab.backend", name = "vulkan", version.ref = "awake" }
+awake-bootstrap = { group = "com.awakekt.awake.engine", name = "bootstrap", version.ref = "awake" }
+awake-shaders = { group = "com.awakekt.awake.asset", name = "shaders", version.ref = "awake" }
+awake-vulkan = { group = "com.awakekt.awake.backend", name = "vulkan", version.ref = "awake" }
 ```
 
 For a JVM desktop target:
@@ -67,7 +67,7 @@ For a scene or Compose UI, add those published feature modules and install them 
 The repository's executable example is:
 
 ```kotlin
---8<-- "samples/engine-showcase/src/commonMain/kotlin/io/github/awakelab/awake/showcase/app/EngineShowcaseApp.kt"
+--8<-- "samples/engine-showcase/src/commonMain/kotlin/com/awakekt/awake/showcase/app/EngineShowcaseApp.kt"
 ```
 
 > [!NOTE]

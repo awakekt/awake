@@ -33,7 +33,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.engine.platform"
+        namespace = "com.awakekt.awake.engine.platform"
     }
 
     // GraphicsEngine.kt: the backend-neutral render bootstrap that VulkanEngine

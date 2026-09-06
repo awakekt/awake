@@ -26,7 +26,7 @@
     <ID>ReturnCount:PathStrokeTessellation.kt$internal fun offsetClosedRing(rawPoints: List&lt;DrawPoint>, distance: Float, join: StrokeJoin): List&lt;DrawPoint></ID>
     <ID>ReturnCount:PathStrokeTessellation.kt$internal fun offsetOpenRing(points: List&lt;DrawPoint>, halfWidth: Float, stroke: DrawStroke): List&lt;DrawPoint></ID>
     <ID>ReturnCount:TriangleMesh.kt$fun ColoredTriangleMesh.splitToCapacity(maxVertices: Int, maxIndices: Int): List&lt;ColoredTriangleMesh></ID>
-    <ID>TooManyFunctions:MeshClipping.kt$io.github.awakelab.awake.core.graphics2d.MeshClipping.kt</ID>
-    <ID>TooManyFunctions:PathStrokeTessellation.kt$io.github.awakelab.awake.core.graphics2d.PathStrokeTessellation.kt</ID>
+    <ID>TooManyFunctions:MeshClipping.kt$com.awakekt.awake.core.graphics2d.MeshClipping.kt</ID>
+    <ID>TooManyFunctions:PathStrokeTessellation.kt$com.awakekt.awake.core.graphics2d.PathStrokeTessellation.kt</ID>
   </CurrentIssues>
 </SmellBaseline>

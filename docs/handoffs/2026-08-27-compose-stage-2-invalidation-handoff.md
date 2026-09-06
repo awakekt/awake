@@ -28,19 +28,19 @@ The broader ordered queue, including the app-level Compose/Scene bridge, is
 
 ```bash
 ./gradlew :awake:compose:runtime:desktopTest \
-  --tests io.github.awakelab.awake.compose.runtime.RecomposeScopeTest --no-daemon
+  --tests com.awakekt.awake.compose.runtime.RecomposeScopeTest --no-daemon
 
 ./gradlew :awake:compose:foundation:desktopTest \
-  --tests io.github.awakelab.awake.compose.foundation.PointerEdgeTest.aSkippedScopeKeepsItsClickTargetAcrossPressAndReleaseFrames --no-daemon
+  --tests com.awakekt.awake.compose.foundation.PointerEdgeTest.aSkippedScopeKeepsItsClickTargetAcrossPressAndReleaseFrames --no-daemon
 
 ./gradlew :awake:editor:desktopTest --no-daemon
 
 ./gradlew :apps:studio:desktopTest \
-  --tests io.github.awakelab.awake.studio.StudioShellChromeTest \
-  --tests io.github.awakelab.awake.studio.ui.StudioFramePerfProbeTest --no-daemon
+  --tests com.awakekt.awake.studio.StudioShellChromeTest \
+  --tests com.awakekt.awake.studio.ui.StudioFramePerfProbeTest --no-daemon
 
 ./gradlew :apps:studio:wasmJsBrowserTest \
-  --tests io.github.awakelab.awake.studio.ui.StudioFramePerfProbeTest --no-daemon
+  --tests com.awakekt.awake.studio.ui.StudioFramePerfProbeTest --no-daemon
 
 ./gradlew :awake:compose:runtime:desktopTest \
   :awake:compose:foundation:desktopTest \

@@ -17,7 +17,7 @@ immediate-mode implementation are historical terminology, not active module depe
 
 ## Overview: `UiModifier` data class fields
 
-Every modifier function returns a `copy()` of [`UiModifier`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/UiModifier.kt).
+Every modifier function returns a `copy()` of [`UiModifier`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/UiModifier.kt).
 The full field set is:
 
 | Field | Type | Set by |
@@ -44,7 +44,7 @@ The full field set is:
 
 ---
 
-## Layout Modifiers ([`LayoutModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/LayoutModifiers.kt))
+## Layout Modifiers ([`LayoutModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/LayoutModifiers.kt))
 
 ### `width(dp)` / `height(dp)` / `size(width, height)`
 
@@ -123,7 +123,7 @@ row {
 2. Remaining space = container − sum(non-weighted widths).
 3. Each weighted child gets `(remaining × weight / totalWeight)`.
 
-**Awake**: Sets `LayoutWeight(weight, fill)`. Resolved by `resolveWeightedMainAxis()` in [`Arrangement.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/layouts/Arrangement.kt). A `fillsMainAxis` flag (set in `RowScope.claimSlot()`) prevents non-weighted `FillMax` siblings from starving weighted ones.
+**Awake**: Sets `LayoutWeight(weight, fill)`. Resolved by `resolveWeightedMainAxis()` in [`Arrangement.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layouts/Arrangement.kt). A `fillsMainAxis` flag (set in `RowScope.claimSlot()`) prevents non-weighted `FillMax` siblings from starving weighted ones.
 
 **Status**: ✅ **Faithful** (fixed in commit `9455bc51`).
 
@@ -219,7 +219,7 @@ Sets `widthDimension`/`heightDimension` **only** when not already set by the cal
 
 ---
 
-## Graphics Layer Modifiers ([`GraphicsLayer.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/GraphicsLayer.kt))
+## Graphics Layer Modifiers ([`GraphicsLayer.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/GraphicsLayer.kt))
 
 ### `graphicsLayer(effect: UiGraphicsEffect)`
 
@@ -278,7 +278,7 @@ icon(modifier = Modifier.scale(scaleX = 1.5f, scaleY = 1.0f)) // non-uniform
 
 ---
 
-## Style Modifiers ([`StyleModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/StyleModifiers.kt))
+## Style Modifiers ([`StyleModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/StyleModifiers.kt))
 
 These are **visual** conveniences that set a `Style` on `UiModifier.styleable`. They do not affect layout geometry.
 
@@ -333,7 +333,7 @@ surface("skeleton", modifier = Modifier.shimmer.width(120.dp).height(16.dp))
 
 ---
 
-## Scroll Modifiers ([`ScrollModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/ScrollModifiers.kt))
+## Scroll Modifiers ([`ScrollModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/ScrollModifiers.kt))
 
 ### `verticalScroll(state, config)` / `horizontalScroll(state, config)`
 
@@ -360,7 +360,7 @@ column(modifier = Modifier.verticalScroll(v).horizontalScroll(h))  // only h sur
 
 ---
 
-## Click / Interaction Modifiers ([`ClickableModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/ClickableModifiers.kt))
+## Click / Interaction Modifiers ([`ClickableModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/ClickableModifiers.kt))
 
 ### `clickable(enabled, onClick)`
 
@@ -387,7 +387,7 @@ text("click", modifier = Modifier.clickable { doSomething() })  // silently igno
 
 ---
 
-## State / Testing Modifiers ([`StateModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/StateModifiers.kt))
+## State / Testing Modifiers ([`StateModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/StateModifiers.kt))
 
 ### `forceHover(value)` / `forceActive(value)` / `forceFocus(value)`
 
@@ -427,10 +427,10 @@ button("submit", modifier = Modifier.testTag("submit-button"))
 
 ## Layout DSL — `row()` / `column()` / `box()` / `Arrangement`
 
-Source: [`Row.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/layouts/Row.kt),
-[`Column.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/layouts/Column.kt),
-[`Box.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/layouts/Box.kt),
-[`Arrangement.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/layouts/Arrangement.kt).
+Source: [`Row.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layouts/Row.kt),
+[`Column.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layouts/Column.kt),
+[`Box.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layouts/Box.kt),
+[`Arrangement.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layouts/Arrangement.kt).
 Companion to [`mirror-map.md`](mirror-map.md)'s Scope/DSL section (status table); this section is
 the how-to.
 
@@ -580,7 +580,7 @@ check.
 
 ## Layout Types — `Dimension` and `UiAlignment`
 
-### `Dimension` ([`Dimension.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/api/layout/Dimension.kt))
+### `Dimension` ([`Dimension.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/api/layout/Dimension.kt))
 
 | Value | Meaning | Compose analog |
 |---|---|---|
@@ -588,7 +588,7 @@ check.
 | `Dimension.FillMax` | Fill available axis | `fillMaxWidth()` / `fillMaxHeight()` |
 | `Dimension.WrapContent` | Size from content | `wrapContentWidth()` / `wrapContentHeight()` |
 
-### `UiAlignment` ([`LayoutValues.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/api/layout/LayoutValues.kt))
+### `UiAlignment` ([`LayoutValues.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/api/layout/LayoutValues.kt))
 
 | Awake | Used in | Compose analog |
 |---|---|---|
@@ -650,16 +650,16 @@ These exist in Jetpack Compose but have **no Awake equivalent** today:
 
 ## Links
 
-- [`UiModifier.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/UiModifier.kt) — data class definition
-- [`LayoutModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/LayoutModifiers.kt) — size/fill/weight/align/offset/padding
-- [`GraphicsLayer.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/GraphicsLayer.kt) — alpha, scale, shimmer, UiGraphicsEffect
-- [`StyleModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/StyleModifiers.kt) — background, border, shape, styleable
-- [`ScrollModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/ScrollModifiers.kt) — verticalScroll, horizontalScroll
-- [`ClickableModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/ClickableModifiers.kt) — clickable, resolveClickable
-- [`StateModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/modifier/StateModifiers.kt) — forceHover, forceActive, forceFocus, testTag
-- [`Row.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/layouts/Row.kt) / [`Column.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/layouts/Column.kt) / [`Box.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/layouts/Box.kt) / [`Arrangement.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/layouts/Arrangement.kt) — Layout DSL section
-- [`Dimension.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/api/layout/Dimension.kt) — Fixed / FillMax / WrapContent
-- [`LayoutValues.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/api/layout/LayoutValues.kt) — UiAlignment, UiInsets
+- [`UiModifier.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/UiModifier.kt) — data class definition
+- [`LayoutModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/LayoutModifiers.kt) — size/fill/weight/align/offset/padding
+- [`GraphicsLayer.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/GraphicsLayer.kt) — alpha, scale, shimmer, UiGraphicsEffect
+- [`StyleModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/StyleModifiers.kt) — background, border, shape, styleable
+- [`ScrollModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/ScrollModifiers.kt) — verticalScroll, horizontalScroll
+- [`ClickableModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/ClickableModifiers.kt) — clickable, resolveClickable
+- [`StateModifiers.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/modifier/StateModifiers.kt) — forceHover, forceActive, forceFocus, testTag
+- [`Row.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layouts/Row.kt) / [`Column.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layouts/Column.kt) / [`Box.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layouts/Box.kt) / [`Arrangement.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/layouts/Arrangement.kt) — Layout DSL section
+- [`Dimension.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/api/layout/Dimension.kt) — Fixed / FillMax / WrapContent
+- [`LayoutValues.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/api/layout/LayoutValues.kt) — UiAlignment, UiInsets
 - [`mirror-map.md`](mirror-map.md) — complete faithful/diverges status table
 - [`compose-animation-guidance.md`](compose-animation-guidance.md) — `animateFloat*`, `Easing`, `rememberTransition`, `animatedVisibility` how-to (separate doc, `awake:ui:animation` module)
 - [`2026-08-21-compose-layout-modifier-parity-plan.md`](../audits/2026-08-21-compose-layout-modifier-parity-plan.md) — Phase 1–3 implementation roadmap

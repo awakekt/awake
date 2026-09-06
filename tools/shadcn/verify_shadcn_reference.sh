@@ -26,7 +26,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
-GENERATED="awake/ui/shadcn/src/commonMain/kotlin/io/github/awakelab/awake/ui/shadcn/ShadcnReferenceTokens.kt"
+GENERATED="awake/ui/shadcn/src/commonMain/kotlin/com/awakekt/awake/ui/shadcn/ShadcnReferenceTokens.kt"
 PINNED_SHA="$(grep -oE '[0-9a-f]{40}' tools/shadcn/fetch_shadcn_reference.sh | head -1)"
 status=0
 

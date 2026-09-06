@@ -1,0 +1,52 @@
+name: Feature Request
+description: Suggest an enhancement, new API, or capability for Awake Engine.
+title: "[Feature]: "
+labels: ["type: feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We welcome ideas for expanding the capabilities of Awake Engine!
+  - type: dropdown
+    id: subsystem
+    attributes:
+      label: Target Subsystem
+      description: Which part of the engine would this feature enhance?
+      options:
+        - "awake:backend:vulkan (Vulkan Renderer)"
+        - "awake:backend:webgpu (WebGPU Renderer)"
+        - "awake:core (Math, Transforms, Animation)"
+        - "awake:ecs (Sparse-Set ECS)"
+        - "awake:compose (Compose UI & Shadcn Components)"
+        - "awake:scene:physics (Jolt Physics Integration)"
+        - "awake:asset (glTF, Naga, Shaders, Formats)"
+        - "apps:studio (Studio Editor & Tools)"
+        - "Engine Architecture / General API"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: Is your feature request related to a problem? What use case does this unlock?
+      placeholder: "I'm always frustrated when..."
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution / API Design
+      description: Describe the solution you'd like and how the Kotlin API or DSL should look.
+      placeholder: "Add `scene.physics.raycast(...)` with the following parameters..."
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative solutions or workarounds you've considered.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Add any references, diagrams, mockups, or relevant industry standard examples.

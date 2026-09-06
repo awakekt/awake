@@ -55,7 +55,7 @@ version of Vec3". Prefer a named type (`WorldCellCoord`, which already exists) o
 integer vector wherever the domain has a name.
 
 **Short / Byte / Long / UInt — no.** Packed normals and quantized positions are handled by
-[VectorPacking.kt](../../awake/core/math/src/commonMain/kotlin/io/github/awakelab/awake/core/math/VectorPacking.kt),
+[VectorPacking.kt](../../awake/core/math/src/commonMain/kotlin/com/awakekt/awake/core/math/VectorPacking.kt),
 which converts at the buffer boundary. You never want arithmetic in a quantized type — the
 error compounds and the code reads as if it were exact.
 
@@ -71,7 +71,7 @@ and never a double-precision matrix. The GPU could not consume one anyway.
 ## Consequence found while deciding
 
 `WorldOrigin.toAbsolute` returns `Vec3f`
-([WorldOrigin.kt](../../awake/scene/scene-core/src/commonMain/kotlin/io/github/awakelab/awake/scene/world/WorldOrigin.kt)).
+([WorldOrigin.kt](../../awake/scene/scene-core/src/commonMain/kotlin/com/awakekt/awake/scene/world/WorldOrigin.kt)).
 The absolute world coordinate is the one quantity in the engine that is genuinely unbounded —
 the quantity floating origin exists to keep out of float32 — and it is currently returned at
 float32 precision. `Vec3d` is already in the tree and has no other production user besides

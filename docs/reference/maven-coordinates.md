@@ -15,8 +15,8 @@ derived by hand. Regenerate with:
 
 | Concern | Value |
 |---|---|
-| Maven group root | `io.github.awake-lab` |
-| Kotlin package root | `io.github.awakelab.awake` |
+| Maven group root | `com.awakekt.awake` |
+| Kotlin package root | `com.awakekt.awake` |
 | Version | derived from the nearest `v*` tag |
 
 The group keeps the hyphen and the package cannot: a hyphen is legal in a group ID and illegal in a
@@ -28,9 +28,9 @@ says so.
 `group` carries the module's **parent path**; `artifactId` is the module's own directory name.
 
 ```text
-:awake:compose:runtime  ->  io.github.awake-lab.compose:runtime
-:awake:scene:runtime    ->  io.github.awake-lab.scene:runtime
-:awake:ecs              ->  io.github.awake-lab:ecs
+:awake:compose:runtime  ->  com.awakekt.awake.compose:runtime
+:awake:scene:runtime    ->  com.awakekt.awake.scene:runtime
+:awake:ecs              ->  com.awakekt.awake:ecs
 ```
 
 The parent path is load-bearing rather than decorative. Gradle identifies a project by the
@@ -60,10 +60,10 @@ The template consumes four artifacts directly:
 
 | Coordinate | Module |
 |---|---|
-| `io.github.awake-lab.engine:bootstrap` | `:awake:engine:bootstrap` |
-| `io.github.awake-lab.asset:shaders` | `:awake:asset:shaders` |
-| `io.github.awake-lab.backend:vulkan` | `:awake:backend:vulkan` |
-| `io.github.awake-lab.backend:webgpu` | `:awake:backend:webgpu` |
+| `com.awakekt.awake.engine:bootstrap` | `:awake:engine:bootstrap` |
+| `com.awakekt.awake.asset:shaders` | `:awake:asset:shaders` |
+| `com.awakekt.awake.backend:vulkan` | `:awake:backend:vulkan` |
+| `com.awakekt.awake.backend:webgpu` | `:awake:backend:webgpu` |
 
 Their `api` and `implementation` closure over **main** source sets is 38 modules. Test-only edges
 are excluded — a `commonTest` dependency never reaches a consumer.
@@ -73,8 +73,8 @@ already use:
 
 | Module | Coordinate |
 |---|---|
-| `:awake:backend:vulkan:bindings` | `io.github.awake-lab:vulkan-kmp` |
-| `:awake:backend:vulkan:bindings:android-native` | `io.github.awake-lab:vulkan-kmp-android-native` |
+| `:awake:backend:vulkan:bindings` | `com.awakekt.awake:vulkan-kmp` |
+| `:awake:backend:vulkan:bindings:android-native` | `com.awakekt.awake:vulkan-kmp-android-native` |
 
 `android-native` is a plain Android library rather than a KMP one -- AGP's KMP plugin has no
 `externalNativeBuild`, which is why the CMake/NDK build lives in its own module -- so it declares an
@@ -82,11 +82,11 @@ already use:
 
 ### Already publishing before Phase 2 (21)
 
-`io.github.awake-lab.asset`: `gltf`, `shader-compiler`, `shader-dsl`, `shader-pack`, `shaders`,
-`terrain` · `io.github.awake-lab.backend.vulkan`: `bindings` ·
-`io.github.awake-lab.core`: `animation`, `color`, `geometry`, `graphics2d`, `host`, `image`,
-`input`, `logging`, `math`, `math2d` · `io.github.awake-lab.engine.render`: `passes2d` ·
-`io.github.awake-lab`: `ecs`, `scene`
+`com.awakekt.awake.asset`: `gltf`, `shader-compiler`, `shader-dsl`, `shader-pack`, `shaders`,
+`terrain` · `com.awakekt.awake.backend.vulkan`: `bindings` ·
+`com.awakekt.awake.core`: `animation`, `color`, `geometry`, `graphics2d`, `host`, `image`,
+`input`, `logging`, `math`, `math2d` · `com.awakekt.awake.engine.render`: `passes2d` ·
+`com.awakekt.awake`: `ecs`, `scene`
 
 ### Enabled in Phase 2 (18)
 
@@ -94,25 +94,25 @@ All of these now apply `awake.publish-convention`.
 
 | Coordinate | Module | Why it ships |
 |---|---|---|
-| `io.github.awake-lab.engine:bootstrap` | `:awake:engine:bootstrap` | Direct template dependency |
-| `io.github.awake-lab.backend:vulkan` | `:awake:backend:vulkan` | Direct template dependency |
-| `io.github.awake-lab.backend:webgpu` | `:awake:backend:webgpu` | Direct template dependency |
-| `io.github.awake-lab.engine:platform` | `:awake:engine:platform` | App lifecycle and windowing |
-| `io.github.awake-lab.engine:compose` | `:awake:engine:compose` | UI host used by bootstrap |
-| `io.github.awake-lab.engine.render:contract` | `:awake:engine:render:contract` | `Renderer`, `Mesh`, `Material` |
-| `io.github.awake-lab.engine.render:passes` | `:awake:engine:render:passes` | Render features and pipelines |
-| `io.github.awake-lab.compose:runtime` | `:awake:compose:runtime` | Composer used by every UI |
-| `io.github.awake-lab.compose:ui` | `:awake:compose:ui` | Modifiers, layout, semantics |
-| `io.github.awake-lab.core:text` | `:awake:core:text` | Font and shaping types |
-| `io.github.awake-lab.physics:api` | `:awake:physics:api` | Physics facade |
-| `io.github.awake-lab.scene:scene-core` | `:awake:scene:scene-core` | Components, systems, streaming |
-| `io.github.awake-lab.scene:rendering` | `:awake:scene:rendering` | Camera, lights, mesh renderer |
-| `io.github.awake-lab.scene:runtime` | `:awake:scene:runtime` | Scene documents and lifecycle |
-| `io.github.awake-lab.scene:authoring` | `:awake:scene:authoring` | The scene/app DSL |
-| `io.github.awake-lab.scene:controls` | `:awake:scene:controls` | Camera and input controls |
-| `io.github.awake-lab.scene:physics` | `:awake:scene:physics` | Physics components and systems |
-| `io.github.awake-lab.scene:navigation` | `:awake:scene:navigation` | NavGrid, streamed navigation, path requests |
-| `io.github.awake-lab.compose:foundation` | `:awake:compose:foundation` | Layout and modifier API |
+| `com.awakekt.awake.engine:bootstrap` | `:awake:engine:bootstrap` | Direct template dependency |
+| `com.awakekt.awake.backend:vulkan` | `:awake:backend:vulkan` | Direct template dependency |
+| `com.awakekt.awake.backend:webgpu` | `:awake:backend:webgpu` | Direct template dependency |
+| `com.awakekt.awake.engine:platform` | `:awake:engine:platform` | App lifecycle and windowing |
+| `com.awakekt.awake.engine:compose` | `:awake:engine:compose` | UI host used by bootstrap |
+| `com.awakekt.awake.engine.render:contract` | `:awake:engine:render:contract` | `Renderer`, `Mesh`, `Material` |
+| `com.awakekt.awake.engine.render:passes` | `:awake:engine:render:passes` | Render features and pipelines |
+| `com.awakekt.awake.compose:runtime` | `:awake:compose:runtime` | Composer used by every UI |
+| `com.awakekt.awake.compose:ui` | `:awake:compose:ui` | Modifiers, layout, semantics |
+| `com.awakekt.awake.core:text` | `:awake:core:text` | Font and shaping types |
+| `com.awakekt.awake.physics:api` | `:awake:physics:api` | Physics facade |
+| `com.awakekt.awake.scene:scene-core` | `:awake:scene:scene-core` | Components, systems, streaming |
+| `com.awakekt.awake.scene:rendering` | `:awake:scene:rendering` | Camera, lights, mesh renderer |
+| `com.awakekt.awake.scene:runtime` | `:awake:scene:runtime` | Scene documents and lifecycle |
+| `com.awakekt.awake.scene:authoring` | `:awake:scene:authoring` | The scene/app DSL |
+| `com.awakekt.awake.scene:controls` | `:awake:scene:controls` | Camera and input controls |
+| `com.awakekt.awake.scene:physics` | `:awake:scene:physics` | Physics components and systems |
+| `com.awakekt.awake.scene:navigation` | `:awake:scene:navigation` | NavGrid, streamed navigation, path requests |
+| `com.awakekt.awake.compose:foundation` | `:awake:compose:foundation` | Layout and modifier API |
 
 `:awake:scene:navigation` and `:awake:compose:foundation` are in the list although nothing the four
 template artifacts reach depends on them. Both are consumer-facing — a game needs navigation, a UI
@@ -162,7 +162,7 @@ It reports no failures. The one it used to -- `:awake:backend:vulkan` needing
 
 **1. `:awake:engine:render:testing` was in the shipped closure. Resolved.**
 `FrameCapture` and `PixelMap` now live in `:awake:engine:render:contract` under
-`io.github.awakelab.awake.render.capture`, and `:awake:backend:vulkan` depends on
+`com.awakekt.awake.render.capture`, and `:awake:backend:vulkan` depends on
 `:awake:engine:render:testing` from tests only. Rendering into an offscreen target and reading its
 pixels back is a renderer capability; that it was first needed by tests is how it ended up in a
 module named *testing*, not what it is. The two detekt findings on `PixelMap.blend` moved with the

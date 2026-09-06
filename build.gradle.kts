@@ -130,14 +130,12 @@ val gitDerivedVersion: String = run {
 }
 
 allprojects {
-    // Maven namespace: verified through the awake-lab GitHub org, no domain dependency.
-    // Packages keep io.github.awakelab until the one pre-publish rename pass (they
-    // become io.github.awakelab.* -- hyphens are legal in a groupId, illegal in a package).
+    // Maven namespace and package root: com.awakekt.awake.
     //
     // The group carries the module's *parent path*, and that is load-bearing rather than tidy.
     // Gradle identifies a project by the capability `group:name`, and `name` is only the last path
     // segment -- so with one flat group, `:awake:compose:runtime` and `:awake:scene:runtime` both
-    // claim `io.github.awake-lab:runtime`. Gradle resolves that by substituting one project for the
+    // claim `com.awakekt.awake:runtime`. Gradle resolves that by substituting one project for the
     // other, and the damage takes two shapes. At configuration time it can produce a circular task
     // graph pointing at neither culprit -- scene:runtime ended up depending on itself through its
     // own jar. At runtime the loser's classes never reach a consumer's classpath at all, which is
@@ -153,9 +151,9 @@ allprojects {
     // this changes only published coordinates. `archivesName` does not work at all: substitution
     // resolves on capability, not archive name.
     group = buildString {
-        append("io.github.awake-lab")
+        append("com.awakekt.awake")
         // The leading `awake` segment is dropped: the group already says awake-lab, and
-        // `io.github.awake-lab.awake.compose` reads as a stutter.
+        // `com.awakekt.awake.awake.compose` reads as a stutter.
         project.parent?.path?.removePrefix(":")?.removePrefix("awake")?.removePrefix(":")
             ?.replace(':', '.')
             ?.takeIf { it.isNotEmpty() }

@@ -8,13 +8,13 @@ parity remain parallel lanes.
 
 - 2026-08-29: The final pre-Maven Kotlin package migration is drafted in
   [2026-08-29-kotlin-package-namespace-migration-plan](tasks/2026-08-29-kotlin-package-namespace-migration-plan.md).
-  It moves `io.github.awakelab.awake.*` to `io.github.awakelab.awake.*` using a checked-in
+  It moves `com.awakekt.awake.*` to `com.awakekt.awake.*` using a checked-in
   refactor script, source-folder moves, and a multiplatform consumer validation gate.
 
 - 2026-08-29: Maven Central publication for the public Awake consumer path is drafted in
   [2026-08-29-maven-central-publication-plan](tasks/2026-08-29-maven-central-publication-plan.md).
   The existing workflow publishes Vulkan bindings only; the plan publishes the engine, asset, and
-  Vulkan/WebGPU modules required by [awake-template](https://github.com/awake-lab/awake-template)
+  Vulkan/WebGPU modules required by [awake-template](https://github.com/awakekt/awake-template)
   and validates a clean Maven-only consumer build.
 
 ## Active Phase

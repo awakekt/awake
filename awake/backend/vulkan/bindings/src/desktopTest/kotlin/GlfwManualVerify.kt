@@ -3,10 +3,10 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-import io.github.awakelab.awake.vulkan.Vulkan
-import io.github.awakelab.awake.vulkan.gen.VulkanWindow
-import io.github.awakelab.awake.vulkan.models.info.VkApplicationInfo
-import io.github.awakelab.awake.vulkan.models.info.VkInstanceCreateInfo
+import com.awakekt.awake.vulkan.Vulkan
+import com.awakekt.awake.vulkan.gen.VulkanWindow
+import com.awakekt.awake.vulkan.models.info.VkApplicationInfo
+import com.awakekt.awake.vulkan.models.info.VkInstanceCreateInfo
 
 /**
  * Manual verification for GLFW window + Vulkan surface creation on desktop -- run via

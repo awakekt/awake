@@ -305,7 +305,7 @@ the `:awake:compose` tree while it is still the shipping engine, which inverts t
 split exists to keep clean.
 
 The move belongs in **Stage 3**, after `ui-headless` and `ui-shadcn` are ported and `ui-core`
-is deleted, bundled with the `io.github.awakelab.*` namespace rename so the ~242 `Dp`/`Sp` imports
+is deleted, bundled with the `com.awakekt.awake.*` namespace rename so the ~242 `Dp`/`Sp` imports
 and these package moves are one pass rather than three.
 
 Nothing is blocked in the meantime: `:awake:compose:ui` already declares

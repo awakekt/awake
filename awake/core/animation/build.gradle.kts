@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.core.animation"
+        namespace = "com.awakekt.awake.core.animation"
     }
 
     sourceSets {

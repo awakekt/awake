@@ -9,7 +9,7 @@ VkPhysicalDeviceSparsePropertiesMutator::VkPhysicalDeviceSparsePropertiesMutator
         env) {
     this->env = env;
     clazz = env->FindClass(
-            "io/github/awakelab/awake/vulkan/models/physicaldevice/VkPhysicalDeviceSparseProperties");
+            "com/awakekt/awake/vulkan/models/physicaldevice/VkPhysicalDeviceSparseProperties");
     residencyStandard2DBlockShapeField = env->GetFieldID(clazz, "residencyStandard2DBlockShape",
                                                          "Z");
     residencyStandard2DMultisampleBlockShapeField = env->GetFieldID(clazz,

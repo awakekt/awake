@@ -9,13 +9,13 @@ VkComponentMappingAccessor::VkComponentMappingAccessor(JNIEnv *env, jobject obj)
                                                                                    obj(obj) {
     clazz = env->GetObjectClass(obj);
     rField = env->GetFieldID(clazz, "r",
-                             "Lio/github/awakelab/awake/vulkan/enums/VkComponentSwizzle;");
+                             "Lcom/awakekt/awake/vulkan/enums/VkComponentSwizzle;");
     gField = env->GetFieldID(clazz, "g",
-                             "Lio/github/awakelab/awake/vulkan/enums/VkComponentSwizzle;");
+                             "Lcom/awakekt/awake/vulkan/enums/VkComponentSwizzle;");
     bField = env->GetFieldID(clazz, "b",
-                             "Lio/github/awakelab/awake/vulkan/enums/VkComponentSwizzle;");
+                             "Lcom/awakekt/awake/vulkan/enums/VkComponentSwizzle;");
     aField = env->GetFieldID(clazz, "a",
-                             "Lio/github/awakelab/awake/vulkan/enums/VkComponentSwizzle;");
+                             "Lcom/awakekt/awake/vulkan/enums/VkComponentSwizzle;");
 }
 
 VkComponentSwizzle

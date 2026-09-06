@@ -113,11 +113,11 @@ mod jni_bindings {
     use jni::JNIEnv;
 
     fn throw(env: &mut JNIEnv, message: &str) {
-        let _ = env.throw_new("io/github/awakelab/awake/asset/shadercompiler/NagaException", message);
+        let _ = env.throw_new("com/awakekt/awake/asset/shadercompiler/NagaException", message);
     }
 
     #[no_mangle]
-    pub extern "system" fn Java_io_github_awakelab_awake_asset_shadercompiler_NagaJni_wgslToSpirv(
+    pub extern "system" fn Java_com_awakekt_awake_asset_shadercompiler_NagaJni_wgslToSpirv(
         mut env: JNIEnv,
         _class: JClass,
         source: JString,
@@ -148,7 +148,7 @@ mod jni_bindings {
     }
 
     #[no_mangle]
-    pub extern "system" fn Java_io_github_awakelab_awake_asset_shadercompiler_NagaJni_validate(
+    pub extern "system" fn Java_com_awakekt_awake_asset_shadercompiler_NagaJni_validate(
         mut env: JNIEnv,
         _class: JClass,
         source: JString,

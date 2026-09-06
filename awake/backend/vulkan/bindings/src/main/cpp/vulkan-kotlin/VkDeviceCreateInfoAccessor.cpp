@@ -9,16 +9,16 @@ VkDeviceCreateInfoAccessor::VkDeviceCreateInfoAccessor(JNIEnv *env, jobject obj)
                                                                                    obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     pQueueCreateInfosField = env->GetFieldID(clazz, "pQueueCreateInfos",
-                                             "[Lio/github/awakelab/awake/vulkan/models/info/VkDeviceQueueCreateInfo;");
+                                             "[Lcom/awakekt/awake/vulkan/models/info/VkDeviceQueueCreateInfo;");
     ppEnabledLayerNamesField = env->GetFieldID(clazz, "ppEnabledLayerNames", "[Ljava/lang/String;");
     ppEnabledExtensionNamesField = env->GetFieldID(clazz, "ppEnabledExtensionNames",
                                                    "[Ljava/lang/String;");
     pEnabledFeaturesField = env->GetFieldID(clazz, "pEnabledFeatures",
-                                            "[Lio/github/awakelab/awake/vulkan/models/physicaldevice/VkPhysicalDeviceFeatures;");
+                                            "[Lcom/awakekt/awake/vulkan/models/physicaldevice/VkPhysicalDeviceFeatures;");
 }
 
 VkStructureType

@@ -7,7 +7,7 @@
 
 VkLayerPropertiesMutator::VkLayerPropertiesMutator(JNIEnv *env) : env(env) {
     this->env = env;
-    clazz = env->FindClass("io/github/awakelab/awake/vulkan/models/VkLayerProperties");
+    clazz = env->FindClass("com/awakekt/awake/vulkan/models/VkLayerProperties");
     layerNameField = env->GetFieldID(clazz, "layerName", "Ljava/lang/String;");
     specVersionField = env->GetFieldID(clazz, "specVersion", "I");
     implementationVersionField = env->GetFieldID(clazz, "implementationVersion", "I");

@@ -9,29 +9,29 @@ VkGraphicsPipelineCreateInfoAccessor::VkGraphicsPipelineCreateInfoAccessor(JNIEn
         : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     pStagesField = env->GetFieldID(clazz, "pStages",
-                                   "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineShaderStageCreateInfo;");
+                                   "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkPipelineShaderStageCreateInfo;");
     pVertexInputStateField = env->GetFieldID(clazz, "pVertexInputState",
-                                             "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineVertexInputStateCreateInfo;");
+                                             "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkPipelineVertexInputStateCreateInfo;");
     pInputAssemblyStateField = env->GetFieldID(clazz, "pInputAssemblyState",
-                                               "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineInputAssemblyStateCreateInfo;");
+                                               "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkPipelineInputAssemblyStateCreateInfo;");
     pTessellationStateField = env->GetFieldID(clazz, "pTessellationState",
-                                              "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineTessellationStateCreateInfo;");
+                                              "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkPipelineTessellationStateCreateInfo;");
     pViewportStateField = env->GetFieldID(clazz, "pViewportState",
-                                          "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineViewportStateCreateInfo;");
+                                          "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkPipelineViewportStateCreateInfo;");
     pRasterizationStateField = env->GetFieldID(clazz, "pRasterizationState",
-                                               "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineRasterizationStateCreateInfo;");
+                                               "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkPipelineRasterizationStateCreateInfo;");
     pMultisampleStateField = env->GetFieldID(clazz, "pMultisampleState",
-                                             "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineMultisampleStateCreateInfo;");
+                                             "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkPipelineMultisampleStateCreateInfo;");
     pDepthStencilStateField = env->GetFieldID(clazz, "pDepthStencilState",
-                                              "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineDepthStencilStateCreateInfo;");
+                                              "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkPipelineDepthStencilStateCreateInfo;");
     pColorBlendStateField = env->GetFieldID(clazz, "pColorBlendState",
-                                            "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineColorBlendStateCreateInfo;");
+                                            "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkPipelineColorBlendStateCreateInfo;");
     pDynamicStateField = env->GetFieldID(clazz, "pDynamicState",
-                                         "[Lio/github/awakelab/awake/vulkan/models/info/pipeline/VkPipelineDynamicStateCreateInfo;");
+                                         "[Lcom/awakekt/awake/vulkan/models/info/pipeline/VkPipelineDynamicStateCreateInfo;");
     layoutField = env->GetFieldID(clazz, "layout", "J");
     renderPassField = env->GetFieldID(clazz, "renderPass", "J");
     subpassField = env->GetFieldID(clazz, "subpass", "I");

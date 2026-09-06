@@ -15,7 +15,7 @@ plugins {
 }
 
 application {
-    mainClass.set("io.github.awakelab.awake.fontatlasgenerator.MainKt")
+    mainClass.set("com.awakekt.awake.fontatlasgenerator.MainKt")
 }
 
 dependencies {
@@ -32,6 +32,6 @@ tasks.register<JavaExec>("generateFontAtlas") {
         "geometry -- run this and commit the diff after any font or atlas metric change."
     dependsOn("classes")
     workingDir = projectDir
-    mainClass.set("io.github.awakelab.awake.fontatlasgenerator.MainKt")
+    mainClass.set("com.awakekt.awake.fontatlasgenerator.MainKt")
     classpath = sourceSets.main.get().runtimeClasspath
 }

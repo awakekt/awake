@@ -15,11 +15,12 @@ plugins {
 // :awake:ui:benchmark and :awake:editor declare context-parameterised helpers to drive the
 // compose engine's ComposeHost, so they need the same bump.
 val ktlintVersion = if (project.path.startsWith(":awake:compose") ||
-    project.path == ":awake:ui:benchmark" ||
+    project.path.startsWith(":awake:ui") ||
     project.path.startsWith(":awake:editor") ||
-    project.path == ":awake:ui:shadcn" ||
     project.path == ":apps:studio" ||
-    project.path == ":samples:ui-showcase"
+    project.path == ":samples:ui-showcase" ||
+    project.path == ":samples:engine-showcase" ||
+    project.path == ":samples:compose-showcase"
 ) {
     "1.7.1"
 } else {

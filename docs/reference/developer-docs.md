@@ -196,9 +196,9 @@ The debug overlay is owned by the retained Compose UI runtime; use the semantic 
 output from `:awake:compose:ui-testing` for verification. The application UI runtime owns the
 toggle wiring and appends the overlay after the frame is finished.
 F3 is mapped to `Key.F3` in both input backends -- GLFW (desktop,
-`awake/backend/vulkan/src/desktopMain/kotlin/io/github/awakelab/awake/vulkan/application/GlfwInputBridge.kt`)
+`awake/backend/vulkan/src/desktopMain/kotlin/com/awakekt/awake/vulkan/application/GlfwInputBridge.kt`)
 and DOM keyboard events (wasmJs,
-`awake/backend/webgpu/src/wasmJsMain/kotlin/io/github/awakelab/awake/webgpu/application/WebGpuCanvasHost.kt`)
+`awake/backend/webgpu/src/wasmJsMain/kotlin/com/awakekt/awake/webgpu/application/WebGpuCanvasHost.kt`)
 so it works identically on both.
 
 ## Adding a UI Tutorial

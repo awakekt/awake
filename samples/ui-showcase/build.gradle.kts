@@ -33,7 +33,7 @@ kotlin {
     applyDefaultHierarchyTemplate()
 
     android {
-        namespace = "io.github.awakelab.awake.sample.uishowcase"
+        namespace = "com.awakekt.awake.sample.uishowcase"
         compileSdk = (findProperty("android.compileSdk") as String).toInt()
         minSdk = (findProperty("android.minSdk") as String).toInt()
         withHostTest {}
@@ -180,7 +180,7 @@ tasks.register<JavaExec>("run") {
     wireVulkanDesktopNatives(project(":awake:backend:vulkan:bindings"))
     // Shipped shaders are WGSL, so every pipeline this sample builds goes through naga.
     useNagaShaderCompiler(this)
-    mainClass.set("io.github.awakelab.awake.sample.uishowcase.app.MainKt")
+    mainClass.set("com.awakekt.awake.sample.uishowcase.app.MainKt")
     classpath = files(
         layout.buildDirectory.dir("classes/kotlin/desktop/main"),
         layout.buildDirectory.dir("processedResources/desktop/main"),

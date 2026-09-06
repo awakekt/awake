@@ -11,7 +11,7 @@ Pure, high-performance Vulkan API bindings for Kotlin Multiplatform (Desktop JVM
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.awake-lab:vulkan-kmp:<version>")
+            implementation("com.awakekt.awake:vulkan-kmp:<version>")
         }
     }
 }
@@ -23,7 +23,7 @@ kotlin {
 vulkan-kmp = "<version>"
 
 [libraries]
-vulkan-kmp = { module = "io.github.awake-lab:vulkan-kmp", version.ref = "vulkan-kmp" }
+vulkan-kmp = { module = "com.awakekt.awake:vulkan-kmp", version.ref = "vulkan-kmp" }
 ```
 
 ```kotlin
@@ -72,17 +72,17 @@ A pure Kotlin Multiplatform sample demonstrating:
 * Clean resource teardown
 
 ```kotlin
-import io.github.awakelab.awake.vulkan.Version
-import io.github.awakelab.awake.vulkan.Version.Companion.vkVersion
-import io.github.awakelab.awake.vulkan.Vulkan
-import io.github.awakelab.awake.vulkan.enums.VkCommandBufferLevel
-import io.github.awakelab.awake.vulkan.enums.VkQueueFlagBits
-import io.github.awakelab.awake.vulkan.models.info.VkApplicationInfo
-import io.github.awakelab.awake.vulkan.models.info.VkCommandBufferAllocateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkCommandPoolCreateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkDeviceCreateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkDeviceQueueCreateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkInstanceCreateInfo
+import com.awakekt.awake.vulkan.Version
+import com.awakekt.awake.vulkan.Version.Companion.vkVersion
+import com.awakekt.awake.vulkan.Vulkan
+import com.awakekt.awake.vulkan.enums.VkCommandBufferLevel
+import com.awakekt.awake.vulkan.enums.VkQueueFlagBits
+import com.awakekt.awake.vulkan.models.info.VkApplicationInfo
+import com.awakekt.awake.vulkan.models.info.VkCommandBufferAllocateInfo
+import com.awakekt.awake.vulkan.models.info.VkCommandPoolCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkDeviceCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkDeviceQueueCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkInstanceCreateInfo
 
 fun main() {
     // 1. Application & Instance Setup

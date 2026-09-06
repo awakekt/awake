@@ -7,12 +7,12 @@
 
 VkQueueFamilyPropertiesMutator::VkQueueFamilyPropertiesMutator(JNIEnv *env) : env(env) {
     this->env = env;
-    clazz = env->FindClass("io/github/awakelab/awake/vulkan/models/VkQueueFamilyProperties");
+    clazz = env->FindClass("com/awakekt/awake/vulkan/models/VkQueueFamilyProperties");
     queueFlagsField = env->GetFieldID(clazz, "queueFlags", "I");
     queueCountField = env->GetFieldID(clazz, "queueCount", "I");
     timestampValidBitsField = env->GetFieldID(clazz, "timestampValidBits", "I");
     minImageTransferGranularityField = env->GetFieldID(clazz, "minImageTransferGranularity",
-                                                       "Lio/github/awakelab/awake/vulkan/models/VkExtent3D;");
+                                                       "Lcom/awakekt/awake/vulkan/models/VkExtent3D;");
 }
 
 jobject

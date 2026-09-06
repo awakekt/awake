@@ -1,0 +1,46 @@
+public final class com/awakekt/awake/core/config/AwakeConfig {
+	public static final field Companion Lcom/awakekt/awake/core/config/AwakeConfig$Companion;
+	public fun <init> (Lcom/awakekt/awake/core/config/EnvSource;)V
+	public final fun getBoolean (Ljava/lang/String;Z)Z
+	public static synthetic fun getBoolean$default (Lcom/awakekt/awake/core/config/AwakeConfig;Ljava/lang/String;ZILjava/lang/Object;)Z
+	public final fun getInt (Ljava/lang/String;I)I
+	public static synthetic fun getInt$default (Lcom/awakekt/awake/core/config/AwakeConfig;Ljava/lang/String;IILjava/lang/Object;)I
+	public final fun getLong (Ljava/lang/String;J)J
+	public static synthetic fun getLong$default (Lcom/awakekt/awake/core/config/AwakeConfig;Ljava/lang/String;JILjava/lang/Object;)J
+	public final fun getSource ()Lcom/awakekt/awake/core/config/EnvSource;
+	public final fun getString (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+	public static synthetic fun getString$default (Lcom/awakekt/awake/core/config/AwakeConfig;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Ljava/lang/String;
+	public final fun getStringOrNull (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/config/AwakeConfig$Companion {
+	public final fun fromMap (Ljava/util/Map;)Lcom/awakekt/awake/core/config/AwakeConfig;
+	public final fun getEmpty ()Lcom/awakekt/awake/core/config/AwakeConfig;
+}
+
+public final class com/awakekt/awake/core/config/CompositeEnvSource : com/awakekt/awake/core/config/EnvSource {
+	public fun <init> (Ljava/util/List;)V
+	public fun <init> ([Lcom/awakekt/awake/core/config/EnvSource;)V
+	public fun get (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/config/DotEnvParser {
+	public static final field INSTANCE Lcom/awakekt/awake/core/config/DotEnvParser;
+	public final fun parse (Ljava/lang/String;)Ljava/util/Map;
+}
+
+public abstract interface class com/awakekt/awake/core/config/EnvSource {
+	public abstract fun get (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/config/MapEnvSource : com/awakekt/awake/core/config/EnvSource {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun get (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/config/PlatformEnvSource_desktopKt {
+	public static final fun defaultPlatformEnvSource ()Lcom/awakekt/awake/core/config/EnvSource;
+}
+

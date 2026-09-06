@@ -1,50 +1,50 @@
-public final class io/github/awakelab/awake/engine/bootstrap/dsl/AppDefinition {
-	public final fun createApp ()Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;
-	public final fun createApp (Ljava/lang/Object;)Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;
-	public final fun createAppSpec ()Lio/github/awakelab/awake/engine/platform/core/AppSpec;
-	public final fun createAppSpec (Ljava/lang/Object;)Lio/github/awakelab/awake/engine/platform/core/AppSpec;
-	public final fun createModule (Ljava/lang/Object;)Lio/github/awakelab/awake/engine/platform/core/AppModule;
+public final class com/awakekt/awake/engine/bootstrap/dsl/AppDefinition {
+	public final fun createApp ()Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;
+	public final fun createApp (Ljava/lang/Object;)Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;
+	public final fun createAppSpec ()Lcom/awakekt/awake/engine/platform/core/AppSpec;
+	public final fun createAppSpec (Ljava/lang/Object;)Lcom/awakekt/awake/engine/platform/core/AppSpec;
+	public final fun createModule (Ljava/lang/Object;)Lcom/awakekt/awake/engine/platform/core/AppModule;
 	public final fun createState ()Ljava/lang/Object;
 }
 
-public final class io/github/awakelab/awake/engine/bootstrap/dsl/AppDefinitionDsl {
-	public final fun module (Lio/github/awakelab/awake/engine/platform/core/AppModule;)V
+public final class com/awakekt/awake/engine/bootstrap/dsl/AppDefinitionDsl {
+	public final fun module (Lcom/awakekt/awake/engine/platform/core/AppModule;)V
 	public final fun module (Lkotlin/jvm/functions/Function1;)V
 	public final fun window (Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class io/github/awakelab/awake/engine/bootstrap/dsl/AppDefinitionDslKt {
-	public static final fun appDefinition (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/engine/bootstrap/dsl/AppDefinition;
+public final class com/awakekt/awake/engine/bootstrap/dsl/AppDefinitionDslKt {
+	public static final fun appDefinition (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/engine/bootstrap/dsl/AppDefinition;
 }
 
-public final class io/github/awakelab/awake/engine/bootstrap/dsl/AppDsl : io/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl {
+public final class com/awakekt/awake/engine/bootstrap/dsl/AppDsl : com/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl {
 	public final fun window (Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class io/github/awakelab/awake/engine/bootstrap/dsl/AppDslKt {
-	public static final fun app (Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;
-	public static final fun appSpec (Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/engine/platform/core/AppSpec;
-	public static final fun select (Lio/github/awakelab/awake/engine/bootstrap/dsl/WindowBackendDsl;Lio/github/awakelab/awake/engine/platform/dsl/AppWindowBackend;)V
+public final class com/awakekt/awake/engine/bootstrap/dsl/AppDslKt {
+	public static final fun app (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;
+	public static final fun appSpec (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/engine/platform/core/AppSpec;
+	public static final fun select (Lcom/awakekt/awake/engine/bootstrap/dsl/WindowBackendDsl;Lcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;)V
 }
 
-public final class io/github/awakelab/awake/engine/bootstrap/dsl/AppModuleDsl : io/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl {
-	public final fun module (Lio/github/awakelab/awake/engine/platform/core/AppModule;)V
+public final class com/awakekt/awake/engine/bootstrap/dsl/AppModuleDsl : com/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl {
+	public final fun module (Lcom/awakekt/awake/engine/platform/core/AppModule;)V
 	public final fun module (Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class io/github/awakelab/awake/engine/bootstrap/dsl/AppModuleDslKt {
-	public static final fun appModule (Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/engine/platform/core/AppModule;
-	public static final fun createApp (Lio/github/awakelab/awake/engine/platform/core/AppModule;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;
-	public static final fun createAppSpec (Lio/github/awakelab/awake/engine/platform/core/AppModule;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/engine/platform/core/AppSpec;
-	public static final fun module (Lio/github/awakelab/awake/engine/bootstrap/dsl/AppDsl;Lio/github/awakelab/awake/engine/platform/core/AppModule;)V
-	public static final fun module (Lio/github/awakelab/awake/engine/bootstrap/dsl/AppDsl;Lkotlin/jvm/functions/Function1;)V
+public final class com/awakekt/awake/engine/bootstrap/dsl/AppModuleDslKt {
+	public static final fun appModule (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/engine/platform/core/AppModule;
+	public static final fun createApp (Lcom/awakekt/awake/engine/platform/core/AppModule;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;
+	public static final fun createAppSpec (Lcom/awakekt/awake/engine/platform/core/AppModule;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/engine/platform/core/AppSpec;
+	public static final fun module (Lcom/awakekt/awake/engine/bootstrap/dsl/AppDsl;Lcom/awakekt/awake/engine/platform/core/AppModule;)V
+	public static final fun module (Lcom/awakekt/awake/engine/bootstrap/dsl/AppDsl;Lkotlin/jvm/functions/Function1;)V
 }
 
-public abstract class io/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl {
-	public synthetic fun <init> (Lio/github/awakelab/awake/engine/platform/dsl/AppSpecBuilder;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+public abstract class com/awakekt/awake/engine/bootstrap/dsl/AppSpecDsl {
+	public synthetic fun <init> (Lcom/awakekt/awake/engine/platform/dsl/AppSpecBuilder;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun dispose (Lkotlin/jvm/functions/Function0;)V
-	protected final fun getBuilder ()Lio/github/awakelab/awake/engine/platform/dsl/AppSpecBuilder;
-	public final fun install (Lio/github/awakelab/awake/engine/platform/lifecycle/AppInstaller;)V
+	protected final fun getBuilder ()Lcom/awakekt/awake/engine/platform/dsl/AppSpecBuilder;
+	public final fun install (Lcom/awakekt/awake/engine/platform/lifecycle/AppInstaller;)V
 	public final fun pause (Lkotlin/jvm/functions/Function0;)V
 	public final fun ready (Lkotlin/jvm/functions/Function2;)V
 	public final fun render (Lkotlin/jvm/functions/Function1;)V
@@ -53,24 +53,24 @@ public abstract class io/github/awakelab/awake/engine/bootstrap/dsl/AppSpecDsl {
 	public final fun resume (Lkotlin/jvm/functions/Function0;)V
 	public final fun service (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun service (Lkotlin/reflect/KClass;Ljava/lang/Object;)V
-	public final fun serviceLookup ()Lio/github/awakelab/awake/engine/platform/dsl/AppServiceLookup;
+	public final fun serviceLookup ()Lcom/awakekt/awake/engine/platform/dsl/AppServiceLookup;
 }
 
-public abstract interface annotation class io/github/awakelab/awake/engine/bootstrap/dsl/AwakeAppDsl : java/lang/annotation/Annotation {
+public abstract interface annotation class com/awakekt/awake/engine/bootstrap/dsl/AwakeAppDsl : java/lang/annotation/Annotation {
 }
 
-public final class io/github/awakelab/awake/engine/bootstrap/dsl/WindowBackendDsl {
+public final class com/awakekt/awake/engine/bootstrap/dsl/WindowBackendDsl {
 	public final fun default ()V
 	public final fun openGl ()V
 	public final fun vulkan ()V
 	public final fun webGpu ()V
 }
 
-public final class io/github/awakelab/awake/engine/bootstrap/dsl/WindowDsl {
-	public final fun getBackend ()Lio/github/awakelab/awake/engine/bootstrap/dsl/WindowBackendDsl;
-	public final fun getPresentMode ()Lio/github/awakelab/awake/engine/platform/config/PresentMode;
+public final class com/awakekt/awake/engine/bootstrap/dsl/WindowDsl {
+	public final fun getBackend ()Lcom/awakekt/awake/engine/bootstrap/dsl/WindowBackendDsl;
+	public final fun getPresentMode ()Lcom/awakekt/awake/engine/platform/config/PresentMode;
 	public final fun getTitle ()Ljava/lang/String;
-	public final fun setPresentMode (Lio/github/awakelab/awake/engine/platform/config/PresentMode;)V
+	public final fun setPresentMode (Lcom/awakekt/awake/engine/platform/config/PresentMode;)V
 	public final fun setTitle (Ljava/lang/String;)V
 	public final fun size (II)V
 }

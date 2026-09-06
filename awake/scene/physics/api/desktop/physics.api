@@ -1,49 +1,49 @@
-public final class io/github/awakelab/awake/scene/physics/PhysicsBody {
-	public synthetic fun <init> (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/physics/MotionType;IZLio/github/awakelab/awake/physics/BodyHandle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/physics/MotionType;IZLio/github/awakelab/awake/physics/BodyHandle;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/physics/PhysicsShape;
-	public final fun component2 ()Lio/github/awakelab/awake/physics/MotionType;
-	public final fun component3-XV27feE ()I
+public final class com/awakekt/awake/scene/physics/PhysicsBody {
+	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/physics/PhysicsShape;
+	public final fun component2 ()Lcom/awakekt/awake/physics/MotionType;
+	public final fun component3-K5w6Uvk ()I
 	public final fun component4 ()Z
-	public final fun component5-7H9HN24 ()Lio/github/awakelab/awake/physics/BodyHandle;
-	public final fun copy-vDAk5Rc (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/physics/MotionType;IZLio/github/awakelab/awake/physics/BodyHandle;)Lio/github/awakelab/awake/scene/physics/PhysicsBody;
-	public static synthetic fun copy-vDAk5Rc$default (Lio/github/awakelab/awake/scene/physics/PhysicsBody;Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/physics/MotionType;IZLio/github/awakelab/awake/physics/BodyHandle;ILjava/lang/Object;)Lio/github/awakelab/awake/scene/physics/PhysicsBody;
+	public final fun component5-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
+	public final fun copy-WPkvr74 (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;)Lcom/awakekt/awake/scene/physics/PhysicsBody;
+	public static synthetic fun copy-WPkvr74$default (Lcom/awakekt/awake/scene/physics/PhysicsBody;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/physics/MotionType;IZLcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/PhysicsBody;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getHandle-7H9HN24 ()Lio/github/awakelab/awake/physics/BodyHandle;
-	public final fun getLayer-XV27feE ()I
-	public final fun getMotionType ()Lio/github/awakelab/awake/physics/MotionType;
+	public final fun getHandle-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
+	public final fun getLayer-K5w6Uvk ()I
+	public final fun getMotionType ()Lcom/awakekt/awake/physics/MotionType;
 	public final fun getSensor ()Z
-	public final fun getShape ()Lio/github/awakelab/awake/physics/PhysicsShape;
+	public final fun getShape ()Lcom/awakekt/awake/physics/PhysicsShape;
 	public fun hashCode ()I
-	public final fun setHandle-KDVMuq8 (Lio/github/awakelab/awake/physics/BodyHandle;)V
-	public final fun setMotionType (Lio/github/awakelab/awake/physics/MotionType;)V
+	public final fun setHandle-lSLWVzI (Lcom/awakekt/awake/physics/BodyHandle;)V
+	public final fun setMotionType (Lcom/awakekt/awake/physics/MotionType;)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/physics/PhysicsDebugLinesKt {
-	public static final fun physicsDebugLines (Lio/github/awakelab/awake/ecs/World;)Ljava/util/List;
+public final class com/awakekt/awake/scene/physics/PhysicsDebugLinesKt {
+	public static final fun physicsDebugLines (Lcom/awakekt/awake/ecs/World;)Ljava/util/List;
 }
 
-public final class io/github/awakelab/awake/scene/physics/PhysicsOriginShiftListener : io/github/awakelab/awake/scene/world/OriginShiftListener {
-	public fun <init> (Lio/github/awakelab/awake/physics/PhysicsWorld;)V
-	public fun onOriginShift (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/scene/world/WorldOrigin;)V
+public final class com/awakekt/awake/scene/physics/PhysicsOriginShiftListener : com/awakekt/awake/scene/world/OriginShiftListener {
+	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;)V
+	public fun onOriginShift (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/scene/world/WorldOrigin;)V
 }
 
-public final class io/github/awakelab/awake/scene/physics/PhysicsSystem : io/github/awakelab/awake/ecs/InterpolatedSystem {
-	public fun <init> (Lio/github/awakelab/awake/physics/PhysicsWorld;)V
-	public fun interpolate (Lio/github/awakelab/awake/ecs/World;F)V
-	public fun update (Lio/github/awakelab/awake/ecs/World;F)V
+public final class com/awakekt/awake/scene/physics/PhysicsSystem : com/awakekt/awake/ecs/InterpolatedSystem {
+	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;)V
+	public fun interpolate (Lcom/awakekt/awake/ecs/World;F)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
-public final class io/github/awakelab/awake/scene/physics/character/CharacterConfig {
+public final class com/awakekt/awake/scene/physics/character/CharacterConfig {
 	public static final field DEFAULT_GROUND_PROBE_DISTANCE F
 	public static final field DEFAULT_MAX_SLIDE_ITERATIONS I
 	public static final field DEFAULT_SKIN_WIDTH F
 	public static final field DEFAULT_SLOPE_LIMIT_RADIANS F
 	public static final field DEFAULT_STEP_HEIGHT F
-	public fun <init> (Lio/github/awakelab/awake/physics/CapsuleShape;FFIFFFLjava/lang/Float;Z)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/physics/CapsuleShape;FFIFFFLjava/lang/Float;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/physics/CapsuleShape;
+	public fun <init> (Lcom/awakekt/awake/physics/CapsuleShape;FFIFFFLjava/lang/Float;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/physics/CapsuleShape;FFIFFFLjava/lang/Float;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/physics/CapsuleShape;
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()I
@@ -52,14 +52,14 @@ public final class io/github/awakelab/awake/scene/physics/character/CharacterCon
 	public final fun component7 ()F
 	public final fun component8 ()Ljava/lang/Float;
 	public final fun component9 ()Z
-	public final fun copy (Lio/github/awakelab/awake/physics/CapsuleShape;FFIFFFLjava/lang/Float;Z)Lio/github/awakelab/awake/scene/physics/character/CharacterConfig;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/scene/physics/character/CharacterConfig;Lio/github/awakelab/awake/physics/CapsuleShape;FFIFFFLjava/lang/Float;ZILjava/lang/Object;)Lio/github/awakelab/awake/scene/physics/character/CharacterConfig;
+	public final fun copy (Lcom/awakekt/awake/physics/CapsuleShape;FFIFFFLjava/lang/Float;Z)Lcom/awakekt/awake/scene/physics/character/CharacterConfig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/physics/character/CharacterConfig;Lcom/awakekt/awake/physics/CapsuleShape;FFIFFFLjava/lang/Float;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/character/CharacterConfig;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCrouchHalfHeight ()Ljava/lang/Float;
 	public final fun getGroundProbeDistance ()F
 	public final fun getInnerBody ()Z
 	public final fun getMaxSlideIterations ()I
-	public final fun getShape ()Lio/github/awakelab/awake/physics/CapsuleShape;
+	public final fun getShape ()Lcom/awakekt/awake/physics/CapsuleShape;
 	public final fun getSkinWidth ()F
 	public final fun getSlopeLimitRadians ()F
 	public final fun getStepDownDistance ()F
@@ -68,25 +68,25 @@ public final class io/github/awakelab/awake/scene/physics/character/CharacterCon
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/scene/physics/character/KinematicCharacterController {
+public final class com/awakekt/awake/scene/physics/character/KinematicCharacterController {
 	public static final field DEFAULT_SYNC_DELTA F
 	public static final field MIN_MOTION F
-	public fun <init> (Lio/github/awakelab/awake/physics/PhysicsWorld;Lio/github/awakelab/awake/scene/physics/character/CharacterConfig;Lio/github/awakelab/awake/core/math/Vec3f;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/physics/PhysicsWorld;Lio/github/awakelab/awake/scene/physics/character/CharacterConfig;Lio/github/awakelab/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/scene/physics/character/CharacterConfig;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/scene/physics/character/CharacterConfig;Lcom/awakekt/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun crouch ()V
 	public final fun dispose ()V
-	public final fun getBody-7H9HN24 ()Lio/github/awakelab/awake/physics/BodyHandle;
-	public final fun getGroundBody-7H9HN24 ()Lio/github/awakelab/awake/physics/BodyHandle;
-	public final fun getGroundNormal ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getGroundVelocity ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getBody-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
+	public final fun getGroundBody-V_ezQ8E ()Lcom/awakekt/awake/physics/BodyHandle;
+	public final fun getGroundNormal ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getGroundVelocity ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getOnContact ()Lkotlin/jvm/functions/Function2;
-	public final fun getPosition ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun isCrouching ()Z
 	public final fun isGrounded ()Z
-	public final fun move (Lio/github/awakelab/awake/core/math/Vec3f;F)V
-	public static synthetic fun move$default (Lio/github/awakelab/awake/scene/physics/character/KinematicCharacterController;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)V
+	public final fun move (Lcom/awakekt/awake/core/math/Vec3f;F)V
+	public static synthetic fun move$default (Lcom/awakekt/awake/scene/physics/character/KinematicCharacterController;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)V
 	public final fun setOnContact (Lkotlin/jvm/functions/Function2;)V
 	public final fun standUp ()Z
-	public final fun teleport (Lio/github/awakelab/awake/core/math/Vec3f;)V
+	public final fun teleport (Lcom/awakekt/awake/core/math/Vec3f;)V
 }
 

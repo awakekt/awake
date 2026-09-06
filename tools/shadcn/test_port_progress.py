@@ -23,8 +23,8 @@ port_progress = importlib.util.module_from_spec(_spec)
 sys.modules["port_progress"] = port_progress
 _spec.loader.exec_module(port_progress)
 
-LEGACY = "import io.github.awakelab.awake.ui.headless.button"
-TARGET = "import io.github.awakelab.awake.compose.foundation.Text"
+LEGACY = "import com.awakekt.awake.ui.headless.button"
+TARGET = "import com.awakekt.awake.compose.foundation.Text"
 
 
 def report(text: str) -> port_progress.FileReport:

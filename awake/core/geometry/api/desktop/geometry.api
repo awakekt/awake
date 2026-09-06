@@ -1,73 +1,73 @@
-public final class io/github/awakelab/awake/core/geometry/GpuDataShape : java/lang/Enum {
-	public static final field Float Lio/github/awakelab/awake/core/geometry/GpuDataShape;
-	public static final field Mat4 Lio/github/awakelab/awake/core/geometry/GpuDataShape;
-	public static final field UInt4 Lio/github/awakelab/awake/core/geometry/GpuDataShape;
-	public static final field Vec2 Lio/github/awakelab/awake/core/geometry/GpuDataShape;
-	public static final field Vec3 Lio/github/awakelab/awake/core/geometry/GpuDataShape;
-	public static final field Vec4 Lio/github/awakelab/awake/core/geometry/GpuDataShape;
+public final class com/awakekt/awake/core/geometry/GpuDataShape : java/lang/Enum {
+	public static final field Float Lcom/awakekt/awake/core/geometry/GpuDataShape;
+	public static final field Mat4 Lcom/awakekt/awake/core/geometry/GpuDataShape;
+	public static final field UInt4 Lcom/awakekt/awake/core/geometry/GpuDataShape;
+	public static final field Vec2 Lcom/awakekt/awake/core/geometry/GpuDataShape;
+	public static final field Vec3 Lcom/awakekt/awake/core/geometry/GpuDataShape;
+	public static final field Vec4 Lcom/awakekt/awake/core/geometry/GpuDataShape;
 	public final fun getBytesPerComponent ()I
 	public final fun getComponentCount ()I
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/geometry/GpuDataShape;
-	public static fun values ()[Lio/github/awakelab/awake/core/geometry/GpuDataShape;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/geometry/GpuDataShape;
+	public static fun values ()[Lcom/awakekt/awake/core/geometry/GpuDataShape;
 }
 
-public final class io/github/awakelab/awake/core/geometry/GridTopologyKt {
+public final class com/awakekt/awake/core/geometry/GridTopologyKt {
 	public static final fun gridTriangleIndices (IILkotlin/jvm/functions/Function2;)[I
 	public static synthetic fun gridTriangleIndices$default (IILkotlin/jvm/functions/Function2;ILjava/lang/Object;)[I
 }
 
-public final class io/github/awakelab/awake/core/geometry/IndexBytesKt {
+public final class com/awakekt/awake/core/geometry/IndexBytesKt {
 	public static final fun toByteArrayLE ([I)[B
 }
 
-public final class io/github/awakelab/awake/core/geometry/InterleavedVertices {
-	public fun <init> (Lio/github/awakelab/awake/core/geometry/VertexFormat;I)V
-	public final fun build ([I)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
-	public final fun copyOrFill (Lio/github/awakelab/awake/core/geometry/VertexSemantic;[FI[F)V
-	public final fun fill (Lio/github/awakelab/awake/core/geometry/VertexSemantic;[F)V
-	public final fun getFormat ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
+public final class com/awakekt/awake/core/geometry/InterleavedVertices {
+	public fun <init> (Lcom/awakekt/awake/core/geometry/VertexFormat;I)V
+	public final fun build ([I)Lcom/awakekt/awake/core/geometry/MeshGeometry;
+	public final fun copyOrFill (Lcom/awakekt/awake/core/geometry/VertexSemantic;[FI[F)V
+	public final fun fill (Lcom/awakekt/awake/core/geometry/VertexSemantic;[F)V
+	public final fun getFormat ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getVertexCount ()I
-	public final fun has (Lio/github/awakelab/awake/core/geometry/VertexSemantic;)Z
-	public final fun put (ILio/github/awakelab/awake/core/geometry/VertexSemantic;F)V
-	public final fun put (ILio/github/awakelab/awake/core/geometry/VertexSemantic;FF)V
-	public final fun put (ILio/github/awakelab/awake/core/geometry/VertexSemantic;FFF)V
-	public final fun put (ILio/github/awakelab/awake/core/geometry/VertexSemantic;FFFF)V
+	public final fun has (Lcom/awakekt/awake/core/geometry/VertexSemantic;)Z
+	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;F)V
+	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;FF)V
+	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;FFF)V
+	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;FFFF)V
 	public final fun toFloatArray ()[F
 }
 
-public final class io/github/awakelab/awake/core/geometry/MeshGeometry {
-	public fun <init> ([F[ILio/github/awakelab/awake/core/geometry/VertexFormat;)V
-	public synthetic fun <init> ([F[ILio/github/awakelab/awake/core/geometry/VertexFormat;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+public final class com/awakekt/awake/core/geometry/MeshGeometry {
+	public fun <init> ([F[ILcom/awakekt/awake/core/geometry/VertexFormat;)V
+	public synthetic fun <init> ([F[ILcom/awakekt/awake/core/geometry/VertexFormat;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()[F
 	public final fun component2 ()[I
-	public final fun component3 ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public final fun copy ([F[ILio/github/awakelab/awake/core/geometry/VertexFormat;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/geometry/MeshGeometry;[F[ILio/github/awakelab/awake/core/geometry/VertexFormat;ILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
+	public final fun component3 ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun copy ([F[ILcom/awakekt/awake/core/geometry/VertexFormat;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/geometry/MeshGeometry;[F[ILcom/awakekt/awake/core/geometry/VertexFormat;ILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getBounds ()Lio/github/awakelab/awake/core/math/Aabb;
-	public final fun getFormat ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
+	public final fun getBounds ()Lcom/awakekt/awake/core/math/Aabb;
+	public final fun getFormat ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getIndices ()[I
 	public final fun getVertices ()[F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/geometry/MeshHealer {
-	public static final field INSTANCE Lio/github/awakelab/awake/core/geometry/MeshHealer;
-	public final fun weld ([F[IF)Lio/github/awakelab/awake/core/geometry/MeshHealer$Result;
-	public static synthetic fun weld$default (Lio/github/awakelab/awake/core/geometry/MeshHealer;[F[IFILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/MeshHealer$Result;
-	public final fun weldMeshes (Ljava/util/List;Ljava/util/List;F)Lio/github/awakelab/awake/core/geometry/MeshHealer$Result;
-	public static synthetic fun weldMeshes$default (Lio/github/awakelab/awake/core/geometry/MeshHealer;Ljava/util/List;Ljava/util/List;FILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/MeshHealer$Result;
+public final class com/awakekt/awake/core/geometry/MeshHealer {
+	public static final field INSTANCE Lcom/awakekt/awake/core/geometry/MeshHealer;
+	public final fun weld ([F[IF)Lcom/awakekt/awake/core/geometry/MeshHealer$Result;
+	public static synthetic fun weld$default (Lcom/awakekt/awake/core/geometry/MeshHealer;[F[IFILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshHealer$Result;
+	public final fun weldMeshes (Ljava/util/List;Ljava/util/List;F)Lcom/awakekt/awake/core/geometry/MeshHealer$Result;
+	public static synthetic fun weldMeshes$default (Lcom/awakekt/awake/core/geometry/MeshHealer;Ljava/util/List;Ljava/util/List;FILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshHealer$Result;
 }
 
-public final class io/github/awakelab/awake/core/geometry/MeshHealer$Result {
+public final class com/awakekt/awake/core/geometry/MeshHealer$Result {
 	public fun <init> ([F[I[I)V
 	public final fun component1 ()[F
 	public final fun component2 ()[I
 	public final fun component3 ()[I
-	public final fun copy ([F[I[I)Lio/github/awakelab/awake/core/geometry/MeshHealer$Result;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/geometry/MeshHealer$Result;[F[I[IILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/MeshHealer$Result;
+	public final fun copy ([F[I[I)Lcom/awakekt/awake/core/geometry/MeshHealer$Result;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/geometry/MeshHealer$Result;[F[I[IILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshHealer$Result;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getIndices ()[I
 	public final fun getPositions ()[F
@@ -76,50 +76,50 @@ public final class io/github/awakelab/awake/core/geometry/MeshHealer$Result {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/geometry/MeshProblem {
-	public fun <init> (Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;Ljava/lang/String;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+public final class com/awakekt/awake/core/geometry/MeshProblem {
+	public fun <init> (Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;Ljava/lang/String;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;Ljava/lang/String;)Lio/github/awakelab/awake/core/geometry/MeshProblem;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/geometry/MeshProblem;Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/MeshProblem;
+	public final fun copy (Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;Ljava/lang/String;)Lcom/awakekt/awake/core/geometry/MeshProblem;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/geometry/MeshProblem;Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshProblem;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDetail ()Ljava/lang/String;
-	public final fun getKind ()Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public final fun getKind ()Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/geometry/MeshProblem$Kind : java/lang/Enum {
-	public static final field Degenerate Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
-	public static final field Indices Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
-	public static final field NormalLength Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
-	public static final field NotFinite Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
-	public static final field Stride Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
-	public static final field Winding Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+public final class com/awakekt/awake/core/geometry/MeshProblem$Kind : java/lang/Enum {
+	public static final field Degenerate Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;
+	public static final field Indices Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;
+	public static final field NormalLength Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;
+	public static final field NotFinite Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;
+	public static final field Stride Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;
+	public static final field Winding Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
-	public static fun values ()[Lio/github/awakelab/awake/core/geometry/MeshProblem$Kind;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;
+	public static fun values ()[Lcom/awakekt/awake/core/geometry/MeshProblem$Kind;
 }
 
-public final class io/github/awakelab/awake/core/geometry/MeshProblemKt {
-	public static final fun facesUpward (Lio/github/awakelab/awake/core/geometry/MeshGeometry;)Z
-	public static final fun validate (Lio/github/awakelab/awake/core/geometry/MeshGeometry;F)Ljava/util/List;
-	public static synthetic fun validate$default (Lio/github/awakelab/awake/core/geometry/MeshGeometry;FILjava/lang/Object;)Ljava/util/List;
+public final class com/awakekt/awake/core/geometry/MeshProblemKt {
+	public static final fun facesUpward (Lcom/awakekt/awake/core/geometry/MeshGeometry;)Z
+	public static final fun validate (Lcom/awakekt/awake/core/geometry/MeshGeometry;F)Ljava/util/List;
+	public static synthetic fun validate$default (Lcom/awakekt/awake/core/geometry/MeshGeometry;FILjava/lang/Object;)Ljava/util/List;
 }
 
-public final class io/github/awakelab/awake/core/geometry/MeshSimplifier {
-	public static final field INSTANCE Lio/github/awakelab/awake/core/geometry/MeshSimplifier;
-	public final fun simplify ([F[IFZ)Lio/github/awakelab/awake/core/geometry/MeshSimplifier$Result;
-	public static synthetic fun simplify$default (Lio/github/awakelab/awake/core/geometry/MeshSimplifier;[F[IFZILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/MeshSimplifier$Result;
+public final class com/awakekt/awake/core/geometry/MeshSimplifier {
+	public static final field INSTANCE Lcom/awakekt/awake/core/geometry/MeshSimplifier;
+	public final fun simplify ([F[IFZ)Lcom/awakekt/awake/core/geometry/MeshSimplifier$Result;
+	public static synthetic fun simplify$default (Lcom/awakekt/awake/core/geometry/MeshSimplifier;[F[IFZILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshSimplifier$Result;
 }
 
-public final class io/github/awakelab/awake/core/geometry/MeshSimplifier$Result {
+public final class com/awakekt/awake/core/geometry/MeshSimplifier$Result {
 	public fun <init> ([F[I[I)V
 	public final fun component1 ()[F
 	public final fun component2 ()[I
 	public final fun component3 ()[I
-	public final fun copy ([F[I[I)Lio/github/awakelab/awake/core/geometry/MeshSimplifier$Result;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/geometry/MeshSimplifier$Result;[F[I[IILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/MeshSimplifier$Result;
+	public final fun copy ([F[I[I)Lcom/awakekt/awake/core/geometry/MeshSimplifier$Result;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/geometry/MeshSimplifier$Result;[F[I[IILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshSimplifier$Result;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getIndices ()[I
 	public final fun getPositions ()[F
@@ -128,41 +128,41 @@ public final class io/github/awakelab/awake/core/geometry/MeshSimplifier$Result 
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/geometry/NormalizedInt {
-	public static final field INSTANCE Lio/github/awakelab/awake/core/geometry/NormalizedInt;
+public final class com/awakekt/awake/core/geometry/NormalizedInt {
+	public static final field INSTANCE Lcom/awakekt/awake/core/geometry/NormalizedInt;
 	public final fun signedByte (I)F
 	public final fun signedShort (I)F
 	public final fun unsignedByte (I)F
 	public final fun unsignedShort (I)F
 }
 
-public final class io/github/awakelab/awake/core/geometry/VertexAttribute {
-	public fun <init> (Lio/github/awakelab/awake/core/geometry/VertexSemantic;Lio/github/awakelab/awake/core/geometry/GpuDataShape;I)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public final fun component2 ()Lio/github/awakelab/awake/core/geometry/GpuDataShape;
+public final class com/awakekt/awake/core/geometry/VertexAttribute {
+	public fun <init> (Lcom/awakekt/awake/core/geometry/VertexSemantic;Lcom/awakekt/awake/core/geometry/GpuDataShape;I)V
+	public final fun component1 ()Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public final fun component2 ()Lcom/awakekt/awake/core/geometry/GpuDataShape;
 	public final fun component3 ()I
-	public final fun copy (Lio/github/awakelab/awake/core/geometry/VertexSemantic;Lio/github/awakelab/awake/core/geometry/GpuDataShape;I)Lio/github/awakelab/awake/core/geometry/VertexAttribute;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/geometry/VertexAttribute;Lio/github/awakelab/awake/core/geometry/VertexSemantic;Lio/github/awakelab/awake/core/geometry/GpuDataShape;IILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/VertexAttribute;
+	public final fun copy (Lcom/awakekt/awake/core/geometry/VertexSemantic;Lcom/awakekt/awake/core/geometry/GpuDataShape;I)Lcom/awakekt/awake/core/geometry/VertexAttribute;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/geometry/VertexAttribute;Lcom/awakekt/awake/core/geometry/VertexSemantic;Lcom/awakekt/awake/core/geometry/GpuDataShape;IILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/VertexAttribute;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getFormat ()Lio/github/awakelab/awake/core/geometry/GpuDataShape;
+	public final fun getFormat ()Lcom/awakekt/awake/core/geometry/GpuDataShape;
 	public final fun getLocation ()I
-	public final fun getSemantic ()Lio/github/awakelab/awake/core/geometry/VertexSemantic;
+	public final fun getSemantic ()Lcom/awakekt/awake/core/geometry/VertexSemantic;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/geometry/VertexAttributeKt {
-	public static final fun getVertexByteSize (Lio/github/awakelab/awake/core/geometry/GpuDataShape;)I
+public final class com/awakekt/awake/core/geometry/VertexAttributeKt {
+	public static final fun getVertexByteSize (Lcom/awakekt/awake/core/geometry/GpuDataShape;)I
 }
 
-public final class io/github/awakelab/awake/core/geometry/VertexFormat {
-	public static final field Companion Lio/github/awakelab/awake/core/geometry/VertexFormat$Companion;
+public final class com/awakekt/awake/core/geometry/VertexFormat {
+	public static final field Companion Lcom/awakekt/awake/core/geometry/VertexFormat$Companion;
 	public fun <init> (Ljava/util/List;)V
 	public final fun component1 ()Ljava/util/List;
-	public final fun copy (Ljava/util/List;)Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/geometry/VertexFormat;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/VertexFormat;
+	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun floatOffsetOf (Lio/github/awakelab/awake/core/geometry/VertexSemantic;)I
+	public final fun floatOffsetOf (Lcom/awakekt/awake/core/geometry/VertexSemantic;)I
 	public final fun getAttributes ()Ljava/util/List;
 	public final fun getEntries ()Ljava/util/List;
 	public final fun getStrideBytes ()I
@@ -171,70 +171,70 @@ public final class io/github/awakelab/awake/core/geometry/VertexFormat {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/geometry/VertexFormat$Companion {
-	public final fun getNone ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public final fun getPositionColor ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public final fun getPositionColorUv ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public final fun getPositionNormalColor ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public final fun getPositionNormalColorSkin ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public final fun getPositionNormalColorUv ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public final fun getPositionNormalColorUvSkin ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public final fun getPositionUv ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
+public final class com/awakekt/awake/core/geometry/VertexFormat$Companion {
+	public final fun getNone ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getPositionColor ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getPositionColorUv ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getPositionNormalColor ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getPositionNormalColorSkin ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getPositionNormalColorUv ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getPositionNormalColorUvSkin ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getPositionUv ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 }
 
-public final class io/github/awakelab/awake/core/geometry/VertexFormat$Entry {
-	public fun <init> (Lio/github/awakelab/awake/core/geometry/VertexAttribute;I)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/geometry/VertexAttribute;
+public final class com/awakekt/awake/core/geometry/VertexFormat$Entry {
+	public fun <init> (Lcom/awakekt/awake/core/geometry/VertexAttribute;I)V
+	public final fun component1 ()Lcom/awakekt/awake/core/geometry/VertexAttribute;
 	public final fun component2 ()I
-	public final fun copy (Lio/github/awakelab/awake/core/geometry/VertexAttribute;I)Lio/github/awakelab/awake/core/geometry/VertexFormat$Entry;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/geometry/VertexFormat$Entry;Lio/github/awakelab/awake/core/geometry/VertexAttribute;IILjava/lang/Object;)Lio/github/awakelab/awake/core/geometry/VertexFormat$Entry;
+	public final fun copy (Lcom/awakekt/awake/core/geometry/VertexAttribute;I)Lcom/awakekt/awake/core/geometry/VertexFormat$Entry;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/geometry/VertexFormat$Entry;Lcom/awakekt/awake/core/geometry/VertexAttribute;IILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/VertexFormat$Entry;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAttribute ()Lio/github/awakelab/awake/core/geometry/VertexAttribute;
+	public final fun getAttribute ()Lcom/awakekt/awake/core/geometry/VertexAttribute;
 	public final fun getOffsetBytes ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/geometry/VertexFormats2D {
+public final class com/awakekt/awake/core/geometry/VertexFormats2D {
 	public static final field FLOATS_PER_VERTEX I
 	public static final field GLYPH_FLOATS_PER_VERTEX I
 	public static final field INDICES_PER_QUAD I
-	public static final field INSTANCE Lio/github/awakelab/awake/core/geometry/VertexFormats2D;
+	public static final field INSTANCE Lcom/awakekt/awake/core/geometry/VertexFormats2D;
 	public static final field ROUNDED_QUAD_FLOATS_PER_VERTEX I
 	public static final field VERTICES_PER_QUAD I
-	public final fun getGlyph ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public final fun getQuad ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
-	public final fun getRoundedQuad ()Lio/github/awakelab/awake/core/geometry/VertexFormat;
+	public final fun getGlyph ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getQuad ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getRoundedQuad ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 }
 
-public final class io/github/awakelab/awake/core/geometry/VertexSemantic : java/lang/Enum {
-	public static final field Color Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field Custom Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field JointIndices Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field JointWeights Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field LocalPosition Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field Normal Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field Position Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field Radius Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field Size Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field Smoothing Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field Tangent Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field Transform Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static final field Uv Lio/github/awakelab/awake/core/geometry/VertexSemantic;
+public final class com/awakekt/awake/core/geometry/VertexSemantic : java/lang/Enum {
+	public static final field Color Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field Custom Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field JointIndices Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field JointWeights Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field LocalPosition Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field Normal Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field Position Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field Radius Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field Size Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field Smoothing Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field Tangent Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field Transform Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static final field Uv Lcom/awakekt/awake/core/geometry/VertexSemantic;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/geometry/VertexSemantic;
-	public static fun values ()[Lio/github/awakelab/awake/core/geometry/VertexSemantic;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/geometry/VertexSemantic;
+	public static fun values ()[Lcom/awakekt/awake/core/geometry/VertexSemantic;
 }
 
-public final class io/github/awakelab/awake/core/geometry/generate/MeshGenerateScope {
+public final class com/awakekt/awake/core/geometry/generate/MeshGenerateScope {
 	public fun <init> ()V
-	public final fun cube (FZLio/github/awakelab/awake/core/geometry/VertexFormat;)V
-	public static synthetic fun cube$default (Lio/github/awakelab/awake/core/geometry/generate/MeshGenerateScope;FZLio/github/awakelab/awake/core/geometry/VertexFormat;ILjava/lang/Object;)V
-	public final fun plane (FZLio/github/awakelab/awake/core/geometry/VertexFormat;)V
-	public static synthetic fun plane$default (Lio/github/awakelab/awake/core/geometry/generate/MeshGenerateScope;FZLio/github/awakelab/awake/core/geometry/VertexFormat;ILjava/lang/Object;)V
+	public final fun cube (FZLcom/awakekt/awake/core/geometry/VertexFormat;)V
+	public static synthetic fun cube$default (Lcom/awakekt/awake/core/geometry/generate/MeshGenerateScope;FZLcom/awakekt/awake/core/geometry/VertexFormat;ILjava/lang/Object;)V
+	public final fun plane (FZLcom/awakekt/awake/core/geometry/VertexFormat;)V
+	public static synthetic fun plane$default (Lcom/awakekt/awake/core/geometry/generate/MeshGenerateScope;FZLcom/awakekt/awake/core/geometry/VertexFormat;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/core/geometry/generate/MeshGeometryGeneratorsKt {
-	public static final fun generate (Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/core/geometry/MeshGeometry;
+public final class com/awakekt/awake/core/geometry/generate/MeshGeometryGeneratorsKt {
+	public static final fun generate (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
 }
 

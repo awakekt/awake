@@ -22,7 +22,7 @@ kotlin {
         // which every Android consumer of this backend does -- fails to merge manifests with an
         // error naming the namespace and neither owner. Invisible inside a composite build and
         // fatal for a consumer resolving both from Maven, which is where it was found.
-        namespace = "io.github.awakelab.awake.vulkan.backend"
+        namespace = "com.awakekt.awake.vulkan.backend"
     }
 
     // iosX64 (Intel simulator) dropped: Compose Multiplatform stopped publishing it

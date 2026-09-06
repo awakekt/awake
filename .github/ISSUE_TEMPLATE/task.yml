@@ -1,0 +1,41 @@
+name: Engine Task / Refactor
+description: Propose an internal technical task, refactor, or build improvement.
+title: "[Task]: "
+labels: ["type: task"]
+body:
+  - type: dropdown
+    id: subsystem
+    attributes:
+      label: Subsystem / Area
+      description: Target module or infrastructure.
+      options:
+        - "awake:backend:vulkan"
+        - "awake:backend:webgpu"
+        - "awake:core"
+        - "awake:ecs"
+        - "awake:compose"
+        - "awake:scene"
+        - "apps:studio"
+        - "build-logic / CI"
+        - "docs / reference"
+    validations:
+      required: true
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective & Motivation
+      description: What technical change or refactoring needs to be performed, and why?
+    validations:
+      required: true
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Implementation Plan / Acceptance Criteria
+      description: Checklist of steps or criteria required to complete this task.
+      value: |
+        - [ ] Implementation completed
+        - [ ] Unit tests added / updated
+        - [ ] Verified across active platforms (Desktop JVM, WebGPU, etc.)
+        - [ ] Documentation updated if public API changed
+    validations:
+      required: true

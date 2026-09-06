@@ -1,37 +1,37 @@
-public final class io/github/awakelab/awake/core/math/Aabb {
-	public static final field Companion Lio/github/awakelab/awake/core/math/Aabb$Companion;
-	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component2 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun contains (Lio/github/awakelab/awake/core/math/Vec3f;)Z
-	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Aabb;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;ILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Aabb;
+public final class com/awakekt/awake/core/math/Aabb {
+	public static final field Companion Lcom/awakekt/awake/core/math/Aabb$Companion;
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun contains (Lcom/awakekt/awake/core/math/Vec3f;)Z
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Aabb;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/Aabb;
 	public final fun corners ()Ljava/util/List;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCenter ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getExtents ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getMax ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getMin ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getCenter ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getExtents ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getMax ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getMin ()Lcom/awakekt/awake/core/math/Vec3f;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-	public final fun transformed (Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Aabb;
-	public final fun union (Lio/github/awakelab/awake/core/math/Aabb;)Lio/github/awakelab/awake/core/math/Aabb;
+	public final fun transformed (Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Aabb;
+	public final fun union (Lcom/awakekt/awake/core/math/Aabb;)Lcom/awakekt/awake/core/math/Aabb;
 }
 
-public final class io/github/awakelab/awake/core/math/Aabb$Companion {
-	public final fun fromPositions ([FI)Lio/github/awakelab/awake/core/math/Aabb;
-	public static synthetic fun fromPositions$default (Lio/github/awakelab/awake/core/math/Aabb$Companion;[FIILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Aabb;
+public final class com/awakekt/awake/core/math/Aabb$Companion {
+	public final fun fromPositions ([FI)Lcom/awakekt/awake/core/math/Aabb;
+	public static synthetic fun fromPositions$default (Lcom/awakekt/awake/core/math/Aabb$Companion;[FIILjava/lang/Object;)Lcom/awakekt/awake/core/math/Aabb;
 	public final fun getEDGES ()Ljava/util/List;
 }
 
-public final class io/github/awakelab/awake/core/math/AabbKt {
-	public static final fun intersects (Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Aabb;)Z
-	public static final fun squaredDistanceTo (Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Vec3f;)F
+public final class com/awakekt/awake/core/math/AabbKt {
+	public static final fun intersects (Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Aabb;)Z
+	public static final fun squaredDistanceTo (Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Vec3f;)F
 }
 
-public final class io/github/awakelab/awake/core/math/Angle {
-	public static final field Companion Lio/github/awakelab/awake/core/math/Angle$Companion;
-	public static final synthetic fun box-impl (F)Lio/github/awakelab/awake/core/math/Angle;
+public final class com/awakekt/awake/core/math/Angle {
+	public static final field Companion Lcom/awakekt/awake/core/math/Angle$Companion;
+	public static final synthetic fun box-impl (F)Lcom/awakekt/awake/core/math/Angle;
 	public static fun constructor-impl (F)F
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (FLjava/lang/Object;)Z
@@ -45,26 +45,26 @@ public final class io/github/awakelab/awake/core/math/Angle {
 	public final synthetic fun unbox-impl ()F
 }
 
-public final class io/github/awakelab/awake/core/math/Angle$Companion {
-	public final fun fromDegrees-h8UeWro (F)F
-	public final fun fromRadians-h8UeWro (F)F
+public final class com/awakekt/awake/core/math/Angle$Companion {
+	public final fun fromDegrees-31Twupo (F)F
+	public final fun fromRadians-31Twupo (F)F
 }
 
-public final class io/github/awakelab/awake/core/math/AngleKt {
+public final class com/awakekt/awake/core/math/AngleKt {
 	public static final fun getAngleDeg (F)F
 	public static final fun getAngleDeg (I)F
 	public static final fun getAngleRad (F)F
 	public static final fun getAngleRad (I)F
 }
 
-public final class io/github/awakelab/awake/core/math/CameraClipPreset {
-	public static final field Companion Lio/github/awakelab/awake/core/math/CameraClipPreset$Companion;
+public final class com/awakekt/awake/core/math/CameraClipPreset {
+	public static final field Companion Lcom/awakekt/awake/core/math/CameraClipPreset$Companion;
 	public fun <init> (FFF)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()F
-	public final fun copy (FFF)Lio/github/awakelab/awake/core/math/CameraClipPreset;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/CameraClipPreset;FFFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/CameraClipPreset;
+	public final fun copy (FFF)Lcom/awakekt/awake/core/math/CameraClipPreset;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/CameraClipPreset;FFFILjava/lang/Object;)Lcom/awakekt/awake/core/math/CameraClipPreset;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFarPaddingMultiplier ()F
 	public final fun getMaxDepthRangeRatio ()F
@@ -73,17 +73,17 @@ public final class io/github/awakelab/awake/core/math/CameraClipPreset {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/CameraClipPreset$Companion {
-	public final fun getStandard ()Lio/github/awakelab/awake/core/math/CameraClipPreset;
+public final class com/awakekt/awake/core/math/CameraClipPreset$Companion {
+	public final fun getStandard ()Lcom/awakekt/awake/core/math/CameraClipPreset;
 }
 
-public final class io/github/awakelab/awake/core/math/CameraClipRange {
-	public static final field Companion Lio/github/awakelab/awake/core/math/CameraClipRange$Companion;
+public final class com/awakekt/awake/core/math/CameraClipRange {
+	public static final field Companion Lcom/awakekt/awake/core/math/CameraClipRange$Companion;
 	public fun <init> (FF)V
 	public final fun component1 ()F
 	public final fun component2 ()F
-	public final fun copy (FF)Lio/github/awakelab/awake/core/math/CameraClipRange;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/CameraClipRange;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/CameraClipRange;
+	public final fun copy (FF)Lcom/awakekt/awake/core/math/CameraClipRange;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/CameraClipRange;FFILjava/lang/Object;)Lcom/awakekt/awake/core/math/CameraClipRange;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFar ()F
 	public final fun getNear ()F
@@ -91,107 +91,107 @@ public final class io/github/awakelab/awake/core/math/CameraClipRange {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/CameraClipRange$Companion {
-	public final fun forRequiredFar (FLio/github/awakelab/awake/core/math/CameraClipPreset;)Lio/github/awakelab/awake/core/math/CameraClipRange;
-	public static synthetic fun forRequiredFar$default (Lio/github/awakelab/awake/core/math/CameraClipRange$Companion;FLio/github/awakelab/awake/core/math/CameraClipPreset;ILjava/lang/Object;)Lio/github/awakelab/awake/core/math/CameraClipRange;
+public final class com/awakekt/awake/core/math/CameraClipRange$Companion {
+	public final fun forRequiredFar (FLcom/awakekt/awake/core/math/CameraClipPreset;)Lcom/awakekt/awake/core/math/CameraClipRange;
+	public static synthetic fun forRequiredFar$default (Lcom/awakekt/awake/core/math/CameraClipRange$Companion;FLcom/awakekt/awake/core/math/CameraClipPreset;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/CameraClipRange;
 }
 
-public final class io/github/awakelab/awake/core/math/CameraMathUtils {
-	public static final field INSTANCE Lio/github/awakelab/awake/core/math/CameraMathUtils;
+public final class com/awakekt/awake/core/math/CameraMathUtils {
+	public static final field INSTANCE Lcom/awakekt/awake/core/math/CameraMathUtils;
 	public static final field MIN_EYE_CENTER_DISTANCE_SQ F
-	public final fun applyHorizontalPan (Lio/github/awakelab/awake/core/math/CameraPoseState;FFFF)Z
-	public final fun applyOrbitDrag (Lio/github/awakelab/awake/core/math/CameraPoseState;FFF)Z
-	public static synthetic fun applyOrbitDrag$default (Lio/github/awakelab/awake/core/math/CameraMathUtils;Lio/github/awakelab/awake/core/math/CameraPoseState;FFFILjava/lang/Object;)Z
-	public final fun applyScreenSpacePan (Lio/github/awakelab/awake/core/math/CameraPoseState;FFF)Z
-	public static synthetic fun applyScreenSpacePan$default (Lio/github/awakelab/awake/core/math/CameraMathUtils;Lio/github/awakelab/awake/core/math/CameraPoseState;FFFILjava/lang/Object;)Z
-	public final fun applyZoom (Lio/github/awakelab/awake/core/math/CameraPoseState;FFFF)Z
-	public static synthetic fun applyZoom$default (Lio/github/awakelab/awake/core/math/CameraMathUtils;Lio/github/awakelab/awake/core/math/CameraPoseState;FFFFILjava/lang/Object;)Z
-	public final fun computeFreeFlyStep (Lio/github/awakelab/awake/core/math/Vec3f;FFLio/github/awakelab/awake/core/math/Vec3f;FFLio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun computeOrbitEye (Lio/github/awakelab/awake/core/math/Vec3f;FFFLio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun computeThirdPersonPose (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FFFLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)V
-	public final fun forwardVector (FFLio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun applyHorizontalPan (Lcom/awakekt/awake/core/math/CameraPoseState;FFFF)Z
+	public final fun applyOrbitDrag (Lcom/awakekt/awake/core/math/CameraPoseState;FFF)Z
+	public static synthetic fun applyOrbitDrag$default (Lcom/awakekt/awake/core/math/CameraMathUtils;Lcom/awakekt/awake/core/math/CameraPoseState;FFFILjava/lang/Object;)Z
+	public final fun applyScreenSpacePan (Lcom/awakekt/awake/core/math/CameraPoseState;FFF)Z
+	public static synthetic fun applyScreenSpacePan$default (Lcom/awakekt/awake/core/math/CameraMathUtils;Lcom/awakekt/awake/core/math/CameraPoseState;FFFILjava/lang/Object;)Z
+	public final fun applyZoom (Lcom/awakekt/awake/core/math/CameraPoseState;FFFF)Z
+	public static synthetic fun applyZoom$default (Lcom/awakekt/awake/core/math/CameraMathUtils;Lcom/awakekt/awake/core/math/CameraPoseState;FFFFILjava/lang/Object;)Z
+	public final fun computeFreeFlyStep (Lcom/awakekt/awake/core/math/Vec3f;FFLcom/awakekt/awake/core/math/Vec3f;FFLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun computeOrbitEye (Lcom/awakekt/awake/core/math/Vec3f;FFFLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun computeThirdPersonPose (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFFLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun forwardVector (FFLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getPITCH_LIMIT_RAD ()F
-	public final fun safeLookAt (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Mat4;
-	public static synthetic fun safeLookAt$default (Lio/github/awakelab/awake/core/math/CameraMathUtils;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Mat4;ILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun safeLookAt (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public static synthetic fun safeLookAt$default (Lcom/awakekt/awake/core/math/CameraMathUtils;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/Mat4;
 	public final fun validateLensParameters (FFFF)V
-	public static synthetic fun validateLensParameters$default (Lio/github/awakelab/awake/core/math/CameraMathUtils;FFFFILjava/lang/Object;)V
+	public static synthetic fun validateLensParameters$default (Lcom/awakekt/awake/core/math/CameraMathUtils;FFFFILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/core/math/CameraPoseState {
+public final class com/awakekt/awake/core/math/CameraPoseState {
 	public fun <init> ()V
-	public fun <init> (FFFLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)V
-	public synthetic fun <init> (FFFLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFFLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public synthetic fun <init> (FFFLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()F
-	public final fun component4 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component5 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun copy (FFFLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/CameraPoseState;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/CameraPoseState;FFFLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;ILjava/lang/Object;)Lio/github/awakelab/awake/core/math/CameraPoseState;
+	public final fun component4 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component5 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun copy (FFFLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/CameraPoseState;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/CameraPoseState;FFFLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/CameraPoseState;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCenter ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getCenter ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getDistance ()F
-	public final fun getEye ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getEye ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getPitch ()F
 	public final fun getYaw ()F
 	public fun hashCode ()I
-	public final fun recomputeEye ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun recomputeEye ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun setDistance (F)V
 	public final fun setPitch (F)V
 	public final fun setYaw (F)V
-	public final fun syncFromLens (Lio/github/awakelab/awake/core/math/Lens;)V
+	public final fun syncFromLens (Lcom/awakekt/awake/core/math/Lens;)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/ClipSpace : java/lang/Enum {
-	public static final field OpenGl Lio/github/awakelab/awake/core/math/ClipSpace;
-	public static final field Vulkan Lio/github/awakelab/awake/core/math/ClipSpace;
-	public static final field WebGpu Lio/github/awakelab/awake/core/math/ClipSpace;
+public final class com/awakekt/awake/core/math/ClipSpace : java/lang/Enum {
+	public static final field OpenGl Lcom/awakekt/awake/core/math/ClipSpace;
+	public static final field Vulkan Lcom/awakekt/awake/core/math/ClipSpace;
+	public static final field WebGpu Lcom/awakekt/awake/core/math/ClipSpace;
 	public final fun getDepthZeroToOne ()Z
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getFlipY ()Z
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/math/ClipSpace;
-	public static fun values ()[Lio/github/awakelab/awake/core/math/ClipSpace;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/math/ClipSpace;
+	public static fun values ()[Lcom/awakekt/awake/core/math/ClipSpace;
 }
 
-public final class io/github/awakelab/awake/core/math/Frustum {
-	public static final field INSTANCE Lio/github/awakelab/awake/core/math/Frustum;
-	public final fun corners (Lio/github/awakelab/awake/core/math/Lens;F)Ljava/util/List;
+public final class com/awakekt/awake/core/math/Frustum {
+	public static final field INSTANCE Lcom/awakekt/awake/core/math/Frustum;
+	public final fun corners (Lcom/awakekt/awake/core/math/Lens;F)Ljava/util/List;
 	public final fun getEDGES ()Ljava/util/List;
 }
 
-public final class io/github/awakelab/awake/core/math/FrustumKt {
-	public static final fun containsSphere (Ljava/util/List;Lio/github/awakelab/awake/core/math/Vec3f;F)Z
-	public static final fun intersects (Lio/github/awakelab/awake/core/math/Frustum;Lio/github/awakelab/awake/core/math/Lens;FLio/github/awakelab/awake/core/math/Aabb;)Z
-	public static final fun intersects (Ljava/util/List;Lio/github/awakelab/awake/core/math/Aabb;)Z
-	public static final fun planes (Lio/github/awakelab/awake/core/math/Frustum;Lio/github/awakelab/awake/core/math/Lens;F)Ljava/util/List;
+public final class com/awakekt/awake/core/math/FrustumKt {
+	public static final fun containsSphere (Ljava/util/List;Lcom/awakekt/awake/core/math/Vec3f;F)Z
+	public static final fun intersects (Lcom/awakekt/awake/core/math/Frustum;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/Aabb;)Z
+	public static final fun intersects (Ljava/util/List;Lcom/awakekt/awake/core/math/Aabb;)Z
+	public static final fun planes (Lcom/awakekt/awake/core/math/Frustum;Lcom/awakekt/awake/core/math/Lens;F)Ljava/util/List;
 }
 
-public final class io/github/awakelab/awake/core/math/GeometryKt {
-	public static final fun boundingCenter ([F)Lio/github/awakelab/awake/core/math/Vec3f;
+public final class com/awakekt/awake/core/math/GeometryKt {
+	public static final fun boundingCenter ([F)Lcom/awakekt/awake/core/math/Vec3f;
 	public static final fun boundingRadius ([F)F
 }
 
-public final class io/github/awakelab/awake/core/math/Grid {
-	public static final field INSTANCE Lio/github/awakelab/awake/core/math/Grid;
-	public final fun generateGridLines (FFLio/github/awakelab/awake/core/math/Vec3f;F)Ljava/util/List;
-	public static synthetic fun generateGridLines$default (Lio/github/awakelab/awake/core/math/Grid;FFLio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Ljava/util/List;
-	public final fun intersectGroundPlane (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/math/Vec3f;
-	public static synthetic fun intersectGroundPlane$default (Lio/github/awakelab/awake/core/math/Grid;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Vec3f;
+public final class com/awakekt/awake/core/math/Grid {
+	public static final field INSTANCE Lcom/awakekt/awake/core/math/Grid;
+	public final fun generateGridLines (FFLcom/awakekt/awake/core/math/Vec3f;F)Ljava/util/List;
+	public static synthetic fun generateGridLines$default (Lcom/awakekt/awake/core/math/Grid;FFLcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Ljava/util/List;
+	public final fun intersectGroundPlane (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/core/math/Vec3f;
+	public static synthetic fun intersectGroundPlane$default (Lcom/awakekt/awake/core/math/Grid;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun lines (FIF)Ljava/util/List;
-	public static synthetic fun lines$default (Lio/github/awakelab/awake/core/math/Grid;FIFILjava/lang/Object;)Ljava/util/List;
+	public static synthetic fun lines$default (Lcom/awakekt/awake/core/math/Grid;FIFILjava/lang/Object;)Ljava/util/List;
 	public final fun snapToGrid (FF)F
 }
 
-public final class io/github/awakelab/awake/core/math/GridOrigin : java/lang/Enum {
-	public static final field Centered Lio/github/awakelab/awake/core/math/GridOrigin;
-	public static final field Corner Lio/github/awakelab/awake/core/math/GridOrigin;
+public final class com/awakekt/awake/core/math/GridOrigin : java/lang/Enum {
+	public static final field Centered Lcom/awakekt/awake/core/math/GridOrigin;
+	public static final field Corner Lcom/awakekt/awake/core/math/GridOrigin;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/math/GridOrigin;
-	public static fun values ()[Lio/github/awakelab/awake/core/math/GridOrigin;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/math/GridOrigin;
+	public static fun values ()[Lcom/awakekt/awake/core/math/GridOrigin;
 }
 
-public final class io/github/awakelab/awake/core/math/GridSpec {
+public final class com/awakekt/awake/core/math/GridSpec {
 	public fun <init> ()V
 	public fun <init> (FFFZ)V
 	public synthetic fun <init> (FFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -199,8 +199,8 @@ public final class io/github/awakelab/awake/core/math/GridSpec {
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()Z
-	public final fun copy (FFFZ)Lio/github/awakelab/awake/core/math/GridSpec;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/GridSpec;FFFZILjava/lang/Object;)Lio/github/awakelab/awake/core/math/GridSpec;
+	public final fun copy (FFFZ)Lcom/awakekt/awake/core/math/GridSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/GridSpec;FFFZILjava/lang/Object;)Lcom/awakekt/awake/core/math/GridSpec;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getPrimaryStep ()F
 	public final fun getShowAxisLines ()Z
@@ -210,53 +210,53 @@ public final class io/github/awakelab/awake/core/math/GridSpec {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/Lens {
-	public static final field Companion Lio/github/awakelab/awake/core/math/Lens$Companion;
+public final class com/awakekt/awake/core/math/Lens {
+	public static final field Companion Lcom/awakekt/awake/core/math/Lens$Companion;
 	public static final field DEFAULT_FAR F
 	public static final field DEFAULT_FOV_DEGREES F
 	public static final field DEFAULT_NEAR F
-	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FFF)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun getCenter ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getEye ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getCenter ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getEye ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getFar ()F
 	public final fun getFovYRadians ()F
 	public final fun getNear ()F
 	public final fun getOrthoHalfHeight ()F
-	public final fun getProjection ()Lio/github/awakelab/awake/core/math/Lens$Projection;
-	public final fun getUp ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun setCenter (Lio/github/awakelab/awake/core/math/Vec3f;)V
-	public final fun setEye (Lio/github/awakelab/awake/core/math/Vec3f;)V
+	public final fun getProjection ()Lcom/awakekt/awake/core/math/Lens$Projection;
+	public final fun getUp ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun setCenter (Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun setEye (Lcom/awakekt/awake/core/math/Vec3f;)V
 	public final fun setFar (F)V
 	public final fun setFovYRadians (F)V
 	public final fun setNear (F)V
 	public final fun setOrthoHalfHeight (F)V
-	public final fun setProjection (Lio/github/awakelab/awake/core/math/Lens$Projection;)V
-	public final fun setUp (Lio/github/awakelab/awake/core/math/Vec3f;)V
-	public final fun viewProjectionMatrix (FLio/github/awakelab/awake/core/math/ClipSpace;)Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun setProjection (Lcom/awakekt/awake/core/math/Lens$Projection;)V
+	public final fun setUp (Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun viewProjectionMatrix (FLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math/Mat4;
 }
 
-public final class io/github/awakelab/awake/core/math/Lens$Companion {
+public final class com/awakekt/awake/core/math/Lens$Companion {
 	public final fun getDEFAULT_ORTHO_HALF_HEIGHT ()F
-	public final fun perspective (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FFF)Lio/github/awakelab/awake/core/math/Lens;
-	public static synthetic fun perspective$default (Lio/github/awakelab/awake/core/math/Lens$Companion;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FFFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Lens;
+	public final fun perspective (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFF)Lcom/awakekt/awake/core/math/Lens;
+	public static synthetic fun perspective$default (Lcom/awakekt/awake/core/math/Lens$Companion;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFFILjava/lang/Object;)Lcom/awakekt/awake/core/math/Lens;
 }
 
-public final class io/github/awakelab/awake/core/math/Lens$Projection : java/lang/Enum {
-	public static final field Orthographic Lio/github/awakelab/awake/core/math/Lens$Projection;
-	public static final field Perspective Lio/github/awakelab/awake/core/math/Lens$Projection;
+public final class com/awakekt/awake/core/math/Lens$Projection : java/lang/Enum {
+	public static final field Orthographic Lcom/awakekt/awake/core/math/Lens$Projection;
+	public static final field Perspective Lcom/awakekt/awake/core/math/Lens$Projection;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/math/Lens$Projection;
-	public static fun values ()[Lio/github/awakelab/awake/core/math/Lens$Projection;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/math/Lens$Projection;
+	public static fun values ()[Lcom/awakekt/awake/core/math/Lens$Projection;
 }
 
-public final class io/github/awakelab/awake/core/math/LensKt {
-	public static final fun projectToViewport (Lio/github/awakelab/awake/core/math/Lens;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Mat4;FF)Lio/github/awakelab/awake/core/math2d/Vec2;
-	public static final fun rayThroughViewport (Lio/github/awakelab/awake/core/math/Lens;FFLio/github/awakelab/awake/core/math/Mat4;FF)Lio/github/awakelab/awake/core/math/Ray;
+public final class com/awakekt/awake/core/math/LensKt {
+	public static final fun projectToViewport (Lcom/awakekt/awake/core/math/Lens;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;FF)Lcom/awakekt/awake/core/math2d/Vec2;
+	public static final fun rayThroughViewport (Lcom/awakekt/awake/core/math/Lens;FFLcom/awakekt/awake/core/math/Mat4;FF)Lcom/awakekt/awake/core/math/Ray;
 }
 
-public final class io/github/awakelab/awake/core/math/Mat4 {
-	public static final field Companion Lio/github/awakelab/awake/core/math/Mat4$Companion;
+public final class com/awakekt/awake/core/math/Mat4 {
+	public static final field Companion Lcom/awakekt/awake/core/math/Mat4$Companion;
 	public fun <init> ()V
 	public final fun getData ()[F
 	public final fun getM00 ()F
@@ -276,14 +276,14 @@ public final class io/github/awakelab/awake/core/math/Mat4 {
 	public final fun getM32 ()F
 	public final fun getM33 ()F
 	public final fun identity ()V
-	public final fun rotate (FLio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun rotateX (F)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun rotateY (F)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun rotateZ (F)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun scale (F)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun scale (FFF)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun set (Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun setEulerTRS (FFFFFFFFF)Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun rotate (FLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun rotateX (F)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun rotateY (F)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun rotateZ (F)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun scale (F)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun scale (FFF)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun set (Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun setEulerTRS (FFFFFFFFF)Lcom/awakekt/awake/core/math/Mat4;
 	public final fun setM00 (F)V
 	public final fun setM01 (F)V
 	public final fun setM02 (F)V
@@ -300,69 +300,69 @@ public final class io/github/awakelab/awake/core/math/Mat4 {
 	public final fun setM31 (F)V
 	public final fun setM32 (F)V
 	public final fun setM33 (F)V
-	public final fun setTranslationScale (FFFF)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun setTrs (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun setTranslationScale (FFFF)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun setTrs (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Mat4;
 	public fun toString ()Ljava/lang/String;
-	public final fun translate (FFF)Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun translate (FFF)Lcom/awakekt/awake/core/math/Mat4;
 }
 
-public final class io/github/awakelab/awake/core/math/Mat4$Companion {
-	public final fun fromTrs (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun frustum (FFFFFFLio/github/awakelab/awake/core/math/ClipSpace;)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun multiplyColumnMajor (Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun multiplyInPlace (Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun orthographic (FFFFFFLio/github/awakelab/awake/core/math/ClipSpace;)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun perspective (FFFFLio/github/awakelab/awake/core/math/ClipSpace;)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun setLookAt (FFFFFFFFF)Lio/github/awakelab/awake/core/math/Mat4;
-	public final fun setLookAt (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Mat4;
+public final class com/awakekt/awake/core/math/Mat4$Companion {
+	public final fun fromTrs (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun frustum (FFFFFFLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun multiplyColumnMajor (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun multiplyInPlace (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun orthographic (FFFFFFLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun perspective (FFFFLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun setLookAt (FFFFFFFFF)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun setLookAt (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Mat4;
 }
 
-public final class io/github/awakelab/awake/core/math/MatrixKt {
-	public static final fun determinant (Lio/github/awakelab/awake/core/math/Mat4;)F
-	public static final fun inverse (Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Mat4;
-	public static final fun normalMatrix (Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Mat4;
-	public static final fun plus (Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Mat4;
-	public static final fun times (Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Mat4;
-	public static final fun transformPosition (Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/math/Vec4;)Lio/github/awakelab/awake/core/math/Vec4;
-	public static final fun transformToPosition (Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/math/Vec4;)V
-	public static final fun transpose (Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Mat4;
+public final class com/awakekt/awake/core/math/MatrixKt {
+	public static final fun determinant (Lcom/awakekt/awake/core/math/Mat4;)F
+	public static final fun inverse (Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public static final fun normalMatrix (Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public static final fun plus (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public static final fun times (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public static final fun transformPosition (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec4;)Lcom/awakekt/awake/core/math/Vec4;
+	public static final fun transformToPosition (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec4;)V
+	public static final fun transpose (Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
 }
 
-public final class io/github/awakelab/awake/core/math/Noise {
-	public static final field INSTANCE Lio/github/awakelab/awake/core/math/Noise;
+public final class com/awakekt/awake/core/math/Noise {
+	public static final field INSTANCE Lcom/awakekt/awake/core/math/Noise;
 	public final fun fractalNoise2D (FFIIFF)F
-	public static synthetic fun fractalNoise2D$default (Lio/github/awakelab/awake/core/math/Noise;FFIIFFILjava/lang/Object;)F
+	public static synthetic fun fractalNoise2D$default (Lcom/awakekt/awake/core/math/Noise;FFIIFFILjava/lang/Object;)F
 	public final fun valueNoise2D (FFI)F
 }
 
-public final class io/github/awakelab/awake/core/math/OcclusionKt {
-	public static final fun isOccludedBy (Lio/github/awakelab/awake/core/math/ScreenBounds;Lio/github/awakelab/awake/core/math/ScreenBounds;)Z
-	public static final fun screenBounds (Lio/github/awakelab/awake/core/math/Lens;Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Mat4;FF)Lio/github/awakelab/awake/core/math/ScreenBounds;
-	public static synthetic fun screenBounds$default (Lio/github/awakelab/awake/core/math/Lens;Lio/github/awakelab/awake/core/math/Aabb;Lio/github/awakelab/awake/core/math/Mat4;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/ScreenBounds;
+public final class com/awakekt/awake/core/math/OcclusionKt {
+	public static final fun isOccludedBy (Lcom/awakekt/awake/core/math/ScreenBounds;Lcom/awakekt/awake/core/math/ScreenBounds;)Z
+	public static final fun screenBounds (Lcom/awakekt/awake/core/math/Lens;Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Mat4;FF)Lcom/awakekt/awake/core/math/ScreenBounds;
+	public static synthetic fun screenBounds$default (Lcom/awakekt/awake/core/math/Lens;Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Mat4;FFILjava/lang/Object;)Lcom/awakekt/awake/core/math/ScreenBounds;
 }
 
-public final class io/github/awakelab/awake/core/math/Plane {
-	public static final field Companion Lio/github/awakelab/awake/core/math/Plane$Companion;
-	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;F)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
+public final class com/awakekt/awake/core/math/Plane {
+	public static final field Companion Lcom/awakekt/awake/core/math/Plane$Companion;
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;F)V
+	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component2 ()F
-	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/math/Plane;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/Plane;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Plane;
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/core/math/Plane;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/Plane;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/core/math/Plane;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDistance ()F
-	public final fun getNormal ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getNormal ()Lcom/awakekt/awake/core/math/Vec3f;
 	public fun hashCode ()I
-	public final fun project (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun signedDistanceTo (Lio/github/awakelab/awake/core/math/Vec3f;)F
+	public final fun project (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun signedDistanceTo (Lcom/awakekt/awake/core/math/Vec3f;)F
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/Plane$Companion {
-	public final fun through (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Plane;
+public final class com/awakekt/awake/core/math/Plane$Companion {
+	public final fun through (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Plane;
 }
 
-public final class io/github/awakelab/awake/core/math/Quat {
-	public static final field Companion Lio/github/awakelab/awake/core/math/Quat$Companion;
+public final class com/awakekt/awake/core/math/Quat {
+	public static final field Companion Lcom/awakekt/awake/core/math/Quat$Companion;
 	public fun <init> ()V
 	public fun <init> (FFFF)V
 	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -370,76 +370,76 @@ public final class io/github/awakelab/awake/core/math/Quat {
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()F
-	public final fun conjugate ()Lio/github/awakelab/awake/core/math/Quat;
-	public final fun copy (FFFF)Lio/github/awakelab/awake/core/math/Quat;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/Quat;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Quat;
+	public final fun conjugate ()Lcom/awakekt/awake/core/math/Quat;
+	public final fun copy (FFFF)Lcom/awakekt/awake/core/math/Quat;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/Quat;FFFFILjava/lang/Object;)Lcom/awakekt/awake/core/math/Quat;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getW ()F
 	public final fun getX ()F
 	public final fun getY ()F
 	public final fun getZ ()F
 	public fun hashCode ()I
-	public final fun inverse ()Lio/github/awakelab/awake/core/math/Quat;
-	public final fun rotate (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun set (Lio/github/awakelab/awake/core/math/Quat;)Lio/github/awakelab/awake/core/math/Quat;
+	public final fun inverse ()Lcom/awakekt/awake/core/math/Quat;
+	public final fun rotate (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun set (Lcom/awakekt/awake/core/math/Quat;)Lcom/awakekt/awake/core/math/Quat;
 	public final fun setW (F)V
 	public final fun setX (F)V
 	public final fun setY (F)V
 	public final fun setZ (F)V
-	public final fun times (Lio/github/awakelab/awake/core/math/Quat;)Lio/github/awakelab/awake/core/math/Quat;
-	public final fun toEuler ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun toEuler (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun toMat4 ()Lio/github/awakelab/awake/core/math/Mat4;
+	public final fun times (Lcom/awakekt/awake/core/math/Quat;)Lcom/awakekt/awake/core/math/Quat;
+	public final fun toEuler ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun toEuler (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun toMat4 ()Lcom/awakekt/awake/core/math/Mat4;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/Quat$Companion {
-	public final fun fromAxisAngle (Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/math/Quat;
-	public final fun fromEuler (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Quat;
-	public final fun getIDENTITY ()Lio/github/awakelab/awake/core/math/Quat;
-	public final fun nlerp (Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/core/math/Quat;F)Lio/github/awakelab/awake/core/math/Quat;
+public final class com/awakekt/awake/core/math/Quat$Companion {
+	public final fun fromAxisAngle (Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/core/math/Quat;
+	public final fun fromEuler (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Quat;
+	public final fun getIDENTITY ()Lcom/awakekt/awake/core/math/Quat;
+	public final fun nlerp (Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Quat;F)Lcom/awakekt/awake/core/math/Quat;
 }
 
-public final class io/github/awakelab/awake/core/math/Ray {
-	public static final field Companion Lio/github/awakelab/awake/core/math/Ray$Companion;
-	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component2 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Ray;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/Ray;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;ILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Ray;
+public final class com/awakekt/awake/core/math/Ray {
+	public static final field Companion Lcom/awakekt/awake/core/math/Ray$Companion;
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Ray;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/Ray;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/Ray;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getDirection ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getOrigin ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getDirection ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getOrigin ()Lcom/awakekt/awake/core/math/Vec3f;
 	public fun hashCode ()I
-	public final fun intersectAabb (Lio/github/awakelab/awake/core/math/Aabb;)Ljava/lang/Float;
-	public final fun intersectGroundPlane (FF)Lio/github/awakelab/awake/core/math/Vec3f;
-	public static synthetic fun intersectGroundPlane$default (Lio/github/awakelab/awake/core/math/Ray;FFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun intersectPlane (Lio/github/awakelab/awake/core/math/Plane;)Ljava/lang/Float;
-	public final fun intersectSphere (Lio/github/awakelab/awake/core/math/Vec3f;F)Ljava/lang/Float;
-	public final fun pointAt (F)Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun intersectAabb (Lcom/awakekt/awake/core/math/Aabb;)Ljava/lang/Float;
+	public final fun intersectGroundPlane (FF)Lcom/awakekt/awake/core/math/Vec3f;
+	public static synthetic fun intersectGroundPlane$default (Lcom/awakekt/awake/core/math/Ray;FFILjava/lang/Object;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun intersectPlane (Lcom/awakekt/awake/core/math/Plane;)Ljava/lang/Float;
+	public final fun intersectSphere (Lcom/awakekt/awake/core/math/Vec3f;F)Ljava/lang/Float;
+	public final fun pointAt (F)Lcom/awakekt/awake/core/math/Vec3f;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/Ray$Companion {
-	public final fun through (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Ray;
+public final class com/awakekt/awake/core/math/Ray$Companion {
+	public final fun through (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Ray;
 }
 
-public final class io/github/awakelab/awake/core/math/ScalarMathKt {
+public final class com/awakekt/awake/core/math/ScalarMathKt {
 	public static final fun clamp (DDD)D
 	public static final fun clamp (FFF)F
 	public static final fun lerp (DDD)D
 	public static final fun lerp (FFF)F
 }
 
-public final class io/github/awakelab/awake/core/math/ScreenBounds {
+public final class com/awakekt/awake/core/math/ScreenBounds {
 	public fun <init> (FFFFF)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()F
 	public final fun component5 ()F
-	public final fun copy (FFFFF)Lio/github/awakelab/awake/core/math/ScreenBounds;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/ScreenBounds;FFFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/ScreenBounds;
+	public final fun copy (FFFFF)Lcom/awakekt/awake/core/math/ScreenBounds;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/ScreenBounds;FFFFFILjava/lang/Object;)Lcom/awakekt/awake/core/math/ScreenBounds;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getMaxX ()F
 	public final fun getMaxY ()F
@@ -450,162 +450,162 @@ public final class io/github/awakelab/awake/core/math/ScreenBounds {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/Vec3d {
-	public static final field Companion Lio/github/awakelab/awake/core/math/Vec3d$Companion;
+public final class com/awakekt/awake/core/math/Vec3d {
+	public static final field Companion Lcom/awakekt/awake/core/math/Vec3d$Companion;
 	public fun <init> ()V
 	public fun <init> (DDD)V
 	public synthetic fun <init> (DDDILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun add (Lio/github/awakelab/awake/core/math/Vec3d;)Lio/github/awakelab/awake/core/math/Vec3d;
+	public final fun add (Lcom/awakekt/awake/core/math/Vec3d;)Lcom/awakekt/awake/core/math/Vec3d;
 	public final fun component1 ()D
 	public final fun component2 ()D
 	public final fun component3 ()D
-	public final fun copy (DDD)Lio/github/awakelab/awake/core/math/Vec3d;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/Vec3d;DDDILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun cross (Lio/github/awakelab/awake/core/math/Vec3d;)Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun cross (Lio/github/awakelab/awake/core/math/Vec3d;Lio/github/awakelab/awake/core/math/Vec3d;)Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun dot (Lio/github/awakelab/awake/core/math/Vec3d;)D
+	public final fun copy (DDD)Lcom/awakekt/awake/core/math/Vec3d;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/Vec3d;DDDILjava/lang/Object;)Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun cross (Lcom/awakekt/awake/core/math/Vec3d;)Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun cross (Lcom/awakekt/awake/core/math/Vec3d;Lcom/awakekt/awake/core/math/Vec3d;)Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun dot (Lcom/awakekt/awake/core/math/Vec3d;)D
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getX ()D
 	public final fun getY ()D
 	public final fun getZ ()D
 	public fun hashCode ()I
 	public final fun length3 ()D
-	public final fun lerp (Lio/github/awakelab/awake/core/math/Vec3d;D)Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun minus (Lio/github/awakelab/awake/core/math/Vec3d;)Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun normalize ()Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun normalized ()Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun plus (Lio/github/awakelab/awake/core/math/Vec3d;)Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun scale (D)Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun set (DDD)Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun set (Lio/github/awakelab/awake/core/math/Vec3d;)Lio/github/awakelab/awake/core/math/Vec3d;
+	public final fun lerp (Lcom/awakekt/awake/core/math/Vec3d;D)Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun minus (Lcom/awakekt/awake/core/math/Vec3d;)Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun normalize ()Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun normalized ()Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun plus (Lcom/awakekt/awake/core/math/Vec3d;)Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun scale (D)Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun set (DDD)Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun set (Lcom/awakekt/awake/core/math/Vec3d;)Lcom/awakekt/awake/core/math/Vec3d;
 	public final fun setX (D)V
 	public final fun setY (D)V
 	public final fun setZ (D)V
-	public final fun squaredDistanceTo (Lio/github/awakelab/awake/core/math/Vec3d;)D
-	public final fun sub (Lio/github/awakelab/awake/core/math/Vec3d;)Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun times (D)Lio/github/awakelab/awake/core/math/Vec3d;
+	public final fun squaredDistanceTo (Lcom/awakekt/awake/core/math/Vec3d;)D
+	public final fun sub (Lcom/awakekt/awake/core/math/Vec3d;)Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun times (D)Lcom/awakekt/awake/core/math/Vec3d;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/Vec3d$Companion {
-	public final fun getBACK ()Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun getDOWN ()Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun getFORWARD ()Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun getLEFT ()Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun getONE ()Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun getRIGHT ()Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun getUP ()Lio/github/awakelab/awake/core/math/Vec3d;
-	public final fun getZERO ()Lio/github/awakelab/awake/core/math/Vec3d;
+public final class com/awakekt/awake/core/math/Vec3d$Companion {
+	public final fun getBACK ()Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun getDOWN ()Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun getFORWARD ()Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun getLEFT ()Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun getONE ()Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun getRIGHT ()Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun getUP ()Lcom/awakekt/awake/core/math/Vec3d;
+	public final fun getZERO ()Lcom/awakekt/awake/core/math/Vec3d;
 }
 
-public final class io/github/awakelab/awake/core/math/Vec3dKt {
-	public static final fun toVec3 (Lio/github/awakelab/awake/core/math/Vec3d;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public static final fun toVec3d (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3d;
+public final class com/awakekt/awake/core/math/Vec3dKt {
+	public static final fun toVec3 (Lcom/awakekt/awake/core/math/Vec3d;)Lcom/awakekt/awake/core/math/Vec3f;
+	public static final fun toVec3d (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3d;
 }
 
-public final class io/github/awakelab/awake/core/math/Vec3f {
-	public static final field Companion Lio/github/awakelab/awake/core/math/Vec3f$Companion;
+public final class com/awakekt/awake/core/math/Vec3f {
+	public static final field Companion Lcom/awakekt/awake/core/math/Vec3f$Companion;
 	public fun <init> ()V
 	public fun <init> (FFF)V
 	public synthetic fun <init> (FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun add (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun add (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()F
-	public final fun copy (FFF)Lio/github/awakelab/awake/core/math/Vec3f;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/Vec3f;FFFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun cross (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun distanceTo (Lio/github/awakelab/awake/core/math/Vec3f;)F
-	public final fun dot (Lio/github/awakelab/awake/core/math/Vec3f;)F
+	public final fun copy (FFF)Lcom/awakekt/awake/core/math/Vec3f;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/Vec3f;FFFILjava/lang/Object;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun cross (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun distanceTo (Lcom/awakekt/awake/core/math/Vec3f;)F
+	public final fun dot (Lcom/awakekt/awake/core/math/Vec3f;)F
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getX ()F
 	public final fun getY ()F
 	public final fun getZ ()F
 	public fun hashCode ()I
-	public final fun horizontalDistanceTo (Lio/github/awakelab/awake/core/math/Vec3f;)F
-	public final fun horizontalSquaredDistanceTo (Lio/github/awakelab/awake/core/math/Vec3f;)F
+	public final fun horizontalDistanceTo (Lcom/awakekt/awake/core/math/Vec3f;)F
+	public final fun horizontalSquaredDistanceTo (Lcom/awakekt/awake/core/math/Vec3f;)F
 	public final fun length3 ()F
-	public final fun lerp (Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun minus (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun moveTowards (Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun normalize ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun normalized ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun plus (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun scale (F)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun set (FFF)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun set (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun lerp (Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun minus (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun moveTowards (Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun normalize ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun normalized ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun plus (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun scale (F)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun set (FFF)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun set (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun setX (F)V
 	public final fun setY (F)V
 	public final fun setZ (F)V
-	public final fun squaredDistanceTo (Lio/github/awakelab/awake/core/math/Vec3f;)F
-	public final fun sub (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun times (F)Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun squaredDistanceTo (Lcom/awakekt/awake/core/math/Vec3f;)F
+	public final fun sub (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun times (F)Lcom/awakekt/awake/core/math/Vec3f;
 	public fun toString ()Ljava/lang/String;
-	public final fun yawTowards (Lio/github/awakelab/awake/core/math/Vec3f;)F
+	public final fun yawTowards (Lcom/awakekt/awake/core/math/Vec3f;)F
 }
 
-public final class io/github/awakelab/awake/core/math/Vec3f$Companion {
-	public final fun getBACK ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getDOWN ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getFORWARD ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getLEFT ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getONE ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getRIGHT ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getUP ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getZERO ()Lio/github/awakelab/awake/core/math/Vec3f;
+public final class com/awakekt/awake/core/math/Vec3f$Companion {
+	public final fun getBACK ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getDOWN ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getFORWARD ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getLEFT ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getONE ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getRIGHT ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getUP ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getZERO ()Lcom/awakekt/awake/core/math/Vec3f;
 }
 
-public final class io/github/awakelab/awake/core/math/Vec3i {
-	public static final field Companion Lio/github/awakelab/awake/core/math/Vec3i$Companion;
+public final class com/awakekt/awake/core/math/Vec3i {
+	public static final field Companion Lcom/awakekt/awake/core/math/Vec3i$Companion;
 	public fun <init> ()V
 	public fun <init> (III)V
 	public synthetic fun <init> (IIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun add (Lio/github/awakelab/awake/core/math/Vec3i;)Lio/github/awakelab/awake/core/math/Vec3i;
+	public final fun add (Lcom/awakekt/awake/core/math/Vec3i;)Lcom/awakekt/awake/core/math/Vec3i;
 	public final fun component1 ()I
 	public final fun component2 ()I
 	public final fun component3 ()I
-	public final fun copy (III)Lio/github/awakelab/awake/core/math/Vec3i;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/Vec3i;IIIILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun dot (Lio/github/awakelab/awake/core/math/Vec3i;)J
+	public final fun copy (III)Lcom/awakekt/awake/core/math/Vec3i;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/Vec3i;IIIILjava/lang/Object;)Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun dot (Lcom/awakekt/awake/core/math/Vec3i;)J
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getX ()I
 	public final fun getY ()I
 	public final fun getZ ()I
 	public fun hashCode ()I
-	public final fun manhattanDistanceTo (Lio/github/awakelab/awake/core/math/Vec3i;)I
-	public final fun minus (Lio/github/awakelab/awake/core/math/Vec3i;)Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun plus (Lio/github/awakelab/awake/core/math/Vec3i;)Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun scale (I)Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun set (III)Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun set (Lio/github/awakelab/awake/core/math/Vec3i;)Lio/github/awakelab/awake/core/math/Vec3i;
+	public final fun manhattanDistanceTo (Lcom/awakekt/awake/core/math/Vec3i;)I
+	public final fun minus (Lcom/awakekt/awake/core/math/Vec3i;)Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun plus (Lcom/awakekt/awake/core/math/Vec3i;)Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun scale (I)Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun set (III)Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun set (Lcom/awakekt/awake/core/math/Vec3i;)Lcom/awakekt/awake/core/math/Vec3i;
 	public final fun setX (I)V
 	public final fun setY (I)V
 	public final fun setZ (I)V
-	public final fun squaredDistanceTo (Lio/github/awakelab/awake/core/math/Vec3i;)J
-	public final fun sub (Lio/github/awakelab/awake/core/math/Vec3i;)Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun times (I)Lio/github/awakelab/awake/core/math/Vec3i;
+	public final fun squaredDistanceTo (Lcom/awakekt/awake/core/math/Vec3i;)J
+	public final fun sub (Lcom/awakekt/awake/core/math/Vec3i;)Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun times (I)Lcom/awakekt/awake/core/math/Vec3i;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/Vec3i$Companion {
-	public final fun getBACK ()Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun getDOWN ()Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun getFORWARD ()Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun getLEFT ()Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun getONE ()Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun getRIGHT ()Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun getUP ()Lio/github/awakelab/awake/core/math/Vec3i;
-	public final fun getZERO ()Lio/github/awakelab/awake/core/math/Vec3i;
+public final class com/awakekt/awake/core/math/Vec3i$Companion {
+	public final fun getBACK ()Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun getDOWN ()Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun getFORWARD ()Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun getLEFT ()Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun getONE ()Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun getRIGHT ()Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun getUP ()Lcom/awakekt/awake/core/math/Vec3i;
+	public final fun getZERO ()Lcom/awakekt/awake/core/math/Vec3i;
 }
 
-public final class io/github/awakelab/awake/core/math/Vec3iKt {
-	public static final fun toVec3 (Lio/github/awakelab/awake/core/math/Vec3i;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public static final fun toVec3d (Lio/github/awakelab/awake/core/math/Vec3i;)Lio/github/awakelab/awake/core/math/Vec3d;
-	public static final fun toVec3i (Lio/github/awakelab/awake/core/math/Vec3d;)Lio/github/awakelab/awake/core/math/Vec3i;
-	public static final fun toVec3i (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/core/math/Vec3i;
+public final class com/awakekt/awake/core/math/Vec3iKt {
+	public static final fun toVec3 (Lcom/awakekt/awake/core/math/Vec3i;)Lcom/awakekt/awake/core/math/Vec3f;
+	public static final fun toVec3d (Lcom/awakekt/awake/core/math/Vec3i;)Lcom/awakekt/awake/core/math/Vec3d;
+	public static final fun toVec3i (Lcom/awakekt/awake/core/math/Vec3d;)Lcom/awakekt/awake/core/math/Vec3i;
+	public static final fun toVec3i (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Vec3i;
 }
 
-public final class io/github/awakelab/awake/core/math/Vec4 {
+public final class com/awakekt/awake/core/math/Vec4 {
 	public fun <init> ()V
 	public fun <init> (FFFF)V
 	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -613,9 +613,9 @@ public final class io/github/awakelab/awake/core/math/Vec4 {
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()F
-	public final fun copy (FFFF)Lio/github/awakelab/awake/core/math/Vec4;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/math/Vec4;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Vec4;
-	public final fun dot (Lio/github/awakelab/awake/core/math/Vec4;)F
+	public final fun copy (FFFF)Lcom/awakekt/awake/core/math/Vec4;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/Vec4;FFFFILjava/lang/Object;)Lcom/awakekt/awake/core/math/Vec4;
+	public final fun dot (Lcom/awakekt/awake/core/math/Vec4;)F
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getW ()F
 	public final fun getX ()F
@@ -624,25 +624,25 @@ public final class io/github/awakelab/awake/core/math/Vec4 {
 	public fun hashCode ()I
 	public final fun length3 ()F
 	public final fun makePixelCoords (II)V
-	public final fun minus (Lio/github/awakelab/awake/core/math/Vec4;)Lio/github/awakelab/awake/core/math/Vec4;
-	public final fun pixelCoords (II)Lio/github/awakelab/awake/core/math2d/Vec2;
-	public final fun plus (Lio/github/awakelab/awake/core/math/Vec4;)Lio/github/awakelab/awake/core/math/Vec4;
+	public final fun minus (Lcom/awakekt/awake/core/math/Vec4;)Lcom/awakekt/awake/core/math/Vec4;
+	public final fun pixelCoords (II)Lcom/awakekt/awake/core/math2d/Vec2;
+	public final fun plus (Lcom/awakekt/awake/core/math/Vec4;)Lcom/awakekt/awake/core/math/Vec4;
 	public final fun set (FFFF)V
 	public final fun setW (F)V
 	public final fun setX (F)V
 	public final fun setY (F)V
 	public final fun setZ (F)V
-	public final fun times (F)Lio/github/awakelab/awake/core/math/Vec4;
-	public final fun times (Lio/github/awakelab/awake/core/math/Mat4;)Lio/github/awakelab/awake/core/math/Vec4;
+	public final fun times (F)Lcom/awakekt/awake/core/math/Vec4;
+	public final fun times (Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Vec4;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/math/VectorPackingKt {
+public final class com/awakekt/awake/core/math/VectorPackingKt {
 	public static final fun putFloat ([FIF)I
-	public static final fun putVec3 ([FILio/github/awakelab/awake/core/math/Vec3f;)I
-	public static final fun putVec4 ([FILio/github/awakelab/awake/core/math/Vec3f;F)I
-	public static final fun putVec4 ([FILio/github/awakelab/awake/core/math/Vec4;)I
-	public static synthetic fun putVec4$default ([FILio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)I
-	public static final fun squaredDistanceFrom (Lio/github/awakelab/awake/core/math/Mat4;Lio/github/awakelab/awake/core/math/Vec3f;)F
+	public static final fun putVec3 ([FILcom/awakekt/awake/core/math/Vec3f;)I
+	public static final fun putVec4 ([FILcom/awakekt/awake/core/math/Vec3f;F)I
+	public static final fun putVec4 ([FILcom/awakekt/awake/core/math/Vec4;)I
+	public static synthetic fun putVec4$default ([FILcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)I
+	public static final fun squaredDistanceFrom (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;)F
 }
 

@@ -13,7 +13,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.navigation.grid"
+        namespace = "com.awakekt.awake.navigation.grid"
     }
 
     sourceSets {

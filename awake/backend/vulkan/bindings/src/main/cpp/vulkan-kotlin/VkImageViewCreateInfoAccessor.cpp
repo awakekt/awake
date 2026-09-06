@@ -9,18 +9,18 @@ VkImageViewCreateInfoAccessor::VkImageViewCreateInfoAccessor(JNIEnv *env, jobjec
                                                                                          obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     imageField = env->GetFieldID(clazz, "image", "J");
     viewTypeField = env->GetFieldID(clazz, "viewType",
-                                    "Lio/github/awakelab/awake/vulkan/enums/VkImageViewType;");
+                                    "Lcom/awakekt/awake/vulkan/enums/VkImageViewType;");
     formatField = env->GetFieldID(clazz, "format",
-                                  "Lio/github/awakelab/awake/vulkan/enums/VkFormat;");
+                                  "Lcom/awakekt/awake/vulkan/enums/VkFormat;");
     componentsField = env->GetFieldID(clazz, "components",
-                                      "Lio/github/awakelab/awake/vulkan/models/info/VkComponentMapping;");
+                                      "Lcom/awakekt/awake/vulkan/models/info/VkComponentMapping;");
     subresourceRangeField = env->GetFieldID(clazz, "subresourceRange",
-                                            "Lio/github/awakelab/awake/vulkan/models/info/VkImageSubresourceRange;");
+                                            "Lcom/awakekt/awake/vulkan/models/info/VkImageSubresourceRange;");
 }
 
 VkStructureType

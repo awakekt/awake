@@ -9,15 +9,15 @@ VkRenderPassCreateInfoAccessor::VkRenderPassCreateInfoAccessor(JNIEnv *env, jobj
                                                                                            obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     pAttachmentsField = env->GetFieldID(clazz, "pAttachments",
-                                        "[Lio/github/awakelab/awake/vulkan/models/VkAttachmentDescription;");
+                                        "[Lcom/awakekt/awake/vulkan/models/VkAttachmentDescription;");
     pSubpassesField = env->GetFieldID(clazz, "pSubpasses",
-                                      "[Lio/github/awakelab/awake/vulkan/models/info/VkSubpassDescription;");
+                                      "[Lcom/awakekt/awake/vulkan/models/info/VkSubpassDescription;");
     pDependenciesField = env->GetFieldID(clazz, "pDependencies",
-                                         "[Lio/github/awakelab/awake/vulkan/models/VkSubpassDependency;");
+                                         "[Lcom/awakekt/awake/vulkan/models/VkSubpassDependency;");
 }
 
 VkStructureType

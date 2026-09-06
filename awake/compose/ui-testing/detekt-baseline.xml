@@ -9,6 +9,6 @@
     <ID>LongParameterList:RasterGeometry.kt$( x: Float, y: Float, w: Float, h: Float, transform: UiPrimitiveTransform?, block: (x: Float, y: Float, w: Float, h: Float) -> Unit, )</ID>
     <ID>LoopWithTooManyJumpStatements:UiRasterizer.kt$while</ID>
     <ID>NestedBlockDepth:UiRasterizer.kt$fun List&lt;UiDrawPrimitive>.rasterizeToPixelMap( width: Int, height: Int, background: Color = Color(0.1f, 0.1f, 0.12f, 1f), font: UiFont? = null, ): PixelMap</ID>
-    <ID>TooManyFunctions:SemanticsTestApi.kt$io.github.awakelab.awake.compose.testing.SemanticsTestApi.kt</ID>
+    <ID>TooManyFunctions:SemanticsTestApi.kt$com.awakekt.awake.compose.testing.SemanticsTestApi.kt</ID>
   </CurrentIssues>
 </SmellBaseline>

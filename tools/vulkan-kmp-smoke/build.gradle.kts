@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-// External-consumer smoke test for io.github.awake-lab:vulkan-kmp. Publish first:
+// External-consumer smoke test for com.awakekt.awake:vulkan-kmp. Publish first:
 //   ./gradlew :awake:backend:vulkan:bindings:publishToMavenLocal -PisMainHost=true
 // then, from the repo root:
 //   ./gradlew -p tools/vulkan-kmp-smoke run
@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.awake-lab:vulkan-kmp:0.1.0-dev.7-SNAPSHOT")
+    implementation("com.awakekt.awake:vulkan-kmp:0.1.0-dev.7-SNAPSHOT")
 }
 
 application {

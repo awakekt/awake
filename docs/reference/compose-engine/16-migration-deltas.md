@@ -5,7 +5,7 @@ arrival. All five are `ui-core` defaults this engine reverted to Compose's, so t
 and the same on every screen — but a reviewer who does not know the list will read each one as a new
 bug.
 
-Every row was found by the [cross-engine differ](../../../awake/ui/testing/src/commonTest/kotlin/io/github/awakelab/awake/testing/crossengine/CrossEngineDiffTest.kt),
+Every row was found by the [cross-engine differ](../../../awake/ui/testing/src/commonTest/kotlin/com/awakekt/awake/testing/crossengine/CrossEngineDiffTest.kt),
 which is where the executable version lives.
 
 | # | `ui-core` | This engine | What you will see |

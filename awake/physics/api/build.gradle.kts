@@ -33,7 +33,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.physics"
+        namespace = "com.awakekt.awake.physics"
     }
 
     // No platform-specific code at all in this module (mirrors awake:engine:render-api's own

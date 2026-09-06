@@ -1,27 +1,27 @@
-public final class io/github/awakelab/awake/sample/composeshowcase/app/ComposeShowcaseGameKt {
-	public static final fun composeShowcase ()Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;
+public final class com/awakekt/awake/sample/composeshowcase/app/ComposeShowcaseGameKt {
+	public static final fun composeShowcase ()Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;
 }
 
-public final class io/github/awakelab/awake/sample/composeshowcase/app/ComposeShowcaseVulkanBootstrapKt {
-	public static final fun createComposeShowcaseVulkanApplication (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;)Lio/github/awakelab/awake/vulkan/application/VulkanEngine;
-	public static synthetic fun createComposeShowcaseVulkanApplication$default (Lio/github/awakelab/awake/engine/platform/lifecycle/AwakeAppLifecycle;ILjava/lang/Object;)Lio/github/awakelab/awake/vulkan/application/VulkanEngine;
+public final class com/awakekt/awake/sample/composeshowcase/app/ComposeShowcaseVulkanBootstrapKt {
+	public static final fun createComposeShowcaseVulkanApplication (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;)Lcom/awakekt/awake/vulkan/application/VulkanEngine;
+	public static synthetic fun createComposeShowcaseVulkanApplication$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;ILjava/lang/Object;)Lcom/awakekt/awake/vulkan/application/VulkanEngine;
 }
 
-public final class io/github/awakelab/awake/sample/composeshowcase/app/MainKt {
+public final class com/awakekt/awake/sample/composeshowcase/app/MainKt {
 	public static final fun main ()V
 	public static synthetic fun main ([Ljava/lang/String;)V
 }
 
-public final class io/github/awakelab/awake/sample/composeshowcase/ui/ShowcaseAppKt {
-	public static final fun ShowcaseApp (Lio/github/awakelab/awake/compose/runtime/Composer;)V
+public final class com/awakekt/awake/sample/composeshowcase/ui/ShowcaseAppKt {
+	public static final fun ShowcaseApp (Lcom/awakekt/awake/compose/runtime/Composer;)V
 }
 
-public final class io/github/awakelab/awake/sample/composeshowcase/ui/pages/DemoPrimitivesKt {
-	public static final fun DemoSectionLabel (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;)V
+public final class com/awakekt/awake/sample/composeshowcase/ui/pages/DemoPrimitivesKt {
+	public static final fun DemoSectionLabel (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;)V
 	public static final fun getSwatchColors ()Ljava/util/List;
-	public static final fun swatch (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/color/Color;)V
-	public static synthetic fun swatch$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)V
-	public static final fun swatch-Kf-55UE (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;FFLio/github/awakelab/awake/core/color/Color;)V
-	public static synthetic fun swatch-Kf-55UE$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;FFLio/github/awakelab/awake/core/color/Color;ILjava/lang/Object;)V
+	public static final fun swatch (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;)V
+	public static synthetic fun swatch$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
+	public static final fun swatch-NlkKk7A (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;FFLcom/awakekt/awake/core/color/Color;)V
+	public static synthetic fun swatch-NlkKk7A$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;FFLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)V
 }
 

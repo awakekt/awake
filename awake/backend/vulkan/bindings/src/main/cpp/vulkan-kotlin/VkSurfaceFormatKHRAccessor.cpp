@@ -9,9 +9,9 @@ VkSurfaceFormatKHRAccessor::VkSurfaceFormatKHRAccessor(JNIEnv *env, jobject obj)
                                                                                    obj(obj) {
     clazz = env->GetObjectClass(obj);
     formatField = env->GetFieldID(clazz, "format",
-                                  "Lio/github/awakelab/awake/vulkan/enums/VkFormat;");
+                                  "Lcom/awakekt/awake/vulkan/enums/VkFormat;");
     colorSpaceField = env->GetFieldID(clazz, "colorSpace",
-                                      "Lio/github/awakelab/awake/vulkan/enums/VkColorSpaceKHR;");
+                                      "Lcom/awakekt/awake/vulkan/enums/VkColorSpaceKHR;");
 }
 
 void

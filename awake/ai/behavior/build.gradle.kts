@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.ai.behavior"
+        namespace = "com.awakekt.awake.ai.behavior"
     }
 
     sourceSets {

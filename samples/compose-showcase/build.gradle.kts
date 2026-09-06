@@ -37,9 +37,13 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:input"))
+            implementation(project(":awake:core:di"))
+            implementation(project(":awake:core:state"))
+            implementation(project(":awake:compose:foundation"))
+            implementation(project(":awake:compose:di"))
+            implementation(project(":awake:compose:state"))
             implementation(project(":awake:engine:bootstrap"))
             implementation(project(":awake:scene:authoring"))
-            implementation(project(":awake:compose:foundation"))
             implementation(project(":awake:asset:shader-pack"))
         }
         commonTest.dependencies {
@@ -73,7 +77,7 @@ tasks.register<JavaExec>("run") {
     dependsOn("desktopMainClasses")
     wireVulkanDesktopNatives(project(":awake:backend:vulkan:bindings"))
     useNagaShaderCompiler(this)
-    mainClass.set("io.github.awakelab.awake.sample.composeshowcase.app.MainKt")
+    mainClass.set("com.awakekt.awake.sample.composeshowcase.app.MainKt")
     classpath = files(
         layout.buildDirectory.dir("classes/kotlin/desktop/main"),
         layout.buildDirectory.dir("processedResources/desktop/main"),

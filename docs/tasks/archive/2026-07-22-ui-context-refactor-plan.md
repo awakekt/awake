@@ -59,7 +59,7 @@ That is still workable for an MVP, but it is no longer a clean long-term boundar
 ## Current State
 
 The split has already started in
-`awake/engine/ui/ui-core/src/commonMain/kotlin/io/github/awakelab/awake/ui/context/`.
+`awake/engine/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/context/`.
 
 Current extracted pieces already include:
 

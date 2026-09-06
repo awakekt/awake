@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.scene.authoring"
+        namespace = "com.awakekt.awake.scene.authoring"
     }
 
     sourceSets {

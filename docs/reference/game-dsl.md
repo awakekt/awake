@@ -80,7 +80,7 @@ val mainModule = appModule {
 
 The application DSL is backed by tests in `:awake:engine:bootstrap`:
 
-- [AppLifecycleDslTest.kt](../../awake/engine/bootstrap/src/commonTest/kotlin/io/github/awakelab/awake/engine/bootstrap/AppLifecycleDslTest.kt)
+- [AppLifecycleDslTest.kt](../../awake/engine/bootstrap/src/commonTest/kotlin/com/awakekt/awake/engine/bootstrap/AppLifecycleDslTest.kt)
 
 Run tests with:
 

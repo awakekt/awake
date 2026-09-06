@@ -10,7 +10,7 @@ It provides a scene viewport, camera orbit controls, transform gizmos, hierarchy
 
 ### Standalone Default Launch
 ```kotlin
-import io.github.awakelab.awake.studio.app.studioApp
+import com.awakekt.awake.studio.app.studioApp
 
 fun main() {
     studioApp().start()
@@ -43,23 +43,23 @@ As a game developer, you **do not** need to write Compose UI or custom panels. Y
 ```kotlin
 package com.mygame.combat
 
-import io.github.awakelab.awake.ecs.Entity
-import io.github.awakelab.awake.ecs.System
-import io.github.awakelab.awake.ecs.World
-import io.github.awakelab.awake.editor.EditorPlugin
-import io.github.awakelab.awake.editor.EditorPluginApi
-import io.github.awakelab.awake.editor.EditorPluginId
-import io.github.awakelab.awake.editor.EditorPluginMetadata
-import io.github.awakelab.awake.editor.EditorProvider
-import io.github.awakelab.awake.editor.EditorProviderId
-import io.github.awakelab.awake.editor.EditorProviderMetadata
-import io.github.awakelab.awake.editor.scene.inspector.SceneComponentInspector
-import io.github.awakelab.awake.editor.scene.inspector.SceneFieldScope
-import io.github.awakelab.awake.editor.scene.plugin.AssetResolverPlugin
-import io.github.awakelab.awake.editor.scene.plugin.SceneSystemPlugin
-import io.github.awakelab.awake.scene.authoring.SceneAssetsDsl
-import io.github.awakelab.awake.scene.authoring.SceneSystemsDsl
-import io.github.awakelab.awake.studio.app.studioApp
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.System
+import com.awakekt.awake.ecs.World
+import com.awakekt.awake.editor.EditorPlugin
+import com.awakekt.awake.editor.EditorPluginApi
+import com.awakekt.awake.editor.EditorPluginId
+import com.awakekt.awake.editor.EditorPluginMetadata
+import com.awakekt.awake.editor.EditorProvider
+import com.awakekt.awake.editor.EditorProviderId
+import com.awakekt.awake.editor.EditorProviderMetadata
+import com.awakekt.awake.editor.scene.inspector.SceneComponentInspector
+import com.awakekt.awake.editor.scene.inspector.SceneFieldScope
+import com.awakekt.awake.editor.scene.plugin.AssetResolverPlugin
+import com.awakekt.awake.editor.scene.plugin.SceneSystemPlugin
+import com.awakekt.awake.scene.authoring.SceneAssetsDsl
+import com.awakekt.awake.scene.authoring.SceneSystemsDsl
+import com.awakekt.awake.studio.app.studioApp
 import kotlin.reflect.KClass
 
 // -------------------------------------------------------------

@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.core.graphics2d"
+        namespace = "com.awakekt.awake.core.graphics2d"
     }
 
     sourceSets {

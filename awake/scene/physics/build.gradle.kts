@@ -13,7 +13,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.scene.physics"
+        namespace = "com.awakekt.awake.scene.physics"
         // Instrumented, because the ragdoll tests below need jolt-jni's native library and its
         // Android artifact ships device ABIs only. `sourceSetTreeName = "test"` puts
         // androidDeviceTest in the test tree, so it inherits commonTest rather than needing a copy.

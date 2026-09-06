@@ -1,15 +1,15 @@
-public final class io/github/awakelab/awake/ui/builder/codegen/UiCodeGenerator {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/codegen/UiCodeGenerator;
-	public final fun generateKotlin (Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;)Ljava/lang/String;
+public final class com/awakekt/awake/ui/builder/codegen/UiCodeGenerator {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/codegen/UiCodeGenerator;
+	public final fun generateKotlin (Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;)Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/layout/DropTarget {
+public final class com/awakekt/awake/ui/builder/layout/DropTarget {
 	public fun <init> (Ljava/lang/String;ILjava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()I
 	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;ILjava/lang/String;)Lio/github/awakelab/awake/ui/builder/layout/DropTarget;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/layout/DropTarget;Ljava/lang/String;ILjava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/layout/DropTarget;
+	public final fun copy (Ljava/lang/String;ILjava/lang/String;)Lcom/awakekt/awake/ui/builder/layout/DropTarget;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/layout/DropTarget;Ljava/lang/String;ILjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/layout/DropTarget;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getContainerType ()Ljava/lang/String;
 	public final fun getInsertionIndex ()I
@@ -18,37 +18,37 @@ public final class io/github/awakelab/awake/ui/builder/layout/DropTarget {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/layout/DropTargetSolver {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/layout/DropTargetSolver;
-	public final fun solveIndex (Lio/github/awakelab/awake/ui/builder/model/UiNode;FLjava/util/List;)Lio/github/awakelab/awake/ui/builder/layout/DropTarget;
+public final class com/awakekt/awake/ui/builder/layout/DropTargetSolver {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/layout/DropTargetSolver;
+	public final fun solveIndex (Lcom/awakekt/awake/ui/builder/model/UiNode;FLjava/util/List;)Lcom/awakekt/awake/ui/builder/layout/DropTarget;
 }
 
-public final class io/github/awakelab/awake/ui/builder/layout/MagicReflowEngine {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/layout/MagicReflowEngine;
-	public final fun reflowContainer (Lio/github/awakelab/awake/ui/builder/model/UiNode;)Lio/github/awakelab/awake/ui/builder/model/UiNode;
+public final class com/awakekt/awake/ui/builder/layout/MagicReflowEngine {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/layout/MagicReflowEngine;
+	public final fun reflowContainer (Lcom/awakekt/awake/ui/builder/model/UiNode;)Lcom/awakekt/awake/ui/builder/model/UiNode;
 }
 
-public final class io/github/awakelab/awake/ui/builder/model/UiComponentRegistry {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/model/UiComponentRegistry;
-	public final fun findTemplate (Ljava/lang/String;)Lio/github/awakelab/awake/ui/builder/model/UiComponentTemplate;
+public final class com/awakekt/awake/ui/builder/model/UiComponentRegistry {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/model/UiComponentRegistry;
+	public final fun findTemplate (Ljava/lang/String;)Lcom/awakekt/awake/ui/builder/model/UiComponentTemplate;
 	public final fun getTemplates ()Ljava/util/List;
 }
 
-public final class io/github/awakelab/awake/ui/builder/model/UiComponentTemplate {
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+public final class com/awakekt/awake/ui/builder/model/UiComponentTemplate {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Z
 	public final fun component5 ()Ljava/util/Map;
-	public final fun component6 ()Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;)Lio/github/awakelab/awake/ui/builder/model/UiComponentTemplate;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/model/UiComponentTemplate;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/model/UiComponentTemplate;
+	public final fun component6 ()Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;)Lcom/awakekt/awake/ui/builder/model/UiComponentTemplate;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/model/UiComponentTemplate;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZLjava/util/Map;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/model/UiComponentTemplate;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCategory ()Ljava/lang/String;
 	public final fun getDefaultProps ()Ljava/util/Map;
-	public final fun getDefaultStyle ()Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;
+	public final fun getDefaultStyle ()Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;
 	public final fun getDisplayName ()Ljava/lang/String;
 	public final fun getType ()Ljava/lang/String;
 	public fun hashCode ()I
@@ -56,84 +56,84 @@ public final class io/github/awakelab/awake/ui/builder/model/UiComponentTemplate
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/model/UiLayoutDocument {
-	public static final field Companion Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/model/UiNode;I)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/model/UiNode;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+public final class com/awakekt/awake/ui/builder/model/UiLayoutDocument {
+	public static final field Companion Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/ui/builder/model/UiNode;I)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/ui/builder/model/UiNode;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Lio/github/awakelab/awake/ui/builder/model/UiNode;
+	public final fun component3 ()Lcom/awakekt/awake/ui/builder/model/UiNode;
 	public final fun component4 ()I
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/model/UiNode;I)Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;Ljava/lang/String;Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/model/UiNode;IILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/ui/builder/model/UiNode;I)Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/ui/builder/model/UiNode;IILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getId ()Ljava/lang/String;
 	public final fun getName ()Ljava/lang/String;
-	public final fun getRootNode ()Lio/github/awakelab/awake/ui/builder/model/UiNode;
+	public final fun getRootNode ()Lcom/awakekt/awake/ui/builder/model/UiNode;
 	public final fun getVersion ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/ui/builder/model/UiLayoutDocument$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument$$serializer;
+public final synthetic class com/awakekt/awake/ui/builder/model/UiLayoutDocument$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/ui/builder/model/UiLayoutDocument$Companion {
-	public final fun createEmpty (Ljava/lang/String;)Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;
-	public static synthetic fun createEmpty$default (Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument$Companion;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;
+public final class com/awakekt/awake/ui/builder/model/UiLayoutDocument$Companion {
+	public final fun createEmpty (Ljava/lang/String;)Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;
+	public static synthetic fun createEmpty$default (Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument$Companion;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/ui/builder/model/UiNode {
-	public static final field Companion Lio/github/awakelab/awake/ui/builder/model/UiNode$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+public final class com/awakekt/awake/ui/builder/model/UiNode {
+	public static final field Companion Lcom/awakekt/awake/ui/builder/model/UiNode$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Ljava/util/Map;
-	public final fun component4 ()Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;
+	public final fun component4 ()Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;
 	public final fun component5 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;Ljava/util/List;)Lio/github/awakelab/awake/ui/builder/model/UiNode;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/model/UiNode;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;Ljava/util/List;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/model/UiNode;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;Ljava/util/List;)Lcom/awakekt/awake/ui/builder/model/UiNode;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/model/UiNode;Ljava/lang/String;Ljava/lang/String;Ljava/util/Map;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/model/UiNode;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun findNode (Ljava/lang/String;)Lio/github/awakelab/awake/ui/builder/model/UiNode;
+	public final fun findNode (Ljava/lang/String;)Lcom/awakekt/awake/ui/builder/model/UiNode;
 	public final fun getChildren ()Ljava/util/List;
 	public final fun getId ()Ljava/lang/String;
 	public final fun getProps ()Ljava/util/Map;
-	public final fun getStyle ()Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;
+	public final fun getStyle ()Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;
 	public final fun getType ()Ljava/lang/String;
 	public fun hashCode ()I
-	public final fun insertNode (Ljava/lang/String;ILio/github/awakelab/awake/ui/builder/model/UiNode;)Lio/github/awakelab/awake/ui/builder/model/UiNode;
-	public final fun removeNode (Ljava/lang/String;)Lio/github/awakelab/awake/ui/builder/model/UiNode;
+	public final fun insertNode (Ljava/lang/String;ILcom/awakekt/awake/ui/builder/model/UiNode;)Lcom/awakekt/awake/ui/builder/model/UiNode;
+	public final fun removeNode (Ljava/lang/String;)Lcom/awakekt/awake/ui/builder/model/UiNode;
 	public fun toString ()Ljava/lang/String;
-	public final fun updateNode (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/ui/builder/model/UiNode;
+	public final fun updateNode (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/ui/builder/model/UiNode;
 }
 
-public final synthetic class io/github/awakelab/awake/ui/builder/model/UiNode$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/model/UiNode$$serializer;
+public final synthetic class com/awakekt/awake/ui/builder/model/UiNode$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/model/UiNode$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/ui/builder/model/UiNode;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ui/builder/model/UiNode;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/ui/builder/model/UiNode;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ui/builder/model/UiNode;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/ui/builder/model/UiNode$Companion {
+public final class com/awakekt/awake/ui/builder/model/UiNode$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/ui/builder/model/UiStyleSpec {
-	public static final field Companion Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec$Companion;
+public final class com/awakekt/awake/ui/builder/model/UiStyleSpec {
+	public static final field Companion Lcom/awakekt/awake/ui/builder/model/UiStyleSpec$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -144,8 +144,8 @@ public final class io/github/awakelab/awake/ui/builder/model/UiStyleSpec {
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Ljava/lang/String;
 	public final fun component7 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAlignment ()Ljava/lang/String;
 	public final fun getArrangement ()Ljava/lang/String;
@@ -158,144 +158,144 @@ public final class io/github/awakelab/awake/ui/builder/model/UiStyleSpec {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class io/github/awakelab/awake/ui/builder/model/UiStyleSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec$$serializer;
+public final synthetic class com/awakekt/awake/ui/builder/model/UiStyleSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/model/UiStyleSpec$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/ui/builder/model/UiStyleSpec$Companion {
+public final class com/awakekt/awake/ui/builder/model/UiStyleSpec$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class io/github/awakelab/awake/ui/builder/plugin/UiBuilderDockContribution : io/github/awakelab/awake/editor/shell/EditorDockContribution {
+public final class com/awakekt/awake/ui/builder/plugin/UiBuilderDockContribution : com/awakekt/awake/editor/shell/EditorDockContribution {
 	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/ui/builder/state/UiBuilderStore;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/ui/builder/state/UiBuilderStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun content (Lio/github/awakelab/awake/compose/runtime/Composer;)V
+	public fun <init> (Lcom/awakekt/awake/ui/builder/state/UiBuilderStore;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/builder/state/UiBuilderStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun content (Lcom/awakekt/awake/compose/runtime/Composer;)V
 	public fun dispose ()V
-	public fun getCodec ()Lio/github/awakelab/awake/editor/core/plugin/EditorProviderCodec;
-	public fun getKind ()Lio/github/awakelab/awake/editor/core/plugin/EditorProviderKind;
-	public fun getMetadata ()Lio/github/awakelab/awake/editor/core/plugin/EditorProviderMetadata;
-	public fun getTab ()Lio/github/awakelab/awake/editor/shell/EditorDockTab;
+	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderCodec;
+	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+	public fun getMetadata ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderMetadata;
+	public fun getTab ()Lcom/awakekt/awake/editor/shell/EditorDockTab;
 }
 
-public final class io/github/awakelab/awake/ui/builder/plugin/UiBuilderEditorPlugin : io/github/awakelab/awake/editor/core/plugin/EditorPlugin {
+public final class com/awakekt/awake/ui/builder/plugin/UiBuilderEditorPlugin : com/awakekt/awake/editor/core/plugin/EditorPlugin {
 	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/ui/builder/state/UiBuilderStore;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/ui/builder/state/UiBuilderStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/ui/builder/state/UiBuilderStore;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/builder/state/UiBuilderStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun createProviders ()Ljava/util/List;
-	public fun getMetadata ()Lio/github/awakelab/awake/editor/core/plugin/EditorPluginMetadata;
+	public fun getMetadata ()Lcom/awakekt/awake/editor/core/plugin/EditorPluginMetadata;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract;
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/state/UiBuilderContract;
 }
 
-public abstract interface class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Effect {
+public abstract interface class com/awakekt/awake/ui/builder/state/UiBuilderContract$Effect {
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Effect$Saved : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Effect {
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Effect$Saved : com/awakekt/awake/ui/builder/state/UiBuilderContract$Effect {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Effect$Saved;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Effect$Saved;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Effect$Saved;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Effect$Saved;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Effect$Saved;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Effect$Saved;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDocumentName ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public abstract interface class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
+public abstract interface class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$ApplyMagicReflow : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$ApplyMagicReflow;
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$ApplyMagicReflow : com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$ApplyMagicReflow;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$DeleteNode : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$DeleteNode : com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$DeleteNode;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$DeleteNode;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$DeleteNode;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$DeleteNode;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$DeleteNode;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$DeleteNode;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getNodeId ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$InsertWidget : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
-	public fun <init> (Lio/github/awakelab/awake/ui/builder/model/UiNode;Ljava/lang/String;I)V
-	public final fun component1 ()Lio/github/awakelab/awake/ui/builder/model/UiNode;
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$InsertWidget : com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
+	public fun <init> (Lcom/awakekt/awake/ui/builder/model/UiNode;Ljava/lang/String;I)V
+	public final fun component1 ()Lcom/awakekt/awake/ui/builder/model/UiNode;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()I
-	public final fun copy (Lio/github/awakelab/awake/ui/builder/model/UiNode;Ljava/lang/String;I)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$InsertWidget;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$InsertWidget;Lio/github/awakelab/awake/ui/builder/model/UiNode;Ljava/lang/String;IILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$InsertWidget;
+	public final fun copy (Lcom/awakekt/awake/ui/builder/model/UiNode;Ljava/lang/String;I)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$InsertWidget;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$InsertWidget;Lcom/awakekt/awake/ui/builder/model/UiNode;Ljava/lang/String;IILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$InsertWidget;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getIndex ()I
 	public final fun getTargetParentId ()Ljava/lang/String;
-	public final fun getTemplate ()Lio/github/awakelab/awake/ui/builder/model/UiNode;
+	public final fun getTemplate ()Lcom/awakekt/awake/ui/builder/model/UiNode;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$Redo : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$Redo;
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$Redo : com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$Redo;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$SelectNode : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$SelectNode : com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
 	public fun <init> (Ljava/lang/String;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$SelectNode;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$SelectNode;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$SelectNode;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$SelectNode;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$SelectNode;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$SelectNode;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getNodeId ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$SetActiveDropTarget : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
-	public fun <init> (Lio/github/awakelab/awake/ui/builder/layout/DropTarget;)V
-	public final fun component1 ()Lio/github/awakelab/awake/ui/builder/layout/DropTarget;
-	public final fun copy (Lio/github/awakelab/awake/ui/builder/layout/DropTarget;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$SetActiveDropTarget;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$SetActiveDropTarget;Lio/github/awakelab/awake/ui/builder/layout/DropTarget;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$SetActiveDropTarget;
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$SetActiveDropTarget : com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
+	public fun <init> (Lcom/awakekt/awake/ui/builder/layout/DropTarget;)V
+	public final fun component1 ()Lcom/awakekt/awake/ui/builder/layout/DropTarget;
+	public final fun copy (Lcom/awakekt/awake/ui/builder/layout/DropTarget;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$SetActiveDropTarget;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$SetActiveDropTarget;Lcom/awakekt/awake/ui/builder/layout/DropTarget;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$SetActiveDropTarget;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getTarget ()Lio/github/awakelab/awake/ui/builder/layout/DropTarget;
+	public final fun getTarget ()Lcom/awakekt/awake/ui/builder/layout/DropTarget;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$ToggleLivePreview : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$ToggleLivePreview;
-	public fun equals (Ljava/lang/Object;)Z
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$Undo : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
-	public static final field INSTANCE Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$Undo;
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$ToggleLivePreview : com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$ToggleLivePreview;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeProps : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$Undo : com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
+	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$Undo;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeProps : com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
 	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/util/Map;
-	public final fun copy (Ljava/lang/String;Ljava/util/Map;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeProps;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeProps;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeProps;
+	public final fun copy (Ljava/lang/String;Ljava/util/Map;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeProps;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeProps;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeProps;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getNodeId ()Ljava/lang/String;
 	public final fun getProps ()Ljava/util/Map;
@@ -303,34 +303,34 @@ public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeStyle : io/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent {
-	public fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;)V
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeStyle : com/awakekt/awake/ui/builder/state/UiBuilderContract$Intent {
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;
-	public final fun copy (Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeStyle;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeStyle;Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;ILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeStyle;
+	public final fun component2 ()Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeStyle;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeStyle;Ljava/lang/String;Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;ILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent$UpdateNodeStyle;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getNodeId ()Ljava/lang/String;
-	public final fun getStyle ()Lio/github/awakelab/awake/ui/builder/model/UiStyleSpec;
+	public final fun getStyle ()Lcom/awakekt/awake/ui/builder/model/UiStyleSpec;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$State {
-	public fun <init> (Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/layout/DropTarget;ZLjava/util/List;Ljava/util/List;Z)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/layout/DropTarget;ZLjava/util/List;Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;
+public final class com/awakekt/awake/ui/builder/state/UiBuilderContract$State {
+	public fun <init> (Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;Ljava/lang/String;Lcom/awakekt/awake/ui/builder/layout/DropTarget;ZLjava/util/List;Ljava/util/List;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;Ljava/lang/String;Lcom/awakekt/awake/ui/builder/layout/DropTarget;ZLjava/util/List;Ljava/util/List;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun component3 ()Lio/github/awakelab/awake/ui/builder/layout/DropTarget;
+	public final fun component3 ()Lcom/awakekt/awake/ui/builder/layout/DropTarget;
 	public final fun component4 ()Z
 	public final fun component5 ()Ljava/util/List;
 	public final fun component6 ()Ljava/util/List;
 	public final fun component7 ()Z
-	public final fun copy (Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/layout/DropTarget;ZLjava/util/List;Ljava/util/List;Z)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$State;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$State;Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;Ljava/lang/String;Lio/github/awakelab/awake/ui/builder/layout/DropTarget;ZLjava/util/List;Ljava/util/List;ZILjava/lang/Object;)Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$State;
+	public final fun copy (Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;Ljava/lang/String;Lcom/awakekt/awake/ui/builder/layout/DropTarget;ZLjava/util/List;Ljava/util/List;Z)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$State;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$State;Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;Ljava/lang/String;Lcom/awakekt/awake/ui/builder/layout/DropTarget;ZLjava/util/List;Ljava/util/List;ZILjava/lang/Object;)Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$State;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getActiveDropTarget ()Lio/github/awakelab/awake/ui/builder/layout/DropTarget;
-	public final fun getDocument ()Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;
+	public final fun getActiveDropTarget ()Lcom/awakekt/awake/ui/builder/layout/DropTarget;
+	public final fun getDocument ()Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;
 	public final fun getRedoStack ()Ljava/util/List;
 	public final fun getSelectedNodeId ()Ljava/lang/String;
 	public final fun getUndoStack ()Ljava/util/List;
@@ -340,36 +340,36 @@ public final class io/github/awakelab/awake/ui/builder/state/UiBuilderContract$S
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/ui/builder/state/UiBuilderStore {
+public final class com/awakekt/awake/ui/builder/state/UiBuilderStore {
 	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/ui/builder/model/UiLayoutDocument;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun dispatch (Lio/github/awakelab/awake/ui/builder/state/UiBuilderContract$Intent;)V
+	public fun <init> (Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ui/builder/model/UiLayoutDocument;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun dispatch (Lcom/awakekt/awake/ui/builder/state/UiBuilderContract$Intent;)V
 	public final fun getState ()Lkotlinx/coroutines/flow/StateFlow;
 }
 
-public final class io/github/awakelab/awake/ui/builder/ui/UiBuilderCanvasKt {
-	public static final fun UiBuilderCanvas (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/builder/model/UiNode;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun UiBuilderCanvas$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/builder/model/UiNode;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+public final class com/awakekt/awake/ui/builder/ui/UiBuilderCanvasKt {
+	public static final fun UiBuilderCanvas (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/builder/model/UiNode;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun UiBuilderCanvas$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/builder/model/UiNode;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/ui/builder/ui/UiBuilderHostKt {
-	public static final fun UiBuilderHost (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/builder/state/UiBuilderStore;Ljava/lang/String;)V
-	public static synthetic fun UiBuilderHost$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/builder/state/UiBuilderStore;Ljava/lang/String;ILjava/lang/Object;)V
+public final class com/awakekt/awake/ui/builder/ui/UiBuilderHostKt {
+	public static final fun UiBuilderHost (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/builder/state/UiBuilderStore;Ljava/lang/String;)V
+	public static synthetic fun UiBuilderHost$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/builder/state/UiBuilderStore;Ljava/lang/String;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/ui/builder/ui/UiComponentPaletteKt {
-	public static final fun UiComponentPalette (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun UiComponentPalette$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+public final class com/awakekt/awake/ui/builder/ui/UiComponentPaletteKt {
+	public static final fun UiComponentPalette (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun UiComponentPalette$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/ui/builder/ui/UiInspectorPanelKt {
-	public static final fun UiInspectorPanel (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/builder/model/UiNode;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
-	public static synthetic fun UiInspectorPanel$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/builder/model/UiNode;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+public final class com/awakekt/awake/ui/builder/ui/UiInspectorPanelKt {
+	public static final fun UiInspectorPanel (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/builder/model/UiNode;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun UiInspectorPanel$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/builder/model/UiNode;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/ui/builder/ui/UiLivePreviewKt {
-	public static final fun UiLivePreviewNode (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/builder/model/UiNode;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun UiLivePreviewNode$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/ui/builder/model/UiNode;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+public final class com/awakekt/awake/ui/builder/ui/UiLivePreviewKt {
+	public static final fun UiLivePreviewNode (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/builder/model/UiNode;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun UiLivePreviewNode$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/builder/model/UiNode;Ljava/lang/String;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 

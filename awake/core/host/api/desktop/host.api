@@ -1,14 +1,14 @@
-public final class io/github/awakelab/awake/core/host/BinaryExtensionsKt {
+public final class com/awakekt/awake/core/host/BinaryExtensionsKt {
 	public static final fun readLittleEndianInt ([BI)I
 	public static final fun readLittleEndianShort ([BI)S
 }
 
-public final class io/github/awakelab/awake/core/host/DesktopFrameLoop : io/github/awakelab/awake/core/host/FrameLoop {
-	public static final field INSTANCE Lio/github/awakelab/awake/core/host/DesktopFrameLoop;
+public final class com/awakekt/awake/core/host/DesktopFrameLoop : com/awakekt/awake/core/host/FrameLoop {
+	public static final field INSTANCE Lcom/awakekt/awake/core/host/DesktopFrameLoop;
 	public fun tick (Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class io/github/awakelab/awake/core/host/FixedTimestepLoop {
+public final class com/awakekt/awake/core/host/FixedTimestepLoop {
 	public static final field DEFAULT_FIXED_DELTA F
 	public static final field DEFAULT_MAX_STEPS_PER_FRAME I
 	public fun <init> ()V
@@ -17,15 +17,15 @@ public final class io/github/awakelab/awake/core/host/FixedTimestepLoop {
 	public final fun advance (FLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 }
 
-public abstract interface class io/github/awakelab/awake/core/host/FrameLoop {
+public abstract interface class com/awakekt/awake/core/host/FrameLoop {
 	public abstract fun tick (Lkotlin/jvm/functions/Function1;)V
 }
 
-public final class io/github/awakelab/awake/core/host/FrameLoopKt {
+public final class com/awakekt/awake/core/host/FrameLoopKt {
 	public static final field TARGET_FPS I
 }
 
-public final class io/github/awakelab/awake/core/host/ResourceKt {
+public final class com/awakekt/awake/core/host/ResourceKt {
 	public static final fun readResourceBytes (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 

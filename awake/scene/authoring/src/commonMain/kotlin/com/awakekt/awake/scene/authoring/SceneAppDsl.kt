@@ -1,0 +1,248 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.scene.authoring
+
+import com.awakekt.awake.ecs.System
+import com.awakekt.awake.engine.bootstrap.dsl.AppSpecDsl
+import com.awakekt.awake.scene.authoring.dsl.AwakeSceneDsl
+import com.awakekt.awake.scene.authoring.dsl.EntityScope
+import com.awakekt.awake.scene.authoring.dsl.SceneBuilder
+import com.awakekt.awake.scene.authoring.dsl.scene
+import com.awakekt.awake.scene.document.SceneDocument
+import com.awakekt.awake.scene.document.instantiate
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.runtime.SceneAppSpec
+import com.awakekt.awake.scene.runtime.SceneAssetLibrary
+import com.awakekt.awake.scene.runtime.SceneContent
+import com.awakekt.awake.scene.runtime.SceneDisposeBlock
+import com.awakekt.awake.scene.runtime.SceneReadyBlock
+import com.awakekt.awake.scene.runtime.SceneRenderableFactory
+import com.awakekt.awake.scene.runtime.SceneServiceRegistration
+import com.awakekt.awake.scene.runtime.SceneSystemHandle
+import com.awakekt.awake.scene.runtime.SceneSystemPhase
+import com.awakekt.awake.scene.runtime.SceneSystemRegistration
+import com.awakekt.awake.scene.runtime.SceneUpdateBlock
+import com.awakekt.awake.scene.runtime.attachRenderableComponents
+import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
+import kotlin.reflect.KClass
+
+fun AppSpecDsl.ecs(block: SceneAppDsl.() -> Unit) {
+    install(sceneApp(block))
+}
+
+fun AppSpecDsl.ecs(spec: SceneAppSpec) {
+    install(spec)
+}
+
+fun AppSpecDsl.scene(
+    name: String? = null,
+    block: SceneAppDsl.() -> Unit,
+) {
+    install(
+        sceneApp {
+            if (name != null) {
+                this.name(name)
+            }
+            block()
+        },
+    )
+}
+
+fun AppSpecDsl.scene(spec: SceneAppSpec) {
+    install(spec)
+}
+
+fun sceneApp(block: SceneAppDsl.() -> Unit): SceneAppSpec = SceneAppDsl().apply(block).build()
+
+@Deprecated("Use ecs { ... } or scene { ... } instead.", ReplaceWith("ecs(block)"))
+fun sceneSession(block: SceneAppDsl.() -> Unit): SceneAppSpec = SceneAppDsl().apply(block).build()
+
+@Deprecated("Use ecs { ... } or scene { ... } instead.", ReplaceWith("ecs(block)"))
+fun AppSpecDsl.sceneSession(block: SceneAppDsl.() -> Unit) {
+    install(SceneAppDsl().apply(block).build())
+}
+
+/**
+ * Marked with [AwakeSceneDsl] so the enclosing `AppSpecDsl` receiver is hidden inside this
+ * block. Without it, a `scene(name) { ... }` call here silently resolves to the outer
+ * `AppSpecDsl.scene` extension and installs a whole second scene module -- two `World`s, two
+ * render callbacks, and a `requireService<SceneAppLifecycleRuntime>()` that returns the wrong one.
+ */
+@AwakeSceneDsl
+class SceneAppDsl internal constructor() {
+    private var sceneName: String? = null
+    private var scenePopulationBlock: SceneAppLifecycleRuntime.() -> Unit = {}
+    private var renderableFactory: SceneRenderableFactory = {
+        error("ecs { assets { ... } } or ecs { renderables { ... } } must resolve scene mesh/material requests.")
+    }
+    private var assetLibraryFactory: (() -> SceneAssetLibrary)? = null
+    private val systemsDsl = SceneSystemsDsl()
+    private var updateBlock: SceneUpdateBlock = { _, _ -> }
+    private var ui: SceneContent? = null
+    private val onReadyBlocks = mutableListOf<SceneReadyBlock>()
+    private val onDisposeBlocks = mutableListOf<SceneDisposeBlock>()
+    private val serviceRegistrations = mutableListOf<SceneServiceRegistration<*>>()
+    private var infrastructureSystemsFactory: SceneAppLifecycleRuntime.() -> List<System> =
+        SceneAppLifecycleRuntime::defaultInfrastructureSystems
+
+    fun name(value: String?) {
+        this.sceneName = value
+    }
+
+    /**
+     * Captures the declarative entity layout block without running it yet.
+     * It delays execution until the actual runtime engine assigns a World.
+     */
+    fun scene(name: String? = null, block: SceneBuilder.() -> Unit) {
+        if (name != null) {
+            this.sceneName = name
+        }
+        this.scenePopulationBlock = {
+            world.scene(block)
+        }
+    }
+
+    /**
+     * Integrates an existing [SceneDocument] into the population block.
+     */
+    fun scene(document: SceneDocument) {
+        this.sceneName = document.name
+        this.scenePopulationBlock = {
+            val scene = document.instantiate(world = world)
+            scene.attachRenderableComponents { request -> spec.renderableFactory(this, request) }
+        }
+    }
+
+    /**
+     * Shortcut to spawn a root-level entity cleanly without nesting.
+     *
+     * @param name The optional descriptive name for the entity.
+     * @param block The configuration block executed within an [EntityScope].
+     */
+    fun entity(
+        name: String? = null,
+        block: EntityScope.() -> Unit = {},
+    ) {
+        // Since we want to preserve the population block, we append to it.
+        val previous = scenePopulationBlock
+        scenePopulationBlock = {
+            previous()
+            SceneBuilder(world).entity(name, block)
+        }
+    }
+
+    fun assets(block: SceneAssetsDsl.() -> Unit) {
+        val dsl = SceneAssetsDsl().apply(block)
+        assetLibraryFactory = dsl::buildLibrary
+        renderableFactory = { request ->
+            requireAssetLibrary().resolve(this, request)
+        }
+    }
+
+    fun <T : System> system(
+        name: String,
+        phase: SceneSystemPhase,
+        factory: SceneAppLifecycleRuntime.() -> T,
+    ): SceneSystemHandle<T> = systemsDsl.system(name, phase, factory)
+
+    fun <T : System> fixedSystem(
+        name: String,
+        factory: SceneAppLifecycleRuntime.() -> T,
+    ): SceneSystemHandle<T> = systemsDsl.fixedSystem(name, factory)
+
+    fun <T : System> frameSystem(
+        name: String,
+        factory: SceneAppLifecycleRuntime.() -> T,
+    ): SceneSystemHandle<T> = systemsDsl.frameSystem(name, factory)
+
+    fun systems(block: SceneSystemsDsl.() -> Unit) {
+        systemsDsl.apply(block)
+    }
+
+    fun update(block: SceneUpdateBlock) {
+        updateBlock = block
+    }
+
+    /** Declares scene-level Compose UI overlay content. */
+    fun ui(block: SceneContent) {
+        ui = block
+    }
+
+    @Deprecated("Use ui { ... } instead.", ReplaceWith("ui(block)"))
+    fun content(block: SceneContent) {
+        ui(block)
+    }
+
+    fun onReady(block: SceneReadyBlock) {
+        onReadyBlocks += block
+    }
+
+    fun onDispose(block: SceneDisposeBlock) {
+        onDisposeBlocks += block
+    }
+
+    fun <T : Any> service(type: KClass<T>, factory: SceneAppLifecycleRuntime.() -> T) {
+        serviceRegistrations += SceneServiceRegistration(type, factory)
+    }
+
+    inline fun <reified T : Any> service(noinline factory: SceneAppLifecycleRuntime.() -> T) {
+        service(T::class, factory)
+    }
+
+    /**
+     * Overrides the mandatory transform-resolution + draw-pass systems (default:
+     * [defaultInfrastructureSystems]) -- e.g. to swap in a custom render backend. This DSL
+     * never imports a concrete render system itself; the override lambda is free to import
+     * whatever it needs from the caller's own module.
+     */
+    fun infrastructureSystems(factory: SceneAppLifecycleRuntime.() -> List<System>) {
+        infrastructureSystemsFactory = factory
+    }
+
+    internal fun build(): SceneAppSpec = SceneAppSpec(
+        sceneName = sceneName,
+        systems = systemsDsl.build(),
+        scenePopulationBlock = scenePopulationBlock,
+        renderableFactory = renderableFactory,
+        assetLibraryFactory = assetLibraryFactory,
+        updateBlock = updateBlock,
+        ui = ui,
+        onReadyBlock = { onReadyBlocks.forEach { it(this) } },
+        onDisposeBlock = { onDisposeBlocks.forEach { it(this) } },
+        serviceRegistrations = serviceRegistrations.toList(),
+        infrastructureSystemsFactory = infrastructureSystemsFactory,
+    )
+}
+
+class SceneSystemsDsl internal constructor() {
+    private val registrations = mutableListOf<SceneSystemRegistration>()
+
+    fun <T : System> system(
+        name: String,
+        phase: SceneSystemPhase,
+        factory: SceneAppLifecycleRuntime.() -> T,
+    ): SceneSystemHandle<T> {
+        val handle = SceneSystemHandle<T>(name)
+        registrations += SceneSystemRegistration(
+            handle = handle,
+            phase = phase,
+            factory = { factory() },
+        )
+        return handle
+    }
+
+    fun <T : System> fixedSystem(
+        name: String,
+        factory: SceneAppLifecycleRuntime.() -> T,
+    ): SceneSystemHandle<T> = system(name, SceneSystemPhase.Fixed, factory)
+
+    fun <T : System> frameSystem(
+        name: String,
+        factory: SceneAppLifecycleRuntime.() -> T,
+    ): SceneSystemHandle<T> = system(name, SceneSystemPhase.Frame, factory)
+
+    internal fun build(): List<SceneSystemRegistration> = registrations.toList()
+}

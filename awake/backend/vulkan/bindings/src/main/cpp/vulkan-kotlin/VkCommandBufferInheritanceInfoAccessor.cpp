@@ -10,7 +10,7 @@ VkCommandBufferInheritanceInfoAccessor::VkCommandBufferInheritanceInfoAccessor(J
         env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     renderPassField = env->GetFieldID(clazz, "renderPass", "J");
     subpassField = env->GetFieldID(clazz, "subpass", "I");

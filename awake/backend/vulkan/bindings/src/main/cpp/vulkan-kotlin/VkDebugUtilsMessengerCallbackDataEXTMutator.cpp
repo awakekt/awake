@@ -9,20 +9,20 @@ VkDebugUtilsMessengerCallbackDataEXTMutator::VkDebugUtilsMessengerCallbackDataEX
         JNIEnv *env) : env(env) {
     this->env = env;
     clazz = env->FindClass(
-            "io/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsMessengerCallbackDataEXT");
+            "com/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsMessengerCallbackDataEXT");
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     pMessageIdNameField = env->GetFieldID(clazz, "pMessageIdName", "Ljava/lang/String;");
     messageIdNumberField = env->GetFieldID(clazz, "messageIdNumber", "I");
     pMessageField = env->GetFieldID(clazz, "pMessage", "Ljava/lang/String;");
     pQueueLabelsField = env->GetFieldID(clazz, "pQueueLabels",
-                                        "[Lio/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT;");
+                                        "[Lcom/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT;");
     pCmdBufLabelsField = env->GetFieldID(clazz, "pCmdBufLabels",
-                                         "[Lio/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT;");
+                                         "[Lcom/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT;");
     pObjectsField = env->GetFieldID(clazz, "pObjects",
-                                    "[Lio/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsObjectNameInfoEXT;");
+                                    "[Lcom/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsObjectNameInfoEXT;");
 }
 
 jobject
@@ -30,7 +30,7 @@ VkDebugUtilsMessengerCallbackDataEXTMutator::toObject(VkDebugUtilsMessengerCallb
     auto constructor = env->GetMethodID(clazz, "<init>", "()V");
     auto newObj = env->NewObject(clazz, constructor);
     auto sType = enum_utils::setEnumFromVulkan(env, static_cast<jint>(source.sType),
-                                               "io/github/awakelab/awake/vulkan/enums/VkStructureType");
+                                               "com/awakekt/awake/vulkan/enums/VkStructureType");
     env->SetObjectField(newObj, sTypeField, sType);
     env->DeleteLocalRef(sType);
     // processing Any, Void, Null, Object
@@ -49,7 +49,7 @@ VkDebugUtilsMessengerCallbackDataEXTMutator::toObject(VkDebugUtilsMessengerCallb
     env->DeleteLocalRef(pMessage);
     // processing non-primitive array
     jclass pQueueLabelsClazz = env->FindClass(
-            "io/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT");
+            "com/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT");
     jobjectArray pQueueLabelsArray = env->NewObjectArray(source.queueLabelCount, pQueueLabelsClazz,
                                                          nullptr);
     for (int i = 0; i < source.queueLabelCount; ++i) {
@@ -63,7 +63,7 @@ VkDebugUtilsMessengerCallbackDataEXTMutator::toObject(VkDebugUtilsMessengerCallb
     env->DeleteLocalRef(pQueueLabelsClazz);
     // processing non-primitive array
     jclass pCmdBufLabelsClazz = env->FindClass(
-            "io/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT");
+            "com/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT");
     jobjectArray pCmdBufLabelsArray = env->NewObjectArray(source.cmdBufLabelCount,
                                                           pCmdBufLabelsClazz, nullptr);
     for (int i = 0; i < source.cmdBufLabelCount; ++i) {
@@ -77,7 +77,7 @@ VkDebugUtilsMessengerCallbackDataEXTMutator::toObject(VkDebugUtilsMessengerCallb
     env->DeleteLocalRef(pCmdBufLabelsClazz);
     // processing non-primitive array
     jclass pObjectsClazz = env->FindClass(
-            "io/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsObjectNameInfoEXT");
+            "com/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsObjectNameInfoEXT");
     jobjectArray pObjectsArray = env->NewObjectArray(source.objectCount, pObjectsClazz, nullptr);
     for (int i = 0; i < source.objectCount; ++i) {
         auto element = source.pObjects[i];

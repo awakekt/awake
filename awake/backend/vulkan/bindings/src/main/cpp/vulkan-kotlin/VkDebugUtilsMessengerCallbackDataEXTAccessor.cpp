@@ -9,18 +9,18 @@ VkDebugUtilsMessengerCallbackDataEXTAccessor::VkDebugUtilsMessengerCallbackDataE
         JNIEnv *env, jobject obj) : env(env), obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     pMessageIdNameField = env->GetFieldID(clazz, "pMessageIdName", "Ljava/lang/String;");
     messageIdNumberField = env->GetFieldID(clazz, "messageIdNumber", "I");
     pMessageField = env->GetFieldID(clazz, "pMessage", "Ljava/lang/String;");
     pQueueLabelsField = env->GetFieldID(clazz, "pQueueLabels",
-                                        "[Lio/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT;");
+                                        "[Lcom/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT;");
     pCmdBufLabelsField = env->GetFieldID(clazz, "pCmdBufLabels",
-                                         "[Lio/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT;");
+                                         "[Lcom/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsLabelEXT;");
     pObjectsField = env->GetFieldID(clazz, "pObjects",
-                                    "[Lio/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsObjectNameInfoEXT;");
+                                    "[Lcom/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsObjectNameInfoEXT;");
 }
 
 VkStructureType

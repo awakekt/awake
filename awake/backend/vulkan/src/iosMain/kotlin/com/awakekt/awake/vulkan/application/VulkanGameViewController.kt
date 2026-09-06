@@ -1,0 +1,31 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
+package com.awakekt.awake.vulkan.application
+
+import com.awakekt.awake.vulkan.VulkanMetalView
+import platform.UIKit.UIScreen
+import platform.UIKit.UIViewController
+
+/**
+ * Wraps a [VulkanEngine] in a plain UIKit view controller.
+ */
+fun makeVulkanGameViewController(
+    application: VulkanEngine,
+): UIViewController {
+    val controller = UIViewController()
+    controller.view = VulkanMetalView(
+        frame = UIScreen.mainScreen.bounds,
+        input = application.input,
+        onCreate = { metalLayer -> application.create(metalLayer) },
+        onUpdate = { delta -> application.update(delta) },
+        onResize = { width, height -> application.resize(0, 0, width, height) },
+        onPause = { application.pause() },
+        onResume = { application.resume() },
+    )
+    return controller
+}

@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.core.image"
+        namespace = "com.awakekt.awake.core.image"
     }
 
     sourceSets {

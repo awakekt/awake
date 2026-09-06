@@ -1,15 +1,15 @@
-public final class io/github/awakelab/awake/compose/foundation/BackgroundKt {
-	public static final fun background (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/compose/ui/graphics/Shape;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun background$default (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/compose/ui/graphics/Shape;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun background-5qrf3kc (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/color/Color;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun border-iqY3VVM (Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;FLio/github/awakelab/awake/compose/foundation/BorderSides;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun border-iqY3VVM$default (Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;FLio/github/awakelab/awake/compose/foundation/BorderSides;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun border-n51kMMQ (Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/compose/ui/graphics/Shape;Lio/github/awakelab/awake/compose/foundation/BorderSides;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun border-n51kMMQ$default (Lio/github/awakelab/awake/compose/ui/Modifier;FLio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/compose/ui/graphics/Shape;Lio/github/awakelab/awake/compose/foundation/BorderSides;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/BackgroundKt {
+	public static final fun background (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/Shape;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun background$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/Shape;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun background-l9dllRQ (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun border-keHTAFM (Lcom/awakekt/awake/compose/ui/Modifier;FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/Shape;Lcom/awakekt/awake/compose/foundation/BorderSides;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun border-keHTAFM$default (Lcom/awakekt/awake/compose/ui/Modifier;FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/compose/ui/graphics/Shape;Lcom/awakekt/awake/compose/foundation/BorderSides;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun border-yFyCJ3c (Lcom/awakekt/awake/compose/ui/Modifier;FLcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/compose/foundation/BorderSides;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun border-yFyCJ3c$default (Lcom/awakekt/awake/compose/ui/Modifier;FLcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/compose/foundation/BorderSides;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/BorderSides {
-	public static final field Companion Lio/github/awakelab/awake/compose/foundation/BorderSides$Companion;
+public final class com/awakekt/awake/compose/foundation/BorderSides {
+	public static final field Companion Lcom/awakekt/awake/compose/foundation/BorderSides$Companion;
 	public fun <init> ()V
 	public fun <init> (ZZZZ)V
 	public synthetic fun <init> (ZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -17,8 +17,8 @@ public final class io/github/awakelab/awake/compose/foundation/BorderSides {
 	public final fun component2 ()Z
 	public final fun component3 ()Z
 	public final fun component4 ()Z
-	public final fun copy (ZZZZ)Lio/github/awakelab/awake/compose/foundation/BorderSides;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/compose/foundation/BorderSides;ZZZZILjava/lang/Object;)Lio/github/awakelab/awake/compose/foundation/BorderSides;
+	public final fun copy (ZZZZ)Lcom/awakekt/awake/compose/foundation/BorderSides;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/foundation/BorderSides;ZZZZILjava/lang/Object;)Lcom/awakekt/awake/compose/foundation/BorderSides;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBottom ()Z
 	public final fun getEnd ()Z
@@ -29,50 +29,50 @@ public final class io/github/awakelab/awake/compose/foundation/BorderSides {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/BorderSides$Companion {
-	public final fun getAll ()Lio/github/awakelab/awake/compose/foundation/BorderSides;
-	public final fun getNone ()Lio/github/awakelab/awake/compose/foundation/BorderSides;
+public final class com/awakekt/awake/compose/foundation/BorderSides$Companion {
+	public final fun getAll ()Lcom/awakekt/awake/compose/foundation/BorderSides;
+	public final fun getNone ()Lcom/awakekt/awake/compose/foundation/BorderSides;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/CanvasKt {
-	public static final fun Canvas (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun Canvas$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+public final class com/awakekt/awake/compose/foundation/CanvasKt {
+	public static final fun Canvas (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun Canvas$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/ClickableKt {
-	public static final fun clickable (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function0;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun clickable$default (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun combinedClickable (Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun combinedClickable$default (Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/ClickableKt {
+	public static final fun clickable (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun clickable$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun combinedClickable (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun combinedClickable$default (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/FocusableKt {
-	public static final fun focusable (Lio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun focusable$default (Lio/github/awakelab/awake/compose/ui/Modifier;ZLio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/FocusableKt {
+	public static final fun focusable (Lcom/awakekt/awake/compose/ui/Modifier;ZLcom/awakekt/awake/compose/foundation/interaction/InteractionSource;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun focusable$default (Lcom/awakekt/awake/compose/ui/Modifier;ZLcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/HoverableKt {
-	public static final fun hoverable (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;ZI)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun hoverable$default (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;ZIILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun rememberInteractionSource (Lio/github/awakelab/awake/compose/runtime/Composer;)Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;
+public final class com/awakekt/awake/compose/foundation/HoverableKt {
+	public static final fun hoverable (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZI)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun hoverable$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZIILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun rememberInteractionSource (Lcom/awakekt/awake/compose/runtime/Composer;)Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/Orientation : java/lang/Enum {
-	public static final field Horizontal Lio/github/awakelab/awake/compose/foundation/Orientation;
-	public static final field Vertical Lio/github/awakelab/awake/compose/foundation/Orientation;
+public final class com/awakekt/awake/compose/foundation/Orientation : java/lang/Enum {
+	public static final field Horizontal Lcom/awakekt/awake/compose/foundation/Orientation;
+	public static final field Vertical Lcom/awakekt/awake/compose/foundation/Orientation;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/compose/foundation/Orientation;
-	public static fun values ()[Lio/github/awakelab/awake/compose/foundation/Orientation;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/Orientation;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/Orientation;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/ScrollKt {
-	public static final fun horizontalScroll (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/ScrollState;Z)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun horizontalScroll$default (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/ScrollState;ZILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun verticalScroll (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/ScrollState;Z)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun verticalScroll$default (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/ScrollState;ZILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/ScrollKt {
+	public static final fun horizontalScroll (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/ScrollState;Z)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun horizontalScroll$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/ScrollState;ZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun verticalScroll (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/ScrollState;Z)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun verticalScroll$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/ScrollState;ZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/ScrollState {
+public final class com/awakekt/awake/compose/foundation/ScrollState {
 	public fun <init> ()V
 	public fun <init> (I)V
 	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -85,467 +85,467 @@ public final class io/github/awakelab/awake/compose/foundation/ScrollState {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/ScrollStateKt {
-	public static final fun rememberScrollState (Lio/github/awakelab/awake/compose/runtime/Composer;I)Lio/github/awakelab/awake/compose/foundation/ScrollState;
-	public static synthetic fun rememberScrollState$default (Lio/github/awakelab/awake/compose/runtime/Composer;IILjava/lang/Object;)Lio/github/awakelab/awake/compose/foundation/ScrollState;
+public final class com/awakekt/awake/compose/foundation/ScrollStateKt {
+	public static final fun rememberScrollState (Lcom/awakekt/awake/compose/runtime/Composer;I)Lcom/awakekt/awake/compose/foundation/ScrollState;
+	public static synthetic fun rememberScrollState$default (Lcom/awakekt/awake/compose/runtime/Composer;IILjava/lang/Object;)Lcom/awakekt/awake/compose/foundation/ScrollState;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/TextureQuadKt {
-	public static final fun TextureQuad (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Lio/github/awakelab/awake/compose/ui/Modifier;)V
-	public static synthetic fun TextureQuad$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/Object;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+public final class com/awakekt/awake/compose/foundation/TextureQuadKt {
+	public static final fun TextureQuad (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lcom/awakekt/awake/compose/ui/Modifier;)V
+	public static synthetic fun TextureQuad$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/Object;Lcom/awakekt/awake/compose/ui/Modifier;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/animation/AnimateKt {
+public final class com/awakekt/awake/compose/foundation/animation/AnimateKt {
 	public static final field DEFAULT_DURATION_SECONDS F
-	public static final fun animateFloat (Lio/github/awakelab/awake/compose/runtime/Composer;FF)F
-	public static synthetic fun animateFloat$default (Lio/github/awakelab/awake/compose/runtime/Composer;FFILjava/lang/Object;)F
-	public static final fun rememberLoopingPhase (Lio/github/awakelab/awake/compose/runtime/Composer;F)F
+	public static final fun animateFloat (Lcom/awakekt/awake/compose/runtime/Composer;FF)F
+	public static synthetic fun animateFloat$default (Lcom/awakekt/awake/compose/runtime/Composer;FFILjava/lang/Object;)F
+	public static final fun rememberLoopingPhase (Lcom/awakekt/awake/compose/runtime/Composer;F)F
 }
 
-public final class io/github/awakelab/awake/compose/foundation/animation/ShimmerModifierKt {
-	public static final fun shimmer (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/color/Color;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun shimmer$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/color/Color;FILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/animation/ShimmerModifierKt {
+	public static final fun shimmer (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun shimmer$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/gestures/DraggableKt {
-	public static final fun draggable (Lio/github/awakelab/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun draggable$default (Lio/github/awakelab/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/gestures/DraggableKt {
+	public static final fun draggable (Lcom/awakekt/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun draggable$default (Lcom/awakekt/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/gestures/SecondaryPressKt {
-	public static final fun onSecondaryPress (Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/gestures/SecondaryPressKt {
+	public static final fun onSecondaryPress (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/gestures/TransformableKt {
-	public static final fun transformable (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/gestures/TransformableState;Z)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun transformable$default (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/gestures/TransformableState;ZILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/gestures/TransformableKt {
+	public static final fun transformable (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/gestures/TransformableState;Z)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun transformable$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/gestures/TransformableState;ZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/gestures/TransformableState {
+public abstract interface class com/awakekt/awake/compose/foundation/gestures/TransformableState {
 	public abstract fun transform (FFFF)V
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/interaction/Interaction {
+public abstract interface class com/awakekt/awake/compose/foundation/interaction/Interaction {
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/interaction/Interaction$Focus : io/github/awakelab/awake/compose/foundation/interaction/Interaction {
+public abstract interface class com/awakekt/awake/compose/foundation/interaction/Interaction$Focus : com/awakekt/awake/compose/foundation/interaction/Interaction {
 }
 
-public final class io/github/awakelab/awake/compose/foundation/interaction/Interaction$Focus$Focus : io/github/awakelab/awake/compose/foundation/interaction/Interaction$Focus {
-	public static final field INSTANCE Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Focus$Focus;
+public final class com/awakekt/awake/compose/foundation/interaction/Interaction$Focus$Focus : com/awakekt/awake/compose/foundation/interaction/Interaction$Focus {
+	public static final field INSTANCE Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Focus$Focus;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/interaction/Interaction$Focus$Unfocus : io/github/awakelab/awake/compose/foundation/interaction/Interaction$Focus {
-	public fun <init> (Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Focus$Focus;)V
-	public final fun getFocus ()Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Focus$Focus;
+public final class com/awakekt/awake/compose/foundation/interaction/Interaction$Focus$Unfocus : com/awakekt/awake/compose/foundation/interaction/Interaction$Focus {
+	public fun <init> (Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Focus$Focus;)V
+	public final fun getFocus ()Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Focus$Focus;
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/interaction/Interaction$Hover : io/github/awakelab/awake/compose/foundation/interaction/Interaction {
+public abstract interface class com/awakekt/awake/compose/foundation/interaction/Interaction$Hover : com/awakekt/awake/compose/foundation/interaction/Interaction {
 }
 
-public final class io/github/awakelab/awake/compose/foundation/interaction/Interaction$Hover$Enter : io/github/awakelab/awake/compose/foundation/interaction/Interaction$Hover {
-	public static final field INSTANCE Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Hover$Enter;
+public final class com/awakekt/awake/compose/foundation/interaction/Interaction$Hover$Enter : com/awakekt/awake/compose/foundation/interaction/Interaction$Hover {
+	public static final field INSTANCE Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Hover$Enter;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/interaction/Interaction$Hover$Exit : io/github/awakelab/awake/compose/foundation/interaction/Interaction$Hover {
-	public fun <init> (Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Hover$Enter;)V
-	public final fun getEnter ()Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Hover$Enter;
+public final class com/awakekt/awake/compose/foundation/interaction/Interaction$Hover$Exit : com/awakekt/awake/compose/foundation/interaction/Interaction$Hover {
+	public fun <init> (Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Hover$Enter;)V
+	public final fun getEnter ()Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Hover$Enter;
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/interaction/Interaction$Press : io/github/awakelab/awake/compose/foundation/interaction/Interaction {
+public abstract interface class com/awakekt/awake/compose/foundation/interaction/Interaction$Press : com/awakekt/awake/compose/foundation/interaction/Interaction {
 }
 
-public final class io/github/awakelab/awake/compose/foundation/interaction/Interaction$Press$Cancel : io/github/awakelab/awake/compose/foundation/interaction/Interaction$Press {
-	public fun <init> (Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Press$Press;)V
-	public final fun getPress ()Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Press$Press;
+public final class com/awakekt/awake/compose/foundation/interaction/Interaction$Press$Cancel : com/awakekt/awake/compose/foundation/interaction/Interaction$Press {
+	public fun <init> (Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Press$Press;)V
+	public final fun getPress ()Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Press$Press;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/interaction/Interaction$Press$Press : io/github/awakelab/awake/compose/foundation/interaction/Interaction$Press {
-	public static final field INSTANCE Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Press$Press;
+public final class com/awakekt/awake/compose/foundation/interaction/Interaction$Press$Press : com/awakekt/awake/compose/foundation/interaction/Interaction$Press {
+	public static final field INSTANCE Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Press$Press;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/interaction/Interaction$Press$Release : io/github/awakelab/awake/compose/foundation/interaction/Interaction$Press {
-	public fun <init> (Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Press$Press;)V
-	public final fun getPress ()Lio/github/awakelab/awake/compose/foundation/interaction/Interaction$Press$Press;
+public final class com/awakekt/awake/compose/foundation/interaction/Interaction$Press$Release : com/awakekt/awake/compose/foundation/interaction/Interaction$Press {
+	public fun <init> (Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Press$Press;)V
+	public final fun getPress ()Lcom/awakekt/awake/compose/foundation/interaction/Interaction$Press$Press;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/interaction/InteractionSource {
+public final class com/awakekt/awake/compose/foundation/interaction/InteractionSource {
 	public fun <init> ()V
 	public final fun isFocused ()Z
 	public final fun isHovered ()Z
 	public final fun isPressed ()Z
 	public final fun reset ()V
 	public fun toString ()Ljava/lang/String;
-	public final fun tryEmit (Lio/github/awakelab/awake/compose/foundation/interaction/Interaction;)V
+	public final fun tryEmit (Lcom/awakekt/awake/compose/foundation/interaction/Interaction;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/Arrangement {
-	public static final field INSTANCE Lio/github/awakelab/awake/compose/foundation/layout/Arrangement;
-	public final fun getBottom ()Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;
-	public final fun getCenter ()Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;
-	public final fun getCenterHorizontally ()Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;
-	public final fun getEnd ()Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;
-	public final fun getSpaceBetween ()Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;
-	public final fun getSpaceBetweenHorizontal ()Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;
-	public final fun getStart ()Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;
-	public final fun getTop ()Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;
-	public final fun spacedBy-62jLhNU (F)Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;
-	public final fun spacedByHorizontal-62jLhNU (F)Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;
+public final class com/awakekt/awake/compose/foundation/layout/Arrangement {
+	public static final field INSTANCE Lcom/awakekt/awake/compose/foundation/layout/Arrangement;
+	public final fun getBottom ()Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;
+	public final fun getCenter ()Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;
+	public final fun getCenterHorizontally ()Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;
+	public final fun getEnd ()Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;
+	public final fun getSpaceBetween ()Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;
+	public final fun getSpaceBetweenHorizontal ()Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;
+	public final fun getStart ()Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;
+	public final fun getTop ()Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;
+	public final fun spacedBy-Jha-xPg (F)Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;
+	public final fun spacedByHorizontal-Jha-xPg (F)Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal {
+public abstract interface class com/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal {
 	public fun between (II)I
-	public abstract fun getSpacing-PExdcLc ()F
+	public abstract fun getSpacing-LGk54g8 ()F
 	public fun leading (II)I
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal$DefaultImpls {
-	public static fun between (Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;II)I
-	public static fun leading (Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;II)I
+public final class com/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal$DefaultImpls {
+	public static fun between (Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;II)I
+	public static fun leading (Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;II)I
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical {
+public abstract interface class com/awakekt/awake/compose/foundation/layout/Arrangement$Vertical {
 	public fun between (II)I
-	public abstract fun getSpacing-PExdcLc ()F
+	public abstract fun getSpacing-LGk54g8 ()F
 	public fun leading (II)I
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical$DefaultImpls {
-	public static fun between (Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;II)I
-	public static fun leading (Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;II)I
+public final class com/awakekt/awake/compose/foundation/layout/Arrangement$Vertical$DefaultImpls {
+	public static fun between (Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;II)I
+	public static fun leading (Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;II)I
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/BoxMeasurePolicy : io/github/awakelab/awake/compose/ui/layout/MeasurePolicy {
+public final class com/awakekt/awake/compose/foundation/layout/BoxMeasurePolicy : com/awakekt/awake/compose/ui/layout/MeasurePolicy {
 	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;)V
-	public fun <init> (Lio/github/awakelab/awake/compose/ui/Alignment;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/compose/ui/Alignment;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun maxIntrinsicHeight (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun maxIntrinsicWidth (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun measure-81w2-r0 (Lio/github/awakelab/awake/compose/ui/layout/MeasureScope;Ljava/util/List;J)Lio/github/awakelab/awake/compose/ui/layout/MeasureResult;
-	public fun minIntrinsicHeight (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun minIntrinsicWidth (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun <init> (Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;)V
+	public fun <init> (Lcom/awakekt/awake/compose/ui/Alignment;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/compose/ui/Alignment;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun maxIntrinsicHeight (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun maxIntrinsicWidth (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun measure-D7wS3wE (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;Ljava/util/List;J)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public fun minIntrinsicHeight (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun minIntrinsicWidth (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/BoxScope {
-	public abstract fun align (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public abstract fun matchParentSize (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public abstract interface class com/awakekt/awake/compose/foundation/layout/BoxScope {
+	public abstract fun align (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public abstract fun matchParentSize (Lcom/awakekt/awake/compose/ui/Modifier;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/BoxWithConstraintsKt {
-	public static final fun BoxWithConstraints (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment;ZLkotlin/jvm/functions/Function2;)V
-	public static synthetic fun BoxWithConstraints$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+public final class com/awakekt/awake/compose/foundation/layout/BoxWithConstraintsKt {
+	public static final fun BoxWithConstraints (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment;ZLkotlin/jvm/functions/Function2;)V
+	public static synthetic fun BoxWithConstraints$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/BoxWithConstraintsScope : io/github/awakelab/awake/compose/foundation/layout/BoxScope {
-	public abstract fun getConstraints-YycWvuI ()J
-	public abstract fun getMaxHeight-PExdcLc ()F
-	public abstract fun getMaxWidth-PExdcLc ()F
-	public abstract fun getMinHeight-PExdcLc ()F
-	public abstract fun getMinWidth-PExdcLc ()F
+public abstract interface class com/awakekt/awake/compose/foundation/layout/BoxWithConstraintsScope : com/awakekt/awake/compose/foundation/layout/BoxScope {
+	public abstract fun getConstraints-YWuktoM ()J
+	public abstract fun getMaxHeight-LGk54g8 ()F
+	public abstract fun getMaxWidth-LGk54g8 ()F
+	public abstract fun getMinHeight-LGk54g8 ()F
+	public abstract fun getMinWidth-LGk54g8 ()F
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/ColumnMeasurePolicy : io/github/awakelab/awake/compose/ui/layout/MeasurePolicy {
+public final class com/awakekt/awake/compose/foundation/layout/ColumnMeasurePolicy : com/awakekt/awake/compose/ui/layout/MeasurePolicy {
 	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun maxIntrinsicHeight (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun maxIntrinsicWidth (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun measure-81w2-r0 (Lio/github/awakelab/awake/compose/ui/layout/MeasureScope;Ljava/util/List;J)Lio/github/awakelab/awake/compose/ui/layout/MeasureResult;
-	public fun minIntrinsicHeight (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun minIntrinsicWidth (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun <init> (Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun maxIntrinsicHeight (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun maxIntrinsicWidth (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun measure-D7wS3wE (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;Ljava/util/List;J)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public fun minIntrinsicHeight (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun minIntrinsicWidth (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/ColumnScope {
-	public abstract fun align (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public abstract fun alignBy (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/layout/VerticalAlignmentLine;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public abstract fun weight (Lio/github/awakelab/awake/compose/ui/Modifier;FZ)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun weight$default (Lio/github/awakelab/awake/compose/foundation/layout/ColumnScope;Lio/github/awakelab/awake/compose/ui/Modifier;FZILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public abstract interface class com/awakekt/awake/compose/foundation/layout/ColumnScope {
+	public abstract fun align (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public abstract fun alignBy (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/layout/VerticalAlignmentLine;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public abstract fun weight (Lcom/awakekt/awake/compose/ui/Modifier;FZ)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun weight$default (Lcom/awakekt/awake/compose/foundation/layout/ColumnScope;Lcom/awakekt/awake/compose/ui/Modifier;FZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/ColumnScope$DefaultImpls {
-	public static synthetic fun weight$default (Lio/github/awakelab/awake/compose/foundation/layout/ColumnScope;Lio/github/awakelab/awake/compose/ui/Modifier;FZILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/layout/ColumnScope$DefaultImpls {
+	public static synthetic fun weight$default (Lcom/awakekt/awake/compose/foundation/layout/ColumnScope;Lcom/awakekt/awake/compose/ui/Modifier;FZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexAlignContent : java/lang/Enum {
-	public static final field Center Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignContent;
-	public static final field End Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignContent;
-	public static final field SpaceAround Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignContent;
-	public static final field SpaceBetween Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignContent;
-	public static final field Start Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignContent;
-	public static final field Stretch Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignContent;
+public final class com/awakekt/awake/compose/foundation/layout/FlexAlignContent : java/lang/Enum {
+	public static final field Center Lcom/awakekt/awake/compose/foundation/layout/FlexAlignContent;
+	public static final field End Lcom/awakekt/awake/compose/foundation/layout/FlexAlignContent;
+	public static final field SpaceAround Lcom/awakekt/awake/compose/foundation/layout/FlexAlignContent;
+	public static final field SpaceBetween Lcom/awakekt/awake/compose/foundation/layout/FlexAlignContent;
+	public static final field Start Lcom/awakekt/awake/compose/foundation/layout/FlexAlignContent;
+	public static final field Stretch Lcom/awakekt/awake/compose/foundation/layout/FlexAlignContent;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignContent;
-	public static fun values ()[Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignContent;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/layout/FlexAlignContent;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/layout/FlexAlignContent;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexAlignItems : java/lang/Enum {
-	public static final field Baseline Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignItems;
-	public static final field Center Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignItems;
-	public static final field End Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignItems;
-	public static final field Start Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignItems;
-	public static final field Stretch Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignItems;
+public final class com/awakekt/awake/compose/foundation/layout/FlexAlignItems : java/lang/Enum {
+	public static final field Baseline Lcom/awakekt/awake/compose/foundation/layout/FlexAlignItems;
+	public static final field Center Lcom/awakekt/awake/compose/foundation/layout/FlexAlignItems;
+	public static final field End Lcom/awakekt/awake/compose/foundation/layout/FlexAlignItems;
+	public static final field Start Lcom/awakekt/awake/compose/foundation/layout/FlexAlignItems;
+	public static final field Stretch Lcom/awakekt/awake/compose/foundation/layout/FlexAlignItems;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignItems;
-	public static fun values ()[Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignItems;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/layout/FlexAlignItems;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/layout/FlexAlignItems;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexAlignSelf : java/lang/Enum {
-	public static final field Auto Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignSelf;
-	public static final field Baseline Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignSelf;
-	public static final field Center Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignSelf;
-	public static final field End Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignSelf;
-	public static final field Start Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignSelf;
-	public static final field Stretch Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignSelf;
+public final class com/awakekt/awake/compose/foundation/layout/FlexAlignSelf : java/lang/Enum {
+	public static final field Auto Lcom/awakekt/awake/compose/foundation/layout/FlexAlignSelf;
+	public static final field Baseline Lcom/awakekt/awake/compose/foundation/layout/FlexAlignSelf;
+	public static final field Center Lcom/awakekt/awake/compose/foundation/layout/FlexAlignSelf;
+	public static final field End Lcom/awakekt/awake/compose/foundation/layout/FlexAlignSelf;
+	public static final field Start Lcom/awakekt/awake/compose/foundation/layout/FlexAlignSelf;
+	public static final field Stretch Lcom/awakekt/awake/compose/foundation/layout/FlexAlignSelf;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignSelf;
-	public static fun values ()[Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignSelf;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/layout/FlexAlignSelf;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/layout/FlexAlignSelf;
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/FlexBasis {
-	public static final field Companion Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis$Companion;
+public abstract interface class com/awakekt/awake/compose/foundation/layout/FlexBasis {
+	public static final field Companion Lcom/awakekt/awake/compose/foundation/layout/FlexBasis$Companion;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexBasis$Auto : io/github/awakelab/awake/compose/foundation/layout/FlexBasis {
-	public static final field INSTANCE Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis$Auto;
+public final class com/awakekt/awake/compose/foundation/layout/FlexBasis$Auto : com/awakekt/awake/compose/foundation/layout/FlexBasis {
+	public static final field INSTANCE Lcom/awakekt/awake/compose/foundation/layout/FlexBasis$Auto;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexBasis$Companion {
-	public final fun Dp-62jLhNU (F)Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis;
-	public final fun Percent (F)Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis;
+public final class com/awakekt/awake/compose/foundation/layout/FlexBasis$Companion {
+	public final fun Dp-Jha-xPg (F)Lcom/awakekt/awake/compose/foundation/layout/FlexBasis;
+	public final fun Percent (F)Lcom/awakekt/awake/compose/foundation/layout/FlexBasis;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexBasis$Fixed : io/github/awakelab/awake/compose/foundation/layout/FlexBasis {
+public final class com/awakekt/awake/compose/foundation/layout/FlexBasis$Fixed : com/awakekt/awake/compose/foundation/layout/FlexBasis {
 	public synthetic fun <init> (FLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-PExdcLc ()F
-	public final fun copy-62jLhNU (F)Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis$Fixed;
-	public static synthetic fun copy-62jLhNU$default (Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis$Fixed;FILjava/lang/Object;)Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis$Fixed;
+	public final fun component1-LGk54g8 ()F
+	public final fun copy-Jha-xPg (F)Lcom/awakekt/awake/compose/foundation/layout/FlexBasis$Fixed;
+	public static synthetic fun copy-Jha-xPg$default (Lcom/awakekt/awake/compose/foundation/layout/FlexBasis$Fixed;FILjava/lang/Object;)Lcom/awakekt/awake/compose/foundation/layout/FlexBasis$Fixed;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getValue-PExdcLc ()F
+	public final fun getValue-LGk54g8 ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexBasis$Percent : io/github/awakelab/awake/compose/foundation/layout/FlexBasis {
+public final class com/awakekt/awake/compose/foundation/layout/FlexBasis$Percent : com/awakekt/awake/compose/foundation/layout/FlexBasis {
 	public fun <init> (F)V
 	public final fun component1 ()F
-	public final fun copy (F)Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis$Percent;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis$Percent;FILjava/lang/Object;)Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis$Percent;
+	public final fun copy (F)Lcom/awakekt/awake/compose/foundation/layout/FlexBasis$Percent;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/foundation/layout/FlexBasis$Percent;FILjava/lang/Object;)Lcom/awakekt/awake/compose/foundation/layout/FlexBasis$Percent;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getValue ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/FlexBoxConfig {
-	public static final field Companion Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfig$Companion;
-	public abstract fun configure (Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfigScope;)V
+public abstract interface class com/awakekt/awake/compose/foundation/layout/FlexBoxConfig {
+	public static final field Companion Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfig$Companion;
+	public abstract fun configure (Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfigScope;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexBoxConfig$Companion : io/github/awakelab/awake/compose/foundation/layout/FlexBoxConfig {
-	public fun configure (Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfigScope;)V
+public final class com/awakekt/awake/compose/foundation/layout/FlexBoxConfig$Companion : com/awakekt/awake/compose/foundation/layout/FlexBoxConfig {
+	public fun configure (Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfigScope;)V
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/FlexBoxConfigScope : io/github/awakelab/awake/compose/ui/unit/Density {
-	public fun gap-62jLhNU (F)V
-	public fun gap-mhGDGVo (FF)V
-	public abstract fun getAlignContent ()Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignContent;
-	public abstract fun getAlignItems ()Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignItems;
-	public abstract fun getColumnGap-PExdcLc ()F
-	public abstract fun getConstraints-YycWvuI ()J
-	public abstract fun getDirection ()Lio/github/awakelab/awake/compose/foundation/layout/FlexDirection;
-	public abstract fun getJustifyContent ()Lio/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent;
-	public abstract fun getRowGap-PExdcLc ()F
-	public abstract fun getWrap ()Lio/github/awakelab/awake/compose/foundation/layout/FlexWrap;
-	public abstract fun setAlignContent (Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignContent;)V
-	public abstract fun setAlignItems (Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignItems;)V
-	public abstract fun setColumnGap-62jLhNU (F)V
-	public abstract fun setDirection (Lio/github/awakelab/awake/compose/foundation/layout/FlexDirection;)V
-	public abstract fun setJustifyContent (Lio/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent;)V
-	public abstract fun setRowGap-62jLhNU (F)V
-	public abstract fun setWrap (Lio/github/awakelab/awake/compose/foundation/layout/FlexWrap;)V
+public abstract interface class com/awakekt/awake/compose/foundation/layout/FlexBoxConfigScope : com/awakekt/awake/compose/ui/unit/Density {
+	public fun gap-6gMdd8Y (FF)V
+	public fun gap-Jha-xPg (F)V
+	public abstract fun getAlignContent ()Lcom/awakekt/awake/compose/foundation/layout/FlexAlignContent;
+	public abstract fun getAlignItems ()Lcom/awakekt/awake/compose/foundation/layout/FlexAlignItems;
+	public abstract fun getColumnGap-LGk54g8 ()F
+	public abstract fun getConstraints-YWuktoM ()J
+	public abstract fun getDirection ()Lcom/awakekt/awake/compose/foundation/layout/FlexDirection;
+	public abstract fun getJustifyContent ()Lcom/awakekt/awake/compose/foundation/layout/FlexJustifyContent;
+	public abstract fun getRowGap-LGk54g8 ()F
+	public abstract fun getWrap ()Lcom/awakekt/awake/compose/foundation/layout/FlexWrap;
+	public abstract fun setAlignContent (Lcom/awakekt/awake/compose/foundation/layout/FlexAlignContent;)V
+	public abstract fun setAlignItems (Lcom/awakekt/awake/compose/foundation/layout/FlexAlignItems;)V
+	public abstract fun setColumnGap-Jha-xPg (F)V
+	public abstract fun setDirection (Lcom/awakekt/awake/compose/foundation/layout/FlexDirection;)V
+	public abstract fun setJustifyContent (Lcom/awakekt/awake/compose/foundation/layout/FlexJustifyContent;)V
+	public abstract fun setRowGap-Jha-xPg (F)V
+	public abstract fun setWrap (Lcom/awakekt/awake/compose/foundation/layout/FlexWrap;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexBoxConfigScope$DefaultImpls {
-	public static fun gap-62jLhNU (Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfigScope;F)V
-	public static fun gap-mhGDGVo (Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfigScope;FF)V
-	public static fun roundToPx-62jLhNU (Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfigScope;F)I
-	public static fun toDp-u3pm0pw (Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfigScope;F)F
-	public static fun toDp-u3pm0pw (Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfigScope;I)F
-	public static fun toPx-62jLhNU (Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfigScope;F)F
+public final class com/awakekt/awake/compose/foundation/layout/FlexBoxConfigScope$DefaultImpls {
+	public static fun gap-6gMdd8Y (Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfigScope;FF)V
+	public static fun gap-Jha-xPg (Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfigScope;F)V
+	public static fun roundToPx-Jha-xPg (Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfigScope;F)I
+	public static fun toDp-ggnb7VQ (Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfigScope;F)F
+	public static fun toDp-ggnb7VQ (Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfigScope;I)F
+	public static fun toPx-Jha-xPg (Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfigScope;F)F
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexBoxKt {
-	public static final fun FlexBox (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfig;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun FlexBox$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/FlexBoxConfig;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-	public static final fun flex (Lio/github/awakelab/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/layout/FlexBoxKt {
+	public static final fun FlexBox (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfig;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun FlexBox$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/FlexBoxConfig;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun flex (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/FlexBoxScope {
+public abstract interface class com/awakekt/awake/compose/foundation/layout/FlexBoxScope {
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexDirection : java/lang/Enum {
-	public static final field Column Lio/github/awakelab/awake/compose/foundation/layout/FlexDirection;
-	public static final field ColumnReverse Lio/github/awakelab/awake/compose/foundation/layout/FlexDirection;
-	public static final field Row Lio/github/awakelab/awake/compose/foundation/layout/FlexDirection;
-	public static final field RowReverse Lio/github/awakelab/awake/compose/foundation/layout/FlexDirection;
+public final class com/awakekt/awake/compose/foundation/layout/FlexDirection : java/lang/Enum {
+	public static final field Column Lcom/awakekt/awake/compose/foundation/layout/FlexDirection;
+	public static final field ColumnReverse Lcom/awakekt/awake/compose/foundation/layout/FlexDirection;
+	public static final field Row Lcom/awakekt/awake/compose/foundation/layout/FlexDirection;
+	public static final field RowReverse Lcom/awakekt/awake/compose/foundation/layout/FlexDirection;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/compose/foundation/layout/FlexDirection;
-	public static fun values ()[Lio/github/awakelab/awake/compose/foundation/layout/FlexDirection;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/layout/FlexDirection;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/layout/FlexDirection;
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/FlexItemConfig {
-	public abstract fun alignSelf (Lio/github/awakelab/awake/compose/foundation/layout/FlexAlignSelf;)V
+public abstract interface class com/awakekt/awake/compose/foundation/layout/FlexItemConfig {
+	public abstract fun alignSelf (Lcom/awakekt/awake/compose/foundation/layout/FlexAlignSelf;)V
 	public fun basis (F)V
-	public abstract fun basis (Lio/github/awakelab/awake/compose/foundation/layout/FlexBasis;)V
-	public fun basis-62jLhNU (F)V
+	public abstract fun basis (Lcom/awakekt/awake/compose/foundation/layout/FlexBasis;)V
+	public fun basis-Jha-xPg (F)V
 	public abstract fun grow (F)V
 	public abstract fun order (I)V
 	public abstract fun shrink (F)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexItemConfig$DefaultImpls {
-	public static fun basis (Lio/github/awakelab/awake/compose/foundation/layout/FlexItemConfig;F)V
-	public static fun basis-62jLhNU (Lio/github/awakelab/awake/compose/foundation/layout/FlexItemConfig;F)V
+public final class com/awakekt/awake/compose/foundation/layout/FlexItemConfig$DefaultImpls {
+	public static fun basis (Lcom/awakekt/awake/compose/foundation/layout/FlexItemConfig;F)V
+	public static fun basis-Jha-xPg (Lcom/awakekt/awake/compose/foundation/layout/FlexItemConfig;F)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent : java/lang/Enum {
-	public static final field Center Lio/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent;
-	public static final field End Lio/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent;
-	public static final field SpaceAround Lio/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent;
-	public static final field SpaceBetween Lio/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent;
-	public static final field SpaceEvenly Lio/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent;
-	public static final field Start Lio/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent;
+public final class com/awakekt/awake/compose/foundation/layout/FlexJustifyContent : java/lang/Enum {
+	public static final field Center Lcom/awakekt/awake/compose/foundation/layout/FlexJustifyContent;
+	public static final field End Lcom/awakekt/awake/compose/foundation/layout/FlexJustifyContent;
+	public static final field SpaceAround Lcom/awakekt/awake/compose/foundation/layout/FlexJustifyContent;
+	public static final field SpaceBetween Lcom/awakekt/awake/compose/foundation/layout/FlexJustifyContent;
+	public static final field SpaceEvenly Lcom/awakekt/awake/compose/foundation/layout/FlexJustifyContent;
+	public static final field Start Lcom/awakekt/awake/compose/foundation/layout/FlexJustifyContent;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent;
-	public static fun values ()[Lio/github/awakelab/awake/compose/foundation/layout/FlexJustifyContent;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/layout/FlexJustifyContent;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/layout/FlexJustifyContent;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlexWrap : java/lang/Enum {
-	public static final field NoWrap Lio/github/awakelab/awake/compose/foundation/layout/FlexWrap;
-	public static final field Wrap Lio/github/awakelab/awake/compose/foundation/layout/FlexWrap;
-	public static final field WrapReverse Lio/github/awakelab/awake/compose/foundation/layout/FlexWrap;
+public final class com/awakekt/awake/compose/foundation/layout/FlexWrap : java/lang/Enum {
+	public static final field NoWrap Lcom/awakekt/awake/compose/foundation/layout/FlexWrap;
+	public static final field Wrap Lcom/awakekt/awake/compose/foundation/layout/FlexWrap;
+	public static final field WrapReverse Lcom/awakekt/awake/compose/foundation/layout/FlexWrap;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/compose/foundation/layout/FlexWrap;
-	public static fun values ()[Lio/github/awakelab/awake/compose/foundation/layout/FlexWrap;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/layout/FlexWrap;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/layout/FlexWrap;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/FlowKt {
-	public static final fun FlowColumn (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;IILkotlin/jvm/functions/Function2;)V
-	public static synthetic fun FlowColumn$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;IILkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-	public static final fun FlowRow (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;IILkotlin/jvm/functions/Function2;)V
-	public static synthetic fun FlowRow$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;IILkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+public final class com/awakekt/awake/compose/foundation/layout/FlowKt {
+	public static final fun FlowColumn (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;IILkotlin/jvm/functions/Function2;)V
+	public static synthetic fun FlowColumn$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;IILkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun FlowRow (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;IILkotlin/jvm/functions/Function2;)V
+	public static synthetic fun FlowRow$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;IILkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/IntrinsicSize : java/lang/Enum {
-	public static final field Max Lio/github/awakelab/awake/compose/foundation/layout/IntrinsicSize;
-	public static final field Min Lio/github/awakelab/awake/compose/foundation/layout/IntrinsicSize;
+public final class com/awakekt/awake/compose/foundation/layout/IntrinsicSize : java/lang/Enum {
+	public static final field Max Lcom/awakekt/awake/compose/foundation/layout/IntrinsicSize;
+	public static final field Min Lcom/awakekt/awake/compose/foundation/layout/IntrinsicSize;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/compose/foundation/layout/IntrinsicSize;
-	public static fun values ()[Lio/github/awakelab/awake/compose/foundation/layout/IntrinsicSize;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/layout/IntrinsicSize;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/layout/IntrinsicSize;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/IntrinsicSizeKt {
-	public static final fun height (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/IntrinsicSize;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun width (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/IntrinsicSize;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/layout/IntrinsicSizeKt {
+	public static final fun height (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/IntrinsicSize;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun width (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/IntrinsicSize;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/LayoutModifiersKt {
-	public static final fun fillMaxHeight (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun fillMaxHeight$default (Lio/github/awakelab/awake/compose/ui/Modifier;FILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun fillMaxSize (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun fillMaxSize$default (Lio/github/awakelab/awake/compose/ui/Modifier;FILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun fillMaxWidth (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun fillMaxWidth$default (Lio/github/awakelab/awake/compose/ui/Modifier;FILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun height-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun padding-CxBiA2w (Lio/github/awakelab/awake/compose/ui/Modifier;FFFF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun padding-CxBiA2w$default (Lio/github/awakelab/awake/compose/ui/Modifier;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun padding-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun padding-uuA1Jbk (Lio/github/awakelab/awake/compose/ui/Modifier;FF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun padding-uuA1Jbk$default (Lio/github/awakelab/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun size-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun size-uuA1Jbk (Lio/github/awakelab/awake/compose/ui/Modifier;FF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun width-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun wrapContentHeight (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;Z)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun wrapContentHeight$default (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;ZILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun wrapContentSize (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;Z)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun wrapContentSize$default (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;ZILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun wrapContentWidth (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;Z)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun wrapContentWidth$default (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;ZILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/layout/LayoutModifiersKt {
+	public static final fun fillMaxHeight (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun fillMaxHeight$default (Lcom/awakekt/awake/compose/ui/Modifier;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun fillMaxSize (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun fillMaxSize$default (Lcom/awakekt/awake/compose/ui/Modifier;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun fillMaxWidth (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun fillMaxWidth$default (Lcom/awakekt/awake/compose/ui/Modifier;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun height-HmGnkO4 (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun padding-1pN_xf8 (Lcom/awakekt/awake/compose/ui/Modifier;FFFF)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun padding-1pN_xf8$default (Lcom/awakekt/awake/compose/ui/Modifier;FFFFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun padding-HmGnkO4 (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun padding-YJb1Ef8 (Lcom/awakekt/awake/compose/ui/Modifier;FF)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun padding-YJb1Ef8$default (Lcom/awakekt/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun size-HmGnkO4 (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun size-YJb1Ef8 (Lcom/awakekt/awake/compose/ui/Modifier;FF)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun width-HmGnkO4 (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun wrapContentHeight (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;Z)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun wrapContentHeight$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;ZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun wrapContentSize (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;Z)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun wrapContentSize$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;ZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun wrapContentWidth (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Z)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun wrapContentWidth$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;ZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public abstract interface annotation class io/github/awakelab/awake/compose/foundation/layout/LayoutScopeMarker : java/lang/annotation/Annotation {
+public abstract interface annotation class com/awakekt/awake/compose/foundation/layout/LayoutScopeMarker : java/lang/annotation/Annotation {
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/LayoutsKt {
-	public static final fun Box (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;)V
-	public static final fun Box (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun Box$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-	public static synthetic fun Box$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-	public static final fun Column (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun Column$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Vertical;Lio/github/awakelab/awake/compose/ui/Alignment$Horizontal;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-	public static final fun Row (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun Row$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+public final class com/awakekt/awake/compose/foundation/layout/LayoutsKt {
+	public static final fun Box (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;)V
+	public static final fun Box (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun Box$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static synthetic fun Box$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun Column (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun Column$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Vertical;Lcom/awakekt/awake/compose/ui/Alignment$Horizontal;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun Row (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun Row$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/OffsetAndSizingKt {
-	public static final fun absoluteOffset-uuA1Jbk (Lio/github/awakelab/awake/compose/ui/Modifier;FF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun absoluteOffset-uuA1Jbk$default (Lio/github/awakelab/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun aspectRatio (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun defaultMinSize-uuA1Jbk (Lio/github/awakelab/awake/compose/ui/Modifier;FF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun defaultMinSize-uuA1Jbk$default (Lio/github/awakelab/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun heightIn-uuA1Jbk (Lio/github/awakelab/awake/compose/ui/Modifier;FF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun heightIn-uuA1Jbk$default (Lio/github/awakelab/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun offset-uuA1Jbk (Lio/github/awakelab/awake/compose/ui/Modifier;FF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun offset-uuA1Jbk$default (Lio/github/awakelab/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun requiredHeight-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun requiredSize-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun requiredSize-uuA1Jbk (Lio/github/awakelab/awake/compose/ui/Modifier;FF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun requiredWidth-bEoJtvI (Lio/github/awakelab/awake/compose/ui/Modifier;F)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun sizeIn-CxBiA2w (Lio/github/awakelab/awake/compose/ui/Modifier;FFFF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun sizeIn-CxBiA2w$default (Lio/github/awakelab/awake/compose/ui/Modifier;FFFFILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun widthIn-uuA1Jbk (Lio/github/awakelab/awake/compose/ui/Modifier;FF)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun widthIn-uuA1Jbk$default (Lio/github/awakelab/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/layout/OffsetAndSizingKt {
+	public static final fun absoluteOffset-YJb1Ef8 (Lcom/awakekt/awake/compose/ui/Modifier;FF)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun absoluteOffset-YJb1Ef8$default (Lcom/awakekt/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun aspectRatio (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun defaultMinSize-YJb1Ef8 (Lcom/awakekt/awake/compose/ui/Modifier;FF)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun defaultMinSize-YJb1Ef8$default (Lcom/awakekt/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun heightIn-YJb1Ef8 (Lcom/awakekt/awake/compose/ui/Modifier;FF)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun heightIn-YJb1Ef8$default (Lcom/awakekt/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun offset-YJb1Ef8 (Lcom/awakekt/awake/compose/ui/Modifier;FF)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun offset-YJb1Ef8$default (Lcom/awakekt/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun requiredHeight-HmGnkO4 (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun requiredSize-HmGnkO4 (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun requiredSize-YJb1Ef8 (Lcom/awakekt/awake/compose/ui/Modifier;FF)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun requiredWidth-HmGnkO4 (Lcom/awakekt/awake/compose/ui/Modifier;F)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun sizeIn-1pN_xf8 (Lcom/awakekt/awake/compose/ui/Modifier;FFFF)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun sizeIn-1pN_xf8$default (Lcom/awakekt/awake/compose/ui/Modifier;FFFFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun widthIn-YJb1Ef8 (Lcom/awakekt/awake/compose/ui/Modifier;FF)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun widthIn-YJb1Ef8$default (Lcom/awakekt/awake/compose/ui/Modifier;FFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/RowMeasurePolicy : io/github/awakelab/awake/compose/ui/layout/MeasurePolicy {
+public final class com/awakekt/awake/compose/foundation/layout/RowMeasurePolicy : com/awakekt/awake/compose/ui/layout/MeasurePolicy {
 	public fun <init> ()V
-	public fun <init> (Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/compose/foundation/layout/Arrangement$Horizontal;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun maxIntrinsicHeight (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun maxIntrinsicWidth (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun measure-81w2-r0 (Lio/github/awakelab/awake/compose/ui/layout/MeasureScope;Ljava/util/List;J)Lio/github/awakelab/awake/compose/ui/layout/MeasureResult;
-	public fun minIntrinsicHeight (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun minIntrinsicWidth (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun <init> (Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/compose/foundation/layout/Arrangement$Horizontal;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun maxIntrinsicHeight (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun maxIntrinsicWidth (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun measure-D7wS3wE (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;Ljava/util/List;J)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public fun minIntrinsicHeight (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun minIntrinsicWidth (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/layout/RowScope {
-	public abstract fun align (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/Alignment$Vertical;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public abstract fun alignBy (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/ui/layout/HorizontalAlignmentLine;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public fun alignByBaseline (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public abstract fun weight (Lio/github/awakelab/awake/compose/ui/Modifier;FZ)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun weight$default (Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Lio/github/awakelab/awake/compose/ui/Modifier;FZILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public abstract interface class com/awakekt/awake/compose/foundation/layout/RowScope {
+	public abstract fun align (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/Alignment$Vertical;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public abstract fun alignBy (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/ui/layout/HorizontalAlignmentLine;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public fun alignByBaseline (Lcom/awakekt/awake/compose/ui/Modifier;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public abstract fun weight (Lcom/awakekt/awake/compose/ui/Modifier;FZ)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun weight$default (Lcom/awakekt/awake/compose/foundation/layout/RowScope;Lcom/awakekt/awake/compose/ui/Modifier;FZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/RowScope$DefaultImpls {
-	public static fun alignByBaseline (Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun weight$default (Lio/github/awakelab/awake/compose/foundation/layout/RowScope;Lio/github/awakelab/awake/compose/ui/Modifier;FZILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/layout/RowScope$DefaultImpls {
+	public static fun alignByBaseline (Lcom/awakekt/awake/compose/foundation/layout/RowScope;Lcom/awakekt/awake/compose/ui/Modifier;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun weight$default (Lcom/awakekt/awake/compose/foundation/layout/RowScope;Lcom/awakekt/awake/compose/ui/Modifier;FZILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/layout/SpacerKt {
-	public static final fun Spacer (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;)V
-	public static synthetic fun Spacer$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+public final class com/awakekt/awake/compose/foundation/layout/SpacerKt {
+	public static final fun Spacer (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;)V
+	public static synthetic fun Spacer$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/lazy/LazyColumnKt {
-	public static final fun LazyColumn (Lio/github/awakelab/awake/compose/runtime/Composer;ILio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/lazy/LazyListState;Lkotlin/jvm/functions/Function2;)V
-	public static synthetic fun LazyColumn$default (Lio/github/awakelab/awake/compose/runtime/Composer;ILio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/lazy/LazyListState;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+public final class com/awakekt/awake/compose/foundation/lazy/LazyColumnKt {
+	public static final fun LazyColumn (Lcom/awakekt/awake/compose/runtime/Composer;ILcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/lazy/LazyListState;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun LazyColumn$default (Lcom/awakekt/awake/compose/runtime/Composer;ILcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/lazy/LazyListState;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/lazy/LazyListState {
+public final class com/awakekt/awake/compose/foundation/lazy/LazyListState {
 	public static final field DEFAULT_ESTIMATE I
 	public fun <init> ()V
 	public fun <init> (II)V
@@ -557,24 +557,24 @@ public final class io/github/awakelab/awake/compose/foundation/lazy/LazyListStat
 	public final fun getFirstVisibleItemScrollOffset ()I
 	public final fun scrollBy (I)I
 	public final fun scrollToItem (II)V
-	public static synthetic fun scrollToItem$default (Lio/github/awakelab/awake/compose/foundation/lazy/LazyListState;IIILjava/lang/Object;)V
+	public static synthetic fun scrollToItem$default (Lcom/awakekt/awake/compose/foundation/lazy/LazyListState;IIILjava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/lazy/LazyListStateKt {
-	public static final fun rememberLazyListState (Lio/github/awakelab/awake/compose/runtime/Composer;II)Lio/github/awakelab/awake/compose/foundation/lazy/LazyListState;
-	public static synthetic fun rememberLazyListState$default (Lio/github/awakelab/awake/compose/runtime/Composer;IIILjava/lang/Object;)Lio/github/awakelab/awake/compose/foundation/lazy/LazyListState;
+public final class com/awakekt/awake/compose/foundation/lazy/LazyListStateKt {
+	public static final fun rememberLazyListState (Lcom/awakekt/awake/compose/runtime/Composer;II)Lcom/awakekt/awake/compose/foundation/lazy/LazyListState;
+	public static synthetic fun rememberLazyListState$default (Lcom/awakekt/awake/compose/runtime/Composer;IIILjava/lang/Object;)Lcom/awakekt/awake/compose/foundation/lazy/LazyListState;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/selection/SelectionKt {
-	public static final fun selectable (Lio/github/awakelab/awake/compose/ui/Modifier;ZZLio/github/awakelab/awake/compose/ui/semantics/SemanticsRole;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function0;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun selectable$default (Lio/github/awakelab/awake/compose/ui/Modifier;ZZLio/github/awakelab/awake/compose/ui/semantics/SemanticsRole;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun selectableGroup (Lio/github/awakelab/awake/compose/ui/Modifier;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun toggleable (Lio/github/awakelab/awake/compose/ui/Modifier;ZZLio/github/awakelab/awake/compose/ui/semantics/SemanticsRole;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function1;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static synthetic fun toggleable$default (Lio/github/awakelab/awake/compose/ui/Modifier;ZZLio/github/awakelab/awake/compose/ui/semantics/SemanticsRole;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/selection/SelectionKt {
+	public static final fun selectable (Lcom/awakekt/awake/compose/ui/Modifier;ZZLcom/awakekt/awake/compose/ui/semantics/SemanticsRole;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun selectable$default (Lcom/awakekt/awake/compose/ui/Modifier;ZZLcom/awakekt/awake/compose/ui/semantics/SemanticsRole;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun selectableGroup (Lcom/awakekt/awake/compose/ui/Modifier;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun toggleable (Lcom/awakekt/awake/compose/ui/Modifier;ZZLcom/awakekt/awake/compose/ui/semantics/SemanticsRole;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun toggleable$default (Lcom/awakekt/awake/compose/ui/Modifier;ZZLcom/awakekt/awake/compose/ui/semantics/SemanticsRole;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/style/MutableStyleState : io/github/awakelab/awake/compose/foundation/style/StyleState {
+public final class com/awakekt/awake/compose/foundation/style/MutableStyleState : com/awakekt/awake/compose/foundation/style/StyleState {
 	public fun <init> ()V
 	public fun <init> (ZZZZZZ)V
 	public synthetic fun <init> (ZZZZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -591,76 +591,76 @@ public final class io/github/awakelab/awake/compose/foundation/style/MutableStyl
 	public fun setPressed (Z)V
 	public fun setSelected (Z)V
 	public fun toString ()Ljava/lang/String;
-	public final fun updateFrom (Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;)V
+	public final fun updateFrom (Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/style/ResolvedStyle {
+public final class com/awakekt/awake/compose/foundation/style/ResolvedStyle {
 	public fun <init> ()V
 	public final fun getAlpha ()F
-	public final fun getBackground ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun getBorderColor ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun getBorderWidth-PExdcLc ()F
-	public final fun getContentPaddingHorizontal-PExdcLc ()F
-	public final fun getContentPaddingVertical-PExdcLc ()F
-	public final fun getCornerRadius-PExdcLc ()F
-	public final fun getExternalPaddingHorizontal-PExdcLc ()F
-	public final fun getExternalPaddingVertical-PExdcLc ()F
-	public final fun getHeight-N8oBcAg ()Lio/github/awakelab/awake/core/math2d/Dp;
-	public final fun getShape ()Lio/github/awakelab/awake/compose/ui/graphics/Shape;
-	public final fun getTextColor ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun getWidth-N8oBcAg ()Lio/github/awakelab/awake/core/math2d/Dp;
+	public final fun getBackground ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getBorderColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getBorderWidth-LGk54g8 ()F
+	public final fun getContentPaddingHorizontal-LGk54g8 ()F
+	public final fun getContentPaddingVertical-LGk54g8 ()F
+	public final fun getCornerRadius-LGk54g8 ()F
+	public final fun getExternalPaddingHorizontal-LGk54g8 ()F
+	public final fun getExternalPaddingVertical-LGk54g8 ()F
+	public final fun getHeight-x2uu33Y ()Lcom/awakekt/awake/core/math2d/Dp;
+	public final fun getShape ()Lcom/awakekt/awake/compose/ui/graphics/Shape;
+	public final fun getTextColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getWidth-x2uu33Y ()Lcom/awakekt/awake/core/math2d/Dp;
 	public final fun setAlpha (F)V
-	public final fun setBackground (Lio/github/awakelab/awake/core/color/Color;)V
-	public final fun setBorderColor (Lio/github/awakelab/awake/core/color/Color;)V
-	public final fun setBorderWidth-62jLhNU (F)V
-	public final fun setContentPaddingHorizontal-62jLhNU (F)V
-	public final fun setContentPaddingVertical-62jLhNU (F)V
-	public final fun setCornerRadius-62jLhNU (F)V
-	public final fun setExternalPaddingHorizontal-62jLhNU (F)V
-	public final fun setExternalPaddingVertical-62jLhNU (F)V
-	public final fun setHeight-e4R9NNs (Lio/github/awakelab/awake/core/math2d/Dp;)V
-	public final fun setShape (Lio/github/awakelab/awake/compose/ui/graphics/Shape;)V
-	public final fun setTextColor (Lio/github/awakelab/awake/core/color/Color;)V
-	public final fun setWidth-e4R9NNs (Lio/github/awakelab/awake/core/math2d/Dp;)V
+	public final fun setBackground (Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setBorderColor (Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setBorderWidth-Jha-xPg (F)V
+	public final fun setContentPaddingHorizontal-Jha-xPg (F)V
+	public final fun setContentPaddingVertical-Jha-xPg (F)V
+	public final fun setCornerRadius-Jha-xPg (F)V
+	public final fun setExternalPaddingHorizontal-Jha-xPg (F)V
+	public final fun setExternalPaddingVertical-Jha-xPg (F)V
+	public final fun setHeight-BLcS0G4 (Lcom/awakekt/awake/core/math2d/Dp;)V
+	public final fun setShape (Lcom/awakekt/awake/compose/ui/graphics/Shape;)V
+	public final fun setTextColor (Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setWidth-BLcS0G4 (Lcom/awakekt/awake/core/math2d/Dp;)V
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/style/Style {
-	public abstract fun applyStyle (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;)V
+public abstract interface class com/awakekt/awake/compose/foundation/style/Style {
+	public abstract fun applyStyle (Lcom/awakekt/awake/compose/foundation/style/StyleScope;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/style/StyleKt {
-	public static final fun checked (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;Lio/github/awakelab/awake/compose/foundation/style/Style;)V
-	public static final fun disabled (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;Lio/github/awakelab/awake/compose/foundation/style/Style;)V
-	public static final fun focused (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;Lio/github/awakelab/awake/compose/foundation/style/Style;)V
-	public static final fun hovered (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;Lio/github/awakelab/awake/compose/foundation/style/Style;)V
-	public static final fun pressed (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;Lio/github/awakelab/awake/compose/foundation/style/Style;)V
-	public static final fun selected (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;Lio/github/awakelab/awake/compose/foundation/style/Style;)V
+public final class com/awakekt/awake/compose/foundation/style/StyleKt {
+	public static final fun checked (Lcom/awakekt/awake/compose/foundation/style/StyleScope;Lcom/awakekt/awake/compose/foundation/style/Style;)V
+	public static final fun disabled (Lcom/awakekt/awake/compose/foundation/style/StyleScope;Lcom/awakekt/awake/compose/foundation/style/Style;)V
+	public static final fun focused (Lcom/awakekt/awake/compose/foundation/style/StyleScope;Lcom/awakekt/awake/compose/foundation/style/Style;)V
+	public static final fun hovered (Lcom/awakekt/awake/compose/foundation/style/StyleScope;Lcom/awakekt/awake/compose/foundation/style/Style;)V
+	public static final fun pressed (Lcom/awakekt/awake/compose/foundation/style/StyleScope;Lcom/awakekt/awake/compose/foundation/style/Style;)V
+	public static final fun selected (Lcom/awakekt/awake/compose/foundation/style/StyleScope;Lcom/awakekt/awake/compose/foundation/style/Style;)V
 }
 
-public abstract interface class io/github/awakelab/awake/compose/foundation/style/StyleScope {
+public abstract interface class com/awakekt/awake/compose/foundation/style/StyleScope {
 	public abstract fun alpha (F)V
-	public abstract fun background (Lio/github/awakelab/awake/core/color/Color;)V
-	public abstract fun border-WHO6D0s (FLio/github/awakelab/awake/core/color/Color;)V
-	public abstract fun contentPadding-mhGDGVo (FF)V
-	public static synthetic fun contentPadding-mhGDGVo$default (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;FFILjava/lang/Object;)V
-	public abstract fun cornerRadius-62jLhNU (F)V
-	public abstract fun externalPadding-mhGDGVo (FF)V
-	public static synthetic fun externalPadding-mhGDGVo$default (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;FFILjava/lang/Object;)V
-	public abstract fun getState ()Lio/github/awakelab/awake/compose/foundation/style/StyleState;
-	public abstract fun height-62jLhNU (F)V
-	public abstract fun shape (Lio/github/awakelab/awake/compose/ui/graphics/Shape;)V
-	public abstract fun size-62jLhNU (F)V
-	public abstract fun textColor (Lio/github/awakelab/awake/core/color/Color;)V
-	public abstract fun width-62jLhNU (F)V
+	public abstract fun background (Lcom/awakekt/awake/core/color/Color;)V
+	public abstract fun border-x8eJsFc (FLcom/awakekt/awake/core/color/Color;)V
+	public abstract fun contentPadding-6gMdd8Y (FF)V
+	public static synthetic fun contentPadding-6gMdd8Y$default (Lcom/awakekt/awake/compose/foundation/style/StyleScope;FFILjava/lang/Object;)V
+	public abstract fun cornerRadius-Jha-xPg (F)V
+	public abstract fun externalPadding-6gMdd8Y (FF)V
+	public static synthetic fun externalPadding-6gMdd8Y$default (Lcom/awakekt/awake/compose/foundation/style/StyleScope;FFILjava/lang/Object;)V
+	public abstract fun getState ()Lcom/awakekt/awake/compose/foundation/style/StyleState;
+	public abstract fun height-Jha-xPg (F)V
+	public abstract fun shape (Lcom/awakekt/awake/compose/ui/graphics/Shape;)V
+	public abstract fun size-Jha-xPg (F)V
+	public abstract fun textColor (Lcom/awakekt/awake/core/color/Color;)V
+	public abstract fun width-Jha-xPg (F)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/style/StyleScope$DefaultImpls {
-	public static synthetic fun contentPadding-mhGDGVo$default (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;FFILjava/lang/Object;)V
-	public static synthetic fun externalPadding-mhGDGVo$default (Lio/github/awakelab/awake/compose/foundation/style/StyleScope;FFILjava/lang/Object;)V
+public final class com/awakekt/awake/compose/foundation/style/StyleScope$DefaultImpls {
+	public static synthetic fun contentPadding-6gMdd8Y$default (Lcom/awakekt/awake/compose/foundation/style/StyleScope;FFILjava/lang/Object;)V
+	public static synthetic fun externalPadding-6gMdd8Y$default (Lcom/awakekt/awake/compose/foundation/style/StyleScope;FFILjava/lang/Object;)V
 }
 
-public abstract class io/github/awakelab/awake/compose/foundation/style/StyleState {
-	public static final field Companion Lio/github/awakelab/awake/compose/foundation/style/StyleState$Companion;
+public abstract class com/awakekt/awake/compose/foundation/style/StyleState {
+	public static final field Companion Lcom/awakekt/awake/compose/foundation/style/StyleState$Companion;
 	public fun <init> ()V
 	public abstract fun isChecked ()Z
 	public abstract fun isEnabled ()Z
@@ -670,34 +670,34 @@ public abstract class io/github/awakelab/awake/compose/foundation/style/StyleSta
 	public abstract fun isSelected ()Z
 }
 
-public final class io/github/awakelab/awake/compose/foundation/style/StyleState$Companion {
-	public final fun getDefault ()Lio/github/awakelab/awake/compose/foundation/style/StyleState;
+public final class com/awakekt/awake/compose/foundation/style/StyleState$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/compose/foundation/style/StyleState;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/style/StyleStateKt {
-	public static final fun rememberStyleState (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;ZZZ)Lio/github/awakelab/awake/compose/foundation/style/StyleState;
-	public static synthetic fun rememberStyleState$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;ZZZILjava/lang/Object;)Lio/github/awakelab/awake/compose/foundation/style/StyleState;
+public final class com/awakekt/awake/compose/foundation/style/StyleStateKt {
+	public static final fun rememberStyleState (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZZZ)Lcom/awakekt/awake/compose/foundation/style/StyleState;
+	public static synthetic fun rememberStyleState$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZZZILjava/lang/Object;)Lcom/awakekt/awake/compose/foundation/style/StyleState;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/style/StyleableKt {
-	public static final fun resolveTextColor (Lio/github/awakelab/awake/compose/foundation/style/StyleState;[Lio/github/awakelab/awake/compose/foundation/style/Style;)Lio/github/awakelab/awake/core/color/Color;
-	public static final fun styleable (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/style/StyleState;Lio/github/awakelab/awake/compose/foundation/BorderSides;[Lio/github/awakelab/awake/compose/foundation/style/Style;)Lio/github/awakelab/awake/compose/ui/Modifier;
-	public static final fun styleable (Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/compose/foundation/style/StyleState;[Lio/github/awakelab/awake/compose/foundation/style/Style;)Lio/github/awakelab/awake/compose/ui/Modifier;
+public final class com/awakekt/awake/compose/foundation/style/StyleableKt {
+	public static final fun resolveTextColor (Lcom/awakekt/awake/compose/foundation/style/StyleState;[Lcom/awakekt/awake/compose/foundation/style/Style;)Lcom/awakekt/awake/core/color/Color;
+	public static final fun styleable (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/style/StyleState;Lcom/awakekt/awake/compose/foundation/BorderSides;[Lcom/awakekt/awake/compose/foundation/style/Style;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun styleable (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/style/StyleState;[Lcom/awakekt/awake/compose/foundation/style/Style;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/text/BasicTextFieldKt {
-	public static final fun BasicTextField (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/text/theme/TextStyle;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Ljava/lang/String;Lio/github/awakelab/awake/core/color/Color;ZLkotlin/jvm/functions/Function0;)V
-	public static synthetic fun BasicTextField$default (Lio/github/awakelab/awake/compose/runtime/Composer;Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/text/theme/TextStyle;Lio/github/awakelab/awake/compose/foundation/interaction/InteractionSource;Ljava/lang/String;Lio/github/awakelab/awake/core/color/Color;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+public final class com/awakekt/awake/compose/foundation/text/BasicTextFieldKt {
+	public static final fun BasicTextField (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Ljava/lang/String;Lcom/awakekt/awake/core/color/Color;ZLkotlin/jvm/functions/Function0;)V
+	public static synthetic fun BasicTextField$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Ljava/lang/String;Lcom/awakekt/awake/core/color/Color;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/text/TextFieldState {
+public final class com/awakekt/awake/compose/foundation/text/TextFieldState {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;I)V
 	public synthetic fun <init> (Ljava/lang/String;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun apply (Lio/github/awakelab/awake/core/input/TextEditAction;)V
+	public final fun apply (Lcom/awakekt/awake/core/input/TextEditAction;)V
 	public final fun cancelComposition ()V
 	public final fun commitComposition (Ljava/lang/String;)V
-	public static synthetic fun commitComposition$default (Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;Ljava/lang/String;ILjava/lang/Object;)V
+	public static synthetic fun commitComposition$default (Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Ljava/lang/String;ILjava/lang/Object;)V
 	public final fun getCursor ()I
 	public final fun getHasComposition ()Z
 	public final fun getHasSelection ()Z
@@ -710,31 +710,31 @@ public final class io/github/awakelab/awake/compose/foundation/text/TextFieldSta
 	public final fun moveCursorTo (I)V
 	public final fun select (II)V
 	public final fun selectAll ()V
-	public final fun setComposition (Lio/github/awakelab/awake/core/input/ImeComposition;)V
+	public final fun setComposition (Lcom/awakekt/awake/core/input/ImeComposition;)V
 	public final fun setText (Ljava/lang/String;I)V
-	public static synthetic fun setText$default (Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;Ljava/lang/String;IILjava/lang/Object;)V
+	public static synthetic fun setText$default (Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Ljava/lang/String;IILjava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/text/TextFieldStateKt {
-	public static final fun rememberTextFieldState (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;)Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;
-	public static synthetic fun rememberTextFieldState$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;ILjava/lang/Object;)Lio/github/awakelab/awake/compose/foundation/text/TextFieldState;
+public final class com/awakekt/awake/compose/foundation/text/TextFieldStateKt {
+	public static final fun rememberTextFieldState (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/text/TextFieldState;
+	public static synthetic fun rememberTextFieldState$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/compose/foundation/text/TextFieldState;
 }
 
-public final class io/github/awakelab/awake/compose/foundation/text/TextKt {
-	public static final fun Text (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/text/theme/TextStyle;)V
-	public static synthetic fun Text$default (Lio/github/awakelab/awake/compose/runtime/Composer;Ljava/lang/String;Lio/github/awakelab/awake/compose/ui/Modifier;Lio/github/awakelab/awake/core/text/theme/TextStyle;ILjava/lang/Object;)V
+public final class com/awakekt/awake/compose/foundation/text/TextKt {
+	public static final fun Text (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;)V
+	public static synthetic fun Text$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;ILjava/lang/Object;)V
 }
 
-public final class io/github/awakelab/awake/compose/foundation/text/TextMeasurePolicy : io/github/awakelab/awake/compose/ui/layout/MeasurePolicy {
-	public fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/core/text/theme/TextStyle;Lio/github/awakelab/awake/core/text/font/UiFont;Z)V
-	public synthetic fun <init> (Ljava/lang/String;Lio/github/awakelab/awake/core/text/theme/TextStyle;Lio/github/awakelab/awake/core/text/font/UiFont;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun <init> (Lkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/core/text/theme/TextStyle;Lio/github/awakelab/awake/core/text/font/UiFont;Z)V
-	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lio/github/awakelab/awake/core/text/theme/TextStyle;Lio/github/awakelab/awake/core/text/font/UiFont;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun maxIntrinsicHeight (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun maxIntrinsicWidth (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun measure-81w2-r0 (Lio/github/awakelab/awake/compose/ui/layout/MeasureScope;Ljava/util/List;J)Lio/github/awakelab/awake/compose/ui/layout/MeasureResult;
-	public fun minIntrinsicHeight (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
-	public fun minIntrinsicWidth (Lio/github/awakelab/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+public final class com/awakekt/awake/compose/foundation/text/TextMeasurePolicy : com/awakekt/awake/compose/ui/layout/MeasurePolicy {
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;Z)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/text/font/UiFont;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun maxIntrinsicHeight (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun maxIntrinsicWidth (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun measure-D7wS3wE (Lcom/awakekt/awake/compose/ui/layout/MeasureScope;Ljava/util/List;J)Lcom/awakekt/awake/compose/ui/layout/MeasureResult;
+	public fun minIntrinsicHeight (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
+	public fun minIntrinsicWidth (Lcom/awakekt/awake/compose/ui/unit/Density;Ljava/util/List;I)I
 }
 

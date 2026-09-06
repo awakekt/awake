@@ -21,7 +21,7 @@ Lightweight, high-performance 2D geometric and layout primitives for screen spac
 ## API Catalog
 
 ### 1. Vector Math (`Vec2`)
-Location: `io.github.awakelab.awake.core.math2d.Vec2`
+Location: `com.awakekt.awake.core.math2d.Vec2`
 
 | Member / Function | Description |
 | :--- | :--- |
@@ -46,7 +46,7 @@ if (distance <= 8f) {
 ---
 
 ### 2. Geometry (`Rectangle`, `Size2D`)
-Location: `io.github.awakelab.awake.core.math2d`
+Location: `com.awakekt.awake.core.math2d`
 
 | Type / Function | Description |
 | :--- | :--- |
@@ -72,7 +72,7 @@ if (placedRect.contains(mouseX, mouseY)) {
 ---
 
 ### 3. Density Units (`Dp`, `Sp`)
-Location: `io.github.awakelab.awake.core.math2d`
+Location: `com.awakekt.awake.core.math2d`
 
 | Type / Extension | Description |
 | :--- | :--- |

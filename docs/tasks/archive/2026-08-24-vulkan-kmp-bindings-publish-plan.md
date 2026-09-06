@@ -24,7 +24,7 @@ are consumers, never contents; the relationship is LWJGL-to-engine.
 
 ## Phase A — publish the core profile (weeks)
 
-1. **Naming** — needs one decision: the artifact group. The repo-wide `io.github.awake-lab`
+1. **Naming** — needs one decision: the artifact group. The repo-wide `com.awakekt.awake`
    rename is planned as a single pre-publish pass (see memory/decision log); publishing
    bindings *now* under `io.github.awakelab` and renaming later breaks early adopters.
    Options: (a) do the awake-lab rename for the published bindings artifacts only, as an
@@ -63,7 +63,7 @@ are consumers, never contents; the relationship is LWJGL-to-engine.
   publish wiring during the naming step.
 - Verified: bindings + backend GPU desktop suites, jolt iOS cinterop compile, naga iOS
   framework link, studio drift test — all through the shared helpers.
-- **Naming + publish chain landed (2026-08-24)**: `coordinates("io.github.awake-lab",
+- **Naming + publish chain landed (2026-08-24)**: `coordinates("com.awakekt.awake",
   "vulkan-kmp")` on the bindings (name unique, so the capability-collision guard stays
   satisfied); `android-native` publishes as `vulkan-kmp-android-native`
   (`AndroidSingleVariantLibrary`, release variant). Maven Local dry-run produces all six
@@ -76,7 +76,7 @@ are consumers, never contents; the relationship is LWJGL-to-engine.
 The remaining three items landed in one pass:
 - **External-consumer smoke** (`tools/vulkan-kmp-smoke/`): a standalone Gradle project —
   deliberately NOT in the root build, so resolution goes through real Maven metadata — that
-  consumes `io.github.awake-lab:vulkan-kmp` from mavenLocal and runs a live
+  consumes `com.awakekt.awake:vulkan-kmp` from mavenLocal and runs a live
   `vkCreateInstance`/`vkDestroyInstance` round trip through the published jar, JNI library,
   loader, and MoltenVK. It also documents two things every external macOS consumer needs:
   the ICD/DYLD environment, and the portability opt-in

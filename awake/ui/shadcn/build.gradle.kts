@@ -17,7 +17,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.ui.shadcn"
+        namespace = "com.awakekt.awake.ui.shadcn"
     }
 
     sourceSets {
@@ -60,7 +60,7 @@ tasks.named<Test>("desktopTest") {
     // so neither is an input Gradle can infer from the classpath. Without these, adding a component
     // leaves the compiled output identical and the task is served FROM-CACHE -- the coverage gate
     // reports green on exactly the change it exists to catch. Verified: it did.
-    inputs.dir(layout.projectDirectory.dir("src/commonMain/kotlin/io/github/awakelab/awake/ui/shadcn/components"))
+    inputs.dir(layout.projectDirectory.dir("src/commonMain/kotlin/com/awakekt/awake/ui/shadcn/components"))
         .withPropertyName("shadcnComponentSources")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.dir(layout.projectDirectory.dir("src/desktopTest/resources/baselines"))
@@ -79,9 +79,9 @@ tasks.register("auditUiShadcnComponentNaming") {
     description =
         "Verifies design-system component files use Shadcn naming and matching family packages."
     val componentsRoot = layout.projectDirectory.dir(
-        "src/commonMain/kotlin/io/github/awakelab/awake/ui/shadcn/components",
+        "src/commonMain/kotlin/com/awakekt/awake/ui/shadcn/components",
     )
-    val packagePrefix = "io.github.awakelab.awake.ui.shadcn.components"
+    val packagePrefix = "com.awakekt.awake.ui.shadcn.components"
     doLast {
         val violations = componentsRoot.asFile.walkTopDown()
             .filter { it.isFile && it.extension == "kt" }
@@ -123,7 +123,7 @@ tasks.register("auditUiShadcnRecipeDuplicates") {
     description =
         "Rejects the same-receiver Shadcn recipe declared in more than one file."
     val componentsRoot = layout.projectDirectory.dir(
-        "src/commonMain/kotlin/io/github/awakelab/awake/ui/shadcn/components",
+        "src/commonMain/kotlin/com/awakekt/awake/ui/shadcn/components",
     )
     val declaration = Regex("""fun\s+(?:<[^>]+>\s*)?((?:[\w.]+)\.)?(shadcn[A-Z]\w*)\s*\(""")
     doLast {
@@ -156,7 +156,7 @@ tasks.register("auditUiShadcnComponentCoverage") {
     group = "verification"
     description = "Verifies every public design-system recipe is backed by a behaviour layer."
     val componentsRoot = layout.projectDirectory.dir(
-        "src/commonMain/kotlin/io/github/awakelab/awake/ui/shadcn/components",
+        "src/commonMain/kotlin/com/awakekt/awake/ui/shadcn/components",
     )
     doLast {
         val componentFiles = componentsRoot.asFile.walkTopDown()
@@ -174,7 +174,7 @@ tasks.register("auditUiShadcnComponentCoverage") {
                 // on the name `shadcn*` alone it also failed, since `shadcnSliderTrack` is a
                 // function and not a recipe.
                 val composes = source.contains("context(_: Composer)")
-                val delegates = source.contains("io.github.awakelab.awake.compose.")
+                val delegates = source.contains("com.awakekt.awake.compose.")
                 when {
                     !composes -> null
                     !delegates ->

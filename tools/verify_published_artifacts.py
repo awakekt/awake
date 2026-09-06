@@ -64,13 +64,13 @@ def coordinate(pom: Path) -> str:
 
 
 def unresolvable_dependencies(pom: Path, known: set[str]) -> list[str]:
-    """Dependencies on `io.github.awake-lab` coordinates that were never published."""
+    """Dependencies on `com.awakekt.awake` coordinates that were never published."""
     root = ElementTree.parse(pom).getroot()
     missing = []
     for dependency in root.iterfind(".//m:dependency", POM_NAMESPACE):
         group = dependency.findtext("m:groupId", default="", namespaces=POM_NAMESPACE)
         artifact = dependency.findtext("m:artifactId", default="", namespaces=POM_NAMESPACE)
-        if group.startswith("io.github.awake-lab") and f"{group}:{artifact}" not in known:
+        if group.startswith("com.awakekt.awake") and f"{group}:{artifact}" not in known:
             missing.append(f"{group}:{artifact}")
     return missing
 

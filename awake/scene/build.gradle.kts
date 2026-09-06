@@ -33,7 +33,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.scene"
+        namespace = "com.awakekt.awake.scene"
     }
 
     sourceSets {

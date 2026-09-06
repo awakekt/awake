@@ -8,7 +8,7 @@
     <ID>ObjectPropertyNaming:Tw.kt$Tw.Text$public val `3xl`: Sp = 30f.sp</ID>
     <ID>ObjectPropertyNaming:Tw.kt$Tw.Text$public val `4xl`: Sp = 36f.sp</ID>
     <ID>ObjectPropertyNaming:Tw.kt$Tw.Text$public val `5xl`: Sp = 48f.sp</ID>
-    <ID>TooManyFunctions:TwModifiers.kt$io.github.awakelab.awake.tailwind.TwModifiers.kt</ID>
+    <ID>TooManyFunctions:TwModifiers.kt$com.awakekt.awake.tailwind.TwModifiers.kt</ID>
     <ID>UnusedParameter:TwModifiers.kt$radius: Dp = Tw.Radius.md</ID>
   </CurrentIssues>
 </SmellBaseline>

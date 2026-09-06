@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.ui.builder"
+        namespace = "com.awakekt.awake.ui.builder"
     }
 
     sourceSets {

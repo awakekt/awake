@@ -20,12 +20,12 @@ saves, nothing undoes, nothing creates or deletes, and the one host wires `start
 
 ### 1. Persistence — Save landed; Open still missing
 
-`SceneLoader.fromWorld` ([SceneWorldExport.kt:32](../../awake/scene/runtime/src/commonMain/kotlin/io/github/awakelab/awake/scene/runtime/SceneWorldExport.kt)) and
-`writeSceneDocument` ([SceneWriter.kt:18](../../awake/scene/runtime/src/commonMain/kotlin/io/github/awakelab/awake/scene/runtime/SceneWriter.kt))
+`SceneLoader.fromWorld` ([SceneWorldExport.kt:32](../../awake/scene/runtime/src/commonMain/kotlin/com/awakekt/awake/scene/runtime/SceneWorldExport.kt)) and
+`writeSceneDocument` ([SceneWriter.kt:18](../../awake/scene/runtime/src/commonMain/kotlin/com/awakekt/awake/scene/runtime/SceneWriter.kt))
 both exist and are correct. The only caller in the repository is `SceneLoaderTest`.
 
 **Landed:** Studio saves through `writeSceneDocument` and clears the dirty dot with
-`EditorHistory.markSaved` ([StudioFixtureSystem.kt:78](../../apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/systems/StudioFixtureSystem.kt)).
+`EditorHistory.markSaved` ([StudioFixtureSystem.kt:78](../../apps/studio/src/commonMain/kotlin/com/awakekt/awake/studio/systems/StudioFixtureSystem.kt)).
 
 **Still missing:** Open, Save As, and recent files. `writeSceneDocument` has no read counterpart, so
 a saved scene cannot be loaded back — which also blocks multi-document (#18).
@@ -37,7 +37,7 @@ override fun startPlay() = Unit
 override fun stopPlay() = studio.reloadFixture()
 ```
 
-[StudioEditorBridge.kt:28](../../apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/state/StudioEditorBridge.kt).
+[StudioEditorBridge.kt:28](../../apps/studio/src/commonMain/kotlin/com/awakekt/awake/studio/state/StudioEditorBridge.kt).
 
 `SceneDocumentEditorSession` and `SceneEditorHost` — the real snapshot-and-isolate path — are
 written, unit-tested, and wired to nothing. The plan's Stage 1 gate ("Edit and Play worlds are
@@ -49,7 +49,7 @@ no `SceneDocument` behind it at all.
 `EditorHistory` now owns undo/redo and dirty-state tracking. Gizmo, inspector vector edits,
 rename, visibility, and entity creation all route through commands; entity delete and duplicate
 now snapshot an authored subtree and restore it with fresh generation-bearing handles
-([`SceneEntityCommands.kt`](../../awake/editor/scene/src/commonMain/kotlin/io/github/awakelab/awake/editor/scene/commands/SceneEntityCommands.kt)).
+([`SceneEntityCommands.kt`](../../awake/editor/scene/src/commonMain/kotlin/com/awakekt/awake/editor/scene/commands/SceneEntityCommands.kt)).
 
 This closes the mutation seam before more panels add their own paths. It does **not** yet make the
 lifecycle operations available from Studio's hierarchy, nor does it finish the external authored
@@ -72,14 +72,14 @@ Still missing: keyboard map, context menu, and drag-to-reparent.
 The plan says "Validate a representative hierarchy against the lazy-list one-frame-settling
 behaviour." That validation never happened. Worse, `buildHierarchy` allocates two hash maps plus N
 nodes **per recomposition**, at frame rate
-([SceneHierarchyPanel.kt:57](../../awake/editor/scene/src/commonMain/kotlin/io/github/awakelab/awake/editor/scene/SceneHierarchyPanel.kt)).
+([SceneHierarchyPanel.kt:57](../../awake/editor/scene/src/commonMain/kotlin/com/awakekt/awake/editor/scene/SceneHierarchyPanel.kt)).
 
 ### 6. Two picking paths, one dead
 
 Studio passes `viewportPicker = { null }`
-([StudioEditorBridge.kt:31](../../apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/state/StudioEditorBridge.kt))
+([StudioEditorBridge.kt:31](../../apps/studio/src/commonMain/kotlin/com/awakekt/awake/studio/state/StudioEditorBridge.kt))
 and `viewportPickingEnabled = false`
-([StudioShell.kt:113](../../apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/ui/StudioShell.kt)).
+([StudioShell.kt:113](../../apps/studio/src/commonMain/kotlin/com/awakekt/awake/studio/ui/StudioShell.kt)).
 Real picking runs through `SceneGizmoSystem`.
 
 So `EditorEffect.ViewportPick`, `EditorViewportPicker`, and `ViewportPickInputElement` are roughly
@@ -121,7 +121,7 @@ depend on `awake:scene:physics` without pulling the physics backend into the edi
 
 It is not wired yet, and the blocker is on the physics side rather than the editor's.
 `PhysicsSystem` creates a body only when `handle == null`
-([PhysicsSystem.kt:42](../../awake/scene/physics/src/commonMain/kotlin/io/github/awakelab/awake/scene/physics/systems/PhysicsSystem.kt))
+([PhysicsSystem.kt:42](../../awake/scene/physics/src/commonMain/kotlin/com/awakekt/awake/scene/physics/systems/PhysicsSystem.kt))
 and never rebuilds one. Editing `motionType` or `shape` would change the component and leave the
 simulation running the old body, and clearing `handle` to force a rebuild would leak the previous
 one. The missing capability is a rebuild path that destroys the existing body first; the contract
@@ -137,11 +137,11 @@ Read from the render, not the source.
 
 **a. The viewport chrome is one undifferentiated ten-icon strip.** Display controls and debug
 controls are semantically distinct groups with identical `Outline`/`Sm` styling, eight device pixels
-apart ([SceneViewportPanel.kt:92](../../awake/editor/scene/src/commonMain/kotlin/io/github/awakelab/awake/editor/scene/SceneViewportPanel.kt)).
+apart ([SceneViewportPanel.kt:92](../../awake/editor/scene/src/commonMain/kotlin/com/awakekt/awake/editor/scene/SceneViewportPanel.kt)).
 They read as one strip, and nothing labels either.
 
 **b. Icon collisions make it unlearnable.** `globeAlt` is **both** "Sky" and "Orientation gizmo"
-([SceneViewportControls.kt:86,126](../../awake/editor/scene/src/commonMain/kotlin/io/github/awakelab/awake/editor/scene/SceneViewportControls.kt)).
+([SceneViewportControls.kt:86,126](../../awake/editor/scene/src/commonMain/kotlin/com/awakekt/awake/editor/scene/SceneViewportControls.kt)).
 `squares2x2` is **both** "Wireframe" and orthographic projection (`:84,156`). `eyeSlash` is
 "Occlusion" here and "hidden" in the hierarchy. Icon-only, plus a duplicated glyph, plus no visible
 tooltip, means the user must memorise positions.
@@ -154,7 +154,7 @@ a tooltip. The Kotlin port did not follow it.
 user-facing view options sitting inside a seven-item *debug* group.
 
 **d. The tool palette floats vertically centred.** `verticalAlignment = CenterVertically` on the
-`weight(1f)` row ([SceneViewportPanel.kt:105](../../awake/editor/scene/src/commonMain/kotlin/io/github/awakelab/awake/editor/scene/SceneViewportPanel.kt))
+`weight(1f)` row ([SceneViewportPanel.kt:105](../../awake/editor/scene/src/commonMain/kotlin/com/awakekt/awake/editor/scene/SceneViewportPanel.kt))
 parks Select/Move/Rotate/Scale in the middle of the left edge. It also moves whenever the dock
 resizes. The React reference makes the same choice deliberately and documents the reasoning; this is
 the one design decision in this audit where the two disagree on purpose.
@@ -169,17 +169,17 @@ identical controls.
 for two lines of text.
 
 **h. The inspector's collapse chevron is redundant**
-([SceneInspectorPanel.kt:87](../../awake/editor/scene/src/commonMain/kotlin/io/github/awakelab/awake/editor/scene/SceneInspectorPanel.kt)).
+([SceneInspectorPanel.kt:87](../../awake/editor/scene/src/commonMain/kotlin/com/awakekt/awake/editor/scene/SceneInspectorPanel.kt)).
 The resize handle already does this, and the hierarchy has no equivalent.
 
 **i. The status bar is one reflowing string.**
 `"$mode - $count entities - ${ms}ms ${fps} fps - ui ..ms wait ..ms stage ..ms sim+render ..ms"`
-([StudioToolbar.kt:126](../../apps/studio/src/commonMain/kotlin/io/github/awakelab/awake/studio/ui/StudioToolbar.kt)) —
+([StudioToolbar.kt:126](../../apps/studio/src/commonMain/kotlin/com/awakekt/awake/studio/ui/StudioToolbar.kt)) —
 no segments, no fixed-width numerics, so the whole line shifts every frame as digits change width.
 Four developer-only perf figures permanently own the primary status line.
 
 Correction, found while fixing this: F2 toggles phase *collection*, not a separate overlay
-([SceneAppLifecycleRuntime.kt:116](../../awake/scene/runtime/src/commonMain/kotlin/io/github/awakelab/awake/scene/runtime/SceneAppLifecycleRuntime.kt)).
+([SceneAppLifecycleRuntime.kt:116](../../awake/scene/runtime/src/commonMain/kotlin/com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime.kt)).
 This status bar is the only surface that shows them, so they cannot be moved behind it as the
 recommendation below originally said. The real defect is narrower and worse: `phaseStats()` reports
 all-zero rather than null while collection is off, so every run printed four `0.0ms` readings that
@@ -189,7 +189,7 @@ were never measured.
 File/Edit menu, no save state, no undo/redo, no scene tabs.
 
 **k. A hard 680dp minimum width with no responsive behaviour.** 160 + 320 + 200 minimum
-([EditorShell.kt:43](../../awake/editor/src/commonMain/kotlin/io/github/awakelab/awake/editor/EditorShell.kt)).
+([EditorShell.kt:43](../../awake/editor/src/commonMain/kotlin/com/awakekt/awake/editor/EditorShell.kt)).
 Studio ships wasmJs; a narrow browser has nowhere to go. No breakpoint collapse.
 
 **l. The hierarchy has no affordances** — no search, no type icons, no add or delete in the header,

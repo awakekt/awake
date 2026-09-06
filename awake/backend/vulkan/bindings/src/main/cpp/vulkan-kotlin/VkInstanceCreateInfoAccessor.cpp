@@ -9,11 +9,11 @@ VkInstanceCreateInfoAccessor::VkInstanceCreateInfoAccessor(JNIEnv *env, jobject 
                                                                                        obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     flagsField = env->GetFieldID(clazz, "flags", "I");
     pApplicationInfoField = env->GetFieldID(clazz, "pApplicationInfo",
-                                            "[Lio/github/awakelab/awake/vulkan/models/info/VkApplicationInfo;");
+                                            "[Lcom/awakekt/awake/vulkan/models/info/VkApplicationInfo;");
     ppEnabledLayerNamesField = env->GetFieldID(clazz, "ppEnabledLayerNames", "[Ljava/lang/String;");
     ppEnabledExtensionNamesField = env->GetFieldID(clazz, "ppEnabledExtensionNames",
                                                    "[Ljava/lang/String;");

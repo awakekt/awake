@@ -10,7 +10,7 @@
 third_party/shadcn-ui-ref/ checkout (see tools/shadcn/fetch_shadcn_reference.sh) and writes a
 generated Kotlin ground-truth object:
 
-    awake/engine/ui/ui-shadcn/src/commonTest/kotlin/io/github/awakelab/awake/ui/
+    awake/engine/ui/ui-shadcn/src/commonTest/kotlin/com/awakekt/awake/ui/
     shadcn/ShadcnReferenceTokens.kt
 
 Canonical source: the capture app's `:root`/`.dark` CSS pair for Awake's default `neutral` theme,
@@ -238,9 +238,9 @@ def render_kotlin(sha: str, per_theme: "list[tuple[str, dict, dict, dict[str, fl
 // non-neutral themes come from apps/v4/registry/themes.ts (new-york-v4 style). Re-run
 // tools/shadcn/fetch_shadcn_reference.sh to move the pinned checkout, then this script to refresh. See
 // docs/reference/shadcn-reference-pipeline.md.
-package io.github.awakelab.awake.ui.shadcn
+package com.awakekt.awake.ui.shadcn
 
-import io.github.awakelab.awake.core.color.Color
+import com.awakekt.awake.core.color.Color
 
 /** One real shadcn OKLCH CSS custom property value: `oklch(lightness chroma hueDegrees [/ alpha%])`. */
 data class ShadcnReferenceOklch(

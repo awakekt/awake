@@ -13,7 +13,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.net"
+        namespace = "com.awakekt.awake.net"
     }
 
     // No platform-specific code: every declaration is an interface or a plain buffer, so the

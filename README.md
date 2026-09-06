@@ -2,7 +2,7 @@
 <p align="center">Kotlin Multiplatform first, Vulkan and WebGPU native — a 3D/2D game engine and graphics runtime for developers who want to feel every frame they write.</p>
 
 <p align="center">
-  <a href="https://github.com/awake-lab/awake/actions/workflows/build-and-publish.yml"><img src="https://github.com/awake-lab/awake/actions/workflows/build-and-publish.yml/badge.svg" alt="Build And Publish"></a>
+  <a href="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml"><img src="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml/badge.svg" alt="Build And Publish"></a>
   <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.4.10-blue.svg?logo=kotlin" alt="Kotlin"></a>
   <a href="https://www.jetbrains.com/lp/compose-multiplatform/"><img src="https://img.shields.io/badge/Compose_Multiplatform-1.11.1-purple.svg" alt="Compose Multiplatform"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
@@ -85,7 +85,7 @@ Standalone, zero-dependency Vulkan bindings for Kotlin Multiplatform:
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.github.awake-lab:vulkan-kmp:<version>")
+    implementation("com.awakekt.awake:vulkan-kmp:<version>")
 }
 ```
 
@@ -146,5 +146,5 @@ All documentation is indexed and self-healed in **[`docs/README.md`](docs/README
 ## Contributing & Community
 
 - **License**: Distributed under the [Apache License 2.0](LICENSE.md).
-- **GitHub**: [github.com/awake-lab/awake](https://github.com/awake-lab/awake).
-- **Support**: Funded independently via [Patreon](https://www.patreon.com/cw/awakelab) and [GitHub Sponsors](https://github.com/sponsors/awake-lab).
+- **GitHub**: [github.com/awakekt/awake](https://github.com/awakekt/awake).
+- **Support**: Funded independently via [Patreon](https://www.patreon.com/cw/awakelab) and [GitHub Sponsors](https://github.com/sponsors/awakekt).

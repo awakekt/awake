@@ -8,12 +8,12 @@
 VkDebugUtilsObjectNameInfoEXTMutator::VkDebugUtilsObjectNameInfoEXTMutator(JNIEnv *env) : env(env) {
     this->env = env;
     clazz = env->FindClass(
-            "io/github/awakelab/awake/vulkan/models/info/debug/VkDebugUtilsObjectNameInfoEXT");
+            "com/awakekt/awake/vulkan/models/info/debug/VkDebugUtilsObjectNameInfoEXT");
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     objectTypeField = env->GetFieldID(clazz, "objectType",
-                                      "Lio/github/awakelab/awake/vulkan/enums/VkObjectType;");
+                                      "Lcom/awakekt/awake/vulkan/enums/VkObjectType;");
     objectHandleField = env->GetFieldID(clazz, "objectHandle", "J");
     pObjectNameField = env->GetFieldID(clazz, "pObjectName", "Ljava/lang/String;");
 }
@@ -23,7 +23,7 @@ VkDebugUtilsObjectNameInfoEXTMutator::toObject(VkDebugUtilsObjectNameInfoEXT sou
     auto constructor = env->GetMethodID(clazz, "<init>", "()V");
     auto newObj = env->NewObject(clazz, constructor);
     auto sType = enum_utils::setEnumFromVulkan(env, static_cast<jint>(source.sType),
-                                               "io/github/awakelab/awake/vulkan/enums/VkStructureType");
+                                               "com/awakekt/awake/vulkan/enums/VkStructureType");
     env->SetObjectField(newObj, sTypeField, sType);
     env->DeleteLocalRef(sType);
     // processing Any, Void, Null, Object
@@ -31,7 +31,7 @@ VkDebugUtilsObjectNameInfoEXTMutator::toObject(VkDebugUtilsObjectNameInfoEXT sou
     env->SetObjectField(newObj, pNextField, pNext);
     env->DeleteLocalRef(pNext);
     auto objectType = enum_utils::setEnumFromVulkan(env, static_cast<jint>(source.objectType),
-                                                    "io/github/awakelab/awake/vulkan/enums/VkObjectType");
+                                                    "com/awakekt/awake/vulkan/enums/VkObjectType");
     env->SetObjectField(newObj, objectTypeField, objectType);
     env->DeleteLocalRef(objectType);
     env->SetLongField(newObj, objectHandleField, static_cast<jlong>(source.objectHandle));

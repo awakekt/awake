@@ -9,14 +9,14 @@ VkRenderPassBeginInfoAccessor::VkRenderPassBeginInfoAccessor(JNIEnv *env, jobjec
                                                                                          obj(obj) {
     clazz = env->GetObjectClass(obj);
     sTypeField = env->GetFieldID(clazz, "sType",
-                                 "Lio/github/awakelab/awake/vulkan/enums/VkStructureType;");
+                                 "Lcom/awakekt/awake/vulkan/enums/VkStructureType;");
     pNextField = env->GetFieldID(clazz, "pNext", "Ljava/lang/Object;");
     renderPassField = env->GetFieldID(clazz, "renderPass", "J");
     framebufferField = env->GetFieldID(clazz, "framebuffer", "J");
     renderAreaField = env->GetFieldID(clazz, "renderArea",
-                                      "Lio/github/awakelab/awake/vulkan/models/VkRect2D;");
+                                      "Lcom/awakekt/awake/vulkan/models/VkRect2D;");
     pClearValuesField = env->GetFieldID(clazz, "pClearValues",
-                                        "[Lio/github/awakelab/awake/vulkan/models/VkClearValue;");
+                                        "[Lcom/awakekt/awake/vulkan/models/VkClearValue;");
 }
 
 VkStructureType
@@ -62,7 +62,7 @@ VkRenderPassBeginInfoAccessor::getpClearValues(VkRenderPassBeginInfo &clazzInfo)
                                                             i); // actual type is VkClearValue[];
         // sealed class
         auto vkClearColorValueClass = env->FindClass(
-                "io/github/awakelab/awake/vulkan/models/VkClearColorValue");
+                "com/awakekt/awake/vulkan/models/VkClearColorValue");
         if (env->IsInstanceOf(element, vkClearColorValueClass)) {
             VkClearColorValueAccessor accessor(env, element);
             VkClearColorValue ref{};
@@ -73,7 +73,7 @@ VkRenderPassBeginInfoAccessor::getpClearValues(VkRenderPassBeginInfo &clazzInfo)
             continue;
         }
         auto vkClearDepthStencilValueClass = env->FindClass(
-                "io/github/awakelab/awake/vulkan/models/VkClearDepthStencilValue");
+                "com/awakekt/awake/vulkan/models/VkClearDepthStencilValue");
         if (env->IsInstanceOf(element, vkClearDepthStencilValueClass)) {
             VkClearDepthStencilValueAccessor accessor(env, element);
             VkClearDepthStencilValue ref{};

@@ -7,11 +7,11 @@
 
 VkSurfaceFormatKHRMutator::VkSurfaceFormatKHRMutator(JNIEnv *env) : env(env) {
     this->env = env;
-    clazz = env->FindClass("io/github/awakelab/awake/vulkan/models/VkSurfaceFormatKHR");
+    clazz = env->FindClass("com/awakekt/awake/vulkan/models/VkSurfaceFormatKHR");
     formatField = env->GetFieldID(clazz, "format",
-                                  "Lio/github/awakelab/awake/vulkan/enums/VkFormat;");
+                                  "Lcom/awakekt/awake/vulkan/enums/VkFormat;");
     colorSpaceField = env->GetFieldID(clazz, "colorSpace",
-                                      "Lio/github/awakelab/awake/vulkan/enums/VkColorSpaceKHR;");
+                                      "Lcom/awakekt/awake/vulkan/enums/VkColorSpaceKHR;");
 }
 
 jobject
@@ -19,11 +19,11 @@ VkSurfaceFormatKHRMutator::toObject(VkSurfaceFormatKHR source) {
     auto constructor = env->GetMethodID(clazz, "<init>", "()V");
     auto newObj = env->NewObject(clazz, constructor);
     auto format = enum_utils::setEnumFromVulkan(env, static_cast<jint>(source.format),
-                                                "io/github/awakelab/awake/vulkan/enums/VkFormat");
+                                                "com/awakekt/awake/vulkan/enums/VkFormat");
     env->SetObjectField(newObj, formatField, format);
     env->DeleteLocalRef(format);
     auto colorSpace = enum_utils::setEnumFromVulkan(env, static_cast<jint>(source.colorSpace),
-                                                    "io/github/awakelab/awake/vulkan/enums/VkColorSpaceKHR");
+                                                    "com/awakekt/awake/vulkan/enums/VkColorSpaceKHR");
     env->SetObjectField(newObj, colorSpaceField, colorSpace);
     env->DeleteLocalRef(colorSpace);
     return newObj;

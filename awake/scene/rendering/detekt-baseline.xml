@@ -15,7 +15,7 @@
     <ID>LoopWithTooManyJumpStatements:ParticleSystem.kt$ParticleSystem$while</ID>
     <ID>ReturnCount:ParticleSystem.kt$ParticleSystem$private fun groundHeightAt(emitter: ParticleEmitter, x: Float, z: Float): Float?</ID>
     <ID>ReturnCount:ParticleSystem.kt$ParticleSystem$private fun spawnVelocity(emitter: ParticleEmitter, spawnPosition: Vec3f): Vec3f</ID>
-    <ID>ReturnCount:RenderSystem.kt$RenderSystem$private fun isOccluded( camera: io.github.awakelab.awake.core.math.Lens, worldBounds: io.github.awakelab.awake.core.math.Aabb, occlusionViewProjection: Mat4?, ): Boolean</ID>
+    <ID>ReturnCount:RenderSystem.kt$RenderSystem$private fun isOccluded( camera: com.awakekt.awake.core.math.Lens, worldBounds: com.awakekt.awake.core.math.Aabb, occlusionViewProjection: Mat4?, ): Boolean</ID>
     <ID>TooManyFunctions:ParticleSystem.kt$ParticleSystem : System</ID>
   </CurrentIssues>
 </SmellBaseline>

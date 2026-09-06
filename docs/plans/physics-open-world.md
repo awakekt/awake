@@ -12,15 +12,15 @@ does not repeat it.
 ## Current state
 
 `PhysicsWorld` exposes `createBody` / `destroyBody` / `step` / `syncTransforms` / `raycast`
-([PhysicsWorld.kt](../../awake/physics/api/src/commonMain/kotlin/io/github/awakelab/awake/physics/PhysicsWorld.kt)).
+([PhysicsWorld.kt](../../awake/physics/api/src/commonMain/kotlin/com/awakekt/awake/physics/PhysicsWorld.kt)).
 
 - Shapes: `BoxShape`, `SphereShape`, `HeightFieldShape` (STATIC only).
 - Two hardcoded object layers, one broadphase layer, `MAX_BODIES = 5_000`
-  ([JoltPhysicsWorld.kt](../../awake/backend/jolt/src/desktopMain/kotlin/io/github/awakelab/awake/physics/jolt/JoltPhysicsWorld.kt)).
+  ([JoltPhysicsWorld.kt](../../awake/backend/jolt/src/desktopMain/kotlin/com/awakekt/awake/physics/jolt/JoltPhysicsWorld.kt)).
 - Four duplicated backend implementations: desktop and Android on jolt-jni, iOS on JoltC
   cinterop, wasmJs on JoltPhysics.js.
 - ECS bridge is
-  [PhysicsSystem](../../awake/scene/physics/src/commonMain/kotlin/io/github/awakelab/awake/scene/physics/systems/PhysicsSystem.kt):
+  [PhysicsSystem](../../awake/scene/physics/src/commonMain/kotlin/com/awakekt/awake/scene/physics/systems/PhysicsSystem.kt):
   lazy one-shot body creation, one `step`, one `syncTransforms` per `update`.
 
 Already built, and deliberately **not** wired to physics yet:
@@ -55,7 +55,7 @@ duplicate means in practice, and exactly the tax Tier 3 describes: three of four
 not a partial landing, it is a red build nobody sees until someone builds Android.
 
 Related, worth settling in the same pass: `WorldOrigin.toAbsolute` returns `Vec3f`
-([WorldOrigin.kt](../../awake/scene/scene-core/src/commonMain/kotlin/io/github/awakelab/awake/scene/world/WorldOrigin.kt)).
+([WorldOrigin.kt](../../awake/scene/scene-core/src/commonMain/kotlin/com/awakekt/awake/scene/world/WorldOrigin.kt)).
 The absolute coordinate is the one genuinely unbounded quantity in the engine — the thing
 floating origin exists to keep out of float32 — so it is the exact case `Vec3d` was added for,
 and `Vec3d` has no production user today besides `MeshSimplifier`. Not a bug at current world
@@ -174,7 +174,7 @@ over the step, so carrying one across a respawn would send it through the level 
 The original entry follows.
 
 Player movement writes position directly
-([MatrixRelativeMovementSystem](../../awake/scene/controls/src/commonMain/kotlin/io/github/awakelab/awake/scene/controls/systems/MatrixRelativeMovementSystem.kt)),
+([MatrixRelativeMovementSystem](../../awake/scene/controls/src/commonMain/kotlin/com/awakekt/awake/scene/controls/systems/MatrixRelativeMovementSystem.kt)),
 so the character walks through walls and terrain.
 
 Required behaviours, whoever supplies them:

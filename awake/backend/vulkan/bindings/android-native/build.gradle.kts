@@ -20,7 +20,7 @@ plugins {
 }
 
 android {
-    namespace = "io.github.awakelab.awake.vulkan.jni"
+    namespace = "com.awakekt.awake.vulkan.jni"
     ndkVersion = "26.1.10909125"
 
     defaultConfig {
@@ -53,8 +53,8 @@ android {
 //
 // --kotlin-source points at the whole module (needed so the generator's struct/enum
 // pre-pass can see types declared anywhere, e.g. models/info/VkBufferCreateInfo.kt), but
-// --package-filter scopes actual *generation* to io.github.awakelab.awake.vulkan.gen —
-// the new Phase 1d package. The legacy io.github.awakelab.awake.vulkan.Vulkan (58
+// --package-filter scopes actual *generation* to com.awakekt.awake.vulkan.gen —
+// the new Phase 1d package. The legacy com.awakekt.awake.vulkan.Vulkan (58
 // functions, awake-vulkan-generator-backed) is deliberately left alone: some of its
 // existing signatures (e.g. Array<VkLayerProperties> as a *return type*, as opposed to a
 // struct field) use shapes jni-binding-generator doesn't support at the function level yet.
@@ -83,7 +83,7 @@ val kotlinSourceForJni = layout.projectDirectory.dir("../src")
 val jniOutputDir = layout.projectDirectory.dir("../src/main/cpp/generated")
 val jniScriptsDir = rootProject.layout.projectDirectory.dir("tools/jni-binding-generator/scripts")
 val jniScript = jniScriptsDir.file("jni-binding-generator.py")
-val jniPackageFilter = "io.github.awakelab.awake.vulkan.gen"
+val jniPackageFilter = "com.awakekt.awake.vulkan.gen"
 
 tasks.register<Exec>("generateJniBindings") {
     group = "jni"
@@ -137,11 +137,11 @@ mavenPublishing {
             javadocJar = com.vanniktech.maven.publish.JavadocJar.Empty(),
         ),
     )
-    coordinates("io.github.awake-lab", "vulkan-kmp-android-native", version.toString())
+    coordinates("com.awakekt.awake", "vulkan-kmp-android-native", version.toString())
     pom {
         name.set("Vulkan KMP Android Native")
         description.set("NDK-built JNI library and validation layers backing vulkan-kmp on Android")
-        url.set("https://awake-lab.github.io/awake")
+        url.set("https://awakekt.github.io/awake")
         licenses {
             license {
                 name.set("Apache License, Version 2.0")
@@ -149,9 +149,9 @@ mavenPublishing {
             }
         }
         scm {
-            connection.set("scm:git:git://github.com/awake-lab/awake.git")
-            developerConnection.set("scm:git:ssh://github.com:awake-lab/awake.git")
-            url.set("https://github.com/awake-lab/awake")
+            connection.set("scm:git:git://github.com/awakekt/awake.git")
+            developerConnection.set("scm:git:ssh://github.com:awakekt/awake.git")
+            url.set("https://github.com/awakekt/awake")
         }
         developers {
             developer {

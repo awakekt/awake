@@ -3,18 +3,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-import io.github.awakelab.awake.vulkan.Version
-import io.github.awakelab.awake.vulkan.Version.Companion.vkVersion
-import io.github.awakelab.awake.vulkan.Vulkan
-import io.github.awakelab.awake.vulkan.enums.VkCommandBufferLevel
-import io.github.awakelab.awake.vulkan.enums.VkQueueFlagBits
-import io.github.awakelab.awake.vulkan.enums.VkResult
-import io.github.awakelab.awake.vulkan.models.info.VkApplicationInfo
-import io.github.awakelab.awake.vulkan.models.info.VkCommandBufferAllocateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkCommandPoolCreateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkDeviceCreateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkDeviceQueueCreateInfo
-import io.github.awakelab.awake.vulkan.models.info.VkInstanceCreateInfo
+import com.awakekt.awake.vulkan.Version
+import com.awakekt.awake.vulkan.Version.Companion.vkVersion
+import com.awakekt.awake.vulkan.Vulkan
+import com.awakekt.awake.vulkan.enums.VkCommandBufferLevel
+import com.awakekt.awake.vulkan.enums.VkQueueFlagBits
+import com.awakekt.awake.vulkan.enums.VkResult
+import com.awakekt.awake.vulkan.models.info.VkApplicationInfo
+import com.awakekt.awake.vulkan.models.info.VkCommandBufferAllocateInfo
+import com.awakekt.awake.vulkan.models.info.VkCommandPoolCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkDeviceCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkDeviceQueueCreateInfo
+import com.awakekt.awake.vulkan.models.info.VkInstanceCreateInfo
 
 /**
  * Self-contained sample demonstrating pure Vulkan in Kotlin Multiplatform:

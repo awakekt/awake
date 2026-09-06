@@ -1,6 +1,6 @@
 site_name: Awake Engine
-site_url: https://awake-lab.github.io/awake/
-repo_url: https://github.com/awake-lab/awake
+site_url: https://awakekt.github.io/awake/
+repo_url: https://github.com/awakekt/awake
 theme:
   name: material
   palette:

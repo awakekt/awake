@@ -36,7 +36,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.asset.shaders"
+        namespace = "com.awakekt.awake.asset.shaders"
     }
 
     sourceSets {

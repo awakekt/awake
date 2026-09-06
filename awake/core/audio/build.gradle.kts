@@ -14,7 +14,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.core.audio"
+        namespace = "com.awakekt.awake.core.audio"
     }
 
     sourceSets {

@@ -1,0 +1,77 @@
+public class com/awakekt/awake/core/state/DefaultReducerStore : com/awakekt/awake/core/state/MutableStore, com/awakekt/awake/core/state/ReducerStore {
+	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/state/Reducer;Lkotlinx/coroutines/CoroutineScope;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/state/Reducer;Lkotlinx/coroutines/CoroutineScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun dispatch (Ljava/lang/Object;)V
+	public fun drainEffects ()Ljava/util/List;
+	public fun getEffects ()Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/awakekt/awake/core/state/DefaultStoreScope : com/awakekt/awake/core/state/StoreScope {
+	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
+}
+
+public class com/awakekt/awake/core/state/MutableStore : com/awakekt/awake/core/state/Store {
+	public fun <init> (Ljava/lang/Object;Lkotlinx/coroutines/CoroutineScope;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lkotlinx/coroutines/CoroutineScope;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public fun getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
+	public fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun getValue ()Ljava/lang/Object;
+	public fun select (Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/StateFlow;
+	public fun update (Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface class com/awakekt/awake/core/state/Reducer {
+	public abstract fun reduce (Ljava/lang/Object;Ljava/lang/Object;)Lkotlin/Pair;
+}
+
+public abstract interface class com/awakekt/awake/core/state/ReducerStore : com/awakekt/awake/core/state/Store {
+	public abstract fun dispatch (Ljava/lang/Object;)V
+	public abstract fun drainEffects ()Ljava/util/List;
+	public abstract fun getEffects ()Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class com/awakekt/awake/core/state/ReducerStore$DefaultImpls {
+	public static fun close (Lcom/awakekt/awake/core/state/ReducerStore;)V
+	public static fun getValue (Lcom/awakekt/awake/core/state/ReducerStore;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/state/ReducerStoreKt {
+	public static final fun reducerStore (Ljava/lang/Object;Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/core/state/Reducer;)Lcom/awakekt/awake/core/state/ReducerStore;
+	public static final fun reducerStore (Ljava/lang/Object;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/core/state/ReducerStore;
+	public static synthetic fun reducerStore$default (Ljava/lang/Object;Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/core/state/Reducer;ILjava/lang/Object;)Lcom/awakekt/awake/core/state/ReducerStore;
+	public static synthetic fun reducerStore$default (Ljava/lang/Object;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/core/state/ReducerStore;
+}
+
+public abstract interface class com/awakekt/awake/core/state/Store : com/awakekt/awake/core/state/StoreScope {
+	public abstract fun getState ()Lkotlinx/coroutines/flow/StateFlow;
+	public fun getValue ()Ljava/lang/Object;
+	public abstract fun select (Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/StateFlow;
+	public static synthetic fun select$default (Lcom/awakekt/awake/core/state/Store;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/StateFlow;
+	public abstract fun update (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class com/awakekt/awake/core/state/Store$DefaultImpls {
+	public static fun close (Lcom/awakekt/awake/core/state/Store;)V
+	public static fun getValue (Lcom/awakekt/awake/core/state/Store;)Ljava/lang/Object;
+	public static synthetic fun select$default (Lcom/awakekt/awake/core/state/Store;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/StateFlow;
+}
+
+public final class com/awakekt/awake/core/state/StoreKt {
+	public static final fun store (Ljava/lang/Object;Lkotlinx/coroutines/CoroutineScope;)Lcom/awakekt/awake/core/state/Store;
+	public static synthetic fun store$default (Ljava/lang/Object;Lkotlinx/coroutines/CoroutineScope;ILjava/lang/Object;)Lcom/awakekt/awake/core/state/Store;
+}
+
+public abstract interface class com/awakekt/awake/core/state/StoreScope : java/lang/AutoCloseable {
+	public fun close ()V
+	public abstract fun getCoroutineScope ()Lkotlinx/coroutines/CoroutineScope;
+}
+
+public final class com/awakekt/awake/core/state/StoreScope$DefaultImpls {
+	public static fun close (Lcom/awakekt/awake/core/state/StoreScope;)V
+}
+

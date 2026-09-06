@@ -33,7 +33,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.render"
+        namespace = "com.awakekt.awake.render"
     }
 
     // No platform-specific code at all in this module (see docs/mvp-plan.md's module

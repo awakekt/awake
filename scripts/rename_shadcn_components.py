@@ -43,7 +43,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SHADCN_ROOT = REPO_ROOT / "awake/ui/shadcn/src/commonMain/kotlin/io/github/awakelab/awake/ui/shadcn"
+SHADCN_ROOT = REPO_ROOT / "awake/ui/shadcn/src/commonMain/kotlin/com/awakekt/awake/ui/shadcn"
 
 # `fun shadcnFoo(` at column 0. Nested/member functions are not public entry points.
 DECL = re.compile(r"^fun (shadcn[A-Za-z0-9]*)\s*\(", re.MULTILINE)

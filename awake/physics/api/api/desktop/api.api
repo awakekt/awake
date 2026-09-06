@@ -1,33 +1,33 @@
-public final class io/github/awakelab/awake/physics/BallSocketConstraint : io/github/awakelab/awake/physics/Constraint {
-	public static final field Companion Lio/github/awakelab/awake/physics/BallSocketConstraint$Companion;
+public final class com/awakekt/awake/physics/BallSocketConstraint : com/awakekt/awake/physics/Constraint {
+	public static final field Companion Lcom/awakekt/awake/physics/BallSocketConstraint$Companion;
 	public static final field FREE_SWING F
-	public synthetic fun <init> (JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FLkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-jpH6f6o ()J
-	public final fun component2-jpH6f6o ()J
-	public final fun component3 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component4 ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public synthetic fun <init> (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-IB_h3Cs ()J
+	public final fun component2-IB_h3Cs ()J
+	public final fun component3 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component4 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component5 ()F
 	public final fun component6 ()Lkotlin/ranges/ClosedFloatingPointRange;
-	public final fun copy-JliEqI8 (JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FLkotlin/ranges/ClosedFloatingPointRange;)Lio/github/awakelab/awake/physics/BallSocketConstraint;
-	public static synthetic fun copy-JliEqI8$default (Lio/github/awakelab/awake/physics/BallSocketConstraint;JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FLkotlin/ranges/ClosedFloatingPointRange;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/BallSocketConstraint;
+	public final fun copy-1gR-rmg (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLkotlin/ranges/ClosedFloatingPointRange;)Lcom/awakekt/awake/physics/BallSocketConstraint;
+	public static synthetic fun copy-1gR-rmg$default (Lcom/awakekt/awake/physics/BallSocketConstraint;JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLkotlin/ranges/ClosedFloatingPointRange;ILjava/lang/Object;)Lcom/awakekt/awake/physics/BallSocketConstraint;
 	public fun equals (Ljava/lang/Object;)Z
-	public fun getBodyA-jpH6f6o ()J
-	public fun getBodyB-jpH6f6o ()J
-	public final fun getPoint ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public fun getBodyA-IB_h3Cs ()J
+	public fun getBodyB-IB_h3Cs ()J
+	public final fun getPoint ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getSwingLimit ()F
-	public final fun getTwistAxis ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getTwistAxis ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getTwistLimit ()Lkotlin/ranges/ClosedFloatingPointRange;
 	public fun hashCode ()I
-	public final fun swingReferenceAxis ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun swingReferenceAxis ()Lcom/awakekt/awake/core/math/Vec3f;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/BallSocketConstraint$Companion {
+public final class com/awakekt/awake/physics/BallSocketConstraint$Companion {
 }
 
-public final class io/github/awakelab/awake/physics/BodyHandle {
-	public static final synthetic fun box-impl (J)Lio/github/awakelab/awake/physics/BodyHandle;
+public final class com/awakekt/awake/physics/BodyHandle {
+	public static final synthetic fun box-impl (J)Lcom/awakekt/awake/physics/BodyHandle;
 	public static fun constructor-impl (J)J
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (JLjava/lang/Object;)Z
@@ -40,63 +40,63 @@ public final class io/github/awakelab/awake/physics/BodyHandle {
 	public final synthetic fun unbox-impl ()J
 }
 
-public final class io/github/awakelab/awake/physics/BodyTransform {
-	public synthetic fun <init> (JLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-jpH6f6o ()J
-	public final fun component2 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component3 ()Lio/github/awakelab/awake/core/math/Quat;
-	public final fun copy-l4afOBA (JLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;)Lio/github/awakelab/awake/physics/BodyTransform;
-	public static synthetic fun copy-l4afOBA$default (Lio/github/awakelab/awake/physics/BodyTransform;JLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/BodyTransform;
+public final class com/awakekt/awake/physics/BodyTransform {
+	public synthetic fun <init> (JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-IB_h3Cs ()J
+	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component3 ()Lcom/awakekt/awake/core/math/Quat;
+	public final fun copy-wogh_oc (JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;)Lcom/awakekt/awake/physics/BodyTransform;
+	public static synthetic fun copy-wogh_oc$default (Lcom/awakekt/awake/physics/BodyTransform;JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;ILjava/lang/Object;)Lcom/awakekt/awake/physics/BodyTransform;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getHandle-jpH6f6o ()J
-	public final fun getPosition ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getRotation ()Lio/github/awakelab/awake/core/math/Quat;
+	public final fun getHandle-IB_h3Cs ()J
+	public final fun getPosition ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getRotation ()Lcom/awakekt/awake/core/math/Quat;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/BoxShape : io/github/awakelab/awake/physics/PhysicsShape {
-	public fun <init> (Lio/github/awakelab/awake/core/math/Vec3f;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun copy (Lio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/physics/BoxShape;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/physics/BoxShape;Lio/github/awakelab/awake/core/math/Vec3f;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/BoxShape;
+public final class com/awakekt/awake/physics/BoxShape : com/awakekt/awake/physics/PhysicsShape {
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/physics/BoxShape;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/physics/BoxShape;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)Lcom/awakekt/awake/physics/BoxShape;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getHalfExtents ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getHalfExtents ()Lcom/awakekt/awake/core/math/Vec3f;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/Buoyancy {
-	public static final field Companion Lio/github/awakelab/awake/physics/Buoyancy$Companion;
+public final class com/awakekt/awake/physics/Buoyancy {
+	public static final field Companion Lcom/awakekt/awake/physics/Buoyancy$Companion;
 	public fun <init> ()V
-	public fun <init> (FFFLio/github/awakelab/awake/core/math/Vec3f;)V
-	public synthetic fun <init> (FFFLio/github/awakelab/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFFLcom/awakekt/awake/core/math/Vec3f;)V
+	public synthetic fun <init> (FFFLcom/awakekt/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()F
-	public final fun component4 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun copy (FFFLio/github/awakelab/awake/core/math/Vec3f;)Lio/github/awakelab/awake/physics/Buoyancy;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/physics/Buoyancy;FFFLio/github/awakelab/awake/core/math/Vec3f;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/Buoyancy;
+	public final fun component4 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun copy (FFFLcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/physics/Buoyancy;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/physics/Buoyancy;FFFLcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)Lcom/awakekt/awake/physics/Buoyancy;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAngularDrag ()F
-	public final fun getFluidVelocity ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getFluidVelocity ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getLinearDrag ()F
 	public final fun getStrength ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/Buoyancy$Companion {
-	public final fun getSinking ()Lio/github/awakelab/awake/physics/Buoyancy;
-	public final fun getWater ()Lio/github/awakelab/awake/physics/Buoyancy;
+public final class com/awakekt/awake/physics/Buoyancy$Companion {
+	public final fun getSinking ()Lcom/awakekt/awake/physics/Buoyancy;
+	public final fun getWater ()Lcom/awakekt/awake/physics/Buoyancy;
 }
 
-public final class io/github/awakelab/awake/physics/CapsuleShape : io/github/awakelab/awake/physics/PhysicsShape {
+public final class com/awakekt/awake/physics/CapsuleShape : com/awakekt/awake/physics/PhysicsShape {
 	public fun <init> (FF)V
 	public final fun component1 ()F
 	public final fun component2 ()F
-	public final fun copy (FF)Lio/github/awakelab/awake/physics/CapsuleShape;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/physics/CapsuleShape;FFILjava/lang/Object;)Lio/github/awakelab/awake/physics/CapsuleShape;
+	public final fun copy (FF)Lcom/awakekt/awake/physics/CapsuleShape;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/physics/CapsuleShape;FFILjava/lang/Object;)Lcom/awakekt/awake/physics/CapsuleShape;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getHalfHeight ()F
 	public final fun getRadius ()F
@@ -104,8 +104,8 @@ public final class io/github/awakelab/awake/physics/CapsuleShape : io/github/awa
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/CollisionLayer {
-	public static final synthetic fun box-impl (I)Lio/github/awakelab/awake/physics/CollisionLayer;
+public final class com/awakekt/awake/physics/CollisionLayer {
+	public static final synthetic fun box-impl (I)Lcom/awakekt/awake/physics/CollisionLayer;
 	public static fun constructor-impl (I)I
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (ILjava/lang/Object;)Z
@@ -118,29 +118,29 @@ public final class io/github/awakelab/awake/physics/CollisionLayer {
 	public final synthetic fun unbox-impl ()I
 }
 
-public final class io/github/awakelab/awake/physics/CollisionLayers {
-	public static final field Companion Lio/github/awakelab/awake/physics/CollisionLayers$Companion;
+public final class com/awakekt/awake/physics/CollisionLayers {
+	public static final field Companion Lcom/awakekt/awake/physics/CollisionLayers$Companion;
 	public static final field MAX_LAYERS I
 	public fun <init> (ILjava/util/Set;Lkotlin/jvm/functions/Function2;)V
-	public final fun collides-D3uiSsE (II)Z
+	public final fun collides-LHoG6SI (II)Z
 	public final fun getCount ()I
 	public final fun getMovingLayers ()Ljava/util/Set;
-	public final fun isMoving-pJ8e8X0 (I)Z
+	public final fun isMoving-DAfdhAY (I)Z
 }
 
-public final class io/github/awakelab/awake/physics/CollisionLayers$Companion {
-	public final fun getDefault ()Lio/github/awakelab/awake/physics/CollisionLayers;
-	public final fun getMoving-XV27feE ()I
-	public final fun getWorld-XV27feE ()I
+public final class com/awakekt/awake/physics/CollisionLayers$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/physics/CollisionLayers;
+	public final fun getMoving-K5w6Uvk ()I
+	public final fun getWorld-K5w6Uvk ()I
 }
 
-public abstract interface class io/github/awakelab/awake/physics/Constraint {
-	public abstract fun getBodyA-jpH6f6o ()J
-	public abstract fun getBodyB-jpH6f6o ()J
+public abstract interface class com/awakekt/awake/physics/Constraint {
+	public abstract fun getBodyA-IB_h3Cs ()J
+	public abstract fun getBodyB-IB_h3Cs ()J
 }
 
-public final class io/github/awakelab/awake/physics/ConstraintHandle {
-	public static final synthetic fun box-impl (J)Lio/github/awakelab/awake/physics/ConstraintHandle;
+public final class com/awakekt/awake/physics/ConstraintHandle {
+	public static final synthetic fun box-impl (J)Lcom/awakekt/awake/physics/ConstraintHandle;
 	public static fun constructor-impl (J)J
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (JLjava/lang/Object;)Z
@@ -153,36 +153,36 @@ public final class io/github/awakelab/awake/physics/ConstraintHandle {
 	public final synthetic fun unbox-impl ()J
 }
 
-public final class io/github/awakelab/awake/physics/ContactEvent {
-	public synthetic fun <init> (JJLio/github/awakelab/awake/physics/ContactPhase;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-jpH6f6o ()J
-	public final fun component2-jpH6f6o ()J
-	public final fun component3 ()Lio/github/awakelab/awake/physics/ContactPhase;
-	public final fun copy-I3W6gZU (JJLio/github/awakelab/awake/physics/ContactPhase;)Lio/github/awakelab/awake/physics/ContactEvent;
-	public static synthetic fun copy-I3W6gZU$default (Lio/github/awakelab/awake/physics/ContactEvent;JJLio/github/awakelab/awake/physics/ContactPhase;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/ContactEvent;
+public final class com/awakekt/awake/physics/ContactEvent {
+	public synthetic fun <init> (JJLcom/awakekt/awake/physics/ContactPhase;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-IB_h3Cs ()J
+	public final fun component2-IB_h3Cs ()J
+	public final fun component3 ()Lcom/awakekt/awake/physics/ContactPhase;
+	public final fun copy-e9QFJ-g (JJLcom/awakekt/awake/physics/ContactPhase;)Lcom/awakekt/awake/physics/ContactEvent;
+	public static synthetic fun copy-e9QFJ-g$default (Lcom/awakekt/awake/physics/ContactEvent;JJLcom/awakekt/awake/physics/ContactPhase;ILjava/lang/Object;)Lcom/awakekt/awake/physics/ContactEvent;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getA-jpH6f6o ()J
-	public final fun getB-jpH6f6o ()J
-	public final fun getPhase ()Lio/github/awakelab/awake/physics/ContactPhase;
+	public final fun getA-IB_h3Cs ()J
+	public final fun getB-IB_h3Cs ()J
+	public final fun getPhase ()Lcom/awakekt/awake/physics/ContactPhase;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/ContactPhase : java/lang/Enum {
-	public static final field BEGAN Lio/github/awakelab/awake/physics/ContactPhase;
-	public static final field ENDED Lio/github/awakelab/awake/physics/ContactPhase;
+public final class com/awakekt/awake/physics/ContactPhase : java/lang/Enum {
+	public static final field BEGAN Lcom/awakekt/awake/physics/ContactPhase;
+	public static final field ENDED Lcom/awakekt/awake/physics/ContactPhase;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/physics/ContactPhase;
-	public static fun values ()[Lio/github/awakelab/awake/physics/ContactPhase;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/physics/ContactPhase;
+	public static fun values ()[Lcom/awakekt/awake/physics/ContactPhase;
 }
 
-public final class io/github/awakelab/awake/physics/ConvexHullShape : io/github/awakelab/awake/physics/PhysicsShape {
+public final class com/awakekt/awake/physics/ConvexHullShape : com/awakekt/awake/physics/PhysicsShape {
 	public static final field MIN_POINTS I
 	public static final field VALUES_PER_POINT I
 	public fun <init> ([F)V
 	public final fun component1 ()[F
-	public final fun copy ([F)Lio/github/awakelab/awake/physics/ConvexHullShape;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/physics/ConvexHullShape;[FILjava/lang/Object;)Lio/github/awakelab/awake/physics/ConvexHullShape;
+	public final fun copy ([F)Lcom/awakekt/awake/physics/ConvexHullShape;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/physics/ConvexHullShape;[FILjava/lang/Object;)Lcom/awakekt/awake/physics/ConvexHullShape;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getPointCount ()I
 	public final fun getPoints ()[F
@@ -190,196 +190,196 @@ public final class io/github/awakelab/awake/physics/ConvexHullShape : io/github/
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/DistanceConstraint : io/github/awakelab/awake/physics/Constraint {
-	public synthetic fun <init> (JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FFLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-jpH6f6o ()J
-	public final fun component2-jpH6f6o ()J
-	public final fun component3 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component4 ()Lio/github/awakelab/awake/core/math/Vec3f;
+public final class com/awakekt/awake/physics/DistanceConstraint : com/awakekt/awake/physics/Constraint {
+	public synthetic fun <init> (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-IB_h3Cs ()J
+	public final fun component2-IB_h3Cs ()J
+	public final fun component3 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component4 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component5 ()F
 	public final fun component6 ()F
-	public final fun copy-JliEqI8 (JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FF)Lio/github/awakelab/awake/physics/DistanceConstraint;
-	public static synthetic fun copy-JliEqI8$default (Lio/github/awakelab/awake/physics/DistanceConstraint;JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FFILjava/lang/Object;)Lio/github/awakelab/awake/physics/DistanceConstraint;
+	public final fun copy-1gR-rmg (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FF)Lcom/awakekt/awake/physics/DistanceConstraint;
+	public static synthetic fun copy-1gR-rmg$default (Lcom/awakekt/awake/physics/DistanceConstraint;JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFILjava/lang/Object;)Lcom/awakekt/awake/physics/DistanceConstraint;
 	public fun equals (Ljava/lang/Object;)Z
-	public fun getBodyA-jpH6f6o ()J
-	public fun getBodyB-jpH6f6o ()J
+	public fun getBodyA-IB_h3Cs ()J
+	public fun getBodyB-IB_h3Cs ()J
 	public final fun getMaxDistance ()F
 	public final fun getMinDistance ()F
-	public final fun getPointA ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getPointB ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getPointA ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getPointB ()Lcom/awakekt/awake/core/math/Vec3f;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/HeightFieldMeshKt {
-	public static final fun toMeshShape (Lio/github/awakelab/awake/physics/HeightFieldShape;)Lio/github/awakelab/awake/physics/MeshShape;
+public final class com/awakekt/awake/physics/HeightFieldMeshKt {
+	public static final fun toMeshShape (Lcom/awakekt/awake/physics/HeightFieldShape;)Lcom/awakekt/awake/physics/MeshShape;
 }
 
-public final class io/github/awakelab/awake/physics/HeightFieldShape : io/github/awakelab/awake/physics/PhysicsShape {
+public final class com/awakekt/awake/physics/HeightFieldShape : com/awakekt/awake/physics/PhysicsShape {
 	public static final field MIN_SAMPLE_COUNT I
-	public fun <init> ([FILio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/GridOrigin;)V
-	public synthetic fun <init> ([FILio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/GridOrigin;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> ([FILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/GridOrigin;)V
+	public synthetic fun <init> ([FILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/GridOrigin;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()[F
 	public final fun component2 ()I
-	public final fun component3 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component4 ()Lio/github/awakelab/awake/core/math/GridOrigin;
-	public final fun copy ([FILio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/GridOrigin;)Lio/github/awakelab/awake/physics/HeightFieldShape;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/physics/HeightFieldShape;[FILio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/GridOrigin;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/HeightFieldShape;
+	public final fun component3 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component4 ()Lcom/awakekt/awake/core/math/GridOrigin;
+	public final fun copy ([FILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/GridOrigin;)Lcom/awakekt/awake/physics/HeightFieldShape;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/physics/HeightFieldShape;[FILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/GridOrigin;ILjava/lang/Object;)Lcom/awakekt/awake/physics/HeightFieldShape;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getHeights ()[F
-	public final fun getOrigin ()Lio/github/awakelab/awake/core/math/GridOrigin;
+	public final fun getOrigin ()Lcom/awakekt/awake/core/math/GridOrigin;
 	public final fun getSampleCount ()I
-	public final fun getScale ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getScale ()Lcom/awakekt/awake/core/math/Vec3f;
 	public fun hashCode ()I
 	public final fun heightAt (II)F
-	public final fun requireSupportedMotionType (Lio/github/awakelab/awake/physics/MotionType;)V
+	public final fun requireSupportedMotionType (Lcom/awakekt/awake/physics/MotionType;)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/HeightFieldTileKt {
+public final class com/awakekt/awake/physics/HeightFieldTileKt {
 	public static final fun forEachHeightFieldTileTouching (IIIIILkotlin/jvm/functions/Function2;)V
-	public static final fun heightFieldTile ([FIILio/github/awakelab/awake/core/math/Vec3f;III)Lio/github/awakelab/awake/physics/HeightFieldShape;
-	public static final fun heightFieldTileCenter (IILio/github/awakelab/awake/core/math/Vec3f;IIILio/github/awakelab/awake/core/math/GridOrigin;)Lio/github/awakelab/awake/core/math/Vec3f;
-	public static synthetic fun heightFieldTileCenter$default (IILio/github/awakelab/awake/core/math/Vec3f;IIILio/github/awakelab/awake/core/math/GridOrigin;ILjava/lang/Object;)Lio/github/awakelab/awake/core/math/Vec3f;
+	public static final fun heightFieldTile ([FIILcom/awakekt/awake/core/math/Vec3f;III)Lcom/awakekt/awake/physics/HeightFieldShape;
+	public static final fun heightFieldTileCenter (IILcom/awakekt/awake/core/math/Vec3f;IIILcom/awakekt/awake/core/math/GridOrigin;)Lcom/awakekt/awake/core/math/Vec3f;
+	public static synthetic fun heightFieldTileCenter$default (IILcom/awakekt/awake/core/math/Vec3f;IIILcom/awakekt/awake/core/math/GridOrigin;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/Vec3f;
 }
 
-public final class io/github/awakelab/awake/physics/HingeConstraint : io/github/awakelab/awake/physics/Constraint {
-	public synthetic fun <init> (JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-jpH6f6o ()J
-	public final fun component2-jpH6f6o ()J
-	public final fun component3 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component4 ()Lio/github/awakelab/awake/core/math/Vec3f;
+public final class com/awakekt/awake/physics/HingeConstraint : com/awakekt/awake/physics/Constraint {
+	public synthetic fun <init> (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lkotlin/ranges/ClosedFloatingPointRange;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lkotlin/ranges/ClosedFloatingPointRange;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-IB_h3Cs ()J
+	public final fun component2-IB_h3Cs ()J
+	public final fun component3 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component4 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component5 ()Lkotlin/ranges/ClosedFloatingPointRange;
-	public final fun copy-hKHVOxQ (JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lkotlin/ranges/ClosedFloatingPointRange;)Lio/github/awakelab/awake/physics/HingeConstraint;
-	public static synthetic fun copy-hKHVOxQ$default (Lio/github/awakelab/awake/physics/HingeConstraint;JJLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lkotlin/ranges/ClosedFloatingPointRange;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/HingeConstraint;
+	public final fun copy-5CZun8s (JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lkotlin/ranges/ClosedFloatingPointRange;)Lcom/awakekt/awake/physics/HingeConstraint;
+	public static synthetic fun copy-5CZun8s$default (Lcom/awakekt/awake/physics/HingeConstraint;JJLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lkotlin/ranges/ClosedFloatingPointRange;ILjava/lang/Object;)Lcom/awakekt/awake/physics/HingeConstraint;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAxis ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public fun getBodyA-jpH6f6o ()J
-	public fun getBodyB-jpH6f6o ()J
+	public final fun getAxis ()Lcom/awakekt/awake/core/math/Vec3f;
+	public fun getBodyA-IB_h3Cs ()J
+	public fun getBodyB-IB_h3Cs ()J
 	public final fun getLimits ()Lkotlin/ranges/ClosedFloatingPointRange;
-	public final fun getPoint ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getPoint ()Lcom/awakekt/awake/core/math/Vec3f;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/MeshShape : io/github/awakelab/awake/physics/PhysicsShape {
+public final class com/awakekt/awake/physics/MeshShape : com/awakekt/awake/physics/PhysicsShape {
 	public static final field INDICES_PER_TRIANGLE I
 	public static final field VALUES_PER_VERTEX I
 	public fun <init> ([F[I)V
 	public final fun component1 ()[F
 	public final fun component2 ()[I
-	public final fun copy ([F[I)Lio/github/awakelab/awake/physics/MeshShape;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/physics/MeshShape;[F[IILjava/lang/Object;)Lio/github/awakelab/awake/physics/MeshShape;
+	public final fun copy ([F[I)Lcom/awakekt/awake/physics/MeshShape;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/physics/MeshShape;[F[IILjava/lang/Object;)Lcom/awakekt/awake/physics/MeshShape;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getIndices ()[I
 	public final fun getTriangleCount ()I
 	public final fun getVertices ()[F
 	public fun hashCode ()I
-	public final fun requireSupportedMotionType (Lio/github/awakelab/awake/physics/MotionType;)V
+	public final fun requireSupportedMotionType (Lcom/awakekt/awake/physics/MotionType;)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/MotionType : java/lang/Enum {
-	public static final field DYNAMIC Lio/github/awakelab/awake/physics/MotionType;
-	public static final field KINEMATIC Lio/github/awakelab/awake/physics/MotionType;
-	public static final field STATIC Lio/github/awakelab/awake/physics/MotionType;
+public final class com/awakekt/awake/physics/MotionType : java/lang/Enum {
+	public static final field DYNAMIC Lcom/awakekt/awake/physics/MotionType;
+	public static final field KINEMATIC Lcom/awakekt/awake/physics/MotionType;
+	public static final field STATIC Lcom/awakekt/awake/physics/MotionType;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/physics/MotionType;
-	public static fun values ()[Lio/github/awakelab/awake/physics/MotionType;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/physics/MotionType;
+	public static fun values ()[Lcom/awakekt/awake/physics/MotionType;
 }
 
-public final class io/github/awakelab/awake/physics/PhysicsCapabilityException : java/lang/UnsupportedOperationException {
+public final class com/awakekt/awake/physics/PhysicsCapabilityException : java/lang/UnsupportedOperationException {
 	public fun <init> (Ljava/lang/String;)V
 }
 
-public abstract interface class io/github/awakelab/awake/physics/PhysicsShape {
+public abstract interface class com/awakekt/awake/physics/PhysicsShape {
 }
 
-public final class io/github/awakelab/awake/physics/PhysicsShapeKt {
-	public static final fun requireCanBeSensor (Lio/github/awakelab/awake/physics/PhysicsShape;)V
+public final class com/awakekt/awake/physics/PhysicsShapeKt {
+	public static final fun requireCanBeSensor (Lcom/awakekt/awake/physics/PhysicsShape;)V
 }
 
-public abstract interface class io/github/awakelab/awake/physics/PhysicsWorld {
-	public abstract fun addImpulse-2JRFxmI (JLio/github/awakelab/awake/core/math/Vec3f;)V
-	public abstract fun applyBuoyancy-EZ0ihm0 (JFLio/github/awakelab/awake/physics/Buoyancy;F)V
-	public abstract fun createBody-FP6Etuo (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/physics/MotionType;IZ)J
-	public static synthetic fun createBody-FP6Etuo$default (Lio/github/awakelab/awake/physics/PhysicsWorld;Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/physics/MotionType;IZILjava/lang/Object;)J
-	public abstract fun createConstraint-_1th6IU (Lio/github/awakelab/awake/physics/Constraint;)J
+public abstract interface class com/awakekt/awake/physics/PhysicsWorld {
+	public abstract fun addImpulse-5Z1epPo (JLcom/awakekt/awake/core/math/Vec3f;)V
+	public abstract fun applyBuoyancy-QB6aDRY (JFLcom/awakekt/awake/physics/Buoyancy;F)V
+	public abstract fun createBody-KN-qpMI (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZ)J
+	public static synthetic fun createBody-KN-qpMI$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZILjava/lang/Object;)J
+	public abstract fun createConstraint-TjAUSrg (Lcom/awakekt/awake/physics/Constraint;)J
 	public abstract fun destroy ()V
-	public abstract fun destroyBody-OdLkPKs (J)V
-	public abstract fun destroyConstraint-vu58jQ4 (J)V
+	public abstract fun destroyBody-EMivcsM (J)V
+	public abstract fun destroyConstraint-G3VQlSw (J)V
 	public abstract fun drainContacts (Lkotlin/jvm/functions/Function1;)V
 	public abstract fun forEachBodyTransform (Lkotlin/jvm/functions/Function3;)V
-	public abstract fun getLayers ()Lio/github/awakelab/awake/physics/CollisionLayers;
-	public abstract fun getLinearVelocity-OdLkPKs (J)Lio/github/awakelab/awake/core/math/Vec3f;
-	public abstract fun isActive-OdLkPKs (J)Z
-	public abstract fun moveKinematic-EZ0ihm0 (JLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;F)V
-	public abstract fun overlapShape-eH70JwY (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun overlapShape-eH70JwY$default (Lio/github/awakelab/awake/physics/PhysicsWorld;Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public abstract fun raycast-aeZ-CVc (Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/physics/CollisionLayer;)Lio/github/awakelab/awake/physics/RaycastHit;
-	public static synthetic fun raycast-aeZ-CVc$default (Lio/github/awakelab/awake/physics/PhysicsWorld;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/physics/CollisionLayer;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/RaycastHit;
-	public abstract fun setActive-2JRFxmI (JZ)V
-	public abstract fun setAngularVelocity-2JRFxmI (JLio/github/awakelab/awake/core/math/Vec3f;)V
-	public abstract fun setContactReporting-2JRFxmI (JZ)V
-	public abstract fun setContinuousCollision-2JRFxmI (JZ)V
-	public abstract fun setLinearVelocity-2JRFxmI (JLio/github/awakelab/awake/core/math/Vec3f;)V
-	public abstract fun shapeCast-yEdDi50 (Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayer;Lio/github/awakelab/awake/physics/BodyHandle;)Lio/github/awakelab/awake/physics/ShapeCastHit;
-	public static synthetic fun shapeCast-yEdDi50$default (Lio/github/awakelab/awake/physics/PhysicsWorld;Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayer;Lio/github/awakelab/awake/physics/BodyHandle;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/ShapeCastHit;
-	public abstract fun shiftOrigin (Lio/github/awakelab/awake/core/math/Vec3f;)V
+	public abstract fun getLayers ()Lcom/awakekt/awake/physics/CollisionLayers;
+	public abstract fun getLinearVelocity-EMivcsM (J)Lcom/awakekt/awake/core/math/Vec3f;
+	public abstract fun isActive-EMivcsM (J)Z
+	public abstract fun moveKinematic-QB6aDRY (JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;F)V
+	public abstract fun overlapShape-Wy0u3Nk (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun overlapShape-Wy0u3Nk$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public abstract fun raycast-DMjTmNA (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/physics/CollisionLayer;)Lcom/awakekt/awake/physics/RaycastHit;
+	public static synthetic fun raycast-DMjTmNA$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/physics/CollisionLayer;ILjava/lang/Object;)Lcom/awakekt/awake/physics/RaycastHit;
+	public abstract fun setActive-5Z1epPo (JZ)V
+	public abstract fun setAngularVelocity-5Z1epPo (JLcom/awakekt/awake/core/math/Vec3f;)V
+	public abstract fun setContactReporting-5Z1epPo (JZ)V
+	public abstract fun setContinuousCollision-5Z1epPo (JZ)V
+	public abstract fun setLinearVelocity-5Z1epPo (JLcom/awakekt/awake/core/math/Vec3f;)V
+	public abstract fun shapeCast-KJBOitM (Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;)Lcom/awakekt/awake/physics/ShapeCastHit;
+	public static synthetic fun shapeCast-KJBOitM$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/physics/ShapeCastHit;
+	public abstract fun shiftOrigin (Lcom/awakekt/awake/core/math/Vec3f;)V
 	public abstract fun step (F)V
 }
 
-public final class io/github/awakelab/awake/physics/PhysicsWorld$DefaultImpls {
-	public static synthetic fun createBody-FP6Etuo$default (Lio/github/awakelab/awake/physics/PhysicsWorld;Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Quat;Lio/github/awakelab/awake/physics/MotionType;IZILjava/lang/Object;)J
-	public static synthetic fun overlapShape-eH70JwY$default (Lio/github/awakelab/awake/physics/PhysicsWorld;Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static synthetic fun raycast-aeZ-CVc$default (Lio/github/awakelab/awake/physics/PhysicsWorld;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FLio/github/awakelab/awake/physics/CollisionLayer;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/RaycastHit;
-	public static synthetic fun shapeCast-yEdDi50$default (Lio/github/awakelab/awake/physics/PhysicsWorld;Lio/github/awakelab/awake/physics/PhysicsShape;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/physics/CollisionLayer;Lio/github/awakelab/awake/physics/BodyHandle;ILjava/lang/Object;)Lio/github/awakelab/awake/physics/ShapeCastHit;
+public final class com/awakekt/awake/physics/PhysicsWorld$DefaultImpls {
+	public static synthetic fun createBody-KN-qpMI$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/physics/MotionType;IZILjava/lang/Object;)J
+	public static synthetic fun overlapShape-Wy0u3Nk$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static synthetic fun raycast-DMjTmNA$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/physics/CollisionLayer;ILjava/lang/Object;)Lcom/awakekt/awake/physics/RaycastHit;
+	public static synthetic fun shapeCast-KJBOitM$default (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/physics/PhysicsShape;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/physics/CollisionLayer;Lcom/awakekt/awake/physics/BodyHandle;ILjava/lang/Object;)Lcom/awakekt/awake/physics/ShapeCastHit;
 }
 
-public final class io/github/awakelab/awake/physics/PhysicsWorldKt {
-	public static final fun defaultLayerFor (Lio/github/awakelab/awake/physics/MotionType;)I
-	public static final fun syncTransforms (Lio/github/awakelab/awake/physics/PhysicsWorld;)Ljava/util/List;
+public final class com/awakekt/awake/physics/PhysicsWorldKt {
+	public static final fun defaultLayerFor (Lcom/awakekt/awake/physics/MotionType;)I
+	public static final fun syncTransforms (Lcom/awakekt/awake/physics/PhysicsWorld;)Ljava/util/List;
 }
 
-public final class io/github/awakelab/awake/physics/RaycastHit {
-	public synthetic fun <init> (JLio/github/awakelab/awake/core/math/Vec3f;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-jpH6f6o ()J
-	public final fun component2 ()Lio/github/awakelab/awake/core/math/Vec3f;
+public final class com/awakekt/awake/physics/RaycastHit {
+	public synthetic fun <init> (JLcom/awakekt/awake/core/math/Vec3f;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-IB_h3Cs ()J
+	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component3 ()F
-	public final fun copy-l4afOBA (JLio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/physics/RaycastHit;
-	public static synthetic fun copy-l4afOBA$default (Lio/github/awakelab/awake/physics/RaycastHit;JLio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Lio/github/awakelab/awake/physics/RaycastHit;
+	public final fun copy-wogh_oc (JLcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/physics/RaycastHit;
+	public static synthetic fun copy-wogh_oc$default (Lcom/awakekt/awake/physics/RaycastHit;JLcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/physics/RaycastHit;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getDistance ()F
-	public final fun getHandle-jpH6f6o ()J
-	public final fun getPoint ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getHandle-IB_h3Cs ()J
+	public final fun getPoint ()Lcom/awakekt/awake/core/math/Vec3f;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/ShapeCastHit {
-	public synthetic fun <init> (JLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1-jpH6f6o ()J
-	public final fun component2 ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun component3 ()Lio/github/awakelab/awake/core/math/Vec3f;
+public final class com/awakekt/awake/physics/ShapeCastHit {
+	public synthetic fun <init> (JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-IB_h3Cs ()J
+	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component3 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component4 ()F
-	public final fun copy-EZ0ihm0 (JLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;F)Lio/github/awakelab/awake/physics/ShapeCastHit;
-	public static synthetic fun copy-EZ0ihm0$default (Lio/github/awakelab/awake/physics/ShapeCastHit;JLio/github/awakelab/awake/core/math/Vec3f;Lio/github/awakelab/awake/core/math/Vec3f;FILjava/lang/Object;)Lio/github/awakelab/awake/physics/ShapeCastHit;
+	public final fun copy-QB6aDRY (JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/physics/ShapeCastHit;
+	public static synthetic fun copy-QB6aDRY$default (Lcom/awakekt/awake/physics/ShapeCastHit;JLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/physics/ShapeCastHit;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFraction ()F
-	public final fun getHandle-jpH6f6o ()J
-	public final fun getNormal ()Lio/github/awakelab/awake/core/math/Vec3f;
-	public final fun getPoint ()Lio/github/awakelab/awake/core/math/Vec3f;
+	public final fun getHandle-IB_h3Cs ()J
+	public final fun getNormal ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getPoint ()Lcom/awakekt/awake/core/math/Vec3f;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/physics/SphereShape : io/github/awakelab/awake/physics/PhysicsShape {
+public final class com/awakekt/awake/physics/SphereShape : com/awakekt/awake/physics/PhysicsShape {
 	public fun <init> (F)V
 	public final fun component1 ()F
-	public final fun copy (F)Lio/github/awakelab/awake/physics/SphereShape;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/physics/SphereShape;FILjava/lang/Object;)Lio/github/awakelab/awake/physics/SphereShape;
+	public final fun copy (F)Lcom/awakekt/awake/physics/SphereShape;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/physics/SphereShape;FILjava/lang/Object;)Lcom/awakekt/awake/physics/SphereShape;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getRadius ()F
 	public fun hashCode ()I

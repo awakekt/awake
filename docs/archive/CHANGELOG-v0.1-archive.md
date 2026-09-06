@@ -86,7 +86,7 @@ For active releases and upcoming changes, see [CHANGELOG.md](../../CHANGELOG.md)
   Consumers of the published `vulkan-kmp` bindings must update their imports. Nothing has been
   released under the current artifact coordinates yet, so no published version is affected.
 
-  The Maven group has been `io.github.awake-lab` for a while and the packages were the last thing
+  The Maven group has been `com.awakekt.awake` for a while and the packages were the last thing
   still saying something else. A package cannot contain a hyphen, so the conventional rendering
   drops it. Entries below this one keep the old package names on purpose — they record what was
   true when they were written.
@@ -442,8 +442,8 @@ For active releases and upcoming changes, see [CHANGELOG.md](../../CHANGELOG.md)
   ([D28](docs/decisions/D28-open-world-framework-boundary.md)).
 - **Vulkan Pipeline Shader Entry Point Alignment:** `LineRenderPipeline`, `UiRenderPipeline`, and `DepthOnlyPipeline` now configure entry points defaulting to `vertexMain` and `fragmentMain` to match generated WGSL/ASL SPIR-V shader outputs.
 - **`vulkan-kmp` Maven Central release pipeline & embedded native loader.** Standalone
-  Vulkan API bindings published under `io.github.awake-lab:vulkan-kmp` and companion AAR
-  `io.github.awake-lab:vulkan-kmp-android-native`.
+  Vulkan API bindings published under `com.awakekt.awake:vulkan-kmp` and companion AAR
+  `com.awakekt.awake:vulkan-kmp-android-native`.
   - Ships `VulkanNativeLoader` on Desktop JVM (macOS ARM64/x86_64, Linux x86_64, Windows x64)
     which auto-extracts precompiled native libraries from the JAR to a local cache directory
     with zero configuration and no manual `-Djava.library.path` required.
@@ -1117,7 +1117,7 @@ For active releases and upcoming changes, see [CHANGELOG.md](../../CHANGELOG.md)
   names.
 
 - **vulkan-kmp: publish chain proven end to end.** The bindings publish as
-  `io.github.awake-lab:vulkan-kmp` (Android's NDK half as `vulkan-kmp-android-native`), and a
+  `com.awakekt.awake:vulkan-kmp` (Android's NDK half as `vulkan-kmp-android-native`), and a
   standalone consumer project (`tools/vulkan-kmp-smoke`) resolves the published artifact from
   mavenLocal and runs a live `vkCreateInstance` through it — including the MoltenVK
   portability opt-in every external macOS consumer needs. CI's lavapipe job now runs the
@@ -1594,4 +1594,4 @@ on.
 - Desktop OpenGL texture rendering is leaking.
 
 
-[1.0.0-SNAPSHOT]: https://github.com/awake-lab/awake/compare/v0.0.1...v0.0.2
+[1.0.0-SNAPSHOT]: https://github.com/awakekt/awake/compare/v0.0.1...v0.0.2

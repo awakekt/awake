@@ -7,19 +7,19 @@
 
 VkSurfaceCapabilitiesKHRMutator::VkSurfaceCapabilitiesKHRMutator(JNIEnv *env) : env(env) {
     this->env = env;
-    clazz = env->FindClass("io/github/awakelab/awake/vulkan/models/VkSurfaceCapabilitiesKHR");
+    clazz = env->FindClass("com/awakekt/awake/vulkan/models/VkSurfaceCapabilitiesKHR");
     minImageCountField = env->GetFieldID(clazz, "minImageCount", "I");
     maxImageCountField = env->GetFieldID(clazz, "maxImageCount", "I");
     currentExtentField = env->GetFieldID(clazz, "currentExtent",
-                                         "Lio/github/awakelab/awake/vulkan/models/VkExtent2D;");
+                                         "Lcom/awakekt/awake/vulkan/models/VkExtent2D;");
     minImageExtentField = env->GetFieldID(clazz, "minImageExtent",
-                                          "Lio/github/awakelab/awake/vulkan/models/VkExtent2D;");
+                                          "Lcom/awakekt/awake/vulkan/models/VkExtent2D;");
     maxImageExtentField = env->GetFieldID(clazz, "maxImageExtent",
-                                          "Lio/github/awakelab/awake/vulkan/models/VkExtent2D;");
+                                          "Lcom/awakekt/awake/vulkan/models/VkExtent2D;");
     maxImageArrayLayersField = env->GetFieldID(clazz, "maxImageArrayLayers", "I");
     supportedTransformsField = env->GetFieldID(clazz, "supportedTransforms", "I");
     currentTransformField = env->GetFieldID(clazz, "currentTransform",
-                                            "Lio/github/awakelab/awake/vulkan/enums/VkSurfaceTransformFlagBitsKHR;");
+                                            "Lcom/awakekt/awake/vulkan/enums/VkSurfaceTransformFlagBitsKHR;");
     supportedCompositeAlphaField = env->GetFieldID(clazz, "supportedCompositeAlpha", "I");
     supportedUsageFlagsField = env->GetFieldID(clazz, "supportedUsageFlags", "I");
 }
@@ -48,7 +48,7 @@ VkSurfaceCapabilitiesKHRMutator::toObject(VkSurfaceCapabilitiesKHR source) {
                      static_cast<jint>(source.supportedTransforms));
     auto currentTransform = enum_utils::setEnumFromVulkan(env,
                                                           static_cast<jint>(source.currentTransform),
-                                                          "io/github/awakelab/awake/vulkan/enums/VkSurfaceTransformFlagBitsKHR");
+                                                          "com/awakekt/awake/vulkan/enums/VkSurfaceTransformFlagBitsKHR");
     env->SetObjectField(newObj, currentTransformField, currentTransform);
     env->DeleteLocalRef(currentTransform);
     env->SetIntField(newObj, supportedCompositeAlphaField,

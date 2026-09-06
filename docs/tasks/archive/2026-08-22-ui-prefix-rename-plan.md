@@ -406,7 +406,7 @@ until they are deleted or rewritten.
 same lines:
 
 ```kotlin
-import io.github.awakelab.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import io.github.awakelab.core.graphics2d.DrawCommand
 ```
 

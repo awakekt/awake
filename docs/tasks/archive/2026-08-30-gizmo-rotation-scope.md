@@ -14,7 +14,7 @@ transform.rotation.x += axis.direction.x * radians
 ```
 
 `Quat.fromEuler` writes `Qx * Qy * Qz`
-([Quat.kt:147](../../awake/core/math/src/commonMain/kotlin/io/github/awakelab/awake/core/math/Quat.kt)),
+([Quat.kt:147](../../awake/core/math/src/commonMain/kotlin/com/awakekt/awake/core/math/Quat.kt)),
 and `Quat`'s multiply composes in **apply-order** — `a * b` means apply `a`, then `b` — so the
 matrix is **R = Rz(z) · Ry(y) · Rx(x)**, with `z` outermost. (This was measured, not read: the
 first version of this document had X and Z the wrong way round because it assumed the other

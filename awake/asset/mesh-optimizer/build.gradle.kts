@@ -16,7 +16,7 @@ plugins {
 }
 
 application {
-    mainClass.set("io.github.awakelab.awake.asset.meshoptimizer.MainKt")
+    mainClass.set("com.awakekt.awake.asset.meshoptimizer.MainKt")
 }
 
 dependencies {
@@ -35,7 +35,7 @@ tasks.register<JavaExec>("decimate") {
     description = "Simplify a .gltf mesh's triangle count -- args: <input.gltf> <output.gltf> <targetRatio>"
     dependsOn("classes")
     workingDir = projectDir
-    mainClass.set("io.github.awakelab.awake.asset.meshoptimizer.MainKt")
+    mainClass.set("com.awakekt.awake.asset.meshoptimizer.MainKt")
     classpath = sourceSets.main.get().runtimeClasspath
     if (project.hasProperty("args")) {
         args((project.property("args") as String).split(" "))

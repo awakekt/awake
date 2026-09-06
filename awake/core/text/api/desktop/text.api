@@ -1,9 +1,9 @@
-public final class io/github/awakelab/awake/core/text/font/BitmapFont : io/github/awakelab/awake/core/text/font/UiFont {
+public final class com/awakekt/awake/core/text/font/BitmapFont : com/awakekt/awake/core/text/font/UiFont {
 	public fun <init> ()V
 	public fun <init> (II)V
 	public synthetic fun <init> (IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun advanceFor (CF)F
-	public fun advanceFor-KXIu0rk (CFI)F
+	public fun advanceFor-JWAxxxI (CFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -13,17 +13,17 @@ public final class io/github/awakelab/awake/core/text/font/BitmapFont : io/githu
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
 	public fun getLineHeightEm ()F
-	public fun getSamplingMode ()Lio/github/awakelab/awake/core/text/font/UiFontSamplingMode;
+	public fun getSamplingMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
-	public fun glyphFor-aeoeaJ4 (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
-	public fun uvFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
-public final class io/github/awakelab/awake/core/text/font/FontWeight {
-	public static final field Companion Lio/github/awakelab/awake/core/text/font/FontWeight$Companion;
-	public static final synthetic fun box-impl (I)Lio/github/awakelab/awake/core/text/font/FontWeight;
+public final class com/awakekt/awake/core/text/font/FontWeight {
+	public static final field Companion Lcom/awakekt/awake/core/text/font/FontWeight$Companion;
+	public static final synthetic fun box-impl (I)Lcom/awakekt/awake/core/text/font/FontWeight;
 	public static fun constructor-impl (I)I
 	public fun equals (Ljava/lang/Object;)Z
 	public static fun equals-impl (ILjava/lang/Object;)Z
@@ -36,19 +36,19 @@ public final class io/github/awakelab/awake/core/text/font/FontWeight {
 	public final synthetic fun unbox-impl ()I
 }
 
-public final class io/github/awakelab/awake/core/text/font/FontWeight$Companion {
-	public final fun getBlack-HEXW_wo ()I
-	public final fun getBold-HEXW_wo ()I
-	public final fun getExtraBold-HEXW_wo ()I
-	public final fun getExtraLight-HEXW_wo ()I
-	public final fun getLight-HEXW_wo ()I
-	public final fun getMedium-HEXW_wo ()I
-	public final fun getNormal-HEXW_wo ()I
-	public final fun getSemiBold-HEXW_wo ()I
-	public final fun getThin-HEXW_wo ()I
+public final class com/awakekt/awake/core/text/font/FontWeight$Companion {
+	public final fun getBlack-IDQ5Rls ()I
+	public final fun getBold-IDQ5Rls ()I
+	public final fun getExtraBold-IDQ5Rls ()I
+	public final fun getExtraLight-IDQ5Rls ()I
+	public final fun getLight-IDQ5Rls ()I
+	public final fun getMedium-IDQ5Rls ()I
+	public final fun getNormal-IDQ5Rls ()I
+	public final fun getSemiBold-IDQ5Rls ()I
+	public final fun getThin-IDQ5Rls ()I
 }
 
-public final class io/github/awakelab/awake/core/text/font/GlyphRect {
+public final class com/awakekt/awake/core/text/font/GlyphRect {
 	public fun <init> (FFFFFFFF)V
 	public synthetic fun <init> (FFFFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
@@ -59,8 +59,8 @@ public final class io/github/awakelab/awake/core/text/font/GlyphRect {
 	public final fun component6 ()F
 	public final fun component7 ()F
 	public final fun component8 ()F
-	public final fun copy (FFFFFFFF)Lio/github/awakelab/awake/core/text/font/GlyphRect;
-	public static synthetic fun copy$default (Lio/github/awakelab/awake/core/text/font/GlyphRect;FFFFFFFFILjava/lang/Object;)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public final fun copy (FFFFFFFF)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/text/font/GlyphRect;FFFFFFFFILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/GlyphRect;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getHeightEm ()F
 	public final fun getOffsetXEm ()F
@@ -74,12 +74,12 @@ public final class io/github/awakelab/awake/core/text/font/GlyphRect {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/text/font/MsdfFont : io/github/awakelab/awake/core/text/font/UiFont {
+public final class com/awakekt/awake/core/text/font/MsdfFont : com/awakekt/awake/core/text/font/UiFont {
 	public fun <init> ()V
 	public fun <init> (IIF)V
 	public synthetic fun <init> (IIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun advanceFor (CF)F
-	public fun advanceFor-KXIu0rk (CFI)F
+	public fun advanceFor-JWAxxxI (CFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -89,18 +89,18 @@ public final class io/github/awakelab/awake/core/text/font/MsdfFont : io/github/
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
 	public fun getLineHeightEm ()F
-	public fun getSamplingMode ()Lio/github/awakelab/awake/core/text/font/UiFontSamplingMode;
+	public fun getSamplingMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
-	public fun glyphFor-aeoeaJ4 (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
-	public fun uvFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
-public final class io/github/awakelab/awake/core/text/font/PackedUiFont : io/github/awakelab/awake/core/text/font/UiFont {
+public final class com/awakekt/awake/core/text/font/PackedUiFont : com/awakekt/awake/core/text/font/UiFont {
 	public static final field RGBA_CHANNELS I
 	public fun advanceFor (CF)F
-	public fun advanceFor-KXIu0rk (CFI)F
+	public fun advanceFor-JWAxxxI (CFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -110,23 +110,23 @@ public final class io/github/awakelab/awake/core/text/font/PackedUiFont : io/git
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
 	public fun getLineHeightEm ()F
-	public fun getSamplingMode ()Lio/github/awakelab/awake/core/text/font/UiFontSamplingMode;
+	public fun getSamplingMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
-	public fun glyphFor-aeoeaJ4 (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
-	public final fun inkFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
-	public fun uvFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public final fun inkFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
-public final class io/github/awakelab/awake/core/text/font/UiAnchorKt {
-	public static final fun textBlockHeight (Lio/github/awakelab/awake/core/text/font/UiFont;IFF)F
-	public static synthetic fun textBlockHeight$default (Lio/github/awakelab/awake/core/text/font/UiFont;IFFILjava/lang/Object;)F
+public final class com/awakekt/awake/core/text/font/UiAnchorKt {
+	public static final fun textBlockHeight (Lcom/awakekt/awake/core/text/font/UiFont;IFF)F
+	public static synthetic fun textBlockHeight$default (Lcom/awakekt/awake/core/text/font/UiFont;IFFILjava/lang/Object;)F
 }
 
-public abstract interface class io/github/awakelab/awake/core/text/font/UiFont {
+public abstract interface class com/awakekt/awake/core/text/font/UiFont {
 	public fun advanceFor (CF)F
-	public fun advanceFor-KXIu0rk (CFI)F
+	public fun advanceFor-JWAxxxI (CFI)F
 	public fun getAscentEm ()F
 	public abstract fun getAtlasHeight ()I
 	public abstract fun getAtlasPixelsRgba ()[B
@@ -136,60 +136,60 @@ public abstract interface class io/github/awakelab/awake/core/text/font/UiFont {
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
 	public fun getLineHeightEm ()F
-	public abstract fun getSamplingMode ()Lio/github/awakelab/awake/core/text/font/UiFontSamplingMode;
+	public abstract fun getSamplingMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public abstract fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
-	public fun glyphFor-aeoeaJ4 (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
-	public abstract fun uvFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public abstract fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
-public final class io/github/awakelab/awake/core/text/font/UiFont$DefaultImpls {
-	public static fun advanceFor (Lio/github/awakelab/awake/core/text/font/UiFont;CF)F
-	public static fun advanceFor-KXIu0rk (Lio/github/awakelab/awake/core/text/font/UiFont;CFI)F
-	public static fun getAscentEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
-	public static fun getCapHeightEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
-	public static fun getDescentEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
-	public static fun getDistanceFieldRangePx (Lio/github/awakelab/awake/core/text/font/UiFont;)F
-	public static fun getLineHeightEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
-	public static fun getVisibleBottomEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
-	public static fun getVisibleTopEm (Lio/github/awakelab/awake/core/text/font/UiFont;)F
-	public static fun glyphFor-aeoeaJ4 (Lio/github/awakelab/awake/core/text/font/UiFont;CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+public final class com/awakekt/awake/core/text/font/UiFont$DefaultImpls {
+	public static fun advanceFor (Lcom/awakekt/awake/core/text/font/UiFont;CF)F
+	public static fun advanceFor-JWAxxxI (Lcom/awakekt/awake/core/text/font/UiFont;CFI)F
+	public static fun getAscentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getCapHeightEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getDescentEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getDistanceFieldRangePx (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getLineHeightEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getVisibleBottomEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun getVisibleTopEm (Lcom/awakekt/awake/core/text/font/UiFont;)F
+	public static fun glyphFor-MFPI20o (Lcom/awakekt/awake/core/text/font/UiFont;CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
-public final class io/github/awakelab/awake/core/text/font/UiFontKt {
-	public static final fun measureTextWidth-t966K9Y (Lio/github/awakelab/awake/core/text/font/UiFont;Ljava/lang/String;FI)F
-	public static synthetic fun measureTextWidth-t966K9Y$default (Lio/github/awakelab/awake/core/text/font/UiFont;Ljava/lang/String;FIILjava/lang/Object;)F
+public final class com/awakekt/awake/core/text/font/UiFontKt {
+	public static final fun measureTextWidth-k5oWgnU (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FI)F
+	public static synthetic fun measureTextWidth-k5oWgnU$default (Lcom/awakekt/awake/core/text/font/UiFont;Ljava/lang/String;FIILjava/lang/Object;)F
 }
 
-public final class io/github/awakelab/awake/core/text/font/UiFontSamplingMode : java/lang/Enum {
-	public static final field CoverageAlpha Lio/github/awakelab/awake/core/text/font/UiFontSamplingMode;
-	public static final field DistanceField Lio/github/awakelab/awake/core/text/font/UiFontSamplingMode;
+public final class com/awakekt/awake/core/text/font/UiFontSamplingMode : java/lang/Enum {
+	public static final field CoverageAlpha Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
+	public static final field DistanceField Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/github/awakelab/awake/core/text/font/UiFontSamplingMode;
-	public static fun values ()[Lio/github/awakelab/awake/core/text/font/UiFontSamplingMode;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
+	public static fun values ()[Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 }
 
-public final class io/github/awakelab/awake/core/text/font/UiFonts {
-	public static final field INSTANCE Lio/github/awakelab/awake/core/text/font/UiFonts;
-	public final fun bitmap (I)Lio/github/awakelab/awake/core/text/font/UiFont;
-	public static synthetic fun bitmap$default (Lio/github/awakelab/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lio/github/awakelab/awake/core/text/font/UiFont;
-	public final fun default (I)Lio/github/awakelab/awake/core/text/font/UiFont;
-	public static synthetic fun default$default (Lio/github/awakelab/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lio/github/awakelab/awake/core/text/font/UiFont;
-	public final fun family (Ljava/util/Map;)Lio/github/awakelab/awake/core/text/font/UiFont;
-	public final fun msdf (I)Lio/github/awakelab/awake/core/text/font/UiFont;
-	public static synthetic fun msdf$default (Lio/github/awakelab/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lio/github/awakelab/awake/core/text/font/UiFont;
-	public final fun trueSans (I)Lio/github/awakelab/awake/core/text/font/UiFont;
-	public static synthetic fun trueSans$default (Lio/github/awakelab/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lio/github/awakelab/awake/core/text/font/UiFont;
-	public final fun weightedSans (I)Lio/github/awakelab/awake/core/text/font/UiFont;
-	public static synthetic fun weightedSans$default (Lio/github/awakelab/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lio/github/awakelab/awake/core/text/font/UiFont;
+public final class com/awakekt/awake/core/text/font/UiFonts {
+	public static final field INSTANCE Lcom/awakekt/awake/core/text/font/UiFonts;
+	public final fun bitmap (I)Lcom/awakekt/awake/core/text/font/UiFont;
+	public static synthetic fun bitmap$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun default (I)Lcom/awakekt/awake/core/text/font/UiFont;
+	public static synthetic fun default$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun family (Ljava/util/Map;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun msdf (I)Lcom/awakekt/awake/core/text/font/UiFont;
+	public static synthetic fun msdf$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun trueSans (I)Lcom/awakekt/awake/core/text/font/UiFont;
+	public static synthetic fun trueSans$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
+	public final fun weightedSans (I)Lcom/awakekt/awake/core/text/font/UiFont;
+	public static synthetic fun weightedSans$default (Lcom/awakekt/awake/core/text/font/UiFonts;IILjava/lang/Object;)Lcom/awakekt/awake/core/text/font/UiFont;
 }
 
-public final class io/github/awakelab/awake/core/text/font/WeightedUiFont : io/github/awakelab/awake/core/text/font/UiFont {
+public final class com/awakekt/awake/core/text/font/WeightedUiFont : com/awakekt/awake/core/text/font/UiFont {
 	public static final field RGBA_CHANNELS I
 	public fun <init> (Ljava/util/Map;)V
 	public fun advanceFor (CF)F
-	public fun advanceFor-KXIu0rk (CFI)F
+	public fun advanceFor-JWAxxxI (CFI)F
 	public fun getAscentEm ()F
 	public fun getAtlasHeight ()I
 	public fun getAtlasPixelsRgba ()[B
@@ -199,44 +199,44 @@ public final class io/github/awakelab/awake/core/text/font/WeightedUiFont : io/g
 	public fun getDescentEm ()F
 	public fun getDistanceFieldRangePx ()F
 	public fun getLineHeightEm ()F
-	public fun getSamplingMode ()Lio/github/awakelab/awake/core/text/font/UiFontSamplingMode;
+	public fun getSamplingMode ()Lcom/awakekt/awake/core/text/font/UiFontSamplingMode;
 	public fun getTextScaleStep ()F
 	public fun getVisibleBottomEm ()F
 	public fun getVisibleTopEm ()F
-	public fun glyphFor-aeoeaJ4 (CI)Lio/github/awakelab/awake/core/text/font/GlyphRect;
-	public fun uvFor (C)Lio/github/awakelab/awake/core/text/font/GlyphRect;
+	public fun glyphFor-MFPI20o (CI)Lcom/awakekt/awake/core/text/font/GlyphRect;
+	public fun uvFor (C)Lcom/awakekt/awake/core/text/font/GlyphRect;
 }
 
-public final class io/github/awakelab/awake/core/text/scope/UiTextScaleKt {
+public final class com/awakekt/awake/core/text/scope/UiTextScaleKt {
 	public static final fun pixelPerfectTextScale (FF)F
 	public static synthetic fun pixelPerfectTextScale$default (FFILjava/lang/Object;)F
 }
 
-public final class io/github/awakelab/awake/core/text/theme/TextStyle {
-	public static final field Companion Lio/github/awakelab/awake/core/text/theme/TextStyle$Companion;
-	public synthetic fun <init> (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/math2d/Sp;Lio/github/awakelab/awake/core/math2d/Sp;FIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/math2d/Sp;Lio/github/awakelab/awake/core/math2d/Sp;FIFLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun component2-N37Q_40 ()Lio/github/awakelab/awake/core/math2d/Sp;
-	public final fun component3-N37Q_40 ()Lio/github/awakelab/awake/core/math2d/Sp;
+public final class com/awakekt/awake/core/text/theme/TextStyle {
+	public static final field Companion Lcom/awakekt/awake/core/text/theme/TextStyle$Companion;
+	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component2-cA3tPgo ()Lcom/awakekt/awake/core/math2d/Sp;
+	public final fun component3-cA3tPgo ()Lcom/awakekt/awake/core/math2d/Sp;
 	public final fun component4 ()F
-	public final fun component5-HEXW_wo ()I
-	public final fun component6-sgZBgvw ()F
-	public final fun copy-m3N6e7I (Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/math2d/Sp;Lio/github/awakelab/awake/core/math2d/Sp;FIF)Lio/github/awakelab/awake/core/text/theme/TextStyle;
-	public static synthetic fun copy-m3N6e7I$default (Lio/github/awakelab/awake/core/text/theme/TextStyle;Lio/github/awakelab/awake/core/color/Color;Lio/github/awakelab/awake/core/math2d/Sp;Lio/github/awakelab/awake/core/math2d/Sp;FIFILjava/lang/Object;)Lio/github/awakelab/awake/core/text/theme/TextStyle;
+	public final fun component5-IDQ5Rls ()I
+	public final fun component6-7B0eUI0 ()F
+	public final fun copy-_WKOUJ8 (Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIF)Lcom/awakekt/awake/core/text/theme/TextStyle;
+	public static synthetic fun copy-_WKOUJ8$default (Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/math2d/Sp;Lcom/awakekt/awake/core/math2d/Sp;FIFILjava/lang/Object;)Lcom/awakekt/awake/core/text/theme/TextStyle;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getColor ()Lio/github/awakelab/awake/core/color/Color;
-	public final fun getLetterSpacing-sgZBgvw ()F
-	public final fun getLineHeight-N37Q_40 ()Lio/github/awakelab/awake/core/math2d/Sp;
+	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getLetterSpacing-7B0eUI0 ()F
+	public final fun getLineHeight-cA3tPgo ()Lcom/awakekt/awake/core/math2d/Sp;
 	public final fun getScale ()F
-	public final fun getSize-N37Q_40 ()Lio/github/awakelab/awake/core/math2d/Sp;
-	public final fun getWeight-HEXW_wo ()I
+	public final fun getSize-cA3tPgo ()Lcom/awakekt/awake/core/math2d/Sp;
+	public final fun getWeight-IDQ5Rls ()I
 	public fun hashCode ()I
-	public final fun then (Lio/github/awakelab/awake/core/text/theme/TextStyle;)Lio/github/awakelab/awake/core/text/theme/TextStyle;
+	public final fun then (Lcom/awakekt/awake/core/text/theme/TextStyle;)Lcom/awakekt/awake/core/text/theme/TextStyle;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class io/github/awakelab/awake/core/text/theme/TextStyle$Companion {
-	public final fun getDefault ()Lio/github/awakelab/awake/core/text/theme/TextStyle;
+public final class com/awakekt/awake/core/text/theme/TextStyle$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/core/text/theme/TextStyle;
 }
 

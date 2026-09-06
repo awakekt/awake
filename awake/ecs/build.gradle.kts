@@ -36,7 +36,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "io.github.awakelab.awake.ecs"
+        namespace = "com.awakekt.awake.ecs"
     }
 
     sourceSets {

@@ -28,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.awake-lab:ecs:<version>")
+    implementation("com.awakekt.awake:ecs:<version>")
 }
 ```
 
@@ -50,7 +50,7 @@ The version is derived from `git describe`, so it follows your checkout — prin
 ## Quick start
 
 ```kotlin
-import io.github.awakelab.awake.ecs.World
+import com.awakekt.awake.ecs.World
 
 data class Position(var x: Float, var y: Float)
 data class Velocity(var dx: Float, var dy: Float)
