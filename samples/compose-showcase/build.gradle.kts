@@ -8,9 +8,10 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
+    id("com.awakekt.awake.plugin.application")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
 }
 
 kotlin {
@@ -71,20 +72,9 @@ kotlin {
     }
 }
 
-tasks.register<JavaExec>("run") {
-    group = "application"
-    description = "Run the Compose Foundation layout showcase."
-    dependsOn("desktopMainClasses")
-    wireVulkanDesktopNatives(project(":awake:backend:vulkan:bindings"))
-    useNagaShaderCompiler(this)
-    mainClass.set("com.awakekt.awake.sample.composeshowcase.app.MainKt")
-    classpath = files(
-        layout.buildDirectory.dir("classes/kotlin/desktop/main"),
-        layout.buildDirectory.dir("processedResources/desktop/main"),
-        kotlin.jvm("desktop").compilations.getByName("main").runtimeDependencyFiles,
-    )
-    environment(VulkanDesktopEnv.environment())
-    val jvmArgsList = mutableListOf<String>()
-    if (HostOs.isMac) jvmArgsList += "-XstartOnFirstThread"
-    jvmArgs(jvmArgsList)
+awake {
+    desktopApp {
+        mainClass = "com.awakekt.awake.sample.composeshowcase.app.MainKt"
+        description = "Run the Compose Foundation layout showcase."
+    }
 }

@@ -7,11 +7,8 @@ package com.awakekt.awake.scene.document
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.document.SceneComponent
-import com.awakekt.awake.scene.document.SceneComponentResolver
-import com.awakekt.awake.scene.document.SceneMeshRenderer
-import com.awakekt.awake.scene.document.SceneResolutionContext
 
+/** Built-in resolver for [SceneMeshRenderer] components requesting renderable mesh instances. */
 object MeshRendererBinding : SceneComponentResolver {
     override fun canResolve(component: SceneComponent): Boolean = component is SceneMeshRenderer
 

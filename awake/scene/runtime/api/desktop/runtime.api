@@ -353,6 +353,51 @@ public final class com/awakekt/awake/scene/runtime/TerrainDriver$DefaultImpls {
 	public static synthetic fun dispose$default (Lcom/awakekt/awake/scene/runtime/TerrainDriver;Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;ILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/scene/runtime/project/AwakeProjectLauncher {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;
+	public final fun loadScene (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;)Lcom/awakekt/awake/scene/document/Scene;
+	public final fun loadScene (Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;)Lcom/awakekt/awake/scene/document/Scene;
+	public static synthetic fun loadScene$default (Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/Scene;
+	public static synthetic fun loadScene$default (Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/Scene;
+	public final fun parseConfig (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/project/StandaloneProjectConfig;
+}
+
+public final class com/awakekt/awake/scene/runtime/project/StandaloneProjectConfig {
+	public static final field Companion Lcom/awakekt/awake/scene/runtime/project/StandaloneProjectConfig$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;IILjava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;IILjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()I
+	public final fun component4 ()I
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;IILjava/util/List;)Lcom/awakekt/awake/scene/runtime/project/StandaloneProjectConfig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/runtime/project/StandaloneProjectConfig;Ljava/lang/String;Ljava/lang/String;IILjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/project/StandaloneProjectConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDefaultScene ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getPhysicsTickRate ()I
+	public final fun getPlugins ()Ljava/util/List;
+	public final fun getTargetFrameRate ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/runtime/project/StandaloneProjectConfig$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/runtime/project/StandaloneProjectConfig$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/runtime/project/StandaloneProjectConfig;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/runtime/project/StandaloneProjectConfig;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/runtime/project/StandaloneProjectConfig$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/runtime/schedule/SceneSchedule {
 }
 

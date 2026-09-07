@@ -13,9 +13,9 @@ val wasmDevPort = 8088
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
 }
 
 kotlin {

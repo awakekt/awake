@@ -321,7 +321,7 @@ open class VulkanEngine(
         paletteLayout?.let { declare(PipelineKey.SkinnedInstanced, BindingSemantic.JointPalette, it) }
         depthTarget?.let { map ->
             val layout = DescriptorSetLayoutHandle(map.descriptorSetLayout)
-            shadowDepthPipelineKeys().forEach { declare(it, BindingSemantic.ShadowDepth, layout) }
+            depthTargetPipelineKeys().forEach { declare(it, BindingSemantic.ShadowDepth, layout) }
         }
         sceneDepthTarget?.let { map ->
             val layout = DescriptorSetLayoutHandle(map.descriptorSetLayout)
@@ -346,7 +346,7 @@ open class VulkanEngine(
             ),
         ).also { emptyDescriptorSetLayout = it }
 
-    private fun shadowDepthPipelineKeys(): Set<PipelineKey> = buildSet {
+    private fun depthTargetPipelineKeys(): Set<PipelineKey> = buildSet {
         if (depthTarget != null) {
             add(PipelineKey.Primary)
             plan.scenePipelines.forEach { pipeline ->
@@ -373,12 +373,12 @@ open class VulkanEngine(
 
     /** Which engine-owned groups each pipeline family reads, for the recorder to bind. */
     private fun engineSemanticsByKey(): Map<PipelineKey, Set<BindingSemantic>> = buildMap {
-        val keys = shadowDepthPipelineKeys() + sceneDepthPipelineKeys()
+        val keys = depthTargetPipelineKeys() + sceneDepthPipelineKeys()
         keys.forEach { key ->
             put(
                 key,
                 buildSet {
-                    if (key in shadowDepthPipelineKeys()) add(BindingSemantic.ShadowDepth)
+                    if (key in depthTargetPipelineKeys()) add(BindingSemantic.ShadowDepth)
                     if (key in sceneDepthPipelineKeys()) add(BindingSemantic.SceneDepth)
                 },
             )

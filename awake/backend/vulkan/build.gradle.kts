@@ -3,16 +3,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
+import com.awakekt.awake.build.extension.*
 import java.util.Base64
 
 plugins {
-    id("awake.kmp-library-convention")
-    id("awake.publish-convention")
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.backend-layering-convention")
-    id("awake.spotless-convention")
+    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.publish")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.backend-layering")
+    id("com.awakekt.awake.plugin.spotless")
 }
 
 kotlin {
@@ -39,6 +39,7 @@ kotlin {
             implementation(project(":awake:core:host"))
             implementation(project(":awake:core:image"))
             implementation(project(":awake:core:input"))
+            implementation(project(":awake:core:logging"))
             // Renderer/DrawCall/TextureLoader (moved in from awake-core) need Mat4/Camera
             // and Bitmap/readResourceBytes -- see docs/mvp-plan.md's Decision Log, D11, for
             // the awake-core split this module boundary comes from.

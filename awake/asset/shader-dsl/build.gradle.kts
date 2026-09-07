@@ -9,11 +9,11 @@
 // generation -- no render contract, no backend, no UI dependency. See
 // docs/tasks/2026-08-23-asl-procedural-shader-plan.md for scope and sequencing.
 plugins {
-    id("awake.kmp-library-convention")
-    id("awake.publish-convention")
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
+    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.publish")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
     alias(libs.plugins.kover)
 }
 

@@ -7,9 +7,9 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlinx.benchmark)
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
 }
 
 kotlin {

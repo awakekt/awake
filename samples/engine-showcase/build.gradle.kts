@@ -7,17 +7,37 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    id("awake.test-resources-convention")
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
+    alias(libs.plugins.android.library.kmp)
+    id("com.awakekt.awake.plugin.application")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
 }
 
 kotlin {
     jvmToolchain(17)
     applyDefaultHierarchyTemplate()
 
+    android {
+        namespace = "com.awakekt.awake.showcase"
+        compileSdk = (findProperty("android.compileSdk") as String).toInt()
+        minSdk = (findProperty("android.minSdk") as String).toInt()
+    }
+
     jvm("desktop")
+
+    iosArm64 {
+        binaries.framework {
+            baseName = "EngineShowcase"
+            isStatic = true
+        }
+    }
+    iosSimulatorArm64 {
+        binaries.framework {
+            baseName = "EngineShowcase"
+            isStatic = true
+        }
+    }
 
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
@@ -49,7 +69,8 @@ kotlin {
             // The heightfield-terrain showcase runs a real Jolt world, so it needs a backend and
             // not just the contract -- this is the sample that proves physics is wired at all.
             implementation(project(":awake:backend:jolt"))
-            implementation(project(":awake:scene"))
+            implementation(project(":awake:scene:scene-core"))
+            implementation(project(":awake:scene:physics"))
             implementation(project(":awake:scene:world"))
             implementation(project(":awake:ai:behavior"))
             implementation(project(":awake:scene:authoring"))
@@ -74,6 +95,12 @@ kotlin {
         named("desktopMain") {
             dependsOn(appMain)
         }
+        named("androidMain") {
+            dependsOn(appMain)
+        }
+        named("iosMain") {
+            dependsOn(appMain)
+        }
         named("desktopTest") {
             dependencies {
                 implementation(project(":awake:backend:vulkan"))
@@ -89,44 +116,27 @@ kotlin {
     }
 }
 
-awakeTestResources {
-    roots.from(layout.projectDirectory.dir("src/commonMain/resources"))
-    roots.from(layout.projectDirectory.dir("src/appMain/resources"))
-}
-
-val desktopNativeLibDir =
-    project(":awake:backend:vulkan:bindings").layout.buildDirectory.dir("desktop-native-libs")
-val desktopVulkanEnv = VulkanDesktopEnv.environment()
-
-tasks.named<Test>("desktopTest") {
-    // Serialised against the other modules that open a Vulkan device; see
-    // requireExclusiveGpu. forkEvery below isolates classes within this module only.
-    requireExclusiveGpu(this)
-    dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
-    useNagaShaderCompiler(this)
-    jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
-    environment(desktopVulkanEnv)
-    forkEvery = 1
-}
-
-tasks.register<JavaExec>("run") {
-    group = "application"
-    description = "Run the Awake engine showcase; pass -Pawake.showcase=<id> for a focused demo."
-    dependsOn("desktopMainClasses")
-    wireVulkanDesktopNatives(project(":awake:backend:vulkan:bindings"))
-    // Shipped shaders are WGSL, so every pipeline this sample builds goes through naga.
-    useNagaShaderCompiler(this)
-    mainClass.set("com.awakekt.awake.showcase.app.MainKt")
-    classpath = files(
-        layout.buildDirectory.dir("classes/kotlin/desktop/main"),
-        layout.buildDirectory.dir("processedResources/desktop/main"),
-        kotlin.jvm("desktop").compilations.getByName("main").runtimeDependencyFiles,
-    )
-    environment(desktopVulkanEnv)
-    val jvmArgsList = mutableListOf<String>()
-    if (HostOs.isMac) jvmArgsList += "-XstartOnFirstThread"
-    providers.gradleProperty("awake.showcase").orNull?.let { showcaseId ->
-        jvmArgsList += "-Dawake.showcase=$showcaseId"
+awake {
+    xcframework("EngineShowcase") {
+        includeMoltenVK = true
     }
-    jvmArgs(jvmArgsList)
+
+    desktopApp {
+        mainClass = "com.awakekt.awake.showcase.app.MainKt"
+        description = "Run the Awake engine showcase; pass -Pawake.showcase=<id> for a focused demo."
+    }
+
+    test {
+        useVulkanNatives = true
+        useNagaShaders = true
+        exclusiveGpu = true
+        forkEvery = 1
+    }
+
+    testResources {
+        roots(
+            layout.projectDirectory.dir("src/commonMain/resources"),
+            layout.projectDirectory.dir("src/appMain/resources"),
+        )
+    }
 }

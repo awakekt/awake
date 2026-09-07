@@ -9,27 +9,50 @@ import kotlinx.coroutines.CompletableDeferred
 import java.net.BindException
 import java.util.concurrent.ConcurrentLinkedQueue
 
+/** Default TCP port used for Awake remote debug control WebSockets (`42770`). */
 const val AWAKE_DEBUG_CONTROL_PORT = 42770
 
+/**
+ * Service handling incoming remote debug control commands and returning state snapshots.
+ *
+ * @param TCommand The command model type.
+ * @param TSnapshot The snapshot response state model type.
+ */
 interface DebugService<TCommand, TSnapshot> {
+    /** Processes an incoming [command]. */
     fun handle(command: TCommand)
+
+    /** Returns a current state [TSnapshot] after command execution. */
     fun snapshot(): TSnapshot
 }
 
+/**
+ * Transport contract receiving remote commands and completing response deferreds.
+ */
 interface DebugTransport<TCommand, TSnapshot> {
+    /** Starts the underlying transport listener. */
     fun start()
+
+    /** Drains all pending commands queued since the last frame. */
     fun drainCommands(): List<Pair<TCommand, CompletableDeferred<TSnapshot>>>
+
+    /** Stops the transport and closes active listener sockets. */
     fun stop()
 }
 
+/**
+ * Event loop orchestrating transport command draining and service state execution.
+ */
 class DebugServiceLoop<TCommand, TSnapshot>(
     private val transport: DebugTransport<TCommand, TSnapshot>,
     private val service: DebugService<TCommand, TSnapshot>,
 ) {
+    /** Starts the debug service loop transport. */
     fun start() {
         transport.start()
     }
 
+    /** Processes pending transport commands before each engine frame step. */
     fun beforeFrame() {
         transport.drainCommands().forEach { (command, deferred) ->
             service.handle(command)
@@ -37,11 +60,15 @@ class DebugServiceLoop<TCommand, TSnapshot>(
         }
     }
 
+    /** Stops the debug service loop transport. */
     fun stop() {
         transport.stop()
     }
 }
 
+/**
+ * Constructs a [DebugServiceLoop] backed by a WebSocket transport.
+ */
 fun <TCommand, TSnapshot> webSocketDebugLoop(
     port: Int = AWAKE_DEBUG_CONTROL_PORT,
     parseCommand: (String) -> TCommand?,
@@ -56,6 +83,9 @@ fun <TCommand, TSnapshot> webSocketDebugLoop(
     service = service,
 )
 
+/**
+ * Executes an engine loop wrapped with an optional remote [DebugServiceLoop].
+ */
 fun <TCommand, TSnapshot> withOptionalDebugLoop(
     enabled: Boolean,
     createLoop: () -> DebugServiceLoop<TCommand, TSnapshot>,

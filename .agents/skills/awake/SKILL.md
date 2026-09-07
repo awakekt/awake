@@ -20,3 +20,10 @@ agent naming conventions, and the agent model-tier field.
 Canonical architecture policy and module ownership rules live in `docs/*`, not here —
 this is execution guidance, not the source of truth. `.claude/agents` and
 `.claude/commands/awake` are symlinks into this folder; edit the tracked files here.
+
+## Release Execution Policy
+See [Awake Release Process & Branching Guidelines](file:///Users/ronvaldoz/StudioProjects/awaken/docs/release-process.md) for the complete branching, versioning, and changelog rules.
+To cut a release, run:
+```bash
+./scripts/release.py cut [--channel dev|alpha|beta|rc|stable]
+```

@@ -1,7 +1,7 @@
 name: Engine Task / Refactor
 description: Propose an internal technical task, refactor, or build improvement.
 title: "[Task]: "
-labels: ["type: task"]
+labels: [ "type: task" ]
 body:
   - type: dropdown
     id: subsystem
@@ -15,7 +15,7 @@ body:
         - "awake:ecs"
         - "awake:compose"
         - "awake:scene"
-        - "apps:studio"
+        - "app:studio"
         - "build-logic / CI"
         - "docs / reference"
     validations:

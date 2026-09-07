@@ -95,8 +95,10 @@ internal fun Renderer.performCompositeUiTargets(
     val sourceTarget = source as OffscreenRenderTarget
     val outputTarget = output as OffscreenRenderTarget
     require(
-        destinationTarget.width == sourceTarget.width && sourceTarget.width == outputTarget.width &&
-            destinationTarget.height == sourceTarget.height && sourceTarget.height == outputTarget.height,
+        destinationTarget.width == sourceTarget.width &&
+            sourceTarget.width == outputTarget.width &&
+            destinationTarget.height == sourceTarget.height &&
+            sourceTarget.height == outputTarget.height,
     ) {
         "UI target composites require equal source, destination, and output dimensions."
     }

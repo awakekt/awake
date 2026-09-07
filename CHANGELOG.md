@@ -7,45 +7,111 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-dev.11] - 2026-09-07
+
+### Added
+
+- **Engine Showcase Android runner (`samples:engine-showcase:androidApp`).** Added a native Android application
+  runner module (`com.android.application`) hosting a hardware-accelerated `VulkanView(this, application)`
+  lifecycle surface. Added `com.android.kotlin.multiplatform.library` target to `samples:engine-showcase` and created
+  an `Engine Showcase [Android]` IDE run configuration.
+
+- **Automated framework embedding & IDE run configurations.** Modernized `iosApp.xcodeproj` build phases to invoke
+  `./gradlew :samples:engine-showcase:embedAndSignAppleFrameworkForXcode`, bundle common assets, and enforce
+  active-architecture compilation. Added standardized IDE run configurations for `Engine Showcase [iOS]`,
+  `Engine Showcase [Desktop]`, and `Engine Showcase [Wasm]`.
+
+### Changed
+
+- **Collocated `iosApp` under sample directory.** Relocated `iosApp/` to `samples/engine-showcase/iosApp/` matching
+  modern KMP Wizard layout conventions and collocating sample-specific platform hosts with their sample sources.
+
+### Fixed
+
+- **iOS `CAMetalLayer` upside-down presentation & retina resolution.** Fixed inverted render orientation in
+  `VulkanMetalView` by applying a vertical scaling transform (`CATransform3DMakeScale(1.0, -1.0, 1.0)`) matching
+  UIKit view coordinate space, and configured `metalLayer.contentsScale` to render at native retina resolution.
+
+- **iOS Simulator Vulkan image view allocation in MoltenVK.** Attached `VkImageViewUsageCreateInfo` with
+  `VK_IMAGE_USAGE_SAMPLED_BIT` to arrayed image views in `Vulkan.kt`, resolving MoltenVK texture array view creation
+  failures on iOS Simulator Apple 2 GPU targets.
+
 ## [0.1.0-dev.10] - 2026-09-06
 
 ### Changed
 
-- **Migrated coordinates, packages, and namespaces to `com.awakekt`.** Updated Maven group to `com.awakekt`, moved package root to `com.awakekt.awake`, and transferred repository to `awakekt/awake`.
+- **Migrated coordinates, packages, and namespaces to `com.awakekt`.** Updated Maven group to
+  `com.awakekt`, moved package root to `com.awakekt.awake`, and transferred repository to
+  `awakekt/awake`.
 
 ### Added
 
-- **GitHub issue templates.** Added structured YAML forms for bug reports, feature requests, and engine tasks under `.github/ISSUE_TEMPLATE/`.
+- **GitHub issue templates.** Added structured YAML forms for bug reports, feature requests, and
+  engine tasks under `.github/ISSUE_TEMPLATE/`.
 
 ### Fixed
 
-- **Console log column overlap & text bleeding.** Resolved text collisions in `EditorConsolePanel` where long subsystem tags (such as `studio.plugins` and `studio.repository`) overflowed the hardcoded 72.dp column and painted over log messages. Increased default tag column width to 120.dp, added bounds clipping (`clipToBounds()`), and added a vertical column divider.
+- **Console log column overlap & text bleeding.** Resolved text collisions in `EditorConsolePanel`
+  where long subsystem tags (such as `studio.plugins` and `studio.repository`) overflowed the
+  hardcoded 72.dp column and painted over log messages. Increased default tag column width to
+  120.dp, added bounds clipping (`clipToBounds()`), and added a vertical column divider.
 
-- **Marketplace dialog extension misclassification and post-install UX.** Fixed an issue where newly installed extensions were misclassified as built-in engine subsystems (`RealInstalledPluginCard`) without controls. The Installed tab now clearly partitions user-installed extensions from engine core subsystems, surfacing full management controls (`Enable`/`Disable`, `Details`, `Uninstall`) for extensions, correctly counting installed extensions in the tab badge, and resetting import form states cleanly.
+- **Marketplace dialog extension misclassification and post-install UX.** Fixed an issue where newly
+  installed extensions were misclassified as built-in engine subsystems (`RealInstalledPluginCard`)
+  without controls. The Installed tab now clearly partitions user-installed extensions from engine
+  core subsystems, surfacing full management controls (`Enable`/`Disable`, `Details`, `Uninstall`)
+  for extensions, correctly counting installed extensions in the tab badge, and resetting import
+  form states cleanly.
 
 ### Added
 
-- **Resizable console tag column.** Added interactive horizontal column resizing in `EditorConsolePanel`. Users can drag the column divider handle in the header or table rows with `PointerCursor.ResizeHorizontal` to smoothly widen or narrow the tag column between 50.dp and 320.dp.
+- **Resizable console tag column.** Added interactive horizontal column resizing in
+  `EditorConsolePanel`. Users can drag the column divider handle in the header or table rows with
+  `PointerCursor.ResizeHorizontal` to smoothly widen or narrow the tag column between 50.dp and
+  320.dp.
 
-- **Studio execution & transaction logging.** Connected all Studio state intents, plugin lifecycle events, repository mutations, and file operations to Awake's `LogRingBuffer`, surfacing a complete, frame-indexed audit trail in the bottom Console dock tab.
+- **Studio execution & transaction logging.** Connected all Studio state intents, plugin lifecycle
+  events, repository mutations, and file operations to Awake's `LogRingBuffer`, surfacing a
+  complete, frame-indexed audit trail in the bottom Console dock tab.
 
-- **Floating toast notifications (`ShadcnToaster`).** Wired `ShadcnToastState` and `ShadcnToaster` into Studio root, displaying non-modal, transient bottom-right toasts on scene save, project folder open, asset import, and extension lifecycle changes.
+- **Floating toast notifications (`ShadcnToaster`).** Wired `ShadcnToastState` and `ShadcnToaster`
+  into Studio root, displaying non-modal, transient bottom-right toasts on scene save, project
+  folder open, asset import, and extension lifecycle changes.
 
-- **Dynamic project directory scanning (`StudioFileOps`).** Added multiplatform `StudioFileOps` contract and desktop file walker to scan opened project directories, populating project assets dynamically into the Studio Files dock tab.
+- **Dynamic project directory scanning (`StudioFileOps`).** Added multiplatform `StudioFileOps`
+  contract and desktop file walker to scan opened project directories, populating project assets
+  dynamically into the Studio Files dock tab.
 
-- **Real scene serialization on save.** Connected "Save Scene" and "Save Scene As..." in the Studio top bar to live `SceneLoader.fromWorld(world)` and `SceneLoader.encode(document)`, serializing and writing the scene document directly to disk.
+- **Real scene serialization on save.** Connected "Save Scene" and "Save Scene As..." in the Studio
+  top bar to live `SceneLoader.fromWorld(world)` and `SceneLoader.encode(document)`, serializing and
+  writing the scene document directly to disk.
 
-- **Extension manifest validation.** Added schema validation for imported plugin manifests (`id` format, `version` semver, non-blank `name`), logging validation issues and displaying inline errors.
+- **Extension manifest validation.** Added schema validation for imported plugin manifests (`id`
+  format, `version` semver, non-blank `name`), logging validation issues and displaying inline
+  errors.
 
-- **Directory selection and file save dialog support (`EditorFileChooser`).** Added `openDirectory` and `saveFile` APIs to multiplatform `EditorFileChooser`, backed on desktop by out-of-process native platform dialogs (`osascript` on macOS, `zenity` on Linux, and PowerShell/.NET `FolderBrowserDialog`/`SaveFileDialog` on Windows) with automatic fallback to AWT `FileDialog`. Wired into Studio toolbar as "Open Project Folder..." and "Save Scene As...".
+- **Directory selection and file save dialog support (`EditorFileChooser`).** Added `openDirectory`
+  and `saveFile` APIs to multiplatform `EditorFileChooser`, backed on desktop by out-of-process
+  native platform dialogs (`osascript` on macOS, `zenity` on Linux, and PowerShell/.NET
+  `FolderBrowserDialog`/`SaveFileDialog` on Windows) with automatic fallback to AWT `FileDialog`.
+  Wired into Studio toolbar as "Open Project Folder..." and "Save Scene As...".
 
-- **Studio extension plugin enable/disable lifecycle.** Added `isEnabled` flag, `PluginLifecycleListener`, and `setEnabled(id, enabled)` to `StudioPluginRepository` and `DefaultStudioPluginRepository`. Studio now persists disabled plugin state across sessions and dynamically registers or tears down dock tabs and engine systems without requiring full uninstallation. Added Enable/Disable toggles to `StudioMarketplaceDialog`.
+- **Studio extension plugin enable/disable lifecycle.** Added `isEnabled` flag,
+  `PluginLifecycleListener`, and `setEnabled(id, enabled)` to `StudioPluginRepository` and
+  `DefaultStudioPluginRepository`. Studio now persists disabled plugin state across sessions and
+  dynamically registers or tears down dock tabs and engine systems without requiring full
+  uninstallation. Added Enable/Disable toggles to `StudioMarketplaceDialog`.
 
-- **Dependency injection migration for Studio dialogs.** Migrated `StudioSettingsDialog` and `StudioLicenseDialog` to ambient DI (`rememberResolveOrNull<StudioThemeState>()` and `rememberResolveOrNull<AwakeLicenseRegistry>()`), registering singletons in `StudioDi.kt` and refactoring `StudioLicenseDialog` to an immutable `rememberReducerStore`.
+- **Dependency injection migration for Studio dialogs.** Migrated `StudioSettingsDialog` and
+  `StudioLicenseDialog` to ambient DI (`rememberResolveOrNull<StudioThemeState>()` and
+  `rememberResolveOrNull<AwakeLicenseRegistry>()`), registering singletons in `StudioDi.kt` and
+  refactoring `StudioLicenseDialog` to an immutable `rememberReducerStore`.
 
 ### Changed
 
-- **`StudioStore` refactored to `ReducerStore`.** Migrated `StudioStore` to delegate to Awake's canonical `reducerStore`, adding pure intents `StartPlay`, `StopPlay`, and `ReloadFixture` while preserving synchronous effect draining for frame-loop fidelity.
+- **`StudioStore` refactored to `ReducerStore`.** Migrated `StudioStore` to delegate to Awake's
+  canonical `reducerStore`, adding pure intents `StartPlay`, `StopPlay`, and `ReloadFixture` while
+  preserving synchronous effect draining for frame-loop fidelity.
 
 ## [0.1.0-dev.9] - 2026-09-05
 
@@ -61,9 +127,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Two-way `SceneComponentBinding` decouples scene export from hardcoded domain types.**
   Previously, `SceneLoader.fromWorld` hardcoded manual checks for each known component type,
-  forcing all domain components to be compiled directly into the scene runtime. `SceneComponentBinding<C, S>`
-  now defines a pluggable export and resolution contract on `SceneComponentRegistry`. Features and plugins
-  can register custom bindings that export live ECS components into persistent scene records and reattach
+  forcing all domain components to be compiled directly into the scene runtime.
+  `SceneComponentBinding<C, S>`
+  now defines a pluggable export and resolution contract on `SceneComponentRegistry`. Features and
+  plugins
+  can register custom bindings that export live ECS components into persistent scene records and
+  reattach
   them during instantiation.
 
 - **`snake_case` serialized component names.** All `@SerialName` discriminators (`mesh_renderer`,
@@ -78,17 +147,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rendering or UI runtimes.
 
 ### Changed
- 
-- **Modernized Studio app bootstrap & theme.** Migrated `StudioApp` to the canonical `app` and `ui` DSLs,
+
+- **Modernized Studio app bootstrap & theme.** Migrated `StudioApp` to the canonical `app` and `ui`
+  DSLs,
   set the default theme base to Zinc, and replaced deprecated `shadcnSurface` containers across the
   editor dock, toolbar, and viewport chrome with scoped `ShadcnCard` and foundation primitives.
 
-- **Scene inspector card container layout.** Enclosed inspector component properties in card containers
+- **Scene inspector card container layout.** Enclosed inspector component properties in card
+  containers
   with consistent padding and hierarchical layout.
 
 ### Fixed
 
-- **`BasicTextField` text bleed in single-line inputs.** Fixed overlapping text rendering in single-line
+- **`BasicTextField` text bleed in single-line inputs.** Fixed overlapping text rendering in
+  single-line
   dialog inputs by enforcing line-height bounds and layout clipping.
 
 
@@ -109,7 +181,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   different surfaces — up to 0.16 apart on the showcase terrain, which is a box resting visibly
   above or below the slope it stands on. Matching Jolt brings it to 0.003, and both consumers of the
   helper are terrain, so the matching diagonal is the right default rather than a special case.
-
 
 ## [0.1.0-dev.8] - 2026-09-01
 
@@ -208,7 +279,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `setLinearVelocity`, and the only way to induce twist and so to test a twist limit at all.
 
 - **The inspector can add a component.** Until now it could show and edit what an entity already
-  carried and nothing else, so building an entity meant editing the scene file. `SceneComponentFactory`
+  carried and nothing else, so building an entity meant editing the scene file.
+  `SceneComponentFactory`
   is the seam -- the third over the same types, beside the inspector's form and the snapshotter's
   copy, and for the same reason: the editor cannot name `PhysicsBody` or a game's own component, so
   whoever owns the type supplies the constructor call. `Transform` and `SpinControl` come from the
@@ -289,7 +361,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   differently while the pool reports the player inside it. `applyBuoyancy` could not do this job,
   because the character's body is kinematic and buoyancy only moves dynamic ones.
   Three ways to get it wrong, each a test: no drift is a swimmer hanging motionless, full gravity is
-  a swimmer falling, and a drift stronger than the swim speed is water that cannot be climbed out of.
+  a swimmer falling, and a drift stronger than the swim speed is water that cannot be climbed out
+  of.
 - **Water you can drop something into.** The terrain showcase has a pool: a sensor volume is the
   water, contact events track what is inside it, and the fixed step applies buoyancy to each
   occupant so a box dropped in floats instead of reaching the bottom. That composition is the point
@@ -419,15 +492,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The Jolt backend's tests moved to `commonTest`, and found three more bugs on the way.** 40 of
   them now run on desktop, the iOS simulator and a headless browser instead of desktop alone. What
   the first run turned up, all of it invisible to a compiler:
-  - **iOS `raycast` accepted `onlyLayer` and ignored it**, so a camera meant to see only the level
-    was stopped by every crate — and it reported sensors as solid.
-  - **iOS swept meshes silently**, returning a hit instead of the `PhysicsCapabilityException`
-    every other backend throws for a surface with no inside.
-  - **wasmJs's body filter compared a pointer to an id.** JoltPhysics.js hands its filter callbacks
-    Emscripten *pointers*, not values, so `ignore` matched nothing and silently did nothing.
-  Four tests stayed in `desktopTest` because they assert jolt-jni *capabilities* the contract makes
-  optional — heightfields (unimplemented in JoltC) and active-body readback (`forEachBodyTransform`
-  explicitly permits visiting everything).
+    - **iOS `raycast` accepted `onlyLayer` and ignored it**, so a camera meant to see only the level
+      was stopped by every crate — and it reported sensors as solid.
+    - **iOS swept meshes silently**, returning a hit instead of the `PhysicsCapabilityException`
+      every other backend throws for a surface with no inside.
+    - **wasmJs's body filter compared a pointer to an id.** JoltPhysics.js hands its filter
+      callbacks
+      Emscripten *pointers*, not values, so `ignore` matched nothing and silently did nothing.
+      Four tests stayed in `desktopTest` because they assert jolt-jni *capabilities* the contract
+      makes
+      optional — heightfields (unimplemented in JoltC) and active-body readback (
+      `forEachBodyTransform`
+      explicitly permits visiting everything).
 - **Fixed: the iOS physics backend aborted on its very first step, and always had.**
   `TempAllocatorImpl` is a linear allocator over a fixed block — overrunning it calls `abort()`
   rather than falling back to malloc — and Jolt sizes its per-step arrays from the *configured*
@@ -457,7 +533,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A pickup you can push a box into, in the terrain showcase.** A `goal-zone` post marks a trigger
   volume; boxes shoved into it are collected and removed, body first. The first thing in the
   showcase that reacts to physics having *happened* rather than to physics having moved something --
-  nothing here measures a distance to the zone, it waits for Jolt to say a box entered. `PhysicsBody`
+  nothing here measures a distance to the zone, it waits for Jolt to say a box entered.
+  `PhysicsBody`
   gained a `sensor` flag so a scene can author a trigger at all.
   **The player is not what trips it, and cannot be.** `KinematicCharacterController` owns no body --
   it sweeps shapes -- so Jolt has nothing to report contacts for, and giving it an inner body is
@@ -625,7 +702,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unlabelled glyphs read as one strip a user navigates by counting positions; each group now sits on
   its own surface. The inspector showed `shadcnEmpty` -- shadcn's page-scale empty state, `p-12` and
   a `text-lg` title -- centred in a 300dp column, which is two lines of near-heading text floating
-  in the middle of the panel; it is one muted line at the top now. The shared component is unchanged:
+  in the middle of the panel; it is one muted line at the top now. The shared component is
+  unchanged:
   the parity baselines hold it to the web's dimensions, and the call site is what was wrong.
 
 - **A shader's clip space is handed to it, not remembered by whoever wrote it.**
@@ -644,8 +722,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and now reachable directly. Assets lists the fixture's registered meshes; selecting one does
   nothing until drag-to-viewport exists, and the timeline is empty because the fixture has no
   clips -- both shown rather than hidden, which is the point.
-- **Studio moved from `samples/studio` to `apps/studio`.** Its Gradle path is now `:apps:studio`,
-  so the quickstart is `./gradlew :apps:studio:run`. It was never a sample: it is the product the
+- **Studio moved from `samples/studio` to `apps/studio`.** Its Gradle path is now `:app:studio`,
+  so the quickstart is `./gradlew :app:studio:run`. It was never a sample: it is the product the
   README points a new user at, and the only host every editor seam is proven through. `samples/`
   now holds only illustrative code. No Kotlin changed -- the package was already
   `com.awakekt.awake.studio`.
@@ -686,7 +764,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pixel goldens over one symmetry period of yaws, zero tolerance, on both backends.
 
 - **Heroicons' outline tier is stroked path data again.** All 32 glyphs were generated before the
-  script emitted `path(stroke = ...)`, so each was a *filled stroke centreline* -- the silent-garbage
+  script emitted `path(stroke = ...)`, so each was a *filled stroke centreline* -- the
+  silent-garbage
   case the generator's own comment names. Regenerated from the official SVGs. Two of them,
   `userCircle` and `lightBulb`, still rendered as solid shapes afterwards -- a stroke-tessellation
   bug that predated the data, fixed below. `OutlineIconStrokeTest` measures the hole rather than
@@ -694,13 +773,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **A stroke outline is no longer mistaken for a convex shape.** `isConvex` only compared turn
   signs, and a stroked arc's ring turns one way the whole way round while wrapping about twice: out
-  along one side, round the cap, back along the other, cap again. It read as convex, `tessellateFill`
+  along one side, round the cap, back along the other, cap again. It read as convex,
+  `tessellateFill`
   centroid-fanned it, and the fan covered the hole the outline was supposed to leave -- `userCircle`
   and `lightBulb` rendered as solid discs. It now also requires the total turning to be one
   revolution, summed over edge directions with zero-length edges dropped: pairing raw vertex triples
   across such an edge discards the turn at that vertex, enough to push a genuinely convex rounded
   rectangle out of tolerance. Those icons now go through the scanline triangulator, which is what an
-  outline costs -- the frame ratchet moves from 41,016 to 56,184 vertices, and the cheaper number was
+  outline costs -- the frame ratchet moves from 41,016 to 56,184 vertices, and the cheaper number
+  was
   measuring blobs.
 
 - **A stroked contour that ends where it began is stroked as a loop.** The open-contour path walks
@@ -885,8 +966,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Older Releases
 
-For releases prior to `0.1.0-dev.8` (`v0.1.0-dev.1` through `v0.1.0-dev.7`), see [CHANGELOG Archive](docs/archive/CHANGELOG-v0.1-archive.md).
+For releases prior to `0.1.0-dev.8` (`v0.1.0-dev.1` through `v0.1.0-dev.7`),
+see [CHANGELOG Archive](docs/archive/CHANGELOG-v0.1-archive.md).
 
 [unreleased]: https://github.com/awakekt/awake/compare/v0.1.0-dev.9...HEAD
+
 [0.1.0-dev.9]: https://github.com/awakekt/awake/compare/v0.1.0-dev.8...v0.1.0-dev.9
+
 [0.1.0-dev.8]: https://github.com/awakekt/awake/compare/v0.1.0-dev.7...v0.1.0-dev.8

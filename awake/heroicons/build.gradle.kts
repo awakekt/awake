@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 plugins {
-    id("awake.kmp-library-convention")
-    id("awake.publish-convention")
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
-    id("awake.ui-ownership-convention")
-    id("awake.icon-codegen-convention")
+    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.publish")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
+    id("com.awakekt.awake.plugin.ui-ownership")
+    id("com.awakekt.awake.plugin.icon-codegen")
 }
 
 kotlin {

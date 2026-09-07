@@ -5,19 +5,19 @@
  */
 
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library.kmp)
     alias(libs.plugins.kotlin.serialization)
-    id("awake.shader-pipeline-convention")
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
-    id("awake.ui-authored-units-convention")
-    id("awake.ui-preview-report-convention")
-    id("awake.ui-ownership-convention")
+    id("com.awakekt.awake.plugin.application")
+    id("com.awakekt.awake.plugin.shader-pipeline")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
+    id("com.awakekt.awake.plugin.ui-authored-units")
+    id("com.awakekt.awake.plugin.ui-preview-report")
+    id("com.awakekt.awake.plugin.ui-ownership")
 }
 
 // verifyUiOwnership reads the whole src/ tree for its .kt source-pattern checks;
@@ -41,41 +41,16 @@ kotlin {
 
     jvm("desktop")
 
-    val xcf = XCFramework("UiShowcase")
-    val moltenVkStaticDir = mapOf(
-        "iosArm64" to project(":awake:backend:vulkan").file(
-            "ios-native/MoltenVK/Package/Release/MoltenVK/static/MoltenVK.xcframework/ios-arm64"
-        ),
-        "iosSimulatorArm64" to project(":awake:backend:vulkan").file(
-            "ios-native/MoltenVK/Package/Release/MoltenVK/static/MoltenVK.xcframework/" +
-                    "ios-arm64_x86_64-simulator"
-        ),
-    )
-
-    fun moltenVkLinkerOpts(targetName: String) = listOf(
-        "-L${moltenVkStaticDir.getValue(targetName).path}", "-lMoltenVK", "-lc++",
-        "-framework", "Metal",
-        "-framework", "QuartzCore",
-        "-framework", "IOSurface",
-        "-framework", "CoreGraphics",
-        "-framework", "Foundation",
-        "-framework", "UIKit",
-    )
-
     iosArm64 {
         binaries.framework {
             baseName = "UiShowcase"
             isStatic = true
-            linkerOpts(moltenVkLinkerOpts("iosArm64"))
-            xcf.add(this)
         }
     }
     iosSimulatorArm64 {
         binaries.framework {
             baseName = "UiShowcase"
             isStatic = true
-            linkerOpts(moltenVkLinkerOpts("iosSimulatorArm64"))
-            xcf.add(this)
         }
     }
 
@@ -150,9 +125,7 @@ kotlin {
     }
 }
 
-tasks.named<UiPreviewReportTask>("uiPreviewReport") {
-    reportTitle.set("Awake UI Showcase Previews")
-}
+
 
 val desktopNativeLibDir =
     project(":awake:backend:vulkan:bindings").layout.buildDirectory.dir("desktop-native-libs")
@@ -164,37 +137,22 @@ val dyldFallbackLibraryPath = "/opt/homebrew/opt/vulkan-loader/lib:/opt/homebrew
 
 // Vulkan-backed previews use the same headless loader/native-library setup as the backend's
 // pixel tests. Keep software previews portable; only the opt-in GPU preview needs this wiring.
-tasks.named<Test>("desktopTest") {
-    requireExclusiveGpu(this)
-    dependsOn(":awake:backend:vulkan:bindings:buildDesktopNative")
-    useNagaShaderCompiler(this)
-    jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
-    environment(VulkanDesktopEnv.environment())
-    forkEvery = 1
-}
+awake {
+    xcframework("UiShowcase") {
+        includeMoltenVK = true
+    }
 
-tasks.register<JavaExec>("run") {
-    group = "application"
-    description = "Run the Awake UI showcase sample."
-    dependsOn("desktopMainClasses")
-    wireVulkanDesktopNatives(project(":awake:backend:vulkan:bindings"))
-    // Shipped shaders are WGSL, so every pipeline this sample builds goes through naga.
-    useNagaShaderCompiler(this)
-    mainClass.set("com.awakekt.awake.sample.uishowcase.app.MainKt")
-    classpath = files(
-        layout.buildDirectory.dir("classes/kotlin/desktop/main"),
-        layout.buildDirectory.dir("processedResources/desktop/main"),
-        kotlin.jvm("desktop").compilations.getByName("main").runtimeDependencyFiles
-    )
-    if (moltenVkIcdPath != null) {
-        environment("VK_ICD_FILENAMES", moltenVkIcdPath)
+    desktopApp {
+        mainClass = "com.awakekt.awake.sample.uishowcase.app.MainKt"
+        description = "Run the Awake UI showcase sample."
     }
-    environment("DYLD_FALLBACK_LIBRARY_PATH", dyldFallbackLibraryPath)
-    val jvmArgsList = mutableListOf<String>()
-    if (HostOs.isMac) {
-        jvmArgsList += "-XstartOnFirstThread"
+
+    test {
+        useVulkanNatives = true
+        useNagaShaders = true
+        exclusiveGpu = true
+        forkEvery = 1
     }
-    jvmArgs(jvmArgsList)
 }
 
 tasks.withType<Test>().configureEach {

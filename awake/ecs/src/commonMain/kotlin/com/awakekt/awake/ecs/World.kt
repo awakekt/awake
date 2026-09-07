@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.ecs
 
+import kotlin.experimental.ExperimentalObjCName
+import kotlin.native.ObjCName
 import kotlin.reflect.KClass
 
 /**
@@ -259,11 +261,15 @@ class World {
     /**
      * Returns a maintained [Family1] for the specified [type].
      */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("family1")
     fun <A : Any> family(type: KClass<A>): Family1<A> = Family1(familyRegistry.familyCache(type))
 
     /**
      * Returns a maintained [Family1] for the specified type [A].
      */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("familyOf1")
     inline fun <reified A : Any> family(): Family1<A> = family(A::class)
 
     /**
@@ -291,16 +297,22 @@ class World {
     /**
      * Returns a maintained [Family2] for the specified [typeA] and [typeB].
      */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("family2")
     fun <A : Any, B : Any> family(typeA: KClass<A>, typeB: KClass<B>): Family2<A, B> = Family2(familyRegistry.familyCache(typeA, typeB))
 
     /**
      * Returns a maintained [Family2] for the specified types [A] and [B].
      */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("familyOf2")
     inline fun <reified A : Any, reified B : Any> family(): Family2<A, B> = family(A::class, B::class)
 
     /**
      * Returns a maintained [Family] matching the specified configuration.
      */
+    @OptIn(ExperimentalObjCName::class)
+    @ObjCName("familySpec")
     fun family(configure: FamilySpecBuilder.() -> Unit): Family {
         val spec = FamilySpecBuilder().apply(configure).build()
         return Family(familyRegistry.familySpecCache(spec))

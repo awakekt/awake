@@ -1,7 +1,7 @@
 name: Feature Request
 description: Suggest an enhancement, new API, or capability for Awake Engine.
 title: "[Feature]: "
-labels: ["type: feature"]
+labels: [ "type: feature" ]
 body:
   - type: markdown
     attributes:
@@ -20,7 +20,7 @@ body:
         - "awake:compose (Compose UI & Shadcn Components)"
         - "awake:scene:physics (Jolt Physics Integration)"
         - "awake:asset (glTF, Naga, Shaders, Formats)"
-        - "apps:studio (Studio Editor & Tools)"
+        - "app:studio (Studio Editor & Tools)"
         - "Engine Architecture / General API"
     validations:
       required: true

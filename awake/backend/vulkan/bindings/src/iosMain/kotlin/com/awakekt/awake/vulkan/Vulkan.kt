@@ -887,7 +887,16 @@ actual object Vulkan {
     actual fun vkCreateImageView(device: Long, createInfo: VkImageViewCreateInfo): Long = memScoped {
         val nativeCreateInfo = alloc<NativeVkImageViewCreateInfo>().apply {
             sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO
-            pNext = null
+            if (createInfo.subresourceRange.layerCount > 1) {
+                val usageInfo = alloc<platform.MoltenVK.VkImageViewUsageCreateInfo>().apply {
+                    sType = platform.MoltenVK.VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO
+                    pNext = null
+                    usage = platform.MoltenVK.VK_IMAGE_USAGE_SAMPLED_BIT
+                }
+                pNext = usageInfo.ptr
+            } else {
+                pNext = null
+            }
             flags = createInfo.flags.toUInt()
             image = createInfo.image.toCPointer()
             viewType = createInfo.viewType.value.toUInt()

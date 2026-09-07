@@ -5,11 +5,22 @@
  */
 package com.awakekt.awake.scene.document
 
+/**
+ * Validation issue detected in a scene document.
+ *
+ * @property path Scene node path where the issue was detected (e.g. `root/camera`).
+ * @property message Human-readable validation issue description.
+ */
 data class SceneValidationIssue(
     val path: String,
     val message: String,
 )
 
+/**
+ * Exception thrown when scene document validation fails.
+ *
+ * @property issues List of detected validation issues.
+ */
 class SceneValidationException(
     val issues: List<SceneValidationIssue>,
 ) : IllegalArgumentException(
@@ -19,7 +30,11 @@ class SceneValidationException(
     ) { issue -> "- ${issue.path}: ${issue.message}" },
 )
 
+/**
+ * Validator checking scene documents for structural integrity, unique node names, and component constraints.
+ */
 object SceneValidator {
+    /** Validates [document] and returns a list of detected validation issues. */
     fun validate(
         document: SceneDocument,
         extensions: SceneExtensionRegistry? = null,
@@ -37,6 +52,7 @@ object SceneValidator {
         return issues
     }
 
+    /** Validates [document] and throws a [SceneValidationException] if any validation issues are detected. */
     fun requireValid(
         document: SceneDocument,
         extensions: SceneExtensionRegistry? = null,

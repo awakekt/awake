@@ -10,19 +10,20 @@ changing external input. A scope may skip only when its inputs are unchanged and
 `MutableState` it read was written.
 
 The authoritative plan is
-[`2026-08-25-compose-stage-2-invalidation-plan.md`](../tasks/2026-08-25-compose-stage-2-invalidation-plan.md).
+[
+`2026-08-25-compose-stage-2-invalidation-plan.md`](../tasks/2026-08-25-compose-stage-2-invalidation-plan.md).
 The broader ordered queue, including the app-level Compose/Scene bridge, is
 [`2026-08-27-compose-next-stages-plan.md`](../tasks/2026-08-27-compose-next-stages-plan.md).
 
 ## Worktree changes to retain
 
-| Area | Files | Delivered result |
-|---|---|---|
-| Runtime scope correctness | `awake/compose/runtime/.../Composer.kt`, `RecomposeScopeTest.kt`, `FakeTree.kt` | Dirty descendants invalidate their ancestors so a stable parent cannot hide them. Keyed scopes now move their retained group identity with the keyed node and recompose the moved group to update applier order. |
-| Retained frame correctness | `awake/compose/foundation/.../ComposeHostTest.kt` | A skipped interactive scope retains its click target across press/release frames and preserves primitive and semantic output. |
-| Modifier-node regression | `awake/editor/.../AwakeEditor.kt` | `ViewportPickInput` is again a `ModifierNodeElement` with a retained `PointerInputNode`; the prior node-element split had left it appended directly as a modifier. |
-| First Studio consumer | `apps/studio/.../StudioShell.kt`, `StudioToolbar.kt` | The stable scene-picker chrome is scoped with `sceneTitle` and `StudioStore` as explicit inputs. Its local open state is `MutableState`, so pointer input invalidates the scope and the dropdown can open. |
-| Plan status | `docs/tasks/2026-08-25-compose-stage-2-invalidation-plan.md` | Records completed scope tests and the consumer/profiling status. |
+| Area                       | Files                                                                           | Delivered result                                                                                                                                                                                                 |
+|----------------------------|---------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Runtime scope correctness  | `awake/compose/runtime/.../Composer.kt`, `RecomposeScopeTest.kt`, `FakeTree.kt` | Dirty descendants invalidate their ancestors so a stable parent cannot hide them. Keyed scopes now move their retained group identity with the keyed node and recompose the moved group to update applier order. |
+| Retained frame correctness | `awake/compose/foundation/.../ComposeHostTest.kt`                               | A skipped interactive scope retains its click target across press/release frames and preserves primitive and semantic output.                                                                                    |
+| Modifier-node regression   | `awake/editor/.../AwakeEditor.kt`                                               | `ViewportPickInput` is again a `ModifierNodeElement` with a retained `PointerInputNode`; the prior node-element split had left it appended directly as a modifier.                                               |
+| First Studio consumer      | `apps/studio/.../StudioShell.kt`, `StudioToolbar.kt`                            | The stable scene-picker chrome is scoped with `sceneTitle` and `StudioStore` as explicit inputs. Its local open state is `MutableState`, so pointer input invalidates the scope and the dropdown can open.       |
+| Plan status                | `docs/tasks/2026-08-25-compose-stage-2-invalidation-plan.md`                    | Records completed scope tests and the consumer/profiling status.                                                                                                                                                 |
 
 ## Evidence already passing
 
@@ -35,18 +36,18 @@ The broader ordered queue, including the app-level Compose/Scene bridge, is
 
 ./gradlew :awake:editor:desktopTest --no-daemon
 
-./gradlew :apps:studio:desktopTest \
+./gradlew :app:studio:desktopTest \
   --tests com.awakekt.awake.studio.StudioShellChromeTest \
   --tests com.awakekt.awake.studio.ui.StudioFramePerfProbeTest --no-daemon
 
-./gradlew :apps:studio:wasmJsBrowserTest \
+./gradlew :app:studio:wasmJsBrowserTest \
   --tests com.awakekt.awake.studio.ui.StudioFramePerfProbeTest --no-daemon
 
 ./gradlew :awake:compose:runtime:desktopTest \
   :awake:compose:foundation:desktopTest \
   :awake:compose:ui:desktopTest \
   :awake:editor:desktopTest \
-  :apps:studio:desktopTest --no-daemon
+  :app:studio:desktopTest --no-daemon
 ```
 
 The desktop and wasm probes each reported `compositionPasses=300`, `scopeExecutions=0`, and

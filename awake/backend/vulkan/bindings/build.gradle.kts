@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
+import com.awakekt.awake.build.extension.*
 // Raw generated Vulkan API surface, split out of :awake:backend:vulkan (see
 // docs/tasks/2026-08-09-application-seam-and-module-naming-plan.md, Part 3): gen/ (JNI-backed
 // vkCreate*/vkDestroy* calls), handles/, models/, enums/, plus the small hand-authored
@@ -21,12 +21,12 @@
 // functions, which this native library backs.
 
 plugins {
-    id("awake.kmp-library-convention")
-    id("awake.publish-convention")
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
-    id("awake.native-build-convention")
+    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.publish")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
+    id("com.awakekt.awake.plugin.native-build")
 }
 
 // Mirrored Khronos API: the Vulkan spec is the documentation for Vk* names, and demanding

@@ -6,7 +6,7 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-09-05` | **Total Tracked Docs**: `199`
+**Last Self-Healed**: `2026-09-06` | **Total Tracked Docs**: `200`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
@@ -185,7 +185,7 @@
 | **Tasks (Archive)** | [`Gizmo rotation: scoping audit gap #13`](tasks/archive/2026-08-30-gizmo-rotation-scope.md) | `Archived` | Scope for the scene-editor audit's P1 #13, *"Euler-radian rotation summed per component -- gimbal |
 | **Tasks (Archive)** | [`Navigation Plan — a Heightmap-Derived NavGrid, in commonMain`](tasks/archive/2026-08-30-navgrid-navigation-plan.md) | `Archived` | Date: 2026-08-30 |
 | **Tasks (Archive)** | [`2026-08-31: generate `ImageVector` icons from vendored SVGs at build time`](tasks/archive/2026-08-31-icon-codegen-plan.md) | `Archived` | Status: **done, 2026-09-01.** Heroicons is pinned at **v2.2.0** and all 78 committed icons |
-| **Tasks (Archive)** | [`Studio Infinite Grid with Infinite Axis Lines`](tasks/archive/2026-08-31-studio-infinite-grid-plan.md) | `Archived` | Formalize an unprojected, multi-scale **Infinite Grid** with **Infinite Axis Lines** (X red / Z blue / Y green) in Awake... |
+| **Tasks (Archive)** | [`Studio Infinite Grid with Infinite Axis Lines`](tasks/archive/2026-08-31-studio-infinite-grid-plan.md) | `Archived` | Formalize an unprojected, multi-scale **Infinite Grid** with **Infinite Axis Lines** (X red / Z |
 | **General** | [`RFC: Open-World Terrain, Modular Character, and Environment Subsystems`](RFC_OPEN_WORLD_ENGINE_SUBSYSTEMS.md) | `Active` | Awake has established a solid Vulkan-first renderer, entity-component system (ECS), and cross-platform shader architectu... |
 | **General** | [`About Awake`](about.md) | `Active` | Unreal and Unity are editor-first: huge surface area, and it wasn't clear where |
 | **General** | [`Archived: Immediate-Mode UI Ownership`](archive/2026-08-28-immediate-mode-ui-ownership.md) | `Archived` | This document is retained for history only. The ownership model below was replaced by the |
@@ -208,6 +208,7 @@
 | **General** | [`Network Plan — Transport, Replication, Smoothing`](plans/network.md) | `Active` | Where networking lives in Awake, which transport and wire format to pick, and the order to |
 | **General** | [`Physics Plan — Open World & Character`](plans/physics-open-world.md) | `Active` | What the physics subsystem is missing before Awake can carry an open world with a |
 | **General** | [`Release Notes — vulkan-kmp v0.1.0 (MVP Release)`](release-notes-v0.1.0.md) | `Active` | `vulkan-kmp` is the first Kotlin Multiplatform library providing raw, high-performance Vulkan bindings across **Desktop ... |
+| **General** | [`Awake Engine Release Process & Branching Guidelines`](release-process.md) | `Active` | This document serves as the canonical source of truth for repository branching, versioning, |
 | **General** | [`Tasks`](tasks.md) | `Active` | Prototype and decision-gate adaptive bulk ECS structural mutation without changing the default |
 
 ---

@@ -6,10 +6,15 @@ Prototype and decision-gate adaptive bulk ECS structural mutation without changi
 immediate API or reopening the rejected archetype migration. Public API stabilization and UI
 parity remain parallel lanes.
 
-- 2026-08-29: The final pre-Maven Kotlin package migration is drafted in
-  [2026-08-29-kotlin-package-namespace-migration-plan](tasks/2026-08-29-kotlin-package-namespace-migration-plan.md).
-  It moves `com.awakekt.awake.*` to `com.awakekt.awake.*` using a checked-in
-  refactor script, source-folder moves, and a multiplatform consumer validation gate.
+- 2026-09-06: The Kotlin package and Maven namespace migration to `com.awakekt` and repository transfer to `awakekt/awake` are complete. All subprojects now publish under group `com.awakekt.awake` with clean package root `com.awakekt.awake.*`.
+
+- 2026-09-06: Cut release `v0.1.0-dev.10` and expanded the project roadmap to 7 GitHub Milestones (covering `v0.1.0-alpha.1` Maven release, `v0.2.0` WebGPU/Cloudflare Pages, `v0.3.0` Jolt physics, `v0.4.0` Studio prefabs, `v0.5.0` spatial audio/terrain, `v0.6.0` networking, and `v1.0.0` stable ecosystem).
+
+- 2026-08-29: Maven Central publication for the public Awake consumer path is drafted in
+  [2026-08-29-maven-central-publication-plan](tasks/2026-08-29-maven-central-publication-plan.md).
+  The existing workflow publishes Vulkan bindings only; the plan publishes the engine, asset, and
+  Vulkan/WebGPU modules required by [awake-template](https://github.com/awakekt/awake-template)
+  and validates a clean Maven-only consumer build.
 
 - 2026-08-29: Maven Central publication for the public Awake consumer path is drafted in
   [2026-08-29-maven-central-publication-plan](tasks/2026-08-29-maven-central-publication-plan.md).

@@ -5,4 +5,5 @@
  */
 package com.awakekt.awake.scene.document
 
+/** Platform-specific writer saving serialized scene JSON [json] to disk at [fileName]. */
 expect fun writeSceneDocument(fileName: String, json: String): String

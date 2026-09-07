@@ -72,7 +72,7 @@ def published_coordinates() -> dict[str, set[str]]:
     coordinates: dict[str, set[str]] = {}
     for build_file in REPO_ROOT.glob("awake/**/build.gradle.kts"):
         text = build_file.read_text()
-        if "awake.publish-convention" not in text and "com.vanniktech.maven.publish" not in text:
+        if "com.awakekt.awake.plugin.publish" not in text and "awake.publish-convention" not in text and "com.vanniktech.maven.publish" not in text:
             continue
         module = build_file.parent
         override = re.search(r'coordinates\(\s*"([^"]+)"\s*,\s*"([^"]+)"', text)

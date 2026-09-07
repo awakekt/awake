@@ -3,17 +3,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
-
+import com.awakekt.awake.build.extension.*
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    id("awake.publish-convention")
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.backend-layering-convention")
-    id("awake.spotless-convention")
+    id("com.awakekt.awake.plugin.publish")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.backend-layering")
+    id("com.awakekt.awake.plugin.spotless")
 }
 
 kotlin {
@@ -95,7 +94,6 @@ kotlin {
             // dependency on the production classpath makes ASL-generated WGSL available to the
             // same runtime resource lookup used by Vulkan.
             implementation(project(":awake:asset:shader-pack"))
-            implementation(project(":awake:scene"))
             // HeadlessRenderSession, the shape both backends hand a windowless renderer back in.
             api(project(":awake:engine:render:testing"))
             implementation(libs.kotlinx.coroutines.core)

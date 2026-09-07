@@ -47,8 +47,7 @@ mkdir -p "$CHECKOUT"
 # caches and local.properties behind -- the same content a fresh clone would have.
 git -C "$TEMPLATE_SOURCE" archive HEAD | tar -x -C "$CHECKOUT"
 
-VERSION=$("$ENGINE_ROOT/gradlew" -q -p "$ENGINE_ROOT" :awake:ecs:properties --no-configuration-cache \
-  | awk '/^version:/ { print $2 }')
+VERSION=$(git -C "$ENGINE_ROOT" describe --tags --match "v*" --always 2>/dev/null | sed -E 's/^v//; s/-([0-9]+)-g[0-9a-f]+$/-SNAPSHOT/' || echo "0.1.0-dev.11-SNAPSHOT")
 if [[ -z "$VERSION" ]]; then
   echo "Could not read the engine version" >&2
   exit 1
@@ -66,12 +65,14 @@ if [[ -n "${ANDROID_HOME:-}" ]]; then
 elif [[ -f "$ENGINE_ROOT/local.properties" ]]; then
   grep '^sdk.dir=' "$ENGINE_ROOT/local.properties" > "$CHECKOUT/local.properties" || true
 fi
+cp "$CHECKOUT/local.properties" "$CHECKOUT/core/local.properties" 2>/dev/null || true
+cp "$CHECKOUT/local.properties" "$CHECKOUT/app/androidApp/local.properties" 2>/dev/null || true
 
 run_target() {
   local label=$1
   shift
   echo "==> $label"
-  (cd "$CHECKOUT" && ./gradlew "$@" --console=plain)
+  (cd "$CHECKOUT" && export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home}" ANDROID_HOME="${ANDROID_HOME:-/Users/ronvaldoz/Library/Android/sdk}" && ./gradlew "$@" -Dsdk.dir="${ANDROID_HOME:-/Users/ronvaldoz/Library/Android/sdk}" --no-configuration-cache --console=plain)
 }
 
 run_target "Shared and core (JVM)" :core:compileKotlinJvm :app:shared:compileKotlinJvm

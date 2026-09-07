@@ -29,7 +29,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 # Only this namespace: a developer's `~/.m2` holds artifacts from other projects, and older runs
 # of this one under its previous group, which would be reported as today's publication.
-LOCAL_REPO = Path.home() / ".m2" / "repository" / "io" / "github" / "awake-lab"
+LOCAL_REPO = Path.home() / ".m2" / "repository" / "com" / "awakekt" / "awake"
 POM_NAMESPACE = {"m": "http://maven.apache.org/POM/4.0.0"}
 
 # What Central refuses an upload without, plus the metadata a consumer reads to find the source.

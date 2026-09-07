@@ -12,6 +12,9 @@ package com.awakekt.awake.sample.server
  * policy. A future MMORPG server can adapt its own world to [SimulationStep] while proving
  * fixed-tick ordering and replaying a known number of ticks in tests. Promote a smaller,
  * backend-neutral contract to Awake only after another consumer needs the same seam.
+ *
+ * @param fixedDeltaSeconds The fixed simulation time delta per tick in seconds (e.g. `1 / 60`).
+ * @param step The consumer-owned world step handler.
  */
 class HeadlessSimulation(
     private val fixedDeltaSeconds: Float = DEFAULT_FIXED_DELTA_SECONDS,
@@ -21,10 +24,11 @@ class HeadlessSimulation(
         require(fixedDeltaSeconds > 0f) { "fixedDeltaSeconds must be positive" }
     }
 
+    /** The current monotonically increasing simulation tick count. */
     var tick: Long = 0
         private set
 
-    /** Runs exactly one authoritative simulation tick. */
+    /** Runs time-stepping for exactly one authoritative simulation tick. */
     fun step(): SimulationTick {
         val current = SimulationTick(number = tick, deltaSeconds = fixedDeltaSeconds)
         step.update(current)
@@ -43,7 +47,12 @@ class HeadlessSimulation(
     }
 }
 
-/** The neutral input to one fixed simulation update. */
+/**
+ * The neutral input to one fixed simulation update.
+ *
+ * @property number The 0-based tick index.
+ * @property deltaSeconds The fixed time step interval in seconds.
+ */
 data class SimulationTick(
     val number: Long,
     val deltaSeconds: Float,
@@ -51,5 +60,6 @@ data class SimulationTick(
 
 /** A consumer-owned world adapter invoked once per authoritative simulation tick. */
 fun interface SimulationStep {
+    /** Executes world updates for [tick]. */
     fun update(tick: SimulationTick)
 }

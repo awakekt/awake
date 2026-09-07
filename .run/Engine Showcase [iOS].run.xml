@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Engine Showcase [iOS]" type="KmmRunConfiguration" factoryName="iOS Application">
+    <argumentHandlers />
+    <xcodeProject>$PROJECT_DIR$/samples/engine-showcase/iosApp/iosApp.xcodeproj</xcodeProject>
+    <scheme>iosApp</scheme>
+    <configuration>Debug</configuration>
+    <target>iosApp</target>
+    <method v="2">
+      <option name="com.jetbrains.kmm.ios.BuildIOSAppTask" enabled="true" />
+    </method>
+  </configuration>
+</component>

@@ -6,16 +6,19 @@
 package com.awakekt.awake.vulkan
 
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.logging.Logger
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.useContents
+import objcnames.protocols.MTLDeviceProtocol
 import platform.CoreFoundation.CFTimeInterval
 import platform.CoreGraphics.CGRect
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSRunLoop
 import platform.Foundation.NSRunLoopCommonModes
 import platform.Foundation.NSSelectorFromString
+import platform.Metal.MTLCreateSystemDefaultDevice
 import platform.QuartzCore.CADisplayLink
 import platform.QuartzCore.CAMetalLayer
 import platform.UIKit.UIEvent
@@ -36,7 +39,17 @@ class VulkanMetalView(
 ) : UIView(frame),
     UIKeyInputProtocol {
 
-    val metalLayer = CAMetalLayer()
+    private val logger = Logger("VulkanMetalView")
+
+    val metalLayer = CAMetalLayer().apply {
+        val dev = MTLCreateSystemDefaultDevice()
+        if (dev != null) {
+            @Suppress("UNCHECKED_CAST")
+            setDevice(dev as Any as MTLDeviceProtocol)
+        } else {
+            logger.error { "MTLCreateSystemDefaultDevice() returned null; Metal is unavailable on this device." }
+        }
+    }
 
     private var displayLink: CADisplayLink? = null
     private var previousTimestamp: CFTimeInterval = 0.0
@@ -48,6 +61,7 @@ class VulkanMetalView(
         layer.addSublayer(metalLayer)
     }
 
+    @Suppress("TooGenericExceptionCaught")
     override fun layoutSubviews() {
         super.layoutSubviews()
         val scale = UIScreen.mainScreen.scale
@@ -57,27 +71,44 @@ class VulkanMetalView(
             width = size.width * scale
             height = size.height * scale
         }
-        metalLayer.frame = bounds
+        if (width <= 0.0 || height <= 0.0) return
+
+        metalLayer.contentsScale = scale
+        metalLayer.bounds = bounds
+        metalLayer.position = bounds.useContents {
+            platform.CoreGraphics.CGPointMake(size.width / 2.0, size.height / 2.0)
+        }
+        metalLayer.transform = platform.QuartzCore.CATransform3DMakeScale(1.0, -1.0, 1.0)
         metalLayer.drawableSize = CGSizeMake(width, height)
+
         if (!created) {
             created = true
-            onCreate(metalLayer)
+            try {
+                onCreate(metalLayer)
+            } catch (t: Throwable) {
+                logger.error(t) { "Failed to execute onCreate for VulkanMetalView: ${t.message}" }
+            }
         } else {
             onResize(width.toInt(), height.toInt())
         }
     }
 
     @ObjCAction
+    @Suppress("UnusedPrivateMember", "TooGenericExceptionCaught")
     private fun tick(displayLink: CADisplayLink) {
-        val currentTimestamp = displayLink.timestamp
-        val deltaTime = if (previousTimestamp == 0.0) {
-            0f
-        } else {
-            (currentTimestamp - previousTimestamp).toFloat()
+        try {
+            val currentTimestamp = displayLink.timestamp
+            val deltaTime = if (previousTimestamp == 0.0) {
+                0f
+            } else {
+                (currentTimestamp - previousTimestamp).toFloat()
+            }
+            previousTimestamp = currentTimestamp
+            textInputWasFocused = syncAwakeTextInputFocus(textInputWasFocused, input)
+            onUpdate(deltaTime)
+        } catch (t: Throwable) {
+            logger.error(t) { "Error in VulkanMetalView tick render step: ${t.message}" }
         }
-        previousTimestamp = currentTimestamp
-        textInputWasFocused = syncAwakeTextInputFocus(textInputWasFocused, input)
-        onUpdate(deltaTime)
     }
 
     override fun canBecomeFirstResponder(): Boolean = true

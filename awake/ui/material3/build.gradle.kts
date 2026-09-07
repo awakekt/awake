@@ -5,12 +5,12 @@
  */
 
 plugins {
-    id("awake.kmp-library-convention")
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
-    id("awake.ui-ownership-convention")
-    id("awake.ui-authored-units-convention")
+    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
+    id("com.awakekt.awake.plugin.ui-ownership")
+    id("com.awakekt.awake.plugin.ui-authored-units")
 }
 
 kotlin {

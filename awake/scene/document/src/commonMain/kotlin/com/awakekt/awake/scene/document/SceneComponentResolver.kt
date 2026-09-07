@@ -10,20 +10,33 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import kotlin.reflect.KClass
 
+/** Context provided during component resolution and instantiation. */
 interface SceneResolutionContext {
+    /** Target active ECS [World]. */
     val world: World
 
+    /** Defers a node-to-node entity link resolution callback until all scene nodes are created. */
     fun deferNodeLink(targetNodeName: String, onResolved: (target: Entity) -> Unit)
 
+    /** Requests a renderable mesh request during scene instantiation. */
     fun requestRenderable(entity: Entity, component: SceneMeshRenderer)
 }
 
+/** Resolver contract attaching serializable [SceneComponent]s onto ECS [Entity] instances. */
 interface SceneComponentResolver {
+    /** Returns true if this resolver handles [component]. */
     fun canResolve(component: SceneComponent): Boolean
 
+    /** Attaches [component] onto [entity] in [world]. */
     fun attach(world: World, entity: Entity, component: SceneComponent, context: SceneResolutionContext)
 }
 
+/**
+ * Registry holding component resolvers and bi-directional bindings for scene loading and export.
+ *
+ * @param resolvers Custom component resolvers to register.
+ * @param bindings Custom component bindings to register.
+ */
 class SceneComponentRegistry(
     resolvers: List<SceneComponentResolver> = emptyList(),
     bindings: List<SceneComponentBinding<*, *>> = emptyList(),
@@ -42,10 +55,12 @@ class SceneComponentRegistry(
         register(SpinControlBinding)
     }
 
+    /** Global static registry entrypoints. */
     companion object {
         private val globalResolvers = ArrayList<SceneComponentResolver>()
         private val globalBindings = ArrayList<SceneComponentBinding<*, *>>()
 
+        /** Registers a global [resolver] active across all registry instances. */
         fun registerGlobal(resolver: SceneComponentResolver) {
             if (resolver !in globalResolvers) {
                 globalResolvers += resolver
@@ -55,6 +70,7 @@ class SceneComponentRegistry(
             }
         }
 
+        /** Registers a global bi-directional [binding] active across all registry instances. */
         fun registerGlobal(binding: SceneComponentBinding<*, *>) {
             if (binding !in globalBindings) {
                 globalBindings += binding
@@ -65,9 +81,13 @@ class SceneComponentRegistry(
         }
     }
 
+    /** Read-only view of registered bindings. */
     val bindings: List<SceneComponentBinding<*, *>> get() = registeredBindings
+
+    /** Read-only view of registered resolvers. */
     val resolvers: List<SceneComponentResolver> get() = registeredResolvers
 
+    /** Registers a component [resolver]. */
     fun register(resolver: SceneComponentResolver): SceneComponentRegistry {
         if (resolver !in registeredResolvers) {
             registeredResolvers += resolver
@@ -78,6 +98,7 @@ class SceneComponentRegistry(
         return this
     }
 
+    /** Registers a bi-directional component [binding]. */
     fun register(binding: SceneComponentBinding<*, *>): SceneComponentRegistry {
         if (binding !in registeredBindings) {
             registeredBindings += binding
@@ -88,6 +109,7 @@ class SceneComponentRegistry(
         return this
     }
 
+    /** Exports all registered components on [entity] in [world] into a list of [SceneComponent]s. */
     fun exportComponents(world: World, entity: Entity): List<SceneComponent> = buildList {
         val seenClasses = HashSet<KClass<*>>()
         for (binding in registeredBindings) {
@@ -97,6 +119,7 @@ class SceneComponentRegistry(
         }
     }
 
+    /** Resolves and attaches [component] onto [entity] in [world]. */
     fun resolve(
         world: World,
         entity: Entity,
@@ -120,6 +143,7 @@ class SceneComponentRegistry(
     }
 }
 
+/** Built-in resolver for [ScenePrefabLink] components. */
 object PrefabLinkBinding : SceneComponentResolver {
     override fun canResolve(component: SceneComponent): Boolean = component is ScenePrefabLink
 

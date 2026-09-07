@@ -46,32 +46,32 @@ Awake keeps project guidance in three layers:
 Use them like this:
 
 - `docs/architecture.md`
-  - stable architecture, module boundaries, threading model, and long-lived technical rules
+    - stable architecture, module boundaries, threading model, and long-lived technical rules
 - `docs/reference/module-architecture.md`
-  - source of truth for module decisions: how the 44 modules are grouped, which splits are
-    decided or withdrawn, and where a new module goes. Paired with `awake/README.md`'s map
+    - source of truth for module decisions: how the 44 modules are grouped, which splits are
+      decided or withdrawn, and where a new module goes. Paired with `awake/README.md`'s map
 - `docs/reference/ui-ownership.md`
-  - canonical placement rules for reusable UI primitives, compositions, design-system pieces,
-    and sample adapters
+    - canonical placement rules for reusable UI primitives, compositions, design-system pieces,
+      and sample adapters
 - `docs/reference/ui-validation.md`
-  - canonical UI correctness gate for previews, semantic checks, truncation/content-fit rules,
-    and animation/state proof requirements
+    - canonical UI correctness gate for previews, semantic checks, truncation/content-fit rules,
+      and animation/state proof requirements
 - `docs/reference/ai-collaboration.md`
-  - the cross-agent contract for `docs/*`, entrypoints, and `skills/*`
+    - the cross-agent contract for `docs/*`, entrypoints, and `skills/*`
 - `docs/reference/agent-catalog.md`
-  - the canonical roster, naming convention, and responsibility map for repo-local agents
+    - the canonical roster, naming convention, and responsibility map for repo-local agents
 - `docs/reference/agent-starter-pack.md`
-  - the reusable downstream starter shape for multi-agent repo setup
+    - the reusable downstream starter shape for multi-agent repo setup
 - `docs/reference/agent-routing.md`
-  - real Awake examples for choosing the right repo-local agent
+    - real Awake examples for choosing the right repo-local agent
 - `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/AGENTS.md`
-  - thin startup files that point assistants at the canonical docs
+    - thin startup files that point assistants at the canonical docs
 - `skills/awake/agents/*.md`
-  - task-specific working guidance for ECS, engine, and other Awake domains
+    - task-specific working guidance for ECS, engine, and other Awake domains
 - `skills/awake/commands/*.md`
-  - repo-local operational commands and review workflows
+    - repo-local operational commands and review workflows
 - `skills/awake/templates/*.md`
-  - reusable templates for new repo-local agent docs
+    - reusable templates for new repo-local agent docs
 
 Rule of thumb:
 
@@ -156,17 +156,17 @@ Every wasmJs sample's dev server has a fixed port (configured via `commonWebpack
 `build.gradle.kts` -- webpack otherwise defaults every sample to 8080, causing collisions when
 more than one is run at once). `.claude/launch.json`'s `port` field must match the table below.
 
-| Port | Owner | Task |
-|------|-------|------|
-| 8081 | `samples/engine-showcase` dev | `:samples:engine-showcase:wasmJsBrowserDevelopmentRun` |
-| 8082 | `samples/ui-showcase` dev | `:samples:ui-showcase:wasmJsBrowserDevelopmentRun` |
-| 8083 | `samples/ui-showcase` prod preview | `:samples:ui-showcase:wasmJsBrowserProductionRun` |
-| 8084 | `samples/starter-game` dev | `:samples:starter-game:wasmJsBrowserDevelopmentRun` |
-| 8085 | `samples/engine-showcase` prod preview | `:samples:engine-showcase:wasmJsBrowserProductionRun` |
-| 8086 | `apps/studio` dev | `:apps:studio:wasmJsBrowserDevelopmentRun` |
-| 8087 | `apps/studio` prod preview | `:apps:studio:wasmJsBrowserProductionRun` |
-| 8088 | `samples/net-demo` dev (browser client; needs the desktop server on 9540) | `:samples:net-demo:wasmJsBrowserDevelopmentRun` |
-| 8090 | `skills/awake-ui-verification/scripts/ui_preview_watch.sh` / `ui_preview_server.py` | live-reload static file server |
+| Port | Owner                                                                               | Task                                                   |
+|------|-------------------------------------------------------------------------------------|--------------------------------------------------------|
+| 8081 | `samples/engine-showcase` dev                                                       | `:samples:engine-showcase:wasmJsBrowserDevelopmentRun` |
+| 8082 | `samples/ui-showcase` dev                                                           | `:samples:ui-showcase:wasmJsBrowserDevelopmentRun`     |
+| 8083 | `samples/ui-showcase` prod preview                                                  | `:samples:ui-showcase:wasmJsBrowserProductionRun`      |
+| 8084 | `samples/starter-game` dev                                                          | `:samples:starter-game:wasmJsBrowserDevelopmentRun`    |
+| 8085 | `samples/engine-showcase` prod preview                                              | `:samples:engine-showcase:wasmJsBrowserProductionRun`  |
+| 8086 | `apps/studio` dev                                                                   | `:app:studio:wasmJsBrowserDevelopmentRun`              |
+| 8087 | `apps/studio` prod preview                                                          | `:app:studio:wasmJsBrowserProductionRun`               |
+| 8088 | `samples/net-demo` dev (browser client; needs the desktop server on 9540)           | `:samples:net-demo:wasmJsBrowserDevelopmentRun`        |
+| 8090 | `skills/awake-ui-verification/scripts/ui_preview_watch.sh` / `ui_preview_server.py` | live-reload static file server                         |
 
 Convention: when adding a new dev-server tool (a new sample's wasmJs target, a new preview
 script, etc.), reserve the next free port in this range, wire it into the module's
@@ -203,7 +203,8 @@ so it works identically on both.
 
 ## Adding a UI Tutorial
 
-1. Add or update a focused test under `awake/compose/ui-testing` or the owning design-system/sample module.
+1. Add or update a focused test under `awake/compose/ui-testing` or the owning design-system/sample
+   module.
 2. Render the example with `composeFrame(...)` or `composeTestSession(...)`.
 3. Keep the title and summary short and tutorial-oriented
 4. Add machine-checkable validation for semantics, text fit, clipping, and state coverage per

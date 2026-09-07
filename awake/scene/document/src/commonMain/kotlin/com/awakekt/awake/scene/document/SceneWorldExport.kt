@@ -11,6 +11,15 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 
+/**
+ * Exports a live active ECS [world] into a serializable [SceneDocument].
+ *
+ * @param world Active ECS world containing live scene entities.
+ * @param name Optional scene title to set on the exported document.
+ * @param componentRegistry Registry containing component bindings to export.
+ * @param extraComponents Optional callback exporting custom components for an entity.
+ * @return The exported [SceneDocument].
+ */
 fun SceneLoader.fromWorld(
     world: World,
     name: String? = null,
@@ -64,10 +73,12 @@ private fun World.sceneComponents(
     extraComponents?.invoke(entity)?.let { addAll(it) }
 }
 
+/** Converts a live ECS [Transform] component into a serializable [SceneTransform]. */
 fun Transform.toSceneTransform(): SceneTransform = SceneTransform(
     position = position.toSceneVec3(),
     rotation = rotation.toSceneVec3(),
     scale = scale.toSceneVec3(),
 )
 
+/** Converts a math [Vec3f] into a serializable [SceneVec3]. */
 fun Vec3f.toSceneVec3(): SceneVec3 = SceneVec3(x, y, z)

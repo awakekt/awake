@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.awakekt.awake.build"
-version = "0.1.0-dev.9-SNAPSHOT"
+version = "0.1.0-dev.11-SNAPSHOT"
 
 repositories {
     gradlePluginPortal()

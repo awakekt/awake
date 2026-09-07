@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
+import com.awakekt.awake.build.extension.*
 // Runtime WGSL->SPIR-V via naga-as-a-library: the Rust crate in rust-native/ exports JNI
 // symbols (desktop/Android) and a C ABI (iOS cinterop). Native builds are manual/on-demand
 // cargo tasks, same policy as jolt's buildJoltC* -- they only change when the Rust shim or
@@ -13,11 +13,11 @@ import org.gradle.api.tasks.PathSensitivity
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
-    id("awake.kmp-library-convention")
-    id("awake.publish-convention")
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
+    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.publish")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
 }
 
 val rustDir = layout.projectDirectory.dir("rust-native")

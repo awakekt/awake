@@ -6,11 +6,12 @@
 package com.awakekt.awake.engine.platform
 
 import com.awakekt.awake.core.input.Input
-import com.awakekt.awake.engine.platform.WindowLifecycle
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,6 +23,8 @@ import kotlinx.coroutines.launch
 abstract class GraphicsEngine(
     protected val appLifecycle: AwakeAppLifecycle,
 ) : WindowLifecycle {
+
+    private val logger = Logger("GraphicsEngine")
 
     /** The session's input accumulator. */
     override val input: Input get() = appLifecycle.input
@@ -44,11 +47,28 @@ abstract class GraphicsEngine(
     protected val aspectRatio: Float
         get() = viewportSize().let { (width, height) -> width / height }
 
+    private val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        logger.error(throwable) { "Uncaught exception in graphics engine coroutine" }
+    }
+
+    @Suppress("TooGenericExceptionCaught")
     final override fun create(surface: Any?) {
         // NOT MainScope(): its Dispatchers.Main can resolve to a Swing/AWT dispatcher on
         // desktop, deadlocking against -XstartOnFirstThread (already claimed by GLFW).
         // Dispatchers.Unconfined keeps every call on this calling thread instead.
-        surface?.let { window -> CoroutineScope(Dispatchers.Unconfined).launch { setupCommon(window) } }
+        surface?.let { window ->
+            CoroutineScope(Dispatchers.Unconfined + exceptionHandler).launch {
+                try {
+                    logger.debug { "GraphicsEngine create() starting, initializing backend resources" }
+                    setupCommon(window)
+                    logger.info { "GraphicsEngine created and ready" }
+                } catch (t: Throwable) {
+                    logger.error(t) { "Failed to initialize graphics engine" }
+                }
+            }
+        } ?: run {
+            logger.error { "GraphicsEngine.create() called with null surface" }
+        }
     }
 
     final override fun update(delta: Float) {

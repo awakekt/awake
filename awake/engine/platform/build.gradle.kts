@@ -24,11 +24,11 @@
 
 
 plugins {
-    id("awake.kmp-library-convention")
-    id("awake.publish-convention")
-    id("awake.dokka-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
+    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.publish")
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
 }
 
 kotlin {
@@ -48,6 +48,7 @@ kotlin {
             implementation(project(":awake:core:host"))
             implementation(project(":awake:core:image"))
             implementation(project(":awake:core:input"))
+            implementation(project(":awake:core:logging"))
             // Application, FixedTimestepLoop (via awake-base transitively).
             // Renderer/LineSegment -- AppLifecycle.ready(renderer)'s parameter type and
             // drawDebugLines()'s plumbing, nothing scene/ECS-specific.

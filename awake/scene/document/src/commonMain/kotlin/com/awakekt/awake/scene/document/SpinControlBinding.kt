@@ -8,11 +8,8 @@ package com.awakekt.awake.scene.document
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.SpinControl
-import com.awakekt.awake.scene.document.SceneComponent
-import com.awakekt.awake.scene.document.SceneComponentBinding
-import com.awakekt.awake.scene.document.SceneResolutionContext
-import com.awakekt.awake.scene.document.SceneSpinControl
 
+/** Built-in bi-directional binding connecting live [SpinControl] components with serializable [SceneSpinControl] components. */
 object SpinControlBinding : SceneComponentBinding<SpinControl, SceneSpinControl> {
     override val componentClass = SpinControl::class
 
@@ -34,11 +31,13 @@ object SpinControlBinding : SceneComponentBinding<SpinControl, SceneSpinControl>
     override fun exportFrom(world: World, entity: Entity): SceneSpinControl? =
         world.get(entity, componentClass)?.let { export(world, entity, it) }
 
+    /** Converts a [SceneSpinControl] component into a live [SpinControl] component. */
     fun SceneSpinControl.toComponent(): SpinControl = SpinControl().also {
         it.radians = radians
         it.speed = speed
     }
 
+    /** Converts a live [SpinControl] component into a [SceneSpinControl] component. */
     fun SpinControl.toSceneComponent(): SceneSpinControl = SceneSpinControl(
         radians = radians,
         speed = speed,

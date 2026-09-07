@@ -8,7 +8,7 @@ on:
     # `:awake:engine:app`, `awake:ui:testing`'s commonTest and `samples/ui-showcase`'s wasmJs all
     # stopped compiling with nothing reporting it. A source set nobody builds is indistinguishable
     # from one that passes.
-    branches: [main, 'dev/**']
+    branches: [ main, 'dev/**' ]
   pull_request:
 
 concurrency:
@@ -81,7 +81,7 @@ jobs:
       # `desktopTest` touches VulkanEngine, GraphicsDevice or loadLibrary, which is why this
       # belongs in `build` rather than the lavapipe job.
       - name: Studio sample (tests and desktop jar)
-        run: ./gradlew :apps:studio:desktopTest :apps:studio:desktopJar
+        run: ./gradlew :app:studio:desktopTest :app:studio:desktopJar
 
       - name: Build vulkan generator
         run: ./gradlew :awake:backend:vulkan:generator:assemble

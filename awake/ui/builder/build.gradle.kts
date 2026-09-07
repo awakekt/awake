@@ -5,10 +5,10 @@
  */
 
 plugins {
-    id("awake.kmp-library-convention")
-    id("awake.publish-convention")
-    id("awake.detekt-convention")
-    id("awake.spotless-convention")
+    id("com.awakekt.awake.plugin.library")
+    id("com.awakekt.awake.plugin.publish")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -28,8 +28,6 @@ kotlin {
             implementation(project(":awake:heroicons"))
             implementation(project(":awake:compose:foundation"))
             implementation(project(":awake:ui:shadcn"))
-            implementation(project(":awake:editor:core"))
-            implementation(project(":awake:editor"))
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.core)
         }

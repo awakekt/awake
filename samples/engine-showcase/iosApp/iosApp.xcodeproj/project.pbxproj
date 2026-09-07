@@ -1,0 +1,286 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		F1F8A0012E74200000E1280A /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1F8A0022E74200000E1280A /* iOSApp.swift */; };
+		F1F8A0032E74200000E1280A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1F8A0042E74200000E1280A /* ContentView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		F1F8A0002E74200000E1280A /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1F8A0022E74200000E1280A /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
+		F1F8A0042E74200000E1280A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F1F8A0052E74200000E1280A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F1F89FFF2E74200000E1280A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		F1F8A0062E74200000E1280A = {
+			isa = PBXGroup;
+			children = (
+				F1F8A0072E74200000E1280A /* iosApp */,
+				F1F8A0002E74200000E1280A /* iosApp.app */,
+			);
+			sourceTree = "<group>";
+		};
+		F1F8A0072E74200000E1280A /* iosApp */ = {
+			isa = PBXGroup;
+			children = (
+				F1F8A0022E74200000E1280A /* iOSApp.swift */,
+				F1F8A0042E74200000E1280A /* ContentView.swift */,
+				F1F8A0052E74200000E1280A /* Info.plist */,
+			);
+			path = iosApp;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F1F8A0082E74200000E1280A /* iosApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F1F8A0092E74200000E1280A /* Build configuration list for PBXNativeTarget "iosApp" */;
+			buildPhases = (
+				F1F8A00A2E74200000E1280A /* Run Script */,
+				F1F8A0102E74200000E1280A /* Copy Assets */,
+				F1F8A00B2E74200000E1280A /* Sources */,
+				F1F89FFF2E74200000E1280A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iosApp;
+			productName = iosApp;
+			productReference = F1F8A0002E74200000E1280A /* iosApp.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F1F8A00C2E74200000E1280A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					F1F8A0082E74200000E1280A = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = F1F8A00D2E74200000E1280A /* Build configuration list for PBXProject "iosApp" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = F1F8A0062E74200000E1280A;
+			productRefGroup = F1F8A0062E74200000E1280A;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F1F8A0082E74200000E1280A /* iosApp */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		F1F8A00A2E74200000E1280A /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputValueSubstitutions = (
+			);
+			inputPaths = (
+			);
+			name = "Compile KMP Framework";
+			outputValueSubstitutions = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ -z \"$AWAKE_SKIP_GRADLE_IOS\" ]; then\n    cd \"$SRCROOT/../../..\"\n    ./gradlew :samples:engine-showcase:embedAndSignAppleFrameworkForXcode\nfi\nmkdir -p \"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\ncp -R \"${SRCROOT}/../src/commonMain/resources/\"* \"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F1F8A00B2E74200000E1280A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1F8A0012E74200000E1280A /* iOSApp.swift in Sources */,
+				F1F8A0032E74200000E1280A /* ContentView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		F1F8A00E2E74200000E1280A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(BUILT_PRODUCTS_DIR)\"",
+					"\"$(SRCROOT)/../build/bin/iosSimulatorArm64/debugFramework\"",
+					"\"$(SRCROOT)/../../../awake/backend/vulkan/bindings/ios-native/MoltenVK/Package/Release/MoltenVK/static/MoltenVK.xcframework/ios-arm64_x86_64-simulator\"",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+
+				INFOPLIST_FILE = iosApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				ONLY_ACTIVE_ARCH = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-framework",
+					"EngineShowcase",
+					"-L$(SRCROOT)/../../../awake/backend/vulkan/bindings/ios-native/MoltenVK/Package/Release/MoltenVK/static/MoltenVK.xcframework/ios-arm64_x86_64-simulator",
+					"-lMoltenVK",
+					"-lc++",
+					"-L$(SRCROOT)/../../../awake/backend/jolt/ios-native/JoltC/build-ios-sim",
+					"-L$(SRCROOT)/../../../awake/backend/jolt/ios-native/JoltC/build-ios-sim/JoltPhysics/Build",
+					"-ljoltc",
+					"-lJolt",
+					"-L$(SRCROOT)/../../../awake/asset/shader-compiler/rust-native/target/aarch64-apple-ios-sim/release",
+					"-lawake_naga",
+					"-framework",
+					"Metal",
+					"-framework",
+					"QuartzCore",
+					"-framework",
+					"IOSurface",
+					"-framework",
+					"CoreGraphics",
+					"-framework",
+					"Foundation",
+					"-framework",
+					"UIKit",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.awakekt.awake.iosApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphonesimulator;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F1F8A00F2E74200000E1280A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"\"$(SRCROOT)/../build/bin/iosSimulatorArm64/debugFramework\"",
+					"\"$(SRCROOT)/../../../awake/backend/vulkan/bindings/ios-native/MoltenVK/Package/Release/MoltenVK/static/MoltenVK.xcframework/ios-arm64_x86_64-simulator\"",
+				);
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				INFOPLIST_FILE = iosApp/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-framework",
+					"EngineShowcase",
+					"-L$(SRCROOT)/../../../awake/backend/vulkan/bindings/ios-native/MoltenVK/Package/Release/MoltenVK/static/MoltenVK.xcframework/ios-arm64_x86_64-simulator",
+					"-lMoltenVK",
+					"-lc++",
+					"-framework",
+					"Metal",
+					"-framework",
+					"QuartzCore",
+					"-framework",
+					"IOSurface",
+					"-framework",
+					"CoreGraphics",
+					"-framework",
+					"Foundation",
+					"-framework",
+					"UIKit",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.awakekt.awake.iosApp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphonesimulator;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F1F8A0092E74200000E1280A /* Build configuration list for PBXNativeTarget "iosApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1F8A00E2E74200000E1280A /* Debug */,
+				F1F8A00F2E74200000E1280A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F1F8A00D2E74200000E1280A /* Build configuration list for PBXProject "iosApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F1F8A00E2E74200000E1280A /* Debug */,
+				F1F8A00F2E74200000E1280A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F1F8A00C2E74200000E1280A /* Project object */;
+}

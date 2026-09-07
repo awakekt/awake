@@ -21,7 +21,8 @@ still write `ui-headless` layout/state directly (`row`/`column`/`box`/`Modifier`
 [docs/reference/ui-ownership.md](../../../docs/reference/ui-ownership.md)'s "Consuming From A
 Sample, Game, Or Tool" section). **Before writing `row {}`/`column {}`/`remember*` code in a
 sample**, read
-[docs/reference/compose-modifier-layout-guidance.md](../../../docs/reference/compose-modifier-layout-guidance.md)'s
+[docs/reference/compose-modifier-layout-guidance.md](../../../docs/reference/compose-modifier-layout-guidance.md)'
+s
 Layout DSL section (content inside `row {}`/`column {}` can run more than once per frame — an
 unguarded side effect there is a real, silent bug) and
 [docs/reference/mirror-map.md](../../../docs/reference/mirror-map.md)'s State hooks section (a
@@ -66,5 +67,5 @@ shares state, with no compile-time signal).
 ## Validation
 
 - Compile engine runtime modules and consuming samples:
-  `./gradlew :awake:engine:platform:desktopTest :apps:studio:desktopTest`
+  `./gradlew :awake:engine:platform:desktopTest :app:studio:desktopTest`
 - Run sample smoke checks when modifying game bootstrap or lifecycle ordering.

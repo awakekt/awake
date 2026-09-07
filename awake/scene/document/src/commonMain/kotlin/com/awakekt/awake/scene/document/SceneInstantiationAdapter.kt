@@ -11,20 +11,49 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 
+/**
+ * Intermediate node handle produced during scene document instantiation.
+ *
+ * @param T Target node type.
+ * @property name Node name identifier if present.
+ * @property value Created node value object.
+ * @property children Child node handles.
+ */
 data class SceneNodeHandle<T>(
     val name: String?,
     val value: T,
     val children: List<SceneNodeHandle<T>>,
 )
 
+/**
+ * Adapter interface allowing custom instantiation targets for scene documents.
+ *
+ * @param Node Created node type (e.g. [Entity]).
+ * @param Instance Completed scene instance type (e.g. [Scene]).
+ */
 interface SceneInstantiationAdapter<Node, Instance> {
+    /** Creates a new node instance. */
     fun createNode(node: SceneNode, parent: Node?): Node
+
+    /** Attaches a name identifier onto [node]. */
     fun attachName(node: Node, name: String)
+
+    /** Attaches a transform descriptor onto [node]. */
     fun attachTransform(node: Node, transform: SceneTransform, parent: Node?)
+
+    /** Attaches a component descriptor onto [node]. */
     fun attachComponent(node: Node, component: SceneComponent)
+
+    /** Completes scene instantiation and returns the final [Instance]. */
     fun complete(roots: List<SceneNodeHandle<Node>>): Instance
 }
 
+/**
+ * Standard scene instantiation adapter creating live ECS entities in a [World].
+ *
+ * @param world Target active [World].
+ * @param componentRegistry Associated component registry.
+ */
 class AwakeWorldSceneAdapter(
     private val world: World = World(),
     private val componentRegistry: SceneComponentRegistry = SceneComponentRegistry(),
@@ -76,6 +105,7 @@ class AwakeWorldSceneAdapter(
     private class EntityLink(val name: String, val assign: (Entity) -> Unit)
 }
 
+/** Converts a [SceneTransform] into a live ECS [Transform] component. */
 fun SceneTransform.toComponent(parent: Entity?): Transform = Transform(
     position = position.toVec3(),
     rotation = rotation.toVec3(),
@@ -83,6 +113,7 @@ fun SceneTransform.toComponent(parent: Entity?): Transform = Transform(
     parent = parent,
 )
 
+/** Converts a [SceneVec3] into a math [Vec3f]. */
 fun SceneVec3.toVec3(): Vec3f = Vec3f(x, y, z)
 
 private fun SceneNodeHandle<Entity>.toSceneNodeInstance(): SceneNodeInstance = SceneNodeInstance(

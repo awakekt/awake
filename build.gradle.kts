@@ -19,7 +19,7 @@ plugins {
 
 apiValidation {
     ignoredProjects += setOf(
-        "ui-showcase", "engine-showcase", "studio", "server",
+        "ui-showcase", "engine-showcase", "server",
         "benchmark", "generator", "android-native", "font-atlas-generator",
         // `editor` is deliberately absent: it is a library, not an application, and its plugin
         // contract negotiates an EditorPluginApiVersion that means nothing if the surface it

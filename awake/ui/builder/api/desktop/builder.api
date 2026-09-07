@@ -173,26 +173,6 @@ public final class com/awakekt/awake/ui/builder/model/UiStyleSpec$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/ui/builder/plugin/UiBuilderDockContribution : com/awakekt/awake/editor/shell/EditorDockContribution {
-	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/ui/builder/state/UiBuilderStore;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/ui/builder/state/UiBuilderStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun content (Lcom/awakekt/awake/compose/runtime/Composer;)V
-	public fun dispose ()V
-	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderCodec;
-	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
-	public fun getMetadata ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderMetadata;
-	public fun getTab ()Lcom/awakekt/awake/editor/shell/EditorDockTab;
-}
-
-public final class com/awakekt/awake/ui/builder/plugin/UiBuilderEditorPlugin : com/awakekt/awake/editor/core/plugin/EditorPlugin {
-	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/ui/builder/state/UiBuilderStore;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/ui/builder/state/UiBuilderStore;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun createProviders ()Ljava/util/List;
-	public fun getMetadata ()Lcom/awakekt/awake/editor/core/plugin/EditorPluginMetadata;
-}
-
 public final class com/awakekt/awake/ui/builder/state/UiBuilderContract {
 	public static final field INSTANCE Lcom/awakekt/awake/ui/builder/state/UiBuilderContract;
 }
