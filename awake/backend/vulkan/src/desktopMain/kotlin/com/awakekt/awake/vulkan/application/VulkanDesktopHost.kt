@@ -83,8 +83,11 @@ fun runVulkanDesktopGame(
     // returning its own UiContext's `finishFrame().effects.cursor` each frame.
     cursor: (() -> PointerCursor)? = null,
 ) {
-    check(game.windowConfig.backend == AppWindowBackend.VULKAN) {
-        "Desktop Vulkan host requires a Vulkan backend, found ${game.windowConfig.backend}."
+    check(
+        game.windowConfig.backend == AppWindowBackend.VULKAN ||
+            game.windowConfig.backend == AppWindowBackend.DEFAULT,
+    ) {
+        "Desktop Vulkan host requires a Vulkan or DEFAULT backend, found ${game.windowConfig.backend}."
     }
     check(VulkanWindow.glfwInit()) { "glfwInit failed" }
     VulkanWindow.glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)

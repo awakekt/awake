@@ -20,11 +20,11 @@ class ShowcaseSelectionTest {
     fun aRequestIsHandedOverExactlyOnce() {
         val selection = ShowcaseSelection("point-lights")
 
-        selection.request("streamed-nav")
+        selection.request("nav-chase")
 
-        assertEquals("streamed-nav", selection.consumeRequest())
+        assertEquals("nav-chase", selection.consumeRequest())
         assertNull(selection.consumeRequest(), "The same request must not activate twice.")
-        assertEquals("streamed-nav", selection.current)
+        assertEquals("nav-chase", selection.current)
     }
 
     @Test

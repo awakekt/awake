@@ -69,19 +69,16 @@ jobs:
       # `android {}` library target (no application-plugin wrapper module), so this currently
       # builds the Android library AAR, not an installable APK -- a real gap versus hello-cube's
       # old coverage, left open until ui-showcase gets its own :androidApp wrapper.
-      - name: Build Android demo (Vulkan JNI regression gate)
-        run: ./gradlew :samples:ui-showcase:assembleDebug
+      - name: Build Android demo APK (Vulkan JNI regression gate)
+        run: ./gradlew :samples:engine-showcase:androidApp:assembleDebug
 
       - name: Build desktop demo
         run: ./gradlew :samples:ui-showcase:desktopJar
 
-      # studio is the sample with real coverage -- 53 tests over its store, gizmo math, shell
-      # layout, save/load and the ASL shader drift guard -- and until now no CI step named it at
-      # all, so none of them ran here. No GPU or native library involved: nothing in
-      # `desktopTest` touches VulkanEngine, GraphicsDevice or loadLibrary, which is why this
-      # belongs in `build` rather than the lavapipe job.
-      - name: Studio sample (tests and desktop jar)
-        run: ./gradlew :app:studio:desktopTest :app:studio:desktopJar
+      # engine-showcase has complete multiplatform coverage across core ECS, physics, audio,
+      # particles and navigation showcases.
+      - name: Engine showcase sample (tests and desktop jar)
+        run: ./gradlew :samples:engine-showcase:desktopTest :samples:engine-showcase:desktopJar
 
       - name: Build vulkan generator
         run: ./gradlew :awake:backend:vulkan:generator:assemble

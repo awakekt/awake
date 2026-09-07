@@ -55,9 +55,9 @@ class ShowcaseSwitcherTest {
 
     @Test
     fun clickingAnEntryRequestsThatShowcase() {
-        click(ShowcaseSwitcherTags.entry("streamed-nav"))
+        click(ShowcaseSwitcherTags.entry("nav-chase"))
 
-        assertEquals("streamed-nav", selection.consumeRequest())
+        assertEquals("nav-chase", selection.consumeRequest())
     }
 }
 

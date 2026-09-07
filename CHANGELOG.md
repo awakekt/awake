@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-dev.12] - 2026-09-07
+
+### Changed
+
+- **Platform backend selection simplification (`AppWindowBackend.DEFAULT`).** Enhanced desktop Vulkan host
+  (`VulkanDesktopHost`) to accept `AppWindowBackend.DEFAULT` alongside `AppWindowBackend.VULKAN`. Removed
+  redundant expect/actual `PlatformBackend` boilerplate across `samples:engine-showcase`, `samples:ui-showcase`,
+  and `samples:compose-showcase`, allowing all multiplatform sample entrypoints to rely on framework defaults.
+
+### Removed
+
+- **Commercial Awake Pro duplicate samples in `samples:engine-showcase`.** Removed proprietary showcase drivers,
+  scenes, and tests (`ragdoll`, `skinned-ragdoll`, and `streamed-nav`) from the open-source repository. These
+  commercial features and workflows now reside in the standalone `awake-pro` repository under
+  `com.awakekt.awake.pro.*`.
+
 ## [0.1.0-dev.11] - 2026-09-07
 
 ### Added

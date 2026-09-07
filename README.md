@@ -27,15 +27,15 @@
 - **Formal Project System & Standalone Runtime** — Typed `awake.project.json` specification with
   SemVer compatibility gates and standalone `AwakeProjectLauncher` execution without editor
   overhead.
-- **Microkernel Plugin Architecture** — `GamePlugin` (runtime systems) and `EditorPlugin` (Shadcn
-  studio panels) SPIs allow modular engine extensions.
+- **Microkernel Plugin Architecture** — `GamePlugin` SPI allows modular engine and gameplay
+  subsystem extensions.
 
-### Declarative UI & Studio IDE
+### Declarative UI & Design System
 
 - **Compose Multiplatform UI Stack** — Declarative UI powered by Compose runtime, custom design
-  tokens, and a complete Shadcn component suite.
-- **Studio IDE & Hierarchical Outliner** — Interactive 3D editor (`app:studio`) featuring expandable
-  file trees, path breadcrumb navigation, live scene inspection, and gizmos.
+  tokens, and a complete Shadcn component suite (`awake:ui:shadcn`).
+- **UI Builder & HUD DSL** — Extensible component architecture (`awake:ui:builder`) for in-game HUDs,
+  debug inspectors, and declarative overlays.
 
 ### Gameplay, Physics & AI
 
@@ -50,21 +50,30 @@
 
 ## Quickstart
 
-Run **Awake Studio** (interactive 3D editor with live scene switching, glTF previewing, and ECS
-inspector):
+Run the **Engine Showcase** (3D rendering with camera controls, lighting, and physics):
 
 ```bash
-# Desktop JVM Target
-./gradlew :app:studio:run
+# Desktop JVM (Vulkan)
+./gradlew :samples:engine-showcase:desktopRun
 
-# Web Target (Chrome/Edge 113+ with WebGPU)
-./gradlew :app:studio:wasmJsBrowserDevelopmentRun
+# Web / Wasm (WebGPU)
+./gradlew :samples:engine-showcase:wasmJsBrowserDevelopmentRun
+
+# Android (Vulkan)
+./gradlew :samples:engine-showcase:androidApp:assembleDebug
+
+# iOS (MoltenVK) - open in Xcode or run from Android Studio / Fleet
+open samples/engine-showcase/iosApp/iosApp.xcodeproj
 ```
 
-Run the **UI Showcase Gallery** (complete catalog of Compose Shadcn components):
+Run the **UI Showcase Gallery** (complete catalog of 23+ Compose Shadcn components):
 
 ```bash
-./gradlew :samples:ui-showcase:run
+# Desktop JVM
+./gradlew :samples:ui-showcase:desktopRun
+
+# Web / Wasm
+./gradlew :samples:ui-showcase:wasmJsBrowserDevelopmentRun
 ```
 
 ---
@@ -161,8 +170,8 @@ List required plugin IDs in your project manifest:
   "id": "com.example.mygame",
   "defaultScene": "scenes/main.scene.json",
   "plugins": [
-    "com.awakekt.pro.physics-ragdoll",
-    "com.awakekt.pro.worldstream"
+    "com.awakekt.awake.pro.physics-ragdoll",
+    "com.awakekt.awake.pro.worldstream"
   ]
 }
 ```
@@ -289,31 +298,32 @@ Awake is organized into clean, modular subprojects:
 - **[`awake:ecs:*`](awake/ecs)** — High-performance sparse-set ECS and archetypes.
 - **[`awake:compose:*`](awake/compose)** — Compose Multiplatform UI runtime, layout nodes, and
   rendering passes.
+- **[`awake:ui:*`](awake/ui)** — Shadcn Compose design system (`awake:ui:shadcn`) and UI builder (`awake:ui:builder`).
 - **[`awake:asset:*`](awake/asset)** — glTF parser, Naga runtime shader compiler, and texture
   loaders.
 - **[`awake:engine:*`](awake/engine)** — Frame loops, render-pass orchestration, and window
   lifecycle.
 - **[`awake:scene:*`](awake/scene)** — Microkernel `GamePlugin` SPI, transforms, Jolt physics,
   `KeybindingProfile`, Behavior Tree AI, and modular slot rendering.
-- **[`awake:editor:*`](awake/editor)** — Studio editor shell, docking layout, scene hierarchy,
-  inspector, and `EditorPlugin` SPI.
 - **[`awake:backend:*`](awake/backend)** — Platform renderers (`vulkan`, `webgpu`, `jolt`).
 
 ---
 
-## Commercial Pro Extensions (`com.awakekt.pro`)
+## Commercial Pro Extensions (`awakekt/awake-pro`)
 
-Advanced algorithmic and enterprise-grade simulation modules are maintained separately under the
+Advanced algorithmic, world-streaming, and studio editor modules are maintained separately under the
 private commercial [`awakekt/awake-pro`](https://github.com/awakekt/awake-pro) repository:
 
-- **`com.awakekt.pro:physics-ragdoll`** — Multi-body humanoid ragdoll solvers, cone-twist joint
-  angle limits, and vehicle physics.
-- **`com.awakekt.pro:worldstream`** — Multi-tile clipmap infinite terrain streaming and GPU virtual
+- **Awake Studio IDE & Editor Shell (`app:studio`, `awake:editor:*`)** — Pluggable docking IDE with
+  live ECS outliner, inspector, glTF preview, and visual scene tools.
+- **`com.awakekt.awake.pro:worldstream`** — Multi-tile clipmap infinite terrain streaming and GPU virtual
   texturing.
-- **`com.awakekt.pro:navigation`** — 2-level hierarchical A* pathfinder and streamed navmesh graphs.
-- **`com.awakekt.pro:character-studio`** — Boundary-locked QEM mesh decimation and dynamic UV atlas
+- **`com.awakekt.awake.pro:navigation`** — 2-level hierarchical A* pathfinder and streamed navmesh graphs.
+- **`com.awakekt.awake.pro:physics-ragdoll`** — Multi-body humanoid ragdoll solvers, cone-twist joint
+  angle limits, and vehicle physics.
+- **`com.awakekt.awake.pro:character-studio`** — Boundary-locked QEM mesh decimation and dynamic UV atlas
   packing.
-- **`com.awakekt.pro:visual-blueprints`** — Drag-and-drop node graph canvas and live execution wire
+- **`com.awakekt.awake.pro:visual-blueprints`** — Drag-and-drop node graph canvas and live execution wire
   debugger.
 
 ---

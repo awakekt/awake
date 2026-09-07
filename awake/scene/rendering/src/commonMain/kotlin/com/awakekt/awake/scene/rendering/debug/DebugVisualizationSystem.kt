@@ -56,14 +56,12 @@ class DebugVisualizationSystem(
 /**
  * The world-space wireframe lines [WorldDebugSettings]' toggles ask for -- pulled out of
  * [DebugVisualizationSystem.update] so a caller that ALSO has its own debug lines to draw this
- * frame (Studio's gizmo handles) can merge both into one [Renderer.drawDebugLines] call instead
+ * frame (an external editor's gizmo handles) can merge both into one [Renderer.drawDebugLines] call instead
  * of two: that call replaces the whole line buffer rather than appending, so whichever caller
  * draws last would otherwise silently wipe the other's lines out -- exactly what made debug
  * toggles disappear the moment an entity was selected (a real gizmo handle only draws when
- * something is selected, and [com.awakekt.awake.studio.StudioModule]'s gizmo system
- * runs after this one specifically so a real drag isn't itself wiped, see that system's own
- * `infrastructureSystems` ordering comment -- which flipped the failure onto every OTHER debug
- * toggle once a selection existed at the same time).
+ * something is selected, and an external editor gizmo system runs after this one specifically so
+ * a real drag isn't itself wiped).
  */
 fun debugVisualizationLines(
     world: World,

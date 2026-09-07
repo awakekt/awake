@@ -26,7 +26,7 @@ class AwakeProjectLauncherTest {
                 "defaultScene": "scenes/level1.scene.json",
                 "targetFrameRate": 120,
                 "physicsTickRate": 60,
-                "plugins": ["com.awakekt.pro.physics-ragdoll"]
+                "plugins": ["com.awakekt.awake.pro.physics-ragdoll"]
             }
         """.trimIndent()
 
@@ -37,7 +37,7 @@ class AwakeProjectLauncherTest {
         assertEquals(120, config.targetFrameRate)
         assertEquals(60, config.physicsTickRate)
         assertEquals(1, config.plugins.size)
-        assertEquals("com.awakekt.pro.physics-ragdoll", config.plugins[0])
+        assertEquals("com.awakekt.awake.pro.physics-ragdoll", config.plugins[0])
     }
 
     @Test

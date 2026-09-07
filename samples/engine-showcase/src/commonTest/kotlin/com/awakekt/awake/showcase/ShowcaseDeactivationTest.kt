@@ -18,11 +18,11 @@ class ShowcaseDeactivationTest {
 
     @Test
     fun theShowcaseThatSpawnsItsOwnEntitiesCleansThemUp() {
-        val streamed = EngineShowcases.single { it.id == "streamed-nav" }
+        val terrain = EngineShowcases.single { it.id == "heightfield-terrain" }
 
         assertTrue(
-            streamed.onDeactivated != null,
-            "streamed-nav spawns terrain entities of its own, so it must clean them up on switch.",
+            terrain.onDeactivated != null,
+            "heightfield-terrain spawns physics/character entities of its own, so it must clean them up on switch.",
         )
     }
 

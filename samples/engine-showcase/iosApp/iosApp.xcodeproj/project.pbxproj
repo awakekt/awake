@@ -54,8 +54,8 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = F1F8A0092E74200000E1280A /* Build configuration list for PBXNativeTarget "iosApp" */;
 			buildPhases = (
-				F1F8A00A2E74200000E1280A /* Run Script */,
-				F1F8A0102E74200000E1280A /* Copy Assets */,
+				F1F8A00A2E74200000E1280A /* Compile KMP Framework */,
+				F1F8A0102E74200000E1280A,
 				F1F8A00B2E74200000E1280A /* Sources */,
 				F1F89FFF2E74200000E1280A /* Frameworks */,
 			);
@@ -102,23 +102,23 @@
 /* End PBXProject section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		F1F8A00A2E74200000E1280A /* Run Script */ = {
+		F1F8A00A2E74200000E1280A /* Compile KMP Framework */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
-			inputValueSubstitutions = (
-			);
 			inputPaths = (
 			);
-			name = "Compile KMP Framework";
-			outputValueSubstitutions = (
+			inputValueSubstitutions = (
 			);
+			name = "Compile KMP Framework";
 			outputPaths = (
+			);
+			outputValueSubstitutions = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ -z \"$AWAKE_SKIP_GRADLE_IOS\" ]; then\n    cd \"$SRCROOT/../../..\"\n    ./gradlew :samples:engine-showcase:embedAndSignAppleFrameworkForXcode\nfi\nmkdir -p \"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\ncp -R \"${SRCROOT}/../src/commonMain/resources/\"* \"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\n";
+			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\nif [ -z \"$AWAKE_SKIP_GRADLE_IOS\" ]; then\n    cd \"$SRCROOT/../../..\"\n    ./gradlew :samples:engine-showcase:embedAndSignAppleFrameworkForXcode\nfi\nmkdir -p \"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}\"\ncp -R \"${SRCROOT}/../src/commonMain/resources/\"* \"${BUILT_PRODUCTS_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -162,17 +162,16 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
-
 				INFOPLIST_FILE = iosApp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				ONLY_ACTIVE_ARCH = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				ONLY_ACTIVE_ARCH = YES;
 				OTHER_LDFLAGS = (
 					"-framework",
-					"EngineShowcase",
+					EngineShowcase,
 					"-L$(SRCROOT)/../../../awake/backend/vulkan/bindings/ios-native/MoltenVK/Package/Release/MoltenVK/static/MoltenVK.xcframework/ios-arm64_x86_64-simulator",
 					"-lMoltenVK",
 					"-lc++",
@@ -183,17 +182,17 @@
 					"-L$(SRCROOT)/../../../awake/asset/shader-compiler/rust-native/target/aarch64-apple-ios-sim/release",
 					"-lawake_naga",
 					"-framework",
-					"Metal",
+					Metal,
 					"-framework",
-					"QuartzCore",
+					QuartzCore,
 					"-framework",
-					"IOSurface",
+					IOSurface,
 					"-framework",
-					"CoreGraphics",
+					CoreGraphics,
 					"-framework",
-					"Foundation",
+					Foundation,
 					"-framework",
-					"UIKit",
+					UIKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.awakekt.awake.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -232,22 +231,22 @@
 				);
 				OTHER_LDFLAGS = (
 					"-framework",
-					"EngineShowcase",
+					EngineShowcase,
 					"-L$(SRCROOT)/../../../awake/backend/vulkan/bindings/ios-native/MoltenVK/Package/Release/MoltenVK/static/MoltenVK.xcframework/ios-arm64_x86_64-simulator",
 					"-lMoltenVK",
 					"-lc++",
 					"-framework",
-					"Metal",
+					Metal,
 					"-framework",
-					"QuartzCore",
+					QuartzCore,
 					"-framework",
-					"IOSurface",
+					IOSurface,
 					"-framework",
-					"CoreGraphics",
+					CoreGraphics,
 					"-framework",
-					"Foundation",
+					Foundation,
 					"-framework",
-					"UIKit",
+					UIKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.awakekt.awake.iosApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";

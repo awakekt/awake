@@ -51,7 +51,7 @@ For new UI-bearing scenes, install the app-level UI module before the scene sess
 
 ```kotlin
 app {
-    module(sceneComposeAppModule(content = { StudioEditor() }))
+    module(sceneComposeAppModule(content = { GameHud() }))
     sceneSession {
         scene(loadScene("island.scene.json"))
     }

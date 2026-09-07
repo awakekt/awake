@@ -15,13 +15,8 @@ import com.awakekt.awake.showcase.examples.InstancedCubesExampleDriver
 import com.awakekt.awake.showcase.examples.InstancedSkinnedExampleDriver
 import com.awakekt.awake.showcase.examples.NavChaseExampleDriver
 import com.awakekt.awake.showcase.examples.ParticleEmitterExampleDriver
-import com.awakekt.awake.showcase.examples.RagdollExampleDriver
 import com.awakekt.awake.showcase.examples.SkinnedExampleDriver
-import com.awakekt.awake.showcase.examples.SkinnedRagdollExampleDriver
-import com.awakekt.awake.showcase.examples.StreamedNavExampleDriver
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
-import com.awakekt.awake.showcase.examples.ragdoll.RagdollGamePlugin
-import com.awakekt.awake.showcase.examples.streaming.WorldStreamGamePlugin
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 
 /** A focused engine proof asset, independently owned by the engine-showcase sample. */
@@ -78,28 +73,6 @@ val EngineShowcases = listOf(
         scenePath = "assets/examples/skinned-mesh.scene.json",
         onActivated = { instance, runtime -> SkinnedExampleDriver.attachPose(instance, runtime) },
     ),
-    // The second showcase running a real Jolt world, and the one that shows what a joint limit is
-    // for: an eleven-limb figure collapsing, then dropped again once it has settled.
-    EngineShowcase(
-        id = "ragdoll",
-        title = "Ragdoll",
-        scenePath = "assets/examples/ragdoll.scene.json",
-        plugins = listOf(RagdollGamePlugin()),
-        driver = { delta -> RagdollExampleDriver.advance(delta) },
-        onActivated = { instance, runtime -> RagdollExampleDriver.attach(instance, runtime) },
-        onDeactivated = { RagdollExampleDriver.detach() },
-    ),
-    // The ragdoll wearing its own mesh: bodies shaped from CesiumMan's bind pose, written back
-    // into the joint palette the skinned material reads.
-    EngineShowcase(
-        id = "skinned-ragdoll",
-        title = "Skinned ragdoll",
-        scenePath = "assets/examples/skinned-ragdoll.scene.json",
-        plugins = listOf(RagdollGamePlugin()),
-        driver = { delta -> SkinnedRagdollExampleDriver.advance(this, delta) },
-        onActivated = { instance, runtime -> SkinnedRagdollExampleDriver.attach(instance, runtime) },
-        onDeactivated = { SkinnedRagdollExampleDriver.detach() },
-    ),
     EngineShowcase(
         id = "instanced-cubes",
         title = "Instanced cubes",
@@ -119,15 +92,6 @@ val EngineShowcases = listOf(
         scenePath = "assets/examples/nav-chase.scene.json",
         driver = { delta -> NavChaseExampleDriver.advance(this, delta) },
         onActivated = { instance, runtime -> NavChaseExampleDriver.attach(instance, runtime) },
-    ),
-    EngineShowcase(
-        id = "streamed-nav",
-        title = "Streamed navigation",
-        scenePath = "assets/examples/streamed-nav.scene.json",
-        plugins = listOf(WorldStreamGamePlugin()),
-        driver = { delta -> StreamedNavExampleDriver.advance(this, delta) },
-        onActivated = { instance, runtime -> StreamedNavExampleDriver.attach(instance, runtime) },
-        onDeactivated = { runtime -> StreamedNavExampleDriver.detach(runtime) },
     ),
     EngineShowcase(
         id = "particles",
