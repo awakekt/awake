@@ -6,7 +6,6 @@
 package com.awakekt.awake.showcase
 
 import com.awakekt.awake.scene.authoring.SceneAssetsDsl
-import com.awakekt.awake.scene.core.plugin.GamePlugin
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.showcase.examples.CharacterExampleDriver
@@ -24,7 +23,6 @@ data class EngineShowcase(
     val id: String,
     val title: String,
     val scenePath: String,
-    val plugins: List<GamePlugin> = emptyList(),
     val driver: (SceneAppLifecycleRuntime.(delta: Float) -> Unit)? = null,
     val onActivated: ((instance: Scene, runtime: SceneAppLifecycleRuntime) -> Unit)? = null,
     /**

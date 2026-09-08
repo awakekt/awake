@@ -13,7 +13,6 @@ import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @Serializable

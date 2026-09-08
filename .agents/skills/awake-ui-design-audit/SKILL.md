@@ -33,8 +33,9 @@ theme, responsive behavior, keyboard operation, or loading state that was not pr
 inspected.
 
 Read [the audit rubric](references/audit-rubric.md) before assigning a score. For a reusable
-report, copy [the audit template](assets/ui-design-audit-report.md). When the request is a web
-port, read `awake-web-to-compose` as well; when a finding requires a fidelity claim or a new
+report, copy [the audit template](assets/ui-design-audit-report.md). When reviewing desktop studio
+tools or plugin dock panels, consult [desktop studio ergonomics](references/desktop-studio-ergonomics.md).
+When the request is a web port, read `awake-web-to-compose` as well; when a finding requires a fidelity claim or a new
 baseline, read `awake-ui-verification` before making that claim.
 
 ## Audit repetition and component ownership

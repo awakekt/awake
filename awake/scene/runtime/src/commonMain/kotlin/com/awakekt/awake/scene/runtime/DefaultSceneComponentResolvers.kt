@@ -12,9 +12,12 @@ import com.awakekt.awake.scene.binding.SceneComponentResolver
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinControlBinding
+import com.awakekt.awake.scene.rendering.Environment
 import com.awakekt.awake.scene.rendering.Light
 import com.awakekt.awake.scene.rendering.camera.CameraBinding
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
+import com.awakekt.awake.scene.rendering.environment.EnvironmentBinding
+import com.awakekt.awake.scene.rendering.environment.SceneEnvironment
 import com.awakekt.awake.scene.rendering.light.LightBinding
 import com.awakekt.awake.scene.rendering.light.SceneLight
 import com.awakekt.awake.scene.rendering.mesh.MaterialBinding
@@ -38,6 +41,7 @@ object DefaultSceneComponentResolvers {
     val SpinControlResolver: SceneComponentBinding<SpinControl, SceneSpinControl> =
         SpinControlBinding
     val MeshRendererResolver: SceneComponentBinding<*, SceneMeshRenderer> = MeshRendererBinding
+    val EnvironmentResolver: SceneComponentBinding<Environment, SceneEnvironment> = EnvironmentBinding
     val PrefabLinkResolver: SceneComponentResolver = PrefabLinkBinding
 
     val bindings: List<SceneComponentBinding<*, *>> = listOf(
@@ -46,6 +50,7 @@ object DefaultSceneComponentResolvers {
         MaterialBinding,
         SpinControlBinding,
         MeshRendererBinding,
+        EnvironmentBinding,
     )
 
     val all: List<SceneComponentResolver> = listOf(
@@ -54,6 +59,7 @@ object DefaultSceneComponentResolvers {
         MaterialBinding,
         SpinControlBinding,
         MeshRendererBinding,
+        EnvironmentBinding,
         PrefabLinkBinding,
     )
 

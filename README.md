@@ -27,8 +27,8 @@
 - **Formal Project System & Standalone Runtime** — Typed `awake.project.json` specification with
   SemVer compatibility gates and standalone `AwakeProjectLauncher` execution without editor
   overhead.
-- **Microkernel Plugin Architecture** — `GamePlugin` SPI allows modular engine and gameplay
-  subsystem extensions.
+- **Extensible Scene Authoring DSL** — Modular scene authoring with typed `SceneSystemsDsl` and
+  `SceneAssetsDsl` for clean system scheduling and asset resolving without reflection.
 
 ### Declarative UI & Design System
 
@@ -157,63 +157,38 @@ fun main(args: Array<String>) {
 }
 ```
 
-### Plugin Architecture & Setup (`GamePlugin`)
+### Scene Authoring & Systems Scheduling (`SceneSystemsDsl`)
 
-Awake's microkernel architecture allows engine and game extensions (such as commercial **Awake Pro** plugins like `physics-ragdoll` or `worldstream`) to install systems and component bindings cleanly.
-
-#### 1. Declare Plugins in `awake.project.json`
-List required plugin IDs in your project manifest:
-
-```json
-{
-  "name": "MyAwakeGame",
-  "id": "com.example.mygame",
-  "defaultScene": "scenes/main.scene.json",
-  "plugins": [
-    "com.awakekt.awake.pro.physics-ragdoll",
-    "com.awakekt.awake.pro.worldstream"
-  ]
-}
-```
-
-#### 2. Implement or Register `GamePlugin`
+Awake scenes declare their simulation systems, assets, and entities using a clean, typed DSL without reflection or runtime plugin overhead:
 
 ```kotlin
-import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.core.plugin.GamePlugin
-import com.awakekt.awake.scene.core.plugin.PluginId
-import com.awakekt.awake.scene.core.plugin.PluginMetadata
+import com.awakekt.awake.scene.authoring.scene
 
-class CustomGameplayPlugin : GamePlugin {
-    override val metadata = PluginMetadata(
-        id = PluginId("com.example.custom-gameplay"),
-        displayName = "Custom Gameplay Systems",
-        version = "1.0.0",
-    )
-
-    override fun install(world: World) {
-        // Register custom ECS systems and component bindings
-        world.addSystem(CustomMovementSystem())
+val myScene = scene {
+    assets {
+        // Register asset loaders / resolvers
+    }
+    systems {
+        frameSystem("movement") { PlayerMovementSystem() }
+        fixedSystem("physics") { PhysicsSimulationSystem() }
+    }
+    entities {
+        // Author entities, components, and transforms
     }
 }
 ```
 
-#### 3. Execute Plugins in `AwakeProjectLauncher`
+Standalone project launches execute scenes directly via `AwakeProjectLauncher`:
 
 ```kotlin
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.core.plugin.GamePluginRegistry
 import com.awakekt.awake.scene.runtime.project.AwakeProjectLauncher
 
 fun main() {
     val world = World()
-    val registry = GamePluginRegistry()
 
-    // Register plugin instances
-    registry.register(CustomGameplayPlugin())
-
-    // Instantiates scene and installs declared plugins before scene deserialization
-    val scene = AwakeProjectLauncher.loadScene(world, sceneJson, registry)
+    // Instantiates default scene and binds systems directly into the runtime frame loop
+    val scene = AwakeProjectLauncher.loadScene(world, sceneJson)
 }
 ```
 
@@ -303,7 +278,7 @@ Awake is organized into clean, modular subprojects:
   loaders.
 - **[`awake:engine:*`](awake/engine)** — Frame loops, render-pass orchestration, and window
   lifecycle.
-- **[`awake:scene:*`](awake/scene)** — Microkernel `GamePlugin` SPI, transforms, Jolt physics,
+- **[`awake:scene:*`](awake/scene)** — Scene lifecycle, transforms, Jolt physics,
   `KeybindingProfile`, Behavior Tree AI, and modular slot rendering.
 - **[`awake:backend:*`](awake/backend)** — Platform renderers (`vulkan`, `webgpu`, `jolt`).
 

@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.foundation.layout.Arrangement
@@ -12,6 +14,8 @@ import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.widthIn
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.CompositionLocal
+import com.awakekt.awake.compose.runtime.compositionLocalOf
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.layout.Layer
@@ -84,6 +88,11 @@ class ShadcnToastState {
 }
 
 /**
+ * Ambient [ShadcnToastState] for applications that host a [ShadcnToaster] near their root.
+ */
+val LocalToastState: CompositionLocal<ShadcnToastState?> = compositionLocalOf { null }
+
+/**
  * shadcn's `Toaster`: the viewport toasts appear in. Place one near the app root.
  *
  * Bottom-trailing and non-modal, which is the whole difference from the other overlays -- a toast
@@ -105,8 +114,12 @@ fun ShadcnToaster(
         // A layer sizes to its content and, without a provider, is placed at the origin -- the other
         // overlays only appear centred because their scrim makes the layer viewport-sized and the
         // alignment then acts inside it. A toaster has no scrim, so it has to say where it goes.
-        positionProvider = { _, _, layerWidth, layerHeight, viewportWidth, viewportHeight ->
-            LayerPosition(viewportWidth - layerWidth, viewportHeight - layerHeight)
+        // LayerPosition is expressed relative to the declaring node, so parent coordinates are subtracted.
+        positionProvider = { parentX, parentY, layerWidth, layerHeight, viewportWidth, viewportHeight ->
+            LayerPosition(
+                x = viewportWidth - layerWidth - parentX,
+                y = viewportHeight - layerHeight - parentY,
+            )
         },
         measurePolicy = BoxMeasurePolicy(),
     ) {
@@ -116,7 +129,7 @@ fun ShadcnToaster(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(ToastGap)) {
                 for (toast in toasts) {
-                    shadcnToast(
+                    ShadcnToast(
                         toast.message,
                         modifier = Modifier
                             .widthIn(max = ToastMaxWidth)
@@ -132,6 +145,19 @@ fun ShadcnToaster(
             }
         }
     }
+}
+
+/**
+ * Convenience overload that reads the toast queue from [LocalToastState].
+ * Emits nothing if no [LocalToastState] is provided or if the queue is empty.
+ */
+context(_: Composer)
+fun ShadcnToaster(
+    modifier: Modifier = Modifier,
+    id: String? = null,
+) {
+    val state = LocalToastState.current ?: return
+    ShadcnToaster(state, modifier, id)
 }
 
 /** Sonner's default dwell. */

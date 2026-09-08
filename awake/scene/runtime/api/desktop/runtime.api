@@ -74,6 +74,7 @@ public final class com/awakekt/awake/scene/runtime/DefaultSceneComponentResolver
 	public final fun getAll ()Ljava/util/List;
 	public final fun getBindings ()Ljava/util/List;
 	public final fun getCameraResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getEnvironmentResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getLightResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getMeshRendererResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getPbrMaterialResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
@@ -348,10 +349,8 @@ public final class com/awakekt/awake/scene/runtime/TerrainDriver$DefaultImpls {
 
 public final class com/awakekt/awake/scene/runtime/project/AwakeProjectLauncher {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;
-	public final fun loadScene (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;)Lcom/awakekt/awake/scene/binding/Scene;
-	public final fun loadScene (Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;)Lcom/awakekt/awake/scene/binding/Scene;
-	public static synthetic fun loadScene$default (Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/Scene;
-	public static synthetic fun loadScene$default (Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/Scene;
+	public final fun loadScene (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/document/SceneDocument;)Lcom/awakekt/awake/scene/binding/Scene;
+	public final fun loadScene (Lcom/awakekt/awake/ecs/World;Ljava/lang/String;)Lcom/awakekt/awake/scene/binding/Scene;
 	public final fun parseConfig (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/project/StandaloneProjectConfig;
 }
 

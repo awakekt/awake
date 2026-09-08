@@ -5,16 +5,16 @@
  */
 package com.awakekt.awake.ai.behavior
 
-import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.core.Name
-import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.binding.SceneComponentRegistry
-import com.awakekt.awake.scene.binding.fromWorld
-import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.ai.behavior.chase.SceneChase
 import com.awakekt.awake.ai.behavior.flee.SceneFlee
 import com.awakekt.awake.ai.behavior.patrol.ScenePatrol
+import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
+import com.awakekt.awake.scene.binding.fromWorld
+import com.awakekt.awake.scene.binding.instantiate
+import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode

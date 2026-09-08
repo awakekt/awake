@@ -1169,6 +1169,8 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnToastEntry {
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnToastKt {
+	public static final fun ShadcnToast (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;)V
+	public static synthetic fun ShadcnToast$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;ILjava/lang/Object;)V
 	public static final fun shadcnToast (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;)V
 	public static synthetic fun shadcnToast$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;ILjava/lang/Object;)V
 }
@@ -1185,8 +1187,11 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnToastState {
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnToasterKt {
 	public static final field DEFAULT_TOAST_SECONDS F
 	public static final field MAX_VISIBLE_TOASTS I
+	public static final fun ShadcnToaster (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;)V
 	public static final fun ShadcnToaster (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/shadcn/components/ShadcnToastState;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;)V
+	public static synthetic fun ShadcnToaster$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;ILjava/lang/Object;)V
 	public static synthetic fun ShadcnToaster$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/ui/shadcn/components/ShadcnToastState;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/lang/String;ILjava/lang/Object;)V
+	public static final fun getLocalToastState ()Lcom/awakekt/awake/compose/runtime/CompositionLocal;
 }
 
 public abstract interface annotation class com/awakekt/awake/ui/shadcn/components/ShadcnToggleGroupDsl : java/lang/annotation/Annotation {

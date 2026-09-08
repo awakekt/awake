@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+
 package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.foundation.background
@@ -15,9 +17,9 @@ import com.awakekt.awake.core.text.font.FontWeight
 import com.awakekt.awake.tailwind.Tw
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
-/** Shadcn toast component. */
+/** Shadcn toast card component. */
 context(_: Composer)
-fun shadcnToast(
+fun ShadcnToast(
     message: String,
     modifier: Modifier = Modifier,
     title: String? = null,
@@ -35,4 +37,18 @@ fun shadcnToast(
             ShadcnText(message, variant = ShadcnTextVariant.Small, color = theme.palette.cardForeground)
         }
     }
+}
+
+/** Compatibility shim for [ShadcnToast]. */
+@Deprecated(
+    message = "Use PascalCase ShadcnToast instead",
+    replaceWith = ReplaceWith("ShadcnToast(message, modifier, title)"),
+)
+context(_: Composer)
+fun shadcnToast(
+    message: String,
+    modifier: Modifier = Modifier,
+    title: String? = null,
+) {
+    ShadcnToast(message, modifier, title)
 }

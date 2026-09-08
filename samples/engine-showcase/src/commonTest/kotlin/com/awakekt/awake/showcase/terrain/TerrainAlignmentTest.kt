@@ -12,8 +12,8 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
-import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import kotlinx.coroutines.test.runTest
 import kotlin.math.abs

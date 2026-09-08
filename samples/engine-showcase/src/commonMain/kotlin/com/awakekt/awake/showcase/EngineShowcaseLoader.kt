@@ -6,11 +6,11 @@
 package com.awakekt.awake.showcase
 
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraMode
 import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.controls.camera.aimAt
-import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.Camera
@@ -52,9 +52,6 @@ internal class EngineShowcaseLoader {
         // and the bounds overlay all have nothing to work on.
         instance.attachRenderableComponents { request -> library.resolve(runtime, request) }
         instance.attachOrbitCamera()
-        showcase.plugins.forEach { plugin ->
-            plugin.install(instance.world)
-        }
         showcase.onActivated?.invoke(instance, runtime)
     }
 

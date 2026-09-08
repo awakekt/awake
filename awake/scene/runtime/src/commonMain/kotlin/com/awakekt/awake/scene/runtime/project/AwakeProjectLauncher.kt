@@ -8,7 +8,6 @@ package com.awakekt.awake.scene.runtime.project
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.binding.instantiate
-import com.awakekt.awake.scene.core.plugin.GamePluginRegistry
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import kotlinx.serialization.Serializable
@@ -27,46 +26,34 @@ data class StandaloneProjectConfig(
 )
 
 /**
- * Standalone game launcher that loads an Awake game project and its default scene
- * directly into an ECS [World] without editor UI or Studio dependencies.
+ * Headless or platform launcher utility to bootstrap an Awake game from a project manifest and scene.
  */
 object AwakeProjectLauncher {
-
     private val json = Json { ignoreUnknownKeys = true }
 
     /**
-     * Parses the project configuration JSON.
+     * Parses the project configuration JSON string.
      */
     fun parseConfig(projectJson: String): StandaloneProjectConfig = json.decodeFromString(StandaloneProjectConfig.serializer(), projectJson)
 
     /**
-     * Instantiates a scene document into an active [World], executing any registered [GamePlugin]s.
+     * Instantiates a scene document into an active [World].
      *
      * @return The instantiated [Scene] containing the root nodes.
      */
     fun loadScene(
         world: World,
         sceneJson: String,
-        pluginRegistry: GamePluginRegistry? = null,
     ): Scene {
-        pluginRegistry?.installed?.forEach { plugin ->
-            plugin.install(world)
-        }
         val document = SceneLoader.decode(sceneJson)
         return SceneLoader.instantiate(document, world)
     }
 
     /**
-     * Instantiates an already parsed [SceneDocument] into an active [World], executing any registered [GamePlugin]s.
+     * Instantiates an already parsed [SceneDocument] into an active [World].
      */
     fun loadScene(
         world: World,
         document: SceneDocument,
-        pluginRegistry: GamePluginRegistry? = null,
-    ): Scene {
-        pluginRegistry?.installed?.forEach { plugin ->
-            plugin.install(world)
-        }
-        return SceneLoader.instantiate(document, world)
-    }
+    ): Scene = SceneLoader.instantiate(document, world)
 }

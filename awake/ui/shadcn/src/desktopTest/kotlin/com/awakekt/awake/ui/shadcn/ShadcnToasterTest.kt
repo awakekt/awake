@@ -8,6 +8,7 @@ package com.awakekt.awake.ui.shadcn
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
+import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.testing.ComposeComponentFrame
 import com.awakekt.awake.compose.testing.ComposeTestSession
 import com.awakekt.awake.compose.testing.composeTestSession
@@ -15,6 +16,7 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.compose.ui.semantics.testTag
+import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.ui.shadcn.components.MAX_VISIBLE_TOASTS
 import com.awakekt.awake.ui.shadcn.components.ShadcnToastState
 import com.awakekt.awake.ui.shadcn.components.ShadcnToaster
@@ -105,6 +107,38 @@ class ShadcnToasterTest {
         session.clickAt(EDGE, EDGE)
 
         assertEquals(1, clicks, "a toast swallowed a click meant for the page")
+    }
+
+    /**
+     * When a toaster is nested inside an offset parent (e.g. an EditorScaffold body below a header),
+     * its positionProvider must subtract the parent coordinates so the floating layer remains
+     * correctly anchored to the bottom-trailing corner of the viewport rather than pushed offscreen.
+     */
+    @Test
+    fun toasterNestedInOffsetContainerPlacesCorrectlyAtViewportBottomRight() {
+        val state = ShadcnToastState()
+        val session = composeTestSession(VIEWPORT, VIEWPORT) {
+            provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
+                Box(Modifier.padding(top = 100.dp, start = 80.dp)) {
+                    ShadcnToaster(state, id = TOASTER)
+                }
+            }
+        }
+        session.frame(tick())
+        val key = state.show("Nested test")
+        val frame = session.frame(tick())
+
+        val toastNode = frame.flatSemantics().first { it.testTag == "$TOASTER.$key" }
+        assertTrue(
+            toastNode.x + toastNode.width <= VIEWPORT,
+            "Toast exceeded viewport width: x=${toastNode.x}, w=${toastNode.width}, viewport=$VIEWPORT",
+        )
+        assertTrue(
+            toastNode.y + toastNode.height <= VIEWPORT,
+            "Toast exceeded viewport height: y=${toastNode.y}, h=${toastNode.height}, viewport=$VIEWPORT",
+        )
+        assertTrue(toastNode.x >= 0, "Toast was placed off-screen to the left: x=${toastNode.x}")
+        assertTrue(toastNode.y >= 0, "Toast was placed off-screen to the top: y=${toastNode.y}")
     }
 
     /** The semantics tree is nested, so a toast is a child of the toaster rather than a root. */

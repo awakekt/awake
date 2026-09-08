@@ -6,15 +6,10 @@
 package com.awakekt.awake.scene.runtime.project
 
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.core.plugin.GamePlugin
-import com.awakekt.awake.scene.core.plugin.GamePluginRegistry
-import com.awakekt.awake.scene.core.plugin.PluginId
-import com.awakekt.awake.scene.core.plugin.PluginMetadata
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class AwakeProjectLauncherTest {
 
@@ -53,30 +48,5 @@ class AwakeProjectLauncherTest {
         val scene = AwakeProjectLauncher.loadScene(world, doc)
 
         assertEquals(2, scene.roots.size)
-    }
-
-    @Test
-    fun installsRegisteredPluginsWhenLoadingScene() {
-        val world = World()
-        val registry = GamePluginRegistry()
-        var installedCalled = false
-
-        val testPlugin = object : GamePlugin {
-            override val metadata = PluginMetadata(
-                id = PluginId("com.test.plugin"),
-                displayName = "Test Plugin",
-                version = "1.0.0",
-            )
-            override fun install(world: World) {
-                installedCalled = true
-            }
-        }
-
-        registry.install(testPlugin)
-
-        val doc = SceneDocument(nodes = listOf(SceneNode(name = "Root")))
-        AwakeProjectLauncher.loadScene(world, doc, registry)
-
-        assertTrue(installedCalled)
     }
 }

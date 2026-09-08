@@ -19,11 +19,12 @@ import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.shadowCascadeUniforms
-import com.awakekt.awake.scene.rendering.camera.SceneCamera
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.physics.PhysicsBody
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.rendering.RenderSystem
+import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
@@ -34,7 +35,6 @@ import com.awakekt.awake.vulkan.renderer.readPresentedPixels
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.rendering.light.SceneLight as SceneDocumentLight
 import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
 

@@ -28,6 +28,7 @@ import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
+import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -51,7 +52,6 @@ import kotlin.test.assertTrue
 import com.awakekt.awake.render.material.Material as RenderMaterial
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 import com.awakekt.awake.scene.rendering.light.SceneLight as SceneDocumentLight
-import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 
 /**
  * What cascades buy, on real pixels: a scene that is nowhere near the world origin still casts
