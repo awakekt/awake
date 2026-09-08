@@ -23,11 +23,13 @@ kotlin {
             api(project(":awake:core:math"))
             api(project(":awake:scene:scene-core"))
             api(project(":awake:scene:document"))
+            api(project(":awake:scene:binding"))
             api(project(":awake:navigation"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(project(":awake:scene:runtime"))
             implementation(project(":awake:asset:terrain"))
         }
     }

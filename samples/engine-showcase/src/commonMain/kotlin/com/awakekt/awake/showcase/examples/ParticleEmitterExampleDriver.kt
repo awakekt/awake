@@ -16,7 +16,7 @@ import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.renderer.ParticleUniformLayout
 import com.awakekt.awake.render.texture.TextureAsset
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.rendering.particles.ParticleDynamics
 import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
 import com.awakekt.awake.scene.rendering.particles.ParticleGround

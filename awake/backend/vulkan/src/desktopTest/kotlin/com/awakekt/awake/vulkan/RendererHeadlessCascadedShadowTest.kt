@@ -24,10 +24,10 @@ import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.renderer.directionalShadowBox
 import com.awakekt.awake.render.renderer.shadowCascadeUniforms
 import com.awakekt.awake.render.texture.RenderTarget
-import com.awakekt.awake.scene.document.SceneCamera
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
-import com.awakekt.awake.scene.document.SceneMeshRenderer
+import com.awakekt.awake.scene.rendering.camera.SceneCamera
+import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -50,7 +50,8 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 import com.awakekt.awake.render.material.Material as RenderMaterial
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
-import com.awakekt.awake.scene.document.SceneLight as SceneDocumentLight
+import com.awakekt.awake.scene.rendering.light.SceneLight as SceneDocumentLight
+import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 
 /**
  * What cascades buy, on real pixels: a scene that is nowhere near the world origin still casts
@@ -68,6 +69,9 @@ import com.awakekt.awake.scene.document.SceneLight as SceneDocumentLight
  * mean something: without it, a test that passes proves only that something drew.
  */
 class RendererHeadlessCascadedShadowTest {
+    init {
+        DefaultSceneComponentResolvers.install()
+    }
 
     @Test
     fun aSceneFarFromTheOriginStillCastsShadows() {

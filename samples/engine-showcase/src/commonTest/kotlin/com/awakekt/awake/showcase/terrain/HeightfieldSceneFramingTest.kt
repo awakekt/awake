@@ -5,8 +5,9 @@
  */
 package com.awakekt.awake.showcase.terrain
 
-import com.awakekt.awake.scene.document.SceneCamera
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.rendering.camera.SceneCamera
+import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -22,6 +23,9 @@ import kotlin.test.assertTrue
  * the terrain sat off to one side of a frame nobody asserted anything about.
  */
 class HeightfieldSceneFramingTest {
+    init {
+        DefaultSceneComponentResolvers.install()
+    }
 
     @Test
     fun theCameraLooksAtGroundThatExists() = runTest {

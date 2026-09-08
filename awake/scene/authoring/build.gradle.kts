@@ -32,7 +32,7 @@ kotlin {
             api(project(":awake:scene:rendering"))
             api(project(":awake:scene:controls"))
             api(project(":awake:scene:runtime"))
-            api(project(":awake:core:audio"))
+            api(project(":awake:scene:audio"))
             api(project(":awake:engine:bootstrap"))
             implementation(libs.kotlinx.serialization.json)
         }

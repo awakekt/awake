@@ -16,7 +16,7 @@ import com.awakekt.awake.physics.Buoyancy
 import com.awakekt.awake.physics.ContactPhase
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.physics.PhysicsBody
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime

@@ -6,6 +6,7 @@
 package com.awakekt.awake.showcase.terrain
 
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -24,6 +25,9 @@ import kotlin.test.assertTrue
  * wide enough to push a box onto, the ground under this spot rises by more than half a metre.
  */
 class GoalZonePlacementTest {
+    init {
+        DefaultSceneComponentResolvers.install()
+    }
 
     @Test
     fun theGoalPostStandsOnTheGroundItMarks() = runTest {

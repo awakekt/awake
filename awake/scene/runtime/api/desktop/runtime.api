@@ -1,92 +1,85 @@
-public final class com/awakekt/awake/scene/audio/AudioListener {
+public final class com/awakekt/awake/scene/binding/AwakeWorldSceneAdapter : com/awakekt/awake/scene/document/SceneInstantiationAdapter {
 	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun attachComponent (Ljava/lang/Object;Lcom/awakekt/awake/scene/document/SceneComponent;)V
+	public fun attachComponent-smMvhPQ (JLcom/awakekt/awake/scene/document/SceneComponent;)V
+	public synthetic fun attachName (Ljava/lang/Object;Ljava/lang/String;)V
+	public fun attachName-smMvhPQ (JLjava/lang/String;)V
+	public synthetic fun attachTransform (Ljava/lang/Object;Lcom/awakekt/awake/scene/document/SceneTransform;Ljava/lang/Object;)V
+	public fun attachTransform-3cK-NeU (JLcom/awakekt/awake/scene/document/SceneTransform;Lcom/awakekt/awake/ecs/Entity;)V
+	public fun complete (Ljava/util/List;)Lcom/awakekt/awake/scene/binding/Scene;
+	public synthetic fun complete (Ljava/util/List;)Ljava/lang/Object;
+	public synthetic fun createNode (Lcom/awakekt/awake/scene/document/SceneNode;Ljava/lang/Object;)Ljava/lang/Object;
+	public fun createNode-bfQRhxg (Lcom/awakekt/awake/scene/document/SceneNode;Lcom/awakekt/awake/ecs/Entity;)J
 }
 
-public final class com/awakekt/awake/scene/audio/AudioSource {
-	public fun <init> (Lcom/awakekt/awake/core/audio/AudioClip;FZFZZ)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/audio/AudioClip;FZFZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lcom/awakekt/awake/core/audio/AudioClip;
-	public final fun component2 ()F
-	public final fun component3 ()Z
-	public final fun component4 ()F
-	public final fun component5 ()Z
-	public final fun component6 ()Z
-	public final fun copy (Lcom/awakekt/awake/core/audio/AudioClip;FZFZZ)Lcom/awakekt/awake/scene/audio/AudioSource;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/audio/AudioSource;Lcom/awakekt/awake/core/audio/AudioClip;FZFZZILjava/lang/Object;)Lcom/awakekt/awake/scene/audio/AudioSource;
+public final class com/awakekt/awake/scene/binding/AwakeWorldSceneAdapterKt {
+	public static final fun toComponent-14ph0pU (Lcom/awakekt/awake/scene/document/SceneTransform;Lcom/awakekt/awake/ecs/Entity;)Lcom/awakekt/awake/scene/core/transform/Transform;
+	public static final fun toVec3 (Lcom/awakekt/awake/scene/document/SceneVec3;)Lcom/awakekt/awake/core/math/Vec3f;
+}
+
+public final class com/awakekt/awake/scene/binding/Scene {
+	public fun <init> (Lcom/awakekt/awake/ecs/World;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/ecs/World;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy (Lcom/awakekt/awake/ecs/World;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/scene/binding/Scene;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/binding/Scene;Lcom/awakekt/awake/ecs/World;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/Scene;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAutoPlay ()Z
-	public final fun getClip ()Lcom/awakekt/awake/core/audio/AudioClip;
-	public final fun getLoop ()Z
-	public final fun getMaxDistance ()F
-	public final fun getPlayingHandle ()Lcom/awakekt/awake/core/audio/SoundHandle;
-	public final fun getVolume ()F
+	public final fun getRequests ()Ljava/util/List;
+	public final fun getRoots ()Ljava/util/List;
+	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
 	public fun hashCode ()I
-	public final fun isPlaying ()Z
-	public final fun isSpatial3D ()Z
-	public final fun setAutoPlay (Z)V
-	public final fun setLoop (Z)V
-	public final fun setMaxDistance (F)V
-	public final fun setPlayingHandle (Lcom/awakekt/awake/core/audio/SoundHandle;)V
-	public final fun setSpatial3D (Z)V
-	public final fun setVolume (F)V
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/awakekt/awake/scene/audio/AudioSystem : com/awakekt/awake/ecs/System {
-	public fun <init> (Lcom/awakekt/awake/core/audio/AudioPlayer;)V
-	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+public final class com/awakekt/awake/scene/binding/SceneBindingExtensionsKt {
+	public static final fun instantiate (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/Scene;
+	public static final fun instantiate (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/Scene;
+	public static synthetic fun instantiate$default (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/Scene;
+	public static synthetic fun instantiate$default (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/Scene;
 }
 
-public final class com/awakekt/awake/scene/runtime/CameraBinding : com/awakekt/awake/scene/document/SceneComponentBinding {
-	public static final field INSTANCE Lcom/awakekt/awake/scene/runtime/CameraBinding;
-	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/document/SceneResolutionContext;)V
-	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
-	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/Camera;)Lcom/awakekt/awake/scene/document/SceneCamera;
-	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneCamera;
-	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public fun getComponentClass ()Lkotlin/reflect/KClass;
-	public final fun toComponent (Lcom/awakekt/awake/scene/document/SceneCamera;)Lcom/awakekt/awake/scene/rendering/Camera;
-	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/Camera;)Lcom/awakekt/awake/scene/document/SceneCamera;
+public final class com/awakekt/awake/scene/binding/SceneInstanceKt {
+	public static final fun destroy (Lcom/awakekt/awake/scene/binding/Scene;)V
+	public static final fun getRenderableRequests (Lcom/awakekt/awake/scene/binding/Scene;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/scene/binding/SceneNodeInstance {
+	public synthetic fun <init> (Ljava/lang/String;JLjava/util/List;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2-LaMO_uA ()J
+	public final fun component3 ()Ljava/util/List;
+	public final fun copy-_l4HXwU (Ljava/lang/String;JLjava/util/List;)Lcom/awakekt/awake/scene/binding/SceneNodeInstance;
+	public static synthetic fun copy-_l4HXwU$default (Lcom/awakekt/awake/scene/binding/SceneNodeInstance;Ljava/lang/String;JLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/SceneNodeInstance;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChildren ()Ljava/util/List;
+	public final fun getEntity-LaMO_uA ()J
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/binding/SceneWorldExportKt {
+	public static final fun fromWorld (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/document/SceneDocument;
+	public static synthetic fun fromWorld$default (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneDocument;
+	public static final fun toSceneTransform (Lcom/awakekt/awake/scene/core/transform/Transform;)Lcom/awakekt/awake/scene/document/SceneTransform;
+	public static final fun toSceneVec3 (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/scene/document/SceneVec3;
 }
 
 public final class com/awakekt/awake/scene/runtime/DefaultSceneComponentResolvers {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/runtime/DefaultSceneComponentResolvers;
 	public final fun getAll ()Ljava/util/List;
 	public final fun getBindings ()Ljava/util/List;
-	public final fun getCameraResolver ()Lcom/awakekt/awake/scene/document/SceneComponentBinding;
-	public final fun getLightResolver ()Lcom/awakekt/awake/scene/document/SceneComponentBinding;
-	public final fun getMeshRendererResolver ()Lcom/awakekt/awake/scene/document/SceneComponentResolver;
-	public final fun getPbrMaterialResolver ()Lcom/awakekt/awake/scene/document/SceneComponentBinding;
-	public final fun getPrefabLinkResolver ()Lcom/awakekt/awake/scene/document/SceneComponentResolver;
-	public final fun getSpinControlResolver ()Lcom/awakekt/awake/scene/document/SceneComponentBinding;
+	public final fun getCameraResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getLightResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getMeshRendererResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getPbrMaterialResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getPrefabLinkResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentResolver;
+	public final fun getSpinControlResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun install ()V
-}
-
-public final class com/awakekt/awake/scene/runtime/LightBinding : com/awakekt/awake/scene/document/SceneComponentBinding {
-	public static final field INSTANCE Lcom/awakekt/awake/scene/runtime/LightBinding;
-	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/document/SceneResolutionContext;)V
-	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
-	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/Light;)Lcom/awakekt/awake/scene/document/SceneLight;
-	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneLight;
-	public fun getComponentClass ()Lkotlin/reflect/KClass;
-	public final fun toComponent (Lcom/awakekt/awake/scene/document/SceneLight;)Lcom/awakekt/awake/scene/rendering/Light;
-	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/Light;)Lcom/awakekt/awake/scene/document/SceneLight;
-}
-
-public final class com/awakekt/awake/scene/runtime/MaterialBinding : com/awakekt/awake/scene/document/SceneComponentBinding {
-	public static final field INSTANCE Lcom/awakekt/awake/scene/runtime/MaterialBinding;
-	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/document/SceneResolutionContext;)V
-	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
-	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;)Lcom/awakekt/awake/scene/document/ScenePbrMaterial;
-	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/ScenePbrMaterial;
-	public fun getComponentClass ()Lkotlin/reflect/KClass;
-	public final fun toComponent (Lcom/awakekt/awake/scene/document/ScenePbrMaterial;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
-	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;)Lcom/awakekt/awake/scene/document/ScenePbrMaterial;
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAppFrameKt {
@@ -170,7 +163,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary {
 	public final fun releaseMesh (Ljava/lang/String;)Z
 	public final fun requireMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public final fun requireMesh (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
-	public final fun resolve (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/scene/document/SceneRenderableRequest;)Lcom/awakekt/awake/scene/rendering/mesh/MeshRenderer;
+	public final fun resolve (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lcom/awakekt/awake/scene/rendering/mesh/SceneRenderableRequest;)Lcom/awakekt/awake/scene/rendering/mesh/MeshRenderer;
 	public final fun retainedMeshBytes ()J
 }
 
@@ -221,8 +214,8 @@ public final class com/awakekt/awake/scene/runtime/SceneLocalsKt {
 public final class com/awakekt/awake/scene/runtime/SceneManager {
 	public fun <init> (Lcom/awakekt/awake/ecs/World;)V
 	public final fun close ()V
-	public final fun getCurrent ()Lcom/awakekt/awake/scene/document/Scene;
-	public final fun switchTo (Lcom/awakekt/awake/scene/document/SceneDocument;)Lcom/awakekt/awake/scene/document/Scene;
+	public final fun getCurrent ()Lcom/awakekt/awake/scene/binding/Scene;
+	public final fun switchTo (Lcom/awakekt/awake/scene/document/SceneDocument;)Lcom/awakekt/awake/scene/binding/Scene;
 }
 
 public final class com/awakekt/awake/scene/runtime/ScenePhaseStats {
@@ -250,7 +243,7 @@ public final class com/awakekt/awake/scene/runtime/ScenePhaseStats {
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneRenderableAttachmentKt {
-	public static final fun attachRenderableComponents (Lcom/awakekt/awake/scene/document/Scene;Lkotlin/jvm/functions/Function1;)V
+	public static final fun attachRenderableComponents (Lcom/awakekt/awake/scene/binding/Scene;Lkotlin/jvm/functions/Function1;)V
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneRenderableKey {
@@ -355,10 +348,10 @@ public final class com/awakekt/awake/scene/runtime/TerrainDriver$DefaultImpls {
 
 public final class com/awakekt/awake/scene/runtime/project/AwakeProjectLauncher {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;
-	public final fun loadScene (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;)Lcom/awakekt/awake/scene/document/Scene;
-	public final fun loadScene (Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;)Lcom/awakekt/awake/scene/document/Scene;
-	public static synthetic fun loadScene$default (Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/Scene;
-	public static synthetic fun loadScene$default (Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/Scene;
+	public final fun loadScene (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;)Lcom/awakekt/awake/scene/binding/Scene;
+	public final fun loadScene (Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;)Lcom/awakekt/awake/scene/binding/Scene;
+	public static synthetic fun loadScene$default (Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/Scene;
+	public static synthetic fun loadScene$default (Lcom/awakekt/awake/scene/runtime/project/AwakeProjectLauncher;Lcom/awakekt/awake/ecs/World;Ljava/lang/String;Lcom/awakekt/awake/scene/core/plugin/GamePluginRegistry;ILjava/lang/Object;)Lcom/awakekt/awake/scene/binding/Scene;
 	public final fun parseConfig (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/project/StandaloneProjectConfig;
 }
 
@@ -405,16 +398,22 @@ public final class com/awakekt/awake/scene/runtime/session/SceneDocumentEditSess
 	public fun <init> (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun applyAuthoredDocument (Lcom/awakekt/awake/scene/document/SceneDocument;)V
+	public final fun clearStepping ()V
 	public final fun close ()V
 	public final fun getAuthoredDocument ()Lcom/awakekt/awake/scene/document/SceneDocument;
 	public final fun getMode ()Lcom/awakekt/awake/scene/runtime/session/SceneDocumentSessionMode;
 	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
-	public final fun startPlay ()Lcom/awakekt/awake/scene/document/Scene;
+	public final fun isStepping ()Z
+	public final fun pausePlay ()V
+	public final fun resumePlay ()V
+	public final fun startPlay ()Lcom/awakekt/awake/scene/binding/Scene;
+	public final fun stepPlay ()V
 	public final fun stopPlay ()V
 }
 
 public final class com/awakekt/awake/scene/runtime/session/SceneDocumentSessionMode : java/lang/Enum {
 	public static final field Edit Lcom/awakekt/awake/scene/runtime/session/SceneDocumentSessionMode;
+	public static final field Pause Lcom/awakekt/awake/scene/runtime/session/SceneDocumentSessionMode;
 	public static final field Play Lcom/awakekt/awake/scene/runtime/session/SceneDocumentSessionMode;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/session/SceneDocumentSessionMode;

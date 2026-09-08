@@ -51,6 +51,31 @@ class MeshGenerateScope {
     ) {
         geometry = buildPlaneGeometry(size = size, colored = colored, format = format)
     }
+
+    /**
+     * Generates a UV sphere mesh.
+     *
+     * @param radius The radius of the sphere.
+     * @param rings The number of latitude subdivisions.
+     * @param sectors The number of longitude subdivisions.
+     * @param colored If true, generates distinctive face colors; otherwise uniform white.
+     * @param format The vertex layout format. Defaults to [VertexFormat.PositionNormalColor].
+     */
+    fun sphere(
+        radius: Float = 0.5f,
+        rings: Int = 16,
+        sectors: Int = 16,
+        colored: Boolean = false,
+        format: VertexFormat = VertexFormat.PositionNormalColor,
+    ) {
+        geometry = buildSphereGeometry(
+            radius = radius,
+            rings = rings,
+            sectors = sectors,
+            colored = colored,
+            format = format,
+        )
+    }
 }
 
 /**
@@ -161,5 +186,71 @@ private fun buildPlaneGeometry(
         -h, 0f, h, 0f, 1f, 0f, r, g, b,
     )
     val indices = intArrayOf(0, 1, 2, 2, 3, 0)
+    return MeshGeometry(vertices = vertices, indices = indices, format = format)
+}
+
+@Suppress("MagicNumber", "LongMethod")
+private fun buildSphereGeometry(
+    radius: Float,
+    rings: Int,
+    sectors: Int,
+    colored: Boolean,
+    format: VertexFormat,
+): MeshGeometry {
+    val vertexCount = (rings + 1) * (sectors + 1)
+    val floatStride = format.strideFloats
+    val vertices = FloatArray(vertexCount * floatStride)
+    val (rColor, gColor, bColor) = if (colored) Triple(0.85f, 0.85f, 0.95f) else Triple(1f, 1f, 1f)
+
+    var offset = 0
+    val pi = kotlin.math.PI.toFloat()
+    for (r in 0..rings) {
+        val theta = (pi * r) / rings
+        val sinTheta = kotlin.math.sin(theta)
+        val cosTheta = kotlin.math.cos(theta)
+
+        for (s in 0..sectors) {
+            val phi = (2f * pi * s) / sectors
+            val sinPhi = kotlin.math.sin(phi)
+            val cosPhi = kotlin.math.cos(phi)
+
+            val nx = sinTheta * cosPhi
+            val ny = cosTheta
+            val nz = sinTheta * sinPhi
+
+            val px = radius * nx
+            val py = radius * ny
+            val pz = radius * nz
+
+            vertices[offset++] = px
+            vertices[offset++] = py
+            vertices[offset++] = pz
+            vertices[offset++] = nx
+            vertices[offset++] = ny
+            vertices[offset++] = nz
+            vertices[offset++] = rColor
+            vertices[offset++] = gColor
+            vertices[offset++] = bColor
+        }
+    }
+
+    val indexCount = rings * sectors * 6
+    val indices = IntArray(indexCount)
+    var indexOffset = 0
+    for (r in 0 until rings) {
+        for (s in 0 until sectors) {
+            val first = r * (sectors + 1) + s
+            val second = first + sectors + 1
+
+            indices[indexOffset++] = first
+            indices[indexOffset++] = second
+            indices[indexOffset++] = first + 1
+
+            indices[indexOffset++] = second
+            indices[indexOffset++] = second + 1
+            indices[indexOffset++] = first + 1
+        }
+    }
+
     return MeshGeometry(vertices = vertices, indices = indices, format = format)
 }

@@ -6,8 +6,9 @@
 package com.awakekt.awake.scene.runtime.project
 
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.Scene
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.core.plugin.GamePluginRegistry
-import com.awakekt.awake.scene.document.Scene
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import kotlinx.serialization.Serializable

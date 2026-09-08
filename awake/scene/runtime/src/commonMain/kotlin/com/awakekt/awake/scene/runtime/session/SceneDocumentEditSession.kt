@@ -6,14 +6,15 @@
 package com.awakekt.awake.scene.runtime.session
 
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
+import com.awakekt.awake.scene.binding.destroy
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneExtensionRegistry
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneValidator
-import com.awakekt.awake.scene.document.destroy
 
-enum class SceneDocumentSessionMode { Edit, Play }
+enum class SceneDocumentSessionMode { Edit, Play, Pause }
 
 /**
  * Owns authored scene data and a disposable, isolated Play world.
@@ -33,6 +34,9 @@ class SceneDocumentEditSession(
     var mode: SceneDocumentSessionMode = SceneDocumentSessionMode.Edit
         private set
 
+    var isStepping: Boolean = false
+        private set
+
     private var playScene: Scene? = null
 
     val world: World?
@@ -48,9 +52,30 @@ class SceneDocumentEditSession(
         }
     }
 
+    fun pausePlay() {
+        check(mode == SceneDocumentSessionMode.Play) { "Can only pause when playing." }
+        mode = SceneDocumentSessionMode.Pause
+    }
+
+    fun resumePlay() {
+        check(mode == SceneDocumentSessionMode.Pause) { "Can only resume when paused." }
+        mode = SceneDocumentSessionMode.Play
+    }
+
+    fun stepPlay() {
+        check(mode == SceneDocumentSessionMode.Pause) { "Can only step when paused." }
+        isStepping = true
+    }
+
+    fun clearStepping() {
+        isStepping = false
+    }
+
     fun stopPlay() {
+        if (mode == SceneDocumentSessionMode.Edit) return
         playScene?.destroy()
         playScene = null
+        isStepping = false
         mode = SceneDocumentSessionMode.Edit
     }
 

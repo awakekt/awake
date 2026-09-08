@@ -23,7 +23,7 @@ import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.controls.movement.MovementControl
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.physics.PhysicsBody
 import com.awakekt.awake.scene.physics.character.CharacterConfig
 import com.awakekt.awake.scene.physics.character.KinematicCharacterController

@@ -12,6 +12,7 @@ import com.awakekt.awake.engine.bootstrap.dsl.appSpec
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.RenderSystem

@@ -18,7 +18,7 @@ import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.renderer.SkinnedUniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime

@@ -49,10 +49,13 @@ actual fun surfaceFramebufferExtent(window: Any): VkExtent2D? {
     }
 }
 
-// Not wired to a real value yet: iOS's own display-scale story (UIScreen.scale /
-// CAMetalLayer.contentsScale) is a separate follow-up, out of this fix's scope -- returning null
-// keeps density at its unscaled default, the same behavior iOS already had.
-actual fun windowLogicalExtent(window: Any): VkExtent2D? = null
+@OptIn(ExperimentalForeignApi::class)
+actual fun windowLogicalExtent(window: Any): VkExtent2D? {
+    val metalLayer = window as? CAMetalLayer ?: return null
+    return metalLayer.bounds.useContents {
+        VkExtent2D(width = size.width.toInt(), height = size.height.toInt())
+    }
+}
 
 actual fun destroySurfaceWindow(window: Any) {
     // The CAMetalLayer/UIView's lifecycle is owned by UIKit (VulkanMetalView), same as

@@ -20,7 +20,7 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.TextureAsset
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.rendering.particles.ParticleDynamics
 import com.awakekt.awake.scene.rendering.particles.ParticleEmitter

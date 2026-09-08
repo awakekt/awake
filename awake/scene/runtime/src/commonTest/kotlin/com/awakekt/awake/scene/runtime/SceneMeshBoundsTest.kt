@@ -10,12 +10,12 @@ import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneDocument
-import com.awakekt.awake.scene.document.SceneMeshRenderer
 import com.awakekt.awake.scene.document.SceneNode
-import com.awakekt.awake.scene.document.instantiate
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
+import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

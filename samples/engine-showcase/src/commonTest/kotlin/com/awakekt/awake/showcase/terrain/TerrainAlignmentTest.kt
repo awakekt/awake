@@ -12,8 +12,9 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
-import com.awakekt.awake.scene.document.SceneCamera
+import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import kotlinx.coroutines.test.runTest
 import kotlin.math.abs
 import kotlin.math.max
@@ -37,6 +38,9 @@ import kotlin.test.assertTrue
  *   reads as physics being broken rather than as an origin mismatch.
  */
 class TerrainAlignmentTest {
+    init {
+        DefaultSceneComponentResolvers.install()
+    }
 
     private val bounds = assertNotNull(TerrainExampleAsset.geometry.bounds, "the terrain has no bounds")
 

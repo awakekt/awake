@@ -52,7 +52,16 @@ if (secretPropsFile.exists()) {
 
 extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
     publishToMavenCentral()
-    signAllPublications()
+    val hasSigningKey = hasProperty("signing.keyId") ||
+        hasProperty("signing.secretKey") ||
+        hasProperty("signingInMemoryKey") ||
+        hasProperty("signingKey") ||
+        System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey") != null ||
+        System.getenv("SIGNING_KEY") != null
+
+    if (hasSigningKey) {
+        signAllPublications()
+    }
 
     configure(
         KotlinMultiplatform(
@@ -82,7 +91,7 @@ extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
         developers {
             developer {
                 name.set("Ron June Valdoz")
-                email.set("ronjune.lopez@gmail.com")
+                email.set("ronjune.valdoz@gmail.com")
             }
         }
     }

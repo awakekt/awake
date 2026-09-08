@@ -6,7 +6,7 @@
 package com.awakekt.awake.showcase.examples
 
 import com.awakekt.awake.core.math.Mat4
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 

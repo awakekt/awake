@@ -3,13 +3,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.document
+package com.awakekt.awake.scene.binding
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneComponent
+import com.awakekt.awake.scene.document.SceneDocument
+import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.document.SceneTransform
+import com.awakekt.awake.scene.document.SceneVec3
 
 /**
  * Exports a live active ECS [world] into a serializable [SceneDocument].

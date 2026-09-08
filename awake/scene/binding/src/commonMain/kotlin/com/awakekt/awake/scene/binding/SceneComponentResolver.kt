@@ -3,11 +3,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.document
+package com.awakekt.awake.scene.binding
 
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.document.SceneComponent
+import com.awakekt.awake.scene.document.SceneCustomComponent
+import com.awakekt.awake.scene.document.ScenePrefabLink
+import com.awakekt.awake.scene.document.SceneSerializers
 import kotlin.reflect.KClass
 
 /** Context provided during component resolution and instantiation. */
@@ -18,8 +22,8 @@ interface SceneResolutionContext {
     /** Defers a node-to-node entity link resolution callback until all scene nodes are created. */
     fun deferNodeLink(targetNodeName: String, onResolved: (target: Entity) -> Unit)
 
-    /** Requests a renderable mesh request during scene instantiation. */
-    fun requestRenderable(entity: Entity, component: SceneMeshRenderer)
+    /** Records an arbitrary capability request (e.g. mesh rendering) during scene instantiation. */
+    fun recordRequest(request: Any)
 }
 
 /** Resolver contract attaching serializable [SceneComponent]s onto ECS [Entity] instances. */
@@ -43,7 +47,7 @@ class SceneComponentRegistry(
 ) {
     private val registeredResolvers = ArrayList<SceneComponentResolver>()
     private val registeredBindings = ArrayList<SceneComponentBinding<*, *>>()
-    private val log = Logger("scene-document")
+    private val log = Logger("scene-binding")
 
     init {
         globalResolvers.forEach(::register)
@@ -51,8 +55,6 @@ class SceneComponentRegistry(
         resolvers.forEach(::register)
         bindings.forEach(::register)
         register(PrefabLinkBinding)
-        register(MeshRendererBinding)
-        register(SpinControlBinding)
     }
 
     /** Global static registry entrypoints. */
@@ -67,6 +69,7 @@ class SceneComponentRegistry(
             }
             if (resolver is SceneComponentBinding<*, *> && resolver !in globalBindings) {
                 globalBindings += resolver
+                registerSerializer(resolver)
             }
         }
 
@@ -74,9 +77,21 @@ class SceneComponentRegistry(
         fun registerGlobal(binding: SceneComponentBinding<*, *>) {
             if (binding !in globalBindings) {
                 globalBindings += binding
+                registerSerializer(binding)
             }
             if (binding !in globalResolvers) {
                 globalResolvers += binding
+            }
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        private fun registerSerializer(binding: SceneComponentBinding<*, *>) {
+            val serializer = binding.serializer
+            if (serializer != null) {
+                SceneSerializers.register(
+                    binding.schemaClass as KClass<SceneComponent>,
+                    serializer as kotlinx.serialization.KSerializer<SceneComponent>,
+                )
             }
         }
     }
@@ -94,6 +109,7 @@ class SceneComponentRegistry(
         }
         if (resolver is SceneComponentBinding<*, *> && resolver !in registeredBindings) {
             registeredBindings += resolver
+            Companion.registerSerializer(resolver)
         }
         return this
     }
@@ -102,6 +118,7 @@ class SceneComponentRegistry(
     fun register(binding: SceneComponentBinding<*, *>): SceneComponentRegistry {
         if (binding !in registeredBindings) {
             registeredBindings += binding
+            Companion.registerSerializer(binding)
         }
         if (binding !in registeredResolvers) {
             registeredResolvers += binding

@@ -6,10 +6,10 @@
 package com.awakekt.awake.scene.runtime.session
 
 import com.awakekt.awake.scene.document.SceneDocument
-import com.awakekt.awake.scene.document.SceneMeshRenderer
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.SceneTransform
 import com.awakekt.awake.scene.document.SceneVec3
+import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -56,5 +56,42 @@ class SceneDocumentEditSessionTest {
         assertEquals(replacement, session.authoredDocument)
         session.close()
         assertEquals(SceneDocumentSessionMode.Edit, session.mode)
+    }
+
+    @Test
+    fun pauseResumeAndStepLifecycleTransitions() {
+        val session = SceneDocumentEditSession(SceneDocument(name = "test"))
+        session.startPlay()
+        assertEquals(SceneDocumentSessionMode.Play, session.mode)
+        assertEquals(false, session.isStepping)
+
+        session.pausePlay()
+        assertEquals(SceneDocumentSessionMode.Pause, session.mode)
+
+        session.stepPlay()
+        assertEquals(true, session.isStepping)
+        session.clearStepping()
+        assertEquals(false, session.isStepping)
+
+        session.resumePlay()
+        assertEquals(SceneDocumentSessionMode.Play, session.mode)
+
+        session.stopPlay()
+        assertEquals(SceneDocumentSessionMode.Edit, session.mode)
+    }
+
+    @Test
+    fun stoppingFromPauseDestroysIsolatedWorldAndRestoresEditMode() {
+        val session = SceneDocumentEditSession(SceneDocument(name = "paused-stop"))
+        val play = session.startPlay()
+        assertNotNull(session.world)
+
+        session.pausePlay()
+        assertEquals(SceneDocumentSessionMode.Pause, session.mode)
+
+        session.stopPlay()
+        assertEquals(SceneDocumentSessionMode.Edit, session.mode)
+        assertNull(session.world)
+        assertEquals(false, session.isStepping)
     }
 }

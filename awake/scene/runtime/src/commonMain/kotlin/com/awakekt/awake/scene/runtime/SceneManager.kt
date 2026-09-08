@@ -6,10 +6,11 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
+import com.awakekt.awake.scene.binding.destroy
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
-import com.awakekt.awake.scene.document.destroy
 
 /**
  * Owns the currently-loaded [Scene], if any -- the only thing that may create or destroy one

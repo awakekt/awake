@@ -48,6 +48,11 @@ public final class com/awakekt/awake/scene/rendering/RenderSystem : com/awakekt/
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/scene/rendering/SceneMathExtensionsKt {
+	public static final fun toSceneVec3 (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/scene/document/SceneVec3;
+	public static final fun toVec3 (Lcom/awakekt/awake/scene/document/SceneVec3;)Lcom/awakekt/awake/core/math/Vec3f;
+}
+
 public final class com/awakekt/awake/scene/rendering/animation/AnimationSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
@@ -161,6 +166,66 @@ public final class com/awakekt/awake/scene/rendering/animation/SocketAttachmentS
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/scene/rendering/camera/CameraBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/camera/CameraBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/camera/SceneCamera;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/Camera;)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;)Lcom/awakekt/awake/scene/rendering/Camera;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/Camera;)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;
+}
+
+public final class com/awakekt/awake/scene/rendering/camera/SceneCamera : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/camera/SceneCamera$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun component2 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun component3 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()Z
+	public final fun copy (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZ)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getCenter ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun getEye ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun getFar ()F
+	public final fun getFovYDegrees ()F
+	public final fun getNear ()F
+	public final fun getPrimary ()Z
+	public final fun getUp ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/camera/SceneCamera$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/camera/SceneCamera$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/camera/SceneCamera$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/rendering/debug/DebugSettingsAccessKt {
 	public static final fun debugSettings (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;
 	public static final fun debugSettingsOrNull (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;
@@ -217,6 +282,75 @@ public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {
 	public final fun setShowOcclusion (Z)V
 	public final fun setShowShadowFrustum (Z)V
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/rendering/light/LightBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/light/LightBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/light/SceneLight;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/Light;)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/rendering/light/SceneLight;)Lcom/awakekt/awake/scene/rendering/Light;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/Light;)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
+}
+
+public final class com/awakekt/awake/scene/rendering/light/SceneLight : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/light/SceneLight$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun component2 ()F
+	public final fun component3 ()Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type;
+	public final fun component4 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun component5 ()F
+	public final fun copy (Lcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;F)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/light/SceneLight;Lcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getColor ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun getDirection ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun getIntensity ()F
+	public final fun getRange ()F
+	public final fun getType ()Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/light/SceneLight$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/light/SceneLight$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/light/SceneLight;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/light/SceneLight$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/light/SceneLight$Type : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type$Companion;
+	public static final field Directional Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type;
+	public static final field Point Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type;
+	public static fun values ()[Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type;
+}
+
+public final class com/awakekt/awake/scene/rendering/light/SceneLight$Type$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/scene/rendering/mesh/InstancedMeshRenderer {
@@ -285,6 +419,23 @@ public final class com/awakekt/awake/scene/rendering/mesh/LodLevel {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/rendering/mesh/MaterialBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/mesh/MaterialBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+}
+
 public final class com/awakekt/awake/scene/rendering/mesh/MeshBounds {
 	public fun <init> (Lcom/awakekt/awake/core/math/Aabb;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Aabb;
@@ -319,6 +470,21 @@ public final class com/awakekt/awake/scene/rendering/mesh/MeshRenderer {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/rendering/mesh/MeshRendererBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/mesh/MeshRendererBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/mesh/MeshRenderer;)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/rendering/mesh/PbrMaterial {
 	public fun <init> ()V
 	public fun <init> (FF[F[F)V
@@ -339,6 +505,95 @@ public final class com/awakekt/awake/scene/rendering/mesh/PbrMaterial {
 	public final fun setEmissiveFactor ([F)V
 	public final fun setMetallic (F)V
 	public final fun setRoughness (F)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getCullMode ()Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
+	public final fun getMaterial ()Ljava/lang/String;
+	public final fun getMesh ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode : java/lang/Enum {
+	public static final field Back Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
+	public static final field Front Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
+	public static final field None Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
+	public static fun values ()[Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
+}
+
+public final class com/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial$Companion;
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;FFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getMetallic ()F
+	public final fun getRoughness ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/mesh/SceneRenderableRequest {
+	public synthetic fun <init> (JLcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-LaMO_uA ()J
+	public final fun component2 ()Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public final fun copy-smMvhPQ (JLcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;)Lcom/awakekt/awake/scene/rendering/mesh/SceneRenderableRequest;
+	public static synthetic fun copy-smMvhPQ$default (Lcom/awakekt/awake/scene/rendering/mesh/SceneRenderableRequest;JLcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/SceneRenderableRequest;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntity-LaMO_uA ()J
+	public final fun getMeshRenderer ()Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 

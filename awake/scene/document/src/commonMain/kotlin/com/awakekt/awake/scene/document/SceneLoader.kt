@@ -6,56 +6,7 @@
 package com.awakekt.awake.scene.document
 
 import com.awakekt.awake.core.host.readResourceBytes
-import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.World
 import kotlinx.serialization.json.Json
-
-/**
- * Live instantiated scene container.
- *
- * @property world The ECS [World] containing the instantiated scene entities.
- * @property roots Top-level instantiated scene node instances.
- * @property renderableRequests Active renderable requests requested during scene instantiation.
- */
-data class Scene(
-    val world: World,
-    val roots: List<SceneNodeInstance>,
-    val renderableRequests: List<SceneRenderableRequest>,
-)
-
-/**
- * Handle to an instantiated scene node in a live scene hierarchy.
- *
- * @property name Node name identifier if named.
- * @property entity Associated live ECS [Entity].
- * @property children Nested child node handles.
- */
-data class SceneNodeInstance(
-    val name: String?,
-    val entity: Entity,
-    val children: List<SceneNodeInstance>,
-)
-
-/**
- * Renderable mesh request generated when instantiating a [SceneMeshRenderer] component.
- *
- * @property entity The target live ECS [Entity].
- * @property meshRenderer Associated scene mesh renderer descriptor.
- */
-data class SceneRenderableRequest(
-    val entity: Entity,
-    val meshRenderer: SceneMeshRenderer,
-)
-
-/** Destroys all entities associated with this instantiated scene. */
-fun Scene.destroy() {
-    roots.forEach { it.destroyRecursively(world) }
-}
-
-private fun SceneNodeInstance.destroyRecursively(world: World) {
-    children.forEach { it.destroyRecursively(world) }
-    world.destroy(entity)
-}
 
 /**
  * Exception thrown when attempting to load a scene document with an unsupported schema version.
@@ -70,11 +21,8 @@ class SceneSchemaVersionException(
 )
 
 /** Default JSON serializer configured for Awake scene documents. */
-val DefaultSceneJson: Json = Json {
-    ignoreUnknownKeys = true
-    encodeDefaults = true
-    explicitNulls = false
-}
+val DefaultSceneJson: Json
+    get() = SceneSerializers.createJson()
 
 /**
  * Engine service for encoding, decoding, and instantiating Awake scene documents (`.scene.json`).
@@ -110,13 +58,6 @@ object SceneLoader {
     /** Loads and decodes a scene document from a resource asset path. */
     suspend fun loadFromResource(path: String, json: Json = DefaultSceneJson): SceneDocument =
         decode(readResourceBytes(path).decodeToString(), json)
-
-    /** Instantiates [document] into [world] using [componentRegistry]. */
-    fun instantiate(
-        document: SceneDocument,
-        world: World = World(),
-        componentRegistry: SceneComponentRegistry = SceneComponentRegistry(),
-    ): Scene = instantiate(document, AwakeWorldSceneAdapter(world, componentRegistry))
 
     /** Instantiates [document] using a custom [SceneInstantiationAdapter]. */
     fun <Node, Instance> instantiate(
@@ -157,7 +98,3 @@ object SceneLoader {
         return SceneNodeHandle(node.name, created, children)
     }
 }
-
-/** Extension function to instantiate this [SceneDocument] into an active [World]. */
-fun SceneDocument.instantiate(world: World = World()): Scene =
-    SceneLoader.instantiate(this, world)

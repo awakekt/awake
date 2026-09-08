@@ -6,6 +6,7 @@
 package com.awakekt.awake.showcase
 
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertNotNull
@@ -21,6 +22,9 @@ import kotlin.test.assertTrue
  * loads and simply does nothing.
  */
 class TerrainShowcaseWiringTest {
+    init {
+        DefaultSceneComponentResolvers.install()
+    }
 
     private val terrain = EngineShowcases.single { it.id == "heightfield-terrain" }
 

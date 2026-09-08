@@ -8,8 +8,8 @@ package com.awakekt.awake.scene.runtime
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.ecs.System
-import com.awakekt.awake.scene.document.SceneRenderableRequest
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
+import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest
 
 typealias SceneRenderableFactory = SceneAppLifecycleRuntime.(SceneRenderableRequest) -> MeshRenderer
 typealias SceneSystemFactory = SceneAppLifecycleRuntime.() -> System

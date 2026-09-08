@@ -12,7 +12,7 @@ import com.awakekt.awake.scene.authoring.dsl.EntityScope
 import com.awakekt.awake.scene.authoring.dsl.SceneBuilder
 import com.awakekt.awake.scene.authoring.dsl.scene
 import com.awakekt.awake.scene.document.SceneDocument
-import com.awakekt.awake.scene.document.instantiate
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAppSpec
 import com.awakekt.awake.scene.runtime.SceneAssetLibrary

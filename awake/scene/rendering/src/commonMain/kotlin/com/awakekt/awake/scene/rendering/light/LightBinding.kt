@@ -3,38 +3,33 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.runtime
+package com.awakekt.awake.scene.rendering.light
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.document.SceneComponent
-import com.awakekt.awake.scene.document.SceneComponentBinding
-import com.awakekt.awake.scene.document.SceneLight
-import com.awakekt.awake.scene.document.SceneResolutionContext
-import com.awakekt.awake.scene.document.toSceneVec3
-import com.awakekt.awake.scene.document.toVec3
+import com.awakekt.awake.scene.binding.SceneComponentBinding
+import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.rendering.Light
+import com.awakekt.awake.scene.rendering.toSceneVec3
+import com.awakekt.awake.scene.rendering.toVec3
+import kotlin.reflect.KClass
 
 object LightBinding : SceneComponentBinding<Light, SceneLight> {
-    override val componentClass = Light::class
+    override val componentClass: KClass<Light> = Light::class
+    override val schemaClass: KClass<SceneLight> = SceneLight::class
+    override val serializer = SceneLight.serializer()
 
-    override fun canResolve(component: SceneComponent): Boolean = component is SceneLight
-
-    override fun attach(
+    override fun attachTyped(
         world: World,
         entity: Entity,
-        component: SceneComponent,
+        component: SceneLight,
         context: SceneResolutionContext,
     ) {
-        val light = component as SceneLight
-        world.add(entity, light.toComponent())
+        world.add(entity, component.toComponent())
     }
 
     override fun export(world: World, entity: Entity, component: Light): SceneLight =
         component.toSceneComponent()
-
-    override fun exportFrom(world: World, entity: Entity): SceneLight? =
-        world.get(entity, componentClass)?.let { export(world, entity, it) }
 
     fun SceneLight.toComponent(): Light = Light(
         color = color.toVec3(),

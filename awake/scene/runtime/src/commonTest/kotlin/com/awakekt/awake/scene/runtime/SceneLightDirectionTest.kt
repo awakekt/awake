@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.Light
 import kotlin.test.Test

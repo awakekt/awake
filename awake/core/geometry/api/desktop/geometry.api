@@ -232,6 +232,8 @@ public final class com/awakekt/awake/core/geometry/generate/MeshGenerateScope {
 	public static synthetic fun cube$default (Lcom/awakekt/awake/core/geometry/generate/MeshGenerateScope;FZLcom/awakekt/awake/core/geometry/VertexFormat;ILjava/lang/Object;)V
 	public final fun plane (FZLcom/awakekt/awake/core/geometry/VertexFormat;)V
 	public static synthetic fun plane$default (Lcom/awakekt/awake/core/geometry/generate/MeshGenerateScope;FZLcom/awakekt/awake/core/geometry/VertexFormat;ILjava/lang/Object;)V
+	public final fun sphere (FIIZLcom/awakekt/awake/core/geometry/VertexFormat;)V
+	public static synthetic fun sphere$default (Lcom/awakekt/awake/core/geometry/generate/MeshGenerateScope;FIIZLcom/awakekt/awake/core/geometry/VertexFormat;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/core/geometry/generate/MeshGeometryGeneratorsKt {

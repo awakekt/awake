@@ -78,106 +78,20 @@ object SceneValidator {
             }
         }
 
-        node.components.filterIsInstance<SceneCamera>().size.takeIf { it > 1 }?.let { count ->
-            issues += SceneValidationIssue(path, "node declares $count cameras, expected at most 1")
+        node.components.groupBy { it::class }.forEach { (componentClass, list) ->
+            if (list.size > 1 && !list.first().allowsMultiplePerNode) {
+                val typeName = componentClass.simpleName ?: "Component"
+                issues += SceneValidationIssue(path, "node declares ${list.size} $typeName instances, expected at most 1")
+            }
         }
 
-        node.components.forEach { component -> validateComponent(component, path, issues) }
+        node.components.forEach { component ->
+            issues += component.validate(path)
+        }
 
         node.children.forEachIndexed { index, child ->
             validateNode(child, nodePath(child.name, index, path), issues, namedPaths)
         }
-    }
-}
-
-private fun validateComponent(
-    component: SceneComponent,
-    path: String,
-    issues: MutableList<SceneValidationIssue>,
-) {
-    when (component) {
-        is SceneMeshRenderer -> validateMeshRenderer(component, path, issues)
-        is SceneCamera -> validateCamera(component, path, issues)
-        is ScenePbrMaterial -> validatePbrMaterial(component, path, issues)
-        is SceneSpinControl -> validateSpinControl(component, path, issues)
-        is ScenePatrol -> validatePatrol(component, path, issues)
-        is SceneChase -> validateRoute(component.speed, component.repathInterval, "chase", path, issues)
-        is SceneFlee -> validateFlee(component, path, issues)
-        is ScenePrefabLink -> validatePrefabLink(component, path, issues)
-        is SceneCustomComponent -> validateCustomComponent(component, path, issues)
-        is SceneLight -> Unit
-    }
-}
-
-private fun validateMeshRenderer(
-    component: SceneMeshRenderer,
-    path: String,
-    issues: MutableList<SceneValidationIssue>,
-) {
-    if (component.mesh.isBlank()) {
-        issues += SceneValidationIssue(path, "meshRenderer.mesh must not be blank")
-    }
-    if (component.material.isBlank()) {
-        issues += SceneValidationIssue(path, "meshRenderer.material must not be blank")
-    }
-}
-
-private fun validateCamera(
-    component: SceneCamera,
-    path: String,
-    issues: MutableList<SceneValidationIssue>,
-) {
-    if (component.near <= 0f) {
-        issues += SceneValidationIssue(path, "camera.near must be > 0")
-    }
-    if (component.far <= component.near) {
-        issues += SceneValidationIssue(path, "camera.far must be greater than camera.near")
-    }
-    if (component.fovYDegrees <= 0f || component.fovYDegrees >= 180f) {
-        issues += SceneValidationIssue(path, "camera.fovYDegrees must be between 0 and 180")
-    }
-}
-
-private fun validatePbrMaterial(
-    component: ScenePbrMaterial,
-    path: String,
-    issues: MutableList<SceneValidationIssue>,
-) {
-    if (component.metallic !in 0f..1f) {
-        issues += SceneValidationIssue(path, "pbrMaterial.metallic must be within 0..1")
-    }
-    if (component.roughness !in 0f..1f) {
-        issues += SceneValidationIssue(path, "pbrMaterial.roughness must be within 0..1")
-    }
-}
-
-private fun validateSpinControl(
-    component: SceneSpinControl,
-    path: String,
-    issues: MutableList<SceneValidationIssue>,
-) {
-    if (component.speed < 0f) {
-        issues += SceneValidationIssue(path, "spinControl.speed must not be negative")
-    }
-}
-
-private fun validatePrefabLink(
-    component: ScenePrefabLink,
-    path: String,
-    issues: MutableList<SceneValidationIssue>,
-) {
-    if (component.prefabGuid.isBlank()) {
-        issues += SceneValidationIssue(path, "prefabLink.prefabGuid must not be blank")
-    }
-}
-
-private fun validateCustomComponent(
-    component: SceneCustomComponent,
-    path: String,
-    issues: MutableList<SceneValidationIssue>,
-) {
-    if (component.type.isBlank()) {
-        issues += SceneValidationIssue(path, "custom.type must not be blank")
     }
 }
 

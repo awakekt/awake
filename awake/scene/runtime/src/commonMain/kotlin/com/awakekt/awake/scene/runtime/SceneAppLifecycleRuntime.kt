@@ -158,6 +158,11 @@ class SceneAppLifecycleRuntime internal constructor(
     /** Called at install time (see [SceneAppSpec.installInto]). */
     fun initialize(services: AppServiceLookup) {
         this.services = services
+        // Install built-in scene component resolvers (Camera, Light, PbrMaterial, SpinControl,
+        // MeshRenderer, PrefabLink) into the global SceneComponentRegistry. Explicit here
+        // rather than in DefaultSceneComponentResolvers.init{} so tests can run without
+        // triggering global state, and so subclasses can opt out or replace the set.
+        DefaultSceneComponentResolvers.install()
         session.initialize()
     }
 

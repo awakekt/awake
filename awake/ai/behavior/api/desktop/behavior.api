@@ -2,13 +2,13 @@ public final class com/awakekt/awake/ai/behavior/AiBehaviorBindings {
 	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/AiBehaviorBindings;
 	public final fun getAll ()Ljava/util/List;
 	public final fun getBindings ()Ljava/util/List;
-	public final fun getChaseResolver ()Lcom/awakekt/awake/scene/document/SceneComponentBinding;
-	public final fun getFleeResolver ()Lcom/awakekt/awake/scene/document/SceneComponentBinding;
-	public final fun getPatrolResolver ()Lcom/awakekt/awake/scene/document/SceneComponentBinding;
+	public final fun getChaseResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getFleeResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getPatrolResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 }
 
-public final class com/awakekt/awake/ai/behavior/BehaviorBindingsKt {
-	public static final fun registerAiBehaviors (Lcom/awakekt/awake/scene/document/SceneComponentRegistry;)Lcom/awakekt/awake/scene/document/SceneComponentRegistry;
+public final class com/awakekt/awake/ai/behavior/AiBehaviorBindingsKt {
+	public static final fun registerAiBehaviors (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 }
 
 public final class com/awakekt/awake/ai/behavior/ChaseAiSystem : com/awakekt/awake/ecs/System {
@@ -41,19 +41,6 @@ public final class com/awakekt/awake/ai/behavior/ChaseBehavior : com/awakekt/awa
 }
 
 public final class com/awakekt/awake/ai/behavior/ChaseBehavior$Companion {
-}
-
-public final class com/awakekt/awake/ai/behavior/ChaseBinding : com/awakekt/awake/scene/document/SceneComponentBinding {
-	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/ChaseBinding;
-	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/document/SceneResolutionContext;)V
-	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
-	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/ChaseBehavior;)Lcom/awakekt/awake/scene/document/SceneChase;
-	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneChase;
-	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public fun getComponentClass ()Lkotlin/reflect/KClass;
-	public final fun toComponent (Lcom/awakekt/awake/scene/document/SceneChase;)Lcom/awakekt/awake/ai/behavior/ChaseBehavior;
-	public final fun toSceneComponent-B7Vkg1U (Lcom/awakekt/awake/ai/behavior/ChaseBehavior;Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneChase;
 }
 
 public final class com/awakekt/awake/ai/behavior/FleeAiSystem : com/awakekt/awake/ecs/System {
@@ -104,19 +91,6 @@ public final class com/awakekt/awake/ai/behavior/FleeBehavior : com/awakekt/awak
 public final class com/awakekt/awake/ai/behavior/FleeBehavior$Companion {
 }
 
-public final class com/awakekt/awake/ai/behavior/FleeBinding : com/awakekt/awake/scene/document/SceneComponentBinding {
-	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/FleeBinding;
-	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/document/SceneResolutionContext;)V
-	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
-	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/FleeBehavior;)Lcom/awakekt/awake/scene/document/SceneFlee;
-	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneFlee;
-	public fun getComponentClass ()Lkotlin/reflect/KClass;
-	public final fun toComponent (Lcom/awakekt/awake/scene/document/SceneFlee;)Lcom/awakekt/awake/ai/behavior/FleeBehavior;
-	public final fun toSceneComponent-B7Vkg1U (Lcom/awakekt/awake/ai/behavior/FleeBehavior;Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneFlee;
-}
-
 public final class com/awakekt/awake/ai/behavior/PatrolAiSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
@@ -164,19 +138,6 @@ public final class com/awakekt/awake/ai/behavior/PatrolBehavior : com/awakekt/aw
 public final class com/awakekt/awake/ai/behavior/PatrolBehavior$Companion {
 }
 
-public final class com/awakekt/awake/ai/behavior/PatrolBinding : com/awakekt/awake/scene/document/SceneComponentBinding {
-	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/PatrolBinding;
-	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/document/SceneResolutionContext;)V
-	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
-	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/PatrolBehavior;)Lcom/awakekt/awake/scene/document/ScenePatrol;
-	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
-	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/ScenePatrol;
-	public fun getComponentClass ()Lkotlin/reflect/KClass;
-	public final fun toComponent (Lcom/awakekt/awake/scene/document/ScenePatrol;)Lcom/awakekt/awake/ai/behavior/PatrolBehavior;
-	public final fun toSceneComponent (Lcom/awakekt/awake/ai/behavior/PatrolBehavior;)Lcom/awakekt/awake/scene/document/ScenePatrol;
-}
-
 public final class com/awakekt/awake/ai/behavior/PatrolStyle : java/lang/Enum {
 	public static final field Loop Lcom/awakekt/awake/ai/behavior/PatrolStyle;
 	public static final field Once Lcom/awakekt/awake/ai/behavior/PatrolStyle;
@@ -199,5 +160,191 @@ public abstract interface class com/awakekt/awake/ai/behavior/RouteFollower {
 	public abstract fun setTimeSinceRepath (F)V
 	public abstract fun setWaypointIndex (I)V
 	public abstract fun setWaypointRadius (F)V
+}
+
+public final class com/awakekt/awake/ai/behavior/chase/ChaseBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/chase/ChaseBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/chase/SceneChase;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/ChaseBehavior;)Lcom/awakekt/awake/ai/behavior/chase/SceneChase;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/ai/behavior/chase/SceneChase;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/ai/behavior/chase/SceneChase;)Lcom/awakekt/awake/ai/behavior/ChaseBehavior;
+	public final fun toSceneComponent-B7Vkg1U (Lcom/awakekt/awake/ai/behavior/ChaseBehavior;Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/ai/behavior/chase/SceneChase;
+}
+
+public final class com/awakekt/awake/ai/behavior/chase/SceneChase : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/chase/SceneChase$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;FFF)V
+	public synthetic fun <init> (Ljava/lang/String;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (Ljava/lang/String;FFF)Lcom/awakekt/awake/ai/behavior/chase/SceneChase;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/chase/SceneChase;Ljava/lang/String;FFFILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/chase/SceneChase;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getRepathInterval ()F
+	public final fun getSpeed ()F
+	public final fun getTarget ()Ljava/lang/String;
+	public final fun getWaypointRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/chase/SceneChase$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/chase/SceneChase$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/chase/SceneChase;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/chase/SceneChase;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/chase/SceneChase$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/flee/FleeBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/flee/FleeBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/flee/SceneFlee;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/FleeBehavior;)Lcom/awakekt/awake/ai/behavior/flee/SceneFlee;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/ai/behavior/flee/SceneFlee;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/ai/behavior/flee/SceneFlee;)Lcom/awakekt/awake/ai/behavior/FleeBehavior;
+	public final fun toSceneComponent-B7Vkg1U (Lcom/awakekt/awake/ai/behavior/FleeBehavior;Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/ai/behavior/flee/SceneFlee;
+}
+
+public final class com/awakekt/awake/ai/behavior/flee/SceneFlee : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/flee/SceneFlee$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;FFFFFF)V
+	public synthetic fun <init> (Ljava/lang/String;FFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun copy (Ljava/lang/String;FFFFFF)Lcom/awakekt/awake/ai/behavior/flee/SceneFlee;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/flee/SceneFlee;Ljava/lang/String;FFFFFFILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/flee/SceneFlee;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getFleeDistance ()F
+	public final fun getPanicRadius ()F
+	public final fun getRepathInterval ()F
+	public final fun getSafeRadius ()F
+	public final fun getSpeed ()F
+	public final fun getThreat ()Ljava/lang/String;
+	public final fun getWaypointRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/flee/SceneFlee$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/flee/SceneFlee$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/flee/SceneFlee;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/flee/SceneFlee;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/flee/SceneFlee$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/patrol/PatrolBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/patrol/PatrolBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/patrol/ScenePatrol;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/PatrolBehavior;)Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol;)Lcom/awakekt/awake/ai/behavior/PatrolBehavior;
+	public final fun toSceneComponent (Lcom/awakekt/awake/ai/behavior/PatrolBehavior;)Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol;
+}
+
+public final class com/awakekt/awake/ai/behavior/patrol/ScenePatrol : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;FFFF)V
+	public synthetic fun <init> (Ljava/util/List;Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun copy (Ljava/util/List;Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;FFFF)Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol;Ljava/util/List;Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;FFFFILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getDwellSeconds ()F
+	public final fun getRepathInterval ()F
+	public final fun getSpeed ()F
+	public final fun getStops ()Ljava/util/List;
+	public final fun getStyle ()Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;
+	public final fun getWaypointRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/patrol/ScenePatrol$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/patrol/ScenePatrol$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style$Companion;
+	public static final field Loop Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;
+	public static final field Once Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;
+	public static final field PingPong Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;
+	public static fun values ()[Lcom/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style;
+}
+
+public final class com/awakekt/awake/ai/behavior/patrol/ScenePatrol$Style$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 

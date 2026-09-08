@@ -3,22 +3,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.scene.document
+package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.binding.fromWorld
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneLoader
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
  * A snapshot taken before simulation must restore what was authored.
- *
- * The guarantee is what matters, not the mechanism: an editor host runs Play on the same world its systems and
- * renderer are bound to, and Stop rebuilds that world from a document captured beforehand. This
- * covers the capture/restore pair, which is what makes the guarantee true; the host wiring that
- * calls it is one `when` branch either side and belongs to the host's own tests.
  */
 class SceneSnapshotRestoreTest {
 
@@ -49,12 +47,6 @@ class SceneSnapshotRestoreTest {
         assertEquals(3f, found?.z)
     }
 
-    /**
-     * The snapshot is taken from the *edited* world, not from the file.
-     *
-     * Editing then playing then stopping has to return to what was edited. Snapshotting the file
-     * on disk instead would silently revert the session's work every time Play was pressed.
-     */
     @Test
     fun theSnapshotIncludesEditsMadeBeforePlay() {
         val world = World()

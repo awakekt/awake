@@ -10,7 +10,7 @@ import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraMode
 import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.controls.camera.aimAt
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.Camera

@@ -129,7 +129,16 @@ tasks.register<Exec>("checkJniBindings") {
 // no externalNativeBuild, so the CMake/NDK build needs a plain library to live in.
 mavenPublishing {
     publishToMavenCentral()
-    signAllPublications()
+    val hasSigningKey = hasProperty("signing.keyId") ||
+        hasProperty("signing.secretKey") ||
+        hasProperty("signingInMemoryKey") ||
+        hasProperty("signingKey") ||
+        System.getenv("ORG_GRADLE_PROJECT_signingInMemoryKey") != null ||
+        System.getenv("SIGNING_KEY") != null
+
+    if (hasSigningKey) {
+        signAllPublications()
+    }
     configure(
         com.vanniktech.maven.publish.AndroidSingleVariantLibrary(
             variant = "release",
@@ -156,7 +165,7 @@ mavenPublishing {
         developers {
             developer {
                 name.set("Ron June Valdoz")
-                email.set("ronjune.lopez@gmail.com")
+                email.set("ronjune.valdoz@gmail.com")
             }
         }
     }

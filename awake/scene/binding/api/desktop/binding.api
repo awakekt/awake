@@ -1,0 +1,53 @@
+public final class com/awakekt/awake/scene/binding/PrefabLinkBinding : com/awakekt/awake/scene/binding/SceneComponentResolver {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/binding/PrefabLinkBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+}
+
+public abstract interface class com/awakekt/awake/scene/binding/SceneComponentBinding : com/awakekt/awake/scene/binding/SceneComponentResolver {
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public abstract fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public abstract fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public abstract fun getComponentClass ()Lkotlin/reflect/KClass;
+	public abstract fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/binding/SceneComponentBinding$DefaultImpls {
+	public static fun attach-8mtA4i0 (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public static fun canResolve (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public static fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public static fun getSerializer (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;)Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/binding/SceneComponentRegistry {
+	public static final field Companion Lcom/awakekt/awake/scene/binding/SceneComponentRegistry$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun exportComponents-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Ljava/util/List;
+	public final fun getBindings ()Ljava/util/List;
+	public final fun getResolvers ()Ljava/util/List;
+	public final fun register (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
+	public final fun register (Lcom/awakekt/awake/scene/binding/SceneComponentResolver;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
+	public final fun resolve-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)Z
+}
+
+public final class com/awakekt/awake/scene/binding/SceneComponentRegistry$Companion {
+	public final fun registerGlobal (Lcom/awakekt/awake/scene/binding/SceneComponentBinding;)V
+	public final fun registerGlobal (Lcom/awakekt/awake/scene/binding/SceneComponentResolver;)V
+}
+
+public abstract interface class com/awakekt/awake/scene/binding/SceneComponentResolver {
+	public abstract fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public abstract fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+}
+
+public abstract interface class com/awakekt/awake/scene/binding/SceneResolutionContext {
+	public abstract fun deferNodeLink (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public abstract fun getWorld ()Lcom/awakekt/awake/ecs/World;
+	public abstract fun recordRequest (Ljava/lang/Object;)V
+}
+

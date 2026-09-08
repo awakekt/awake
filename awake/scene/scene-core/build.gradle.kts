@@ -5,6 +5,7 @@
  */
 plugins {
     id("com.awakekt.awake.plugin.library")
+    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -20,10 +21,13 @@ kotlin {
         commonMain.dependencies {
             api(project(":awake:core:math"))
             api(project(":awake:ecs"))
+            api(project(":awake:scene:document"))
+            api(project(":awake:scene:binding"))
             // WorldPartitionSystem schedules cell loads off the frame thread; see
             // docs/tasks/2026-08-29-async-cell-streaming-plan.md. The only dependency this
             // otherwise-lean module carries beyond math and the ECS.
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

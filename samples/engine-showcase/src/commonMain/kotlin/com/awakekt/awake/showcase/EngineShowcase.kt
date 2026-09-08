@@ -7,7 +7,7 @@ package com.awakekt.awake.showcase
 
 import com.awakekt.awake.scene.authoring.SceneAssetsDsl
 import com.awakekt.awake.scene.core.plugin.GamePlugin
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.showcase.examples.CharacterExampleDriver
 import com.awakekt.awake.showcase.examples.GltfViewerAssets
@@ -104,6 +104,7 @@ val EngineShowcases = listOf(
 
 /** Preloads every asset-backed showcase before a frame system activates one. */
 suspend fun preloadEngineShowcases() {
+    com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers.install()
     GltfViewerAssets.preload()
     SkinnedExampleDriver.preload()
     InstancedSkinnedExampleDriver.preload()

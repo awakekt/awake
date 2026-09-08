@@ -23,7 +23,7 @@ import com.awakekt.awake.navigation.grid.NavGrid
 import com.awakekt.awake.navigation.grid.bakeNavGrid
 import com.awakekt.awake.navigation.grid.navGridDebugLines
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.document.Scene
+import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.showcase.ShowcaseDebugToggles
 import kotlin.math.cos

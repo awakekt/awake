@@ -6,13 +6,18 @@
 package com.awakekt.awake.showcase
 
 import com.awakekt.awake.scene.document.SceneLoader
-import com.awakekt.awake.scene.document.destroy
+import com.awakekt.awake.scene.binding.destroy
+import com.awakekt.awake.scene.binding.instantiate
+import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class EngineShowcaseTest {
+    init {
+        DefaultSceneComponentResolvers.install()
+    }
     @Test
     fun everyShowcaseUsesAStableIdAndAResourceScene() {
         assertEquals(EngineShowcases.map(EngineShowcase::id).toSet().size, EngineShowcases.size)

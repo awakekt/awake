@@ -17,6 +17,9 @@ plugins {
 // compose engine's ComposeHost, so they need the same bump.
 val ktlintVersion = if (project.path.startsWith(":awake:compose") ||
     project.path.startsWith(":awake:ui") ||
+    project.path.startsWith(":awake:editor") ||
+    project.path.startsWith(":app") ||
+    project.path.startsWith(":plugins") ||
     project.path == ":samples:ui-showcase" ||
     project.path == ":samples:engine-showcase" ||
     project.path == ":samples:compose-showcase"
