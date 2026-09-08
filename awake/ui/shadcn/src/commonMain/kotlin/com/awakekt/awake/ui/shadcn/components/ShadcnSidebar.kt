@@ -142,7 +142,7 @@ fun ShadcnSidebarMenuItem(
     onClick: () -> Unit = {},
 ) {
     val theme = shadcnTheme
-    val interaction = remember { InteractionSource() }
+    val interaction = remember("item-interaction", label) { InteractionSource() }
     // Icon-only when the enclosing Sidebar is collapsed -- matches upstream's
     // `group-data-[collapsible=icon]` selector, which hides SidebarMenuButton's own label text.
     // A collapsed item with no icon renders as an empty button rather than truncated label text;
@@ -219,7 +219,7 @@ fun ShadcnSidebarMenuCollapsibleItem(
     items: context(Composer) () -> Unit,
 ) {
     val collapsed = LocalSidebarCollapsed.current
-    val group = remember { CollapsibleGroupState(defaultExpanded) }
+    val group = remember("collapsible-group", label) { CollapsibleGroupState(defaultExpanded) }
 
     if (collapsed) {
         ShadcnSidebarMenuItem(
