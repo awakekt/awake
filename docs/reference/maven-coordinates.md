@@ -106,7 +106,7 @@ All of these now apply `awake.publish-convention`.
 | `com.awakekt.awake.core:text` | `:awake:core:text` | Font and shaping types |
 | `com.awakekt.awake.physics:api` | `:awake:physics:api` | Physics facade |
 | `com.awakekt.awake.scene:scene-core` | `:awake:scene:scene-core` | Components, systems, streaming |
-| `com.awakekt.awake.scene:rendering` | `:awake:scene:rendering` | Camera, lights, mesh renderer |
+| `com.awakekt.awake.scene:scene3d` | `:awake:scene:scene3d` | Camera, lights, mesh renderer |
 | `com.awakekt.awake.scene:runtime` | `:awake:scene:runtime` | Scene documents and lifecycle |
 | `com.awakekt.awake.scene:authoring` | `:awake:scene:authoring` | The scene/app DSL |
 | `com.awakekt.awake.scene:controls` | `:awake:scene:controls` | Camera and input controls |

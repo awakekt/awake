@@ -99,7 +99,7 @@ Content in a call, a local, a property, or a well-chosen function name is invisi
 it is fixed: it declared `lightViewProjection`, which decided what volume a directional light
 covers. Real content, in the driver layer, and no forbidden word in a declared name -- it never
 appeared on any list. `0a94382e3` moved it out: `SceneLight` carries `viewProjection`,
-`RenderSystem` fills it in, and a backend renders depth from whatever matrix it is handed.
+`RenderSystem3D` fills it in, and a backend renders depth from whatever matrix it is handed.
 
 That one is **closed too** (`b19fe3e63`): `prepareDrawCalls` used to write
 `lit_shadow.wgsl`'s uniform block field by field, and now calls the shared `litShadowUniforms`

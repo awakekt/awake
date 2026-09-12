@@ -39,11 +39,11 @@ of architectural debt in this codebase.
 **LAYER 1 — Hardware Abstraction Layer (HAL)**
 - Module: `awake:engine:render:contract` (`GpuDevice` / `Renderer`)
 - Owns: pipelines, buffers, textures, samplers, command recording, swapchain, viewport scissors, pixel readback, `GpuPassInput`, `GpuSubPass`, `GpuDrawCommand`
-- NEVER owns: `SceneLight`, `PointLight`, `DrawCall`, `Lens`, `EnvironmentUniforms`, `ScenePassDescriptor`, `ShadowCascades`, `DirectionalShadowBox`, `ShadowCascadeUniforms`, `SkyboxUniforms`, `SkyboxFields`, `ParticleUniforms`, `DepthFogFields`, `InfiniteGridFields`, or any scene default constants
+- NEVER owns: `SceneLight`, `PointLight`, `RenderDrawCommand`, `Lens`, `EnvironmentUniforms`, `ScenePassDescriptor`, `ShadowCascades`, `DirectionalShadowBox`, `ShadowCascadeUniforms`, `SkyboxUniforms`, `SkyboxFields`, `ParticleUniforms`, `DepthFogFields`, `InfiniteGridFields`, or any scene default constants
 
 **LAYER 2 — Render Graph / Scene System**
 - Modules: `awake:engine:render:passes`, `awake:asset:shader-pack`, `awake:scene:rendering`
-- Owns: `SceneLight`, `DrawCall`, `Lens`, `EnvironmentUniforms`, `ScenePassDescriptor`, all shadow cascade algorithms, all content-specific uniform layouts, all scene default constants, `RenderFeature` list and dispatch
+- Owns: `SceneLight`, `RenderDrawCommand`, `Lens`, `EnvironmentUniforms`, `ScenePassDescriptor`, all shadow cascade algorithms, all content-specific uniform layouts, all scene default constants, `RenderFeature` list and dispatch
 - Translates: scene data → raw GPU passes and pre-packed byte/float buffers (`GpuPassInput`) BEFORE calling `GpuDevice`
 
 **The test:** *"Could a third backend implement this type unchanged, without knowing what scene content it serves?"* A type that fails this test does not belong in `render:contract`.
@@ -52,12 +52,21 @@ of architectural debt in this codebase.
 - ❌ WRONG: add a field or parameter to `Renderer` / `GpuDevice`
 - ✅ RIGHT: pack the data into a `FloatArray`/`ByteArray` in `render:passes`, pass raw bytes and generic `GpuSubPass` executions to the backend via `GpuPassInput`
 
-**Phase 1 staging note (D31):** `Renderer.kt` still declares
-`fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight)` while Phase 2 is
-pending. The agent rules below define the *target state*. Existing occurrences in the
-five tracked exempt files per backend are **known debt, not actionable defects yet**.
-See `docs/reference/decision-log.md` D31 and `docs/reference/render-hardware-interface.md`
-§ HAL vs Render Graph for the full type audit. Phase 2 will eliminate all 5 exemptions per backend.
+**Phase 2 status (D31):** `Renderer` consumes `GpuPassInput`; `render:passes` invokes the
+contract-owned generic `GpuDrawPreparer` with `GpuDrawRequest` values. The request exposes only
+`GpuMesh`/`GpuMaterial` handles and generic draw state, never richer authored resource interfaces.
+The backend layering ledger is empty, so no backend source file imports scene-authored vocabulary.
+Each backend supplies only its resource-handle preparation implementation and returns resolved
+packets to the renderer.
+
+Uniform ABI writes are guarded by the root `verifyRenderUniforms` task. It scans the complete
+production source text, including `awake:asset:shader-pack` and multiline calls, and rejects
+literal indices, hand-sliced matrix/light payloads, numeric `copyOfRange` payloads, direct indexed
+`*Uniform`/`*Params` scratch writes, and WGSL binding-text inference. Use
+`UniformLayout`/`UniformWriter` and named fields for every new uniform write.
+The root `verifyRenderContractBoundary` task is also wired into `check`; it rejects scene or
+render-pipeline imports in `render:contract` and prevents source packets from regressing to
+authored `Mesh`/`Material` fields.
 
 ## 1. Strategy pattern for render features — in place, keep it that way
 
@@ -200,8 +209,8 @@ the shared layer, and `docs/reference/backend-commonisation.md` for what is stil
 
 | Module | Owns | Must not own |
 |---|---|---|
-| **`awake:engine:render:contract`** | Stable backend-neutral contracts, interfaces, GPU data shapes (`GpuDataShape`), vertex semantics (`VertexSemantic`), canonical `VertexFormat`, resource handles, and low-level layout vocabulary. | Backend types, driver calls, rendering policy, batching/scheduling algorithms, filesystem output, or test helpers. |
-| **`awake:engine:render:passes`** | Shared scene/general rendering algorithms and `RenderFeature` bodies: draw preparation, vertex/uniform writers, batching, and pass ordering. | Vulkan/WebGPU types, UI-framework vocabulary, or desktop/platform IO. |
+| **`awake:engine:render:contract`** | Stable backend-neutral contracts, interfaces, GPU data shapes (`GpuDataShape`), vertex semantics (`VertexSemantic`), canonical `VertexFormat`, resource handles, and low-level layout vocabulary. | Backend types, driver calls, rendering policy, source draw packets, source-resolution bridges, filesystem output, scene lowering, or test helpers. |
+| **`awake:engine:render:passes`** | Shared scene/general rendering algorithms and `RenderFeature` bodies: source draw packets and resolution, draw preparation, vertex/uniform writers, batching, and pass ordering. | Vulkan/WebGPU types, UI-framework vocabulary, or desktop/platform IO. |
 | **`awake:engine:render:passes2d`** | Shared 2D primitive coalescing, mesh-upload/recording ports, and 2D pass algorithms. It is intentionally UI-framework-free. | Widgets, layout/state/theme code, backend objects, or paint-order re-sorting. |
 | **`awake:engine:render:testing`** | KMP test/diagnostic helpers built on the contract: pixel buffers, offscreen capture lifetime, assertions, and platform-specific diagnostic writers in their platform source set. | Production renderer APIs, backend construction, or application/game content. |
 | **`awake:backend:vulkan` / `awake:backend:webgpu`** | Only driver-specific bindings and GPU resource allocation/recording (e.g. Vulkan JNI handles, WebGPU wgpu4k wrappers, command buffer encoders, descriptor set / bind group caching). Backend test source sets may adapt shared `render:testing` helpers to a real backend fixture. | Shared decisions, CPU rendering algorithms, UI/game content, or reusable cross-backend test helpers. |
@@ -282,25 +291,15 @@ port in `contract`, an algorithm using that port in `passes`/`passes2d`, and a d
   missing mediator. A Bridge or adapter layer added without them relocates the duplication
   instead of deleting it. Both primitives landed (`VertexFormat.None`, `PipelineSpec.uniforms`),
   and the rule stands for the next one: check the primitive before reaching for the layer.
-- **Do not add new backend imports of scene vocabulary (staged rule — D31).** `DrawCall`,
+- **Do not add new backend imports of scene vocabulary (D31).** `RenderDrawCommand`,
   `SceneLight`, `Lens`, `EnvironmentUniforms`, `ShadowCascadeUniforms`, `DirectionalShadowBox`,
   `SkyboxUniforms`, and `ParticleUniforms` are render *runtime* concepts; a backend receives
-  pipelines, buffers and recorded commands. Both backends violate this today — **10 files** in
-  `verifyBackendLayering`'s import ledger (5 Vulkan + 5 WebGPU, all under `renderer/`) — because
-  `Renderer.draw()`'s signature still passes scene objects. That is **tracked debt** (D31 Phase 2),
-  not a precedent. The rule below defines the *target state*:
-
-  > **Phase 1 (now):** Do not add a new scene import to any file, including the exempt ones.
-  > Do not add a sixth file to the ledger without a plan entry. Shrink the list over time.
-  >
-  > **Phase 2 (pending):** Replace `Renderer.draw(camera, drawCalls, light)` with
-  > `draw(frame: GpuSceneFrame)`. When that lands, the ledger reaches zero automatically.
-
-  The full exempt-file list per backend is in the `awake-render-vulkan` and
-  `awake-render-webgpu` skills and in `com.awakekt.awake.plugin.backend-layering.gradle.kts`.
-  Unlike the content-vocabulary list (which reached 0), this one has not moved — because
-  shrinking it means changing what a backend is handed, which is the draw-preparation phase of
-  `docs/tasks/2026-08-23-rhi-gpudevice-plan.md` — not an import cleanup.
+  pipelines, buffers and recorded commands. The verifier now has an empty import-exemption
+  ledger for both backends. Any reintroduction of `RenderDrawCommand`, `SceneLight`, `Lens`, or
+  `EnvironmentUniforms` into backend source is a build failure, not tracked debt. The same guard
+  rejects authored scene defaults (`DEFAULT_SCENE_LIGHT`, sky/fog color presets) in backend
+  production sources. The source command is lowered above the HAL and only `GpuPassInput` crosses
+  the backend boundary.
 - **Never reach for `expect`/`actual` to enforce backend symmetry.** It makes both sides implement
   matching signatures while both bodies stay hand-written — duplication becomes mandatory and
   compiler-checked instead of removed. It also resolves per KMP *target*, not per backend. Use an
@@ -374,11 +373,24 @@ already covers it -- it did here, and the fix required zero new backend or shade
 - [ ] All vertex attributes and buffer offsets are derived dynamically from `VertexFormat` —
       no hardcoded attribute arrays or offsets in backend pipeline classes.
 - [ ] Logic shared or symmetric between Vulkan and WebGPU is moved to `render:contract` or `render:passes`.
+- [ ] Shared compilers are source-type generic; they must not import or expose authored
+      `RenderDrawCommand`, ECS, or scene types. Keep authored lowering at the scene-to-passes edge.
+- [ ] Uniform blocks are packed through `UniformLayout`/`UniformWriter`; never concatenate matrix,
+      light, or extra arrays (`mvp.data + ...`) in a backend. Run the production-source audit
+      before review:
+      `rg -n "mvp\\.data\\s*\\+|lightUniforms\\s*\\+|shaderLightUniforms\\s*\\+|uniformFloats\\[[0-9]+\\]|extraUniformFloats\\[[0-9]+\\]" awake/backend awake/engine/render awake/asset/shader-pack awake/scene -g '*.kt'`.
+      The same audit is now executable with `./gradlew verifyRenderUniforms` and is wired into the
+      root `check`; it also rejects numeric `copyOf`/`copyOfRange` slices of light or material
+      payloads. Do not weaken its source-set exclusions to hide a production violation.
+- [ ] Every pipeline declaration carries explicit group/binding metadata from its shared shader
+      definition. Never infer bind-group use from WGSL substring matching, and never submit a
+      group-0 bind group when the selected entry points declare no group-0 resources.
 - [ ] 2D primitive algorithms live in `render:passes2d`, never beside a UI framework or a backend.
 - [ ] Capture/pixel-dump helpers live in `render:testing`; only a backend-specific fixture stays in a backend test source set.
 - [ ] Anything added to the shared layer passes the third-backend test and is WebGPU-shaped —
       no `Vk*` type, descriptor-set index or explicit barrier in shared code.
-- [ ] No new backend import of `DrawCall`/`SceneLight`/`Lens`.
+- [ ] No new backend import of `RenderDrawCommand`/`SceneLight`/`Lens` or authored scene defaults;
+      the backend import-exemption ledger must remain empty.
 - [ ] No `expect`/`actual` used to enforce backend symmetry.
 - [ ] A new pipeline/pass/companion is decided once in the shared layer, or its one-backend-only
       status is documented at the declaration site with the reason.

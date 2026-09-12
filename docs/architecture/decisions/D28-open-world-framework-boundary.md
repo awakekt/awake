@@ -27,7 +27,7 @@ world policy.
 ### State at decision time
 
 The RFC's components and systems exist and have no production consumers — only their own
-unit tests. `SceneAppLifecycleRuntime` installs `TransformSystem`, `RenderSystem` and
+unit tests. `SceneAppLifecycleRuntime` installs `TransformSystem`, `RenderSystem3D` and
 `DebugVisualizationSystem`, and nothing else.
 
 - `TerrainClipmapSystem` computes snapped clipmap ring origins and emits no draw calls.
@@ -76,7 +76,7 @@ subresource in an undefined layout and sampling it is a validation error rather 
 pixel.
 
 **Spatial index, landed as an opt-in (2026-08-30).** `SpatialGrid` plus `SpatialIndexSystem`,
-with `RenderSystem` culling through the index when a scene installs one. The benchmark that came
+with `RenderSystem3D` culling through the index when a scene installs one. The benchmark that came
 with it is the part worth keeping: the query is five times faster than scanning every entity, and
 maintaining the index costs twice what the scan does, because this ECS reports neither movement
 nor destruction and the only way to know an entity moved is to look at it. So the index is not a

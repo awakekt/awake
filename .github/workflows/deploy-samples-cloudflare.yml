@@ -1,0 +1,59 @@
+name: Deploy samples to Cloudflare Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'awake/**'
+      - 'samples/engine-showcase/**'
+      - 'samples/ui-showcase/**'
+      - 'scripts/prepare-samples-site.sh'
+      - '.github/workflows/deploy-samples-cloudflare.yml'
+      - 'gradle/**'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: samples-cloudflare-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and deploy samples
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build production Wasm bundles
+        run: >-
+          ./gradlew
+          :samples:engine-showcase:wasmJsBrowserProductionWebpack
+          :samples:ui-showcase:wasmJsBrowserProductionWebpack
+          --no-daemon --console=plain
+
+      - name: Assemble Pages site
+        run: ./scripts/prepare-samples-site.sh build/samples-site
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/samples-site --project-name=awake-samples
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

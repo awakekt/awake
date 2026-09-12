@@ -14,6 +14,7 @@ Last reconciled against the tree: **2026-08-28**.
 
 | Plan | Status |
 |---|---|
+| [render-architecture-finalization](2026-09-09-render-architecture-finalization-plan.md) | **draft** — audited at `36fe7c2f0`; phases assigned to Astra 6 (architecture/integration) and Gemini 3.8 Flash (bounded follow-ups). Start with A0 flicker recovery; runtime work not started. |
 | [vendor-the-reference-app-components](2026-08-23-vendor-the-reference-app-components.md) | **done** — generator + re-vendor landed; see what it exposed |
 | [ui-tooling-formalization](2026-08-23-ui-tooling-formalization-plan.md) | **done** — five gates, all generators gated or documented as ungateable |
 | [shadcn-palette-from-table](2026-08-23-shadcn-palette-from-table-plan.md) | **done** — all five steps plus the three formalisation gaps |

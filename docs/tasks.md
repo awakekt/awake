@@ -24,6 +24,14 @@ parity remain parallel lanes.
 
 ## Active Phase
 
+- 2026-09-09: Rendering architecture finalization is drafted in
+  [render-architecture-finalization](tasks/2026-09-09-render-architecture-finalization-plan.md).
+  It records the latest HAL regression paths and sequences flicker recovery, complete shared
+  preparation, driver isolation and bounded concurrency. The empty backend exemption ledger is
+  insufficient completion evidence; runtime implementation and visual verification remain open.
+  Execution ownership was added 2026-09-10: Astra 6 owns A0–A7 complex implementation and
+  integration; Gemini 3.8 Flash owns F0–F6 bounded follow-ups with explicit prerequisites.
+
 - 2026-08-22: Vector precision variants are drafted in
   [math/01-vector-precision-variants-todo](tasks/math/01-vector-precision-variants-todo.md).
   Three independent flat types, no shared supertype -- generics box and a sealed parent kills

@@ -17,9 +17,9 @@ Read [docs/architecture.md](../../docs/architecture.md), [docs/mvp-plan.md](../.
 
 This backend knows pipelines, buffers, textures, samplers and command recording. It must never
 know what a skybox or a shadow *is* -- that is content, and content lives in the shared layer or
-`samples/<game>/`. `verifyBackendLayering` enforces this on `check` and carries a shrinking
-tracked-debt ledger of the files that still violate it. Before adding a content-shaped class here,
-read `docs/reference/render-extensibility.md`.
+`samples/<game>/`. `verifyBackendLayering` enforces this on `check`; its scene-import exemption
+ledger is empty. Before adding a content-shaped class here, read
+`docs/reference/render-extensibility.md`.
 
 ## 1. Resource Lifetime Symmetry
 
@@ -56,37 +56,16 @@ explicit exception that must be documented at the definition site.
 - **Headless Pixel Baselines**: When touching shader pipelines or draw submissions, run headless pixel-baseline tests (`PixelBaseline.kt`) to verify frame output determinism.
 - **Frame-Timing Harness**: When modifying command buffer recording or state transitions, verify frame timing metrics using `TimingBaseline` in `awake:ui:testing`.
 
-## 6. Tracked debt — the five exempt files (do not grow this list)
+## 6. Backend boundary guard
 
 `verifyBackendLayering` (in
 `build-logic/src/main/kotlin/com.awakekt.awake.plugin.backend-layering.gradle.kts`) bans
-`DrawCall`, `SceneLight`, and `Lens` imports from all files in `awake:backend:vulkan`, with
-exactly these five exceptions:
+`RenderDrawCommand`, `SceneLight`, `Lens`, and `EnvironmentUniforms` imports from every
+`awake:backend:vulkan` source file. The ledger is intentionally empty. Scene lowering happens
+in `render:passes`; Vulkan receives resolved `GpuPassInput` packets and hardware handles.
 
-```
-renderer/RendererCommandRecording.kt
-renderer/RendererDraw3D.kt
-renderer/RendererFrameContext.kt
-renderer/RendererOffscreen.kt
-renderer/Renderer.kt
-```
-
-These files are allowed to import scene vocabulary **only because `Renderer.draw()`'s signature
-still passes `camera: Lens`, `drawCalls: List<DrawCall>`, `light: SceneLight`**. This is known
-debt tracked against **D31 Phase 2** in `docs/reference/decision-log.md`.
-
-**Rules (staged — Phase 1):**
-
-1. Do **not** add a sixth file to `exemptBackendFiles` in the gradle plugin without a plan entry.
-2. Do **not** add a new scene import (`SceneLight`, `DrawCall`, `Lens`, `EnvironmentUniforms`,
-   `ShadowCascadeUniforms`, `SkyboxUniforms`, `ParticleUniforms`, etc.) to any of the five
-   exempt files — shrink the list over time, never grow it.
-3. Any scene import **outside** `renderer/` in this module fails `verifyBackendLayering` on
-   `check` immediately — that is a defect, not tracked debt.
-4. When Phase 2 lands (`Renderer.draw(input: GpuPassInput)` with generic `GpuSubPass` execution), all five files drop their scene
-   and shadow cascade imports; the ledger reaches zero and the backend is 100% free of game-authored vocabulary.
+Any new scene import is a build failure and must be moved above the HAL rather than added to an
+exemption.
 
 See `docs/reference/render-hardware-interface.md` § HAL vs Render Graph for the full
 vocabulary boundary and `awake-render-pipeline/SKILL.md` §0.5 for the two-layer model.
-
-

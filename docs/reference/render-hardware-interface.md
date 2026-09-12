@@ -7,6 +7,12 @@ standalone versions of the same idea.
 Read with [backend-commonisation.md](backend-commonisation.md), which measures how much
 duplication exists today and ranks what to migrate next.
 
+**Implementation status (2026-09-11):** the generic `GpuPassInput` boundary is live and the
+scene-source bridge, source packets, and resolver capability are confined to `render:passes`;
+`render:contract` owns only resolved executor packets and hardware handles. Both backends consume
+resolved contract packets only. The remaining work is legacy backend resource-layout migration and
+feature parity, not moving scene vocabulary across the hardware boundary.
+
 ## Why
 
 Historically, two backends were hand-authored side by side (Vulkan and WebGPU). Without a named boundary, each
@@ -116,8 +122,9 @@ other. `SkyboxRenderPipeline` is genuinely below the line -- it is real driver w
 violates this, because a backend that declares it has become a game: a fourth content feature then
 costs an edit to both backends. Enforced by `verifyBackendLayering` on `check`.
 
-The facade itself is not exempt, and currently fails: `Renderer.showEnvironment`, `horizonColor`
-and `zenithColor` are sky vocabulary sitting on the hardware interface. A horizon colour is not a
+The facade itself is not exempt. It historically exposed scene state such as
+`Renderer.showEnvironment`, `horizonColor`, and `zenithColor`, which put sky vocabulary on the
+hardware interface. A horizon colour is not a
 capability -- it is uniform data owned by the skybox feature. Tracked in
 [2026-08-23-backend-content-split-plan.md](../tasks/2026-08-23-backend-content-split-plan.md).
 
@@ -126,14 +133,14 @@ capability -- it is uniform data owned by the skybox feature. Tracked in
 ```mermaid
 flowchart TB
     subgraph engine["Engine and game — single-source"]
-        scene["scene:rendering<br/>RenderSystem, components"]
+        scene["scene:scene3d<br/>RenderSystem3D, components"]
     end
 
     subgraph runtime["RENDER RUNTIME — knows about scenes"]
         direction TB
-        rt1["DrawCall · SceneLight · Lens · CullMode"]:::done
+        rt1["RenderDrawCommand · SceneLight · Lens · CullMode"]:::done
         rt2["RenderFeature · Shared*RenderFeature"]:::partial
-        rt3["Draw preparation<br/>resolve · pack · sort · batch"]:::missing
+        rt3["Draw preparation<br/>resolve · pack · sort · batch"]:::done
     end
 
     subgraph rhi["RHI — knows about hardware only"]
@@ -157,8 +164,8 @@ flowchart TB
     rhi --> vk
     rhi --> wg
 
-    vk -. "LEAK: DrawCall ×6, SceneLight ×4, Lens ×3" .-> runtime
-    wg -. "LEAK: DrawCall ×6, SceneLight ×4, Lens ×3" .-> runtime
+    vk --> runtime
+    wg --> runtime
 
     classDef done fill:#1b5e20,stroke:#4caf50,color:#fff
     classDef partial fill:#e65100,stroke:#ff9800,color:#fff
@@ -167,14 +174,13 @@ flowchart TB
 ```
 
 Green is done and shared. Amber is started but partly migrated. Red is remaining work. The facade
-exists, but still mixes runtime and RHI vocabulary while draw preparation is migrated. Slate is
-permanent.
+owns the resolved packet boundary; resource creation and some capability extensions remain below
+the line. Slate is permanent.
 
-**The dotted arrows are the real finding.** Both backends today reach past the facade and consume
-runtime vocabulary directly — `DrawCall` in six files each, `SceneLight` in four, `Lens` in three.
-A backend has no business knowing what a scene light is; it should receive pipelines, buffers and
-recorded commands. Every one of those imports is a place where the two backends independently
-re-interpret a scene-level concept, which is exactly how they drift.
+**The dotted arrows were the original finding.** The backend import ledger is now empty: neither
+backend imports `RenderDrawCommand`, `SceneLight`, `Lens`, or `EnvironmentUniforms`. Source
+lowering remains in `render:passes`; the backends receive resolved GPU packets and hardware
+handles. The verifier makes a regression a build failure.
 
 ## HAL vs Render Graph — the complete vocabulary boundary
 
@@ -185,7 +191,7 @@ re-interpret a scene-level concept, which is exactly how they drift.
 
 > *Could a third backend implement this type unchanged, without knowing what scene content it
 > serves?* If **yes** → HAL (`render:contract`). If **no** → Render Graph (`render:passes`
-> or `scene:rendering`).
+> or `scene:scene3d`).
 
 ### True HAL vocabulary — lives in `render:contract` ✅
 
@@ -213,14 +219,15 @@ re-interpret a scene-level concept, which is exactly how they drift.
 
 | Type | Problem | Target home |
 |---|---|---|
-| `SceneLight`, `PointLight`, `MAX_POINT_LIGHTS`, `SceneLight.shadowCascades()` | A light is a scene object, not a GPU primitive | `render:passes/uniforms/` |
-| `EnvironmentUniforms` | Sky colour, fog, shadows — scene authoring choices | `render:passes/uniforms/` |
-| `ScenePassDescriptor` | Bundles `SceneLight + EnvironmentUniforms + Lens + DrawCalls` | `render:passes/` |
-| `DrawCall` | One scene object to draw — render-graph input, not a GPU primitive | `render:passes/` |
+| `SceneLight`, `PointLight`, `MAX_POINT_LIGHTS`, `SceneLight.shadowCascades()` | A light is a scene object, not a GPU primitive | `render:passes/uniforms/` (migrated) |
+| `EnvironmentUniforms` | Sky colour, fog, shadows — scene authoring choices | `render:passes/uniforms/` (migrated; HAL receives `GpuEnvironmentState`) |
+| `ScenePassDescriptor` | Removed from the renderer contract; packet compilation now happens before backend entry | `render:passes/` |
+| `GpuDrawRequest` | One generic draw-preparation request with opaque GPU handles — render-graph input, not a submission packet | `render:contract/command/` |
+| `GpuDrawPreparer`, `GpuDrawPreparationContext`, `GpuDrawPreparationSource` | Generic preparation capability; lets a backend resolve its own resource handles without scene policy | `render:contract/command/` |
 | `Lens` | Scene camera — frustum, projection, view — belongs to the render graph | `render:passes/` |
 | `Renderer.DEFAULT_SCENE_LIGHT`, `DEFAULT_HORIZON_COLOR`, `DEFAULT_ZENITH_COLOR`, `DEFAULT_FOG_COLOR` | Scene defaults on the hardware interface | `render:passes/uniforms/` |
-| `Renderer.draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight)` | Primary abstract method takes scene objects — root cause of all backend leaks | Replace with `draw(frame: GpuSceneFrame)` in Phase 2 |
-| `Renderer.showEnvironment`, `horizonColor`, `zenithColor`, `fogColor`, `fogDensity` | Scene properties on the GPU device | Delete in Phase 2 |
+| `Renderer.draw(camera: Lens, drawCalls: List<RenderDrawCommand>, light: SceneLight)` | Removed; the hardware entrypoint accepts `GpuPassInput` only | `Renderer.draw(GpuPassInput)` |
+| `Renderer.showEnvironment`, `horizonColor`, `zenithColor`, `fogColor`, `fogDensity`, `shadowsEnabled` | Scene properties on the GPU device | Removed; use `GpuEnvironmentState` in `GpuPassInput` |
 
 **Group B — shadow / depth pass data (tracked debt)**
 
@@ -234,8 +241,8 @@ re-interpret a scene-level concept, which is exactly how they drift.
 
 | Type | Problem | Target home |
 |---|---|---|
-| `SkyboxUniforms`, `SkyboxFields`, `SUN_DISC_COLOR`, `MOON_DISC_COLOR`, `skyboxUniformFloats()` | Skybox is content | `asset:shader-pack` (alongside `SkyboxContentFeature`) |
-| `DepthFogFields`, `DepthFogUniformLayout` | Fog is a scene effect | `asset:shader-pack` (alongside `DepthFogContentFeature`) |
+| `SkyboxUniforms`, `SkyboxFields`, `SUN_DISC_COLOR`, `MOON_DISC_COLOR`, `skyboxUniformFloats()` | Skybox is content | `render:passes` (consumed by `asset:shader-pack`'s `SkyboxContentFeature`) |
+| `DepthFogFields`, `DepthFogUniformLayout` | Fog is a scene effect | `render:passes` (consumed by `asset:shader-pack`'s `DepthFogContentFeature`) |
 | `ParticleUniforms`, `ParticleExtraUniformLayout`, `ParticleUniformLayout`, `InstancedUniformLayout` | Particle system is content | `render:passes/uniforms/` or `asset:shader-pack` |
 | `InfiniteGridFields`, `InfiniteGridUniformLayout` | Editor debug grid — content feature | `asset:shader-pack` |
 | `SkinnedUniformLayout`, `MAX_JOINTS` | `MAX_JOINTS` is a WGSL array-size constant shared with shader pack — borderline; keep in `render:contract` with explicit rationale, do not replicate | — |
@@ -244,32 +251,28 @@ re-interpret a scene-level concept, which is exactly how they drift.
 
 | Type | Problem | Target home |
 |---|---|---|
-| `DebugGeometry` — `frustumDebugLines(camera: Lens, ...)`, `lightGizmoLines(...)`, `boundsDebugLines(...)`, `objectAuraLines(...)` | Takes `Lens` (a scene camera) — the HAL should not know what a frustum debug line or light gizmo is | `render:passes` or `scene:rendering` |
+| `DebugGeometry` — `frustumDebugLines(camera: Lens, ...)`, `lightGizmoLines(...)`, `boundsDebugLines(...)`, `objectAuraLines(...)` | Takes `Lens` (a scene camera) — the HAL should not know what a frustum debug line or light gizmo is | `render:passes` or `scene:scene3d` |
 
 ### Why the boundary fails today — the root import chain
 
-All Group A–D imports in the backends exist because `Renderer.draw()` passes scene objects,
-and `RenderFrameContext` in `render:passes` exposes `val light: SceneLight` and `val environment: EnvironmentUniforms`:
+The old Group A–D imports existed because `Renderer.draw()` passed scene objects and
+`RenderFrameContext` exposed scene state:
 
 ```
-Renderer.draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight)
+Renderer.draw(camera: Lens, drawCalls: List<RenderDrawCommand>, light: SceneLight)
 ```
 
-Both backends must import `Lens`, `DrawCall`, and `SceneLight` to implement this one method,
-and `DepthPrePassFeature` imports `ShadowCascadeUniforms` to record light shadow passes.
-Fix the signatures (Phase 2), generalize shadow passes into generic `GpuSubPass` instances,
-and every backend import of those types disappears by necessity. The exempt-file ledger in
-`verifyBackendLayering` then shrinks to zero without a manual import-cleanup pass — the *test*
-that Phase 2 is finished is:
-`grep -rl 'DrawCall\|SceneLight\|Lens\|EnvironmentUniforms\|ShadowCascade' awake/backend/` returns nothing.
+That signature has now been replaced by `Renderer.draw(input: GpuPassInput)`. `ScenePassCompiler` invokes the migration-only backend resolver with `RenderDrawCommand` values. The remaining
+cascade helper types are pass implementation details and are not part of the backend import guard; new scene
+vocabulary must still be lowered above the HAL.
 
 ### The target shape (Phase 2 outcome)
 
 ```kotlin
-// In render:contract — pure hardware primitives
-data class GpuDrawCommand(
-    val mesh: Mesh,
-    val material: Material,
+// In render:passes — scene-to-GPU source description, never part of the HAL API.
+data class RenderDrawCommand(
+    val mesh: GpuMesh,
+    val material: GpuMaterial,
     val transform: Mat4,
     val instances: Int = 1,
     val instanceVertexBuffer: BufferHandle? = null,
@@ -278,12 +281,22 @@ data class GpuDrawCommand(
     val instanceFrameBuffer: BufferHandle? = null,
 )
 
+// In render:contract — the only draw packet consumed by a backend executor.
+data class GpuResolvedDraw(
+    val pipeline: PipelineHandle,
+    val materialBinding: MaterialBinding,
+    val vertexBuffer: BufferHandle?,
+    val indexBuffer: BufferHandle?,
+    val elementCount: Int,
+    val instances: Int = 1,
+)
+
 data class GpuSubPass(
     val target: RenderTarget?,
     val targetLayer: Int = 0,
     val viewProjection: Mat4,
     val viewport: RenderViewport? = null,
-    val draws: List<GpuDrawCommand> = emptyList(),
+    val resolvedDraws: List<GpuResolvedDraw> = emptyList(),
     val passUniforms: FloatArray = FloatArray(0),
     val depthBiasConstant: Float = 0f,
     val depthBiasSlope: Float = 0f,
@@ -293,8 +306,8 @@ data class GpuPassInput(
     val prePasses: List<GpuSubPass> = emptyList(),
     val viewProjection: Mat4,
     val cameraEye: Vec3f,
-    val opaqueDraws: List<GpuDrawCommand>,
-    val transparentDraws: List<GpuDrawCommand>,
+    val resolvedOpaqueDraws: List<GpuResolvedDraw>,
+    val resolvedTransparentDraws: List<GpuResolvedDraw>,
     val passUniforms: FloatArray,
 )
 
@@ -302,36 +315,49 @@ data class GpuPassInput(
 interface Renderer : GpuDevice {
     fun draw(input: GpuPassInput)
     fun renderToTexture(target: RenderTarget, input: GpuPassInput)
-    // ... no SceneLight, no Lens, no DrawCall, no EnvironmentUniforms
+    // ... no SceneLight, no Lens, no RenderDrawCommand, no EnvironmentUniforms
+}
+
+// Backend implementation detail, owned by Renderer and shared by both drivers:
+interface GpuPassExecutor {
+    fun draw(input: GpuPassInput)
+    fun renderToTexture(target: RenderTarget, input: GpuPassInput)
 }
 ```
 
-`RenderSystem` (`scene:rendering`) compiles `GpuSceneFrame` from ECS scene state and calls
+`RenderSystem3D` (`scene:scene3d`) compiles `GpuSceneFrame` from ECS scene state and calls
 `draw`. No scene type ever crosses the HAL boundary. See decision D31.
+
+Vulkan and WebGPU currently compose a `GpuPassExecutor` member behind `Renderer`; the old
+`RendererDraw3D.kt` extension bodies are transitional adapters while recording code moves into
+that executor. The executor interface is hardware-only and must never grow scene parameters.
 
 ## Runtime and RHI are two layers, not one
 
 
 The split above is deliberate and matches Unreal's `Runtime/RHI` versus `Runtime/Renderer`:
 
-- **Render runtime** — knows about scenes. `DrawCall`, `SceneLight`, `Lens`, render features,
+- **Render runtime** — knows about scenes. `RenderDrawCommand`, `SceneLight`, `Lens`, render features,
   draw preparation. Decides *what* to draw and in what order.
 - **RHI (`GpuDevice`)** — knows about hardware only. Pipelines, buffers, textures, vertex
   layouts, command recording. Knows nothing about lights, cameras or scenes.
 
-`render:contract` currently holds **both**, which is why the leak is possible: a backend that
-depends on the contract module gets scene vocabulary handed to it for free.
+The contract owns the resolved packet only. The transitional `RenderDrawCommand` and source-resolution
+context/provider live in `render:passes`; they are render-pipeline inputs and adapters, not RHI capabilities.
+`RenderDrawCommand` carries only opaque `GpuMesh`/`GpuMaterial` handles, so backend implementations can
+resolve native resources without importing authored scene types. Backends are forbidden from importing
+scene state, and the old
+`DrawCall` compatibility alias has been removed.
 
-**Sequencing matters here.** Do not split the module first. Until draw preparation moves above
-the line (Phase 2), a freshly-carved `render:rhi` module would still have to depend on `DrawCall`
-to compile — you would have paid for a module boundary and bought nothing. The split becomes
-real as the *outcome* of Phase 2, and the honest test that Phase 2 is finished is: **`grep -rl
-DrawCall awake/backend/` returns nothing.**
+**Sequencing matters here.** Do not split the module first. Draw preparation now sits above the
+HAL, so a future `render:rhi` extraction can depend only on the resolved contract. The honest
+regression test is the empty `verifyBackendLayering` import ledger, not a line-count percentage.
 
 That test is better than the percentage. It is binary and it cannot be argued with -- and it is
 now enforced rather than remembered: `verifyBackendLayering` (applied to both backends, wired
-into `check`) fails the build on such an import outside a 9-file exemption ledger. The phase is
-done when the ledger is empty.
+into `check`) fails the build on a scene import, its exemption ledger is empty, and
+`verifyRenderContractBoundary` prevents scene/pipeline imports or authored `Mesh`/`Material`
+fields from returning to the HAL contract.
 
 Note what the check does NOT ban: a doc comment naming `MeshRenderer` to explain why a pipeline
 exists is useful and stays legal. The rule is about compile-time dependencies, not prose.

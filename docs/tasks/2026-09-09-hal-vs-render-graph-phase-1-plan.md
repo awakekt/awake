@@ -1,5 +1,11 @@
 # Implementation Plan: HAL vs Render Graph — Decoupling `render:contract`
 
+> **2026-09-09 follow-up:** The checked Phase 2 steps below record migration progress, not final
+> architecture or rendering acceptance. At `36fe7c2f0`, scene aliases, lossy HAL conversion and
+> divergent rendering paths remain despite both layering checks passing. Use the
+> [render architecture finalization plan](2026-09-09-render-architecture-finalization-plan.md)
+> for the audited findings, flicker investigation and remaining completion gates.
+
 ## Background & Executive Summary
 
 `render:contract` is Awake Engine's **Hardware Abstraction Layer (HAL)**. Over time, it accumulated
@@ -14,7 +20,7 @@ This revised plan addresses the critical architectural, Gradle boundary, and bac
 
 1. **Eliminates Gradle Circular Dependencies**: `awake:engine:render:passes` depends on
    `awake:engine:render:contract`. `render:contract` MUST NOT depend on `render:passes`. We define a
-   pure, backend-agnostic HAL input descriptor (`GpuPassInput` / `GpuSubPass` / `GpuDrawCommand`) inside
+   pure, backend-agnostic HAL input descriptor (`GpuPassInput` / `GpuSubPass` / `RenderDrawCommand`) inside
    `render:contract`. High-level scene representations (`GpuSceneFrame`, `ScenePassGraph`) live in
    `render:passes` and compile down to `GpuPassInput` before entering the HAL.
 2. **Guarantees 100% Backend Decoupling (Zero Game-Authored Vocabulary)**:
@@ -30,7 +36,7 @@ This revised plan addresses the critical architectural, Gradle boundary, and bac
      standard draw commands via a `RenderFeature`, and fog/lighting/shadow data is pre-packed into raw uniform
      buffers before entering the backend.
    - **Instancing, Skinning & Particle Handling**: Preserves hardware-level instancing (`instanceBuffer`,
-     `instanceJointPalettes`, `instanceColors`, `instanceFrames`) inside `GpuDrawCommand` as raw GPU buffer handles and
+     `instanceJointPalettes`, `instanceColors`, `instanceFrames`) inside `RenderDrawCommand` as raw GPU buffer handles and
      instance counts, avoiding content knowledge while preserving zero-allocation batching.
 3. **Corrects Repository State & Ledger**: Correctly lists the exact 5 exempt backend files per
    backend tracked in `build-logic`, replaces non-existent file references, audits
@@ -157,8 +163,8 @@ To ensure Vulkan and WebGPU have **zero visible game-authored vocabulary (lights
 - **Solution**: All lighting and fog uniform packing is moved to the render graph preparation phase (`render:passes`). The HAL only binds already-packed UBOs and descriptor sets.
 
 ### 4. Instancing, Skinning, and Billboard Particles
-- **Problem**: High-level `DrawCall` contains `instanceJointPalettes`, `instanceColors`, and `instanceFrames`. If `GpuDrawCommand` only took `Mat4`, animated meshes and particles would be dropped.
-- **Solution**: `GpuDrawCommand` retains the low-level hardware buffer handles and instance counts without knowing game semantics:
+- **Problem**: High-level `DrawCall` contains `instanceJointPalettes`, `instanceColors`, and `instanceFrames`. If `RenderDrawCommand` only took `Mat4`, animated meshes and particles would be dropped.
+- **Solution**: `RenderDrawCommand` retains the low-level hardware buffer handles and instance counts without knowing game semantics:
   - `instances: Int = 1`
   - `instanceVertexBuffer: BufferHandle? = null` (instance model matrices or particle positions)
   - `jointPaletteBinding: MaterialBinding? = null` (skinned joint matrices)
@@ -198,7 +204,7 @@ with **Decision D31**:
   - Add the exact 5 exempt files per backend as tracked legacy debt.
   - Document that Phase 2 will achieve 0 exempt files and complete removal of all lighting/env/shadow imports.
 - **[.agents/skills/awake/agents/awake-render-backend-engineer.md](file:///Users/ronvaldoz/StudioProjects/awaken/.agents/skills/awake/agents/awake-render-backend-engineer.md)**:
-  - Update agent prompt and working rules: replace references to deprecated mutable properties (`shadowsEnabled`, `fogColor`, `skybox`) with pure HAL primitives (`GpuPassInput`, `GpuSubPass`, `GpuDrawCommand`).
+  - Update agent prompt and working rules: replace references to deprecated mutable properties (`shadowsEnabled`, `fogColor`, `skybox`) with pure HAL primitives (`GpuPassInput`, `GpuSubPass`, `RenderDrawCommand`).
   - Add explicit rule: a backend renderer receives pre-packed GPU passes only and must have zero knowledge of scene lights, camera, environment, or shadows.
 
 ### 4. Project Entry Points & Documentation
@@ -217,7 +223,7 @@ with **Decision D31**:
 
 ```
 ┌────────────────────────────────────────────────────────┐
-│  awake:scene:rendering (RenderSystem, ECS integration)  │
+│  awake:scene:scene3d (RenderSystem3D, ECS integration)  │
 └───────────────────────────┬────────────────────────────┘
                             │ api(project(":awake:engine:render:passes"))
 ┌───────────────────────────▼────────────────────────────┐
@@ -230,12 +236,12 @@ with **Decision D31**:
 ┌───────────────────────────▼────────────────────────────┐
 │  awake:engine:render:contract                          │
 │  Owns: Renderer, GpuDevice, GpuPassInput, GpuSubPass,  │
-│        GpuDrawCommand, Mesh, Material, Mat4, UBOs      │
+│        RenderDrawCommand, Mesh, Material, Mat4, UBOs      │
 └────────────────────────────────────────────────────────┘
 ```
 
 1. `awake:engine:render:passes` depends on `awake:engine:render:contract`.
-2. `awake:scene:rendering` depends on `awake:engine:render:passes` and `awake:engine:render:contract`.
+2. `awake:scene:scene3d` depends on `awake:engine:render:passes` and `awake:engine:render:contract`.
 3. `awake:engine:render:contract` depends on NO higher-level engine modules.
 
 ---
@@ -245,11 +251,11 @@ with **Decision D31**:
 #### 1. HAL Input Primitives (`awake:engine:render:contract`)
 
 ```kotlin
-// awake:engine:render:contract — GpuDrawCommand.kt
+// awake:engine:render:passes — RenderDrawCommand.kt
 /**
  * A single draw command resolved to hardware primitives.
  */
-data class GpuDrawCommand(
+data class RenderDrawCommand(
     val mesh: Mesh,
     val material: Material,
     val transform: Mat4,
@@ -270,7 +276,7 @@ data class GpuSubPass(
     val targetLayer: Int = 0,
     val viewProjection: Mat4,
     val viewport: RenderViewport? = null,
-    val draws: List<GpuDrawCommand> = emptyList(),
+    val draws: List<RenderDrawCommand> = emptyList(),
     val passUniforms: FloatArray = FloatArray(0),
     val depthBiasConstant: Float = 0f,
     val depthBiasSlope: Float = 0f,
@@ -280,7 +286,7 @@ data class GpuSubPass(
 /**
  * Fully pre-packed, hardware-ready pass input for the HAL.
  *
- * References ONLY HAL primitives (Mat4, Vec3f, GpuSubPass, GpuDrawCommand, FloatArray).
+ * References ONLY HAL primitives (Mat4, Vec3f, GpuSubPass, RenderDrawCommand, FloatArray).
  * Contains NO SceneLight, Lens, EnvironmentUniforms, or content flags.
  */
 data class GpuPassInput(
@@ -291,9 +297,9 @@ data class GpuPassInput(
     /** Camera world position for distance-based calculations / sorting. */
     val cameraEye: Vec3f,
     /** Opaque draws pre-sorted and batched by pipeline/material. */
-    val opaqueDraws: List<GpuDrawCommand>,
+    val opaqueDraws: List<RenderDrawCommand>,
     /** Transparent draws pre-sorted back-to-front. */
-    val transparentDraws: List<GpuDrawCommand>,
+    val transparentDraws: List<RenderDrawCommand>,
     /** Pre-packed uniform bytes (lighting, fog, shadow matrices) as raw floats. */
     val passUniforms: FloatArray,
 ) {
@@ -476,13 +482,13 @@ internal fun Renderer.recordCommandBuffer(
 
 ##### C. Total Decoupling Outcome:
 - **Zero Game-Authored Knowledge**: The backend does not know whether a draw is a shadow caster, a skybox, a character mesh, or a particle. It only sees `Mesh`, `Material`, transforms, and buffer bindings.
-- **Trivial Authoring for New Games & Features**: To add a new pass (e.g. SSAO, water reflection, custom depth, volumetric fog), a game developer authors a `RenderFeature` or compiles a `GpuSubPass` in `render:passes` or `scene:rendering`. **Zero edits to Vulkan or WebGPU backend code are ever required again.**
+- **Trivial Authoring for New Games & Features**: To add a new pass (e.g. SSAO, water reflection, custom depth, volumetric fog), a game developer authors a `RenderFeature` or compiles a `GpuSubPass` in `render:passes` or `scene:scene3d`. **Zero edits to Vulkan or WebGPU backend code are ever required again.**
 
 ---
 
 ## Step-by-Step Code Migration Sequence (Phase 2 Progress Tracker)
 
-- [x] **Step 1 — Introduce HAL Primitives**: Create `GpuDrawCommand.kt`, `GpuSubPass.kt`, and `GpuPassInput.kt` in
+- [x] **Step 1 — Introduce HAL Primitives**: Create `RenderDrawCommand.kt`, `GpuSubPass.kt`, and `GpuPassInput.kt` in
    `awake:engine:render:contract`. Introduce `GpuMesh` and `GpuMaterial` interfaces with backwards-compatible typealiases.
 - [x] **Step 2 — Default Constant Extraction**: Move `DEFAULT_SCENE_LIGHT`, `DEFAULT_HORIZON_COLOR`, `DEFAULT_ZENITH_COLOR`,
    `DEFAULT_FOG_COLOR`, and `DEFAULT_UNIFORM_FLOAT_COUNT = 24` from `Renderer.kt` and `GpuDevice.kt` to `render:passes/uniforms/SceneDefaults.kt`.
@@ -491,8 +497,8 @@ internal fun Renderer.recordCommandBuffer(
 - [x] **Step 4 — Add HAL Signatures to `Renderer`**: Add `fun draw(input: GpuPassInput)` and `fun renderToTexture(target, input: GpuPassInput)`
    to `render:contract/renderer/Renderer.kt`, implementing them on Vulkan `Renderer`, WebGPU `Renderer`, and `NoopRenderer`.
 - [x] **Step 5 — Wire Scene Callers to `draw(GpuPassInput)`**:
-  - `awake:scene:rendering` depends on `awake:engine:render:passes`.
-  - `RenderSystem.kt` builds `GpuSceneFrame` and invokes `renderer.draw(passInput)`.
+  - `awake:scene:scene3d` depends on `awake:engine:render:passes`.
+  - `RenderSystem3D.kt` builds `GpuSceneFrame` and invokes `renderer.draw(passInput)`.
 - [x] **Step 6 — Wire Swapchain & Offscreen `GpuPassInput`**: Both Vulkan and WebGPU `performDraw` and `performRenderToTexture` now execute `GpuPassInput`.
 - [x] **Step 7 — Purge `RenderFrameContext`**: Removed `light` and `environment` from `RenderFrameContext` and backend context adapters (ledger dropped from 10 to 8 files).
 - [x] **Step 8 — Cleanse `RendererCommandRecording.kt`**: Cleaned `SceneLight` and `EnvironmentUniforms` from Vulkan `RendererCommandRecording.kt` (ledger dropped from 8 to 7 files).
@@ -526,10 +532,10 @@ Upon completion of both Phase 1 and Phase 2, the system will satisfy the followi
 
 ### 4. Acyclic, Extensible Render Pipeline Architecture
 - `render:contract` depends on no higher-level engine modules.
-- New game render passes (e.g. SSAO, water reflection, custom depth, volumetric fog) can be authored entirely in `render:passes` or `scene:rendering` as `GpuSubPass` / `RenderFeature` instances without modifying a single line of backend driver code.
+- New game render passes (e.g. SSAO, water reflection, custom depth, volumetric fog) can be authored entirely in `render:passes` or `scene:scene3d` as `GpuSubPass` / `RenderFeature` instances without modifying a single line of backend driver code.
 
 ### 5. Passing Build, Tests, and Spotless Gate
-- All desktop tests across `:awake:engine:render:contract`, `:awake:engine:render:passes`, `:awake:backend:vulkan`, `:awake:backend:webgpu`, and `:awake:scene:rendering` pass green.
+- All desktop tests across `:awake:engine:render:contract`, `:awake:engine:render:passes`, `:awake:backend:vulkan`, `:awake:backend:webgpu`, and `:awake:scene:scene3d` pass green.
 - `spotlessCheck` and `apiDump` pass cleanly.
 
 ---
@@ -550,7 +556,7 @@ Run the complete suite of verification checks:
           :awake:engine:render:passes:desktopTest \
           :awake:backend:vulkan:desktopTest \
           :awake:backend:webgpu:desktopTest \
-          :awake:scene:rendering:desktopTest \
+          :awake:scene:scene3d:desktopTest \
           apiDump spotlessCheck verifyBackendLayering
 ```
 

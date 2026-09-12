@@ -423,7 +423,7 @@ class SceneGameRuntime(
 ```
 
 ### 2. Upgraded Engine Glue (SceneGameDsl)
-Make sure your internal infrastructure installation injects the SpatialSystem and RenderSystem right at the tail-end of your system arrays so they always catch game logic mutations seamlessly before drawing to the screen.
+Make sure your internal infrastructure installation injects the SpatialSystem and RenderSystem3D right at the tail-end of your system arrays so they always catch game logic mutations seamlessly before drawing to the screen.
 
 ```kotlin
 class SceneGameDsl internal constructor() {
@@ -435,8 +435,8 @@ class SceneGameDsl internal constructor() {
         // SpatialSystem runs in Fixed or Frame phase right after gameplay mutations
         fixedSystem("EngineSpatialSystem") { SpatialSystem(world) }
         
-        // RenderSystem always executes last in the Frame phase
-        frameSystem("EngineRenderSystem") { RenderSystem(renderer) }
+        // RenderSystem3D always executes last in the Frame phase
+        frameSystem("EngineRenderSystem") { RenderSystem3D(renderer) }
     }
 }
 ```
@@ -679,7 +679,7 @@ gameSpec.ecs {
     // 2. Setup your Systems pipeline
     systems {
         fixedSystem("SpinSystem") { SpinSystem(world) }
-        frameSystem("RenderSystem") { RenderSystem(renderer) }
+        frameSystem("RenderSystem3D") { RenderSystem3D(renderer) }
     }
 
     // 3. Pass your loaded assets straight into your clean Modifier tree!

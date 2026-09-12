@@ -187,7 +187,7 @@ inflates the figure and implies a cycle that does not exist):
     ui-core, ui-graphics, ui-text
 ```
 
-It cascades: `scene:rendering`, `render:passes` and both backends each inherit the same 3.
+It cascades: `scene:scene3d`, `render:passes` and both backends each inherit the same 3.
 
 **Two modules pay for it, the same way.** Both need the CPU data, both refuse a UI dependency,
 both re-derive what they cannot see:
@@ -202,14 +202,25 @@ both re-derive what they cannot see:
 A glTF parser and a mesh decimator both reasonably decline to depend on a UI framework. The
 module graph left neither any other option.
 
-Target -- the CPU half joins the module that already owns mesh data:
+Current transitional state -- the legacy bridge still leaves scene data beside the hardware
+interface, but new scene frames compile through `render:passes` into generic packets:
+
+```
+render:contract   Renderer, Mesh, DrawCall, Material, LineSegment, legacy scene bridge
+render:passes     GpuSceneFrame, scene-to-GPU compiler, generic packet preparation
+```
+
+Target -- the CPU half joins the module that already owns mesh data and the hardware contract
+contains no authored scene objects:
 
 ```
 core:geometry     MeshGeometry, VertexFormat, VertexAttribute, GpuDataShape, VertexSemantic,
                   MeshSimplifier, NormalizedInt                              (zero deps)
 
-render:contract   Renderer, Mesh, DrawCall, Material, LineSegment, uniform layouts
+render:contract   Renderer, Mesh, Material, LineSegment, generic GPU packets and uniform layouts
                   -> core:geometry, -> ui-core
+render:passes     GpuSceneFrame, DrawCall, SceneLight, EnvironmentUniforms, scene compilation
+                  -> render:contract
 ```
 
 `Mesh` **stays** in the contract. It is a GPU handle taking a raw `commandBuffer: Long`, not
@@ -226,7 +237,7 @@ Falls out of the move:
   `+ 3`/`+ 4`/`+ 5` write offsets inside the interleaving loops. Stride drift and `MagicNumber`
   are different problems that happened to live in the same file.
 - `MeshSimplifier` taking a `MeshGeometry` -- **retracted, do not do this.** See below.
-- `scene:rendering` drops from 7 transitive deps toward ~4, and to zero UI if it needs only
+- `scene:scene3d` drops from 7 transitive deps toward ~4, and to zero UI if it needs only
   mesh descriptions.
 - The repo-wide `MagicNumber` decision becomes answerable -- see below.
 
@@ -338,7 +349,7 @@ The narrowing is what paid. Two modules turned out to be reaching `core` through
 
 | Module | Was getting `core` via | Now |
 |---|---|---|
-| `scene:rendering` | `scene-core`'s `api(core)` | declares `core` |
+| `scene:scene3d` | `scene-core`'s `api(core)` | declares `core` |
 | `scene:controls` | `scene-core` + `rendering` | declares `core` and `core:math` |
 
 `scene:controls` never declared `:awake:core` at all, which is why a survey of modules that
@@ -368,7 +379,7 @@ There is a file named `Geometry.kt` inside `core:math`. The collision is real an
 reasonable wrong guess: that `Aabb` belongs in `core:geometry`.
 
 **It does not.** `Aabb` is `data class Aabb(min: Vec3, max: Vec3)` importing only `kotlin.math`,
-and it is consumed by `core:geometry`, `render:contract`, `scene:rendering`, and `studio`. Moving
+and it is consumed by `core:geometry`, `render:contract`, `scene:scene3d`, and `studio`. Moving
 it would force two rendering modules to depend on a *CPU mesh-data* module to hold a culling
 volume. It is a math primitive used for culling as much as for mesh bounds. Same shape of trap as
 the two meanings of `3` in `MeshSimplifier` -- one word, two referents.

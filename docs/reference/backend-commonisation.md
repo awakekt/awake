@@ -4,7 +4,7 @@ Vulkan and WebGPU are hand-authored side by side. This is the measurement of how
 and which parts can realistically be shared — so the next pass is chosen on evidence rather than
 on which file happened to annoy someone.
 
-Re-measured 2026-08-23 (was 2026-08-22). Kotlin lines in `commonMain`/`wasmJsMain`, tests and
+Re-measured 2026-09-11 (was 2026-08-23). Kotlin lines in `commonMain`/`wasmJsMain`, tests and
 `build/` excluded. Re-measure with `python3 tools/loc_survey.py`; do not trust these numbers after
 a large refactor.
 
@@ -12,28 +12,31 @@ a large refactor.
 
 | package | Vulkan | WebGPU | combined | shareable? |
 |---|---:|---:|---:|---|
-| `renderer/` | 2,032 | 1,449 | **3,481** | mostly — same algorithm, two spellings |
-| `pipeline/` | 1,194 | 744 | 1,938 | the *decisions* yes, the struct-building no |
-| `mesh/` | 777 | 426 | 1,203 | packing yes, allocation no |
-| `debug/` | 774 | 337 | 1,111 | yes — three more pipelines of the same shape |
-| `ui/` | 719 | 310 | 1,029 | partly done already via `render:passes2d` |
-| `texture/` + `material/` | 1,075 | 344 | 1,419 | mip/format logic yes, upload no |
-| `application/` | 826 | 511 | 1,337 | partly — wiring, not device setup |
-| `device/` + `swapchain/` + `commands/` | 574 | 201 | 775 | **no** — this *is* the API |
-| **total per-backend** | **7,971** | **4,322** | **12,293** | |
+| `renderer/` | 2,543 | 1,702 | **4,245** | mostly — same algorithm, two spellings |
+| `pipeline/` | 1,545 | 1,297 | 2,842 | the *decisions* yes, the struct-building no |
+| `mesh/` | 787 | 461 | 1,248 | packing yes, allocation no |
+| `debug/` | 643 | 219 | 862 | yes — three more pipelines of the same shape |
+| `ui/` | 1,008 | 553 | 1,561 | partly done already via `render:passes2d` |
+| `texture/` + `material/` | 1,293 | 532 | 1,825 | mip/format logic yes, upload no |
+| `application/` | 1,194 | 809 | 2,003 | partly — wiring, not device setup |
+| `device/` + `swapchain/` + `commands/` | 769 | 231 | 1,000 | **no** — this *is* the API |
+| **total per-backend** | **9,782** | **5,804** | **15,586** | |
 
-Shared render code (`render:contract` + `render:passes` + `render:passes2d`): **3,691**.
+Shared render code (`render:contract` + `render:passes` + `render:passes2d`): **7,588**.
 
-- Commonised, whole render stack: **3,691 / 15,984 = 23.1%**
-- Excluding `device`/`swapchain`/`commands`: **24.3%**
+- Commonised, whole render stack: **7,588 / 23,174 = 32.7%**
+- Excluding `device`/`swapchain`/`commands`: **34.2%**
 - Counting only packages with a real counterpart on both sides (`renderer/` + `pipeline/`):
-  3,691 / 9,110 = **40.5%**
+  7,588 / 14,675 = **51.7%**
 
-Movement since 2026-08-22: shared code grew 3,115 -> 3,691 and the whole-stack figure 20.6% ->
-23.1%. Both backends' `pipeline/` and `debug/` *grew* too — WebGPU's `pipeline/` by 82 lines,
-`debug/` by 37 — because the content-feature provider list added a per-backend `*ContentFeature`
-and `SkyboxContentFeature` to each side. That is expected and temporary: those files are exactly
-the ledger entries phase 3 of
+Movement since 2026-08-23: shared code is now 7,588 lines and the whole-stack figure is 32.7%.
+The denominator also grew as generic packet execution, explicit binding metadata, and feature
+seams became real code. Both backends still retain native allocation and command encoding; the
+remaining commonisation work is the source-resource preparation seam and feature-family parity,
+not moving driver API wrappers into `render:passes`. The per-package table is generated from the
+current tree by `tools/loc_survey.py`; rerun it after a large refactor. The content-feature provider
+list still adds a per-backend `*ContentFeature` and `SkyboxContentFeature`; those files remain
+ledger entries for phase 3 of
 [the content-split plan](../tasks/2026-08-23-backend-content-split-plan.md) deletes. A pass that
 moves the number the wrong way is worth recording, not hiding.
 
@@ -57,14 +60,14 @@ lines that cannot be shared under any design. A realistic ceiling is **55–65% 
 
 ## Ranked plan
 
-1. **`renderer/` draw preparation** (3,494 lines) — the single largest win. Both sides walk draw
+1. **`renderer/` draw preparation** (4,245 lines) — the single largest win. Both sides walk draw
    calls, resolve a pipeline, pack uniforms, sort, and record. The port already exists
    (`CommandRecorder`) and the shared bodies are started (`SharedOpaqueRenderFeature`,
    `SharedTransparentRenderFeature`), so this is finishing a migration, not starting one. Its own
    multi-day pass.
-2. **`debug/`** (1,029) — line, skybox and particle pipelines are the same shape
+2. **`debug/`** (862) — line, skybox and particle pipelines are the same shape
    `PipelineSpec`/`PipelineFactory` already handles. Cheap once that machinery exists.
-3. **`mesh/` packing** (1,211) — instance/vertex buffer packing is arithmetic; only the
+3. **`mesh/` packing** (1,248) — instance/vertex buffer packing is arithmetic; only the
    allocation call differs.
 
 ## The pattern to use — and the one to avoid

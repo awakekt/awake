@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Deprecated the legacy scene-shaped renderer and offscreen overloads. They remain migration
+  bridges during the render architecture cutover and are scheduled for removal at A7; new code
+  should submit resolved `GpuPassInput` packets.
+- Routed `RenderSystem` scene frames through `GpuSceneFrame.toPassInput`, carrying directional and
+  point-light payloads plus planned shadow subpasses through the generic render contract.
+- Vulkan's generic packet executor now forwards planned shadow matrices into its existing depth
+  pre-pass recorder for onscreen and offscreen submissions.
+- Generic Vulkan and WebGPU offscreen packet preparation now consumes the authored lighting payload
+  instead of silently falling back to default directional light values.
+- Vulkan resolved packets now preserve camera-depth and planned shadow-depth passes by using the
+  retained transitional source draws only for depth recording; the resolved packet remains the
+  color-path source.
+
 ## [0.1.0-dev.12] - 2026-09-07
 
 ### Changed

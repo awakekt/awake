@@ -6,11 +6,12 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-09-09` | **Total Tracked Docs**: `201`
+**Last Self-Healed**: `2026-09-12` | **Total Tracked Docs**: `210`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
 | **Strategy & Roadmap** | [`MMORPG Engine Roadmap`](mmorpg-roadmap.md) | `In Progress` | Companion to [mvp-plan.md](./mvp-plan.md). That document covers the near-term "spinning |
+| **Architecture** | [`D34: render plugin lifecycle`](architecture/D34-render-plugin-lifecycle.md) | `Stable` | Status: accepted |
 | **Architecture** | [`Architecture`](architecture/architecture.md) | `Stable` | Awake is a Kotlin Multiplatform game engine library: a Vulkan-first cross-platform renderer |
 | **Architecture** | [`D10 — jni-binding-generator de-risk findings (2026-07-07)`](architecture/decisions/D10-codegen-derisk-findings.md) | `Stable` | Phase 1a of [mvp-plan.md](../mvp-plan.md) called for a week-one de-risk: run |
 | **Architecture** | [`D11: JNI Native Implementation Boundary`](architecture/decisions/D11-jni-native-implementation-boundary.md) | `Stable` | `jni-binding-generator` owns the JNI boundary only: exported JNI names, parameter |
@@ -19,6 +20,8 @@
 | **Architecture** | [`D30: Math — Which Numeric Primitive Variants Earn a Type`](architecture/decisions/D30-math-numeric-primitive-variants.md) | `Stable` | `:awake:core:math` does **not** carry a variant of every vector/quaternion/matrix type for |
 | **Architecture** | [`D31: Net — What the Transport Module Owns, and What Stays in the Game`](architecture/decisions/D31-net-api-extraction.md) | `Stable` | `:awake:net:api` exists and carries exactly two things: the **transport port** and the |
 | **Architecture** | [`D32 — The editor is a library, not Studio's UI (2026-08-31)`](architecture/decisions/D32-editor-is-a-library.md) | `Stable` | **Status: Accepted.** `awake:editor` and its adapters are a published library whose consumers are |
+| **Architecture** | [`D32: scene and render domain modules`](architecture/decisions/D32-scene-and-render-domain-modules.md) | `Stable` | Status: accepted |
+| **Architecture** | [`D33: render feature plugin boundary`](architecture/decisions/D33-render-feature-plugin-boundary.md) | `Stable` | Status: accepted |
 | **Audits** | [`Shadcn visual parity audit — 2026-08-15`](audits/2026-08-15-shadcn-visual-parity-audit.md) | `Active` | Live audit of `samples:ui-showcase` (wasmJs, WebGPU, dpr=2) against official shadcn/ui |
 | **Audits** | [`UI refactor plan — 2026-08-17`](audits/2026-08-17-ui-refactor-vs-recreate-audit.md) | `Active` | **Verdict: refactor in place. Do not recreate.** Recreate only 3 small units |
 | **Audits** | [`Application layer — full shape survey and options`](audits/2026-08-19-application-layer-shape-options.md) | `Active` | Status: draft, not implemented. Scope widened from |
@@ -44,6 +47,11 @@
 | **Audits** | [`Tooling Consolidation, Duplicate Audit, and 2D/3D Decoupling (2026-08-30)`](audits/2026-08-30-tooling-consolidation-plan.md) | `Active` | **Date:** 2026-08-30 |
 | **Audits** | [`Button group: intrinsic cross-axis sizing + per-corner radii`](audits/button-group-intrinsics-handoff.md) | `Active` | Handoff for a fresh session. Reference implementation is the user's own |
 | **Active Task** | [`Implementation Plan: HAL vs Render Graph — Decoupling `render:contract``](tasks/2026-09-09-hal-vs-render-graph-phase-1-plan.md) | `Active` | `render:contract` is Awake Engine's **Hardware Abstraction Layer (HAL)**. Over time, it accumulated |
+| **Active Task** | [`Render architecture finalization`](tasks/2026-09-09-render-architecture-finalization-plan.md) | `Active` | Status: **Active — implementation roadmap with A0/A1 complete and A2–A6 in progress.** |
+| **Active Task** | [`2D demo scope and dependency boundary`](tasks/2026-09-10-2d-demo-scope.md) | `Active` | Status: active architecture decision |
+| **Active Task** | [`Render architecture continuation handoff`](tasks/2026-09-10-render-architecture-handoff.md) | `Active` | **Verification note (2026-09-11):** this assignment document is complete, but the architecture |
+| **Active Task** | [`Render architecture cleanup status`](tasks/2026-09-10-render-cleanup-status.md) | `Active` | Status: complete (verified 2026-09-11; all G1-G6 acceptance gates 100% green) |
+| **Active Task** | [`Render packet field inventory`](tasks/2026-09-10-render-packet-field-inventory.md) | `Active` | This is the F1 read-only inventory requested by the rendering-finalization roadmap. It records |
 | **Active Task** | [`Awake Editor Plan — rebuild, do not port`](tasks/editor/01-compose-editor-plan-todo.md) | `Active` | Drafted 2026-08-22. Revised 2026-08-25. Status: Stages 0 and 1 foundations complete; |
 | **Active Task** | [``Vec3f` / `Vec3d` / `Vec3i` — precision variants`](tasks/math/01-vector-precision-variants-todo.md) | `Active` | Drafted 2026-08-22. Status: todo. Gated on a real consumer per variant; see Triggers. |
 | **Reference** | [`Agent Catalog`](reference/agent-catalog.md) | `Active` | This document is the canonical source for Awake's repo-local agent roster, naming convention, |
@@ -195,6 +203,7 @@
 | **General** | [`Archived: UI status report`](archive/2026-08-28-retired-ui-status.md) | `Archived` | This document is retained for history only. It describes the deleted immediate-mode UI module |
 | **General** | [`Changelog Archive (v0.1.0-dev.1 to v0.1.0-dev.7)`](archive/CHANGELOG-v0.1-archive.md) | `Archived` | This archive documents historical pre-releases of Awake Engine. |
 | **General** | [`Awake Engine — MVP phase log (archive)`](archive/mvp-phase-log.md) | `Archived` | Historical record of how phases 0–8 were executed, kept verbatim. Superseded as a planning |
+| **General** | [`Samples on Cloudflare Pages`](deployment/samples-cloudflare-pages.md) | `Active` | The repository contains a GitHub Actions deployment for the two browser samples: |
 | **General** | [`ECS Benchmark Scorecard`](ecs-benchmark-scorecard.md) | `Active` | Latest rerun: `2026-08-21`, from the working tree based on commit `851663afb`, using the exact |
 | **General** | [`Compose parity handoff — 2026-08-27`](handoffs/2026-08-27-compose-parity-handoff.md) | `Active` | The open objective is **“implement remaining items”** from the Compose parity inventory. It is |
 | **General** | [`Compose Stage 2 invalidation handoff — 2026-08-27`](handoffs/2026-08-27-compose-stage-2-invalidation-handoff.md) | `Active` | Status: active, uncommitted worktree handoff. Do not discard or overwrite the listed changes. |

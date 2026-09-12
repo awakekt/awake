@@ -51,7 +51,7 @@ backs it. Three rows changed.
 | **No GPU timing** | ✅ confirmed, **worse than stated** | Zero `QueryPool`/`WriteTimestamp` hits across `backend/vulkan/src`, `engine`, `scene`, `samples`; zero `timestamp`/`QuerySet` in `backend/webgpu/src`. **`vkCreateQueryPool` is not in the bindings either**, so Vulkan GPU timing needs new JNI first — same blocker as debug-utils, and the plan below did not account for it. |
 | ~~No validation layers~~ | ❌ **WRONG — retracted** | `setupDebugMessenger()` (`GraphicsDevice.kt:126`) is called from both `create()` and `createHeadless()`, with a `failOnValidationError` path headless tests rely on. The real defect was different and is fixed in `6901f79f6`: `createInstance` enabled **every layer installed on the host**, not the validation layer. |
 | **No `VK_EXT_debug_utils` labels/names** | ✅ confirmed, **worse than stated** | Zero uses in engine code — and zero `DebugUtilsObjectName`/`DebugUtilsLabel` entry points in `bindings/.../Vulkan.kt`. Only the struct types are generated, so this needs new JNI bindings (5 touch points × 3 functions), not a call site. |
-| **No draw-call/triangle counters** | ✅ confirmed | `RenderSystem.lastOccludedCount` (`RenderSystem.kt:55`) is the only one, and it is asserted by `RenderSystemTest`. The `triangleCount` in WebGPU's `Mesh.kt:117` is a local for line-index generation, not a statistic. |
+| **No draw-call/triangle counters** | ✅ confirmed | `RenderSystem3D.lastOccludedCount` (`RenderSystem3D.kt:55`) is the only one, and it is asserted by `RenderSystemTest`. The `triangleCount` in WebGPU's `Mesh.kt:117` is a local for line-index generation, not a statistic. |
 | **2D is blind** | ⚠️ **overstated** | `DrawMeshUploader` already computes `quadRunCount` / `roundedQuadRunCount` / `glyphRunCount` (`DrawMeshUploader.kt:31-33`) as mesh-pool indices, then discards them; `staged.size` is the total run count. The numbers exist at the right place and are unpublished — publishing them is a few lines, not new instrumentation. Batch *breaks* and clip splits genuinely are uncounted. |
 | **No GPU memory tracking** | ✅ confirmed | Zero hits for byte/resource accounting across both backends and `engine`. |
 | **No physics debug draw** | ✅ confirmed | Zero hits across `backend/jolt`, `scene/physics`, `physics`. |
@@ -153,7 +153,7 @@ object FrameDiagnostics {
 }
 ```
 
-Increment sites: `RenderSystem` (culling — fold in the existing `lastOccludedCount`),
+Increment sites: `RenderSystem3D` (culling — fold in the existing `lastOccludedCount`),
 `RendererDraw3D`, `DrawRunCoalescer` (2D runs and breaks), and buffer/texture creation in both
 backends.
 

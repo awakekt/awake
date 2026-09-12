@@ -2,6 +2,23 @@
 
 Welcome to **Awake Engine**. This repository is the core Kotlin Multiplatform 3D/2D game engine runtime powered by Vulkan, WebGPU, and Compose Multiplatform.
 
+## Skill precedence and technology boundaries
+
+Project-owned `awake-*` skills are authoritative for Awake engine code and the
+Awake-owned UI/runtime framework. They take precedence over generic `kmp-*` skills.
+
+- Use `awake-*` for ECS, rendering, physics, engine lifecycle, Awake UI, Awake styling,
+  and Awake's Compose-like engine APIs.
+- Use `kmp-compose-*` only when the target code has actual Jetpack Compose or Compose
+  Multiplatform imports, source sets, or verified Compose dependencies.
+- Use `kmp-shadcn-*` only when the target uses verified `Shadcn*` APIs or the real
+  shadcn-compose dependency.
+- Do not route by naming resemblance alone. An Awake-owned composable or shadcn-like
+  component is not automatically Jetpack Compose or shadcn-compose.
+
+When a task spans both systems, route the Awake-owned boundary first and explicitly
+identify any generic KMP/Compose follow-up.
+
 ## Engine Domain Skills (.agents/skills/)
 
 All engine-specific skills and architectural rules are located in `.agents/skills/`:
@@ -27,9 +44,10 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 > `docs/reference/render-hardware-interface.md` § HAL vs Render Graph.
 > The most common defect is adding scene vocabulary (`SceneLight`, `DrawCall`, `Lens`,
 > shadow or fog types) to `render:contract`. Decision D31 classifies every current type.
-> In the target state, `Renderer` accepts only `GpuPassInput` with generic `GpuSubPass`es,
-> while the five exempt files per backend (`renderer/Renderer.kt`, `RendererDraw3D.kt`, etc.)
-> are **known legacy debt — not a precedent** — and will shrink to zero.
+> In the target state, `Renderer` accepts only `GpuPassInput` with generic `GpuSubPass`es.
+> `verifyBackendLayering` runs against every backend production source file; its import and
+> content-vocabulary exemption ledgers are empty. Remaining backend extensions are tracked
+> migration work, not permission to add scene vocabulary.
 
 
 ### Physics & Asset Pipelines

@@ -35,7 +35,7 @@ Current intended split:
 | `World.family(...)` / `queryEach(...)`  | Core/helper boundary | `:awake:ecs`                                        | Querying is central to using the ECS; ergonomic overloads are acceptable when they stay explicit |
 | Component pooling                       | Helper               | `:awake:ecs`                                        | Performance convenience over component storage                                                   |
 | `Transform`, `Name`                     | Scene core           | `:awake:scene:scene-core` via `:awake:scene` facade | Scene-domain components, not generic ECS concepts                                                |
-| `Camera`, `Light`, `MeshRenderer`       | Scene rendering      | `:awake:scene:rendering` via `:awake:scene` facade  | Render-facing scene components stay out of the tiny scene core                                   |
+| `Camera`, `Light`, `MeshRenderer`       | Scene rendering      | `:awake:scene:scene3d` via `:awake:scene` facade  | Render-facing scene components stay out of the tiny scene core                                   |
 | `SceneGameRuntime`                      | Scene core           | `:awake:scene:runtime` via `:awake:scene` facade    | Owns scene lifecycle and game-loop integration                                                   |
 | `SceneSystemPhase`                      | Scene core           | `:awake:scene:runtime` via `:awake:scene` facade    | Scheduling belongs to the scene runtime, not the ECS core                                        |
 | `fixedSystem(...)` / `frameSystem(...)` | Helper/sugar         | `:awake:scene:authoring`                            | Friendly explicit registration for scene runtime phases                                          |
@@ -113,8 +113,8 @@ Likely future shape:
   actual state, not just the plan), plus the generic entity-rotation SpinControl/
   SpinSystem.
 
-:awake:scene:rendering
-  Render-facing scene components and systems, such as MeshRenderer and RenderSystem.
+:awake:scene:scene3d
+  Render-facing scene components and systems, such as MeshRenderer and RenderSystem3D.
 
 :awake:scene:physics
   Physics-facing scene components and systems. Currently owns PhysicsBody and PhysicsSystem.

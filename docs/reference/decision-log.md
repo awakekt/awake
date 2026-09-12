@@ -123,7 +123,7 @@ Compose and lwjgl are no longer `awake-core` dependencies at all.
 **DECIDED (2026-07-10): slice 1 done.** User proposed a target module shape (`core/ecs`,
 `core/scene`, `core/engine`, `api/engine-render-api`, `backend/{vulkan,opengl,webgpu}`,
 flat directory names per this repo's `awake-*` convention, not physically nested folders).
-Usage analysis (grep across `awake-scene`/`awake-demo`) found `RenderSystem` only ever
+Usage analysis (grep across `awake-scene`/`awake-demo`) found `RenderSystem3D` only ever
 touches `DrawCall`/`Renderer` from `awake-vulkan`'s Phase 2.5 `expect` seam — never the raw
 Vulkan bindings, and never `GraphicsDevice`/`SwapchainManager`/`RenderPipeline`/`Texture`/
 `TransferContext` (those are only constructed by `VulkanApplication.kt`'s own backend-
@@ -293,7 +293,7 @@ planning, each resolved with the user before implementation:
 changes to become genuinely shared: its `Renderer` import switched from the concrete
 `com.awakekt.awake.vulkan.renderer.Renderer` to the backend-neutral
 `com.awakekt.awake.render.renderer.Renderer` interface (a pre-existing bug —
-`RenderSystem` already expected the interface), and its constructor became `private` +
+`RenderSystem3D` already expected the interface), and its constructor became `private` +
 a `companion object suspend fun create(...)` factory, since `SceneLoader.loadFromResource`
 is now `suspend` and Kotlin forbids `suspend` calls inside `init {}`/property initializers.
 
@@ -335,7 +335,7 @@ on this backend, then drives a plain `window.requestAnimationFrame` loop.
 (confirming the suspend restructuring changed no runtime behavior on the 4 existing
 platforms); and — the actual payoff — a real browser run of the wasmJs bundle
 (`wasmJsBrowserDevelopmentRun`) renders the real RGB cube loaded from `mvp.scene.json` via
-genuine async `fetch()`, through the same `SceneRuntimeHost`/`RenderSystem`/ECS pipeline
+genuine async `fetch()`, through the same `SceneRuntimeHost`/`RenderSystem3D`/ECS pipeline
 every other platform uses, animating frame-to-frame via `requestAnimationFrame` — screenshot-
 confirmed rotating between two captures two seconds apart. Unlike D13's WebGPU check, this
 one's screenshot pipeline worked cleanly (via a different browser tool than the sandboxed
@@ -399,7 +399,7 @@ be another copy of the same boilerplate — not simpler, just smaller in scope.
 
 **Resolution**: extracted `VulkanGameApplication` (`awake-backend-vulkan`) and
 `WebGpuGameApplication` (`awake-backend-webgpu`), each owning the full generic bootstrap
-plus scene loading/`TransformSystem`/`RenderSystem` wiring. A game supplies mesh geometry
+plus scene loading/`TransformSystem`/`RenderSystem3D` wiring. A game supplies mesh geometry
 (new `MeshGeometry`/`TextureAsset` data types in `awake-engine-render-api`, same neutral
 role `DrawCall` already plays), an optional texture (`null` binds a built-in 1x1 white
 placeholder, so the shader/descriptor-set contract doesn't need a second no-texture
@@ -408,7 +408,7 @@ variant), and a scene path via the constructor. Game-specific logic hooks in via
 `onFixedUpdate()`/`onRender()` (per-frame, call `super` first to keep the generic systems
 running). `awake-demo`'s own `SceneRuntimeHost` was trimmed to only the parts genuinely
 specific to that demo (player/camera/NPC resolution, their systems) — generic scene
-loading/`TransformSystem`/`RenderSystem` moved into the base classes.
+loading/`TransformSystem`/`RenderSystem3D` moved into the base classes.
 
 **Relationship to D15**: D15 explicitly deferred "building `awake-engine` out into a real
 scene-orchestrating layer" as a separate, unrequested feature. This is that feature, now
@@ -777,7 +777,7 @@ assets at all — a game is a plain `Game` implementation, constructor-injected 
 D19's dedup correctly identified that `VulkanGameApplication`/`WebGpuGameApplication`
 duplicated ~90% of their bootstrap fields/lifecycle, but the resulting
 `GenericGameApplication` still hard-baked in `awake-scene` (`World`/`SceneInstance`/
-`SceneLoader`/`TransformSystem`/`RenderSystem`) and `awake-engine-ui` (`UiContext`,
+`SceneLoader`/`TransformSystem`/`RenderSystem3D`) and `awake-engine-ui` (`UiContext`,
 `BitmapFont`), forcing every game onto one specific ECS and one specific immediate-mode UI
 system whether it wanted them or not — the same problem the earlier deferred
 `GameApplication { scene { }; ui { } }` DSL discussion was pointing at (see the
@@ -800,7 +800,7 @@ need to be optional/composable under the hood; they weren't).
   concern, so it moved to the game.
 - **New `SceneRuntime` class in `awake-scene`** — a plain class encapsulating exactly what
   `GenericGameApplication` used to do for scene handling (`World`/`SceneInstance`/
-  `TransformSystem`/`RenderSystem`, driven via `load(scenePath, resolveRenderable)` +
+  `TransformSystem`/`RenderSystem3D`, driven via `load(scenePath, resolveRenderable)` +
   `render(delta)`), constructed and driven by a game that wants it, not baked into the
   bootstrap.
 - **New `Game` interface in `awake-engine-game`**, injected via `GenericGameApplication`'s
@@ -1484,7 +1484,7 @@ had read what the check reads, and it claims more than it can. Declared names ar
 so content in a call, a local, a property or a well-chosen function name never appears.
 `RendererDraw3D` declared `lightViewProjection`, which decided what volume a directional light
 covers -- real content, never on the list, because "light" is not vocabulary and the rest were
-calls and locals. Moved out in `0a94382e3`: `SceneLight` carries the matrix and `RenderSystem`
+calls and locals. Moved out in `0a94382e3`: `SceneLight` carries the matrix and `RenderSystem3D`
 builds it. `prepareDrawCalls` hand-writing `lit_shadow.wgsl`'s uniform block went the same way in
 `b19fe3e63`. What is left in a backend is references, not decisions.
 
@@ -1607,7 +1607,7 @@ placement and splat layer authoring move to a consumer starter-kit — a net del
 `WaterRenderSystem` and `AtmosphereSystem` build uniforms and discard them and their
 components have no other caller.
 
-**Applied 2026-08-29:** 11 files deleted from `:awake:scene:rendering`, `:awake:asset:terrain`
+**Applied 2026-08-29:** 11 files deleted from `:awake:scene:scene3d`, `:awake:asset:terrain`
 and `:awake:asset:shader-compiler`; recoverable from `31837432b`, the last commit that still
 contains them.
 
@@ -1720,7 +1720,7 @@ reaches zero and backends are 100% free of game-authored vocabulary.
 
 ```kotlin
 // render:contract — pure hardware primitives
-data class GpuDrawCommand(
+data class RenderDrawCommand(
     val mesh: Mesh,
     val material: Material,
     val transform: Mat4,
@@ -1736,7 +1736,7 @@ data class GpuSubPass(
     val targetLayer: Int = 0,
     val viewProjection: Mat4,
     val viewport: RenderViewport? = null,
-    val draws: List<GpuDrawCommand> = emptyList(),
+    val draws: List<RenderDrawCommand> = emptyList(),
     val passUniforms: FloatArray = FloatArray(0),
     val depthBiasConstant: Float = 0f,
     val depthBiasSlope: Float = 0f,
@@ -1746,8 +1746,8 @@ data class GpuPassInput(
     val prePasses: List<GpuSubPass> = emptyList(),
     val viewProjection: Mat4,
     val cameraEye: Vec3f,
-    val opaqueDraws: List<GpuDrawCommand>,
-    val transparentDraws: List<GpuDrawCommand>,
+    val opaqueDraws: List<RenderDrawCommand>,
+    val transparentDraws: List<RenderDrawCommand>,
     val passUniforms: FloatArray,
 )
 

@@ -87,5 +87,5 @@ built yet: nothing calls it until there's an editor to save from.
 
 1. **Migrate the remaining demos**, then make the demo registry a list of scene files.
 2. **Decide camera mode's home** — either move `CameraComponent` down into
-   `:awake:scene:rendering`, or let the sample own that component's serialization.
+   `:awake:scene:scene3d`, or let the sample own that component's serialization.
 3. **Add a write path** when an editor needs one, not before.
