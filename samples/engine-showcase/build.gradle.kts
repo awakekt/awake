@@ -22,6 +22,10 @@ kotlin {
         namespace = "com.awakekt.awake.showcase"
         compileSdk = (findProperty("android.compileSdk") as String).toInt()
         minSdk = (findProperty("android.minSdk") as String).toInt()
+        // Run commonTest on a real device. Jolt's Android artifact ships device ABIs only, so
+        // this native-backed suite cannot run as an Android host test.
+        withDeviceTestBuilder { sourceSetTreeName = "test" }
+            .configure { instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner" }
     }
 
     jvm("desktop")
@@ -87,6 +91,11 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:engine:render:testing"))
+        }
+        named("androidDeviceTest") {
+            dependencies {
+                implementation(libs.androidx.test.runner)
+            }
         }
         val appMain = create("appMain") {
             dependsOn(commonMain.get())
