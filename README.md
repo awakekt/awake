@@ -2,10 +2,9 @@
 <p align="center">The modern, code-first 3D game engine in Kotlin.<br>Fast, type-safe, and zero-allocation — build your game once and ship to Desktop, Mobile, and the Web with native Vulkan and WebGPU performance.</p>
 
 <p align="center">
-  <a href="https://github.com/awakekt/awake/releases/tag/v0.1.0-alpha.1"><img src="https://img.shields.io/badge/Release-v0.1.0--alpha.1-blue.svg" alt="Release v0.1.0-alpha.1"></a>
+  <a href="https://github.com/awakekt/awake/releases/tag/v0.1.0-alpha.2"><img src="https://img.shields.io/badge/Release-v0.1.0--alpha.2-blue.svg" alt="Release v0.1.0-alpha.2"></a>
   <a href="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml"><img src="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml/badge.svg" alt="Build And Publish"></a>
   <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.4.10-blue.svg?logo=kotlin" alt="Kotlin"></a>
-  <a href="https://www.jetbrains.com/lp/compose-multiplatform/"><img src="https://img.shields.io/badge/Compose_Multiplatform-1.11.1-purple.svg" alt="Compose Multiplatform"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
   <a href="https://www.patreon.com/awakekt"><img src="https://img.shields.io/badge/donate-Patreon-f96854.svg?logo=patreon" alt="Patreon"></a>
 </p>
@@ -257,7 +256,7 @@ Awake is organized into clean, modular subprojects:
 - **[`awake:core:*`](awake/core)** — Vector math (`Mat4`, `Vec3f`, `Quat`), geometry, animation, and
   image loaders.
 - **[`awake:ecs:*`](awake/ecs)** — High-performance sparse-set ECS and archetypes.
-- **[`awake:compose:*`](awake/compose)** — Compose Multiplatform UI runtime, layout nodes, and
+- **[`awake:compose:*`](awake/compose)** — Retained Compose-shaped UI runtime, layout nodes, and
   rendering passes.
 - **[`awake:ui:*`](awake/ui)** — Shadcn Compose design system (`awake:ui:shadcn`) and UI builder (`awake:ui:builder`).
 - **[`awake:asset:*`](awake/asset)** — glTF parser, Naga runtime shader compiler, and texture
