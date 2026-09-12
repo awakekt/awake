@@ -189,8 +189,8 @@ def check_symlinks() -> list[str]:
         errors.append(f"{DEPLOYED_SKILLS_DIR.relative_to(REPO_ROOT)} does not exist")
         return errors
     if not MIRROR_SKILLS_DIR.exists():
-        errors.append(f"{MIRROR_SKILLS_DIR.relative_to(REPO_ROOT)} mirror does not exist")
-        return errors
+        # Mirror is gitignored, so fresh clones/CI checkouts start without it. Rebuild automatically.
+        fix_mirror()
 
     canonical_names = {path.name for path in DEPLOYED_SKILLS_DIR.iterdir() if path.is_dir()}
     mirror_names = {path.name for path in MIRROR_SKILLS_DIR.iterdir() if path.is_dir()}

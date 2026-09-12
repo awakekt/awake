@@ -77,6 +77,13 @@ class AwakeTestSpec(private val project: Project) {
         val libDir = bindingsProj?.layout?.buildDirectory?.dir("desktop-native-libs")
 
         project.tasks.withType<Test>().configureEach {
+            testLogging {
+                events("passed", "skipped", "failed")
+                showExceptions = true
+                showStackTraces = true
+                showCauses = true
+                exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            }
             if (this@AwakeTestSpec.exclusiveGpu) {
                 requireExclusiveGpu(this)
             }

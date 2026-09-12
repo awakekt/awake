@@ -139,7 +139,7 @@ jobs:
       - name: Check out the template beside nothing
         uses: actions/checkout@v4
         with:
-          repository: awake-lab/awake-template
+          repository: awakekt/awake-template
           # Deliberately not a sibling named `awaken`: the template's settings.gradle.kts
           # substitutes engine projects for the published artifacts when one is next to it, and
           # then this job would prove nothing.
@@ -255,6 +255,8 @@ jobs:
       # subkeys, and passing it blank reads as set-but-empty rather than absent.
       SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
       SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
+      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
         with:

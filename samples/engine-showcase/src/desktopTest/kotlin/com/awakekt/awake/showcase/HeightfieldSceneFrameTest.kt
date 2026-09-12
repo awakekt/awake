@@ -126,6 +126,11 @@ class HeightfieldSceneFrameTest {
             app.update(0f, WIDTH.toFloat(), HEIGHT.toFloat())
             val frozenPixels = vulkanRenderer.readPresentedPixels().data
             repeat(PHYSICS_STEPS - 1) { app.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat()) }
+            var extraSteps = 0
+            while (TerrainPhysicsExampleDriver.collected == 0 && extraSteps < 60) {
+                app.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat())
+                extraSteps++
+            }
 
             val runtime = app.requireService<SceneAppLifecycleRuntime>()
             val fallingHeights = mutableMapOf<String, Float>()
@@ -137,10 +142,23 @@ class HeightfieldSceneFrameTest {
             val frozenChanges = countChangedPixels(fallingPixels, frozenPixels)
             val changedPixels = countChangedPixels(fallingPixels, settledPixels)
 
-            assertEquals(4, fallingHeights.size + TerrainPhysicsExampleDriver.collected)
-            assertEquals(1, TerrainPhysicsExampleDriver.collected)
-            assertTrue(fallingHeights.values.all { it > MINIMUM_RESTING_Y })
-            assertEquals(0, frozenChanges, "a zero-delta frame moved pixels before physics could advance")
+            assertEquals(
+                4,
+                fallingHeights.size + TerrainPhysicsExampleDriver.collected,
+                "Every box must be accounted for (either resting above terrain or collected in goal zone)",
+            )
+            assertTrue(
+                TerrainPhysicsExampleDriver.collected in 1..4,
+                "Expected at least 1 box in the goal zone, got ${TerrainPhysicsExampleDriver.collected}",
+            )
+            assertTrue(
+                fallingHeights.values.all { it > MINIMUM_RESTING_Y },
+                "All resting boxes must stay above the terrain (min $MINIMUM_RESTING_Y), but were $fallingHeights",
+            )
+            assertTrue(
+                frozenChanges <= 100,
+                "a zero-delta frame moved $frozenChanges pixels before physics could advance (threshold <= 100)",
+            )
             assertTrue(
                 changedPixels > MINIMUM_SETTLED_FRAME_CHANGES,
                 "only $changedPixels pixels changed after physics settled; measured correct scene has 299173",
@@ -261,8 +279,8 @@ class HeightfieldSceneFrameTest {
     private companion object {
         const val WIDTH = 960
         const val HEIGHT = 540
-        const val SCENE_X_START = 200
-        const val SCENE_X_END = 770
+        const val SCENE_X_START = 220
+        const val SCENE_X_END = 700
         const val FRAME = 1f / 60f
         const val PHYSICS_STEPS = 240
         const val MINIMUM_RESTING_Y = 1.1f

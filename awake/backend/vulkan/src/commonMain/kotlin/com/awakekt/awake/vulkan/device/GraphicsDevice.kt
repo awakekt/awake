@@ -149,19 +149,27 @@ class GraphicsDevice {
         val physicalDevices =
             Vulkan.vkEnumeratePhysicalDevices(instance).map { VkPhysicalDevice(it, instance) }
         if (physicalDevices.isNotEmpty()) {
-            // find a gpu
-            val gpu = physicalDevices.find { vkDevice ->
-                val properties = Vulkan.vkGetPhysicalDeviceProperties(vkDevice.physicalDevice)
-                val features = Vulkan.vkGetPhysicalDeviceFeatures(vkDevice.physicalDevice)
-                val hasGeometry = features.geometryShader
-                val isIntegratedGPU =
-                    properties.deviceType == VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU
-                val isDiscreteGPU =
-                    properties.deviceType == VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
-                val isVirtualGPU =
-                    properties.deviceType == VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU
-                isIntegratedGPU || isDiscreteGPU || isVirtualGPU
-            } ?: throw Exception("Cannot find suitable gpu!")
+            // Pick the best available GPU, falling back to CPU (e.g. lavapipe in headless CI)
+            val gpu = physicalDevices
+                .filter { vkDevice ->
+                    val properties = Vulkan.vkGetPhysicalDeviceProperties(vkDevice.physicalDevice)
+                    properties.deviceType in setOf(
+                        VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
+                        VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
+                        VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU,
+                        VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_CPU,
+                    )
+                }
+                .minByOrNull { vkDevice ->
+                    val properties = Vulkan.vkGetPhysicalDeviceProperties(vkDevice.physicalDevice)
+                    when (properties.deviceType) {
+                        VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU -> 0
+                        VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU -> 1
+                        VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU -> 2
+                        VkPhysicalDeviceType.VK_PHYSICAL_DEVICE_TYPE_CPU -> 3
+                        else -> 4
+                    }
+                } ?: throw Exception("Cannot find suitable gpu!")
             physicalDevice = gpu.physicalDevice
         }
     }

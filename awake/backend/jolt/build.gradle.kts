@@ -196,10 +196,13 @@ kotlin {
                 // classes themselves are identical across all 8 desktop platform artifact
                 // IDs jolt-jni publishes.
                 implementation(libs.jolt.jni.desktop)
-                // Native library matching this dev machine (macOS Apple Silicon), Release
-                // build + single-precision ("Sp") flavor -- see jolt-jni's own "add to an
-                // existing project" doc for the Debug/Release and Sp/Dp axes.
+                // Native desktop libraries for all supported desktop platforms (ReleaseSp flavor).
+                // Snaploader picks and extracts the matching library at runtime.
                 runtimeOnly("com.github.stephengold:jolt-jni-MacOSX_ARM64:5.2.0:ReleaseSp")
+                runtimeOnly("com.github.stephengold:jolt-jni-MacOSX64:5.2.0:ReleaseSp")
+                runtimeOnly("com.github.stephengold:jolt-jni-Linux64:5.2.0:ReleaseSp")
+                runtimeOnly("com.github.stephengold:jolt-jni-Linux_ARM64:5.2.0:ReleaseSp")
+                runtimeOnly("com.github.stephengold:jolt-jni-Windows64:5.2.0:ReleaseSp")
                 // Extracts + loads the native library above at runtime (see JoltNative.kt).
                 implementation(libs.snaploader)
                 implementation(libs.oshi.core)

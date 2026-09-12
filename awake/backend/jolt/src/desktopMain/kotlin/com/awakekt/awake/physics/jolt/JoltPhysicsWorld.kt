@@ -840,8 +840,9 @@ class JoltPhysicsWorld(
             // build. Sleeping bodies are skipped because buoyancy adds velocity and a sleeping body
             // has no motion state to receive it -- Android's debug artifact asserts on that, which
             // is how this was found while desktop's release build ran on quietly.
+            if (!locked.succeeded()) return
             val body = locked.body
-            if (!locked.succeeded() || body.motionType != EMotionType.Dynamic || !body.isActive) return
+            if (body.motionType != EMotionType.Dynamic || !body.isActive) return
             val gravity = physicsSystem.gravity
             body.applyBuoyancyImpulse(
                 RVec3(0.0, surfaceY.toDouble(), 0.0),

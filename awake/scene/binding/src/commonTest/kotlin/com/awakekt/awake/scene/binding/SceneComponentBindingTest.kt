@@ -48,7 +48,11 @@ class SceneComponentBindingTest {
     fun bindingAutoResolvesBySchemaClassWithoutManualCasting() {
         val binding = TestHealthBinding()
         val matchComponent = TestHealthSceneComponent(hp = 100)
+        val world = World()
+        val entity = world.create()
         val dummyContext = object : SceneResolutionContext {
+            override val world: World = world
+
             override fun deferNodeLink(targetNodeName: String, onResolved: (target: Entity) -> Unit) {
                 // no-op for unit test
             }
@@ -59,9 +63,6 @@ class SceneComponentBindingTest {
         }
 
         assertTrue(binding.canResolve(matchComponent))
-
-        val world = World()
-        val entity = world.create()
         binding.attach(world, entity, matchComponent, dummyContext)
 
         val attached = world.get<TestHealthEcsComponent>(entity)

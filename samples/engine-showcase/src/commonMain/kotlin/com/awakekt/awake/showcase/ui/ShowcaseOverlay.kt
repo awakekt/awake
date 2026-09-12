@@ -37,7 +37,7 @@ context(_: Composer)
 internal fun ShowcaseOverlay(
     selection: ShowcaseSelection,
     showcases: List<EngineShowcase>,
-    framebufferDebugger: ShowcaseFramebufferDebugger,
+    framebufferDebugger: ShowcaseFramebufferDebugger = ShowcaseFramebufferDebugger(),
     modifier: Modifier = Modifier,
 ) {
     provideShadcnTheme(ShowcaseTheme) {

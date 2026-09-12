@@ -28,6 +28,7 @@ project(awake-vulkan-desktop)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 find_package(JNI REQUIRED)
 # Global (not just on the awake-vulkan target): vulkan-kotlin's own CMakeLists.txt

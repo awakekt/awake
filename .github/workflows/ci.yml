@@ -43,6 +43,11 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
             "ndk;${{ env.NDK_VERSION }}" "cmake;3.22.1" > /dev/null
 
+      - name: Install desktop Vulkan/GLFW build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers
+
       - name: Detekt (all modules, baselined)
         run: ./gradlew detekt
 
@@ -80,6 +85,13 @@ jobs:
       # particles and navigation showcases.
       - name: Engine showcase sample (tests and desktop jar)
         run: ./gradlew :samples:engine-showcase:desktopTest :samples:engine-showcase:desktopJar
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-showcase-test-reports
+          path: samples/engine-showcase/build/reports/tests/
 
       - name: Build vulkan generator
         run: ./gradlew :awake:backend:vulkan:generator:assemble

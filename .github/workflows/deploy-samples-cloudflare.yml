@@ -50,6 +50,15 @@ jobs:
       - name: Assemble Pages site
         run: ./scripts/prepare-samples-site.sh build/samples-site
 
+      - name: Ensure Pages project exists
+        uses: cloudflare/wrangler-action@v4
+        continue-on-error: true
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create awake-samples --production-branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v4
         with:
