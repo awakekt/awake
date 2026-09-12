@@ -273,7 +273,7 @@ def check_module_readmes() -> list[str]:
         REPO_ROOT / "awake" / "ecs",
         REPO_ROOT / "awake" / "scene",
         REPO_ROOT / "awake" / "scene" / "authoring",
-        REPO_ROOT / "awake" / "scene" / "rendering",
+        REPO_ROOT / "awake" / "scene" / "scene3d",
         REPO_ROOT / "awake" / "engine" / "render" / "contract",
         REPO_ROOT / "awake" / "engine" / "render" / "passes",
         REPO_ROOT / "awake" / "ui",
