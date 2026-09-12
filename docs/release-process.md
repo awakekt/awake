@@ -34,13 +34,13 @@ Version numbers are derived dynamically from Git tags using `git describe` in `b
 | Phase                 | Tag Format       | Maven Version   | Description                                               |
 |:----------------------|:-----------------|:----------------|:----------------------------------------------------------|
 | **Development**       | `v0.1.0-dev.10`  | `0.1.0-dev.10`  | Regular development tags cut from `main`.                 |
-| **Alpha**             | `v0.1.0-alpha.1` | `0.1.0-alpha.1` | Feature-complete for milestone; backend validation.       |
+| **Alpha**             | `v0.1.0-alpha.2` | `0.1.0-alpha.2` | Feature-complete milestone cuts (Milestones 1–3).         |
 | **Beta**              | `v0.1.0-beta.1`  | `0.1.0-beta.1`  | Public API frozen; memory leak, performance, & doc focus. |
 | **Release Candidate** | `v0.1.0-rc.1`    | `0.1.0-rc.1`    | Final sanity checks before production release.            |
 | **Stable Release**    | `v0.1.0`         | `0.1.0`         | Production general availability release on Maven Central. |
 
 > **SNAPSHOT Behavior:** Any local or CI commit after a tag automatically appends `-SNAPSHOT` (e.g.,
-`0.1.0-dev.11-SNAPSHOT`), ensuring unreleased local builds never collide with published releases.
+`0.1.0-alpha.2-SNAPSHOT`), ensuring unreleased local builds never collide with published releases.
 
 ---
 
@@ -74,19 +74,19 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 
 ---
 
-### **Milestone 2: [v0.2.0](https://github.com/awakekt/awake/milestone/2)** — *WebGPU Backend &
-Web Demos Preview*
+### **Milestone 2: [v0.1.0-alpha.2](https://github.com/awakekt/awake/milestone/2)** — *WebGPU Backend & Web Demos Preview* *(IN PROGRESS)*
 
 - **Subsystem: Rendering Engine (`awake:backend:webgpu`)**
     - `[ ]` WebGPU WasmJs browser runtime stability in Chrome/Edge.
+    - `[ ]` Omnidirectional Point-Light Shadows (Cube Maps) parity with Vulkan.
     - `[ ]` Naga SPIR-V → WGSL shader compilation pipeline.
 - **Subsystem: Web Hosting & Preview**
-    - `[ ]` Automated Cloudflare Pages deployment for `demo.awakekt.com` (Engine & UI Showcases).
+    - `[x]` Automated Cloudflare Pages deployment for `demo.awakekt.com` (Engine & UI Showcases).
+    - `[x]` Automated documentation deployment for `docs.awakekt.com` (MkDocs).
 
 ---
 
-### **Milestone 3: [v0.3.0](https://github.com/awakekt/awake/milestone/3)** — *Physics & Character
-Controller Maturity*
+### **Milestone 3: [v0.1.0-alpha.3](https://github.com/awakekt/awake/milestone/3)** — *Physics & Character Controller Maturity*
 
 - **Subsystem: Physics Simulation (`awake:backend:jolt`, `awake:physics:api`)**
     - `[ ]` Heightfield terrain colliders, raycasting, character controller.
@@ -95,8 +95,7 @@ Controller Maturity*
 
 ---
 
-### **Milestone 4: [v0.4.0](https://github.com/awakekt/awake/milestone/4)** — *Studio IDE Maturity &
-Prefabs System*
+### **Milestone 4: [v0.1.0-beta.1](https://github.com/awakekt/awake/milestone/4)** — *Studio IDE Maturity & Prefabs System*
 
 - **Subsystem: Editor IDE (`app:studio`)**
     - `[ ]` Undo/Redo command stack (`UndoManager`).
@@ -105,31 +104,31 @@ Prefabs System*
 
 ---
 
-### **Milestone 5: [v0.5.0](https://github.com/awakekt/awake/milestone/5)** — *3D Spatial Audio &
-Open World Terrain*
+### **Milestone 5: [v0.1.0-rc.1](https://github.com/awakekt/awake/milestone/5)** — *Release Candidate & Performance Ratchets*
 
-- **Subsystem: Audio Engine (`awake:core:audio`)**
-    - `[ ]` 3D spatial positional audio, attenuation curves, audio bus mixing.
-- **Subsystem: Terrain & AI (`awake:asset:terrain`, `awake:navigation`)**
-    - `[ ]` Concentric geometry clipmap LODs, 4-weight terrain splatting, 3D NavMesh baking.
-
----
-
-### **Milestone 6: [v0.6.0](https://github.com/awakekt/awake/milestone/6)** — *Multiplayer
-Synchronization & Networking*
-
-- **Subsystem: Networking (`awake:net:api`, `samples:server`)**
-    - `[ ]` Client prediction, entity delta serialization, authoritative server harness.
+- **Subsystem: Quality & Performance Gates**
+    - `[ ]` Zero memory leaks in long-running headless test sessions.
+    - `[ ]` Frame timing and rasterization baseline ratchets.
+    - `[ ]` Automated cross-backend pixel parity verification.
 
 ---
 
-### **Milestone 7: [v1.0.0](https://github.com/awakekt/awake/milestone/7)** — *Production Stable
-Engine & Ecosystem*
+### **Milestone 6: [v0.1.0](https://github.com/awakekt/awake/milestone/6)** — *Production Stable Engine General Availability*
 
 - **Subsystem: API Stability & Ecosystem**
     - `[ ]` Full platform matrix (JVM, Android, iOS MoltenVK, Web Wasm).
     - `[ ]` Dokka API reference documentation on `docs.awakekt.com`.
     - `[ ]` 100% automated headless render parity gate.
+
+---
+
+### **Milestone 7: [v0.2.0](https://github.com/awakekt/awake/milestone/7)** — *Multiplayer Synchronization & Open-World Ecosystem*
+
+- **Subsystem: Networking (`awake:net:api`, `samples:server`)**
+    - `[ ]` Client prediction, entity delta serialization, authoritative server harness.
+- **Subsystem: Spatial Audio & Terrain (`awake:core:audio`, `awake:asset:terrain`, `awake:navigation`)**
+    - `[ ]` 3D spatial positional audio, attenuation curves, audio bus mixing.
+    - `[ ]` Concentric geometry clipmap LODs, 4-weight terrain splatting, 3D NavMesh baking.
 
 ---
 
