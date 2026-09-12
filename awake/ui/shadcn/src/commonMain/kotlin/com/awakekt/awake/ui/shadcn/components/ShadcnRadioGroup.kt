@@ -24,6 +24,7 @@ import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.SemanticsRole
 import com.awakekt.awake.compose.ui.semantics.semantics
+import com.awakekt.awake.ui.shadcn.ShadcnThemeValues
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
@@ -47,76 +48,104 @@ fun ShadcnRadioGroup(
     val theme = shadcnTheme
     val state = remember { RadioGroupState() }
     val next = state.clicked?.also { state.clicked = null } ?: selected
+    state.prepare(theme, next, enabled)
 
     Column(
         modifier.semantics { this[SemanticsProperties.SelectableGroup] = true },
         verticalArrangement = Arrangement.spacedBy(ShadcnRadioGroupGap),
     ) {
         options.forEachIndexed { index, option ->
-            val interaction = remember { InteractionSource() }
-            val active = index == next
-            Row(
-                Modifier.clickable(interaction) { if (enabled) state.clicked = index },
-                horizontalArrangement = Arrangement.spacedByHorizontal(ShadcnRadioLabelGap),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    Modifier
-                        .size(ShadcnRadioSize)
-                        // Match upstream's actual `border rounded-full`. The old two-disc
-                        // approximation made the ring depend on the page background and could
-                        // read square once the inner disc was rasterized at small sizes.
-                        .let {
-                            if (theme.config.dark) {
-                                it.background(theme.palette.input.withAlpha(theme.palette.input.a * RADIO_INPUT_ALPHA), theme.radii.full)
-                            } else {
-                                it
-                            }
-                        }
-                        .border(ShadcnRadioBorderWidth, theme.palette.input, RoundedCornerShape(theme.radii.full))
-                        // On the ring, not on the row: the ring is the control, and a reader that
-                        // landed on the row would report a box as wide as the label beside it.
-                        .semantics {
-                            this[SemanticsProperties.Role] = SemanticsRole.RadioButton
-                            this[SemanticsProperties.Label] = option
-                            this[SemanticsProperties.TestTag] = "parity-radio.$index"
-                            this[SemanticsProperties.Selected] = active
-                        },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        Modifier.size(ShadcnRadioSize - ShadcnRadioBorderWidth * 2f),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (active) {
-                            Box(Modifier.size(ShadcnRadioDotSize).background(theme.palette.primary, theme.radii.full))
-                        }
-                    }
-                }
-                ShadcnText(
-                    option,
-                    Modifier
-                        .semantics {
-                            this[SemanticsProperties.Role] = SemanticsRole.Text
-                            this[SemanticsProperties.Label] = option
-                            this[SemanticsProperties.TestTag] = "parity-radio.$index.label"
-                        },
-                    variant = ShadcnTextVariant.Small,
-                    // `leading-none` on the label, which is what puts it on the ring's centre line
-                    // rather than a `text-sm` line box taller than the ring itself.
-                    lineHeight = ShadcnRadioLabelLeading,
-                )
-            }
+            ShadcnRadioItem(state, index, option)
         }
     }
     return next
 }
 
+context(_: Composer)
+private fun ShadcnRadioItem(
+    state: RadioGroupState,
+    index: Int,
+    option: String,
+) {
+    val interaction = remember { InteractionSource() }
+    val active = index == state.selected
+    Row(
+        Modifier.clickable(interaction) { if (state.enabled) state.clicked = index },
+        horizontalArrangement = Arrangement.spacedByHorizontal(ShadcnRadioLabelGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ShadcnRadioControl(state.theme, index, option, active)
+        ShadcnText(
+            option,
+            Modifier
+                .semantics {
+                    this[SemanticsProperties.Role] = SemanticsRole.Text
+                    this[SemanticsProperties.Label] = option
+                    this[SemanticsProperties.TestTag] = "parity-radio.$index.label"
+                },
+            variant = ShadcnTextVariant.Small,
+            // `leading-none` on the label, which is what puts it on the ring's centre line
+            // rather than a `text-sm` line box taller than the ring itself.
+            lineHeight = ShadcnRadioLabelLeading,
+        )
+    }
+}
+
+context(_: Composer)
+private fun ShadcnRadioControl(
+    theme: ShadcnThemeValues,
+    index: Int,
+    option: String,
+    active: Boolean,
+) {
+    Box(
+        Modifier
+            .size(ShadcnRadioSize)
+            // Match upstream's actual `border rounded-full`. The old two-disc approximation made
+            // the ring depend on the page background and could read square at small sizes.
+            .let {
+                if (theme.config.dark) {
+                    it.background(theme.palette.input.withAlpha(theme.palette.input.a * RADIO_INPUT_ALPHA), theme.radii.full)
+                } else {
+                    it
+                }
+            }
+            .border(ShadcnRadioBorderWidth, theme.palette.input, RoundedCornerShape(theme.radii.full))
+            // On the ring, not on the row: the ring is the control, and a reader that landed on
+            // the row would report a box as wide as the label beside it.
+            .semantics {
+                this[SemanticsProperties.Role] = SemanticsRole.RadioButton
+                this[SemanticsProperties.Label] = option
+                this[SemanticsProperties.TestTag] = "parity-radio.$index"
+                this[SemanticsProperties.Selected] = active
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier.size(ShadcnRadioSize - ShadcnRadioBorderWidth * 2f),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (active) {
+                Box(Modifier.size(ShadcnRadioDotSize).background(theme.palette.primary, theme.radii.full))
+            }
+        }
+    }
+}
+
 /** The click that arrived during input dispatch, consumed by the next build. */
 private class RadioGroupState {
     var clicked: Int? = null
+    lateinit var theme: ShadcnThemeValues
+    var selected: Int = 0
+    var enabled: Boolean = true
+
+    fun prepare(nextTheme: ShadcnThemeValues, nextSelected: Int, nextEnabled: Boolean) {
+        theme = nextTheme
+        selected = nextSelected
+        enabled = nextEnabled
+    }
 }
 
 private const val RADIO_INPUT_ALPHA = 0.3f
