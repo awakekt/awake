@@ -176,10 +176,33 @@ jobs:
         with:
           targets: aarch64-apple-ios-sim
 
+      - name: Resolve Rust compiler version
+        id: rust-version
+        shell: bash
+        run: echo "version=$(rustc --version | tr ' ' '_')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Cargo downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-ios-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.lock') }}
+
+      - name: Cache Naga native build
+        uses: actions/cache@v4
+        with:
+          path: awake/asset/shader-compiler/rust-native/target
+          key: naga-ios-sim-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}
+
       - uses: ./.github/actions/ios-native
 
       - name: Build Naga for the iOS simulator
         run: ./gradlew :awake:asset:shader-compiler:buildNagaIosSimulatorArm64
+
+      - name: Verify Naga native library
+        shell: bash
+        run: test -f awake/asset/shader-compiler/rust-native/target/aarch64-apple-ios-sim/release/libawake_naga.a
 
       - name: Jolt iOS simulator physics tests
         run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test :samples:engine-showcase:iosSimulatorArm64Test
