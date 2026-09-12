@@ -82,6 +82,12 @@ interface GpuDevice {
      * with no explicit synchronisation to expose, and every test double, needs nothing here. */
     fun waitIdle() {}
 
+    /**
+     * Queries an optional hardware capability of this device. Returns `null` if the capability
+     * is not supported by the underlying GPU hardware or backend implementation.
+     */
+    fun <T : GpuCapability> capability(kind: GpuCapabilityKind<T>): T? = null
+
     /** Releases every GPU resource this device owns. */
     fun destroy()
 

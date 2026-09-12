@@ -630,8 +630,15 @@ public final class com/awakekt/awake/render/pipeline/FrontFace : java/lang/Enum 
 	public static fun values ()[Lcom/awakekt/awake/render/pipeline/FrontFace;
 }
 
+public abstract interface class com/awakekt/awake/render/pipeline/GpuCapability {
+}
+
+public abstract interface class com/awakekt/awake/render/pipeline/GpuCapabilityKind {
+}
+
 public abstract interface class com/awakekt/awake/render/pipeline/GpuDevice {
 	public static final field Companion Lcom/awakekt/awake/render/pipeline/GpuDevice$Companion;
+	public fun capability (Lcom/awakekt/awake/render/pipeline/GpuCapabilityKind;)Lcom/awakekt/awake/render/pipeline/GpuCapability;
 	public abstract fun createMaterial (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/RenderTarget;ILcom/awakekt/awake/render/texture/PbrTextureSet;)Lcom/awakekt/awake/render/material/Material;
 	public static synthetic fun createMaterial$default (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/RenderTarget;ILcom/awakekt/awake/render/texture/PbrTextureSet;ILjava/lang/Object;)Lcom/awakekt/awake/render/material/Material;
 	public abstract fun createMesh (Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/render/mesh/Mesh;
@@ -646,6 +653,7 @@ public final class com/awakekt/awake/render/pipeline/GpuDevice$Companion {
 }
 
 public final class com/awakekt/awake/render/pipeline/GpuDevice$DefaultImpls {
+	public static fun capability (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/pipeline/GpuCapabilityKind;)Lcom/awakekt/awake/render/pipeline/GpuCapability;
 	public static synthetic fun createMaterial$default (Lcom/awakekt/awake/render/pipeline/GpuDevice;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/RenderTarget;ILcom/awakekt/awake/render/texture/PbrTextureSet;ILjava/lang/Object;)Lcom/awakekt/awake/render/material/Material;
 	public static fun waitIdle (Lcom/awakekt/awake/render/pipeline/GpuDevice;)V
 }
@@ -1130,6 +1138,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 
 public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun awaitFrameResources (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public static fun capability (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/pipeline/GpuCapabilityKind;)Lcom/awakekt/awake/render/pipeline/GpuCapability;
 	public static fun compositeUiTargets (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/renderer/UiTargetCompositeMode;)V
 	public static fun draw (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public static synthetic fun drawUi$default (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
