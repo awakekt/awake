@@ -8,8 +8,8 @@ description: >
 license: Apache-2.0
 metadata:
   author: awake
-  last-updated: '2026-08-26'
-  keywords: Awake Compose, layout, fixed size, adaptive size, Spacer, alignment, showcase
+  last-updated: '2026-09-13'
+  keywords: Awake Compose, layout, Row, Column, FlowRow, FlowColumn, FlexBox, fixed size, adaptive size, Spacer, alignment, showcase
 ---
 
 # Awake UI Layout Guidance
@@ -40,6 +40,60 @@ goal is predictable bounds under both the headless preview viewport and the live
   large page inset to compensate for a missing parent width or spacing contract.
 - Alignment positions a child in space already allocated; it does not make a narrow child fill.
   Fix the parent width contract before changing alignment or typography.
+
+## Choosing the layout primitive
+
+Choose the least powerful primitive that expresses the layout. Extra flexibility is not free: it
+increases the number of sizing, wrapping, and alignment states that must be reasoned about and
+verified.
+
+| Need | Use | Do not use |
+|---|---|---|
+| One non-wrapping horizontal sequence | `Row` | `FlexBox` configured as a row, unless flex growth/shrink/order is required |
+| One non-wrapping vertical sequence | `Column` | `FlexBox` configured as a column |
+| Horizontal children that wrap into additional rows | `FlowRow` | A `Row` with manual line breaks, or a `FlexBox` used only for ordinary wrapping |
+| Vertical children that wrap into additional columns | `FlowColumn` | A `Column` with manual column bookkeeping |
+| CSS-like flex behavior: grow/shrink, reverse direction, per-item order, line distribution, or cross-line alignment | `FlexBox` | Nested `Row`/`Column` trees that simulate flex behavior with magic widths or spacers |
+
+### Row and Column
+
+- Use `Row` and `Column` for the normal one-dimensional case when all children belong on one line
+  or one column.
+- Put equal sibling gaps on `horizontalArrangement` or `verticalArrangement` with
+  `Arrangement.spacedBy(...)`.
+- Use scoped `weight()` only when a child consumes the remaining main-axis space. A weighted child
+  is not a substitute for a fixed gap, and `fillMaxWidth()`/`fillMaxHeight()` does not distribute
+  remaining space among siblings.
+- Use the cross-axis alignment parameter for the common alignment and the child-scoped
+  `align(...)` modifier only for an intentional exception.
+
+### FlowRow and FlowColumn
+
+- Use `FlowRow` for repeated content whose number or width can exceed the available width:
+  chips, tags, compact buttons, filters, and responsive card specimens. Use `FlowColumn` for the
+  corresponding height-to-columns case.
+- Give the flow container a bounded axis when wrapping is expected. Under an unbounded main axis,
+  children stay on one line/column unless `maxItemsInEachRow` or `maxItemsInEachColumn` supplies an
+  explicit cap.
+- Use `maxItemsInEachRow`/`maxItemsInEachColumn` for a deliberate item-count contract and
+  `maxLines` when later lines must be clipped. Do not hide overflow with a hard parent height.
+- Use the flow arrangement for equal gaps within each line and between lines. Use child alignment
+  only when one item differs from the line’s common cross-axis alignment.
+
+### FlexBox
+
+- Use `FlexBox` only when the layout contract needs flex-specific behavior: `grow`, `shrink`, a
+  non-auto `basis`, `order`, reverse direction, `Wrap`/`WrapReverse`, `justifyContent`,
+  `alignItems`, or `alignContent`.
+- Configure container behavior through `FlexBoxConfig`; configure direct-child behavior through
+  `Modifier.flex { ... }`. Do not put `Modifier.flex` on a grandchild and expect the FlexBox to
+  consume it.
+- `rowGap` is the cross-axis gap and `columnGap` is the main-axis gap for the configured flex
+  direction. Prefer `gap(value)` when both should be equal.
+- Flex growth and shrink are line-local. If the UI only needs one remaining-width pane, a `Row`
+  with `weight()` is clearer and easier to verify.
+- Do not use `FlexBox` to paper over an unknown parent width. Fix the parent constraints first,
+  then choose the primitive that matches the actual relationship.
 
 ## Catalog contract
 
