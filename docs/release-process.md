@@ -63,15 +63,14 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 
 ---
 
-### **Milestone 1: [v0.1.0-alpha.1](https://github.com/awakekt/awake/milestone/1)** — *First Public
-Maven Release*
+### **Milestone 1: [v0.1.0-alpha.1](https://github.com/awakekt/awake/milestone/1)** — *First Public Maven Release* *(COMPLETED)*
 
 - **Subsystem: Maven Central Distribution (`com.awakekt`)**
-    - `[ ]` Publish `com.awakekt.awake:*` libraries to Maven Central via `build-and-publish.yml`.
-    - `[ ]` Verify `awake-template` consumer build against published Maven Central artifacts.
+    - `[x]` Publish `com.awakekt.awake:*` libraries to Maven Central via `build-and-publish.yml`.
+    - `[x]` Verify `awake-template` consumer build against published Maven Central artifacts.
 - **Subsystem: Multi-OS Desktop Vulkan (`awake:backend:vulkan`)**
     - `[x]` Multi-OS Vulkan native binaries (macOS ARM64, macOS x86_64, Linux x86_64).
-    - `[ ]` Out-of-the-box Desktop JVM sample verification (`samples:engine-showcase`).
+    - `[x]` Out-of-the-box Desktop JVM sample verification (`samples:engine-showcase`).
 
 ---
 

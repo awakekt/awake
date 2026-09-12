@@ -6,6 +6,8 @@ Prototype and decision-gate adaptive bulk ECS structural mutation without changi
 immediate API or reopening the rejected archetype migration. Public API stabilization and UI
 parity remain parallel lanes.
 
+- 2026-09-12: Milestone 1 completed! Released `v0.1.0-alpha.1` — first public Maven Central release with full multiplatform publication (`com.awakekt.awake:*`), multi-OS Vulkan natives, verified consumer template integration, and closed GitHub Milestone 1.
+
 - 2026-09-06: The Kotlin package and Maven namespace migration to `com.awakekt` and repository transfer to `awakekt/awake` are complete. All subprojects now publish under group `com.awakekt.awake` with clean package root `com.awakekt.awake.*`.
 
 - 2026-09-06: Cut release `v0.1.0-dev.10` and expanded the project roadmap to 7 GitHub Milestones (covering `v0.1.0-alpha.1` Maven release, `v0.2.0` WebGPU/Cloudflare Pages, `v0.3.0` Jolt physics, `v0.4.0` Studio prefabs, `v0.5.0` spatial audio/terrain, `v0.6.0` networking, and `v1.0.0` stable ecosystem).

@@ -2,6 +2,7 @@
 <p align="center">Kotlin Multiplatform first, Vulkan and WebGPU native — a 3D/2D game engine and graphics runtime for developers who want to feel every frame they write.</p>
 
 <p align="center">
+  <a href="https://github.com/awakekt/awake/releases/tag/v0.1.0-alpha.1"><img src="https://img.shields.io/badge/Release-v0.1.0--alpha.1-blue.svg" alt="Release v0.1.0-alpha.1"></a>
   <a href="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml"><img src="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml/badge.svg" alt="Build And Publish"></a>
   <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.4.10-blue.svg?logo=kotlin" alt="Kotlin"></a>
   <a href="https://www.jetbrains.com/lp/compose-multiplatform/"><img src="https://img.shields.io/badge/Compose_Multiplatform-1.11.1-purple.svg" alt="Compose Multiplatform"></a>
@@ -233,32 +234,32 @@ Add the core mandatory modules and optional feature extensions to your `build.gr
 ```kotlin
 dependencies {
     // Core Engine (Mandatory for 3D Games)
-    implementation("com.awakekt.awake.core:math:<version>")
-    implementation("com.awakekt.awake:ecs:<version>")
-    implementation("com.awakekt.awake.scene:scene-core:<version>")
-    implementation("com.awakekt.awake.engine:bootstrap:<version>")
+    implementation("com.awakekt.awake.core:math:0.1.0-alpha.1")
+    implementation("com.awakekt.awake:ecs:0.1.0-alpha.1")
+    implementation("com.awakekt.awake.scene:scene-core:0.1.0-alpha.1")
+    implementation("com.awakekt.awake.engine:bootstrap:0.1.0-alpha.1")
 
     // Optional Rendering Backends (Choose Vulkan, WebGPU, or Both)
-    implementation("com.awakekt.awake.backend:vulkan:<version>")
-    implementation("com.awakekt.awake.backend:webgpu:<version>")
+    implementation("com.awakekt.awake.backend:vulkan:0.1.0-alpha.1")
+    implementation("com.awakekt.awake.backend:webgpu:0.1.0-alpha.1")
 
     // Optional Physics Engine
-    implementation("com.awakekt.awake.backend:jolt:<version>")
+    implementation("com.awakekt.awake.backend:jolt:0.1.0-alpha.1")
 
     // Optional Asset Importers & Terrain
-    implementation("com.awakekt.awake.asset:gltf:<version>")
-    implementation("com.awakekt.awake.asset:terrain:<version>")
+    implementation("com.awakekt.awake.asset:gltf:0.1.0-alpha.1")
+    implementation("com.awakekt.awake.asset:terrain:0.1.0-alpha.1")
 
     // Optional AI & Navigation Pathfinding
-    implementation("com.awakekt.awake:ai:<version>")
-    implementation("com.awakekt.awake:navigation:<version>")
+    implementation("com.awakekt.awake:ai:0.1.0-alpha.1")
+    implementation("com.awakekt.awake:navigation:0.1.0-alpha.1")
 
     // Optional 3D Audio Subsystem
-    implementation("com.awakekt.awake.core:audio:<version>")
+    implementation("com.awakekt.awake.core:audio:0.1.0-alpha.1")
 
     // Optional Compose UI Overlay Stack
-    implementation("com.awakekt.awake.compose:foundation:<version>")
-    implementation("com.awakekt.awake.ui:shadcn:<version>")
+    implementation("com.awakekt.awake.compose:foundation:0.1.0-alpha.1")
+    implementation("com.awakekt.awake.ui:shadcn:0.1.0-alpha.1")
 }
 ```
 
