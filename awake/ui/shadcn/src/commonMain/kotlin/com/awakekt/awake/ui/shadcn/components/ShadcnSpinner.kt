@@ -49,13 +49,17 @@ fun ShadcnSpinner(
         SpinnerMeshCache(size, density)
     }.mesh(theme.palette.primary)
     Canvas(modifier.size(size)) {
-        emit(
+        // `emit` expects tree-space coordinates and bypasses this Canvas node's origin. Rotate the
+        // cached local mesh first, then hand it to drawMesh so padding/offsets from the showcase
+        // layout are applied. The old direct emit left nested spinners at the root origin, where a
+        // parent clip could make them appear to vanish.
+        drawMesh(
             UiDrawPrimitive.Mesh(
                 mesh = mesh,
                 rotationDegrees = phase * 360f,
                 pivotX = width / 2f,
                 pivotY = height / 2f,
-            ),
+            ).placedMesh(),
         )
     }
 }

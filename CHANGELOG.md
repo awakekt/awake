@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **shadcn spinner motion.** Cached the tessellated arc and rotate the stable mesh per frame, removing
   per-frame stroke tessellation that caused uneven animation under load.
+- **shadcn spinner placement.** Route the rotated cached mesh through the Canvas node's placement
+  path so padded and nested spinners remain visible instead of rendering at the root origin.
 - **UI showcase input forwarding.** Scene runtime frames now preserve secondary pointer presses,
   pointer modifiers, and key events so context menus and keyboard interactions work in the running
   showcase, not only in isolated component tests.
