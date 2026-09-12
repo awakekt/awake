@@ -3,7 +3,7 @@ name: awake-pro-core-scoring
 description: >
   Evaluates and scores proposed Awake Engine features, editor panels, runtime modules, and asset tools
   to decide whether they belong in Awake Core (Free & Open-Source) or Awake Pro (Commercial Studio Tier).
-  Produces structured insights, industry comparison benchmarks (Godot, Unity, Unreal), and a scoring matrix report.
+  Produces structured insights, industry runtime architecture benchmarks, and a scoring matrix report.
 license: Apache-2.0
 metadata:
   author: awake
@@ -84,10 +84,9 @@ When asked to score a feature, generate the following structured report:
 | Infrastructure Cost ($I$) | `/5` | `[Explanation]` |
 | **Calculated Core Index** | **`[Value]`** | **Tier Decision** |
 
-### 3. Industry Benchmark Comparison (Godot, Unity, Unreal)
-- **Godot**: `[How Godot handles this feature]`
-- **Unity**: `[How Unity handles this feature in Personal vs Pro]`
-- **Unreal**: `[How Unreal Engine handles this feature]`
+### 3. Industry Architecture Benchmark Comparison
+- **Open-source ecosystem baseline**: `[How standalone open-source engines handle this feature]`
+- **Commercial tier baseline**: `[How commercial studio tiers package this feature]`
 
 ### 4. Implementation Split Strategy
 - **Free Component**: `[What goes into open-source Kotlin library]`

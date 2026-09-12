@@ -2,8 +2,7 @@
 
 Status: **refactor in progress** — see [docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md](../../docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md).
 
-Awake UI is an immediate-mode UI framework for the Awake engine, modeled after modern declarative UI
-architecture patterns (Jetpack Compose / Base UI). Placement rules for these modules live in
+Awake UI is a lightweight declarative UI framework designed for game HUDs, overlays, and developer tooling within the Awake engine. Placement rules for these modules live in
 [docs/reference/ui-ownership.md](../../docs/reference/ui-ownership.md); the same
 optional-content-vs-capability principle the render backends follow is documented at
 [docs/reference/render-extensibility.md](../../docs/reference/render-extensibility.md).

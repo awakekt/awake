@@ -1,13 +1,12 @@
 # Mirror Map: Awake UI DSL vs. Jetpack Compose
 
-Awake's retained Compose-shaped UI API (`Modifier`, `Row`/`Column`/`Box`, state hooks,
-`animateFloat*`, `graphicsLayer`) is deliberately shaped to *feel* like Jetpack Compose --
+Awake's retained UI API (`Modifier`, `Row`/`Column`/`Box`, state hooks,
+`animateFloat*`, `graphicsLayer`) provides familiar declarative layout ergonomics —
 chainable modifiers, slot-lambda scopes, `weight()`, `remember`-style state,
-`animateFloatAsState`-style helpers -- so that
-a Compose developer's muscle memory transfers. It is not a Compose-compiler-plugin
-runtime: there is no recomposition, no snapshot state, no constraint negotiation.
-Following `kotlin-multiplatform-api-mimicry`'s method, this doc catalogs each mimicked
-primitive against Compose's real current public shape and calls out three states:
+and `animateFloatAsState`-style helpers. It is an optimized lightweight game engine runtime:
+there is no compiler plugin, recomposition, or snapshot overhead.
+This document catalogs each declarative layout primitive against standard Compose ergonomics
+and calls out three states:
 **Faithful** (same ergonomics, same behavior a Compose developer would expect),
 **Diverges** (looks Compose-shaped but behaves differently -- the dangerous category,
 since it passes a glance-review and then causes a layout/render bug later), and

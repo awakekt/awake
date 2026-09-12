@@ -2,24 +2,19 @@
 
 ## Why
 
-Unreal and Unity are editor-first: huge surface area, and it wasn't clear where
-to start or what was actually happening under the hood. Godot's editor is nicer,
-but same shape of problem — an editor between you and the game. Hand-written
-code beats an editor for visibility into what the engine is actually doing.
+Awake is built for developers who prioritize code-first visibility, precision,
+and control over editor-first abstractions. Hand-written code gives direct
+insight and predictability into what the engine, render passes, and simulation loops
+are actually doing every frame.
 
-libGDX was the closest fit for a code-first workflow, but its 3D support is
-thin — not enough to build on.
-
-Kotlin Multiplatform was already the daily tool. One codebase that targets
-every platform — Desktop, Mobile, Web — instead of maintaining separate
-engines or bolting a scripting layer onto a C++/C# core, seemed worth trying.
+Kotlin Multiplatform is the core foundation. One unified codebase targeting
+every platform — Desktop, Mobile, and Web — without maintaining separate engines
+or bolting a scripting layer onto a native core.
 
 ## The name
 
-Short, one word, same shape as Unity, Unreal, libGDX, Godot. "Awake" is
-growing into a meaning beyond the name: the awake developer — someone who
-wants to see and control the whole build instead of delegating it to an
-editor.
+"Awake" represents the awake developer — someone who wants to see, understand,
+and control the entire build and runtime instead of delegating it to opaque black boxes.
 
 ## Lineage
 

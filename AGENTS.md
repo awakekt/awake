@@ -59,6 +59,7 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 - [Awake UI Authoring](.agents/skills/awake-ui-authoring/SKILL.md): Compose UI component authoring
 - [Awake UI Performance](.agents/skills/awake-ui-performance/SKILL.md): Frame pacing & draw call reduction
 - [Awake Compose Authoring](.agents/skills/awake-compose-authoring/SKILL.md): Design system tokens and spacing
+- [Awake Pro Core Scoring](.agents/skills/awake-pro-core-scoring/SKILL.md): Evaluates and scores proposed Awake Engine features, editor panels, runtime modules, and asset tools to decide whether they belong in Awake Core (Free & Open-Source) or Awake Pro (Commercial Studio Tier). Produces structured insights, industry runtime architecture benchmarks, and a scoring matrix report.
 - [Awake UI Design Audit](.agents/skills/awake-ui-design-audit/SKILL.md): Automated UI design audit rubric
 - [Awake UI Layout Guidance](.agents/skills/awake-ui-layout-guidance/SKILL.md): Responsive and adaptive layouts
 - [Awake UI Verification](.agents/skills/awake-ui-verification/SKILL.md): Visual regression and component crops

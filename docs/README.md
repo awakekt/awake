@@ -37,7 +37,7 @@
 | **Audits** | [`UI / shadcn Parity Audit and Remediation Plan`](audits/2026-08-20-ui-shadcn-parity-report-and-plan.md) | `Active` | Date: 2026-08-20, refreshed 2026-08-24. |
 | **Audits** | [`Vulkan & WebGPU Architecture Audit: God Class Decoupling, Duplication Elimination, Utilization & Commonization`](audits/2026-08-20-vulkan-webgpu-godclass-and-optimization-audit.md) | `Active` | Date: 2026-08-20 |
 | **Audits** | [`Vulkan & WebGPU KMP Commonization Audit`](audits/2026-08-20-vulkan-webgpu-uncommonized-audit.md) | `Active` | Date: 2026-08-20 |
-| **Audits** | [`Jetpack Compose vs Awake UI: Layout & Modifier Parity Plan`](audits/2026-08-21-compose-layout-modifier-parity-plan.md) | `Active` | Awake UI is an immediate-mode UI framework designed for high-performance 60–120 FPS games and tooling. While it mimics J... |
+| **Audits** | [`Jetpack Compose vs Awake UI: Layout & Modifier Parity Plan`](audits/2026-08-21-compose-layout-modifier-parity-plan.md) | `Active` | Awake UI is an immediate-mode UI framework designed for high-performance 60–120 FPS games and tooling. While it provides... |
 | **Audits** | [`2026-08-23: shadcn tokens — keep what exists, take one idea from the proposal`](audits/2026-08-23-shadcn-tokens-existing-vs-proposed.md) | `Active` | **Question asked:** is the existing shadcn skill set and parity tooling stale enough to recreate, or |
 | **Audits** | [`REUSE baseline — 2026-08-25`](audits/2026-08-25-reuse-baseline.md) | `Active` | `reuse 6.2.0 lint` establishes this repository's starting point for making REUSE a required CI |
 | **Audits** | [`Architecture & Quality Audit Report (2026-08-28)`](audits/2026-08-28-architecture-audit.md) | `Active` | **Date:** 2026-08-28 |
@@ -93,7 +93,7 @@
 | **Reference** | [`KMP Architecture Stance`](reference/kmp-architecture-stance.md) | `Active` | Awake is a Kotlin Multiplatform project that deliberately skips most of what people mean by |
 | **Reference** | [`Library API Boundaries`](reference/library-api-boundaries.md) | `Active` | This document is the canonical rule for how Awake splits public library surface from DSL |
 | **Reference** | [`Maven coordinates`](reference/maven-coordinates.md) | `Active` | The frozen publication surface: what an external consumer resolves, under what coordinates, and |
-| **Reference** | [`Mirror Map: Awake UI DSL vs. Jetpack Compose`](reference/mirror-map.md) | `Active` | Awake's retained Compose-shaped UI API (`Modifier`, `Row`/`Column`/`Box`, state hooks, |
+| **Reference** | [`Mirror Map: Awake UI DSL vs. Jetpack Compose`](reference/mirror-map.md) | `Active` | Awake's retained UI API (`Modifier`, `Row`/`Column`/`Box`, state hooks, |
 | **Reference** | [`Module Architecture`](reference/module-architecture.md) | `Active` | How Awake's 44 modules are grouped, why, and how to decide where a new one goes. |
 | **Reference** | [`Engine Performance Matrix & Scorecard`](reference/performance-matrix.md) | `Active` | High-level dashboard of Awake's performance baselines, micro-benchmark suites, algorithmic complexity guarantees, and co... |
 | **Reference** | [`Releasing`](reference/releasing.md) | `Active` | Awake has no released version yet. Everything lands under `## [Unreleased]` in |
@@ -196,7 +196,7 @@
 | **Tasks (Archive)** | [`2026-08-31: generate `ImageVector` icons from vendored SVGs at build time`](tasks/archive/2026-08-31-icon-codegen-plan.md) | `Archived` | Status: **done, 2026-09-01.** Heroicons is pinned at **v2.2.0** and all 78 committed icons |
 | **Tasks (Archive)** | [`Studio Infinite Grid with Infinite Axis Lines`](tasks/archive/2026-08-31-studio-infinite-grid-plan.md) | `Archived` | Formalize an unprojected, multi-scale **Infinite Grid** with **Infinite Axis Lines** (X red / Z |
 | **General** | [`RFC: Open-World Terrain, Modular Character, and Environment Subsystems`](RFC_OPEN_WORLD_ENGINE_SUBSYSTEMS.md) | `Active` | Awake has established a solid Vulkan-first renderer, entity-component system (ECS), and cross-platform shader architectu... |
-| **General** | [`About Awake`](about.md) | `Active` | Unreal and Unity are editor-first: huge surface area, and it wasn't clear where |
+| **General** | [`About Awake`](about.md) | `Active` | Awake is built for developers who prioritize code-first visibility, precision, |
 | **General** | [`Archived: Immediate-Mode UI Ownership`](archive/2026-08-28-immediate-mode-ui-ownership.md) | `Archived` | This document is retained for history only. The ownership model below was replaced by the |
 | **General** | [`Archived: DSL Modules`](archive/2026-08-28-retired-dsl-modules.md) | `Archived` | This document is retained for history only. It describes the deleted immediate-mode DSL module |
 | **General** | [`Archived: UI component coverage matrix`](archive/2026-08-28-retired-ui-component-coverage.md) | `Archived` | This document is retained for history only. Its inventory describes deleted `ui-headless` and |

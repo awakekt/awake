@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Awake UI is an immediate-mode UI framework designed for high-performance 60–120 FPS games and tooling. While it mimics Jetpack Compose syntax (`Row`, `Column`, `Modifier`, `Style`, `Surface`), its underlying layout resolution diverged in critical ways, leading to fragile recipe workarounds:
+Awake UI is an immediate-mode UI framework designed for high-performance 60–120 FPS games and tooling. While it provides declarative DSL syntax (`Row`, `Column`, `Modifier`, `Style`, `Surface`), its underlying layout resolution diverged in critical ways, leading to fragile recipe workarounds:
 
 1. **Unbounded `Dimension.FillMax` Fallback**: `FillMax` without a bounded parent falls back to `frameBounds` (entire window), causing screen blowouts.
 2. **Missing Cross-Axis `Stretch`**: Containers cannot stretch children to their cross-axis height/width without forcing `FillMax` on the child.
