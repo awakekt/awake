@@ -8,8 +8,8 @@ package com.awakekt.awake.webgpu
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.PipelineTable
 import com.awakekt.awake.render.testing.HeadlessRenderSession
@@ -33,7 +33,7 @@ import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
  *
  * [webGpuHeadlessUi]'s sibling. Built the same way `WebGpuEngine` builds its own: `lit_shadow` as
  * the scene pipeline, and a depth pre-pass whose target is layered and arrayed at
- * [DEFAULT_SHADOW_CASCADES], because the shader declares `texture_depth_2d_array`.
+ * [MAX_SHADOW_TARGET_LAYERS], because the shader declares `texture_depth_2d_array`.
  *
  * **This is wgpu-native, not a browser** -- see [webGpuHeadlessUi] for what that leaves uncovered.
  */
@@ -87,12 +87,12 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         bindingsMetadataAvailable = PackShaderSets.Textured.webGpu.bindingsMetadataAvailable,
     )
     val depthPrePass = DepthPrePassFeature(
-        depthTarget = DepthTarget(graphicsDevice, layers = DEFAULT_SHADOW_CASCADES, arrayed = true, comparison = true),
+        depthTarget = DepthTarget(graphicsDevice, layers = MAX_SHADOW_TARGET_LAYERS, arrayed = true, comparison = true),
         depthOnlyPipeline = DepthOnlyPipeline(
             graphicsDevice = graphicsDevice,
             shaderCode = wgsl(PackShaderSets.ShadowDepth),
             vertexFormat = VertexFormat.PositionNormalColor,
-            cascadeCount = DEFAULT_SHADOW_CASCADES,
+            cascadeCount = MAX_SHADOW_TARGET_LAYERS,
             bindingsByGroup = PackShaderSets.ShadowDepth.webGpu.bindingsByGroup,
             bindingsMetadataAvailable = PackShaderSets.ShadowDepth.webGpu.bindingsMetadataAvailable,
         ),

@@ -77,9 +77,9 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 ### **Milestone 2: [v0.1.0-alpha.2](https://github.com/awakekt/awake/milestone/2)** — *WebGPU Backend & Web Demos Preview* *(IN PROGRESS)*
 
 - **Subsystem: Rendering Engine (`awake:backend:webgpu`)**
-    - `[ ]` WebGPU WasmJs browser runtime stability in Chrome/Edge.
-    - `[ ]` Omnidirectional Point-Light Shadows (Cube Maps) parity with Vulkan.
-    - `[ ]` Naga SPIR-V → WGSL shader compilation pipeline.
+    - `[x]` WebGPU WasmJs browser runtime stability in Chrome/Edge.
+    - `[x]` Omnidirectional Point-Light Shadows (Cube Maps) parity with Vulkan.
+    - `[x]` Naga SPIR-V → WGSL shader compilation pipeline.
 - **Subsystem: Web Hosting & Preview**
     - `[x]` Automated Cloudflare Pages deployment for `demo.awakekt.com` (Engine & UI Showcases).
     - `[x]` Automated documentation deployment for `docs.awakekt.com` (MkDocs).

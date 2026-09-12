@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   querying via `GpuCapability` and `GpuCapabilityKind<T>` on `GpuDevice`, allowing Vulkan extensions
   (e.g., timeline semaphores, bindless descriptors) to be queried safely without breaking WebGPU
   browser compatibility.
+- **WebGPU point-light omnidirectional shadow contact parity (`WebGpuPointLightShadowTest`).**
+  Configured `HeadlessSceneRenderer` with full `MAX_SHADOW_TARGET_LAYERS` (9 layers: 3 directional
+  cascades + 6 point-light cube faces) in parity with `WebGpuEngine`, and added hardware contact
+  probe asserting attached point-light shadows without peter-panning.
+- **Milestone 2 web hosting and showcase preview deployment.** Automated continuous Cloudflare Pages
+  deployments for `demo.awakekt.com` (WasmJs WebGPU 3D Engine showcase & Compose UI gallery) and
+  `docs.awakekt.com` (MkDocs documentation site).
 
 ## [0.1.0-alpha.1] - 2026-09-12
 
