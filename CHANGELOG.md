@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Named skeletal sockets.** glTF bone names are preserved, skeletons support name lookup, and
   socket attachments now follow joint translation and rotation in world space.
 
+### Fixed
+
+- **shadcn spinner motion.** Cached the tessellated arc and rotate the stable mesh per frame, removing
+  per-frame stroke tessellation that caused uneven animation under load.
+
 ## [0.1.0-alpha.2] - 2026-09-12
 
 ### Added
