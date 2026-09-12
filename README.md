@@ -313,8 +313,8 @@ Awake development is tracked through structured GitHub milestones ([Release Proc
 | **Milestone 0** | `v0.1.0-dev` | Completed | Engine Foundations, Multiplatform Math, Compose UI, Sparse-Set ECS |
 | **Milestone 1** | `v0.1.0-alpha.1` | **Published** | First Public Maven Central release (`com.awakekt.awake:*`), Multi-OS Desktop Vulkan |
 | **Milestone 2** | `v0.1.0-alpha.2` | **Completed** | WebGPU Backend & Web Demos Preview (WasmJs, `demo.awakekt.com`, Naga pipeline) |
-| **Milestone 3** | `v0.1.0-alpha.3` | **In Progress** | Physics & Character Controller Maturity (Jolt, Heightfield, Raycasting) |
-| **Milestone 4** | `v0.1.0-beta.1` | Planned | Studio IDE Maturity & Prefabs System (`app:studio`, Undo/Redo) |
+| **Milestone 3** | `v0.1.0-alpha.3` | **Completed** | Physics & Character Controller Maturity (Jolt, Heightfield, Raycasting) |
+| **Milestone 4** | `v0.1.0-beta.1` | **In Progress** | Studio IDE Maturity & Prefabs System (`app:studio`, Undo/Redo) |
 | **Milestone 5** | `v0.1.0-rc.1` | Planned | Release Candidate & Performance Ratchets (Zero Leaks, Parity Gate) |
 | **Milestone 6** | `v0.1.0` | Planned | Production Stable Engine GA (Full Platform Matrix, Public API Freeze) |
 | **Milestone 7** | `v0.2.0` | Planned | Multiplayer Synchronization & Open-World Ecosystem |

@@ -5,10 +5,14 @@
  */
 package com.awakekt.awake.scene.rendering.animation
 
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
+import kotlin.math.asin
+import kotlin.math.atan2
+import kotlin.math.sqrt
 
 /**
  * ECS system driving attached entities to track animated character skeleton joints in world space.
@@ -18,7 +22,9 @@ import com.awakekt.awake.scene.core.transform.Transform
  * and rotation to match the joint's position in world space.
  */
 class SocketAttachmentSystem : System {
-    private val tempJointPos = Vec3f()
+    private val scratchJointMat = Mat4()
+    private val scratchWorldMat = Mat4()
+    private val scratchRotation = Vec3f()
 
     /**
      * Updates all active socket attachments in [world] by [delta] seconds.
@@ -26,6 +32,7 @@ class SocketAttachmentSystem : System {
      * @param world The active ECS world.
      * @param delta Frame elapsed time in seconds.
      */
+    @Suppress("CyclomaticComplexMethod")
     override fun update(world: World, delta: Float) {
         world.family<Transform, SocketAttachmentComponent>().forEach { _, transform, attachment ->
             if (!attachment.enabled) return@forEach
@@ -33,9 +40,14 @@ class SocketAttachmentSystem : System {
             val targetEntity = attachment.targetEntity
             val targetTransform = world.get<Transform>(targetEntity) ?: return@forEach
             val pose = world.get<SkinnedPose>(targetEntity) ?: return@forEach
+            if (attachment.jointIndex < 0 && attachment.jointName != null) {
+                val skeleton = world.get<Animator>(targetEntity)?.player?.skeleton
+                    ?: world.get<ModularCharacterComponent>(targetEntity)?.skeleton
+                attachment.jointIndex = skeleton?.findBoneIndex(attachment.jointName!!) ?: return@forEach
+            }
+            if (attachment.jointIndex < 0) return@forEach
 
-            // Read local joint translation from the target's joint palette
-            pose.getJointPosition(attachment.jointIndex, tempJointPos)
+            pose.getJointMatrix(attachment.jointIndex, scratchJointMat)
 
             // If worldMatrix was not yet initialized by a transform pass, ensure local matrix is evaluated
             val worldMat = if (targetTransform.worldMatrix.data[12] == 0f &&
@@ -48,18 +60,41 @@ class SocketAttachmentSystem : System {
                 targetTransform.worldMatrix
             }
 
-            val finalX = worldMat.data[0] * tempJointPos.x + worldMat.data[4] * tempJointPos.y + worldMat.data[8] * tempJointPos.z + worldMat.data[12]
-            val finalY = worldMat.data[1] * tempJointPos.x + worldMat.data[5] * tempJointPos.y + worldMat.data[9] * tempJointPos.z + worldMat.data[13]
-            val finalZ = worldMat.data[2] * tempJointPos.x + worldMat.data[6] * tempJointPos.y + worldMat.data[10] * tempJointPos.z + worldMat.data[14]
+            Mat4.multiplyColumnMajor(worldMat, scratchJointMat, scratchWorldMat)
 
-            transform.position.x = finalX + attachment.offsetPosition.x
-            transform.position.y = finalY + attachment.offsetPosition.y
-            transform.position.z = finalZ + attachment.offsetPosition.z
+            transform.position.x = scratchWorldMat.data[12] + attachment.offsetPosition.x
+            transform.position.y = scratchWorldMat.data[13] + attachment.offsetPosition.y
+            transform.position.z = scratchWorldMat.data[14] + attachment.offsetPosition.z
+
+            extractEuler(scratchWorldMat, scratchRotation)
+            transform.rotation.x = scratchRotation.x + attachment.offsetRotation.x
+            transform.rotation.y = scratchRotation.y + attachment.offsetRotation.y
+            transform.rotation.z = scratchRotation.z + attachment.offsetRotation.z
 
             // Sync scale from parent
             transform.scale.x = targetTransform.scale.x
             transform.scale.y = targetTransform.scale.y
             transform.scale.z = targetTransform.scale.z
         }
+    }
+
+    private fun extractEuler(matrix: Mat4, out: Vec3f) {
+        val sx = sqrt(matrix.m00 * matrix.m00 + matrix.m10 * matrix.m10 + matrix.m20 * matrix.m20)
+        val sy = sqrt(matrix.m01 * matrix.m01 + matrix.m11 * matrix.m11 + matrix.m21 * matrix.m21)
+        val sz = sqrt(matrix.m02 * matrix.m02 + matrix.m12 * matrix.m12 + matrix.m22 * matrix.m22)
+        if (sx == 0f || sy == 0f || sz == 0f) {
+            out.set(0f, 0f, 0f)
+            return
+        }
+        val r00 = matrix.m00 / sx
+        val r10 = matrix.m10 / sx
+        val r20 = matrix.m20 / sx
+        val r21 = matrix.m21 / sy
+        val r22 = matrix.m22 / sz
+        out.set(
+            atan2(r21, r22),
+            asin((-r20).coerceIn(-1f, 1f)),
+            atan2(r10, r00),
+        )
     }
 }

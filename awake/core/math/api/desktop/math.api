@@ -310,6 +310,7 @@ public final class com/awakekt/awake/core/math/Mat4$Companion {
 	public final fun fromTrs (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/Mat4;
 	public final fun frustum (FFFFFFLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math/Mat4;
 	public final fun multiplyColumnMajor (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
+	public final fun multiplyColumnMajor (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
 	public final fun multiplyInPlace (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Mat4;
 	public final fun orthographic (FFFFFFLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math/Mat4;
 	public final fun perspective (FFFFLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math/Mat4;

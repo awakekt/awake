@@ -73,8 +73,8 @@ class GltfParserSkinnedTest {
                 { "bufferView": 2, "componentType": 5126, "count": 2, "type": "VEC4" }
               ],
               "nodes": [
-                { "translation": [0, 0, 0] },
-                { "translation": [0, 1, 0] }
+                { "name": "Root", "translation": [0, 0, 0], "children": [1] },
+                { "name": "Hand_R", "translation": [0, 1, 0] }
               ],
               "scenes": [ { "nodes": [0] } ],
               "scene": 0,
@@ -94,6 +94,9 @@ class GltfParserSkinnedTest {
         val scene = GltfParser.parseSkinned(skinnedGltfJson())
 
         assertEquals(2, scene.skeleton.bones.size)
+        assertEquals("Root", scene.skeleton.bones[0].name)
+        assertEquals("Hand_R", scene.skeleton.bones[1].name)
+        assertEquals(1, scene.skeleton.findBoneIndex("Hand_R"))
         assertEquals(1, scene.skins.size)
         val skin = scene.skins.single()
         assertEquals(listOf(0, 1), skin.joints)

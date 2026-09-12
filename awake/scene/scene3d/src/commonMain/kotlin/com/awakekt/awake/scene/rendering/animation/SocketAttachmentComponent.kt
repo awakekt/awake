@@ -16,13 +16,16 @@ import com.awakekt.awake.ecs.Entity
  *
  * @property targetEntity The animated character entity owning the skeleton and [SkinnedPose].
  * @property jointIndex The bone index within the target character's joint palette to follow.
+ * @property jointName Optional skeleton bone name. When set with a negative [jointIndex], the
+ *   system resolves the index from the target's skeleton.
  * @property offsetPosition Relative translation offset applied in the joint's coordinate space.
  * @property offsetRotation Relative Euler rotation offset.
  * @property enabled Whether this socket attachment is active and updated each frame.
  */
 data class SocketAttachmentComponent(
     var targetEntity: Entity,
-    var jointIndex: Int,
+    var jointIndex: Int = -1,
+    var jointName: String? = null,
     var offsetPosition: Vec3f = Vec3f(0f, 0f, 0f),
     var offsetRotation: Vec3f = Vec3f(0f, 0f, 0f),
     var enabled: Boolean = true,

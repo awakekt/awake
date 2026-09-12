@@ -86,16 +86,16 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 
 ---
 
-### **Milestone 3: [v0.1.0-alpha.3](https://github.com/awakekt/awake/milestone/3)** — *Physics & Character Controller Maturity* *(IN PROGRESS)*
+### **Milestone 3: [v0.1.0-alpha.3](https://github.com/awakekt/awake/milestone/3)** — *Physics & Character Controller Maturity* *(COMPLETED)*
 
 - **Subsystem: Physics Simulation (`awake:backend:jolt`, `awake:physics:api`)**
-    - `[ ]` Heightfield terrain colliders, raycasting, character controller.
+    - `[x]` Heightfield terrain colliders, raycasting, character controller.
 - **Subsystem: Asset Pipeline (`awake:asset:gltf`)**
-    - `[ ]` glTF 2.0 skinned skeletal mesh animations and socket attachments.
+    - `[x]` glTF 2.0 skinned skeletal mesh animations and socket attachments.
 
 ---
 
-### **Milestone 4: [v0.1.0-beta.1](https://github.com/awakekt/awake/milestone/4)** — *Studio IDE Maturity & Prefabs System*
+### **Milestone 4: [v0.1.0-beta.1](https://github.com/awakekt/awake/milestone/4)** — *Studio IDE Maturity & Prefabs System* *(IN PROGRESS)*
 
 - **Subsystem: Editor IDE (`app:studio`)**
     - `[ ]` Undo/Redo command stack (`UndoManager`).
