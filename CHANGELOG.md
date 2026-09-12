@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Milestone 3 physics and character-controller coverage.** Moved the real Jolt controller suite
+  to multiplatform `commonTest`, including heightfield terrain, ground probes, traversal, and
+  moving-platform behavior.
+- **Named skeletal sockets.** glTF bone names are preserved, skeletons support name lookup, and
+  socket attachments now follow joint translation and rotation in world space.
+
 ## [0.1.0-alpha.2] - 2026-09-12
 
 ### Added

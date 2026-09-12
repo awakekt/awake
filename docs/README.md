@@ -6,7 +6,7 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-09-12` | **Total Tracked Docs**: `211`
+**Last Self-Healed**: `2026-09-13` | **Total Tracked Docs**: `211`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |

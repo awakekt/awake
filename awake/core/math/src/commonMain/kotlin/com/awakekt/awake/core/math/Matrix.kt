@@ -621,16 +621,22 @@ class Mat4 {
          * palettes) needs this exact convention. */
         fun multiplyColumnMajor(a: Mat4, b: Mat4): Mat4 {
             val result = Mat4()
+            multiplyColumnMajor(a, b, result)
+            return result
+        }
+
+        /** Writes the column-major product into [target] without allocating. */
+        fun multiplyColumnMajor(a: Mat4, b: Mat4, target: Mat4): Mat4 {
             for (col in 0 until 4) {
                 for (row in 0 until 4) {
                     var sum = 0f
                     for (k in 0 until 4) {
                         sum += a.data[k * 4 + row] * b.data[col * 4 + k]
                     }
-                    result.data[col * 4 + row] = sum
+                    target.data[col * 4 + row] = sum
                 }
             }
-            return result
+            return target
         }
     }
 

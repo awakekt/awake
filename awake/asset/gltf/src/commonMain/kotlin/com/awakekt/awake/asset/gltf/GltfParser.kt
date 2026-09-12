@@ -282,6 +282,7 @@ object GltfParser {
                 scale = Vec3f(s[0], s[1], s[2]),
                 matrix = explicitMatrix,
                 children = node.children,
+                name = node.name,
             )
         }
         val meshes = document.meshes.map { meshDef ->
