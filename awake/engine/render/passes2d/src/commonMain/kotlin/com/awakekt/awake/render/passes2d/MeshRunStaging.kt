@@ -8,6 +8,9 @@ package com.awakekt.awake.render.passes2d
 import com.awakekt.awake.core.geometry.VertexFormats2D
 import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.graphics2d.writeVertex
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * Staging for [DrawCommand.Mesh]: triangles the caller tessellated once and keeps redrawing.
@@ -63,12 +66,19 @@ private fun stagePlacedMeshesToRun(meshes: List<DrawCommand.Mesh>): StagedDrawRu
     var vertexOffset = 0
 
     meshes.forEach { placed ->
+        val radians = placed.rotationDegrees * PI.toFloat() / 180f
+        val cosine = if (placed.rotationDegrees == 0f) 1f else cos(radians)
+        val sine = if (placed.rotationDegrees == 0f) 0f else sin(radians)
         placed.mesh.vertices.forEach { vertex ->
+            val dx = vertex.position.x - placed.pivotX
+            val dy = vertex.position.y - placed.pivotY
+            val rotatedX = placed.pivotX + dx * cosine - dy * sine
+            val rotatedY = placed.pivotY + dx * sine + dy * cosine
             writeVertex(
                 vertices,
                 vertexCursor,
-                vertex.position.x * placed.scaleX + placed.offsetX,
-                vertex.position.y * placed.scaleY + placed.offsetY,
+                rotatedX * placed.scaleX + placed.offsetX,
+                rotatedY * placed.scaleY + placed.offsetY,
                 if (placed.alpha >= 1f) vertex.color else vertex.color.withAlpha(vertex.color.a * placed.alpha),
             )
             vertexCursor += VertexFormats2D.FLOATS_PER_VERTEX

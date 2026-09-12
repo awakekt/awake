@@ -11,8 +11,8 @@ import com.awakekt.awake.compose.foundation.BorderSides
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.IntrinsicSize
 import com.awakekt.awake.compose.foundation.layout.Row
-import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.fillMaxHeight
+import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.height
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.runtime.Composer

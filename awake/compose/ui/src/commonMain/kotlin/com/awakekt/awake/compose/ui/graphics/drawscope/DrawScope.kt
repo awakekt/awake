@@ -735,6 +735,7 @@ private fun UiDrawPrimitive.dimmedBy(alpha: Float): UiDrawPrimitive = when (this
     is UiDrawPrimitive.StrokedPath -> copy(color = color.dimmedBy(alpha))
     is UiDrawPrimitive.ShadowQuad -> copy(color = color.dimmedBy(alpha))
     is UiDrawPrimitive.GradientQuad -> copy(gradient = gradient.dimmedBy(alpha))
+    is UiDrawPrimitive.Mesh -> copy(alpha = this.alpha * alpha)
     else -> this
 }
 
