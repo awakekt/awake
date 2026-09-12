@@ -6,19 +6,27 @@
 package com.awakekt.awake.render.parity
 
 import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.generate.generate
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.render.renderer.CullMode
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.ScenePassCompiler
+import com.awakekt.awake.render.passes.directionalShadowBox
+import com.awakekt.awake.render.passes.shadowCascadeUniforms
+import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
+import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
+import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.createMaterial
-import com.awakekt.awake.render.renderer.directionalShadowBox
-import com.awakekt.awake.render.renderer.shadowCascadeUniforms
+import com.awakekt.awake.render.texture.PbrTextureSet
+import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.runBlocking
 
 /** The square every scene scenario renders into. */
@@ -38,28 +46,141 @@ fun Renderer.renderShadowScene(): ByteArray {
     val caster = createMesh(plane(CASTER_HALF, y = CASTER_Y, r = 1f, g = 0f, b = 0f))
     val material = createMaterial(LitShadowUniformLayout)
     return try {
+        val lens = Lens(
+            eye = Vec3f(0f, EYE_Y, EYE_Z),
+            center = Vec3f(0f, 0f, 0f),
+            fovYRadians = 1f,
+            near = 0.1f,
+            far = 50f,
+        )
+        val light = SceneLight(direction = Vec3f(LIGHT_X, 1f, 0f), color = Vec3f(1f, 1f, 1f)).let {
+            it.copy(viewProjection = directionalShadowBox(it.direction, clipSpace).viewProjection)
+        }
         renderToTexture(
             target,
-            Lens(
-                eye = Vec3f(0f, EYE_Y, EYE_Z),
-                center = Vec3f(0f, 0f, 0f),
-                fovYRadians = 1f,
-                near = 0.1f,
-                far = 50f,
+            ScenePassCompiler.compile(
+                lens = lens,
+                drawCalls = listOf(RenderDrawCommand(ground, material), RenderDrawCommand(caster, material)),
+                light = light,
+                clipSpace = clipSpace,
+                aspect = 1f,
+                drawPreparer = (this as? GpuDrawPreparationSource)?.gpuDrawPreparer,
             ),
-            listOf(DrawCall(ground, material), DrawCall(caster, material)),
-            // `viewProjection` is supplied, not derived: the renderer renders depth from whatever
-            // matrix the light carries and never builds one. `RenderSystem` fills this in for a
-            // real scene; a direct `renderToTexture` caller does it here -- and it must be built
-            // for this backend's own clip space, which is the whole subject of this comparison.
-            SceneLight(direction = Vec3f(LIGHT_X, 1f, 0f), color = Vec3f(1f, 1f, 1f)).let {
-                it.copy(viewProjection = directionalShadowBox(it.direction, clipSpace).viewProjection)
-            },
         )
         runBlocking { readPixels(target) }.data
     } finally {
         ground.destroy()
         caster.destroy()
+        material.destroy()
+        target.destroy()
+    }
+}
+
+/**
+ * A small textured glTF-style PBR draw through the shared packet path.
+ *
+ * This deliberately disables shadows: the test isolates base-color/PBR material binding and
+ * uniform packing, while [renderShadowScene] covers the separate depth and shadow path. A missing
+ * WebGPU group-0 binding or an incorrect PBR resource layout produces either a validation error
+ * or an empty capture here, so the scenario is a useful cross-backend control for A2.
+ */
+fun Renderer.renderTexturedPbrScene(
+    environment: EnvironmentUniforms = EnvironmentUniforms.Default.copy(shadowsEnabled = false),
+): ByteArray {
+    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+    val mesh = createMesh(texturedPlane())
+    val material = createMaterial(
+        texture = TextureAsset(
+            data = byteArrayOf(
+                220.toByte(), 80, 40, 255.toByte(),
+                220.toByte(), 80, 40, 255.toByte(),
+                220.toByte(), 80, 40, 255.toByte(),
+                220.toByte(), 80, 40, 255.toByte(),
+            ),
+            width = 2,
+            height = 2,
+        ),
+        uniformFloatCount = MaterialUniformLayouts.PbrTextured.total,
+        pbrTextures = PbrTextureSet(),
+    )
+    return try {
+        val lens = Lens(
+            eye = Vec3f(0f, EYE_Y, EYE_Z),
+            center = Vec3f(0f, 0f, 0f),
+            fovYRadians = 1f,
+            near = 0.1f,
+            far = 50f,
+        )
+        val draw = RenderDrawCommand(
+            mesh = mesh,
+            material = material,
+            extraUniformFloats = pbrMaterialFloats(
+                metallic = 0.1f,
+                roughness = 0.45f,
+                baseColorFactor = Color.White,
+                emissiveFactor = Color.Transparent,
+            ),
+        )
+        renderToTexture(
+            target,
+            ScenePassCompiler.compile(
+                lens = lens,
+                drawCalls = listOf(draw),
+                light = SceneLight(direction = Vec3f(0f, 1f, 0f), color = Vec3f(1f, 1f, 1f)),
+                environment = environment,
+                clipSpace = clipSpace,
+                aspect = 1f,
+                drawPreparer = (this as? GpuDrawPreparationSource)?.gpuDrawPreparer,
+            ),
+        )
+        runBlocking { readPixels(target) }.data
+    } finally {
+        mesh.destroy()
+        material.destroy()
+        target.destroy()
+    }
+}
+
+/**
+ * Renders a procedurally generated CCW plane with back-face culling enabled.
+ *
+ * Verifies that front-facing surfaces (viewed from above) are drawn on both backends, while
+ * back-facing surfaces (viewed from below) are culled.
+ */
+fun Renderer.renderBackCulledScene(cullBack: Boolean = true, viewFromAbove: Boolean = true): ByteArray {
+    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+    val mesh = createMesh(generate { plane(size = GROUND_HALF * 2f, colored = false) })
+    val material = createMaterial(uniformFloatCount = MaterialUniformLayouts.LitShadow.total)
+    return try {
+        val lens = Lens(
+            eye = if (viewFromAbove) Vec3f(0f, EYE_Y, EYE_Z) else Vec3f(0f, -EYE_Y, EYE_Z),
+            center = Vec3f(0f, 0f, 0f),
+            fovYRadians = 1f,
+            near = 0.1f,
+            far = 50f,
+        )
+        val light = SceneLight(direction = Vec3f(0f, 1f, 0f), color = Vec3f(1f, 1f, 1f)).let {
+            it.copy(viewProjection = directionalShadowBox(it.direction, clipSpace).viewProjection)
+        }
+        val draw = RenderDrawCommand(
+            mesh = mesh,
+            material = material,
+            cullMode = if (cullBack) CullMode.Back else CullMode.None,
+        )
+        renderToTexture(
+            target,
+            ScenePassCompiler.compile(
+                lens = lens,
+                drawCalls = listOf(draw),
+                light = light,
+                clipSpace = clipSpace,
+                aspect = 1f,
+                drawPreparer = (this as? GpuDrawPreparationSource)?.gpuDrawPreparer,
+            ),
+        )
+        runBlocking { readPixels(target) }.data
+    } finally {
+        mesh.destroy()
         material.destroy()
         target.destroy()
     }
@@ -77,6 +198,18 @@ private fun plane(half: Float, y: Float, r: Float = 1f, g: Float = 1f, b: Float 
     // Explicit: MeshGeometry defaults to PositionColorUv (8 floats per vertex), which would read
     // these 9-float vertices at the wrong stride and put the geometry nowhere visible.
     VertexFormat.PositionNormalColor,
+)
+
+/** Position/normal/colour/UV plane used by [renderTexturedPbrScene]. */
+private fun texturedPlane() = MeshGeometry(
+    floatArrayOf(
+        -GROUND_HALF, 0f, -GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 0f,
+        GROUND_HALF, 0f, -GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 0f,
+        GROUND_HALF, 0f, GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 1f,
+        -GROUND_HALF, 0f, GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 1f,
+    ),
+    intArrayOf(0, 1, 2, 2, 3, 0),
+    VertexFormat.PositionNormalColorUv,
 )
 
 /** Brightness of the pixel at [x], [y] in a [SCENE_SIZE]-square RGBA readback. */
@@ -132,13 +265,20 @@ fun Renderer.renderStudioCubeScene(yawRadians: Float): ByteArray {
         val cascades = shadowCascadeUniforms(base, lens, STUDIO_ASPECT, clipSpace)
         renderToTexture(
             target,
-            lens,
-            listOf(
-                DrawCall(ground, material, cullMode = CullMode.Back),
-                // Composed the way `TransformSystem` composes a spun entity's matrix.
-                DrawCall(cube, material, model = Mat4().apply { identity() }.translate(0f, CUBE_Y, 0f).rotateY(yawRadians)),
+            ScenePassCompiler.compile(
+                lens = lens,
+                drawCalls = listOf(
+                    RenderDrawCommand(ground, material, cullMode = CullMode.Back),
+                    // Composed the way `TransformSystem` composes a spun entity's matrix.
+                    RenderDrawCommand(cube, material, model = Mat4().apply { identity() }.translate(0f, CUBE_Y, 0f).rotateY(yawRadians)),
+                ),
+                light = base.copy(cascades = cascades),
+                clipSpace = clipSpace,
+                // The offscreen target is square; the wider studio aspect belongs only to the
+                // cascade fit above, not to the camera projection used for this 128x128 target.
+                aspect = 1f,
+                drawPreparer = (this as? GpuDrawPreparationSource)?.gpuDrawPreparer,
             ),
-            base.copy(viewProjection = cascades.viewProjections.first(), cascades = cascades),
         )
         runBlocking { readPixels(target) }.data
     } finally {

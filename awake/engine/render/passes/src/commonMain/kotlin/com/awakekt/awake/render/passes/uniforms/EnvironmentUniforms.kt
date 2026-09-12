@@ -6,11 +6,12 @@
 package com.awakekt.awake.render.passes.uniforms
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.render.command.GpuEnvironmentState
 
 /**
- * Per-frame environmental uniforms passed to the render graph for sky, fog, and global shadows.
+ * Per-frame environmental uniforms passed to the renderer for sky, fog, and global shadows.
  *
- * This represents the render graph contract for environment shading (pure shader uniforms),
+ * This represents the hardware/GPU render contract for environment shading (pure shader uniforms),
  * strictly decoupled from any ECS scene-graph or authoring components.
  */
 data class EnvironmentUniforms(
@@ -24,4 +25,23 @@ data class EnvironmentUniforms(
     companion object {
         val Default = EnvironmentUniforms()
     }
+
+    fun toGpuState(): GpuEnvironmentState = GpuEnvironmentState(
+        showSky = showSky,
+        horizonColor = horizonColor,
+        zenithColor = zenithColor,
+        fogDensity = fogDensity,
+        fogColor = fogColor,
+        shadowsEnabled = shadowsEnabled,
+    )
 }
+
+/** Rehydrates lowered HAL state for a render-feature context that still uses scene pass data. */
+fun GpuEnvironmentState.toEnvironmentUniforms(): EnvironmentUniforms = EnvironmentUniforms(
+    showSky = showSky,
+    horizonColor = horizonColor,
+    zenithColor = zenithColor,
+    fogDensity = fogDensity,
+    fogColor = fogColor,
+    shadowsEnabled = shadowsEnabled,
+)

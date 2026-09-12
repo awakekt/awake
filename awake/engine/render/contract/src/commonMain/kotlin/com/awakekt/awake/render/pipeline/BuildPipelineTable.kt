@@ -5,7 +5,7 @@
  */
 package com.awakekt.awake.render.pipeline
 
-import com.awakekt.awake.render.renderer.CullMode
+import com.awakekt.awake.render.pipeline.CullMode
 
 /**
  * Builds every pipeline in [requests] through [factory], fanning each request out into its own

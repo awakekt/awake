@@ -6,6 +6,8 @@
 package com.awakekt.awake.asset.shaders
 
 import com.awakekt.awake.render.passes.ContentFeature
+import com.awakekt.awake.render.pipeline.DepthCasterKind
+import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRequest
 
@@ -59,6 +61,11 @@ fun ShaderSet.stagesFor(backend: RenderBackend): ShaderStages = when (backend) {
  * @property sceneDepthShaderSet Opts into a camera-space depth pre-pass, bound at
  * [com.awakekt.awake.render.pipeline.BindingSemantic.SceneDepth] for anything that
  * needs the depth already in front of it -- water, soft particles, depth fog.
+ * @property depthPrePassVariants Optional depth-caster shader sets keyed by structural draw
+ * family. The ordinary [depthPrePassShaderSet] remains source-compatible; variants are the
+ * explicit migration path for instanced, skinned, and particle casters.
+ * @property depthPrePassKeyedVariants Optional depth-caster shader sets keyed by both caster
+ * family and fragment coverage. A masked entry must never fall back to an opaque shader.
  *
  * A full extra geometry pass per frame, which is why it is opt-in rather than always on. The
  * scene pass cannot supply this itself: content features draw inside it, and neither backend
@@ -70,6 +77,9 @@ data class RenderPlan(
     val contentFeatures: List<ContentFeatureSource> = emptyList(),
     val depthPrePassShaderSet: ShaderSet? = null,
     val sceneDepthShaderSet: ShaderSet? = null,
+    val depthPrePassVariants: Map<DepthCasterKind, ShaderSet> = emptyMap(),
+    val depthPrePassKeyedVariants: Map<DepthRenderKey, ShaderSet> = emptyMap(),
+    val sceneDepthVariants: Map<DepthCasterKind, ShaderSet> = emptyMap(),
 ) {
     /** [contentFeatures] resolved against [backend]. */
     fun contentFeaturesFor(backend: RenderBackend): List<ContentFeature> =
@@ -93,7 +103,14 @@ data class RenderPlan(
         add(
             PipelineRequest(
                 key = PipelineKey.Primary,
-                spec = primary.shaders.stagesFor(backend).spec(primary.vertexFormat),
+                spec = primary.shaders.stagesFor(backend).spec(
+                    vertexFormat = primary.vertexFormat,
+                    variant = primary.variant,
+                    bindingLayout = primary.bindingLayout,
+                    materialBindings = primary.materialBindings,
+                    usesMaterialGroup = primary.usesMaterialGroup,
+                    bindingsByGroup = primary.shaders.stagesFor(backend).bindingsByGroup,
+                ),
                 buildWireframe = true,
                 buildBackCulled = true,
                 buildTransparent = true,
@@ -166,5 +183,8 @@ fun RenderPlan.narrowedTo(
         scenePipelines = scenePipelines.filter(capabilities.supportsPipeline),
         depthPrePassShaderSet = depthPrePass,
         sceneDepthShaderSet = sceneDepth,
+        depthPrePassVariants = depthPrePassVariants.takeIf { depthPrePass != null }.orEmpty(),
+        depthPrePassKeyedVariants = depthPrePassKeyedVariants.takeIf { depthPrePass != null }.orEmpty(),
+        sceneDepthVariants = sceneDepthVariants.takeIf { sceneDepth != null }.orEmpty(),
     )
 }

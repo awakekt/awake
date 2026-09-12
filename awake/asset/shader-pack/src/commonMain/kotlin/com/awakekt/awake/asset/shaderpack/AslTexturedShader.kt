@@ -52,10 +52,10 @@ import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
+import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
-import com.awakekt.awake.render.renderer.MAX_POINT_LIGHTS
 
 /**
  * glTF metallic-roughness PBR for `PositionNormalColorUv` -- same Cook-Torrance BRDF as

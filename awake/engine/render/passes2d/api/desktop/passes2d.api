@@ -154,3 +154,16 @@ public final class com/awakekt/awake/render/passes2d/TexturedDrawRun {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/passes2d/UiUniformLayouts {
+	public static final field INSTANCE Lcom/awakekt/awake/render/passes2d/UiUniformLayouts;
+	public final fun getBuffer ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public final fun getFontInfo ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getScreenToNdc ()Lcom/awakekt/awake/render/renderer/UniformField;
+}
+
+public final class com/awakekt/awake/render/passes2d/UiUniformsKt {
+	public static final fun getUiTargetCompositeUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public static final fun uiUniformFloats (Lcom/awakekt/awake/core/math/Vec4;Lcom/awakekt/awake/core/math/Vec4;)[F
+	public static synthetic fun uiUniformFloats$default (Lcom/awakekt/awake/core/math/Vec4;Lcom/awakekt/awake/core/math/Vec4;ILjava/lang/Object;)[F
+}
+

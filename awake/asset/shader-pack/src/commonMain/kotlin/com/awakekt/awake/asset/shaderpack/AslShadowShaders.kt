@@ -8,9 +8,10 @@ package com.awakekt.awake.asset.shaderpack
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.AslType
-import com.awakekt.awake.asset.shaderdsl.AslVertexBuilder
 import com.awakekt.awake.asset.shaderdsl.F32
 import com.awakekt.awake.asset.shaderdsl.a
+import com.awakekt.awake.asset.shaderdsl.abs
+import com.awakekt.awake.asset.shaderdsl.and
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.cos
 import com.awakekt.awake.asset.shaderdsl.div
@@ -20,6 +21,7 @@ import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.ge
 import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
+import com.awakekt.awake.asset.shaderdsl.instanceModelMatrix
 import com.awakekt.awake.asset.shaderdsl.le
 import com.awakekt.awake.asset.shaderdsl.length
 import com.awakekt.awake.asset.shaderdsl.lit
@@ -34,16 +36,22 @@ import com.awakekt.awake.asset.shaderdsl.or
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.pow
 import com.awakekt.awake.asset.shaderdsl.rgb
+import com.awakekt.awake.asset.shaderdsl.sampler
 import com.awakekt.awake.asset.shaderdsl.samplerComparison
 import com.awakekt.awake.asset.shaderdsl.saturate
+import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.sin
 import com.awakekt.awake.asset.shaderdsl.sqrt
+import com.awakekt.awake.asset.shaderdsl.storageArrayOfArrays
+import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureDepth2dArray
 import com.awakekt.awake.asset.shaderdsl.textureDimensions
+import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.textureSampleCompareLevel
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.toF32
+import com.awakekt.awake.asset.shaderdsl.toU32
 import com.awakekt.awake.asset.shaderdsl.unaryMinus
 import com.awakekt.awake.asset.shaderdsl.vec2
 import com.awakekt.awake.asset.shaderdsl.vec3
@@ -58,12 +66,13 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.render.passes.uniforms.CascadePassUniformLayout
+import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
+import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
-import com.awakekt.awake.render.renderer.CascadePassUniformLayout
-import com.awakekt.awake.render.renderer.MAX_POINT_LIGHTS
+import com.awakekt.awake.render.renderer.MAX_JOINTS
 import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
-import com.awakekt.awake.render.renderer.SHADOW_CASCADE_PASS_GROUP
 
 /** Depth-only shadow-map pre-pass: binds lit_shadow's buffer (hence the full prefix struct),
  * reads only lightMvp, writes no color -- depth comes from the fixed-function pipeline. The
@@ -76,7 +85,9 @@ val ShadowDepthShader: AslShaderDefinition = shader("shadow_depth") {
     val cascadeViewProjection =
         pass.fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
     vertex {
-        val world = u.model * vec4(animatedPosition(u), 1f.lit)
+        val ins = inputsFrom(VertexFormat.PositionNormalColor)
+        val animated = animatedShadowPosition(u, ins.input(VertexSemantic.Position))
+        val world = u.model * vec4(animated, 1f.lit)
         returnPosition(cascadeViewProjection * world)
     }
     fragment { }
@@ -88,7 +99,7 @@ val ShadowDepthShader: AslShaderDefinition = shader("shadow_depth") {
  * particles, depth fog).
  *
  * Binding-compatible with [ShadowDepthShader] because it reads the same uniform buffer; only the
- * matrix differs. Sharing [animatedPosition] is not tidiness: depth that disagrees with the
+ * matrix differs. Sharing [animatedShadowPosition] is not tidiness: depth that disagrees with the
  * scene pass by even one vertex displacement reads as geometry floating above or sinking into
  * itself, and two hand-copied animation blocks is exactly how that drift arrives.
  */
@@ -97,8 +108,59 @@ val SceneDepthShader: AslShaderDefinition = shader("scene_depth") {
     // This draw's own mvp, not a pass-scoped matrix: the camera-space pass renders once, so
     // there is nothing for a per-pass block to say. It therefore declares no group 1, and
     // `DepthOnlyPipeline` must be built for it with no cascade block -- see that class.
-    vertex { returnPosition(u.mvp * vec4(animatedPosition(u), 1f.lit)) }
+    vertex {
+        val ins = inputsFrom(VertexFormat.PositionNormalColor)
+        val animated = animatedShadowPosition(u, ins.input(VertexSemantic.Position))
+        returnPosition(u.mvp * vec4(animated, 1f.lit))
+    }
     fragment { }
+}
+
+/**
+ * Alpha-tested depth companion for textured ordinary meshes. The material ABI intentionally
+ * matches [MaterialUniformLayouts.PbrTextured]: `pbrFactors.z` carries the draw's alpha cutoff,
+ * while the remaining sampled bindings are declared so the backend can reuse the material's
+ * standard bind group. No color is written; fragments below the cutoff are discarded before
+ * depth test/write.
+ */
+val MaskedTexturedDepthShader: AslShaderDefinition = shader("shadow_depth_masked_textured") {
+    val u = uniformBlock(
+        "Uniforms",
+        group = BindingLayout.Standard.slot(BindingSemantic.Material),
+        binding = 0,
+    )
+    val handles = u.fieldsFrom(com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts.PbrTextured)
+    val mvp = handles.value("mvp")
+    val model = handles.value("model")
+    val pbrFactors = handles.value("pbrFactors")
+    val baseColorFactor = handles.value("baseColorFactor")
+    val baseColorTexture by texture2d(
+        group = BindingLayout.Standard.slot(BindingSemantic.Material),
+        binding = 1,
+    )
+    val baseColorSampler by sampler(
+        group = BindingLayout.Standard.slot(BindingSemantic.Material),
+        binding = 2,
+    )
+    // Keep the standard PBR bind-group shape compatible with Material.bindGroupFor().
+    texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 5)
+    texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 6)
+    texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 7)
+    texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 8)
+
+    val out = varyings("VertexOutput")
+    val uv by out.varying(GpuDataShape.Vec2, location = 0)
+    vertex {
+        val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
+        val position = ins.input(VertexSemantic.Position)
+        out.position set (mvp * vec4(position, 1f.lit))
+        uv set vec2(ins.input(VertexSemantic.Uv).x, 1f.lit - ins.input(VertexSemantic.Uv).y)
+    }
+    fragment {
+        val sampled = let("baseColorSample", textureSample(baseColorTexture, baseColorSampler, uv))
+        val alpha = let("alpha", sampled.a * baseColorFactor.a)
+        iff(alpha lt pbrFactors.z) { this@fragment.discard() }
+    }
 }
 
 /** PBR + shadow-mapped variant of the triangle shader, live on BOTH backends. The map is
@@ -116,7 +178,12 @@ val SceneDepthShader: AslShaderDefinition = shader("scene_depth") {
  * wrong axis the lookup is mirrored about the map's centre, so a caster's shadow lands on the far
  * side of the scene from the caster. */
 @Suppress("LongMethod")
-private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_shadow") {
+private fun litShadow(
+    clipSpace: ClipSpace,
+    instanced: Boolean = false,
+    skinned: Boolean = false,
+    shaderName: String = "lit_shadow",
+): AslShaderDefinition = shader(shaderName) {
     val u = shadowUniforms(includeLitTail = true)
     val shadowMap by textureDepth2dArray(
         group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth),
@@ -126,6 +193,19 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
         group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth),
         binding = 1,
     )
+    val jointPalettes = if (skinned) {
+        storageArrayOfArrays(
+            structName = "JointPalette",
+            varName = "palettes",
+            group = BindingLayout.Standard.slot(BindingSemantic.JointPalette),
+            binding = 0,
+            fieldName = "joints",
+            elementShape = GpuDataShape.Mat4,
+            elementCount = MAX_JOINTS,
+        )
+    } else {
+        null
+    }
 
     val out = varyings("VertexOutput")
     val color by out.varying(GpuDataShape.Vec3, location = 0)
@@ -133,23 +213,43 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
     val worldPos by out.varying(GpuDataShape.Vec3, location = 2)
 
     vertex {
-        val ins = inputsFrom(VertexFormat.PositionNormalColor)
+        val ins = inputsFrom(if (skinned) VertexFormat.PositionNormalColorSkin else VertexFormat.PositionNormalColor)
         val inPosition = ins.input(VertexSemantic.Position)
+        val inNormal = ins.input(VertexSemantic.Normal)
+        val instance = if (skinned) instanceIndex() else null
+        val localPosition: AslExpr
+        val localNormal: AslExpr
+        if (skinned) {
+            val joints = ins.input(VertexSemantic.JointIndices)
+            val weights = ins.input(VertexSemantic.JointWeights)
+            fun palette(slot: AslExpr): AslExpr = jointPalettes!!.element(instance!!, slot)
+            val skinMatrix = let(
+                "skinMatrix",
+                weights.x * palette(joints.x) + weights.y * palette(joints.y) +
+                    weights.z * palette(joints.z) + weights.w * palette(joints.w),
+            )
+            localPosition = let("skinnedPosition", (skinMatrix * vec4(inPosition, 1f.lit)).xyz)
+            localNormal = let("skinnedNormal", (skinMatrix * vec4(inNormal, 0f.lit)).xyz)
+        } else {
+            localPosition = inPosition
+            localNormal = inNormal
+        }
         val wavelength = max(u.vertexAnimation.y, 0.0001f.lit)
         val phase = u.vertexAnimation.w * u.vertexAnimation.z
-        val diagonal = (inPosition.x + inPosition.z) / wavelength + phase
-        val cross = (inPosition.x - inPosition.z) / wavelength * 0.7f.lit + phase * 0.8f.lit
-        val wave = (sin(diagonal) + cos(cross)) * u.vertexAnimation.x * 0.5f.lit
-        val animatedPosition = vec3(inPosition.x, inPosition.y + wave, inPosition.z)
+        val diagonal = (localPosition.x + localPosition.z) / wavelength + phase
+        val cross = (localPosition.x - localPosition.z) / wavelength * 0.7f.lit + phase * 0.8f.lit
+        val animatedPosition = animatedShadowPosition(u, localPosition)
         val dX =
             (cos(diagonal) - sin(cross) * 0.7f.lit) * u.vertexAnimation.x * 0.5f.lit / wavelength
         val dZ =
             (cos(diagonal) + sin(cross) * 0.7f.lit) * u.vertexAnimation.x * 0.5f.lit / wavelength
         val animatedNormal = normalize(vec3(-dX, 1f.lit, -dZ))
-        out.position set (u.mvp * vec4(animatedPosition, 1f.lit))
+        val finalNormal = select(localNormal, animatedNormal, u.vertexAnimation.x gt 0f.lit)
+        val model = if (instanced) instanceModelMatrix(startLocation = if (skinned) 5 else 3) else u.model
+        out.position set (u.mvp * if (instanced) model * vec4(animatedPosition, 1f.lit) else vec4(animatedPosition, 1f.lit))
         color set ins.input(VertexSemantic.Color)
-        normal set (u.model * vec4(animatedNormal, 0f.lit)).xyz
-        worldPos set (u.model * vec4(animatedPosition, 1f.lit)).xyz
+        normal set (model * vec4(finalNormal, 0f.lit)).xyz
+        worldPos set (model * vec4(animatedPosition, 1f.lit)).xyz
     }
 
     val ambientStrength = const("AMBIENT_STRENGTH", 0.08f)
@@ -183,7 +283,108 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
     // LOOKUP samples clear of that shared texel, and unlike more bias it does not detach the
     // shadow from the caster.
     val normalOffsetTexels = const("SHADOW_NORMAL_OFFSET_TEXELS", 1f)
-    val pcfRadius = constI32("PCF_RADIUS", 1)
+    // Five-by-five comparison PCF keeps the existing texel footprint while hiding the stair-step
+    // edges that are especially visible in the directional/cascade samples. Point shadows retain
+    // the hardware-filtered single lookup because their perspective footprint already varies per
+    // fragment and a second kernel there would multiply the cost for every point-light slot.
+    val pcfRadius = constI32("PCF_RADIUS", 2)
+
+    /** Samples the six-face layered point map. The depth pass uses the same 90-degree
+     * perspective projection for every face, so the comparison reference is the perspective
+     * depth of the dominant face axis rather than a linear distance. */
+    val samplePointShadow = fn("samplePointShadow") {
+        val world by param(GpuDataShape.Vec3)
+        val lightPosition by param(GpuDataShape.Vec3)
+        val range by param(F32)
+        val nDotL by param(F32)
+        val baseLayer by param(AslType.U32)
+        val direction = let("pointDirection", world - lightPosition)
+        val ax = let("pointAx", abs(direction.x))
+        val ay = let("pointAy", abs(direction.y))
+        val az = let("pointAz", abs(direction.z))
+        val face = variable("pointFace", 0.lit)
+        val major = variable("pointMajor", ax)
+        val uCoord = variable("pointU", 0f.lit)
+        val vCoord = variable("pointV", 0f.lit)
+        // These signs are the camera-space right/up axes of the matching face matrices in
+        // PointShadowMatrices, converted to texture coordinates (V increases down).
+        iff((ax ge ay) and (ax ge az) and (direction.x ge 0f.lit)) {
+            assign(face, 0.lit)
+            assign(uCoord, -direction.z)
+            assign(vCoord, direction.y)
+        }
+        iff((ax ge ay) and (ax ge az) and (direction.x lt 0f.lit)) {
+            assign(face, 1.lit)
+            assign(uCoord, direction.z)
+            assign(vCoord, direction.y)
+        }
+        // Keep the same tie-breaking order as pointShadowLookup: X, then Y, then Z.
+        iff((ay gt ax) and (ay ge az) and (direction.y ge 0f.lit)) {
+            assign(major, ay)
+            assign(face, 2.lit)
+            assign(uCoord, -direction.x)
+            assign(vCoord, direction.z)
+        }
+        iff((ay gt ax) and (ay ge az) and (direction.y lt 0f.lit)) {
+            assign(major, ay)
+            assign(face, 3.lit)
+            assign(uCoord, -direction.x)
+            assign(vCoord, -direction.z)
+        }
+        iff((az gt ax) and (az gt ay) and (direction.z ge 0f.lit)) {
+            assign(major, az)
+            assign(face, 4.lit)
+            assign(uCoord, direction.x)
+            assign(vCoord, direction.y)
+        }
+        iff((az gt ax) and (az gt ay) and (direction.z lt 0f.lit)) {
+            assign(major, az)
+            assign(face, 5.lit)
+            assign(uCoord, -direction.x)
+            assign(vCoord, direction.y)
+        }
+        val uv = let("pointUv", (vec2(uCoord, vCoord) / major + vec2(1f.lit)) * 0.5f.lit)
+        val near = 0.05f.lit
+        // A fixed NDC offset is not a world-space bias: with this perspective projection it
+        // becomes a large radial gap near the light and a much smaller one near the range limit.
+        // Size the receiver bias from the point-map texel footprint instead, then convert that
+        // world distance through d(depth)/d(major). This keeps contact shadows attached while
+        // still covering rasterization error on grazing receivers.
+        val texSize = let("pointTexSize", vec2(textureDimensions(shadowMap)))
+        val texelWorld = let("pointTexelWorld", 2f.lit * major / texSize.x)
+        val slopeScale = let(
+            "pointSlopeScale",
+            min(sqrt(max(1f.lit - nDotL * nDotL, 0f.lit)) / max(nDotL, epsilon), maxSlopeScale),
+        )
+        val worldBias = let(
+            "pointWorldBias",
+            texelWorld * (shadowBiasTexels + shadowSlopeTexels * slopeScale),
+        )
+        val depthBias = let(
+            "pointDepthBias",
+            near * range / ((range - near) * major * major) * worldBias,
+        )
+        val depth = if (clipSpace.depthZeroToOne) {
+            let(
+                "pointDepth",
+                range / (range - near) - near * range / ((range - near) * major),
+            )
+        } else {
+            let(
+                "pointDepth",
+                (range / (range - near) - near * range / ((range - near) * major)) * 0.5f.lit + 0.5f.lit,
+            )
+        }
+        returnValue(
+            textureSampleCompareLevel(
+                shadowMap,
+                shadowMapSampler,
+                uv,
+                baseLayer + toU32(face),
+                depth - depthBias,
+            ),
+        )
+    }
 
     /**
      * How lit this fragment is, from whichever cascade contains it.
@@ -234,7 +435,18 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
             // the texel it shares with whatever stands above it. The two agree for a surface
             // facing the light and diverge exactly where the artefact lives -- at nDotL 0.2 the
             // old form moved 1.6 texels and this moves 7.7.
-            val slide = let("slide", texelWorld * normalOffsetTexels / max(nDotL, epsilon))
+            // A normal slide is only needed for a grazing receiver. Applying it to an ordinary
+            // ground receiver moves the lookup laterally in light space and is the classic
+            // peter-panning symptom: the shadow starts visibly away from the caster's base.
+            // Keep the full grazing protection while fading it out over a narrow, shared range.
+            val grazing = let(
+                "grazing",
+                clamp((0.45f.lit - nDotL) * 20f.lit, 0f.lit, 1f.lit),
+            )
+            val slide = let(
+                "slide",
+                texelWorld * normalOffsetTexels * grazing / max(nDotL, epsilon),
+            )
             // Containment answers for the FRAGMENT, not for the offset lookup. Selecting on the
             // offset position couples the two: growing the offset can push a fragment out of one
             // cascade into the next, and the artefact it was meant to fix then moves rather than
@@ -358,7 +570,8 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
         val shadowFactor = let("shadowFactor", sampleShadow(worldPos, n, nDotL))
         val direct =
             variable("direct", (diffuse + specular) * u.lightColor.xyz * nDotL * shadowFactor)
-        // Point lights: same BRDF per slot, unshadowed (the one shadow map is directional).
+        // Point lights: the colour slot selects the light's six-face layer base; zero keeps the
+        // fast unshadowed path for lights without authored shadow support.
         // Slot count is MAX_POINT_LIGHTS itself -- the same constant that sizes the layout's
         // arrays, so the loop and the struct cannot disagree.
         loopU32("i", 0u.lit, MAX_POINT_LIGHTS.toUInt().lit) { i ->
@@ -390,9 +603,24 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
             )
             val pDiffuse =
                 let("pDiffuse", (vec3(1f.lit) - pFresnel) * (1f.lit - metallic) * color / pi)
+            val pointShadow = variable("pointShadow", 1f.lit)
+            // The colour slot's fourth component is zero for an unshadowed light and one plus
+            // its zero-based six-face target layer for a shadowed light.
+            iff(u.pointLightColors[i].w gt 0f.lit) {
+                assign(
+                    pointShadow,
+                    samplePointShadow(
+                        worldPos,
+                        slot.xyz,
+                        slot.w,
+                        pNdotL,
+                        toU32(u.pointLightColors[i].w - 1f.lit),
+                    ),
+                )
+            }
             assign(
                 direct,
-                direct + (pDiffuse + pSpecular) * u.pointLightColors[i].xyz * pNdotL * attenuation,
+                direct + (pDiffuse + pSpecular) * u.pointLightColors[i].xyz * pNdotL * attenuation * pointShadow,
             )
         }
         val ambient = let("ambient", color * ambientStrength)
@@ -406,19 +634,10 @@ private fun litShadow(clipSpace: ClipSpace): AslShaderDefinition = shader("lit_s
 /** `lit_shadow` for [clipSpace]. One definition; the emitted V axis follows the backend. */
 fun litShadowShader(clipSpace: ClipSpace): AslShaderDefinition = litShadow(clipSpace)
 
-/**
- * The vertex position both depth passes rasterise, with the scene's wave displacement applied.
- *
- * All three attributes are declared even though only position is read: a depth pass shares the
- * main pass's vertex layout, and the format says so structurally rather than by comment.
- */
-private fun AslVertexBuilder.animatedPosition(u: ShadowUniforms): AslExpr {
-    val ins = inputsFrom(VertexFormat.PositionNormalColor)
-    val position = ins.input(VertexSemantic.Position)
-    val wavelength = max(u.vertexAnimation.y, 0.0001f.lit)
-    val phase = u.vertexAnimation.w * u.vertexAnimation.z
-    val diagonal = (position.x + position.z) / wavelength + phase
-    val cross = (position.x - position.z) / wavelength * 0.7f.lit + phase * 0.8f.lit
-    val displacement = (sin(diagonal) + cos(cross)) * u.vertexAnimation.x * 0.5f.lit
-    return vec3(position.x, position.y + displacement, position.z)
-}
+/** Shadowed scene variant for non-skinned instance transforms. */
+fun instancedLitShadowShader(clipSpace: ClipSpace): AslShaderDefinition =
+    litShadow(clipSpace, instanced = true, shaderName = "instanced_lit_shadow")
+
+/** Shadowed scene variant for skinned instance transforms. */
+fun skinnedInstancedLitShadowShader(clipSpace: ClipSpace): AslShaderDefinition =
+    litShadow(clipSpace, instanced = true, skinned = true, shaderName = "skinned_instanced_lit_shadow")

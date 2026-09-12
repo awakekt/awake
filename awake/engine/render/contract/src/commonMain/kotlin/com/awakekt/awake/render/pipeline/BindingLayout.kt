@@ -55,7 +55,7 @@ val ShadowCascadePassBinding = BindingSemantic.Custom("shadowCascadePass")
  *
  * The numeric slot is resolved once when a pipeline is authored. Recording code names the
  * resource instead of repeating a Vulkan descriptor-set/WebGPU bind-group index. Shadow depth
- * and joint palettes intentionally share the secondary slot because no pipeline declares both.
+ * and joint palettes have distinct slots so a skinned pipeline can sample shadows safely.
  */
 data class BindingLayout private constructor(
     private val slots: Map<BindingSemantic, Int>,
@@ -92,7 +92,7 @@ data class BindingLayout private constructor(
         val Standard = of(
             BindingSemantic.Material to 0,
             BindingSemantic.ShadowDepth to 1,
-            BindingSemantic.JointPalette to 1,
+            BindingSemantic.JointPalette to 3,
             // The depth pass's own cascade matrix. Shares the second group with the two above
             // for the same reason they share it with each other: the passes are disjoint. A
             // depth-only pass has no shadow map to sample and no skinned palette to read -- it

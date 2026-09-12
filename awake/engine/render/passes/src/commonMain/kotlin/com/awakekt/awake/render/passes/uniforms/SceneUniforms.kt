@@ -7,11 +7,9 @@ package com.awakekt.awake.render.passes.uniforms
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.core.math.putVec4
-import com.awakekt.awake.render.renderer.MAX_POINT_LIGHTS
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
+import com.awakekt.awake.render.renderer.uniformFloats
 
 /**
  * Packs the scene light as `[direction.xyz, shadowTexelDepthScale, color.rgb, pad]`.
@@ -27,16 +25,21 @@ import com.awakekt.awake.render.renderer.UniformWriter
  * variants without shadows never read the slot.
  */
 fun sceneLightFloats(light: SceneLight, shadowTexelDepthScale: Float = 0f): FloatArray =
-    floatArrayOf(
-        light.direction.x,
-        light.direction.y,
-        light.direction.z,
-        shadowTexelDepthScale,
-        light.color.x,
-        light.color.y,
-        light.color.z,
-        0f,
-    )
+    UniformWriter(MaterialUniformLayouts.DirectionalLight)
+        .put(UniformFields.LightDirection, light.direction, shadowTexelDepthScale)
+        .put(UniformFields.LightColor, light.color)
+        .build()
+
+/** Selects the directional prefix from either a directional-only or complete scene-light payload. */
+fun directionalLightFloats(lightPayload: FloatArray): FloatArray =
+    UniformWriter(MaterialUniformLayouts.DirectionalLight)
+        .put(
+            lightPayload,
+            MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.LightDirection),
+            UniformFields.LightDirection,
+            UniformFields.LightColor,
+        )
+        .build()
 
 /**
  * Fills [into] with [light]'s point-light slots: positions with range in `w`, then colours.
@@ -55,9 +58,14 @@ fun sceneLightFloats(light: SceneLight, shadowTexelDepthScale: Float = 0f): Floa
  * divide by, so the survivors are the ones that would have contributed most.
  */
 fun packPointLights(light: SceneLight, eye: Vec3f, into: FloatArray) {
+    val layout = MaterialUniformLayouts.PointLightSlots
+    val positionField = UniformFields.PointLightPositions
+    val colorField = UniformFields.PointLightColors
+    require(into.size >= layout.total) {
+        "Point-light buffer has ${into.size} floats, but the declared layout needs ${layout.total}."
+    }
     into.fill(0f)
     if (light.points.isEmpty()) return
-    val colorBase = MAX_POINT_LIGHTS * VEC4
     var filled = 0
     var farthest = -1f
     var farthestSlot = 0
@@ -68,13 +76,31 @@ fun packPointLights(light: SceneLight, eye: Vec3f, into: FloatArray) {
             distance < farthest -> farthestSlot
             else -> return@forEach
         }
-        into.putVec4(slot * VEC4, point.position, point.range)
-        into.putVec4(colorBase + slot * VEC4, point.color)
+        layout.writeVec4Element(
+            destination = into,
+            field = positionField,
+            index = slot,
+            x = point.position.x,
+            y = point.position.y,
+            z = point.position.z,
+            w = point.range,
+        )
+        layout.writeVec4Element(
+            destination = into,
+            field = colorField,
+            index = slot,
+            x = point.color.x,
+            y = point.color.y,
+            z = point.color.z,
+            // Zero means that this slot has no point-shadow faces. Active lights carry their
+            // zero-based target layer plus one because the shader uses zero as the fast off test.
+            w = if (point.shadowBaseLayer >= 0) (point.shadowBaseLayer + 1).toFloat() else 0f,
+        )
         // Re-scan for the new farthest only when the set changed; MAX_POINT_LIGHTS is 4, so this
         // is cheaper than keeping a sorted structure and allocates nothing either way.
         farthest = -1f
         for (i in 0 until filled) {
-            val p = i * VEC4
+            val p = layout.offsetOf(positionField) + i * positionField.type.uniformFloats
             val d = squaredDistance(into[p], into[p + 1], into[p + 2], eye)
             if (d > farthest) {
                 farthest = d
@@ -91,8 +117,6 @@ private fun squaredDistance(x: Float, y: Float, z: Float, eye: Vec3f): Float {
     return dx * dx + dy * dy + dz * dz
 }
 
-private const val VEC4 = 4
-
 /**
  * Packs `[fogColor.rgb, fogDensity]` -- the density rides in the colour's alpha slot, which the
  * shader never reads as alpha.
@@ -101,7 +125,9 @@ private const val VEC4 = 4
  * @param fogDensity Exponential density; `0f` means no fog.
  */
 fun fogUniformFloats(fogColor: Color, fogDensity: Float): FloatArray =
-    floatArrayOf(fogColor.r, fogColor.g, fogColor.b, fogDensity)
+    UniformWriter(MaterialUniformLayouts.Fog)
+        .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
+        .build()
 
 /**
  * Packs the camera's world position as `[x, y, z, pad]`.
@@ -110,17 +136,11 @@ fun fogUniformFloats(fogColor: Color, fogDensity: Float): FloatArray =
  *
  * @param eye Camera position in world space.
  */
-fun cameraPositionFloats(eye: Vec3f): FloatArray = floatArrayOf(eye.x, eye.y, eye.z, 0f)
+fun cameraPositionFloats(eye: Vec3f): FloatArray =
+    UniformWriter(MaterialUniformLayouts.CameraPosition)
+        .put(UniformFields.CameraPosition, eye)
+        .build()
 
-/**
- * One frame's lighting, ready to write: the directional light's eight floats and the point-light
- * slots.
- *
- * A bundle rather than two threaded parameters. The backends pass light data down through six
- * call layers each; adding a second parameter beside `lightFloats` would mean six signatures per
- * backend that can disagree about whether they got both. [writeTo] also keeps the four fields
- * written together and in layout order, which is the ordering `UniformWriter` enforces anyway.
- */
 /**
  * One frame's lighting, ready to write: the directional light's eight floats and the point-light
  * slots as one flat block, positions then colours.
@@ -140,6 +160,10 @@ class SceneLightUniforms(
     val directional: FloatArray,
     private val pointSlots: FloatArray,
 ) {
+    /** Flat HAL payload: directional light followed by point-light position and colour slots. */
+    val packed: FloatArray
+        get() = directional + pointSlots
+
     /**
      * Writes all four light fields, in layout order -- for a layout whose shader declares the
      * point-light slot arrays. Today that is the two PBR paths, `textured` and `lit_shadow`.
@@ -168,7 +192,7 @@ fun sceneLightUniforms(
     eye: Vec3f,
     shadowTexelDepthScale: Float = 0f,
 ): SceneLightUniforms {
-    val slots = FloatArray(MAX_POINT_LIGHTS * 4 * 2)
+    val slots = FloatArray(MaterialUniformLayouts.PointLightSlots.total)
     packPointLights(light, eye, slots)
     return SceneLightUniforms(sceneLightFloats(light, shadowTexelDepthScale), slots)
 }

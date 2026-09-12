@@ -35,9 +35,9 @@ import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
+import com.awakekt.awake.render.passes.uniforms.InstancedUniformLayout
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
-import com.awakekt.awake.render.renderer.InstancedUniformLayout
 import com.awakekt.awake.render.renderer.MAX_JOINTS
 import com.awakekt.awake.render.renderer.SkinnedUniformLayout
 

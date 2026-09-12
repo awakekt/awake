@@ -36,6 +36,15 @@ public final class com/awakekt/awake/asset/gltf/GltfAccessor$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/asset/gltf/GltfAlphaMode : java/lang/Enum {
+	public static final field BLEND Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
+	public static final field MASK Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
+	public static final field OPAQUE Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
+	public static fun values ()[Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
+}
+
 public final class com/awakekt/awake/asset/gltf/GltfAnimation {
 	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfAnimation$Companion;
 	public fun <init> ()V
@@ -310,17 +319,19 @@ public final class com/awakekt/awake/asset/gltf/GltfImage$Companion {
 public final class com/awakekt/awake/asset/gltf/GltfMaterial {
 	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfMaterial$Companion;
 	public fun <init> ()V
-	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;)V
+	public synthetic fun <init> (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;
 	public final fun component3 ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public final fun component4 ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public final fun component5 ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public final fun component6 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;)Lcom/awakekt/awake/asset/gltf/GltfMaterial;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfMaterial;Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMaterial;
+	public final fun component7 ()Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
+	public final fun copy (Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;)Lcom/awakekt/awake/asset/gltf/GltfMaterial;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfMaterial;Ljava/lang/String;Lcom/awakekt/awake/asset/gltf/GltfPbrMetallicRoughness;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Lcom/awakekt/awake/asset/gltf/GltfTextureRef;Ljava/util/List;Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMaterial;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlphaMode ()Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
 	public final fun getEmissiveFactor ()Ljava/util/List;
 	public final fun getEmissiveTexture ()Lcom/awakekt/awake/asset/gltf/GltfTextureRef;
 	public final fun getName ()Ljava/lang/String;
@@ -347,8 +358,8 @@ public final class com/awakekt/awake/asset/gltf/GltfMaterial$Companion {
 }
 
 public final class com/awakekt/awake/asset/gltf/GltfMesh {
-	public fun <init> ([F[F[F[F[I[I[F[B[B[B[B[B[FFF[F)V
-	public synthetic fun <init> ([F[F[F[F[I[I[F[B[B[B[B[B[FFF[FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> ([F[F[F[F[I[I[F[B[B[B[B[B[FFF[FLcom/awakekt/awake/asset/gltf/GltfAlphaMode;)V
+	public synthetic fun <init> ([F[F[F[F[I[I[F[B[B[B[B[B[FFF[FLcom/awakekt/awake/asset/gltf/GltfAlphaMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()[F
 	public final fun component10 ()[B
 	public final fun component11 ()[B
@@ -357,6 +368,7 @@ public final class com/awakekt/awake/asset/gltf/GltfMesh {
 	public final fun component14 ()F
 	public final fun component15 ()F
 	public final fun component16 ()[F
+	public final fun component17 ()Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
 	public final fun component2 ()[F
 	public final fun component3 ()[F
 	public final fun component4 ()[F
@@ -365,9 +377,10 @@ public final class com/awakekt/awake/asset/gltf/GltfMesh {
 	public final fun component7 ()[F
 	public final fun component8 ()[B
 	public final fun component9 ()[B
-	public final fun copy ([F[F[F[F[I[I[F[B[B[B[B[B[FFF[F)Lcom/awakekt/awake/asset/gltf/GltfMesh;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfMesh;[F[F[F[F[I[I[F[B[B[B[B[B[FFF[FILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
+	public final fun copy ([F[F[F[F[I[I[F[B[B[B[B[B[FFF[FLcom/awakekt/awake/asset/gltf/GltfAlphaMode;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/GltfMesh;[F[F[F[F[I[I[F[B[B[B[B[B[FFF[FLcom/awakekt/awake/asset/gltf/GltfAlphaMode;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlphaMode ()Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
 	public final fun getBaseColorFactor ()[F
 	public final fun getBaseColorImageBytes ()[B
 	public final fun getColors ()[F
@@ -730,12 +743,13 @@ public final class com/awakekt/awake/asset/gltf/LoadedMesh {
 }
 
 public final class com/awakekt/awake/asset/gltf/LoadedPrimitive {
-	public fun <init> ([F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[F)V
-	public synthetic fun <init> ([F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> ([F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[FLcom/awakekt/awake/asset/gltf/GltfAlphaMode;)V
+	public synthetic fun <init> ([F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[FLcom/awakekt/awake/asset/gltf/GltfAlphaMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()[F
 	public final fun component10 ()F
 	public final fun component11 ()F
 	public final fun component12 ()[F
+	public final fun component13 ()Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
 	public final fun component2 ()[I
 	public final fun component3 ()Lcom/awakekt/awake/core/math/Mat4;
 	public final fun component4 ()[B
@@ -744,9 +758,10 @@ public final class com/awakekt/awake/asset/gltf/LoadedPrimitive {
 	public final fun component7 ()[B
 	public final fun component8 ()[B
 	public final fun component9 ()[F
-	public final fun copy ([F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[F)Lcom/awakekt/awake/asset/gltf/LoadedPrimitive;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/LoadedPrimitive;[F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[FILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedPrimitive;
+	public final fun copy ([F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[FLcom/awakekt/awake/asset/gltf/GltfAlphaMode;)Lcom/awakekt/awake/asset/gltf/LoadedPrimitive;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/gltf/LoadedPrimitive;[F[ILcom/awakekt/awake/core/math/Mat4;[B[B[B[B[B[FFF[FLcom/awakekt/awake/asset/gltf/GltfAlphaMode;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/LoadedPrimitive;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlphaMode ()Lcom/awakekt/awake/asset/gltf/GltfAlphaMode;
 	public final fun getBaseColorFactor ()[F
 	public final fun getBaseColorImageBytes ()[B
 	public final fun getEmissiveFactor ()[F

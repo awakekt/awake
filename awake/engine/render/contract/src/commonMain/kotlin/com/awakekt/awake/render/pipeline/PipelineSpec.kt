@@ -6,7 +6,7 @@
 package com.awakekt.awake.render.pipeline
 
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.render.renderer.CullMode
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.UniformLayout
 
 /**
@@ -55,9 +55,14 @@ data class PipelineSpec(
     val fragmentShader: ShaderSource,
     val variant: PipelineVariant = PipelineVariant.Opaque,
     val cullMode: CullMode = CullMode.None,
+    val frontFace: FrontFace = FrontFace.CounterClockwise,
     val wireframe: Boolean = false,
     /** Semantic descriptor-set/bind-group layout consumed by this pipeline. */
     val bindingLayout: BindingLayout = BindingLayout.Standard,
+    /** Exact resources used by each shader group, when the shader declaration provides them. */
+    val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
+    /** True when [bindingsByGroup] is authoritative, including an explicitly empty layout. */
+    val bindingsMetadataAvailable: Boolean = false,
     /**
      * What occupies this pipeline's material group, or null to keep the fixed glTF
      * metallic-roughness shape both backends build today.
@@ -68,6 +73,8 @@ data class PipelineSpec(
      * at all. See [GroupBindings] for why [bindingLayout] alone was not enough.
      */
     val materialBindings: GroupBindings? = null,
+    /** Whether this pipeline binds semantic group 0 during recording. */
+    val usesMaterialGroup: Boolean = true,
     /**
      * The uniform block this pipeline owns, or null when its uniforms come from a per-draw
      * `Material` instead.
@@ -105,7 +112,7 @@ data class PipelineRequest(
     /** A back-face-culled companion -- see [CullMode]'s own doc comment. Same scope as
      * [buildWireframe]; instanced and particle meshes don't opt into per-mesh culling yet. */
     val buildBackCulled: Boolean = false,
-    /** An alpha-blended, non-depth-writing companion for `DrawCall.transparent` draws. Same
+    /** An alpha-blended, non-depth-writing companion for `RenderDrawCommand.transparent` draws. Same
      * scope again, since instanced and particle draws carry their own blend variants already. */
     val buildTransparent: Boolean = false,
 )

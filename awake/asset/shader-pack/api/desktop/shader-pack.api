@@ -2,6 +2,13 @@ public final class com/awakekt/awake/asset/shaderpack/AslDepthFogShaderKt {
 	public static final fun depthFogShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslDepthVariantsKt {
+	public static final fun getInstancedShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getParticleShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getSkinnedInstancedShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getSkinnedShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslInfiniteGridShaderKt {
 	public static final fun getInfiniteGridShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
@@ -18,9 +25,12 @@ public final class com/awakekt/awake/asset/shaderpack/AslParticleShaderKt {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslShadowShadersKt {
+	public static final fun getMaskedTexturedDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getSceneDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun instancedLitShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun litShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun skinnedInstancedLitShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslSkyboxShaderKt {
@@ -45,12 +55,36 @@ public final class com/awakekt/awake/asset/shaderpack/DepthFogContentFeatureKt {
 	public static synthetic fun depthFogContentFeature$default (Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/DepthFogFields {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/DepthFogFields;
+	public final fun getCameraEye ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getFogColor ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getInverseViewProjection ()Lcom/awakekt/awake/render/renderer/UniformField;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/DepthFogFieldsKt {
+	public static final fun getDepthFogUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/DepthFogRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
 	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun destroy ()V
 	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
+}
+
+public final class com/awakekt/awake/asset/shaderpack/InfiniteGridFields {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/InfiniteGridFields;
+	public final fun getAxisColorX ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getAxisColorZ ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getCameraPos ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getGridColor ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getGridParams ()Lcom/awakekt/awake/render/renderer/UniformField;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/InfiniteGridFieldsKt {
+	public static final fun getInfiniteGridUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/LitShadowUniformLayoutKt {
@@ -61,12 +95,17 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/PackShaderSets;
 	public final fun getInfiniteGrid ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstanced ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getInstancedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getLitShadow ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getMaskedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getParticle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getParticleShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSceneDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinned ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinnedInstanced ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkinnedInstancedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkinnedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinnedTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkybox ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
@@ -98,6 +137,24 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxContentFeatureKt {
 	public static final fun skyboxContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/SkyboxFields {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/SkyboxFields;
+	public final fun getCameraEye ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getHorizonColor ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getInverseViewProjection ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getMoonColor ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getSunColor ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getSunDirection ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getZenithColor ()Lcom/awakekt/awake/render/renderer/UniformField;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SkyboxUniformsKt {
+	public static final fun getMOON_DISC_COLOR ()Lcom/awakekt/awake/core/color/Color;
+	public static final fun getSUN_DISC_COLOR ()Lcom/awakekt/awake/core/color/Color;
+	public static final fun getSkyboxUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public static final fun skyboxUniformFloats (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)[F
+}
+
 public final class com/awakekt/awake/asset/shaderpack/TerrainContentFeatureKt {
 	public static final fun terrainContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 	public static synthetic fun terrainContentFeature$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
@@ -105,7 +162,6 @@ public final class com/awakekt/awake/asset/shaderpack/TerrainContentFeatureKt {
 
 public final class com/awakekt/awake/asset/shaderpack/TerrainRenderFeature : com/awakekt/awake/render/passes/RenderFeature {
 	public static final field AMBIENT F
-	public static final field VEC4 I
 	public fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/render/command/PipelineHandle;Lcom/awakekt/awake/render/command/UniformBlock;Lcom/awakekt/awake/render/passes/ContentGeometry;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker;FF[FLkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun destroy ()V

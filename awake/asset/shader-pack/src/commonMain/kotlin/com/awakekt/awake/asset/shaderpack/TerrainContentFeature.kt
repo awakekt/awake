@@ -54,7 +54,7 @@ private const val VERTEX_BINDING = 0
  * @param heightmap Elevation source, sampled in the vertex stage.
  * @param config Ring layout; its `ringCount` must fit [MAX_CLIPMAP_RINGS].
  * @param isVisible Read every frame. A lambda rather than a flag so an ECS component can own the
- * answer without this module depending on the scene layer -- see `:awake:scene:rendering`'s own
+ * answer without this module depending on the scene layer -- see `:awake:scene:scene3d`'s own
  * `terrainContentFeature` overload, which passes a `TerrainComponent`'s.
  */
 fun terrainContentFeature(
@@ -70,16 +70,21 @@ fun terrainContentFeature(
     val encoded = heightmap.encodeForSampling()
     return ContentFeatureSource { backend ->
         val stages = shaders.stagesFor(backend)
+        val materialBindings = requireNotNull(
+            TerrainShader.bindingsForGroup(
+                com.awakekt.awake.render.pipeline.BindingLayout.Standard
+                    .slot(BindingSemantic.Material),
+            ),
+        )
         ContentFeature(
             name = "terrain",
             spec = PipelineSpec(
                 vertexFormat = VertexFormat.PositionNormalColorUv,
                 vertexShader = stages.source(ShaderStage.VERTEX),
                 fragmentShader = stages.source(ShaderStage.FRAGMENT),
-                materialBindings = TerrainShader.bindingsForGroup(
-                    com.awakekt.awake.render.pipeline.BindingLayout.Standard
-                        .slot(BindingSemantic.Material),
-                ),
+                bindingsByGroup = mapOf(0 to materialBindings),
+                bindingsMetadataAvailable = stages.bindingsMetadataAvailable,
+                materialBindings = materialBindings,
                 uniforms = TerrainUniformLayout.Layout,
             ),
             textures = mapOf(HEIGHTMAP_BINDING to encoded.texture),
@@ -184,8 +189,8 @@ class TerrainRenderFeature(
 
     /** Reused across frames -- `ringParams` is written every frame and this runs inside the
      * record path, where `skills/awake-ui-performance` rules out per-frame allocation. */
-    private val ringParams = FloatArray(MAX_CLIPMAP_RINGS * VEC4)
-    private val terrainParams = FloatArray(VEC4)
+    private val ringParams = FloatArray(TerrainUniformLayout.RingParams.floats)
+    private val terrainParams = FloatArray(TerrainUniformLayout.TerrainParams.floats)
 
     override fun recordCommands(context: RenderFrameContext) {
         // Before the tracker updates: a hidden terrain should cost nothing, and its rings have no
@@ -193,16 +198,22 @@ class TerrainRenderFeature(
         if (!isVisible()) return
         tracker.update(context.cameraEye)
         tracker.ringStates.forEachIndexed { index, ring ->
-            val base = index * VEC4
-            ringParams[base] = ring.snappedCenter.x
-            ringParams[base + 1] = ring.snappedCenter.z
-            ringParams[base + 2] = ring.spacing
-            ringParams[base + 3] = ring.halfExtent
+            TerrainUniformLayout.RingParams.writeVec4Element(
+                destination = ringParams,
+                index = index,
+                x = ring.snappedCenter.x,
+                y = ring.snappedCenter.z,
+                z = ring.spacing,
+                w = ring.halfExtent,
+            )
         }
-        terrainParams[0] = heightScale
-        terrainParams[1] = MORPH_WIDTH
-        terrainParams[2] = BASE_SHADE
-        terrainParams[3] = heightBias
+        TerrainUniformLayout.TerrainParams.writeVec4(
+            destination = terrainParams,
+            x = heightScale,
+            y = MORPH_WIDTH,
+            z = BASE_SHADE,
+            w = heightBias,
+        )
         // Written in layout order -- UniformWriter checks each field against the layout's next
         // slot, so a reordering here is an error rather than a wrongly-shaped buffer.
         uniforms.write(context.frameIndex) {
@@ -223,7 +234,6 @@ class TerrainRenderFeature(
     override fun destroy() = Unit
 
     private companion object {
-        const val VEC4 = 4
         const val AMBIENT = 0.35f
     }
 }

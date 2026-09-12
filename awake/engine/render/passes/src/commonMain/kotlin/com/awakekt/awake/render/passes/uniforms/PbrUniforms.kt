@@ -8,12 +8,12 @@ package com.awakekt.awake.render.passes.uniforms
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.render.renderer.DrawCall
-import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
+import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
 
-/** No metal, half-rough -- a plain lit surface when a `DrawCall` supplies no PBR factors. */
+/** No metal, half-rough -- a plain lit surface when a `RenderDrawCommand` supplies no PBR factors. */
 const val DEFAULT_METALLIC = 0f
 const val DEFAULT_ROUGHNESS = 0.5f
 
@@ -33,25 +33,69 @@ val DEFAULT_EMISSIVE_FACTOR: Color = Color(r = 0f, g = 0f, b = 0f, a = 0f)
  * @param drawCall Supplies the factors through `extraUniformFloats`, or nothing for the defaults.
  * @return Exactly [PBR_MATERIAL_FLOATS] floats.
  */
-fun pbrMaterialFloats(drawCall: DrawCall): FloatArray {
-    val supplied = drawCall.extraUniformFloats
-    if (supplied.size >= PBR_MATERIAL_FLOATS) return supplied.copyOf(PBR_MATERIAL_FLOATS)
-    return floatArrayOf(DEFAULT_METALLIC, DEFAULT_ROUGHNESS, 0f, 0f)
-}
+fun pbrMaterialFloats(drawCall: RenderDrawCommand): FloatArray = pbrMaterialPayload(drawCall.extraUniformFloats)
+
+/** Packs authored PBR factors without making scene extraction know the GPU lane order. */
+fun pbrMaterialFloats(
+    metallic: Float,
+    roughness: Float,
+    baseColorFactor: Color,
+    emissiveFactor: Color,
+): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTexturedMaterial)
+    .put(UniformFields.PbrFactors, metallic, roughness, 0f, 0f)
+    .put(UniformFields.BaseColorFactor, baseColorFactor)
+    .put(UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, 0f)
+    .build()
+
+/** Same typed defaulting for backend source adapters that carry only the raw extra payload. */
+internal fun pbrMaterialFloats(values: FloatArray): FloatArray = pbrMaterialPayload(values)
 
 /**
  * Packs `[metallic, roughness, pad, pad] + baseColorFactor.rgba + emissiveFactor.rgba` for the
  * textured glTF PBR path.
  *
  * @param drawCall Supplies the factors through `extraUniformFloats`, or nothing for the defaults.
+ * The third float in the metallic/roughness vec4 is reserved for the draw's alpha cutoff. The
+ * lit textured shader ignores that slot today; keyed masked depth shaders can consume it without
+ * changing the uniform block size or introducing a backend-specific buffer.
+ *
  * @return Exactly [PBR_TEXTURED_MATERIAL_FLOATS] floats.
  */
-fun pbrTexturedMaterialFloats(drawCall: DrawCall): FloatArray {
+fun pbrTexturedMaterialFloats(drawCall: RenderDrawCommand): FloatArray {
     val supplied = drawCall.extraUniformFloats
-    if (supplied.size >= PBR_TEXTURED_MATERIAL_FLOATS) return supplied.copyOf(PBR_TEXTURED_MATERIAL_FLOATS)
-    return floatArrayOf(DEFAULT_METALLIC_FACTOR, DEFAULT_ROUGHNESS_FACTOR, 0f, 0f) +
-        DEFAULT_BASE_COLOR_FACTOR.toFloatArray() +
-        DEFAULT_EMISSIVE_FACTOR.toFloatArray()
+    val layout = MaterialUniformLayouts.PbrTexturedMaterial
+    if (supplied.size >= layout.total) {
+        val output = supplied.copyOf(layout.total)
+        val factors = layout.readVec4(output, UniformFields.PbrFactors)
+        layout.writeVec4(
+            destination = output,
+            field = UniformFields.PbrFactors,
+            x = factors.x,
+            y = factors.y,
+            z = drawCall.alphaCutoff,
+            w = factors.w,
+        )
+        return output
+    }
+    return UniformWriter(layout)
+        .put(
+            UniformFields.PbrFactors,
+            DEFAULT_METALLIC_FACTOR,
+            DEFAULT_ROUGHNESS_FACTOR,
+            drawCall.alphaCutoff,
+            0f,
+        )
+        .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
+        .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
+        .build()
+}
+
+private fun pbrMaterialPayload(values: FloatArray): FloatArray {
+    val layout = MaterialUniformLayouts.PbrMaterial
+    if (values.size >= layout.total) return values.copyOf(layout.total)
+    return UniformWriter(layout)
+        .put(UniformFields.PbrFactors, DEFAULT_METALLIC, DEFAULT_ROUGHNESS, 0f, 0f)
+        .build()
 }
 
 /**
@@ -85,7 +129,7 @@ class SceneFrameUniforms(
  * @return The complete uniform block, sized exactly [MaterialUniformLayouts.PbrTextured].
  */
 fun texturedUniforms(
-    drawCall: DrawCall,
+    drawCall: RenderDrawCommand,
     mvp: Mat4,
     frame: SceneFrameUniforms,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTextured)
@@ -101,6 +145,85 @@ fun texturedUniforms(
     )
     .put(frame.fog, UniformFields.FogColor)
     .build()
+
+/** Packs the unshadowed textured PBR block from the backend-neutral draw payload. The light
+ * payload is the frame block produced by [sceneLightUniforms]: directional lanes followed by
+ * point-light position and colour slots. Keeping this here prevents Vulkan and WebGPU from
+ * independently assembling a shorter, invalid prefix of the textured layout. */
+fun texturedUniforms(
+    mvp: Mat4,
+    model: Mat4,
+    lightPayload: FloatArray,
+    extraUniformFloats: FloatArray,
+    cameraEye: Vec3f,
+    fogColor: Color,
+    fogDensity: Float,
+    alphaCutoff: Float = 0.5f,
+): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTextured)
+    .put(mvp.data, UniformFields.Mvp)
+    .put(
+        lightPayload,
+        UniformFields.LightDirection,
+        UniformFields.LightColor,
+        UniformFields.PointLightPositions,
+        UniformFields.PointLightColors,
+    )
+    .put(model.data, UniformFields.Model)
+    .put(UniformFields.CameraPosition, cameraEye)
+    .putPbrTexturedFactors(extraUniformFloats, alphaCutoff)
+    .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
+    .build()
+
+/** Packs the ordinary untextured lit block. A draw with PBR factors uses [Lit]; a plain draw
+ * uses [Primary]. The source payload may contain the textured superset, so only the four
+ * directional lanes and the four PBR lanes are consumed for the smaller block. */
+fun litUniforms(
+    mvp: Mat4,
+    lightPayload: FloatArray,
+    extraUniformFloats: FloatArray,
+    usePbrFactors: Boolean,
+): FloatArray {
+    val writer = UniformWriter(if (usePbrFactors) MaterialUniformLayouts.Lit else MaterialUniformLayouts.Primary)
+        .put(mvp.data, UniformFields.Mvp)
+        .put(lightPayload, UniformFields.LightDirection, UniformFields.LightColor)
+    if (usePbrFactors) {
+        writer.putPbrFactors(extraUniformFloats)
+    }
+    return writer.build()
+}
+
+private fun UniformWriter.putPbrFactors(values: FloatArray): UniformWriter {
+    val layout = MaterialUniformLayouts.PbrMaterial
+    if (values.size >= layout.total) {
+        return put(values, layout.offsetOf(UniformFields.PbrFactors), UniformFields.PbrFactors)
+    }
+    return put(UniformFields.PbrFactors, DEFAULT_METALLIC, DEFAULT_ROUGHNESS, 0f, 0f)
+}
+
+private fun UniformWriter.putPbrTexturedFactors(values: FloatArray, alphaCutoff: Float): UniformWriter {
+    val layout = MaterialUniformLayouts.PbrTexturedMaterial
+    if (values.size >= layout.total) {
+        // The packet's third lane is the authoritative alpha cutoff for masked depth passes.
+        val copy = values.copyOf(layout.total)
+        val factors = layout.readVec4(copy, UniformFields.PbrFactors)
+        layout.writeVec4(
+            destination = copy,
+            field = UniformFields.PbrFactors,
+            x = factors.x,
+            y = factors.y,
+            z = alphaCutoff,
+            w = factors.w,
+        )
+        put(copy, layout.offsetOf(UniformFields.PbrFactors), UniformFields.PbrFactors)
+        put(copy, layout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
+        put(copy, layout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
+        return this
+    }
+    put(UniformFields.PbrFactors, DEFAULT_METALLIC_FACTOR, DEFAULT_ROUGHNESS_FACTOR, alphaCutoff, 0f)
+    put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
+    put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
+    return this
+}
 
 /**
  * The complete `lit_shadow.wgsl` uniform block for one draw.
@@ -122,7 +245,7 @@ fun texturedUniforms(
  * @return The complete uniform block, sized exactly [MaterialUniformLayouts.LitShadow].
  */
 fun litShadowUniforms(
-    drawCall: DrawCall,
+    drawCall: RenderDrawCommand,
     mvp: Mat4,
     cascades: ShadowCascadeUniforms,
     frame: SceneFrameUniforms,

@@ -10,11 +10,11 @@ import com.awakekt.awake.core.math.Aabb
 
 /**
  * Module restructuring slice 1 (see docs/mvp-plan.md): the backend-neutral surface
- * `RenderSystem`/`DrawCall`/`Renderer.draw()` actually need across the module boundary --
+ * `RenderSystem3D`/`RenderDrawCommand`/`Renderer.draw()` actually need across the module boundary --
  * deliberately narrow, not a 1:1 port of every Vulkan-backend `Mesh` member. Usage analysis
  * this session confirmed no caller outside `awake-vulkan` ever reads `vertexBuffer`/
  * `indexBuffer`/`indexCount`/etc. directly; only `bind()`/`draw()` are invoked generically
- * (by a `Renderer` implementation iterating `List<DrawCall>`). `awake-vulkan`'s real
+ * (by a `Renderer` implementation iterating `List<RenderDrawCommand>`). `awake-vulkan`'s real
  * `expect class Mesh` implements this interface (`expect class Mesh(...) :
  * com.awakekt.awake.render.mesh.Mesh`) -- an `expect` class can implement an
  * interface declared in a different module, so `VulkanApplication.kt`'s existing

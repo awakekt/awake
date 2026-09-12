@@ -24,12 +24,12 @@ sealed interface PipelineVariant {
 
     /** Only meaningful alongside [instanced]. Adds a THIRD instance-rate binding (stride 16)
      * carrying one `vec4f` RGBA color+alpha per instance -- see `particle.wgsl` and
-     * `DrawCall.instanceColors`. */
+     * `RenderDrawCommand.instanceColors`. */
     val instanceAlpha: Boolean
 
     /** Only meaningful alongside [instanced]. Adds a FOURTH instance-rate binding (stride 4)
      * carrying one `f32` sprite-strip frame index per instance -- see `particle.wgsl`'s
-     * `inFrame` and `DrawCall.instanceFrames`. */
+     * `inFrame` and `RenderDrawCommand.instanceFrames`. */
     val instanceFrame: Boolean
 
     /** `true` enables standard straight-alpha blending (`SRC_ALPHA`/`ONE_MINUS_SRC_ALPHA`, both
@@ -70,7 +70,7 @@ sealed interface PipelineVariant {
     /**
      * A transparent surface: alpha-blended, depth-tested, no depth write. Not instanced.
      *
-     * Depth write off is the whole point -- see `DrawCall.transparent`. Depth *test* stays on so
+     * Depth write off is the whole point -- see `RenderDrawCommand.transparent`. Depth *test* stays on so
      * a transparent surface behind opaque geometry is still hidden by it.
      */
     data object AlphaBlended : PipelineVariant {

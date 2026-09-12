@@ -65,14 +65,20 @@ sealed interface AslType {
      */
     object TextureDepth2dArray : AslType
 
+    /** `texture_depth_cube` -- a point light's six-face shadow map. */
+    object TextureDepthCube : AslType
+
     /** Sampler resource. */
     object Sampler : AslType
 
+    /** Non-filtering sampler used for raw depth reads. */
+    object SamplerNonFiltering : AslType
+
     /**
      * `sampler_comparison` -- the hardware depth-compare sampler `textureSampleCompareLevel`
-     * needs. Its own case rather than [Sampler] because WebGPU's auto layout derives the bind
-     * group's sampler type from this spelling, and binding a comparison sampler against a plain
-     * `sampler` declaration (or vice versa) fails validation naming the bind group.
+     * needs. Its own case rather than [Sampler] because the shared binding metadata derives the
+     * comparison sampler layout from this spelling, and binding a comparison sampler against a
+     * plain `sampler` declaration (or vice versa) fails validation naming the bind group.
      */
     object SamplerComparison : AslType
 }

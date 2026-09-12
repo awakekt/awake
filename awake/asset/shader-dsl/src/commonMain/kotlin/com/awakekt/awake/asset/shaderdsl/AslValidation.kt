@@ -89,7 +89,7 @@ private fun List<AslStatement>.collectVaryings(into: MutableSet<String>): Unit =
             it.body.collectVaryings(into)
         }
         is AslReturn -> it.value?.collectVaryings(into)
-        AslContinue -> Unit
+        AslContinue, AslDiscard -> Unit
     }
 }
 
@@ -135,7 +135,7 @@ private fun List<AslStatement>.collectNames(into: MutableSet<String>): Unit = fo
             it.body.collectNames(into)
         }
         is AslReturn -> it.value?.collectNames(into)
-        AslContinue -> Unit
+        AslContinue, AslDiscard -> Unit
     }
 }
 

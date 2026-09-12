@@ -16,7 +16,7 @@ import com.awakekt.awake.core.math.putVec4
  * layout.
  *
  * [UniformLayout] has always described what a shader's `Uniforms` struct contains, but callers
- * built the actual array by hand -- `mvp.data + lightFloats + model.data + ...` under a comment
+ * built the actual array by hand by joining matrix, light, and material arrays under a comment
  * reading "order matches lit_shadow.wgsl's Uniforms field order exactly". Nothing enforced that.
  * Reordering two fields, or dropping one, produced a correctly-sized buffer that renders garbage,
  * and the layout would still agree on [UniformLayout.total].
@@ -47,7 +47,13 @@ class UniformWriter(private val layout: UniformLayout) {
      * @param values Exactly as many floats as [fields] declare between them.
      * @param fields The next fields, in layout order.
      */
-    fun put(values: FloatArray, vararg fields: UniformField): UniformWriter {
+    fun put(values: FloatArray, vararg fields: UniformField): UniformWriter = put(values, 0, *fields)
+
+    /** Writes fields from [values] starting at [start]. The range is checked against the fields
+     * before copying, so callers can pass a packed superset (for example the frame light block)
+     * without slicing it into a per-draw allocation. */
+    fun put(values: FloatArray, start: Int, vararg fields: UniformField): UniformWriter {
+        require(start >= 0 && start <= values.size) { "Invalid uniform source start: $start." }
         require(nextField + fields.size <= layout.fields.size) {
             "Writing ${fields.joinToString { it.name }} past the end of the layout " +
                 "(${layout.fields.size} fields, already wrote $nextField)."
@@ -61,10 +67,11 @@ class UniformWriter(private val layout: UniformLayout) {
             }
             expected += field.floats
         }
-        require(values.size == expected) {
-            "'${fields.joinToString { it.name }}' declares $expected floats, got ${values.size}."
+        require(values.size - start >= expected) {
+            "'${fields.joinToString { it.name }}' declares $expected floats, got " +
+                "${values.size - start} from source index $start."
         }
-        values.copyInto(out, offset)
+        values.copyInto(out, offset, start, start + expected)
         offset += expected
         nextField += fields.size
         return this
@@ -103,6 +110,18 @@ class UniformWriter(private val layout: UniformLayout) {
         return this
     }
 
+    /** Writes a scalar `vec4` field without making a temporary float array. */
+    fun put(field: UniformField, x: Float, y: Float, z: Float, w: Float): UniformWriter {
+        requireShape(field, GpuDataShape.Vec4, 1)
+        val start = offset
+        accept(field)
+        out[start] = x
+        out[start + 1] = y
+        out[start + 2] = z
+        out[start + 3] = w
+        return this
+    }
+
     /** Writes a `Mat4` field from the matrix's own backing array. */
     fun put(field: UniformField, value: Mat4): UniformWriter {
         requireShape(field, GpuDataShape.Mat4, 1)
@@ -129,6 +148,21 @@ class UniformWriter(private val layout: UniformLayout) {
         var at = offset
         accept(field)
         values.forEach { (v, w) -> at = out.putVec4(at, v, w) }
+        return this
+    }
+
+    /** Writes a float array into an array field, zero-filling the unused tail. This is used for
+     * bounded palettes whose authored joint count is smaller than the shader's fixed capacity. */
+    fun putPadded(field: UniformField, values: FloatArray): UniformWriter {
+        require(field.type == GpuDataShape.Mat4 || field.type == GpuDataShape.Vec4) {
+            "'${field.name}' is not a padded float-array field."
+        }
+        require(values.size <= field.floats) {
+            "'${field.name}' declares ${field.floats} floats, got ${values.size}."
+        }
+        val start = offset
+        accept(field)
+        values.copyInto(out, start)
         return this
     }
 

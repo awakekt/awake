@@ -101,6 +101,7 @@ class AslEvaluator private constructor(
             is AslIf -> if (eval(statement.condition, env)[0] != 0f) execute(statement.body, env)
             is AslReturn -> throw AslReturnSignal(statement.value?.let { eval(it, env) })
             AslContinue -> throw AslContinueSignal
+            AslDiscard -> Unit
             is AslForI32 -> runLoop(
                 statement.counter,
                 eval(statement.start, env)[0].toInt(),

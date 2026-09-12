@@ -6,6 +6,8 @@
 package com.awakekt.awake.render.renderer
 
 import com.awakekt.awake.core.geometry.GpuDataShape
+import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
@@ -23,6 +25,57 @@ data class UniformField(val name: String, val type: GpuDataShape, val count: Int
     /** [count] elements of [type], std140-padded. An array field is [count] > 1 -- the shader
      * declares `array<vec4f, N>` and the writer expects one contiguous block of that size. */
     val floats: Int get() = type.uniformFloats * count
+
+    fun writeVec4(
+        destination: FloatArray,
+        x: Float,
+        y: Float,
+        z: Float,
+        w: Float,
+    ) = writeVec4Element(destination, 0, x, y, z, w)
+
+    /** Writes one element of this field into a field-sized reusable buffer. This is useful when
+     * a caller stages an array field separately before [UniformWriter] concatenates it into the
+     * complete block; the field owns both the element stride and the destination size contract. */
+    fun writeVec4Element(
+        destination: FloatArray,
+        index: Int,
+        x: Float,
+        y: Float,
+        z: Float,
+        w: Float,
+    ) {
+        require(type == GpuDataShape.Vec4) {
+            "'$name' must be a vec4 field, was $type."
+        }
+        require(index in 0 until count) {
+            "'$name' has $count vec4 elements; index $index is invalid."
+        }
+        require(destination.size >= floats) {
+            "Field '$name' buffer has ${destination.size} floats, but this field needs $floats."
+        }
+        val start = index * type.uniformFloats
+        destination[start] = x
+        destination[start + 1] = y
+        destination[start + 2] = z
+        destination[start + 3] = w
+    }
+
+    /** Writes one element of a matrix array into a field-sized reusable buffer. The field owns
+     * the element stride, keeping matrix-array packing on the same declared-ABI path as vec4
+     * arrays. */
+    fun writeMat4Element(destination: FloatArray, index: Int, value: Mat4) {
+        require(type == GpuDataShape.Mat4) {
+            "'$name' must be a mat4 field, was $type."
+        }
+        require(index in 0 until count) {
+            "'$name' has $count mat4 elements; index $index is invalid."
+        }
+        require(destination.size >= floats) {
+            "Field '$name' buffer has ${destination.size} floats, but this field needs $floats."
+        }
+        value.data.copyInto(destination, destinationOffset = index * type.uniformFloats)
+    }
 }
 
 /** std140/WGSL-aligned float count for a uniform-buffer field -- [GpuDataShape.Vec3] pads to 4,
@@ -50,6 +103,9 @@ val GpuDataShape.uniformFloats: Int
  */
 const val MAX_SHADOW_CASCADES = 4
 
+/** Fixed GPU buffer capacity for point-light slots; scene code decides how many are populated. */
+const val MAX_POINT_LIGHT_SLOTS = 4
+
 object UniformFields {
     val Mvp = UniformField("mvp", GpuDataShape.Mat4)
     val LightDirection = UniformField("lightDirection", GpuDataShape.Vec4)
@@ -58,12 +114,12 @@ object UniformFields {
     /** `xyz` = world position, `w` = range. A slot with `w <= 0` is off, which is how a scene
      * with fewer lights than slots costs nothing but the loop iteration. */
     val PointLightPositions =
-        UniformField("pointLightPositions", GpuDataShape.Vec4, MAX_POINT_LIGHTS)
+        UniformField("pointLightPositions", GpuDataShape.Vec4, MAX_POINT_LIGHT_SLOTS)
 
     /** `xyz` = colour already multiplied by intensity, `w` unused. Paired positionally with
      * [PointLightPositions]; the shader reads slot i from both. */
     val PointLightColors =
-        UniformField("pointLightColors", GpuDataShape.Vec4, MAX_POINT_LIGHTS)
+        UniformField("pointLightColors", GpuDataShape.Vec4, MAX_POINT_LIGHT_SLOTS)
 
     /**
      * World space to each cascade's light clip space -- what a fragment projects into to sample
@@ -118,6 +174,13 @@ object UniformFields {
     val Material = UniformField("material", GpuDataShape.Vec4)
     val BaseColorFactor = UniformField("baseColorFactor", GpuDataShape.Vec4)
     val EmissiveFactor = UniformField("emissiveFactor", GpuDataShape.Vec4)
+
+    /** Default material ABI used by [GpuDevice] when a caller has not selected a richer layout. */
+    val DefaultMaterial = UniformLayout(
+        Mvp,
+        LightDirection,
+        LightColor,
+    )
 }
 
 /** [fields], concatenated in order, is exactly the float array each shader's uniform buffer
@@ -128,6 +191,61 @@ class UniformLayout(vararg val fields: UniformField) {
     val total: Int = fields.sumOf { it.floats }
     fun offsetOf(field: UniformField): Int =
         fields.takeWhile { it !== field }.sumOf { it.floats }
+
+    /** Writes one declared vec4 field into an existing reusable buffer. The field determines the
+     * destination offset; callers never repeat the shader ABI as `offset + 1`, `offset + 2`, ... . */
+    fun writeVec4(
+        destination: FloatArray,
+        field: UniformField,
+        x: Float,
+        y: Float,
+        z: Float,
+        w: Float,
+    ) = writeVec4Element(destination, field, 0, x, y, z, w)
+
+    /** Writes one element of a declared vec4 array field. The layout derives both the field's
+     * start and the element stride, so callers cannot quietly re-create a shader offset with a
+     * bare `index * 4` expression. */
+    fun writeVec4Element(
+        destination: FloatArray,
+        field: UniformField,
+        index: Int,
+        x: Float,
+        y: Float,
+        z: Float,
+        w: Float,
+    ) {
+        require(field.type == GpuDataShape.Vec4) {
+            "'${field.name}' must be a vec4 field, was ${field.type}."
+        }
+        require(index in 0 until field.count) {
+            "'${field.name}' has ${field.count} vec4 elements; index $index is invalid."
+        }
+        require(destination.size >= total) {
+            "Uniform buffer has ${destination.size} floats, but this layout needs $total."
+        }
+        val start = offsetOf(field) + index * field.type.uniformFloats
+        destination[start] = x
+        destination[start + 1] = y
+        destination[start + 2] = z
+        destination[start + 3] = w
+    }
+
+    /** Reads one vec4 element using the same derived field/element offset as
+     * [writeVec4Element]. */
+    fun readVec4(source: FloatArray, field: UniformField, index: Int = 0): Vec4 {
+        require(field.type == GpuDataShape.Vec4) {
+            "'${field.name}' must be a vec4 field, was ${field.type}."
+        }
+        require(index in 0 until field.count) {
+            "'${field.name}' has ${field.count} vec4 elements; index $index is invalid."
+        }
+        require(source.size >= total) {
+            "Uniform source has ${source.size} floats, but this layout needs $total."
+        }
+        val start = offsetOf(field) + index * field.type.uniformFloats
+        return Vec4(source[start], source[start + 1], source[start + 2], source[start + 3])
+    }
 }
 
 /** [Renderer.createMaterial] sized from [layout] instead of a bare `Int` -- the size a caller

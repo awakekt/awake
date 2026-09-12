@@ -7,10 +7,12 @@ package com.awakekt.awake.asset.shaders
 
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.pipeline.BindingLayout
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.pipeline.ShaderSource
 import com.awakekt.awake.render.pipeline.entryPoint
+import com.awakekt.awake.render.renderer.UniformLayout
 
 /** [stage]'s source, whatever variant it is -- shared by both backends' bootstrap classes so
  * neither hand-duplicates this lookup + error message. */
@@ -41,12 +43,22 @@ fun ShaderStages.spec(
     vertexFormat: VertexFormat,
     variant: PipelineVariant = PipelineVariant.Opaque,
     bindingLayout: BindingLayout = BindingLayout.Standard,
+    materialBindings: GroupBindings? = null,
+    usesMaterialGroup: Boolean = true,
+    bindingsByGroup: Map<Int, GroupBindings> = this.bindingsByGroup,
+    bindingsMetadataAvailable: Boolean = this.bindingsMetadataAvailable,
+    uniforms: UniformLayout? = null,
 ): PipelineSpec = PipelineSpec(
     vertexFormat = vertexFormat,
     vertexShader = source(ShaderStage.VERTEX),
     fragmentShader = source(ShaderStage.FRAGMENT),
     variant = variant,
     bindingLayout = bindingLayout,
+    materialBindings = materialBindings ?: bindingsByGroup[0],
+    bindingsByGroup = bindingsByGroup,
+    bindingsMetadataAvailable = bindingsMetadataAvailable,
+    usesMaterialGroup = usesMaterialGroup,
+    uniforms = uniforms,
 )
 
 /** [name]'s pipeline build wrapped so a resource-not-found/shader-module-creation failure says

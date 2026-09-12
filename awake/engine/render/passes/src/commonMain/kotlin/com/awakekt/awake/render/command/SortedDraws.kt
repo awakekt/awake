@@ -45,3 +45,7 @@ fun <P : PreparedDraw> sortForRecording(draws: List<P>): SortedDraws<P> {
         transparent = transparent.sortedByDescending { it.depthSortKey },
     )
 }
+
+/** Flattened list of all prepared draws in this sorted set. */
+val <P : PreparedDraw> SortedDraws<P>.allDraws: List<P>
+    get() = opaqueByPipeline.values.flatten() + transparent

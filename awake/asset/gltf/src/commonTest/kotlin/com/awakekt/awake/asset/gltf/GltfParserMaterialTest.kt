@@ -209,7 +209,8 @@ class GltfParserMaterialTest {
                     "metallicFactor": 0.7,
                     "roughnessFactor": 0.6
                   },
-                  "emissiveFactor": [0.5, 0.6, 0.7]
+                  "emissiveFactor": [0.5, 0.6, 0.7],
+                  "alphaMode": "MASK"
                 }
               ],
               "meshes": [
@@ -224,6 +225,7 @@ class GltfParserMaterialTest {
         assertEquals(0.7f, mesh.metallicFactor)
         assertEquals(0.6f, mesh.roughnessFactor)
         assertEquals(listOf(0.5f, 0.6f, 0.7f), mesh.emissiveFactor.toList())
+        assertEquals(GltfAlphaMode.MASK, mesh.alphaMode)
     }
 
     @Test

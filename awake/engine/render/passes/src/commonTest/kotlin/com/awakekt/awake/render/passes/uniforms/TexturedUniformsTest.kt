@@ -7,8 +7,8 @@ package com.awakekt.awake.render.passes.uniforms
 
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.render.renderer.MAX_POINT_LIGHTS
-import com.awakekt.awake.render.renderer.SceneLight
+import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
+import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.renderer.UniformFields
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -41,7 +41,7 @@ class TexturedUniformsTest {
     }
 
     private fun block(model: Mat4 = Mat4(), eye: Vec3f = Vec3f.ZERO) = texturedUniforms(
-        drawCall = com.awakekt.awake.render.renderer.DrawCall(
+        drawCall = com.awakekt.awake.render.passes.RenderDrawCommand(
             mesh = FakeMesh(),
             material = FakeMaterial(),
             model = model,

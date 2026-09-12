@@ -122,7 +122,9 @@ fun textureSampleLevelDepth(
     uv: AslExpr,
     level: AslExpr,
 ): AslExpr {
-    if (texture.type != AslType.TextureDepth2d || sampler.type != AslType.Sampler) {
+    if (texture.type != AslType.TextureDepth2d ||
+        (sampler.type != AslType.Sampler && sampler.type != AslType.SamplerNonFiltering)
+    ) {
         throw AslDefinitionException(
             "textureSampleLevelDepth needs (depth texture, sampler), got ${'$'}{texture.type}/${'$'}{sampler.type}.",
         )
@@ -151,7 +153,8 @@ fun textureSampleArrayLevelDepth(
     level: AslExpr,
 ): AslExpr {
     val problem = when {
-        texture.type != AslType.TextureDepth2dArray || sampler.type != AslType.Sampler ->
+        texture.type != AslType.TextureDepth2dArray ||
+            (sampler.type != AslType.Sampler && sampler.type != AslType.SamplerNonFiltering) ->
             "needs (depth array texture, sampler), got ${texture.type}/${sampler.type}"
         layer.type != AslType.I32 && layer.type != AslType.U32 ->
             "takes an integer layer index, got ${layer.type}"
@@ -196,6 +199,25 @@ fun textureSampleCompareLevel(
     }
     if (problem != null) throw AslDefinitionException("textureSampleCompareLevel $problem.")
     return AslCall("textureSampleCompareLevel", listOf(texture, sampler, uv, layer, depthRef), F32)
+}
+
+/** WGSL `textureSampleCompareLevel` for a depth cubemap used by point shadows. */
+fun textureSampleCompareLevelCube(
+    texture: AslExpr,
+    sampler: AslExpr,
+    direction: AslExpr,
+    depthRef: AslExpr,
+): AslExpr {
+    val problem = when {
+        texture.type != AslType.TextureDepthCube || sampler.type != AslType.SamplerComparison ->
+            "needs (depth cube texture, comparison sampler), got ${texture.type}/${sampler.type}"
+        direction.type != AslType.Data(GpuDataShape.Vec3) ->
+            "takes a vec3f direction, got ${direction.type}"
+        depthRef.type != F32 -> "takes an f32 reference depth, got ${depthRef.type}"
+        else -> null
+    }
+    if (problem != null) throw AslDefinitionException("textureSampleCompareLevelCube $problem.")
+    return AslCall("textureSampleCompareLevel", listOf(texture, sampler, direction, depthRef), F32)
 }
 
 /**

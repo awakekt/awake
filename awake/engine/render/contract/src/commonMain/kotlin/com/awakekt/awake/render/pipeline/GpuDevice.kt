@@ -9,6 +9,7 @@ import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -24,7 +25,7 @@ import com.awakekt.awake.render.texture.TextureAsset
  * ## What belongs here
  *
  * Hardware vocabulary only -- resource creation, pipelines, vertex layouts, command recording,
- * device lifetime. A `GpuDevice` must never mention `DrawCall`, `SceneLight`, `Lens`, fog or a
+ * device lifetime. A `GpuDevice` must never mention `RenderDrawCommand`, `SceneLight`, `Lens`, fog or a
  * clear colour: those are render *runtime* concepts, describing what to draw rather than what
  * the hardware can do.
  *
@@ -45,15 +46,10 @@ import com.awakekt.awake.render.texture.TextureAsset
  *
  * ## Status
  *
- * Phase 1 of the migration: this aggregates members `Renderer` already declared, so every
- * backend satisfies it today without changing a line. `Renderer` extends it, which is what makes
- * the boundary real without moving code.
- *
- * Still to come, and deliberately absent for now: command recording (`CommandRecorder` exists but
- * is not yet reachable from here) and the capability accessor above. Both arrive with the
- * draw-preparation phase, which is also what removes the backends' current imports of `DrawCall`,
- * `SceneLight` and `Lens` -- that phase is finished when `grep -rl DrawCall awake/backend/`
- * returns nothing.
+ * `GpuDevice` remains the resource/lifetime tier. Generic draw preparation is exposed separately
+ * through `GpuDrawPreparer`, and submission consumes only `GpuPassInput` with resolved handles.
+ * This keeps backend resource lookup available without putting scene vocabulary or authored
+ * packet types on the renderer submission interface.
  */
 interface GpuDevice {
     /** Which clip-space convention this backend's projection matrices must target -- the one
@@ -91,6 +87,6 @@ interface GpuDevice {
 
     companion object {
         /** Default size in floats for standard lit material uniform buffer (MVP 16 + Light 8 = 24). */
-        const val DEFAULT_UNIFORM_FLOAT_COUNT = 24
+        val DEFAULT_UNIFORM_FLOAT_COUNT: Int = UniformFields.DefaultMaterial.total
     }
 }

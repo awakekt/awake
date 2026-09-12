@@ -40,6 +40,7 @@ kotlin {
     // README.md). Same no-platform-code shape as :awake:engine:render:contract next door.
     sourceSets {
         commonMain.dependencies {
+            implementation(libs.kotlinx.coroutines.core)
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
@@ -51,6 +52,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

@@ -9,17 +9,12 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
-import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.renderer.DrawCall
-import com.awakekt.awake.render.renderer.EnvironmentUniforms
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.render.renderer.SceneLight
-import com.awakekt.awake.render.renderer.ScenePassDescriptor
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -27,16 +22,13 @@ import com.awakekt.awake.render.texture.TextureAsset
 /**
  * GPU-free [Renderer] for tests that drive real UI or scene composition headlessly. Every
  * method is a no-op returning an inert object; `open` so a test can override just the calls
- * it wants to observe (e.g. record the camera handed to [draw]) without restating the rest
+ * it wants to observe (e.g. record the generic packet handed to [draw]) without restating the rest
  * of the contract.
  */
 open class NoopRenderer : Renderer {
     override val clipSpace: ClipSpace = ClipSpace.WebGpu
     override var clearColor: Color = Color.Black
     override var wireframe: Boolean = false
-
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var shadowsEnabled: Boolean = true
 
     override fun createMesh(geometry: MeshGeometry): Mesh = object : Mesh {
         override val format = geometry.format
@@ -60,54 +52,9 @@ open class NoopRenderer : Renderer {
         override fun destroy() = Unit
     }
 
-    var lastEnvironment: EnvironmentUniforms = EnvironmentUniforms.Default
-    var lastPass: ScenePassDescriptor? = null
-
-    override fun draw(pass: ScenePassDescriptor) {
-        lastPass = pass
-        lastEnvironment = pass.environment
-        super.draw(pass)
-    }
-
-    override fun renderToTexture(target: RenderTarget, pass: ScenePassDescriptor) {
-        lastPass = pass
-        lastEnvironment = pass.environment
-        super.renderToTexture(target, pass)
-    }
-
     override fun draw(input: GpuPassInput) = Unit
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) = Unit
-
-    override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) = Unit
-
-    override fun draw(
-        camera: Lens,
-        drawCalls: List<DrawCall>,
-        light: SceneLight,
-        environment: EnvironmentUniforms,
-    ) {
-        lastEnvironment = environment
-        super.draw(camera, drawCalls, light, environment)
-    }
-
-    override fun renderToTexture(
-        target: RenderTarget,
-        camera: Lens,
-        drawCalls: List<DrawCall>,
-        light: SceneLight,
-    ) = Unit
-
-    override fun renderToTexture(
-        target: RenderTarget,
-        camera: Lens,
-        drawCalls: List<DrawCall>,
-        light: SceneLight,
-        environment: EnvironmentUniforms,
-    ) {
-        lastEnvironment = environment
-        super.renderToTexture(target, camera, drawCalls, light, environment)
-    }
 
     override suspend fun readPixels(target: RenderTarget): TextureAsset =
         TextureAsset(ByteArray(target.width * target.height * 4), target.width, target.height)

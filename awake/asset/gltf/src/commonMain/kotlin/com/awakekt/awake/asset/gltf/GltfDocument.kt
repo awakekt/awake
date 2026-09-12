@@ -66,6 +66,8 @@ data class GltfMaterial(
     /** Linear RGB `[r, g, b]`, multiplied into [emissiveTexture]'s sample (or standing alone
      * when there's no emissive texture) -- glTF 2.0 spec default `[0, 0, 0]` (no emission). */
     val emissiveFactor: List<Float>? = null,
+    /** glTF alpha mode; defaults to opaque when omitted. */
+    val alphaMode: GltfAlphaMode = GltfAlphaMode.OPAQUE,
 )
 
 /**

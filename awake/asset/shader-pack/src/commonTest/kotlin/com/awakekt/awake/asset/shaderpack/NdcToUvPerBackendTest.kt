@@ -36,6 +36,41 @@ class NdcToUvPerBackendTest {
         return (source as ShaderSource.InlineText).sourceCode
     }
 
+    @Test
+    fun instancedSceneShaderCarriesShadowAbiAndInstanceTransform() {
+        val vertex = wgsl(PackShaderSets.Instanced.vulkan)
+        val fragment = (PackShaderSets.Instanced.vulkan[ShaderStage.FRAGMENT] as ShaderSource.InlineText).sourceCode
+        assertTrue("instance" in vertex.lowercase())
+        assertTrue("cascade" in fragment.lowercase())
+        assertTrue("shadow" in fragment.lowercase())
+    }
+
+    @Test
+    fun skinnedInstancedShaderKeepsPaletteAndShadowBindingsSeparate() {
+        val stages = PackShaderSets.SkinnedInstanced.webGpu
+        val vertex = wgsl(stages)
+        val fragment = (stages[ShaderStage.FRAGMENT] as ShaderSource.InlineText).sourceCode
+        assertTrue("@group(3)" in vertex, "joint palettes must use their dedicated WebGPU group")
+        assertTrue("@group(1)" in fragment, "skinned shadows must retain the shadow depth group")
+        assertTrue("cascade" in fragment.lowercase())
+    }
+
+    @Test
+    fun instancedShadowDepthUsesTheVisiblePassAnimationAbi() {
+        listOf(PackShaderSets.InstancedShadowDepth, PackShaderSets.SkinnedInstancedShadowDepth)
+            .forEach { set ->
+                val vertex = wgsl(set.webGpu)
+                assertTrue(
+                    "vertexAnimation" in vertex,
+                    "${set.webGpu} must read the LitShadow animation field so its caster matches the visible mesh",
+                )
+                assertTrue(
+                    "sin" in vertex && "cos" in vertex,
+                    "${set.webGpu} must apply the shared animated vertex displacement",
+                )
+            }
+    }
+
     /** How each backend turns NDC Y into a V, as the emitter spells it. */
     private fun flippedV(ndc: String) = "(1.0 - $ndc.y) * 0.5"
     private fun directV(ndc: String) = "($ndc.y + 1.0) * 0.5"

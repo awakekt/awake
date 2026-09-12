@@ -74,6 +74,10 @@ tasks.named<Test>("desktopTest") {
             // java.lang -- JPMS blocks that by default on a modern JDK.
             "--add-opens", "java.base/java.lang=ALL-UNNAMED",
         )
+        val homebrewGlfw = file("/opt/homebrew/opt/glfw/lib/libglfw.dylib")
+        if (homebrewGlfw.exists()) {
+            systemProperty("org.lwjgl.glfw.libname", homebrewGlfw.absolutePath)
+        }
     }
     // Both backends open a real device in one process; two of these running at once is how a GPU
     // test starts failing for reasons unrelated to the change under test.
@@ -88,4 +92,7 @@ tasks.named<Test>("desktopTest") {
     // JVM; the test JVM needs it forwarded explicitly -- same wiring as the Vulkan backend's.
     System.getProperty("AWAKE_RECORD_SNAPSHOTS")
         ?.let { systemProperty("AWAKE_RECORD_SNAPSHOTS", it) }
+    // Each parity test creates and destroys both Vulkan and WebGPU native contexts; fork per class
+    // prevents wgpu-native/GLFW driver collisions on macOS.
+    setForkEvery(1)
 }

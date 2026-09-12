@@ -9,6 +9,8 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexAttribute
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
+import com.awakekt.awake.render.renderer.UniformFields
+import com.awakekt.awake.render.renderer.UniformLayout
 
 /**
  * World-space debug lines -- frustum wireframes, bounds boxes, light gizmos.
@@ -71,3 +73,6 @@ object DebugLineLayout {
         return capacity
     }
 }
+
+/** The line pipeline's MVP block. Its size is shared so backends cannot drift on the matrix ABI. */
+val DebugLineUniformLayout = UniformLayout(UniformFields.Mvp)

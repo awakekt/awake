@@ -6,8 +6,10 @@
 package com.awakekt.awake.asset.shaders
 
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
+import com.awakekt.awake.asset.shaderdsl.bindingsByGroup
 import com.awakekt.awake.core.host.readResourceBytes
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ShaderSource
 
 enum class ShaderStage {
@@ -29,12 +31,22 @@ suspend fun ShaderSource.resolveBytes(): ByteArray = when (this) {
  * pipeline (none exist yet, see this module's own doc comment) but costs nothing to keep. */
 class ShaderStages private constructor(
     val stages: Map<ShaderStage, ShaderSource>,
+    /** Statically used resource ABI, carried from ASL into pipeline creation. */
+    val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
+    /** Whether [bindingsByGroup] is authoritative, including an explicitly empty layout. */
+    val bindingsMetadataAvailable: Boolean = false,
 ) {
     operator fun get(stage: ShaderStage): ShaderSource? = stages[stage]
 
     companion object {
-        fun graphics(vertex: ShaderSource, fragment: ShaderSource) = ShaderStages(
+        fun graphics(
+            vertex: ShaderSource,
+            fragment: ShaderSource,
+            bindingsByGroup: Map<Int, GroupBindings>,
+        ) = ShaderStages(
             mapOf(ShaderStage.VERTEX to vertex, ShaderStage.FRAGMENT to fragment),
+            bindingsByGroup,
+            bindingsMetadataAvailable = true,
         )
 
         fun compute(compute: ShaderSource) = ShaderStages(
@@ -67,25 +79,35 @@ fun shaderSet(
  * string for a backend whose stages share one file (WebGPU's `.wgsl`), different strings for a
  * backend with separate per-stage files (Vulkan's `.vert.spv`/`.frag.spv`). The only thing that
  * varies per backend in [shaderSet] below is these file names -- everything else (the
- * `ResourcePath`/entry-point shape) is written here exactly once. */
-private fun conventionStages(directory: String, vertexFile: String, fragmentFile: String): ShaderStages =
+ * `ResourcePath`/entry-point shape) is written here exactly once. Binding metadata is supplied
+ * by the caller because resource contents are intentionally not parsed in common code. */
+private fun conventionStages(
+    directory: String,
+    vertexFile: String,
+    fragmentFile: String,
+    bindingsByGroup: Map<Int, GroupBindings>,
+): ShaderStages =
     ShaderStages.graphics(
         vertex = ShaderSource.ResourcePath("$directory/$vertexFile", entryPoint = "vertexMain"),
         fragment = ShaderSource.ResourcePath("$directory/$fragmentFile", entryPoint = "fragmentMain"),
+        bindingsByGroup = bindingsByGroup,
     )
 
 /** The common case: a shader named [name] follows this engine's fixed file-naming convention on
  * both backends (`assets/shader/vulkan/$name.wgsl`, `assets/shader/webgpu/$name.wgsl`), so a
- * caller just names it once. No directory override params -- confirmed via a full-repo audit
+ * caller names it and declares [bindingsByGroup] once. No directory override params -- confirmed via a full-repo audit
  * that zero call sites have ever needed one; a shader whose stages genuinely don't fit this
  * convention uses the [shaderSet] escape hatch above instead of bending this one.
  *
  * Both halves name WGSL. Vulkan ships source rather than SPIR-V because `VulkanShaderResolver`
  * compiles it through the in-process naga binding and caches per path, which costs one compile
  * per shader at load and keeps a single naga in the repo instead of two to hold in lockstep. */
-fun shaderSet(name: String): ShaderSet = ShaderSet(
-    vulkan = conventionStages("assets/shader/vulkan", "$name.wgsl", "$name.wgsl"),
-    webGpu = conventionStages("assets/shader/webgpu", "$name.wgsl", "$name.wgsl"),
+fun shaderSet(
+    name: String,
+    bindingsByGroup: Map<Int, GroupBindings>,
+): ShaderSet = ShaderSet(
+    vulkan = conventionStages("assets/shader/vulkan", "$name.wgsl", "$name.wgsl", bindingsByGroup),
+    webGpu = conventionStages("assets/shader/webgpu", "$name.wgsl", "$name.wgsl", bindingsByGroup),
 )
 
 /**
@@ -123,5 +145,6 @@ private fun AslShaderDefinition.graphicsStages(): ShaderStages {
     return ShaderStages.graphics(
         vertex = ShaderSource.InlineText(wgsl, entryPoint = "vertexMain"),
         fragment = ShaderSource.InlineText(wgsl, entryPoint = "fragmentMain"),
+        bindingsByGroup = bindingsByGroup(),
     )
 }

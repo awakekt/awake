@@ -26,4 +26,5 @@ dependencies {
     implementation(libs.dokka.gradle.plugin)
     implementation(libs.download.gradle.plugin)
     implementation("com.vanniktech:gradle-maven-publish-plugin:0.36.0")
+    testImplementation(kotlin("test"))
 }

@@ -17,7 +17,7 @@ import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.ndcToUv
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.rgb
-import com.awakekt.awake.asset.shaderdsl.sampler
+import com.awakekt.awake.asset.shaderdsl.samplerNonFiltering
 import com.awakekt.awake.asset.shaderdsl.saturate
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.step
@@ -74,7 +74,7 @@ fun depthFogShader(clipSpace: ClipSpace): AslShaderDefinition = shader("depth_fo
 
     val depthGroup = BindingLayout.Standard.slot(BindingSemantic.SceneDepth)
     val sceneDepth by textureDepth2d(group = depthGroup, binding = 0)
-    val sceneDepthSampler by sampler(group = depthGroup, binding = 1)
+    val sceneDepthSampler by samplerNonFiltering(group = depthGroup, binding = 1)
 
     val out = varyings("VertexOutput")
     val ndc by out.varying(GpuDataShape.Vec2, location = 0)

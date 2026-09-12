@@ -6,6 +6,7 @@
 package com.awakekt.awake.asset.shaders
 
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -80,11 +81,18 @@ class RenderPlanNarrowingTest {
             pipeline(SKINNED, VertexFormat.PositionNormalColorSkin),
             pipeline(TEXTURED, VertexFormat.PositionNormalColorUv),
         ),
-        depthPrePassShaderSet = shaderSet("shadow_depth"),
+        depthPrePassShaderSet = shaderSet(
+            "shadow_depth",
+            mapOf(0 to GroupBindings.UniformOnlyMaterial),
+        ),
     )
 
     private fun pipeline(key: PipelineKey, format: VertexFormat) =
-        ScenePipeline(key = key, shaders = shaderSet("lit_shadow"), vertexFormat = format)
+        ScenePipeline(
+            key = key,
+            shaders = shaderSet("lit_shadow", mapOf(0 to GroupBindings.StandardMaterial)),
+            vertexFormat = format,
+        )
 
     private companion object {
         val SKINNED = PipelineKey.Format(VertexFormat.PositionNormalColorSkin)

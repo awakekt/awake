@@ -8,7 +8,7 @@ package com.awakekt.awake.render.renderer
 /**
  * A sub-rect of the render surface, in framebuffer pixels with the origin at the top-left --
  * the same coordinate space a UI frame's own bounds are in, so an editor can hand a panel's
- * bounds straight to [Renderer.sceneViewport].
+ * bounds straight to a [com.awakekt.awake.render.command.GpuPassInput] packet.
  *
  * [aspect] is the rect's own, not the surface's: a scene confined to a narrow panel must be
  * projected for that panel, otherwise its content is stretched by however much the surrounding

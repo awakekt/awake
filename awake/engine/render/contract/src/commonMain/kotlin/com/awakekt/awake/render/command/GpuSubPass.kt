@@ -20,7 +20,8 @@ data class GpuSubPass(
     val targetLayer: Int = 0,
     val viewProjection: Mat4,
     val viewport: RenderViewport? = null,
-    val draws: List<GpuDrawCommand> = emptyList(),
+    /** Fully resolved draw list for the generic command path. */
+    val resolvedDraws: List<GpuResolvedDraw> = emptyList(),
     val passUniforms: FloatArray = FloatArray(0),
     val depthBiasConstant: Float = 0f,
     val depthBiasSlope: Float = 0f,
@@ -33,7 +34,7 @@ data class GpuSubPass(
         if (targetLayer != other.targetLayer) return false
         if (viewProjection != other.viewProjection) return false
         if (viewport != other.viewport) return false
-        if (draws != other.draws) return false
+        if (resolvedDraws != other.resolvedDraws) return false
         if (!passUniforms.contentEquals(other.passUniforms)) return false
         if (depthBiasConstant != other.depthBiasConstant) return false
         if (depthBiasSlope != other.depthBiasSlope) return false
@@ -46,7 +47,7 @@ data class GpuSubPass(
         result = 31 * result + targetLayer
         result = 31 * result + viewProjection.hashCode()
         result = 31 * result + (viewport?.hashCode() ?: 0)
-        result = 31 * result + draws.hashCode()
+        result = 31 * result + resolvedDraws.hashCode()
         result = 31 * result + passUniforms.contentHashCode()
         result = 31 * result + depthBiasConstant.hashCode()
         result = 31 * result + depthBiasSlope.hashCode()

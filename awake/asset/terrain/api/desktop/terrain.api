@@ -47,6 +47,7 @@ public final class com/awakekt/awake/asset/terrain/HeightmapDirtyRegion {
 }
 
 public final class com/awakekt/awake/asset/terrain/HeightmapMeshBuilderKt {
+	public static final fun normalAt (Lcom/awakekt/awake/asset/terrain/Heightmap;II)Lcom/awakekt/awake/core/math/Vec3f;
 	public static final fun toPositionNormalColorMesh (Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
 	public static final fun toPositionNormalColorMesh (Lcom/awakekt/awake/asset/terrain/Heightmap;Lkotlin/jvm/functions/Function3;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
 	public static synthetic fun toPositionNormalColorMesh$default (Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshGeometry;

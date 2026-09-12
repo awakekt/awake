@@ -105,6 +105,9 @@ class AslReturn(val value: AslExpr?) : AslStatement
  */
 object AslContinue : AslStatement
 
+/** Fragment-stage discard statement (`discard;`). */
+object AslDiscard : AslStatement
+
 /**
  * Definition of a field within a uniform block.
  *

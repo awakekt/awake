@@ -142,6 +142,7 @@ object GltfParser {
                         raw.metallicFactor,
                         raw.roughnessFactor,
                         raw.emissiveFactor,
+                        raw.alphaMode,
                     )
                 }
                 loadedMeshes += LoadedMesh(meshDef.name ?: "", primitives)
@@ -205,6 +206,7 @@ object GltfParser {
         val metallicFactor = pbr?.metallicFactor ?: 1f
         val roughnessFactor = pbr?.roughnessFactor ?: 1f
         val emissiveFactor = material?.emissiveFactor?.toFloatArray() ?: floatArrayOf(0f, 0f, 0f)
+        val alphaMode = material?.alphaMode ?: GltfAlphaMode.OPAQUE
 
         return GltfMesh(
             positions,
@@ -223,6 +225,7 @@ object GltfParser {
             metallicFactor,
             roughnessFactor,
             emissiveFactor,
+            alphaMode,
         )
     }
 

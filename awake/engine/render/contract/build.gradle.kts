@@ -55,6 +55,7 @@ kotlin {
             // docs/reference/module-architecture.md -- the "prefer implementation" rule's
             // deliberate exception.
             api(project(":awake:core:geometry"))
+            implementation(libs.kotlinx.atomicfu)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

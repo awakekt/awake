@@ -6,9 +6,8 @@
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
-import com.awakekt.awake.asset.shaders.ShaderStage
 import com.awakekt.awake.asset.shaders.aslShaderSet
-import com.awakekt.awake.asset.shaders.source
+import com.awakekt.awake.asset.shaders.spec
 import com.awakekt.awake.asset.shaders.stagesFor
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
@@ -22,7 +21,6 @@ import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.pipeline.BindingSemantic
-import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.renderer.DepthFogFields
 import com.awakekt.awake.render.renderer.DepthFogUniformLayout
@@ -58,10 +56,8 @@ fun depthFogContentFeature(
     val stages = shaders.stagesFor(backend)
     ContentFeature(
         name = "depth_fog",
-        spec = PipelineSpec(
+        spec = stages.spec(
             vertexFormat = VertexFormat.None,
-            vertexShader = stages.source(ShaderStage.VERTEX),
-            fragmentShader = stages.source(ShaderStage.FRAGMENT),
             variant = PipelineVariant.Overlay,
             uniforms = DepthFogUniformLayout,
         ),

@@ -7,6 +7,7 @@ package com.awakekt.awake.asset.shaders
 
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.pipeline.BindingLayout
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRequest
 import com.awakekt.awake.render.pipeline.PipelineVariant
@@ -37,7 +38,7 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
  * @property buildBackCulled Also build the back-face-culled companion, opted into per entity via
  * `MeshRenderer.cullMode`.
  * @property buildTransparent Also build the alpha-blended companion, opted into per draw via
- * `DrawCall.transparent`.
+ * `RenderDrawCommand.transparent`.
  */
 data class ScenePipeline(
     val key: PipelineKey,
@@ -45,6 +46,8 @@ data class ScenePipeline(
     val vertexFormat: VertexFormat,
     val variant: PipelineVariant = PipelineVariant.Opaque,
     val bindingLayout: BindingLayout = BindingLayout.Standard,
+    val materialBindings: GroupBindings? = null,
+    val usesMaterialGroup: Boolean = true,
     val buildWireframe: Boolean = false,
     val buildBackCulled: Boolean = false,
     val buildTransparent: Boolean = false,
@@ -60,12 +63,17 @@ data class ScenePipeline(
  */
 fun List<ScenePipeline>.toRequests(stages: (ShaderSet) -> ShaderStages): List<PipelineRequest> =
     map { declared ->
+        val selectedStages = stages(declared.shaders)
         PipelineRequest(
             key = declared.key,
-            spec = stages(declared.shaders).spec(
+            spec = selectedStages.spec(
                 vertexFormat = declared.vertexFormat,
                 variant = declared.variant,
                 bindingLayout = declared.bindingLayout,
+                materialBindings = declared.materialBindings,
+                usesMaterialGroup = declared.usesMaterialGroup,
+                bindingsByGroup = selectedStages.bindingsByGroup,
+                bindingsMetadataAvailable = selectedStages.bindingsMetadataAvailable,
             ),
             buildWireframe = declared.buildWireframe,
             buildBackCulled = declared.buildBackCulled,

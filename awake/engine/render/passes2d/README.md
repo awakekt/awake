@@ -1,10 +1,12 @@
 # awake:engine:render:passes2d
 
-Backend-neutral **2D pass logic** — the GPU-side half of 2D rendering. Migration complete;
-`:awake:engine:render:passes` now holds only 3D and shared work.
+Backend-neutral **2D pass logic** — the GPU-side half of 2D rendering.
 
-Interim coordinate. Under the [target grouping](../../../../docs/reference/module-architecture.md#target-grouping--decided)
-this becomes `:awake:render:passes2d`, and what is left in `:render:passes` becomes `passes3d`.
+The published Gradle identity is intentionally `:awake:engine:render:passes2d`. The repository
+already has a stable `:awake:engine:render` hierarchy, so this module is not aliased or moved to
+`:awake:render:passes:2d`. The sibling `passes` module remains the shared compiler for generic
+scene packets; a separate `passes3d` module is only a future extraction if 3D-only code grows
+large enough to justify it.
 
 ## The line: CPU produces, GPU consumes
 

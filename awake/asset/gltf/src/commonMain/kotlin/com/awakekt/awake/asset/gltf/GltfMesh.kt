@@ -64,6 +64,8 @@ data class GltfMesh(
     val roughnessFactor: Float = 1f,
     /** The emissive factor (RGB). */
     val emissiveFactor: FloatArray = floatArrayOf(0f, 0f, 0f),
+    /** Alpha behavior inherited from the primitive's glTF material. */
+    val alphaMode: GltfAlphaMode = GltfAlphaMode.OPAQUE,
 ) {
     /** The total number of vertices in this mesh. */
     val vertexCount: Int get() = positions.size / POSITION_COMPONENTS

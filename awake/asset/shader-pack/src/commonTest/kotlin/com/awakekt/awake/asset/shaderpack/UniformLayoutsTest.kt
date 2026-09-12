@@ -5,7 +5,7 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
-import com.awakekt.awake.render.renderer.MAX_POINT_LIGHTS
+import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
 import com.awakekt.awake.render.renderer.UniformFields
 import kotlin.test.Test
 import kotlin.test.assertEquals

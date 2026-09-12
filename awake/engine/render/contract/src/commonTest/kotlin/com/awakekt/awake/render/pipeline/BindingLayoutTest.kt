@@ -16,7 +16,7 @@ class BindingLayoutTest {
     fun standardLayoutPreservesTheCurrentSceneAbi() {
         assertEquals(0, BindingLayout.Standard.slot(BindingSemantic.Material))
         assertEquals(1, BindingLayout.Standard.slot(BindingSemantic.ShadowDepth))
-        assertEquals(1, BindingLayout.Standard.slot(BindingSemantic.JointPalette))
+        assertEquals(3, BindingLayout.Standard.slot(BindingSemantic.JointPalette))
     }
 
     @Test

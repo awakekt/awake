@@ -5,10 +5,14 @@
  */
 package com.awakekt.awake.asset.shaderdsl
 
+import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ResourceBinding
 import com.awakekt.awake.render.pipeline.ResourceKind
+import com.awakekt.awake.render.pipeline.SamplerType
 import com.awakekt.awake.render.pipeline.ShaderStage
+import com.awakekt.awake.render.pipeline.TextureSampleType
+import com.awakekt.awake.render.renderer.uniformFloats
 
 /**
  * What this shader declares in bind [group], as the render contract's own description -- so a
@@ -38,7 +42,14 @@ fun AslShaderDefinition.bindingsForGroup(group: Int): GroupBindings? {
             val prefix = "${block.instanceName}."
             val stages = stagesFor { it == block.instanceName || it.startsWith(prefix) }
             if (stages.isNotEmpty()) {
-                add(ResourceBinding(block.binding, ResourceKind.UniformBuffer, stages))
+                add(
+                    ResourceBinding(
+                        binding = block.binding,
+                        kind = ResourceKind.UniformBuffer,
+                        stages = stages,
+                        minBindingSize = block.totalByteSize(),
+                    ),
+                )
             }
         }
         textures.filter { it.group == group }.forEach { texture ->
@@ -51,6 +62,8 @@ fun AslShaderDefinition.bindingsForGroup(group: Int): GroupBindings? {
                         stages,
                         arrayed = texture.type == AslType.Texture2dArrayF32 ||
                             texture.type == AslType.TextureDepth2dArray,
+                        textureSampleType = texture.type.toTextureSampleType(),
+                        samplerType = texture.type.toSamplerType(),
                     ),
                 )
             }
@@ -65,9 +78,35 @@ fun AslShaderDefinition.bindingsForGroup(group: Int): GroupBindings? {
     return if (entries.isEmpty()) null else GroupBindings(entries.sortedBy { it.binding })
 }
 
+/** All statically used resource groups in this definition, keyed by their WebGPU/Vulkan index. */
+fun AslShaderDefinition.bindingsByGroup(): Map<Int, GroupBindings> {
+    val groups = buildSet {
+        uniformBlocks.forEach { add(it.group) }
+        textures.forEach { add(it.group) }
+        storageBindings.forEach { add(it.group) }
+    }
+    return groups.mapNotNull { group ->
+        bindingsForGroup(group)?.let { group to it }
+    }.toMap()
+}
+
 private fun AslType.toResourceKind(): ResourceKind = when (this) {
-    AslType.Sampler -> ResourceKind.Sampler
+    AslType.Sampler, AslType.SamplerNonFiltering, AslType.SamplerComparison -> ResourceKind.Sampler
     else -> ResourceKind.SampledTexture
+}
+
+private fun AslType.toTextureSampleType(): TextureSampleType = when (this) {
+    AslType.TextureDepth2d,
+    AslType.TextureDepth2dArray,
+    AslType.TextureDepthCube,
+    -> TextureSampleType.Depth
+    else -> TextureSampleType.Float
+}
+
+private fun AslType.toSamplerType(): SamplerType = when (this) {
+    AslType.SamplerComparison -> SamplerType.Comparison
+    AslType.SamplerNonFiltering -> SamplerType.NonFiltering
+    else -> SamplerType.Filtering
 }
 
 /** Wraps a bare expression so the statement walker can reach it -- a stage's `positionOnly` and
@@ -121,7 +160,7 @@ private fun collectNames(statement: AslStatement, into: MutableSet<String>) {
             collectNames(statement.endExclusive, into)
             statement.body.forEach { collectNames(it, into) }
         }
-        AslContinue -> Unit
+        AslContinue, AslDiscard -> Unit
     }
 }
 
@@ -151,4 +190,55 @@ private fun collectNames(expr: AslExpr, into: MutableSet<String>) {
         is AslConstruct -> expr.args.forEach { collectNames(it, into) }
         else -> Unit
     }
+}
+
+internal fun AslUniformBlock.totalByteSize(): Long {
+    var offset = 0
+    for (field in fields) {
+        val (align, size) = when (val t = field.type) {
+            is AslType.Data -> {
+                val elementAlign = when (t.shape) {
+                    GpuDataShape.Float, GpuDataShape.UInt4 -> 4
+                    GpuDataShape.Vec2 -> 8
+                    GpuDataShape.Vec3, GpuDataShape.Vec4, GpuDataShape.Mat4 -> 16
+                }
+                if (field.count > 1) {
+                    val arrayElementAlign = maxOf(elementAlign, 16)
+                    val arrayElementStride = maxOf(t.shape.uniformFloats * Float.SIZE_BYTES, 16)
+                    arrayElementAlign to (arrayElementStride * field.count)
+                } else {
+                    val fieldSize = when (t.shape) {
+                        GpuDataShape.Float, GpuDataShape.UInt4 -> 4
+                        GpuDataShape.Vec2 -> 8
+                        GpuDataShape.Vec3 -> 12
+                        GpuDataShape.Vec4 -> 16
+                        GpuDataShape.Mat4 -> 64
+                    }
+                    elementAlign to fieldSize
+                }
+            }
+            AslType.I32, AslType.U32, AslType.Bool -> {
+                if (field.count > 1) {
+                    16 to (16 * field.count)
+                } else {
+                    4 to 4
+                }
+            }
+            is AslType.ArrayData -> {
+                16 to (16 * t.count * field.count)
+            }
+            else -> 16 to (16 * field.count)
+        }
+        val remainder = offset % align
+        if (remainder != 0) {
+            offset += (align - remainder)
+        }
+        offset += size
+    }
+    val structAlign = 16
+    val remainder = offset % structAlign
+    if (remainder != 0) {
+        offset += (structAlign - remainder)
+    }
+    return offset.toLong()
 }

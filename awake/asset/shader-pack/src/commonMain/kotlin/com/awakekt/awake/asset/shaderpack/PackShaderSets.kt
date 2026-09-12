@@ -17,18 +17,25 @@ import com.awakekt.awake.asset.shaders.aslShaderSet
  * and a shader that works unchanged on iOS and wasm, whose loaders cannot see a library's own
  * resources.
  *
- * A `RenderPlan` names one of these instead of `shaderSet("lit_shadow")`.
+ * A `RenderPlan` names one of these instead of a resource-path shader set without binding metadata.
  */
 object PackShaderSets {
     val Triangle = aslShaderSet(TriangleShader)
     val LitShadow = aslShaderSet(::litShadowShader)
     val ShadowDepth = aslShaderSet(ShadowDepthShader)
+
+    /** Depth companions whose vertex inputs differ from [ShadowDepth]. */
+    val InstancedShadowDepth = aslShaderSet(InstancedShadowDepthShader)
+    val SkinnedInstancedShadowDepth = aslShaderSet(SkinnedInstancedShadowDepthShader)
+    val SkinnedShadowDepth = aslShaderSet(SkinnedShadowDepthShader)
+    val ParticleShadowDepth = aslShaderSet(ParticleShadowDepthShader)
     val SceneDepth = aslShaderSet(SceneDepthShader)
+    val MaskedTexturedShadowDepth = aslShaderSet(MaskedTexturedDepthShader)
     val Textured = aslShaderSet(TexturedShader)
-    val Instanced = aslShaderSet(InstancedShader)
+    val Instanced = aslShaderSet(::instancedLitShadowShader)
     val Skinned = aslShaderSet(SkinnedShader)
     val SkinnedTextured = aslShaderSet(SkinnedTexturedShader)
-    val SkinnedInstanced = aslShaderSet(SkinnedInstancedShader)
+    val SkinnedInstanced = aslShaderSet(::skinnedInstancedLitShadowShader)
     val Skybox = aslShaderSet(SkyboxShader)
     val Particle = aslShaderSet(ParticleShader)
     val Terrain = aslShaderSet(TerrainShader)

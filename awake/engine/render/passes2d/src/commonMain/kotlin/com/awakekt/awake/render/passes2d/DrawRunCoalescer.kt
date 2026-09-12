@@ -117,6 +117,11 @@ object DrawRunCoalescer {
             val slice = primitives.subList(runStart, index)
             val safeInteriorRect = safeInteriorRectStack.lastOrNull()
 
+            // Each branch below casts `slice` (a List<DrawCommand>) to the concrete subtype
+            // confirmed by the `is` check that opens the branch.  The inner while-loop above
+            // already ensured every element in `slice` shares the same ::class as `first`, so
+            // each cast is guaranteed by construction.  @Suppress("UNCHECKED_CAST") inside the
+            // branches is therefore a false positive from the compiler's perspective.
             when (first) {
                 is DrawCommand.Quad -> {
                     @Suppress("UNCHECKED_CAST")

@@ -13,6 +13,21 @@ enum class ResourceKind {
     SampledTexture,
 }
 
+/** Texture sample interpretation required by a sampled-image binding. */
+enum class TextureSampleType {
+    Float,
+    Depth,
+    Sint,
+    Uint,
+}
+
+/** Sampler operation required by a sampler binding. */
+enum class SamplerType {
+    Filtering,
+    NonFiltering,
+    Comparison,
+}
+
 /**
  * Which shader stages read a binding.
  *
@@ -43,15 +58,25 @@ data class ResourceBinding(
     val kind: ResourceKind,
     val stages: Set<ShaderStage>,
     val arrayed: Boolean = false,
+    val textureSampleType: TextureSampleType = TextureSampleType.Float,
+    val samplerType: SamplerType = SamplerType.Filtering,
+    val minBindingSize: Long = 0L,
 ) {
     init {
         require(binding >= 0) { "Binding index must be non-negative; was $binding." }
+        require(minBindingSize >= 0L) { "minBindingSize must be non-negative; was $minBindingSize." }
         require(stages.isNotEmpty()) {
             "Binding $binding declares no shader stage. A binding no stage reads should be " +
                 "omitted rather than declared with an empty stage set."
         }
         require(!arrayed || kind == ResourceKind.SampledTexture) {
             "Only a sampled texture can be arrayed; binding $binding is $kind."
+        }
+        require(kind == ResourceKind.SampledTexture || textureSampleType == TextureSampleType.Float) {
+            "Only a sampled texture can declare a sample type; binding $binding is $kind."
+        }
+        require(kind == ResourceKind.Sampler || samplerType == SamplerType.Filtering) {
+            "Only a sampler can declare a sampler type; binding $binding is $kind."
         }
     }
 }
@@ -83,7 +108,27 @@ data class GroupBindings(val entries: List<ResourceBinding>) {
     /** The entry at [binding], or null when this group declares no such slot. */
     fun at(binding: Int): ResourceBinding? = entries.firstOrNull { it.binding == binding }
 
+    /** Declared minimum buffer byte size for [binding], or 0 when absent/not a uniform. */
+    fun uniformBufferSize(binding: Int = 0): Long =
+        entries.firstOrNull { it.binding == binding && it.kind == ResourceKind.UniformBuffer }?.minBindingSize ?: 0L
+
     companion object {
+        /** A scene shader whose material group contains only its per-draw uniform block. */
+        val UniformOnlyMaterial = GroupBindings(
+            listOf(
+                ResourceBinding(0, ResourceKind.UniformBuffer, setOf(ShaderStage.Vertex, ShaderStage.Fragment)),
+            ),
+        )
+
+        /** A shader with a uniform block and one base-color texture/sampler pair. */
+        val TexturedMaterial = GroupBindings(
+            listOf(
+                ResourceBinding(0, ResourceKind.UniformBuffer, setOf(ShaderStage.Vertex, ShaderStage.Fragment)),
+                ResourceBinding(1, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
+                ResourceBinding(2, ResourceKind.Sampler, setOf(ShaderStage.Fragment)),
+            ),
+        )
+
         /**
          * The material group every pipeline uses today: an MVP/lighting uniform block, a
          * base-color image and its sampler, then the four remaining glTF metallic-roughness
@@ -107,13 +152,38 @@ data class GroupBindings(val entries: List<ResourceBinding>) {
          */
         val StandardMaterial = GroupBindings(
             listOf(
-                ResourceBinding(0, ResourceKind.UniformBuffer, setOf(ShaderStage.Vertex, ShaderStage.Fragment)),
+                ResourceBinding(
+                    binding = 0,
+                    kind = ResourceKind.UniformBuffer,
+                    stages = setOf(ShaderStage.Vertex, ShaderStage.Fragment),
+                    minBindingSize = 368L,
+                ),
                 ResourceBinding(1, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
                 ResourceBinding(2, ResourceKind.Sampler, setOf(ShaderStage.Fragment)),
                 ResourceBinding(5, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
                 ResourceBinding(6, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
                 ResourceBinding(7, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
                 ResourceBinding(8, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
+            ),
+        )
+
+        /** Particle sprites use only their uniform block, texture, and sampler. */
+        val ParticleMaterial = GroupBindings(
+            listOf(
+                ResourceBinding(0, ResourceKind.UniformBuffer, setOf(ShaderStage.Vertex, ShaderStage.Fragment)),
+                ResourceBinding(1, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
+                ResourceBinding(2, ResourceKind.Sampler, setOf(ShaderStage.Fragment)),
+            ),
+        )
+
+        /** The sampled UI target composite pass: two texture/sampler pairs plus its mode block. */
+        val UiTargetComposite = GroupBindings(
+            listOf(
+                ResourceBinding(0, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
+                ResourceBinding(1, ResourceKind.Sampler, setOf(ShaderStage.Fragment)),
+                ResourceBinding(2, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
+                ResourceBinding(3, ResourceKind.Sampler, setOf(ShaderStage.Fragment)),
+                ResourceBinding(4, ResourceKind.UniformBuffer, setOf(ShaderStage.Fragment)),
             ),
         )
     }

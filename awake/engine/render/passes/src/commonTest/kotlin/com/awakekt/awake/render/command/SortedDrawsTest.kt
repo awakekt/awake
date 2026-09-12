@@ -5,6 +5,12 @@
  */
 package com.awakekt.awake.render.command
 
+import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.render.material.Material
+import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.passes.BoundedPreparationQueue
+import com.awakekt.awake.render.passes.RenderDrawCommand
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -23,6 +29,16 @@ class SortedDrawsTest {
     private object PipelineA : PipelineHandle
     private object PipelineB : PipelineHandle
     private object Binding : MaterialBinding
+
+    private val mesh = object : Mesh {
+        override val format = VertexFormat.PositionColorUv
+        override val sizeBytes = 12L
+        override fun destroy() = Unit
+    }
+    private val material = object : Material {
+        override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
+        override fun destroy() = Unit
+    }
 
     private class Draw(
         override val pipeline: PipelineHandle,
@@ -62,7 +78,7 @@ class SortedDrawsTest {
 
         assertEquals(
             listOf("meshA", "meshB", "meshB again"),
-            sorted.opaqueByPipeline.getValue(PipelineA).map { (it as Draw).label },
+            sorted.opaqueByPipeline.getValue(PipelineA).map { it.label },
         )
     }
 
@@ -79,7 +95,7 @@ class SortedDrawsTest {
 
         assertEquals(
             listOf("far", "mid", "near"),
-            sorted.transparent.map { (it as Draw).label },
+            sorted.transparent.map { it.label },
         )
     }
 
@@ -95,6 +111,46 @@ class SortedDrawsTest {
         )
 
         assertEquals(1, sorted.opaqueByPipeline.getValue(PipelineA).size)
-        assertEquals(listOf("blended"), sorted.transparent.map { (it as Draw).label })
+        assertEquals(listOf("blended"), sorted.transparent.map { it.label })
+    }
+
+    @Test
+    fun asyncCompilerKeepsSourceResultsAndSharedOrdering() = runTest {
+        val source = listOf(
+            RenderDrawCommand(mesh, material),
+            RenderDrawCommand(mesh, material),
+            RenderDrawCommand(mesh, material),
+        )
+        val queue = BoundedPreparationQueue<Int, Draw?>(this, capacity = 2, workers = 2) { index ->
+            Draw(
+                pipeline = PipelineA,
+                transparent = true,
+                depthSortKey = index.toFloat(),
+                label = index.toString(),
+            )
+        }
+        try {
+            val sorted = compileDrawCallsAsync<RenderDrawCommand, Draw>(source, queue)
+            assertEquals(listOf("2", "1", "0"), sorted.transparent.map { it.label })
+        } finally {
+            queue.close()
+        }
+    }
+
+    @Test
+    fun asyncCompilerPublishesAnExplicitCommandLease() = runTest {
+        val source = listOf(RenderDrawCommand(mesh, material))
+        val queue = BoundedPreparationQueue<Int, Draw?>(this, capacity = 1) { index ->
+            Draw(PipelineA, label = index.toString())
+        }
+        try {
+            val lease = compileDrawCallsAsyncLease<RenderDrawCommand, Draw>(source, queue)
+            assertEquals(GpuCommandLeaseState.Sealed, lease.state)
+            lease.submit()
+            lease.retire()
+            assertEquals(GpuCommandLeaseState.Retired, lease.state)
+        } finally {
+            queue.close()
+        }
     }
 }

@@ -7,13 +7,11 @@ package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.ShaderSet
-import com.awakekt.awake.asset.shaders.ShaderStage
-import com.awakekt.awake.asset.shaders.source
+import com.awakekt.awake.asset.shaders.spec
 import com.awakekt.awake.asset.shaders.stagesFor
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.passes.SkyboxRenderFeature
-import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.renderer.SkyboxUniformLayout
 
@@ -42,10 +40,8 @@ fun skyboxContentFeature(shaders: ShaderSet): ContentFeatureSource = ContentFeat
     val stages = shaders.stagesFor(backend)
     ContentFeature(
         name = "skybox",
-        spec = PipelineSpec(
+        spec = stages.spec(
             vertexFormat = VertexFormat.None,
-            vertexShader = stages.source(ShaderStage.VERTEX),
-            fragmentShader = stages.source(ShaderStage.FRAGMENT),
             variant = PipelineVariant.Background,
             uniforms = SkyboxUniformLayout,
         ),

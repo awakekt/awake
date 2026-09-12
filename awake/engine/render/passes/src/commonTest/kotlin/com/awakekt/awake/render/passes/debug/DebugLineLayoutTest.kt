@@ -7,6 +7,7 @@ package com.awakekt.awake.render.passes.debug
 
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexSemantic
+import com.awakekt.awake.render.renderer.UniformFields
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -65,6 +66,11 @@ class DebugLineLayoutTest {
             DebugLineLayout.Format.strideBytes / Float.SIZE_BYTES,
             DebugLineLayout.FLOATS_PER_VERTEX,
         )
+    }
+
+    @Test
+    fun mvpUniformSizeIsDerivedFromTheSharedLayout() {
+        assertEquals(UniformFields.Mvp.floats, DebugLineUniformLayout.total)
     }
 
     private companion object {

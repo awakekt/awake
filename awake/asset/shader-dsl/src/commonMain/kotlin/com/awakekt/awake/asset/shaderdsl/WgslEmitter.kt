@@ -170,6 +170,7 @@ internal class WgslEmitter(private val definition: AslShaderDefinition) {
                 appendLine("${pad}return$value;")
             }
             AslContinue -> appendLine("${pad}continue;")
+            AslDiscard -> appendLine("${pad}discard;")
         }
     }
 

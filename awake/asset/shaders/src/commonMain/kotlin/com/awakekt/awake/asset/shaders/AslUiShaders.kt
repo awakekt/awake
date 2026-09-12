@@ -118,7 +118,9 @@ val UiTextureShader: AslShaderDefinition = shader("ui_texture") {
 val UiGlyphShader: AslShaderDefinition = shader("ui_glyph") {
     val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
     val screenToNdc by uniforms.field(GpuDataShape.Vec4)
-    val fontInfo by uniforms.field(GpuDataShape.Vec2)
+    // Keep the font metadata in a vec4 so the shared UI UBO has an explicit 16-byte field.
+    // The shader uses only x/y; z/w are padding lanes written as zero by the shared packer.
+    val fontInfo by uniforms.field(GpuDataShape.Vec4)
 
     val fontAtlas by texture2d(group = 0, binding = 1)
     val fontSampler by sampler(group = 0, binding = 2)

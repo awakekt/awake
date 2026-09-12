@@ -6,9 +6,9 @@
 package com.awakekt.awake.render.passes.uniforms
 
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.render.renderer.MAX_POINT_LIGHTS
-import com.awakekt.awake.render.renderer.PointLight
-import com.awakekt.awake.render.renderer.SceneLight
+import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
+import com.awakekt.awake.render.passes.uniforms.PointLight
+import com.awakekt.awake.render.passes.uniforms.SceneLight
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

@@ -17,6 +17,42 @@ import com.awakekt.awake.render.renderer.UniformLayout
  * shader reads.
  */
 object MaterialUniformLayouts {
+    /** Directional light payload used as the source block before it is embedded in a material. */
+    val DirectionalLight = UniformLayout(
+        UniformFields.LightDirection,
+        UniformFields.LightColor,
+    )
+
+    /** Point-light source payload: positions first, then colours, exactly as the shader fields. */
+    val PointLightSlots = UniformLayout(
+        UniformFields.PointLightPositions,
+        UniformFields.PointLightColors,
+    )
+
+    /** Complete scene-light payload carried between the scene compiler and a backend adapter. */
+    val SceneLight = UniformLayout(
+        UniformFields.LightDirection,
+        UniformFields.LightColor,
+        UniformFields.PointLightPositions,
+        UniformFields.PointLightColors,
+    )
+
+    /** The compact PBR material payload carried by a draw command. */
+    val PbrMaterial = UniformLayout(UniformFields.PbrFactors)
+
+    /** The compact textured PBR payload carried by a draw command. */
+    val PbrTexturedMaterial = UniformLayout(
+        UniformFields.PbrFactors,
+        UniformFields.BaseColorFactor,
+        UniformFields.EmissiveFactor,
+    )
+
+    /** A standalone camera position field used by source packers. */
+    val CameraPosition = UniformLayout(UniformFields.CameraPosition)
+
+    /** A standalone fog field used by source packers. */
+    val Fog = UniformLayout(UniformFields.FogColor)
+
     /** The primary lit path -- exactly what `triangle.wgsl` reads: MVP + lightDirection +
      * lightColor = 24 floats. Both light halves are `vec4f` rather than `vec3f` to sidestep
      * std140's vec3 padding; see [sceneLightFloats]. */

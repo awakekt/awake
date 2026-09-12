@@ -11,11 +11,12 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.renderer.DrawCall
-import com.awakekt.awake.render.renderer.SceneLight
-import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
+import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.UniformFields
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
 class MaterialUniformsTest {
@@ -33,7 +34,7 @@ class MaterialUniformsTest {
 
     @Test
     fun testPbrMaterialFloatsDefault() {
-        val drawCall = DrawCall(
+        val drawCall = RenderDrawCommand(
             mesh = FakeMesh(),
             material = FakeMaterial(),
             model = Mat4(),
@@ -48,7 +49,7 @@ class MaterialUniformsTest {
     @Test
     fun testPbrTexturedMaterialFloatsSupplied() {
         val custom = FloatArray(12) { it.toFloat() }
-        val drawCall = DrawCall(
+        val drawCall = RenderDrawCommand(
             mesh = FakeMesh(),
             material = FakeMaterial(),
             model = Mat4(),
@@ -58,6 +59,18 @@ class MaterialUniformsTest {
         assertEquals(12, floats.size)
         assertEquals(0f, floats[0])
         assertEquals(11f, floats[11])
+    }
+
+    @Test
+    fun texturedMaterialFloatsReserveCutoffForMaskedDepth() {
+        val drawCall = RenderDrawCommand(
+            mesh = FakeMesh(),
+            material = FakeMaterial(),
+            alphaCutoff = 0.37f,
+            extraUniformFloats = FloatArray(12) { it.toFloat() },
+        )
+
+        assertEquals(0.37f, pbrTexturedMaterialFloats(drawCall)[2])
     }
 
     @Test
@@ -103,7 +116,7 @@ class MaterialUniformsTest {
 
     @Test
     fun litShadowPacksVertexAnimationParametersAndFrameTime() {
-        val drawCall = DrawCall(
+        val drawCall = RenderDrawCommand(
             mesh = FakeMesh(),
             material = FakeMaterial(),
             vertexAnimation = Vec3f(0.08f, 6f, 0.8f),
@@ -130,5 +143,46 @@ class MaterialUniformsTest {
         assertEquals(6f, packed[offset + 1])
         assertEquals(0.8f, packed[offset + 2])
         assertEquals(3.5f, packed[offset + 3])
+    }
+
+    @Test
+    fun gpuLitShadowPackerMatchesSceneLitShadowAbi() {
+        val model = Mat4().apply { identity() }.translate(1f, 2f, 3f)
+        val animation = Vec3f(0.08f, 6f, 0.8f)
+        val light = sceneLightUniforms(
+            SceneLight(direction = Vec3f.UP, color = Vec3f.ONE),
+            eye = Vec3f(4f, 5f, 6f),
+        )
+        val cascades = ShadowCascadeUniforms(
+            viewProjections = listOf(Mat4()),
+            splitDistances = floatArrayOf(Float.MAX_VALUE),
+        )
+        val draw = RenderDrawCommand(
+            mesh = FakeMesh(),
+            material = FakeMaterial(),
+            model = model,
+            vertexAnimation = animation,
+            timeSeconds = 3.5f,
+        )
+        val frame = SceneFrameUniforms(
+            light = light,
+            cameraEye = Vec3f(4f, 5f, 6f),
+            fog = floatArrayOf(0.1f, 0.2f, 0.3f, 0.04f),
+        )
+        assertContentEquals(
+            litShadowUniforms(draw, model, cascades, frame),
+            gpuLitShadowUniforms(
+                transform = model,
+                extraUniformFloats = draw.extraUniformFloats,
+                vertexAnimation = animation,
+                timeSeconds = draw.timeSeconds,
+                mvp = model,
+                lightPayload = light.packed,
+                cascades = cascades,
+                cameraEye = frame.cameraEye,
+                fogColor = Color(0.1f, 0.2f, 0.3f),
+                fogDensity = 0.04f,
+            ),
+        )
     }
 }

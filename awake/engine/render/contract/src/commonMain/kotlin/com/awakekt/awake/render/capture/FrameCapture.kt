@@ -31,5 +31,14 @@ class FrameCapture(
         return renderer.readPixels(target)
     }
 
+    /** Captures one attachment from the same rendered frame for a framebuffer debugger. */
+    suspend fun captureAttachment(
+        attachment: FramebufferAttachment,
+        render: (RenderTarget) -> Unit,
+    ): FramebufferAttachmentData {
+        render(target)
+        return renderer.readFramebufferAttachment(target, attachment)
+    }
+
     override fun close() = target.destroy()
 }

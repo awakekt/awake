@@ -7,17 +7,10 @@ package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
-import com.awakekt.awake.core.math.Mat4
-import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.passes.DirectionalShadowBox
 import com.awakekt.awake.render.passes.uniforms.SceneLight
-import com.awakekt.awake.render.renderer.DirectionalShadowBox
-import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
-import com.awakekt.awake.render.renderer.cascadeShadowBoxes
-import com.awakekt.awake.render.renderer.cascadeSplitDistances
-import com.awakekt.awake.render.renderer.shadowCascadeUniforms
-import kotlin.math.max
-
-const val DEFAULT_SHADOW_CASCADES = 3
+import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
+import com.awakekt.awake.render.passes.uniforms.shadowCascadeUniforms
 
 fun shadowCascadeUniforms(
     light: SceneLight,
@@ -26,7 +19,7 @@ fun shadowCascadeUniforms(
     clipSpace: ClipSpace,
     cascadeCount: Int = DEFAULT_SHADOW_CASCADES,
 ): ShadowCascadeUniforms {
-    val legacyLight = com.awakekt.awake.render.renderer.SceneLight(
+    val legacyLight = com.awakekt.awake.render.passes.uniforms.SceneLight(
         direction = light.direction,
         color = light.color,
     )

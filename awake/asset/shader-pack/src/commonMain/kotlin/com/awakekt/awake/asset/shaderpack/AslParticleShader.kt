@@ -32,9 +32,9 @@ import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
+import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
-import com.awakekt.awake.render.renderer.ParticleUniformLayout
 
 /**
  * GPU-instanced camera-facing billboard for `VertexFormat.PositionUv` (shared unit quad).

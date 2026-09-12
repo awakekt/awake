@@ -7,7 +7,7 @@ package com.awakekt.awake.render.passes.uniforms
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Vec3f
-import com.awakekt.awake.render.renderer.SceneLight
+import com.awakekt.awake.render.passes.uniforms.SceneLight
 
 private const val DEFAULT_LIGHT_DIRECTION_X = 0.4f
 private const val DEFAULT_LIGHT_DIRECTION_Y = 0.8f
@@ -27,5 +27,5 @@ val DEFAULT_HORIZON_COLOR = Color(r = 0.72f, g = 0.80f, b = 0.88f, a = 1f)
 val DEFAULT_ZENITH_COLOR = Color(r = 0.20f, g = 0.38f, b = 0.68f, a = 1f)
 val DEFAULT_FOG_COLOR = Color(r = 0.55f, g = 0.62f, b = 0.70f, a = 1f)
 
-/** Sized for MVP (16) + SceneLight direction & color (8) floats. */
-const val DEFAULT_UNIFORM_FLOAT_COUNT = 24
+/** Sized from the shared default material ABI rather than a duplicated count. */
+val DEFAULT_UNIFORM_FLOAT_COUNT: Int = MaterialUniformLayouts.Primary.total

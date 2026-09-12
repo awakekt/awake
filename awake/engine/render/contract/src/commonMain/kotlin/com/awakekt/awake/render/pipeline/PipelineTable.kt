@@ -6,8 +6,7 @@
 package com.awakekt.awake.render.pipeline
 
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.render.renderer.CullMode
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.pipeline.CullMode
 
 /**
  * Common registry of 3D pipelines indexed by [VertexFormat] and variant shape.
@@ -24,7 +23,7 @@ class PipelineTable<P>(
     val wireframeByFormat: Map<VertexFormat, P> = emptyMap(),
     val backCulledByFormat: Map<VertexFormat, P> = emptyMap(),
     /** Alpha-blended, depth-tested, non-depth-writing companions -- the pipeline a
-     * `DrawCall.transparent` draw resolves to. Empty means the app built none, and a transparent
+     * `RenderDrawCommand.transparent` draw resolves to. Empty means the app built none, and a transparent
      * draw falls back to its opaque pipeline rather than being dropped: it renders unblended,
      * which is wrong but visible, where dropping it looks like a missing mesh. */
     val transparentByFormat: Map<VertexFormat, P> = emptyMap(),
@@ -64,7 +63,7 @@ data class UiShaderSet<T>(
  * @receiver The frame's pipeline registry.
  * @param format The mesh's own vertex format -- the key everything here is indexed by.
  * @param cullMode The draw's per-mesh winding preference, from `MeshRenderer.cullMode`.
- * @param transparent Per-draw, from `DrawCall.transparent`. Ahead of [cullMode] because a
+ * @param transparent Per-draw, from `RenderDrawCommand.transparent`. Ahead of [cullMode] because a
  * surface's blending matters more than its winding, and in practice the two never combine.
  * @param wireframe The renderer-wide debug override. Wins outright because it is something the
  * user asked for explicitly, and seeing a transparent surface's edges beats seeing it blended.
@@ -84,61 +83,3 @@ fun <P> PipelineTable<P>.resolve(
         else -> fill
     }
 }
-
-/**
- * Which flavour of instanced draw a [DrawCall] is, and therefore which per-instance buffers and
- * which pipeline map it needs.
- *
- * Both backends derived this from the same two `DrawCall` properties, separately.
- */
-enum class InstancedDrawKind {
-    /** Per-instance model matrices only -- `instanced.wgsl`. */
-    Plain,
-
-    /** Plus a per-instance joint palette -- `skinned_instanced.wgsl`. */
-    Skinned,
-
-    /** Plus per-instance colour and sprite frame -- `particle.wgsl`. */
-    Particle,
-}
-
-/**
- * This draw's instanced flavour, or null when it is not an instanced draw at all.
- *
- * Skinned is checked before particle: a draw carrying joint palettes is skinned whatever its
- * vertex format, and the two have never co-occurred.
- *
- * @receiver The draw to classify.
- * @return The flavour, or null when [DrawCall.instanceModels] is null or empty.
- */
-fun DrawCall.instancedDrawKind(): InstancedDrawKind? = when {
-    instanceModels.isNullOrEmpty() -> null
-    instanceJointPalettes != null -> InstancedDrawKind.Skinned
-    mesh.format == VertexFormat.PositionUv -> InstancedDrawKind.Particle
-    else -> InstancedDrawKind.Plain
-}
-
-/**
- * The pipeline an instanced draw of [kind] resolves to, or null when none was built.
- *
- * Separate from [resolve] because instanced draws never take its companions: no wireframe,
- * back-culled or transparent variant is built for them (see `PipelineRequest`).
- *
- * The two backends had drifted here in a way that made [particlePipelines] mean different things
- * on each: WebGPU populated it, while Vulkan left it empty and folded the particle pipeline into
- * [instancedByFormat] under `PositionUv` instead. Shared code reading [particlePipelines] would
- * therefore have worked on one backend and silently returned null on the other. Both now
- * populate it.
- *
- * @param P The backend's own pipeline type.
- * @receiver The frame's pipeline registry.
- * @param format The mesh's vertex format.
- * @param kind The flavour from [instancedDrawKind].
- * @return The pipeline to bind, or null when this app built none for that flavour.
- */
-fun <P> PipelineTable<P>.resolveInstanced(format: VertexFormat, kind: InstancedDrawKind): P? =
-    when (kind) {
-        InstancedDrawKind.Skinned -> skinnedInstancedByFormat[format]
-        InstancedDrawKind.Particle -> particlePipelines[format]
-        InstancedDrawKind.Plain -> instancedByFormat[format]
-    }

@@ -32,7 +32,7 @@ fun Heightmap.toPositionNormalColorMesh(
         for (x in 0 until width) {
             val vertex = z * width + x
             val height = heightAt(x, z)
-            val normal = normalAt(x, z, scale)
+            val normal = normalAt(x, z)
             val color = colorAt(x, z, height)
             vertices.put(vertex, VertexSemantic.Position, offsetX + x * scale.x, height * scale.y, offsetZ + z * scale.z)
             vertices.put(vertex, VertexSemantic.Normal, normal.x, normal.y, normal.z)
@@ -47,7 +47,15 @@ fun Heightmap.toPositionNormalColorMesh(
 fun Heightmap.toPositionNormalColorMesh(color: Color = Color.White): MeshGeometry =
     toPositionNormalColorMesh { _, _, _ -> color }
 
-private fun Heightmap.normalAt(x: Int, z: Int, scale: Vec3f): Vec3f {
+/**
+ * The upward local-space normal at one authored sample.
+ *
+ * The mesh builder and tools such as terrain diagnostics must use this one calculation: copying
+ * the finite-difference rule into a renderer or sample is how a harmless visual probe becomes a
+ * second, disagreeing definition of the terrain surface.
+ */
+fun Heightmap.normalAt(x: Int, z: Int): Vec3f {
+    val scale = scale
     val leftX = (x - 1).coerceAtLeast(0)
     val rightX = (x + 1).coerceAtMost(width - 1)
     val nearZ = (z - 1).coerceAtLeast(0)

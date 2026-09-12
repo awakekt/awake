@@ -11,7 +11,7 @@ import com.awakekt.awake.core.geometry.VertexFormat
 /**
  * Entry point: build and structurally validate a shader definition.
  *
- * @param name must match the `shaderSet(name)` lookup and the emitted `.wgsl` filename,
+ * @param name must match the resource-path shader lookup and the emitted `.wgsl` filename,
  * exactly like a hand-written file.
  * @param block The builder block to define the shader.
  * @return A validated [AslShaderDefinition].
@@ -408,6 +408,11 @@ class AslFragmentBuilder internal constructor() : AslBlockBuilder() {
         return AslRef("position", GpuDataShape.Vec4)
     }
 
+    /** Discards the current fragment before it can write a depth or color value. */
+    fun discard() {
+        statements += AslDiscard
+    }
+
     /**
      * Sets the fragment color output value (`@location(0)`).
      *
@@ -486,6 +491,13 @@ fun AslShaderBuilder.textureDepth2dArray(group: Int, binding: Int): AslHandlePro
         AslRef(name, AslType.TextureDepth2dArray)
     }
 
+/** Declares a `texture_depth_cube` resource for point-light shadow lookup. */
+fun AslShaderBuilder.textureDepthCube(group: Int, binding: Int): AslHandleProvider<AslRef> =
+    AslHandleProvider { name ->
+        textureBindings += AslTextureBinding(name, group, binding, AslType.TextureDepthCube)
+        AslRef(name, AslType.TextureDepthCube)
+    }
+
 /**
  * Declares a sampler resource at the specified [group] and [binding].
  *
@@ -499,11 +511,19 @@ fun AslShaderBuilder.sampler(group: Int, binding: Int): AslHandleProvider<AslRef
         AslRef(name, AslType.Sampler)
     }
 
+/** Declares a nearest/non-filtering sampler, used with raw depth sampling. */
+fun AslShaderBuilder.samplerNonFiltering(group: Int, binding: Int): AslHandleProvider<AslRef> =
+    AslHandleProvider { name ->
+        textureBindings += AslTextureBinding(name, group, binding, AslType.SamplerNonFiltering)
+        AslRef(name, AslType.SamplerNonFiltering)
+    }
+
 /**
  * Declares a `sampler_comparison` resource at the specified [group] and [binding].
  *
- * The backend must bind a sampler created WITH a compare op here: WebGPU's auto layout derives
- * a comparison-sampler binding from this declaration and rejects a plain sampler at bind time.
+ * The backend must bind a sampler created WITH a compare op here: the shared binding metadata
+ * derives a comparison-sampler layout from this declaration and rejects a plain sampler at bind
+ * time.
  *
  * @param group The bind group index.
  * @param binding The binding index.

@@ -45,6 +45,8 @@ data class LoadedPrimitive(
     val roughnessFactor: Float = 1f,
     /** The emissive factor (RGB). */
     val emissiveFactor: FloatArray = floatArrayOf(0f, 0f, 0f),
+    /** Alpha behavior inherited from the primitive's glTF material. */
+    val alphaMode: GltfAlphaMode = GltfAlphaMode.OPAQUE,
 )
 
 /**

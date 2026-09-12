@@ -9,14 +9,15 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
-import com.awakekt.awake.render.renderer.DEFAULT_HORIZON_COLOR
-import com.awakekt.awake.render.renderer.DEFAULT_SCENE_LIGHT
-import com.awakekt.awake.render.renderer.DEFAULT_ZENITH_COLOR
-import com.awakekt.awake.render.renderer.EnvironmentUniforms
-import com.awakekt.awake.render.renderer.SceneLight
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_HORIZON_COLOR
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_ZENITH_COLOR
+import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
+import com.awakekt.awake.render.passes.uniforms.SceneLight
 
 /**
  * Which of the two render passes a feature's commands are valid inside. Not a feature
@@ -73,6 +74,15 @@ interface RenderFrameContext {
     /** This frame's environment uniforms (skybox, horizon, zenith, fog, shadows). */
     val environment: EnvironmentUniforms
         get() = EnvironmentUniforms(
+            showSky = showEnvironment,
+            horizonColor = horizonColor,
+            zenithColor = zenithColor,
+        )
+
+    /** Lowered environment policy carried by the generic pass packet. Backend adapters consume
+     * this state directly; [environment] remains a compatibility view for authored features. */
+    val environmentState: GpuEnvironmentState
+        get() = GpuEnvironmentState(
             showSky = showEnvironment,
             horizonColor = horizonColor,
             zenithColor = zenithColor,

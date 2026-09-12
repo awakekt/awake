@@ -40,6 +40,14 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
     @get:Input
     abstract val forbiddenImports: ListProperty<String>
 
+    /** Fully-qualified spellings of [forbiddenImports] that may appear without an import. */
+    @get:Input
+    abstract val forbiddenQualifiedReferences: ListProperty<String>
+
+    /** Package prefixes rejected for wildcard imports and arbitrary qualified references. */
+    @get:Input
+    abstract val forbiddenQualifiedPrefixes: ListProperty<String>
+
     /**
      * Content words no backend declaration may contain, e.g. `Skybox`.
      *
@@ -56,8 +64,9 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
     abstract val forbiddenContentVocabulary: ListProperty<String>
 
     /**
-     * Path suffixes (invariant separators) still allowed to import [forbiddenImports] -- a
-     * tracked-debt ledger, not an opt-out.
+     * Path suffixes (invariant separators) still allowed to reference [forbiddenImports] -- a
+     * tracked-debt ledger, not an opt-out. This includes imports, qualified references and
+     * aliases, so an alias cannot hide a scene dependency from the gate.
      *
      * Shrink this list, never grow it. It reaches empty when the draw-preparation phase of
      * `docs/tasks/2026-08-23-rhi-gpudevice-plan.md` lands, which is that phase's completion
@@ -83,6 +92,8 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
     @TaskAction
     fun verify() {
         val forbidden = forbiddenImports.get()
+        val forbiddenQualified = forbiddenQualifiedReferences.get()
+        val forbiddenPrefixes = forbiddenQualifiedPrefixes.get()
         val exempt = exemptFiles.get()
         val vocabulary = forbiddenContentVocabulary.get()
         val contentExempt = contentExemptFiles.get()
@@ -94,14 +105,19 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
             val importExempt = exempt.any { path.endsWith(it) }
             val vocabularyExempt = contentExempt.any { path.endsWith(it) }
             if (importExempt && vocabularyExempt) return@forEach
-            file.readLines().forEachIndexed { index, line ->
-                val trimmed = line.trim()
-                if (!importExempt && trimmed.startsWith("import ")) {
-                    val imported = trimmed.removePrefix("import ").substringBefore(" as ").trim()
-                    if (imported.substringAfterLast('.') in forbidden) {
-                        importViolations += "${file.name}:${index + 1}: imports ${imported.substringAfterLast('.')}"
-                    }
+            val lines = file.readLines()
+            if (!importExempt) {
+                findRenderRuntimeReferenceViolations(
+                    lines,
+                    forbidden,
+                    forbiddenQualified,
+                    forbiddenPrefixes,
+                ).forEach { violation ->
+                    importViolations += "${file.name}:$violation"
                 }
+            }
+            lines.forEachIndexed { index, line ->
+                val trimmed = line.trim()
                 if (vocabularyExempt) return@forEachIndexed
                 val declared = DECLARATION.find(trimmed)?.groupValues?.get(2) ?: return@forEachIndexed
                 vocabulary.firstOrNull { declared.contains(it, ignoreCase = true) }?.let { word ->
@@ -113,7 +129,7 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
         if (importViolations.isNotEmpty()) {
             throw GradleException(
                 buildString {
-                    appendLine("${modulePath.get()} imports render-runtime vocabulary into a GPU backend:")
+                    appendLine("${modulePath.get()} references render-runtime vocabulary inside a GPU backend:")
                     importViolations.forEach { appendLine("  $it") }
                     appendLine()
                     appendLine("A backend receives pipelines and recorded commands -- it should not know")
@@ -144,5 +160,6 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
     private companion object {
         /** `class Foo` / `fun bar` / `internal object Baz` -- captures the declared name in group 2. */
         val DECLARATION = Regex("""\b(class|interface|object|fun)\s+([A-Za-z_][A-Za-z0-9_]*)""")
+
     }
 }
