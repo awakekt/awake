@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Frame rate pacing & FPS control (`FrameRateMode`).** Introduced `FrameRateMode` (`Unlimited`,
+  `DisplaySync`, `TargetFps(fps)`) in `:awake:engine:platform` allowing explicit frame rate capping,
+  display VSync locking, or unlimited rendering across all target platforms.
+- **Interactive FramebufferDebugger & render diagnostics.** Added visual render target diagnostics,
+  depth/color buffer inspection, and diagnostics tooling to sample showcases.
+- **ECS family caching and component storage optimization.** Optimized query family matching,
+  sparse set lookups, and system iteration performance.
+
 ### Changed
 
 - Deprecated the legacy scene-shaped renderer and offscreen overloads. They remain migration
@@ -21,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vulkan resolved packets now preserve camera-depth and planned shadow-depth passes by using the
   retained transitional source draws only for depth recording; the resolved packet remains the
   color-path source.
+
+### Fixed
+
+- **Frame loop timing and delta measurement.** Corrected `DesktopFrameLoop`, `AndroidFrameLoop`, and
+  `IOSFrameLoop` to measure delta time from frame start to frame start (`currentFrameTime - previousFrameTime`)
+  rather than excluding frame execution overhead, preventing runaway / infinite FPS calculations.
 
 ## [0.1.0-dev.12] - 2026-09-07
 
