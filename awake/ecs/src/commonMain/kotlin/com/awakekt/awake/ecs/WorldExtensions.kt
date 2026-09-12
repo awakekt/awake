@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions")
+
 package com.awakekt.awake.ecs
 
 import kotlin.jvm.JvmName

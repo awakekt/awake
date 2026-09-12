@@ -161,6 +161,7 @@ private class DebugCardState {
 }
 
 context(_: Composer)
+@Suppress("LongMethod")
 internal fun ShowcaseDebugCard(
     showcase: EngineShowcase,
     framebufferDebugger: ShowcaseFramebufferDebugger,
@@ -261,6 +262,7 @@ internal fun ShowcaseDebugCard(
 }
 
 context(_: Composer)
+@Suppress("LongMethod")
 private fun FramebufferDebuggerPanel(debugger: ShowcaseFramebufferDebugger) {
     ShadcnText("Attachment", variant = ShadcnTextVariant.Small)
     ShadcnTabs(

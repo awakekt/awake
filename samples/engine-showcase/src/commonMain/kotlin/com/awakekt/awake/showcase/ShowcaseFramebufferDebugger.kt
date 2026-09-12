@@ -63,8 +63,8 @@ internal class ShowcaseFramebufferDebugger {
     }
 
     private fun takeRequest(): CaptureRequest? {
-        if (captureInFlight) return null
-        val request = pendingRequest ?: return null
+        if (captureInFlight || pendingRequest == null) return null
+        val request = pendingRequest
         pendingRequest = null
         captureInFlight = true
         return request
@@ -95,6 +95,7 @@ internal class ShowcaseFramebufferDebugger {
         error = message
     }
 
+    @Suppress("TooGenericExceptionCaught")
     internal fun update(runtime: SceneAppLifecycleRuntime, width: Int, height: Int) {
         val request = takeRequest() ?: return
         scope.launch {
