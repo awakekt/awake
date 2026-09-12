@@ -8,6 +8,7 @@
 package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.foundation.background
+import com.awakekt.awake.compose.foundation.border
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.SemanticsRole
 import com.awakekt.awake.compose.ui.semantics.semantics
@@ -61,11 +63,17 @@ fun ShadcnRadioGroup(
                 Box(
                     Modifier
                         .size(ShadcnRadioSize)
-                        // A filled circle with a background-filled one inside it, not
-                        // `Modifier.border`: that draws four edge rects, and four straight edges
-                        // cannot make a ring -- each takes the full radius and a 1px edge clamps it
-                        // to 0.5, which is also what the style oracle read instead of `rounded-full`.
-                        .background(theme.palette.input, theme.radii.full)
+                        // Match upstream's actual `border rounded-full`. The old two-disc
+                        // approximation made the ring depend on the page background and could
+                        // read square once the inner disc was rasterized at small sizes.
+                        .let {
+                            if (theme.config.dark) {
+                                it.background(theme.palette.input.withAlpha(theme.palette.input.a * RADIO_INPUT_ALPHA), theme.radii.full)
+                            } else {
+                                it
+                            }
+                        }
+                        .border(ShadcnRadioBorderWidth, theme.palette.input, RoundedCornerShape(theme.radii.full))
                         // On the ring, not on the row: the ring is the control, and a reader that
                         // landed on the row would report a box as wide as the label beside it.
                         .semantics {
@@ -78,9 +86,7 @@ fun ShadcnRadioGroup(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
-                        Modifier
-                            .size(ShadcnRadioSize - ShadcnRadioBorderWidth * 2f)
-                            .background(theme.palette.background, theme.radii.full),
+                        Modifier.size(ShadcnRadioSize - ShadcnRadioBorderWidth * 2f),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -112,3 +118,5 @@ fun ShadcnRadioGroup(
 private class RadioGroupState {
     var clicked: Int? = null
 }
+
+private const val RADIO_INPUT_ALPHA = 0.3f

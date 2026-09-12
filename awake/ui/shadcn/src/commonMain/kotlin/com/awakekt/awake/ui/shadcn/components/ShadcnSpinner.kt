@@ -64,7 +64,7 @@ fun ShadcnSpinner(
                 cap = StrokeCap.Round,
                 join = StrokeJoin.Round,
             ),
-            theme.palette.mutedForeground,
+            theme.palette.primary,
         )
     }
 }

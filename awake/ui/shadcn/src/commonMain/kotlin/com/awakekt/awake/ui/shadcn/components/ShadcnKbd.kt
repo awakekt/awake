@@ -13,6 +13,7 @@ import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.foundation.style.styleable
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
@@ -39,7 +40,11 @@ fun ShadcnKbd(
 ) {
     val theme = shadcnTheme
     val style = remember(theme) { theme.kbdStyle() }
-    Box(modifier.height(KbdSize).widthIn(min = KbdSize).styleable(StyleState.Default, style)) {
+    Box(
+        modifier.height(KbdSize).widthIn(min = KbdSize).styleable(StyleState.Default, style),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         ShadcnText(key, variant = ShadcnTextVariant.Xs, color = theme.palette.mutedForeground)
     }
 }

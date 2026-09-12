@@ -141,7 +141,15 @@ fun ShadcnInputOtp(
                                     // already own and broke the seam the group is made of.
                                     sides = borderSides,
                                 )
-                                .background(color = theme.palette.input.scaleAlpha(SLOT_FILL_ALPHA), shape = shape),
+                                // Upstream only adds `dark:bg-input/30`; light mode leaves the
+                                // slot transparent so the border and page surface stay clean.
+                                .let {
+                                    if (theme.config.dark) {
+                                        it.background(color = theme.palette.input.scaleAlpha(SLOT_FILL_ALPHA), shape = shape)
+                                    } else {
+                                        it
+                                    }
+                                },
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
