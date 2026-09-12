@@ -58,6 +58,7 @@ public final class com/awakekt/awake/core/animation/AnimationPlayer {
 	public final fun getClipEntries ()Ljava/util/Map;
 	public final fun getClips ()Ljava/util/List;
 	public final fun getCurrentClip ()Lcom/awakekt/awake/core/animation/AnimationClip;
+	public final fun getSkeleton ()Lcom/awakekt/awake/core/animation/Skeleton;
 	public final fun getSpeed ()F
 	public final fun getTime ()F
 	public final fun isFinished ()Z
@@ -108,17 +109,20 @@ public final class com/awakekt/awake/core/animation/AnimationSampler {
 }
 
 public final class com/awakekt/awake/core/animation/Bone {
-	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;Ljava/util/List;)V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;Ljava/util/List;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;Ljava/util/List;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component2 ()Lcom/awakekt/awake/core/math/Quat;
 	public final fun component3 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component4 ()Lcom/awakekt/awake/core/math/Mat4;
 	public final fun component5 ()Ljava/util/List;
-	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;Ljava/util/List;)Lcom/awakekt/awake/core/animation/Bone;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/core/animation/Bone;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/animation/Bone;
+	public final fun component6 ()Ljava/lang/String;
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;Ljava/util/List;Ljava/lang/String;)Lcom/awakekt/awake/core/animation/Bone;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/animation/Bone;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Quat;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;Ljava/util/List;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/animation/Bone;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getChildren ()Ljava/util/List;
 	public final fun getMatrix ()Lcom/awakekt/awake/core/math/Mat4;
+	public final fun getName ()Ljava/lang/String;
 	public final fun getRotation ()Lcom/awakekt/awake/core/math/Quat;
 	public final fun getScale ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getTranslation ()Lcom/awakekt/awake/core/math/Vec3f;
@@ -134,6 +138,7 @@ public final class com/awakekt/awake/core/animation/Skeleton {
 	public final fun copy (Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/core/animation/Skeleton;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/core/animation/Skeleton;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/animation/Skeleton;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun findBoneIndex (Ljava/lang/String;)I
 	public final fun getBones ()Ljava/util/List;
 	public final fun getRoots ()Ljava/util/List;
 	public fun hashCode ()I

@@ -23,6 +23,7 @@ data class Bone(
     val scale: Vec3f,
     val matrix: Mat4?,
     val children: List<Int>,
+    val name: String? = null,
 ) {
     /** This bone's local transform -- [matrix] verbatim when present, otherwise composed from
      * [translation]/[rotation]/[scale] (which playback may have already overwritten). */
@@ -37,4 +38,7 @@ data class Bone(
 data class Skeleton(
     val bones: List<Bone>,
     val roots: List<Int>,
-)
+) {
+    /** Returns the index of the bone named [name], or -1 when no bone has that name. */
+    fun findBoneIndex(name: String): Int = bones.indexOfFirst { it.name == name }
+}

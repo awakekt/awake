@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering.animation
 
 import com.awakekt.awake.core.animation.Skin
+import com.awakekt.awake.core.animation.Skeleton
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 
@@ -34,11 +35,13 @@ data class CharacterSlot(
  * @property skin The skeletal hierarchy and inverse bind matrices shared across all slot pieces.
  * @property slots Map of equipped character slots keyed by slot name.
  * @property isVisible Master visibility toggle for the entire modular character.
+ * @property skeleton Optional shared skeleton used to resolve named socket attachments.
  */
 data class ModularCharacterComponent(
     val skin: Skin,
     val slots: Map<String, CharacterSlot> = LinkedHashMap(),
     var isVisible: Boolean = true,
+    val skeleton: Skeleton? = null,
 ) {
     // Safe: default constructor assigns LinkedHashMap, and copy preserves it.
     @Suppress("UNCHECKED_CAST")

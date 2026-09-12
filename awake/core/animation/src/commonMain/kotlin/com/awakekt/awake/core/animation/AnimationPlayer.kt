@@ -31,6 +31,9 @@ enum class AnimationPlayback { Loop, Once }
 class AnimationPlayer(
     private val library: AnimationLibrary,
 ) {
+    /** The immutable skeleton shared by this player's animation poses. */
+    val skeleton: Skeleton get() = library.skeleton
+
     private val currentPose = AnimationPose(library.skeleton)
     private val outgoingPose = AnimationPose(library.skeleton)
     private val blendedPose = AnimationPose(library.skeleton)

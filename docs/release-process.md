@@ -18,7 +18,21 @@ To maintain high development velocity while ensuring release stability:
       `feat/webgpu-swapchain`, `fix/vulkan-sync-hazard`).
     - Merged into `main` using **Squash and Merge** or linear rebase to keep history clean.
 
-3. **Release Branches (Major & Minor Cuts)**:
+3. **Stacked Pull Requests for Dependent Work**:
+    - Use a stack when a change has multiple independently reviewable layers that must land in
+      order. The bottom branch targets `main`; each branch above it targets the branch directly
+      below it.
+    - Keep every layer focused and use the repository prefixes above. For example:
+      `feat/physics-sockets -> main`, then `feat/common-tests-across-platforms -> feat/physics-sockets`.
+    - Preserve linear ancestry between layers. Do not create a dependent branch by cherry-picking
+      the lower layer onto a separate history; create it directly from the lower branch.
+    - Review and merge from the bottom upward. A middle PR must not be closed while PRs remain
+      above it; update or dissolve the stack first.
+    - When a lower layer changes, rebase the branches above it and push with
+      `--force-with-lease`. GitHub's stacked-PR support and the `gh stack` extension can automate
+      this flow; the feature is currently public preview.
+
+4. **Release Branches (Major & Minor Cuts)**:
     - Cut a dedicated branch when preparing major or minor releases (e.g. `release/v0.1.0` or
       `release/v0.2.0`).
     - Only bug fixes, documentation, and release polish land on the release branch.
@@ -86,16 +100,16 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 
 ---
 
-### **Milestone 3: [v0.1.0-alpha.3](https://github.com/awakekt/awake/milestone/3)** — *Physics & Character Controller Maturity* *(IN PROGRESS)*
+### **Milestone 3: [v0.1.0-alpha.3](https://github.com/awakekt/awake/milestone/3)** — *Physics & Character Controller Maturity* *(COMPLETED)*
 
 - **Subsystem: Physics Simulation (`awake:backend:jolt`, `awake:physics:api`)**
-    - `[ ]` Heightfield terrain colliders, raycasting, character controller.
+    - `[x]` Heightfield terrain colliders, raycasting, character controller.
 - **Subsystem: Asset Pipeline (`awake:asset:gltf`)**
-    - `[ ]` glTF 2.0 skinned skeletal mesh animations and socket attachments.
+    - `[x]` glTF 2.0 skinned skeletal mesh animations and socket attachments.
 
 ---
 
-### **Milestone 4: [v0.1.0-beta.1](https://github.com/awakekt/awake/milestone/4)** — *Studio IDE Maturity & Prefabs System*
+### **Milestone 4: [v0.1.0-beta.1](https://github.com/awakekt/awake/milestone/4)** — *Studio IDE Maturity & Prefabs System* *(IN PROGRESS)*
 
 - **Subsystem: Editor IDE (`app:studio`)**
     - `[ ]` Undo/Redo command stack (`UndoManager`).
