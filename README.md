@@ -313,7 +313,7 @@ Awake development is tracked through structured GitHub milestones ([Release Proc
 |---|---|---|---|
 | **Milestone 0** | `v0.1.0-dev` | Completed | Engine Foundations, Multiplatform Math, Compose UI, Sparse-Set ECS |
 | **Milestone 1** | `v0.1.0-alpha.1` | **Published** | First Public Maven Central release (`com.awakekt.awake:*`), Multi-OS Desktop Vulkan |
-| **Milestone 2** | `v0.2.0` | **In Progress** | WebGPU Backend & Studio Web Preview (WasmJs, Naga SPIR-V to WGSL pipeline) |
+| **Milestone 2** | `v0.2.0` | **In Progress** | WebGPU Backend & Web Demos Preview (WasmJs, `demo.awakekt.com`, Naga pipeline) |
 | **Milestone 3** | `v0.3.0` | Planned | Physics & Character Controller Maturity (Jolt, Heightfield, Raycasting) |
 | **Milestone 4** | `v0.4.0` | Planned | Studio IDE Maturity & Prefabs System (`app:studio`, Undo/Redo) |
 | **Milestone 5** | `v0.5.0` | Planned | 3D Spatial Audio & Open World Terrain (Geometry Clipmaps, 3D NavMesh) |
