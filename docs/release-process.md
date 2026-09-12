@@ -74,7 +74,7 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 
 ---
 
-### **Milestone 2: [v0.1.0-alpha.2](https://github.com/awakekt/awake/milestone/2)** — *WebGPU Backend & Web Demos Preview* *(IN PROGRESS)*
+### **Milestone 2: [v0.1.0-alpha.2](https://github.com/awakekt/awake/milestone/2)** — *WebGPU Backend & Web Demos Preview* *(COMPLETED)*
 
 - **Subsystem: Rendering Engine (`awake:backend:webgpu`)**
     - `[x]` WebGPU WasmJs browser runtime stability in Chrome/Edge.
@@ -86,7 +86,7 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 
 ---
 
-### **Milestone 3: [v0.1.0-alpha.3](https://github.com/awakekt/awake/milestone/3)** — *Physics & Character Controller Maturity*
+### **Milestone 3: [v0.1.0-alpha.3](https://github.com/awakekt/awake/milestone/3)** — *Physics & Character Controller Maturity* *(IN PROGRESS)*
 
 - **Subsystem: Physics Simulation (`awake:backend:jolt`, `awake:physics:api`)**
     - `[ ]` Heightfield terrain colliders, raycasting, character controller.
