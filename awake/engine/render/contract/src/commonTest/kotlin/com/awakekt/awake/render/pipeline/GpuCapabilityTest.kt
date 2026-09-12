@@ -39,7 +39,9 @@ class GpuCapabilityTest {
             pbrTextures: PbrTextureSet?,
         ): Material = error("unused")
         override fun createRenderTarget(width: Int, height: Int): RenderTarget = error("unused")
-        override fun destroy() {}
+        override fun destroy() {
+            // No-op for mock test device
+        }
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : GpuCapability> capability(kind: GpuCapabilityKind<T>): T? = when (kind) {
@@ -60,7 +62,9 @@ class GpuCapabilityTest {
                 pbrTextures: PbrTextureSet?,
             ): Material = error("unused")
             override fun createRenderTarget(width: Int, height: Int): RenderTarget = error("unused")
-            override fun destroy() {}
+            override fun destroy() {
+                // No-op for mock test device
+            }
         }
 
         assertNull(bareDevice.capability(FakeCapability))

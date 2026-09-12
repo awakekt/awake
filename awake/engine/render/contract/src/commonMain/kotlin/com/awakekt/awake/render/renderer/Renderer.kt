@@ -22,6 +22,7 @@ import com.awakekt.awake.render.texture.TextureAsset
  * see [com.awakekt.awake.render.mesh.Mesh]'s doc comment for why this doesn't
  * change `VulkanApplication.kt`'s construction pattern.
  */
+@Suppress("TooManyFunctions")
 interface Renderer : GpuDevice {
 
     /**
