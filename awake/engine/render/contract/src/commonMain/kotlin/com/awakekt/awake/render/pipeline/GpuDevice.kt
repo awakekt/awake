@@ -90,8 +90,7 @@ interface GpuDevice {
     fun destroy()
 
     companion object {
-        /** MVP (16) + a `SceneLight`'s direction and colour as two `vec4f` (8). The default
-         * every material that goes through the standard lit pass needs. */
+        /** Default size in floats for standard lit material uniform buffer (MVP 16 + Light 8 = 24). */
         const val DEFAULT_UNIFORM_FLOAT_COUNT = 24
     }
 }

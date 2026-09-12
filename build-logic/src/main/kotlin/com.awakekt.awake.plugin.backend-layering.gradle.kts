@@ -52,23 +52,7 @@ val backendContentVocabulary = listOf(
  * `docs/tasks/2026-08-23-rhi-gpudevice-plan.md` -- that phase is finished exactly when this
  * list is empty. Shrink it; never grow it without a plan entry saying why.
  */
-val exemptBackendFiles = when (project.path) {
-    ":awake:backend:vulkan" -> listOf(
-        "renderer/RendererCommandRecording.kt",
-        "renderer/RendererDraw3D.kt",
-        "renderer/RendererFrameContext.kt",
-        "renderer/RendererOffscreen.kt",
-        "renderer/Renderer.kt",
-    )
-    ":awake:backend:webgpu" -> listOf(
-        "renderer/RendererDraw3D.kt",
-        "renderer/RendererOffscreen.kt",
-        "renderer/RendererOpaqueDraws.kt",
-        "renderer/WebGpuFrameContext.kt",
-        "renderer/Renderer.kt",
-    )
-    else -> emptyList()
-}
+val exemptBackendFiles = emptyList<String>()
 
 /**
  * Files still declaring [backendContentVocabulary], tracked as debt. **Empty since 2026-08-24**

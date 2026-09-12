@@ -72,13 +72,16 @@ public final class com/awakekt/awake/scene/binding/SceneWorldExportKt {
 public final class com/awakekt/awake/scene/runtime/DefaultSceneComponentResolvers {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/runtime/DefaultSceneComponentResolvers;
 	public final fun getAll ()Ljava/util/List;
+	public final fun getAmbientLightResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getBindings ()Ljava/util/List;
 	public final fun getCameraResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getEnvironmentResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getFogResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getLightResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getMeshRendererResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getPbrMaterialResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getPrefabLinkResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentResolver;
+	public final fun getSkyboxResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getSpinControlResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun install ()V
 }

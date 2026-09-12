@@ -180,6 +180,24 @@ class RenderSystemTest {
     }
 
     @Test
+    fun directionalLightDerivesDirectionFromTransformRotation() {
+        val world = worldWithPrimaryCamera()
+        val lightEntity = world.create()
+        val pitch = (kotlin.math.PI / 4.0).toFloat()
+        world.add(lightEntity, Transform(rotation = Vec3f(pitch, 0f, 0f)))
+        world.add(lightEntity, Light(type = Light.Type.Directional, color = Vec3f(1f, 1f, 1f), intensity = 1f))
+        val renderer = RecordingRenderer()
+
+        RenderSystem(renderer).update(world, 1f / 60f)
+
+        val light = renderer.lastLight
+        assertNotNull(light)
+        assertEquals(0f, light.direction.x, 0.001f)
+        assertEquals(-kotlin.math.sin(pitch), light.direction.y, 0.001f)
+        assertEquals(kotlin.math.cos(pitch), light.direction.z, 0.001f)
+    }
+
+    @Test
     fun cascadesAreFittedUnlessTheToggleSaysOtherwise() {
         val world = worldWithPrimaryCamera()
         val renderer = RecordingRenderer()

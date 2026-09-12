@@ -10,10 +10,12 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.squaredDistanceFrom
 import com.awakekt.awake.core.math.times
 import com.awakekt.awake.render.command.BufferHandle
+import com.awakekt.awake.render.command.GpuDrawCommand
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.sortForRecording
+import com.awakekt.awake.render.renderer.CullMode
 import com.awakekt.awake.render.passes.uniforms.SceneFrameUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLightUniforms
 import com.awakekt.awake.render.passes.uniforms.litShadowUniforms
@@ -22,11 +24,10 @@ import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.instancedDrawKind
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.pipeline.resolveInstanced
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.renderer.EnvironmentUniforms
 import com.awakekt.awake.render.renderer.InstancedUniformLayout
 import com.awakekt.awake.render.renderer.ParticleExtraUniformLayout
 import com.awakekt.awake.render.renderer.ParticleUniformLayout
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.UNSHADOWED_CASCADES
 import com.awakekt.awake.render.renderer.UniformFields
@@ -83,6 +84,54 @@ internal fun Renderer.prepareOpaqueDraws(
     return PreparedDraws(opaque = sorted.opaqueByPipeline, transparent = sorted.transparent)
 }
 
+private val DEFAULT_LIGHT_FLOATS = floatArrayOf(
+    0.4f, 0.8f, 0.4f, 0f,
+    1.0f, 1.0f, 1.0f, 1.0f,
+)
+
+internal fun Renderer.prepareGpuDraws(
+    draws: List<GpuDrawCommand>,
+    isTransparent: Boolean,
+    primary: PrimaryPipelineBinding,
+    viewProjection: Mat4,
+    cameraEye: Vec3f,
+    singleIndexStart: Int = 0,
+): PreparedDraws {
+    val prepared = ArrayList<PreparedDraw>(draws.size)
+    var singleIndex = singleIndexStart
+    for (cmd in draws) {
+        val mesh = cmd.mesh as Mesh
+        val material = cmd.material as Material
+        val pipeline = pipelines.resolve(
+            format = mesh.format,
+            cullMode = CullMode.Back,
+            transparent = isTransparent,
+            wireframe = primary.wireframe,
+        )?.handle ?: primary.pipeline
+        val slot = bufferPools.uniformSlotForDraw(pipeline.pipeline, singleIndex)
+        val mvp = cmd.transform * viewProjection
+        val uniformFloats = mvp.data + DEFAULT_LIGHT_FLOATS
+        graphicsDevice.wgpuContext.device.queue.writeBuffer(
+            slot.buffer,
+            0uL,
+            fastArrayBufferOf(uniformFloats),
+        )
+        prepared += WebGpuPreparedDraw(
+            pipeline = pipeline,
+            materialBinding = slot.binding,
+            vertexBuffer = mesh.vertexBinding,
+            indexBuffer = mesh.indexBinding,
+            elementCount = mesh.indexCount,
+            transparent = isTransparent,
+            depthSortKey = cmd.transform.squaredDistanceFrom(cameraEye),
+            batchKey = mesh.hashCode(),
+        )
+        singleIndex += 1
+    }
+    val sorted = sortForRecording(prepared)
+    return PreparedDraws(opaque = sorted.opaqueByPipeline, transparent = sorted.transparent)
+}
+
 /** This frame's draws, split by how they must be ordered: opaque batched by pipeline, transparent
  * back-to-front. See [SharedTransparentRenderFeature] for why one list cannot serve both. */
 internal data class PreparedDraws(
@@ -112,6 +161,7 @@ internal class FrameDrawContext(
     /** The light itself, for a feature that reads direction or colour rather than the packed
      * uniforms -- the sky does. Carried here so a pass takes one frame argument, not four. */
     val light: SceneLight,
+    val environment: EnvironmentUniforms = EnvironmentUniforms.Default,
 )
 
 internal class PrimaryPipelineBinding(
@@ -170,7 +220,7 @@ private fun Renderer.texturedDraw(
 ): PreparedDraw {
     val material = drawCall.material as Material
     material.updateUniformBuffer(
-        texturedUniforms(drawCall, mvp, SceneFrameUniforms(frame.lightUniforms, frame.cameraEye, fogFloats())),
+        texturedUniforms(drawCall, mvp, SceneFrameUniforms(frame.lightUniforms, frame.cameraEye, fogFloats(frame.environment))),
     )
     val mesh = drawCall.mesh as Mesh
     return WebGpuPreparedDraw(
@@ -223,7 +273,7 @@ private fun Renderer.primaryDraw(
             drawCall = drawCall,
             mvp = mvp,
             cascades = cascades ?: UNSHADOWED_CASCADES,
-            frame = SceneFrameUniforms(frame.lightUniforms, frame.cameraEye, fogFloats()),
+            frame = SceneFrameUniforms(frame.lightUniforms, frame.cameraEye, fogFloats(frame.environment)),
         )
     } else {
         UniformWriter(InstancedUniformLayout)

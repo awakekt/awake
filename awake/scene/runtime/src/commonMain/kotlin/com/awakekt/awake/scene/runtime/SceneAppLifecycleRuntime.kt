@@ -38,6 +38,7 @@ import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.RenderSystem
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
+import com.awakekt.awake.scene.rendering.environment.EnvironmentSystem
 import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.InstancedSkinnedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
@@ -388,4 +389,12 @@ class SceneAppLifecycleRuntime internal constructor(
  * [com.awakekt.awake.scene.rendering.debug.WorldDebugSettings] entity and
  * toggles it on -- every existing scene is unaffected by its presence here. */
 fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(): List<System> =
-    listOf(TransformSystem(), RenderSystem(renderer), DebugVisualizationSystem(renderer))
+    listOf(
+        TransformSystem(),
+        // Reads Environment + Light(Directional) entities → pushes sky/fog/shadow flags to the
+        // renderer before RenderSystem calls renderer.draw(). Same ordering as Godot: the scene
+        // tree updates are applied before the render pass.
+        EnvironmentSystem(renderer),
+        RenderSystem(renderer),
+        DebugVisualizationSystem(renderer),
+    )

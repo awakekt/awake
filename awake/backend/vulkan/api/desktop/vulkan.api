@@ -333,6 +333,8 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun createRenderTarget (II)Lcom/awakekt/awake/render/texture/RenderTarget;
 	public fun destroy ()V
 	public fun draw (Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;)V
+	public fun draw (Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;)V
+	public fun draw (Lcom/awakekt/awake/render/renderer/ScenePassDescriptor;)V
 	public fun drawDebugLines (Ljava/util/List;)V
 	public fun drawUi (Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
@@ -350,6 +352,8 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun presentWithoutScene ()V
 	public fun readPixels (Lcom/awakekt/awake/render/texture/RenderTarget;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;)V
+	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;)V
+	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/renderer/ScenePassDescriptor;)V
 	public fun setClearColor (Lcom/awakekt/awake/core/color/Color;)V
 	public fun setDebugMode (Z)V
 	public fun setFogColor (Lcom/awakekt/awake/core/color/Color;)V

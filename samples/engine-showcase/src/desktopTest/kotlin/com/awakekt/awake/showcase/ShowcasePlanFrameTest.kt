@@ -212,7 +212,7 @@ class ShowcasePlanFrameTest {
             ),
             light = SceneLight(
                 direction = Vec3f(sceneSun.direction.x, sceneSun.direction.y, sceneSun.direction.z),
-                color = Vec3f(sceneSun.color.x, sceneSun.color.y, sceneSun.color.z),
+                color = Vec3f(sceneSun.color.r, sceneSun.color.g, sceneSun.color.b),
             ),
         )
     }

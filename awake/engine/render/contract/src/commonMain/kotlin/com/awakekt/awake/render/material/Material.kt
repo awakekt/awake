@@ -12,14 +12,9 @@ package com.awakekt.awake.render.material
  * backend-specific app-bootstrap code (`VulkanApplication.setupVulkan()`) on the concrete
  * type directly, never through this interface.
  */
-interface Material {
-    /** Writes this material's whole uniform block -- every field its shader's `Uniforms`
-     * struct declares, concatenated in layout order, not just the MVP the parameter was
-     * once named for. See `MaterialUniformLayouts` for the layouts callers pack against. */
-    fun updateUniformBuffer(uniformFloats: FloatArray)
-    // No bind here, for the same reason Mesh has no bind/draw: it took a raw VkCommandBuffer
-    // and VkPipelineLayout as Longs, which WebGPU could only answer with TODO(). It had zero
-    // callers.
+interface Material : GpuMaterial {
+    /** Writes this material's whole uniform block. */
+    override fun updateUniformBuffer(uniformFloats: FloatArray)
 
-    fun destroy()
+    override fun destroy()
 }

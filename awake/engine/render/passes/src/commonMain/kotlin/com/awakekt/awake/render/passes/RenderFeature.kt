@@ -12,6 +12,10 @@ import com.awakekt.awake.render.command.CommandRecorder
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.renderer.DEFAULT_HORIZON_COLOR
+import com.awakekt.awake.render.renderer.DEFAULT_SCENE_LIGHT
+import com.awakekt.awake.render.renderer.DEFAULT_ZENITH_COLOR
+import com.awakekt.awake.render.renderer.EnvironmentUniforms
 import com.awakekt.awake.render.renderer.SceneLight
 
 /**
@@ -55,15 +59,24 @@ interface RenderFrameContext {
         get() = emptyList()
     val primaryPipeline: PipelineHandle
 
-    /** This frame's camera matrices and light, for features that write their own pipeline's
+    /** This frame's camera matrices and light direction for features that write their own pipeline's
      * uniform block (debug lines, sky) before drawing with it. */
     val viewProjection: Mat4
     val cameraEye: Vec3f
-    val light: SceneLight
+    val light: SceneLight get() = DEFAULT_SCENE_LIGHT
+    val sunDirection: Vec3f get() = light.direction
 
-    val showEnvironment: Boolean
-    val horizonColor: Color
-    val zenithColor: Color
+    val showEnvironment: Boolean get() = false
+    val horizonColor: Color get() = DEFAULT_HORIZON_COLOR
+    val zenithColor: Color get() = DEFAULT_ZENITH_COLOR
+
+    /** This frame's environment uniforms (skybox, horizon, zenith, fog, shadows). */
+    val environment: EnvironmentUniforms
+        get() = EnvironmentUniforms(
+            showSky = showEnvironment,
+            horizonColor = horizonColor,
+            zenithColor = zenithColor,
+        )
 
     /** The surface this pass draws into, for scissor clamping. */
     val surfaceWidth: Int

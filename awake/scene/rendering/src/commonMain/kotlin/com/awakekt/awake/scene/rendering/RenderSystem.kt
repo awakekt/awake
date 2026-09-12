@@ -19,11 +19,16 @@ import com.awakekt.awake.core.math.planes
 import com.awakekt.awake.core.math.screenBounds
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.ecs.firstOrNull
+import com.awakekt.awake.ecs.singleOrNull
+import com.awakekt.awake.render.passes.GpuSceneFrame
 import com.awakekt.awake.render.renderer.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.renderer.EnvironmentUniforms
 import com.awakekt.awake.render.renderer.PointLight
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.SceneLight
+import com.awakekt.awake.render.renderer.ScenePassDescriptor
 import com.awakekt.awake.render.renderer.directionalShadowBox
 import com.awakekt.awake.render.renderer.shadowCascadeUniforms
 import com.awakekt.awake.scene.core.transform.Transform
@@ -43,6 +48,8 @@ import com.awakekt.awake.scene.rendering.particles.currentFrame
 import com.awakekt.awake.scene.rendering.spatial.Occluder
 import com.awakekt.awake.scene.rendering.spatial.SpatialIndex
 import com.awakekt.awake.scene.rendering.spatial.findSpatialIndex
+import kotlin.math.cos
+import kotlin.math.sin
 
 class RenderSystem(
     private val renderer: Renderer,
@@ -56,6 +63,7 @@ class RenderSystem(
 
     /** Refilled each frame by [sceneLight]; see its own note on why it is not a local. */
     private val pointLights = ArrayList<PointLight>()
+    private val scratchDirectionalDir = Vec3()
 
     /** How many entities occlusion culling actually excluded last frame -- zero when no
      * [Occluder] entities exist, or when none of them fully cover anything. Exists purely so a
@@ -73,7 +81,12 @@ class RenderSystem(
             // presented: `drawUi()` already staged this frame's UI overlay, and `renderer.draw()`
             // is the only call that acquires/submits/presents a frame. Skipping it here left the
             // window showing nothing at all, forever, even though the UI pass had real content.
-            renderer.draw(FALLBACK_LENS, emptyList(), DEFAULT_SCENE_LIGHT)
+            renderer.draw(
+                camera = FALLBACK_LENS,
+                drawCalls = emptyList(),
+                light = DEFAULT_SCENE_LIGHT,
+                environment = environmentUniforms(world),
+            )
             return
         }
         drawCalls.clear()
@@ -232,7 +245,15 @@ class RenderSystem(
             if (bounds != null && !passesCulling(entity.id, transform, bounds, culling)) return@forEach
             drawCalls.add(DrawCall(mesh = level.mesh, material = level.material, model = transform.worldMatrix))
         }
-        renderer.draw(camera.lens, drawCalls, sceneLight(world, camera))
+
+        val light = sceneLight(world, camera)
+        val env = environmentUniforms(world)
+        renderer.draw(
+            camera = camera.lens,
+            drawCalls = drawCalls,
+            light = light,
+            environment = env,
+        )
     }
 
     /**
@@ -425,6 +446,7 @@ class RenderSystem(
      */
     private fun sceneLight(world: World, camera: Camera): SceneLight {
         var directional: Light? = null
+        var directionalHasTransformRotation = false
         // Reused, not rebuilt: this runs every frame, and `skills/awake-core-math` rules out
         // allocating inside System.update.
         //
@@ -435,7 +457,20 @@ class RenderSystem(
         pointLights.clear()
         world.family<Light>().forEach { entity, light ->
             when (light.type) {
-                Light.Type.Directional -> if (directional == null) directional = light
+                Light.Type.Directional -> if (directional == null) {
+                    directional = light
+                    val transform = world.get<Transform>(entity)
+                    if (transform != null && (transform.rotation.x != 0f || transform.rotation.y != 0f || transform.rotation.z != 0f)) {
+                        val rot = transform.rotation
+                        val cp = cos(rot.x)
+                        val fwdX = sin(rot.y) * cp
+                        val fwdY = sin(rot.x)
+                        val fwdZ = -cos(rot.y) * cp
+                        // Light direction is the direction light shines FROM (-forward)
+                        scratchDirectionalDir.set(-fwdX, -fwdY, -fwdZ)
+                        directionalHasTransformRotation = true
+                    }
+                }
                 Light.Type.Point -> {
                     val transform = world.get<Transform>(entity) ?: return@forEach
                     pointLights += PointLight(
@@ -450,7 +485,8 @@ class RenderSystem(
         val base = if (sun == null) {
             DEFAULT_SCENE_LIGHT.copy(points = pointLights)
         } else {
-            SceneLight(sun.direction, sun.color * sun.intensity, pointLights)
+            val dir = if (directionalHasTransformRotation) scratchDirectionalDir else sun.direction
+            SceneLight(dir, sun.color * sun.intensity, pointLights)
         }
         // The volume a directional light covers is a content decision, so it is made here rather
         // than inside a backend -- see docs/reference/render-extensibility.md. A backend renders
@@ -489,6 +525,40 @@ class RenderSystem(
         // viewProjection stays the near cascade: the debug visualiser draws its wireframe, and a
         // backend that reads it alone still gets the cascade covering what is nearest.
         return base.copy(viewProjection = cascades.viewProjections.first(), cascades = cascades)
+    }
+
+    private fun environmentUniforms(world: World): EnvironmentUniforms {
+        val skybox = world.singleOrNull<Skybox>() ?: world.firstOrNull<Skybox>()
+        val fog = world.singleOrNull<Fog>() ?: world.firstOrNull<Fog>()
+        val env = world.singleOrNull<Environment>() ?: world.firstOrNull<Environment>()
+
+        val showSky = skybox?.enabled ?: env?.showEnvironment ?: EnvironmentUniforms.Default.showSky
+        val horizon = skybox?.horizonColor ?: env?.horizonColor ?: EnvironmentUniforms.Default.horizonColor
+        val zenith = skybox?.zenithColor ?: env?.zenithColor ?: EnvironmentUniforms.Default.zenithColor
+
+        val fogDensity = if (fog != null) {
+            if (fog.enabled) fog.density else 0f
+        } else {
+            env?.fogDensity ?: EnvironmentUniforms.Default.fogDensity
+        }
+        val fogColor = fog?.color ?: env?.fogColor ?: EnvironmentUniforms.Default.fogColor
+
+        var directional: Light? = null
+        world.family<Light>().forEachComponent { light ->
+            if (directional == null && light.type == Light.Type.Directional) {
+                directional = light
+            }
+        }
+        val shadows = directional?.shadowsEnabled ?: EnvironmentUniforms.Default.shadowsEnabled
+
+        return EnvironmentUniforms(
+            showSky = showSky,
+            horizonColor = horizon,
+            zenithColor = zenith,
+            fogDensity = fogDensity,
+            fogColor = fogColor,
+            shadowsEnabled = shadows,
+        )
     }
 }
 

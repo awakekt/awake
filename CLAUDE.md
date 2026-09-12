@@ -22,6 +22,16 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 - [Awake Render Pipeline](.agents/skills/awake-render-pipeline/SKILL.md): RenderPlan, ShaderSet, and pass orchestration
 - [Awake Render Headless Verification](.agents/skills/awake-render-headless-verification/SKILL.md): Measuring what the engine renders, without a window
 
+> **⚠️ Before touching `Renderer.kt`, any `render:contract` type, or any backend renderer file:**
+> Read `awake-render-pipeline` §0.5 (Two-Layer Model) and
+> `docs/reference/render-hardware-interface.md` § HAL vs Render Graph.
+> The most common defect is adding scene vocabulary (`SceneLight`, `DrawCall`, `Lens`,
+> shadow or fog types) to `render:contract`. Decision D31 classifies every current type.
+> In the target state, `Renderer` accepts only `GpuPassInput` with generic `GpuSubPass`es,
+> while the five exempt files per backend (`renderer/Renderer.kt`, `RendererDraw3D.kt`, etc.)
+> are **known legacy debt — not a precedent** — and will shrink to zero.
+
+
 ### Physics & Asset Pipelines
 - [Awake Physics Jolt](.agents/skills/awake-physics-jolt/SKILL.md): Jolt physics bodies, collision shapes, and steps
 - [Awake Terrain Authoring](.agents/skills/awake-terrain-authoring/SKILL.md): Raw Heightmap and surface sampling

@@ -6,13 +6,11 @@
 package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.core.geometry.MeshGeometry
-import com.awakekt.awake.core.math.Lens
-import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.sortForRecording
+import com.awakekt.awake.render.passes.GpuSceneFrame
 import com.awakekt.awake.render.passes.RenderPassSlot
-import com.awakekt.awake.render.renderer.DrawCall
-import com.awakekt.awake.render.renderer.SceneLight
-import com.awakekt.awake.render.renderer.shadowCascades
+import com.awakekt.awake.render.renderer.EnvironmentUniforms
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -120,7 +118,7 @@ suspend fun Renderer.readPresentedPixels(): TextureAsset {
     val height = swapchainManager.extent.height
     // The frame just drawn is the one BEFORE the manager's current slot, which draw() advanced.
     val drawn = (swapchainManager.currentFrame + swapchainManager.imageViews.size - 1) %
-        swapchainManager.imageViews.size
+            swapchainManager.imageViews.size
     return readImageBytes(swapchainManager.headlessImages[drawn], width, height)
 }
 
@@ -138,69 +136,35 @@ internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): Render
     return target
 }
 
-/**
- * The same Scene-slot feature list the swapchain path records, rather than a second hand-rolled
- * grouping loop.
- *
- * That loop had drifted: it grouped every prepared draw by pipeline with no transparency
- * separation, so an offscreen render drew transparent surfaces in arbitrary order, and it
- * recorded no features at all -- no sky, no debug lines. StudioCameraPreview renders through
- * here, which is why its inset never showed either.
- */
-private fun Renderer.recordOffscreenScene(
-    commandBuffer: Long,
-    preparedDrawCalls: List<PreparedDrawCall>,
-    viewProjection: Mat4,
-    camera: Lens,
-    light: SceneLight,
-) {
-    val sorted = sortForRecording(preparedDrawCalls)
-    // Bind before the first feature; VulkanCommandRecorder rebinds it after pipeline transitions
-    // because a one-set content pipeline invalidates set 1.
-    bindDepthSet(commandBuffer)
-    recordSharedPassFeatures(
-        RenderPassSlot.Scene,
-        RendererFrameContext(
-            renderer = this,
-            commandBuffer = commandBuffer,
-            frameIndex = commandBuffers.size,
-            groupedDrawCalls = sorted.opaqueByPipeline,
-            transparentDrawCalls = sorted.transparent,
-            primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
-            viewProjection = viewProjection,
-            cameraEye = camera.eye,
-            light = light,
-        ),
-    )
-}
-
 internal fun Renderer.performRenderToTexture(
     target: RenderTarget,
-    camera: Lens,
-    drawCalls: List<DrawCall>,
-    light: SceneLight,
+    input: GpuPassInput,
 ) {
     val offscreen = target as OffscreenRenderTarget
-    val sceneRect =
-        sceneViewport?.clampedTo(offscreen.width.toFloat(), offscreen.height.toFloat())
-    val aspect = sceneRect?.aspect ?: (offscreen.width.toFloat() / offscreen.height.toFloat())
-    val viewProjection = camera.viewProjectionMatrix(aspect, clipSpace)
-    val preparedDrawCalls = prepareDrawCalls(
-        frameIndex = commandBuffers.size,
-        viewProjection = viewProjection,
-        drawCalls = drawCalls,
-        light = light,
-        cascades = if (depthTarget != null) light.shadowCascades() else null,
-        cameraPosition = camera.eye,
+    val sceneRect = sceneViewport?.clampedTo(offscreen.width.toFloat(), offscreen.height.toFloat())
+    val materialUsage = mutableMapOf<RenderMaterial, Int>()
+    val preparedOpaque = prepareGpuDraws(
+        commandBuffers.size,
+        input.viewProjection,
+        input.cameraEye,
+        input.opaqueDraws,
+        isTransparent = false,
+        materialUsage,
     )
+    val preparedTransparent = prepareGpuDraws(
+        commandBuffers.size,
+        input.viewProjection,
+        input.cameraEye,
+        input.transparentDraws,
+        isTransparent = true,
+        materialUsage,
+    )
+    val preparedDrawCalls = preparedOpaque + preparedTransparent
+    val sorted = sortForRecording(preparedDrawCalls)
 
-    // Before the colour pass, exactly as the swapchain path does it: the scene's fragment shader
-    // samples this frame's shadow map, so its depth content has to be complete first. Its absence
-    // here is why an offscreen render used to show unshadowed geometry -- and why nothing could
-    // pixel-test the shadow map at all.
     runOffscreenCommands { commandBuffer ->
-        recordDepthPrePass(commandBuffer, preparedDrawCalls, light.shadowCascades())
-        recordSceneDepthPass(commandBuffer, preparedDrawCalls, cameraDepthPass(viewProjection))
+        recordDepthPrePass(commandBuffer, preparedDrawCalls, null)
+        recordSceneDepthPass(commandBuffer, preparedDrawCalls, cameraDepthPass(input.viewProjection))
         offscreen.prepareForColorAttachment(commandBuffer)
         val renderPassInfo = VkRenderPassBeginInfo(
             renderPass = renderPipeline.renderPass,
@@ -226,11 +190,49 @@ internal fun Renderer.performRenderToTexture(
             ),
         )
         Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(scissor))
-        commandRecorder.commandBuffer = commandBuffer
-        recordOffscreenScene(commandBuffer, preparedDrawCalls, viewProjection, camera, light)
+
+        recordSharedPassFeatures(
+            RenderPassSlot.Scene,
+            RendererFrameContext(
+                renderer = this,
+                commandBuffer = commandBuffer,
+                frameIndex = commandBuffers.size,
+                groupedDrawCalls = sorted.opaqueByPipeline,
+                transparentDrawCalls = sorted.transparent,
+                primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
+                viewProjection = input.viewProjection,
+                cameraEye = input.cameraEye,
+            ),
+        )
         Vulkan.vkCmdEndRenderPass(commandBuffer)
         offscreen.transitionToShaderReadOnly(commandBuffer)
     }
+}
+
+internal fun Renderer.performRenderToTexture(
+    target: RenderTarget,
+    camera: Lens,
+    drawCalls: List<DrawCall>,
+    light: SceneLight,
+    environment: EnvironmentUniforms = EnvironmentUniforms(
+        showSky = showEnvironment,
+        horizonColor = horizonColor,
+        zenithColor = zenithColor,
+        fogDensity = fogDensity,
+        fogColor = fogColor,
+        shadowsEnabled = shadowsEnabled,
+    ),
+) {
+    val offscreen = target as OffscreenRenderTarget
+    val sceneRect = sceneViewport?.clampedTo(offscreen.width.toFloat(), offscreen.height.toFloat())
+    val aspect = sceneRect?.aspect ?: (offscreen.width.toFloat() / offscreen.height.toFloat())
+    val frame = GpuSceneFrame(
+        lens = camera,
+        drawCalls = drawCalls,
+        light = light,
+        environment = environment,
+    )
+    performRenderToTexture(target, frame.toPassInput(clipSpace, aspect))
 }
 
 internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAsset {
@@ -269,7 +271,7 @@ internal suspend fun Renderer.readImageBytes(
         physicalDevice,
         stagingRequirements.memoryTypeBits,
         VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
     )
     val stagingMemory = VulkanBuffers.vkAllocateMemory(
         device,

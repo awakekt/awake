@@ -21,6 +21,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:core:math"))
+            api(project(":awake:core:color"))
             api(project(":awake:core:logging"))
             api(project(":awake:core:host"))
             implementation(libs.kotlinx.serialization.json)

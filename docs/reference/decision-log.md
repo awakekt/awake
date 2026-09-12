@@ -1665,3 +1665,103 @@ already solve it. Most proposals die to one of the two.
 is the one unbounded quantity in the engine — the thing floating origin exists to keep out of
 float32 — and `Vec3d` currently has no production user besides `MeshSimplifier`'s QEM
 quadrics. Revisit when world size grows or physics origin shifting lands.
+
+### D31 — `GpuDevice`/`Renderer` is a pure hardware interface; scene vocabulary does not cross the HAL
+**DECIDED (2026-09-09).** Full audit:
+[docs/reference/render-hardware-interface.md § HAL vs Render Graph](render-hardware-interface.md#hal-vs-render-graph--the-complete-vocabulary-boundary).
+
+#### Root cause
+
+`render:contract` has accumulated scene-level vocabulary that does not belong on a hardware
+interface: `SceneLight`, `DrawCall`, `Lens`, shadow cascade types, environment uniforms, skybox
+uniforms, particle uniforms, fog fields, and scene-aware debug geometry. Both backends depend
+on `render:contract`, so they receive this vocabulary for free — every backend file that
+imports `DrawCall`, `SceneLight`, or `Lens` exists because `Renderer.draw()`'s signature
+passes them directly:
+
+```kotlin
+// current — HAL method takes scene objects (root cause)
+abstract fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight)
+```
+
+#### Decision
+
+The HAL (`GpuDevice` / `Renderer`) knows hardware only: pipelines, buffers, textures, samplers,
+command recording, viewport scissors, pixel readback. It must never name or import a scene
+object. The classification test: *could a third backend implement this type without knowing what
+scene content it serves?* If no, it does not belong in `render:contract`.
+
+#### Vocabulary groups (see full audit table in render-hardware-interface.md)
+
+- **Group A** — scene shading / lighting: `SceneLight`, `DrawCall`, `Lens`, `EnvironmentUniforms`, `ScenePassDescriptor`, scene-default constants on `Renderer`.
+- **Group B** — shadow pass data: `ShadowCascades`, `DirectionalShadowBox`, `ShadowCascadeUniforms` and all cascade constants.
+- **Group C** — content-specific uniform layouts: `SkyboxUniforms`/`SkyboxFields`, `DepthFogFields`, `ParticleUniforms`, `InfiniteGridFields`.
+- **Group D** — scene-aware debug geometry: `DebugGeometry` functions that take `Lens` or light objects.
+
+#### Migration plan
+
+**Phase 1 (documentation, no code changes):** Record this decision; add the complete boundary
+audit to `render-hardware-interface.md`; update agent skills and agent personas (`awake-render-pipeline`,
+`awake-render-vulkan`, `awake-render-webgpu`, `awake-render-backend-engineer`) to name all four groups and frame
+the rules as forward-looking targets rather than immediate defects (existing imports are tracked
+debt, not breakage). Add the exempt-file ledger to `awake-render-vulkan` and
+`awake-render-webgpu` skills with the exact five files per backend from
+`com.awakekt.awake.plugin.backend-layering.gradle.kts`.
+
+**Phase 2 (code, the real work):** Move Group A–D types to their target homes. Replace
+`Renderer.draw(camera, drawCalls, light)` with `Renderer.draw(input: GpuPassInput)`. Introduce
+generic `GpuSubPass` execution for pre-passes (depth pre-pass, shadow cascades) so the backend
+never inspects lights or shadow cascades. Purge `light: SceneLight` and `environment: EnvironmentUniforms`
+from `RenderFrameContext` in `render:passes`. High-level scene state (`GpuSceneFrame`) is compiled by
+the render graph before entering the HAL. When this is done, `verifyBackendLayering`'s import ledger
+reaches zero and backends are 100% free of game-authored vocabulary.
+
+#### Target shape
+
+```kotlin
+// render:contract — pure hardware primitives
+data class GpuDrawCommand(
+    val mesh: Mesh,
+    val material: Material,
+    val transform: Mat4,
+    val instances: Int = 1,
+    val instanceVertexBuffer: BufferHandle? = null,
+    val jointPaletteBinding: MaterialBinding? = null,
+    val instanceColorBuffer: BufferHandle? = null,
+    val instanceFrameBuffer: BufferHandle? = null,
+)
+
+data class GpuSubPass(
+    val target: RenderTarget?,
+    val targetLayer: Int = 0,
+    val viewProjection: Mat4,
+    val viewport: RenderViewport? = null,
+    val draws: List<GpuDrawCommand> = emptyList(),
+    val passUniforms: FloatArray = FloatArray(0),
+    val depthBiasConstant: Float = 0f,
+    val depthBiasSlope: Float = 0f,
+)
+
+data class GpuPassInput(
+    val prePasses: List<GpuSubPass> = emptyList(),
+    val viewProjection: Mat4,
+    val cameraEye: Vec3f,
+    val opaqueDraws: List<GpuDrawCommand>,
+    val transparentDraws: List<GpuDrawCommand>,
+    val passUniforms: FloatArray,
+)
+
+interface Renderer : GpuDevice {
+    fun draw(input: GpuPassInput)
+    fun renderToTexture(target: RenderTarget, input: GpuPassInput)
+    // No SceneLight, no Lens, no DrawCall, no EnvironmentUniforms anywhere
+}
+```
+
+#### Phase 1 gating rule (agent-facing)
+
+`Renderer.kt` still declares `fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight)`
+while Phase 2 is pending. The five exempt files per backend in `verifyBackendLayering` are
+**known debt, not a precedent**. Do not add a new scene import to any exempt file and do not
+add a sixth file to the ledger without a plan entry.
+

@@ -9,9 +9,7 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.sortForRecording
 import com.awakekt.awake.render.passes.RenderPassSlot
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
-import com.awakekt.awake.render.renderer.shadowCascades
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.enums.flags.VkCommandBufferUsageFlagBits
@@ -28,7 +26,7 @@ internal fun Renderer.recordCommandBuffer(
     drawCalls: List<PreparedDrawCall>,
     viewProjection: Mat4,
     cameraEye: Vec3f,
-    light: SceneLight,
+    cascades: ShadowCascadeUniforms? = null,
 ) {
     Vulkan.vkBeginCommandBuffer(
         commandBuffer,
@@ -39,7 +37,7 @@ internal fun Renderer.recordCommandBuffer(
     // Before the scene pass begins, in the same buffer: its fragment shader samples the depth this
     // writes, and DepthTarget's outgoing subpass dependency orders the two on the GPU. This used
     // to be a separate submit the CPU blocked on.
-    recordDepthPrePass(commandBuffer, drawCalls, light.shadowCascades())
+    recordDepthPrePass(commandBuffer, drawCalls, cascades)
     // The camera's own depth, expressed as the one "cascade" this frame renders from the eye.
     recordSceneDepthPass(commandBuffer, drawCalls, cameraDepthPass(viewProjection))
     Vulkan.vkCmdBeginRenderPass(
@@ -63,7 +61,6 @@ internal fun Renderer.recordCommandBuffer(
         primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
         viewProjection = viewProjection,
         cameraEye = cameraEye,
-        light = light,
     )
     val viewport = VkViewport(
         width = swapchainManager.extent.width.toFloat(),

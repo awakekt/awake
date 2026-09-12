@@ -9,7 +9,6 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
 import com.awakekt.awake.render.command.PipelineHandle
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 import com.awakekt.awake.vulkan.pipeline.UiPipelineSet
 import com.awakekt.awake.vulkan.pipeline.VulkanRenderFrameContext
@@ -28,11 +27,7 @@ internal class RendererFrameContext(
     override val primaryPipeline: RenderPipeline,
     override val viewProjection: Mat4,
     override val cameraEye: Vec3f,
-    override val light: SceneLight,
 ) : VulkanRenderFrameContext {
-    override val showEnvironment get() = renderer.showEnvironment
-    override val horizonColor get() = renderer.horizonColor
-    override val zenithColor get() = renderer.zenithColor
     override val lineMesh get() = renderer.lineMesh
     override val uiRuns get() = renderer.uiRuns
     override val surfaceWidth get() = renderer.swapchainManager.extent.width

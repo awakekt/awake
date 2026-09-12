@@ -31,26 +31,15 @@ object EnvironmentBinding : SceneComponentBinding<Environment, SceneEnvironment>
         component.toSceneComponent()
 
     fun SceneEnvironment.toComponent(): Environment = Environment(
-        sunAzimuthDeg = sunAzimuthDeg,
-        sunElevationDeg = sunElevationDeg,
-        sunIntensity = sunIntensity,
-        sunColor = Color(sunColorR, sunColorG, sunColorB, 1f),
         showEnvironment = showEnvironment,
         horizonColor = Color(horizonColorR, horizonColorG, horizonColorB, 1f),
         zenithColor = Color(zenithColorR, zenithColorG, zenithColorB, 1f),
         fogDensity = fogDensity,
         fogColor = Color(fogColorR, fogColorG, fogColorB, 1f),
         ambientLight = ambientLight,
-        shadowsEnabled = shadowsEnabled,
     )
 
     fun Environment.toSceneComponent(): SceneEnvironment = SceneEnvironment(
-        sunAzimuthDeg = sunAzimuthDeg,
-        sunElevationDeg = sunElevationDeg,
-        sunIntensity = sunIntensity,
-        sunColorR = sunColor.r,
-        sunColorG = sunColor.g,
-        sunColorB = sunColor.b,
         showEnvironment = showEnvironment,
         horizonColorR = horizonColor.r,
         horizonColorG = horizonColor.g,
@@ -63,6 +52,5 @@ object EnvironmentBinding : SceneComponentBinding<Environment, SceneEnvironment>
         fogColorG = fogColor.g,
         fogColorB = fogColor.b,
         ambientLight = ambientLight,
-        shadowsEnabled = shadowsEnabled,
     )
 }

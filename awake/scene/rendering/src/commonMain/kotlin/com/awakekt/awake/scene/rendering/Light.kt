@@ -34,6 +34,14 @@ data class Light(
     val type: Type = Type.Directional,
     val direction: Vec3f = Vec3f(DEFAULT_DIRECTION_X, DEFAULT_DIRECTION_Y, DEFAULT_DIRECTION_Z),
     val range: Float = DEFAULT_POINT_RANGE,
+    /**
+     * Whether this directional light casts shadows. Ignored for [Type.Point] lights -- point
+     * shadow maps require a cube-face depth pass that is not yet implemented.
+     *
+     * Matches Godot's `DirectionalLight3D.shadow_enabled` and Unreal's
+     * `DirectionalLight.CastShadows`.
+     */
+    val shadowsEnabled: Boolean = true,
 ) {
     enum class Type {
         Directional,

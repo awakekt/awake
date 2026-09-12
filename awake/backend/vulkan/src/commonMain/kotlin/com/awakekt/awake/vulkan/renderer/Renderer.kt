@@ -11,8 +11,8 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
-import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.SharedOpaqueRenderFeature
@@ -26,10 +26,8 @@ import com.awakekt.awake.render.renderer.CullMode
 import com.awakekt.awake.render.renderer.DEFAULT_FOG_COLOR
 import com.awakekt.awake.render.renderer.DEFAULT_HORIZON_COLOR
 import com.awakekt.awake.render.renderer.DEFAULT_ZENITH_COLOR
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderViewport
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
@@ -155,6 +153,7 @@ class Renderer internal constructor(
      * frozen last-good result rather than a one-frame flicker to "nothing occludes anything".
      * ponytail: freezes stale depth instead of clearing on disable; revisit if that staleness is
      * ever visible (e.g. toggling off, then moving whatever the pre-pass renders from). */
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var shadowsEnabled: Boolean = true
 
     override var clearColor: Color = Color.Black
@@ -166,10 +165,19 @@ class Renderer internal constructor(
      * comments. [showEnvironment] additionally needs the app to have opted into a skybox
      * content feature; with none supplied it stays a no-op flag, same shape as [wireframe]
      * with no wireframe pipeline. */
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var showEnvironment: Boolean = false
+
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var horizonColor: Color = DEFAULT_HORIZON_COLOR
+
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var zenithColor: Color = DEFAULT_ZENITH_COLOR
+
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var fogColor: Color = DEFAULT_FOG_COLOR
+
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var fogDensity: Float = 0f
 
     /** Applied to the 3D pass only (viewport + scissor + projection aspect); the UI pass keeps
@@ -329,19 +337,12 @@ class Renderer internal constructor(
 
     override fun createRenderTarget(width: Int, height: Int): RenderTarget = performCreateRenderTarget(width, height)
 
-    override fun renderToTexture(
-        target: RenderTarget,
-        camera: Lens,
-        drawCalls: List<DrawCall>,
-        light: SceneLight,
-    ) = performRenderToTexture(target, camera, drawCalls, light)
+    override fun draw(input: GpuPassInput) = performDraw(input)
+
+    override fun renderToTexture(target: RenderTarget, input: GpuPassInput) =
+        performRenderToTexture(target, input)
 
     override suspend fun readPixels(target: RenderTarget): TextureAsset = performReadPixels(target)
-
-    /** Delegates to [performDraw] ([RendererDraw3D.kt]) -- see that function's doc comment
-     * for why this can't just be the extracted body under the same name. */
-    override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) =
-        performDraw(camera, drawCalls, light)
 
     /** Delegates to [performDrawUi] ([RendererDrawUi.kt]) -- see [performDraw]'s doc comment
      * for why. */

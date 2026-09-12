@@ -6,7 +6,7 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-09-06` | **Total Tracked Docs**: `200`
+**Last Self-Healed**: `2026-09-09` | **Total Tracked Docs**: `201`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
@@ -43,6 +43,7 @@
 | **Audits** | [`Scene editor — production-readiness audit`](audits/2026-08-30-scene-editor-production-readiness-audit.md) | `Active` | Audited 2026-08-30 against `awake:editor`, `awake:editor:scene`, their only host |
 | **Audits** | [`Tooling Consolidation, Duplicate Audit, and 2D/3D Decoupling (2026-08-30)`](audits/2026-08-30-tooling-consolidation-plan.md) | `Active` | **Date:** 2026-08-30 |
 | **Audits** | [`Button group: intrinsic cross-axis sizing + per-corner radii`](audits/button-group-intrinsics-handoff.md) | `Active` | Handoff for a fresh session. Reference implementation is the user's own |
+| **Active Task** | [`Implementation Plan: HAL vs Render Graph — Decoupling `render:contract``](tasks/2026-09-09-hal-vs-render-graph-phase-1-plan.md) | `Active` | `render:contract` is Awake Engine's **Hardware Abstraction Layer (HAL)**. Over time, it accumulated |
 | **Active Task** | [`Awake Editor Plan — rebuild, do not port`](tasks/editor/01-compose-editor-plan-todo.md) | `Active` | Drafted 2026-08-22. Revised 2026-08-25. Status: Stages 0 and 1 foundations complete; |
 | **Active Task** | [``Vec3f` / `Vec3d` / `Vec3i` — precision variants`](tasks/math/01-vector-precision-variants-todo.md) | `Active` | Drafted 2026-08-22. Status: todo. Gated on a real consumer per variant; see Triggers. |
 | **Reference** | [`Agent Catalog`](reference/agent-catalog.md) | `Active` | This document is the canonical source for Awake's repo-local agent roster, naming convention, |

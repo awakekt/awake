@@ -9,8 +9,11 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.rendering.AmbientLight
 import com.awakekt.awake.scene.rendering.Environment
+import com.awakekt.awake.scene.rendering.Fog
 import com.awakekt.awake.scene.rendering.Light
+import com.awakekt.awake.scene.rendering.Skybox
 
 /**
  * Attaches a Directional Light component to this entity.
@@ -157,5 +160,80 @@ fun SceneAppDsl.environmentEntity(
 ) {
     entity(name) {
         environment(environment)
+    }
+}
+
+/** Attaches a [Skybox] component to this entity. */
+fun EntityScope.skybox(
+    skybox: Skybox = Skybox(),
+) {
+    with(skybox)
+}
+
+/** Spawns a dedicated skybox entity in a [SceneBuilder]. */
+fun SceneBuilder.skyboxEntity(
+    name: String = "skybox",
+    skybox: Skybox = Skybox(),
+): Entity = entity(name) {
+    skybox(skybox)
+}
+
+/** Spawns a dedicated skybox entity in a [SceneAppDsl]. */
+fun SceneAppDsl.skyboxEntity(
+    name: String = "skybox",
+    skybox: Skybox = Skybox(),
+) {
+    entity(name) {
+        skybox(skybox)
+    }
+}
+
+/** Attaches a [Fog] component to this entity. */
+fun EntityScope.fog(
+    fog: Fog = Fog(),
+) {
+    with(fog)
+}
+
+/** Spawns a dedicated fog entity in a [SceneBuilder]. */
+fun SceneBuilder.fogEntity(
+    name: String = "fog",
+    fog: Fog = Fog(),
+): Entity = entity(name) {
+    fog(fog)
+}
+
+/** Spawns a dedicated fog entity in a [SceneAppDsl]. */
+fun SceneAppDsl.fogEntity(
+    name: String = "fog",
+    fog: Fog = Fog(),
+) {
+    entity(name) {
+        fog(fog)
+    }
+}
+
+/** Attaches an [AmbientLight] component to this entity. */
+fun EntityScope.ambientLight(
+    ambientLight: AmbientLight = AmbientLight(),
+) {
+    with(ambientLight)
+}
+
+/** Spawns a dedicated ambient light entity in a [SceneBuilder]. */
+fun SceneBuilder.ambientLightEntity(
+    name: String = "ambient_light",
+    ambientLight: AmbientLight = AmbientLight(),
+): Entity = entity(name) {
+    ambientLight(ambientLight)
+}
+
+/** Spawns a dedicated ambient light entity in a [SceneAppDsl]. */
+fun SceneAppDsl.ambientLightEntity(
+    name: String = "ambient_light",
+    ambientLight: AmbientLight = AmbientLight(),
+) {
+    entity(name) {
+        ambientLight(ambientLight)
     }
 }

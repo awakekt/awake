@@ -6,16 +6,15 @@
 package com.awakekt.awake.webgpu.renderer
 
 import com.awakekt.awake.core.geometry.MeshGeometry
-import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.times
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.recordPassFeatures
 import com.awakekt.awake.render.passes.uniforms.SceneFrameUniforms
 import com.awakekt.awake.render.passes.uniforms.litShadowUniforms
 import com.awakekt.awake.render.passes.uniforms.sceneLightUniforms
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.renderer.EnvironmentUniforms
 import com.awakekt.awake.render.renderer.InstancedUniformLayout
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
@@ -72,7 +71,11 @@ internal fun Renderer.performCreateMaterial(
                 pbrTextures.occlusion to Renderer.NEUTRAL_OCCLUSION,
                 pbrTextures.emissive to Renderer.NEUTRAL_EMISSIVE,
             ).map { (asset, neutral) ->
-                asset?.let(::uploadTexture) ?: textureResources.neutral(neutral) { uploadTexture(neutral) }
+                asset?.let(::uploadTexture) ?: textureResources.neutral(neutral) {
+                    uploadTexture(
+                        neutral
+                    )
+                }
             }
         } else {
             emptyList()
@@ -83,7 +86,13 @@ internal fun Renderer.performCreateMaterial(
 }
 
 internal fun Renderer.uploadTexture(asset: TextureAsset): Texture =
-    Texture(graphicsDevice, {}, asset.data, asset.width, asset.height).let(textureResources::register)
+    Texture(
+        graphicsDevice,
+        {},
+        asset.data,
+        asset.width,
+        asset.height
+    ).let(textureResources::register)
 
 internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): RenderTarget {
     lateinit var target: OffscreenRenderTarget
@@ -112,9 +121,84 @@ internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): Render
  */
 internal fun Renderer.performRenderToTexture(
     target: RenderTarget,
+    input: GpuPassInput,
+) {
+    val offscreen = target as OffscreenRenderTarget
+    val device = graphicsDevice.wgpuContext.device
+    val primary = PrimaryPipelineBinding(pipeline = renderPipeline.handle, wireframe = false)
+
+    val opaqueDraws = prepareGpuDraws(
+        input.opaqueDraws,
+        isTransparent = false,
+        primary,
+        input.viewProjection,
+        input.cameraEye
+    )
+    val transparentDraws = prepareGpuDraws(
+        input.transparentDraws,
+        isTransparent = true,
+        primary,
+        input.viewProjection,
+        input.cameraEye,
+        singleIndexStart = input.opaqueDraws.size
+    )
+    val draws = PreparedDraws(
+        opaque = opaqueDraws.opaque + transparentDraws.opaque,
+        transparent = opaqueDraws.transparent + transparentDraws.transparent,
+    )
+
+    val encoder = device.createCommandEncoder()
+    encoder.beginRenderPass(
+        RenderPassDescriptor(
+            colorAttachments = listOf(
+                RenderPassColorAttachment(
+                    view = offscreen.colorView,
+                    loadOp = GPULoadOp.Clear,
+                    clearValue = clearColorValue,
+                    storeOp = GPUStoreOp.Store,
+                ),
+            ),
+            depthStencilAttachment = RenderPassDepthStencilAttachment(
+                view = offscreen.depthView,
+                depthClearValue = 1.0f,
+                depthLoadOp = GPULoadOp.Clear,
+                depthStoreOp = GPUStoreOp.Store,
+            ),
+        ),
+    ) {
+        recordPassFeatures(
+            renderFeatures,
+            RenderPassSlot.Scene,
+            WebGpuFrameContext(
+                renderer = this@performRenderToTexture,
+                encoder = this,
+                groupedDrawCalls = draws.opaque,
+                transparentDrawCalls = draws.transparent,
+                primaryPipeline = primary.pipeline,
+                viewProjection = input.viewProjection,
+                cameraEye = input.cameraEye,
+                surfaceWidth = offscreen.width,
+                surfaceHeight = offscreen.height,
+            ),
+        )
+        end()
+    }
+    device.queue.submit(listOf(encoder.finish()))
+}
+
+internal fun Renderer.performRenderToTexture(
+    target: RenderTarget,
     camera: Lens,
     drawCalls: List<DrawCall>,
     light: SceneLight,
+    environment: EnvironmentUniforms = EnvironmentUniforms(
+        showSky = showEnvironment,
+        horizonColor = horizonColor,
+        zenithColor = zenithColor,
+        fogDensity = fogDensity,
+        fogColor = fogColor,
+        shadowsEnabled = shadowsEnabled,
+    ),
 ) {
     val offscreen = target as OffscreenRenderTarget
     val device = graphicsDevice.wgpuContext.device
@@ -123,12 +207,13 @@ internal fun Renderer.performRenderToTexture(
     val aspect = offscreen.width.toFloat() / offscreen.height.toFloat()
     val viewProjection = camera.viewProjectionMatrix(aspect, clipSpace)
     val lightUniforms = sceneLightUniforms(light, camera.eye)
-    val cascades = if (depthPrePass != null) light.shadowCascades() else null
-    val frame = FrameDrawContext(camera.eye, viewProjection, lightUniforms, cascades, light)
+    val cascades =
+        if (depthPrePass != null && environment.shadowsEnabled) light.shadowCascades() else null
+    val frame =
+        FrameDrawContext(camera.eye, viewProjection, lightUniforms, cascades, light, environment)
     val opaqueDraws = prepareOpaqueDraws(drawCalls, frame, primary)
 
     val encoder = device.createCommandEncoder()
-    // Before the colour pass, as on screen: whatever draws below may sample the depth these write.
     recordDepthPasses(encoder, drawCalls, frame)
 
     encoder.beginRenderPass(
@@ -172,7 +257,10 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
     val bytesPerRow = ((unpaddedBytesPerRow + 255) / 256) * 256
     val bufferSize = (bytesPerRow * offscreen.height).toULong()
     val readbackBuffer = device.createBuffer(
-        BufferDescriptor(size = bufferSize, usage = GPUBufferUsage.CopyDst or GPUBufferUsage.MapRead),
+        BufferDescriptor(
+            size = bufferSize,
+            usage = GPUBufferUsage.CopyDst or GPUBufferUsage.MapRead
+        ),
     )
     val encoder = device.createCommandEncoder()
     encoder.copyTextureToBuffer(
@@ -263,7 +351,11 @@ private fun Renderer.depthPassDraws(
                     drawCall = drawCall,
                     mvp = mvp,
                     cascades = cascades,
-                    frame = SceneFrameUniforms(frame.lightUniforms, frame.cameraEye, fogFloats()),
+                    frame = SceneFrameUniforms(
+                        frame.lightUniforms,
+                        frame.cameraEye,
+                        fogFloats(frame.environment)
+                    ),
                 )
             } else {
                 UniformWriter(InstancedUniformLayout)
@@ -291,15 +383,26 @@ internal fun Renderer.recordDepthPasses(
 ) {
     val cascades = frame.cascades
     val shadowPass = depthPrePass
-    if (shadowsEnabled && shadowPass != null && cascades != null) {
-        shadowPass.recordCommands(encoder, depthPassDraws(shadowPass.depthOnlyHandle, drawCalls, frame), cascades)
+    if (frame.environment.shadowsEnabled && shadowPass != null && cascades != null) {
+        shadowPass.recordCommands(
+            encoder,
+            depthPassDraws(shadowPass.depthOnlyHandle, drawCalls, frame),
+            cascades
+        )
     }
     // Not gated on shadowsEnabled -- that toggle is about shadows, and water or fog needs this
     // either way. Its "cascade" is the camera's own view-projection, and it reads mvp, so the
     // frame it prepares against carries no cascade set.
     val scenePass = sceneDepthPass
     if (scenePass != null) {
-        val cameraFrame = FrameDrawContext(frame.cameraEye, frame.viewProjection, frame.lightUniforms, null, frame.light)
+        val cameraFrame = FrameDrawContext(
+            frame.cameraEye,
+            frame.viewProjection,
+            frame.lightUniforms,
+            null,
+            frame.light,
+            frame.environment
+        )
         scenePass.recordCommands(
             encoder,
             depthPassDraws(scenePass.depthOnlyHandle, drawCalls, cameraFrame),

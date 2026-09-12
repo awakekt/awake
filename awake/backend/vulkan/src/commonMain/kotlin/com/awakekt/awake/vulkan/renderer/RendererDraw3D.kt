@@ -6,12 +6,15 @@
 package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.squaredDistanceFrom
 import com.awakekt.awake.core.math.times
+import com.awakekt.awake.render.command.GpuDrawCommand
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.renderer.CullMode
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.SceneFrameUniforms
 import com.awakekt.awake.render.passes.uniforms.fogUniformFloats
 import com.awakekt.awake.render.passes.uniforms.litShadowUniforms
@@ -20,18 +23,18 @@ import com.awakekt.awake.render.passes.uniforms.texturedUniforms
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
 import com.awakekt.awake.render.pipeline.instancedDrawKind
 import com.awakekt.awake.render.pipeline.resolveInstanced
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.renderer.EnvironmentUniforms
 import com.awakekt.awake.render.renderer.InstancedUniformLayout
 import com.awakekt.awake.render.renderer.ParticleExtraUniformLayout
 import com.awakekt.awake.render.renderer.ParticleUniformLayout
 import com.awakekt.awake.render.renderer.RenderViewport
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.UNSHADOWED_CASCADES
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
 import com.awakekt.awake.render.renderer.directionalShadowTexelDepthScale
 import com.awakekt.awake.render.renderer.shadowCascades
+
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.material.Material
 import com.awakekt.awake.vulkan.mesh.AlphaInstanceBuffer
@@ -47,6 +50,10 @@ import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 import com.awakekt.awake.vulkan.pipeline.VulkanMaterialBinding
 import kotlin.math.ceil
 import com.awakekt.awake.render.material.Material as RenderMaterial
+
+internal typealias Lens = com.awakekt.awake.core.math.Lens
+internal typealias DrawCall = com.awakekt.awake.render.renderer.DrawCall
+internal typealias SceneLight = com.awakekt.awake.render.renderer.SceneLight
 
 /** The 3D frame path -- [Renderer.draw]'s whole-frame orchestration (wait/acquire -> update
  * uniforms -> record -> submit -> present), the shared per-draw-call recording loop, the
@@ -69,14 +76,97 @@ import com.awakekt.awake.render.material.Material as RenderMaterial
  * the member call winning resolution and recursing into itself. Frame acquisition itself
  * is [acquireSwapchainImage] ([RendererSwapchainAcquire.kt]), split into its own file to
  * keep both detekt's method-length limit and this file's function-count limit. */
-internal fun Renderer.performDraw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) {
+private val DEFAULT_LIGHT_FLOATS = floatArrayOf(
+    0.4f, 0.8f, 0.4f, 0f,
+    1.0f, 1.0f, 1.0f, 1.0f,
+)
+
+internal fun Renderer.prepareGpuDraws(
+    frameIndex: Int,
+    viewProjection: Mat4,
+    cameraPosition: Vec3f,
+    draws: List<GpuDrawCommand>,
+    isTransparent: Boolean,
+    materialUsage: MutableMap<RenderMaterial, Int> = mutableMapOf(),
+): List<PreparedDrawCall> {
+    val prepared = ArrayList<PreparedDrawCall>(draws.size)
+    for (cmd in draws) {
+        val mesh = cmd.mesh as Mesh
+        val material = cmd.material as Material
+        val pipeline = pipelineFor(mesh.format, CullMode.Back, isTransparent) ?: continue
+        val uniformSlotIndex = materialUsage.nextSlot(material)
+        val mvp = cmd.transform * viewProjection
+        val uniformFloats = mvp.data + DEFAULT_LIGHT_FLOATS
+        val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
+        prepared += PreparedDrawCall(
+            mesh = mesh,
+            isTransparent = isTransparent,
+            pipeline = pipeline,
+            material = material,
+            frameIndex = frameIndex,
+            uniformSlotIndex = uniformSlotIndex,
+            materialBinding = binding,
+            depthSortKey = cmd.transform.squaredDistanceFrom(cameraPosition),
+        )
+    }
+    return prepared
+}
+
+internal fun Renderer.performDraw(input: GpuPassInput) {
+    val currentFrame = swapchainManager.currentFrame
+    val imageIndex = acquireSwapchainImage(currentFrame) ?: return
+
+    val materialUsage = mutableMapOf<RenderMaterial, Int>()
+    val preparedOpaque = prepareGpuDraws(
+        currentFrame,
+        input.viewProjection,
+        input.cameraEye,
+        input.opaqueDraws,
+        isTransparent = false,
+        materialUsage,
+    )
+    val preparedTransparent = prepareGpuDraws(
+        currentFrame,
+        input.viewProjection,
+        input.cameraEye,
+        input.transparentDraws,
+        isTransparent = true,
+        materialUsage,
+    )
+    val preparedDrawCalls = preparedOpaque + preparedTransparent
+
+    Vulkan.vkResetCommandBuffer(commandBuffers[currentFrame], 0)
+    recordCommandBuffer(
+        commandBuffers[currentFrame],
+        currentFrame,
+        imageIndex,
+        preparedDrawCalls,
+        input.viewProjection,
+        input.cameraEye,
+    )
+    submitAndPresent(currentFrame, imageIndex)
+}
+
+internal fun Renderer.performDraw(
+    camera: Lens,
+    drawCalls: List<DrawCall>,
+    light: SceneLight,
+    environment: EnvironmentUniforms = EnvironmentUniforms(
+        showSky = showEnvironment,
+        horizonColor = horizonColor,
+        zenithColor = zenithColor,
+        fogDensity = fogDensity,
+        fogColor = fogColor,
+        shadowsEnabled = shadowsEnabled,
+    ),
+) {
     val currentFrame = swapchainManager.currentFrame
     val imageIndex = acquireSwapchainImage(currentFrame) ?: return
 
     val aspect = resolvedSceneViewport()?.aspect
         ?: (swapchainManager.extent.width.toFloat() / swapchainManager.extent.height.toFloat())
     val viewProjection = camera.viewProjectionMatrix(aspect, clipSpace)
-    val cascades = if (depthTarget != null) light.shadowCascades() else null
+    val cascades = if (depthTarget != null && environment.shadowsEnabled) light.shadowCascades() else null
     val materialUsage = mutableMapOf<RenderMaterial, Int>()
     val preparedDrawCalls =
         prepareDrawCalls(
@@ -87,6 +177,7 @@ internal fun Renderer.performDraw(camera: Lens, drawCalls: List<DrawCall>, light
             cascades,
             materialUsage,
             cameraPosition = camera.eye,
+            environment = environment,
         )
 
     Vulkan.vkResetCommandBuffer(commandBuffers[currentFrame], 0)
@@ -97,7 +188,7 @@ internal fun Renderer.performDraw(camera: Lens, drawCalls: List<DrawCall>, light
         preparedDrawCalls,
         viewProjection,
         camera.eye,
-        light,
+        cascades,
     )
 
     submitAndPresent(currentFrame, imageIndex)
@@ -147,43 +238,40 @@ internal fun Renderer.waitForCurrentFrameResourceSlot() {
  * allocates nothing.
  */
 internal data class PreparedDrawCall(
-    val drawCall: DrawCall,
+    val mesh: Mesh,
+    val isTransparent: Boolean,
     override val pipeline: RenderPipeline,
     val material: Material,
     val frameIndex: Int,
     val uniformSlotIndex: Int,
     /** The descriptor set `prepareDrawCalls` just wrote this draw's uniforms into. */
     override val materialBinding: VulkanMaterialBinding,
-    /** Non-null only for a [DrawCall.instanceModels] draw resolved to an instanced pipeline --
+    /** Non-null only for an instanced draw resolved to an instanced pipeline --
      * [recordDrawCalls] then binds it and issues one `drawInstanced` instead of `draw`. */
     val instanceBuffer: InstanceBuffer? = null,
     val instanceCount: Int = 0,
-    /** Non-null only for an ANIMATED instanced draw ([DrawCall.instanceJointPalettes]), where it
+    /** Non-null only for an ANIMATED instanced draw, where it
      * accompanies [instanceBuffer] -- per-instance model matrices still come through that. */
     val jointPaletteBuffer: SkinnedInstanceBuffer? = null,
-    /** Non-null only for a billboard-particle instanced draw ([DrawCall.instanceColors]),
+    /** Non-null only for a billboard-particle instanced draw,
      * bound at binding 2 alongside [instanceBuffer]'s binding 1. */
     val alphaInstanceBuffer: AlphaInstanceBuffer? = null,
-    /** Non-null only for a billboard-particle instanced draw ([DrawCall.instanceFrames]), bound
+    /** Non-null only for a billboard-particle instanced draw, bound
      * at binding 3 alongside [alphaInstanceBuffer]'s binding 2. */
     val frameInstanceBuffer: FrameInstanceBuffer? = null,
     /** Squared distance to the camera eye, computed once at preparation rather than inside the
      * sort comparator. Last in the list on purpose: one construction site below is positional. */
     override val depthSortKey: Float = 0f,
 ) : PreparedDraw {
-    override val transparent: Boolean get() = drawCall.transparent
+    override val transparent: Boolean get() = isTransparent
 
     /** Mesh identity -- clusters draws sharing a mesh so consecutive calls reuse its vertex and
      * index buffer bindings. */
-    override val batchKey: Int get() = drawCall.mesh.hashCode()
+    override val batchKey: Int get() = mesh.hashCode()
 
-    /** Safe for the same reason `prepareDrawCalls`' own `drawCall.material as Material` is: a
-     * `Renderer` only ever draws meshes it created itself. */
-    private val vulkanMesh: Mesh get() = drawCall.mesh as Mesh
-
-    override val vertexBuffer get() = vulkanMesh.vertexBinding
-    override val indexBuffer get() = vulkanMesh.indexBinding
-    override val elementCount get() = vulkanMesh.indexCount
+    override val vertexBuffer get() = mesh.vertexBinding
+    override val indexBuffer get() = mesh.indexBinding
+    override val elementCount get() = mesh.indexCount
 
     /** [instanceCount] is 0 for a non-instanced draw; the port's count is the real one Vulkan
      * issues, which is 1 there. */
@@ -224,10 +312,18 @@ internal fun Renderer.prepareDrawCalls(
     cascades: ShadowCascadeUniforms? = null,
     materialUsage: MutableMap<RenderMaterial, Int> = mutableMapOf(),
     cameraPosition: Vec3f = Vec3f.ZERO,
+    environment: EnvironmentUniforms = EnvironmentUniforms(
+        showSky = showEnvironment,
+        horizonColor = horizonColor,
+        zenithColor = zenithColor,
+        fogDensity = fogDensity,
+        fogColor = fogColor,
+        shadowsEnabled = shadowsEnabled,
+    ),
 ): List<PreparedDrawCall> {
     val prepared = ArrayList<PreparedDrawCall>(drawCalls.size)
     val lightUniforms = sceneLightUniforms(light, cameraPosition, shadowTexelDepthScale())
-    val frame = SceneFrameUniforms(lightUniforms, cameraPosition, fogFloats())
+    val frame = SceneFrameUniforms(lightUniforms, cameraPosition, fogFloats(environment))
     var drawIndex = 0
     var instancedIndex = 0
     while (drawIndex < drawCalls.size) {
@@ -292,12 +388,13 @@ internal fun Renderer.prepareDrawCalls(
             val binding =
                 material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
             prepared += PreparedDrawCall(
-                drawCall,
-                pipeline,
-                material,
-                frameIndex,
-                uniformSlotIndex,
-                binding,
+                mesh = drawCall.mesh as Mesh,
+                isTransparent = drawCall.transparent,
+                pipeline = pipeline,
+                material = material,
+                frameIndex = frameIndex,
+                uniformSlotIndex = uniformSlotIndex,
+                materialBinding = binding,
                 depthSortKey = drawCall.model.squaredDistanceFrom(cameraPosition),
             )
         } else if (debugMode) {
@@ -376,7 +473,8 @@ private fun Renderer.prepareInstancedDrawCall(
     // transparent companion only for the non-instanced primary/format requests), so it never
     // reaches the back-to-front sort.
     return PreparedDrawCall(
-        drawCall = drawCall,
+        mesh = drawCall.mesh as Mesh,
+        isTransparent = drawCall.transparent,
         pipeline = pipeline,
         material = material,
         frameIndex = frameIndex,
@@ -441,7 +539,16 @@ private fun Renderer.shadowTexelDepthScale(): Float {
     return directionalShadowTexelDepthScale(map.size)
 }
 
-private fun Renderer.fogFloats(): FloatArray = fogUniformFloats(fogColor, fogDensity)
+private fun Renderer.fogFloats(
+    environment: EnvironmentUniforms = EnvironmentUniforms(
+        showSky = showEnvironment,
+        horizonColor = horizonColor,
+        zenithColor = zenithColor,
+        fogDensity = fogDensity,
+        fogColor = fogColor,
+        shadowsEnabled = shadowsEnabled,
+    ),
+): FloatArray = fogUniformFloats(environment.fogColor, environment.fogDensity)
 
 private fun MutableMap<RenderMaterial, Int>.nextSlot(material: RenderMaterial): Int {
     val slot = this[material] ?: 0

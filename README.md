@@ -282,6 +282,22 @@ Awake is organized into clean, modular subprojects:
   `KeybindingProfile`, Behavior Tree AI, and modular slot rendering.
 - **[`awake:backend:*`](awake/backend)** — Platform renderers (`vulkan`, `webgpu`, `jolt`).
 
+### Rendering Architecture — Two-Layer Model
+
+Awake's renderer is split into two strict layers (D31). Mixing them is the leading source of
+architectural debt:
+
+| Layer | Module(s) | Owns |
+|---|---|---|
+| **HAL** | `awake:engine:render:contract` | `GpuDevice`, `Renderer`, `GpuPassInput`, `GpuSubPass`, `GpuDrawCommand`, pipelines, buffers, textures, samplers, command recording |
+| **Render Graph** | `awake:engine:render:passes`, `awake:asset:shader-pack`, `awake:scene:rendering` | `GpuSceneFrame`, `SceneLight`, `DrawCall`, `Lens`, shadow cascade math, environment uniforms, `RenderFeature` list |
+
+> **The most common defect in this codebase is adding scene vocabulary to `render:contract`.**
+> Before adding any type to `render:contract`, apply the test:
+> *"Could a third backend implement this type without knowing what scene content it serves?"*
+> If no, it belongs in `render:passes` or `scene:rendering`.
+> Full audit: [`docs/reference/render-hardware-interface.md`](docs/reference/render-hardware-interface.md#hal-vs-render-graph--the-complete-vocabulary-boundary).
+
 ---
 
 ## Commercial Pro Extensions (`awakekt/awake-pro`)

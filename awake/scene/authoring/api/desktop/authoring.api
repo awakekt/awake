@@ -109,6 +109,12 @@ public final class com/awakekt/awake/scene/authoring/dsl/SceneCameraDslKt {
 }
 
 public final class com/awakekt/awake/scene/authoring/dsl/SceneLightingDslKt {
+	public static final fun ambientLight (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/scene/rendering/AmbientLight;)V
+	public static synthetic fun ambientLight$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/scene/rendering/AmbientLight;ILjava/lang/Object;)V
+	public static final fun ambientLightEntity (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/AmbientLight;)V
+	public static final fun ambientLightEntity (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/AmbientLight;)J
+	public static synthetic fun ambientLightEntity$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/AmbientLight;ILjava/lang/Object;)V
+	public static synthetic fun ambientLightEntity$default (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/AmbientLight;ILjava/lang/Object;)J
 	public static final fun directionalLight (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)V
 	public static synthetic fun directionalLight$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)V
 	public static final fun environment (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/scene/rendering/Environment;)V
@@ -117,12 +123,24 @@ public final class com/awakekt/awake/scene/authoring/dsl/SceneLightingDslKt {
 	public static final fun environmentEntity (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Environment;)J
 	public static synthetic fun environmentEntity$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Environment;ILjava/lang/Object;)V
 	public static synthetic fun environmentEntity$default (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Environment;ILjava/lang/Object;)J
+	public static final fun fog (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/scene/rendering/Fog;)V
+	public static synthetic fun fog$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/scene/rendering/Fog;ILjava/lang/Object;)V
+	public static final fun fogEntity (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Fog;)V
+	public static final fun fogEntity (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Fog;)J
+	public static synthetic fun fogEntity$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Fog;ILjava/lang/Object;)V
+	public static synthetic fun fogEntity$default (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Fog;ILjava/lang/Object;)J
 	public static final fun lamp (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FF)V
 	public static final fun lamp (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FF)J
 	public static synthetic fun lamp$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFILjava/lang/Object;)V
 	public static synthetic fun lamp$default (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FFILjava/lang/Object;)J
 	public static final fun pointLight (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/math/Vec3f;FF)V
 	public static synthetic fun pointLight$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/core/math/Vec3f;FFILjava/lang/Object;)V
+	public static final fun skybox (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/scene/rendering/Skybox;)V
+	public static synthetic fun skybox$default (Lcom/awakekt/awake/scene/authoring/dsl/EntityScope;Lcom/awakekt/awake/scene/rendering/Skybox;ILjava/lang/Object;)V
+	public static final fun skyboxEntity (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Skybox;)V
+	public static final fun skyboxEntity (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Skybox;)J
+	public static synthetic fun skyboxEntity$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Skybox;ILjava/lang/Object;)V
+	public static synthetic fun skyboxEntity$default (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/Skybox;ILjava/lang/Object;)J
 	public static final fun sun (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)V
 	public static final fun sun (Lcom/awakekt/awake/scene/authoring/dsl/SceneBuilder;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)J
 	public static synthetic fun sun$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)V

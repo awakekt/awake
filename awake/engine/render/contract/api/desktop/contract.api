@@ -647,6 +647,34 @@ public final class com/awakekt/awake/render/renderer/DrawCall {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/renderer/EnvironmentUniforms {
+	public static final field Companion Lcom/awakekt/awake/render/renderer/EnvironmentUniforms$Companion;
+	public fun <init> ()V
+	public fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;Z)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component4 ()F
+	public final fun component5 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component6 ()Z
+	public final fun copy (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;Z)Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;ZILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFogColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getFogDensity ()F
+	public final fun getHorizonColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getShadowsEnabled ()Z
+	public final fun getShowSky ()Z
+	public final fun getZenithColor ()Lcom/awakekt/awake/core/color/Color;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/renderer/EnvironmentUniforms$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;
+}
+
 public final class com/awakekt/awake/render/renderer/InfiniteGridFields {
 	public static final field INSTANCE Lcom/awakekt/awake/render/renderer/InfiniteGridFields;
 	public final fun getAxisColorX ()Lcom/awakekt/awake/render/renderer/UniformField;
@@ -721,6 +749,8 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun awaitFrameResources ()V
 	public fun compositeUiTargets (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/renderer/UiTargetCompositeMode;)V
 	public abstract fun draw (Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;)V
+	public fun draw (Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;)V
+	public fun draw (Lcom/awakekt/awake/render/renderer/ScenePassDescriptor;)V
 	public static synthetic fun draw$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;ILjava/lang/Object;)V
 	public abstract fun drawDebugLines (Ljava/util/List;)V
 	public abstract fun drawUi (Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
@@ -740,6 +770,8 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun presentWithoutScene ()V
 	public abstract fun readPixels (Lcom/awakekt/awake/render/texture/RenderTarget;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public abstract fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;)V
+	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;)V
+	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/renderer/ScenePassDescriptor;)V
 	public static synthetic fun renderToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;ILjava/lang/Object;)V
 	public abstract fun setClearColor (Lcom/awakekt/awake/core/color/Color;)V
 	public fun setDebugMode (Z)V
@@ -756,6 +788,8 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun awaitFrameResources (Lcom/awakekt/awake/render/renderer/Renderer;)V
 	public static fun compositeUiTargets (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/renderer/UiTargetCompositeMode;)V
+	public static fun draw (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;)V
+	public static fun draw (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/renderer/ScenePassDescriptor;)V
 	public static synthetic fun draw$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;ILjava/lang/Object;)V
 	public static synthetic fun drawUi$default (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public static fun drawUiToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
@@ -768,6 +802,8 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun getShowEnvironment (Lcom/awakekt/awake/render/renderer/Renderer;)Z
 	public static fun getZenithColor (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/core/color/Color;
 	public static fun presentWithoutScene (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public static fun renderToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;)V
+	public static fun renderToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/renderer/ScenePassDescriptor;)V
 	public static synthetic fun renderToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;ILjava/lang/Object;)V
 	public static fun setDebugMode (Lcom/awakekt/awake/render/renderer/Renderer;Z)V
 	public static fun setFogColor (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/core/color/Color;)V
@@ -809,6 +845,24 @@ public final class com/awakekt/awake/render/renderer/SceneLight {
 public final class com/awakekt/awake/render/renderer/SceneLightKt {
 	public static final field MAX_POINT_LIGHTS I
 	public static final fun shadowCascades (Lcom/awakekt/awake/render/renderer/SceneLight;)Lcom/awakekt/awake/render/renderer/ShadowCascadeUniforms;
+}
+
+public final class com/awakekt/awake/render/renderer/ScenePassDescriptor {
+	public fun <init> (Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/math/Lens;
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Lcom/awakekt/awake/render/renderer/SceneLight;
+	public final fun component4 ()Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;
+	public final fun copy (Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;)Lcom/awakekt/awake/render/renderer/ScenePassDescriptor;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/ScenePassDescriptor;Lcom/awakekt/awake/core/math/Lens;Ljava/util/List;Lcom/awakekt/awake/render/renderer/SceneLight;Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/ScenePassDescriptor;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCamera ()Lcom/awakekt/awake/core/math/Lens;
+	public final fun getDrawCalls ()Ljava/util/List;
+	public final fun getEnvironment ()Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;
+	public final fun getLight ()Lcom/awakekt/awake/render/renderer/SceneLight;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/render/renderer/ShadowCascadeUniforms {

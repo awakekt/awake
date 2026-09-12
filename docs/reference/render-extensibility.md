@@ -114,6 +114,17 @@ unreadable without saying what a consumer uses it for.
 
 Widening the check to match line-level vocabulary would flag exactly that prose. Do not.
 
-The shared `Renderer` contract leaks too: `showEnvironment`, `horizonColor` and `zenithColor` are
-sky vocabulary on the hardware interface. A horizon colour is not a hardware capability -- it is
-uniform data belonging to the skybox feature. Same plan, phase 3.
+The shared `Renderer` contract leaks too: `showEnvironment`, `horizonColor`, `zenithColor`,
+`fogColor`, `fogDensity`, and the scene-default constants (`DEFAULT_SCENE_LIGHT`,
+`DEFAULT_HORIZON_COLOR`, `DEFAULT_ZENITH_COLOR`, `DEFAULT_FOG_COLOR`) are scene vocabulary
+on the hardware interface, not hardware capabilities. The same applies to the abstract method
+signature `fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight)` — passing
+scene objects directly into the HAL is the root cause of all backend import debt. All of these
+are tracked against Phase 2 of `docs/reference/decision-log.md` **D31**.
+
+The complete audit — every type currently in `render:contract`, classified as True HAL or
+scene vocabulary with its target home — is in
+[render-hardware-interface.md § HAL vs Render Graph](render-hardware-interface.md#hal-vs-render-graph--the-complete-vocabulary-boundary).
+Do not add new scene types, scene constants, or scene parameters to `render:contract` before
+reading that section and applying the third-backend test.
+

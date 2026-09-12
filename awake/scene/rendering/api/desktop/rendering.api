@@ -1,3 +1,20 @@
+public final class com/awakekt/awake/scene/rendering/AmbientLight {
+	public fun <init> ()V
+	public fun <init> (FLcom/awakekt/awake/core/color/Color;)V
+	public synthetic fun <init> (FLcom/awakekt/awake/core/color/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun copy (FLcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/scene/rendering/AmbientLight;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/AmbientLight;FLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/AmbientLight;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getIntensity ()F
+	public fun hashCode ()I
+	public final fun setColor (Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setIntensity (F)V
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/scene/rendering/Camera {
 	public fun <init> (Lcom/awakekt/awake/core/math/Lens;Z)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Lens;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -15,44 +32,29 @@ public final class com/awakekt/awake/scene/rendering/Camera {
 
 public final class com/awakekt/awake/scene/rendering/Environment {
 	public fun <init> ()V
-	public fun <init> (FFFLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;FZ)V
-	public synthetic fun <init> (FFFLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()F
-	public final fun component10 ()F
-	public final fun component11 ()Z
-	public final fun component2 ()F
-	public final fun component3 ()F
-	public final fun component4 ()Lcom/awakekt/awake/core/color/Color;
-	public final fun component5 ()Z
-	public final fun component6 ()Lcom/awakekt/awake/core/color/Color;
-	public final fun component7 ()Lcom/awakekt/awake/core/color/Color;
-	public final fun component8 ()F
-	public final fun component9 ()Lcom/awakekt/awake/core/color/Color;
-	public final fun copy (FFFLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;FZ)Lcom/awakekt/awake/scene/rendering/Environment;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/Environment;FFFLcom/awakekt/awake/core/color/Color;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;FZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/Environment;
+	public fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;F)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component4 ()F
+	public final fun component5 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component6 ()F
+	public final fun copy (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;F)Lcom/awakekt/awake/scene/rendering/Environment;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/Environment;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/Environment;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAmbientLight ()F
 	public final fun getFogColor ()Lcom/awakekt/awake/core/color/Color;
 	public final fun getFogDensity ()F
 	public final fun getHorizonColor ()Lcom/awakekt/awake/core/color/Color;
-	public final fun getShadowsEnabled ()Z
 	public final fun getShowEnvironment ()Z
-	public final fun getSunAzimuthDeg ()F
-	public final fun getSunColor ()Lcom/awakekt/awake/core/color/Color;
-	public final fun getSunElevationDeg ()F
-	public final fun getSunIntensity ()F
 	public final fun getZenithColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun hashCode ()I
 	public final fun setAmbientLight (F)V
 	public final fun setFogColor (Lcom/awakekt/awake/core/color/Color;)V
 	public final fun setFogDensity (F)V
 	public final fun setHorizonColor (Lcom/awakekt/awake/core/color/Color;)V
-	public final fun setShadowsEnabled (Z)V
 	public final fun setShowEnvironment (Z)V
-	public final fun setSunAzimuthDeg (F)V
-	public final fun setSunColor (Lcom/awakekt/awake/core/color/Color;)V
-	public final fun setSunElevationDeg (F)V
-	public final fun setSunIntensity (F)V
 	public final fun setZenithColor (Lcom/awakekt/awake/core/color/Color;)V
 	public fun toString ()Ljava/lang/String;
 }
@@ -60,26 +62,47 @@ public final class com/awakekt/awake/scene/rendering/Environment {
 public final class com/awakekt/awake/scene/rendering/EnvironmentKt {
 	public static final fun getDefaultFogColor ()Lcom/awakekt/awake/core/color/Color;
 	public static final fun getDefaultHorizonColor ()Lcom/awakekt/awake/core/color/Color;
-	public static final fun getDefaultSunColor ()Lcom/awakekt/awake/core/color/Color;
 	public static final fun getDefaultZenithColor ()Lcom/awakekt/awake/core/color/Color;
+}
+
+public final class com/awakekt/awake/scene/rendering/Fog {
+	public fun <init> ()V
+	public fun <init> (ZFLcom/awakekt/awake/core/color/Color;)V
+	public synthetic fun <init> (ZFLcom/awakekt/awake/core/color/Color;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()F
+	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun copy (ZFLcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/scene/rendering/Fog;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/Fog;ZFLcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/Fog;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getDensity ()F
+	public final fun getEnabled ()Z
+	public fun hashCode ()I
+	public final fun setColor (Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setDensity (F)V
+	public final fun setEnabled (Z)V
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/scene/rendering/Light {
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;F)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component2 ()F
 	public final fun component3 ()Lcom/awakekt/awake/scene/rendering/Light$Type;
 	public final fun component4 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component5 ()F
-	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/scene/rendering/Light;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/Light;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/Light;
+	public final fun component6 ()Z
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZ)Lcom/awakekt/awake/scene/rendering/Light;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/Light;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/Light;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColor ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getDirection ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getIntensity ()F
 	public final fun getRange ()F
+	public final fun getShadowsEnabled ()Z
 	public final fun getType ()Lcom/awakekt/awake/scene/rendering/Light$Type;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -102,6 +125,44 @@ public final class com/awakekt/awake/scene/rendering/RenderSystem : com/awakekt/
 public final class com/awakekt/awake/scene/rendering/SceneMathExtensionsKt {
 	public static final fun toSceneVec3 (Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/scene/document/SceneVec3;
 	public static final fun toVec3 (Lcom/awakekt/awake/scene/document/SceneVec3;)Lcom/awakekt/awake/core/math/Vec3f;
+}
+
+public final class com/awakekt/awake/scene/rendering/Skybox {
+	public fun <init> ()V
+	public fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Ljava/lang/String;FLcom/awakekt/awake/scene/rendering/Skybox$Type;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Ljava/lang/String;FLcom/awakekt/awake/scene/rendering/Skybox$Type;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()F
+	public final fun component6 ()Lcom/awakekt/awake/scene/rendering/Skybox$Type;
+	public final fun copy (ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Ljava/lang/String;FLcom/awakekt/awake/scene/rendering/Skybox$Type;)Lcom/awakekt/awake/scene/rendering/Skybox;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/Skybox;ZLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Ljava/lang/String;FLcom/awakekt/awake/scene/rendering/Skybox$Type;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/Skybox;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCubemapPath ()Ljava/lang/String;
+	public final fun getEnabled ()Z
+	public final fun getExposure ()F
+	public final fun getHorizonColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getType ()Lcom/awakekt/awake/scene/rendering/Skybox$Type;
+	public final fun getZenithColor ()Lcom/awakekt/awake/core/color/Color;
+	public fun hashCode ()I
+	public final fun setCubemapPath (Ljava/lang/String;)V
+	public final fun setEnabled (Z)V
+	public final fun setExposure (F)V
+	public final fun setHorizonColor (Lcom/awakekt/awake/core/color/Color;)V
+	public final fun setType (Lcom/awakekt/awake/scene/rendering/Skybox$Type;)V
+	public final fun setZenithColor (Lcom/awakekt/awake/core/color/Color;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/rendering/Skybox$Type : java/lang/Enum {
+	public static final field Cubemap Lcom/awakekt/awake/scene/rendering/Skybox$Type;
+	public static final field Procedural Lcom/awakekt/awake/scene/rendering/Skybox$Type;
+	public static final field SolidColor Lcom/awakekt/awake/scene/rendering/Skybox$Type;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/Skybox$Type;
+	public static fun values ()[Lcom/awakekt/awake/scene/rendering/Skybox$Type;
 }
 
 public final class com/awakekt/awake/scene/rendering/animation/AnimationSystem : com/awakekt/awake/ecs/System {
@@ -335,6 +396,23 @@ public final class com/awakekt/awake/scene/rendering/debug/WorldDebugSettings {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/rendering/environment/AmbientLightBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/environment/AmbientLightBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/AmbientLight;)Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight;)Lcom/awakekt/awake/scene/rendering/AmbientLight;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/AmbientLight;)Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight;
+}
+
 public final class com/awakekt/awake/scene/rendering/environment/EnvironmentBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/environment/EnvironmentBinding;
 	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
@@ -352,32 +430,92 @@ public final class com/awakekt/awake/scene/rendering/environment/EnvironmentBind
 	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/Environment;)Lcom/awakekt/awake/scene/rendering/environment/SceneEnvironment;
 }
 
+public final class com/awakekt/awake/scene/rendering/environment/EnvironmentSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/scene/rendering/environment/SkyboxSystem;Lcom/awakekt/awake/scene/rendering/environment/FogSystem;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/scene/rendering/environment/SkyboxSystem;Lcom/awakekt/awake/scene/rendering/environment/FogSystem;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/rendering/environment/FogBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/environment/FogBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/environment/SceneFog;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/Fog;)Lcom/awakekt/awake/scene/rendering/environment/SceneFog;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/environment/SceneFog;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/rendering/environment/SceneFog;)Lcom/awakekt/awake/scene/rendering/Fog;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/Fog;)Lcom/awakekt/awake/scene/rendering/environment/SceneFog;
+}
+
+public final class com/awakekt/awake/scene/rendering/environment/FogSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/rendering/environment/SceneAmbientLight : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight$Companion;
+	public fun <init> ()V
+	public fun <init> (FLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)V
+	public synthetic fun <init> (FLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun component3 ()Ljava/lang/Float;
+	public final fun component4 ()Ljava/lang/Float;
+	public final fun component5 ()Ljava/lang/Float;
+	public final fun copy (FLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight;FLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getColor ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun getColorB ()Ljava/lang/Float;
+	public final fun getColorG ()Ljava/lang/Float;
+	public final fun getColorR ()Ljava/lang/Float;
+	public final fun getIntensity ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/environment/SceneAmbientLight$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/environment/SceneAmbientLight;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/environment/SceneAmbientLight$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/rendering/environment/SceneEnvironment : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/environment/SceneEnvironment$Companion;
 	public fun <init> ()V
-	public fun <init> (FFFFFFZFFFFFFFFFFFZ)V
-	public synthetic fun <init> (FFFFFFZFFFFFFFFFFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()F
+	public fun <init> (ZFFFFFFFFFFF)V
+	public synthetic fun <init> (ZFFFFFFFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
 	public final fun component10 ()F
 	public final fun component11 ()F
 	public final fun component12 ()F
-	public final fun component13 ()F
-	public final fun component14 ()F
-	public final fun component15 ()F
-	public final fun component16 ()F
-	public final fun component17 ()F
-	public final fun component18 ()F
-	public final fun component19 ()Z
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()F
 	public final fun component5 ()F
 	public final fun component6 ()F
-	public final fun component7 ()Z
+	public final fun component7 ()F
 	public final fun component8 ()F
 	public final fun component9 ()F
-	public final fun copy (FFFFFFZFFFFFFFFFFFZ)Lcom/awakekt/awake/scene/rendering/environment/SceneEnvironment;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/environment/SceneEnvironment;FFFFFFZFFFFFFFFFFFZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/environment/SceneEnvironment;
+	public final fun copy (ZFFFFFFFFFFF)Lcom/awakekt/awake/scene/rendering/environment/SceneEnvironment;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/environment/SceneEnvironment;ZFFFFFFFFFFFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/environment/SceneEnvironment;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getAmbientLight ()F
@@ -388,14 +526,7 @@ public final class com/awakekt/awake/scene/rendering/environment/SceneEnvironmen
 	public final fun getHorizonColorB ()F
 	public final fun getHorizonColorG ()F
 	public final fun getHorizonColorR ()F
-	public final fun getShadowsEnabled ()Z
 	public final fun getShowEnvironment ()Z
-	public final fun getSunAzimuthDeg ()F
-	public final fun getSunColorB ()F
-	public final fun getSunColorG ()F
-	public final fun getSunColorR ()F
-	public final fun getSunElevationDeg ()F
-	public final fun getSunIntensity ()F
 	public final fun getZenithColorB ()F
 	public final fun getZenithColorG ()F
 	public final fun getZenithColorR ()F
@@ -419,6 +550,122 @@ public final class com/awakekt/awake/scene/rendering/environment/SceneEnvironmen
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/rendering/environment/SceneFog : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/environment/SceneFog$Companion;
+	public fun <init> ()V
+	public fun <init> (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)V
+	public synthetic fun <init> (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component2 ()F
+	public final fun component3 ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun component4 ()Ljava/lang/Float;
+	public final fun component5 ()Ljava/lang/Float;
+	public final fun component6 ()Ljava/lang/Float;
+	public final fun copy (ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;)Lcom/awakekt/awake/scene/rendering/environment/SceneFog;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/environment/SceneFog;ZFLcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/environment/SceneFog;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getColor ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun getColorB ()Ljava/lang/Float;
+	public final fun getColorG ()Ljava/lang/Float;
+	public final fun getColorR ()Ljava/lang/Float;
+	public final fun getDensity ()F
+	public final fun getEnabled ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/environment/SceneFog$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/environment/SceneFog$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/environment/SceneFog;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/environment/SceneFog;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/environment/SceneFog$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/environment/SceneSkybox : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox$Companion;
+	public fun <init> ()V
+	public fun <init> (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Z
+	public final fun component10 ()Ljava/lang/String;
+	public final fun component11 ()F
+	public final fun component12 ()Ljava/lang/String;
+	public final fun component2 ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun component3 ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun component4 ()Ljava/lang/Float;
+	public final fun component5 ()Ljava/lang/Float;
+	public final fun component6 ()Ljava/lang/Float;
+	public final fun component7 ()Ljava/lang/Float;
+	public final fun component8 ()Ljava/lang/Float;
+	public final fun component9 ()Ljava/lang/Float;
+	public final fun copy (ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;)Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox;ZLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/Float;Ljava/lang/String;FLjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getCubemapPath ()Ljava/lang/String;
+	public final fun getEnabled ()Z
+	public final fun getExposure ()F
+	public final fun getHorizonColor ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun getHorizonColorB ()Ljava/lang/Float;
+	public final fun getHorizonColorG ()Ljava/lang/Float;
+	public final fun getHorizonColorR ()Ljava/lang/Float;
+	public final fun getType ()Ljava/lang/String;
+	public final fun getZenithColor ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun getZenithColorB ()Ljava/lang/Float;
+	public final fun getZenithColorG ()Ljava/lang/Float;
+	public final fun getZenithColorR ()Ljava/lang/Float;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/environment/SceneSkybox$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/environment/SceneSkybox$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/environment/SkyboxBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/environment/SkyboxBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/environment/SceneSkybox;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/Skybox;)Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+	public final fun toComponent (Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox;)Lcom/awakekt/awake/scene/rendering/Skybox;
+	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/Skybox;)Lcom/awakekt/awake/scene/rendering/environment/SceneSkybox;
+}
+
+public final class com/awakekt/awake/scene/rendering/environment/SkyboxSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
 public final class com/awakekt/awake/scene/rendering/light/LightBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/light/LightBinding;
 	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
@@ -439,21 +686,23 @@ public final class com/awakekt/awake/scene/rendering/light/LightBinding : com/aw
 public final class com/awakekt/awake/scene/rendering/light/SceneLight : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/light/SceneLight$Companion;
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;F)V
-	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public fun <init> (Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public final fun component2 ()F
 	public final fun component3 ()Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type;
 	public final fun component4 ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun component5 ()F
-	public final fun copy (Lcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;F)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/light/SceneLight;Lcom/awakekt/awake/scene/document/SceneVec3;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
+	public final fun component6 ()Z
+	public final fun copy (Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZ)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/light/SceneLight;Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
-	public final fun getColor ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun getColor ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public final fun getDirection ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun getIntensity ()F
 	public final fun getRange ()F
+	public final fun getShadowsEnabled ()Z
 	public final fun getType ()Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;

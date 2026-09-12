@@ -176,7 +176,141 @@ A backend has no business knowing what a scene light is; it should receive pipel
 recorded commands. Every one of those imports is a place where the two backends independently
 re-interpret a scene-level concept, which is exactly how they drift.
 
+## HAL vs Render Graph — the complete vocabulary boundary
+
+> **D31**: `GpuDevice`/`Renderer` is a pure hardware interface. The types below are the
+> binding record for that decision. See `docs/reference/decision-log.md` D31 for rationale.
+
+### Classification test
+
+> *Could a third backend implement this type unchanged, without knowing what scene content it
+> serves?* If **yes** → HAL (`render:contract`). If **no** → Render Graph (`render:passes`
+> or `scene:rendering`).
+
+### True HAL vocabulary — lives in `render:contract` ✅
+
+| Type / file | Why |
+|---|---|
+| `GpuDevice`, `Renderer` | Hardware device facade |
+| `RenderViewport` | Scissor rect — a hardware concept |
+| `RenderTarget` | Framebuffer attachment — hardware |
+| `TextureAsset`, `MipChain` | Texture data shapes |
+| `Material` | Descriptor set + UBO handle |
+| `Mesh` | Vertex / index buffer handle |
+| `PipelineSpec`, `PipelineTable`, `PipelineRegistry`, `PipelineVariant` | Pipeline objects |
+| `ShaderSource`, `BindingLayout`, `GroupBindings` | Shader / binding descriptors |
+| `UiPipelineDescriptor`, `UiTargetCompositeMode` | UI pass descriptor |
+| `CullMode` | Rasterizer state enum |
+| `FrameCapture`, `PixelMap` | Raw pixel readback |
+| `UiFontSamplingInfo` | Font texture sampling hint |
+| `UniformLayout`, `UniformWriter`, `UniformField`, `UniformFields` | GPU buffer packing — needed by both the passes layer and backends |
+| `LineSegment` | Geometry for `drawDebugLines` — feeds a hardware capability, not content |
+| `ShadowsEnabled` flag | App-facing toggle the backend only reads — does not require knowing what a shadow is |
+
+### Scene / content vocabulary — must NOT live in `render:contract` ❌
+
+**Group A — scene shading / lighting (highest priority debt)**
+
+| Type | Problem | Target home |
+|---|---|---|
+| `SceneLight`, `PointLight`, `MAX_POINT_LIGHTS`, `SceneLight.shadowCascades()` | A light is a scene object, not a GPU primitive | `render:passes/uniforms/` |
+| `EnvironmentUniforms` | Sky colour, fog, shadows — scene authoring choices | `render:passes/uniforms/` |
+| `ScenePassDescriptor` | Bundles `SceneLight + EnvironmentUniforms + Lens + DrawCalls` | `render:passes/` |
+| `DrawCall` | One scene object to draw — render-graph input, not a GPU primitive | `render:passes/` |
+| `Lens` | Scene camera — frustum, projection, view — belongs to the render graph | `render:passes/` |
+| `Renderer.DEFAULT_SCENE_LIGHT`, `DEFAULT_HORIZON_COLOR`, `DEFAULT_ZENITH_COLOR`, `DEFAULT_FOG_COLOR` | Scene defaults on the hardware interface | `render:passes/uniforms/` |
+| `Renderer.draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight)` | Primary abstract method takes scene objects — root cause of all backend leaks | Replace with `draw(frame: GpuSceneFrame)` in Phase 2 |
+| `Renderer.showEnvironment`, `horizonColor`, `zenithColor`, `fogColor`, `fogDensity` | Scene properties on the GPU device | Delete in Phase 2 |
+
+**Group B — shadow / depth pass data (tracked debt)**
+
+| Type | Problem | Target home |
+|---|---|---|
+| `ShadowCascades` — `cascadeSplitDistances`, `cascadeShadowBoxes`, all `DEFAULT_*` cascade constants | Shadow cascade math — a scene algorithm | `render:passes/` |
+| `DirectionalShadowBox`, `directionalShadowBox()`, shadow geometry constants | Shadow frustum geometry — render graph computation | `render:passes/` |
+| `ShadowCascadeUniforms`, `shadowCascadeUniforms()`, `UNSHADOWED_CASCADES`, `CascadePassUniformLayout`, `SHADOW_CASCADE_PASS_GROUP` | Shadow map uniform data | `render:passes/uniforms/` |
+
+**Group C — content-specific uniform layouts (tracked debt)**
+
+| Type | Problem | Target home |
+|---|---|---|
+| `SkyboxUniforms`, `SkyboxFields`, `SUN_DISC_COLOR`, `MOON_DISC_COLOR`, `skyboxUniformFloats()` | Skybox is content | `asset:shader-pack` (alongside `SkyboxContentFeature`) |
+| `DepthFogFields`, `DepthFogUniformLayout` | Fog is a scene effect | `asset:shader-pack` (alongside `DepthFogContentFeature`) |
+| `ParticleUniforms`, `ParticleExtraUniformLayout`, `ParticleUniformLayout`, `InstancedUniformLayout` | Particle system is content | `render:passes/uniforms/` or `asset:shader-pack` |
+| `InfiniteGridFields`, `InfiniteGridUniformLayout` | Editor debug grid — content feature | `asset:shader-pack` |
+| `SkinnedUniformLayout`, `MAX_JOINTS` | `MAX_JOINTS` is a WGSL array-size constant shared with shader pack — borderline; keep in `render:contract` with explicit rationale, do not replicate | — |
+
+**Group D — scene-aware debug geometry (tracked debt)**
+
+| Type | Problem | Target home |
+|---|---|---|
+| `DebugGeometry` — `frustumDebugLines(camera: Lens, ...)`, `lightGizmoLines(...)`, `boundsDebugLines(...)`, `objectAuraLines(...)` | Takes `Lens` (a scene camera) — the HAL should not know what a frustum debug line or light gizmo is | `render:passes` or `scene:rendering` |
+
+### Why the boundary fails today — the root import chain
+
+All Group A–D imports in the backends exist because `Renderer.draw()` passes scene objects,
+and `RenderFrameContext` in `render:passes` exposes `val light: SceneLight` and `val environment: EnvironmentUniforms`:
+
+```
+Renderer.draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight)
+```
+
+Both backends must import `Lens`, `DrawCall`, and `SceneLight` to implement this one method,
+and `DepthPrePassFeature` imports `ShadowCascadeUniforms` to record light shadow passes.
+Fix the signatures (Phase 2), generalize shadow passes into generic `GpuSubPass` instances,
+and every backend import of those types disappears by necessity. The exempt-file ledger in
+`verifyBackendLayering` then shrinks to zero without a manual import-cleanup pass — the *test*
+that Phase 2 is finished is:
+`grep -rl 'DrawCall\|SceneLight\|Lens\|EnvironmentUniforms\|ShadowCascade' awake/backend/` returns nothing.
+
+### The target shape (Phase 2 outcome)
+
+```kotlin
+// In render:contract — pure hardware primitives
+data class GpuDrawCommand(
+    val mesh: Mesh,
+    val material: Material,
+    val transform: Mat4,
+    val instances: Int = 1,
+    val instanceVertexBuffer: BufferHandle? = null,
+    val jointPaletteBinding: MaterialBinding? = null,
+    val instanceColorBuffer: BufferHandle? = null,
+    val instanceFrameBuffer: BufferHandle? = null,
+)
+
+data class GpuSubPass(
+    val target: RenderTarget?,
+    val targetLayer: Int = 0,
+    val viewProjection: Mat4,
+    val viewport: RenderViewport? = null,
+    val draws: List<GpuDrawCommand> = emptyList(),
+    val passUniforms: FloatArray = FloatArray(0),
+    val depthBiasConstant: Float = 0f,
+    val depthBiasSlope: Float = 0f,
+)
+
+data class GpuPassInput(
+    val prePasses: List<GpuSubPass> = emptyList(),
+    val viewProjection: Mat4,
+    val cameraEye: Vec3f,
+    val opaqueDraws: List<GpuDrawCommand>,
+    val transparentDraws: List<GpuDrawCommand>,
+    val passUniforms: FloatArray,
+)
+
+// In render:contract — pure hardware
+interface Renderer : GpuDevice {
+    fun draw(input: GpuPassInput)
+    fun renderToTexture(target: RenderTarget, input: GpuPassInput)
+    // ... no SceneLight, no Lens, no DrawCall, no EnvironmentUniforms
+}
+```
+
+`RenderSystem` (`scene:rendering`) compiles `GpuSceneFrame` from ECS scene state and calls
+`draw`. No scene type ever crosses the HAL boundary. See decision D31.
+
 ## Runtime and RHI are two layers, not one
+
 
 The split above is deliberate and matches Unreal's `Runtime/RHI` versus `Runtime/Renderer`:
 

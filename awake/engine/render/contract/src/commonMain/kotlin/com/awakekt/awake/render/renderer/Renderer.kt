@@ -7,11 +7,13 @@ package com.awakekt.awake.render.renderer
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.command.GpuDrawCommand
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
-import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.GpuDevice
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -83,6 +85,7 @@ interface Renderer : GpuDevice {
      * them the moment it opts in, matching how a new [Renderer] capability elsewhere in this
      * interface (e.g. [drawDebugLines]) is on by default rather than requiring an extra call
      * to enable. */
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     var shadowsEnabled: Boolean
 
     /**
@@ -109,40 +112,40 @@ interface Renderer : GpuDevice {
      * whose bootstrap never built a skybox pipeline, and every test double, keeps rendering
      * exactly as it always did. Both real backends override this with real storage.
      */
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     var showEnvironment: Boolean
         get() = false
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
     /** RGB(A) the sky gradient blends from at the horizon ([showEnvironment] only). */
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     var horizonColor: Color
         get() = DEFAULT_HORIZON_COLOR
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
     /** RGB(A) the sky gradient blends to straight overhead ([showEnvironment] only). */
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     var zenithColor: Color
         get() = DEFAULT_ZENITH_COLOR
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
     /** RGB(A) distant geometry blends toward on the two PBR-capable lit paths
      * (`textured.wgsl`/`lit_shadow.wgsl`). Only visible once [fogDensity] is non-zero. */
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     var fogColor: Color
         get() = DEFAULT_FOG_COLOR
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
     /** Exponential fog density -- `0f` (default) is "no fog", which is what every scene got
      * before this existed. Unlike [showEnvironment] this needs no pipeline support: it is one
      * more uniform field the existing lit shaders read, so it works on any backend. */
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     var fogDensity: Float
         get() = 0f
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
 
@@ -161,45 +164,87 @@ interface Renderer : GpuDevice {
      */
     var sceneViewport: RenderViewport?
         get() = null
-
         @Suppress("UNUSED_PARAMETER")
         set(value) = Unit
+
+    /** Renders the frame specified by [pass]. */
+    fun draw(pass: ScenePassDescriptor) =
+        draw(pass.camera, pass.drawCalls, pass.light, pass.environment)
+
+    /**
+     * Renders [drawCalls] with [camera], shaded by [light] and environmental uniforms [environment].
+     */
+    @Suppress("DEPRECATION")
+    fun draw(
+        camera: Lens,
+        drawCalls: List<DrawCall>,
+        light: SceneLight,
+        environment: EnvironmentUniforms,
+    ) {
+        this.showEnvironment = environment.showSky
+        this.horizonColor = environment.horizonColor
+        this.zenithColor = environment.zenithColor
+        this.fogDensity = environment.fogDensity
+        this.fogColor = environment.fogColor
+        this.shadowsEnabled = environment.shadowsEnabled
+        draw(camera, drawCalls, light)
+    }
+
+    /**
+     * Executes rendering from pre-packed GPU pass input.
+     *
+     * The HAL receives raw matrices, generic sub-passes, pre-sorted draw commands,
+     * and uniform floats. It never imports or inspects SceneLight, DrawCall,
+     * Lens, EnvironmentUniforms, or ShadowCascadeUniforms.
+     */
+    fun draw(input: GpuPassInput) = Unit
+
+    /**
+     * Renders [input] into offscreen [target] instead of swapchain.
+     */
+    fun renderToTexture(target: RenderTarget, input: GpuPassInput) = Unit
 
     /** [light] shades every [DrawCall] in this frame's pass -- defaults to
      * [DEFAULT_SCENE_LIGHT] (the same direction/color every lit shader hardcoded before this
      * parameter existed) so a scene with no `Light` entity looks exactly as it always did.
      * `RenderSystem` overrides this with the scene's actual primary `Light` entity when one
      * exists. */
-    fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight = DEFAULT_SCENE_LIGHT)
+    fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight = DEFAULT_SCENE_LIGHT) {
+        draw(toPassInput(camera, drawCalls, clipSpace))
+    }
 
     /**
      * Presents a frame containing no scene geometry.
-     *
-     * [draw] is the only call that acquires, records, submits and presents a swapchain frame;
-     * [drawUi] merely stages primitives into pooled meshes. So a UI-only app still has to call
-     * [draw] every frame or the window shows its OS-default backing -- a real desktop repro was
-     * a blank pale-grey window with no crash and no error.
-     *
-     * A named capability rather than each caller inventing an unused camera to satisfy [draw]'s
-     * signature: the camera is not used for any transform, so the value is arbitrary and the
-     * intent is invisible at the call site. Anything with a real scene calls [draw] directly.
      */
-    fun presentWithoutScene() = draw(UI_ONLY_CAMERA, emptyList())
+    fun presentWithoutScene() = draw(GpuPassInput.EMPTY)
+
+    /** Renders the frame specified by [pass] into [target]. */
+    fun renderToTexture(target: RenderTarget, pass: ScenePassDescriptor) =
+        renderToTexture(target, pass.camera, pass.drawCalls, pass.light, pass.environment)
+
+    /** Renders [drawCalls] against [camera] into [target] with [environment] uniforms. */
+    fun renderToTexture(
+        target: RenderTarget,
+        camera: Lens,
+        drawCalls: List<DrawCall>,
+        light: SceneLight,
+        environment: EnvironmentUniforms,
+    ) {
+        renderToTexture(target, camera, drawCalls, light)
+    }
 
     /** Renders [drawCalls] against [camera] into [target] instead of the swapchain/canvas --
      * a sibling of [draw] (not an overload/parameter of it), since the two have different
      * post-conditions: [draw] ends with a present, this ends with [target]'s color image left
-     * in a sampled-readable state for [readPixels] or a compositing [Material] to consume.
-     * [target]'s own [RenderTarget.width]/[RenderTarget.height] supply the aspect ratio passed
-     * to [Lens.viewProjectionMatrix] -- NOT the live swapchain/canvas size. Does not draw
-     * debug lines ([drawDebugLines]) or a UI overlay ([drawUi]) -- an offscreen render is a
-     * clean scene-only pass; both are out of scope for now. */
+     * in a sampled-readable state for [readPixels] or a compositing [Material] to consume. */
     fun renderToTexture(
         target: RenderTarget,
         camera: Lens,
         drawCalls: List<DrawCall>,
         light: SceneLight = DEFAULT_SCENE_LIGHT,
-    )
+    ) {
+        renderToTexture(target, toPassInput(camera, drawCalls, clipSpace))
+    }
 
     /** Reads [target]'s color attachment back to the CPU as tightly-packed RGBA8 pixels (the
      * same layout [TextureAsset.data] already assumes) -- for golden-image/screenshot-diff
@@ -237,7 +282,11 @@ interface Renderer : GpuDevice {
     fun awaitFrameResources() = Unit
 
     /** Renders UI into an offscreen target for compositing as one texture. */
-    fun drawUiToTexture(target: RenderTarget, primitives: List<UiDrawPrimitive>, font: UiFont? = null) {
+    fun drawUiToTexture(
+        target: RenderTarget,
+        primitives: List<UiDrawPrimitive>,
+        font: UiFont? = null
+    ) {
         error("This renderer does not support UI rendering to a RenderTarget.")
     }
 
@@ -263,6 +312,37 @@ interface Renderer : GpuDevice {
      * geometry. Stages the lines for the next [draw] call, same "stage now, consume on next
      * draw" pattern [drawUi] already uses -- call before [draw] each frame. */
     fun drawDebugLines(lines: List<LineSegment>)
+}
+
+private fun toPassInput(
+    camera: Lens,
+    drawCalls: List<DrawCall>,
+    clipSpace: ClipSpace,
+): GpuPassInput {
+    val vp = camera.viewProjectionMatrix(1f, clipSpace)
+    val opaque = ArrayList<GpuDrawCommand>(drawCalls.size)
+    val transparent = ArrayList<GpuDrawCommand>()
+    for (i in drawCalls.indices) {
+        val dc = drawCalls[i]
+        val cmd = GpuDrawCommand(
+            mesh = dc.mesh,
+            material = dc.material,
+            transform = dc.model,
+            instances = dc.instanceModels?.size ?: 1,
+        )
+        if (dc.transparent) {
+            transparent.add(cmd)
+        } else {
+            opaque.add(cmd)
+        }
+    }
+    return GpuPassInput(
+        viewProjection = vp,
+        cameraEye = camera.eye,
+        opaqueDraws = opaque,
+        transparentDraws = transparent,
+        passUniforms = FloatArray(0),
+    )
 }
 
 /**

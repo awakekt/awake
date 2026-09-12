@@ -28,6 +28,7 @@ kotlin {
             api(project(":awake:scene:document"))
             api(project(":awake:scene:binding"))
             api(project(":awake:engine:render:contract"))
+            api(project(":awake:engine:render:passes"))
             api(project(":awake:asset:terrain"))
             // terrainContentFeature(TerrainComponent) adapts the pack's feature to the ECS
             // component. Acyclic: shader-pack knows nothing of the scene layer.

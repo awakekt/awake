@@ -475,7 +475,7 @@ class RendererHeadlessCascadedShadowTest {
         ?.let { light ->
             SceneLight(
                 direction = Vec3f(light.direction.x, light.direction.y, light.direction.z),
-                color = Vec3f(light.color.x, light.color.y, light.color.z),
+                color = Vec3f(light.color.r, light.color.g, light.color.b),
             )
         }
 
@@ -509,6 +509,7 @@ class RendererHeadlessCascadedShadowTest {
             // uniform buffer; a first frame after that measures the handover rather than this
             // scene. JUnit does not fix method order, so without this the result changes between
             // runs of the same code.
+            renderer.renderGrazingFace(target)
             val pixels = renderer.renderGrazingFace(target)
 
             val speckles = selfShadowedFacePixels(pixels)

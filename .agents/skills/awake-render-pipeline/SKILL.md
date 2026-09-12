@@ -31,6 +31,34 @@ than silently generating an incompatible replacement. The current exception is
 decision. `fwidth` and other fragment derivatives are valid in generated GPU shaders, but are not
 meaningful in the CPU ASL evaluator.
 
+## 0.5 Two-Layer Rendering Model — READ BEFORE TOUCHING `Renderer.kt`
+
+Awake rendering has exactly two layers. Crossing the boundary is the primary source
+of architectural debt in this codebase.
+
+**LAYER 1 — Hardware Abstraction Layer (HAL)**
+- Module: `awake:engine:render:contract` (`GpuDevice` / `Renderer`)
+- Owns: pipelines, buffers, textures, samplers, command recording, swapchain, viewport scissors, pixel readback, `GpuPassInput`, `GpuSubPass`, `GpuDrawCommand`
+- NEVER owns: `SceneLight`, `PointLight`, `DrawCall`, `Lens`, `EnvironmentUniforms`, `ScenePassDescriptor`, `ShadowCascades`, `DirectionalShadowBox`, `ShadowCascadeUniforms`, `SkyboxUniforms`, `SkyboxFields`, `ParticleUniforms`, `DepthFogFields`, `InfiniteGridFields`, or any scene default constants
+
+**LAYER 2 — Render Graph / Scene System**
+- Modules: `awake:engine:render:passes`, `awake:asset:shader-pack`, `awake:scene:rendering`
+- Owns: `SceneLight`, `DrawCall`, `Lens`, `EnvironmentUniforms`, `ScenePassDescriptor`, all shadow cascade algorithms, all content-specific uniform layouts, all scene default constants, `RenderFeature` list and dispatch
+- Translates: scene data → raw GPU passes and pre-packed byte/float buffers (`GpuPassInput`) BEFORE calling `GpuDevice`
+
+**The test:** *"Could a third backend implement this type unchanged, without knowing what scene content it serves?"* A type that fails this test does not belong in `render:contract`.
+
+**COMMON MISTAKE — "I need to pass fog/light/shadows to the backend":**
+- ❌ WRONG: add a field or parameter to `Renderer` / `GpuDevice`
+- ✅ RIGHT: pack the data into a `FloatArray`/`ByteArray` in `render:passes`, pass raw bytes and generic `GpuSubPass` executions to the backend via `GpuPassInput`
+
+**Phase 1 staging note (D31):** `Renderer.kt` still declares
+`fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight)` while Phase 2 is
+pending. The agent rules below define the *target state*. Existing occurrences in the
+five tracked exempt files per backend are **known debt, not actionable defects yet**.
+See `docs/reference/decision-log.md` D31 and `docs/reference/render-hardware-interface.md`
+§ HAL vs Render Graph for the full type audit. Phase 2 will eliminate all 5 exemptions per backend.
+
 ## 1. Strategy pattern for render features — in place, keep it that way
 
 `Renderer` used to wire each pass as its own nullable field (`skyboxRenderPipeline`,
@@ -74,9 +102,11 @@ itself.
 (`recordDepthPrePass` is a wholly separate function from `recordCommandBuffer`, since a
 `DepthTarget`'s render pass is not the scene pass), so `RenderFeature` only covers the 3
 features that genuinely share a pass (`Opaque`, `Skybox`, `UI`). `DepthPrePassFeature` stays
-its own class with its own signature. Don't generalize this into a shared pass-ownership
-interface until a second standalone-pass feature (e.g. a future post-process blur) actually
-exists — building that abstraction for a hypothetical is speculative generality. See
+its own class with its own signature. This rule applies **only** to `RenderFeature`
+registration and pass dispatch ordering — don't create a shared pass-ownership interface just
+because you can. It does **not** mean "keep adding scene vocabulary to `GpuDevice`/`Renderer`".
+Those are separate concerns: the HAL boundary (§0.5) is non-negotiable regardless of how many
+passes exist. See
 [docs/audits/2026-08-19-render-feature-strategy-plan.md](../../docs/audits/2026-08-19-render-feature-strategy-plan.md)
 for the full worked design, including why the receiver-on-`Renderer` shortcut and an earlier
 3-way sealed hierarchy were both rejected.
@@ -252,16 +282,25 @@ port in `contract`, an algorithm using that port in `passes`/`passes2d`, and a d
   missing mediator. A Bridge or adapter layer added without them relocates the duplication
   instead of deleting it. Both primitives landed (`VertexFormat.None`, `PipelineSpec.uniforms`),
   and the rule stands for the next one: check the primitive before reaching for the layer.
-- **A backend must never import scene vocabulary.** `DrawCall`, `SceneLight` and `Lens` are render
-  *runtime* concepts; a backend receives pipelines, buffers and recorded commands. Both backends
-  violate this today: **9 files** in `verifyBackendLayering`'s import ledger, 4 Vulkan and 5
-  WebGPU, all under `renderer/`. That is tracked work, not a precedent to copy. Do not add a new
-  one.
+- **Do not add new backend imports of scene vocabulary (staged rule — D31).** `DrawCall`,
+  `SceneLight`, `Lens`, `EnvironmentUniforms`, `ShadowCascadeUniforms`, `DirectionalShadowBox`,
+  `SkyboxUniforms`, and `ParticleUniforms` are render *runtime* concepts; a backend receives
+  pipelines, buffers and recorded commands. Both backends violate this today — **10 files** in
+  `verifyBackendLayering`'s import ledger (5 Vulkan + 5 WebGPU, all under `renderer/`) — because
+  `Renderer.draw()`'s signature still passes scene objects. That is **tracked debt** (D31 Phase 2),
+  not a precedent. The rule below defines the *target state*:
 
-  Unlike the content list, this one has not moved, and the reason matters before anyone plans to
-  empty it: these imports *are* `Renderer.draw`'s signature. Shrinking the list means changing
-  what a backend is handed, which is the draw-preparation phase of
-  `docs/tasks/2026-08-23-rhi-gpudevice-plan.md` -- not an import cleanup.
+  > **Phase 1 (now):** Do not add a new scene import to any file, including the exempt ones.
+  > Do not add a sixth file to the ledger without a plan entry. Shrink the list over time.
+  >
+  > **Phase 2 (pending):** Replace `Renderer.draw(camera, drawCalls, light)` with
+  > `draw(frame: GpuSceneFrame)`. When that lands, the ledger reaches zero automatically.
+
+  The full exempt-file list per backend is in the `awake-render-vulkan` and
+  `awake-render-webgpu` skills and in `com.awakekt.awake.plugin.backend-layering.gradle.kts`.
+  Unlike the content-vocabulary list (which reached 0), this one has not moved — because
+  shrinking it means changing what a backend is handed, which is the draw-preparation phase of
+  `docs/tasks/2026-08-23-rhi-gpudevice-plan.md` — not an import cleanup.
 - **Never reach for `expect`/`actual` to enforce backend symmetry.** It makes both sides implement
   matching signatures while both bodies stay hand-written — duplication becomes mandatory and
   compiler-checked instead of removed. It also resolves per KMP *target*, not per backend. Use an

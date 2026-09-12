@@ -5,23 +5,24 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
-import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.times
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.renderer.DEFAULT_FOG_COLOR
 import com.awakekt.awake.render.renderer.DEFAULT_HORIZON_COLOR
 import com.awakekt.awake.render.renderer.DEFAULT_ZENITH_COLOR
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.renderer.EnvironmentUniforms
 import com.awakekt.awake.render.renderer.LineSegment
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
@@ -134,15 +135,25 @@ class Renderer internal constructor(
      * comments. [showEnvironment] additionally needs [skyboxRenderPipeline] to be non-null
      * (the app's bootstrap must have opted into a skybox shader set); with none built it stays
      * a no-op flag, same shape as [wireframe] with no [wireframeRenderPipeline]. */
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var showEnvironment: Boolean = false
+
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var horizonColor: AwakeColor = DEFAULT_HORIZON_COLOR
+
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var zenithColor: AwakeColor = DEFAULT_ZENITH_COLOR
+
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var fogColor: AwakeColor = DEFAULT_FOG_COLOR
+
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var fogDensity: Float = 0f
 
     // Read for real (RendererDraw3D gates the depth pre-pass on it), but [depthPrePass] is
     // always null here -- WebGpuEngine rejects a non-null depthPrePassShaderSet, because no WebGPU
     // shader can sample the map. So this toggles a pass that never has anything to run.
+    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
     override var shadowsEnabled: Boolean = true
 
     /** Real storage overriding the interface's no-op default -- see the interface's own doc
@@ -239,6 +250,14 @@ class Renderer internal constructor(
         camera: Lens,
         drawCalls: List<DrawCall>,
         light: SceneLight,
+        environment: EnvironmentUniforms,
+    ) = performRenderToTexture(target, camera, drawCalls, light, environment)
+
+    override fun renderToTexture(
+        target: RenderTarget,
+        camera: Lens,
+        drawCalls: List<DrawCall>,
+        light: SceneLight,
     ) = performRenderToTexture(target, camera, drawCalls, light)
 
     override suspend fun readPixels(target: RenderTarget): TextureAsset = performReadPixels(target)
@@ -264,9 +283,10 @@ class Renderer internal constructor(
      * extracted body under the same name. */
     override fun drawDebugLines(lines: List<LineSegment>) = performDrawDebugLines(lines)
 
-    /** Renders one frame -- delegates to [performDraw] ([RendererDraw3D.kt]). See [drawUi]'s
-     * doc comment for why this can't just be the extracted body under the same name. */
-    override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) = performDraw(camera, drawCalls, light)
+    override fun draw(input: GpuPassInput) = performDraw(input)
+
+    override fun renderToTexture(target: RenderTarget, input: GpuPassInput) =
+        performRenderToTexture(target, input)
 
     override fun destroy() {
         instancedUniformBuffer?.close()

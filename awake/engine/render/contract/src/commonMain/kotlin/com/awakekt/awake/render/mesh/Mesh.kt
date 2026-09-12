@@ -20,27 +20,12 @@ import com.awakekt.awake.core.math.Aabb
  * interface declared in a different module, so `VulkanApplication.kt`'s existing
  * `Mesh(graphicsDevice, ...)` construction pattern needs no changes.
  */
-interface Mesh {
-    /** The vertex layout this mesh's GPU buffer was built with -- lets a [Renderer]
-     * implementation pick the correct pipeline for a [com.awakekt.awake.render
-     * .renderer.DrawCall] by [format] instead of assuming every mesh shares the one pipeline
-     * the renderer happens to have bound. Set once at [Renderer.createMesh] time from the
-     * [MeshGeometry.format] the mesh was created from. */
-    val format: VertexFormat
+interface Mesh : GpuMesh {
+    /** The vertex layout this mesh's GPU buffer was built with. */
+    override val format: VertexFormat
 
-    /**
-     * The box this mesh's own vertices occupy, in local space, or null when a backend built it
-     * without one.
-     *
-     * Here rather than left to a caller because a caller cannot recover it: `createMesh` takes
-     * `MeshGeometry` and returns GPU buffers, and the vertices are gone by the time anything
-     * wants to cull, index or draw a box around them. `MeshGeometry.bounds` already computes it;
-     * this is only where the answer is kept.
-     *
-     * The consequence of NOT having it was quiet: nothing attached `MeshBounds`, so frustum
-     * culling had nothing to test, the spatial index had nothing to index, and the bounds
-     * overlay had nothing to draw -- three features that looked implemented and were inert.
-     */
+    /** The local-space bounding box of this mesh's vertices, or null if uncomputed. */
+    override val bounds: Aabb? get() = null
     val localBounds: Aabb? get() = null
 
     /**

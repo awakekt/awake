@@ -13,7 +13,6 @@ import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes2d.UiRun
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.webgpu.debug.LineMesh
 import com.awakekt.awake.webgpu.pipeline.WebGpuCommandRecorder
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
@@ -35,7 +34,6 @@ internal class WebGpuFrameContext(
     override val primaryPipeline: PipelineHandle,
     override val viewProjection: Mat4,
     override val cameraEye: Vec3f,
-    override val light: SceneLight,
     override val surfaceWidth: Int,
     override val surfaceHeight: Int,
 ) : WebGpuRenderFrameContext {
@@ -44,9 +42,9 @@ internal class WebGpuFrameContext(
      * per-frame-in-flight. */
     override val frameIndex: Int get() = 0
 
-    override val showEnvironment: Boolean get() = renderer.showEnvironment
-    override val horizonColor: Color get() = renderer.horizonColor
-    override val zenithColor: Color get() = renderer.zenithColor
+    override val showEnvironment: Boolean get() = environment.showSky
+    override val horizonColor: Color get() = environment.horizonColor
+    override val zenithColor: Color get() = environment.zenithColor
 
     override val recorder: CommandRecorder = WebGpuCommandRecorder(encoder)
 

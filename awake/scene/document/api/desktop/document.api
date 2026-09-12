@@ -26,6 +26,50 @@ public final class com/awakekt/awake/scene/document/SceneCatalogEntry {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/document/SceneColor {
+	public static final field Companion Lcom/awakekt/awake/scene/document/SceneColor$Companion;
+	public fun <init> ()V
+	public fun <init> (FFFF)V
+	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lcom/awakekt/awake/scene/document/SceneColor;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/document/SceneColor;FFFFILjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneColor;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getA ()F
+	public final fun getB ()F
+	public final fun getG ()F
+	public final fun getR ()F
+	public fun hashCode ()I
+	public final fun toHex (Z)Ljava/lang/String;
+	public static synthetic fun toHex$default (Lcom/awakekt/awake/scene/document/SceneColor;ZILjava/lang/Object;)Ljava/lang/String;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/document/SceneColor$Companion {
+	public final fun fromHex (Ljava/lang/String;)Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun getBlack ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun getTransparent ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun getWhite ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/document/SceneColorKt {
+	public static final fun toColor (Lcom/awakekt/awake/scene/document/SceneColor;)Lcom/awakekt/awake/core/color/Color;
+	public static final fun toSceneColor (Lcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/scene/document/SceneColor;
+}
+
+public final class com/awakekt/awake/scene/document/SceneColorSerializer : kotlinx/serialization/KSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/document/SceneColorSerializer;
+	public fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/document/SceneColor;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/document/SceneColor;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+}
+
 public abstract interface class com/awakekt/awake/scene/document/SceneComponent {
 	public fun getAllowsMultiplePerNode ()Z
 	public fun validate (Ljava/lang/String;)Ljava/util/List;
@@ -377,6 +421,41 @@ public final class com/awakekt/awake/scene/document/ScenePropertyOverride$Compan
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/document/SceneQuat {
+	public static final field Companion Lcom/awakekt/awake/scene/document/SceneQuat$Companion;
+	public fun <init> ()V
+	public fun <init> (FFFF)V
+	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (FFFF)Lcom/awakekt/awake/scene/document/SceneQuat;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/document/SceneQuat;FFFFILjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneQuat;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getW ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun getZ ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/document/SceneQuat$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/document/SceneQuat$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/document/SceneQuat;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/document/SceneQuat;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/document/SceneQuat$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/document/SceneSchemaVersionException : java/lang/IllegalArgumentException {
 	public fun <init> (I)V
 	public final fun getDocumentVersion ()I
@@ -446,6 +525,37 @@ public final class com/awakekt/awake/scene/document/SceneValidator {
 	public static synthetic fun requireValid$default (Lcom/awakekt/awake/scene/document/SceneValidator;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;ILjava/lang/Object;)V
 	public final fun validate (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;)Ljava/util/List;
 	public static synthetic fun validate$default (Lcom/awakekt/awake/scene/document/SceneValidator;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneExtensionRegistry;ILjava/lang/Object;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/scene/document/SceneVec2 {
+	public static final field Companion Lcom/awakekt/awake/scene/document/SceneVec2$Companion;
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/scene/document/SceneVec2;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/document/SceneVec2;FFILjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneVec2;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/document/SceneVec2$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/document/SceneVec2$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/document/SceneVec2;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/document/SceneVec2;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/document/SceneVec2$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/scene/document/SceneVec3 {

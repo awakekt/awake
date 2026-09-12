@@ -43,6 +43,18 @@ object NativeCMake {
                 .firstOrNull { File(it).exists() }
 
     /**
+     * cmake executable path.
+     *
+     * Tries PATH first, then homebrew/local fallback paths for macOS IDE environments where
+     * GUI launcher processes lack homebrew in PATH.
+     */
+    fun findCmake(): String =
+        findOnPath("cmake")
+            ?: listOf("/opt/homebrew/bin/cmake", "/usr/local/bin/cmake")
+                .firstOrNull { File(it).exists() }
+            ?: "cmake"
+
+    /**
      * [executable] resolved against PATH, or null.
      *
      * Tries the bare name and `.exe` -- a check for `cmake` alone reports "not installed" on a
@@ -95,7 +107,7 @@ fun Project.registerCMakeLibrary(
         doFirst { buildDir.mkdirs() }
         commandLine(
             buildList {
-                add("cmake")
+                add(NativeCMake.findCmake())
                 add("-S"); add(sourceDir.absolutePath)
                 add("-B"); add(buildDir.absolutePath)
                 add("-DCMAKE_BUILD_TYPE=$buildType")
@@ -130,7 +142,7 @@ fun Project.registerCMakeLibrary(
         this.description = description
         dependsOn(configure)
         workingDir = buildDir
-        commandLine(buildList { add("cmake"); add("--build"); add(buildDir.absolutePath); addAll(buildArgs) })
+        commandLine(buildList { add(NativeCMake.findCmake()); add("--build"); add(buildDir.absolutePath); addAll(buildArgs) })
         // Same reasoning as configure's outputs above: rebuilding is only worth skipping once
         // the C++ sources themselves are unchanged, and the compiled artifacts land back in
         // buildDir regardless of which target this caller asked for.

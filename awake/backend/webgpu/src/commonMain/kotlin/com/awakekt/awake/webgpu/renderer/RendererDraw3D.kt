@@ -5,23 +5,31 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
-import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.debug.lineSegmentVertices
 import com.awakekt.awake.render.passes.recordPassFeatures
 import com.awakekt.awake.render.passes.uniforms.fogUniformFloats
 import com.awakekt.awake.render.passes.uniforms.sceneLightUniforms
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.renderer.EnvironmentUniforms
 import com.awakekt.awake.render.renderer.LineSegment
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.shadowCascades
+import io.ygdrasil.webgpu.GPUCommandEncoder
 import io.ygdrasil.webgpu.GPULoadOp
+import io.ygdrasil.webgpu.GPURenderPassEncoder
 import io.ygdrasil.webgpu.GPUStoreOp
+import io.ygdrasil.webgpu.GPUTextureView
 import io.ygdrasil.webgpu.RenderPassColorAttachment
 import io.ygdrasil.webgpu.RenderPassDepthStencilAttachment
 import io.ygdrasil.webgpu.RenderPassDescriptor
 import io.ygdrasil.webgpu.beginRenderPass
+
+internal typealias Lens = com.awakekt.awake.core.math.Lens
+internal typealias DrawCall = com.awakekt.awake.render.renderer.DrawCall
+internal typealias SceneLight = com.awakekt.awake.render.renderer.SceneLight
 
 /** The 3D frame path -- `Renderer.draw`'s whole-frame orchestration (3D draw calls + debug
  * lines in one render pass, then the UI overlay pass on top of it) and debug-line staging.
@@ -35,7 +43,89 @@ import io.ygdrasil.webgpu.beginRenderPass
  * method) is a one-line delegate to this extension function; an extension function can't
  * share its name with a member function it's called from without the member call winning
  * resolution and recursing into itself. */
-internal fun Renderer.performDraw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) {
+internal fun Renderer.performDraw(input: GpuPassInput) {
+    swapchainManager.syncSurface()
+    val device = graphicsDevice.wgpuContext.device
+    val renderingContext = graphicsDevice.wgpuContext.renderingContext
+    val useWireframe = wireframe && wireframeRenderPipeline != null
+    val activeRenderPipeline = if (useWireframe) wireframeRenderPipeline!! else renderPipeline
+    val primaryHandle = activeRenderPipeline.handle
+    val primary = PrimaryPipelineBinding(pipeline = primaryHandle, wireframe = useWireframe)
+
+    val sceneRect = sceneViewport?.clampedTo(
+        renderingContext.width.toFloat(),
+        renderingContext.height.toFloat(),
+    )
+    val opaqueDraws = prepareGpuDraws(input.opaqueDraws, isTransparent = false, primary, input.viewProjection, input.cameraEye)
+    val transparentDraws = prepareGpuDraws(input.transparentDraws, isTransparent = true, primary, input.viewProjection, input.cameraEye, singleIndexStart = input.opaqueDraws.size)
+    val draws = PreparedDraws(
+        opaque = opaqueDraws.opaque + transparentDraws.opaque,
+        transparent = opaqueDraws.transparent + transparentDraws.transparent,
+    )
+
+    val encoder = device.createCommandEncoder()
+    val colorView = renderingContext.getCurrentTexture().createView()
+
+    encoder.beginRenderPass(
+        RenderPassDescriptor(
+            colorAttachments = listOf(
+                RenderPassColorAttachment(
+                    view = colorView,
+                    loadOp = GPULoadOp.Clear,
+                    clearValue = clearColorValue,
+                    storeOp = GPUStoreOp.Store,
+                ),
+            ),
+            depthStencilAttachment = RenderPassDepthStencilAttachment(
+                view = requireNotNull(swapchainManager.depthTextureView),
+                depthClearValue = 1.0f,
+                depthLoadOp = GPULoadOp.Clear,
+                depthStoreOp = GPUStoreOp.Store,
+            ),
+        ),
+    ) {
+        sceneRect?.let { rect ->
+            setViewport(rect.x, rect.y, rect.width, rect.height, 0f, 1f)
+            setScissorRect(
+                rect.x.toUInt(),
+                rect.y.toUInt(),
+                rect.width.toUInt(),
+                rect.height.toUInt(),
+            )
+        }
+        recordPassFeatures(
+            renderFeatures,
+            RenderPassSlot.Scene,
+            sceneContext(
+                this,
+                draws,
+                primary.pipeline,
+                input.viewProjection,
+                input.cameraEye,
+                SurfaceSize(renderingContext.width.toInt(), renderingContext.height.toInt()),
+            ),
+        )
+        end()
+    }
+
+    recordUiOverlay(encoder, colorView, draws, primary.pipeline, input.viewProjection, input.cameraEye)
+
+    device.queue.submit(listOf(encoder.finish()))
+}
+
+internal fun Renderer.performDraw(
+    camera: Lens,
+    drawCalls: List<DrawCall>,
+    light: SceneLight,
+    environment: EnvironmentUniforms = EnvironmentUniforms(
+        showSky = showEnvironment,
+        horizonColor = horizonColor,
+        zenithColor = zenithColor,
+        fogDensity = fogDensity,
+        fogColor = fogColor,
+        shadowsEnabled = shadowsEnabled,
+    ),
+) {
     swapchainManager.syncSurface()
     val device = graphicsDevice.wgpuContext.device
     val renderingContext = graphicsDevice.wgpuContext.renderingContext
@@ -67,8 +157,8 @@ internal fun Renderer.performDraw(camera: Lens, drawCalls: List<DrawCall>, light
     // The light's own view-projection: what lit_shadow.wgsl projects a vertex into to sample
     // the depth target. Identity when no depth target exists -- primaryDraw ignores it then,
     // matching Vulkan's own null-lightViewProjection branch.
-    val cascades = if (depthPrePass != null) light.shadowCascades() else null
-    val frame = FrameDrawContext(camera.eye, viewProjection, lightUniforms, cascades, light)
+    val cascades = if (depthPrePass != null && environment.shadowsEnabled) light.shadowCascades() else null
+    val frame = FrameDrawContext(camera.eye, viewProjection, lightUniforms, cascades, light, environment)
     val opaqueDraws = prepareOpaqueDraws(drawCalls, frame, primary)
 
     val encoder = device.createCommandEncoder()
@@ -134,7 +224,8 @@ private fun Renderer.recordUiOverlay(
     colorView: io.ygdrasil.webgpu.GPUTextureView,
     opaqueDraws: PreparedDraws,
     primaryPipeline: PipelineHandle,
-    frame: FrameDrawContext,
+    viewProjection: Mat4,
+    cameraEye: Vec3f,
 ) {
     val renderingContext = graphicsDevice.wgpuContext.renderingContext
     val quadPipeline = uiRenderPipeline
@@ -167,13 +258,22 @@ private fun Renderer.recordUiOverlay(
                 this,
                 opaqueDraws,
                 primaryPipeline,
-                frame,
+                viewProjection,
+                cameraEye,
                 SurfaceSize(renderingContext.width.toInt(), renderingContext.height.toInt()),
             ),
         )
         end()
     }
 }
+
+private fun Renderer.recordUiOverlay(
+    encoder: GPUCommandEncoder,
+    colorView: GPUTextureView,
+    opaqueDraws: PreparedDraws,
+    primaryPipeline: PipelineHandle,
+    frame: FrameDrawContext,
+) = recordUiOverlay(encoder, colorView, opaqueDraws, primaryPipeline, frame.viewProjection, frame.cameraEye)
 
 /** Stages this frame's world-space debug lines (e.g. a frustum wireframe) -- rewrites
  * [Renderer.lineMesh]'s buffer but issues no GPU commands itself, same "stage now, consume
@@ -185,10 +285,8 @@ internal fun Renderer.sceneContext(
     encoder: io.ygdrasil.webgpu.GPURenderPassEncoder,
     opaqueDraws: PreparedDraws,
     primaryPipeline: PipelineHandle,
-    /** This frame's camera, light and prepared uniforms -- already assembled by the caller,
-     * which had to build them to prepare the draws above. */
-    frame: FrameDrawContext,
-    /** The surface being drawn into: the canvas on screen, the target's own size offscreen. */
+    viewProjection: Mat4,
+    cameraEye: Vec3f,
     surface: SurfaceSize,
 ): WebGpuFrameContext = WebGpuFrameContext(
     renderer = this,
@@ -196,11 +294,25 @@ internal fun Renderer.sceneContext(
     groupedDrawCalls = opaqueDraws.opaque,
     transparentDrawCalls = opaqueDraws.transparent,
     primaryPipeline = primaryPipeline,
-    viewProjection = frame.viewProjection,
-    cameraEye = frame.cameraEye,
-    light = frame.light,
+    viewProjection = viewProjection,
+    cameraEye = cameraEye,
     surfaceWidth = surface.width,
     surfaceHeight = surface.height,
+)
+
+internal fun Renderer.sceneContext(
+    encoder: GPURenderPassEncoder,
+    opaqueDraws: PreparedDraws,
+    primaryPipeline: PipelineHandle,
+    frame: FrameDrawContext,
+    surface: SurfaceSize,
+): WebGpuFrameContext = sceneContext(
+    encoder,
+    opaqueDraws,
+    primaryPipeline,
+    frame.viewProjection,
+    frame.cameraEye,
+    surface,
 )
 
 /** What a pass is drawing into, so [sceneContext] takes one argument for it rather than two. */
@@ -211,4 +323,13 @@ internal fun Renderer.performDrawDebugLines(lines: List<LineSegment>) {
     lineMesh.update(lineSegmentVertices(lines))
 }
 
-internal fun Renderer.fogFloats(): FloatArray = fogUniformFloats(fogColor, fogDensity)
+internal fun Renderer.fogFloats(
+    environment: EnvironmentUniforms = EnvironmentUniforms(
+        showSky = showEnvironment,
+        horizonColor = horizonColor,
+        zenithColor = zenithColor,
+        fogDensity = fogDensity,
+        fogColor = fogColor,
+        shadowsEnabled = shadowsEnabled,
+    ),
+): FloatArray = fogUniformFloats(environment.fogColor, environment.fogDensity)

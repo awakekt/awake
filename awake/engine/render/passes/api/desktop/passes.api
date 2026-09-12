@@ -146,6 +146,7 @@ public final class com/awakekt/awake/render/passes/RenderFeatureKt {
 
 public abstract interface class com/awakekt/awake/render/passes/RenderFrameContext {
 	public abstract fun getCameraEye ()Lcom/awakekt/awake/core/math/Vec3f;
+	public fun getEnvironment ()Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;
 	public abstract fun getFrameIndex ()I
 	public abstract fun getGroupedDrawCalls ()Ljava/util/Map;
 	public abstract fun getHorizonColor ()Lcom/awakekt/awake/core/color/Color;
@@ -162,6 +163,7 @@ public abstract interface class com/awakekt/awake/render/passes/RenderFrameConte
 }
 
 public final class com/awakekt/awake/render/passes/RenderFrameContext$DefaultImpls {
+	public static fun getEnvironment (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/renderer/EnvironmentUniforms;
 	public static fun getTransparentDrawCalls (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Ljava/util/List;
 	public static fun sceneDepthBinding (Lcom/awakekt/awake/render/passes/RenderFrameContext;Lcom/awakekt/awake/render/command/PipelineHandle;)Lcom/awakekt/awake/render/command/MaterialBinding;
 }

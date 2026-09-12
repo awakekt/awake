@@ -5,10 +5,12 @@
  */
 package com.awakekt.awake.scene.rendering.light
 
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.rendering.Light
 import com.awakekt.awake.scene.rendering.toSceneVec3
 import com.awakekt.awake.scene.rendering.toVec3
@@ -32,7 +34,7 @@ object LightBinding : SceneComponentBinding<Light, SceneLight> {
         component.toSceneComponent()
 
     fun SceneLight.toComponent(): Light = Light(
-        color = color.toVec3(),
+        color = Vec3f(color.r, color.g, color.b),
         intensity = intensity,
         direction = direction.toVec3(),
         type = when (type) {
@@ -40,10 +42,11 @@ object LightBinding : SceneComponentBinding<Light, SceneLight> {
             SceneLight.Type.Point -> Light.Type.Point
         },
         range = range,
+        shadowsEnabled = shadowsEnabled,
     )
 
     fun Light.toSceneComponent(): SceneLight = SceneLight(
-        color = color.toSceneVec3(),
+        color = SceneColor(color.x, color.y, color.z, 1f),
         intensity = intensity,
         direction = direction.toSceneVec3(),
         type = when (type) {
@@ -51,5 +54,6 @@ object LightBinding : SceneComponentBinding<Light, SceneLight> {
             Light.Type.Point -> SceneLight.Type.Point
         },
         range = range,
+        shadowsEnabled = shadowsEnabled,
     )
 }

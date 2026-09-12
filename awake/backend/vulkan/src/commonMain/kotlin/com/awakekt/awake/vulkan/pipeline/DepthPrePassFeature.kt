@@ -11,7 +11,6 @@ import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
-import com.awakekt.awake.vulkan.mesh.Mesh
 import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkViewport
@@ -116,17 +115,17 @@ internal class DepthPrePassFeature(
         while (drawIndex < drawCalls.size) {
             val prepared = drawCalls[drawIndex]
             if (prepared.pipeline.vertexFormat == castFormat) {
-                // Safe for the same reason RendererDraw3D's own `drawCall.mesh as Mesh` is: a
+                // Safe for the same reason RendererDraw3D's own `mesh as Mesh` is: a
                 // Renderer only ever draws meshes it created itself. bind/draw live on the
                 // concrete Mesh, not the shared interface -- they take a VkCommandBuffer.
-                (prepared.drawCall.mesh as Mesh).bind(commandBuffer)
+                prepared.mesh.bind(commandBuffer)
                 prepared.material.bind(
                     commandBuffer,
                     depthOnlyPipeline.pipelineLayout,
                     prepared.frameIndex,
                     prepared.uniformSlotIndex,
                 )
-                (prepared.drawCall.mesh as Mesh).draw(commandBuffer)
+                prepared.mesh.draw(commandBuffer)
             }
             drawIndex += 1
         }
