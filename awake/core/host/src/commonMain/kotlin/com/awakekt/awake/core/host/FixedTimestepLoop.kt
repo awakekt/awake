@@ -23,7 +23,7 @@ package com.awakekt.awake.core.host
  * usual pairing for this pattern, using the leftover `accumulator / fixedDelta` fraction to
  * blend the last two simulation states) -- there are no stored "previous" component values
  * to blend from yet. [render]'s `alpha` parameter is provided for a future render system
- * that wants it; today's [com.awakekt.awake.scene.systems.RenderSystem] ignores
+ * that wants it; today's [com.awakekt.awake.scene.systems.RenderSystem3D] ignores
  * it and just draws whatever [FixedUpdate] last wrote.
  */
 class FixedTimestepLoop(

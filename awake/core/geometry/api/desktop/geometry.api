@@ -29,11 +29,15 @@ public final class com/awakekt/awake/core/geometry/InterleavedVertices {
 	public final fun getFormat ()Lcom/awakekt/awake/core/geometry/VertexFormat;
 	public final fun getVertexCount ()I
 	public final fun has (Lcom/awakekt/awake/core/geometry/VertexSemantic;)Z
+	public final fun position (ILcom/awakekt/awake/core/math/Vec3f;)V
 	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;F)V
 	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;FF)V
 	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;FFF)V
 	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;FFFF)V
+	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;Lcom/awakekt/awake/core/math/Vec3f;)V
 	public final fun toFloatArray ()[F
+	public final fun vertex (ILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public static synthetic fun vertex$default (Lcom/awakekt/awake/core/geometry/InterleavedVertices;ILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/core/geometry/MeshGeometry {
@@ -51,6 +55,21 @@ public final class com/awakekt/awake/core/geometry/MeshGeometry {
 	public final fun getVertices ()[F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/geometry/MeshGeometryBuilder {
+	public fun <init> (Lcom/awakekt/awake/core/geometry/VertexFormat;I)V
+	public final fun build ()Lcom/awakekt/awake/core/geometry/MeshGeometry;
+	public final fun fill (Lcom/awakekt/awake/core/geometry/VertexSemantic;[F)V
+	public final fun getFormat ()Lcom/awakekt/awake/core/geometry/VertexFormat;
+	public final fun getVertexCount ()I
+	public final fun has (Lcom/awakekt/awake/core/geometry/VertexSemantic;)Z
+	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;FFF)V
+	public final fun put (ILcom/awakekt/awake/core/geometry/VertexSemantic;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun quad (IIII)V
+	public final fun triangle (III)V
+	public final fun vertex (ILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public static synthetic fun vertex$default (Lcom/awakekt/awake/core/geometry/MeshGeometryBuilder;ILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/core/geometry/MeshHealer {

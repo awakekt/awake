@@ -21,6 +21,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(":awake:core:di"))
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
@@ -30,6 +31,7 @@ kotlin {
         commonTest.dependencies {
             implementation(project(":awake:core:math"))
             implementation(project(":awake:engine:render:contract"))
+            implementation(project(":awake:engine:render:passes"))
             implementation(project(":awake:core:text"))
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)

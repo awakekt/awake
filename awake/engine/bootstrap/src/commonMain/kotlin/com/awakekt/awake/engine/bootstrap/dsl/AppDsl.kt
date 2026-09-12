@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.engine.bootstrap.dsl
 
+import com.awakekt.awake.core.di.Container
+import com.awakekt.awake.core.host.FrameRateMode
+import com.awakekt.awake.engine.bootstrap.di.asAppServiceLookup
 import com.awakekt.awake.engine.platform.config.PresentMode
 import com.awakekt.awake.engine.platform.core.AppSpec
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
@@ -41,6 +44,12 @@ fun appSpec(
 sealed class AppSpecDsl(
     protected val builder: AppSpecBuilder,
 ) {
+    /** Installs an owner-created DI container at the app/session composition boundary. */
+    fun di(container: Container) {
+        builder.service(Container::class, container)
+        builder.service(AppServiceLookup::class, container.asAppServiceLookup())
+    }
+
     fun install(installer: AppInstaller) {
         builder.install(installer)
     }
@@ -111,6 +120,15 @@ class WindowDsl internal constructor(
         get() = builder.presentMode
         set(value) {
             builder.presentMode = value
+        }
+
+    /**
+     * Target frame rate mode. Defaults to [FrameRateMode.Auto].
+     */
+    var frameRateMode: FrameRateMode
+        get() = builder.frameRateMode
+        set(value) {
+            builder.frameRateMode = value
         }
 
     fun size(width: Int, height: Int) {

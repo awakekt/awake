@@ -6,7 +6,9 @@
 package com.awakekt.awake.core.geometry.generate
 
 import com.awakekt.awake.core.geometry.MeshGeometry
+import com.awakekt.awake.core.geometry.MeshGeometryBuilder
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.math.Vec3f
 
 /**
  * Scoped builder for generating procedural [MeshGeometry] instances.
@@ -93,83 +95,46 @@ private fun buildCubeGeometry(
     format: VertexFormat,
 ): MeshGeometry {
     val h = size * 0.5f
-    // 24 vertices (4 per face x 6 faces), 36 indices
-    val vertices = if (colored) {
-        floatArrayOf(
-            // Back face (-Z)
-            -h, -h, -h, 0f, 0f, -1f, 0f, 0f, 0f,
-            h, -h, -h, 0f, 0f, -1f, 1f, 0f, 0f,
-            h, h, -h, 0f, 0f, -1f, 1f, 1f, 0f,
-            -h, h, -h, 0f, 0f, -1f, 0f, 1f, 0f,
-            // Front face (+Z)
-            -h, -h, h, 0f, 0f, 1f, 0f, 0f, 1f,
-            h, -h, h, 0f, 0f, 1f, 1f, 0f, 1f,
-            h, h, h, 0f, 0f, 1f, 1f, 1f, 1f,
-            -h, h, h, 0f, 0f, 1f, 0f, 1f, 1f,
-            // Left face (-X)
-            -h, -h, -h, -1f, 0f, 0f, 0f, 0f, 0f,
-            -h, h, -h, -1f, 0f, 0f, 0f, 1f, 0f,
-            -h, h, h, -1f, 0f, 0f, 0f, 1f, 1f,
-            -h, -h, h, -1f, 0f, 0f, 0f, 0f, 1f,
-            // Right face (+X)
-            h, -h, -h, 1f, 0f, 0f, 1f, 0f, 0f,
-            h, -h, h, 1f, 0f, 0f, 1f, 0f, 1f,
-            h, h, h, 1f, 0f, 0f, 1f, 1f, 1f,
-            h, h, -h, 1f, 0f, 0f, 1f, 1f, 0f,
-            // Bottom face (-Y)
-            -h, -h, -h, 0f, -1f, 0f, 0f, 0f, 0f,
-            -h, -h, h, 0f, -1f, 0f, 0f, 0f, 1f,
-            h, -h, h, 0f, -1f, 0f, 1f, 0f, 1f,
-            h, -h, -h, 0f, -1f, 0f, 1f, 0f, 0f,
-            // Top face (+Y)
-            -h, h, -h, 0f, 1f, 0f, 0f, 1f, 0f,
-            h, h, -h, 0f, 1f, 0f, 1f, 1f, 0f,
-            h, h, h, 0f, 1f, 0f, 1f, 1f, 1f,
-            -h, h, h, 0f, 1f, 0f, 0f, 1f, 1f,
-        )
-    } else {
-        floatArrayOf(
-            // Back face (-Z)
-            -h, -h, -h, 0f, 0f, -1f, 1f, 1f, 1f,
-            h, -h, -h, 0f, 0f, -1f, 1f, 1f, 1f,
-            h, h, -h, 0f, 0f, -1f, 1f, 1f, 1f,
-            -h, h, -h, 0f, 0f, -1f, 1f, 1f, 1f,
-            // Front face (+Z)
-            -h, -h, h, 0f, 0f, 1f, 1f, 1f, 1f,
-            h, -h, h, 0f, 0f, 1f, 1f, 1f, 1f,
-            h, h, h, 0f, 0f, 1f, 1f, 1f, 1f,
-            -h, h, h, 0f, 0f, 1f, 1f, 1f, 1f,
-            // Left face (-X)
-            -h, -h, -h, -1f, 0f, 0f, 1f, 1f, 1f,
-            -h, h, -h, -1f, 0f, 0f, 1f, 1f, 1f,
-            -h, h, h, -1f, 0f, 0f, 1f, 1f, 1f,
-            -h, -h, h, -1f, 0f, 0f, 1f, 1f, 1f,
-            // Right face (+X)
-            h, -h, -h, 1f, 0f, 0f, 1f, 1f, 1f,
-            h, -h, h, 1f, 0f, 0f, 1f, 1f, 1f,
-            h, h, h, 1f, 0f, 0f, 1f, 1f, 1f,
-            h, h, -h, 1f, 0f, 0f, 1f, 1f, 1f,
-            // Bottom face (-Y)
-            -h, -h, -h, 0f, -1f, 0f, 1f, 1f, 1f,
-            -h, -h, h, 0f, -1f, 0f, 1f, 1f, 1f,
-            h, -h, h, 0f, -1f, 0f, 1f, 1f, 1f,
-            h, -h, -h, 0f, -1f, 0f, 1f, 1f, 1f,
-            // Top face (+Y)
-            -h, h, -h, 0f, 1f, 0f, 1f, 1f, 1f,
-            h, h, -h, 0f, 1f, 0f, 1f, 1f, 1f,
-            h, h, h, 0f, 1f, 0f, 1f, 1f, 1f,
-            -h, h, h, 0f, 1f, 0f, 1f, 1f, 1f,
-        )
-    }
-    val indices = intArrayOf(
-        0, 1, 2, 2, 3, 0,
-        4, 5, 6, 6, 7, 4,
-        8, 9, 10, 10, 11, 8,
-        12, 13, 14, 14, 15, 12,
-        16, 17, 18, 18, 19, 16,
-        20, 21, 22, 22, 23, 20,
+    val corners = arrayOf(
+        Vec3f(-h, -h, -h),
+        Vec3f(h, -h, -h),
+        Vec3f(h, h, -h),
+        Vec3f(-h, h, -h),
+        Vec3f(-h, -h, h),
+        Vec3f(h, -h, h),
+        Vec3f(h, h, h),
+        Vec3f(-h, h, h),
     )
-    return MeshGeometry(vertices = vertices, indices = indices, format = format)
+    val faces = arrayOf(
+        intArrayOf(0, 1, 2, 3) to Vec3f(0f, 0f, -1f),
+        intArrayOf(4, 5, 6, 7) to Vec3f(0f, 0f, 1f),
+        intArrayOf(0, 3, 7, 4) to Vec3f(-1f, 0f, 0f),
+        intArrayOf(1, 5, 6, 2) to Vec3f(1f, 0f, 0f),
+        intArrayOf(0, 4, 5, 1) to Vec3f(0f, -1f, 0f),
+        intArrayOf(3, 2, 6, 7) to Vec3f(0f, 1f, 0f),
+    )
+    val mesh = MeshGeometryBuilder(format, vertexCount = 24)
+    faces.forEachIndexed { faceIndex, (cornersForFace, normal) ->
+        cornersForFace.forEachIndexed { cornerIndex, corner ->
+            val vertex = faceIndex * 4 + cornerIndex
+            val position = corners[corner]
+            val color = if (colored) {
+                Vec3f(position.x / size + 0.5f, position.y / size + 0.5f, position.z / size + 0.5f)
+            } else {
+                Vec3f(1f, 1f, 1f)
+            }
+            mesh.vertex(vertex, position, normal, color)
+        }
+        val base = faceIndex * 4
+        if (faceIndex == 1) {
+            // The +Z face uses the opposite diagonal to preserve its outward winding.
+            mesh.triangle(base, base + 1, base + 2)
+            mesh.triangle(base + 2, base + 3, base)
+        } else {
+            mesh.quad(base, base + 2, base + 1, base + 3)
+        }
+    }
+    return mesh.build()
 }
 
 private fun buildPlaneGeometry(
@@ -179,14 +144,20 @@ private fun buildPlaneGeometry(
 ): MeshGeometry {
     val h = size * 0.5f
     val (r, g, b) = if (colored) Triple(0.5f, 0.5f, 0.55f) else Triple(1f, 1f, 1f)
-    val vertices = floatArrayOf(
-        -h, 0f, -h, 0f, 1f, 0f, r, g, b,
-        h, 0f, -h, 0f, 1f, 0f, r, g, b,
-        h, 0f, h, 0f, 1f, 0f, r, g, b,
-        -h, 0f, h, 0f, 1f, 0f, r, g, b,
+    val mesh = MeshGeometryBuilder(format, vertexCount = 4)
+    val positions = arrayOf(
+        Vec3f(-h, 0f, -h),
+        Vec3f(h, 0f, -h),
+        Vec3f(h, 0f, h),
+        Vec3f(-h, 0f, h),
     )
-    val indices = intArrayOf(0, 1, 2, 2, 3, 0)
-    return MeshGeometry(vertices = vertices, indices = indices, format = format)
+    positions.forEachIndexed { index, position ->
+        mesh.vertex(index, position, Vec3f.UP, Vec3f(r, g, b))
+    }
+    // Counter-clockwise when viewed from above (+Y), matching the declared vertex normals and
+    // the back-face culling convention used by both render backends.
+    mesh.quad(0, 2, 1, 3)
+    return mesh.build()
 }
 
 @Suppress("MagicNumber", "LongMethod")
@@ -198,11 +169,9 @@ private fun buildSphereGeometry(
     format: VertexFormat,
 ): MeshGeometry {
     val vertexCount = (rings + 1) * (sectors + 1)
-    val floatStride = format.strideFloats
-    val vertices = FloatArray(vertexCount * floatStride)
+    val mesh = MeshGeometryBuilder(format, vertexCount)
     val (rColor, gColor, bColor) = if (colored) Triple(0.85f, 0.85f, 0.95f) else Triple(1f, 1f, 1f)
 
-    var offset = 0
     val pi = kotlin.math.PI.toFloat()
     for (r in 0..rings) {
         val theta = (pi * r) / rings
@@ -222,35 +191,23 @@ private fun buildSphereGeometry(
             val py = radius * ny
             val pz = radius * nz
 
-            vertices[offset++] = px
-            vertices[offset++] = py
-            vertices[offset++] = pz
-            vertices[offset++] = nx
-            vertices[offset++] = ny
-            vertices[offset++] = nz
-            vertices[offset++] = rColor
-            vertices[offset++] = gColor
-            vertices[offset++] = bColor
+            mesh.vertex(
+                r * (sectors + 1) + s,
+                Vec3f(px, py, pz),
+                Vec3f(nx, ny, nz),
+                Vec3f(rColor, gColor, bColor),
+            )
         }
     }
 
-    val indexCount = rings * sectors * 6
-    val indices = IntArray(indexCount)
-    var indexOffset = 0
     for (r in 0 until rings) {
         for (s in 0 until sectors) {
             val first = r * (sectors + 1) + s
             val second = first + sectors + 1
-
-            indices[indexOffset++] = first
-            indices[indexOffset++] = second
-            indices[indexOffset++] = first + 1
-
-            indices[indexOffset++] = second
-            indices[indexOffset++] = second + 1
-            indices[indexOffset++] = first + 1
+            mesh.triangle(first, second, first + 1)
+            mesh.triangle(second, second + 1, first + 1)
         }
     }
 
-    return MeshGeometry(vertices = vertices, indices = indices, format = format)
+    return mesh.build()
 }

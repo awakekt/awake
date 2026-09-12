@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.engine.platform.config
 
+import com.awakekt.awake.core.host.FrameRateMode
 import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
 
 data class WindowConfig(
@@ -14,4 +15,6 @@ data class WindowConfig(
     val backend: AppWindowBackend,
     /** How finished frames reach the display; a request, not a guarantee. See [PresentMode]. */
     val presentMode: PresentMode = PresentMode.Auto,
+    /** Target frame rate mode. Defaults to [FrameRateMode.Auto]. */
+    val frameRateMode: FrameRateMode = FrameRateMode.Auto,
 )

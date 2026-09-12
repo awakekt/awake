@@ -21,6 +21,8 @@ class AwakeAppLifecycle internal constructor(
 ) : AppLifecycle by delegate,
     AppServiceLookup {
 
+    private var disposed = false
+
     /** The session's input accumulator. Guaranteed to exist. */
     val input: Input get() = requireService(Input::class)
 
@@ -32,6 +34,23 @@ class AwakeAppLifecycle internal constructor(
      */
     fun update(delta: Float, viewportWidth: Float, viewportHeight: Float) {
         update(AppFrame(delta, viewportWidth, viewportHeight, input.currentSnapshot))
+    }
+
+    /**
+     * Runs app callbacks first, then closes owner-managed services in reverse map order.
+     * Services are composition resources; render loops must not close them independently.
+     */
+    override fun dispose() {
+        if (disposed) return
+        disposed = true
+        try {
+            delegate.dispose()
+        } finally {
+            services.values.toList()
+                .asReversed()
+                .filterIsInstance<AutoCloseable>()
+                .forEach(AutoCloseable::close)
+        }
     }
 
     // services is keyed by the exact KClass<T> each value was registered under (see

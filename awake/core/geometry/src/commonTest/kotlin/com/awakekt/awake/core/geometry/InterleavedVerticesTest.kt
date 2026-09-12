@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.core.geometry
 
+import com.awakekt.awake.core.math.Vec3f
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -35,6 +36,30 @@ class InterleavedVerticesTest {
                 1f, 2f, 3f, 0f, 1f, 0f, 0f, 0f, 0f,
                 0f, 0f, 0f, 0f, 0f, 0f, 0.1f, 0.2f, 0.3f,
             ),
+            vertices.toFloatArray(),
+        )
+    }
+
+    @Test
+    fun aDynamicVectorCanBeWrittenWithoutManualComponentUnpacking() {
+        val vertices = InterleavedVertices(VertexFormat.PositionNormalColor, vertexCount = 1)
+
+        vertices.put(0, VertexSemantic.Position, Vec3f(2f, 3f, 4f))
+
+        assertContentEquals(
+            floatArrayOf(2f, 3f, 4f, 0f, 0f, 0f, 0f, 0f, 0f),
+            vertices.toFloatArray(),
+        )
+    }
+
+    @Test
+    fun aProceduralVertexWritesItsDynamicAttributesThroughTheFormat() {
+        val vertices = InterleavedVertices(VertexFormat.PositionNormalColor, vertexCount = 1)
+
+        vertices.vertex(0, Vec3f(1f, 2f, 3f), Vec3f.UP, Vec3f(0.2f, 0.4f, 0.6f))
+
+        assertContentEquals(
+            floatArrayOf(1f, 2f, 3f, 0f, 1f, 0f, 0.2f, 0.4f, 0.6f),
             vertices.toFloatArray(),
         )
     }

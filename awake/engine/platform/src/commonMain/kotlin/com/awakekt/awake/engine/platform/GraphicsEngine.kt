@@ -7,6 +7,7 @@ package com.awakekt.awake.engine.platform
 
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.logging.Logger
+import com.awakekt.awake.engine.platform.config.WindowConfig
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.renderer.LineSegment
@@ -28,6 +29,9 @@ abstract class GraphicsEngine(
 
     /** The session's input accumulator. */
     override val input: Input get() = appLifecycle.input
+
+    /** The session's window configuration. */
+    override val windowConfig: WindowConfig get() = appLifecycle.windowConfig
 
     /** Same "create() stays synchronous, launch internally" reasoning the original
      * `VulkanApplication`/`WebGpuApplication` used -- [update] is a no-op until
@@ -51,6 +55,8 @@ abstract class GraphicsEngine(
         logger.error(throwable) { "Uncaught exception in graphics engine coroutine" }
     }
 
+    // TooGenericExceptionCaught intentional: native GPU/JNI layers can throw Throwable
+    // (e.g. OutOfMemoryError, UnsatisfiedLinkError); catching Exception alone would miss them.
     @Suppress("TooGenericExceptionCaught")
     final override fun create(surface: Any?) {
         // NOT MainScope(): its Dispatchers.Main can resolve to a Swing/AWT dispatcher on

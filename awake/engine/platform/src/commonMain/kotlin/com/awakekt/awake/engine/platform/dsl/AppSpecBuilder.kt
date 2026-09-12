@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.engine.platform.dsl
 
+import com.awakekt.awake.core.host.FrameRateMode
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.engine.platform.config.PresentMode
 import com.awakekt.awake.engine.platform.config.WindowConfig
@@ -93,6 +94,9 @@ class AppWindowConfigBuilder {
     /** How finished frames reach the display. See [PresentMode]; `Auto` unless a caller says. */
     var presentMode: PresentMode = PresentMode.Auto
 
+    /** Target frame rate mode. See [FrameRateMode]; `Auto` unless a caller says. */
+    var frameRateMode: FrameRateMode = FrameRateMode.Auto
+
     fun size(width: Int, height: Int) {
         this.width = width
         this.height = height
@@ -104,6 +108,7 @@ class AppWindowConfigBuilder {
         height = height,
         backend = backend.selection,
         presentMode = presentMode,
+        frameRateMode = frameRateMode,
     )
 }
 

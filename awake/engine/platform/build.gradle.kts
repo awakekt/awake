@@ -45,7 +45,7 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:math"))
-            implementation(project(":awake:core:host"))
+            api(project(":awake:core:host"))
             implementation(project(":awake:core:image"))
             implementation(project(":awake:core:input"))
             implementation(project(":awake:core:logging"))

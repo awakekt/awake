@@ -5,11 +5,8 @@
  */
 package com.awakekt.awake.engine.compose
 
-import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
-import com.awakekt.awake.render.renderer.DrawCall
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.testing.NoopRenderer
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -53,9 +50,5 @@ private class RecordingRenderer : NoopRenderer() {
         font: UiFont?,
     ) {
         uiDraws += 1
-    }
-
-    override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) {
-        presents += 1
     }
 }

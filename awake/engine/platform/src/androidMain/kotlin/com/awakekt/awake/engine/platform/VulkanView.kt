@@ -13,6 +13,7 @@ import android.view.SurfaceView
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import com.awakekt.awake.core.host.AndroidFrameLoop
+import com.awakekt.awake.core.host.FrameRateMode
 import com.awakekt.awake.core.input.AndroidSoftKeyboardBridge
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.createAwakeInputConnection
@@ -49,8 +50,9 @@ class VulkanView(
         lifecycle.create(holder.surface)
         running = true
         renderThread = Thread({
+            val mode = lifecycle.windowConfig?.frameRateMode ?: FrameRateMode.Auto
             while (running) {
-                AndroidFrameLoop.tick { deltaTime ->
+                AndroidFrameLoop.tick(mode) { deltaTime ->
                     lifecycle.update(deltaTime.toFloat())
                     post { softKeyboardBridge.syncSoftKeyboardVisibility() }
                 }

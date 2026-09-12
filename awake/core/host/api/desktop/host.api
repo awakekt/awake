@@ -5,6 +5,7 @@ public final class com/awakekt/awake/core/host/BinaryExtensionsKt {
 
 public final class com/awakekt/awake/core/host/DesktopFrameLoop : com/awakekt/awake/core/host/FrameLoop {
 	public static final field INSTANCE Lcom/awakekt/awake/core/host/DesktopFrameLoop;
+	public fun tick (Lcom/awakekt/awake/core/host/FrameRateMode;Lkotlin/jvm/functions/Function1;)V
 	public fun tick (Lkotlin/jvm/functions/Function1;)V
 }
 
@@ -18,11 +19,47 @@ public final class com/awakekt/awake/core/host/FixedTimestepLoop {
 }
 
 public abstract interface class com/awakekt/awake/core/host/FrameLoop {
-	public abstract fun tick (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun tick (Lcom/awakekt/awake/core/host/FrameRateMode;Lkotlin/jvm/functions/Function1;)V
+	public fun tick (Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun tick$default (Lcom/awakekt/awake/core/host/FrameLoop;Lcom/awakekt/awake/core/host/FrameRateMode;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/core/host/FrameLoop$DefaultImpls {
+	public static fun tick (Lcom/awakekt/awake/core/host/FrameLoop;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun tick$default (Lcom/awakekt/awake/core/host/FrameLoop;Lcom/awakekt/awake/core/host/FrameRateMode;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/core/host/FrameLoopKt {
+	public static final field MAX_FRAME_DELTA_SECONDS D
 	public static final field TARGET_FPS I
+}
+
+public abstract interface class com/awakekt/awake/core/host/FrameRateMode {
+}
+
+public final class com/awakekt/awake/core/host/FrameRateMode$Auto : com/awakekt/awake/core/host/FrameRateMode {
+	public static final field INSTANCE Lcom/awakekt/awake/core/host/FrameRateMode$Auto;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/host/FrameRateMode$Capped : com/awakekt/awake/core/host/FrameRateMode {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lcom/awakekt/awake/core/host/FrameRateMode$Capped;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/host/FrameRateMode$Capped;IILjava/lang/Object;)Lcom/awakekt/awake/core/host/FrameRateMode$Capped;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTargetFps ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/host/FrameRateMode$Unlimited : com/awakekt/awake/core/host/FrameRateMode {
+	public static final field INSTANCE Lcom/awakekt/awake/core/host/FrameRateMode$Unlimited;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/core/host/ResourceKt {

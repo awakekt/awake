@@ -9,8 +9,8 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.host.FrameRateMode
 import com.awakekt.awake.core.math.ClipSpace
-import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.bootstrap.dsl.appDefinition
@@ -23,10 +23,8 @@ import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
 import com.awakekt.awake.engine.platform.lifecycle.AppInstaller
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -87,6 +85,7 @@ class AppLifecycleDslTest {
                 title = "Hello Cube"
                 size(1600, 900)
                 backend.vulkan()
+                frameRateMode = FrameRateMode.Capped(120)
             }
         }
 
@@ -94,6 +93,7 @@ class AppLifecycleDslTest {
         assertEquals(1600, game.windowConfig.width)
         assertEquals(900, game.windowConfig.height)
         assertEquals(AppWindowBackend.VULKAN, game.windowConfig.backend)
+        assertEquals(FrameRateMode.Capped(120), game.windowConfig.frameRateMode)
     }
 
     @Test
@@ -254,7 +254,6 @@ private object FakeRenderer : Renderer {
     override val clipSpace: ClipSpace = ClipSpace.WebGpu
     override var clearColor: Color = Color.Black
     override var wireframe: Boolean = false
-    override var shadowsEnabled: Boolean = true
 
     override fun createMesh(geometry: MeshGeometry): Mesh = object : Mesh {
         override val format: VertexFormat =
@@ -280,16 +279,6 @@ private object FakeRenderer : Renderer {
         override val height: Int = height
         override fun destroy() = Unit
     }
-
-    override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) = Unit
-
-    override fun renderToTexture(
-        target: RenderTarget,
-        camera: Lens,
-        drawCalls: List<DrawCall>,
-        light: SceneLight,
-    ) =
-        Unit
 
     override suspend fun readPixels(target: RenderTarget): TextureAsset =
         TextureAsset(ByteArray(0), 0, 0)

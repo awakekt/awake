@@ -5,13 +5,23 @@
  */
 package com.awakekt.awake.core.host
 
-/** Frames per second every [FrameLoop] throttles to. A constant, not config: nothing has
- * needed a second value yet. Give it a real home on `WindowConfig` when something does. */
+/** Default target FPS constant preserved for backward compatibility. */
 const val TARGET_FPS = 60
+
+/** Maximum frame delta allowed in a single tick (250 ms / 4 FPS) to prevent massive time jumps after tab suspension or pauses. */
+const val MAX_FRAME_DELTA_SECONDS: Double = 0.25
 
 interface FrameLoop {
     /** Runs exactly one frame -- measures the delta since the previous call, invokes
-     * [onUpdate], then sleeps out the remainder of the [TARGET_FPS] budget. The caller owns
-     * the repeat loop. */
-    fun tick(onUpdate: (deltaTime: Double) -> Unit)
+     * [onUpdate], then sleeps out the remainder of the frame budget if configured by [mode].
+     * The caller owns the repeat loop. */
+    fun tick(
+        mode: FrameRateMode = FrameRateMode.Auto,
+        onUpdate: (deltaTime: Double) -> Unit,
+    )
+
+    /** Convenience overload defaulting to [FrameRateMode.Auto]. */
+    fun tick(onUpdate: (deltaTime: Double) -> Unit) {
+        tick(FrameRateMode.Auto, onUpdate)
+    }
 }

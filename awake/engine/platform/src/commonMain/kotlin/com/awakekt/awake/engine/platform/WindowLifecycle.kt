@@ -6,6 +6,7 @@
 package com.awakekt.awake.engine.platform
 
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.engine.platform.config.WindowConfig
 
 /**
  * The window/surface shell a backend drives, plus the subsystems a game reaches through it.
@@ -22,6 +23,7 @@ import com.awakekt.awake.core.input.Input
  */
 interface WindowLifecycle {
     val input: Input
+    val windowConfig: WindowConfig? get() = null
     fun create(surface: Any? = null)
     fun update(delta: Float)
     fun pause()

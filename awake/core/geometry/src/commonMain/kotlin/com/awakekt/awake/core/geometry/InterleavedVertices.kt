@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.core.geometry
 
+import com.awakekt.awake.core.math.Vec3f
+
 /**
  * Builds an interleaved vertex buffer by naming attributes, not by counting floats.
  *
@@ -55,6 +57,20 @@ class InterleavedVertices(val format: VertexFormat, val vertexCount: Int) {
 
     fun put(vertex: Int, semantic: VertexSemantic, x: Float, y: Float, z: Float) =
         write(vertex, semantic, x, y, z, 0f, 3)
+
+    /** Writes a dynamic three-component value without unpacking it or knowing the format offset. */
+    fun put(vertex: Int, semantic: VertexSemantic, value: Vec3f) =
+        write(vertex, semantic, value.x, value.y, value.z, 0f, 3)
+
+    /** Semantic shorthand for the most common dynamic value: a vertex position. */
+    fun position(vertex: Int, value: Vec3f) = put(vertex, VertexSemantic.Position, value)
+
+    /** Adds the common procedural vertex payload without repeating semantic presence checks. */
+    fun vertex(vertex: Int, position: Vec3f, normal: Vec3f? = null, color: Vec3f? = null) {
+        this.position(vertex, position)
+        if (normal != null && has(VertexSemantic.Normal)) put(vertex, VertexSemantic.Normal, normal)
+        if (color != null && has(VertexSemantic.Color)) put(vertex, VertexSemantic.Color, color)
+    }
 
     @Suppress("LongParameterList") // A vec4 is four components; naming them is the point.
     fun put(vertex: Int, semantic: VertexSemantic, x: Float, y: Float, z: Float, w: Float) =

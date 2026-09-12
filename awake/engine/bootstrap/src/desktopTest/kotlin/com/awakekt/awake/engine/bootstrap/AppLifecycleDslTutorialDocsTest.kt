@@ -9,7 +9,6 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
-import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.engine.bootstrap.dsl.appDefinition
 import com.awakekt.awake.engine.bootstrap.dsl.appModule
@@ -17,10 +16,8 @@ import com.awakekt.awake.engine.bootstrap.dsl.createApp
 import com.awakekt.awake.engine.bootstrap.dsl.createAppSpec
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -169,7 +166,6 @@ private object TutorialRenderer : Renderer {
     override val clipSpace: ClipSpace = ClipSpace.WebGpu
     override var clearColor: Color = Color.Black
     override var wireframe: Boolean = false
-    override var shadowsEnabled: Boolean = true
 
     override fun createMesh(geometry: MeshGeometry): Mesh = object : Mesh {
         override val format: com.awakekt.awake.core.geometry.VertexFormat =
@@ -195,16 +191,6 @@ private object TutorialRenderer : Renderer {
         override val height: Int = height
         override fun destroy() = Unit
     }
-
-    override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) = Unit
-
-    override fun renderToTexture(
-        target: RenderTarget,
-        camera: Lens,
-        drawCalls: List<DrawCall>,
-        light: SceneLight,
-    ) =
-        Unit
 
     override suspend fun readPixels(target: RenderTarget): TextureAsset =
         TextureAsset(ByteArray(target.width * target.height * 4), target.width, target.height)
