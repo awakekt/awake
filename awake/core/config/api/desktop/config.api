@@ -40,7 +40,7 @@ public final class com/awakekt/awake/core/config/MapEnvSource : com/awakekt/awak
 	public fun get (Ljava/lang/String;)Ljava/lang/String;
 }
 
-public final class com/awakekt/awake/core/config/PlatformEnvSource_desktopKt {
+public final class com/awakekt/awake/core/config/PlatformEnvSourceKt {
 	public static final fun defaultPlatformEnvSource ()Lcom/awakekt/awake/core/config/EnvSource;
 }
 

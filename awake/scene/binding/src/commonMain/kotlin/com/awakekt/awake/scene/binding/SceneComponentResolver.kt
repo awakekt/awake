@@ -84,6 +84,8 @@ class SceneComponentRegistry(
             }
         }
 
+        // Safe: the binding's schemaClass and serializer were paired by `register()` which
+        // constrains them to the same S, so both casts to KClass<SceneComponent> are consistent.
         @Suppress("UNCHECKED_CAST")
         private fun registerSerializer(binding: SceneComponentBinding<*, *>) {
             val serializer = binding.serializer

@@ -12,7 +12,7 @@ import com.awakekt.awake.ecs.EcsTag
  *
  * A tag on an ordinary entity rather than a camera lookup, for two reasons. `WorldPartitionSystem`
  * lives in `:awake:scene:scene-core`, which cannot see `Camera` -- that is in
- * `:awake:scene:rendering`, one layer out. And streaming usually wants to follow the *player*
+ * `:awake:scene:scene3d`, one layer out. And streaming usually wants to follow the *player*
  * rather than the camera anyway: a camera that pans ahead, orbits, or cuts to a cutscene should
  * not drag cells in and out behind it.
  *

@@ -23,9 +23,12 @@ import com.awakekt.awake.compose.testing.rasterize
 import com.awakekt.awake.compose.testing.toBufferedImage
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.graphics.vector.ImageVector
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.font.UiFonts
+import com.awakekt.awake.heroicons.icon.HeroIcons
 import com.awakekt.awake.ui.shadcn.components.ShadcnAlert
 import com.awakekt.awake.ui.shadcn.components.ShadcnAlertVariant
 import com.awakekt.awake.ui.shadcn.components.ShadcnAvatar
@@ -326,6 +329,24 @@ class ShadcnComposeRenderPreview {
     }
 
     @Test
+    fun officialMultiColorIconRendersComplexCurvesAndHoles() {
+        write(
+            "official-multicolor-icon",
+            160,
+            160,
+            composeFrame(160, 160) {
+                provideShadcnTheme(theme) {
+                    ShadcnIcon(
+                        MULTI_COLOR_OFFICIAL_ICON,
+                        size = 128.dp,
+                        tint = Color.White,
+                    )
+                }
+            },
+        )
+    }
+
+    @Test
     fun buttonRendersEveryVariant() {
         val width = 220
         val height = 260
@@ -610,5 +631,25 @@ class ShadcnComposeRenderPreview {
         )
         ImageIO.write(pixels.toBufferedImage(width, height), "png", file)
         println("compose-preview: ${file.absolutePath}")
+    }
+
+    private companion object {
+        /**
+         * Uses geometry generated from the official Heroicons `circle-stack` SVG, then assigns a
+         * different fill to each source path. This exercises multiple cubic contours, holes and
+         * independent colors without hand-transcribing SVG coordinates.
+         */
+        val MULTI_COLOR_PALETTE = listOf(
+            Color.fromHex("#7C3AED"),
+            Color.fromHex("#06B6D4"),
+            Color.fromHex("#F59E0B"),
+            Color.fromHex("#EC4899"),
+        )
+
+        val MULTI_COLOR_OFFICIAL_ICON: ImageVector = HeroIcons.Solid24.circleStack.copy(
+            paths = HeroIcons.Solid24.circleStack.paths.mapIndexed { index, path ->
+                path.copy(fill = MULTI_COLOR_PALETTE[index % MULTI_COLOR_PALETTE.size])
+            },
+        )
     }
 }

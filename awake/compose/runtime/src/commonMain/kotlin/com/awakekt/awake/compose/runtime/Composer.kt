@@ -143,7 +143,7 @@ class Composer internal constructor(
     internal fun <T> remember(key1: Any?, key2: Any?, calculate: () -> T): T {
         val holder = nodeStack.lastOrNull() as? RememberHolder
             ?: error("remember() needs an enclosing node that implements RememberHolder")
-        val slots = holder.rememberSlots
+        val slots = holder.mutableSlots()
         val index = rememberCursors[depth]
         rememberCursors[depth] = index + 1
         if (index == slots.size) slots.add(RememberedSlot(key1, key2, calculate()))

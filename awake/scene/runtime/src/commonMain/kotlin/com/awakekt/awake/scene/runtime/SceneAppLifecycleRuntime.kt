@@ -27,18 +27,22 @@ import com.awakekt.awake.engine.compose.GraphicsLayerCompositor
 import com.awakekt.awake.engine.platform.dsl.AppServiceLookup
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.engine.platform.lifecycle.AppLifecycle
+import com.awakekt.awake.render.capture.FramebufferAttachment
+import com.awakekt.awake.render.capture.FramebufferAttachmentData
+import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.Camera
-import com.awakekt.awake.scene.rendering.RenderSystem
+import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
-import com.awakekt.awake.scene.rendering.environment.EnvironmentSystem
 import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.InstancedSkinnedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
@@ -58,6 +62,9 @@ class SceneAppLifecycleRuntime internal constructor(
         get() = session.world
     lateinit var renderer: Renderer
         private set
+
+    /** Resolver captured once at backend readiness and injected into the scene render system. */
+    internal var gpuDrawPreparer: GpuDrawPreparer? = null
 
     val sceneManager: SceneManager
         get() = session.sceneManager
@@ -96,6 +103,20 @@ class SceneAppLifecycleRuntime internal constructor(
     /** Last frame's draw commands, for a test that has to assert on what was painted. */
     var uiPrimitives: List<UiDrawPrimitive> = emptyList()
         private set
+
+    /** Backend-neutral 2D primitives staged by scene systems for this frame's UI composite. */
+    private val stagedUiPrimitives = ArrayList<UiDrawPrimitive>()
+
+    /**
+     * Adds screen-space primitives to the current frame's UI overlay.
+     *
+     * Scene systems run before the runtime composites UI, so this is the explicit lifecycle seam
+     * for demo render coordinators and future reusable 2D systems. It keeps them independent of a
+     * backend renderer while avoiding a one-frame delay.
+     */
+    fun stageUi(primitives: List<UiDrawPrimitive>) {
+        stagedUiPrimitives += primitives
+    }
 
     /** Rolling window backing [averageFrameTimeMs]/[fps] -- see `SceneAppFrame.kt`'s
      * `frameStats()`, which reads these. */
@@ -169,6 +190,7 @@ class SceneAppLifecycleRuntime internal constructor(
 
     override suspend fun ready(renderer: Renderer) {
         this.renderer = renderer
+        gpuDrawPreparer = (renderer as? GpuDrawPreparationSource)?.gpuDrawPreparer
         session.ready(this)
     }
 
@@ -183,6 +205,16 @@ class SceneAppLifecycleRuntime internal constructor(
         // frame begins, which is why it owns the counter rather than each logging call site.
         Log.advanceFrame()
         if (snapshot.wasPressed(Key.F2)) perfStatsEnabled = !perfStatsEnabled
+
+        stagedUiPrimitives.clear()
+
+        // 1. Simulation & infrastructure pump. Rendering systems stage the scene and any
+        // backend-neutral 2D overlay before the runtime composites the frame below.
+        timePhase({ simRenderMs = it }) {
+            session.advance(delta) { step ->
+                spec.updateBlock(this, step, snapshot)
+            }
+        }
 
         val uiFrame = spec.ui?.let {
             // The backend only knows the real display scale once its window exists, which is after
@@ -200,7 +232,7 @@ class SceneAppLifecycleRuntime internal constructor(
                     renderer.drawUi(
                         graphicsLayers.composite(
                             renderer = renderer,
-                            primitives = builtFrame.primitives,
+                            primitives = stagedUiPrimitives + builtFrame.primitives,
                             layers = builtFrame.graphicsLayers,
                             font = font,
                             viewportWidth = viewportWidth.toInt(),
@@ -217,7 +249,7 @@ class SceneAppLifecycleRuntime internal constructor(
             cursor = uiFrame.cursor
             uiOwnership = uiFrame.ownership
             uiSemantics = uiFrame.semantics
-            uiPrimitives = uiFrame.primitives
+            uiPrimitives = stagedUiPrimitives + uiFrame.primitives
         } else {
             val composeRuntime = services.service(ComposeAppRuntime::class)
             if (composeRuntime != null) {
@@ -230,11 +262,12 @@ class SceneAppLifecycleRuntime internal constructor(
             }
         }
 
-        // 3. Simulation & Infrastructure Pump
-        timePhase({ simRenderMs = it }) {
-            session.advance(delta) { step ->
-                spec.updateBlock(this, step, snapshot)
+        if (uiFrame == null && stagedUiPrimitives.isNotEmpty()) {
+            timePhase({ uiWaitMs = it }) { renderer.awaitFrameResources() }
+            timePhase({ uiStageMs = it }) {
+                renderer.drawUi(stagedUiPrimitives.toList(), font)
             }
+            uiPrimitives = stagedUiPrimitives.toList()
         }
     }
 
@@ -286,21 +319,76 @@ class SceneAppLifecycleRuntime internal constructor(
     suspend fun readback(camera: Lens, width: Int, height: Int): TextureAsset {
         val target = renderer.createRenderTarget(width, height)
         return try {
-            renderer.renderToTexture(target, camera, collectDrawCalls())
+            renderer.renderToTexture(
+                target,
+                ScenePassCompiler.compile(
+                    lens = camera,
+                    drawCalls = collectDrawCalls(),
+                    clipSpace = renderer.clipSpace,
+                    aspect = width.toFloat() / height.toFloat(),
+                    drawPreparer = gpuDrawPreparer,
+                ),
+            )
             renderer.readPixels(target)
         } finally {
             target.destroy()
         }
     }
 
+    /**
+     * Captures one attachment from the scene's current primary-camera view.
+     *
+     * This is the runtime seam for tools such as the showcase framebuffer debugger. The scene
+     * owns camera selection and draw-call collection; callers only choose the diagnostic
+     * attachment and capture size. The render contract remains generic and the backends never
+     * need to know that the result is being shown by a showcase panel.
+     */
+    suspend fun readbackAttachment(
+        width: Int,
+        height: Int,
+        attachment: FramebufferAttachment,
+    ): FramebufferAttachmentData {
+        val family = world.family<Camera>()
+        val cameras = family.components()
+        var primary: Camera? = null
+        var index = 0
+        while (index < family.size) {
+            if (cameras[index].isPrimary) {
+                primary = cameras[index]
+                break
+            }
+            index += 1
+        }
+        val camera = primary ?: return FramebufferAttachmentData.unavailable(
+            attachment,
+            "The showcase has no primary camera to capture.",
+        )
+        val target = renderer.createRenderTarget(width, height)
+        return try {
+            renderer.renderToTexture(
+                target,
+                ScenePassCompiler.compile(
+                    lens = camera.lens,
+                    drawCalls = collectDrawCalls(),
+                    clipSpace = renderer.clipSpace,
+                    aspect = width.toFloat() / height.toFloat(),
+                    drawPreparer = gpuDrawPreparer,
+                ),
+            )
+            renderer.readFramebufferAttachment(target, attachment)
+        } finally {
+            target.destroy()
+        }
+    }
+
     /** Every drawable entity, generic across ordinary/instanced/skinned-instanced content --
-     * mirrors [RenderSystem.update]'s own draw-call assembly (minus its LOD/culling/frustum
+     * mirrors [RenderSystem3D.update]'s own draw-call assembly (minus its LOD/culling/frustum
      * concerns, not needed for an offscreen preview pass). Originally only queried plain
      * [MeshRenderer] entities, which left [InstancedMeshRenderer]/[InstancedSkinnedMeshRenderer]
      * content (instanced-cubes, instanced-skinned) invisible to any caller of this function
      * (the camera preview / orientation gizmo's offscreen passes) even though the real
-     * viewport renders them fine via [RenderSystem]. */
-    fun collectDrawCalls(): List<DrawCall> {
+     * viewport renders them fine via [RenderSystem3D]. */
+    fun collectDrawCalls(): List<RenderDrawCommand> {
         val family = world.family<Transform, MeshRenderer>()
         val transforms = family.componentsA()
         val renderers = family.componentsB()
@@ -308,7 +396,7 @@ class SceneAppLifecycleRuntime internal constructor(
             var index = 0
             while (index < family.size) {
                 add(
-                    DrawCall(
+                    RenderDrawCommand(
                         mesh = renderers[index].mesh,
                         material = renderers[index].material,
                         model = transforms[index].worldMatrix,
@@ -318,7 +406,7 @@ class SceneAppLifecycleRuntime internal constructor(
             }
             world.family<InstancedMeshRenderer>().forEach { _, instanced ->
                 add(
-                    DrawCall(
+                    RenderDrawCommand(
                         mesh = instanced.mesh,
                         material = instanced.material,
                         instanceModels = instanced.transforms,
@@ -327,7 +415,7 @@ class SceneAppLifecycleRuntime internal constructor(
             }
             world.family<InstancedSkinnedMeshRenderer>().forEach { _, instanced ->
                 add(
-                    DrawCall(
+                    RenderDrawCommand(
                         mesh = instanced.mesh,
                         material = instanced.material,
                         instanceModels = instanced.instances.map { it.transform },
@@ -382,7 +470,7 @@ class SceneAppLifecycleRuntime internal constructor(
 
 /** The standard infrastructure trio every 3D scene needs -- transform resolution, the draw
  * pass, then debug wireframes (frustum/[com.awakekt.awake.scene.rendering
- * .components.MeshBounds] boxes) drawn over whatever [RenderSystem] just drew. See
+ * .components.MeshBounds] boxes) drawn over whatever [RenderSystem3D] just drew. See
  * [SceneAppSpec.infrastructureSystemsFactory]'s doc comment for why this lives here instead
  * of being wired through the authoring DSL. [DebugVisualizationSystem] is a no-op (draws
  * nothing extra) unless a scene adds a
@@ -391,10 +479,6 @@ class SceneAppLifecycleRuntime internal constructor(
 fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(): List<System> =
     listOf(
         TransformSystem(),
-        // Reads Environment + Light(Directional) entities → pushes sky/fog/shadow flags to the
-        // renderer before RenderSystem calls renderer.draw(). Same ordering as Godot: the scene
-        // tree updates are applied before the render pass.
-        EnvironmentSystem(renderer),
-        RenderSystem(renderer),
+        RenderSystem3D(renderer, gpuDrawPreparer),
         DebugVisualizationSystem(renderer),
     )

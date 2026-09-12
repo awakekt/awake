@@ -15,14 +15,15 @@ import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SCENE_SCHEMA_VERSION
+import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.SceneSchemaVersionException
 import com.awakekt.awake.scene.document.SceneTransform
 import com.awakekt.awake.scene.document.SceneVec3
-import com.awakekt.awake.scene.rendering.Light
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
+import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.light.SceneLight
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
@@ -113,7 +114,7 @@ class SceneLoaderTest {
                                     primary = false,
                                 ),
                                 SceneLight(
-                                    color = SceneVec3(0.1f, 0.2f, 0.3f),
+                                    color = SceneColor(0.1f, 0.2f, 0.3f),
                                     intensity = 0.75f,
                                     type = SceneLight.Type.Point,
                                 ),

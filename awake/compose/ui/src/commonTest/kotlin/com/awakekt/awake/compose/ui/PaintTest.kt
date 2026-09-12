@@ -19,6 +19,7 @@ import com.awakekt.awake.compose.ui.graphics.Painter
 import com.awakekt.awake.compose.ui.graphics.RectangleShape
 import com.awakekt.awake.compose.ui.graphics.RenderEffect
 import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
+import com.awakekt.awake.compose.ui.graphics.ShapeOutline
 import com.awakekt.awake.compose.ui.layout.Layer
 import com.awakekt.awake.compose.ui.layout.LayerKind
 import com.awakekt.awake.compose.ui.layout.Layout
@@ -27,12 +28,14 @@ import com.awakekt.awake.compose.ui.layout.composeInto
 import com.awakekt.awake.compose.ui.layout.layoutTree
 import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.unit.Constraints
+import com.awakekt.awake.compose.ui.unit.LayoutDirection
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.bounds
 import com.awakekt.awake.core.math2d.Rectangle
+import com.awakekt.awake.core.math2d.Size2D
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -74,6 +77,42 @@ private fun paintOf(
 }
 
 class PaintTest {
+
+    @Test
+    fun roundedCornerShapeResolvesLogicalCornersForLayoutDirection() {
+        val shape = RoundedCornerShape(topStart = 4.dp, topEnd = 12.dp)
+        val ltr = shape.createOutline(Size2D(80f, 40f), density = 1f, layoutDirection = LayoutDirection.Ltr)
+        val rtl = shape.createOutline(Size2D(80f, 40f), density = 1f, layoutDirection = LayoutDirection.Rtl)
+
+        val ltrCorners = assertIs<ShapeOutline.RoundedCorners>(ltr)
+        val rtlCorners = assertIs<ShapeOutline.RoundedCorners>(rtl)
+        assertEquals(4f, ltrCorners.topLeft)
+        assertEquals(12f, ltrCorners.topRight)
+        assertEquals(12f, rtlCorners.topLeft)
+        assertEquals(4f, rtlCorners.topRight)
+    }
+
+    @Test
+    fun roundedCornerShapeSupportsPercentageCornerSizes() {
+        val outline = RoundedCornerShape(topStartPercent = 50).createOutline(
+            Size2D(80f, 40f),
+            density = 1f,
+        )
+
+        assertEquals(20f, assertIs<ShapeOutline.RoundedCorners>(outline).topLeft)
+    }
+
+    @Test
+    fun roundedCornerShapeClampsAdjacentCornersLikeCompose() {
+        val outline = RoundedCornerShape(topStart = 100.dp, topEnd = 100.dp).createOutline(
+            Size2D(80f, 40f),
+            density = 1f,
+        )
+
+        val corners = assertIs<ShapeOutline.RoundedCorners>(outline)
+        assertEquals(40f, corners.topLeft)
+        assertEquals(40f, corners.topRight)
+    }
 
     @Test
     fun graphicsLayerCapturesContentAndLeavesOneTexturePlaceholder() {

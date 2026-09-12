@@ -1,0 +1,30 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+plugins {
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlinx.benchmark)
+    id("com.awakekt.awake.plugin.dokka")
+    id("com.awakekt.awake.plugin.detekt")
+    id("com.awakekt.awake.plugin.spotless")
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+dependencies {
+    implementation(project(":awake:core:math"))
+    // SpatialGrid, the thing SpatialCullingBenchmarks measures against a per-entity scan.
+    implementation(project(":awake:scene:scene3d"))
+    implementation(libs.kotlinx.benchmark.runtime)
+}
+
+benchmark {
+    targets {
+        register("main")
+    }
+}

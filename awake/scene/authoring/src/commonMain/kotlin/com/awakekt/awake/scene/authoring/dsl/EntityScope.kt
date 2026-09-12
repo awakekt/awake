@@ -31,6 +31,8 @@ class EntityScope internal constructor(
      * @param component The component instance to attach.
      */
     fun with(component: Any) {
+        // Safe: component::class produces KClass<T> where T is the concrete runtime type of
+        // component; widening to KClass<Any> is always valid for the untyped World.add overload.
         @Suppress("UNCHECKED_CAST")
         world.add(entity, component::class as KClass<Any>, component)
     }

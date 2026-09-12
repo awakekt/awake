@@ -7,7 +7,7 @@ components and systems, serialized scene documents, runtime loading, and authori
 
 ```text
 scene:scene-core   Transform, Name, generic transform/spin behavior
-scene:rendering    cameras, lights, mesh renderers, animation, render systems
+scene:scene3d    cameras, lights, mesh renderers, animation, render systems
 scene:physics      physics-facing components and synchronization
 scene:controls     reusable camera and movement controls
 scene:runtime      document loading, scene switching, runtime/session plumbing

@@ -330,11 +330,14 @@ internal class PaintScope :
         val outline = shape.createOutline(
             com.awakekt.awake.core.math2d.Size2D(layerWidth.toFloat(), layerHeight.toFloat()),
             density,
+            layoutDirection,
         )
         val shadowRadius = when (outline) {
             is ShapeOutline.Rectangle -> 0f
             is ShapeOutline.Rounded -> outline.radius
-            is ShapeOutline.Generic -> 0f
+            is ShapeOutline.RoundedCorners,
+            is ShapeOutline.Generic,
+            -> 0f
         }
         val compositeX = layerX + (1f - scaleX) * layerWidth / 2f + translationX
         val compositeY = layerY + (1f - scaleY) * layerHeight / 2f + translationY
@@ -364,9 +367,13 @@ internal class PaintScope :
             primitives = layerOutput.map { it.translatedBy(-layerX, -layerY) },
         )
         if (elevation > 0f) {
-            if (outline is ShapeOutline.Generic) {
+            if (outline is ShapeOutline.Generic || outline is ShapeOutline.RoundedCorners) {
+                val path = when (outline) {
+                    is ShapeOutline.Generic -> outline.path
+                    is ShapeOutline.RoundedCorners -> outline.path
+                }
                 drawPathShadow(
-                    path = outline.path,
+                    path = path,
                     color = Color(0f, 0f, 0f, layerAlpha * 0.25f),
                     x = 0f,
                     y = 0f,

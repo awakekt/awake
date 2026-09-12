@@ -19,7 +19,8 @@ import kotlin.test.assertFailsWith
 class ComposeDiTest {
 
     private class TestNode : RememberHolder {
-        override val rememberSlots = mutableListOf<Any?>()
+        private val _rememberSlots = mutableListOf<Any?>()
+        override val rememberSlots: List<Any?> get() = _rememberSlots
     }
 
     private class TestApplier : Applier {

@@ -19,7 +19,6 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.math.ClipSpace
-import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
@@ -27,12 +26,14 @@ import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.bootstrap.dsl.appModule
 import com.awakekt.awake.engine.bootstrap.dsl.module
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -201,7 +202,7 @@ class SceneAppLifecycleDslTest {
         renderer.frameCalls.clear()
         game.update(0.016f, 320f, 240f)
 
-        assertEquals(listOf("drawUi", "draw"), renderer.frameCalls)
+        assertEquals(listOf("draw", "drawUi"), renderer.frameCalls)
     }
 
     @Test
@@ -432,7 +433,15 @@ private class TraceSystem(
 
 private val EmptyGeometry = MeshGeometry(vertices = floatArrayOf(), indices = intArrayOf())
 
-internal class RecordingRenderer : Renderer {
+internal class RecordingRenderer :
+    Renderer,
+    GpuDrawPreparationSource {
+    var lastDrawCalls: List<RenderDrawCommand> = emptyList()
+    override val gpuDrawPreparer = GpuDrawPreparer { command, sourceIndex, _ ->
+        if (sourceIndex == 0) lastDrawCalls = emptyList()
+        lastDrawCalls += command
+        null
+    }
     var meshCreateCount = 0
     var materialCreateCount = 0
     var meshDestroyCount = 0
@@ -443,7 +452,6 @@ internal class RecordingRenderer : Renderer {
     override val clipSpace: ClipSpace = ClipSpace.WebGpu
     override var clearColor: Color = Color.Black
     override var wireframe: Boolean = false
-    override var shadowsEnabled: Boolean = true
 
     override fun createMesh(geometry: MeshGeometry): Mesh {
         meshCreateCount += 1
@@ -479,24 +487,16 @@ internal class RecordingRenderer : Renderer {
         override fun destroy() = Unit
     }
 
-    override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) {
-        frameCalls += "draw"
-    }
-
-    override fun renderToTexture(
-        target: RenderTarget,
-        camera: Lens,
-        drawCalls: List<DrawCall>,
-        light: SceneLight,
-    ) =
-        Unit
-
     override suspend fun readPixels(target: RenderTarget): TextureAsset =
         TextureAsset(ByteArray(target.width * target.height * 4), target.width, target.height)
 
     override fun drawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) {
         frameCalls += "drawUi"
         lastUiPrimitives = primitives
+    }
+
+    override fun draw(input: GpuPassInput) {
+        frameCalls += "draw"
     }
 
     override fun drawDebugLines(lines: List<LineSegment>) = Unit

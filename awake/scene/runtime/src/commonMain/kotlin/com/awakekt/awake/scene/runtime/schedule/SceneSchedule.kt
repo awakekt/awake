@@ -77,6 +77,8 @@ class SceneSchedule internal constructor(
         )
     }
 
+    // Safe: SceneSystemHandle<T> is the key used when the system was registered via
+    // `register(handle, system)`, so the stored value is always the same T the caller holds.
     @Suppress("UNCHECKED_CAST")
     internal fun <T : System> system(handle: SceneSystemHandle<T>): T =
         registeredSystems[handle] as? T ?: error("System ${handle.name} not found")

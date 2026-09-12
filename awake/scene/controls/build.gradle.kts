@@ -21,7 +21,7 @@ kotlin {
             api(project(":awake:core:input"))
             api(project(":awake:scene:scene-core"))
             implementation(project(":awake:core:math"))
-            api(project(":awake:scene:rendering"))
+            api(project(":awake:scene:scene3d"))
             api(project(":awake:compose:ui"))
         }
         commonTest.dependencies {

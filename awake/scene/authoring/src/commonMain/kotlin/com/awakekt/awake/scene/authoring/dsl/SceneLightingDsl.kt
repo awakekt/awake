@@ -9,11 +9,10 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.rendering.AmbientLight
-import com.awakekt.awake.scene.rendering.Environment
-import com.awakekt.awake.scene.rendering.Fog
-import com.awakekt.awake.scene.rendering.Light
-import com.awakekt.awake.scene.rendering.Skybox
+import com.awakekt.awake.scene.rendering.fog.Fog
+import com.awakekt.awake.scene.rendering.light.AmbientLight
+import com.awakekt.awake.scene.rendering.light.Light
+import com.awakekt.awake.scene.rendering.sky.Skybox
 
 /**
  * Attaches a Directional Light component to this entity.
@@ -125,41 +124,6 @@ fun SceneAppDsl.lamp(
     entity(name) {
         with(Transform(position = position))
         pointLight(color, intensity, range)
-    }
-}
-
-/**
- * Attaches an [Environment] component to this entity.
- */
-fun EntityScope.environment(
-    environment: Environment = Environment(),
-) {
-    with(environment)
-}
-
-/**
- * Spawns an environment entity in a [SceneBuilder].
- *
- * @param name Optional entity name ("environment" by default).
- * @param environment Environmental parameters to assign.
- * @return The spawned environment [Entity].
- */
-fun SceneBuilder.environmentEntity(
-    name: String = "environment",
-    environment: Environment = Environment(),
-): Entity = entity(name) {
-    environment(environment)
-}
-
-/**
- * Spawns an environment entity in a [SceneAppDsl].
- */
-fun SceneAppDsl.environmentEntity(
-    name: String = "environment",
-    environment: Environment = Environment(),
-) {
-    entity(name) {
-        environment(environment)
     }
 }
 

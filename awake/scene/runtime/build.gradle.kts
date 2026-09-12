@@ -29,7 +29,7 @@ kotlin {
             api(project(":awake:scene:binding"))
             api(project(":awake:scene:scene-core"))
             api(project(":awake:scene:world"))
-            api(project(":awake:scene:rendering"))
+            api(project(":awake:scene:scene3d"))
             api(project(":awake:core:math"))
             api(project(":awake:core:audio"))
             api(project(":awake:scene:audio"))

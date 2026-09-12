@@ -29,7 +29,7 @@ kotlin {
             // `PlayerControlSystem` lives in this module directly (it needs `ui-core`'s
             // `UiInputOwnership`, which `:awake:scene:controls` deliberately stays free of).
             api(project(":awake:scene:scene-core"))
-            api(project(":awake:scene:rendering"))
+            api(project(":awake:scene:scene3d"))
             api(project(":awake:scene:controls"))
             api(project(":awake:scene:runtime"))
             api(project(":awake:scene:audio"))

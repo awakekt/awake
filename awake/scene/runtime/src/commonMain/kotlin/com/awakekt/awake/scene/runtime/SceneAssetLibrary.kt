@@ -7,7 +7,7 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.renderer.CullMode
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneRenderableRequest

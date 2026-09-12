@@ -27,7 +27,7 @@ class SceneAppSpec(
     internal val serviceRegistrations: List<SceneServiceRegistration<*>>,
     // Mandatory, not user-configurable data (every scene needs transform resolution + a draw
     // pass) -- pluggable so a game can swap the render backend, but defaults to the standard
-    // pair so `authoring` never has to import RenderSystem just to get one running. See
+    // pair so `authoring` never has to import RenderSystem3D just to get one running. See
     // defaultInfrastructureSystems() in SceneAppLifecycleRuntime.kt.
     val infrastructureSystemsFactory: SceneAppLifecycleRuntime.() -> List<System> =
         SceneAppLifecycleRuntime::defaultInfrastructureSystems,

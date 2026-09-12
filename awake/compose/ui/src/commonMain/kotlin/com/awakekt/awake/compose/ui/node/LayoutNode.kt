@@ -46,8 +46,11 @@ class LayoutNode(
     /** Children this node's [measurePolicy] lays out. */
     val children: NodeChildren = NodeChildren(this)
 
+    /** Backing storage for `remember` slots declared in this node's content. */
+    private val _rememberSlots: MutableList<Any?> = ArrayList()
+
     /** `remember` slots declared in this node's content. Created once with the node, never per pass. */
-    override val rememberSlots: MutableList<Any?> = ArrayList()
+    override val rememberSlots: List<Any?> get() = _rememberSlots
 
     /**
      * Overlays declared inside this node -- popup, dialog, tooltip.

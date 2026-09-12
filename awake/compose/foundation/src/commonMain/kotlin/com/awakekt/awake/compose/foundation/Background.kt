@@ -14,6 +14,7 @@ import com.awakekt.awake.compose.ui.graphics.ShapeOutline
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.unit.Dp
+import com.awakekt.awake.compose.ui.unit.LayoutDirection
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
@@ -105,9 +106,10 @@ private class BackgroundNode :
     lateinit var color: Color
     lateinit var shape: Shape
     override fun DrawScope.draw(drawContent: () -> Unit) {
-        when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density)) {
+        when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)) {
             is ShapeOutline.Rectangle -> drawRect(color = color)
             is ShapeOutline.Rounded -> drawRoundedRect(color = color, radius = outline.radius)
+            is ShapeOutline.RoundedCorners -> drawPath(outline.path, color)
             is ShapeOutline.Generic -> drawPath(outline.path, color)
         }
         drawContent()
@@ -152,7 +154,7 @@ private class BorderNode :
         drawContent()
         val stroke = strokeWidth.value * density
         if (stroke <= 0f || (!sides.top && !sides.end && !sides.bottom && !sides.start)) return
-        val key = BorderKey(width, height, stroke, color, shape, sides, density)
+        val key = BorderKey(width, height, stroke, color, shape, sides, density, layoutDirection)
         cachedMesh?.let { if (cachedKey == key) return drawMesh(it) }
         // Centred on a box inset by half the stroke width, so the ring's solid band lands inside
         // this node's bounds -- the same "inside, not centred on the edge" contract the old
@@ -167,7 +169,7 @@ private class BorderNode :
             (height - stroke).coerceAtLeast(0f),
         )
         // Tessellated node-local, so moving the node reuses this rather than rebuilding it.
-        val mesh = borderOutlinePath(bounds, shape, sides, density, inset).tessellateStrokeAa(
+        val mesh = borderOutlinePath(bounds, shape, sides, density, inset, layoutDirection).tessellateStrokeAa(
             DrawStroke(
                 width = StrokeWidth(stroke),
                 // Rounded outlines are already flattened into arc segments. Round joins prevent
@@ -197,16 +199,18 @@ private fun borderOutlinePath(
     sides: BorderSides,
     density: Float,
     inset: Float,
+    layoutDirection: LayoutDirection = LayoutDirection.Ltr,
 ): com.awakekt.awake.core.graphics2d.DrawPath {
-    if (!sides.isAll) return partialBorderPath(bounds, shape, sides, density, inset)
+    if (!sides.isAll) return partialBorderPath(bounds, shape, sides, density, inset, layoutDirection)
     val outline = when (shape) {
-        is RoundedCornerShape -> shape.createOutline(bounds, density, radiusInset = inset)
-        else -> shape.createOutline(Size2D(bounds.width, bounds.height), density)
+        is RoundedCornerShape -> shape.createOutline(bounds, density, radiusInset = inset, layoutDirection = layoutDirection)
+        else -> shape.createOutline(Size2D(bounds.width, bounds.height), density, layoutDirection)
     }
     return when (outline) {
         is ShapeOutline.Rectangle -> com.awakekt.awake.core.graphics2d.DrawShape.Rectangle.toPath(bounds)
         is ShapeOutline.Rounded -> com.awakekt.awake.core.graphics2d.DrawShape.RoundedRectangle(outline.radius.dp)
             .toPath(bounds)
+        is ShapeOutline.RoundedCorners -> outline.path
         is ShapeOutline.Generic -> if (shape is RoundedCornerShape) {
             outline.path
         } else {
@@ -224,6 +228,7 @@ private data class BorderKey(
     val shape: Shape,
     val sides: BorderSides,
     val density: Float,
+    val layoutDirection: LayoutDirection,
 )
 
 internal fun partialBorderPath(
@@ -232,10 +237,11 @@ internal fun partialBorderPath(
     sides: BorderSides,
     density: Float,
     inset: Float,
+    layoutDirection: LayoutDirection = LayoutDirection.Ltr,
 ) = drawPath {
     val radii = when (shape) {
         RectangleShape -> CornerRadii.Zero
-        is RoundedCornerShape -> CornerRadii.of(shape, bounds, density, inset)
+        is RoundedCornerShape -> CornerRadii.of(shape, bounds, density, inset, layoutDirection)
         else -> error("Partial borders require RectangleShape or RoundedCornerShape")
     }
     val left = bounds.x
@@ -286,15 +292,24 @@ private data class CornerRadii(
     companion object {
         val Zero = CornerRadii(0f, 0f, 0f, 0f)
 
-        fun of(shape: RoundedCornerShape, bounds: Rectangle, density: Float, inset: Float): CornerRadii {
-            val limit = min(bounds.width, bounds.height) / 2f
-            fun resolve(radius: Dp): Float = (radius.value * density - inset).coerceIn(0f, limit)
-            return CornerRadii(
-                topStart = resolve(shape.topStart),
-                topEnd = resolve(shape.topEnd),
-                bottomEnd = resolve(shape.bottomEnd),
-                bottomStart = resolve(shape.bottomStart),
-            )
+        fun of(
+            shape: RoundedCornerShape,
+            bounds: Rectangle,
+            density: Float,
+            inset: Float,
+            layoutDirection: LayoutDirection,
+        ): CornerRadii {
+            val outline = shape.createOutline(bounds, density, inset, layoutDirection)
+            return when (outline) {
+                is ShapeOutline.Rounded -> CornerRadii(outline.radius, outline.radius, outline.radius, outline.radius)
+                is ShapeOutline.RoundedCorners -> CornerRadii(
+                    outline.topLeft,
+                    outline.topRight,
+                    outline.bottomRight,
+                    outline.bottomLeft,
+                )
+                else -> Zero
+            }
         }
     }
 }

@@ -36,6 +36,7 @@ interface SceneComponentBinding<C : Any, S : SceneComponent> : SceneComponentRes
         schemaClass.isInstance(component)
 
     /** Automatically routes and safely casts [component] to [attachTyped]. */
+    // Safe: isInstance check on the line below guarantees component is exactly S before the cast.
     @Suppress("UNCHECKED_CAST")
     override fun attach(
         world: World,

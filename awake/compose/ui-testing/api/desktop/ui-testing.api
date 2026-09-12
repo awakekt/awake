@@ -145,7 +145,7 @@ public final class com/awakekt/awake/compose/testing/UiRasterizerKt {
 	public static synthetic fun rasterizeToPixelMap$default (Ljava/util/List;IILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)Lcom/awakekt/awake/render/capture/PixelMap;
 }
 
-public final class com/awakekt/awake/compose/testing/UiSnapshotWriter_desktopKt {
+public final class com/awakekt/awake/compose/testing/UiSnapshotWriterKt {
 	public static final fun captureImage (Lcom/awakekt/awake/compose/testing/ComposeComponentFrame;Ljava/io/File;IILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;)Ljava/io/File;
 	public static final fun captureImage (Lcom/awakekt/awake/compose/testing/ComposeComponentFrame;Ljava/lang/String;IILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;)Ljava/io/File;
 	public static synthetic fun captureImage$default (Lcom/awakekt/awake/compose/testing/ComposeComponentFrame;Ljava/io/File;IILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)Ljava/io/File;
@@ -154,7 +154,7 @@ public final class com/awakekt/awake/compose/testing/UiSnapshotWriter_desktopKt 
 	public static final fun toBufferedImage ([BII)Ljava/awt/image/BufferedImage;
 }
 
-public final class com/awakekt/awake/compose/testing/VisualBaseline_desktopKt {
+public final class com/awakekt/awake/compose/testing/VisualBaselineKt {
 	public static final fun assertMatchesBaseline (Lcom/awakekt/awake/compose/testing/ComposeComponentFrame;Ljava/lang/String;IILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public static synthetic fun assertMatchesBaseline$default (Lcom/awakekt/awake/compose/testing/ComposeComponentFrame;Ljava/lang/String;IILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 }

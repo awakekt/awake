@@ -224,9 +224,49 @@ public final class com/awakekt/awake/compose/ui/graphics/Brush$SolidColor : com/
 
 public final class com/awakekt/awake/compose/ui/graphics/CircleShape : com/awakekt/awake/compose/ui/graphics/Shape {
 	public static final field INSTANCE Lcom/awakekt/awake/compose/ui/graphics/CircleShape;
-	public fun createOutline (Lcom/awakekt/awake/core/math2d/Size2D;F)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
+	public fun createOutline (Lcom/awakekt/awake/core/math2d/Size2D;FLcom/awakekt/awake/compose/ui/unit/LayoutDirection;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/compose/ui/graphics/CornerSize {
+	public abstract fun toPx (Lcom/awakekt/awake/core/math2d/Size2D;F)F
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/CornerSize$Dp : com/awakekt/awake/compose/ui/graphics/CornerSize {
+	public synthetic fun <init> (FLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-LGk54g8 ()F
+	public final fun copy-Jha-xPg (F)Lcom/awakekt/awake/compose/ui/graphics/CornerSize$Dp;
+	public static synthetic fun copy-Jha-xPg$default (Lcom/awakekt/awake/compose/ui/graphics/CornerSize$Dp;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/CornerSize$Dp;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue-LGk54g8 ()F
+	public fun hashCode ()I
+	public fun toPx (Lcom/awakekt/awake/core/math2d/Size2D;F)F
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/CornerSize$Percent : com/awakekt/awake/compose/ui/graphics/CornerSize {
+	public fun <init> (I)V
+	public final fun component1 ()I
+	public final fun copy (I)Lcom/awakekt/awake/compose/ui/graphics/CornerSize$Percent;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/graphics/CornerSize$Percent;IILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/CornerSize$Percent;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()I
+	public fun hashCode ()I
+	public fun toPx (Lcom/awakekt/awake/core/math2d/Size2D;F)F
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/CornerSize$Px : com/awakekt/awake/compose/ui/graphics/CornerSize {
+	public fun <init> (F)V
+	public final fun component1 ()F
+	public final fun copy (F)Lcom/awakekt/awake/compose/ui/graphics/CornerSize$Px;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/graphics/CornerSize$Px;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/CornerSize$Px;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()F
+	public fun hashCode ()I
+	public fun toPx (Lcom/awakekt/awake/core/math2d/Size2D;F)F
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -251,7 +291,7 @@ public final class com/awakekt/awake/compose/ui/graphics/Painter {
 
 public final class com/awakekt/awake/compose/ui/graphics/RectangleShape : com/awakekt/awake/compose/ui/graphics/Shape {
 	public static final field INSTANCE Lcom/awakekt/awake/compose/ui/graphics/RectangleShape;
-	public fun createOutline (Lcom/awakekt/awake/core/math2d/Size2D;F)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
+	public fun createOutline (Lcom/awakekt/awake/core/math2d/Size2D;FLcom/awakekt/awake/compose/ui/unit/LayoutDirection;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -280,23 +320,40 @@ public final class com/awakekt/awake/compose/ui/graphics/RenderEffect$Companion 
 }
 
 public final class com/awakekt/awake/compose/ui/graphics/RoundedCornerShape : com/awakekt/awake/compose/ui/graphics/Shape {
-	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (FFFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public synthetic fun <init> (FLkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun createOutline (Lcom/awakekt/awake/core/math2d/Rectangle;FF)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
-	public fun createOutline (Lcom/awakekt/awake/core/math2d/Size2D;F)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
-	public static synthetic fun createOutline$default (Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;Lcom/awakekt/awake/core/math2d/Rectangle;FFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/compose/ui/graphics/CornerSize;Lcom/awakekt/awake/compose/ui/graphics/CornerSize;Lcom/awakekt/awake/compose/ui/graphics/CornerSize;Lcom/awakekt/awake/compose/ui/graphics/CornerSize;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/compose/ui/graphics/CornerSize;Lcom/awakekt/awake/compose/ui/graphics/CornerSize;Lcom/awakekt/awake/compose/ui/graphics/CornerSize;Lcom/awakekt/awake/compose/ui/graphics/CornerSize;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun createOutline (Lcom/awakekt/awake/core/math2d/Rectangle;FFLcom/awakekt/awake/compose/ui/unit/LayoutDirection;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
+	public fun createOutline (Lcom/awakekt/awake/core/math2d/Size2D;FLcom/awakekt/awake/compose/ui/unit/LayoutDirection;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
+	public static synthetic fun createOutline$default (Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;Lcom/awakekt/awake/core/math2d/Rectangle;FFLcom/awakekt/awake/compose/ui/unit/LayoutDirection;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getBottomEnd-LGk54g8 ()F
-	public final fun getBottomStart-LGk54g8 ()F
-	public final fun getTopEnd-LGk54g8 ()F
-	public final fun getTopStart-LGk54g8 ()F
+	public final fun getBottomEnd ()Lcom/awakekt/awake/compose/ui/graphics/CornerSize;
+	public final fun getBottomStart ()Lcom/awakekt/awake/compose/ui/graphics/CornerSize;
+	public final fun getTopEnd ()Lcom/awakekt/awake/compose/ui/graphics/CornerSize;
+	public final fun getTopStart ()Lcom/awakekt/awake/compose/ui/graphics/CornerSize;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class com/awakekt/awake/compose/ui/graphics/Shape {
-	public abstract fun createOutline (Lcom/awakekt/awake/core/math2d/Size2D;F)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
+	public abstract fun createOutline (Lcom/awakekt/awake/core/math2d/Size2D;FLcom/awakekt/awake/compose/ui/unit/LayoutDirection;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
+	public static synthetic fun createOutline$default (Lcom/awakekt/awake/compose/ui/graphics/Shape;Lcom/awakekt/awake/core/math2d/Size2D;FLcom/awakekt/awake/compose/ui/unit/LayoutDirection;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/Shape$DefaultImpls {
+	public static synthetic fun createOutline$default (Lcom/awakekt/awake/compose/ui/graphics/Shape;Lcom/awakekt/awake/core/math2d/Size2D;FLcom/awakekt/awake/compose/ui/unit/LayoutDirection;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline;
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/ShapeKt {
+	public static final fun RoundedCornerShape (F)Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;
+	public static final fun RoundedCornerShape (FFFF)Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;
+	public static final fun RoundedCornerShape (I)Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;
+	public static final fun RoundedCornerShape (IIII)Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;
+	public static synthetic fun RoundedCornerShape$default (FFFFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;
+	public static synthetic fun RoundedCornerShape$default (IIIIILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;
+	public static final fun RoundedCornerShape-Jha-xPg (F)Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;
+	public static final fun RoundedCornerShape-Zt3hnP8 (FFFF)Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;
+	public static synthetic fun RoundedCornerShape-Zt3hnP8$default (FFFFILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/RoundedCornerShape;
 }
 
 public abstract interface class com/awakekt/awake/compose/ui/graphics/ShapeOutline {
@@ -337,6 +394,27 @@ public final class com/awakekt/awake/compose/ui/graphics/ShapeOutline$Rounded : 
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getBounds ()Lcom/awakekt/awake/core/math2d/Rectangle;
 	public final fun getRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/compose/ui/graphics/ShapeOutline$RoundedCorners : com/awakekt/awake/compose/ui/graphics/ShapeOutline {
+	public fun <init> (Lcom/awakekt/awake/core/math2d/Rectangle;FFFFLcom/awakekt/awake/core/graphics2d/DrawPath;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/math2d/Rectangle;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()Lcom/awakekt/awake/core/graphics2d/DrawPath;
+	public final fun copy (Lcom/awakekt/awake/core/math2d/Rectangle;FFFFLcom/awakekt/awake/core/graphics2d/DrawPath;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline$RoundedCorners;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline$RoundedCorners;Lcom/awakekt/awake/core/math2d/Rectangle;FFFFLcom/awakekt/awake/core/graphics2d/DrawPath;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/graphics/ShapeOutline$RoundedCorners;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBottomLeft ()F
+	public final fun getBottomRight ()F
+	public fun getBounds ()Lcom/awakekt/awake/core/math2d/Rectangle;
+	public final fun getPath ()Lcom/awakekt/awake/core/graphics2d/DrawPath;
+	public final fun getTopLeft ()F
+	public final fun getTopRight ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }

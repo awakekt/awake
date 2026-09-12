@@ -4,7 +4,7 @@
 
 > [!NOTE]
 > **Strict Dependency DAG**: This module depends **only** on `:awake:ecs` and `:awake:scene:document`.
-> It has **zero** dependencies on `:awake:scene:scene-core`, `:awake:scene:rendering`, or other concrete feature modules. This guarantees a strictly acyclic dependency graph across the engine.
+> It has **zero** dependencies on `:awake:scene:scene-core`, `:awake:scene:scene3d`, or other concrete feature modules. This guarantees a strictly acyclic dependency graph across the engine.
 
 ---
 
@@ -63,6 +63,6 @@ Handles recursive instantiation and property overrides for nested prefab links (
 
 - [`awake:scene:document`](../document/README.md) — Pure AST schema, parser, and validator.
 - [`awake:scene:runtime`](../runtime/README.md) — Scene adapters (`AwakeWorldSceneAdapter`, `SceneWorldExport`), `DefaultSceneComponentResolvers`, and `SceneAppLifecycleRuntime`.
-- [`awake:scene:rendering`](../rendering/README.md) — Camera, light, and mesh bindings (`CameraBinding`, `LightBinding`, `MaterialBinding`, `MeshRendererBinding`).
+- [`awake:scene:scene3d`](../scene3d/README.md) — Camera, light, and mesh bindings (`CameraBinding`, `LightBinding`, `MaterialBinding`, `MeshRendererBinding`).
 - [`awake:scene:scene-core`](../scene-core/README.md) — Transform components and `SpinControlBinding`.
 - [`awake:ai:behavior`](../../ai/behavior/README.md) — AI behavior bindings (`PatrolBinding`, `ChaseBinding`, `FleeBinding`).

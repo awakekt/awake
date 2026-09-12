@@ -11,16 +11,16 @@ import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
-import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
+import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -97,13 +97,15 @@ class SceneRouterDslTest {
 
 private val RouterGeometry = MeshGeometry(floatArrayOf(), intArrayOf())
 
-private class RouterRecordingRenderer : Renderer {
+private class RouterRecordingRenderer :
+    Renderer,
+    GpuDrawPreparationSource {
+    override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
     var lastUiPrimitives: List<UiDrawPrimitive> = emptyList()
 
     override val clipSpace: ClipSpace = ClipSpace.WebGpu
     override var clearColor: Color = Color.Black
     override var wireframe: Boolean = false
-    override var shadowsEnabled: Boolean = true
 
     override fun createMesh(geometry: MeshGeometry): Mesh = object : Mesh {
         override val format: VertexFormat = geometry.format
@@ -127,18 +129,10 @@ private class RouterRecordingRenderer : Renderer {
         override fun destroy() = Unit
     }
 
-    override fun draw(camera: Lens, drawCalls: List<DrawCall>, light: SceneLight) = Unit
-
-    override fun renderToTexture(
-        target: RenderTarget,
-        camera: Lens,
-        drawCalls: List<DrawCall>,
-        light: SceneLight,
-    ) =
-        Unit
-
     override suspend fun readPixels(target: RenderTarget): TextureAsset =
         TextureAsset(ByteArray(target.width * target.height * 4), target.width, target.height)
+
+    override fun draw(input: GpuPassInput) = Unit
 
     override fun drawUi(primitives: List<UiDrawPrimitive>, font: UiFont?) {
         lastUiPrimitives = primitives

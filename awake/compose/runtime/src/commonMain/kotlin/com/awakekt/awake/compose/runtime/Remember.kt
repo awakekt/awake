@@ -13,8 +13,13 @@ package com.awakekt.awake.compose.runtime
  * widget that wrote them: when this node goes, everything it remembered goes with it.
  */
 interface RememberHolder {
-    val rememberSlots: MutableList<Any?>
+    val rememberSlots: List<Any?>
 }
+
+@Suppress("UNCHECKED_CAST")
+internal fun RememberHolder.mutableSlots(): MutableList<Any?> =
+    (rememberSlots as? MutableList<Any?>)
+        ?: error("RememberHolder implementation must back rememberSlots with a MutableList")
 
 /**
  * Computes [calculate] on the first pass and returns that same value on every pass after.
@@ -67,7 +72,8 @@ internal class RememberedSlot(var key: Any?, var key2: Any?, var value: Any?)
 
 /** Drops slots this pass stopped declaring, the way [Applier.truncateFrom] drops children. */
 internal fun RememberHolder.trimRememberedTo(count: Int) {
-    while (rememberSlots.size > count) {
-        rememberSlots.removeAt(rememberSlots.lastIndex)
+    val slots = mutableSlots()
+    while (slots.size > count) {
+        slots.removeAt(slots.lastIndex)
     }
 }

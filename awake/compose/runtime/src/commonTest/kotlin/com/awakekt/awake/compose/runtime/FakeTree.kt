@@ -9,7 +9,8 @@ package com.awakekt.awake.compose.runtime
 internal class FakeNode(val type: Any = "root", val key: Any? = null) : RememberHolder {
     val children = mutableListOf<FakeNode>()
     val layers = mutableListOf<FakeNode>()
-    override val rememberSlots: MutableList<Any?> = mutableListOf()
+    private val _rememberSlots = mutableListOf<Any?>()
+    override val rememberSlots: List<Any?> get() = _rememberSlots
     var updates = 0
     var value: Any? = null
 }

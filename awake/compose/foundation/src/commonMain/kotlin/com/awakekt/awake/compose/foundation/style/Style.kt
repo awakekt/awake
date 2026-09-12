@@ -117,7 +117,8 @@ internal class ResolvingStyleScope(
         resolved.shape = shape
         // The current semantic export has one radius field, like browser `parseFloat(borderRadius)`;
         // retain the leading corner for existing geometry/style reports until per-corner semantics land.
-        resolved.cornerRadius = (shape as? RoundedCornerShape)?.topStart ?: 0.dp
+        resolved.cornerRadius =
+            ((shape as? RoundedCornerShape)?.topStart as? com.awakekt.awake.compose.ui.graphics.CornerSize.Dp)?.value ?: 0.dp
     }
 
     override fun contentPadding(horizontal: Dp, vertical: Dp) {

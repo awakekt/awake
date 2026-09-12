@@ -111,6 +111,7 @@ private fun Shape.ringPath(
     return when (outline) {
         is ShapeOutline.Rectangle -> DrawShape.Rectangle.toPath(bounds)
         is ShapeOutline.Rounded -> DrawShape.RoundedRectangle(StrokeWidth(outline.radius)).toPath(bounds)
+        is ShapeOutline.RoundedCorners -> outline.path
         is ShapeOutline.Generic -> outline.path
     }
 }

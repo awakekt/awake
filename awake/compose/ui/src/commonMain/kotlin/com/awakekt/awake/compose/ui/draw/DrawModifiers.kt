@@ -160,11 +160,13 @@ private class DropShadowNode :
     lateinit var shape: Shape
     lateinit var shadow: Shadow
     override fun DrawScope.draw(drawContent: () -> Unit) {
-        val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density)
+        val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)
         val cornerRadius = when (outline) {
             is ShapeOutline.Rectangle -> 0f
             is ShapeOutline.Rounded -> outline.radius
-            is ShapeOutline.Generic -> null
+            is ShapeOutline.RoundedCorners,
+            is ShapeOutline.Generic,
+            -> null
         }
         val brush = shadow.brush
         val color = (brush as? Brush.SolidColor)?.color ?: shadow.color
@@ -183,8 +185,13 @@ private class DropShadowNode :
             require(gradient == null && shadow.spread.value == 0f) {
                 "Generic shape shadows currently support solid, zero-spread masks only."
             }
+            val path = when (outline) {
+                is ShapeOutline.Generic -> outline.path
+                is ShapeOutline.RoundedCorners -> outline.path
+                else -> error("unreachable")
+            }
             (this as LayerDrawScope).drawPathShadow(
-                path = (outline as ShapeOutline.Generic).path,
+                path = path,
                 color = color.withAlpha(color.a * shadow.alpha),
                 x = 0f,
                 y = 0f,
@@ -338,7 +345,7 @@ private class ShapeClipNode :
     DrawModifierNode {
     lateinit var shape: Shape
     override fun DrawScope.draw(drawContent: () -> Unit) {
-        when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density)) {
+        when (val outline = shape.createOutline(Size2D(width.toFloat(), height.toFloat()), density, layoutDirection)) {
             is ShapeOutline.Rectangle -> clipped { drawContent() }
             is ShapeOutline.Rounded -> {
                 val b = outline.bounds
@@ -358,6 +365,7 @@ private class ShapeClipNode :
                     safeInterior,
                 ) { drawContent() }
             }
+            is ShapeOutline.RoundedCorners -> clippedPath(outline.path) { drawContent() }
             is ShapeOutline.Generic -> clippedPath(outline.path) { drawContent() }
         }
     }

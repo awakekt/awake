@@ -10,7 +10,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.controls.camera.CameraMode
 import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.core.Name
-import com.awakekt.awake.scene.rendering.Light
+import com.awakekt.awake.scene.rendering.light.Light
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

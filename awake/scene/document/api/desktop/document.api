@@ -591,7 +591,7 @@ public final class com/awakekt/awake/scene/document/SceneVec3$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/scene/document/SceneWriter_desktopKt {
+public final class com/awakekt/awake/scene/document/SceneWriterKt {
 	public static final fun writeSceneDocument (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }
 

@@ -36,8 +36,8 @@ private data class FlowMeasureLimits(
 )
 
 private data class FlowLineSizes(
-    val widths: MutableList<Int>,
-    val heights: MutableList<Int>,
+    internal val widths: MutableList<Int>,
+    internal val heights: MutableList<Int>,
 )
 
 private data class AlignmentLineExtent(val before: Int, val after: Int)

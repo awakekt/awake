@@ -75,7 +75,6 @@ public final class com/awakekt/awake/scene/runtime/DefaultSceneComponentResolver
 	public final fun getAmbientLightResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getBindings ()Ljava/util/List;
 	public final fun getCameraResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
-	public final fun getEnvironmentResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getFogResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getLightResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getMeshRendererResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
@@ -95,7 +94,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public static final field NANOS_PER_MS F
 	public final fun collectDrawCalls ()Ljava/util/List;
 	public fun dispose ()V
-	public final fun findCamera (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/Camera;
+	public final fun findCamera (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/camera/Camera;
 	public final fun findEntity-XHcgaUg (Ljava/lang/String;)Lcom/awakekt/awake/ecs/Entity;
 	public final fun findTransform (Ljava/lang/String;)Lcom/awakekt/awake/scene/core/transform/Transform;
 	public final fun getAverageFrameTimeMs ()F
@@ -117,9 +116,10 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public fun pause ()V
 	public final fun phaseStats ()Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
 	public final fun readback (Lcom/awakekt/awake/core/math/Lens;IILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun readbackAttachment (IILcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun ready (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun requireAssetLibrary ()Lcom/awakekt/awake/scene/runtime/SceneAssetLibrary;
-	public final fun requireCamera (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/Camera;
+	public final fun requireCamera (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/camera/Camera;
 	public final fun requireEntity-bssdaRw (Ljava/lang/String;)J
 	public final fun requireMaterial (Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public final fun requireMesh (Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
@@ -130,6 +130,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun service (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun setPerfStatsEnabled (Z)V
 	public final fun setUiOwnership (Lcom/awakekt/awake/compose/ui/platform/InputOwnership;)V
+	public final fun stageUi (Ljava/util/List;)V
 	public final fun system (Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;)Lcom/awakekt/awake/ecs/System;
 	public final fun system (Ljava/lang/String;)Lcom/awakekt/awake/ecs/System;
 	public fun update (Lcom/awakekt/awake/engine/platform/lifecycle/AppFrame;)V

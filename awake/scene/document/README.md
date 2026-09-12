@@ -122,6 +122,6 @@ Registering the binding:
 
 - [`awake:scene:binding`](../binding/README.md) — Pure contract & registry module (`SceneComponentBinding<C, S>`, `SceneComponentResolver`, `SceneComponentRegistry`).
 - [`awake:scene:runtime`](../runtime/README.md) — Scene adapters, session lifecycle, and runtime scheduling.
-- [`awake:scene:rendering`](../rendering/README.md) — Camera, light, and mesh renderer components and bindings.
+- [`awake:scene:scene3d`](../scene3d/README.md) — Camera, light, and mesh renderer components and bindings.
 - [`awake:scene:scene-core`](../scene-core/README.md) — Spatial transform components and spin control binding.
 - [`awake:ai:behavior`](../../ai/behavior/README.md) — Patrol, chase, and flee behavior components and bindings.

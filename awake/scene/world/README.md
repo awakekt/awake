@@ -26,6 +26,6 @@ physics backend has to rebase its bodies in the same frame, which is what
 ## What it does not do
 
 It has no opinion about what a cell *contains*. `AsyncWorldCellStream` loads and unloads by
-coordinate; a listener decides what that means — meshes in `scene:rendering`, colliders in
+coordinate; a listener decides what that means — meshes in `scene:scene3d`, colliders in
 `scene:physics`, nav tiles in `scene:navigation`. That is why the listener is an interface and this
 module depends on none of them.

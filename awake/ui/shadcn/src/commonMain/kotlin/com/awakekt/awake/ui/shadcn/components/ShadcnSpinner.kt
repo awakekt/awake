@@ -45,14 +45,17 @@ fun ShadcnSpinner(
         val cy = height / 2f
         val turn = phase * 2f * PI.toFloat()
         // Three quarters of the ring: `border-t-transparent` leaves the top edge unpainted.
-        val drawn = (SEGMENTS * 3) / 4
         val arc = drawPath {
-            val firstAngle = turn
-            moveTo(cx + cos(firstAngle) * radius, cy + sin(firstAngle) * radius)
-            for (i in 1 until drawn) {
-                val angle = turn + i * 2f * PI.toFloat() / SEGMENTS
-                lineTo(cx + cos(angle) * radius, cy + sin(angle) * radius)
-            }
+            val startDegrees = turn * 180f / PI.toFloat()
+            moveTo(cx + cos(turn) * radius, cy + sin(turn) * radius)
+            arcTo(
+                left = cx - radius,
+                top = cy - radius,
+                right = cx + radius,
+                bottom = cy + radius,
+                startDegrees = startDegrees,
+                sweepDegrees = 270f,
+            )
         }
         drawStrokedPath(
             arc,
@@ -74,12 +77,3 @@ private val SpinnerStroke: Dp = 2.dp
 
 /** `animate-spin` is one turn per second. */
 private const val SPIN_SECONDS = 1f
-
-/**
- * Enough that consecutive stamps overlap into one stroke.
- *
- * At `size-6` the ring's circumference is about 69px and the stroke is 2px, so 24 segments left
- * visible gaps and the spinner read as a ring of dots. This is that count rounded up past the
- * point where they touch.
- */
-private const val SEGMENTS = 48

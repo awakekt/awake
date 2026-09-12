@@ -36,6 +36,8 @@ object SceneSerializers {
     fun buildSerializersModule(): SerializersModule = SerializersModule {
         polymorphic(SceneComponent::class) {
             registered.forEach { (kClass, serializer) ->
+                // Safe: `register()` only admits (KClass<S>, KSerializer<S>) pairs, so the stored
+                // kClass and serializer are always consistent with each other at KClass<SceneComponent>.
                 @Suppress("UNCHECKED_CAST")
                 subclass(kClass as KClass<SceneComponent>, serializer as KSerializer<SceneComponent>)
             }
