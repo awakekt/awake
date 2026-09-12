@@ -155,13 +155,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      # Both the JoltC and engine-showcase iOS tests use native interop. JoltC needs its nested
-      # JoltPhysics, while the showcase path also needs the MoltenVK headers and framework.
-      - name: Check out native iOS dependencies
-        run: |
-          git submodule update --init --recursive awake/backend/jolt/ios-native/JoltC
-          git submodule update --init awake/backend/vulkan/bindings/ios-native/MoltenVK
+        with:
+          # The shared iOS-native action builds both MoltenVK and JoltC from these pinned submodules.
+          submodules: recursive
 
       - name: Setup JDK
         uses: actions/setup-java@v5
@@ -172,11 +168,10 @@ jobs:
       - name: Setup Gradle (with cache)
         uses: gradle/actions/setup-gradle@v4
 
-      # On demand, like the desktop Vulkan library above: a CMake configure plus build of Jolt
-      # itself is far too slow to hang off every Kotlin compile, so nothing depends on it and the
-      # test below would fail to link without it.
-      - name: Build JoltC for the simulator
-        run: ./gradlew :awake:backend:jolt:buildJoltCIosSimulatorArm64
+      - name: Install Vulkan tools (macOS)
+        run: brew install vulkan-loader molten-vk glfw
+
+      - uses: ./.github/actions/ios-native
 
       - name: Jolt iOS simulator physics tests
         run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test :samples:engine-showcase:iosSimulatorArm64Test
