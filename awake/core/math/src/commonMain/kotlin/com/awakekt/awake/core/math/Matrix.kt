@@ -216,7 +216,7 @@ class Mat4 {
      * [z]) -- the same result as `Mat4().translate(x, y, z).scale(scale, scale, scale)`, without
      * that expression's five intermediate `Mat4` allocations.
      *
-     * For per-frame callers that own a reusable matrix (see `RenderSystem`'s particle path,
+     * For per-frame callers that own a reusable matrix (see `RenderSystem3D`'s particle path,
      * where the allocating form cost five matrices per particle per frame). */
     fun setTranslationScale(x: Float, y: Float, z: Float, scale: Float): Mat4 {
         identity()

@@ -29,6 +29,7 @@ internal class PayloadColumn<T : Any>(type: KClass<T>) : ComponentValueStorage<T
         require(value !is EcsTag) { "EcsTag component types must always use their singleton tag value: ${value::class}" }
     }
 
+    // Safe: `values` array was allocated via newComponentArray(type) where type is KClass<T>.
     @Suppress("UNCHECKED_CAST")
     private inline val typedValues: Array<T> get() = values as Array<T>
 

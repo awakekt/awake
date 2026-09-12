@@ -9,6 +9,7 @@ import kotlin.reflect.KClass
 
 /** Dense, incrementally maintained cache backing [Family2]. */
 @PublishedApi
+// TooManyFunctions: dense dual-column cache implements full set of FamilyCache lifecycle and indexing operations.
 @Suppress("TooManyFunctions")
 internal class Family2Cache<A : Any, B : Any>(
     private val typeA: KClass<A>,
@@ -111,10 +112,12 @@ internal class Family2Cache<A : Any, B : Any>(
     override fun addComponent(world: World, entity: Entity, typeId: ComponentTypeId, component: Any) {
         if (typeId == typeIdA) {
             val componentB = storeB.get(entity) ?: return
+            // Safe: typeId == typeIdA check confirms component is of type A.
             @Suppress("UNCHECKED_CAST")
             append(entity, component as A, componentB)
         } else if (typeId == typeIdB) {
             val componentA = storeA.get(entity) ?: return
+            // Safe: typeId == typeIdB check confirms component is of type B.
             @Suppress("UNCHECKED_CAST")
             append(entity, componentA, component as B)
         }
@@ -124,9 +127,11 @@ internal class Family2Cache<A : Any, B : Any>(
         val index = indexOf(entity)
         if (index < 0) return
         if (typeIdA == typeId) {
+            // Safe: typeIdA == typeId check confirms component is of type A.
             @Suppress("UNCHECKED_CAST")
             componentValuesA.replace(index, component as A)
         } else if (typeIdB == typeId) {
+            // Safe: typeIdB == typeId check confirms component is of type B.
             @Suppress("UNCHECKED_CAST")
             componentValuesB.replace(index, component as B)
         }

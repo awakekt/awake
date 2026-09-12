@@ -82,7 +82,8 @@ fun navGridDebugLines(
  * helpers is how a marker ends up on the wrong list or at the wrong height.
  */
 open class NavGridDebugSink(val surfaceAt: (Float, Float) -> Float) {
-    val lines: MutableList<LineSegment> = ArrayList()
+    private val _lines: MutableList<LineSegment> = ArrayList()
+    val lines: List<LineSegment> get() = _lines
 
     /** Every sample of [tile] an agent cannot stand on, offset to that tile's place in the world. */
     fun blockedMarkers(tile: NavGridTile, originX: Float, originZ: Float, color: Color) {
@@ -106,7 +107,7 @@ open class NavGridDebugSink(val surfaceAt: (Float, Float) -> Float) {
             if (route.isEmpty()) return@forEach
             val color = routeColorFor(entity)
             for (index in 0 until route.size - 1) {
-                lines += LineSegment(route[index].onSurface(), route[index + 1].onSurface(), color)
+                _lines += LineSegment(route[index].onSurface(), route[index + 1].onSurface(), color)
             }
             cross(route.last().x, route.last().z, GOAL_ARM, ROUTE_LIFT, color)
         }
@@ -126,12 +127,12 @@ open class NavGridDebugSink(val surfaceAt: (Float, Float) -> Float) {
 
     fun cross(worldX: Float, worldZ: Float, arm: Float, lift: Float, color: Color) {
         val y = surfaceAt(worldX, worldZ) + lift
-        lines += LineSegment(
+        _lines += LineSegment(
             Vec3f(worldX - arm, y, worldZ - arm),
             Vec3f(worldX + arm, y, worldZ + arm),
             color,
         )
-        lines += LineSegment(
+        _lines += LineSegment(
             Vec3f(worldX - arm, y, worldZ + arm),
             Vec3f(worldX + arm, y, worldZ - arm),
             color,
@@ -145,7 +146,7 @@ open class NavGridDebugSink(val surfaceAt: (Float, Float) -> Float) {
      */
     private fun edge(startX: Float, startZ: Float, endX: Float, endZ: Float) {
         for (step in 0 until OUTLINE_SEGMENTS) {
-            lines += LineSegment(
+            _lines += LineSegment(
                 point(startX, startZ, endX, endZ, step.toFloat() / OUTLINE_SEGMENTS),
                 point(startX, startZ, endX, endZ, (step + 1).toFloat() / OUTLINE_SEGMENTS),
                 CELL_OUTLINE_COLOR,

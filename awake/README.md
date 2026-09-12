@@ -58,7 +58,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | Module | What it is |
 |---|---|
 | `scene:scene-core` | `Transform`, `Name`, hierarchy, `TransformSystem`, `SpinControl`. What every scene has |
-| `scene:rendering` | `MeshRenderer`, `Camera`, `Light`, `ParticleEmitter`, `RenderSystem` |
+| `scene:scene3d` | `MeshRenderer`, `Camera`, `Light`, `ParticleEmitter`, `RenderSystem3D` |
 | `scene:controls` | `camera` (rig, modes, input) and `movement` (control, player input, matrix-relative) |
 | `scene:physics` | `PhysicsBody` and `PhysicsSystem`, plus `character` and `streaming` |
 | `scene:navigation` | `NavMesh` and `PathRequest` (the contract), plus `NavGridTile`, slope bake, A* + smoothing |

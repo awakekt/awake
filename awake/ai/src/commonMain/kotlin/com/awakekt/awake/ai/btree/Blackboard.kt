@@ -14,6 +14,7 @@ class Blackboard {
     /**
      * Retrieves the stored value for [key] cast to type [T], or null if absent or type mismatch.
      */
+    // Safe: `as? T` performs a safe downcast and evaluates to null on type mismatch.
     @Suppress("UNCHECKED_CAST")
     operator fun <T : Any> get(key: String): T? = data[key] as? T
 

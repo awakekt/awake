@@ -142,14 +142,26 @@ internal fun offsetOpenRing(points: List<DrawPoint>, halfWidth: Float, stroke: D
 
     val ring = ArrayList<DrawPoint>()
     ring += DrawPoint(pts.first().x + offsetVector(dirs.first(), halfWidth).x, pts.first().y + offsetVector(dirs.first(), halfWidth).y)
-    for (i in 1 until dirs.size) ring += ringCorner(round, pts[i], halfWidth, dirs[i - 1], dirs[i])
+    for (i in 1 until dirs.size) {
+        // A round SVG join belongs only on the outside of a turn. Rounding the inside edge as
+        // well creates a second semicircle at every connected point -- the visible "bead" on
+        // Lucide checks and chevrons. The reverse side below walks the opposite direction, so it
+        // applies the same test with its already-reversed directions.
+        val turn = cross(dirs[i - 1], dirs[i])
+        ring += ringCorner(round && turn < 0f, pts[i], halfWidth, dirs[i - 1], dirs[i])
+    }
     ring += capSweep(roundCap, pts.last(), halfWidth, dirs.last())
     for (i in dirs.size - 2 downTo 0) {
-        ring += ringCorner(round, pts[i + 1], halfWidth, DrawPoint(-dirs[i + 1].x, -dirs[i + 1].y), DrawPoint(-dirs[i].x, -dirs[i].y))
+        val from = DrawPoint(-dirs[i + 1].x, -dirs[i + 1].y)
+        val to = DrawPoint(-dirs[i].x, -dirs[i].y)
+        val turn = cross(from, to)
+        ring += ringCorner(round && turn < 0f, pts[i + 1], halfWidth, from, to)
     }
     ring += capSweep(roundCap, pts.first(), halfWidth, DrawPoint(-dirs.first().x, -dirs.first().y))
     return ring
 }
+
+private fun cross(a: DrawPoint, b: DrawPoint): Float = a.x * b.y - a.y * b.x
 
 internal fun offsetClosedRing(rawPoints: List<DrawPoint>, distance: Float, join: StrokeJoin): List<DrawPoint> {
     val points = if (rawPoints.size >= 2 && unitDir(rawPoints.last(), rawPoints.first()) == null) {

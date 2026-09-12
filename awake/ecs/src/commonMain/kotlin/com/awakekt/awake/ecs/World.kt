@@ -418,6 +418,7 @@ class World {
      * Returns the raw [ComponentStore] for the specified [typeId], or null if uninitialized.
      */
     @PublishedApi
+    // Safe: ComponentStore<T> is stored under the unique ComponentTypeId registered for T.
     @Suppress("UNCHECKED_CAST")
     internal fun <T : Any> storeOrNull(typeId: ComponentTypeId): ComponentStore<T>? = components.storeOrNull(typeId)
 
@@ -443,6 +444,7 @@ class World {
     inline fun <reified T : Any> add(entity: Entity, typeId: ComponentTypeId): T {
         val instance = components.pool(typeId)?.obtain() ?: components.pool(T::class).obtain()
 
+        // Safe: Component pool for typeId or T::class dispenses instances of T by construction.
         @Suppress("UNCHECKED_CAST")
         val typedInstance = instance as T
         add(entity, typeId, typedInstance)
