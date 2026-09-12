@@ -45,6 +45,7 @@ nav:
       - Scene World: scene/world.md
       - App & Bootstrap: engine/bootstrap.md
   - Rendering & Backends:
+      - Hardware Interface (RHI): rendering/rhi.md
       - Vulkan Backend: rendering/vulkan.md
       - WebGPU Backend: rendering/webgpu.md
       - Terrain Authoring: asset/terrain.md
@@ -59,6 +60,8 @@ nav:
       - Design System: ui/index.md
       - Shadcn Components: ui/shadcn.md
       - Material 3: ui/material3.md
+  - Roadmap & Releases:
+      - Release Process & Milestones: roadmap.md
   - Guides:
       - Theming: guides/theming.md
       - UI Components:

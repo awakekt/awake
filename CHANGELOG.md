@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Renderer onscreen pixel readout (`Renderer.readPresentedPixels`).** Promoted onscreen pixel
+  readout into the backend-neutral `Renderer` contract (`awake:engine:render:contract`), implemented
+  across both Vulkan and WebGPU backends. Decoupled sample test suites from platform backend casts.
+- **Post-processing pass orchestration (`GpuPassInput.postPasses`).** Extended generic `GpuPassInput`
+  with `postPasses: List<GpuSubPass>`, wiring Vulkan and WebGPU pass executors to run post-processing
+  draws (bloom, tone mapping, color grading) after main forward lighting passes.
+- **Hardware capability query tier (`GpuDevice.capability`).** Introduced typed optional extension
+  querying via `GpuCapability` and `GpuCapabilityKind<T>` on `GpuDevice`, allowing Vulkan extensions
+  (e.g., timeline semaphores, bindless descriptors) to be queried safely without breaking WebGPU
+  browser compatibility.
+
 ## [0.1.0-alpha.1] - 2026-09-12
 
 ### Added

@@ -7,11 +7,13 @@ standalone versions of the same idea.
 Read with [backend-commonisation.md](backend-commonisation.md), which measures how much
 duplication exists today and ranks what to migrate next.
 
-**Implementation status (2026-09-11):** the generic `GpuPassInput` boundary is live and the
+**Implementation status (2026-09-12):** the generic `GpuPassInput` boundary is live and the
 scene-source bridge, source packets, and resolver capability are confined to `render:passes`;
 `render:contract` owns only resolved executor packets and hardware handles. Both backends consume
-resolved contract packets only. The remaining work is legacy backend resource-layout migration and
-feature parity, not moving scene vocabulary across the hardware boundary.
+resolved contract packets only. Core `Renderer.readPresentedPixels()` onscreen readouts, post-processing
+subpasses (`GpuPassInput.postPasses`), and typed optional extension query capability (`GpuDevice.capability`)
+are implemented and verified across both Vulkan and WebGPU backends. The remaining work is legacy backend
+resource-layout migration and feature parity, not moving scene vocabulary across the hardware boundary.
 
 ## Why
 
@@ -150,7 +152,7 @@ flowchart TB
         r2["VertexFormat · GpuDataShape<br/>UniformLayout · UniformWriter"]:::done
         r3["CommandRecorder"]:::partial
         r4["Resource creation<br/>mesh · texture · material · target"]:::missing
-        r5["Capability extensions<br/>barriers · subpasses · bindless<br/>Vulkan-only, engine feature-detects"]:::missing
+        r5["Capability extensions<br/>GpuCapability query on GpuDevice<br/>Vulkan-only, engine feature-detects"]:::done
     end
 
     subgraph backends["BACKENDS — the API itself, permanently per-backend"]

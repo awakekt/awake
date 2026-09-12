@@ -1,0 +1,1 @@
+--8<-- "docs/reference/render-hardware-interface.md"

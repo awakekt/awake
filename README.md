@@ -290,7 +290,7 @@ architectural debt:
 
 | Layer | Module(s) | Owns |
 |---|---|---|
-| **HAL** | `awake:engine:render:contract` | `GpuDevice`, `Renderer`, `GpuPassInput`, `GpuSubPass`, `GpuDrawCommand`, pipelines, buffers, textures, samplers, command recording |
+| **HAL** | `awake:engine:render:contract` | `GpuDevice` (`GpuCapability`), `Renderer` (`readPresentedPixels()`), `GpuPassInput` (`postPasses`), `GpuSubPass`, `GpuDrawCommand`, pipelines, buffers, textures, samplers, command recording |
 | **Render Graph** | `awake:engine:render:passes`, `awake:asset:shader-pack`, `awake:scene:rendering` | `GpuSceneFrame`, `SceneLight`, `DrawCall`, `Lens`, shadow cascade math, environment uniforms, `RenderFeature` list |
 
 > **The most common defect in this codebase is adding scene vocabulary to `render:contract`.**
@@ -317,6 +317,23 @@ private commercial [`awakekt/awake-pro`](https://github.com/awakekt/awake-pro) r
   packing.
 - **`com.awakekt.awake.pro:visual-blueprints`** — Drag-and-drop node graph canvas and live execution wire
   debugger.
+
+---
+
+## Release Milestones & Status
+
+Awake development is tracked through structured GitHub milestones ([Release Process & Milestones](docs/release-process.md)):
+
+| Milestone | Target | Status | Focus |
+|---|---|---|---|
+| **Milestone 0** | `v0.1.0-dev` | Completed | Engine Foundations, Multiplatform Math, Compose UI, Sparse-Set ECS |
+| **Milestone 1** | `v0.1.0-alpha.1` | **Published** | First Public Maven Central release (`com.awakekt.awake:*`), Multi-OS Desktop Vulkan |
+| **Milestone 2** | `v0.2.0` | **In Progress** | WebGPU Backend & Studio Web Preview (WasmJs, Naga SPIR-V to WGSL pipeline) |
+| **Milestone 3** | `v0.3.0` | Planned | Physics & Character Controller Maturity (Jolt, Heightfield, Raycasting) |
+| **Milestone 4** | `v0.4.0` | Planned | Studio IDE Maturity & Prefabs System (`app:studio`, Undo/Redo) |
+| **Milestone 5** | `v0.5.0` | Planned | 3D Spatial Audio & Open World Terrain (Geometry Clipmaps, 3D NavMesh) |
+| **Milestone 6** | `v0.6.0` | Planned | Multiplayer Synchronization & Networking (Client prediction, Delta serialization) |
+| **Milestone 7** | `v1.0.0` | Planned | Production Stable Engine & Ecosystem (Full OS Matrix, Headless Parity Gate) |
 
 ---
 

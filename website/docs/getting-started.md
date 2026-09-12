@@ -10,7 +10,7 @@ Add the following to your `libs.versions.toml`:
 
 ```toml
 [versions]
-awake = "1.0.0-SNAPSHOT"
+awake = "0.1.0-alpha.1"
 
 [libraries]
 awake-bootstrap = { group = "com.awakekt.awake.engine", name = "bootstrap", version.ref = "awake" }
@@ -71,4 +71,4 @@ The repository's executable example is:
 ```
 
 > [!NOTE]
-> The example above is pulled directly from the `samples/hello-cube` module, ensuring it always compiles and stays up-to-date with the latest Engine APIs.
+> The example above is pulled directly from the `samples/engine-showcase` module, ensuring it always compiles and stays up-to-date with the latest Engine APIs.

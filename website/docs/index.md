@@ -2,23 +2,26 @@
 
 ![Awake Banner](https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml/badge.svg)
 
-Awake is a Kotlin Multiplatform game engine (Vulkan, WebGPU, OpenGL) with a shared ECS runtime, targeting Android, iOS, Desktop (macOS/Windows/Linux), and the Web (Wasm/WebGPU) from one `commonMain` codebase.
+Awake is a Kotlin Multiplatform 3D/2D game engine and graphics runtime powered by Vulkan and WebGPU, featuring a shared ECS runtime, Compose Multiplatform UI, and Jolt Physics, targeting Android, iOS (via MoltenVK), Desktop (macOS/Windows/Linux), and the Web (Wasm/WebGPU) from one `commonMain` codebase.
 
 ## Features
 
-- **Vulkan** — Android, Desktop (macOS/Windows/Linux), iOS (via MoltenVK)
-- **WebGPU** — Web (Wasm), behind the same renderer abstraction as Vulkan
-- **OpenGL** — Android, iOS, Desktop (frozen: bugfixes only, Vulkan is the active backend)
-- **Shared ECS** (`awake:ecs`) + scene graph (`awake:scene`)
-- **Type-safe UI** (`awake:engine:ui-dsl`) with a custom design system.
+- **Vulkan & WebGPU RHI** — Native Vulkan (Android, Desktop, iOS via MoltenVK) and WebGPU (Web / Wasm) sharing a strict hardware abstraction layer (`awake:engine:render:contract`).
+- **Shared Sparse-Set ECS** (`awake:ecs`) — Cache-friendly component storage, archetype queries, and zero-allocation per-frame transform math.
+- **Compose Multiplatform UI** (`awake:compose:*`, `awake:ui:shadcn`) — Retained Compose runtime with a full Shadcn component suite for in-game HUDs and tools.
+- **Jolt Physics Integration** (`awake:backend:jolt`) — Hardware-accelerated rigid bodies, heightfield terrain colliders, and character controllers.
+- **Runtime Shader Compilation** (`awake:asset:shaders`) — WebGPU WGSL and Naga SPIR-V pipeline compilation.
 
 ## Modules
 
-- `awake:base` — Core foundational logic, math, and timing.
-- `awake:ecs` — Sparse-set ECS runtime.
-- `awake:scene` — Scene-graph components and systems.
-- `awake:engine:game` — Backend-neutral game bootstrap.
-- `awake:engine:ui:ui-core` — Stateless UI primitives and theme tokens.
+- `awake:core:*` — Vector math (`Vec3f`, `Mat4`, `Quat`), geometry, animation, and image loaders.
+- `awake:ecs:*` — High-performance sparse-set ECS and archetypes.
+- `awake:compose:*` — Compose Multiplatform UI runtime and layout nodes.
+- `awake:ui:shadcn` — Complete Shadcn Compose design system.
+- `awake:engine:bootstrap` — Application bootstrap, windowing, and frame loop lifecycle.
+- `awake:engine:render:contract` — Backend-neutral Render Hardware Interface (`GpuDevice`, `Renderer`, `GpuPassInput`).
+- `awake:scene:*` — Scene runtime, Jolt physics, cameras, lighting, and AI.
+- `awake:backend:*` — Platform native backends (`vulkan`, `webgpu`, `jolt`).
 
 [Getting Started](getting-started.md){ .md-button .md-button--primary }
-[API Reference](api/index.html){ .md-button }
+[Roadmap & Milestones](roadmap.md){ .md-button }
