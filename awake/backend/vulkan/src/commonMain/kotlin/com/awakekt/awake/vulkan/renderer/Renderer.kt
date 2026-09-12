@@ -322,6 +322,8 @@ class Renderer internal constructor(
 
     override suspend fun readPixels(target: RenderTarget): TextureAsset = performReadPixels(target)
 
+    override suspend fun readPresentedPixels(): TextureAsset = performReadPresentedPixels()
+
     override suspend fun readFramebufferAttachment(
         target: RenderTarget,
         attachment: FramebufferAttachment,

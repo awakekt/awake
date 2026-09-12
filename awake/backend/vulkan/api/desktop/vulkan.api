@@ -354,6 +354,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun presentWithoutScene ()V
 	public fun readFramebufferAttachment (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun readPixels (Lcom/awakekt/awake/render/texture/RenderTarget;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun readPresentedPixels (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public fun setClearColor (Lcom/awakekt/awake/core/color/Color;)V
 	public fun setWireframe (Z)V

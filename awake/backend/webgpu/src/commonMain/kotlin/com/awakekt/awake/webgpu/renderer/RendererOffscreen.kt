@@ -166,3 +166,10 @@ internal suspend fun Renderer.performReadFramebufferAttachment(
         "The current WebGPU scene framebuffer does not allocate a ${attachment.name.lowercase()} attachment.",
     )
 }
+
+internal suspend fun Renderer.performReadPresentedPixels(): TextureAsset {
+    val target = createdRenderTargets.lastOrNull() ?: error(
+        "WebGPU readPresentedPixels() requires an active render target; this renderer has not created an offscreen target.",
+    )
+    return performReadPixels(target)
+}

@@ -20,12 +20,10 @@ import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.vulkan.application.VulkanEngine
-import com.awakekt.awake.vulkan.renderer.readPresentedPixels
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
 
 /**
  * The three shadow modes have to look like three different things.
@@ -93,7 +91,7 @@ class ShadowModeFrameTest {
             scene.world.debugSettings().shadowsEnabledOverride = shadows
             val system = RenderSystem3D(this)
             repeat(FRAMES) { system.update(scene.world, FRAME_DELTA) }
-            return (this as VulkanRenderer).readPresentedPixels().data.darkGroundPixels()
+            return readPresentedPixels().data.darkGroundPixels()
         } finally {
             ground.destroy()
             cube.destroy()

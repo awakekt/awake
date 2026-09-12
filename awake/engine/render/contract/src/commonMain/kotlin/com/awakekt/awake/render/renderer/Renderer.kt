@@ -96,6 +96,20 @@ interface Renderer : GpuDevice {
     suspend fun readPixels(target: RenderTarget): TextureAsset
 
     /**
+     * Reads the pixels of the most recently presented frame back to the CPU as tightly-packed
+     * RGBA8 pixels for headless verification and test harnesses.
+     *
+     * In headless environments, this reads the presented swapchain image or active offscreen
+     * target without requiring callers to cast to backend types.
+     */
+    suspend fun readPresentedPixels(): TextureAsset {
+        error(
+            "Renderer.readPresentedPixels() is not supported by ${this::class.simpleName}; " +
+                "this renderer does not expose presented frame readback.",
+        )
+    }
+
+    /**
      * Reads a generic framebuffer attachment for diagnostics. The result reports unsupported or
      * non-retained attachments explicitly; a backend must never return cleared pixels for an
      * attachment it did not actually preserve.

@@ -33,12 +33,10 @@ import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 import com.awakekt.awake.vulkan.application.VulkanEngine
-import com.awakekt.awake.vulkan.renderer.readPresentedPixels
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
 import com.awakekt.awake.scene.rendering.light.SceneLight as SceneDocumentLight
-import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
 
 class ShowcasePlanFrameTest {
     init {
@@ -127,9 +125,7 @@ class ShowcasePlanFrameTest {
                     drawPreparer = requireNotNull((renderer as? GpuDrawPreparationSource)?.gpuDrawPreparer),
                 ),
             )
-            // The contract type has no readback for a presented frame -- that is a backend
-            // capability, and this test is already backend-specific by construction.
-            val pixels = (renderer as VulkanRenderer).readPresentedPixels().data
+            val pixels = renderer.readPresentedPixels().data
 
             val greens = TERRAIN_SAMPLES.map { (x, y) -> pixels[(y * WIDTH + x) * 4 + 1].toInt() and 0xFF }
             mesh.destroy()
@@ -184,7 +180,7 @@ class ShowcasePlanFrameTest {
 
             val renderSystem = RenderSystem3D(renderer)
             repeat(10) { renderSystem.update(scene.world, FRAME_DELTA) }
-            val pixels = (renderer as VulkanRenderer).readPresentedPixels().data
+            val pixels = renderer.readPresentedPixels().data
 
             val greens = TERRAIN_SAMPLES.map { (x, y) -> pixels[(y * WIDTH + x) * 4 + 1].toInt() and 0xFF }
             terrain.destroy()

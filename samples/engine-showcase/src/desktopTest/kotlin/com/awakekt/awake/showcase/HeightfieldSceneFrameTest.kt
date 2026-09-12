@@ -32,13 +32,11 @@ import com.awakekt.awake.showcase.app.engineShowcaseApp
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
 import com.awakekt.awake.vulkan.application.VulkanEngine
-import com.awakekt.awake.vulkan.renderer.readPresentedPixels
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
 
 class HeightfieldSceneFrameTest {
     init {
@@ -80,7 +78,7 @@ class HeightfieldSceneFrameTest {
             transformSystem.update(scene.world, FRAME)
             repeat(4) { renderSystem.update(scene.world, FRAME) }
 
-            val pixels = (renderer as VulkanRenderer).readPresentedPixels().data
+            val pixels = renderer.readPresentedPixels().data
             var cubePixels = 0
             for (index in 0 until WIDTH * HEIGHT) {
                 val r = pixels[index * 4].toInt() and 0xFF
@@ -119,12 +117,11 @@ class HeightfieldSceneFrameTest {
         val engine = HeadlessPlanEngine(app, EngineShowcaseRenderPlan)
         val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
-            val vulkanRenderer = renderer as VulkanRenderer
             app.ready(renderer)
             app.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat())
-            val fallingPixels = vulkanRenderer.readPresentedPixels().data.copyOf()
+            val fallingPixels = renderer.readPresentedPixels().data.copyOf()
             app.update(0f, WIDTH.toFloat(), HEIGHT.toFloat())
-            val frozenPixels = vulkanRenderer.readPresentedPixels().data
+            val frozenPixels = renderer.readPresentedPixels().data
             repeat(PHYSICS_STEPS - 1) { app.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat()) }
             var extraSteps = 0
             while (TerrainPhysicsExampleDriver.collected == 0 && extraSteps < 60) {
@@ -137,7 +134,7 @@ class HeightfieldSceneFrameTest {
             runtime.world.queryEach(Name::class, Transform::class) { _, name, transform ->
                 if (name.value.startsWith("falling-box-")) fallingHeights[name.value] = transform.position.y
             }
-            val settledPixels = vulkanRenderer.readPresentedPixels().data
+            val settledPixels = renderer.readPresentedPixels().data
             PixelMap(WIDTH, HEIGHT, settledPixels.copyOf()).writePng(File(CAPTURE_PATH))
             val frozenChanges = countChangedPixels(fallingPixels, frozenPixels)
             val changedPixels = countChangedPixels(fallingPixels, settledPixels)
@@ -178,7 +175,7 @@ class HeightfieldSceneFrameTest {
     fun terrainDiagnosticOverlayReachesThePresentedFrame() = runBlocking {
         val app = engineShowcaseApp(initialShowcaseId = "heightfield-terrain")
         val engine = HeadlessPlanEngine(app, EngineShowcaseRenderPlan)
-        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT)) as VulkanRenderer
+        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
             app.ready(renderer)
             app.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat())
@@ -210,7 +207,7 @@ class HeightfieldSceneFrameTest {
     fun heightfieldShadowAndCullingControlsReachThePresentedFrame() = runBlocking {
         val app = engineShowcaseApp(initialShowcaseId = "heightfield-terrain")
         val engine = HeadlessPlanEngine(app, EngineShowcaseRenderPlan)
-        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT)) as VulkanRenderer
+        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
             app.ready(renderer)
             app.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat())

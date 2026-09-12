@@ -15,12 +15,10 @@ import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
 import com.awakekt.awake.vulkan.application.VulkanEngine
-import com.awakekt.awake.vulkan.renderer.readPresentedPixels
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
 
 /** Captures the real instanced-cubes showcase for regressions in instance upload and binding. */
 class InstancedCubesSceneFrameTest {
@@ -28,7 +26,7 @@ class InstancedCubesSceneFrameTest {
     fun instancedCubeGridIsTemporallyStableAcrossFrameSlots() = runBlocking {
         val app = engineShowcaseApp(initialShowcaseId = SHOWCASE_ID)
         val engine = HeadlessPlanEngine(app, EngineShowcaseRenderPlan)
-        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT)) as VulkanRenderer
+        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
             app.ready(renderer)
             repeat(WARMUP_FRAMES) { app.update(0f, WIDTH.toFloat(), HEIGHT.toFloat()) }
@@ -49,7 +47,7 @@ class InstancedCubesSceneFrameTest {
     fun instancedCubeGridReachesThePresentedFrame() = runBlocking {
         val app = engineShowcaseApp(initialShowcaseId = SHOWCASE_ID)
         val engine = HeadlessPlanEngine(app, EngineShowcaseRenderPlan)
-        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT)) as VulkanRenderer
+        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
             app.ready(renderer)
             app.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat())

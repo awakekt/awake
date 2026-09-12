@@ -11,12 +11,10 @@ import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
 import com.awakekt.awake.vulkan.application.VulkanEngine
-import com.awakekt.awake.vulkan.renderer.readPresentedPixels
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertTrue
-import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
 
 /** Captures the point-light sample and verifies that authored point shadows reach the frame. */
 class PointLightsSceneFrameTest {
@@ -24,7 +22,7 @@ class PointLightsSceneFrameTest {
     fun pointLightsCastShadows() = runBlocking {
         val app = engineShowcaseApp(initialShowcaseId = "point-lights")
         val engine = HeadlessPlanEngine(app, EngineShowcaseRenderPlan)
-        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT)) as VulkanRenderer
+        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
             app.ready(renderer)
             repeat(4) { app.update(1f / 60f, WIDTH.toFloat(), HEIGHT.toFloat()) }

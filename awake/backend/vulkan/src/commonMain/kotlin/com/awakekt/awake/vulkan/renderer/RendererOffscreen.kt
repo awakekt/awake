@@ -101,7 +101,10 @@ internal fun Renderer.pbrImageView(asset: TextureAsset?, neutral: TextureAsset):
  *
  * Waits on every in-flight fence first: the frame whose image this is may still be executing.
  */
-suspend fun Renderer.readPresentedPixels(): TextureAsset {
+@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
+suspend fun Renderer.readPresentedPixels(): TextureAsset = performReadPresentedPixels()
+
+internal suspend fun Renderer.performReadPresentedPixels(): TextureAsset {
     require(swapchainManager.isHeadlessPresentable) {
         "readPresentedPixels reads a headless stand-in image; this renderer presents to a surface."
     }

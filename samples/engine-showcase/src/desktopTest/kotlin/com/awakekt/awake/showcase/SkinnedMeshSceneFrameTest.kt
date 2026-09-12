@@ -21,13 +21,11 @@ import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
 import com.awakekt.awake.vulkan.application.VulkanEngine
-import com.awakekt.awake.vulkan.renderer.readPresentedPixels
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
 
 class SkinnedMeshSceneFrameTest {
     @Test
@@ -35,7 +33,7 @@ class SkinnedMeshSceneFrameTest {
         ShowcaseDebugToggles.shadows = true
         val app = engineShowcaseApp(initialShowcaseId = INSTANCED_SKINNED_SHOWCASE_ID)
         val engine = HeadlessPlanEngine(app, EngineShowcaseRenderPlan)
-        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT)) as VulkanRenderer
+        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
             app.ready(renderer)
             repeat(POSED_FRAMES) { app.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat()) }
@@ -65,7 +63,7 @@ class SkinnedMeshSceneFrameTest {
     fun posedSkinnedMeshReachesThePresentedFrame() = runBlocking {
         val app = engineShowcaseApp(initialShowcaseId = SKINNED_SHOWCASE_ID)
         val engine = HeadlessPlanEngine(app, EngineShowcaseRenderPlan)
-        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT)) as VulkanRenderer
+        val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
             app.ready(renderer)
             repeat(POSED_FRAMES) { app.update(FRAME, WIDTH.toFloat(), HEIGHT.toFloat()) }
