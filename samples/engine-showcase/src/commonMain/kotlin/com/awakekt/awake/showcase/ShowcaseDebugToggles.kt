@@ -9,6 +9,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.physics.physicsDebugLines
 import com.awakekt.awake.scene.rendering.debug.debugSettings
+import com.awakekt.awake.showcase.terrain.heightfieldDiagnosticLines
 
 /**
  * What the showcase draws on top of the scene, for whoever is watching it.
@@ -34,6 +35,9 @@ internal object ShowcaseDebugToggles {
 
     /** Every mesh's bounding box -- what frustum culling and the spatial index actually test. */
     var showBounds: Boolean = false
+
+    /** Every static-instancing transform, as a cyan wireframe box. */
+    var showInstanceBounds: Boolean = false
 
     /** The boxes each shadow cascade renders from, one colour per cascade. */
     var showShadowCascades: Boolean = false
@@ -72,28 +76,69 @@ internal object ShowcaseDebugToggles {
      */
     var showColliders: Boolean = false
 
+    /**
+     * Draws the Heightfield terrain mesh samples, Jolt samples, local normals, and axes together.
+     *
+     * This is intentionally separate from [showColliders]: the generic collider overlay answers
+     * where bodies exist, while this answers whether the terrain mesh and its collision source use
+     * the same coordinates and orientation.
+     */
+    var showTerrainDiagnostics: Boolean = false
+
     /** Draws every mesh as lines. A renderer toggle rather than an overlay, so it is the one
      * flag here that changes how the scene itself is drawn. */
     var wireframe: Boolean = false
+
+    /** Whether distance fog is enabled in the debugger override. */
+    var fogEnabled: Boolean = true
+
+    /** Fog density factor, where 0f is clear and 0.05f is dense fog. */
+    var fogDensity: Float = 0.005f
+
+    /** Fog color (RGB). */
+    var fogColor: com.awakekt.awake.core.color.Color = com.awakekt.awake.core.color.Color(0.7f, 0.75f, 0.8f, 1f)
+
+    /** Whether the user has toggled or adjusted fog in the debugger UI. */
+    var overrideFog: Boolean = false
 
     /** Copies these into the engine's own [WorldDebugSettings] and renderer state.
      *
      * Per frame rather than on change: a showcase switch rebuilds the world, and settings that
      * lived only on the old one would silently turn themselves off. */
-    fun applyTo(world: World, renderer: Renderer) {
+    fun applyTo(world: World, renderer: Renderer, options: Set<ShowcaseDebugOption>) {
+        resetUnavailable(options)
         val settings = world.debugSettings()
         settings.showBounds = showBounds
+        settings.showInstanceBounds = showInstanceBounds
         settings.showShadowFrustum = showShadowCascades
         settings.cascadedShadows = cascadedShadows
-        renderer.shadowsEnabled = shadows
+        // A false debug toggle must survive EnvironmentSystem's authored-light update later in
+        // the frame. `true` deliberately means "use the authored setting", not force shadows
+        // onto a showcase that intentionally authored its directional light without them.
+        settings.shadowsEnabledOverride = if (shadows) null else false
         settings.showOcclusion = showOcclusion
         settings.showLights = showLights
         renderer.wireframe = wireframe
-        drawColliders(world, renderer)
+        if (overrideFog) {
+            settings.fogDensityOverride = if (fogEnabled) fogDensity else 0f
+            settings.fogColorOverride = fogColor
+        } else {
+            settings.fogDensityOverride = null
+            settings.fogColorOverride = null
+        }
+        drawOverlays(world, renderer)
+    }
+
+    /** Switching samples cannot leave an invisible debug choice affecting the next sample. */
+    private fun resetUnavailable(options: Set<ShowcaseDebugOption>) {
+        if (ShowcaseDebugOption.NavGrid !in options) showNavGrid = false
+        if (ShowcaseDebugOption.Corridor !in options) showCorridor = false
+        if (ShowcaseDebugOption.Colliders !in options) showColliders = false
+        if (ShowcaseDebugOption.TerrainProbes !in options) showTerrainDiagnostics = false
     }
 
     /** Whether colliders owned the line buffer last frame, so turning them off can clear it once. */
-    private var collidersDrawn = false
+    private var overlaysDrawn = false
 
     /**
      * Hands the renderer the collider wireframes, and otherwise leaves its line buffer alone.
@@ -107,11 +152,14 @@ internal object ShowcaseDebugToggles {
      * these, because it draws afterwards. No showcase does both today, and the fix is a merge
      * point rather than more ordering.
      */
-    private fun drawColliders(world: World, renderer: Renderer) {
-        val lines = if (showColliders) physicsDebugLines(world) else emptyList()
-        if (lines.isNotEmpty() || collidersDrawn) {
+    private fun drawOverlays(world: World, renderer: Renderer) {
+        val lines = buildList {
+            if (showColliders) addAll(physicsDebugLines(world))
+            if (showTerrainDiagnostics) addAll(heightfieldDiagnosticLines(world))
+        }
+        if (lines.isNotEmpty() || overlaysDrawn) {
             renderer.drawDebugLines(lines)
-            collidersDrawn = lines.isNotEmpty()
+            overlaysDrawn = lines.isNotEmpty()
         }
     }
 }

@@ -5,8 +5,10 @@
  */
 package com.awakekt.awake.showcase.examples
 
+import com.awakekt.awake.asset.gltf.GltfAlphaMode
 import com.awakekt.awake.asset.gltf.GltfParser
 import com.awakekt.awake.asset.shaderpack.TexturedUniformLayout
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.host.readResourceBytes
@@ -17,10 +19,12 @@ import com.awakekt.awake.core.math.boundingRadius
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.Scene
+import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.rendering.particles.ParticleDynamics
 import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
@@ -45,11 +49,13 @@ internal object GltfViewerAssets {
     private var texture: TextureAsset? = null
     private var pbrTextures: PbrTextureSet? = null
     private var pbrMaterial: PbrMaterial? = null
+    private var usesBlendAlpha: Boolean = false
 
     suspend fun preload() {
         if (interleaved != null) return
         val bytes = readResourceBytes("assets/models/Duck.gltf")
         val gltfMesh = GltfParser.parse(bytes.decodeToString())
+        usesBlendAlpha = gltfMesh.alphaMode == GltfAlphaMode.BLEND
         val modelRadius = boundingRadius(gltfMesh.positions)
         interleaved =
             scalePositions(gltfMesh.toInterleavedPositionNormalColorUv(), 1f / modelRadius)
@@ -66,8 +72,23 @@ internal object GltfViewerAssets {
         pbrMaterial = PbrMaterial(
             metallic = gltfMesh.metallicFactor,
             roughness = gltfMesh.roughnessFactor,
-            baseColorFactor = gltfMesh.baseColorFactor,
-            emissiveFactor = gltfMesh.emissiveFactor,
+            baseColorFactor = Color(
+                gltfMesh.baseColorFactor[0],
+                gltfMesh.baseColorFactor[1],
+                gltfMesh.baseColorFactor[2],
+                gltfMesh.baseColorFactor[3],
+            ),
+            emissiveFactor = Color(
+                gltfMesh.emissiveFactor[0],
+                gltfMesh.emissiveFactor[1],
+                gltfMesh.emissiveFactor[2],
+            ),
+            alphaMode = when (gltfMesh.alphaMode) {
+                GltfAlphaMode.MASK -> AlphaMode.Masked
+                GltfAlphaMode.OPAQUE,
+                GltfAlphaMode.BLEND,
+                -> AlphaMode.Opaque
+            },
         )
     }
 
@@ -83,6 +104,11 @@ internal object GltfViewerAssets {
     fun attach(instance: Scene, runtime: SceneAppLifecycleRuntime) {
         val node = instance.roots.find { it.name == "duck" } ?: return
         runtime.world.add(node.entity, requireNotNull(pbrMaterial))
+        if (usesBlendAlpha) {
+            runtime.world.get<MeshRenderer>(node.entity)?.let { renderer ->
+                runtime.world.add(node.entity, renderer.copy(transparent = true))
+            }
+        }
         attachFrostAura(instance, runtime, followEntity = node.entity)
     }
 

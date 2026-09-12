@@ -96,6 +96,123 @@ tasks.matching { it.name == "check" }.configureEach {
     dependsOn(tasks.named("koverVerify"))
 }
 
+// Keep the render ABI audit executable rather than leaving it as a reviewer-only grep. Uniform
+// destinations must come from UniformLayout/UniformWriter; a literal array index or concatenated
+// matrix/light block in production render code is an architecture regression.
+val renderUniformSources = files(
+    "awake/backend",
+    "awake/engine/render",
+    "awake/asset/shader-pack",
+    "awake/scene",
+).asFileTree.matching {
+    include("**/*.kt")
+    exclude("**/src/test/**", "**/src/commonTest/**", "**/src/desktopTest/**", "**/build/**")
+}
+val verifyRenderUniforms = tasks.register("verifyRenderUniforms") {
+    group = "verification"
+    description = "Reject hand-authored render uniform offsets and array concatenation."
+    inputs.files(renderUniformSources)
+    doLast {
+        val forbiddenPatterns = listOf(
+            Regex("mvp\\.data\\s*\\+"),
+            Regex("(?:lightUniforms|shaderLightUniforms)\\s*\\+"),
+            Regex("(?:uniformFloats|extraUniformFloats)\\s*\\[[^]]*\\+\\s*[0-9]+\\s*]"),
+            Regex("(?:uniformFloats|extraUniformFloats)\\s*\\[[0-9]+]"),
+            // A numeric light/material slice is the same ABI duplication in a less obvious
+            // spelling. The source must derive the size from UniformLayout, never from a literal.
+            Regex("(?:lightUniforms|shaderLightUniforms|extraUniformFloats|uniformFloats)\\.copyOf(?:Range)?\\s*\\([^\\n]*\\b[0-9]+\\b"),
+            // Binding presence is an ABI declaration, not a property to infer from WGSL text.
+            // In particular, `@group(0)` may be absent from the selected entry points while a
+            // caller still constructs a group-0 bind group, which is the WebGPU validation bug
+            // this guard is meant to prevent from returning.
+            Regex("\\b[A-Za-z_][A-Za-z0-9_]*\\.contains\\s*\\(\\s*[\\\"']@(group|binding)\\("),
+            // Keep the same checks effective when a call is formatted across multiple lines.
+            Regex("\\b(?:mvp|model|viewProjection)\\s*\\.\\s*data\\s*\\+\\s*[0-9]+"),
+            Regex("\\b(?:lightUniforms|shaderLightUniforms)\\s*\\+\\s*[0-9]+"),
+            Regex("\\b(?:uniformFloats|extraUniformFloats)\\s*\\[\\s*[0-9]+\\s*]"),
+            Regex("\\b(?:lightUniforms|shaderLightUniforms|extraUniformFloats|uniformFloats)\\s*\\.\\s*copyOf(?:Range)?\\s*\\([^)]*\\b[0-9]+\\b"),
+            // Content features often keep a reusable vec4-array scratch block. Its element
+            // stride and fields still belong to UniformLayout; direct numeric writes recreate
+            // the shader ABI outside the writer just as a light/material slice does.
+            Regex("(?i)\\b[A-Za-z_][A-Za-z0-9_]*(?:uniform|params)\\s*\\[\\s*(?:[0-9]+|[^]]+\\+\\s*[0-9]+)\\s*]"),
+        )
+        val violations = renderUniformSources.files.flatMap { file ->
+            val source = file.readText()
+            val lines = source.lines()
+            forbiddenPatterns.flatMap { pattern ->
+                pattern.findAll(source).map { match ->
+                    val lineNumber = source.take(match.range.first).count { it == '\n' } + 1
+                    "${file.relativeTo(rootDir)}:$lineNumber: ${lines.getOrElse(lineNumber - 1) { "" }.trim()}"
+                }
+            }.toList()
+        }.distinct()
+        check(violations.isEmpty()) {
+            "Render uniform ABI violations found. Use UniformLayout/UniformWriter:\n" +
+                violations.joinToString("\n")
+        }
+    }
+}
+tasks.matching { it.name == "check" }.configureEach {
+    dependsOn(verifyRenderUniforms)
+}
+
+// The HAL contract must stay independent of scene/render-pipeline implementation types. Keep
+// this check close to the uniform audit so a new backend or packet cannot quietly reintroduce
+// authored scene objects through a seemingly harmless import or source-draw field.
+val renderContractSources = files("awake/engine/render/contract/src/commonMain").asFileTree.matching {
+    include("**/*.kt")
+}
+val verifyRenderContractBoundary = tasks.register("verifyRenderContractBoundary") {
+    group = "verification"
+    description = "Reject scene and render-pipeline implementation dependencies in the HAL contract."
+    inputs.files(renderContractSources)
+    doLast {
+        val forbiddenImports = listOf(
+            "import com.awakekt.awake.render.passes.",
+            "import com.awakekt.awake.scene.",
+            "import com.awakekt.awake.ecs.",
+        )
+        val violations = buildList {
+            renderContractSources.files.forEach { file ->
+                val source = file.readText()
+                val lines = source.lines()
+                lines.forEachIndexed { index, line ->
+                    if (forbiddenImports.any(line::contains)) {
+                        add("${file.relativeTo(rootDir)}:${index + 1}: $line")
+                    }
+                }
+                if (file.name == "GpuSourceDraw.kt") {
+                    listOf(
+                        Regex("val\\s+mesh\\s*:\\s*Mesh\\b"),
+                        Regex("val\\s+material\\s*:\\s*Material\\b"),
+                    ).forEach { pattern ->
+                        pattern.findAll(source).forEach { match ->
+                            val lineNumber = source.take(match.range.first).count { it == '\n' } + 1
+                            add("${file.relativeTo(rootDir)}:$lineNumber: ${match.value}")
+                        }
+                    }
+                }
+                // Source-draw resolution is render-pipeline preparation, not an RHI capability.
+                // Keep the bridge physically out of the contract so it cannot become part of
+                // the published hardware API again.
+                if (source.contains("RenderDrawResolution")) {
+                    add("${file.relativeTo(rootDir)}: source-resolution bridge must live in render:passes")
+                }
+                if (source.contains("GpuSourceDraw")) {
+                    add("${file.relativeTo(rootDir)}: source draw packets must live in render:passes")
+                }
+            }
+        }.distinct()
+        check(violations.isEmpty()) {
+            "Render contract boundary violations found. Keep scene lowering above the HAL:\n" +
+                violations.joinToString("\n")
+        }
+    }
+}
+tasks.matching { it.name == "check" }.configureEach {
+    dependsOn(verifyRenderContractBoundary)
+}
+
 // Version comes from the latest v* git tag, so publishing is "tag + push" and the
 // number can never drift from the tag:
 //   HEAD exactly on v0.1.0-dev.1  ->  0.1.0-dev.1          (publishable, immutable)

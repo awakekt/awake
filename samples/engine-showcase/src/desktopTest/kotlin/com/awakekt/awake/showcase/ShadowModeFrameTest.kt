@@ -14,7 +14,7 @@ import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneLoader
-import com.awakekt.awake.scene.rendering.RenderSystem
+import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.debug.debugSettings
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
@@ -90,8 +90,8 @@ class ShadowModeFrameTest {
                 MeshRenderer(if (request.meshRenderer.mesh == GROUND_MESH) ground else cube, material)
             }
             scene.world.debugSettings().cascadedShadows = cascaded
-            shadowsEnabled = shadows
-            val system = RenderSystem(this)
+            scene.world.debugSettings().shadowsEnabledOverride = shadows
+            val system = RenderSystem3D(this)
             repeat(FRAMES) { system.update(scene.world, FRAME_DELTA) }
             return (this as VulkanRenderer).readPresentedPixels().data.darkGroundPixels()
         } finally {

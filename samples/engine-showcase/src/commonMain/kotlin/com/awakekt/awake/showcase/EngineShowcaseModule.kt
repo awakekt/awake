@@ -24,6 +24,7 @@ import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
 import com.awakekt.awake.showcase.examples.CharacterExampleDriver
 import com.awakekt.awake.showcase.examples.ShowcasePhysics
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
+import com.awakekt.awake.showcase.render.RenderSystem2D
 import com.awakekt.awake.showcase.ui.ShowcaseOverlay
 
 /** The independent engine-demo host. [initialShowcaseId] is injectable for focused smoke tests. */
@@ -31,6 +32,8 @@ internal fun engineShowcaseModule(initialShowcaseId: String = DEFAULT_SHOWCASE_I
     require(EngineShowcases.any { it.id == initialShowcaseId }) { "Unknown showcase '$initialShowcaseId'." }
     val loader = EngineShowcaseLoader()
     val selection = ShowcaseSelection(initialShowcaseId)
+    val renderSystem2D = RenderSystem2D()
+    val framebufferDebugger = ShowcaseFramebufferDebugger()
 
     return appModule {
         scene("engine-showcase") {
@@ -47,8 +50,17 @@ internal fun engineShowcaseModule(initialShowcaseId: String = DEFAULT_SHOWCASE_I
                         // Before advancing, not after: a switch requested by the UI last frame
                         // replaces the world the driver is about to read.
                         selection.consumeRequest()?.let { loader.activate(it, runtime) }
-                        ShowcaseDebugToggles.applyTo(world, runtime.renderer)
+                        val activeShowcase = EngineShowcases.first { it.id == selection.current }
+                        ShowcaseDebugToggles.applyTo(world, runtime.renderer, activeShowcase.debugOptions)
                         loader.advance(selection.current, runtime, delta)
+                    }
+                }
+            }
+            frameSystem("showcase-2d-demo") {
+                val runtime = this
+                object : System {
+                    override fun update(world: World, delta: Float) {
+                        runtime.stageUi(renderSystem2D.demoCommands())
                     }
                 }
             }
@@ -76,7 +88,9 @@ internal fun engineShowcaseModule(initialShowcaseId: String = DEFAULT_SHOWCASE_I
             }
             // Fills MovementControl from the keyboard; the character driver reads it.
             playerInputSystem()
-            infrastructureSystems { defaultInfrastructureSystems() }
+            infrastructureSystems {
+                defaultInfrastructureSystems() + ShowcaseFramebufferCaptureSystem(this, framebufferDebugger)
+            }
             onReady {
                 // Before the first activate: the terrain showcase attaches its bodies on
                 // activation and needs a world to attach them to.
@@ -87,10 +101,11 @@ internal fun engineShowcaseModule(initialShowcaseId: String = DEFAULT_SHOWCASE_I
             // A Jolt world owns native allocations that outlive the JVM's idea of garbage, and
             // this one is reachable from an object that outlives the app module.
             onDispose {
+                framebufferDebugger.dispose(renderer)
                 ShowcasePhysics.world?.destroy()
                 ShowcasePhysics.world = null
             }
-            content { ShowcaseOverlay(selection, EngineShowcases) }
+            content { ShowcaseOverlay(selection, EngineShowcases, framebufferDebugger) }
         }
     }
 }

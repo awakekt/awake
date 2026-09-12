@@ -13,6 +13,7 @@ kotlinx-benchmark = "0.4.17"
 kover = "0.9.8"
 kotlinx-serialization = "1.11.0"
 kotlinx-coroutines = "1.10.2"
+kotlinx-atomicfu = "0.27.0"
 kotlinx-browser = "0.5.0"
 napier = "2.7.1"
 androidx-core-ktx = "1.15.0"
@@ -68,6 +69,7 @@ kotlinx-benchmark-runtime = { module = "org.jetbrains.kotlinx:kotlinx-benchmark-
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+kotlinx-atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "kotlinx-atomicfu" }
 # Provides Dispatchers.Main on plain-JVM desktop -- without it, MainScope().launch (used by
 # VulkanApplication.create()/WebGpuApplication.create() since the suspend-scene-loading
 # refactor) throws "Module with the Main dispatcher is missing" at runtime. Not caught

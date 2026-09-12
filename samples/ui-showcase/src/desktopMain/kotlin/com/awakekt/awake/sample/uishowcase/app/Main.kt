@@ -5,16 +5,17 @@
  */
 package com.awakekt.awake.sample.uishowcase.app
 
+import com.awakekt.awake.engine.compose.ComposeAppRuntime
 import com.awakekt.awake.engine.platform.dsl.requireService
-import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.vulkan.application.runVulkanDesktopGame
 
 fun main() {
     val game = uiShowcase()
     // Without this, every hover-driven cursor request (resize handles, text fields) is recorded
     // by ui-core and then dropped on the floor: runVulkanDesktopGame's `cursor` defaults to
-    // null, which skips the platform call entirely. See SceneAppLifecycleRuntime.cursor.
-    val runtime = game.requireService<SceneAppLifecycleRuntime>()
+    // null, which skips the platform call entirely. The UI showcase is app-level Compose, so its
+    // cursor state lives on ComposeAppRuntime rather than a scene runtime.
+    val runtime = game.requireService<ComposeAppRuntime>()
     runVulkanDesktopGame(
         game = game,
         applicationFactory = ::createUiShowcaseVulkanApplication,

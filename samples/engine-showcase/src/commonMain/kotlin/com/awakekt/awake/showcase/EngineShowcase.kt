@@ -33,6 +33,8 @@ data class EngineShowcase(
      * runs next: the ground of one demonstration hanging under another.
      */
     val onDeactivated: ((runtime: SceneAppLifecycleRuntime) -> Unit)? = null,
+    /** Diagnostics specific to this sample; engine-wide controls stay visible separately. */
+    val debugOptions: Set<ShowcaseDebugOption> = emptySet(),
 )
 
 /** Public demonstrations moved out of the editor-integration sample. */
@@ -53,6 +55,10 @@ val EngineShowcases = listOf(
             CharacterExampleDriver.detach(runtime.world)
             TerrainPhysicsExampleDriver.detach(runtime)
         },
+        debugOptions = setOf(
+            ShowcaseDebugOption.Colliders,
+            ShowcaseDebugOption.TerrainProbes,
+        ),
     ),
     // Casters at 6, -6, -26 and -60 along the view: one per cascade, so the near shadow is sharp
     // and the far one still exists. A single fixed shadow box covers only the first of them,
@@ -90,6 +96,10 @@ val EngineShowcases = listOf(
         scenePath = "assets/examples/nav-chase.scene.json",
         driver = { delta -> NavChaseExampleDriver.advance(this, delta) },
         onActivated = { instance, runtime -> NavChaseExampleDriver.attach(instance, runtime) },
+        debugOptions = setOf(
+            ShowcaseDebugOption.NavGrid,
+            ShowcaseDebugOption.Corridor,
+        ),
     ),
     EngineShowcase(
         id = "particles",

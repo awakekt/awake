@@ -65,6 +65,8 @@ kotlin {
             implementation(project(":awake:ecs"))
             implementation(project(":awake:engine:bootstrap"))
             implementation(project(":awake:engine:render:contract"))
+            implementation(project(":awake:core:graphics2d"))
+            implementation(project(":awake:engine:render:passes2d"))
             implementation(project(":awake:physics:api"))
             // The heightfield-terrain showcase runs a real Jolt world, so it needs a backend and
             // not just the contract -- this is the sample that proves physics is wired at all.

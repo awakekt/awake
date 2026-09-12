@@ -7,12 +7,15 @@
 
 package com.awakekt.awake.showcase.ui
 
+import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.Spacer
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.showcase.EngineShowcase
+import com.awakekt.awake.showcase.ShowcaseFramebufferDebugger
 import com.awakekt.awake.showcase.ShowcaseSelection
 import com.awakekt.awake.ui.shadcn.shadcnThemeValues
 import com.awakekt.awake.ui.shadcn.theme.provideShadcnTheme
@@ -34,13 +37,18 @@ context(_: Composer)
 internal fun ShowcaseOverlay(
     selection: ShowcaseSelection,
     showcases: List<EngineShowcase>,
+    framebufferDebugger: ShowcaseFramebufferDebugger,
     modifier: Modifier = Modifier,
 ) {
     provideShadcnTheme(ShowcaseTheme) {
-        Row(modifier.fillMaxSize()) {
-            ShowcaseSwitcher(selection, showcases)
-            Spacer(Modifier.weight(1f))
-            ShowcaseDebugCard()
+        Box(modifier.fillMaxSize()) {
+            Row(Modifier.fillMaxSize()) {
+                ShowcaseSwitcher(selection, showcases)
+                Spacer(Modifier.weight(1f))
+                showcases.firstOrNull { it.id == selection.current }
+                    ?.let { ShowcaseDebugCard(it, framebufferDebugger) }
+            }
+            ShowcaseStatsCard(Modifier.align(Alignment.BottomEnd))
         }
     }
 }

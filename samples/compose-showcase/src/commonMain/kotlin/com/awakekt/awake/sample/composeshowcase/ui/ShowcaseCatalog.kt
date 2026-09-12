@@ -10,8 +10,10 @@ import com.awakekt.awake.sample.composeshowcase.ui.pages.ColumnPage
 import com.awakekt.awake.sample.composeshowcase.ui.pages.FlexBoxPage
 import com.awakekt.awake.sample.composeshowcase.ui.pages.FlowColumnPage
 import com.awakekt.awake.sample.composeshowcase.ui.pages.FlowRowPage
+import com.awakekt.awake.sample.composeshowcase.ui.pages.ModifierPage
 import com.awakekt.awake.sample.composeshowcase.ui.pages.RowPage
 import com.awakekt.awake.sample.composeshowcase.ui.pages.StateDiPage
+import com.awakekt.awake.sample.composeshowcase.ui.pages.StylePage
 import com.awakekt.awake.sample.composeshowcase.ui.pages.WeightPage
 
 /**
@@ -26,6 +28,8 @@ internal val ShowcasePages: List<ShowcasePage> = listOf(
     FlowColumnPage,
     FlexBoxPage,
     BoxPage,
+    ModifierPage,
+    StylePage,
     StateDiPage,
 )
 

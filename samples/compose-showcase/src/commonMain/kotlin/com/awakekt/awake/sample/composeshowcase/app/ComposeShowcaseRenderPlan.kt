@@ -9,6 +9,7 @@ import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ScenePipeline
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
 
 /**
@@ -20,5 +21,6 @@ internal val ComposeShowcaseRenderPlan = RenderPlan(
         key = PipelineKey.Primary,
         shaders = PackShaderSets.Triangle,
         vertexFormat = VertexFormat.PositionNormalColor,
+        materialBindings = GroupBindings.UniformOnlyMaterial,
     ),
 )

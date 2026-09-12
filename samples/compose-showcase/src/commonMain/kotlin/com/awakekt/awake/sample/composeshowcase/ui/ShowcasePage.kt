@@ -15,6 +15,8 @@ internal enum class ShowcaseCategory(val title: String) {
     Flow("Flow"),
     FlexBox("FlexBox"),
     Box("Box"),
+    Modifiers("Modifiers"),
+    Styles("Styles"),
     StateDi("State & DI"),
 }
 

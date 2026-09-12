@@ -12,6 +12,10 @@ import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ScenePipeline
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.render.pipeline.AlphaMode
+import com.awakekt.awake.render.pipeline.DepthCasterKind
+import com.awakekt.awake.render.pipeline.DepthRenderKey
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineVariant
 
@@ -32,15 +36,66 @@ private val fogColor = Color(r = 0.62f, g = 0.68f, b = 0.76f, a = 0.02f)
 
 /** Complete capability plan for the independently runnable engine demonstrations. */
 internal val EngineShowcaseRenderPlan = RenderPlan(
-    primary = ScenePipeline(PipelineKey.Primary, lit, VertexFormat.PositionNormalColor),
+    primary = ScenePipeline(
+        PipelineKey.Primary,
+        lit,
+        VertexFormat.PositionNormalColor,
+        materialBindings = GroupBindings.UniformOnlyMaterial,
+    ),
     contentFeatures = listOf(skyboxContentFeature(skybox), depthFogContentFeature(fogColor)),
     depthPrePassShaderSet = shadow,
+    depthPrePassVariants = mapOf(
+        DepthCasterKind.Instanced to PackShaderSets.InstancedShadowDepth,
+        DepthCasterKind.SkinnedInstanced to PackShaderSets.SkinnedInstancedShadowDepth,
+        DepthCasterKind.Skinned to PackShaderSets.SkinnedShadowDepth,
+        DepthCasterKind.Particle to PackShaderSets.ParticleShadowDepth,
+    ),
+    depthPrePassKeyedVariants = mapOf(
+        DepthRenderKey(DepthCasterKind.Ordinary, AlphaMode.Masked) to
+            PackShaderSets.MaskedTexturedShadowDepth,
+    ),
     sceneDepthShaderSet = PackShaderSets.SceneDepth,
     scenePipelines = listOf(
-        ScenePipeline(PipelineKey.Format(VertexFormat.PositionNormalColorSkin), skinned, VertexFormat.PositionNormalColorSkin),
-        ScenePipeline(PipelineKey.Format(VertexFormat.PositionNormalColorUv), textured, VertexFormat.PositionNormalColorUv),
-        ScenePipeline(PipelineKey.Instanced, instanced, VertexFormat.PositionNormalColor, variant = PipelineVariant.Instanced),
-        ScenePipeline(PipelineKey.SkinnedInstanced, skinnedInstanced, VertexFormat.PositionNormalColorSkin, variant = PipelineVariant.Instanced),
-        ScenePipeline(PipelineKey.Particle, particle, VertexFormat.PositionUv, variant = PipelineVariant.AlphaBlendedParticle),
+        ScenePipeline(
+            PipelineKey.Format(VertexFormat.PositionNormalColorSkin),
+            skinned,
+            VertexFormat.PositionNormalColorSkin,
+            materialBindings = GroupBindings.UniformOnlyMaterial,
+        ),
+        ScenePipeline(
+            PipelineKey.Format(VertexFormat.PositionNormalColorUv),
+            textured,
+            VertexFormat.PositionNormalColorUv,
+            // The full PBR shader samples the four additional maps at bindings 5-8.
+            // Keep its declared group shape aligned with the shader ABI.
+            materialBindings = GroupBindings.StandardMaterial,
+        ),
+        ScenePipeline(
+            PipelineKey.Format(VertexFormat.PositionNormalColorUvSkin),
+            PackShaderSets.SkinnedTextured,
+            VertexFormat.PositionNormalColorUvSkin,
+            materialBindings = GroupBindings.TexturedMaterial,
+        ),
+        ScenePipeline(
+            PipelineKey.Instanced,
+            instanced,
+            VertexFormat.PositionNormalColor,
+            variant = PipelineVariant.Instanced,
+            materialBindings = GroupBindings.UniformOnlyMaterial,
+        ),
+        ScenePipeline(
+            PipelineKey.SkinnedInstanced,
+            skinnedInstanced,
+            VertexFormat.PositionNormalColorSkin,
+            variant = PipelineVariant.Instanced,
+            materialBindings = GroupBindings.UniformOnlyMaterial,
+        ),
+        ScenePipeline(
+            PipelineKey.Particle,
+            particle,
+            VertexFormat.PositionUv,
+            variant = PipelineVariant.AlphaBlendedParticle,
+            materialBindings = GroupBindings.ParticleMaterial,
+        ),
     ),
 )

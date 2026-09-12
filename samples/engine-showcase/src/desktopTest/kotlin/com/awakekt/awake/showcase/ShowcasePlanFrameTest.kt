@@ -15,15 +15,17 @@ import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.ScenePassCompiler
+import com.awakekt.awake.render.passes.shadowCascadeUniforms
+import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.render.renderer.SceneLight
-import com.awakekt.awake.render.renderer.shadowCascadeUniforms
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.physics.PhysicsBody
 import com.awakekt.awake.scene.physics.PhysicsSystem
-import com.awakekt.awake.scene.rendering.RenderSystem
+import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
@@ -52,7 +54,6 @@ class ShowcasePlanFrameTest {
         val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         val target = renderer.createRenderTarget(WIDTH, HEIGHT)
         try {
-            renderer.shadowsEnabled = true
             val scene = showcaseScene()
             val camera = scene.camera
             val light = scene.light
@@ -60,15 +61,20 @@ class ShowcasePlanFrameTest {
             val material = renderer.createMaterial(uniformFloatCount = LitShadowUniformLayout.total)
             renderer.renderToTexture(
                 target,
-                camera,
-                listOf(DrawCall(mesh, material)),
-                light.copy(
-                    cascades = shadowCascadeUniforms(
-                        light,
-                        camera,
-                        WIDTH.toFloat() / HEIGHT,
-                        renderer.clipSpace,
+                ScenePassCompiler.compile(
+                    lens = camera,
+                    drawCalls = listOf(RenderDrawCommand(mesh, material)),
+                    light = light.copy(
+                        cascades = shadowCascadeUniforms(
+                            light,
+                            camera,
+                            renderer.surfaceAspect,
+                            renderer.clipSpace,
+                        ),
                     ),
+                    clipSpace = renderer.clipSpace,
+                    aspect = renderer.surfaceAspect,
+                    drawPreparer = requireNotNull((renderer as? GpuDrawPreparationSource)?.gpuDrawPreparer),
                 ),
             )
             val pixels = runBlocking { renderer.readPixels(target) }.data
@@ -101,20 +107,24 @@ class ShowcasePlanFrameTest {
         val engine = HeadlessPlanEngine(headlessLifecycle(), EngineShowcaseRenderPlan)
         val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
-            renderer.shadowsEnabled = true
             val scene = showcaseScene()
             val mesh = renderer.createMesh(TerrainExampleAsset.geometry)
             val material = renderer.createMaterial(uniformFloatCount = LitShadowUniformLayout.total)
             renderer.draw(
-                scene.camera,
-                listOf(DrawCall(mesh, material)),
-                scene.light.copy(
-                    cascades = shadowCascadeUniforms(
-                        scene.light,
-                        scene.camera,
-                        WIDTH.toFloat() / HEIGHT,
-                        renderer.clipSpace,
+                ScenePassCompiler.compile(
+                    lens = scene.camera,
+                    drawCalls = listOf(RenderDrawCommand(mesh, material)),
+                    light = scene.light.copy(
+                        cascades = shadowCascadeUniforms(
+                            scene.light,
+                            scene.camera,
+                            renderer.surfaceAspect,
+                            renderer.clipSpace,
+                        ),
                     ),
+                    clipSpace = renderer.clipSpace,
+                    aspect = renderer.surfaceAspect,
+                    drawPreparer = requireNotNull((renderer as? GpuDrawPreparationSource)?.gpuDrawPreparer),
                 ),
             )
             // The contract type has no readback for a presented frame -- that is a backend
@@ -136,11 +146,11 @@ class ShowcasePlanFrameTest {
     }
 
     /**
-     * The whole way the app renders: the scene instantiated into a world, and `RenderSystem`
+     * The whole way the app renders: the scene instantiated into a world, and `RenderSystem3D`
      * driving the frame.
      *
      * The two tests above hand the renderer a camera, a light and one draw call. The running app
-     * hands it none of those directly -- `RenderSystem` builds all three from ECS components,
+     * hands it none of those directly -- `RenderSystem3D` builds all three from ECS components,
      * fits the cascades, reads the debug settings and calls `draw` itself. That layer is the last
      * one between a scene file and a pixel, and it is where a terrain can end up lit by nothing
      * while every other test renders it correctly.
@@ -156,7 +166,6 @@ class ShowcasePlanFrameTest {
         val engine = HeadlessPlanEngine(headlessLifecycle(), EngineShowcaseRenderPlan)
         val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
-            renderer.shadowsEnabled = true
             val scene = SceneLoader.instantiate(SceneLoader.loadFromResource(SCENE))
             val terrain = renderer.createMesh(TerrainExampleAsset.geometry)
             val cube = renderer.createMesh(generate { cube(size = 1f, colored = true) })
@@ -173,7 +182,7 @@ class ShowcasePlanFrameTest {
             }
             PhysicsSystem(physics).update(scene.world, FRAME_DELTA)
 
-            val renderSystem = RenderSystem(renderer)
+            val renderSystem = RenderSystem3D(renderer)
             repeat(10) { renderSystem.update(scene.world, FRAME_DELTA) }
             val pixels = (renderer as VulkanRenderer).readPresentedPixels().data
 
@@ -183,7 +192,7 @@ class ShowcasePlanFrameTest {
             material.destroy()
             assertTrue(
                 greens.all { it > MIN_LIT_GREEN },
-                "The terrain reads $greens with RenderSystem driving the frame, against about " +
+                "The terrain reads $greens with RenderSystem3D driving the frame, against about " +
                     "$AMBIENT_GREEN for ambient alone -- while the same scene rendered directly " +
                     "is lit. The difference is this system: the light it builds, the cascades it " +
                     "fits, or what it culls.",

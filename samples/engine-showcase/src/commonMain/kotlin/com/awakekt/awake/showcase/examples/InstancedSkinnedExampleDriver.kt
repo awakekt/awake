@@ -7,6 +7,7 @@ package com.awakekt.awake.showcase.examples
 
 import com.awakekt.awake.asset.gltf.GltfParser
 import com.awakekt.awake.asset.gltf.firstSkinnedAsset
+import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.core.animation.AnimationClip
 import com.awakekt.awake.core.animation.AnimationPose
 import com.awakekt.awake.core.animation.Skin
@@ -16,7 +17,6 @@ import com.awakekt.awake.core.host.readResourceBytes
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.renderer.InstancedUniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.rendering.mesh.InstancedSkinnedMeshRenderer
@@ -63,7 +63,7 @@ internal object InstancedSkinnedExampleDriver {
     )
 
     fun createMaterial(runtime: SceneAppLifecycleRuntime): Material =
-        runtime.renderer.createMaterial(InstancedUniformLayout)
+        runtime.renderer.createMaterial(uniformFloatCount = LitShadowUniformLayout.total)
 
     fun attach(instance: Scene, runtime: SceneAppLifecycleRuntime) {
         val node = instance.roots.find { it.name == "instanced-skinned" } ?: return

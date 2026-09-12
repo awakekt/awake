@@ -56,6 +56,9 @@ EXEMPT = (
     "docs/release-notes-",
     "docs/tasks/archive/",
     "docs/archive/",
+    # Agent skill files contain template/example Maven snippets that consumers are expected
+    # to substitute (e.g. `$ktorVersion`). They are not Awake-published coordinates.
+    ".agents/skills/",
 )
 
 # A version a reader is expected to substitute, not resolve.

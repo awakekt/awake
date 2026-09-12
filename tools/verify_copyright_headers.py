@@ -48,7 +48,7 @@ def paths(staged: bool) -> list[Path]:
     return [
         path
         for path in git_paths(*args)
-        if path.suffix in HEADERS and not (set(path.parts) & EXCLUDED_PARTS)
+        if path.is_file() and path.suffix in HEADERS and not (set(path.parts) & EXCLUDED_PARTS)
     ]
 
 

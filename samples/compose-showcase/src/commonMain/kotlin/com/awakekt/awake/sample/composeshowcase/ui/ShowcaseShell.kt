@@ -20,6 +20,7 @@ import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.key
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
@@ -76,7 +77,14 @@ private fun ShowcaseContent(page: ShowcasePage) {
         Spacer(Modifier.height(4.dp))
         Text(page.description, style = TextStyle.Default.copy(color = MutedText))
         Spacer(Modifier.height(20.dp))
-        page.demo()
+        // Each page owns its own remember slots. Without this keyed node, switching from a page
+        // whose demo remembers a Container to StylePage reuses that positional slot and casts it
+        // to MutableStyleState. The page id is the identity; the wrapper node is the slot owner.
+        key(page.id) {
+            Column(Modifier.fillMaxWidth()) {
+                page.demo()
+            }
+        }
         if (page.notes.isNotEmpty()) {
             Spacer(Modifier.height(24.dp))
             Text("Notes", style = TextStyle.Default)
