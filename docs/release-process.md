@@ -162,3 +162,25 @@ This command automatically:
 3. Prepend a fresh empty `## [Unreleased]` section at the top.
 4. Commits `CHANGELOG.md` alone (`chore(release): cut vX.Y.Z-channel.N`).
 5. Creates an annotated Git tag `vX.Y.Z-channel.N`.
+
+---
+
+## 6. Repository Hygiene: GitHub Milestones vs. In-Repo Docs
+
+To maintain a clean, readable Git history and prevent commit bloat:
+
+### The Rule of Thumb
+
+| Use **GitHub Milestones & Issues** for: | Keep **In-Repo Docs (`docs/`)** for: |
+| :--- | :--- |
+| 🎯 Release targets (`v0.1.0-alpha.1`, `v0.2.0`) | 🏛️ **Architecture Decision Records (ADRs)** |
+| 📋 To-do items, progress checklists, & burndown | 📐 **Hardware Abstraction Layer (HAL) & Render contracts** |
+| 🐛 Bug reports, triage, & fixes | 📖 **API Guides, tutorials, & setup references** |
+| 💬 Design discussions before code lands | 📜 **Official release `CHANGELOG.md`** |
+| ⏱️ Ephemeral task lists & assignment | 🤖 **AI Agent Rules & Skills (`.agents/skills/`)** |
+
+### Guidelines for AI Agents and Contributors
+
+1. **Zero Checkbox Churn in Git**: Do not commit scratch `.md` task checklist files into `docs/` or commit every individual checkbox check-off. Track operational progress via GitHub Issues assigned to the relevant GitHub Milestone.
+2. **Atomic Commits & PR Squashing**: Feature work on topic branches must be squashed upon merging into `main`. Never push rapid micro-commits (`style: reword comment`, `fix typo`) directly to `main`.
+3. **Milestone Association**: Every issue and pull request should be associated with an active GitHub Milestone (`https://github.com/awakekt/awake/milestones`). Closing an issue updates the milestone progress automatically without touching Git history.

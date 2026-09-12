@@ -74,3 +74,4 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 
 ### Release Process & Repository Flow
 - [Awake Release Process & Branching Guidelines](docs/release-process.md): Branching flow, SemVer channels, CHANGELOG rules, and `./scripts/release.py` usage
+- [Awake Milestone Workflow](.agents/skills/awake-milestone-workflow/SKILL.md): Repository hygiene, GitHub milestone tracking, and commit squashing rules

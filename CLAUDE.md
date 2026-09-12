@@ -2,6 +2,23 @@
 
 Welcome to **Awake Engine**. This repository is the core Kotlin Multiplatform 3D/2D game engine runtime powered by Vulkan, WebGPU, and Compose Multiplatform.
 
+## Skill precedence and technology boundaries
+
+Project-owned `awake-*` skills are authoritative for Awake engine code and the
+Awake-owned UI/runtime framework. They take precedence over generic `kmp-*` skills.
+
+- Use `awake-*` for ECS, rendering, physics, engine lifecycle, Awake UI, Awake styling,
+  and Awake's Compose-like engine APIs.
+- Use `kmp-compose-*` only when the target code has actual Jetpack Compose or Compose
+  Multiplatform imports, source sets, or verified Compose dependencies.
+- Use `kmp-shadcn-*` only when the target uses verified `Shadcn*` APIs or the real
+  shadcn-compose dependency.
+- Do not route by naming resemblance alone. An Awake-owned composable or shadcn-like
+  component is not automatically Jetpack Compose or shadcn-compose.
+
+When a task spans both systems, route the Awake-owned boundary first and explicitly
+identify any generic KMP/Compose follow-up.
+
 ## Engine Domain Skills (.agents/skills/)
 
 All engine-specific skills and architectural rules are located in `.agents/skills/`:
@@ -27,9 +44,10 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 > `docs/reference/render-hardware-interface.md` § HAL vs Render Graph.
 > The most common defect is adding scene vocabulary (`SceneLight`, `DrawCall`, `Lens`,
 > shadow or fog types) to `render:contract`. Decision D31 classifies every current type.
-> In the target state, `Renderer` accepts only `GpuPassInput` with generic `GpuSubPass`es,
-> while the five exempt files per backend (`renderer/Renderer.kt`, `RendererDraw3D.kt`, etc.)
-> are **known legacy debt — not a precedent** — and will shrink to zero.
+> In the target state, `Renderer` accepts only `GpuPassInput` with generic `GpuSubPass`es.
+> `verifyBackendLayering` runs against every backend production source file; its import and
+> content-vocabulary exemption ledgers are empty. Remaining backend extensions are tracked
+> migration work, not permission to add scene vocabulary.
 
 
 ### Physics & Asset Pipelines
@@ -41,6 +59,7 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 - [Awake UI Authoring](.agents/skills/awake-ui-authoring/SKILL.md): Compose UI component authoring
 - [Awake UI Performance](.agents/skills/awake-ui-performance/SKILL.md): Frame pacing & draw call reduction
 - [Awake Compose Authoring](.agents/skills/awake-compose-authoring/SKILL.md): Design system tokens and spacing
+- [Awake Pro Core Scoring](.agents/skills/awake-pro-core-scoring/SKILL.md): Evaluates and scores proposed Awake Engine features, editor panels, runtime modules, and asset tools to decide whether they belong in Awake Core (Free & Open-Source) or Awake Pro (Commercial Studio Tier). Produces structured insights, industry runtime architecture benchmarks, and a scoring matrix report.
 - [Awake UI Design Audit](.agents/skills/awake-ui-design-audit/SKILL.md): Automated UI design audit rubric
 - [Awake UI Layout Guidance](.agents/skills/awake-ui-layout-guidance/SKILL.md): Responsive and adaptive layouts
 - [Awake UI Verification](.agents/skills/awake-ui-verification/SKILL.md): Visual regression and component crops
@@ -55,3 +74,4 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 
 ### Release Process & Repository Flow
 - [Awake Release Process & Branching Guidelines](docs/release-process.md): Branching flow, SemVer channels, CHANGELOG rules, and `./scripts/release.py` usage
+- [Awake Milestone Workflow](.agents/skills/awake-milestone-workflow/SKILL.md): Repository hygiene, GitHub milestone tracking, and commit squashing rules
