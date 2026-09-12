@@ -78,6 +78,19 @@ def unresolvable_dependencies(pom: Path, known: set[str]) -> list[str]:
     return missing
 
 
+def snapshot_dependencies(pom: Path) -> list[str]:
+    """Dependencies that declare a -SNAPSHOT version, forbidden by Maven Central in releases."""
+    root = ElementTree.parse(pom).getroot()
+    snapshots = []
+    for dependency in root.iterfind(".//m:dependency", POM_NAMESPACE):
+        group = dependency.findtext("m:groupId", default="", namespaces=POM_NAMESPACE)
+        artifact = dependency.findtext("m:artifactId", default="", namespaces=POM_NAMESPACE)
+        version = dependency.findtext("m:version", default="", namespaces=POM_NAMESPACE)
+        if version.endswith("-SNAPSHOT"):
+            snapshots.append(f"{group}:{artifact}:{version}")
+    return snapshots
+
+
 def companions(directory: Path, stem: str) -> dict[str, bool]:
     """Whether the sidecar artifacts Central expects were produced."""
     names = {path.name for path in directory.iterdir()}
@@ -104,8 +117,11 @@ def main() -> int:
                 cwd=REPO_ROOT,
                 text=True
             ).strip().lstrip("v")
-            if re.search(r"-\d+-g[0-9a-f]+$", raw):
-                version_filter = re.sub(r"-\d+-g[0-9a-f]+$", "-SNAPSHOT", raw)
+            m = re.search(r"^(.+?)(?:-(\d+)-g[0-9a-f]+)$", raw)
+            if m:
+                base = m.group(1)
+                bumped = re.sub(r"(\d+)$", lambda match: str(int(match.group(1)) + 1), base)
+                version_filter = f"{bumped}-SNAPSHOT"
             else:
                 version_filter = raw
         except Exception:
@@ -144,6 +160,11 @@ def main() -> int:
         unresolvable = unresolvable_dependencies(pom, known)
         if unresolvable:
             failures.append(f"  {name}: depends on unpublished {', '.join(sorted(set(unresolvable)))}")
+
+        if version_filter and not version_filter.endswith("-SNAPSHOT"):
+            snapshots = snapshot_dependencies(pom)
+            if snapshots:
+                failures.append(f"  {name}: contains snapshot dependencies forbidden by Central: {', '.join(sorted(set(snapshots)))}")
 
         produced = companions(directory, stem)
         absent = [kind for kind, present in produced.items() if not present]
