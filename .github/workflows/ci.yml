@@ -68,7 +68,7 @@ jobs:
         run: ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest
 
       - name: Every wasmJs source set compiles
-        run: ./gradlew compileKotlinWasmJs
+        run: ./gradlew compileKotlinWasmJs compileTestKotlinWasmJs
 
       # hello-cube (retired) had a dedicated :androidApp wrapper module producing a real
       # installable APK, uploaded below as a regression artifact. ui-showcase only has a KMP
@@ -177,7 +177,18 @@ jobs:
         run: ./gradlew :awake:backend:jolt:buildJoltCIosSimulatorArm64
 
       - name: Jolt iOS simulator physics tests
-        run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test
+        run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test :samples:engine-showcase:iosSimulatorArm64Test
+
+      - name: Upload iOS physics test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-physics-test-results
+          path: |
+            awake/backend/jolt/build/reports/tests/
+            awake/scene/physics/build/reports/tests/
+            samples/engine-showcase/build/reports/tests/
+          if-no-files-found: warn
 
   web-verification:
     runs-on: ubuntu-latest
@@ -197,7 +208,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Wasm/WebGPU browser verification (headless Chrome)
-        run: ./gradlew :samples:ui-showcase:wasmJsBrowserTest
+        run: ./gradlew :samples:ui-showcase:wasmJsBrowserTest :samples:engine-showcase:wasmJsBrowserTest
 
       # The physics backend has four bindings and CI only ran one of them. This is the wasmJs
       # binding executing the same commonTest suite as desktop, on the runner already here --
