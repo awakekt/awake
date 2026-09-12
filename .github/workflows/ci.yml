@@ -171,7 +171,15 @@ jobs:
       - name: Install Vulkan tools (macOS)
         run: brew install vulkan-loader molten-vk glfw
 
+      - name: Install Rust iOS simulator target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim
+
       - uses: ./.github/actions/ios-native
+
+      - name: Build Naga for the iOS simulator
+        run: ./gradlew :awake:asset:shader-compiler:buildNagaIosSimulatorArm64
 
       - name: Jolt iOS simulator physics tests
         run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test :samples:engine-showcase:iosSimulatorArm64Test
