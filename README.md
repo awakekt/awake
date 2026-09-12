@@ -1,5 +1,5 @@
 <h1 align="center">Awake Engine</h1>
-<p align="center">Kotlin Multiplatform first, Vulkan and WebGPU native — a 3D/2D game engine and graphics runtime for developers who want to feel every frame they write.</p>
+<p align="center">The modern, code-first 3D game engine in Kotlin.<br>Fast, type-safe, and zero-allocation — build your game once and ship to Desktop, Mobile, and the Web with native Vulkan and WebGPU performance.</p>
 
 <p align="center">
   <a href="https://github.com/awakekt/awake/releases/tag/v0.1.0-alpha.1"><img src="https://img.shields.io/badge/Release-v0.1.0--alpha.1-blue.svg" alt="Release v0.1.0-alpha.1"></a>
@@ -14,38 +14,23 @@
 
 ## What It Does
 
-### Graphics & Rendering
+### 🚀 High-Performance Engine Core
+- **Data-Oriented ECS** — Sparse-set entity architecture and zero-allocation 3D math designed to effortlessly hold 120 FPS.
+- **Code-First Scenes** — Type-safe DSL for systems scheduling, entity authoring, and asset loading with zero reflection.
+- **Standalone Game Runner** — Lightweight project manifest (`awake.project.json`) and launcher (`AwakeProjectLauncher`) with zero editor overhead.
 
-- **Multi-Backend Renderer** — Vulkan (Desktop JVM, Android, iOS via MoltenVK) and WebGPU (
-  Web/Wasm).
-- **Modern Shader & Mesh Pipeline** — Runtime WGSL shader compilation via Naga, cascaded shadows,
-  PBR materials, and glTF GPU skeletal animation.
+### 🎨 Modern 3D Graphics
+- **Native Vulkan & WebGPU** — High-fidelity graphics targeting PC, Mac, Linux, Android, iOS, and browsers from a single game loop.
+- **Production Visuals** — Physically-Based Rendering (PBR), cascaded shadow maps, glTF 2.0 skeletal animation, and runtime WGSL shader compilation via Naga.
 
-### Engine & Project Runtime
+### ⚡ Integrated Physics & Gameplay
+- **Jolt Physics Engine** — Hardware-accelerated rigid bodies, heightfield terrain colliders, raycasts, and responsive character controllers.
+- **Gameplay AI & Controls** — 60 FPS Behavior Tree AI (selectors, sequences, conditions) and rebindable type-safe keybindings (`KeybindingProfile`).
+- **Modular Equipment & Sockets** — Skinned mesh attachments and bone socket tracking (`ModularCharacterComponent`) for customizable characters.
 
-- **Sparse-Set ECS Runtime** — Cache-friendly entity iteration, archetype queries, and
-  zero-allocation 3D transform math.
-- **Formal Project System & Standalone Runtime** — Typed `awake.project.json` specification with
-  SemVer compatibility gates and standalone `AwakeProjectLauncher` execution without editor
-  overhead.
-- **Extensible Scene Authoring DSL** — Modular scene authoring with typed `SceneSystemsDsl` and
-  `SceneAssetsDsl` for clean system scheduling and asset resolving without reflection.
-
-### Declarative UI & Design System
-
-- **Compose Multiplatform UI Stack** — Declarative UI powered by Compose runtime, custom design
-  tokens, and a complete Shadcn component suite (`awake:ui:shadcn`).
-- **UI Builder & HUD DSL** — Extensible component architecture (`awake:ui:builder`) for in-game HUDs,
-  debug inspectors, and declarative overlays.
-
-### Gameplay, Physics & AI
-
-- **Jolt Physics Engine** — Hardware-accelerated physics bridge with static heightfield colliders,
-  raycasts, and kinematic character controllers.
-- **Behavior Tree AI & Keybindings** — 60fps code-first AI runtime with sequences/selectors, plus
-  type-safe `KeybindingProfile<A>` controls.
-- **Modular Character Equipment & Sockets** — Skinned mesh modular slot composition (
-  `ModularCharacterComponent`) and zero-allocation bone socket tracking.
+### 💻 Declarative In-Game HUDs & Menus
+- **HUDs Powered by Compose** — Build reactive health bars, inventory panels, and menus using standard declarative UI on top of your 3D world.
+- **Built-In Design System** — Over 23+ pre-built, themeable Shadcn components (`awake:ui:shadcn`) ready for games and tools.
 
 ---
 
