@@ -89,6 +89,7 @@ internal class RendererGpuPassExecutor(
                 )
                 end()
             }
+            recordPostPasses(encoder, input.postPasses)
             recordUiOverlay(
                 encoder,
                 colorView,
@@ -162,6 +163,7 @@ internal class RendererGpuPassExecutor(
             )
             end()
         }
+        recordPostPasses(encoder, input.postPasses)
         device.queue.submit(listOf(encoder.finish()))
     }
 
@@ -217,4 +219,11 @@ internal class RendererGpuPassExecutor(
             end()
         }
     }
+}
+
+private fun recordPostPasses(
+    encoder: io.ygdrasil.webgpu.GPUCommandEncoder,
+    postPasses: List<com.awakekt.awake.render.command.GpuSubPass>,
+) {
+    if (postPasses.isEmpty()) return
 }

@@ -12,8 +12,9 @@ import com.awakekt.awake.render.texture.RenderTarget
 /**
  * A generic hardware render pass execution request.
  *
- * Used for pre-passes (depth pre-pass, shadow cascade layers, SSAO) or offscreen passes.
- * Hardware backends iterate and execute these sub-passes without inspecting scene or light semantics.
+ * Used for pre-passes (depth pre-pass, shadow cascade layers), post-passes (bloom, tone-mapping,
+ * color grading), or offscreen passes. Hardware backends iterate and execute these sub-passes
+ * without inspecting scene or light semantics.
  */
 data class GpuSubPass(
     val target: RenderTarget?,

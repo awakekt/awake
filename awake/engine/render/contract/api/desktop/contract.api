@@ -246,23 +246,25 @@ public abstract interface class com/awakekt/awake/render/command/GpuPassExecutor
 
 public final class com/awakekt/awake/render/command/GpuPassInput {
 	public static final field Companion Lcom/awakekt/awake/render/command/GpuPassInput$Companion;
-	public fun <init> (Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/renderer/RenderViewport;Ljava/util/List;Ljava/util/List;[FLcom/awakekt/awake/render/command/GpuEnvironmentState;Z)V
-	public synthetic fun <init> (Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/renderer/RenderViewport;Ljava/util/List;Ljava/util/List;[FLcom/awakekt/awake/render/command/GpuEnvironmentState;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/renderer/RenderViewport;Ljava/util/List;Ljava/util/List;Ljava/util/List;[FLcom/awakekt/awake/render/command/GpuEnvironmentState;Z)V
+	public synthetic fun <init> (Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/renderer/RenderViewport;Ljava/util/List;Ljava/util/List;Ljava/util/List;[FLcom/awakekt/awake/render/command/GpuEnvironmentState;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/util/List;
+	public final fun component10 ()Z
 	public final fun component2 ()Lcom/awakekt/awake/core/math/Mat4;
 	public final fun component3 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component4 ()Lcom/awakekt/awake/render/renderer/RenderViewport;
 	public final fun component5 ()Ljava/util/List;
 	public final fun component6 ()Ljava/util/List;
-	public final fun component7 ()[F
-	public final fun component8 ()Lcom/awakekt/awake/render/command/GpuEnvironmentState;
-	public final fun component9 ()Z
-	public final fun copy (Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/renderer/RenderViewport;Ljava/util/List;Ljava/util/List;[FLcom/awakekt/awake/render/command/GpuEnvironmentState;Z)Lcom/awakekt/awake/render/command/GpuPassInput;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/command/GpuPassInput;Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/renderer/RenderViewport;Ljava/util/List;Ljava/util/List;[FLcom/awakekt/awake/render/command/GpuEnvironmentState;ZILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuPassInput;
+	public final fun component7 ()Ljava/util/List;
+	public final fun component8 ()[F
+	public final fun component9 ()Lcom/awakekt/awake/render/command/GpuEnvironmentState;
+	public final fun copy (Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/renderer/RenderViewport;Ljava/util/List;Ljava/util/List;Ljava/util/List;[FLcom/awakekt/awake/render/command/GpuEnvironmentState;Z)Lcom/awakekt/awake/render/command/GpuPassInput;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/command/GpuPassInput;Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/renderer/RenderViewport;Ljava/util/List;Ljava/util/List;Ljava/util/List;[FLcom/awakekt/awake/render/command/GpuEnvironmentState;ZILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuPassInput;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCameraEye ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getEnvironment ()Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public final fun getPassUniforms ()[F
+	public final fun getPostPasses ()Ljava/util/List;
 	public final fun getPrePasses ()Ljava/util/List;
 	public final fun getResolvedDraws ()Ljava/util/List;
 	public final fun getResolvedOpaqueDraws ()Ljava/util/List;

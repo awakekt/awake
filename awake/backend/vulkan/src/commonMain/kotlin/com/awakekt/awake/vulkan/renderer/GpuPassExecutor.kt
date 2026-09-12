@@ -38,6 +38,7 @@ internal class RendererGpuPassExecutor(
             renderer.commandBuffers[currentFrame], currentFrame, imageIndex, resolvedDraws,
             input.viewProjection, input.cameraEye, depthDraws = depthDraws,
             prePasses = input.prePasses,
+            postPasses = input.postPasses,
             environment = input.environment,
             sceneViewport = input.viewport,
         )
@@ -96,6 +97,7 @@ internal class RendererGpuPassExecutor(
                         ),
                     )
                     Vulkan.vkCmdEndRenderPass(commandBuffer)
+                    recordPostPasses(commandBuffer, input.postPasses)
                     offscreen.transitionToShaderReadOnly(commandBuffer)
                 }
             }

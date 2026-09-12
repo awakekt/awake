@@ -38,5 +38,22 @@ class WebGpuGenericShadowPacketTest {
     @Test
     fun packetsWithoutPrePassesDoNotScheduleShadowWork() {
         assertTrue(GpuPassInput.EMPTY.prePasses.isEmpty())
+        assertTrue(GpuPassInput.EMPTY.postPasses.isEmpty())
+    }
+
+    @Test
+    fun genericPostPassesRemainLayeredWork() {
+        val toneMapVp = Mat4()
+        val input = GpuPassInput(
+            viewProjection = Mat4(),
+            cameraEye = Vec3f(0f, 0f, 0f),
+            passUniforms = FloatArray(0),
+            postPasses = listOf(
+                GpuSubPass(target = null, viewProjection = toneMapVp),
+            ),
+        )
+
+        assertEquals(1, input.postPasses.size)
+        assertEquals(toneMapVp, input.postPasses[0].viewProjection)
     }
 }

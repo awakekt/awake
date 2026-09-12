@@ -125,6 +125,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
     cameraEye: Vec3f,
     depthDraws: List<PreparedDraw> = emptyList(),
     prePasses: List<GpuSubPass> = emptyList(),
+    postPasses: List<GpuSubPass> = emptyList(),
     environment: GpuEnvironmentState = GpuEnvironmentState.Default,
     sceneViewport: RenderViewport? = null,
 ) {
@@ -173,6 +174,8 @@ internal fun Renderer.recordResolvedCommandBuffer(
     recordSharedPassFeatures(RenderPassSlot.Scene, context)
     Vulkan.vkCmdEndRenderPass(commandBuffer)
 
+    recordPostPasses(commandBuffer, postPasses)
+
     val uiPipeline = uiRenderPipeline
     if (uiPipeline != null) {
         Vulkan.vkCmdBeginRenderPass(
@@ -207,3 +210,10 @@ internal fun Renderer.recordResolvedCommandBuffer(
  * from, through the same machinery the shadow pass uses. */
 internal fun cameraDepthPass(viewProjection: Mat4): GpuShadowCascadeData =
     GpuShadowCascadeData(listOf(viewProjection), floatArrayOf(Float.MAX_VALUE))
+
+internal fun Renderer.recordPostPasses(
+    commandBuffer: Long,
+    postPasses: List<GpuSubPass>,
+) {
+    if (postPasses.isEmpty()) return
+}
