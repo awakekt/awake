@@ -221,6 +221,7 @@ internal class RendererGpuPassExecutor(
     }
 }
 
+@Suppress("UnusedParameter")
 private fun recordPostPasses(
     encoder: io.ygdrasil.webgpu.GPUCommandEncoder,
     postPasses: List<com.awakekt.awake.render.command.GpuSubPass>,

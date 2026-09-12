@@ -116,6 +116,7 @@ internal fun Renderer.recordCommandBuffer(
 
 /** Records a packet whose handles were resolved by the shared compiler. Resolved packets do not
  * enter the legacy depth-feature adapter yet; they still use the same shared scene/UI recorder. */
+@Suppress("LongParameterList", "LongMethod")
 internal fun Renderer.recordResolvedCommandBuffer(
     commandBuffer: Long,
     frameIndex: Int,
@@ -211,6 +212,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
 internal fun cameraDepthPass(viewProjection: Mat4): GpuShadowCascadeData =
     GpuShadowCascadeData(listOf(viewProjection), floatArrayOf(Float.MAX_VALUE))
 
+@Suppress("UnusedParameter")
 internal fun Renderer.recordPostPasses(
     commandBuffer: Long,
     postPasses: List<GpuSubPass>,
