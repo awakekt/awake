@@ -7,6 +7,7 @@
 
 #include <jni.h>
 #include <string>
+#include <cstring>
 
 namespace enum_utils {
 

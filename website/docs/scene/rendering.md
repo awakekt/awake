@@ -1,1 +1,1 @@
---8<-- "awake/scene/rendering/README.md"
+--8<-- "awake/scene/scene3d/README.md"

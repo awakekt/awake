@@ -1,1 +1,1 @@
---8<-- "awake/scene/ai/README.md"
+--8<-- "awake/ai/README.md"

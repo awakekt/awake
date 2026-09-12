@@ -39,11 +39,14 @@ REQUIRED_POM = ("name", "description", "url", "licenses", "developers", "scm")
 VARIANT_MARKER = "kotlin-tooling-metadata"
 
 
-def published_modules() -> list[Path]:
+def published_modules(version: str | None = None) -> list[Path]:
     """Every directory under the local repo holding a `.pom`, one per artifact version."""
     if not LOCAL_REPO.exists():
         return []
-    return sorted({pom.parent for pom in LOCAL_REPO.rglob("*.pom")})
+    dirs = {pom.parent for pom in LOCAL_REPO.rglob("*.pom")}
+    if version:
+        dirs = {d for d in dirs if d.name == version}
+    return sorted(dirs)
 
 
 def pom_of(directory: Path) -> Path | None:
@@ -88,12 +91,31 @@ def companions(directory: Path, stem: str) -> dict[str, bool]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--list", action="store_true", help="Print every artifact found and exit")
+    parser.add_argument("--version", help="Filter verification to a specific artifact version")
+    parser.add_argument("--all", action="store_true", help="Verify all artifact versions found in local repository")
     args = parser.parse_args()
 
-    directories = published_modules()
+    version_filter = args.version
+    if not version_filter and not args.all:
+        try:
+            import subprocess
+            raw = subprocess.check_output(
+                ["git", "describe", "--tags", "--always"],
+                cwd=REPO_ROOT,
+                text=True
+            ).strip().lstrip("v")
+            if re.search(r"-\d+-g[0-9a-f]+$", raw):
+                version_filter = re.sub(r"-\d+-g[0-9a-f]+$", "-SNAPSHOT", raw)
+            else:
+                version_filter = raw
+        except Exception:
+            version_filter = None
+
+    directories = published_modules(version_filter)
     if not directories:
+        target_str = f" for version {version_filter}" if version_filter else ""
         print(
-            "Nothing published locally. Run:\n"
+            f"Nothing published locally{target_str}. Run:\n"
             "  ./gradlew publishToMavenLocal -PisMainHost=true",
             file=sys.stderr,
         )

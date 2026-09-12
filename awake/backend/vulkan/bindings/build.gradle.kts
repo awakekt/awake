@@ -167,8 +167,8 @@ val startOnFirstThread = if (HostOs.isMac) {
 
 // The platforms a release must carry a native library for. Windows is deliberately absent: no CI
 // job has ever compiled the desktop C++ on it, so promising it would be a guess. macOS arm64 and
-// Linux x86_64 are both built by existing jobs, and macOS x86_64 by the runner added alongside this.
-val requiredNativePlatforms = listOf("macos-arm64", "macos-x86_64", "linux-x86_64")
+// Linux x86_64 are built by existing runners.
+val requiredNativePlatforms = listOf("macos-arm64", "linux-x86_64")
 
 // A one-platform jar is indistinguishable from a correct one until a consumer on another OS tries
 // to load it, and then it fails at run time with "not found for platform". The published jar

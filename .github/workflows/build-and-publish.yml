@@ -1,4 +1,4 @@
-name: Publish
+name: Publish & Release
 
 # Two paths, deliberately different.
 #
@@ -24,6 +24,8 @@ jobs:
   # assembled from several runners. Each uploads just its `natives/<platform>/` directory; the
   # publish jobs below merge them before packaging.
   natives:
+    name: Build native libraries (${{ matrix.platform }})
+    timeout-minutes: 30
     strategy:
       # One platform failing should not hide whether the others built -- verifyDesktopNatives is
       # what decides if the set is complete.
@@ -32,8 +34,6 @@ jobs:
         include:
           - runner: macos-14
             platform: macos-arm64
-          - runner: macos-13
-            platform: macos-x86_64
           - runner: ubuntu-latest
             platform: linux-x86_64
     runs-on: ${{ matrix.runner }}
@@ -78,6 +78,8 @@ jobs:
   # What must hold before anything is uploaded anywhere. Runs for snapshots and releases alike:
   # a snapshot nobody can resolve wastes the same afternoon a broken release does.
   verify:
+    name: Verify API surface, docs & publication closure
+    timeout-minutes: 30
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -111,6 +113,9 @@ jobs:
       - name: Verify documented Maven coordinates
         run: python3 tools/verify_doc_coordinates.py
 
+      - name: Verify agent skills and catalog sync
+        run: python3 tools/verify_agent_skills_sync.py
+
   # Builds awake-template against these artifacts, the way someone who clicked "Use this template"
   # would. Every bug this has caught -- a package namespace the template never followed, two
   # libraries claiming one Android namespace -- is invisible from inside either repository, because
@@ -119,6 +124,8 @@ jobs:
   # macOS because it is the only runner that can link the iOS framework, and iOS is otherwise
   # untested anywhere in this repository.
   consumer:
+    name: Verify template consumer integration
+    timeout-minutes: 30
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -164,6 +171,8 @@ jobs:
   # `main` builds. Resolvable only by a consumer who adds the snapshot repository, and replaced by
   # the next push, so this path stays deliberately light.
   snapshot:
+    name: Publish snapshot to Maven Central
+    timeout-minutes: 30
     if: github.ref == 'refs/heads/main'
     needs: [natives, verify, consumer]
     runs-on: macos-14
@@ -234,6 +243,8 @@ jobs:
   # Tags only. What lands here is permanent: Central does not allow a version to be replaced, so
   # every check that would be embarrassing to discover afterwards runs before the upload.
   release:
+    name: Publish release to Maven Central
+    timeout-minutes: 30
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [natives, verify, consumer]
     runs-on: macos-14

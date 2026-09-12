@@ -60,10 +60,10 @@ endif()
 
 # GLFW (`brew install glfw`) provides windowing + Vulkan surface creation
 # (VulkanWindow_jni.gen.cpp / glfwCreateWindowSurface) for the desktop demo.
-find_library(GLFW_LIBRARY glfw PATHS /opt/homebrew/opt/glfw/lib /usr/local/opt/glfw/lib)
+find_library(GLFW_LIBRARY NAMES glfw glfw3 PATHS /opt/homebrew/opt/glfw/lib /usr/local/opt/glfw/lib)
 find_path(GLFW_INCLUDE_DIR GLFW/glfw3.h PATHS /opt/homebrew/opt/glfw/include /usr/local/opt/glfw/include)
 if(NOT GLFW_LIBRARY OR NOT GLFW_INCLUDE_DIR)
-    message(FATAL_ERROR "GLFW not found -- install via 'brew install glfw'")
+    message(FATAL_ERROR "GLFW not found -- install via 'brew install glfw' (macOS) or 'sudo apt-get install libglfw3-dev' (Linux)")
 endif()
 include_directories(${GLFW_INCLUDE_DIR})
 

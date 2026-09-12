@@ -9,6 +9,7 @@
 #include <jni.h>
 #include <vulkan/vulkan.h>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <enum_utils.h>
 
