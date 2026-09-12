@@ -14,21 +14,21 @@
 
 ## What It Does
 
-### 🚀 High-Performance Engine Core
+### High-Performance Engine Core
 - **Data-Oriented ECS** — Sparse-set entity architecture and zero-allocation 3D math designed to effortlessly hold 120 FPS.
 - **Code-First Scenes** — Type-safe DSL for systems scheduling, entity authoring, and asset loading with zero reflection.
 - **Standalone Game Runner** — Lightweight project manifest (`awake.project.json`) and launcher (`AwakeProjectLauncher`) with zero editor overhead.
 
-### 🎨 Modern 3D Graphics
+### Modern 3D Graphics
 - **Native Vulkan & WebGPU** — High-fidelity graphics targeting PC, Mac, Linux, Android, iOS, and browsers from a single game loop.
 - **Production Visuals** — Physically-Based Rendering (PBR), cascaded shadow maps, glTF 2.0 skeletal animation, and runtime WGSL shader compilation via Naga.
 
-### ⚡ Integrated Physics & Gameplay
+### Integrated Physics & Gameplay
 - **Jolt Physics Engine** — Hardware-accelerated rigid bodies, heightfield terrain colliders, raycasts, and responsive character controllers.
 - **Gameplay AI & Controls** — 60 FPS Behavior Tree AI (selectors, sequences, conditions) and rebindable type-safe keybindings (`KeybindingProfile`).
 - **Modular Equipment & Sockets** — Skinned mesh attachments and bone socket tracking (`ModularCharacterComponent`) for customizable characters.
 
-### 💻 Declarative In-Game HUDs & Menus
+### Declarative In-Game HUDs & Menus
 - **HUDs Powered by Compose** — Build reactive health bars, inventory panels, and menus using standard declarative UI on top of your 3D world.
 - **Built-In Design System** — Over 23+ pre-built, themeable Shadcn components (`awake:ui:shadcn`) ready for games and tools.
 
