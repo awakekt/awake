@@ -157,6 +157,7 @@ object GltfParser {
         return LoadedScene(loadedMeshes)
     }
 
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     private fun readPrimitive(
         document: GltfDocument,
         buffers: List<ByteArray>,

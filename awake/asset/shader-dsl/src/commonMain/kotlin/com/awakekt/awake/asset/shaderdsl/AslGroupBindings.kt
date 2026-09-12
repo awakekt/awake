@@ -192,6 +192,7 @@ private fun collectNames(expr: AslExpr, into: MutableSet<String>) {
     }
 }
 
+@Suppress("CyclomaticComplexMethod", "NestedBlockDepth")
 internal fun AslUniformBlock.totalByteSize(): Long {
     var offset = 0
     for (field in fields) {

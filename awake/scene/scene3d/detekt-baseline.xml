@@ -2,20 +2,31 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>ComplexCondition:SceneLightingCompiler.kt$SceneLightingCompiler$pointShadowsEnabled &amp;&amp; pointShadows.size &lt; MAX_POINT_LIGHTS &amp;&amp; light.shadowsEnabled &amp;&amp; light.range > POINT_SHADOW_NEAR</ID>
+    <ID>ComplexCondition:SceneLightingCompiler.kt$SceneLightingCompiler$transform != null &amp;&amp; (transform.rotation.x != 0f || transform.rotation.y != 0f || transform.rotation.z != 0f)</ID>
     <ID>ComplexCondition:SocketAttachmentSystem.kt$SocketAttachmentSystem$targetTransform.worldMatrix.data[12] == 0f &amp;&amp; targetTransform.worldMatrix.data[13] == 0f &amp;&amp; targetTransform.worldMatrix.data[14] == 0f &amp;&amp; (targetTransform.position.x != 0f || targetTransform.position.y != 0f || targetTransform.position.z != 0f)</ID>
     <ID>CyclomaticComplexMethod:DebugVisualizationSystem.kt$fun debugVisualizationLines( world: World, renderer: Renderer, settings: WorldDebugSettings, ): List&lt;LineSegment></ID>
-    <ID>CyclomaticComplexMethod:RenderSystem.kt$RenderSystem$override fun update(world: World, delta: Float)</ID>
+    <ID>CyclomaticComplexMethod:SceneDrawCollector.kt$SceneDrawCollector$fun collectBeforeParticles( world: World, culling: FrameCulling, elapsedTimeSeconds: Float, ): ArrayList&lt;RenderDrawCommand></ID>
+    <ID>CyclomaticComplexMethod:SceneLightingCompiler.kt$SceneLightingCompiler$fun sceneLight(world: World, camera: Camera): SceneLight</ID>
+    <ID>EmptyFunctionBlock:SpatialIndexCullingTest.kt$SpatialIndexCullingTest.RecordingRenderer${ }</ID>
     <ID>LargeClass:ParticleSystemTest.kt$ParticleSystemTest</ID>
-    <ID>LongMethod:RenderSystem.kt$RenderSystem$override fun update(world: World, delta: Float)</ID>
-    <ID>LongMethod:RenderSystem.kt$RenderSystem$private fun addParticleDrawCalls( emitter: ParticleEmitter, cameraBasis: FloatArray, frustumPlanes: List&lt;Plane>, eye: Vec3, )</ID>
+    <ID>LongMethod:SceneDrawCollector.kt$SceneDrawCollector$fun collectBeforeParticles( world: World, culling: FrameCulling, elapsedTimeSeconds: Float, ): ArrayList&lt;RenderDrawCommand></ID>
+    <ID>LongMethod:SceneLightingCompiler.kt$SceneLightingCompiler$fun sceneLight(world: World, camera: Camera): SceneLight</ID>
+    <ID>LongMethod:SceneParticleCompiler.kt$SceneParticleCompiler$fun appendDrawCalls( destination: MutableList&lt;RenderDrawCommand>, emitter: ParticleEmitter, cameraBasis: FloatArray, frustumPlanes: List&lt;Plane>, eye: Vec3, )</ID>
     <ID>LongParameterList:BurstEmitterPool.kt$BurstEmitterPool$( mesh: Mesh, material: Material, maxParticles: Int, origin: Vec3f, spawnRate: Float, lifetime: Float, startAlpha: Float, scale: Float, motion: ParticleMotion, visual: ParticleVisual, ground: ParticleGround, lifecycle: ParticleLifecycle, dynamics: ParticleDynamics, )</ID>
     <ID>LongParameterList:ParticleEmitter.kt$( world: World, mesh: Mesh, material: Material, position: Vec3f, count: Int, spawnRate: Float, lifetime: Float, startAlpha: Float, baseVelocity: Vec3f, velocityJitter: Float = 0f, scale: Float = 0.25f, startColor: Vec3f = Vec3f(1f, 1f, 1f), endColor: Vec3f = startColor, coneHalfAngleDegrees: Float? = null, followEntity: Entity? = null, groundY: Float? = null, )</ID>
     <ID>LongParameterList:ParticleEmitter.kt$ParticleEmitter$( newOrigin: Vec3f, newSpawnRate: Float, newLifetime: Float, newStartAlpha: Float, newScale: Float, newMotion: ParticleMotion, newVisual: ParticleVisual, newGround: ParticleGround, newLifecycle: ParticleLifecycle, newDynamics: ParticleDynamics, )</ID>
     <ID>LongParameterList:ParticleEmitter.kt$ParticleEmitter$( val mesh: Mesh, val material: Material, val origin: Vec3f, val maxParticles: Int, var spawnRate: Float, var lifetime: Float, var startAlpha: Float, var scale: Float, var motion: ParticleMotion = ParticleMotion(), var visual: ParticleVisual = ParticleVisual(), var ground: ParticleGround = ParticleGround(), var lifecycle: ParticleLifecycle = ParticleLifecycle(), var dynamics: ParticleDynamics = ParticleDynamics(), val children: List&lt;ParticleEmitter> = emptyList(), )</ID>
     <ID>LoopWithTooManyJumpStatements:ParticleSystem.kt$ParticleSystem$while</ID>
+    <ID>NestedBlockDepth:DebugVisualizationSystem.kt$fun debugVisualizationLines( world: World, renderer: Renderer, settings: WorldDebugSettings, ): List&lt;LineSegment></ID>
+    <ID>NestedBlockDepth:SceneLightingCompiler.kt$SceneLightingCompiler$fun sceneLight(world: World, camera: Camera): SceneLight</ID>
+    <ID>OutdatedDocumentation:SceneLight.kt$SceneLight : SceneComponent</ID>
+    <ID>OutdatedDocumentation:ScenePbrMaterial.kt$ScenePbrMaterial : SceneComponent</ID>
+    <ID>OutdatedDocumentation:Skybox.kt$Skybox</ID>
     <ID>ReturnCount:ParticleSystem.kt$ParticleSystem$private fun groundHeightAt(emitter: ParticleEmitter, x: Float, z: Float): Float?</ID>
     <ID>ReturnCount:ParticleSystem.kt$ParticleSystem$private fun spawnVelocity(emitter: ParticleEmitter, spawnPosition: Vec3f): Vec3f</ID>
-    <ID>ReturnCount:RenderSystem.kt$RenderSystem$private fun isOccluded( camera: com.awakekt.awake.core.math.Lens, worldBounds: com.awakekt.awake.core.math.Aabb, occlusionViewProjection: Mat4?, ): Boolean</ID>
+    <ID>ReturnCount:SceneCullingCompiler.kt$SceneCullingCompiler$private fun isOccluded( camera: com.awakekt.awake.core.math.Lens, worldBounds: Aabb, occlusionViewProjection: Mat4?, ): Boolean</ID>
+    <ID>ReturnCount:SceneLightingCompiler.kt$SceneLightingCompiler$fun sceneLight(world: World, camera: Camera): SceneLight</ID>
     <ID>TooManyFunctions:ParticleSystem.kt$ParticleSystem : System</ID>
   </CurrentIssues>
 </SmellBaseline>

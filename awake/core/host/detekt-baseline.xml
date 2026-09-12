@@ -2,8 +2,8 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>MatchingDeclarationName:FrameLoop.android.kt$AndroidFrameLoop : FrameLoop</ID>
-    <ID>MatchingDeclarationName:FrameLoop.desktop.kt$DesktopFrameLoop : FrameLoop</ID>
-    <ID>MatchingDeclarationName:FrameLoop.ios.kt$IOSFrameLoop : FrameLoop</ID>
+    <ID>MatchingDeclarationName:FrameLoop.kt$AndroidFrameLoop : FrameLoop</ID>
+    <ID>MatchingDeclarationName:FrameLoop.kt$DesktopFrameLoop : FrameLoop</ID>
+    <ID>MatchingDeclarationName:FrameLoop.kt$IOSFrameLoop : FrameLoop</ID>
   </CurrentIssues>
 </SmellBaseline>

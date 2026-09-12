@@ -3,6 +3,7 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:DrawWithCache.kt$DrawWithCacheNode$cachedResult == null || w != lastWidth || h != lastHeight || d != lastDensity || ld != lastLayoutDirection</ID>
+    <ID>ComplexCondition:Shape.kt$RoundedCornerShape$topLeft == 0f &amp;&amp; topRight == 0f &amp;&amp; bottomRight == 0f &amp;&amp; bottomLeft == 0f</ID>
     <ID>CyclomaticComplexMethod:ComposeHost.kt$ComposeHost$private fun dispatchInput(input: FrameInput)</ID>
     <ID>CyclomaticComplexMethod:ComposeHost.kt$ComposeHost$private fun dispatchTouchInput(input: FrameInput)</ID>
     <ID>CyclomaticComplexMethod:FocusOwner.kt$FocusOwner$private fun moveSpatial(root: LayoutNode, direction: FocusDirection): Boolean</ID>
@@ -22,6 +23,7 @@
     <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$fun dispatch(root: LayoutNode, event: PointerEvent, x: Int, y: Int, dx: Int = 0, dy: Int = 0): Boolean</ID>
     <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$private fun descendInto(into: MutableList&lt;LayoutNode>, node: LayoutNode, x: Int, y: Int)</ID>
     <ID>ReturnCount:PointerInputDispatcher.kt$PointerInputDispatcher$private fun hitDetachedLayer(into: MutableList&lt;LayoutNode>, node: LayoutNode, x: Int, y: Int): Boolean</ID>
+    <ID>ReturnCount:Shape.kt$RoundedCornerShape$fun createOutline( bounds: BoundsRectangle, density: Float, radiusInset: Float = 0f, layoutDirection: LayoutDirection = LayoutDirection.Ltr, ): ShapeOutline</ID>
     <ID>TooManyFunctions:DrawModifiers.kt$com.awakekt.awake.compose.ui.draw.DrawModifiers.kt</ID>
     <ID>TooManyFunctions:DrawScope.kt$DrawScope</ID>
     <ID>TooManyFunctions:LayoutNode.kt$LayoutNode : PlaceableMeasurableRememberHolder</ID>

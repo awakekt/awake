@@ -16,6 +16,7 @@ internal fun wgslType(shape: GpuDataShape): String = when (shape) {
     GpuDataShape.UInt4 -> "vec4<u32>"
 }
 
+@Suppress("CyclomaticComplexMethod")
 internal fun wgslTypeName(type: AslType): String = when (type) {
     is AslType.Data -> wgslType(type.shape)
     AslType.I32 -> "i32"

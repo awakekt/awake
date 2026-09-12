@@ -66,6 +66,8 @@ fun ShaderSet.stagesFor(backend: RenderBackend): ShaderStages = when (backend) {
  * explicit migration path for instanced, skinned, and particle casters.
  * @property depthPrePassKeyedVariants Optional depth-caster shader sets keyed by both caster
  * family and fragment coverage. A masked entry must never fall back to an opaque shader.
+ * @property sceneDepthVariants Optional depth-caster shader sets keyed by structural draw family
+ * for camera-space depth pre-passes.
  *
  * A full extra geometry pass per frame, which is why it is opt-in rather than always on. The
  * scene pass cannot supply this itself: content features draw inside it, and neither backend

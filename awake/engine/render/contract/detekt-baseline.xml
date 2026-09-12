@@ -2,10 +2,13 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>EndOfSentenceFormat:DebugGeometry.kt$* Produces 3D aura outline lines around [bounds] transformed by [worldMatrix]: * - Luminous corner brackets (arms wrapping each of the 8 corners) * - Ground/base circular aura ring * - Subtle connecting contour edges</ID>
     <ID>LongParameterList:PixelMap.kt$PixelMap$(x: Int, y: Int, r: Float, g: Float, b: Float, srcA: Float)</ID>
+    <ID>LongParameterList:UniformLayout.kt$UniformField$( destination: FloatArray, index: Int, x: Float, y: Float, z: Float, w: Float, )</ID>
+    <ID>LongParameterList:UniformLayout.kt$UniformLayout$( destination: FloatArray, field: UniformField, index: Int, x: Float, y: Float, z: Float, w: Float, )</ID>
+    <ID>LongParameterList:UniformLayout.kt$UniformLayout$( destination: FloatArray, field: UniformField, x: Float, y: Float, z: Float, w: Float, )</ID>
     <ID>NestedBlockDepth:MipChain.kt$private fun TextureAsset.boxDownsample(newWidth: Int, newHeight: Int): TextureAsset</ID>
+    <ID>OutdatedDocumentation:GroupBindings.kt$ResourceBinding</ID>
     <ID>ReturnCount:PixelMap.kt$PixelMap$fun blend(x: Int, y: Int, r: Float, g: Float, b: Float, srcA: Float)</ID>
-    <ID>SpreadOperator:ParticleUniforms.kt$( UniformFields.Mvp, *ParticleExtraUniformLayout.fields, )</ID>
+    <ID>TooManyFunctions:UniformWriter.kt$UniformWriter</ID>
   </CurrentIssues>
 </SmellBaseline>

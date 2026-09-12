@@ -176,7 +176,11 @@ val MaskedTexturedDepthShader: AslShaderDefinition = shader("shadow_depth_masked
  * @param clipSpace The convention this is emitted for. It decides the shadow lookup's V axis and
  * nothing else -- see [ndcToUv], which is where that decision is made for every shader. With the
  * wrong axis the lookup is mirrored about the map's centre, so a caster's shadow lands on the far
- * side of the scene from the caster. */
+ * side of the scene from the caster.
+ * @param instanced Whether this shader draws instanced geometry.
+ * @param skinned Whether this shader applies joint-palette skinning transforms.
+ * @param shaderName Emitted shader definition name.
+ */
 @Suppress("LongMethod")
 private fun litShadow(
     clipSpace: ClipSpace,

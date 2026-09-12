@@ -4,5 +4,6 @@
   <CurrentIssues>
     <ID>MatchingDeclarationName:SceneAssetDsl.kt$SceneAssetsDsl</ID>
     <ID>TooManyFunctions:SceneAppDsl.kt$SceneAppDsl</ID>
+    <ID>TooManyFunctions:SceneLightingDsl.kt$com.awakekt.awake.scene.authoring.dsl.SceneLightingDsl.kt</ID>
   </CurrentIssues>
 </SmellBaseline>

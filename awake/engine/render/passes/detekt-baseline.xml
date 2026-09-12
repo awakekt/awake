@@ -2,6 +2,18 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>CyclomaticComplexMethod:PointShadowLookup.kt$fun pointShadowLookup(direction: Vec3f): PointShadowLookup</ID>
+    <ID>DestructuringDeclarationWithTooManyEntries:PointShadowLookup.kt$val (face, major, u, v) = when { ax >= ay &amp;&amp; ax >= az &amp;&amp; direction.x >= 0f -> Quad(0, ax, -direction.z, direction.y) ax >= ay &amp;&amp; ax >= az -> Quad(1, ax, direction.z, direction.y) ay >= ax &amp;&amp; ay >= az &amp;&amp; direction.y >= 0f -> Quad(2, ay, -direction.x, direction.z) ay >= ax &amp;&amp; ay >= az -> Quad(3, ay, -direction.x, -direction.z) direction.z >= 0f -> Quad(4, az, direction.x, direction.y) else -> Quad(5, az, -direction.x, direction.y) }</ID>
+    <ID>EndOfSentenceFormat:DebugGeometry.kt$* Produces 3D aura outline lines around [bounds] transformed by [worldMatrix]: * - Luminous corner brackets (arms wrapping each of the 8 corners) * - Ground/base circular aura ring * - Subtle connecting contour edges</ID>
+    <ID>InvalidPackageDeclaration:DrawCallPipeline.kt$package com.awakekt.awake.render.pipeline</ID>
     <ID>LongParameterList:DebugLineVertices.kt$( out: FloatArray, offset: Int, x: Float, y: Float, z: Float, color: Color, )</ID>
+    <ID>LongParameterList:GpuShadowUniforms.kt$( transform: Mat4, extraUniformFloats: FloatArray, vertexAnimation: Vec3f, timeSeconds: Float, mvp: Mat4, lightPayload: FloatArray, cascades: ShadowCascadeUniforms, cameraEye: Vec3f, fogColor: Color = Color.Black, fogDensity: Float = 0f, )</ID>
+    <ID>LongParameterList:PbrUniforms.kt$( mvp: Mat4, model: Mat4, lightPayload: FloatArray, extraUniformFloats: FloatArray, cameraEye: Vec3f, fogColor: Color, fogDensity: Float, alphaCutoff: Float = 0.5f, )</ID>
+    <ID>MatchingDeclarationName:DrawCallPipeline.kt$InstancedDrawKind</ID>
+    <ID>MatchingDeclarationName:ParticleUniforms.kt$ParticleExtraFields</ID>
+    <ID>SpreadOperator:DrawUniformPacking.kt$(extraUniformFloats, *ParticleExtraUniformLayout.fields)</ID>
+    <ID>TooGenericExceptionCaught:BoundedPreparationQueue.kt$BoundedPreparationQueue$failure: Throwable</ID>
+    <ID>TooManyFunctions:PbrUniforms.kt$com.awakekt.awake.render.passes.uniforms.PbrUniforms.kt</ID>
+    <ID>UnusedParameter:DrawUniformPlan.kt$hasShadowCascades: Boolean</ID>
   </CurrentIssues>
 </SmellBaseline>

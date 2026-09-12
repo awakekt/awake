@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("MatchingDeclarationName")
+
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.core.color.Color

@@ -4,7 +4,7 @@
   <CurrentIssues>
     <ID>ComplexCondition:Background.kt$BorderNode$stroke &lt;= 0f || (!sides.top &amp;&amp; !sides.end &amp;&amp; !sides.bottom &amp;&amp; !sides.start)</ID>
     <ID>ComplexCondition:Clickable.kt$CombinedClickableNode$event.isCaptureHolder &amp;&amp; event.isInBounds &amp;&amp; (!event.longPressTriggered || onLongClick == null)</ID>
-    <ID>CyclomaticComplexMethod:Background.kt$internal fun partialBorderPath( bounds: Rectangle, shape: Shape, sides: BorderSides, density: Float, inset: Float, )</ID>
+    <ID>CyclomaticComplexMethod:Background.kt$internal fun partialBorderPath( bounds: Rectangle, shape: Shape, sides: BorderSides, density: Float, inset: Float, layoutDirection: LayoutDirection = LayoutDirection.Ltr, )</ID>
     <ID>CyclomaticComplexMethod:BasicTextField.kt$fun BasicTextField( state: TextFieldState, modifier: Modifier = Modifier, style: TextStyle = TextStyle.Default, interactionSource: InteractionSource? = null, placeholder: String? = null, placeholderColor: Color? = null, singleLine: Boolean = false, onClick: (() -> Unit)? = null, )</ID>
     <ID>CyclomaticComplexMethod:FlexBox.kt$FlexBoxMeasurePolicy$private fun resolveMainSizes(line: List&lt;FlexChild>, limit: Int, gap: Int, vertical: Boolean)</ID>
     <ID>CyclomaticComplexMethod:RowColumnMeasurePolicy.kt$RowColumnMeasurePolicy$override fun MeasureScope.measure( measurables: List&lt;Measurable>, constraints: Constraints, ): MeasureResult</ID>

@@ -46,7 +46,7 @@ jobs:
           # which tag triggered the run.
           fetch-depth: 0
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
@@ -89,7 +89,7 @@ jobs:
           # graph, so without them it fails on a missing header rather than on any API change.
           submodules: recursive
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
@@ -145,7 +145,7 @@ jobs:
           # then this job would prove nothing.
           path: consumer/awake-template
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
@@ -189,7 +189,7 @@ jobs:
           # Both are submodules; the default checkout leaves their directories empty.
           submodules: recursive
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
@@ -266,7 +266,7 @@ jobs:
           # JoltC, and both are submodules.
           submodules: recursive
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}

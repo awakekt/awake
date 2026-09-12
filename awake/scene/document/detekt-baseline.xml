@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:SceneColor.kt$SceneColorSerializer$override fun deserialize(decoder: Decoder): SceneColor</ID>
+    <ID>UnusedPrivateProperty:SceneColor.kt$SceneColorSerializer$val index = composite.decodeElementIndex(descriptor)</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -3,5 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>TooManyFunctions:AppDsl.kt$AppSpecDsl</ID>
+    <ID>UnusedParameter:AppDiDslTest.kt$AppDiDslTest$result: String</ID>
   </CurrentIssues>
 </SmellBaseline>

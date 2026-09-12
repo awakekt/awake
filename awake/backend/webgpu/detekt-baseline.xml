@@ -2,19 +2,42 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>ComplexCondition:DepthPrePassFeature.kt$DepthPrePassFeature$pipeline != null &amp;&amp; vBuffer != null &amp;&amp; (!needsMaterial || depthMaterial != null)</ID>
+    <ID>CyclomaticComplexMethod:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( encoder: GPUCommandEncoder, draws: List&lt;PreparedDraw>, cascade: Int, )</ID>
+    <ID>CyclomaticComplexMethod:RendererOpaqueDraws.kt$private fun Renderer.prepareInstancedGpuDraw( cmd: GpuDrawRequest, mesh: Mesh, material: Material, instanceModels: List&lt;com.awakekt.awake.core.math.Mat4>, instanceIndex: Int, viewProjection: Mat4, cameraEye: Vec3f, lightUniforms: FloatArray, shadowCascades: GpuShadowCascadeData? = null, fogColor: Color = Color.Black, fogDensity: Float = 0f, isTransparent: Boolean, ): WebGpuPreparedDraw?</ID>
+    <ID>CyclomaticComplexMethod:WebGpuDrawPreparer.kt$WebGpuDrawPreparer$override fun prepare( request: GpuDrawRequest, sourceIndex: Int, context: GpuDrawPreparationContext, ): GpuResolvedDraw?</ID>
     <ID>CyclomaticComplexMethod:WebGpuEngine.kt$WebGpuEngine$override suspend fun createBackendResources(window: Any): BackendResources</ID>
-    <ID>LongMethod:RendererDraw3D.kt$internal fun Renderer.performDraw(camera: Lens, drawCalls: List&lt;DrawCall>, light: SceneLight)</ID>
+    <ID>CyclomaticComplexMethod:WebGpuPipelineLayout.kt$private fun ResourceBinding.toWebGpuLayoutEntry()</ID>
+    <ID>LongMethod:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( encoder: GPUCommandEncoder, draws: List&lt;PreparedDraw>, cascade: Int, )</ID>
+    <ID>LongMethod:GpuPassExecutor.kt$RendererGpuPassExecutor$override fun draw(input: GpuPassInput)</ID>
+    <ID>LongMethod:GpuPassExecutor.kt$RendererGpuPassExecutor$override fun renderToTexture(target: RenderTarget, input: GpuPassInput)</ID>
+    <ID>LongMethod:HeadlessSceneRenderer.kt$fun webGpuHeadlessScene(): HeadlessRenderSession</ID>
+    <ID>LongMethod:RendererOpaqueDraws.kt$internal fun Renderer.prepareGpuDraw( cmd: GpuDrawRequest, singleIndex: Int, instancedIndex: Int, isTransparent: Boolean, primary: PrimaryPipelineBinding, viewProjection: Mat4, cameraEye: Vec3f, lightUniforms: FloatArray, shadowCascades: GpuShadowCascadeData? = null, fogColor: Color = Color.Black, fogDensity: Float = 0f, ): WebGpuPreparedDraw?</ID>
+    <ID>LongMethod:RendererOpaqueDraws.kt$private fun Renderer.prepareInstancedGpuDraw( cmd: GpuDrawRequest, mesh: Mesh, material: Material, instanceModels: List&lt;com.awakekt.awake.core.math.Mat4>, instanceIndex: Int, viewProjection: Mat4, cameraEye: Vec3f, lightUniforms: FloatArray, shadowCascades: GpuShadowCascadeData? = null, fogColor: Color = Color.Black, fogDensity: Float = 0f, isTransparent: Boolean, ): WebGpuPreparedDraw?</ID>
     <ID>LongMethod:WebGpuEngine.kt$WebGpuEngine$override suspend fun createBackendResources(window: Any): BackendResources</ID>
-    <ID>LongParameterList:WebGpuFrameContext.kt$WebGpuFrameContext$( private val renderer: Renderer, override val encoder: GPURenderPassEncoder, override val groupedDrawCalls: Map&lt;out PipelineHandle, List&lt;PreparedDraw>>, override val transparentDrawCalls: List&lt;PreparedDraw> = emptyList(), override val primaryPipeline: PipelineHandle, override val viewProjection: Mat4, override val cameraEye: Vec3f, override val light: SceneLight, override val surfaceWidth: Int, override val surfaceHeight: Int, )</ID>
+    <ID>LongMethod:WebGpuShadowBindingTest.kt$WebGpuShadowBindingTest$@Test fun litShadowCompilesAndItsDepthBindGroupValidates()</ID>
+    <ID>LongParameterList:GpuPassExecutor.kt$RendererGpuPassExecutor$( encoder: io.ygdrasil.webgpu.GPUCommandEncoder, colorView: io.ygdrasil.webgpu.GPUTextureView, opaqueDraws: com.awakekt.awake.render.command.SortedDraws&lt;out com.awakekt.awake.render.command.PreparedDraw>, primaryPipeline: com.awakekt.awake.render.command.PipelineHandle, viewProjection: com.awakekt.awake.core.math.Mat4, cameraEye: com.awakekt.awake.core.math.Vec3f, )</ID>
+    <ID>LongParameterList:RendererDraw3D.kt$( encoder: io.ygdrasil.webgpu.GPURenderPassEncoder, opaqueDraws: com.awakekt.awake.render.command.SortedDraws&lt;out com.awakekt.awake.render.command.PreparedDraw>, primaryPipeline: PipelineHandle, viewProjection: Mat4, cameraEye: Vec3f, surface: SurfaceSize, environmentState: GpuEnvironmentState = GpuEnvironmentState.Default, )</ID>
+    <ID>LongParameterList:RendererOpaqueDraws.kt$( cmd: GpuDrawRequest, mesh: Mesh, material: Material, instanceModels: List&lt;com.awakekt.awake.core.math.Mat4>, instanceIndex: Int, viewProjection: Mat4, cameraEye: Vec3f, lightUniforms: FloatArray, shadowCascades: GpuShadowCascadeData? = null, fogColor: Color = Color.Black, fogDensity: Float = 0f, isTransparent: Boolean, )</ID>
+    <ID>LongParameterList:RendererOpaqueDraws.kt$( cmd: GpuDrawRequest, singleIndex: Int, instancedIndex: Int, isTransparent: Boolean, primary: PrimaryPipelineBinding, viewProjection: Mat4, cameraEye: Vec3f, lightUniforms: FloatArray, shadowCascades: GpuShadowCascadeData? = null, fogColor: Color = Color.Black, fogDensity: Float = 0f, )</ID>
+    <ID>LongParameterList:RendererOpaqueDraws.kt$( draws: List&lt;GpuDrawRequest>, isTransparent: Boolean, primary: PrimaryPipelineBinding, viewProjection: Mat4, cameraEye: Vec3f, lightUniforms: FloatArray, shadowCascades: GpuShadowCascadeData? = null, fogColor: Color = Color.Black, fogDensity: Float = 0f, singleIndexStart: Int = 0, )</ID>
+    <ID>LongParameterList:WebGpuFrameContext.kt$WebGpuFrameContext$( private val renderer: Renderer, override val encoder: GPURenderPassEncoder, override val groupedDrawCalls: Map&lt;out PipelineHandle, List&lt;PreparedDraw>>, override val transparentDrawCalls: List&lt;PreparedDraw> = emptyList(), override val primaryPipeline: PipelineHandle, override val viewProjection: Mat4, override val cameraEye: Vec3f, override val environmentState: GpuEnvironmentState = GpuEnvironmentState.Default, override val surfaceWidth: Int, override val surfaceHeight: Int, )</ID>
+    <ID>MatchingDeclarationName:GpuPassExecutor.kt$RendererGpuPassExecutor : GpuPassExecutor</ID>
     <ID>MemberNameEqualsClassName:Texture.kt$Texture$val texture: GPUTexture</ID>
-    <ID>SpreadOperator:RendererOpaqueDraws.kt$(drawCall.extraUniformFloats, *ParticleExtraUniformLayout.fields)</ID>
-    <ID>TooManyFunctions:Renderer.kt$Renderer : RenderRenderer</ID>
-    <ID>UnusedParameter:RenderPipeline.kt$RenderPipeline$commandBuffer: Long</ID>
-    <ID>UnusedParameter:TransferContext.kt$TransferContext$block: (Long) -> Unit</ID>
+    <ID>ReturnCount:RendererOpaqueDraws.kt$private fun Renderer.prepareInstancedGpuDraw( cmd: GpuDrawRequest, mesh: Mesh, material: Material, instanceModels: List&lt;com.awakekt.awake.core.math.Mat4>, instanceIndex: Int, viewProjection: Mat4, cameraEye: Vec3f, lightUniforms: FloatArray, shadowCascades: GpuShadowCascadeData? = null, fogColor: Color = Color.Black, fogDensity: Float = 0f, isTransparent: Boolean, ): WebGpuPreparedDraw?</ID>
+    <ID>ReturnCount:WebGpuCanvasHost.kt$fun frame(time: Double)</ID>
+    <ID>ReturnCount:WebGpuCommandRecorder.kt$fun WebGpuPipelineHandle.uniformByteSize(group: Int = 0, binding: Int = 0): Long</ID>
+    <ID>ReturnCount:WebGpuDrawPreparer.kt$WebGpuDrawPreparer$override fun prepare( request: GpuDrawRequest, sourceIndex: Int, context: GpuDrawPreparationContext, ): GpuResolvedDraw?</ID>
+    <ID>TooGenericExceptionCaught:WebGpuCanvasHost.kt$error: Throwable</ID>
+    <ID>TooGenericExceptionCaught:WebGpuUploadContext.kt$WebGpuUploadContext$failure: Throwable</ID>
+    <ID>TooGenericExceptionThrown:WebGpuUploadContextTest.kt$WebGpuUploadContextTest$throw RuntimeException("Simulated device loss during WebGPU upload")</ID>
+    <ID>TooManyFunctions:GpuBufferPoolManager.kt$GpuBufferPoolManager</ID>
+    <ID>TooManyFunctions:Renderer.kt$Renderer : RenderRendererGpuDrawPreparationSource</ID>
+    <ID>TooManyFunctions:WebGpuCanvasHost.kt$com.awakekt.awake.webgpu.application.WebGpuCanvasHost.kt</ID>
+    <ID>UnusedPrivateProperty:Material.kt$Material$/** Sampled textures past the base-color one, in binding order -- [pbrTextures] fills them * positionally, the same rule Vulkan's `PBR_TEXTURE_BINDINGS` applies to its own writes. */ private val pbrBindings = materialPbrBindings(bindings)</ID>
     <ID>UnusedPrivateProperty:Mesh.kt$Mesh$runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit</ID>
     <ID>UnusedPrivateProperty:RenderPipeline.kt$RenderPipeline$descriptorSetLayout: DescriptorSetLayoutHandle</ID>
     <ID>UnusedPrivateProperty:RenderPipeline.kt$RenderPipeline$fragShaderCode: ByteArray</ID>
     <ID>UnusedPrivateProperty:Renderer.kt$Renderer$maxFramesInFlight: Int</ID>
-    <ID>UnusedPrivateProperty:TransferContext.kt$TransferContext$graphicsDevice: GraphicsDevice</ID>
   </CurrentIssues>
 </SmellBaseline>

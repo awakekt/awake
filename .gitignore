@@ -25,6 +25,8 @@ skills/kmp-*
 .codex/
 .DS_Store
 build/
+!build-logic/src/**
+**/.DS_Store
 /captures
 .externalNativeBuild
 .cxx

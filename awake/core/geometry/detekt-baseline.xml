@@ -3,12 +3,12 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>DestructuringDeclarationWithTooManyEntries:MeshSimplifier.kt$MeshSimplifier$val (nx, ny, nz, d) = plane</ID>
-    <ID>LongMethod:MeshGeometryGenerators.kt$private fun buildCubeGeometry( size: Float, colored: Boolean, format: VertexFormat, ): MeshGeometry</ID>
     <ID>LongParameterList:MeshSimplifier.kt$MeshSimplifier$( p: DoubleArray, i0: Int, i1: Int, i2: Int, substituted: Int, replacement: Vec3d, )</ID>
     <ID>LongParameterList:MeshSimplifier.kt$MeshSimplifier$( p: DoubleArray, vertexTriangles: Array&lt;MutableSet&lt;Int>>, triangleVertices: IntArray, triangleAlive: BooleanArray, a: Int, b: Int, target: Vec3d, )</ID>
     <ID>LongParameterList:MeshSimplifier.kt$MeshSimplifier$( working: DoubleArray, vertexCount: Int, vertexAlive: BooleanArray, vertexOwner: IntArray, triangleAlive: BooleanArray, triangleVertices: IntArray, )</ID>
     <ID>MatchingDeclarationName:MeshGeometryGenerators.kt$MeshGenerateScope</ID>
     <ID>ReturnCount:MeshSimplifier.kt$MeshSimplifier$private fun boundaryQuadric(p: DoubleArray, a: Int, b: Int): DoubleArray?</ID>
+    <ID>TooManyFunctions:InterleavedVertices.kt$InterleavedVertices</ID>
     <ID>TooManyFunctions:MeshSimplifier.kt$MeshSimplifier</ID>
   </CurrentIssues>
 </SmellBaseline>

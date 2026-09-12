@@ -32,6 +32,8 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
  * @property variant Structural shape -- instancing, blending, depth write. See [PipelineVariant].
  * @property bindingLayout Which descriptor groups the pipeline declares. [BindingLayout.Standard]
  * is the per-frame plus per-material pair every scene pipeline had before content features.
+ * @property materialBindings Optional custom descriptor group bindings for the material pass.
+ * @property usesMaterialGroup Whether the pipeline binds the per-material descriptor group.
  * @property buildWireframe Also build the line-topology companion. Only meaningful for
  * [PipelineKey.Primary] and [PipelineKey.Format]; instanced and particle pipelines have never
  * had one.
