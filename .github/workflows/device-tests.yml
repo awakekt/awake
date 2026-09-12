@@ -62,7 +62,7 @@ jobs:
           arch: x86_64
           target: default
           disable-animations: true
-          script: ./gradlew :awake:backend:jolt:connectedAndroidDeviceTest :awake:scene:physics:connectedAndroidDeviceTest
+          script: ./gradlew :awake:backend:jolt:connectedAndroidDeviceTest :awake:scene:physics:connectedAndroidDeviceTest :samples:engine-showcase:connectedAndroidDeviceTest
 
       - name: Upload test results
         if: always()
@@ -72,4 +72,5 @@ jobs:
           path: |
             awake/backend/jolt/build/outputs/androidTest-results/
             awake/scene/physics/build/outputs/androidTest-results/
+            samples/engine-showcase/build/outputs/androidTest-results/
           if-no-files-found: warn

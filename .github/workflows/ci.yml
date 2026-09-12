@@ -68,7 +68,7 @@ jobs:
         run: ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest
 
       - name: Every wasmJs source set compiles
-        run: ./gradlew compileKotlinWasmJs
+        run: ./gradlew compileKotlinWasmJs compileTestKotlinWasmJs
 
       # hello-cube (retired) had a dedicated :androidApp wrapper module producing a real
       # installable APK, uploaded below as a regression artifact. ui-showcase only has a KMP
@@ -155,11 +155,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      # Not `submodules: recursive` on the checkout: that would also clone MoltenVK, which this
-      # job never builds. JoltC needs its own nested JoltPhysics, hence --recursive here.
-      - name: Check out JoltC (and its nested JoltPhysics)
-        run: git submodule update --init --recursive awake/backend/jolt/ios-native/JoltC
+        with:
+          # The shared iOS-native action builds both MoltenVK and JoltC from these pinned submodules.
+          submodules: recursive
 
       - name: Setup JDK
         uses: actions/setup-java@v5
@@ -170,14 +168,55 @@ jobs:
       - name: Setup Gradle (with cache)
         uses: gradle/actions/setup-gradle@v4
 
-      # On demand, like the desktop Vulkan library above: a CMake configure plus build of Jolt
-      # itself is far too slow to hang off every Kotlin compile, so nothing depends on it and the
-      # test below would fail to link without it.
-      - name: Build JoltC for the simulator
-        run: ./gradlew :awake:backend:jolt:buildJoltCIosSimulatorArm64
+      - name: Install Vulkan tools (macOS)
+        run: brew install vulkan-loader molten-vk glfw
+
+      - name: Install Rust iOS simulator target
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim
+
+      - name: Resolve Rust compiler version
+        id: rust-version
+        shell: bash
+        run: echo "version=$(rustc --version | tr ' ' '_')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Cargo downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-ios-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.lock') }}
+
+      - name: Cache Naga native build
+        uses: actions/cache@v4
+        with:
+          path: awake/asset/shader-compiler/rust-native/target
+          key: naga-ios-sim-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}
+
+      - uses: ./.github/actions/ios-native
+
+      - name: Build Naga for the iOS simulator
+        run: ./gradlew :awake:asset:shader-compiler:buildNagaIosSimulatorArm64
+
+      - name: Verify Naga native library
+        shell: bash
+        run: test -f awake/asset/shader-compiler/rust-native/target/aarch64-apple-ios-sim/release/libawake_naga.a
 
       - name: Jolt iOS simulator physics tests
-        run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test
+        run: ./gradlew :awake:backend:jolt:iosSimulatorArm64Test :awake:scene:physics:iosSimulatorArm64Test :samples:engine-showcase:iosSimulatorArm64Test
+
+      - name: Upload iOS physics test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-physics-test-results
+          path: |
+            awake/backend/jolt/build/reports/tests/
+            awake/scene/physics/build/reports/tests/
+            samples/engine-showcase/build/reports/tests/
+          if-no-files-found: warn
 
   web-verification:
     runs-on: ubuntu-latest
@@ -197,7 +236,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Wasm/WebGPU browser verification (headless Chrome)
-        run: ./gradlew :samples:ui-showcase:wasmJsBrowserTest
+        run: ./gradlew :samples:ui-showcase:wasmJsBrowserTest :samples:engine-showcase:wasmJsBrowserTest
 
       # The physics backend has four bindings and CI only ran one of them. This is the wasmJs
       # binding executing the same commonTest suite as desktop, on the runner already here --
