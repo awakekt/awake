@@ -6,7 +6,7 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-09-12` | **Total Tracked Docs**: `210`
+**Last Self-Healed**: `2026-09-12` | **Total Tracked Docs**: `211`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
@@ -203,6 +203,7 @@
 | **General** | [`Archived: UI status report`](archive/2026-08-28-retired-ui-status.md) | `Archived` | This document is retained for history only. It describes the deleted immediate-mode UI module |
 | **General** | [`Changelog Archive (v0.1.0-dev.1 to v0.1.0-dev.7)`](archive/CHANGELOG-v0.1-archive.md) | `Archived` | This archive documents historical pre-releases of Awake Engine. |
 | **General** | [`Awake Engine — MVP phase log (archive)`](archive/mvp-phase-log.md) | `Archived` | Historical record of how phases 0–8 were executed, kept verbatim. Superseded as a planning |
+| **General** | [`Documentation Site on docs.awakekt.com`](deployment/mkdocs-site.md) | `Active` | The Awake documentation site is built with [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/) |
 | **General** | [`Samples on Cloudflare Pages`](deployment/samples-cloudflare-pages.md) | `Active` | The repository contains a GitHub Actions deployment for the two browser samples: |
 | **General** | [`ECS Benchmark Scorecard`](ecs-benchmark-scorecard.md) | `Active` | Latest rerun: `2026-08-21`, from the working tree based on commit `851663afb`, using the exact |
 | **General** | [`Compose parity handoff — 2026-08-27`](handoffs/2026-08-27-compose-parity-handoff.md) | `Active` | The open objective is **“implement remaining items”** from the Compose parity inventory. It is |

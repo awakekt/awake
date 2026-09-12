@@ -96,7 +96,7 @@ extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
     pom {
         name.set(project.provider { (project.findProperty("pom.name") as? String) ?: "Awake Engine - ${project.name}" })
         description.set(project.provider { project.description ?: (project.findProperty("pom.description") as? String) ?: "Awake Kotlin Multiplatform 2D/3D Engine module ${project.name}" })
-        url.set("https://awakekt.github.io/awake")
+        url.set("https://docs.awakekt.com")
         licenses {
             license {
                 name.set("Apache License, Version 2.0")

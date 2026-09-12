@@ -150,7 +150,7 @@ mavenPublishing {
     pom {
         name.set("Vulkan KMP Android Native")
         description.set("NDK-built JNI library and validation layers backing vulkan-kmp on Android")
-        url.set("https://awakekt.github.io/awake")
+        url.set("https://docs.awakekt.com")
         licenses {
             license {
                 name.set("Apache License, Version 2.0")
