@@ -337,6 +337,7 @@ public final class com/awakekt/awake/vulkan/pipeline/VulkanShaderResolver : com/
 public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awake/render/command/GpuDrawPreparationSource, com/awakekt/awake/render/renderer/Renderer {
 	public static final field Companion Lcom/awakekt/awake/vulkan/renderer/Renderer$Companion;
 	public fun awaitFrameResources ()V
+	public fun capability (Lcom/awakekt/awake/render/pipeline/GpuCapabilityKind;)Lcom/awakekt/awake/render/pipeline/GpuCapability;
 	public fun compositeUiTargets (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/renderer/UiTargetCompositeMode;)V
 	public fun createMaterial (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/RenderTarget;ILcom/awakekt/awake/render/texture/PbrTextureSet;)Lcom/awakekt/awake/render/material/Material;
 	public fun createMesh (Lcom/awakekt/awake/core/geometry/MeshGeometry;)Lcom/awakekt/awake/render/mesh/Mesh;
