@@ -156,10 +156,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Not `submodules: recursive` on the checkout: that would also clone MoltenVK, which this
-      # job never builds. JoltC needs its own nested JoltPhysics, hence --recursive here.
-      - name: Check out JoltC (and its nested JoltPhysics)
-        run: git submodule update --init --recursive awake/backend/jolt/ios-native/JoltC
+      # Both the JoltC and engine-showcase iOS tests use native interop. JoltC needs its nested
+      # JoltPhysics, while the showcase path also needs the MoltenVK headers and framework.
+      - name: Check out native iOS dependencies
+        run: |
+          git submodule update --init --recursive awake/backend/jolt/ios-native/JoltC
+          git submodule update --init awake/backend/vulkan/bindings/ios-native/MoltenVK
 
       - name: Setup JDK
         uses: actions/setup-java@v5
