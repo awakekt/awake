@@ -35,7 +35,7 @@ ShadcnCarousel(
         val indexState = remember { CarouselIntState(0) }
         val slides = remember {
             listOf(
-                "Slide 1: Welcome to Awake Engine Compose Multiplatform",
+                "Slide 1: Welcome to the Awake Engine UI showcase",
                 "Slide 2: 50+ Accessible UI Primitives Styled with OKLCH Tokens",
                 "Slide 3: High Performance Retained Rendering & Cross-Platform Parity",
             )

@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.sample.uishowcase.ui.pages.layout
 
-import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.height
 import com.awakekt.awake.compose.foundation.layout.width
@@ -13,6 +12,7 @@ import com.awakekt.awake.compose.foundation.rememberScrollState
 import com.awakekt.awake.compose.foundation.verticalScroll
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
 import com.awakekt.awake.sample.uishowcase.ui.ShowcasePage
 import com.awakekt.awake.ui.shadcn.components.ShadcnText
 import com.awakekt.awake.ui.shadcn.components.shadcnMuted

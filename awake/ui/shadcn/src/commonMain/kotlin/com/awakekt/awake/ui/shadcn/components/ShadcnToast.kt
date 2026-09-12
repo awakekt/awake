@@ -29,15 +29,26 @@ fun ShadcnToast(
     val theme = shadcnTheme
     Box(
         modifier
-            .background(theme.palette.card, theme.radii.lg)
+            // Sonner's toast is a popover surface, not a card. The distinction matters when a
+            // toast overlays a card-heavy screen: it should use the floating-surface token.
+            .background(theme.palette.popover, theme.radii.lg)
             .border(1f.dp, theme.palette.border, theme.radii.lg)
             .padding(Tw.Spacing.s4),
     ) {
         Column {
             if (title != null) {
-                ShadcnText(title, variant = ShadcnTextVariant.Small, weight = FontWeight.SemiBold)
+                ShadcnText(
+                    title,
+                    variant = ShadcnTextVariant.Small,
+                    color = theme.palette.popoverForeground,
+                    weight = FontWeight.SemiBold,
+                )
             }
-            ShadcnText(message, variant = ShadcnTextVariant.Small, color = theme.palette.cardForeground)
+            ShadcnText(
+                message,
+                variant = ShadcnTextVariant.Small,
+                color = theme.palette.popoverForeground,
+            )
         }
     }
 }

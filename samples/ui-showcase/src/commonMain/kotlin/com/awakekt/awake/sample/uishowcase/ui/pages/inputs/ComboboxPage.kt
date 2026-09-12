@@ -28,31 +28,31 @@ internal val ComboboxPage = ShowcasePage(
     title = "Combobox",
     category = ShowcaseCategory.Inputs,
     description = "Autocomplete input and command palette with a searchable list of suggestions.",
-    usageCode = """val frameworks = listOf("Next.js", "SvelteKit", "Nuxt.js", "Remix", "Astro").map(::ShadcnComboboxItem)
+    usageCode = """val targets = listOf("Awake Desktop", "Awake Android", "Awake iOS", "Awake WebGPU", "Awake Editor").map(::ShadcnComboboxItem)
 ShadcnCombobox(
-    items = frameworks,
+    items = targets,
     selectedIndex = selected,
     expanded = expanded,
     onExpandedChange = { expanded = it },
     onItemSelected = { selected = it },
-    placeholder = "Select framework...",
-    searchPlaceholder = "Search framework...",
+    placeholder = "Select Awake target...",
+    searchPlaceholder = "Search Awake target...",
 )""",
     referenceExample = "registry/new-york-v4/examples/combobox-demo.tsx",
     previewHeight = 360,
-    notes = listOf("Command-style framework search with auto-filtered anchored option popup."),
+    notes = listOf("Command-style Awake target search with an auto-filtered anchored option popup."),
     hero = {
         val state = remember { ComboboxState() }
         val options = listOf(
-            "Next.js",
-            "SvelteKit",
-            "Nuxt.js",
-            "Remix",
-            "Astro",
+            "Awake Desktop",
+            "Awake Android",
+            "Awake iOS",
+            "Awake WebGPU",
+            "Awake Editor",
         ).map(::ShadcnComboboxItem)
 
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ShadcnText("Framework", variant = ShadcnTextVariant.Small)
+            ShadcnText("Awake target", variant = ShadcnTextVariant.Small)
             ShadcnCombobox(
                 items = options,
                 selectedIndex = state.selected,
@@ -60,8 +60,8 @@ ShadcnCombobox(
                 onExpandedChange = { state.expanded = it },
                 onItemSelected = { state.selected = it },
                 id = "showcase-combobox",
-                placeholder = "Select framework...",
-                searchPlaceholder = "Search framework...",
+                placeholder = "Select Awake target...",
+                searchPlaceholder = "Search Awake target...",
             )
         }
     },

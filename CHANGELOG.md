@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **shadcn spinner motion.** Cached the tessellated arc and rotate the stable mesh per frame, removing
   per-frame stroke tessellation that caused uneven animation under load.
+- **UI showcase input forwarding.** Scene runtime frames now preserve secondary pointer presses,
+  pointer modifiers, and key events so context menus and keyboard interactions work in the running
+  showcase, not only in isolated component tests.
+- **shadcn surface parity.** Matched dark field tinting to `dark:bg-input/30` and changed toast
+  surfaces and text to the official Sonner `popover` tokens.
+- **UI showcase samples.** Removed React, Next.js, Radix, Stitches, and other web-framework copy
+  from Awake UI examples, keeping the showcase self-contained and Awake-specific.
 
 ## [0.1.0-alpha.2] - 2026-09-12
 

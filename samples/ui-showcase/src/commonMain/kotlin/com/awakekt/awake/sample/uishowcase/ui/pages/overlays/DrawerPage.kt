@@ -5,15 +5,17 @@
  */
 package com.awakekt.awake.sample.uishowcase.ui.pages.overlays
 
-import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
 import com.awakekt.awake.sample.uishowcase.ui.ShowcasePage
 import com.awakekt.awake.ui.shadcn.components.ShadcnButton
-import com.awakekt.awake.ui.shadcn.components.shadcnDrawer
 import com.awakekt.awake.ui.shadcn.components.ShadcnText
+import com.awakekt.awake.ui.shadcn.components.shadcnDrawer
 import com.awakekt.awake.ui.shadcn.components.shadcnMuted
 
-private class DrawerState { var visible: Boolean = false }
+private class DrawerState {
+    var visible: Boolean = false
+}
 
 internal val DrawerPage = ShowcasePage(
     id = "drawer",

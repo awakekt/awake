@@ -40,7 +40,7 @@ internal val CollapsiblePage = ShowcasePage(
     hero = {
         val state = remember { CollapsibleExpanded() }
         ShadcnCollapsible(
-            title = "@radix-ui/primitives",
+            title = "Awake UI primitives",
             expanded = state.open,
             onExpandedChange = { state.open = it },
         ) {
@@ -51,7 +51,7 @@ internal val CollapsiblePage = ShowcasePage(
         // Rendered open on purpose so revealed-content spacing and separators stay reviewable
         // without live interaction.
         ShadcnCollapsible(
-            title = "@radix-ui/primitives",
+            title = "Awake UI primitives",
             expanded = true,
             onExpandedChange = {},
         ) {
@@ -69,10 +69,10 @@ private fun CollapsibleRows() {
         shadcnMuted("Starred repositories in this workspace.")
         ShadcnSeparator(modifier = Modifier.padding(vertical = 4.dp))
         Row(Modifier.fillMaxWidth().height(32.dp)) {
-            ShadcnText("@radix-ui/colors", modifier = Modifier.padding(horizontal = 12.dp))
+            ShadcnText("Awake color tokens", modifier = Modifier.padding(horizontal = 12.dp))
         }
         Row(Modifier.fillMaxWidth().height(32.dp)) {
-            ShadcnText("@stitches/react", modifier = Modifier.padding(horizontal = 12.dp))
+            ShadcnText("Awake style recipes", modifier = Modifier.padding(horizontal = 12.dp))
         }
     }
 }

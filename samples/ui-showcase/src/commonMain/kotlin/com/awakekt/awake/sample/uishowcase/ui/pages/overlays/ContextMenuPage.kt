@@ -5,12 +5,12 @@
  */
 package com.awakekt.awake.sample.uishowcase.ui.pages.overlays
 
-import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
 import com.awakekt.awake.compose.foundation.layout.height
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
 import com.awakekt.awake.sample.uishowcase.ui.ShowcasePage
 import com.awakekt.awake.ui.shadcn.components.ShadcnContextMenu
 import com.awakekt.awake.ui.shadcn.components.ShadcnMenuEntry
@@ -27,7 +27,9 @@ private val ContextMenuEntries: List<ShadcnMenuEntry> = listOf(
     ShadcnMenuItem(label = "Delete item", destructive = true),
 )
 
-private class ContextMenuState { var selected: String = "Nothing selected" }
+private class ContextMenuState {
+    var selected: String = "Nothing selected"
+}
 
 internal val ContextMenuPage = ShowcasePage(
     id = "context-menu",

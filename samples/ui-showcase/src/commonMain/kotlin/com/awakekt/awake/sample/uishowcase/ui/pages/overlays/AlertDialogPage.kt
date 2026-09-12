@@ -5,8 +5,8 @@
  */
 package com.awakekt.awake.sample.uishowcase.ui.pages.overlays
 
-import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
 import com.awakekt.awake.compose.runtime.remember
+import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
 import com.awakekt.awake.sample.uishowcase.ui.ShowcasePage
 import com.awakekt.awake.ui.shadcn.components.ShadcnAlertDialog
 import com.awakekt.awake.ui.shadcn.components.ShadcnButton
@@ -36,8 +36,14 @@ internal val AlertDialogPage = ShowcasePage(
             cancelLabel = "Keep project",
             destructive = true,
             id = "showcase-alert-dialog",
-            onDismissRequest = { state.result = "Kept project"; state.visible = false },
-            onConfirm = { state.result = "Deleted project"; state.visible = false },
+            onDismissRequest = {
+                state.result = "Kept project"
+                state.visible = false
+            },
+            onConfirm = {
+                state.result = "Deleted project"
+                state.visible = false
+            },
         )
         shadcnMuted("Interaction proof: ${state.result}")
     },

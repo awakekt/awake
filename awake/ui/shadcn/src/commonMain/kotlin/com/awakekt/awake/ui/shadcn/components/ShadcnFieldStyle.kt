@@ -19,9 +19,9 @@ import com.awakekt.awake.ui.shadcn.ShadcnThemeValues
  * Their class strings are the same but for the height rule and the vertical pad -- `h-9 py-1` against
  * `min-h-16 py-2` -- so the shared part lives here rather than being typed twice and drifting.
  *
- * **`bg-transparent`, not a fill.** A field takes the colour of whatever it sits on, which is why an
- * input inside a card looks different from one on the page and both are correct. Reaching for
- * `palette.background` gives a field that punches a hole in a card.
+ * **`bg-transparent` in light mode, `dark:bg-input/30` in dark mode.** A field takes the colour of
+ * whatever it sits on in light mode, while the dark reference gives it the low-alpha input tint.
+ * Reaching for `palette.background` in both modes gives a field that punches a hole in a card.
  *
  * Focus is `border-ring` plus `ring-[3px] ring-ring/50`; the outer ring is applied by the field
  * component's `Modifier.focusRing` extension because it is not part of the style box model.
@@ -30,7 +30,13 @@ internal fun ShadcnThemeValues.fieldStyle(
     verticalPadding: Dp,
     focusRingMode: ShadcnFocusRingMode = ShadcnFocusRingMode.DrawWithContent,
 ): Style = Style {
-    background(com.awakekt.awake.core.color.Color.Transparent)
+    background(
+        if (config.dark) {
+            palette.input.withAlpha(palette.input.a * DARK_INPUT_ALPHA)
+        } else {
+            com.awakekt.awake.core.color.Color.Transparent
+        },
+    )
     border(FIELD_BORDER_WIDTH, palette.input)
     cornerRadius(radii.md)
     // Border folded into the inset: shadcn is `border-box` and Awake's border reserves no layout
@@ -56,3 +62,6 @@ internal fun ShadcnThemeValues.fieldStyle(
 private val FIELD_BORDER_WIDTH: Dp = 1.dp
 
 private const val DISABLED_ALPHA = 0.5f
+
+/** Source `dark:bg-input/30`, composed with the token's existing alpha. */
+private const val DARK_INPUT_ALPHA = 0.3f

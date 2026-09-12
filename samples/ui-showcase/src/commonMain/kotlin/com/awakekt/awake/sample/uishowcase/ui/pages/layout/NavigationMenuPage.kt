@@ -44,7 +44,7 @@ ShadcnNavigationMenu {
                 onOpenChange = { gettingStartedOpen.value = it },
             ) {
                 ShadcnText("Introduction")
-                shadcnMuted("Re-usable components built using Compose Multiplatform.")
+                shadcnMuted("Reusable components built for the Awake Engine.")
             }
 
             ShadcnNavigationMenuTrigger(
