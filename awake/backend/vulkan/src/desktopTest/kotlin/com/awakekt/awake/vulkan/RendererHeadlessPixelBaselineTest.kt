@@ -12,8 +12,8 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes2d.UiRenderFeature
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.testing.comparePixels
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -155,7 +155,7 @@ class RendererHeadlessPixelBaselineTest {
                     MeshGeometry(cubeVertices, cubeIndices, VertexFormat.PositionNormalColor),
                 ).also { mesh = it }
             val createdMaterial = renderer.createMaterial().also { material = it }
-            renderer.renderToTexture(target, camera, listOf(DrawCall(createdMesh, createdMaterial)))
+            renderer.renderSceneToTexture(target, camera, listOf(RenderDrawCommand(createdMesh, createdMaterial)))
             val pixels = runBlocking { renderer.readPixels(target) }
 
             if (System.getProperty("AWAKE_RECORD_SNAPSHOTS")?.toBoolean() == true) {
@@ -184,20 +184,20 @@ class RendererHeadlessPixelBaselineTest {
                 }
             }
 
-            // Regression coverage for DrawCall's documented "mesh/material may be shared"
+            // Regression coverage for RenderDrawCommand's documented "mesh/material may be shared"
             // contract. Before materials had per-draw uniform slots, the second MVP rewrite
             // could overwrite the first draw before the GPU consumed it, collapsing both cubes
             // onto the last transform.
-            renderer.renderToTexture(
+            renderer.renderSceneToTexture(
                 target,
                 camera,
                 listOf(
-                    DrawCall(
+                    RenderDrawCommand(
                         createdMesh,
                         createdMaterial,
                         Mat4().translate(-SHARED_CUBE_OFFSET_X, 0f, 0f),
                     ),
-                    DrawCall(
+                    RenderDrawCommand(
                         createdMesh,
                         createdMaterial,
                         Mat4().translate(SHARED_CUBE_OFFSET_X, 0f, 0f),

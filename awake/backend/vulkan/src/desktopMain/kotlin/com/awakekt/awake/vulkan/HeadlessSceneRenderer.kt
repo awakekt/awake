@@ -8,9 +8,9 @@ package com.awakekt.awake.vulkan
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes2d.UiRenderFeature
-import com.awakekt.awake.render.renderer.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -62,6 +62,28 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         // Set 1: the shadow map's own descriptor set, beside the material's set 0.
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
     )
+    val backCulledScenePipeline = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        sceneRenderPass,
+        descriptorSetLayout,
+        runBlocking { spirvPair(PackShaderSets.LitShadow) },
+        VertexFormat.PositionNormalColor,
+        vertexEntryPoint = "vertexMain",
+        fragmentEntryPoint = "fragmentMain",
+        extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
+        cullMode = com.awakekt.awake.vulkan.enums.VkCullModeFlagBits.VK_CULL_MODE_BACK_BIT,
+    )
+    val texturedPipeline = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        sceneRenderPass,
+        descriptorSetLayout,
+        runBlocking { spirvPair(PackShaderSets.Textured) },
+        VertexFormat.PositionNormalColorUv,
+        vertexEntryPoint = "vertexMain",
+        fragmentEntryPoint = "fragmentMain",
+    )
     val depthPrePass = DepthPrePassFeature(
         depthTarget,
         DepthOnlyPipeline(
@@ -87,7 +109,12 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
     val renderer = VulkanRenderer(
         graphicsDevice = graphicsDevice,
         swapchainManager = swapchainManager,
-        pipelines = PipelineTable(primary = scenePipeline, primaryFormat = scenePipeline.vertexFormat),
+        pipelines = PipelineTable(
+            primary = scenePipeline,
+            primaryFormat = scenePipeline.vertexFormat,
+            byFormat = mapOf(VertexFormat.PositionNormalColorUv to texturedPipeline),
+            backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
+        ),
         renderFeatures = listOf(
             OpaqueRenderFeature(VulkanLinePass(linePipeline)),
             UiRenderFeature(VulkanUiPass()),
@@ -103,6 +130,8 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         override fun close() {
             renderer.destroy()
             scenePipeline.destroy()
+            backCulledScenePipeline.destroy()
+            texturedPipeline.destroy()
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, descriptorSetLayout.handle)
             transferContext.destroy()
             Vulkan.vkDestroyRenderPass(graphicsDevice.device, sceneRenderPass)

@@ -10,6 +10,7 @@ import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.webgpu.mesh.meshIndexFormat
 import io.ygdrasil.webgpu.GPUBindGroup
 import io.ygdrasil.webgpu.GPUBuffer
@@ -28,17 +29,21 @@ import com.awakekt.awake.render.command.BufferHandle as RenderBufferHandle
 internal class WebGpuCommandRecorder(private val encoder: GPURenderPassEncoder) : CommandRecorder {
 
     private var bindingLayout: BindingLayout = BindingLayout.Standard
+    private var currentPipeline: WebGpuPipelineHandle? = null
 
     override fun bindPipeline(pipeline: PipelineHandle) {
         val webGpuPipeline = pipeline as WebGpuPipelineHandle
         encoder.setPipeline(webGpuPipeline.pipeline)
         bindingLayout = webGpuPipeline.bindingLayout
+        currentPipeline = webGpuPipeline
     }
 
     /** WebGPU validates a bind group against the currently bound pipeline's own layout, so the
      * Vulkan side's pipeline-layout tracking has no counterpart here. */
     override fun bindMaterial(semantic: BindingSemantic, binding: MaterialBinding) {
-        encoder.setBindGroup(bindingLayout.slot(semantic).toUInt(), (binding as WebGpuBindGroupHandle).bindGroup)
+        val group = bindingLayout.slot(semantic)
+        if (currentPipeline?.hasBindingGroup(group) != true) return
+        encoder.setBindGroup(group.toUInt(), (binding as WebGpuBindGroupHandle).bindGroup)
     }
 
     override fun bindVertexBuffer(binding: Int, buffer: RenderBufferHandle) {
@@ -67,7 +72,25 @@ internal class WebGpuCommandRecorder(private val encoder: GPURenderPassEncoder) 
 class WebGpuPipelineHandle(
     val pipeline: GPURenderPipeline,
     override val bindingLayout: BindingLayout = BindingLayout.Standard,
+    val materialBindings: GroupBindings? = null,
+    val hasGroupZeroBindings: Boolean = true,
+    val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
 ) : PipelineHandle
+
+/** Legacy pipelines omit metadata; retain their historical group-0 behavior until migrated. */
+fun WebGpuPipelineHandle.hasBindingGroup(group: Int): Boolean =
+    if (bindingsByGroup.isEmpty()) group == 0 && hasGroupZeroBindings else group in bindingsByGroup
+
+/** Minimum uniform buffer byte size declared by this pipeline for [group] and [binding], or 0 if undeclared. */
+fun WebGpuPipelineHandle.uniformByteSize(group: Int = 0, binding: Int = 0): Long {
+    val fromGroup = bindingsByGroup[group]?.uniformBufferSize(binding) ?: 0L
+    if (fromGroup > 0L) return fromGroup
+    if (group == 0) {
+        val fromMaterial = materialBindings?.uniformBufferSize(binding) ?: 0L
+        if (fromMaterial > 0L) return fromMaterial
+    }
+    return 0L
+}
 
 class WebGpuBindGroupHandle(val bindGroup: GPUBindGroup) : MaterialBinding
 

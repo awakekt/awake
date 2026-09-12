@@ -6,16 +6,22 @@
 package com.awakekt.awake.vulkan.pipeline
 
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.render.renderer.SHADOW_CASCADE_PASS_GROUP
-import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
+import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.render.command.GpuShadowCascadeData
+import com.awakekt.awake.render.command.GpuSubPass
+import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
+import com.awakekt.awake.render.pipeline.BindingLayout
+import com.awakekt.awake.render.pipeline.DepthCasterKind
+import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkSubpassContents
+import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkViewport
 import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
-import com.awakekt.awake.vulkan.renderer.PreparedDrawCall
 import com.awakekt.awake.vulkan.renderer.Renderer
 import com.awakekt.awake.vulkan.texture.DepthTarget
 
@@ -43,7 +49,30 @@ internal class DepthPrePassFeature(
      * pass so shaders can sample the depth this pass wrote. */
     internal val depthTarget: DepthTarget,
     private val depthOnlyPipeline: DepthOnlyPipeline,
+    private val variantPipelines: Map<DepthCasterKind, DepthOnlyPipeline> = emptyMap(),
+    private val formatPipelines: Map<VertexFormat, DepthOnlyPipeline> = emptyMap(),
+    private val keyedVariantPipelines: Map<DepthRenderKey, DepthOnlyPipeline> = emptyMap(),
 ) {
+    internal fun pipelineFor(kind: DepthCasterKind, format: VertexFormat): DepthOnlyPipeline? {
+        val pipeline = if (kind == DepthCasterKind.Ordinary) {
+            formatPipelines[format] ?: depthOnlyPipeline
+        } else {
+            variantPipelines[kind]
+        }
+        return pipeline?.takeIf { it.vertexFormat == format }
+    }
+
+    internal fun pipelineFor(key: DepthRenderKey, format: VertexFormat): DepthOnlyPipeline? {
+        // A masked caster cannot use an opaque fallback: that would write depth for discarded
+        // texels and make later passes treat transparent holes as solid geometry. Until the
+        // backend has a keyed masked resource, omit this draw from the depth pass safely.
+        if (key.alphaMode == com.awakekt.awake.render.pipeline.AlphaMode.Masked) {
+            return keyedVariantPipelines[key]?.takeIf { it.vertexFormat == format }
+        }
+        return (keyedVariantPipelines[key] ?: pipelineFor(key.kind, format))
+            ?.takeIf { it.vertexFormat == format }
+    }
+
     /**
      * [commandBuffer] is the caller's already-begun one-time buffer (`Renderer` owns that
      * runner); [castFormat] is the one vertex format this pipeline can bind; [cascades] is this
@@ -56,25 +85,63 @@ internal class DepthPrePassFeature(
      */
     fun recordCommands(
         commandBuffer: Long,
-        drawCalls: List<PreparedDrawCall>,
+        drawCalls: List<PreparedDraw>,
         castFormat: VertexFormat,
-        cascades: ShadowCascadeUniforms,
+        cascades: GpuShadowCascadeData,
+    ) = recordCommands(commandBuffer, drawCalls, castFormat, cascades.viewProjections)
+
+    /** Records the generic packet's arbitrary layered depth resource. */
+    fun recordCommands(
+        commandBuffer: Long,
+        drawCalls: List<PreparedDraw>,
+        castFormat: VertexFormat,
+        viewProjections: List<Mat4>,
     ) {
+        require(viewProjections.isNotEmpty()) { "A layered depth pass needs at least one matrix." }
         // EVERY layer, not just the ones this frame's cascade set fills. A layer that is never
         // rendered is never written, and sampling the array then reads an image subresource in an
         // undefined layout -- which the validation layer rejects and a driver may render as
         // anything. A configuration with fewer cascades than layers repeats its last one, so the
         // extra passes are duplicates rather than holes.
+        val allPipelines = buildList {
+            add(depthOnlyPipeline)
+            addAll(variantPipelines.values)
+            addAll(keyedVariantPipelines.values)
+            addAll(formatPipelines.values)
+        }.distinct()
         for (cascade in 0 until depthTarget.layers) {
-            val source = cascades.viewProjections[minOf(cascade, cascades.count - 1)]
-            depthOnlyPipeline.writeCascade(cascade, source)
+            val source = viewProjections[minOf(cascade, viewProjections.lastIndex)]
+            allPipelines.forEach { it.writeCascade(cascade, source) }
             recordCascade(commandBuffer, drawCalls, castFormat, cascade)
+        }
+    }
+
+    /** Missing layers are still cleared, keeping every sampled subresource initialized without
+     * making this backend interpret why a layer was requested. */
+    fun recordCommands(
+        commandBuffer: Long,
+        subPasses: List<GpuSubPass>,
+        castFormat: VertexFormat,
+    ) {
+        if (subPasses.isEmpty()) return
+        val byLayer = subPasses.associateBy { it.targetLayer }
+        val allPipelines = buildList {
+            add(depthOnlyPipeline)
+            addAll(variantPipelines.values)
+            addAll(keyedVariantPipelines.values)
+            addAll(formatPipelines.values)
+        }.distinct()
+        for (layer in 0 until depthTarget.layers) {
+            val subPass = byLayer[layer]
+            val source = subPass?.viewProjection ?: Mat4()
+            allPipelines.forEach { it.writeCascade(layer, source) }
+            recordCascade(commandBuffer, subPass?.resolvedDraws.orEmpty(), castFormat, layer)
         }
     }
 
     private fun recordCascade(
         commandBuffer: Long,
-        drawCalls: List<PreparedDrawCall>,
+        drawCalls: List<PreparedDraw>,
         castFormat: VertexFormat,
         cascade: Int,
     ) {
@@ -89,17 +156,6 @@ internal class DepthPrePassFeature(
             renderPassInfo,
             VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
         )
-        depthOnlyPipeline.bind(commandBuffer)
-        // Set 1, once per cascade rather than per draw: every mesh in this pass renders through
-        // the same matrix, and only the pass knows which cascade it is.
-        if (depthOnlyPipeline.hasCascadeBlock) {
-            VulkanDescriptors.vkCmdBindDescriptorSet(
-                commandBuffer,
-                depthOnlyPipeline.pipelineLayout,
-                SHADOW_CASCADE_PASS_GROUP,
-                depthOnlyPipeline.cascadeBinding(cascade),
-            )
-        }
         val size = depthTarget.size.toFloat()
         Vulkan.vkCmdSetViewport(
             commandBuffer,
@@ -111,21 +167,74 @@ internal class DepthPrePassFeature(
             0,
             arrayOf(VkRect2D(extent = VkExtent2D(depthTarget.size, depthTarget.size))),
         )
+        var boundPipeline: DepthOnlyPipeline? = null
         var drawIndex = 0
         while (drawIndex < drawCalls.size) {
             val prepared = drawCalls[drawIndex]
-            if (prepared.pipeline.vertexFormat == castFormat) {
-                // Safe for the same reason RendererDraw3D's own `mesh as Mesh` is: a
-                // Renderer only ever draws meshes it created itself. bind/draw live on the
-                // concrete Mesh, not the shared interface -- they take a VkCommandBuffer.
-                prepared.mesh.bind(commandBuffer)
-                prepared.material.bind(
+            val kind = when {
+                prepared.instances > 1 && prepared.jointPaletteBinding != null ->
+                    DepthCasterKind.SkinnedInstanced
+                prepared.instances > 1 && prepared.instanceColorBuffer != null ->
+                    DepthCasterKind.Particle
+                prepared.instances > 1 -> DepthCasterKind.Instanced
+                prepared.vertexFormat == VertexFormat.PositionNormalColorSkin ->
+                    DepthCasterKind.Skinned
+                else -> DepthCasterKind.Ordinary
+            }
+            val pipeline = prepared.vertexFormat?.let { pipelineFor(kind, it) }
+            val vertexBuffer = prepared.vertexBuffer as? VulkanBufferBinding
+            val indexBuffer = prepared.indexBuffer as? VulkanBufferBinding
+            val depthMaterial = prepared.depthMaterialBinding ?: prepared.materialBinding
+            val paletteBinding = prepared.depthJointPaletteBinding ?: prepared.jointPaletteBinding
+            val instanceBuffer = prepared.instanceVertexBuffer as? VulkanBufferBinding
+            if (pipeline != null && vertexBuffer != null && depthMaterial != null) {
+                if (boundPipeline !== pipeline) {
+                    pipeline.bind(commandBuffer)
+                    if (pipeline.hasCascadeBlock) {
+                        VulkanDescriptors.vkCmdBindDescriptorSet(
+                            commandBuffer,
+                            pipeline.pipelineLayout,
+                            SHADOW_CASCADE_PASS_GROUP,
+                            pipeline.cascadeBinding(cascade),
+                        )
+                    }
+                    boundPipeline = pipeline
+                }
+                VulkanBuffers.vkCmdBindVertexBuffers(
                     commandBuffer,
-                    depthOnlyPipeline.pipelineLayout,
-                    prepared.frameIndex,
-                    prepared.uniformSlotIndex,
+                    0,
+                    vertexBuffer.asArray,
+                    longArrayOf(0L),
                 )
-                prepared.mesh.draw(commandBuffer)
+                if (kind != DepthCasterKind.Ordinary && instanceBuffer != null) {
+                    VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 1, instanceBuffer.asArray, longArrayOf(0L))
+                    (prepared.instanceColorBuffer as? VulkanBufferBinding)?.let {
+                        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 2, it.asArray, longArrayOf(0L))
+                    }
+                    (prepared.instanceFrameBuffer as? VulkanBufferBinding)?.let {
+                        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 3, it.asArray, longArrayOf(0L))
+                    }
+                }
+                VulkanDescriptors.vkCmdBindDescriptorSet(
+                    commandBuffer,
+                    pipeline.pipelineLayout,
+                    BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.Material),
+                    (depthMaterial as VulkanMaterialBinding).descriptorSetHandle,
+                )
+                if (kind == DepthCasterKind.SkinnedInstanced && paletteBinding != null) {
+                    VulkanDescriptors.vkCmdBindDescriptorSet(
+                        commandBuffer,
+                        pipeline.pipelineLayout,
+                        BindingLayout.Standard.slot(com.awakekt.awake.render.pipeline.BindingSemantic.JointPalette),
+                        (paletteBinding as VulkanMaterialBinding).descriptorSetHandle,
+                    )
+                }
+                if (indexBuffer != null) {
+                    VulkanBuffers.vkCmdBindIndexBuffer(commandBuffer, indexBuffer.handle, 0, com.awakekt.awake.vulkan.models.info.VkIndexType.VK_INDEX_TYPE_UINT32)
+                    VulkanBuffers.vkCmdDrawIndexed(commandBuffer, prepared.elementCount, prepared.instances, 0, 0, 0)
+                } else {
+                    Vulkan.vkCmdDraw(commandBuffer, prepared.elementCount, prepared.instances, 0, 0)
+                }
             }
             drawIndex += 1
         }
@@ -133,7 +242,10 @@ internal class DepthPrePassFeature(
     }
 
     fun destroy() {
-        depthOnlyPipeline.destroy()
+        buildList {
+            add(depthOnlyPipeline)
+            addAll(variantPipelines.values)
+        }.distinct().forEach { it.destroy() }
         depthTarget.destroy()
     }
 }

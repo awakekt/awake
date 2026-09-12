@@ -7,7 +7,10 @@ package com.awakekt.awake.vulkan.ui
 
 import com.awakekt.awake.core.geometry.toByteArrayLE
 import com.awakekt.awake.core.graphics2d.BlendMode
+import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.passes2d.UiPipelineKind
+import com.awakekt.awake.render.passes2d.UiUniformLayouts
+import com.awakekt.awake.render.passes2d.uiUniformFloats
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.vulkan.VK_SUBPASS_EXTERNAL
@@ -268,7 +271,7 @@ class UiRenderPipeline(
     }
 
     private fun createScreenSizeUniformBuffer() {
-        val bufferSize = SCREEN_SIZE_UNIFORM_BYTES.toLong()
+        val bufferSize = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong()
         screenSizeBuffer = VulkanBuffers.vkCreateBuffer(
             device,
             VkBufferCreateInfo(size = bufferSize, usage = VkBufferUsageFlagBits.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT),
@@ -309,7 +312,10 @@ class UiRenderPipeline(
             descriptorSet,
             0,
             VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            VkDescriptorBufferInfo(buffer = screenSizeBuffer, range = SCREEN_SIZE_UNIFORM_BYTES.toLong()),
+            VkDescriptorBufferInfo(
+                buffer = screenSizeBuffer,
+                range = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong(),
+            ),
         )
         if (fixedTexture != null) {
             VulkanDescriptors.vkUpdateDescriptorSetImage(
@@ -376,7 +382,10 @@ class UiRenderPipeline(
             set,
             0,
             VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            VkDescriptorBufferInfo(buffer = screenSizeBuffer, range = SCREEN_SIZE_UNIFORM_BYTES.toLong()),
+            VkDescriptorBufferInfo(
+                buffer = screenSizeBuffer,
+                range = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong(),
+            ),
         )
         return TextureDescriptorSlot(pool, set)
     }
@@ -452,7 +461,10 @@ class UiRenderPipeline(
             slot.descriptorSet,
             4,
             VkDescriptorType.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-            VkDescriptorBufferInfo(buffer = screenSizeBuffer, range = SCREEN_SIZE_UNIFORM_BYTES.toLong()),
+            VkDescriptorBufferInfo(
+                buffer = screenSizeBuffer,
+                range = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toLong(),
+            ),
         )
         VulkanBuffers.writeBufferMemoryBytes(
             device,
@@ -506,15 +518,9 @@ class UiRenderPipeline(
             device,
             screenSizeBufferMemory,
             0,
-            floatArrayOf(
-                2f / screenWidth,
-                2f / screenHeight,
-                -1f,
-                -1f,
-                if (fontIsDistanceField) 1f else 0f,
-                fontRangePx,
-                0f,
-                0f,
+            uiUniformFloats(
+                screenToNdc = Vec4(2f / screenWidth, 2f / screenHeight, -1f, -1f),
+                fontInfo = Vec4(if (fontIsDistanceField) 1f else 0f, fontRangePx, 0f, 0f),
             ),
         )
     }
@@ -755,6 +761,5 @@ class UiRenderPipeline(
     }
 
     companion object {
-        private const val SCREEN_SIZE_UNIFORM_BYTES = 32
     }
 }

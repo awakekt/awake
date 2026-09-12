@@ -16,13 +16,16 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.math.times
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.directionalShadowBox
+import com.awakekt.awake.render.passes.pointShadowMatrices
+import com.awakekt.awake.render.passes.shadowCascadeUniforms
+import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
+import com.awakekt.awake.render.passes.uniforms.PointLight
+import com.awakekt.awake.render.passes.uniforms.PointShadowLight
+import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes2d.UiRenderFeature
-import com.awakekt.awake.render.renderer.DEFAULT_SHADOW_CASCADES
-import com.awakekt.awake.render.renderer.DrawCall
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.createMaterial
-import com.awakekt.awake.render.renderer.directionalShadowBox
-import com.awakekt.awake.render.renderer.shadowCascadeUniforms
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
@@ -78,8 +81,6 @@ class RendererHeadlessCascadedShadowTest {
         val renderer = sharedRenderer()
         val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
         try {
-            renderer.shadowsEnabled = true
-
             val cascaded = renderer.renderScene(target, useCascades = true)
             val fixedBox = renderer.renderScene(target, useCascades = false)
 
@@ -125,7 +126,6 @@ class RendererHeadlessCascadedShadowTest {
         val renderer = sharedRenderer()
         val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
         try {
-            renderer.shadowsEnabled = true
             val camera = topDownCamera()
             val pixels = renderer.renderProbeScene(target, camera)
 
@@ -202,10 +202,10 @@ class RendererHeadlessCascadedShadowTest {
             val caster = createMesh(centredPlane(PROBE_CASTER_HALF, y = PROBE_HEIGHT)).also { casterMesh = it }
             val shared = createMaterial(LitShadowUniformLayout).also { material = it }
             val base = SceneLight(direction = PROBE_LIGHT, color = Vec3f(1f, 1f, 1f))
-            renderToTexture(
+            renderSceneToTexture(
                 target,
                 camera,
-                listOf(DrawCall(ground, shared), DrawCall(caster, shared)),
+                listOf(RenderDrawCommand(ground, shared), RenderDrawCommand(caster, shared)),
                 base.copy(cascades = shadowCascadeUniforms(base, camera, ASPECT, clipSpace)),
             )
             return runBlocking { readPixels(target) }.data
@@ -246,7 +246,6 @@ class RendererHeadlessCascadedShadowTest {
         val renderer = sharedRenderer()
         val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
         try {
-            renderer.shadowsEnabled = true
             val pixels = renderer.renderRestingCaster(target)
 
             val gap = shadowGapFromFootprint(pixels)
@@ -259,6 +258,39 @@ class RendererHeadlessCascadedShadowTest {
                 "The nearest shadowed ground is ${gap}m from the caster's footprint, past the " +
                     "${MAX_CONTACT_GAP}m this allows. That gap IS peter-panning: the shadow has " +
                     "slid out from under the thing casting it, and the object reads as floating.",
+            )
+        } finally {
+            target.destroy()
+        }
+    }
+
+    /**
+     * A point-light shadow must touch the resting caster too.
+     *
+     * This is deliberately separate from the directional contact probe above: point shadows use
+     * a perspective depth projection and six cube faces, so a directional test cannot tell us
+     * whether the point receiver's depth bias is pulling the contact edge away. The companion
+     * math test in `PointShadowLookupTest` records the old fixed-NDC failure numerically; this
+     * probe verifies the actual Vulkan frame still has a contact shadow.
+     */
+    @Test
+    fun aPointLightShadowStaysUnderRestingCaster() {
+        val renderer = sharedRenderer()
+        val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
+        try {
+            val shadowed = renderer.renderPointRestingCaster(target, shadowed = true)
+            val unshadowed = renderer.renderPointRestingCaster(target, shadowed = false)
+            val gap = pointShadowGapFromFootprint(shadowed, unshadowed)
+            assertTrue(
+                gap != null,
+                "The point light did not shadow any ground outside the caster footprint, so there " +
+                    "is no contact gap to measure.",
+            )
+            assertTrue(
+                gap!! < MAX_POINT_CONTACT_GAP,
+                "The nearest point-shadowed ground is ${gap}m from the caster's footprint, past " +
+                    "the ${MAX_POINT_CONTACT_GAP}m allowance. The point receiver bias is pulling " +
+                    "the shadow away from its caster.",
             )
         } finally {
             target.destroy()
@@ -290,14 +322,14 @@ class RendererHeadlessCascadedShadowTest {
                 orthoHalfHeight = CONTACT_VIEW_HALF
             }
             val base = SceneLight(direction = CONTACT_LIGHT, color = Vec3f(1f, 1f, 1f))
-            renderToTexture(
+            renderSceneToTexture(
                 target,
                 camera,
                 listOf(
-                    DrawCall(ground, shared),
+                    RenderDrawCommand(ground, shared),
                     // Lifted by its own half-height so the box RESTS on the ground rather than
                     // straddling it -- the contact is what this measures.
-                    DrawCall(caster, shared, Mat4().translate(0f, CONTACT_HALF, 0f)),
+                    RenderDrawCommand(caster, shared, Mat4().translate(0f, CONTACT_HALF, 0f)),
                 ),
                 base.copy(cascades = shadowCascadeUniforms(base, camera, ASPECT, clipSpace)),
             )
@@ -305,6 +337,69 @@ class RendererHeadlessCascadedShadowTest {
         } finally {
             groundMesh?.destroy()
             casterMesh?.destroy()
+            material?.destroy()
+        }
+    }
+
+    /** Straight down on a point-lit cube resting at the origin. */
+    private fun Renderer.renderPointRestingCaster(target: RenderTarget, shadowed: Boolean): ByteArray {
+        var groundMesh: RenderMesh? = null
+        var casterMesh: RenderMesh? = null
+        var material: RenderMaterial? = null
+        try {
+            val ground = createMesh(centredPlane(CONTACT_GROUND_HALF, y = 0f)).also { groundMesh = it }
+            val caster = createMesh(generate { cube(size = CONTACT_HALF * 2f) }).also { casterMesh = it }
+            val shared = createMaterial(LitShadowUniformLayout).also { material = it }
+            val camera = topDownCamera(eyeHeight = POINT_CONTACT_EYE_HEIGHT, viewDistance = POINT_VIEW_DISTANCE).apply {
+                projection = Lens.Projection.Orthographic
+                orthoHalfHeight = POINT_CONTACT_VIEW_HALF
+            }
+            val pointPosition = Vec3f(2f, 1.5f, 0f)
+            val pointRange = 8f
+            val pointBaseLayer = if (shadowed) {
+                com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
+            } else {
+                -1
+            }
+            val light = SceneLight(
+                direction = Vec3f.ZERO,
+                color = Vec3f.ZERO,
+                points = listOf(
+                    PointLight(
+                        position = pointPosition,
+                        color = Vec3f(1f, 1f, 1f),
+                        range = pointRange,
+                        shadowBaseLayer = pointBaseLayer,
+                    ),
+                ),
+                pointShadows = if (shadowed) {
+                    listOf(
+                        PointShadowLight(
+                            baseLayer = pointBaseLayer,
+                            viewProjections = pointShadowMatrices(
+                                position = pointPosition,
+                                range = pointRange,
+                                clipSpace = clipSpace,
+                            ).viewProjections,
+                        ),
+                    )
+                } else {
+                    emptyList()
+                },
+            )
+            renderSceneToTexture(
+                target,
+                camera,
+                listOf(
+                    RenderDrawCommand(ground, shared),
+                    RenderDrawCommand(caster, shared, Mat4().translate(0f, CONTACT_HALF, 0f)),
+                ),
+                light,
+            )
+            return runBlocking { readPixels(target) }.data
+        } finally {
+            casterMesh?.destroy()
+            groundMesh?.destroy()
             material?.destroy()
         }
     }
@@ -327,7 +422,6 @@ class RendererHeadlessCascadedShadowTest {
         val renderer = sharedRenderer()
         val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
         try {
-            renderer.shadowsEnabled = true
             val pixels = renderer.renderShowcaseFrame(target)
 
             val shadowed = (TARGET_SIZE / 2 until TARGET_SIZE).sumOf { y ->
@@ -364,7 +458,6 @@ class RendererHeadlessCascadedShadowTest {
         val renderer = sharedRenderer()
         val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
         try {
-            renderer.shadowsEnabled = true
             val pixels = renderer.renderShowcaseFrame(target)
 
             val speckles = pixels.isolatedShadowPixels()
@@ -410,7 +503,7 @@ class RendererHeadlessCascadedShadowTest {
                     ?: return@mapNotNull null
                 val transform = node.transform
                 val mesh = if (renderer.mesh == GROUND_MESH) ground else cube
-                DrawCall(
+                RenderDrawCommand(
                     mesh,
                     shared,
                     Mat4()
@@ -418,7 +511,7 @@ class RendererHeadlessCascadedShadowTest {
                         .translate(transform.position.x, transform.position.y, transform.position.z),
                 )
             }
-            renderToTexture(
+            renderSceneToTexture(
                 target,
                 camera,
                 draws,
@@ -503,7 +596,6 @@ class RendererHeadlessCascadedShadowTest {
         val renderer = sharedRenderer()
         val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
         try {
-            renderer.shadowsEnabled = true
             // Twice, and the second frame is the one measured. The renderer is shared with the
             // other tests here, and whichever ran before left its own light in the material's
             // uniform buffer; a first frame after that measures the handover rather than this
@@ -554,12 +646,12 @@ class RendererHeadlessCascadedShadowTest {
                 orthoHalfHeight = CONTACT_VIEW_HALF
             }
             val base = SceneLight(direction = GRAZING_LIGHT, color = Vec3f(1f, 1f, 1f))
-            renderToTexture(
+            renderSceneToTexture(
                 target,
                 camera,
                 listOf(
-                    DrawCall(ground, shared),
-                    DrawCall(caster, shared, Mat4().translate(0f, CONTACT_HALF, 0f)),
+                    RenderDrawCommand(ground, shared),
+                    RenderDrawCommand(caster, shared, Mat4().translate(0f, CONTACT_HALF, 0f)),
                 ),
                 // The default cascade count, and a box far enough out to straddle a boundary:
                 // that is where the lookup used to leave its own cascade's map and read clamped
@@ -616,7 +708,29 @@ class RendererHeadlessCascadedShadowTest {
                 val shadowedGround = pixels.redAt(x, y) < SHADOW_CUTOFF && (dx > 0f || dz > 0f)
                 if (!shadowedGround) continue
                 val distance = kotlin.math.sqrt(dx * dx + dz * dz)
-                if (nearest == null || distance < nearest!!) nearest = distance
+                if (distance < (nearest ?: Float.POSITIVE_INFINITY)) nearest = distance
+            }
+        }
+        return nearest
+    }
+
+    /** World distance from the caster footprint to the first pixel darkened by point shadowing. */
+    private fun pointShadowGapFromFootprint(shadowed: ByteArray, unshadowed: ByteArray): Float? {
+        val metresPerPixel = 2f * POINT_CONTACT_VIEW_HALF / TARGET_SIZE
+        var nearest: Float? = null
+        for (y in 0 until TARGET_SIZE) {
+            for (x in 0 until TARGET_SIZE) {
+                val worldX = (x - TARGET_SIZE / 2f) * metresPerPixel
+                val worldZ = (y - TARGET_SIZE / 2f) * metresPerPixel
+                val dx = maxOf(0f, kotlin.math.abs(worldX) - CONTACT_HALF)
+                val dz = maxOf(0f, kotlin.math.abs(worldZ) - CONTACT_HALF)
+                if (dx == 0f && dz == 0f) continue
+                val offset = (y * TARGET_SIZE + x) * BYTES_PER_PIXEL
+                val shadowDelta = (unshadowed[offset].toInt() and 0xFF) -
+                    (shadowed[offset].toInt() and 0xFF)
+                if (shadowDelta < POINT_SHADOW_DELTA) continue
+                val distance = kotlin.math.sqrt(dx * dx + dz * dz)
+                if (distance < (nearest ?: Float.POSITIVE_INFINITY)) nearest = distance
             }
         }
         return nearest
@@ -658,7 +772,7 @@ class RendererHeadlessCascadedShadowTest {
             } else {
                 base.copy(viewProjection = directionalShadowBox(base.direction, clipSpace).viewProjection)
             }
-            renderToTexture(target, camera, listOf(DrawCall(ground, shared), DrawCall(caster, shared)), light)
+            renderSceneToTexture(target, camera, listOf(RenderDrawCommand(ground, shared), RenderDrawCommand(caster, shared)), light)
             val pixels = runBlocking { readPixels(target) }.data
             val band = (BAND_TOP until BAND_BOTTOM).flatMap { y ->
                 (BAND_LEFT until BAND_RIGHT).map { x -> pixels.redAt(x, y) }
@@ -744,6 +858,12 @@ class RendererHeadlessCascadedShadowTest {
 
         /** Half-width of the resting caster in the contact probe. */
         private const val CONTACT_HALF = 1f
+        private const val CONTACT_GROUND_HALF = 5f
+        private const val POINT_CONTACT_EYE_HEIGHT = 8f
+        private const val POINT_CONTACT_VIEW_HALF = 4f
+        private const val POINT_VIEW_DISTANCE = 20f
+        private const val MAX_POINT_CONTACT_GAP = 0.08f
+        private const val POINT_SHADOW_DELTA = 8
 
         /** The showcase scene's own values -- see `cascaded-shadows.scene.json`. */
         /** `EngineShowcaseModule` registers "ground" as a 10-unit plane; the scene scales it. */
@@ -828,7 +948,7 @@ class RendererHeadlessCascadedShadowTest {
             graphicsDevice.createHeadless()
             val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
             swapchainManager.createHeadless(TARGET_SIZE, TARGET_SIZE)
-            val depthTarget = DepthTarget(graphicsDevice, layers = DEFAULT_SHADOW_CASCADES, arrayed = true, comparison = true)
+            val depthTarget = DepthTarget(graphicsDevice, layers = MAX_SHADOW_TARGET_LAYERS, arrayed = true, comparison = true)
             val descriptorSetLayout = Material.createDescriptorSetLayout(graphicsDevice)
             val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
             val primary = RenderPipeline(

@@ -7,9 +7,11 @@ package com.awakekt.awake.webgpu.material
 
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ResourceKind
+import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
+import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.texture.Texture
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
@@ -27,7 +29,7 @@ import com.awakekt.awake.render.material.Material as RenderMaterial
  * Two unrelated cases share this type, matching the shared `Renderer.createMaterial` contract:
  * a UI-compositing material ([createResourcesFromRenderTarget], sampled by
  * [com.awakekt.awake.webgpu.ui.UiTextureRenderPipeline], which owns its own bind
- * groups) and a 3D `DrawCall.material` with a real base-color texture ([createResources]),
+ * groups) and a 3D packet material with a real base-color texture ([createResources]),
  * which owns the uniform buffer + bind group `textured.wgsl` declares.
  *
  * Unlike Vulkan's descriptor set (host-side writable, so one set can be rewritten per draw),
@@ -36,7 +38,8 @@ import com.awakekt.awake.render.material.Material as RenderMaterial
  */
 class Material(
     graphicsDevice: GraphicsDevice,
-    private val uniformFloatCount: Int = 16,
+    /** Declared ABI size used by transitional packet preparation to select shared writers. */
+    val uniformFloatCount: Int = UniformFields.DefaultMaterial.total,
     /** What this material's bind group declares. Defaults to the glTF metallic-roughness shape
      * every material had before the declaration existed. Unlike Vulkan, the *layout* still comes
      * from the shader via `getBindGroupLayout`; this decides the entries written against it. */
@@ -56,7 +59,11 @@ class Material(
     private var texture: Texture? = null
     private var pbrTextures: List<Texture> = emptyList()
     private var uniformBuffer: GPUBuffer? = null
-    private var bindGroup: GPUBindGroup? = null
+
+    /** Bind-group layouts belong to one concrete pipeline object; a material may be drawn
+     * through several pipeline variants, so each variant needs its own compatible bind group. */
+    private val bindGroups = HashMap<GPURenderPipeline, GPUBindGroup>()
+    private val drawBindGroups = HashMap<GPURenderPipeline, MutableMap<GPUBuffer, GPUBindGroup>>()
 
     /** Scoped to the UI-compositing case -- see this class's own doc comment. */
     fun createResourcesFromRenderTarget(textureView: GPUTextureView, sampler: GPUSampler) {
@@ -64,7 +71,7 @@ class Material(
         previewSampler = sampler
     }
 
-    /** The 3D `DrawCall.material` case: keeps [texture] plus [pbr] (metallicRoughness,
+    /** The 3D packet material case: keeps [texture] plus [pbr] (metallicRoughness,
      * normal, occlusion, emissive -- in `textured.wgsl`'s binding 5-8 order, each a neutral
      * 1x1 stand-in when the material has no such map) and allocates this material's own
      * uniform buffer sized by [uniformFloatCount]. The bind group itself waits for
@@ -84,37 +91,57 @@ class Material(
      * material has no texture can't be drawn through `textured.wgsl` at all. */
     val hasTexture: Boolean get() = texture != null
 
-    /** Builds (once) this material's bind group from [bindings] -- against [pipeline]'s group-0
+    /** Builds (once per pipeline) this material's bind group from [bindings] -- against [pipeline]'s group-0
      * layout, then reuses it every frame. For the default declaration that is exactly what this
      * used to hardcode: uniform, base-color view, sampler, then the four PBR views at 5-8, all
      * sampled through the base-color sampler as `textured.wgsl` expects.
      *
      * WebGPU validates entries against the shader-derived layout, so a declaration that does not
      * match the shader fails here rather than rendering something wrong.
-     *
-     * ponytail: cached for the first pipeline only; make it a per-pipeline map if one material
-     * ever gets drawn through two pipelines (e.g. a wireframe variant of the textured one). */
-    fun bindGroupFor(pipeline: GPURenderPipeline): GPUBindGroup = bindGroup ?: device.createBindGroup(
-        BindGroupDescriptor(
-            layout = pipeline.getBindGroupLayout(0u),
-            entries = bindGroupEntries(),
-        ),
-    ).also { bindGroup = it }
+     */
+    fun bindGroupFor(pipeline: GPURenderPipeline, pipelineBindings: GroupBindings = bindings): GPUBindGroup = bindGroups.getOrPut(pipeline) {
+        device.createBindGroup(
+            BindGroupDescriptor(
+                layout = pipeline.getBindGroupLayout(0u),
+                entries = bindGroupEntries(pipelineBindings),
+            ),
+        )
+    }
 
-    private fun bindGroupEntries(): List<BindGroupEntry> {
-        require(pbrTextures.size >= pbrBindings.size) {
-            "Declaration needs ${pbrBindings.size} sampled textures past the base-color one " +
-                "(bindings $pbrBindings) but createResources supplied ${pbrTextures.size}."
+    /** Builds a pipeline-compatible material group using a caller-owned per-draw uniform buffer.
+     * Depth variants need the material's sampled textures and the prepared draw packet's
+     * transform/material payload in the same group. */
+    fun bindGroupFor(
+        pipeline: GPURenderPipeline,
+        uniformBuffer: GPUBuffer,
+        pipelineBindings: GroupBindings = bindings,
+    ): GPUBindGroup = drawBindGroups.getOrPut(pipeline) { HashMap() }.getOrPut(uniformBuffer) {
+        device.createBindGroup(
+            BindGroupDescriptor(
+                layout = pipeline.getBindGroupLayout(0u),
+                entries = bindGroupEntries(pipelineBindings, uniformBuffer),
+            ),
+        )
+    }
+
+    private fun bindGroupEntries(
+        declaredBindings: GroupBindings,
+        drawUniformBuffer: GPUBuffer? = null,
+    ): List<BindGroupEntry> {
+        val declaredPbrBindings = materialPbrBindings(declaredBindings)
+        require(pbrTextures.size >= declaredPbrBindings.size) {
+            "Declaration needs ${declaredPbrBindings.size} sampled textures past the base-color one " +
+                "(bindings $declaredPbrBindings) but createResources supplied ${pbrTextures.size}."
         }
-        return bindings.entries.map { entry ->
+        return declaredBindings.entries.map { entry ->
             val resource = when (entry.kind) {
-                ResourceKind.UniformBuffer -> BufferBinding(buffer = requireUniformBuffer())
+                ResourceKind.UniformBuffer -> BufferBinding(buffer = drawUniformBuffer ?: requireUniformBuffer())
                 ResourceKind.Sampler -> requireTexture().sampler
                 ResourceKind.SampledTexture ->
                     if (entry.binding == BASE_COLOR_IMAGE_BINDING) {
                         requireTexture().view
                     } else {
-                        pbrTextures[pbrBindings.indexOf(entry.binding)].view
+                        pbrTextures[declaredPbrBindings.indexOf(entry.binding)].view
                     }
                 // No material-side source for one yet -- a joint palette is a storage buffer, but
                 // it is bound at its own group, never here. See D28's plan doc.
@@ -127,11 +154,13 @@ class Material(
         }
     }
 
-    /** [bindGroupFor] as the shared render layer's opaque handle, cached the same way. */
-    fun bindingFor(pipeline: GPURenderPipeline): WebGpuBindGroupHandle =
-        bindGroupHandle ?: WebGpuBindGroupHandle(bindGroupFor(pipeline)).also { bindGroupHandle = it }
+    /** [bindGroupFor] as the shared render layer's opaque handle, cached per pipeline too. */
+    fun bindingFor(pipeline: WebGpuPipelineHandle): WebGpuBindGroupHandle =
+        bindGroupHandles.getOrPut(pipeline.pipeline) {
+            WebGpuBindGroupHandle(bindGroupFor(pipeline.pipeline, pipeline.materialBindings ?: bindings))
+        }
 
-    private var bindGroupHandle: WebGpuBindGroupHandle? = null
+    private val bindGroupHandles = HashMap<GPURenderPipeline, WebGpuBindGroupHandle>()
 
     /** Writes this material's whole `Uniforms` block, not just its MVP -- callers pass the
      * concatenated field list their shader declares. Like every other `queue.writeBuffer` on this
@@ -159,8 +188,9 @@ class Material(
         previewSampler = null
         uniformBuffer?.close()
         uniformBuffer = null
-        bindGroup = null
-        bindGroupHandle = null
+        bindGroups.clear()
+        drawBindGroups.clear()
+        bindGroupHandles.clear()
         texture = null
         pbrTextures = emptyList()
     }

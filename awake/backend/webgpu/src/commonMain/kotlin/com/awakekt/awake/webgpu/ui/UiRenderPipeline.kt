@@ -6,12 +6,17 @@
 package com.awakekt.awake.webgpu.ui
 
 import com.awakekt.awake.core.graphics2d.BlendMode
+import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.passes2d.UiPipelineKind
+import com.awakekt.awake.render.passes2d.UiUniformLayouts
+import com.awakekt.awake.render.passes2d.uiUniformFloats
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.material.Material
+import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.pipeline.toGpuVertexFormat
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import io.ygdrasil.webgpu.BindGroupDescriptor
@@ -61,8 +66,8 @@ class UiRenderPipeline(
     private val premultiplied: Boolean = false,
 ) {
     /** The uniform block's two halves, kept so either can be rewritten without dropping the other. */
-    private var screenToNdc = floatArrayOf(0f, 0f, 0f, 0f)
-    private var fontInfo = floatArrayOf(0f, 0f)
+    private var screenToNdc = Vec4()
+    private var fontInfo = Vec4()
 
     constructor(
         graphicsDevice: GraphicsDevice,
@@ -118,6 +123,14 @@ class UiRenderPipeline(
 
         pipeline = device.createRenderPipeline(
             RenderPipelineDescriptor(
+                layout = device.createAwakePipelineLayout(
+                    mapOf(
+                        0 to when (kind) {
+                            UiPipelineKind.Glyph, UiPipelineKind.Texture -> GroupBindings.TexturedMaterial
+                            UiPipelineKind.Quad, UiPipelineKind.RoundedQuad -> GroupBindings.UniformOnlyMaterial
+                        },
+                    ),
+                ),
                 vertex = VertexState(
                     module = shaderModule,
                     entryPoint = "vertexMain",
@@ -176,7 +189,7 @@ class UiRenderPipeline(
 
         screenSizeBuffer = device.createBuffer(
             BufferDescriptor(
-                size = (8 * Float.SIZE_BYTES).toULong(),
+                size = (UiUniformLayouts.Buffer.total * Float.SIZE_BYTES).toULong(),
                 usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
             ),
         )
@@ -238,7 +251,7 @@ class UiRenderPipeline(
 
     /** Call once at construction and again whenever the canvas resizes. */
     fun writeScreenSize(width: Float, height: Float) {
-        screenToNdc = floatArrayOf(2f / width, -2f / height, -1f, 1f)
+        screenToNdc = Vec4(2f / width, -2f / height, -1f, 1f)
         writeUniforms()
     }
 
@@ -255,7 +268,7 @@ class UiRenderPipeline(
      * Call once when the glyph pipeline is built or the font changes.
      */
     fun writeFontInfo(isDistanceField: Boolean, rangePx: Float) {
-        fontInfo = floatArrayOf(if (isDistanceField) 1f else 0f, rangePx)
+        fontInfo = Vec4(if (isDistanceField) 1f else 0f, rangePx, 0f, 0f)
         writeUniforms()
     }
 
@@ -271,18 +284,7 @@ class UiRenderPipeline(
         device.queue.writeBuffer(
             screenSizeBuffer,
             0uL,
-            fastArrayBufferOf(
-                floatArrayOf(
-                    screenToNdc[0],
-                    screenToNdc[1],
-                    screenToNdc[2],
-                    screenToNdc[3],
-                    fontInfo[0],
-                    fontInfo[1],
-                    0f,
-                    0f,
-                ),
-            ),
+            fastArrayBufferOf(uiUniformFloats(screenToNdc, fontInfo)),
         )
     }
 

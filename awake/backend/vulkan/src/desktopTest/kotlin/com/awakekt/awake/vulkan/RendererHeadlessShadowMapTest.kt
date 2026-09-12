@@ -10,13 +10,13 @@ import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.directionalShadowBox
+import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes2d.UiRenderFeature
-import com.awakekt.awake.render.renderer.DEFAULT_SHADOW_CASCADES
-import com.awakekt.awake.render.renderer.DrawCall
-import com.awakekt.awake.render.renderer.SceneLight
 import com.awakekt.awake.render.renderer.createMaterial
-import com.awakekt.awake.render.renderer.directionalShadowBox
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -70,7 +70,6 @@ class RendererHeadlessShadowMapTest {
         val renderer = sharedRenderer()
         val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
         try {
-            renderer.shadowsEnabled = true
             val frame = renderer.renderScene(target)
 
             // A horizontal band of pure ground: below the caster's screen extent, above the
@@ -122,9 +121,9 @@ class RendererHeadlessShadowMapTest {
                     near = 0.1f,
                     far = 50f,
                 ),
-                listOf(DrawCall(ground, shared), DrawCall(caster, shared)),
+                listOf(RenderDrawCommand(ground, shared), RenderDrawCommand(caster, shared)),
                 // viewProjection is supplied, not derived: the renderer renders depth from
-                // whatever matrix the light carries and never builds one. `RenderSystem` fills
+                // whatever matrix the light carries and never builds one. `RenderSystem3D` fills
                 // this in for a real scene; a direct `renderToTexture` caller does it here.
                 SceneLight(direction = Vec3f(LIGHT_X, 1f, 0f), color = Vec3f(1f, 1f, 1f)).let {
                     it.copy(viewProjection = directionalShadowBox(it.direction, clipSpace).viewProjection)

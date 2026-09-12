@@ -19,10 +19,10 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.renderer.DepthFogUniformLayout
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.commands.TransferContext
@@ -127,8 +127,8 @@ class RendererHeadlessDepthFogTest {
                     far = 50f,
                 ),
                 listOf(
-                    DrawCall(near, shared, Mat4().translate(-OFFSET_X, 0f, NEAR_Z)),
-                    DrawCall(far, shared, Mat4().translate(OFFSET_X, 0f, FAR_Z)),
+                    RenderDrawCommand(near, shared, Mat4().translate(-OFFSET_X, 0f, NEAR_Z)),
+                    RenderDrawCommand(far, shared, Mat4().translate(OFFSET_X, 0f, FAR_Z)),
                 ),
             )
             return runBlocking { readPixels(target) }.data

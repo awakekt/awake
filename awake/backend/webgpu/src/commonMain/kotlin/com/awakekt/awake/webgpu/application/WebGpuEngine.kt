@@ -23,12 +23,14 @@ import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
+import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
+import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSet
+import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.pipeline.entryPoint
-import com.awakekt.awake.render.renderer.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.mesh.Mesh
@@ -114,22 +116,127 @@ open class WebGpuEngine(
         // scene from the light's point of view into a DepthTarget, which primaryDraw then
         // samples through lit_shadow.wgsl's own bindings.
         val depthPrePass = plan.depthPrePassShaderSet?.let { shadowShaders ->
+            val ordinary = com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
+                graphicsDevice = graphicsDevice,
+                shaderCode = shadowShaders.wgsl(),
+                vertexFormat = vertexFormat,
+                vertexEntryPoint = shadowShaders.webGpu.entryPoint(ShaderProgramStage.VERTEX),
+                fragmentEntryPoint = shadowShaders.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                bindingsByGroup = shadowShaders.webGpu.bindingsByGroup,
+                bindingsMetadataAvailable = shadowShaders.webGpu.bindingsMetadataAvailable,
+            )
+            val skinned = plan.depthPrePassVariants[DepthCasterKind.Skinned]?.let { variant ->
+                com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
+                    graphicsDevice = graphicsDevice,
+                    shaderCode = variant.wgsl(),
+                    vertexFormat = VertexFormat.PositionNormalColorSkin,
+                    vertexEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.VERTEX),
+                    fragmentEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                    cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                    bindingsByGroup = variant.webGpu.bindingsByGroup,
+                    bindingsMetadataAvailable = variant.webGpu.bindingsMetadataAvailable,
+                )
+            }
+            val instanced = plan.depthPrePassVariants[DepthCasterKind.Instanced]?.let { variant ->
+                com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
+                    graphicsDevice = graphicsDevice,
+                    shaderCode = variant.wgsl(),
+                    vertexFormat = VertexFormat.PositionNormalColor,
+                    vertexEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.VERTEX),
+                    fragmentEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                    cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                    variant = PipelineVariant.Instanced,
+                    bindingsByGroup = variant.webGpu.bindingsByGroup,
+                    bindingsMetadataAvailable = variant.webGpu.bindingsMetadataAvailable,
+                )
+            }
+            val skinnedInstanced = plan.depthPrePassVariants[DepthCasterKind.SkinnedInstanced]
+                ?.let { variant ->
+                    com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
+                        graphicsDevice = graphicsDevice,
+                        shaderCode = variant.wgsl(),
+                        vertexFormat = VertexFormat.PositionNormalColorSkin,
+                        vertexEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.VERTEX),
+                        fragmentEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                        cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                        variant = PipelineVariant.Instanced,
+                        bindingsByGroup = variant.webGpu.bindingsByGroup,
+                        bindingsMetadataAvailable = variant.webGpu.bindingsMetadataAvailable,
+                    )
+                }
+            val particle = plan.depthPrePassVariants[DepthCasterKind.Particle]?.let { variant ->
+                com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
+                    graphicsDevice = graphicsDevice,
+                    shaderCode = variant.wgsl(),
+                    vertexFormat = VertexFormat.PositionUv,
+                    vertexEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.VERTEX),
+                    fragmentEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                    cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                    variant = PipelineVariant.AlphaBlendedParticle,
+                    bindingsByGroup = variant.webGpu.bindingsByGroup,
+                    bindingsMetadataAvailable = variant.webGpu.bindingsMetadataAvailable,
+                )
+            }
+            val formatPipelines = buildMap {
+                plan.scenePipelines
+                    .filter { it.variant == PipelineVariant.Opaque && it.vertexFormat != vertexFormat }
+                    .forEach { scenePipeline ->
+                        put(
+                            scenePipeline.vertexFormat,
+                            com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
+                                graphicsDevice = graphicsDevice,
+                                shaderCode = shadowShaders.wgsl(),
+                                vertexFormat = scenePipeline.vertexFormat,
+                                vertexEntryPoint = shadowShaders.webGpu.entryPoint(ShaderProgramStage.VERTEX),
+                                fragmentEntryPoint = shadowShaders.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                                bindingsByGroup = shadowShaders.webGpu.bindingsByGroup,
+                                bindingsMetadataAvailable = shadowShaders.webGpu.bindingsMetadataAvailable,
+                            ),
+                        )
+                    }
+            }
+            val keyedPipelines = buildMap {
+                plan.depthPrePassKeyedVariants.forEach { (key, variant) ->
+                    if (key.kind != DepthCasterKind.Ordinary ||
+                        key.alphaMode != com.awakekt.awake.render.pipeline.AlphaMode.Masked
+                    ) {
+                        return@forEach
+                    }
+                    val format = VertexFormat.PositionNormalColorUv
+                    put(
+                        key,
+                        com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
+                            graphicsDevice = graphicsDevice,
+                            shaderCode = variant.wgsl(),
+                            vertexFormat = format,
+                            vertexEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.VERTEX),
+                            fragmentEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                            cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                            bindingsByGroup = variant.webGpu.bindingsByGroup,
+                            bindingsMetadataAvailable = variant.webGpu.bindingsMetadataAvailable,
+                        ),
+                    )
+                }
+            }
             com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature(
                 // Layered and arrayed: one cascade per layer, sampled as an array by lit_shadow.
                 depthTarget = com.awakekt.awake.webgpu.texture.DepthTarget(
                     graphicsDevice,
-                    layers = DEFAULT_SHADOW_CASCADES,
+                    layers = MAX_SHADOW_TARGET_LAYERS,
                     arrayed = true,
                     comparison = true,
                 ),
-                depthOnlyPipeline = com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
-                    graphicsDevice = graphicsDevice,
-                    shaderCode = shadowShaders.wgsl(),
-                    vertexFormat = vertexFormat,
-                    vertexEntryPoint = shadowShaders.webGpu.entryPoint(ShaderProgramStage.VERTEX),
-                    fragmentEntryPoint = shadowShaders.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
-                    cascadeCount = DEFAULT_SHADOW_CASCADES,
-                ),
+                depthOnlyPipeline = ordinary,
+                formatPipelines = formatPipelines,
+                keyedVariantPipelines = keyedPipelines,
+                variantPipelines = buildMap {
+                    instanced?.let { put(DepthCasterKind.Instanced, it) }
+                    skinned?.let { put(DepthCasterKind.Skinned, it) }
+                    skinnedInstanced?.let { put(DepthCasterKind.SkinnedInstanced, it) }
+                    particle?.let { put(DepthCasterKind.Particle, it) }
+                },
             )
         }
         // The same pass through the camera matrix, for whatever samples the depth already in
@@ -143,6 +250,8 @@ open class WebGpuEngine(
                     vertexFormat = vertexFormat,
                     vertexEntryPoint = sceneDepthShaders.webGpu.entryPoint(ShaderProgramStage.VERTEX),
                     fragmentEntryPoint = sceneDepthShaders.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                    bindingsByGroup = sceneDepthShaders.webGpu.bindingsByGroup,
+                    bindingsMetadataAvailable = sceneDepthShaders.webGpu.bindingsMetadataAvailable,
                 ),
             )
         }
@@ -292,13 +401,11 @@ private suspend fun ShaderSet.wgsl(): ByteArray =
  * The shadow gap is closed (2026-08-24): `lit_shadow.wgsl` declares its map as
  * `texture_depth_2d` so one shared source binds on both backends, `primaryDraw` writes
  * `LitShadowUniformLayout`'s floats, and the depth target rides as a per-draw bind group.
- * Skinned (non-instanced) is still narrowed: it needs `RendererOpaqueDraws` to write the
- * joint palette, which its INSTANCED sibling does through its own storage path.
+ * Non-instanced skinned draws use the per-draw uniform slot and carry their joint palette in the
+ * source command's extra payload, just like the shared resolver expects. The path is therefore
+ * supported alongside the instanced variant.
  */
 private val WebGpuCapabilities = RenderCapabilities(
     backend = RenderBackend.WebGpu,
     depthPrePass = true,
-    // skinned.wgsl also needs the joint-palette uniform path (DrawCall.extraUniformFloats), which
-    // this backend does not write yet. Its INSTANCED sibling is fine and stays.
-    supportsPipeline = { it.key != PipelineKey.Format(VertexFormat.PositionNormalColorSkin) },
 )

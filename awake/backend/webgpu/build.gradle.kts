@@ -71,7 +71,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            api(project(":awake:engine:render:passes2d"))
+            implementation(project(":awake:engine:render:passes2d"))
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
@@ -82,10 +82,9 @@ kotlin {
             // Mesh/Material/Renderer implement the same narrow backend-neutral interfaces
             // awake-backend-vulkan's do -- see awake-engine-render-api's module doc.
             api(project(":awake:engine:render:contract"))
-            // The shared render-pass layer (SharedOpaqueRenderFeature + the CommandRecorder
-            // port). `api`, not `implementation`: this module's public pipeline/mesh/material
-            // types implement the port's handle interfaces, so consumers see them.
-            api(project(":awake:engine:render:passes"))
+            // Scene/render-pipeline implementation detail. Backend consumers must depend on the
+            // generic contract, not inherit authored scene vocabulary from this driver.
+            implementation(project(":awake:engine:render:passes"))
             // ShaderSet/ShaderStages/ShaderSource -- api, not implementation: WebGpuEngine's own
             // public constructor takes ShaderSet params, so a consumer needs the type visible
             // too (matches awake-backend-vulkan's identical api(awake:asset:shaders) dependency).

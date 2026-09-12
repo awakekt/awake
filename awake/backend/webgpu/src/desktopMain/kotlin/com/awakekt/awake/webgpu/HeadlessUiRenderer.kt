@@ -62,6 +62,8 @@ fun webGpuHeadlessUi(): HeadlessRenderSession = runBlocking {
         VertexFormat.PositionColorUv,
         "vertexMain",
         "fragmentMain",
+        bindingsByGroup = EngineShaderSets.UiQuad.webGpu.bindingsByGroup,
+        bindingsMetadataAvailable = EngineShaderSets.UiQuad.webGpu.bindingsMetadataAvailable,
     )
     val linePipeline = LineRenderPipeline(graphicsDevice, swapchainManager, wgsl(EngineShaderSets.DebugLine))
     val renderer = WebGpuRenderer(

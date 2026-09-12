@@ -43,7 +43,9 @@ import com.awakekt.awake.render.material.Material as RenderMaterial
  */
 class Material(
     graphicsDevice: GraphicsDevice,
-    private val uniformFloatCount: Int = DEFAULT_UNIFORM_FLOAT_COUNT,
+    /** The declared size lets transitional preparation select the matching shared ABI without
+     * inferring shader semantics from a vertex format alone. */
+    val uniformFloatCount: Int = DEFAULT_UNIFORM_FLOAT_COUNT,
     /** What this material's descriptor set declares. Defaults to the glTF metallic-roughness
      * shape every material had before the declaration existed, so a caller that does not care
      * gets exactly the previous layout. */
@@ -73,6 +75,8 @@ class Material(
         private set
     var imageViewHandle: Long = 0
         private set
+
+    val hasTexture: Boolean get() = samplerHandle != 0L && imageViewHandle != 0L
 
     private var pbrImageViews: PbrImageViews? = null
 
@@ -168,7 +172,7 @@ class Material(
     ): VulkanMaterialBinding {
         // Catches an oversized write here, in Kotlin, with the actual float counts involved --
         // the alternative is vkMapMemory rejecting it deep in native code as a bare
-        // VUID-vkMapMemory-size-00681 with no indication of which Material/DrawCall was at
+        // VUID-vkMapMemory-size-00681 with no indication of which Material/packet draw was at
         // fault (see the entity-debugger/skybox session this check was added after).
         require(values.size <= uniformFloatCount) {
             "Uniform write of ${values.size} floats overflows this Material's " +
@@ -218,7 +222,7 @@ class Material(
          * requests `16 + 16 * jointCount` (MVP + joint palette) instead, see
          * `Renderer.createMaterial`'s own `uniformFloatCount` parameter. */
         /** One MVP matrix -- a plain-colored mesh's whole uniform block. */
-        private val DEFAULT_UNIFORM_FLOAT_COUNT = UniformFields.Mvp.floats
+        private val DEFAULT_UNIFORM_FLOAT_COUNT = UniformFields.DefaultMaterial.total
 
         /** textured.wgsl's base-color image. Its sampler at 2 serves every other sampled
          * texture in the group too, which is why the PBR maps need no samplers of their own. */

@@ -3,12 +3,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+
 package com.awakekt.awake.webgpu.application
 
+import com.awakekt.awake.core.host.MAX_FRAME_DELTA_SECONDS
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.PointerButton
 import io.ygdrasil.webgpu.CompositeAlphaMode
 import io.ygdrasil.webgpu.GPUTextureUsage
+import io.ygdrasil.webgpu.GPUUncapturedErrorCallback
 import io.ygdrasil.webgpu.SurfaceConfiguration
 import io.ygdrasil.webgpu.WGPUContext
 import io.ygdrasil.webgpu.canvasContextRenderer
@@ -38,6 +42,10 @@ fun launchWebGpuGame(
     canvas: HTMLCanvasElement,
     applicationFactory: () -> WebGpuEngine,
 ) {
+    check(browserExposesWebGpu()) {
+        "WebGPU is unavailable in this browser or device. " +
+            "Use a current Chrome/Edge build with WebGPU enabled and a compatible adapter."
+    }
     val resolvedApplication = applicationFactory()
     val input = resolvedApplication.input
 
@@ -49,6 +57,7 @@ fun launchWebGpuGame(
     syncCanvasSize(canvas, initialSize.first, initialSize.second)
     var wgpuContext: WGPUContext? = null
     var application: WebGpuEngine? = resolvedApplication
+    var runtimeFailure: String? = null
 
     window.addEventListener("resize") {
         val (width, height) = currentCanvasSize()
@@ -58,33 +67,76 @@ fun launchWebGpuGame(
     }
 
     MainScope().launch {
-        val canvasContext = canvasContextRenderer(
-            htmlCanvas = canvas,
-            width = initialSize.first,
-            height = initialSize.second,
-        )
-        val resolvedContext = canvasContext.wgpuContext
-        wgpuContext = resolvedContext
-        configureSurface(resolvedContext)
+        try {
+            val canvasContext = canvasContextRenderer(
+                htmlCanvas = canvas,
+                width = initialSize.first,
+                height = initialSize.second,
+                onUncapturedError = GPUUncapturedErrorCallback { error ->
+                    if (runtimeFailure == null) {
+                        val message = "WebGPU uncaptured error: ${error.message}"
+                        runtimeFailure = message
+                        reportWebGpuRuntimeFailure(message)
+                    }
+                },
+            )
+            val resolvedContext = canvasContext.wgpuContext
+            wgpuContext = resolvedContext
+            configureSurface(resolvedContext)
 
-        resolvedApplication.resize(
-            x = 0,
-            y = 0,
-            width = initialSize.first,
-            height = initialSize.second,
-        )
-        resolvedApplication.create(resolvedContext)
+            resolvedApplication.resize(
+                x = 0,
+                y = 0,
+                width = initialSize.first,
+                height = initialSize.second,
+            )
+            resolvedApplication.create(resolvedContext)
 
-        var lastFrameTime = window.performance.now()
-        fun frame(time: Double) {
-            val deltaSeconds = ((time - lastFrameTime) / 1000.0).toFloat()
-            lastFrameTime = time
-            resolvedApplication.update(deltaSeconds)
+            var lastFrameTime = window.performance.now()
+            var frameLoopStopped = false
+            fun frame(time: Double) {
+                if (frameLoopStopped) return
+                runtimeFailure?.let {
+                    frameLoopStopped = true
+                    return
+                }
+                val rawDeltaSeconds = ((time - lastFrameTime) / 1000.0).toFloat()
+                val deltaSeconds = rawDeltaSeconds.coerceAtMost(MAX_FRAME_DELTA_SECONDS.toFloat())
+                lastFrameTime = time
+                try {
+                    resolvedApplication.update(deltaSeconds)
+                } catch (error: Throwable) {
+                    // Animation-frame exceptions do not reach the startup coroutine's catch. Stop
+                    // scheduling after the first failure and keep the cause visible instead of
+                    // leaving a silently black canvas.
+                    frameLoopStopped = true
+                    reportWebGpuStartupFailure(
+                        "WebGPU frame failed: ${error.message ?: error::class.simpleName}",
+                    )
+                    return
+                }
+                window.requestAnimationFrame(::frame)
+            }
             window.requestAnimationFrame(::frame)
+        } catch (error: Throwable) {
+            reportWebGpuStartupFailure(
+                "WebGPU startup failed before the first frame: ${error.message ?: error::class.simpleName}",
+            )
         }
-        window.requestAnimationFrame(::frame)
     }
 }
+
+/** Capability check kept at the browser boundary so unsupported hosts fail before engine setup. */
+@JsFun("() => typeof navigator !== 'undefined' && navigator.gpu != null")
+private external fun browserExposesWebGpu(): Boolean
+
+/** Keeps adapter/device failures visible instead of leaving a black canvas with no context. */
+@JsFun("(message) => console.error(message)")
+private external fun reportWebGpuStartupFailure(message: String)
+
+/** Reports an asynchronous device validation failure before the next animation frame. */
+@JsFun("(message) => console.error(message)")
+private external fun reportWebGpuRuntimeFailure(message: String)
 
 val DefaultDomGameplayKeys: Map<String, com.awakekt.awake.core.input.Key> = linkedMapOf(
     "w" to com.awakekt.awake.core.input.Key.W,

@@ -6,6 +6,7 @@
 package com.awakekt.awake.vulkan.debug
 
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
+import com.awakekt.awake.render.passes.debug.DebugLineUniformLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -83,7 +84,7 @@ class LineRenderPipeline(
         try {
             uniformSlots = PerFrameUniformSlots(
                 graphicsDevice,
-                MVP_UNIFORM_BYTES,
+                DebugLineUniformLayout.total * Float.SIZE_BYTES,
                 VkShaderStageFlagBits.VERTEX.value,
                 framesInFlight,
             )
@@ -230,9 +231,5 @@ class LineRenderPipeline(
         Vulkan.vkDestroyPipelineLayout(device, pipelineLayout)
         Vulkan.vkDestroyPipelineCache(device, pipelineCache)
         if (::uniformSlots.isInitialized) uniformSlots.destroy()
-    }
-
-    private companion object {
-        const val MVP_UNIFORM_BYTES = 16 * Float.SIZE_BYTES
     }
 }

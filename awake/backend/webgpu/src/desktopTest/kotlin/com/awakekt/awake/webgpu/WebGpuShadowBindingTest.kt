@@ -64,6 +64,8 @@ class WebGpuShadowBindingTest {
             VertexFormat.PositionNormalColor,
             "vertexMain",
             "fragmentMain",
+            bindingsByGroup = PackShaderSets.LitShadow.webGpu.bindingsByGroup,
+            bindingsMetadataAvailable = PackShaderSets.LitShadow.webGpu.bindingsMetadataAvailable,
         )
         // Comparison, as the renderer builds it: lit_shadow declares `sampler_comparison`, and
         // the auto layout derived from that declaration rejects a plain sampler at bind time.
@@ -90,8 +92,28 @@ class WebGpuShadowBindingTest {
                 "shadow_depth declares no WebGPU vertex stage."
             }.resolveBytes(),
             vertexFormat = VertexFormat.PositionNormalColor,
+            bindingsByGroup = PackShaderSets.ShadowDepth.webGpu.bindingsByGroup,
+            bindingsMetadataAvailable = PackShaderSets.ShadowDepth.webGpu.bindingsMetadataAvailable,
         )
         assertNotNull(depthOnly.handle, "shadow_depth must compile on WebGPU")
+
+        // The skinned-instanced variant must expose both resources after the ABI split: shadow
+        // depth at group 1 and the per-instance palette at group 3. Creating the pipeline asks
+        // WebGPU's shader validator to resolve those declarations against the vertex format.
+        val skinned = RenderPipeline(
+            graphicsDevice,
+            swapchainManager,
+            DescriptorSetLayoutHandle(0),
+            checkNotNull(PackShaderSets.SkinnedInstanced.webGpu[ShaderStage.VERTEX]).resolveBytes(),
+            checkNotNull(PackShaderSets.SkinnedInstanced.webGpu[ShaderStage.FRAGMENT]).resolveBytes(),
+            VertexFormat.PositionNormalColorSkin,
+            "vertexMain",
+            "fragmentMain",
+            bindingsByGroup = PackShaderSets.SkinnedInstanced.webGpu.bindingsByGroup,
+            bindingsMetadataAvailable = PackShaderSets.SkinnedInstanced.webGpu.bindingsMetadataAvailable,
+        )
+        assertNotNull(skinned.handle.pipeline.getBindGroupLayout(1u), "skinned shadows need group 1")
+        assertNotNull(skinned.handle.pipeline.getBindGroupLayout(3u), "skinned palettes need group 3")
 
         // The slot the pool hands a shadowed draw must hold the whole block; a short buffer is
         // exactly how the old Primary-sized pool would have failed at write time.
@@ -102,6 +124,7 @@ class WebGpuShadowBindingTest {
         )
 
         depthOnly.destroy()
+        skinned.destroy()
         depthTarget.destroy()
         pipeline.destroy()
         swapchainManager.destroy()

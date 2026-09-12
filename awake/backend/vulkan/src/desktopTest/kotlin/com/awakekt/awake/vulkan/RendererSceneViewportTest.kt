@@ -10,8 +10,8 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes2d.UiRenderFeature
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -64,12 +64,11 @@ class RendererSceneViewportTest {
                     near = 0.1f,
                     far = 10f,
                 )
-                val draw = listOf(DrawCall(createdMesh, createdMaterial))
+                val draw = listOf(RenderDrawCommand(createdMesh, createdMaterial))
 
                 // Full surface first: the cube has to be visible on both halves, or "nothing on
                 // the left" below would pass for the wrong reason.
-                renderer.sceneViewport = null
-                renderer.renderToTexture(target, camera, draw)
+                renderer.renderSceneToTexture(target, camera, draw, viewport = null)
                 val whole = runBlocking { renderer.readPixels(target) }.data
                 assertTrue(
                     paintedPixels(whole, LEFT_HALF) > MIN_PAINTED,
@@ -77,13 +76,13 @@ class RendererSceneViewportTest {
                 )
 
                 // Right half only.
-                renderer.sceneViewport = RenderViewport(
+                val rightHalfViewport = RenderViewport(
                     x = HALF.toFloat(),
                     y = 0f,
                     width = HALF.toFloat(),
                     height = TARGET_SIZE.toFloat(),
                 )
-                renderer.renderToTexture(target, camera, draw)
+                renderer.renderSceneToTexture(target, camera, draw, viewport = rightHalfViewport)
                 val confined = runBlocking { renderer.readPixels(target) }.data
 
                 assertEquals(
@@ -99,20 +98,19 @@ class RendererSceneViewportTest {
                 // A rect the surface cannot contain is clamped, not passed to the driver: Vulkan
                 // rejects an out-of-bounds scissor, and a caller's panel bounds can outlive the
                 // surface they were measured against (a resize lands between the two).
-                renderer.sceneViewport = RenderViewport(
+                val oversizedViewport = RenderViewport(
                     x = -100f,
                     y = -100f,
                     width = TARGET_SIZE * 4f,
                     height = TARGET_SIZE * 4f,
                 )
-                renderer.renderToTexture(target, camera, draw)
+                renderer.renderSceneToTexture(target, camera, draw, viewport = oversizedViewport)
                 val clamped = runBlocking { renderer.readPixels(target) }.data
                 assertTrue(
                     paintedPixels(clamped, 0 until TARGET_SIZE) > MIN_PAINTED,
                     "a clamped rect must still render the scene",
                 )
             } finally {
-                renderer.sceneViewport = null
                 mesh?.destroy()
                 material?.destroy()
             }

@@ -18,6 +18,9 @@ import kotlin.test.assertEquals
  * can end up capped, and a frame-time number measured there describes the display rather than the
  * engine. Studio spent a session's worth of profiling on a 17.4 ms frame that was one 60 Hz
  * interval.
+ *
+ * [PresentMode.Auto] resolves to FIFO so that [FrameRateMode.Auto]'s sleep-free path is
+ * throttled by vsync back-pressure rather than spinning at thousands of FPS.
  */
 class PresentModeSelectionTest {
 
@@ -28,7 +31,7 @@ class PresentModeSelectionTest {
     @Test
     fun eachRequestTakesItsOwnModeWhenTheSurfaceOffersIt() {
         val all = listOf(fifo, mailbox, immediate)
-        assertEquals(mailbox, chooseSwapPresentMode(all, PresentMode.Auto))
+        assertEquals(fifo,    chooseSwapPresentMode(all, PresentMode.Auto))
         assertEquals(mailbox, chooseSwapPresentMode(all, PresentMode.LowLatency))
         assertEquals(immediate, chooseSwapPresentMode(all, PresentMode.NoVsync))
         assertEquals(fifo, chooseSwapPresentMode(all, PresentMode.Vsync))
@@ -48,7 +51,7 @@ class PresentModeSelectionTest {
     fun anExplicitNoVsyncTakesTheOtherUncappedModeBeforeAcceptingACap() {
         // Immediate missing but mailbox present: still uncapped, which is what was asked for.
         assertEquals(mailbox, chooseSwapPresentMode(listOf(fifo, mailbox), PresentMode.NoVsync))
-        // Auto does not do the reverse -- it has no opinion beyond preferring mailbox.
+        // Auto resolves to FIFO by design -- it does not search for uncapped alternatives.
         assertEquals(fifo, chooseSwapPresentMode(listOf(fifo, immediate), PresentMode.Auto))
     }
 }

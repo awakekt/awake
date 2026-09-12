@@ -7,9 +7,13 @@ package com.awakekt.awake.vulkan.pipeline
 
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
-import com.awakekt.awake.render.renderer.CascadePassUniformLayout
-import com.awakekt.awake.render.renderer.SHADOW_DEPTH_BIAS_CONSTANT
-import com.awakekt.awake.render.renderer.SHADOW_DEPTH_BIAS_SLOPE
+import com.awakekt.awake.render.passes.SHADOW_DEPTH_BIAS_CONSTANT
+import com.awakekt.awake.render.passes.SHADOW_DEPTH_BIAS_SLOPE
+import com.awakekt.awake.render.passes.uniforms.CascadePassUniformLayout
+import com.awakekt.awake.render.pipeline.BindingLayout
+import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.FrontFace
+import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
 import com.awakekt.awake.vulkan.Vulkan
@@ -17,6 +21,7 @@ import com.awakekt.awake.vulkan.debug.PerFrameUniformSlots
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.VkCullModeFlagBits
 import com.awakekt.awake.vulkan.enums.VkDynamicState
+import com.awakekt.awake.vulkan.enums.VkFrontFace
 import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
 import com.awakekt.awake.vulkan.enums.VkPrimitiveTopology
 import com.awakekt.awake.vulkan.enums.VkShaderStageFlagBits
@@ -64,7 +69,7 @@ class DepthOnlyPipeline(
     renderPass: Long,
     descriptorSetLayout: DescriptorSetLayoutHandle,
     shaders: ShaderPair,
-    vertexFormat: VertexFormat,
+    val vertexFormat: VertexFormat,
     targetSize: Int,
     vertexEntryPoint: String = "vertexMain",
     fragmentEntryPoint: String = "fragmentMain",
@@ -76,7 +81,10 @@ class DepthOnlyPipeline(
      * two things.
      */
     cascadeCount: Int = 0,
-) {
+    variant: PipelineVariant = PipelineVariant.Opaque,
+    val frontFace: FrontFace = FrontFace.CounterClockwise,
+    extraDescriptorSetLayouts: List<DescriptorSetLayoutHandle> = emptyList(),
+) : VulkanPipelineHandle {
     private val device = graphicsDevice.device
 
     /** One slot per cascade: its matrix, and the descriptor set naming it. */
@@ -115,6 +123,11 @@ class DepthOnlyPipeline(
     private var pipelineCache: Long = 0
     private var graphicsPipeline: LongArray = longArrayOf()
 
+    override val pipelineHandle: Long get() = graphicsPipeline[0]
+    override val pipelineLayoutHandle: Long get() = pipelineLayout
+    override val engineBoundSemantics: Set<BindingSemantic> = emptySet()
+    override val bindingLayout: BindingLayout = BindingLayout.Standard
+
     // See RenderPipeline's own init doc comment -- same partial-creation-leak guard.
     init {
         try {
@@ -134,23 +147,68 @@ class DepthOnlyPipeline(
                 ),
             )
 
+            val bindings = mutableListOf<VkVertexInputBindingDescription>()
+            val attributes = vertexFormat.entries.mapTo(mutableListOf()) { entry ->
+                VkVertexInputAttributeDescription(
+                    location = entry.attribute.location,
+                    binding = 0,
+                    format = entry.attribute.format.toVkFormat(),
+                    offset = entry.offsetBytes,
+                )
+            }
+            if (vertexFormat.attributes.isNotEmpty()) {
+                bindings += VkVertexInputBindingDescription(
+                    binding = 0,
+                    stride = vertexFormat.strideBytes,
+                    inputRate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX,
+                )
+            }
+            if (variant.instanced) {
+                val firstLocation = (vertexFormat.attributes.maxOfOrNull { it.location } ?: -1) + 1
+                bindings += VkVertexInputBindingDescription(
+                    binding = 1,
+                    stride = 4 * 4 * Float.SIZE_BYTES,
+                    inputRate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_INSTANCE,
+                )
+                repeat(4) { row ->
+                    attributes += VkVertexInputAttributeDescription(
+                        location = firstLocation + row,
+                        binding = 1,
+                        format = com.awakekt.awake.vulkan.enums.VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT,
+                        offset = row * 4 * Float.SIZE_BYTES,
+                    )
+                }
+                if (variant.instanceAlpha) {
+                    bindings += VkVertexInputBindingDescription(
+                        binding = 2,
+                        stride = 4 * Float.SIZE_BYTES,
+                        inputRate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_INSTANCE,
+                    )
+                    attributes += VkVertexInputAttributeDescription(
+                        location = firstLocation + 4,
+                        binding = 2,
+                        format = com.awakekt.awake.vulkan.enums.VkFormat.VK_FORMAT_R32G32B32A32_SFLOAT,
+                        offset = 0,
+                    )
+                }
+                if (variant.instanceFrame) {
+                    bindings += VkVertexInputBindingDescription(
+                        binding = 3,
+                        stride = Float.SIZE_BYTES,
+                        inputRate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_INSTANCE,
+                    )
+                    attributes += VkVertexInputAttributeDescription(
+                        location = firstLocation + 5,
+                        binding = 3,
+                        format = com.awakekt.awake.vulkan.enums.VkFormat.VK_FORMAT_R32_SFLOAT,
+                        offset = 0,
+                    )
+                }
+            }
             val vertexInputInfo = arrayOf(
                 VkPipelineVertexInputStateCreateInfo(
-                    pVertexBindingDescriptions = arrayOf(
-                        VkVertexInputBindingDescription(
-                            binding = 0,
-                            stride = vertexFormat.strideBytes,
-                            inputRate = VkVertexInputRate.VK_VERTEX_INPUT_RATE_VERTEX,
-                        ),
-                    ),
-                    pVertexAttributeDescriptions = vertexFormat.entries.map { entry ->
-                        VkVertexInputAttributeDescription(
-                            location = entry.attribute.location,
-                            binding = 0,
-                            format = entry.attribute.format.toVkFormat(),
-                            offset = entry.offsetBytes,
-                        )
-                    }.toTypedArray(),
+                    pVertexBindingDescriptions = bindings.toTypedArray(),
+                    pVertexAttributeDescriptions = attributes.toTypedArray(),
                 ),
             )
 
@@ -180,6 +238,10 @@ class DepthOnlyPipeline(
             val rasterizationInfo = arrayOf(
                 VkPipelineRasterizationStateCreateInfo(
                     cullMode = VkCullModeFlagBits.VK_CULL_MODE_NONE.value,
+                    frontFace = when (frontFace) {
+                        FrontFace.CounterClockwise -> VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE
+                        FrontFace.Clockwise -> VkFrontFace.VK_FRONT_FACE_CLOCKWISE
+                    },
                     lineWidth = 1f,
                     depthBiasEnable = cascadeCount > 0,
                     depthBiasConstantFactor = if (cascadeCount > 0) SHADOW_DEPTH_BIAS_CONSTANT else 0f,
@@ -195,7 +257,7 @@ class DepthOnlyPipeline(
                     pSetLayouts = listOfNotNull(
                         descriptorSetLayout.handle,
                         cascadeSlots?.descriptorSetLayout,
-                    ).toTypedArray(),
+                    ).plus(extraDescriptorSetLayouts.map { it.handle }).toTypedArray(),
                 ),
             )
 

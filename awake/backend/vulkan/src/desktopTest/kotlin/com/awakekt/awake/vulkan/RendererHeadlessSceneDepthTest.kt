@@ -31,13 +31,13 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.PipelineVariant
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.renderer.UniformField
 import com.awakekt.awake.render.renderer.UniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
@@ -147,8 +147,8 @@ class RendererHeadlessSceneDepthTest {
                     far = 50f,
                 ),
                 listOf(
-                    DrawCall(near, shared, Mat4().translate(-OFFSET_X, 0f, NEAR_Z)),
-                    DrawCall(far, shared, Mat4().translate(OFFSET_X, 0f, FAR_Z)),
+                    RenderDrawCommand(near, shared, Mat4().translate(-OFFSET_X, 0f, NEAR_Z)),
+                    RenderDrawCommand(far, shared, Mat4().translate(OFFSET_X, 0f, FAR_Z)),
                 ),
             )
             return runBlocking { readPixels(target) }.data

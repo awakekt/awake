@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu
 
+import com.awakekt.awake.asset.shaderdsl.bindingsByGroup
 import com.awakekt.awake.asset.shaderpack.depthFogShader
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.ClipSpace
@@ -65,6 +66,8 @@ class WebGpuDepthFogTest {
                 "fragmentMain",
                 variant = PipelineVariant.Overlay,
                 uniforms = DepthFogUniformLayout,
+                bindingsByGroup = depthFogShader(ClipSpace.WebGpu).bindingsByGroup(),
+                bindingsMetadataAvailable = true,
             )
             assertNotNull(
                 fog.uniformBlock,

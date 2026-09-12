@@ -107,7 +107,7 @@ fun runVulkanDesktopGame(
             pollInput(window, game.input)
             pollGlfwTextInput(window, game.input)
             beforeFrame()
-            DesktopFrameLoop.tick { deltaTime ->
+            DesktopFrameLoop.tick(game.windowConfig.frameRateMode) { deltaTime ->
                 application.update(deltaTime.toFloat())
             }
             cursor?.let { applyUiCursor(window, it()) }

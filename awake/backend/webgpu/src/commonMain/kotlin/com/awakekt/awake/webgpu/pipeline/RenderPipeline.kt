@@ -11,6 +11,7 @@ import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.command.UniformBlockOwner
 import com.awakekt.awake.render.pipeline.BindingLayout
+import com.awakekt.awake.render.pipeline.FrontFace
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.pipeline.ResourceKind
@@ -52,8 +53,9 @@ import io.ygdrasil.webgpu.VertexState
 
 /**
  * Phase 2.5 milestone 2 slice 1 (see docs/mvp-plan.md): real wgpu4k implementation.
- * [descriptorSetLayout] is unused -- WebGPU derives the bind group layout from the shader
- * itself ("auto" pipeline layout), unlike Vulkan's explicit `VkDescriptorSetLayout`.
+ * [descriptorSetLayout] is unused -- WebGPU derives the bind group layout from the shader when
+ * no declaration metadata is available. ASL pipelines carry explicit group metadata and use an
+ * authored pipeline layout, so bind groups cannot silently drift from the selected entry points.
  * [vertShaderCode] is decoded as UTF-8 WGSL source text (not SPIR-V bytecode) containing
  * both a `vertexMain` and `fragmentMain` entry point -- one shader module is used for both
  * pipeline stages, matching how WGSL is normally authored. [fragShaderCode] is unused (the
@@ -76,8 +78,8 @@ class RenderPipeline(
     vertShaderCode: ByteArray,
     fragShaderCode: ByteArray,
     val vertexFormat: VertexFormat,
-    vertexEntryPoint: String = DEFAULT_VERTEX_ENTRY_POINT,
-    fragmentEntryPoint: String = DEFAULT_FRAGMENT_ENTRY_POINT,
+    private val vertexEntryPoint: String = DEFAULT_VERTEX_ENTRY_POINT,
+    private val fragmentEntryPoint: String = DEFAULT_FRAGMENT_ENTRY_POINT,
     topology: GPUPrimitiveTopology = GPUPrimitiveTopology.TriangleList,
     /** See [PipelineVariant]'s own doc comment. Defaults to [PipelineVariant.Opaque] -- the
      * pipeline this class always built before any variant existed. Shared with Vulkan so a
@@ -88,15 +90,20 @@ class RenderPipeline(
      * correctly-wound solid mesh -- see `render.renderer.CullMode`'s own doc comment. Mirrors
      * Vulkan's `RenderPipeline.cullMode`. */
     cullMode: GPUCullMode = GPUCullMode.None,
+    val frontFace: FrontFace = FrontFace.CounterClockwise,
     /** Non-null builds this pipeline its OWN uniform buffer plus bind group -- see
      * `PipelineSpec.uniforms`. Mirrors Vulkan's identical parameter; this backend needs no
      * frames-in-flight count because it runs one. */
     uniforms: UniformLayout? = null,
     val bindingLayout: BindingLayout = BindingLayout.Standard,
     /** What this pipeline's own group holds, when it owns one -- see `PipelineSpec
-     * .materialBindings`. The *layout* still comes from the shader via `getBindGroupLayout`;
-     * this decides the entries written against it. */
-    private val materialBindings: GroupBindings? = null,
+     * .materialBindings`. This decides the entries written against its declared layout. */
+    internal val materialBindings: GroupBindings? = null,
+    val usesMaterialGroup: Boolean = true,
+    /** Exact shader resource ABI keyed by bind-group index, carried from ASL when available. */
+    private val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
+    /** Whether [bindingsByGroup] is authoritative, including an explicitly empty layout. */
+    private val bindingsMetadataAvailable: Boolean = false,
 ) : UniformBlockOwner {
     var renderPass: Long = 0
     var pipelineLayout: Long = 0
@@ -106,11 +113,21 @@ class RenderPipeline(
     /** This pipeline as the shared render layer's opaque handle. One per pipeline object and
      * stable across frames, which is what lets the shared feature group draws by identity. */
     val handle: WebGpuPipelineHandle by lazy {
-        WebGpuPipelineHandle(WebGpuHandles.resolve(graphicsPipeline[0]), bindingLayout)
+        WebGpuPipelineHandle(
+            WebGpuHandles.resolve(graphicsPipeline[0]),
+            bindingLayout,
+            materialBindings,
+            hasGroupZeroBindings = hasDeclaredGroupZeroBindings,
+            bindingsByGroup = bindingsByGroup,
+        )
     }
 
+    /** Group 0 is present only when the authoritative shader ABI declares it. */
+    private val hasDeclaredGroupZeroBindings: Boolean
+        get() = if (bindingsMetadataAvailable) 0 in bindingsByGroup else usesMaterialGroup
+
     private val device = graphicsDevice.wgpuContext.device
-    private val uniformBuffer: GPUBuffer? = uniforms?.let {
+    private val uniformBuffer: GPUBuffer? = uniforms?.takeIf { hasDeclaredGroupZeroBindings }?.let {
         device.createBuffer(
             BufferDescriptor(
                 size = (it.total * Float.SIZE_BYTES).toULong(),
@@ -127,19 +144,34 @@ class RenderPipeline(
      * declared sampled texture takes its supplied image and every declared sampler takes the
      * lowest-numbered texture's -- the same rule Vulkan's `PerFrameUniformSlots.writeTextures`
      * applies, and for the same reason: `Texture` gives them all identical descriptors today.
+     * Missing resources are an authoring error and fail here instead of creating an incomplete
+     * bind group that only reports the problem asynchronously during command encoding.
      */
     private fun contentBindGroupEntries(buffer: GPUBuffer): List<BindGroupEntry> {
         val declared = materialBindings ?: return listOf(
             BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
         )
+        require(declared.entries.any { it.kind == ResourceKind.UniformBuffer }) {
+            "Pipeline '$vertexEntryPoint/$fragmentEntryPoint' owns a uniform block but its " +
+                "group-0 binding metadata declares no uniform buffer."
+        }
         val sharedSampler = contentTextures.entries.minByOrNull { it.key }?.value?.sampler
-        return declared.entries.mapNotNull { entry ->
+        return declared.entries.map { entry ->
             val resource = when (entry.kind) {
                 ResourceKind.UniformBuffer -> BufferBinding(buffer = buffer)
-                ResourceKind.SampledTexture -> contentTextures[entry.binding]?.view ?: return@mapNotNull null
-                ResourceKind.Sampler -> sharedSampler ?: return@mapNotNull null
+                ResourceKind.SampledTexture -> requireNotNull(contentTextures[entry.binding]?.view) {
+                    "Pipeline '$vertexEntryPoint/$fragmentEntryPoint' declares sampled texture " +
+                        "binding ${entry.binding}, but no content texture was supplied."
+                }
+                ResourceKind.Sampler -> requireNotNull(sharedSampler) {
+                    "Pipeline '$vertexEntryPoint/$fragmentEntryPoint' declares sampler binding " +
+                        "${entry.binding}, but no content texture supplied a sampler."
+                }
                 // ContentFeature rejects a storage buffer before it reaches a backend.
-                ResourceKind.StorageBuffer -> return@mapNotNull null
+                ResourceKind.StorageBuffer -> error(
+                    "Pipeline '$vertexEntryPoint/$fragmentEntryPoint' declares unsupported " +
+                        "storage binding ${entry.binding} in its material group.",
+                )
             }
             BindGroupEntry(binding = entry.binding.toUInt(), resource = resource)
         }
@@ -171,7 +203,7 @@ class RenderPipeline(
         contentTextures = textures
     }
 
-    override val uniformBlock: UniformBlock? = uniformBuffer?.let { buffer ->
+    override val uniformBlock: UniformBlock? = uniformBuffer?.takeIf { usesMaterialGroup }?.let { buffer ->
         val layout = requireNotNull(uniforms)
         object : UniformBlock {
             // One bind group, not one per frame: this backend runs a single frame in flight, so
@@ -199,9 +231,13 @@ class RenderPipeline(
     }
 
     init {
+        check(bindingsMetadataAvailable) {
+            "WebGPU RenderPipeline requires explicit shader binding metadata; " +
+                "declare bindingsByGroup on the shared PipelineSpec."
+        }
         val device = graphicsDevice.wgpuContext.device
-        val wgslSource = vertShaderCode.decodeToString()
-        val shaderModule = device.createShaderModule(ShaderModuleDescriptor(code = wgslSource))
+        val shaderModule = device.createShaderModule(ShaderModuleDescriptor(code = vertShaderCode.decodeToString()))
+        val explicitLayout = device.createAwakePipelineLayout(bindingsByGroup)
 
         // No layout at all for VertexFormat.None -- a stride-0 buffer no attribute reads is not the
         // same thing as declaring the pipeline takes no vertex buffer. Mirrors Vulkan's
@@ -263,6 +299,7 @@ class RenderPipeline(
 
         val pipeline = device.createRenderPipeline(
             RenderPipelineDescriptor(
+                layout = explicitLayout,
                 vertex = VertexState(
                     module = shaderModule,
                     entryPoint = vertexEntryPoint,
@@ -294,7 +331,13 @@ class RenderPipeline(
                 primitive = PrimitiveState(
                     topology = topology,
                     cullMode = cullMode,
-                    frontFace = GPUFrontFace.CW,
+                    // Mesh geometry in Awake is authored counter-clockwise when viewed from its
+                    // outward-facing side. WebGPU's +Y-up NDC preserves that convention at
+                    // rasterization; treating CW as front-facing culls camera-facing surfaces.
+                    frontFace = when (frontFace) {
+                        FrontFace.CounterClockwise -> GPUFrontFace.CCW
+                        FrontFace.Clockwise -> GPUFrontFace.CW
+                    },
                 ),
                 depthStencil = DepthStencilState(
                     format = GPUTextureFormat.Depth32Float,
@@ -313,10 +356,6 @@ class RenderPipeline(
             ),
         )
         graphicsPipeline = longArrayOf(WebGpuHandles.register(pipeline))
-    }
-
-    fun bind(commandBuffer: Long) {
-        TODO("WebGPU render-pass binding happens in Renderer.draw() directly, see docs/mvp-plan.md")
     }
 
     fun destroy() {

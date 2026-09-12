@@ -5,23 +5,22 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
-import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
-import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.times
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.capture.FramebufferAttachment
+import com.awakekt.awake.render.capture.FramebufferAttachmentData
+import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes2d.UiRun
-import com.awakekt.awake.render.renderer.DEFAULT_FOG_COLOR
-import com.awakekt.awake.render.renderer.DEFAULT_HORIZON_COLOR
-import com.awakekt.awake.render.renderer.DEFAULT_ZENITH_COLOR
-import com.awakekt.awake.render.renderer.EnvironmentUniforms
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
@@ -37,7 +36,6 @@ import com.awakekt.awake.webgpu.mesh.InstanceBuffer
 import com.awakekt.awake.webgpu.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
-import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuRenderFrameContext
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
@@ -45,8 +43,6 @@ import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.ui.DynamicMesh
 import com.awakekt.awake.webgpu.ui.UiRenderPipeline
 import com.awakekt.awake.webgpu.ui.UiTargetCompositePipeline
-import io.ygdrasil.webgpu.GPUBindGroup
-import io.ygdrasil.webgpu.GPUBuffer
 import com.awakekt.awake.core.color.Color as AwakeColor
 import com.awakekt.awake.render.material.Material as RenderMaterial
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
@@ -58,7 +54,7 @@ import io.ygdrasil.webgpu.Color as GpuColor
  * single triangle/cube draw. No fences/semaphores/frame-in-flight bookkeeping -- the
  * browser's own frame pacing replaces what `SwapchainManager`'s Vulkan sync fields are for.
  *
- * For the primary pipeline, [DrawCall.material] is not consulted at all: each draw takes its own
+ * For the primary pipeline, the packet's material binding is not consulted at all: each draw takes its own
  * uniform buffer + bind group from `GpuBufferPoolManager.uniformSlotForDraw`, the counterpart to
  * Vulkan's per-draw uniform slots. Sharing one buffer across draws would clobber every draw's MVP
  * but the last, since `queue.writeBuffer` is queue-scheduled rather than interleaved mid-encoder.
@@ -91,7 +87,14 @@ class Renderer internal constructor(
      * only the matrix its shader reads differs. */
     internal val sceneDepthPass: DepthPrePassFeature? = null,
     internal val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = emptyList(),
-) : RenderRenderer {
+) : RenderRenderer,
+    GpuDrawPreparationSource {
+    override val gpuDrawPreparer: GpuDrawPreparer by lazy {
+        WebGpuDrawPreparer(this)
+    }
+
+    internal val gpuPassExecutor: GpuPassExecutor by lazy { RendererGpuPassExecutor(this) }
+
     internal val renderPipeline: RenderPipeline get() = pipelines.primary
     internal val primaryVertexFormat: VertexFormat get() = pipelines.primary.vertexFormat
     internal val wireframeRenderPipeline: RenderPipeline? get() = pipelines.wireframeByFormat[primaryVertexFormat]
@@ -117,6 +120,11 @@ class Renderer internal constructor(
     // needed here. Depth is 0..1 on both, unlike OpenGL's -1..1.
     override val clipSpace: ClipSpace = ClipSpace.WebGpu
 
+    override val surfaceAspect: Float
+        get() = graphicsDevice.wgpuContext.renderingContext.let { context ->
+            if (context.height > 0u) context.width.toFloat() / context.height.toFloat() else 16f / 9f
+        }
+
     override var clearColor: AwakeColor = AwakeColor.Black
 
     /** See [wireframeRenderPipeline]'s doc comment. `false` by default -- and a no-op even
@@ -131,35 +139,8 @@ class Renderer internal constructor(
      * carry a per-vertex barycentric attribute. */
     override var wireframe: Boolean = false
 
-    /** Real storage overriding the interface's no-op defaults -- see the interface's own doc
-     * comments. [showEnvironment] additionally needs [skyboxRenderPipeline] to be non-null
-     * (the app's bootstrap must have opted into a skybox shader set); with none built it stays
-     * a no-op flag, same shape as [wireframe] with no [wireframeRenderPipeline]. */
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var showEnvironment: Boolean = false
-
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var horizonColor: AwakeColor = DEFAULT_HORIZON_COLOR
-
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var zenithColor: AwakeColor = DEFAULT_ZENITH_COLOR
-
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var fogColor: AwakeColor = DEFAULT_FOG_COLOR
-
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var fogDensity: Float = 0f
-
-    // Read for real (RendererDraw3D gates the depth pre-pass on it), but [depthPrePass] is
-    // always null here -- WebGpuEngine rejects a non-null depthPrePassShaderSet, because no WebGPU
-    // shader can sample the map. So this toggles a pass that never has anything to run.
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var shadowsEnabled: Boolean = true
-
     /** Real storage overriding the interface's no-op default -- see the interface's own doc
      * comment. */
-    override var debugMode: Boolean = false
-
     /** [clearColor] converted to this backend's clear-value type -- see the Vulkan `Renderer`'s
      * own `clearColorValue` for why this is a fresh-read `get()`, not a cached field. */
     internal val clearColorValue: GpuColor
@@ -177,24 +158,6 @@ class Renderer internal constructor(
      * shared verbatim with the Vulkan backend through [WebGpuCommandRecorder]. */
 
     /** Stateless; the one implementation of procedural skybox drawing, shared verbatim across backends. */
-
-    /** Each of the four bind groups below, as the shared render layer's opaque handle. Cached
-     * next to the group it wraps (set by the matching `ensure*UniformResources`) rather than
-     * rebuilt per draw. */
-    internal var instancedUniformBinding: WebGpuBindGroupHandle? = null
-    internal var skinnedInstancedUniformBinding: WebGpuBindGroupHandle? = null
-
-    /** [instancedPipelines]' own uniform buffer/bind group. One pair is enough for any number of
-     * instanced draws -- unlike the primary path's per-draw pooled slots, their uniform content
-     * (`viewProjection` + light) is identical across all of them, since the per-copy model
-     * matrices live in the instance buffer instead. */
-    internal var instancedUniformBuffer: GPUBuffer? = null
-    internal var instancedUniformBindGroup: GPUBindGroup? = null
-
-    /** [skinnedInstancedPipelines]' own pair of the above -- see
-     * [ensureSkinnedInstancedUniformResources] for why it can't share the instanced one. */
-    internal var skinnedInstancedUniformBuffer: GPUBuffer? = null
-    internal var skinnedInstancedUniformBindGroup: GPUBindGroup? = null
 
     internal val bufferPools = GpuBufferPoolManager(graphicsDevice)
 
@@ -245,22 +208,12 @@ class Renderer internal constructor(
 
     override fun createRenderTarget(width: Int, height: Int): RenderTarget = performCreateRenderTarget(width, height)
 
-    override fun renderToTexture(
-        target: RenderTarget,
-        camera: Lens,
-        drawCalls: List<DrawCall>,
-        light: SceneLight,
-        environment: EnvironmentUniforms,
-    ) = performRenderToTexture(target, camera, drawCalls, light, environment)
-
-    override fun renderToTexture(
-        target: RenderTarget,
-        camera: Lens,
-        drawCalls: List<DrawCall>,
-        light: SceneLight,
-    ) = performRenderToTexture(target, camera, drawCalls, light)
-
     override suspend fun readPixels(target: RenderTarget): TextureAsset = performReadPixels(target)
+
+    override suspend fun readFramebufferAttachment(
+        target: RenderTarget,
+        attachment: FramebufferAttachment,
+    ): FramebufferAttachmentData = performReadFramebufferAttachment(target, attachment)
 
     /** Stages this frame's UI overlay content -- delegates to [performDrawUi]
      * ([RendererDrawUi.kt]). Named differently from the extension function it calls: an
@@ -283,20 +236,12 @@ class Renderer internal constructor(
      * extracted body under the same name. */
     override fun drawDebugLines(lines: List<LineSegment>) = performDrawDebugLines(lines)
 
-    override fun draw(input: GpuPassInput) = performDraw(input)
+    override fun draw(input: GpuPassInput) = gpuPassExecutor.draw(input)
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) =
-        performRenderToTexture(target, input)
+        gpuPassExecutor.renderToTexture(target, input)
 
     override fun destroy() {
-        instancedUniformBuffer?.close()
-        instancedUniformBuffer = null
-        instancedUniformBindGroup = null
-        instancedUniformBinding = null
-        skinnedInstancedUniformBuffer?.close()
-        skinnedInstancedUniformBuffer = null
-        skinnedInstancedUniformBindGroup = null
-        skinnedInstancedUniformBinding = null
         bufferPools.destroy()
         uiRenderPipeline?.destroy()
         uiGlyphRenderPipeline?.destroy()

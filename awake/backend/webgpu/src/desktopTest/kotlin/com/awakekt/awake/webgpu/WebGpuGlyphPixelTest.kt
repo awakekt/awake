@@ -18,6 +18,7 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes2d.UiRenderFeature
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineTable
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
 import com.awakekt.awake.webgpu.device.GraphicsDevice
@@ -157,6 +158,8 @@ class WebGpuGlyphPixelTest {
             VertexFormat.PositionColorUv,
             "vertexMain",
             "fragmentMain",
+            bindingsByGroup = mapOf(0 to GroupBindings.UniformOnlyMaterial),
+            bindingsMetadataAvailable = true,
         )
         val lineRenderPipeline = LineRenderPipeline(
             graphicsDevice,

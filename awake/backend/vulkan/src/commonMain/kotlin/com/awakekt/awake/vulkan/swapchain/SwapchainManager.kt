@@ -364,20 +364,28 @@ private fun chooseSwapSurfaceFormat(availableFormats: List<VkSurfaceFormatKHR>):
     } ?: availableFormats.first()
 }
 
-/** Picks the swapchain's present mode, preferring mailbox (low-latency triple buffering)
- * over FIFO's guaranteed-but-blocking vsync -- extracted from [SwapchainManager] for the same
- * reason as [chooseSwapSurfaceFormat]: no instance state read. */
+/** Picks the swapchain's present mode.
+ *
+ * [PresentMode.Auto] resolves to [VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR] so that the
+ * frame loop receives natural vsync back-pressure without any artificial sleep in
+ * [com.awakekt.awake.core.host.DesktopFrameLoop] / [com.awakekt.awake.core.host.AndroidFrameLoop].
+ * FIFO is the only mode the spec requires every implementation to support, so [Auto] is always
+ * honoured -- no fallback needed.
+ *
+ * [PresentMode.LowLatency] explicitly opts in to mailbox (uncapped triple-buffering). MoltenVK
+ * does not always offer it, so `selectedPresentMode` reports what was actually granted rather
+ * than assuming the request was honoured.
+ *
+ * Extracted from [SwapchainManager] for the same reason as [chooseSwapSurfaceFormat]: no
+ * instance state read. */
 internal fun chooseSwapPresentMode(
     availablePresetModes: List<VkPresentModeKHR>,
     preference: PresentMode,
 ): VkPresentModeKHR {
     require(availablePresetModes.isNotEmpty()) { "AvailablePresetModes must not be empty." }
-    // FIFO is the only mode the spec requires every implementation to support, so it is the
-    // fallback for every request. MoltenVK in particular does not always offer mailbox, which is
-    // how an app that asked not to be capped ends up capped anyway -- hence `selectedPresentMode`
-    // rather than assuming the request was honoured.
     val wanted = when (preference) {
-        PresentMode.Auto, PresentMode.LowLatency -> VkPresentModeKHR.VK_PRESENT_MODE_MAILBOX_KHR
+        PresentMode.Auto -> VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR
+        PresentMode.LowLatency -> VkPresentModeKHR.VK_PRESENT_MODE_MAILBOX_KHR
         PresentMode.NoVsync -> VkPresentModeKHR.VK_PRESENT_MODE_IMMEDIATE_KHR
         PresentMode.Vsync -> VkPresentModeKHR.VK_PRESENT_MODE_FIFO_KHR
     }

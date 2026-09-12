@@ -6,10 +6,13 @@
 package com.awakekt.awake.webgpu.debug
 
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
+import com.awakekt.awake.render.passes.debug.DebugLineUniformLayout
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
+import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.pipeline.toGpuVertexFormat
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import io.ygdrasil.webgpu.BindGroupDescriptor
@@ -55,7 +58,9 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
     val bindGroup: GPUBindGroup
 
     /** [pipeline]/[bindGroup] as the shared render layer's opaque handles -- built once. */
-    val handle: WebGpuPipelineHandle by lazy { WebGpuPipelineHandle(pipeline) }
+    val handle: WebGpuPipelineHandle by lazy {
+        WebGpuPipelineHandle(pipeline, bindingsByGroup = mapOf(0 to GroupBindings.UniformOnlyMaterial))
+    }
     val bindGroupHandle: WebGpuBindGroupHandle by lazy { WebGpuBindGroupHandle(bindGroup) }
 
     init {
@@ -64,6 +69,7 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
 
         pipeline = device.createRenderPipeline(
             RenderPipelineDescriptor(
+                layout = device.createAwakePipelineLayout(mapOf(0 to GroupBindings.UniformOnlyMaterial)),
                 vertex = VertexState(
                     module = shaderModule,
                     entryPoint = "vertexMain",
@@ -102,7 +108,7 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
 
         mvpBuffer = device.createBuffer(
             BufferDescriptor(
-                size = (16 * Float.SIZE_BYTES).toULong(),
+                size = (DebugLineUniformLayout.total * Float.SIZE_BYTES).toULong(),
                 usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
             ),
         )

@@ -12,7 +12,14 @@ import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.render.capture.FramebufferAttachment
+import com.awakekt.awake.render.capture.FramebufferAttachmentData
+import com.awakekt.awake.render.command.GpuDrawPreparationSource
+import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.command.GpuShadowCascadeData
+import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.SharedOpaqueRenderFeature
@@ -21,14 +28,9 @@ import com.awakekt.awake.render.passes.recordPassFeatures
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.resolve
-import com.awakekt.awake.render.renderer.CullMode
-import com.awakekt.awake.render.renderer.DEFAULT_FOG_COLOR
-import com.awakekt.awake.render.renderer.DEFAULT_HORIZON_COLOR
-import com.awakekt.awake.render.renderer.DEFAULT_ZENITH_COLOR
 import com.awakekt.awake.render.renderer.LineSegment
-import com.awakekt.awake.render.renderer.RenderViewport
-import com.awakekt.awake.render.renderer.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
@@ -63,16 +65,14 @@ import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 
 /**
- * Phase 2 (renderer abstraction): the `Renderer.draw(camera, List<DrawCall>)` entry point --
+ * Generic packet renderer: the `Renderer.draw(GpuPassInput)` entry point --
  * owns the depth buffer, framebuffers, and per-frame command buffers, and orchestrates a
- * whole frame (wait/acquire -> update each [DrawCall]'s uniform buffer -> record -> submit ->
+ * whole frame (wait/acquire -> update packet draw resources -> record -> submit ->
  * present), extracted verbatim from `VulkanApplication`'s `createDepthResources`/
  * `createFramebuffers`/`createCommandBuffer`/`drawFrame`/`recordCommandBuffer` functions.
  *
- * Lives in `awake-core`, not `awake-vulkan`: it needs [Lens] and `Mat4` (both `awake-core`
- * math, backend-agnostic) to combine a camera's view/projection with each draw call's model
- * matrix, and `awake-core` already depends on `awake-vulkan` (the reverse dependency doesn't
- * exist) -- putting `Renderer` here avoids a cycle.
+ * The backend receives already compiled GPU packets. Camera and scene policy stay in the shared
+ * render-passes compiler; this class only translates packet handles into Vulkan commands.
  *
  * Takes a raw command-pool handle rather than a
  * [com.awakekt.awake.vulkan.commands.TransferContext] instance: it only needs
@@ -97,7 +97,7 @@ class Renderer internal constructor(
     graphicsDevice: GraphicsDevice,
     swapchainManager: SwapchainManager,
     /** Every 3D [RenderPipeline] this renderer can draw with -- see [pipelinesByFormat]'s doc
-     * comment for how a [DrawCall] picks one. Replaces what used to be 5 separate flat
+     * comment for how a generic draw command picks one. Replaces what used to be 5 separate flat
      * constructor params (`renderPipeline`/`additionalPipelinesByFormat`/
      * `wireframePipelinesByFormat`/`instancedPipelinesByFormat`/
      * `skinnedInstancedPipelinesByFormat`) -- grouped because they always travel together and
@@ -122,7 +122,7 @@ class Renderer internal constructor(
      * pass is even recorded. Non-null only when the app's bootstrap opted into one (see
      * `VulkanEngine`'s own `depthPrePassShaderSet` doc comment). `null` (default) is the
      * "no pre-pass ever existed" path: every material built by this instance keeps its original
-     * 3-binding descriptor set layout, and [prepareDrawCalls] keeps writing the exact same
+     * 3-binding descriptor set layout, and packet preparation keeps writing the exact same
      * 8-float light block it always did -- zero behavior change for every caller that doesn't
      * opt in. */
     private val depthPrePass: DepthPrePassFeature? = null,
@@ -130,8 +130,20 @@ class Renderer internal constructor(
      * its shader reads the camera matrix instead of the light's, and it is not gated on
      * [shadowsEnabled] because nothing about it is a shadow. */
     private val sceneDepthPass: DepthPrePassFeature? = null,
-) : RenderRenderer {
+) : RenderRenderer,
+    GpuDrawPreparationSource {
+    override val gpuDrawPreparer: GpuDrawPreparer by lazy {
+        VulkanDrawPreparer(this)
+    }
+
+    internal val gpuPassExecutor: GpuPassExecutor by lazy { RendererGpuPassExecutor(this) }
+
     override val clipSpace: ClipSpace = ClipSpace.Vulkan
+
+    override val surfaceAspect: Float
+        get() = swapchainManager.extent.let { extent ->
+            if (extent.height > 0) extent.width.toFloat() / extent.height.toFloat() else 16f / 9f
+        }
 
     /** This backend's half of the shared draw-recording port -- retargeted at whichever command
      * buffer is being recorded (see [VulkanCommandRecorder.commandBuffer]) rather than rebuilt,
@@ -143,51 +155,15 @@ class Renderer internal constructor(
      * duplicating it. */
     internal val sharedOpaqueFeature = SharedOpaqueRenderFeature()
 
-    /** Whether the depth pre-pass actually runs this frame -- only meaningful when
-     * [depthTarget] is non-null. The name is the app's word, from the [Renderer] interface:
-     * shadow mapping is what every caller uses this for, even though nothing below this line
-     * depends on that.
-     *
-     * Toggling it off leaves the target holding whatever depth it last rendered (or its cleared
-     * default of 1.0, "nothing occludes", if never rendered) instead of re-clearing it -- a
-     * frozen last-good result rather than a one-frame flicker to "nothing occludes anything".
-     * ponytail: freezes stale depth instead of clearing on disable; revisit if that staleness is
-     * ever visible (e.g. toggling off, then moving whatever the pre-pass renders from). */
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var shadowsEnabled: Boolean = true
-
     override var clearColor: Color = Color.Black
 
     /** See this class's own `wireframePipelinesByFormat` constructor parameter doc comment. */
     override var wireframe: Boolean = false
 
-    /** Real storage overriding the interface's no-op defaults -- see the interface's own doc
-     * comments. [showEnvironment] additionally needs the app to have opted into a skybox
-     * content feature; with none supplied it stays a no-op flag, same shape as [wireframe]
-     * with no wireframe pipeline. */
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var showEnvironment: Boolean = false
-
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var horizonColor: Color = DEFAULT_HORIZON_COLOR
-
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var zenithColor: Color = DEFAULT_ZENITH_COLOR
-
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var fogColor: Color = DEFAULT_FOG_COLOR
-
-    @Deprecated("Pass EnvironmentUniforms into draw(...) or renderToTexture(...) instead of mutating Renderer state.")
-    override var fogDensity: Float = 0f
-
     /** Applied to the 3D pass only (viewport + scissor + projection aspect); the UI pass keeps
      * the full swapchain extent. See the interface's own doc comment. */
-    override var sceneViewport: RenderViewport? = null
-
     /** Real storage overriding the interface's no-op default -- see the interface's own doc
      * comment. */
-    override var debugMode: Boolean = false
-
     /** [clearColor] converted to this backend's clear-value type -- read fresh every render
      * pass (not cached), so a [clearColor] mutation takes effect on the very next frame. */
     internal val clearColorValue: VkClearColorValue
@@ -203,6 +179,8 @@ class Renderer internal constructor(
     /** Non-null exactly when [depthPrePass] is -- read by [createMaterial] (its descriptor set
      * layout gains the depth bindings) and by the uniform-writing paths, never for drawing. */
     internal val depthTarget: DepthTarget? = depthPrePass?.depthTarget
+    internal val depthPrePassFeature: DepthPrePassFeature? get() = depthPrePass
+    internal val sceneDepthPassFeature: DepthPrePassFeature? get() = sceneDepthPass
 
     /** Non-null exactly when [sceneDepthPass] is -- bound per frame at
      * [BindingSemantic.SceneDepth] for whatever declares it. */
@@ -214,10 +192,10 @@ class Renderer internal constructor(
     internal val uiTargetCompositeShaders: ShaderPair? = uiShaderPairs.targetComposite
 
     /** Every 3D pipeline this renderer can draw with, keyed by the [VertexFormat] it expects
-     * -- [prepareDrawCalls] resolves each [DrawCall] against this table via
-     * [DrawCall.mesh]'s own [com.awakekt.awake.render.mesh.Mesh.format]; a format
+     * -- packet preparation resolves each draw command against this table via
+     * its mesh format; a format
      * with no entry here is skipped (not drawn), not force-drawn through [renderPipeline] --
-     * see [prepareDrawCalls]'s own doc comment for why silently rendering wrong-format vertex
+     * see packet preparation's own guard for why silently rendering wrong-format vertex
      * data through the wrong pipeline would be worse than not drawing it at all. */
     internal val pipelinesByFormat: Map<VertexFormat, RenderPipeline> =
         mapOf(pipelines.primary.vertexFormat to pipelines.primary) + pipelines.byFormat
@@ -337,12 +315,17 @@ class Renderer internal constructor(
 
     override fun createRenderTarget(width: Int, height: Int): RenderTarget = performCreateRenderTarget(width, height)
 
-    override fun draw(input: GpuPassInput) = performDraw(input)
+    override fun draw(input: GpuPassInput) = gpuPassExecutor.draw(input)
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) =
-        performRenderToTexture(target, input)
+        gpuPassExecutor.renderToTexture(target, input)
 
     override suspend fun readPixels(target: RenderTarget): TextureAsset = performReadPixels(target)
+
+    override suspend fun readFramebufferAttachment(
+        target: RenderTarget,
+        attachment: FramebufferAttachment,
+    ): FramebufferAttachmentData = performReadFramebufferAttachment(target, attachment)
 
     /** Delegates to [performDrawUi] ([RendererDrawUi.kt]) -- see [performDraw]'s doc comment
      * for why. */
@@ -375,14 +358,15 @@ class Renderer internal constructor(
      * had to exist before any material layout could be built; its own set removes that ordering
      * entirely.
      */
-    internal fun bindDepthSet(commandBuffer: Long) {
-        val map = depthTarget ?: return
-        VulkanDescriptors.vkCmdBindDescriptorSet(
-            commandBuffer,
-            renderPipeline.pipelineLayoutHandle,
-            depthBindingSlot(bindingLayout),
-            map.binding().descriptorSetHandle,
-        )
+    internal fun bindDepthSets(commandBuffer: Long) {
+        depthTarget?.let { map ->
+            VulkanDescriptors.vkCmdBindDescriptorSet(
+                commandBuffer,
+                renderPipeline.pipelineLayoutHandle,
+                depthBindingSlot(bindingLayout),
+                map.binding().descriptorSetHandle,
+            )
+        }
     }
 
     /** Records every feature registered for [slot], in registration order, into the pass
@@ -401,29 +385,41 @@ class Renderer internal constructor(
      * render pass now declares as an outgoing subpass dependency.
      *
      * A no-op when no pre-pass was opted into ([depthPrePass] is null) or it is runtime-disabled
-     * ([shadowsEnabled]). Must be called outside an active render pass.
+     * (the packet's environment flag). Must be called outside an active render pass.
      */
     internal fun recordDepthPrePass(
         commandBuffer: Long,
-        drawCalls: List<PreparedDrawCall>,
-        cascades: ShadowCascadeUniforms?,
+        drawCalls: List<PreparedDraw>,
+        cascades: GpuShadowCascadeData?,
+        shadowsEnabled: Boolean,
     ) {
         val feature = depthPrePass ?: return
         if (!shadowsEnabled || cascades == null) return
         feature.recordCommands(commandBuffer, drawCalls, renderPipeline.vertexFormat, cascades)
     }
 
+    internal fun recordDepthPrePass(
+        commandBuffer: Long,
+        drawCalls: List<PreparedDraw>,
+        subPasses: List<com.awakekt.awake.render.command.GpuSubPass>,
+        shadowsEnabled: Boolean,
+    ) {
+        val feature = depthPrePass ?: return
+        if (!shadowsEnabled || subPasses.isEmpty()) return
+        feature.recordCommands(commandBuffer, subPasses, renderPipeline.vertexFormat)
+    }
+
     /**
      * The camera-space depth pass, recorded alongside [recordDepthPrePass] and under the same
      * rules: outside an active render pass, before the scene pass that samples it.
      *
-     * Not gated on [shadowsEnabled] -- that toggle is about shadows, and something reading scene
+     * Not gated on the shadow flag -- that toggle is about shadows, and something reading scene
      * depth for water or fog still needs it when shadows are off.
      */
     internal fun recordSceneDepthPass(
         commandBuffer: Long,
-        drawCalls: List<PreparedDrawCall>,
-        camera: ShadowCascadeUniforms,
+        drawCalls: List<PreparedDraw>,
+        camera: GpuShadowCascadeData,
     ) {
         val feature = sceneDepthPass ?: return
         // One "cascade": the camera's own view-projection. The pass machinery is the same, and

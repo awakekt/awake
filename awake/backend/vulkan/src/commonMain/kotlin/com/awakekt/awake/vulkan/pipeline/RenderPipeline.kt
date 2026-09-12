@@ -11,6 +11,7 @@ import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.command.UniformBlockOwner
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.FrontFace
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.renderer.UniformLayout
@@ -91,6 +92,7 @@ class RenderPipeline(
      * for a correctly-wound solid mesh -- see `render.renderer.CullMode`'s own doc comment for
      * why NONE isn't just a historical default, it's also a real z-fighting/perf trade-off. */
     cullMode: VkCullModeFlagBits = VkCullModeFlagBits.VK_CULL_MODE_NONE,
+    val frontFace: FrontFace = FrontFace.CounterClockwise,
     /** See [PipelineVariant]'s own doc comment. Defaults to [PipelineVariant.Opaque] -- the
      * pipeline this class always built before any variant existed. */
     variant: PipelineVariant = PipelineVariant.Opaque,
@@ -221,7 +223,7 @@ class RenderPipeline(
                 pVertexInputState = vertexInputState(vertexFormat, variant),
                 pInputAssemblyState = INPUT_ASSEMBLY_STATE,
                 pViewportState = viewportState(swapchainManager),
-                pRasterizationState = rasterizationState(polygonMode, cullMode),
+                pRasterizationState = rasterizationState(polygonMode, cullMode, frontFace),
                 pMultisampleState = MULTISAMPLE_STATE,
                 pColorBlendState = colorBlendState(variant.blendEnabled),
                 pDepthStencilState = depthStencilState(variant.depthTestEnabled, variant.depthWriteEnabled),
@@ -420,7 +422,7 @@ private fun vertexInputState(
         attributes += matrixAttributes
         if (variant.instanceAlpha) {
             // One vec4 (rgba) per instance, not a lone float -- alpha rides in .w alongside
-            // per-particle color, see DrawCall.instanceColors' own doc comment.
+            // per-particle color, see the packet instance-colors field's own doc comment.
             val (colorBinding, colorAttributes) = instanceRateBinding(
                 INSTANCE_ALPHA_BINDING,
                 VEC4_BYTES,
@@ -431,7 +433,7 @@ private fun vertexInputState(
             attributes += colorAttributes
             if (variant.instanceFrame) {
                 // One f32 per instance -- this particle's own sprite-strip frame index, see
-                // DrawCall.instanceFrames' own doc comment.
+                // The packet instance-frames field's own doc comment.
                 val (frameBinding, frameAttributes) = instanceRateBinding(
                     INSTANCE_FRAME_BINDING,
                     Float.SIZE_BYTES,
@@ -481,10 +483,17 @@ private fun depthStencilState(
 private fun rasterizationState(
     polygonMode: VkPolygonMode,
     cullMode: VkCullModeFlagBits,
+    frontFace: FrontFace,
 ): Array<VkPipelineRasterizationStateCreateInfo> = arrayOf(
     VkPipelineRasterizationStateCreateInfo(
         cullMode = cullMode.value,
-        frontFace = VkFrontFace.VK_FRONT_FACE_CLOCKWISE,
+        // Mesh geometry is authored counter-clockwise when viewed from its outward-facing side.
+        // Vulkan's positive-height viewport used here preserves that convention at rasterization;
+        // treating clockwise triangles as front-facing culls those camera-facing surfaces.
+        frontFace = when (frontFace) {
+            FrontFace.CounterClockwise -> VkFrontFace.VK_FRONT_FACE_COUNTER_CLOCKWISE
+            FrontFace.Clockwise -> VkFrontFace.VK_FRONT_FACE_CLOCKWISE
+        },
         polygonMode = polygonMode,
         lineWidth = 1f,
     ),

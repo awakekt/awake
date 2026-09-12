@@ -20,9 +20,9 @@ import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.engine.compose.GraphicsLayerCompositor
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.PipelineVariant
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.vulkan.commands.TransferContext
@@ -46,10 +46,10 @@ import com.awakekt.awake.render.material.Material as RenderMaterial
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 
 /**
- * Proves a `DrawCall.transparent` draw actually resolves to the alpha-blended pipeline and
+ * Proves a `RenderDrawCommand.transparent` draw actually resolves to the alpha-blended pipeline and
  * blends against what is already in the colour buffer -- the one property nothing else checks.
  *
- * The whole transparency path (`MeshRenderer.transparent` -> `DrawCall.transparent` ->
+ * The whole transparency path (`MeshRenderer.transparent` -> `RenderDrawCommand.transparent` ->
  * `PipelineTable.transparentByFormat` -> `Renderer.pipelineFor`) was built without any scene
  * setting the flag, so every piece of it was unexercised. A wrong pipeline choice here is
  * invisible in every other test: the draw still renders, in the right place, at the right size
@@ -339,8 +339,8 @@ class RendererHeadlessTransparencyTest {
                     far = 10f,
                 ),
                 listOf(
-                    DrawCall(backdrop, sharedMaterial),
-                    DrawCall(overlay, sharedMaterial, transparent = true),
+                    RenderDrawCommand(backdrop, sharedMaterial),
+                    RenderDrawCommand(overlay, sharedMaterial, transparent = true),
                 ),
             )
             return runBlocking { readPixels(target) }.data

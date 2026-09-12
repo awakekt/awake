@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.commands
 
+import com.awakekt.awake.render.command.GpuUploadLease
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.VkCommandBufferLevel
@@ -76,6 +77,22 @@ class TransferContext(graphicsDevice: GraphicsDevice) {
             uploadFence,
         )
         Vulkan.vkWaitForFences(device, longArrayOf(uploadFence), true, Long.MAX_VALUE)
+    }
+
+    /**
+     * Submits an owned upload and completes its lease only after the transfer fence signals.
+     * The existing synchronous path remains the fallback for startup assets; the lease makes its
+     * consumption point explicit so callers do not release CPU bytes at queue submission time.
+     */
+    fun <T> runUpload(lease: GpuUploadLease<T>, block: (Long, T) -> Unit) {
+        lease.submit()
+        try {
+            runOneTimeCommands { commandBuffer -> block(commandBuffer, lease.payload) }
+            lease.complete()
+        } catch (failure: Throwable) {
+            lease.fail()
+            throw failure
+        }
     }
 
     fun destroy() {

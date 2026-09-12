@@ -11,17 +11,9 @@ import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.core.text.font.UiFontSamplingMode
 import com.awakekt.awake.render.font.UiFontSamplingInfo
 import com.awakekt.awake.render.font.samplingInfo
-import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.pipeline.UiPipelineDescriptor
-import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.ui.UiRenderPipeline
-import io.ygdrasil.webgpu.BindGroupDescriptor
-import io.ygdrasil.webgpu.BindGroupEntry
-import io.ygdrasil.webgpu.BufferBinding
-import io.ygdrasil.webgpu.BufferDescriptor
-import io.ygdrasil.webgpu.GPUBufferUsage
-import io.ygdrasil.webgpu.GPURenderPipeline
 
 /** Lazy construction of every UI-overlay graphics pipeline `performDrawUi` ([RendererDrawUi.kt])
  * needs -- each is built only on the first call that actually needs it, so a game that never
@@ -93,10 +85,6 @@ internal fun Renderer.ensureRoundedQuadPipeline() {
     )
 }
 
-// Derived, not counted by hand: MaterialUniformLayouts.Primary IS triangle.wgsl's Uniforms
-// struct, so a field added there resizes this buffer automatically.
-private val UNIFORM_FLOAT_COUNT = MaterialUniformLayouts.Primary.total
-
 private fun uiPipelineDescriptor(
     kind: UiPipelineKind,
     blendMode: BlendMode = BlendMode.SourceOver,
@@ -107,54 +95,3 @@ private fun uiPipelineDescriptor(
     blendMode = blendMode,
     isPremultiplied = isPremultiplied,
 )
-
-/** [Renderer.instancedPipelines]' own uniform buffer/bind group -- a third near-duplicate, for
- * the exact "auto" pipeline-layout reason: a bind group is only valid against the pipeline layout it came from.
- * One pair serves every instanced pipeline/draw call: they all write the same `viewProjection` +
- * light block (see `instanced.wgsl`), so unlike the per-draw `mvp` this class writes elsewhere
- * there is nothing here for a second instanced call to clobber. */
-internal fun Renderer.ensureInstancedUniformResources(pipeline: GPURenderPipeline) {
-    if (instancedUniformBuffer != null) return
-    val device = graphicsDevice.wgpuContext.device
-    val buffer = device.createBuffer(
-        BufferDescriptor(
-            size = (UNIFORM_FLOAT_COUNT * Float.SIZE_BYTES).toULong(),
-            usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
-        ),
-    )
-    instancedUniformBuffer = buffer
-    instancedUniformBindGroup = device.createBindGroup(
-        BindGroupDescriptor(
-            layout = pipeline.getBindGroupLayout(0u),
-            entries = listOf(
-                BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
-            ),
-        ),
-    )
-    instancedUniformBinding = WebGpuBindGroupHandle(instancedUniformBindGroup!!)
-}
-
-/** [Renderer.skinnedInstancedPipelines]' own pair of the same -- a separate one from
- * [ensureInstancedUniformResources]' despite writing an identical uniform block, because a bind
- * group is only valid against the pipeline layout it was derived from and this is a different
- * pipeline object (the same reason wireframe needs its own pair). */
-internal fun Renderer.ensureSkinnedInstancedUniformResources(pipeline: GPURenderPipeline) {
-    if (skinnedInstancedUniformBuffer != null) return
-    val device = graphicsDevice.wgpuContext.device
-    val buffer = device.createBuffer(
-        BufferDescriptor(
-            size = (UNIFORM_FLOAT_COUNT * Float.SIZE_BYTES).toULong(),
-            usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
-        ),
-    )
-    skinnedInstancedUniformBuffer = buffer
-    skinnedInstancedUniformBindGroup = device.createBindGroup(
-        BindGroupDescriptor(
-            layout = pipeline.getBindGroupLayout(0u),
-            entries = listOf(
-                BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
-            ),
-        ),
-    )
-    skinnedInstancedUniformBinding = WebGpuBindGroupHandle(skinnedInstancedUniformBindGroup!!)
-}

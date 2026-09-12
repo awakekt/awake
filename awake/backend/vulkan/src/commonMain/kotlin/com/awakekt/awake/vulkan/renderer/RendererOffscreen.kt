@@ -6,32 +6,24 @@
 package com.awakekt.awake.vulkan.renderer
 
 import com.awakekt.awake.core.geometry.MeshGeometry
-import com.awakekt.awake.render.command.GpuPassInput
-import com.awakekt.awake.render.command.sortForRecording
-import com.awakekt.awake.render.passes.GpuSceneFrame
-import com.awakekt.awake.render.passes.RenderPassSlot
-import com.awakekt.awake.render.renderer.EnvironmentUniforms
+import com.awakekt.awake.render.capture.FramebufferAttachment
+import com.awakekt.awake.render.capture.FramebufferAttachmentData
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkImageLayout
-import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanImages
 import com.awakekt.awake.vulkan.material.Material
 import com.awakekt.awake.vulkan.material.PbrImageViews
 import com.awakekt.awake.vulkan.mesh.Mesh
-import com.awakekt.awake.vulkan.models.VkExtent2D
-import com.awakekt.awake.vulkan.models.VkRect2D
-import com.awakekt.awake.vulkan.models.VkViewport
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferImageCopy
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
 import com.awakekt.awake.vulkan.models.info.VkImageLayout2
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
-import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
 import com.awakekt.awake.vulkan.texture.OffscreenRenderTarget
 import com.awakekt.awake.vulkan.texture.Texture
 import com.awakekt.awake.render.material.Material as RenderMaterial
@@ -118,7 +110,7 @@ suspend fun Renderer.readPresentedPixels(): TextureAsset {
     val height = swapchainManager.extent.height
     // The frame just drawn is the one BEFORE the manager's current slot, which draw() advanced.
     val drawn = (swapchainManager.currentFrame + swapchainManager.imageViews.size - 1) %
-            swapchainManager.imageViews.size
+        swapchainManager.imageViews.size
     return readImageBytes(swapchainManager.headlessImages[drawn], width, height)
 }
 
@@ -136,105 +128,6 @@ internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): Render
     return target
 }
 
-internal fun Renderer.performRenderToTexture(
-    target: RenderTarget,
-    input: GpuPassInput,
-) {
-    val offscreen = target as OffscreenRenderTarget
-    val sceneRect = sceneViewport?.clampedTo(offscreen.width.toFloat(), offscreen.height.toFloat())
-    val materialUsage = mutableMapOf<RenderMaterial, Int>()
-    val preparedOpaque = prepareGpuDraws(
-        commandBuffers.size,
-        input.viewProjection,
-        input.cameraEye,
-        input.opaqueDraws,
-        isTransparent = false,
-        materialUsage,
-    )
-    val preparedTransparent = prepareGpuDraws(
-        commandBuffers.size,
-        input.viewProjection,
-        input.cameraEye,
-        input.transparentDraws,
-        isTransparent = true,
-        materialUsage,
-    )
-    val preparedDrawCalls = preparedOpaque + preparedTransparent
-    val sorted = sortForRecording(preparedDrawCalls)
-
-    runOffscreenCommands { commandBuffer ->
-        recordDepthPrePass(commandBuffer, preparedDrawCalls, null)
-        recordSceneDepthPass(commandBuffer, preparedDrawCalls, cameraDepthPass(input.viewProjection))
-        offscreen.prepareForColorAttachment(commandBuffer)
-        val renderPassInfo = VkRenderPassBeginInfo(
-            renderPass = renderPipeline.renderPass,
-            framebuffer = offscreen.framebuffer,
-            renderArea = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height)),
-            pClearValues = arrayOf(clearColorValue, Renderer.clearDepthValue),
-        )
-        Vulkan.vkCmdBeginRenderPass(
-            commandBuffer,
-            renderPassInfo,
-            VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
-        )
-        val viewport = sceneRect?.toVkViewport()
-            ?: VkViewport(
-                width = offscreen.width.toFloat(),
-                height = offscreen.height.toFloat(),
-            )
-        Vulkan.vkCmdSetViewport(commandBuffer, 0, arrayOf(viewport))
-        val scissor = sceneRect?.toVkScissor() ?: VkRect2D(
-            extent = VkExtent2D(
-                offscreen.width,
-                offscreen.height,
-            ),
-        )
-        Vulkan.vkCmdSetScissor(commandBuffer, 0, arrayOf(scissor))
-
-        recordSharedPassFeatures(
-            RenderPassSlot.Scene,
-            RendererFrameContext(
-                renderer = this,
-                commandBuffer = commandBuffer,
-                frameIndex = commandBuffers.size,
-                groupedDrawCalls = sorted.opaqueByPipeline,
-                transparentDrawCalls = sorted.transparent,
-                primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
-                viewProjection = input.viewProjection,
-                cameraEye = input.cameraEye,
-            ),
-        )
-        Vulkan.vkCmdEndRenderPass(commandBuffer)
-        offscreen.transitionToShaderReadOnly(commandBuffer)
-    }
-}
-
-internal fun Renderer.performRenderToTexture(
-    target: RenderTarget,
-    camera: Lens,
-    drawCalls: List<DrawCall>,
-    light: SceneLight,
-    environment: EnvironmentUniforms = EnvironmentUniforms(
-        showSky = showEnvironment,
-        horizonColor = horizonColor,
-        zenithColor = zenithColor,
-        fogDensity = fogDensity,
-        fogColor = fogColor,
-        shadowsEnabled = shadowsEnabled,
-    ),
-) {
-    val offscreen = target as OffscreenRenderTarget
-    val sceneRect = sceneViewport?.clampedTo(offscreen.width.toFloat(), offscreen.height.toFloat())
-    val aspect = sceneRect?.aspect ?: (offscreen.width.toFloat() / offscreen.height.toFloat())
-    val frame = GpuSceneFrame(
-        lens = camera,
-        drawCalls = drawCalls,
-        light = light,
-        environment = environment,
-    )
-    performRenderToTexture(target, frame.toPassInput(clipSpace, aspect))
-}
-
 internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAsset {
     val offscreen = target as OffscreenRenderTarget
     return readImageBytes(
@@ -242,6 +135,24 @@ internal suspend fun Renderer.performReadPixels(target: RenderTarget): TextureAs
         offscreen.width,
         offscreen.height,
         from = VkImageLayout2.VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+    )
+}
+
+internal suspend fun Renderer.performReadFramebufferAttachment(
+    target: RenderTarget,
+    attachment: FramebufferAttachment,
+): FramebufferAttachmentData = when (attachment) {
+    FramebufferAttachment.Color0 -> FramebufferAttachmentData.fromRgba8(performReadPixels(target))
+    FramebufferAttachment.Depth -> FramebufferAttachmentData.unavailable(
+        attachment,
+        "Vulkan offscreen depth is attached for testing but is not yet retained for CPU readback.",
+    )
+
+    FramebufferAttachment.Stencil,
+    FramebufferAttachment.Normal,
+    -> FramebufferAttachmentData.unavailable(
+        attachment,
+        "The current Vulkan scene framebuffer does not allocate a ${attachment.name.lowercase()} attachment.",
     )
 }
 
@@ -271,7 +182,7 @@ internal suspend fun Renderer.readImageBytes(
         physicalDevice,
         stagingRequirements.memoryTypeBits,
         VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or
-                VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            VkMemoryPropertyFlagBits.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
     )
     val stagingMemory = VulkanBuffers.vkAllocateMemory(
         device,

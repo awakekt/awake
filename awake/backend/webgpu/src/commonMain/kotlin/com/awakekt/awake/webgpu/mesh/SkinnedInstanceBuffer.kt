@@ -7,9 +7,13 @@ package com.awakekt.awake.webgpu.mesh
 
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.render.passes.InstancePacker
+import com.awakekt.awake.render.pipeline.BindingLayout
+import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
+import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
+import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
 import io.ygdrasil.webgpu.BindGroupDescriptor
 import io.ygdrasil.webgpu.BindGroupEntry
 import io.ygdrasil.webgpu.BufferBinding
@@ -25,7 +29,7 @@ import io.ygdrasil.webgpu.GPURenderPipeline
  * this is a storage buffer rather than a vertex attribute or a uniform array). Read by
  * `skinned_instanced.wgsl` as `array<JointPalette>` indexed by `@builtin(instance_index)`.
  *
- * Bound as bind group 1 (`@group(1)`), not group 0: group 0 holds the shared
+ * Bound as bind group 3 (`@group(3)`), not group 0: group 0 holds the shared
  * `viewProjection` + light uniform, which every animated instanced draw call can share, while
  * this buffer is per draw call.
  */
@@ -68,6 +72,8 @@ class SkinnedInstanceBuffer(
         graphicsDevice.wgpuContext.device.queue.writeBuffer(buffer, 0uL, fastArrayBufferOf(floats))
     }
 
+    fun bufferRef(): GPUBuffer = buffer
+
     /** This buffer as [pipeline]'s group-1 bind group, built once per pipeline object. */
     fun bindGroupFor(pipeline: GPURenderPipeline): GPUBindGroup {
         val cached = bindGroup
@@ -92,6 +98,13 @@ class SkinnedInstanceBuffer(
         return bindGroupHandle ?: WebGpuBindGroupHandle(group).also { bindGroupHandle = it }
     }
 
+    /** Metadata-aware form used by render preparation. A malformed or custom pipeline that does
+     * not declare the joint-palette group cannot accidentally request its layout. */
+    fun bindingFor(pipeline: WebGpuPipelineHandle): WebGpuBindGroupHandle? {
+        if (!pipeline.hasBindingGroup(PALETTE_GROUP.toInt())) return null
+        return bindingFor(pipeline.pipeline)
+    }
+
     private var bindGroupHandle: WebGpuBindGroupHandle? = null
 
     fun destroy() {
@@ -108,7 +121,9 @@ class SkinnedInstanceBuffer(
         /** Same 256 (1 MB) default as Vulkan's `SkinnedInstanceBuffer` -- see its doc comment. */
         const val DEFAULT_MAX_INSTANCES = 256
 
-        /** `@group(1)` -- see this class's own doc comment. */
-        const val PALETTE_GROUP = 1u
+        /** The shared semantic slot, currently `@group(3)` -- see [BindingLayout.Standard]. */
+        val PALETTE_GROUP: UInt = BindingLayout.Standard
+            .slot(BindingSemantic.JointPalette)
+            .toUInt()
     }
 }

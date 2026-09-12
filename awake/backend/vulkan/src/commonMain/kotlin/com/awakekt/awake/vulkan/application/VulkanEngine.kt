@@ -23,15 +23,17 @@ import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
+import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSet
 import com.awakekt.awake.render.pipeline.PipelineSpec
+import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.pipeline.ShaderSource
-import com.awakekt.awake.render.renderer.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -191,7 +193,7 @@ open class VulkanEngine(
      * `DepthTarget.renderPass`), so unlike every other feature it cannot be built from
      * [pipelineTable]'s shared [sceneRenderPass].
      */
-    private suspend fun buildDepthPrePassFeature(): DepthPrePassFeature? = depthTarget?.let { map ->
+    private suspend fun buildDepthPrePassFeature(target: DepthTarget? = depthTarget): DepthPrePassFeature? = target?.let { map ->
         withPipelineLoadContext("depth-pre-pass") {
             val shaderSet = requireNotNull(plan.depthPrePassShaderSet)
             val depthPipeline = DepthOnlyPipeline(
@@ -206,7 +208,122 @@ open class VulkanEngine(
                 shaderSet.vulkan.entryPoint(ShaderStage.FRAGMENT),
                 cascadeCount = map.layers,
             )
-            DepthPrePassFeature(map, depthPipeline)
+            val skinned = plan.depthPrePassVariants[DepthCasterKind.Skinned]?.let { variant ->
+                DepthOnlyPipeline(
+                    graphicsDevice,
+                    map.renderPass,
+                    pipelineDescriptorSetLayout,
+                    loadShaderPair(variant),
+                    VertexFormat.PositionNormalColorSkin,
+                    map.size,
+                    variant.vulkan.entryPoint(ShaderStage.VERTEX),
+                    variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
+                    cascadeCount = map.layers,
+                )
+            }
+            val instanced = plan.depthPrePassVariants[DepthCasterKind.Instanced]?.let { variant ->
+                DepthOnlyPipeline(
+                    graphicsDevice,
+                    map.renderPass,
+                    pipelineDescriptorSetLayout,
+                    loadShaderPair(variant),
+                    VertexFormat.PositionNormalColor,
+                    map.size,
+                    variant.vulkan.entryPoint(ShaderStage.VERTEX),
+                    variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
+                    cascadeCount = map.layers,
+                    variant = PipelineVariant.Instanced,
+                )
+            }
+            val skinnedInstanced = plan.depthPrePassVariants[DepthCasterKind.SkinnedInstanced]
+                ?.let { variant ->
+                    val palette = requireNotNull(skinnedInstanceDescriptorSetLayout) {
+                        "Skinned-instanced depth requires the joint-palette descriptor layout."
+                    }
+                    DepthOnlyPipeline(
+                        graphicsDevice,
+                        map.renderPass,
+                        pipelineDescriptorSetLayout,
+                        loadShaderPair(variant),
+                        VertexFormat.PositionNormalColorSkin,
+                        map.size,
+                        variant.vulkan.entryPoint(ShaderStage.VERTEX),
+                        variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
+                        cascadeCount = map.layers,
+                        variant = PipelineVariant.Instanced,
+                        extraDescriptorSetLayouts = listOf(emptySetLayout(), palette),
+                    )
+                }
+            val particle = plan.depthPrePassVariants[DepthCasterKind.Particle]?.let { variant ->
+                DepthOnlyPipeline(
+                    graphicsDevice,
+                    map.renderPass,
+                    pipelineDescriptorSetLayout,
+                    loadShaderPair(variant),
+                    VertexFormat.PositionUv,
+                    map.size,
+                    variant.vulkan.entryPoint(ShaderStage.VERTEX),
+                    variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
+                    cascadeCount = map.layers,
+                    variant = PipelineVariant.AlphaBlendedParticle,
+                )
+            }
+            val formatPipelines = buildMap {
+                plan.scenePipelines
+                    .filter { it.variant == PipelineVariant.Opaque && it.vertexFormat != vertexFormat }
+                    .forEach { scenePipeline ->
+                        put(
+                            scenePipeline.vertexFormat,
+                            DepthOnlyPipeline(
+                                graphicsDevice,
+                                map.renderPass,
+                                pipelineDescriptorSetLayout,
+                                loadShaderPair(shaderSet),
+                                scenePipeline.vertexFormat,
+                                map.size,
+                                shaderSet.vulkan.entryPoint(ShaderStage.VERTEX),
+                                shaderSet.vulkan.entryPoint(ShaderStage.FRAGMENT),
+                                cascadeCount = map.layers,
+                            ),
+                        )
+                    }
+            }
+            val keyedPipelines = buildMap {
+                plan.depthPrePassKeyedVariants.forEach { (key, variant) ->
+                    if (key.kind != DepthCasterKind.Ordinary ||
+                        key.alphaMode != com.awakekt.awake.render.pipeline.AlphaMode.Masked
+                    ) {
+                        return@forEach
+                    }
+                    val format = VertexFormat.PositionNormalColorUv
+                    put(
+                        key,
+                        DepthOnlyPipeline(
+                            graphicsDevice,
+                            map.renderPass,
+                            pipelineDescriptorSetLayout,
+                            loadShaderPair(variant),
+                            format,
+                            map.size,
+                            variant.vulkan.entryPoint(ShaderStage.VERTEX),
+                            variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
+                            cascadeCount = map.layers,
+                        ),
+                    )
+                }
+            }
+            DepthPrePassFeature(
+                map,
+                depthPipeline,
+                buildMap {
+                    instanced?.let { put(DepthCasterKind.Instanced, it) }
+                    skinned?.let { put(DepthCasterKind.Skinned, it) }
+                    skinnedInstanced?.let { put(DepthCasterKind.SkinnedInstanced, it) }
+                    particle?.let { put(DepthCasterKind.Particle, it) }
+                },
+                formatPipelines,
+                keyedPipelines,
+            )
         }
     }
 
@@ -350,20 +467,20 @@ open class VulkanEngine(
         if (depthTarget != null) {
             add(PipelineKey.Primary)
             plan.scenePipelines.forEach { pipeline ->
-                if (pipeline.key != PipelineKey.SkinnedInstanced) add(pipeline.key)
+                add(pipeline.key)
             }
         }
     }
 
     /** Scene depth goes to the same families shadow depth does, for the same reason: a mesh
-     * pipeline may sample it, and the skinned-instanced one has its palette at that slot. Plus
+     * pipeline may sample it. Plus
      * every content feature that declares it -- fog and water read this pass, and a content
      * pipeline's set layouts are fixed when it is compiled, so the declaration has to be here. */
     private fun sceneDepthPipelineKeys(): Set<PipelineKey> = buildSet {
         if (sceneDepthTarget != null) {
             add(PipelineKey.Primary)
             plan.scenePipelines.forEach { pipeline ->
-                if (pipeline.key != PipelineKey.SkinnedInstanced) add(pipeline.key)
+                add(pipeline.key)
             }
             plan.contentFeaturesFor(RenderBackend.Vulkan).forEach { feature ->
                 if (feature.samplesSceneDepth) add(PipelineKey.Content(feature.name))
@@ -450,7 +567,12 @@ open class VulkanEngine(
             // descriptor set now, so no material layout depends on whether it exists.
             // Layered and arrayed: one cascade per layer, sampled as an array by lit_shadow.
             depthTarget = plan.depthPrePassShaderSet?.let {
-                DepthTarget(graphicsDevice, layers = DEFAULT_SHADOW_CASCADES, arrayed = true, comparison = true)
+                DepthTarget(
+                    graphicsDevice,
+                    layers = MAX_SHADOW_TARGET_LAYERS,
+                    arrayed = true,
+                    comparison = true,
+                )
             }
             sceneDepthTarget = plan.sceneDepthShaderSet?.let { DepthTarget(graphicsDevice) }
             pipelineDescriptorSetLayout =
@@ -477,7 +599,7 @@ open class VulkanEngine(
                 ),
             )
             requestedPipelines = pipelineRegistry.register(plan.toPipelineRequests(RenderBackend.Vulkan))
-            depthPrePass = buildDepthPrePassFeature()
+            depthPrePass = buildDepthPrePassFeature(depthTarget)
             sceneDepthPass = buildSceneDepthFeature()
             transferContext = TransferContext(graphicsDevice)
             renderFeatures = buildRenderFeatures()
@@ -581,10 +703,9 @@ open class VulkanEngine(
             depthPrePass?.destroy()
             sceneDepthPass?.destroy()
         }
-        // Both depth targets are created well before the features that own them, so a failure in
-        // between -- a shader that will not compile, a pipeline the device rejects -- leaves them
-        // with no owner at all. Destroyed here only in that case: a DepthPrePassFeature frees its
-        // own target, and freeing it twice is a double-free of live handles.
+        // The depth target is created well before the feature that owns it, so a failure in
+        // between -- a shader that will not compile, a pipeline the device rejects -- leaves it
+        // with no owner at all. Destroy it only in that case.
         if (depthPrePass == null) depthTarget?.destroy()
         if (sceneDepthPass == null) sceneDepthTarget?.destroy()
         depthTarget = null

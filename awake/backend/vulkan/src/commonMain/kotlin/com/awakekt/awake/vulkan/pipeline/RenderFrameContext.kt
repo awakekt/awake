@@ -7,10 +7,10 @@ package com.awakekt.awake.vulkan.pipeline
 
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.render.command.PipelineHandle
+import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.vulkan.debug.LineMesh
-import com.awakekt.awake.vulkan.renderer.PreparedDrawCall
 import com.awakekt.awake.vulkan.ui.DynamicMesh
 import com.awakekt.awake.vulkan.ui.UiRenderPipeline
 
@@ -18,7 +18,7 @@ import com.awakekt.awake.vulkan.ui.UiRenderPipeline
  * What a Vulkan feature sees on top of the shared [RenderFrameContext] -- still deliberately
  * narrow, and still carrying no `Renderer` *behavior*: nothing here can drive a frame, only read
  * what one already staged. `Renderer` supplies one of these per frame through the single adapter
- * that bridges the two (`RendererFrameContext`).
+ * that bridges the two ([VulkanFrameContext]).
  *
  * The two draw-call members narrow the shared declarations to this backend's own types, which is
  * what lets a Vulkan feature reach `PreparedDrawCall`'s specifics while a shared feature body
@@ -27,7 +27,7 @@ import com.awakekt.awake.vulkan.ui.UiRenderPipeline
 internal interface VulkanRenderFrameContext : RenderFrameContext {
     val commandBuffer: Long
 
-    override val groupedDrawCalls: Map<out PipelineHandle, List<PreparedDrawCall>>
+    override val groupedDrawCalls: Map<out PipelineHandle, List<PreparedDraw>>
     override val primaryPipeline: RenderPipeline
 
     /** Staged before the frame by `drawDebugLines`/`drawUi` respectively -- consumed here. */

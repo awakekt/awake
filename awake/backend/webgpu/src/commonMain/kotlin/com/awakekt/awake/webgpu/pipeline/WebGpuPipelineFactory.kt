@@ -7,10 +7,10 @@ package com.awakekt.awake.webgpu.pipeline
 
 import com.awakekt.awake.asset.shaders.ResolvedShader
 import com.awakekt.awake.asset.shaders.RuntimeShaderResolver
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.PipelineFactory
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineSpec
-import com.awakekt.awake.render.renderer.CullMode
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
@@ -35,6 +35,11 @@ class WebGpuPipelineFactory(
 ) : PipelineFactory<RenderPipeline> {
 
     override suspend fun create(key: PipelineKey, spec: PipelineSpec): RenderPipeline {
+        require(spec.bindingsMetadataAvailable) {
+            "WebGPU pipeline '$key' requires explicit shader binding metadata. " +
+                "Declare bindingsByGroup on the shared shader/pipeline definition instead of " +
+                "falling back to WGSL auto-layout."
+        }
         val shader = shaderResolver.resolve(spec.vertexShader)
         val wgsl = (shader as? ResolvedShader.Wgsl)?.source
             ?: error("WebGPU shader resolver returned a non-WGSL shader.")
@@ -59,6 +64,9 @@ class WebGpuPipelineFactory(
             uniforms = spec.uniforms,
             bindingLayout = spec.bindingLayout,
             materialBindings = spec.materialBindings,
+            usesMaterialGroup = spec.usesMaterialGroup,
+            bindingsByGroup = spec.bindingsByGroup,
+            bindingsMetadataAvailable = spec.bindingsMetadataAvailable,
             cullMode = when (spec.cullMode) {
                 CullMode.Back -> GPUCullMode.Back
                 // Front-culling has no pipeline on either backend, so a Front mesh draws
@@ -67,6 +75,7 @@ class WebGpuPipelineFactory(
                 // the line that has to change.
                 CullMode.None, CullMode.Front -> GPUCullMode.None
             },
+            frontFace = spec.frontFace,
         )
     }
 }

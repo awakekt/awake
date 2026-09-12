@@ -32,7 +32,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            api(project(":awake:engine:render:passes2d"))
+            implementation(project(":awake:engine:render:passes2d"))
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
@@ -55,10 +55,9 @@ kotlin {
             // `implementation`, since consumers reaching these types through awake-backend-vulkan
             // (e.g. VulkanApplication.kt) need them visible too.
             api(project(":awake:engine:render:contract"))
-            // The shared render-pass layer (SharedOpaqueRenderFeature + the CommandRecorder
-            // port). `api`, not `implementation`: this module's public pipeline/mesh/material
-            // types implement the port's handle interfaces, so consumers see them.
-            api(project(":awake:engine:render:passes"))
+            // Scene/render-pipeline implementation detail. Backend consumers must depend on the
+            // generic contract, not inherit authored scene vocabulary from this driver.
+            implementation(project(":awake:engine:render:passes"))
             // Raw generated Vulkan API (see docs/tasks/2026-08-09-application-seam-and-module-
             // naming-plan.md, Part 3) -- gen/handles/models/enums/Vulkan.kt/VulkanSurface.kt.
             // `api`, not `implementation`: Renderer/GraphicsDevice/etc.'s own public signatures

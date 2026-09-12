@@ -6,10 +6,10 @@
 package com.awakekt.awake.vulkan.pipeline
 
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.PipelineFactory
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineSpec
-import com.awakekt.awake.render.renderer.CullMode
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.VkCullModeFlagBits
 import com.awakekt.awake.vulkan.enums.VkPolygonMode
@@ -69,6 +69,7 @@ class VulkanPipelineFactory(
             // that has to change.
             CullMode.None, CullMode.Front -> VkCullModeFlagBits.VK_CULL_MODE_NONE
         },
+        frontFace = spec.frontFace,
         variant = spec.variant,
         extraDescriptorSetLayouts = extraDescriptorSetLayouts[key].orEmpty(),
         uniforms = spec.uniforms,

@@ -22,4 +22,15 @@ class DepthBindingLayoutTest {
 
         assertEquals(4, depthBindingSlot(layout))
     }
+
+    @Test
+    fun missingDepthSemanticThrowsInsteadOfSilentlyUsingWrongSlot() {
+        val layout = BindingLayout.of(
+            BindingSemantic.Material to 2,
+        )
+
+        kotlin.test.assertFailsWith<IllegalArgumentException> {
+            depthBindingSlot(layout)
+        }
+    }
 }

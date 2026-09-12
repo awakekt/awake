@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu
 
+import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.asset.shaders.ShaderStage
@@ -25,9 +26,11 @@ import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.engine.compose.GraphicsLayerCompositor
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes2d.UiRenderFeature
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineTable
-import com.awakekt.awake.render.renderer.DrawCall
+import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
 import com.awakekt.awake.webgpu.device.GraphicsDevice
@@ -42,6 +45,7 @@ import io.ygdrasil.webgpu.glfwContextRenderer
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -216,7 +220,7 @@ class WebGpuHeadlessPixelTest {
             val quad = renderer.createMesh(greenQuad()).also { mesh = it }
             val quadMaterial = renderer.createMaterial().also { material = it }
 
-            renderer.renderToTexture(target, camera(), listOf(DrawCall(quad, quadMaterial)))
+            renderer.renderSceneToTexture(target, camera(), listOf(RenderDrawCommand(quad, quadMaterial)))
             val pixels = runBlocking { renderer.readPixels(target) }.data
 
             val centre = pixels.pixelAt(SIZE / 2, SIZE / 2)
@@ -238,6 +242,117 @@ class WebGpuHeadlessPixelTest {
         } finally {
             mesh?.destroy()
             material?.destroy()
+        }
+    }
+
+    @Test
+    fun sceneViewportConfinesOffscreenRenderingAndClamps() = withHeadlessRenderer { renderer ->
+        val target = renderer.createRenderTarget(SIZE, SIZE)
+        var mesh: com.awakekt.awake.render.mesh.Mesh? = null
+        var material: com.awakekt.awake.render.material.Material? = null
+        try {
+            val quad = renderer.createMesh(greenQuad()).also { mesh = it }
+            val quadMaterial = renderer.createMaterial().also { material = it }
+
+            // 1. Right half only
+            val rightHalfViewport = com.awakekt.awake.render.renderer.RenderViewport(
+                x = (SIZE / 2).toFloat(),
+                y = 0f,
+                width = (SIZE / 2).toFloat(),
+                height = SIZE.toFloat(),
+            )
+            renderer.renderSceneToTexture(
+                target,
+                camera(),
+                listOf(RenderDrawCommand(quad, quadMaterial)),
+                viewport = rightHalfViewport,
+            )
+            val confined = runBlocking { renderer.readPixels(target) }.data
+
+            val leftPixel = confined.pixelAt(SIZE / 4, SIZE / 2)
+            val rightPixel = confined.pixelAt(3 * SIZE / 4, SIZE / 2)
+
+            assertEquals(0, leftPixel.green, "no geometry may reach outside the right-half scene viewport")
+            assertTrue(rightPixel.green > STRONG, "the quad must render inside the right-half scene viewport")
+
+            // 2. Oversized viewport clamps safely
+            val oversizedViewport = com.awakekt.awake.render.renderer.RenderViewport(
+                x = -100f,
+                y = -100f,
+                width = SIZE * 4f,
+                height = SIZE * 4f,
+            )
+            renderer.renderSceneToTexture(
+                target,
+                camera(),
+                listOf(RenderDrawCommand(quad, quadMaterial)),
+                viewport = oversizedViewport,
+            )
+            val clamped = runBlocking { renderer.readPixels(target) }.data
+            val centrePixel = clamped.pixelAt(SIZE / 2, SIZE / 2)
+            assertTrue(centrePixel.green > STRONG, "a clamped viewport must still render the scene")
+        } finally {
+            mesh?.destroy()
+            material?.destroy()
+        }
+    }
+
+    @Test
+    fun instancedLitShadowPipelineAllocatesSufficientUniformBufferWithoutValidationError() = runBlocking {
+        var uncapturedError: String? = null
+        val context = glfwContextRenderer(
+            width = 1,
+            height = 1,
+            title = "awake-instanced-error-test",
+            onUncapturedError = { error -> uncapturedError = error.toString() },
+        )
+        val graphicsDevice = GraphicsDevice()
+        graphicsDevice.create(context.wgpuContext)
+        val swapchainManager = SwapchainManager(graphicsDevice, 1)
+        swapchainManager.create()
+        try {
+            val instancedPipeline = RenderPipeline(
+                graphicsDevice,
+                swapchainManager,
+                DescriptorSetLayoutHandle(0),
+                engineWgsl(PackShaderSets.Instanced),
+                ByteArray(0),
+                VertexFormat.PositionNormalColor,
+                "vertexMain",
+                "fragmentMain",
+                variant = PipelineVariant.Instanced,
+                bindingsByGroup = PackShaderSets.Instanced.webGpu.bindingsByGroup,
+                bindingsMetadataAvailable = PackShaderSets.Instanced.webGpu.bindingsMetadataAvailable,
+            )
+            val linePipeline = LineRenderPipeline(graphicsDevice, swapchainManager, engineWgsl(EngineShaderSets.DebugLine))
+            val renderer = Renderer(
+                graphicsDevice = graphicsDevice,
+                swapchainManager = swapchainManager,
+                pipelines = PipelineTable(
+                    primary = instancedPipeline,
+                    primaryFormat = VertexFormat.PositionNormalColor,
+                    instancedByFormat = mapOf(VertexFormat.PositionNormalColor to instancedPipeline),
+                ),
+                lineRenderPipeline = linePipeline,
+                uiShaderSources = UiShaderSources(
+                    quad = engineWgsl(EngineShaderSets.UiQuad),
+                    glyph = engineWgsl(EngineShaderSets.UiGlyph),
+                    texture = engineWgsl(EngineShaderSets.UiTexture),
+                    roundedQuad = engineWgsl(EngineShaderSets.UiRoundedQuad),
+                    targetComposite = engineWgsl(EngineShaderSets.UiTargetComposite),
+                ),
+                maxFramesInFlight = 1,
+            )
+            try {
+                renderer.bufferPools.instancedUniformResources(instancedPipeline.handle)
+                assertNull(uncapturedError, "WebGPU uncaptured error: $uncapturedError")
+            } finally {
+                renderer.destroy()
+                instancedPipeline.destroy()
+            }
+        } finally {
+            swapchainManager.destroy()
+            graphicsDevice.destroy()
         }
     }
 
@@ -297,6 +412,8 @@ class WebGpuHeadlessPixelTest {
             VertexFormat.PositionColorUv,
             "vertexMain",
             "fragmentMain",
+            bindingsByGroup = mapOf(0 to GroupBindings.UniformOnlyMaterial),
+            bindingsMetadataAvailable = true,
         )
         val lineRenderPipeline = LineRenderPipeline(
             graphicsDevice,

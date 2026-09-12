@@ -6,6 +6,7 @@
 package com.awakekt.awake.webgpu
 
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
+import com.awakekt.awake.asset.shaderdsl.bindingsByGroup
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.lit
@@ -35,11 +36,11 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.PipelineTable
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline
@@ -93,8 +94,8 @@ class WebGpuSceneDepthTest {
                     far = 50f,
                 ),
                 listOf(
-                    DrawCall(near, shared, Mat4().translate(-OFFSET_X, 0f, NEAR_Z)),
-                    DrawCall(far, shared, Mat4().translate(OFFSET_X, 0f, FAR_Z)),
+                    RenderDrawCommand(near, shared, Mat4().translate(-OFFSET_X, 0f, NEAR_Z)),
+                    RenderDrawCommand(far, shared, Mat4().translate(OFFSET_X, 0f, FAR_Z)),
                 ),
             )
             val pixels = runBlocking { renderer.readPixels(target) }.data
@@ -154,6 +155,8 @@ class WebGpuSceneDepthTest {
             VertexFormat.PositionNormalColor,
             "vertexMain",
             "fragmentMain",
+            bindingsByGroup = ProbeShader.bindingsByGroup(),
+            bindingsMetadataAvailable = true,
         )
         val lineRenderPipeline = com.awakekt.awake.webgpu.debug.LineRenderPipeline(
             graphicsDevice,
@@ -197,6 +200,8 @@ class WebGpuSceneDepthTest {
             vertexFormat = VertexFormat.PositionNormalColor,
             vertexEntryPoint = PackShaderSets.SceneDepth.webGpu.entryPoint(ShaderStage.VERTEX),
             fragmentEntryPoint = PackShaderSets.SceneDepth.webGpu.entryPoint(ShaderStage.FRAGMENT),
+            bindingsByGroup = PackShaderSets.SceneDepth.webGpu.bindingsByGroup,
+            bindingsMetadataAvailable = PackShaderSets.SceneDepth.webGpu.bindingsMetadataAvailable,
         ),
     )
 

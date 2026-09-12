@@ -11,8 +11,8 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.engine.platform.core.FrameStats
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes2d.UiRenderFeature
-import com.awakekt.awake.render.renderer.DrawCall
 import com.awakekt.awake.render.testing.FrameSpans
 import com.awakekt.awake.render.testing.formatTimingBaseline
 import com.awakekt.awake.vulkan.commands.TransferContext
@@ -120,12 +120,12 @@ class RendererHeadlessFrameTimingTest {
             val createdMesh =
                 renderer.createMesh(MeshGeometry(cubeVertices, cubeIndices)).also { mesh = it }
             val createdMaterial = renderer.createMaterial().also { material = it }
-            val drawCalls = listOf(DrawCall(createdMesh, createdMaterial))
+            val drawCalls = listOf(RenderDrawCommand(createdMesh, createdMaterial))
 
             // Warm up (JIT + first-frame allocation costs) before the measured frames, same
             // rationale as UiShowcaseLayoutCostTest.measureOneFrame's warmupFrames.
             repeat(WARMUP_FRAMES) {
-                renderer.renderToTexture(target, camera, drawCalls)
+                renderer.renderSceneToTexture(target, camera, drawCalls)
                 runBlocking { renderer.readPixels(target) }
             }
 
@@ -136,7 +136,7 @@ class RendererHeadlessFrameTimingTest {
             var totalNanos = 0L
             repeat(FRAME_COUNT) {
                 val start = TimeSource.Monotonic.markNow()
-                renderer.renderToTexture(target, camera, drawCalls)
+                renderer.renderSceneToTexture(target, camera, drawCalls)
                 runBlocking { renderer.readPixels(target) }
                 val elapsedNanos = start.elapsedNow().inWholeNanoseconds
                 totalNanos += elapsedNanos
@@ -166,11 +166,11 @@ class RendererHeadlessFrameTimingTest {
             // one multiplies exactly that path by BATCH_DRAW_CALLS while leaving everything
             // else identical, which is what makes a before/after of the draw path readable.
             // readPixels is deliberately outside the span: it is the same cost either way.
-            val batchDrawCalls = List(BATCH_DRAW_CALLS) { DrawCall(createdMesh, createdMaterial) }
-            repeat(WARMUP_FRAMES) { renderer.renderToTexture(target, camera, batchDrawCalls) }
+            val batchDrawCalls = List(BATCH_DRAW_CALLS) { RenderDrawCommand(createdMesh, createdMaterial) }
+            repeat(WARMUP_FRAMES) { renderer.renderSceneToTexture(target, camera, batchDrawCalls) }
             val spans = FrameSpans()
             repeat(FRAME_COUNT) {
-                spans.span(BATCH_SPAN) { renderer.renderToTexture(target, camera, batchDrawCalls) }
+                spans.span(BATCH_SPAN) { renderer.renderSceneToTexture(target, camera, batchDrawCalls) }
             }
             spans.requireAllSpansClosed()
             println(

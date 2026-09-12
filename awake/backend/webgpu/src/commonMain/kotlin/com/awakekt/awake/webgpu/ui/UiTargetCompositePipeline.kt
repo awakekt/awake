@@ -5,9 +5,12 @@
  */
 package com.awakekt.awake.webgpu.ui
 
+import com.awakekt.awake.render.passes2d.UiTargetCompositeUniformLayout
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
+import com.awakekt.awake.webgpu.pipeline.createAwakePipelineLayout
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
 import io.ygdrasil.webgpu.BindGroupDescriptor
@@ -37,7 +40,10 @@ internal class UiTargetCompositePipeline(
     private val device = graphicsDevice.wgpuContext.device
     private val sampler = device.createSampler(SamplerDescriptor(minFilter = GPUFilterMode.Nearest, magFilter = GPUFilterMode.Nearest))
     private val modeBuffer = device.createBuffer(
-        BufferDescriptor(size = 16uL, usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst),
+        BufferDescriptor(
+            size = (UiTargetCompositeUniformLayout.total * Float.SIZE_BYTES).toULong(),
+            usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
+        ),
     )
     private val bindGroups = HashMap<Pair<OffscreenRenderTarget, OffscreenRenderTarget>, GPUBindGroup>()
     val pipeline: GPURenderPipeline
@@ -51,6 +57,7 @@ internal class UiTargetCompositePipeline(
         device.queue.writeBuffer(modeBuffer, 0uL, fastArrayBufferOf(intArrayOf(mode.ordinal)))
         pipeline = device.createRenderPipeline(
             RenderPipelineDescriptor(
+                layout = device.createAwakePipelineLayout(mapOf(0 to GroupBindings.UiTargetComposite)),
                 vertex = VertexState(module = module, entryPoint = "vertexMain"),
                 fragment = FragmentState(
                     module = module,
@@ -75,7 +82,11 @@ internal class UiTargetCompositePipeline(
                         BindGroupEntry(binding = 3u, resource = sampler),
                         BindGroupEntry(
                             binding = 4u,
-                            resource = BufferBinding(buffer = modeBuffer, offset = 0uL, size = 16uL),
+                            resource = BufferBinding(
+                                buffer = modeBuffer,
+                                offset = 0uL,
+                                size = (UiTargetCompositeUniformLayout.total * Float.SIZE_BYTES).toULong(),
+                            ),
                         ),
                     ),
                 ),
