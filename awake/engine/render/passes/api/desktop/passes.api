@@ -174,33 +174,25 @@ public final class com/awakekt/awake/render/passes/RenderFeatureKt {
 
 public abstract interface class com/awakekt/awake/render/passes/RenderFrameContext {
 	public abstract fun getCameraEye ()Lcom/awakekt/awake/core/math/Vec3f;
-	public fun getEnvironment ()Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;
-	public fun getEnvironmentState ()Lcom/awakekt/awake/render/command/GpuEnvironmentState;
+	public fun getEnvironment ()Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public abstract fun getFrameIndex ()I
 	public abstract fun getGroupedDrawCalls ()Ljava/util/Map;
-	public fun getHorizonColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getLight ()Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
 	public abstract fun getPrimaryPipeline ()Lcom/awakekt/awake/render/command/PipelineHandle;
 	public abstract fun getRecorder ()Lcom/awakekt/awake/render/command/CommandRecorder;
-	public fun getShowEnvironment ()Z
 	public fun getSunDirection ()Lcom/awakekt/awake/core/math/Vec3f;
 	public abstract fun getSurfaceHeight ()I
 	public abstract fun getSurfaceWidth ()I
 	public fun getTransparentDrawCalls ()Ljava/util/List;
 	public abstract fun getViewProjection ()Lcom/awakekt/awake/core/math/Mat4;
-	public fun getZenithColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun sceneDepthBinding (Lcom/awakekt/awake/render/command/PipelineHandle;)Lcom/awakekt/awake/render/command/MaterialBinding;
 }
 
 public final class com/awakekt/awake/render/passes/RenderFrameContext$DefaultImpls {
-	public static fun getEnvironment (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;
-	public static fun getEnvironmentState (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
-	public static fun getHorizonColor (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/core/color/Color;
+	public static fun getEnvironment (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/command/GpuEnvironmentState;
 	public static fun getLight (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
-	public static fun getShowEnvironment (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Z
 	public static fun getSunDirection (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/core/math/Vec3f;
 	public static fun getTransparentDrawCalls (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Ljava/util/List;
-	public static fun getZenithColor (Lcom/awakekt/awake/render/passes/RenderFrameContext;)Lcom/awakekt/awake/core/color/Color;
 	public static fun sceneDepthBinding (Lcom/awakekt/awake/render/passes/RenderFrameContext;Lcom/awakekt/awake/render/command/PipelineHandle;)Lcom/awakekt/awake/render/command/MaterialBinding;
 }
 
@@ -340,10 +332,6 @@ public final class com/awakekt/awake/render/passes/uniforms/EnvironmentUniforms 
 
 public final class com/awakekt/awake/render/passes/uniforms/EnvironmentUniforms$Companion {
 	public final fun getDefault ()Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;
-}
-
-public final class com/awakekt/awake/render/passes/uniforms/EnvironmentUniformsKt {
-	public static final fun toEnvironmentUniforms (Lcom/awakekt/awake/render/command/GpuEnvironmentState;)Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/GpuShadowUniformsKt {
