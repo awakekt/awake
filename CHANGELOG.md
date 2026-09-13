@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Desktop Vulkan environment rendering.** Map the generic environment packet into Vulkan's frame
+  context so the shared skybox feature no longer inherits the default hidden-environment flag.
+- **Button-group divider visibility.** Use a readable interaction divider tint instead of the 10%-alpha
+  page border token, which disappeared in dark Studio overlays.
 - **Desktop Vulkan scene picking.** Align CPU viewport projection and picking rays with Vulkan's
   positive-height Y convention so model and gizmo hover/click coordinates match rendered pixels.
 - **shadcn spinner motion.** Cached the tessellated arc and rotate the stable mesh per frame, removing

@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
@@ -34,6 +35,13 @@ internal class VulkanFrameContext(
     override val cameraEye: Vec3f,
     override val environmentState: GpuEnvironmentState = GpuEnvironmentState.Default,
 ) : VulkanRenderFrameContext {
+    // Keep the compatibility view consumed by shared content features in sync with the generic
+    // environment packet. WebGPU exposes the same mapping; without it Vulkan's skybox feature
+    // sees RenderFrameContext's default `showEnvironment = false` and skips the background.
+    override val showEnvironment: Boolean get() = environmentState.showSky
+    override val horizonColor: Color get() = environmentState.horizonColor
+    override val zenithColor: Color get() = environmentState.zenithColor
+
     override val lineMesh get() = renderer.lineMesh
     override val uiRuns get() = renderer.uiRuns
     override val surfaceWidth get() = renderer.swapchainManager.extent.width

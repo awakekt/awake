@@ -37,7 +37,11 @@ fun ShadcnButtonGroupSeparator(
         ShadcnButtonGroupOrientation.Horizontal -> modifier.width(SeparatorThickness).fillMaxHeight()
         ShadcnButtonGroupOrientation.Vertical -> modifier.height(SeparatorThickness).fillMaxWidth()
     }
-    Box(sized.background(theme.palette.border))
+    // A button-group divider is an interaction affordance, not a page border. The shadcn border
+    // token is intentionally only 10% alpha in dark themes, which disappears over a bright
+    // viewport (especially in the vertical gizmo controls). Use a restrained foreground tint so
+    // the divider remains visible on both light and dark surfaces without becoming a second border.
+    Box(sized.background(theme.palette.foreground.withAlpha(0.28f)))
 }
 
 /** Tailwind's bare `border`. */

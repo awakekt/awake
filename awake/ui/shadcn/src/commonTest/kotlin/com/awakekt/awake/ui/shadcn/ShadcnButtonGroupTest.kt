@@ -21,6 +21,7 @@ import com.awakekt.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class ShadcnButtonGroupTest {
@@ -149,6 +150,29 @@ class ShadcnButtonGroupTest {
             "the group filled its parent instead of wrapping its buttons: tallest primitive " +
                 "$tallest in a $FRAME_HEIGHT-high frame",
         )
+    }
+
+    @Test
+    fun aVerticalSeparatedGroupPaintsAnOpaqueHorizontalSeparator() {
+        val primitives = composeFrame(FRAME_WIDTH, FRAME_HEIGHT) {
+            provideShadcnTheme(theme) {
+                ShadcnButtonGroup(orientation = ShadcnButtonGroupOrientation.Vertical) {
+                    button("Snap", variant = ShadcnButtonVariant.Outline)
+                    separator()
+                    button("World", variant = ShadcnButtonVariant.Outline)
+                }
+            }
+        }.primitives
+
+        val quads = primitives.filterIsInstance<UiDrawPrimitive.Quad>()
+        val separator = quads.firstOrNull { it.h == 1f }
+
+        val drawnSeparator = assertNotNull(
+            separator,
+            "a vertical button group must paint a one-pixel separator; quads=$quads",
+        )
+        assertTrue(drawnSeparator.w > 1f, "the separator must span the group's cross axis")
+        assertTrue(drawnSeparator.color.a >= 0.28f, "the separator must remain visibly opaque")
     }
 
     private companion object {
