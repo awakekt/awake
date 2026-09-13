@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
+import com.awakekt.awake.render.renderer.RenderViewport
 
 /**
  * Renderer-free 3D scene extraction and pass planning.
@@ -21,6 +22,7 @@ import com.awakekt.awake.render.passes.ScenePassCompiler
 internal class SceneRenderPlanner3D(
     private val rendererClipSpace: ClipSpace,
     private val rendererAspect: () -> Float,
+    private val rendererViewport: () -> RenderViewport?,
     drawPreparer: GpuDrawPreparer?,
     features: List<RenderFeature3D> = emptyList(),
 ) {
@@ -43,13 +45,15 @@ internal class SceneRenderPlanner3D(
         drawCalls += geometryFeature.finish(world, geometryFrame, camera)
         drawCalls += contributions.authoredDraws
 
+        val viewport = rendererViewport()
         val passInput = ScenePassCompiler.compile(
             lens = camera.lens,
             drawCalls = drawCalls,
             light = contributions.light,
             environment = contributions.environment,
             clipSpace = rendererClipSpace,
-            aspect = rendererAspect(),
+            aspect = viewport?.aspect ?: rendererAspect(),
+            viewport = viewport,
             drawPreparer = drawPreparer,
         )
         return PlannedFrame(

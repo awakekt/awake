@@ -9,6 +9,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
 
@@ -22,10 +23,12 @@ class RenderSystem3D(
     drawPreparer: GpuDrawPreparer? =
         (renderer as? GpuDrawPreparationSource)?.gpuDrawPreparer,
     private val features: List<RenderFeature3D> = emptyList(),
+    private val viewportProvider: () -> RenderViewport? = { null },
 ) : System {
     private val planner = SceneRenderPlanner3D(
         rendererClipSpace = renderer.clipSpace,
         rendererAspect = { renderer.surfaceAspect },
+        rendererViewport = viewportProvider,
         drawPreparer = drawPreparer,
         features = features,
     )
