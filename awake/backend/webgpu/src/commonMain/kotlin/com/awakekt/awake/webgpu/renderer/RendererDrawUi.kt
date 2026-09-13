@@ -9,6 +9,7 @@ import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.passes2d.SharedUiRenderFeature
+import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
 import com.awakekt.awake.render.passes2d.UiMeshUploader
 import com.awakekt.awake.render.passes2d.UiRunCoalescer
 import com.awakekt.awake.render.passes2d.uploadUiRuns
@@ -34,7 +35,7 @@ internal fun Renderer.performDrawUi(primitives: List<UiDrawPrimitive>, font: UiF
     if (primitives.any { it is UiDrawPrimitive.RoundedQuad || it is UiDrawPrimitive.ShadowQuad }) ensureRoundedQuadPipeline()
 
     uiRuns = uploadUiRuns(
-        UiRunCoalescer.coalesce(primitives, Renderer.MAX_UI_QUADS),
+        UiRunCoalescer.coalesce(primitives, Renderer.MAX_UI_QUADS, uiRunCache),
         WebGpuUiMeshUploader(this),
     )
 }

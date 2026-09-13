@@ -92,16 +92,25 @@ object DrawRunCoalescer {
             indices = indices,
         )
 
+    /** Coalesces [primitives] without retaining staged spans between frames. */
+    fun coalesce(
+        primitives: List<DrawCommand>,
+        maxQuadsPerRun: Int = 1024,
+    ): List<StagedDrawRun> = coalesce(primitives, maxQuadsPerRun, null)
+
     /**
      * Walks [primitives] in paint order and coalesces them into [StagedDrawRun] instances.
      *
      * @param primitives The raw 2D draw commands emitted by the UI framework.
      * @param maxQuadsPerRun Mesh capacity, in quads. A span longer than this splits into
      * several runs -- still contiguous and still in order, just backed by more than one mesh.
+     * @param retained Optional renderer-owned cache for unchanged spans outside path clips.
      */
+    @Suppress("LongMethod", "CyclomaticComplexMethod", "NestedBlockDepth")
     fun coalesce(
         primitives: List<DrawCommand>,
         maxQuadsPerRun: Int = 1024,
+        retained: RetainedDrawRunCache? = null,
     ): List<StagedDrawRun> {
         val runs = mutableListOf<StagedDrawRun>()
         val activePathClips = ArrayList<DrawPath>()
@@ -116,6 +125,21 @@ object DrawRunCoalescer {
             while (index < primitives.size && primitives[index]::class == first::class) index += 1
             val slice = primitives.subList(runStart, index)
             val safeInteriorRect = safeInteriorRectStack.lastOrNull()
+            // Rect clips only affect the scissor command. Path clips change the generated
+            // geometry, so retain only spans that are outside an active path clip. Clip commands
+            // themselves also update state and must always be replayed in emission order.
+            val cacheable = retained != null &&
+                activePathClips.isEmpty() &&
+                first !is DrawCommand.ClipPathPush &&
+                first !is DrawCommand.ClipPush &&
+                first !is DrawCommand.ClipPop
+            if (cacheable) {
+                retained.find(slice, maxQuadsPerRun)?.let { cached ->
+                    runs.addAll(cached)
+                    continue
+                }
+            }
+            val stagedRunStart = runs.size
 
             // Each branch below casts `slice` (a List<DrawCommand>) to the concrete subtype
             // confirmed by the `is` check that opens the branch.  The inner while-loop above
@@ -320,6 +344,9 @@ object DrawRunCoalescer {
                         chunkStart = chunkEnd
                     }
                 }
+            }
+            if (cacheable) {
+                retained.store(slice, maxQuadsPerRun, runs.subList(stagedRunStart, runs.size))
             }
         }
         return runs

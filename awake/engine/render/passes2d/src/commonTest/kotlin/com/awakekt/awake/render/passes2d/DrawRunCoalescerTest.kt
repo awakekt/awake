@@ -178,6 +178,69 @@ class DrawRunCoalescerTest {
         assertEquals(1 * 4 * 10, q3.vertices.size)
     }
 
+    @Test
+    fun retainedCacheReusesUnchangedStagedSpan() {
+        val cache = RetainedDrawRunCache()
+        val firstFrame = listOf(
+            DrawCommand.Quad(0f, 0f, 100f, 50f, Color(1f, 1f, 1f, 1f)),
+        )
+
+        val firstRuns = DrawRunCoalescer.coalesce(firstFrame, retained = cache)
+        val secondRuns = DrawRunCoalescer.coalesce(
+            firstFrame.map { it.copy() },
+            retained = cache,
+        )
+
+        assertEquals(1, secondRuns.size)
+        assertTrue(firstRuns.single() === secondRuns.single())
+    }
+
+    @Test
+    fun retainedCacheMissesWhenGeometryChanges() {
+        val cache = RetainedDrawRunCache()
+        val firstRuns = DrawRunCoalescer.coalesce(
+            listOf(DrawCommand.Quad(0f, 0f, 100f, 50f, Color(1f, 1f, 1f, 1f))),
+            retained = cache,
+        )
+        val changedRuns = DrawRunCoalescer.coalesce(
+            listOf(DrawCommand.Quad(1f, 0f, 100f, 50f, Color(1f, 1f, 1f, 1f))),
+            retained = cache,
+        )
+
+        assertTrue(firstRuns.single() !== changedRuns.single())
+        val changed = changedRuns.single() as StagedDrawRun.QuadRun
+        assertEquals(1f, changed.vertices[0])
+    }
+
+    @Test
+    fun retainedCacheReusesGeometryInsideRectClipButNotPathClip() {
+        val cache = RetainedDrawRunCache()
+        val rectClipped = listOf(
+            DrawCommand.ClipPush(Rectangle(0f, 0f, 100f, 100f)),
+            DrawCommand.Quad(10f, 10f, 20f, 20f, Color(1f, 1f, 1f, 1f)),
+            DrawCommand.ClipPop(Rectangle(0f, 0f, 200f, 200f)),
+        )
+        val firstRectRuns = DrawRunCoalescer.coalesce(rectClipped, retained = cache)
+        val secondRectRuns = DrawRunCoalescer.coalesce(rectClipped, retained = cache)
+        assertTrue(firstRectRuns[1] === secondRectRuns[1])
+
+        val path = drawPath {
+            moveTo(0f, 0f)
+            lineTo(100f, 0f)
+            lineTo(100f, 100f)
+            lineTo(0f, 100f)
+            close()
+        }
+        val pathClipped = listOf(
+            DrawCommand.ClipPathPush(path, Rectangle(0f, 0f, 100f, 100f)),
+            DrawCommand.Quad(10f, 10f, 20f, 20f, Color(1f, 1f, 1f, 1f)),
+            DrawCommand.ClipPop(Rectangle(0f, 0f, 200f, 200f)),
+        )
+        val firstPathRuns = DrawRunCoalescer.coalesce(pathClipped, retained = cache)
+        val secondPathRuns = DrawRunCoalescer.coalesce(pathClipped, retained = cache)
+        assertTrue(firstPathRuns[1] !== secondPathRuns[1])
+    }
+
     /**
      * A stroked path is tessellated once, however many frames draw it.
      *

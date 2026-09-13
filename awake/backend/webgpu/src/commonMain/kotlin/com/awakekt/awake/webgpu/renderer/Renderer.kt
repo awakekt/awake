@@ -21,6 +21,7 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes2d.UiRun
+import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
@@ -190,6 +191,9 @@ class Renderer internal constructor(
     /** This frame's runs, in paint order -- staged by `performDrawUi`, consumed by `performDraw`. */
     internal var uiRuns: List<UiRun<DynamicMesh>> = emptyList()
 
+    /** Renderer-owned retained staging; its cached texture handles must die with this renderer. */
+    internal val uiRunCache = RetainedDrawRunCache()
+
     internal fun textureMeshForPrimitive(index: Int): DynamicMesh = bufferPools.textureMeshForPrimitive(index)
     internal fun quadMeshForRun(index: Int): DynamicMesh = bufferPools.quadMeshForRun(index)
     internal fun glyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index)
@@ -244,6 +248,7 @@ class Renderer internal constructor(
         gpuPassExecutor.renderToTexture(target, input)
 
     override fun destroy() {
+        uiRunCache.clear()
         bufferPools.destroy()
         uiRenderPipeline?.destroy()
         uiGlyphRenderPipeline?.destroy()
