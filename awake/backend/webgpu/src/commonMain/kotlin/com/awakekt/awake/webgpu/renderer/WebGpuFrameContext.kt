@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
-import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
@@ -35,7 +34,7 @@ internal class WebGpuFrameContext(
     override val primaryPipeline: PipelineHandle,
     override val viewProjection: Mat4,
     override val cameraEye: Vec3f,
-    override val environmentState: GpuEnvironmentState = GpuEnvironmentState.Default,
+    override val environment: GpuEnvironmentState = GpuEnvironmentState.Default,
     override val surfaceWidth: Int,
     override val surfaceHeight: Int,
 ) : WebGpuRenderFrameContext {
@@ -43,10 +42,6 @@ internal class WebGpuFrameContext(
     /** Single-buffered on this backend; the ports still take it because Vulkan's resources are
      * per-frame-in-flight. */
     override val frameIndex: Int get() = 0
-
-    override val showEnvironment: Boolean get() = environmentState.showSky
-    override val horizonColor: Color get() = environmentState.horizonColor
-    override val zenithColor: Color get() = environmentState.zenithColor
 
     override val recorder: CommandRecorder = WebGpuCommandRecorder(encoder)
 

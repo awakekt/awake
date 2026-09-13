@@ -28,7 +28,7 @@ internal fun Renderer.sceneContext(
     viewProjection: Mat4,
     cameraEye: Vec3f,
     surface: SurfaceSize,
-    environmentState: GpuEnvironmentState = GpuEnvironmentState.Default,
+    environment: GpuEnvironmentState = GpuEnvironmentState.Default,
 ): WebGpuFrameContext = WebGpuFrameContext(
     renderer = this,
     encoder = encoder,
@@ -37,7 +37,7 @@ internal fun Renderer.sceneContext(
     primaryPipeline = primaryPipeline,
     viewProjection = viewProjection,
     cameraEye = cameraEye,
-    environmentState = environmentState,
+    environment = environment,
     surfaceWidth = surface.width,
     surfaceHeight = surface.height,
 )
