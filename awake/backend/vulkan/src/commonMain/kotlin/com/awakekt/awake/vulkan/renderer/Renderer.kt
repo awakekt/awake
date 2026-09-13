@@ -26,6 +26,7 @@ import com.awakekt.awake.render.passes.SharedOpaqueRenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes.recordPassFeatures
 import com.awakekt.awake.render.passes2d.UiRun
+import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.CullMode
@@ -279,6 +280,9 @@ class Renderer internal constructor(
     /** This frame's runs, in paint order -- staged by `drawUi`, consumed by `recordCommandBuffer`. */
     internal var uiRuns: List<UiRun<DynamicMesh>> = emptyList()
 
+    /** Renderer-owned retained staging; its cached texture handles must die with this renderer. */
+    internal val uiRunCache = RetainedDrawRunCache()
+
     internal fun quadMeshForRun(index: Int): DynamicMesh = bufferPools.quadMeshForRun(index)
     internal fun roundedQuadMeshForRun(index: Int): DynamicMesh = bufferPools.roundedQuadMeshForRun(index)
     internal fun glyphMeshForRun(index: Int): DynamicMesh = bufferPools.glyphMeshForRun(index)
@@ -434,6 +438,7 @@ class Renderer internal constructor(
     }
 
     override fun destroy() {
+        uiRunCache.clear()
         // "Whoever holds the list destroys it": these were constructor-injected, but this class
         // is the only thing that knows the list's full membership.
         renderFeatures.forEach { it.destroy() }
