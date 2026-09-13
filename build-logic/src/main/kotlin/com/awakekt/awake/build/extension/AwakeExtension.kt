@@ -136,18 +136,24 @@ class AwakeXcframeworkSpec(
                     xcf.add(this)
                     if (includeMoltenVK) {
                         val opts = project.moltenVkLinkerOpts(targetName)
+                        val frameworkName = this.name
                         linkerOpts(opts)
                         // Keep normal Gradle output quiet. The full linker list is useful when
                         // diagnosing an Apple link, but printing it at lifecycle level once per
                         // framework/configuration produces four noisy, path-heavy lines on every
                         // build. Use --info for the concise wiring record and --debug for options.
                         project.logger.info(
-                            "MoltenVK: static link configured for ${project.path} " +
-                                "(${this.name}, $targetName)"
+                            "MoltenVK | static | ${project.path} | $targetName | ${this.name}"
                         )
                         project.logger.debug(
-                            "MoltenVK linker options for ${project.path} (${this.name}, $targetName):\n" +
-                                opts.joinToString(separator = "\n") { "  $it" }
+                            buildString {
+                                appendLine("MoltenVK linker configuration")
+                                appendLine("  project:  ${project.path}")
+                                appendLine("  target:   $targetName")
+                                appendLine("  framework: $frameworkName")
+                                appendLine("  options:")
+                                opts.forEach { appendLine("    $it") }
+                            }
                         )
                     }
                 }
