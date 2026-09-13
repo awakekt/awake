@@ -251,8 +251,8 @@ public final class com/awakekt/awake/core/math/Lens$Projection : java/lang/Enum 
 }
 
 public final class com/awakekt/awake/core/math/LensKt {
-	public static final fun projectToViewport (Lcom/awakekt/awake/core/math/Lens;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;FF)Lcom/awakekt/awake/core/math2d/Vec2;
-	public static final fun rayThroughViewport (Lcom/awakekt/awake/core/math/Lens;FFLcom/awakekt/awake/core/math/Mat4;FF)Lcom/awakekt/awake/core/math/Ray;
+	public static final fun projectToViewport (Lcom/awakekt/awake/core/math/Lens;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Mat4;FFLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math2d/Vec2;
+	public static final fun rayThroughViewport (Lcom/awakekt/awake/core/math/Lens;FFLcom/awakekt/awake/core/math/Mat4;FFLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math/Ray;
 }
 
 public final class com/awakekt/awake/core/math/Mat4 {
@@ -338,8 +338,7 @@ public final class com/awakekt/awake/core/math/Noise {
 
 public final class com/awakekt/awake/core/math/OcclusionKt {
 	public static final fun isOccludedBy (Lcom/awakekt/awake/core/math/ScreenBounds;Lcom/awakekt/awake/core/math/ScreenBounds;)Z
-	public static final fun screenBounds (Lcom/awakekt/awake/core/math/Lens;Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Mat4;FF)Lcom/awakekt/awake/core/math/ScreenBounds;
-	public static synthetic fun screenBounds$default (Lcom/awakekt/awake/core/math/Lens;Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Mat4;FFILjava/lang/Object;)Lcom/awakekt/awake/core/math/ScreenBounds;
+	public static final fun screenBounds (Lcom/awakekt/awake/core/math/Lens;Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Mat4;FFLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math/ScreenBounds;
 }
 
 public final class com/awakekt/awake/core/math/Plane {

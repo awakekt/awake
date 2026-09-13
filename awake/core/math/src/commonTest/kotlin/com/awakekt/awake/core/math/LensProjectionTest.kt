@@ -27,6 +27,8 @@ class CameraProjectionTest {
     )
     private val viewProjection = camera.viewProjectionMatrix(WIDTH / HEIGHT, ClipSpace.WebGpu)
 
+    private val vulkanViewProjection = camera.viewProjectionMatrix(WIDTH / HEIGHT, ClipSpace.Vulkan)
+
     @Test
     fun theTargetProjectsToTheCentreAndScreenYIsDown() {
         val centre = assertNotNull(
@@ -35,6 +37,7 @@ class CameraProjectionTest {
                 viewProjection,
                 WIDTH,
                 HEIGHT,
+                ClipSpace.WebGpu,
             ),
         )
         assertEquals(WIDTH / 2f, centre.x, TOLERANCE)
@@ -46,6 +49,7 @@ class CameraProjectionTest {
                 viewProjection,
                 WIDTH,
                 HEIGHT,
+                ClipSpace.WebGpu,
             ),
         )
         assertTrue(above.y < HEIGHT / 2f, "world +Y must project above the centre, was ${above.y}")
@@ -55,6 +59,7 @@ class CameraProjectionTest {
                 viewProjection,
                 WIDTH,
                 HEIGHT,
+                ClipSpace.WebGpu,
             ),
         )
         assertTrue(
@@ -63,10 +68,75 @@ class CameraProjectionTest {
         )
     }
 
+    @Test
+    fun vulkanProjectionUsesThePositiveHeightViewportConvention() {
+        val above = assertNotNull(
+            camera.projectToViewport(
+                Vec3f(0f, 1f, 0f),
+                vulkanViewProjection,
+                WIDTH,
+                HEIGHT,
+                ClipSpace.Vulkan,
+            ),
+        )
+        assertTrue(
+            above.y < HEIGHT / 2f,
+            "world +Y must project above the centre in Vulkan, was ${above.y}",
+        )
+
+        val topRay = assertNotNull(
+            camera.rayThroughViewport(
+                WIDTH / 2f,
+                1f,
+                vulkanViewProjection,
+                WIDTH,
+                HEIGHT,
+                ClipSpace.Vulkan,
+            ),
+        )
+        assertTrue(
+            topRay.direction.y > 0f,
+            "a Vulkan top-edge ray must travel toward world +Y, was ${topRay.direction.y}",
+        )
+    }
+
+    @Test
+    fun vulkanRayThroughAnObjectsPixelHitsItsBox() {
+        val box = Aabb(Vec3f(-0.5f, 0.5f, -0.5f), Vec3f(0.5f, 1.5f, 0.5f))
+        val above = assertNotNull(
+            camera.projectToViewport(
+                Vec3f(0f, 1f, 0f),
+                vulkanViewProjection,
+                WIDTH,
+                HEIGHT,
+                ClipSpace.Vulkan,
+            ),
+        )
+        val ray = assertNotNull(
+            camera.rayThroughViewport(
+                above.x,
+                above.y,
+                vulkanViewProjection,
+                WIDTH,
+                HEIGHT,
+                ClipSpace.Vulkan,
+            ),
+        )
+        assertNotNull(ray.intersectAabb(box), "the Vulkan ray through the box's pixel must hit it")
+    }
+
     /** Projecting it anyway mirrors it onto the visible side, where it would respond to clicks. */
     @Test
     fun aPointBehindTheCameraDoesNotProject() {
-        assertNull(camera.projectToViewport(Vec3f(0f, 0f, 10f), viewProjection, WIDTH, HEIGHT))
+        assertNull(
+            camera.projectToViewport(
+                Vec3f(0f, 0f, 10f),
+                viewProjection,
+                WIDTH,
+                HEIGHT,
+                ClipSpace.WebGpu,
+            ),
+        )
     }
 
     /** The round trip is the real contract: a pixel becomes a ray, and a point on that ray
@@ -81,12 +151,21 @@ class CameraProjectionTest {
                 viewProjection,
                 WIDTH,
                 HEIGHT,
+                ClipSpace.WebGpu,
             ),
         )
         val pointOnRay = ray.pointAt(5f)
 
         val projected =
-            assertNotNull(camera.projectToViewport(pointOnRay, viewProjection, WIDTH, HEIGHT))
+            assertNotNull(
+                camera.projectToViewport(
+                    pointOnRay,
+                    viewProjection,
+                    WIDTH,
+                    HEIGHT,
+                    ClipSpace.WebGpu,
+                ),
+            )
         assertEquals(pixel.x, projected.x, TOLERANCE)
         assertEquals(pixel.y, projected.y, TOLERANCE)
     }
@@ -94,7 +173,14 @@ class CameraProjectionTest {
     @Test
     fun theCentrePixelAimsAtTheCameraTarget() {
         val ray = assertNotNull(
-            camera.rayThroughViewport(WIDTH / 2f, HEIGHT / 2f, viewProjection, WIDTH, HEIGHT),
+            camera.rayThroughViewport(
+                WIDTH / 2f,
+                HEIGHT / 2f,
+                viewProjection,
+                WIDTH,
+                HEIGHT,
+                ClipSpace.WebGpu,
+            ),
         )
         assertEquals(0f, ray.direction.x, TOLERANCE)
         assertEquals(0f, ray.direction.y, TOLERANCE)
@@ -111,6 +197,7 @@ class CameraProjectionTest {
                 viewProjection,
                 WIDTH,
                 HEIGHT,
+                ClipSpace.WebGpu,
             ),
         )
         val ray = assertNotNull(
@@ -120,11 +207,21 @@ class CameraProjectionTest {
                 viewProjection,
                 WIDTH,
                 HEIGHT,
+                ClipSpace.WebGpu,
             ),
         )
         assertNotNull(ray.intersectAabb(box), "the ray through the box's own pixel must hit it")
 
-        val corner = assertNotNull(camera.rayThroughViewport(2f, 2f, viewProjection, WIDTH, HEIGHT))
+        val corner = assertNotNull(
+            camera.rayThroughViewport(
+                2f,
+                2f,
+                viewProjection,
+                WIDTH,
+                HEIGHT,
+                ClipSpace.WebGpu,
+            ),
+        )
         assertNull(corner.intersectAabb(box), "a ray through the far corner must miss")
     }
 }

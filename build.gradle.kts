@@ -213,6 +213,51 @@ tasks.matching { it.name == "check" }.configureEach {
     dependsOn(verifyRenderContractBoundary)
 }
 
+// Clip-space is a backend contract, never an optional math default. A default here silently
+// pairs a WebGPU/Vulkan matrix with the other API's viewport or shader convention -- the exact
+// failure that caused desktop picking to mirror vertically. Keep this guard source-based so a
+// future overload or helper cannot reintroduce the escape hatch without making the build fail.
+val clipSpaceSources = files(
+    "awake/core/math/src/commonMain",
+    "awake/scene",
+    "awake/engine/render",
+    "awake/asset/shader-dsl/src/commonMain",
+    "awake/asset/shader-pack/src/commonMain",
+).asFileTree.matching {
+    include("**/*.kt")
+    exclude(
+        "**/src/test/**",
+        "**/src/commonTest/**",
+        "**/src/desktopTest/**",
+        "**/src/wasmJsTest/**",
+        "**/render/testing/**",
+        "**/build/**",
+    )
+}
+val verifyClipSpaceUsage = tasks.register("verifyClipSpaceUsage") {
+    group = "verification"
+    description = "Reject optional ClipSpace parameters in render and viewport math."
+    inputs.files(clipSpaceSources)
+    doLast {
+        val forbidden = Regex("\\bclipSpace\\s*:\\s*ClipSpace\\s*=|\\bclipSpace\\s*:\\s*com\\.awakekt\\.awake\\.core\\.math\\.ClipSpace\\s*=")
+        val violations = clipSpaceSources.files.flatMap { file ->
+            val source = file.readText()
+            val lines = source.lines()
+            forbidden.findAll(source).map { match ->
+                val lineNumber = source.take(match.range.first).count { it == '\n' } + 1
+                "${file.relativeTo(rootDir)}:$lineNumber: ${lines.getOrElse(lineNumber - 1) { "" }.trim()}"
+            }.toList()
+        }
+        check(violations.isEmpty()) {
+            "ClipSpace must be explicit and renderer-owned; optional defaults found:\n" +
+                violations.joinToString("\n")
+        }
+    }
+}
+tasks.matching { it.name == "check" }.configureEach {
+    dependsOn(verifyClipSpaceUsage)
+}
+
 // Version comes from the latest v* git tag, so publishing is "tag + push" and the
 // number can never drift from the tag:
 //   HEAD exactly on v0.1.0-dev.1  ->  0.1.0-dev.1          (publishable, immutable)
