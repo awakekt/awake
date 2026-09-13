@@ -33,7 +33,7 @@ class OcclusionTest {
         val boxBehind =
             Aabb(Vec3f(-1f, -1f, 1f), Vec3f(1f, 1f, 3f)) // +Z is behind an eye looking down -Z
 
-        assertNull(camera.screenBounds(boxBehind, camera.viewProjection()))
+        assertNull(camera.screenBounds(boxBehind, camera.viewProjection(), 1f, 1f, ClipSpace.WebGpu))
     }
 
     @Test
@@ -42,7 +42,7 @@ class OcclusionTest {
         // near = 1, so z in [-1.5, -0.5] straddles it -- some corners in front, some behind.
         val straddling = Aabb(Vec3f(-1f, -1f, -1.5f), Vec3f(1f, 1f, -0.5f))
 
-        assertNull(camera.screenBounds(straddling, camera.viewProjection()))
+        assertNull(camera.screenBounds(straddling, camera.viewProjection(), 1f, 1f, ClipSpace.WebGpu))
     }
 
     @Test
@@ -52,7 +52,9 @@ class OcclusionTest {
         // |z|, isolating it from the box's lateral extent.
         val box = Aabb(Vec3f(0f, 0f, -3f), Vec3f(0f, 0f, -2f))
 
-        val bounds = assertNotNull(camera.screenBounds(box, camera.viewProjection()))
+        val bounds = assertNotNull(
+            camera.screenBounds(box, camera.viewProjection(), 1f, 1f, ClipSpace.WebGpu),
+        )
 
         // Nearest face sits at z = -2 (distance 2 from the origin eye along -Z).
         assertEqualsWithEpsilon(2f, bounds.nearestDistance)
@@ -66,7 +68,9 @@ class OcclusionTest {
         // surface point sits directly in front of the eye at z = -2.
         val wideWall = Aabb(Vec3f(-50f, -50f, -3f), Vec3f(50f, 50f, -2f))
 
-        val bounds = assertNotNull(camera.screenBounds(wideWall, camera.viewProjection()))
+        val bounds = assertNotNull(
+            camera.screenBounds(wideWall, camera.viewProjection(), 1f, 1f, ClipSpace.WebGpu),
+        )
 
         assertEqualsWithEpsilon(2f, bounds.nearestDistance)
     }

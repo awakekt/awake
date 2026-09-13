@@ -30,12 +30,13 @@ data class ScreenBounds(
  * a screen rect around them. `null` when ANY corner is behind the camera -- a box straddling the
  * near plane has no well-defined screen rect, and treating it as occluded (or as occluding
  * something else) risks culling something actually visible, the same false-negative-only bias
- * [Frustum.intersects] already keeps. */
+ * [Frustum.intersects] already keeps. [clipSpace] must match [viewProjection]. */
 fun Lens.screenBounds(
     worldBounds: Aabb,
     viewProjection: Mat4,
-    viewportWidth: Float = 1f,
-    viewportHeight: Float = 1f,
+    viewportWidth: Float,
+    viewportHeight: Float,
+    clipSpace: ClipSpace,
 ): ScreenBounds? {
     var minX = Float.MAX_VALUE
     var minY = Float.MAX_VALUE
@@ -43,7 +44,13 @@ fun Lens.screenBounds(
     var maxY = -Float.MAX_VALUE
     for (corner in worldBounds.corners()) {
         val projected =
-            projectToViewport(corner, viewProjection, viewportWidth, viewportHeight) ?: return null
+            projectToViewport(
+                corner,
+                viewProjection,
+                viewportWidth,
+                viewportHeight,
+                clipSpace,
+            ) ?: return null
         minX = min(minX, projected.x)
         minY = min(minY, projected.y)
         maxX = max(maxX, projected.x)

@@ -56,7 +56,8 @@ internal class SceneCullingCompiler(
             val viewProjection = camera.lens.viewProjectionMatrix(CONSERVATIVE_ASPECT, clipSpace)
             occluderFamily.forEach { _, transform, occluder ->
                 val worldBounds = occluder.localBounds.transformed(transform.worldMatrix)
-                camera.lens.screenBounds(worldBounds, viewProjection)?.let(occluderBounds::add)
+                camera.lens.screenBounds(worldBounds, viewProjection, 1f, 1f, clipSpace)
+                    ?.let(occluderBounds::add)
             }
             viewProjection
         } else {
@@ -96,6 +97,7 @@ internal class SceneCullingCompiler(
                 culling.camera.lens,
                 bounds.worldBounds(transform.worldMatrix),
                 culling.occlusionViewProjection,
+                clipSpace,
             )
         if (occluded) lastOccludedCount++
         return !occluded
@@ -108,13 +110,21 @@ internal class SceneCullingCompiler(
         return visibleIds
     }
 
+    @Suppress("ReturnCount") // Null inputs are independent early exits for this optional culling pass.
     private fun isOccluded(
         camera: com.awakekt.awake.core.math.Lens,
         worldBounds: Aabb,
         occlusionViewProjection: Mat4?,
+        clipSpace: ClipSpace,
     ): Boolean {
         if (occlusionViewProjection == null || occluderBounds.isEmpty()) return false
-        val candidateBounds = camera.screenBounds(worldBounds, occlusionViewProjection) ?: return false
+        val candidateBounds = camera.screenBounds(
+            worldBounds,
+            occlusionViewProjection,
+            1f,
+            1f,
+            clipSpace,
+        ) ?: return false
         return occluderBounds.any { isOccludedBy(candidateBounds, it) }
     }
 }

@@ -132,26 +132,34 @@ class Lens(
 
 /**
  * A world point in viewport pixels (origin top-left), or `null` when it sits behind the camera.
- *
  * Rejected by view-space depth rather than by the clip `w`: projecting a point behind the eye
  * anyway mirrors it onto the visible side, so a handle or label would appear -- and respond to
- * clicks -- somewhere it is not.
+ * clicks -- somewhere it is not. [clipSpace] must be the same convention used to build
+ * [viewProjection].
  */
 fun Lens.projectToViewport(
     world: com.awakekt.awake.core.math.Vec3f,
     viewProjection: Mat4,
     viewportWidth: Float,
     viewportHeight: Float,
+    clipSpace: ClipSpace,
 ): Vec2? {
     val clip = viewProjection.transformPosition(Vec4(world.x, world.y, world.z, 1f))
         .takeIf { isInFront(world) && it.w != 0f }
         ?: return null
     val ndcX = clip.x / clip.w
     val ndcY = clip.y / clip.w
-    // NDC is +Y up; viewport pixels are +Y down.
+    // WebGPU/OpenGL-style NDC is +Y up, while Vulkan's positive-height viewport is +Y down.
+    // Lens.viewProjectionMatrix() already applies the Vulkan projection Y flip, so using the
+    // matching viewport convention here keeps CPU picking aligned with rasterization.
+    val viewportY = if (clipSpace.flipY) {
+        (ndcY * NDC_TO_UNIT + NDC_TO_UNIT) * viewportHeight
+    } else {
+        (NDC_TO_UNIT - ndcY * NDC_TO_UNIT) * viewportHeight
+    }
     return Vec2(
         (ndcX * NDC_TO_UNIT + NDC_TO_UNIT) * viewportWidth,
-        (NDC_TO_UNIT - ndcY * NDC_TO_UNIT) * viewportHeight,
+        viewportY,
     )
 }
 
@@ -172,26 +180,32 @@ private fun Lens.isInFront(world: com.awakekt.awake.core.math.Vec3f): Boolean {
 /**
  * The world-space ray through a viewport pixel -- what picking, drag-onto-a-plane and
  * click-to-place all start from. `null` when [viewProjection] cannot be inverted.
- *
  * Unprojects the near and far plane points of that pixel and joins them, rather than assuming
  * the ray starts at [eye]: that assumption is false for an orthographic camera, where every
- * ray is parallel and starts on the near plane.
+ * ray is parallel and starts on the near plane. [clipSpace] must be the same convention used to
+ * build [viewProjection].
  */
-@Suppress("ReturnCount") // Each early exit is a distinct "this pixel has no ray" reason.
+@Suppress("LongParameterList", "ReturnCount") // Pixel coordinates, viewport, matrix, and backend convention are all required.
 fun Lens.rayThroughViewport(
     viewportX: Float,
     viewportY: Float,
     viewProjection: Mat4,
     viewportWidth: Float,
     viewportHeight: Float,
+    clipSpace: ClipSpace,
 ): Ray? {
     if (viewportWidth <= 0f || viewportHeight <= 0f) return null
     val inverse = viewProjection.inverse() ?: return null
 
     val ndcX = (viewportX / viewportWidth) / NDC_TO_UNIT - 1f
-    val ndcY = 1f - (viewportY / viewportHeight) / NDC_TO_UNIT
+    val ndcY = if (clipSpace.flipY) {
+        (viewportY / viewportHeight) / NDC_TO_UNIT - 1f
+    } else {
+        1f - (viewportY / viewportHeight) / NDC_TO_UNIT
+    }
 
-    val nearPoint = inverse.unprojectNdc(ndcX, ndcY, NEAR_NDC_DEPTH)
+    val nearNdcDepth = if (clipSpace.depthZeroToOne) 0f else -1f
+    val nearPoint = inverse.unprojectNdc(ndcX, ndcY, nearNdcDepth)
     val farPoint = inverse.unprojectNdc(ndcX, ndcY, FAR_NDC_DEPTH)
     if (nearPoint == null || farPoint == null) return null
     val dx = farPoint.x - nearPoint.x
@@ -219,9 +233,8 @@ private fun Mat4.unprojectNdc(
     return Vec3f(unprojected.x * inverseW, unprojected.y * inverseW, unprojected.z * inverseW)
 }
 
-/** Both backends' clip space runs depth 0..1 (see `Renderer.clipSpace`), so the near plane is 0
- * and the far plane is 1 -- not the -1..1 OpenGL convention. */
-private const val NEAR_NDC_DEPTH = 0f
+/** The far plane is always the positive end of the NDC depth interval. The near plane is selected
+ * from [ClipSpace.depthZeroToOne] in [Lens.rayThroughViewport]. */
 private const val FAR_NDC_DEPTH = 1f
 private const val DEGENERATE_LENGTH = 1e-6f
 

@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Desktop Vulkan scene picking.** Align CPU viewport projection and picking rays with Vulkan's
+  positive-height Y convention so model and gizmo hover/click coordinates match rendered pixels.
 - **shadcn spinner motion.** Cached the tessellated arc and rotate the stable mesh per frame, removing
   per-frame stroke tessellation that caused uneven animation under load.
 - **shadcn spinner placement.** Route the rotated cached mesh through the Canvas node's placement
