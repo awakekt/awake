@@ -138,7 +138,8 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntimeKt {
-	public static final fun defaultInfrastructureSystems (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;)Ljava/util/List;
+	public static final fun defaultInfrastructureSystems (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lkotlin/jvm/functions/Function0;)Ljava/util/List;
+	public static synthetic fun defaultInfrastructureSystems$default (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAppSpec : com/awakekt/awake/engine/platform/core/AppModule {

@@ -35,6 +35,7 @@ import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
+import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.Name
@@ -476,9 +477,11 @@ class SceneAppLifecycleRuntime internal constructor(
  * nothing extra) unless a scene adds a
  * [com.awakekt.awake.scene.rendering.debug.WorldDebugSettings] entity and
  * toggles it on -- every existing scene is unaffected by its presence here. */
-fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(): List<System> =
+fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
+    viewportProvider: () -> RenderViewport? = { null },
+): List<System> =
     listOf(
         TransformSystem(),
-        RenderSystem3D(renderer, gpuDrawPreparer),
+        RenderSystem3D(renderer, gpuDrawPreparer, viewportProvider = viewportProvider),
         DebugVisualizationSystem(renderer),
     )
