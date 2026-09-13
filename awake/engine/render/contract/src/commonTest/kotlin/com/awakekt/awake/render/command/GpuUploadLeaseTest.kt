@@ -9,7 +9,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -55,7 +55,7 @@ class GpuUploadLeaseTest {
     }
 
     @Test
-    fun completionAndFailureRaceHasOneTerminalOwner() = runBlocking {
+    fun completionAndFailureRaceHasOneTerminalOwner() = runTest {
         val releases = atomic(0)
         val lease = GpuUploadLease(Unit, byteCount = 0) { releases.incrementAndGet() }
         lease.submit()

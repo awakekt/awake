@@ -26,7 +26,10 @@ runs:
       uses: actions/cache@v4
       with:
         path: awake/backend/vulkan/bindings/ios-native/MoltenVK/Package
-        key: moltenvk-ios-${{ runner.os }}-${{ steps.pins.outputs.moltenvk }}
+        # Bump the recipe version when this action changes its build or verification contract.
+        # Native output is also architecture and runner specific; never restore a different
+        # platform's framework just because the submodule SHA matches.
+        key: moltenvk-ios-v2-${{ runner.os }}-${{ runner.arch }}-${{ steps.pins.outputs.moltenvk }}
 
     # `make ios` and `make iossim` each replace Package/Release/MoltenVK/*.xcframework wholesale
     # rather than merging into it, so the second one run is the one whose slice survives alongside
