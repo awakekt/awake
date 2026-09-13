@@ -7,6 +7,8 @@ package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.document.toColor
+import com.awakekt.awake.scene.document.toSceneColor
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
@@ -31,6 +33,8 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
     fun ScenePbrMaterial.toComponent(): PbrMaterial = PbrMaterial(
         metallic = metallic,
         roughness = roughness,
+        baseColorFactor = baseColorFactor.toColor(),
+        emissiveFactor = emissiveFactor.toColor(),
         alphaMode = alphaMode,
         alphaCutoff = alphaCutoff,
     )
@@ -38,6 +42,8 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
     fun PbrMaterial.toSceneComponent(): ScenePbrMaterial = ScenePbrMaterial(
         metallic = metallic,
         roughness = roughness,
+        baseColorFactor = baseColorFactor.toSceneColor(),
+        emissiveFactor = emissiveFactor.toSceneColor(),
         alphaMode = alphaMode,
         alphaCutoff = alphaCutoff,
     )

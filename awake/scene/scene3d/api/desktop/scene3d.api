@@ -788,18 +788,22 @@ public final class com/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$Cull
 public final class com/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial$Companion;
 	public fun <init> ()V
-	public fun <init> (FFLcom/awakekt/awake/render/pipeline/AlphaMode;F)V
-	public synthetic fun <init> (FFLcom/awakekt/awake/render/pipeline/AlphaMode;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;F)V
+	public synthetic fun <init> (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component2 ()F
-	public final fun component3 ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
-	public final fun component4 ()F
-	public final fun copy (FFLcom/awakekt/awake/render/pipeline/AlphaMode;F)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;FFLcom/awakekt/awake/render/pipeline/AlphaMode;FILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+	public final fun component3 ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun component4 ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun component5 ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
+	public final fun component6 ()F
+	public final fun copy (FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;F)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/render/pipeline/AlphaMode;FILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/ScenePbrMaterial;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getAlphaCutoff ()F
 	public final fun getAlphaMode ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
+	public final fun getBaseColorFactor ()Lcom/awakekt/awake/scene/document/SceneColor;
+	public final fun getEmissiveFactor ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public final fun getMetallic ()F
 	public final fun getRoughness ()F
 	public fun hashCode ()I

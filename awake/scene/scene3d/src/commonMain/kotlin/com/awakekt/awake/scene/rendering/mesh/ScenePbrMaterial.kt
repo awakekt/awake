@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.scene.document.SceneComponent
+import com.awakekt.awake.scene.document.SceneColor
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -22,6 +23,8 @@ import kotlinx.serialization.Serializable
 data class ScenePbrMaterial(
     val metallic: Float = 0f,
     val roughness: Float = 0.5f,
+    val baseColorFactor: SceneColor = SceneColor.White,
+    val emissiveFactor: SceneColor = SceneColor.Transparent,
     val alphaMode: AlphaMode = AlphaMode.Opaque,
     val alphaCutoff: Float = 0.5f,
 ) : SceneComponent {
