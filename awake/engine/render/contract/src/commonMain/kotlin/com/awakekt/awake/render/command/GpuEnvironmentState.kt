@@ -10,8 +10,9 @@ import com.awakekt.awake.core.color.Color
 /**
  * Backend-neutral feature state carried by a compiled GPU pass.
  *
- * Scene and game code owns the richer environment authoring model. The render-pipeline module
- * lowers it to this small value before submitting the packet to the hardware contract.
+ * Scene/game authoring code never crosses the backend boundary. The scene/render compiler lowers
+ * its richer model to this small value before submitting the packet to the hardware contract.
+ * Backends consume this packet; they do not discover or mutate scene environment components.
  */
 data class GpuEnvironmentState(
     val showSky: Boolean = false,

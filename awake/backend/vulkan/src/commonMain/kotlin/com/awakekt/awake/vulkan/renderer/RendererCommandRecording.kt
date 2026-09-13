@@ -67,7 +67,7 @@ internal fun Renderer.recordCommandBuffer(
         primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
         viewProjection = viewProjection,
         cameraEye = cameraEye,
-        environmentState = environment,
+        environment = environment,
     )
     val viewport = VkViewport(
         width = swapchainManager.extent.width.toFloat(),
@@ -158,7 +158,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
         primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
         viewProjection = viewProjection,
         cameraEye = cameraEye,
-        environmentState = environment,
+        environment = environment,
     )
     val viewport = VkViewport(
         width = swapchainManager.extent.width.toFloat(),

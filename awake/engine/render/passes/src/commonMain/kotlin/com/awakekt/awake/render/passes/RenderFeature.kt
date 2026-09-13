@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.render.passes
 
-import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
@@ -13,10 +12,7 @@ import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
-import com.awakekt.awake.render.passes.uniforms.DEFAULT_HORIZON_COLOR
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
-import com.awakekt.awake.render.passes.uniforms.DEFAULT_ZENITH_COLOR
-import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 
 /**
@@ -67,26 +63,9 @@ interface RenderFrameContext {
     val light: SceneLight get() = DEFAULT_SCENE_LIGHT
     val sunDirection: Vec3f get() = light.direction
 
-    val showEnvironment: Boolean get() = false
-    val horizonColor: Color get() = DEFAULT_HORIZON_COLOR
-    val zenithColor: Color get() = DEFAULT_ZENITH_COLOR
-
-    /** This frame's environment uniforms (skybox, horizon, zenith, fog, shadows). */
-    val environment: EnvironmentUniforms
-        get() = EnvironmentUniforms(
-            showSky = showEnvironment,
-            horizonColor = horizonColor,
-            zenithColor = zenithColor,
-        )
-
-    /** Lowered environment policy carried by the generic pass packet. Backend adapters consume
-     * this state directly; [environment] remains a compatibility view for authored features. */
-    val environmentState: GpuEnvironmentState
-        get() = GpuEnvironmentState(
-            showSky = showEnvironment,
-            horizonColor = horizonColor,
-            zenithColor = zenithColor,
-        )
+    /** The canonical lowered environment policy for this pass. It contains no ECS or authoring
+     * types; scene code creates it before the packet reaches a backend. */
+    val environment: GpuEnvironmentState get() = GpuEnvironmentState.Default
 
     /** The surface this pass draws into, for scissor clamping. */
     val surfaceWidth: Int

@@ -156,7 +156,7 @@ internal class RendererGpuPassExecutor(
                     primaryPipeline = primary.pipeline,
                     viewProjection = input.viewProjection,
                     cameraEye = input.cameraEye,
-                    environmentState = input.environment,
+                    environment = input.environment,
                     surfaceWidth = offscreen.width,
                     surfaceHeight = offscreen.height,
                 ),

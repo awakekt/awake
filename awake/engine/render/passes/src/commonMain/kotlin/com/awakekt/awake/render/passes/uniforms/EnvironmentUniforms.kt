@@ -35,13 +35,3 @@ data class EnvironmentUniforms(
         shadowsEnabled = shadowsEnabled,
     )
 }
-
-/** Rehydrates lowered HAL state for a render-feature context that still uses scene pass data. */
-fun GpuEnvironmentState.toEnvironmentUniforms(): EnvironmentUniforms = EnvironmentUniforms(
-    showSky = showSky,
-    horizonColor = horizonColor,
-    zenithColor = zenithColor,
-    fogDensity = fogDensity,
-    fogColor = fogColor,
-    shadowsEnabled = shadowsEnabled,
-)

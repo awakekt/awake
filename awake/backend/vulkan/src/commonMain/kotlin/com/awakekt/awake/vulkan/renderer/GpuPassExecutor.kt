@@ -93,7 +93,7 @@ internal class RendererGpuPassExecutor(
                             primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
                             viewProjection = input.viewProjection,
                             cameraEye = input.cameraEye,
-                            environmentState = input.environment,
+                            environment = input.environment,
                         ),
                     )
                     Vulkan.vkCmdEndRenderPass(commandBuffer)

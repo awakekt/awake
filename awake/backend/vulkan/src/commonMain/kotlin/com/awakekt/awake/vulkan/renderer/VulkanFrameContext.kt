@@ -23,6 +23,7 @@ import com.awakekt.awake.vulkan.pipeline.VulkanRenderFrameContext
  *
  * Named [VulkanFrameContext] to mirror [WebGpuFrameContext] on the sibling backend.
  */
+@Suppress("LongParameterList")
 internal class VulkanFrameContext(
     private val renderer: Renderer,
     override val commandBuffer: Long,
@@ -32,7 +33,7 @@ internal class VulkanFrameContext(
     override val primaryPipeline: RenderPipeline,
     override val viewProjection: Mat4,
     override val cameraEye: Vec3f,
-    override val environmentState: GpuEnvironmentState = GpuEnvironmentState.Default,
+    override val environment: GpuEnvironmentState = GpuEnvironmentState.Default,
 ) : VulkanRenderFrameContext {
     override val lineMesh get() = renderer.lineMesh
     override val uiRuns get() = renderer.uiRuns

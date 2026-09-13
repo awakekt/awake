@@ -53,7 +53,7 @@ interface LinePass<in C : RenderFrameContext> {
  *
  * Authored content, not a capability (docs/reference/render-extensibility.md): construct it only
  * when the app opted into a skybox shader set, and even then it draws nothing unless
- * [RenderFrameContext.showEnvironment] is on.
+ * [RenderFrameContext.environment]'s [GpuEnvironmentState.showSky] flag is on.
  */
 class SkyboxRenderFeature(
     private val pipeline: PipelineHandle,
@@ -64,15 +64,15 @@ class SkyboxRenderFeature(
     private val shared = SharedSkyboxRenderFeature()
 
     override fun recordCommands(context: RenderFrameContext): Unit = with(context) {
-        if (!showEnvironment) return
+        if (!environment.showSky) return
         // Null when this frame's viewProjection can't be inverted -- nothing to draw a sky from.
         val inverse = viewProjection.inverse() ?: return
         uniforms.write(frameIndex) {
             put(SkyboxFields.InverseViewProjection, inverse)
             put(SkyboxFields.CameraEye, cameraEye)
             put(SkyboxFields.SunDirection, light.direction)
-            put(SkyboxFields.HorizonColor, horizonColor)
-            put(SkyboxFields.ZenithColor, zenithColor)
+            put(SkyboxFields.HorizonColor, environment.horizonColor)
+            put(SkyboxFields.ZenithColor, environment.zenithColor)
             put(SkyboxFields.SunColor, SUN_DISC_COLOR)
             put(SkyboxFields.MoonColor, MOON_DISC_COLOR)
         }
