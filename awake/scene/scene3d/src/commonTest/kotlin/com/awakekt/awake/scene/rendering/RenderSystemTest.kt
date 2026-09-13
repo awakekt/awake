@@ -102,7 +102,9 @@ class RenderSystemTest {
             sceneSubmissionCount++
             lastViewProjection = input.viewProjection
             val directional = input.passUniforms
-            val cascades = input.prePasses.map { it.viewProjection }
+            val cascades = input.prePasses
+                .filter { it.targetLayer < com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES }
+                .map { it.viewProjection }
             val points = pointLightsFrom(directional)
             lastLight = SceneLight(
                 direction = Vec3f(directional.getOrElse(0) { 0f }, directional.getOrElse(1) { 0f }, directional.getOrElse(2) { 0f }),
@@ -114,7 +116,7 @@ class RenderSystemTest {
                 },
             )
             lastEnvironment = com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms(
-                shadowsEnabled = input.prePasses.isNotEmpty(),
+                shadowsEnabled = cascades.isNotEmpty(),
             )
         }
 
