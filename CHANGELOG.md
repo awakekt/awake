@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   showcase, not only in isolated component tests.
 - **shadcn surface parity.** Matched dark field tinting to `dark:bg-input/30` and changed toast
   surfaces and text to the official Sonner `popover` tokens.
+- **shadcn modal geometry.** Centered Dialog and Alert Dialog layers in the window, constrained
+  their surfaces with the official responsive gutter/max-width rules, and kept Sheets and Drawers
+  pinned to the window when declared inside nested showcase content.
 - **UI showcase samples.** Removed React, Next.js, Radix, Stitches, and other web-framework copy
   from Awake UI examples, keeping the showcase self-contained and Awake-specific.
 

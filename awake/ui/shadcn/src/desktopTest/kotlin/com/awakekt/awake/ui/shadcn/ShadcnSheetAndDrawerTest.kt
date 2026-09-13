@@ -5,11 +5,16 @@
  */
 package com.awakekt.awake.ui.shadcn
 
+import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.foundation.layout.Column
+import com.awakekt.awake.compose.foundation.layout.Spacer
+import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.testing.ComposeTestSession
 import com.awakekt.awake.compose.testing.composeTestSession
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.semantics.testTag
+import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.ui.shadcn.components.ShadcnSheet
 import com.awakekt.awake.ui.shadcn.components.ShadcnSheetSide
@@ -51,6 +56,31 @@ class ShadcnSheetAndDrawerTest {
     fun aSideSheetIsThreeQuartersWideUpToItsMaximum() {
         assertEquals(NARROW * 3 / 4, sheetBounds(ShadcnSheetSide.Right, viewport = NARROW).width)
         assertEquals(SHEET_MAX_WIDTH, sheetBounds(ShadcnSheetSide.Right, viewport = WIDE).width)
+    }
+
+    @Test
+    fun aSheetUsesTheWindowAsItsViewportWhenDeclaredInsideNestedContent() {
+        val session = composeTestSession(VIEWPORT, VIEWPORT) {
+            provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
+                Column {
+                    Spacer(Modifier.size(VIEWPORT.dp, NESTED_CONTENT_TOP.dp))
+                    Box(Modifier.size(VIEWPORT.dp, 100.dp)) {
+                        ShadcnSheet(
+                            visible = true,
+                            onDismissRequest = {},
+                            side = ShadcnSheetSide.Right,
+                            title = "Filters",
+                            id = SHEET,
+                        )
+                    }
+                }
+            }
+        }
+
+        val bounds = session.frame().onNodeWithTag(SHEET).getBoundsInRoot()
+        assertEquals(0, bounds.top, "sheet was positioned from its declaring preview")
+        assertEquals(VIEWPORT, bounds.bottom, "sheet does not cover the window height")
+        assertEquals(VIEWPORT, bounds.right, "right sheet is not pinned to the window edge")
     }
 
     @Test
@@ -190,6 +220,7 @@ class ShadcnSheetAndDrawerTest {
 
     private companion object {
         const val VIEWPORT = 600
+        const val NESTED_CONTENT_TOP = 120
         const val NARROW = 400
         const val WIDE = 800
         const val SHEET_MAX_WIDTH = 384

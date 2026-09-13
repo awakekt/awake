@@ -14,7 +14,8 @@ import com.awakekt.awake.compose.foundation.layout.ColumnScope
 import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.RowScope
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
-import com.awakekt.awake.compose.foundation.layout.width
+import com.awakekt.awake.compose.foundation.layout.padding
+import com.awakekt.awake.compose.foundation.layout.widthIn
 import com.awakekt.awake.compose.foundation.style.Style
 import com.awakekt.awake.compose.foundation.style.StyleState
 import com.awakekt.awake.compose.foundation.style.styleable
@@ -206,25 +207,30 @@ fun ShadcnDialog(
         onDismissRequest = onDismissRequest,
         scrimModifier = scrimModifier(id, onScrimClick = onDismissRequest),
     ) {
-        Box(
-            modifier = modifier
-                .width(width)
-                .styleable(StyleState.Default, style)
-                .semantics {
-                    this[SemanticsProperties.Role] = SemanticsRole.Dialog
-                    if (id != null) this[SemanticsProperties.TestTag] = id
-                },
-        ) {
-            CompositionLocalProvider(
-                LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.foreground),
+        // `w-full max-w-[calc(100%-2rem)] sm:max-w-lg`: keep the mobile gutter outside the tagged
+        // surface so its semantics bounds describe the actual painted dialog.
+        Box(Modifier.padding(horizontal = DialogViewportMargin)) {
+            Box(
+                modifier = modifier
+                    .widthIn(max = width)
+                    .fillMaxWidth()
+                    .styleable(StyleState.Default, style)
+                    .semantics {
+                        this[SemanticsProperties.Role] = SemanticsRole.Dialog
+                        if (id != null) this[SemanticsProperties.TestTag] = id
+                    },
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(DialogSectionGap),
+                CompositionLocalProvider(
+                    LocalTextStyle provides LocalTextStyle.current.copy(color = theme.palette.foreground),
                 ) {
-                    if (content != null) {
-                        val scope = remember(this) { ShadcnDialogScope(this) }
-                        scope.content()
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(DialogSectionGap),
+                    ) {
+                        if (content != null) {
+                            val scope = remember(this) { ShadcnDialogScope(this) }
+                            scope.content()
+                        }
                     }
                 }
             }
@@ -245,6 +251,7 @@ private val DialogTitleLeading = 18f.sp
 
 /** shadcn's `sm:max-w-lg`. */
 private val DialogWidth: Dp = 512.dp
+private val DialogViewportMargin: Dp = Tw.Spacing.s4
 
 /** `gap-4` between header and footer. */
 private val DialogSectionGap: Dp = Tw.Spacing.s4
