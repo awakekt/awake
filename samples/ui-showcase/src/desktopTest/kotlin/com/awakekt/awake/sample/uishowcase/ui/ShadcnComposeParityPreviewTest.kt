@@ -34,6 +34,8 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.DrawShape
 import com.awakekt.awake.core.graphics2d.DrawStroke
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.graphics2d.bounds
 import com.awakekt.awake.core.graphics2d.toPath
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.sp
@@ -44,6 +46,7 @@ import com.awakekt.awake.sample.uishowcase.state.UiShowcaseRuntimeState
 import com.awakekt.awake.sample.uishowcase.ui.pages.inputs.ComboboxPage
 import com.awakekt.awake.sample.uishowcase.ui.pages.inputs.TextFieldPage
 import com.awakekt.awake.sample.uishowcase.ui.pages.inputs.TextareaPage
+import com.awakekt.awake.sample.uishowcase.ui.pages.status.SpinnerPage
 import com.awakekt.awake.tailwind.Tw
 import com.awakekt.awake.ui.shadcn.components.ShadcnAlert
 import com.awakekt.awake.ui.shadcn.components.ShadcnAlertVariant
@@ -88,6 +91,7 @@ import com.awakekt.awake.vulkan.utils.VkResultException
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import com.awakekt.awake.core.math2d.Dp as StrokeWidth
 
@@ -995,6 +999,33 @@ class ShadcnComposeParityPreviewTest {
                     tab("password", "Password")
                 }
             }
+        }
+    }
+
+    @Test
+    fun spinnerShowcaseCentersTheAnimatedIndicator() {
+        val session = composeTestSession(width = 320, height = 160) {
+            provideShadcnTheme(shadcnThemeValues()) {
+                SpinnerPage.hero(UiShowcaseRuntimeState())
+            }
+        }
+
+        val first = session.frame()
+        val firstMesh = first.primitives.filterIsInstance<UiDrawPrimitive.Mesh>().single()
+        val firstBounds = firstMesh.placedMesh().bounds()
+        assertEquals(160f, firstBounds.x + firstBounds.width / 2f, 1f, "spinner is not horizontally centred")
+        assertEquals(80f, firstBounds.y + firstBounds.height / 2f, 1f, "spinner is not vertically centred")
+
+        val second = session.frame(FrameInput(320, 160, deltaSeconds = 1f / 60f))
+        val secondMesh = second.primitives.filterIsInstance<UiDrawPrimitive.Mesh>().single()
+        assertTrue(
+            firstMesh.placedMesh().vertices.zip(secondMesh.placedMesh().vertices)
+                .any { (a, b) -> a.position != b.position },
+            "showcase spinner did not animate between frames",
+        )
+
+        writePreview("awake-spinner-showcase-page", width = 320, height = 160) {
+            SpinnerPage.hero(UiShowcaseRuntimeState())
         }
     }
 

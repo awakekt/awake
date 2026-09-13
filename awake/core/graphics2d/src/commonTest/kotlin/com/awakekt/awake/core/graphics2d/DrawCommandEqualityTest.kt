@@ -76,4 +76,22 @@ class DrawCommandEqualityTest {
             UiDrawPrimitive.Quad(0f, 0f, 1f, 1f, Color(0f, 1f, 0f, 1f)),
         )
     }
+
+    @Test
+    fun aMeshRotationUsesItsLocalPivotBeforePlacement() {
+        val mesh = ColoredTriangleMesh(
+            vertices = listOf(ColoredVertex(DrawPoint(2f, 1f), red)),
+            indices = intArrayOf(),
+        )
+        val placed = UiDrawPrimitive.Mesh(
+            mesh = mesh,
+            offsetX = 10f,
+            offsetY = 20f,
+            rotationDegrees = 90f,
+            pivotX = 1f,
+            pivotY = 1f,
+        ).placedMesh()
+
+        assertEquals(DrawPoint(11f, 22f), placed.vertices.single().position)
+    }
 }

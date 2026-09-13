@@ -33,7 +33,6 @@ internal val DialogPage = ShowcasePage(
             }
         }
     """.trimIndent(),
-    referenceExample = "registry/new-york-v4/examples/dialog-demo.tsx",
     previewHeight = 420,
     notes = listOf(
         "ShadcnDialog renders in the viewport overlay layer with an animated scrim backdrop.",

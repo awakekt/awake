@@ -7,6 +7,9 @@ package com.awakekt.awake.core.graphics2d
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.Rectangle
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 /**
  * Per-command GPU-applied scale, threaded from a `graphicsLayer(scale(...))` block (see
@@ -136,8 +139,10 @@ sealed class DrawCommand {
      * them through here instead.
      *
      * The placement is kept beside the mesh rather than baked into it so that moving the node costs
-     * four floats, not a re-tessellation. Vertex colours are baked in, so [alpha] dims them at
-     * staging time the way `color.dimmedBy(alpha)` does for the other primitives.
+     * four floats, not a re-tessellation. [rotationDegrees] is applied around [pivotX]/[pivotY]
+     * before scale and translation, which lets animated geometry keep its tessellated vertices
+     * stable. Vertex colours are baked in, so [alpha] dims them at staging time the way
+     * `color.dimmedBy(alpha)` does for the other primitives.
      */
     data class Mesh(
         val mesh: ColoredTriangleMesh,
@@ -147,6 +152,12 @@ sealed class DrawCommand {
         val scaleY: Float = 1f,
         val alpha: Float = 1f,
         val tokenId: String? = null,
+        /** Clockwise screen-space rotation applied before scale and translation. */
+        val rotationDegrees: Float = 0f,
+        /** X coordinate of the rotation pivot in the mesh's local pixel space. */
+        val pivotX: Float = 0f,
+        /** Y coordinate of the rotation pivot in the mesh's local pixel space. */
+        val pivotY: Float = 0f,
     ) : UiDrawPrimitive() {
         /**
          * These triangles with the placement and alpha folded in.
@@ -155,15 +166,24 @@ sealed class DrawCommand {
          * checking it cannot drift apart. A staging pass already copying vertex by vertex applies
          * the same arithmetic inline rather than calling this, to avoid materialising the list.
          */
-        fun placedMesh(): ColoredTriangleMesh = ColoredTriangleMesh(
-            mesh.vertices.map {
-                ColoredVertex(
-                    position = DrawPoint(it.position.x * scaleX + offsetX, it.position.y * scaleY + offsetY),
-                    color = if (alpha >= 1f) it.color else it.color.withAlpha(it.color.a * alpha),
-                )
-            },
-            mesh.indices,
-        )
+        fun placedMesh(): ColoredTriangleMesh {
+            val radians = rotationDegrees * PI.toFloat() / 180f
+            val cosine = if (rotationDegrees == 0f) 1f else cos(radians)
+            val sine = if (rotationDegrees == 0f) 0f else sin(radians)
+            return ColoredTriangleMesh(
+                mesh.vertices.map {
+                    val dx = it.position.x - pivotX
+                    val dy = it.position.y - pivotY
+                    val rotatedX = pivotX + dx * cosine - dy * sine
+                    val rotatedY = pivotY + dx * sine + dy * cosine
+                    ColoredVertex(
+                        position = DrawPoint(rotatedX * scaleX + offsetX, rotatedY * scaleY + offsetY),
+                        color = if (alpha >= 1f) it.color else it.color.withAlpha(it.color.a * alpha),
+                    )
+                },
+                mesh.indices,
+            )
+        }
     }
 
     /** One screen-space quad sampling an arbitrary render-target-backed material. */

@@ -1,0 +1,105 @@
+name: UI / Visual Bug
+description: Report an Awake UI, component, layout, interaction, or visual-parity issue.
+title: "[UI Bug]: "
+labels: [ "bug", "ui" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for bugs involving Awake UI components, the UI showcase, visual parity, layout, input, or accessibility.
+
+        Drag screenshots or short recordings into the evidence fields below. Do not include sensitive data.
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Pre-submission Checks
+      options:
+        - label: I searched existing GitHub issues and discussions for duplicates.
+          required: true
+        - label: I verified the issue persists on the latest commit or release.
+          required: true
+    validations:
+      required: true
+  - type: input
+    id: component
+    attributes:
+      label: Component or Showcase Page
+      description: Name the affected component or page, for example Toggle Group, Dialog, or UI Showcase > Overlays > Context Menu.
+      placeholder: "e.g. Toggle Group"
+    validations:
+      required: true
+  - type: dropdown
+    id: issue_type
+    attributes:
+      label: Issue Type
+      options:
+        - Visual styling or parity
+        - Layout or positioning
+        - Interaction or input
+        - Animation or rendering quality
+        - Accessibility
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Target Platform
+      options:
+        - macOS Desktop
+        - Linux Desktop
+        - Windows Desktop
+        - Android
+        - iOS
+        - Web / Wasm
+        - All platforms
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Theme, Viewport, and Version
+      description: Include light/dark theme, viewport or device size, and commit or release.
+      placeholder: "e.g. Dark theme, 1280x720, commit abc123"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Give the shortest reliable sequence that exposes the issue.
+      placeholder: |
+        1. Open the UI Showcase.
+        2. Navigate to Inputs > Toggle Group.
+        3. Observe the selected item styling.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Result
+      description: Describe the expected appearance or behavior, including the reference design when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Result
+      description: Describe what is visibly or behaviorally wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshot or Recording
+      description: Required for visual issues. Attach an image or short recording, or write “Not applicable” for a non-visual interaction/accessibility issue.
+      placeholder: "Drag and drop evidence here, or write Not applicable."
+    validations:
+      required: true
+  - type: textarea
+    id: accessibility
+    attributes:
+      label: Accessibility Impact
+      description: Explain any impact on keyboard, pointer, focus, screen-reader, contrast, or reduced-motion users. Write “None known” if applicable.
+      placeholder: "None known"
+    validations:
+      required: true

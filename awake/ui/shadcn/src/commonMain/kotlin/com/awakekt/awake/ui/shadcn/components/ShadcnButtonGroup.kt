@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.foundation.BorderSides
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.IntrinsicSize
 import com.awakekt.awake.compose.foundation.layout.Row
+import com.awakekt.awake.compose.foundation.layout.fillMaxHeight
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.height
 import com.awakekt.awake.compose.foundation.layout.width
@@ -55,7 +56,9 @@ fun ShadcnButtonGroup(
                     val modifier = if (orientation == ShadcnButtonGroupOrientation.Vertical) {
                         member.modifier.fillMaxWidth()
                     } else {
-                        member.modifier
+                        // Upstream's root uses `items-stretch`: mixed-size members share the
+                        // tallest member's cross-axis extent.
+                        member.modifier.fillMaxHeight()
                     }
                     val shape = memberShape(orientation, index, buttonCount, shadcnTheme.radii.md)
                     val nextIsSeparator = items.getOrNull(itemIndex + 1) is ButtonGroupMember.Separator

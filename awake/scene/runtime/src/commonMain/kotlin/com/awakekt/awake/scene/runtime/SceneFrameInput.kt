@@ -6,7 +6,10 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.compose.ui.platform.FrameInput
+import com.awakekt.awake.compose.ui.platform.keyEvents
+import com.awakekt.awake.compose.ui.platform.pointerModifiers
 import com.awakekt.awake.core.input.InputSnapshot
+import com.awakekt.awake.core.input.PointerButton
 import kotlin.math.roundToInt
 
 /**
@@ -24,10 +27,13 @@ internal fun InputSnapshot.toFrameInput(
     pointerDown = pointerDown,
     pointerPressed = pointerPressed,
     pointerReleased = pointerReleased,
+    secondaryPointerPressed = PointerButton.Secondary in buttonsPressed,
+    pointerModifiers = pointerModifiers(),
     scrollDeltaY = scrollDeltaY,
     typedText = typedText,
     imeComposition = imeComposition,
     imeCommit = imeCommit,
     editActions = editActions,
+    keyEvents = keyEvents(),
     deltaSeconds = deltaSeconds,
 )

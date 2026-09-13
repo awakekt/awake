@@ -9,27 +9,33 @@ import com.awakekt.awake.compose.foundation.Canvas
 import com.awakekt.awake.compose.foundation.animation.rememberLoopingPhase
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.current
+import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
+import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.DrawStroke
 import com.awakekt.awake.core.graphics2d.StrokeCap
 import com.awakekt.awake.core.graphics2d.StrokeJoin
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.drawPath
+import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 
 /**
- * shadcn's spinner: `size-6 animate-spin rounded-full border-2 border-current border-t-transparent`.
+ * shadcn's spinner: `size-4 animate-spin rounded-full border-2 border-current border-t-transparent`.
  *
  * A ring with one quarter missing, rotated. The gap is what makes rotation visible at all -- a full
  * ring spinning is indistinguishable from a still one, which is the bug a spinner drawn as a plain
  * circle always has.
  *
- * Drawn as one segmented arc path because `DrawScope` has no arc primitive. A continuous stroke
- * avoids the lumpy dot-ring result produced by independent rounded quads at small sizes.
+ * The arc is tessellated once and emitted as a rotating mesh. Rebuilding a stroked path in the
+ * Canvas lambda made every frame pay curve flattening, stroke expansion and fill tessellation,
+ * which was the source of the reported rough motion. The stable mesh follows the official SVG
+ * implementation more closely: fixed geometry plus a transform-driven spin.
  */
 context(_: Composer)
 fun ShadcnSpinner(
@@ -38,39 +44,71 @@ fun ShadcnSpinner(
 ) {
     val theme = shadcnTheme
     val phase = rememberLoopingPhase(SPIN_SECONDS)
+    val density = LocalDensity.current
+    val mesh = remember(size, density) {
+        SpinnerMeshCache(size, density)
+    }.mesh(theme.palette.primary)
     Canvas(modifier.size(size)) {
-        val stroke = SpinnerStroke.value * density
-        val radius = (width.coerceAtMost(height) - stroke) / 2f
-        val cx = width / 2f
-        val cy = height / 2f
-        val turn = phase * 2f * PI.toFloat()
-        // Three quarters of the ring: `border-t-transparent` leaves the top edge unpainted.
-        val arc = drawPath {
-            val startDegrees = turn * 180f / PI.toFloat()
-            moveTo(cx + cos(turn) * radius, cy + sin(turn) * radius)
-            arcTo(
-                left = cx - radius,
-                top = cy - radius,
-                right = cx + radius,
-                bottom = cy + radius,
-                startDegrees = startDegrees,
-                sweepDegrees = 270f,
-            )
-        }
-        drawStrokedPath(
-            arc,
-            DrawStroke(
-                width = stroke.dp,
-                cap = StrokeCap.Round,
-                join = StrokeJoin.Round,
-            ),
-            theme.palette.mutedForeground,
+        // `emit` expects tree-space coordinates and bypasses this Canvas node's origin. Rotate the
+        // cached local mesh first, then hand it to drawMesh so padding/offsets from the showcase
+        // layout are applied. The old direct emit left nested spinners at the root origin, where a
+        // parent clip could make them appear to vanish.
+        drawMesh(
+            UiDrawPrimitive.Mesh(
+                mesh = mesh,
+                rotationDegrees = phase * 360f,
+                pivotX = width / 2f,
+                pivotY = height / 2f,
+            ).placedMesh(),
         )
     }
 }
 
-/** `size-6`. */
-private val SpinnerSize: Dp = 24.dp
+/** Holds the geometry cache separately from the theme colour so theme changes do not rebuild it. */
+private class SpinnerMeshCache(
+    private val size: Dp,
+    private val density: Float,
+) {
+    private var color: Color? = null
+    private var cached: ColoredTriangleMesh? = null
+
+    fun mesh(nextColor: Color): ColoredTriangleMesh {
+        if (nextColor == color) return requireNotNull(cached)
+        // Canvas coordinates are physical pixels after layout. Keep the geometry in that same
+        // space: using raw Dp values here makes a 2x display draw a 24px spinner inside a 48px
+        // node and rotates it around the wrong centre.
+        val sizePx = size.value * density
+        val strokePx = SpinnerStroke.value * density
+        val radius = (sizePx - strokePx) / 2f
+        val centre = sizePx / 2f
+        val path = drawPath {
+            moveTo(centre + radius, centre)
+            arcTo(
+                left = centre - radius,
+                top = centre - radius,
+                right = centre + radius,
+                bottom = centre + radius,
+                startDegrees = 0f,
+                sweepDegrees = 270f,
+            )
+        }
+        val built = path.tessellateStrokeAa(
+            stroke = DrawStroke(
+                width = SpinnerStroke,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
+            color = nextColor,
+            density = density,
+        )
+        color = nextColor
+        cached = built
+        return built
+    }
+}
+
+/** `size-4`. */
+private val SpinnerSize: Dp = 16.dp
 
 /** `border-2`. */
 private val SpinnerStroke: Dp = 2.dp

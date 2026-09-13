@@ -22,26 +22,25 @@ internal val HoverCardPage = ShowcasePage(
     description = "For sighted users to preview content available behind a link or trigger on hover.",
     usageCode = """
 ShadcnHoverCard(
-    trigger = { ShadcnButton("@nextjs", variant = ShadcnButtonVariant.Link) },
+    trigger = { ShadcnButton("View profile", variant = ShadcnButtonVariant.Link) },
 ) {
     Column {
         shadcnAvatar(initials = "NX")
-        ShadcnText("The React Framework – created and maintained by @vercel.")
+        ShadcnText("Preview profile details before opening the full profile.")
     }
 }
     """.trimIndent(),
-    referenceExample = "registry/new-york-v4/examples/hover-card-demo.tsx",
     previewHeight = 350,
     hero = {
         ShadcnHoverCard(
             trigger = {
-                ShadcnButton("@nextjs", variant = ShadcnButtonVariant.Link)
+                ShadcnButton("View profile", variant = ShadcnButtonVariant.Link)
             },
         ) {
             Column {
                 ShadcnAvatar(initials = "NX")
-                ShadcnText("Next.js")
-                shadcnMuted("The React Framework – created and maintained by @vercel.")
+                ShadcnText("Awake profile")
+                shadcnMuted("Preview profile details before opening the full profile.")
             }
         }
     },

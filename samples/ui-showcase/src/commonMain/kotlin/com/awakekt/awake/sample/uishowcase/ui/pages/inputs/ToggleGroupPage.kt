@@ -9,6 +9,7 @@ import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
 import com.awakekt.awake.sample.uishowcase.ui.ShowcasePage
 import com.awakekt.awake.ui.shadcn.components.ShadcnToggleGroup
+import com.awakekt.awake.ui.shadcn.components.ShadcnToggleGroupVariant
 
 private class SelectedValue(initial: String?) {
     var value: String? = initial
@@ -37,6 +38,7 @@ shadcnToggleGroup(selected = "left", onSelectedChange = { }) {
         ShadcnToggleGroup(
             selected = selected.value,
             onSelectedChange = { selected.value = it },
+            variant = ShadcnToggleGroupVariant.Outline,
         ) {
             item("left", "Left")
             item("center", "Center")
@@ -48,6 +50,7 @@ shadcnToggleGroup(selected = "left", onSelectedChange = { }) {
         ShadcnToggleGroup(
             selected = picked.value,
             onSelectedChange = { picked.value = it },
+            variant = ShadcnToggleGroupVariant.Outline,
         ) {
             item("bold", "Bold")
             item("italic", "Italic")

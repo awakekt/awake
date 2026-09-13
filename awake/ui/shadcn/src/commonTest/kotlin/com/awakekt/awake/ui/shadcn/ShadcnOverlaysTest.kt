@@ -509,6 +509,25 @@ class ShadcnOverlaysTest {
     }
 
     @Test
+    fun dialogPanelIsCenteredInTheViewport() {
+        val session = composeTestSession(width = 600, height = 400) {
+            provideShadcnTheme(theme) {
+                ShadcnDialog(
+                    visible = true,
+                    onDismissRequest = {},
+                    id = "centered-dialog",
+                ) {
+                    header { title("Centered") }
+                }
+            }
+        }
+
+        val bounds = session.frame().onNodeWithTag("centered-dialog").getBoundsInRoot()
+        assertEquals(300f, bounds.left + bounds.width / 2f, 1f, "dialog is not horizontally centered")
+        assertEquals(200f, bounds.top + bounds.height / 2f, 1f, "dialog is not vertically centered")
+    }
+
+    @Test
     fun dialogDismissesOnEscapeKey() {
         var visible = true
         var dismissed = false

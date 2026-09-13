@@ -1,7 +1,7 @@
 name: Bug Report
 description: Report a bug, crash, or unexpected behavior in Awake Engine.
 title: "[Bug]: "
-labels: [ "type: bug" ]
+labels: [ "bug" ]
 body:
   - type: markdown
     attributes:
@@ -27,6 +27,8 @@ body:
         - "awake:core (Math, Transforms, Animation)"
         - "awake:ecs (Entity Component System)"
         - "awake:compose (Compose Multiplatform UI)"
+        - "awake:ui:shadcn (Awake UI / Shadcn components)"
+        - "samples:ui-showcase (UI showcase)"
         - "awake:scene:physics (Jolt Physics)"
         - "awake:asset (glTF, Naga Shader Compiler, Textures)"
         - "app:studio (Awake Studio Editor)"

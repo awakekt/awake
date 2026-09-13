@@ -11,6 +11,7 @@ import com.awakekt.awake.ui.shadcn.components.ShadcnAlert
 import com.awakekt.awake.ui.shadcn.components.ShadcnAlertVariant
 import com.awakekt.awake.ui.shadcn.components.ShadcnAvatar
 import com.awakekt.awake.ui.shadcn.components.ShadcnAvatarSizeVariant
+import com.awakekt.awake.ui.shadcn.components.ShadcnToast
 import com.awakekt.awake.ui.shadcn.components.ShadcnTooltip
 import com.awakekt.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test
@@ -132,5 +133,26 @@ class ShadcnSurfacesTest {
         }.primitivesOf<DrawCommand.RoundedQuad>().first().color
 
         assertTrue(fill != theme.palette.popover, "the tooltip took the popover fill")
+    }
+
+    // -- toast ----------------------------------------------------------------------------------
+
+    @Test
+    fun aToastUsesThePopoverSurfaceAndForegroundTokens() {
+        val frame = composeFrame(320, 120) {
+            provideShadcnTheme(theme) {
+                ShadcnToast("The scene was saved", title = "Saved")
+            }
+        }
+
+        assertEquals(
+            theme.palette.popover,
+            frame.primitivesOf<DrawCommand.RoundedQuad>().first().color,
+            "the toast is not a popover surface",
+        )
+        assertTrue(
+            frame.primitivesOf<DrawCommand.Glyph>().all { it.color == theme.palette.popoverForeground },
+            "toast text did not use the popover-foreground token",
+        )
     }
 }

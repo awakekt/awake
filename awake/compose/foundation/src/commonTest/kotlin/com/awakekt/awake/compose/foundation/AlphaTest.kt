@@ -20,6 +20,9 @@ import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
+import com.awakekt.awake.core.graphics2d.ColoredVertex
+import com.awakekt.awake.core.graphics2d.DrawPoint
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.math2d.Rectangle
@@ -132,6 +135,20 @@ class AlphaEmitTest {
         ) as UiDrawPrimitive.ShadowQuad
 
         assertEquals(0.5f, out.color.a)
+    }
+
+    @Test
+    fun aMeshIsDimmed() {
+        val out = emitted(
+            UiDrawPrimitive.Mesh(
+                ColoredTriangleMesh(
+                    vertices = listOf(ColoredVertex(DrawPoint(0f, 0f), red)),
+                    indices = intArrayOf(),
+                ),
+            ),
+        ) as UiDrawPrimitive.Mesh
+
+        assertEquals(0.5f, out.alpha)
     }
 
     @Test

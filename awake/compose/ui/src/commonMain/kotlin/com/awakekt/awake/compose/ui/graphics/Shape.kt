@@ -109,13 +109,16 @@ class RoundedCornerShape(
         val physicalBottomRight = if (layoutDirection == LayoutDirection.Ltr) bottomEnd else bottomStart
         val physicalBottomLeft = if (layoutDirection == LayoutDirection.Ltr) bottomStart else bottomEnd
 
-        // Match CornerBasedShape: adjacent radii are resolved against the same minimum dimension
-        // so the corners cannot overlap along either axis.
+        // Resolve a full/pill radius symmetrically. A radius larger than half the short side must
+        // not consume the entire edge for one corner and leave the opposite corner at zero: that
+        // turns `rounded-full` into an asymmetric generic path instead of the rounded-quad fast
+        // path, and makes circles render as visibly non-circular geometry.
         val minimum = min(bounds.width, bounds.height)
-        val topLeft = radius(physicalTopLeft).coerceAtMost(minimum)
-        val topRight = radius(physicalTopRight).coerceAtMost(minimum)
-        val bottomRight = radius(physicalBottomRight).coerceAtMost(minimum - topRight)
-        val bottomLeft = radius(physicalBottomLeft).coerceAtMost(minimum - topLeft)
+        val maximum = minimum / 2f
+        val topLeft = radius(physicalTopLeft).coerceAtMost(maximum)
+        val topRight = radius(physicalTopRight).coerceAtMost(maximum)
+        val bottomRight = radius(physicalBottomRight).coerceAtMost(maximum)
+        val bottomLeft = radius(physicalBottomLeft).coerceAtMost(maximum)
         if (topLeft == 0f && topRight == 0f && bottomRight == 0f && bottomLeft == 0f) {
             return ShapeOutline.Rectangle(bounds)
         }

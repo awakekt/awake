@@ -48,6 +48,19 @@ class ShadcnFieldsTest {
     }
 
     @Test
+    fun aDarkFieldUsesTheInputTintFromTheReference() {
+        val darkTheme = shadcnThemeValues(dark = true)
+        val quads = composeFrame(300, 80) {
+            provideShadcnTheme(darkTheme) { ShadcnInput(TextFieldState("hello")) }
+        }.primitivesOf<DrawCommand.RoundedQuad>()
+
+        assertTrue(
+            quads.any { it.color == darkTheme.palette.input.withAlpha(darkTheme.palette.input.a * 0.3f) },
+            "dark input is missing the reference dark:bg-input/30 surface",
+        )
+    }
+
+    @Test
     fun anInputIsThirtySixTall() {
         val quad = composeFrame(300, 80) {
             provideShadcnTheme(theme) { ShadcnInput(TextFieldState("hello")) }

@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.ui.input.key.KeyEventType
 import com.awakekt.awake.compose.ui.input.pointer.PointerModifiers
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.input.PointerButton
 
 /**
  * Turns the engine's polled input into a frame the UI can take.
@@ -34,6 +35,7 @@ fun InputSnapshot.toFrameInput(
     pointerDown = pointerDown,
     pointerPressed = pointerPressed,
     pointerReleased = pointerReleased,
+    secondaryPointerPressed = PointerButton.Secondary in buttonsPressed,
     pointerModifiers = pointerModifiers(),
     scrollDeltaY = scrollDeltaY,
     typedText = typedText,

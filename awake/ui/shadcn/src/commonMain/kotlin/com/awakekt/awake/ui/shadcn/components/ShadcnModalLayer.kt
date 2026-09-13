@@ -16,6 +16,8 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.draw.alpha
 import com.awakekt.awake.compose.ui.layout.Layer
 import com.awakekt.awake.compose.ui.layout.LayerKind
+import com.awakekt.awake.compose.ui.layout.LayerPosition
+import com.awakekt.awake.compose.ui.layout.LayerPositionProvider
 import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.semantics.semantics
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
@@ -56,6 +58,11 @@ internal fun shadcnModalLayer(
         dismissOnOutsideClick = false,
         dismissOnEscape = true,
         onDismissRequest = onDismissRequest,
+        // Modal content is portal-like: it owns the viewport, even when it is declared inside a
+        // page preview or another nested layout. Anchored popups intentionally keep their parent
+        // origin; a scrimmed modal must cancel that origin so its backdrop and panel share the
+        // actual window bounds.
+        positionProvider = GlobalModalPositionProvider,
         measurePolicy = BoxMeasurePolicy(alignment),
     ) {
         Box(
@@ -67,6 +74,10 @@ internal fun shadcnModalLayer(
         )
         Box(Modifier.alpha(alpha)) { panel() }
     }
+}
+
+private val GlobalModalPositionProvider = LayerPositionProvider { parentX, parentY, _, _, _, _ ->
+    LayerPosition(-parentX, -parentY)
 }
 
 /**

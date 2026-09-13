@@ -29,7 +29,7 @@ Then read the focused references below when their decision is involved:
 | Gestures, multi-touch, or nested scroll | `Modifier.transformable`, `Modifier.nestedScroll`, [`12-gestures.md`](../../docs/reference/compose-engine/12-gestures.md) |
 | Custom caching or sibling layer ordering | `Modifier.drawWithCache`, `Modifier.zIndex`, [`10-graphics-layer.md`](../../docs/reference/compose-engine/10-graphics-layer.md) |
 | Decide whether a gap belongs to a component, its parent, or a distinct layout relationship | [`references/structural-spacing.md`](references/structural-spacing.md) |
-| Choose fixed versus adaptive size, preview frames, Spacer, arrangement, or alignment | [`awake-ui-layout-guidance`](../awake-ui-layout-guidance/SKILL.md) |
+| Choose fixed versus adaptive size, Row/Column vs FlowRow/FlowColumn vs FlexBox, preview frames, Spacer, arrangement, or alignment | [`awake-ui-layout-guidance`](../awake-ui-layout-guidance/SKILL.md) |
 | A deliberate API divergence | [`11-refinements.md`](../../docs/reference/compose-engine/11-refinements.md) and [`15-compose-parity.md`](../../docs/reference/compose-engine/15-compose-parity.md) |
 | Before building a new draw primitive, `DrawScope` method, or modifier capability | [`15-compose-parity.md`](../../docs/reference/compose-engine/15-compose-parity.md) (what's already **Built** vs a real **Gap**), [`11-refinements.md`](../../docs/reference/compose-engine/11-refinements.md) (whether a divergence has the evidence to be legitimate), and [`10-graphics-layer.md`](../../docs/reference/compose-engine/10-graphics-layer.md) (what's a known, documented non-fixed limitation rather than an oversight) — check all three before designing something new. |
 
@@ -175,3 +175,7 @@ A conditional subtree with no `remember` in it is fine. It is the memo, not the 
   PascalCase API and must not become a second implementation.
 - Use named content slots for caller-owned visible regions. A convenience label/icon overload may
   delegate to the same slot path, but must not create a parallel layout or modifier-order path.
+- Choose the least powerful layout primitive that expresses the relationship: `Row`/`Column` for
+  one non-wrapping axis, `FlowRow`/`FlowColumn` for wrapping, and `FlexBox` only for flex-specific
+  grow/shrink/order/reverse/line-alignment behavior. Follow [`awake-ui-layout-guidance`](../awake-ui-layout-guidance/SKILL.md)
+  for the decision and verification rules.

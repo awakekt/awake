@@ -223,4 +223,21 @@ class ShadcnToggleGroupTest {
             "the second toggle item must paint its outer end border",
         )
     }
+
+    @Test
+    fun aZeroSpacingGroupHasNoGapsBetweenItems() {
+        val semantics = Host().frame {
+            ShadcnToggleGroup(selected = setOf("bold"), onSelectedChange = {}) {
+                item("bold", "Bold")
+                item("italic", "Italic")
+                item("underline", "Underline")
+            }
+        }
+
+        val bold = semantics.byLabel("Bold")
+        val italic = semantics.byLabel("Italic")
+        val underline = semantics.byLabel("Underline")
+        assertEquals(bold.x + bold.width, italic.x, "zero-spacing toggle items must touch")
+        assertEquals(italic.x + italic.width, underline.x, "zero-spacing toggle items must touch")
+    }
 }
