@@ -26,7 +26,7 @@ import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
 /**
- * shadcn's spinner: `size-6 animate-spin rounded-full border-2 border-current border-t-transparent`.
+ * shadcn's spinner: `size-4 animate-spin rounded-full border-2 border-current border-t-transparent`.
  *
  * A ring with one quarter missing, rotated. The gap is what makes rotation visible at all -- a full
  * ring spinning is indistinguishable from a still one, which is the bug a spinner drawn as a plain
@@ -74,9 +74,13 @@ private class SpinnerMeshCache(
 
     fun mesh(nextColor: Color): ColoredTriangleMesh {
         if (nextColor == color) return requireNotNull(cached)
-        val sizeDp = size.value
-        val radius = (sizeDp - SpinnerStroke.value) / 2f
-        val centre = sizeDp / 2f
+        // Canvas coordinates are physical pixels after layout. Keep the geometry in that same
+        // space: using raw Dp values here makes a 2x display draw a 24px spinner inside a 48px
+        // node and rotates it around the wrong centre.
+        val sizePx = size.value * density
+        val strokePx = SpinnerStroke.value * density
+        val radius = (sizePx - strokePx) / 2f
+        val centre = sizePx / 2f
         val path = drawPath {
             moveTo(centre + radius, centre)
             arcTo(
@@ -103,8 +107,8 @@ private class SpinnerMeshCache(
     }
 }
 
-/** `size-6`. */
-private val SpinnerSize: Dp = 24.dp
+/** `size-4`. */
+private val SpinnerSize: Dp = 16.dp
 
 /** `border-2`. */
 private val SpinnerStroke: Dp = 2.dp
