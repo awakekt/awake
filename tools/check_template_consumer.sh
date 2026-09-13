@@ -47,9 +47,13 @@ mkdir -p "$CHECKOUT"
 # caches and local.properties behind -- the same content a fresh clone would have.
 git -C "$TEMPLATE_SOURCE" archive HEAD | tar -x -C "$CHECKOUT"
 
-VERSION=$(git -C "$ENGINE_ROOT" describe --tags --match "v*" --always 2>/dev/null | sed -E 's/^v//; s/-([0-9]+)-g[0-9a-f]+$/-SNAPSHOT/' || echo "0.1.0-dev.11-SNAPSHOT")
+# Ask Gradle for the version that was actually assigned to the publications. Do not duplicate the
+# root build's git-describe/bump rules here: an abbreviated implementation used to point the
+# template at alpha.2-SNAPSHOT while the build correctly published alpha.3-SNAPSHOT.
+VERSION=$(cd "$ENGINE_ROOT" && ./gradlew -q :awake:backend:vulkan:bindings:properties \
+  --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')
 if [[ -z "$VERSION" ]]; then
-  echo "Could not read the engine version" >&2
+  echo "Could not read the engine version from Gradle" >&2
   exit 1
 fi
 
