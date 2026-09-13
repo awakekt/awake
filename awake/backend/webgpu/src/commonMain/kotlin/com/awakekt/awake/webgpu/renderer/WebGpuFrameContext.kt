@@ -26,6 +26,7 @@ import io.ygdrasil.webgpu.GPURenderPassEncoder
  * `RendererFrameContext`. Built once per pass rather than once per frame -- see
  * [WebGpuRenderFrameContext] for why.
  */
+@Suppress("LongParameterList")
 internal class WebGpuFrameContext(
     private val renderer: Renderer,
     override val encoder: GPURenderPassEncoder,

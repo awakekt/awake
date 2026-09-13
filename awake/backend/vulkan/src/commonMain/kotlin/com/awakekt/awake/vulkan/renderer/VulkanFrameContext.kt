@@ -23,6 +23,7 @@ import com.awakekt.awake.vulkan.pipeline.VulkanRenderFrameContext
  *
  * Named [VulkanFrameContext] to mirror [WebGpuFrameContext] on the sibling backend.
  */
+@Suppress("LongParameterList")
 internal class VulkanFrameContext(
     private val renderer: Renderer,
     override val commandBuffer: Long,

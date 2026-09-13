@@ -21,6 +21,7 @@ import io.ygdrasil.webgpu.GPURenderPassEncoder
  * on next draw" pattern as `performDrawUi`. Call before the packet draw each frame. */
 /** One pass's context. Built per pass, not per frame -- a WebGPU pass encoder is only valid
  * inside the `beginRenderPass` that made it. */
+@Suppress("LongParameterList")
 internal fun Renderer.sceneContext(
     encoder: io.ygdrasil.webgpu.GPURenderPassEncoder,
     opaqueDraws: com.awakekt.awake.render.command.SortedDraws<out com.awakekt.awake.render.command.PreparedDraw>,
