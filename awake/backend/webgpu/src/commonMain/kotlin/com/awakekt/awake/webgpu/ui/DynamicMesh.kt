@@ -43,8 +43,8 @@ class DynamicMesh(
     private var vertexUploadData = ArrayBuffer.allocate(vertexBufferByteSize(maxVertices))
     private var indexUploadData = ArrayBuffer.allocate(indexBufferByteSize(maxIndices))
 
-    /** The last arrays uploaded to this pooled run. Coalesced UI creates fresh arrays per frame;
-     * retaining the previous references lets us detect unchanged geometry without copying it. */
+    /** The last arrays uploaded to this pooled run. Retained UI runs reuse these exact immutable
+     * arrays, which lets us skip the upload without scanning every element in Wasm. */
     private var lastUploadedVertices: FloatArray? = null
     private var lastUploadedIndices: IntArray? = null
 
@@ -77,10 +77,11 @@ class DynamicMesh(
         drawIndexCount = indices.size
         if (indices.isEmpty()) return
 
-        // The UI layer produces new arrays even when a retained panel has not changed. Comparing
-        // in Wasm is considerably cheaper than crossing into JS once per element for both arrays.
-        // Do not skip when the caller reuses the same mutable array: it may have changed in place.
-        if (!buffersGrew && hasUnchangedUploadedData(vertices, indices)) {
+        // RetainedDrawRunCache owns the staged arrays and never mutates them after emission. An
+        // identity check is intentional here: contentEquals scans the complete vertex and index
+        // payload in Wasm on every frame, which can cost more than the WebGPU upload it was meant
+        // to avoid. Non-retained callers still produce fresh arrays and therefore upload normally.
+        if (!buffersGrew && lastUploadedVertices === vertices && lastUploadedIndices === indices) {
             return
         }
 
@@ -103,19 +104,6 @@ class DynamicMesh(
         )
         lastUploadedVertices = vertices
         lastUploadedIndices = indices
-    }
-
-    private fun hasUnchangedUploadedData(vertices: FloatArray, indices: IntArray): Boolean {
-        val previousVertices = lastUploadedVertices
-        val previousIndices = lastUploadedIndices
-        return when {
-            previousVertices == null -> false
-            previousIndices == null -> false
-            previousVertices === vertices -> false
-            previousIndices === indices -> false
-            !previousVertices.contentEquals(vertices) -> false
-            else -> previousIndices.contentEquals(indices)
-        }
     }
 
     /**
