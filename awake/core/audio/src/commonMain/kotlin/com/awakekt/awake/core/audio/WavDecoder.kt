@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("NestedBlockDepth", "ComplexCondition")
+
 package com.awakekt.awake.core.audio
 
 import com.awakekt.awake.core.io.BinaryReader
@@ -81,5 +83,4 @@ object WavDecoder {
             bitsPerSample = bitsPerSample,
         )
     }
-
 }

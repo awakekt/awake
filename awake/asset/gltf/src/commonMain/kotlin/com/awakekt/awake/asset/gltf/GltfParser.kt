@@ -18,9 +18,9 @@ import com.awakekt.awake.core.animation.Bone
 import com.awakekt.awake.core.animation.Skeleton
 import com.awakekt.awake.core.animation.Skin
 import com.awakekt.awake.core.geometry.NormalizedInt
-import com.awakekt.awake.core.io.BinaryReader
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.io.BinaryReader
 import com.awakekt.awake.core.io.resolve
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Quat

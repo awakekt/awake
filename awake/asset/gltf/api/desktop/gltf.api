@@ -484,6 +484,8 @@ public final class com/awakekt/awake/asset/gltf/GltfNode$Companion {
 public final class com/awakekt/awake/asset/gltf/GltfParser {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/gltf/GltfParser;
 	public final fun externalUris (Ljava/lang/String;)Ljava/util/List;
+	public final fun load-0E7RQCE (Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun loadExternalResources-BWLJW6A (Ljava/lang/String;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun parse (Ljava/lang/String;Ljava/util/Map;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
 	public static synthetic fun parse$default (Lcom/awakekt/awake/asset/gltf/GltfParser;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
 	public final fun parseScene ([BLjava/util/Map;)Lcom/awakekt/awake/asset/gltf/LoadedScene;

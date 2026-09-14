@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions", "ReturnCount")
+
 package com.awakekt.awake.core.io
 
 /** Reference implementation used by common tests and ephemeral browser sessions. */
@@ -82,7 +84,11 @@ class InMemoryFileSystem(
             return Result.failure(FileSystemException(FileSystemError.Conflict(path, "Directory is not empty.")))
         }
         val changes = descendants.filterIsInstance<FilePath>().map(FileChange::Deleted).toMutableList()
-        descendants.filterIsInstance<FilePath>().forEach { files.remove(it); modified.remove(it); directories.remove(it) }
+        descendants.filterIsInstance<FilePath>().forEach {
+            files.remove(it)
+            modified.remove(it)
+            directories.remove(it)
+        }
         directories.remove(path)
         changes += FileChange.Deleted(path)
         notify(FileChangeBatch(changes))
@@ -122,9 +128,12 @@ class InMemoryFileSystem(
         if (result.isFailure) return Result.failure(result.exceptionOrNull()!!)
         val value = result.getOrThrow()
         val changes = diff(snapshot, working)
-        files.clear(); files.putAll(working.files)
-        directories.clear(); directories.addAll(working.directories)
-        modified.clear(); modified.putAll(working.modified)
+        files.clear()
+        files.putAll(working.files)
+        directories.clear()
+        directories.addAll(working.directories)
+        modified.clear()
+        modified.putAll(working.modified)
         if (changes.isNotEmpty()) notify(FileChangeBatch(changes))
         return Result.success(value)
     }
@@ -213,7 +222,10 @@ class InMemoryFileSystem(
             val children = files.keys.any { it.value.startsWith("${path.value}/") } ||
                 directories.any { it != path && it.value.startsWith("${path.value}/") }
             if (children && !recursive) return Result.failure(FileSystemException(FileSystemError.Conflict(path, "Directory is not empty.")))
-            files.keys.filter { it.value.startsWith("${path.value}/") }.toList().forEach { files.remove(it); modified.remove(it) }
+            files.keys.filter { it.value.startsWith("${path.value}/") }.toList().forEach {
+                files.remove(it)
+                modified.remove(it)
+            }
             directories.filter { it == path || it.value.startsWith("${path.value}/") }.toList().forEach { directories.remove(it) }
             return Result.success(Unit)
         }
@@ -276,8 +288,13 @@ class InMemoryFileSystem(
             return Result.success(Unit)
         }
 
-        override suspend fun abort() { closed = true; chunks.clear() }
-        override fun close() { closed = true }
+        override suspend fun abort() {
+            closed = true
+            chunks.clear()
+        }
+        override fun close() {
+            closed = true
+        }
     }
 
     private data class Watcher(
@@ -295,11 +312,14 @@ class InMemoryFileSystem(
             .forEach { add(FileChange.Deleted(it)) }
         after.directories.filter { it != FilePath.Root && it !in before.directories }
             .sortedBy { it.value.length }
-            .forEach { add(FileChange.Created(FileEntry(it, FileKind.Directory, modifiedAtEpochMs = after.modified[it])) ) }
+            .forEach { add(FileChange.Created(FileEntry(it, FileKind.Directory, modifiedAtEpochMs = after.modified[it]))) }
         after.files.forEach { (path, bytes) ->
             val old = before.files[path]
-            if (old == null) add(FileChange.Created(FileEntry(path, FileKind.File, bytes.size.toLong(), after.modified[path])))
-            else if (!old.contentEquals(bytes)) add(FileChange.Modified(FileEntry(path, FileKind.File, bytes.size.toLong(), after.modified[path])))
+            if (old == null) {
+                add(FileChange.Created(FileEntry(path, FileKind.File, bytes.size.toLong(), after.modified[path])))
+            } else if (!old.contentEquals(bytes)) {
+                add(FileChange.Modified(FileEntry(path, FileKind.File, bytes.size.toLong(), after.modified[path])))
+            }
         }
         before.files.keys.filter { it !in after.files }.forEach { add(FileChange.Deleted(it)) }
     }

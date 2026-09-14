@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -64,12 +65,55 @@ class InMemoryFileSystemTest {
         assertTrue(result.isFailure)
         assertNull(fs.stat(FilePath.of("temporary.txt")).getOrThrow())
     }
+
+    @Test
+    fun writeSessionIsInvisibleUntilAtomicCommit() = runTest {
+        val fs = InMemoryFileSystem()
+        val path = FilePath.of("atomic.json")
+        val session = fs.openWrite(path).getOrThrow()
+
+        assertNull(fs.stat(path).getOrThrow())
+        session.writeChunk("{".encodeToByteArray())
+        session.writeChunk("}".encodeToByteArray())
+        assertNull(fs.stat(path).getOrThrow())
+
+        session.commit().getOrThrow()
+        assertEquals("{}", fs.read(path).getOrThrow().decodeToString())
+    }
+
+    @Test
+    fun transactionChangesAreHiddenUntilCommitAndWatcherOrderIsStable() = runTest {
+        val fs = InMemoryFileSystem()
+        val observed = mutableListOf<FileChange>()
+        fs.watch(FilePath.Root, recursive = true) { observed += it.changes }
+
+        fs.transaction {
+            write(FilePath.of("nested/value.txt"), byteArrayOf(1)).getOrThrow()
+            assertNull(fs.stat(FilePath.of("nested/value.txt")).getOrThrow())
+        }.getOrThrow()
+
+        val expected: List<FileChange> = listOf(
+            FileChange.Created(FileEntry(FilePath.of("nested"), FileKind.Directory)),
+            FileChange.Created(FileEntry(FilePath.of("nested/value.txt"), FileKind.File, 1L, 1L)),
+        )
+        assertEquals(expected, observed)
+    }
+
+    @Test
+    fun failuresKeepTheirStructuredCategory() = runTest {
+        val failure = InMemoryFileSystem().read(FilePath.of("missing.bin")).exceptionOrNull()
+        val exception = assertIs<FileSystemException>(failure)
+        assertEquals(FileSystemError.NotFound(FilePath.of("missing.bin")), exception.error)
+    }
 }
 
 private fun List<ByteArray>.flattenToByteArrayForTest(): ByteArray {
     val size = sumOf { it.size }
     val result = ByteArray(size)
     var offset = 0
-    forEach { it.copyInto(result, offset); offset += it.size }
+    forEach {
+        it.copyInto(result, offset)
+        offset += it.size
+    }
     return result
 }

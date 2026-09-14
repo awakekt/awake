@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions")
+
 package com.awakekt.awake.core.io
 
 /** Whether a filesystem entry is a regular file or directory. */

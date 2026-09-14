@@ -6,7 +6,7 @@
 package com.awakekt.awake.core.io
 
 /** A normalized path relative to a [FileSystem]'s root. An empty value represents the root. */
-data class FilePath private constructor(val value: String) {
+class FilePath private constructor(val value: String) {
     companion object {
         val Root: FilePath = FilePath("")
 
@@ -37,6 +37,10 @@ data class FilePath private constructor(val value: String) {
     }
 
     override fun toString(): String = if (value.isEmpty()) "." else value
+
+    override fun equals(other: Any?): Boolean = other is FilePath && value == other.value
+
+    override fun hashCode(): Int = value.hashCode()
 }
 
 /** A logical asset key shared by bundled and project-backed asset sources. */
@@ -58,7 +62,7 @@ fun AssetPath.resolve(child: String): AssetPath {
     parts.forEach { part ->
         when (part) {
             "", "." -> Unit
-            ".." -> if (resolved.isNotEmpty()) resolved.removeLast() else throw IllegalArgumentException("Asset path escaped its root: $child")
+            ".." -> require(resolved.isNotEmpty()) { "Asset path escaped its root: $child" }.also { resolved.removeLast() }
             else -> resolved.addLast(part)
         }
     }

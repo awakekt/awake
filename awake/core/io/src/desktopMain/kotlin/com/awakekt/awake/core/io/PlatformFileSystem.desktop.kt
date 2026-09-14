@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions", "TooGenericExceptionCaught", "LoopWithTooManyJumpStatements")
+
 package com.awakekt.awake.core.io
 
 import java.nio.file.FileSystems
@@ -78,8 +80,11 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         if (Files.isDirectory(target)) {
             val children = Files.list(target).use { it.findAny().isPresent }
             if (children && !recursive) throw FileSystemException(FileSystemError.Conflict(path, "Directory is not empty."))
-            if (recursive) Files.walk(target).sorted(Comparator.reverseOrder()).forEach(Files::deleteIfExists)
-            else Files.delete(target)
+            if (recursive) {
+                Files.walk(target).sorted(Comparator.reverseOrder()).forEach(Files::deleteIfExists)
+            } else {
+                Files.delete(target)
+            }
         } else {
             Files.delete(target)
         }
@@ -90,8 +95,11 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         val target = resolve(to)
         if (!Files.exists(source)) throw FileSystemException(FileSystemError.NotFound(from))
         Files.createDirectories(target.parent)
-        if (replace) Files.move(source, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
-        else Files.move(source, target, StandardCopyOption.ATOMIC_MOVE)
+        if (replace) {
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
+        } else {
+            Files.move(source, target, StandardCopyOption.ATOMIC_MOVE)
+        }
     }
 
     override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> {
@@ -194,8 +202,13 @@ private class NioFileSystem(private val root: Path) : FileSystem {
             closed = true
         }
 
-        override suspend fun abort() { closed = true; chunks.clear() }
-        override fun close() { closed = true }
+        override suspend fun abort() {
+            closed = true
+            chunks.clear()
+        }
+        override fun close() {
+            closed = true
+        }
     }
 }
 
@@ -218,6 +231,9 @@ private fun List<ByteArray>.flattenToByteArray(): ByteArray {
     val total = sumOf { it.size }
     val result = ByteArray(total)
     var offset = 0
-    forEach { chunk -> chunk.copyInto(result, offset); offset += chunk.size }
+    forEach { chunk ->
+        chunk.copyInto(result, offset)
+        offset += chunk.size
+    }
     return result
 }
