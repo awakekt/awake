@@ -7,6 +7,9 @@ package com.awakekt.awake.webgpu.debug
 
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes.debug.DebugLineUniformLayout
+import com.awakekt.awake.render.passes.debug.DebugLineDepthMode
+import com.awakekt.awake.render.passes.debug.DebugLinePipelinePolicy
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
@@ -100,15 +103,20 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
                 // explicit beside Vulkan's cull-none state so backend defaults cannot drift.
                 primitive = PrimitiveState(
                     topology = GPUPrimitiveTopology.LineList,
-                    cullMode = GPUCullMode.None,
+                    cullMode = when (DebugLinePipelinePolicy.cullMode) {
+                        CullMode.None -> GPUCullMode.None
+                        CullMode.Back, CullMode.Front -> error("Debug line policy cannot cull triangle faces.")
+                    },
                 ),
-                depthStencil = DepthStencilState(
-                    format = GPUTextureFormat.Depth32Float,
-                    depthWriteEnabled = false,
-                    depthCompare = GPUCompareFunction.Always,
-                    stencilFront = StencilFaceState(),
-                    stencilBack = StencilFaceState(),
-                ),
+                depthStencil = when (DebugLinePipelinePolicy.depthMode) {
+                    DebugLineDepthMode.AlwaysVisible -> DepthStencilState(
+                        format = GPUTextureFormat.Depth32Float,
+                        depthWriteEnabled = false,
+                        depthCompare = GPUCompareFunction.Always,
+                        stencilFront = StencilFaceState(),
+                        stencilBack = StencilFaceState(),
+                    )
+                },
             ),
         )
 

@@ -186,9 +186,11 @@ class HeightfieldSceneFrameTest {
             val withDiagnostics = renderer.readPresentedPixels().data
             PixelMap(WIDTH, HEIGHT, withDiagnostics.copyOf()).writePng(File(DIAGNOSTIC_CAPTURE_PATH))
 
+            val diagnosticPixels = countChangedPixels(withoutDiagnostics, withDiagnostics)
             assertTrue(
-                countChangedPixels(withoutDiagnostics, withDiagnostics) > MINIMUM_DIAGNOSTIC_PIXELS,
-                "Terrain diagnostics did not reach enough presented pixels to be usable.",
+                diagnosticPixels > MINIMUM_DIAGNOSTIC_PIXELS,
+                "Terrain diagnostics did not reach enough presented pixels to be usable: " +
+                    "$diagnosticPixels (minimum $MINIMUM_DIAGNOSTIC_PIXELS).",
             )
         } finally {
             ShowcaseDebugToggles.showTerrainDiagnostics = false

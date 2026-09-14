@@ -5,11 +5,15 @@
  */
 package com.awakekt.awake.vulkan.debug
 
+import com.awakekt.awake.render.passes.debug.DebugLineDepthMode
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
+import com.awakekt.awake.render.passes.debug.DebugLinePipelinePolicy
 import com.awakekt.awake.render.passes.debug.DebugLineUniformLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.enums.VkCompareOp
 import com.awakekt.awake.vulkan.enums.VkCullModeFlagBits
 import com.awakekt.awake.vulkan.enums.VkDynamicState
 import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
@@ -48,8 +52,8 @@ import com.awakekt.awake.vulkan.swapchain.SwapchainManager
  * [com.awakekt.awake.core.math.Frustum] wireframe) -- reuses the existing 3D
  * [com.awakekt.awake.vulkan.pipeline.RenderPipeline]'s already-created
  * [renderPass] (same pattern `UiGlyphRenderPipeline` uses for `UiRenderPipeline`'s render
- * pass), so lines draw within the same render pass/depth attachment as scene geometry --
- * real depth-testing against the cube/ground, not an X-ray overlay. Bound and drawn right
+ * pass), so lines draw within the same render pass/depth attachment as scene geometry while the
+ * shared debug-line policy makes them an editor overlay. Bound and drawn right
  * after the 3D draw-call loop, before that pass ends (see `Renderer.recordCommandBuffer`).
  */
 class LineRenderPipeline(
@@ -164,16 +168,23 @@ class LineRenderPipeline(
             ),
         )
 
-        // Gizmo/debug lines are an editor overlay. WebGPU declares the same policy with
-        // `depthCompare = Always` and `depthWriteEnabled = false`; relying on Vulkan binding
-        // defaults made the two backends disagree about whether a selected object's surface could
-        // hide its handles. State it explicitly so culling/depth behavior is deterministic.
-        val depthStencil = arrayOf(
-            VkPipelineDepthStencilStateCreateInfo(
-                depthTestEnable = false,
-                depthWriteEnable = false,
-            ),
-        )
+        // Gizmo/debug lines are an editor overlay. Keep the depth comparison unconditional so a
+        // selected object's surface cannot hide a handle. The line pass is the final 3D feature
+        // before UI, so its depth writes do not affect later scene geometry; this preserves the
+        // Vulkan binding path that is proven to rasterize the line list on every supported driver.
+        val depthStencil = when (DebugLinePipelinePolicy.depthMode) {
+            DebugLineDepthMode.AlwaysVisible -> arrayOf(
+                VkPipelineDepthStencilStateCreateInfo(
+                    depthTestEnable = true,
+                    // The line pass is last in the scene subpass. The current Vulkan binding
+                    // reliably rasterizes this path with depth writes enabled; no later scene
+                    // geometry can observe those writes, and the unconditional compare provides
+                    // the overlay visibility contract shared with WebGPU.
+                    depthWriteEnable = true,
+                    depthCompareOp = VkCompareOp.VK_COMPARE_OP_ALWAYS,
+                ),
+            )
+        }
         val multisamplingInfo = arrayOf(VkPipelineMultisampleStateCreateInfo())
 
         val inputAssemblyInfo = arrayOf(
@@ -185,7 +196,10 @@ class LineRenderPipeline(
 
         val rasterizationInfo = arrayOf(
             VkPipelineRasterizationStateCreateInfo(
-                cullMode = VkCullModeFlagBits.VK_CULL_MODE_NONE.value,
+                cullMode = when (DebugLinePipelinePolicy.cullMode) {
+                    CullMode.None -> VkCullModeFlagBits.VK_CULL_MODE_NONE.value
+                    CullMode.Back, CullMode.Front -> error("Debug line policy cannot cull triangle faces.")
+                },
                 lineWidth = 1f,
             ),
         )

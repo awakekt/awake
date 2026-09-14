@@ -175,9 +175,10 @@ interface Renderer : GpuDevice {
 
     /** Draws world-space debug lines (e.g. a frustum wireframe) -- unlike [drawUi], these
      * are transformed by [draw]'s own view-projection matrix and drawn *inside* the main 3D
-     * render pass (not a separate pass), so they get real depth-testing against scene
-     * geometry. Stages the lines for the next [draw] call, same "stage now, consume on next
-     * draw" pattern [drawUi] already uses -- call before [draw] each frame. */
+     * render pass (not a separate pass). The shared debug-line policy determines their
+     * backend-neutral depth/culling semantics. Stages the lines for the next [draw] call, same
+     * "stage now, consume on next draw" pattern [drawUi] already uses -- call before [draw]
+     * each frame. */
     fun drawDebugLines(lines: List<LineSegment>)
 }
 
