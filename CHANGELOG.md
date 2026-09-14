@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Slider drag completion callback.** Core sliders now expose a single release/keyboard completion
+  seam so editors can preview values continuously and commit one undoable change.
 - **Core capability extraction foundation.** Added rooted asynchronous file I/O, atomic write and
   transaction contracts, asset sources, a bounds-checked binary reader, pure scene byte codecs,
   and the portable project manifest module for Core and Studio consumers.

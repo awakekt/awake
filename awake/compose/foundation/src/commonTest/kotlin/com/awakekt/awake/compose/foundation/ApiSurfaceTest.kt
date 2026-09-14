@@ -201,7 +201,7 @@ class ModifierLabelTest {
         // Not reachable from the chain dump above, because each needs its own construction.
         val chain = Modifier
             .drawBehind { }
-            .draggable { _, _ -> }
+            .draggable(onDrag = { _, _ -> })
             .onFocusChanged { }
             .focusRequester(FocusRequester())
             .width(IntrinsicSize.Max)

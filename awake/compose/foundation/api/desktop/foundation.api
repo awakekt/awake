@@ -109,7 +109,9 @@ public final class com/awakekt/awake/compose/foundation/animation/ShimmerModifie
 
 public final class com/awakekt/awake/compose/foundation/gestures/DraggableKt {
 	public static final fun draggable (Lcom/awakekt/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static final fun draggable (Lcom/awakekt/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun draggable$default (Lcom/awakekt/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
+	public static synthetic fun draggable$default (Lcom/awakekt/awake/compose/ui/Modifier;ILkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
 public final class com/awakekt/awake/compose/foundation/gestures/SecondaryPressKt {

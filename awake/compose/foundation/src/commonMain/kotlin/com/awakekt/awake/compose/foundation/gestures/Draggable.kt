@@ -26,22 +26,38 @@ import com.awakekt.awake.compose.ui.node.PointerInputNode
 fun Modifier.draggable(
     hitMarginPx: Int = 0,
     onDrag: (dx: Int, dy: Int) -> Unit,
-): Modifier = this then DraggableElement(hitMarginPx, onDrag)
+): Modifier = draggable(hitMarginPx, onDrag, {})
+
+/**
+ * Reports the end of the captured gesture in addition to movement. The overload preserves the
+ * original trailing-lambda API for existing callers while giving controls such as sliders an
+ * explicit commit boundary.
+ */
+fun Modifier.draggable(
+    hitMarginPx: Int = 0,
+    onDrag: (dx: Int, dy: Int) -> Unit,
+    onDragStopped: () -> Unit,
+): Modifier = this then DraggableElement(hitMarginPx, onDrag, onDragStopped)
 
 private class DraggableElement(
     private val hitMarginPx: Int,
     private val onDrag: (Int, Int) -> Unit,
+    private val onDragStopped: () -> Unit,
 ) : ModifierNodeElement<DraggableNode>() {
-    override fun create(): DraggableNode = DraggableNode(hitMarginPx)
+    override fun create(): DraggableNode = DraggableNode(hitMarginPx, onDragStopped)
 
     override fun update(node: DraggableNode) {
         node.onDrag = onDrag
+        node.onDragStopped = onDragStopped
         node.hitMarginPx = hitMarginPx
     }
     override fun toString(): String = "draggable(hitMargin=$hitMarginPx)"
 }
 
-private class DraggableNode(override var hitMarginPx: Int) :
+private class DraggableNode(
+    override var hitMarginPx: Int,
+    var onDragStopped: () -> Unit,
+) :
     Modifier.Node(),
     PointerInputNode {
     lateinit var onDrag: (Int, Int) -> Unit
@@ -60,6 +76,13 @@ private class DraggableNode(override var hitMarginPx: Int) :
             // past its own track, which is the whole reason capture exists.
             PointerEventType.Move -> if (event.isCaptureHolder) {
                 onDrag(event.dx, event.dy)
+                event.consume()
+            }
+            PointerEventType.Release -> if (event.isCaptureHolder) {
+                // Release is delivered to the capture holder even when the pointer left the
+                // node. This is the stable end-of-gesture seam for sliders and other controls
+                // that preview continuously but commit once the drag is complete.
+                onDragStopped()
                 event.consume()
             }
             else -> Unit

@@ -995,8 +995,8 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnSkeletonKt {
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnSliderKt {
 	public static final fun ShadcnRangeSlider (Lcom/awakekt/awake/compose/runtime/Composer;FFLcom/awakekt/awake/compose/ui/Modifier;FFIZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun ShadcnRangeSlider$default (Lcom/awakekt/awake/compose/runtime/Composer;FFLcom/awakekt/awake/compose/ui/Modifier;FFIZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
-	public static final fun ShadcnSlider (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;FFIZLkotlin/jvm/functions/Function1;)V
-	public static synthetic fun ShadcnSlider$default (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;FFIZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnSlider (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;FFIZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun ShadcnSlider$default (Lcom/awakekt/awake/compose/runtime/Composer;FLcom/awakekt/awake/compose/ui/Modifier;FFIZLkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnSliderMathKt {
