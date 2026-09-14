@@ -479,9 +479,15 @@ class SceneAppLifecycleRuntime internal constructor(
  * toggles it on -- every existing scene is unaffected by its presence here. */
 fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
     viewportProvider: () -> RenderViewport? = { null },
+    renderWorldProvider: (World) -> World = { it },
 ): List<System> =
     listOf(
         TransformSystem(),
-        RenderSystem3D(renderer, gpuDrawPreparer, viewportProvider = viewportProvider),
+        RenderSystem3D(
+            renderer,
+            gpuDrawPreparer,
+            viewportProvider = viewportProvider,
+            renderWorldProvider = renderWorldProvider,
+        ),
         DebugVisualizationSystem(renderer),
     )

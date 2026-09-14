@@ -335,6 +335,46 @@ class RenderSystemTest {
     }
 
     @Test
+    fun rendersFromAnIsolatedWorldProviderWithoutReadingTheScheduledWorld() {
+        val authoredWorld = worldWithPrimaryCamera()
+        val authoredMesh = fakeMesh()
+        val authoredEntity = authoredWorld.create()
+        authoredWorld.add(authoredEntity, Transform())
+        authoredWorld.add(authoredEntity, MeshRenderer(authoredMesh, fakeMaterial()))
+        authoredWorld.add(
+            authoredEntity,
+            MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f))),
+        )
+
+        val playWorld = worldWithPrimaryCamera()
+        val playMesh = fakeMesh()
+        val playEntity = playWorld.create()
+        playWorld.add(playEntity, Transform())
+        playWorld.add(playEntity, MeshRenderer(playMesh, fakeMaterial()))
+        playWorld.add(
+            playEntity,
+            MeshBounds(Aabb(Vec3f(-0.5f, -0.5f, -0.5f), Vec3f(0.5f, 0.5f, 0.5f))),
+        )
+        val renderer = RecordingRenderer()
+
+        RenderSystem3D(
+            renderer,
+            renderWorldProvider = { playWorld },
+        ).update(authoredWorld, 1f / 60f)
+
+        assertSame(
+            playMesh,
+            renderer.lastDrawCalls.single().mesh,
+            "the render selector must present the isolated play world",
+        )
+        assertEquals(
+            authoredMesh,
+            authoredWorld.get<MeshRenderer>(authoredEntity)?.mesh,
+            "selecting a render world must not mutate the authored world",
+        )
+    }
+
+    @Test
     fun submitsExactlyOneRenderPathPerUpdateFor300Frames() {
         // This is intentionally longer than a frames-in-flight ring. Before 2eb616490,
         // RenderSystem3D submitted both a GpuPassInput on every update;
