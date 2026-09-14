@@ -164,7 +164,16 @@ class LineRenderPipeline(
             ),
         )
 
-        val depthStencil = arrayOf(VkPipelineDepthStencilStateCreateInfo())
+        // Gizmo/debug lines are an editor overlay. WebGPU declares the same policy with
+        // `depthCompare = Always` and `depthWriteEnabled = false`; relying on Vulkan binding
+        // defaults made the two backends disagree about whether a selected object's surface could
+        // hide its handles. State it explicitly so culling/depth behavior is deterministic.
+        val depthStencil = arrayOf(
+            VkPipelineDepthStencilStateCreateInfo(
+                depthTestEnable = false,
+                depthWriteEnable = false,
+            ),
+        )
         val multisamplingInfo = arrayOf(VkPipelineMultisampleStateCreateInfo())
 
         val inputAssemblyInfo = arrayOf(
