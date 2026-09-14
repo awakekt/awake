@@ -7,6 +7,9 @@ package com.awakekt.awake.webgpu.debug
 
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes.debug.DebugLineUniformLayout
+import com.awakekt.awake.render.passes.debug.DebugLineDepthMode
+import com.awakekt.awake.render.passes.debug.DebugLinePipelinePolicy
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.fastArrayBufferOf
@@ -26,6 +29,7 @@ import io.ygdrasil.webgpu.GPUBindGroup
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
 import io.ygdrasil.webgpu.GPUCompareFunction
+import io.ygdrasil.webgpu.GPUCullMode
 import io.ygdrasil.webgpu.GPUPrimitiveTopology
 import io.ygdrasil.webgpu.GPURenderPipeline
 import io.ygdrasil.webgpu.GPUTextureFormat
@@ -95,14 +99,24 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
                     entryPoint = "fragmentMain",
                     targets = listOf(ColorTargetState(format = swapchainManager.imageFormatWebGpu)),
                 ),
-                primitive = PrimitiveState(topology = GPUPrimitiveTopology.LineList),
-                depthStencil = DepthStencilState(
-                    format = GPUTextureFormat.Depth32Float,
-                    depthWriteEnabled = false,
-                    depthCompare = GPUCompareFunction.Always,
-                    stencilFront = StencilFaceState(),
-                    stencilBack = StencilFaceState(),
+                // Debug/gizmo lines are editor overlays, never scene triangles. Keep this
+                // explicit beside Vulkan's cull-none state so backend defaults cannot drift.
+                primitive = PrimitiveState(
+                    topology = GPUPrimitiveTopology.LineList,
+                    cullMode = when (DebugLinePipelinePolicy.cullMode) {
+                        CullMode.None -> GPUCullMode.None
+                        CullMode.Back, CullMode.Front -> error("Debug line policy cannot cull triangle faces.")
+                    },
                 ),
+                depthStencil = when (DebugLinePipelinePolicy.depthMode) {
+                    DebugLineDepthMode.AlwaysVisible -> DepthStencilState(
+                        format = GPUTextureFormat.Depth32Float,
+                        depthWriteEnabled = false,
+                        depthCompare = GPUCompareFunction.Always,
+                        stencilFront = StencilFaceState(),
+                        stencilBack = StencilFaceState(),
+                    )
+                },
             ),
         )
 

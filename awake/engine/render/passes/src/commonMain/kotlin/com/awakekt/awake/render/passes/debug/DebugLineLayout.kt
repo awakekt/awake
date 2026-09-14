@@ -15,8 +15,9 @@ import com.awakekt.awake.render.renderer.UniformLayout
 /**
  * World-space debug lines -- frustum wireframes, bounds boxes, light gizmos.
  *
- * Scene-pass geometry, not UI: these depth-test against real meshes and are recorded by the
- * opaque feature, not the overlay pass. This layout and its writers lived in the `ui` package
+ * Scene-pass geometry, not UI: these are recorded by the opaque feature in the same render pass
+ * as scene meshes, while [DebugLinePipelinePolicy] defines their overlay depth behavior. This
+ * layout and its writers lived in the `ui` package
  * for a while because that is where the vertex writers happened to be, which made the package
  * name inaccurate in both directions.
  */

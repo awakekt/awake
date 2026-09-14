@@ -272,6 +272,13 @@ public final class com/awakekt/awake/render/passes/debug/DebugGeometryKt {
 	public static synthetic fun objectAuraLines$default (Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/color/Color;ZILjava/lang/Object;)Ljava/util/List;
 }
 
+public final class com/awakekt/awake/render/passes/debug/DebugLineDepthMode : java/lang/Enum {
+	public static final field AlwaysVisible Lcom/awakekt/awake/render/passes/debug/DebugLineDepthMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/render/passes/debug/DebugLineDepthMode;
+	public static fun values ()[Lcom/awakekt/awake/render/passes/debug/DebugLineDepthMode;
+}
+
 public final class com/awakekt/awake/render/passes/debug/DebugLineLayout {
 	public static final field INITIAL_LINES I
 	public static final field INSTANCE Lcom/awakekt/awake/render/passes/debug/DebugLineLayout;
@@ -284,6 +291,12 @@ public final class com/awakekt/awake/render/passes/debug/DebugLineLayout {
 
 public final class com/awakekt/awake/render/passes/debug/DebugLineLayoutKt {
 	public static final fun getDebugLineUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+}
+
+public final class com/awakekt/awake/render/passes/debug/DebugLinePipelinePolicy {
+	public static final field INSTANCE Lcom/awakekt/awake/render/passes/debug/DebugLinePipelinePolicy;
+	public final fun getCullMode ()Lcom/awakekt/awake/render/pipeline/CullMode;
+	public final fun getDepthMode ()Lcom/awakekt/awake/render/passes/debug/DebugLineDepthMode;
 }
 
 public final class com/awakekt/awake/render/passes/debug/DebugLineVerticesKt {
