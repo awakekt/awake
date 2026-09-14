@@ -125,6 +125,7 @@ the version you are using.
 ## Contributing
 
 Issues and pull requests are welcome on [GitHub](https://github.com/awakekt/awake). Please read the
-repository's contribution and release guidance before making a change.
+[contribution guide](CONTRIBUTING.md) and [release guidance](docs/release-process.md) before making
+a change. Security issues should follow the [security policy](SECURITY.md).
 
 Awake is available under the [Apache License 2.0](LICENSE.md).
