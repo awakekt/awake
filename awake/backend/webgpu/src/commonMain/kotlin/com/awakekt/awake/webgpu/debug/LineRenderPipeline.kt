@@ -26,6 +26,7 @@ import io.ygdrasil.webgpu.GPUBindGroup
 import io.ygdrasil.webgpu.GPUBuffer
 import io.ygdrasil.webgpu.GPUBufferUsage
 import io.ygdrasil.webgpu.GPUCompareFunction
+import io.ygdrasil.webgpu.GPUCullMode
 import io.ygdrasil.webgpu.GPUPrimitiveTopology
 import io.ygdrasil.webgpu.GPURenderPipeline
 import io.ygdrasil.webgpu.GPUTextureFormat
@@ -95,7 +96,12 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
                     entryPoint = "fragmentMain",
                     targets = listOf(ColorTargetState(format = swapchainManager.imageFormatWebGpu)),
                 ),
-                primitive = PrimitiveState(topology = GPUPrimitiveTopology.LineList),
+                // Debug/gizmo lines are editor overlays, never scene triangles. Keep this
+                // explicit beside Vulkan's cull-none state so backend defaults cannot drift.
+                primitive = PrimitiveState(
+                    topology = GPUPrimitiveTopology.LineList,
+                    cullMode = GPUCullMode.None,
+                ),
                 depthStencil = DepthStencilState(
                     format = GPUTextureFormat.Depth32Float,
                     depthWriteEnabled = false,
