@@ -6,7 +6,7 @@
 package com.awakekt.awake.core.io
 
 /** A normalized path relative to a [FileSystem]'s root. An empty value represents the root. */
-value class FilePath private constructor(val value: String) {
+data class FilePath private constructor(val value: String) {
     companion object {
         val Root: FilePath = FilePath("")
 
@@ -40,7 +40,7 @@ value class FilePath private constructor(val value: String) {
 }
 
 /** A logical asset key shared by bundled and project-backed asset sources. */
-value class AssetPath(val value: String) {
+data class AssetPath(val value: String) {
     fun asFilePath(): FilePath = FilePath.of(value)
 
     override fun toString(): String = value

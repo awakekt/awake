@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Core capability extraction foundation.** Added rooted asynchronous file I/O, atomic write and
+  transaction contracts, asset sources, a bounds-checked binary reader, pure scene byte codecs,
+  and the portable project manifest module for Core and Studio consumers.
 - **Milestone 3 physics and character-controller coverage.** Moved the real Jolt controller suite
   to multiplatform `commonTest`, including heightfield terrain, ground probes, traversal, and
   moving-platform behavior.
