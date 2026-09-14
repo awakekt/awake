@@ -1,0 +1,354 @@
+public final class com/awakekt/awake/core/io/AssetPath {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun asFilePath ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/core/io/AssetPath;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/AssetPath;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/AssetPath;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/core/io/AssetSource {
+	public abstract fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/io/BinaryReader {
+	public fun <init> ([BI)V
+	public synthetic fun <init> ([BIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getPosition ()I
+	public final fun getRemaining ()I
+	public final fun readByte ()I
+	public final fun readBytes (I)[B
+	public final fun readFloatLe ()F
+	public final fun readFloatLeAt (I)F
+	public final fun readIntLe ()I
+	public final fun readIntLeAt (I)I
+	public final fun readShortLe ()I
+	public final fun readShortLeAt (I)I
+	public final fun readUnsignedByte ()I
+	public final fun readUnsignedIntLe ()J
+	public final fun readUnsignedIntLeAt (I)J
+	public final fun readUnsignedShortLe ()I
+	public final fun readUnsignedShortLeAt (I)I
+	public final fun requireRemaining (I)V
+	public final fun skip (I)V
+}
+
+public abstract interface class com/awakekt/awake/core/io/ByteReadSession : java/lang/AutoCloseable {
+	public abstract fun readChunk (ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun readChunk$default (Lcom/awakekt/awake/core/io/ByteReadSession;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/io/ByteReadSession$DefaultImpls {
+	public static synthetic fun readChunk$default (Lcom/awakekt/awake/core/io/ByteReadSession;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/core/io/ByteWriteSession : java/lang/AutoCloseable {
+	public abstract fun abort (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun commit-IoAF18A (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun writeChunk ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/core/io/FileChange {
+}
+
+public final class com/awakekt/awake/core/io/FileChange$Created : com/awakekt/awake/core/io/FileChange {
+	public fun <init> (Lcom/awakekt/awake/core/io/FileEntry;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/io/FileEntry;
+	public final fun copy (Lcom/awakekt/awake/core/io/FileEntry;)Lcom/awakekt/awake/core/io/FileChange$Created;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileChange$Created;Lcom/awakekt/awake/core/io/FileEntry;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileChange$Created;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntry ()Lcom/awakekt/awake/core/io/FileEntry;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileChange$Deleted : com/awakekt/awake/core/io/FileChange {
+	public fun <init> (Lcom/awakekt/awake/core/io/FilePath;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun copy (Lcom/awakekt/awake/core/io/FilePath;)Lcom/awakekt/awake/core/io/FileChange$Deleted;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileChange$Deleted;Lcom/awakekt/awake/core/io/FilePath;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileChange$Deleted;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Lcom/awakekt/awake/core/io/FilePath;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileChange$Modified : com/awakekt/awake/core/io/FileChange {
+	public fun <init> (Lcom/awakekt/awake/core/io/FileEntry;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/io/FileEntry;
+	public final fun copy (Lcom/awakekt/awake/core/io/FileEntry;)Lcom/awakekt/awake/core/io/FileChange$Modified;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileChange$Modified;Lcom/awakekt/awake/core/io/FileEntry;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileChange$Modified;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEntry ()Lcom/awakekt/awake/core/io/FileEntry;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileChange$Moved : com/awakekt/awake/core/io/FileChange {
+	public fun <init> (Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FilePath;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun component2 ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun copy (Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FilePath;)Lcom/awakekt/awake/core/io/FileChange$Moved;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileChange$Moved;Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FilePath;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileChange$Moved;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun getTo ()Lcom/awakekt/awake/core/io/FilePath;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileChangeBatch {
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/core/io/FileChangeBatch;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileChangeBatch;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileChangeBatch;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getChanges ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileEntry {
+	public fun <init> (Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FileKind;Ljava/lang/Long;Ljava/lang/Long;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FileKind;Ljava/lang/Long;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun component2 ()Lcom/awakekt/awake/core/io/FileKind;
+	public final fun component3 ()Ljava/lang/Long;
+	public final fun component4 ()Ljava/lang/Long;
+	public final fun copy (Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FileKind;Ljava/lang/Long;Ljava/lang/Long;)Lcom/awakekt/awake/core/io/FileEntry;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileEntry;Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FileKind;Ljava/lang/Long;Ljava/lang/Long;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileEntry;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKind ()Lcom/awakekt/awake/core/io/FileKind;
+	public final fun getModifiedAtEpochMs ()Ljava/lang/Long;
+	public final fun getPath ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun getSizeBytes ()Ljava/lang/Long;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileKind : java/lang/Enum {
+	public static final field Directory Lcom/awakekt/awake/core/io/FileKind;
+	public static final field File Lcom/awakekt/awake/core/io/FileKind;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/io/FileKind;
+	public static fun values ()[Lcom/awakekt/awake/core/io/FileKind;
+}
+
+public final class com/awakekt/awake/core/io/FilePath {
+	public static final field Companion Lcom/awakekt/awake/core/io/FilePath$Companion;
+	public synthetic fun <init> (Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FilePath$Companion {
+	public final fun getRoot ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun of (Ljava/lang/String;)Lcom/awakekt/awake/core/io/FilePath;
+}
+
+public final class com/awakekt/awake/core/io/FilePathKt {
+	public static final fun resolve (Lcom/awakekt/awake/core/io/AssetPath;Ljava/lang/String;)Lcom/awakekt/awake/core/io/AssetPath;
+}
+
+public abstract interface class com/awakekt/awake/core/io/FileSystem {
+	public abstract fun createDirectories-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun delete-0E7RQCE (Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun delete-0E7RQCE$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun list-0E7RQCE (Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun list-0E7RQCE$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun move-BWLJW6A (Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun move-BWLJW6A$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun openRead-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun openWrite-0E7RQCE (Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun openWrite-0E7RQCE$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun stat-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun transaction-gIAlu-s (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun watch (Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/io/FileWatch;
+	public static synthetic fun watch$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileWatch;
+	public fun write-BWLJW6A (Lcom/awakekt/awake/core/io/FilePath;[BLcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun write-BWLJW6A$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;[BLcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/io/FileSystem$DefaultImpls {
+	public static synthetic fun delete-0E7RQCE$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun list-0E7RQCE$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun move-BWLJW6A$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun openWrite-0E7RQCE$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static fun read-gIAlu-s (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun watch$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileWatch;
+	public static fun write-BWLJW6A (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;[BLcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun write-BWLJW6A$default (Lcom/awakekt/awake/core/io/FileSystem;Lcom/awakekt/awake/core/io/FilePath;[BLcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/io/FileSystemAssetSource : com/awakekt/awake/core/io/AssetSource {
+	public fun <init> (Lcom/awakekt/awake/core/io/FileSystem;)V
+	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/core/io/FileSystemError {
+}
+
+public final class com/awakekt/awake/core/io/FileSystemError$AlreadyExists : com/awakekt/awake/core/io/FileSystemError {
+	public fun <init> (Lcom/awakekt/awake/core/io/FilePath;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun copy (Lcom/awakekt/awake/core/io/FilePath;)Lcom/awakekt/awake/core/io/FileSystemError$AlreadyExists;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileSystemError$AlreadyExists;Lcom/awakekt/awake/core/io/FilePath;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileSystemError$AlreadyExists;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Lcom/awakekt/awake/core/io/FilePath;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileSystemError$Conflict : com/awakekt/awake/core/io/FileSystemError {
+	public fun <init> (Lcom/awakekt/awake/core/io/FilePath;Ljava/lang/String;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Lcom/awakekt/awake/core/io/FilePath;Ljava/lang/String;)Lcom/awakekt/awake/core/io/FileSystemError$Conflict;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileSystemError$Conflict;Lcom/awakekt/awake/core/io/FilePath;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileSystemError$Conflict;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileSystemError$InvalidPath : com/awakekt/awake/core/io/FileSystemError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/core/io/FileSystemError$InvalidPath;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileSystemError$InvalidPath;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileSystemError$InvalidPath;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getInput ()Ljava/lang/String;
+	public final fun getReason ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileSystemError$IoFailure : com/awakekt/awake/core/io/FileSystemError {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/core/io/FileSystemError$IoFailure;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileSystemError$IoFailure;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileSystemError$IoFailure;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCauseMessage ()Ljava/lang/String;
+	public final fun getOperation ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileSystemError$NotFound : com/awakekt/awake/core/io/FileSystemError {
+	public fun <init> (Lcom/awakekt/awake/core/io/FilePath;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun copy (Lcom/awakekt/awake/core/io/FilePath;)Lcom/awakekt/awake/core/io/FileSystemError$NotFound;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileSystemError$NotFound;Lcom/awakekt/awake/core/io/FilePath;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileSystemError$NotFound;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Lcom/awakekt/awake/core/io/FilePath;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileSystemError$PermissionDenied : com/awakekt/awake/core/io/FileSystemError {
+	public fun <init> (Lcom/awakekt/awake/core/io/FilePath;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/io/FilePath;
+	public final fun copy (Lcom/awakekt/awake/core/io/FilePath;)Lcom/awakekt/awake/core/io/FileSystemError$PermissionDenied;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileSystemError$PermissionDenied;Lcom/awakekt/awake/core/io/FilePath;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileSystemError$PermissionDenied;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPath ()Lcom/awakekt/awake/core/io/FilePath;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileSystemError$Unsupported : com/awakekt/awake/core/io/FileSystemError {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;)Lcom/awakekt/awake/core/io/FileSystemError$Unsupported;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/io/FileSystemError$Unsupported;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileSystemError$Unsupported;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getOperation ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/io/FileSystemException : java/lang/IllegalStateException {
+	public fun <init> (Lcom/awakekt/awake/core/io/FileSystemError;)V
+	public final fun getError ()Lcom/awakekt/awake/core/io/FileSystemError;
+}
+
+public final class com/awakekt/awake/core/io/FileSystemKt {
+	public static final field DEFAULT_CHUNK_SIZE I
+}
+
+public abstract interface class com/awakekt/awake/core/io/FileTransaction {
+	public abstract fun createDirectories-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun delete-0E7RQCE (Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun delete-0E7RQCE$default (Lcom/awakekt/awake/core/io/FileTransaction;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun move-BWLJW6A (Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun move-BWLJW6A$default (Lcom/awakekt/awake/core/io/FileTransaction;Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public abstract fun read-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun write-BWLJW6A (Lcom/awakekt/awake/core/io/FilePath;[BLcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun write-BWLJW6A$default (Lcom/awakekt/awake/core/io/FileTransaction;Lcom/awakekt/awake/core/io/FilePath;[BLcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/io/FileTransaction$DefaultImpls {
+	public static synthetic fun delete-0E7RQCE$default (Lcom/awakekt/awake/core/io/FileTransaction;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun move-BWLJW6A$default (Lcom/awakekt/awake/core/io/FileTransaction;Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static synthetic fun write-BWLJW6A$default (Lcom/awakekt/awake/core/io/FileTransaction;Lcom/awakekt/awake/core/io/FilePath;[BLcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/core/io/FileWatch : java/lang/AutoCloseable {
+	public abstract fun close ()V
+}
+
+public final class com/awakekt/awake/core/io/FunctionResourceReader : com/awakekt/awake/core/io/ResourceReader {
+	public fun <init> (Lkotlin/jvm/functions/Function2;)V
+	public fun read-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/io/InMemoryFileSystem : com/awakekt/awake/core/io/FileSystem {
+	public fun <init> ()V
+	public fun <init> (Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun createDirectories-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun delete-0E7RQCE (Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun list-0E7RQCE (Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun move-BWLJW6A (Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun openRead-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun openWrite-0E7RQCE (Lcom/awakekt/awake/core/io/FilePath;Lcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun stat-gIAlu-s (Lcom/awakekt/awake/core/io/FilePath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun transaction-gIAlu-s (Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun watch (Lcom/awakekt/awake/core/io/FilePath;ZLkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/core/io/FileWatch;
+	public fun write-BWLJW6A (Lcom/awakekt/awake/core/io/FilePath;[BLcom/awakekt/awake/core/io/WriteMode;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/io/PlatformFileSystem_desktopKt {
+	public static final fun createPlatformFileSystem (Ljava/lang/String;)Lcom/awakekt/awake/core/io/FileSystem;
+	public static synthetic fun createPlatformFileSystem$default (Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/core/io/FileSystem;
+}
+
+public final class com/awakekt/awake/core/io/ResourceAssetSource : com/awakekt/awake/core/io/AssetSource {
+	public fun <init> (Lcom/awakekt/awake/core/io/ResourceReader;)V
+	public fun read-gIAlu-s (Lcom/awakekt/awake/core/io/AssetPath;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/core/io/ResourceReader {
+	public abstract fun read-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/core/io/WriteMode : java/lang/Enum {
+	public static final field Append Lcom/awakekt/awake/core/io/WriteMode;
+	public static final field CreateNew Lcom/awakekt/awake/core/io/WriteMode;
+	public static final field Replace Lcom/awakekt/awake/core/io/WriteMode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/io/WriteMode;
+	public static fun values ()[Lcom/awakekt/awake/core/io/WriteMode;
+}
+

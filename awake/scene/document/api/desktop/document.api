@@ -258,9 +258,15 @@ public final class com/awakekt/awake/scene/document/SceneLoader {
 	public static final field INSTANCE Lcom/awakekt/awake/scene/document/SceneLoader;
 	public final fun decode (Ljava/lang/String;Lkotlinx/serialization/json/Json;)Lcom/awakekt/awake/scene/document/SceneDocument;
 	public static synthetic fun decode$default (Lcom/awakekt/awake/scene/document/SceneLoader;Ljava/lang/String;Lkotlinx/serialization/json/Json;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneDocument;
+	public final fun decodeBytes ([BLkotlinx/serialization/json/Json;)Lcom/awakekt/awake/scene/document/SceneDocument;
+	public static synthetic fun decodeBytes$default (Lcom/awakekt/awake/scene/document/SceneLoader;[BLkotlinx/serialization/json/Json;ILjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneDocument;
 	public final fun encode (Lcom/awakekt/awake/scene/document/SceneDocument;Lkotlinx/serialization/json/Json;)Ljava/lang/String;
 	public static synthetic fun encode$default (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/scene/document/SceneDocument;Lkotlinx/serialization/json/Json;ILjava/lang/Object;)Ljava/lang/String;
+	public final fun encodeBytes (Lcom/awakekt/awake/scene/document/SceneDocument;Lkotlinx/serialization/json/Json;)[B
+	public static synthetic fun encodeBytes$default (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/scene/document/SceneDocument;Lkotlinx/serialization/json/Json;ILjava/lang/Object;)[B
 	public final fun instantiate (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/scene/document/SceneInstantiationAdapter;)Ljava/lang/Object;
+	public final fun load (Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/serialization/json/Json;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun load$default (Lcom/awakekt/awake/scene/document/SceneLoader;Lcom/awakekt/awake/core/io/AssetPath;Lcom/awakekt/awake/core/io/AssetSource;Lkotlinx/serialization/json/Json;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun loadFromResource (Ljava/lang/String;Lkotlinx/serialization/json/Json;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun loadFromResource$default (Lcom/awakekt/awake/scene/document/SceneLoader;Ljava/lang/String;Lkotlinx/serialization/json/Json;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
@@ -589,9 +595,5 @@ public final synthetic class com/awakekt/awake/scene/document/SceneVec3$$seriali
 
 public final class com/awakekt/awake/scene/document/SceneVec3$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class com/awakekt/awake/scene/document/SceneWriterKt {
-	public static final fun writeSceneDocument (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
 }
 

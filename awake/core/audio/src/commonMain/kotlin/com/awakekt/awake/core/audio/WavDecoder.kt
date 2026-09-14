@@ -3,7 +3,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("NestedBlockDepth", "ComplexCondition")
+
 package com.awakekt.awake.core.audio
+
+import com.awakekt.awake.core.io.BinaryReader
 
 /**
  * Pure Kotlin Multiplatform decoder for uncompressed standard 16-bit PCM RIFF/WAVE audio bytes.
@@ -43,23 +47,30 @@ object WavDecoder {
 
         while (offset + 8 <= bytes.size) {
             val chunkId = bytes.decodeToString(offset, offset + 4)
-            val chunkSize = readIntLe(bytes, offset + 4)
+            val chunkSize = runCatching { BinaryReader(bytes).readIntLeAt(offset + 4) }.getOrNull() ?: return null
             offset += 8
 
             if (chunkId == "fmt ") {
                 if (chunkSize >= 16 && offset + 16 <= bytes.size) {
-                    val audioFormat = readShortLe(bytes, offset)
-                    channels = readShortLe(bytes, offset + 2)
-                    sampleRate = readIntLe(bytes, offset + 4)
-                    bitsPerSample = readShortLe(bytes, offset + 14)
+                    val reader = BinaryReader(bytes, offset)
+                    val audioFormat = reader.readShortLe()
+                    channels = reader.readShortLe()
+                    sampleRate = reader.readIntLe()
+                    reader.skip(8)
+                    bitsPerSample = reader.readShortLe()
+                    if (audioFormat != 1 || channels <= 0 || sampleRate <= 0 || bitsPerSample <= 0) return null
                 }
             } else if (chunkId == "data") {
-                val available = (bytes.size - offset).coerceAtLeast(0)
-                val len = chunkSize.coerceIn(0, available)
-                pcmData = bytes.copyOfRange(offset, offset + len)
+                if (chunkSize < 0 || chunkSize > bytes.size - offset) return null
+                pcmData = BinaryReader(bytes, offset).readBytes(chunkSize)
             }
 
+            if (chunkSize < 0 || chunkSize > bytes.size - offset) return null
             offset += chunkSize
+            if (chunkSize % 2 == 1) {
+                if (offset >= bytes.size) break
+                offset += 1
+            }
         }
 
         val data = pcmData ?: return null
@@ -71,19 +82,5 @@ object WavDecoder {
             channels = channels,
             bitsPerSample = bitsPerSample,
         )
-    }
-
-    private fun readShortLe(bytes: ByteArray, offset: Int): Int {
-        val b0 = bytes[offset].toInt() and 0xFF
-        val b1 = bytes[offset + 1].toInt() and 0xFF
-        return (b1 shl 8) or b0
-    }
-
-    private fun readIntLe(bytes: ByteArray, offset: Int): Int {
-        val b0 = bytes[offset].toInt() and 0xFF
-        val b1 = bytes[offset + 1].toInt() and 0xFF
-        val b2 = bytes[offset + 2].toInt() and 0xFF
-        val b3 = bytes[offset + 3].toInt() and 0xFF
-        return (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
     }
 }

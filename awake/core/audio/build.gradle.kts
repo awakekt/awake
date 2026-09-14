@@ -20,6 +20,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:core:math"))
+            implementation(project(":awake:core:io"))
         }
 
         commonTest.dependencies {
