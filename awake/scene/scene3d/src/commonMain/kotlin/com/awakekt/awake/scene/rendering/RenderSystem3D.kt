@@ -24,6 +24,12 @@ class RenderSystem3D(
         (renderer as? GpuDrawPreparationSource)?.gpuDrawPreparer,
     private val features: List<RenderFeature3D> = emptyList(),
     private val viewportProvider: () -> RenderViewport? = { null },
+    /**
+     * Selects the world whose camera and renderable components are presented for this frame.
+     * Simulation systems still receive the scheduled world in [update]; this seam is for hosts
+     * that keep an isolated preview/play world and choose which one is visible in the viewport.
+     */
+    private val renderWorldProvider: (World) -> World = { it },
 ) : System {
     private val planner = SceneRenderPlanner3D(
         rendererClipSpace = renderer.clipSpace,
@@ -43,7 +49,8 @@ class RenderSystem3D(
     override fun update(world: World, delta: Float) {
         elapsedTimeSeconds += delta.coerceAtLeast(0f)
         RenderDiagnostics.surfaceAspect = renderer.surfaceAspect
-        val camera = primaryCamera(world) ?: run {
+        val renderWorld = renderWorldProvider(world)
+        val camera = primaryCamera(renderWorld) ?: run {
             // No scene camera -- e.g. a UI-only sample with an empty World (see ui-showcase's
             // GameModule). There is nothing 3D to draw, but the swapchain must still be
             // presented: `drawUi()` already staged this frame's UI overlay, and `renderer.draw()`
@@ -52,7 +59,7 @@ class RenderSystem3D(
             renderer.presentWithoutScene()
             return
         }
-        val plannedFrame = planner.plan(world, camera, elapsedTimeSeconds)
+        val plannedFrame = planner.plan(renderWorld, camera, elapsedTimeSeconds)
         RenderDiagnostics.frustumCulled = plannedFrame.frustumCulled
         RenderDiagnostics.occluded = plannedFrame.occluded
         RenderDiagnostics.submittedDrawCalls = plannedFrame.submittedDrawCalls
