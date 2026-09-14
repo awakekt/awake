@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@file:Suppress("FunctionNaming", "LongMethod", "ktlint:standard:function-naming")
 
 package com.awakekt.awake.ui.shadcn.components
 
@@ -64,9 +64,11 @@ fun ShadcnSlider(
     steps: Int = 0,
     enabled: Boolean = true,
     onValueChange: (Float) -> Unit = {},
+    onValueChangeFinished: () -> Unit = {},
 ) {
     val theme = shadcnTheme
     val state = remember { SliderDragState() }
+    state.onValueChangeFinished = onValueChangeFinished
     val interaction = remember { InteractionSource() }
     val styleState = rememberStyleState(interaction, enabled = enabled)
     val focusRingAlpha = animateFloat(if (styleState.isFocused) 1f else 0f)
@@ -111,7 +113,10 @@ fun ShadcnSlider(
             .onSizeChanged { width, _ ->
                 state.trackWidthPx = shadcnSliderTrack(0f, width.toFloat(), state.thumbPx).width
             }
-            .draggable { dx, _ -> if (enabled) state.pendingPx += dx.toFloat() }
+            .draggable(
+                onDrag = { dx, _ -> if (enabled) state.pendingPx += dx.toFloat() },
+                onDragStopped = onValueChangeFinished,
+            )
             .focusable(enabled = enabled, interactionSource = interaction)
             .onKeyEvent { handleSliderKey(it, min, max, steps, state) }
             .focusRing(
@@ -274,7 +279,14 @@ fun ShadcnRangeSlider(
  * Home/End are skipped: they jump to an absolute value rather than stepping one, which does not fit
  * the delta this shares with dragging. Add them if a caller needs the jump.
  */
-private fun handleSliderKey(event: KeyEvent, min: Float, max: Float, steps: Int, state: SliderDragState): Boolean {
+@Suppress("ReturnCount") // Unsupported key and non-key-down events are independent no-op exits.
+private fun handleSliderKey(
+    event: KeyEvent,
+    min: Float,
+    max: Float,
+    steps: Int,
+    state: SliderDragState,
+): Boolean {
     if (event.type != KeyEventType.Down) return false
     val step = shadcnSliderKeyStep(min, max, steps)
     when (event.key) {
@@ -282,6 +294,7 @@ private fun handleSliderKey(event: KeyEvent, min: Float, max: Float, steps: Int,
         Key.ArrowRight, Key.ArrowUp -> state.pendingKeyDelta += step
         else -> return false
     }
+    state.onValueChangeFinished()
     return true
 }
 
@@ -328,6 +341,7 @@ private class SliderDragState {
     var pendingKeyDelta: Float = 0f
     var trackWidthPx: Float = 0f
     var thumbPx: Float = 0f
+    var onValueChangeFinished: () -> Unit = {}
 }
 
 /**

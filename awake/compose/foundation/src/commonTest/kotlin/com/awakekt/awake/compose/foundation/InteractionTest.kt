@@ -7,6 +7,7 @@ package com.awakekt.awake.compose.foundation
 
 import com.awakekt.awake.compose.foundation.interaction.Interaction
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
+import com.awakekt.awake.compose.foundation.gestures.draggable
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.ColumnMeasurePolicy
 import com.awakekt.awake.compose.foundation.layout.Spacer
@@ -200,5 +201,30 @@ class ClickablePressStateTest {
         dispatcher.dispatch(root, PointerEvent(PointerEventType.Release), 10, 10)
 
         assertEquals(1, clicks)
+    }
+}
+
+class DraggableGestureTest {
+
+    @Test
+    fun releaseNotifiesTheCaptureHolderAfterADrag() {
+        var dragDistance = 0
+        var stopped = 0
+        val root = laidOut {
+            Spacer(
+                Modifier.size(50.dp).draggable(
+                    onDrag = { dx, _ -> dragDistance += dx },
+                    onDragStopped = { stopped++ },
+                ),
+            )
+        }
+        val dispatcher = PointerInputDispatcher()
+
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Press), 10, 10)
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Move), 20, 10, dx = 10)
+        dispatcher.dispatch(root, PointerEvent(PointerEventType.Release), 20, 10)
+
+        assertEquals(10, dragDistance)
+        assertEquals(1, stopped)
     }
 }

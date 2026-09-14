@@ -40,12 +40,14 @@ class ShadcnDragTest {
 
     private fun dragSliderAt(density: Float) {
         var value = 0.5f
+        var finished = 0
         val session = composeTestSession(WIDTH, HEIGHT, density = density) {
             provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
                 ShadcnSlider(
                     value = value,
                     modifier = Modifier.fillMaxWidth().testTag("slider"),
                     onValueChange = { value = it },
+                    onValueChangeFinished = { finished++ },
                 )
             }
         }
@@ -69,6 +71,7 @@ class ShadcnDragTest {
             value > before,
             "at density $density, dragging right by ${STEPS * STEP_PX}px left the value at $value (was $before)",
         )
+        assertEquals(1, finished, "at density $density, a drag should commit once on release")
     }
 
     @Test
