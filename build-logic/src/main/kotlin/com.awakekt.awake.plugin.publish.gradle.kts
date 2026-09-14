@@ -74,6 +74,10 @@ if (secretPropsFile.exists()) {
 
 extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
     publishToMavenCentral()
+    // Central snapshots are disposable integration artifacts. Keeping their sources jar is useful
+    // to consumers, but generating Dokka for every KMP publication adds a large amount of work.
+    // Releases retain the full documentation jar below.
+    val isSnapshot = project.version.toString().endsWith("-SNAPSHOT")
     val hasSigningKey = hasProperty("signing.keyId") ||
         hasProperty("signing.secretKey") ||
         hasProperty("signingInMemoryKey") ||
@@ -87,7 +91,7 @@ extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
 
     configure(
         KotlinMultiplatform(
-            javadocJar = JavadocJar.Dokka("dokkaGeneratePublicationHtml"),
+            javadocJar = if (isSnapshot) JavadocJar.Empty() else JavadocJar.Dokka("dokkaGeneratePublicationHtml"),
             sourcesJar = SourcesJar.Sources(),
             androidVariantsToPublish = listOf("release"),
         )
