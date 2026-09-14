@@ -258,6 +258,55 @@ tasks.matching { it.name == "check" }.configureEach {
     dependsOn(verifyClipSpaceUsage)
 }
 
+// Capability ownership is enforced in the Core build so reusable APIs cannot drift back into a
+// product module. Platform adapters belong in source-set-specific code; common code speaks only
+// the rooted, suspend contracts from awake:core:io and never imports Studio or a host API.
+val capabilityCommonSources = fileTree(rootDir) {
+    include("awake/**/src/commonMain/**/*.kt")
+    exclude("**/build/**")
+}
+val verifyCapabilityBoundaries = tasks.register("verifyCapabilityBoundaries") {
+    group = "verification"
+    description = "Reject duplicated platform readers and platform leakage from Core common code."
+    inputs.files(capabilityCommonSources)
+    doLast {
+        val forbiddenImports = listOf(
+            "import java.io.",
+            "import java.nio.",
+            "import kotlinx.browser.",
+            "import platform.Foundation.",
+            "import com.awakekt.awake.studio.",
+            "import com.awakekt.awake.editor.",
+        )
+        val duplicatedReaderPatterns = listOf(
+            Regex("\\b(readFileBytes|readPlatformTextFile|assetBytesReader|externalResourceReader)\\b"),
+            Regex("\\bfun\\s+(readFile|writeFile|listFiles|statFile)\\s*\\("),
+        )
+        val violations = buildList {
+            capabilityCommonSources.files.forEach { file ->
+                val source = file.readText()
+                val lines = source.lines()
+                lines.forEachIndexed { index, line ->
+                    if (forbiddenImports.any(line::contains)) {
+                        add("${file.relativeTo(rootDir)}:${index + 1}: platform or Pro import in commonMain")
+                    }
+                    duplicatedReaderPatterns.forEach { pattern ->
+                        if (pattern.containsMatchIn(line)) {
+                            add("${file.relativeTo(rootDir)}:${index + 1}: duplicated reader API: ${line.trim()}")
+                        }
+                    }
+                }
+            }
+        }.distinct()
+        check(violations.isEmpty()) {
+            "Capability boundary violations found:\n" + violations.joinToString("\n")
+        }
+    }
+}
+tasks.matching { it.name == "check" }.configureEach {
+    dependsOn(verifyCapabilityBoundaries)
+}
+
 // Version comes from the latest v* git tag, so publishing is "tag + push" and the
 // number can never drift from the tag:
 //   HEAD exactly on v0.1.0-dev.1  ->  0.1.0-dev.1          (publishable, immutable)

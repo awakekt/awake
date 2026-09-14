@@ -3,9 +3,9 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 plugins {
     id("com.awakekt.awake.plugin.library")
+    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -14,15 +14,13 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.awakekt.awake.core.audio"
+        namespace = "com.awakekt.awake.project"
     }
 
     sourceSets {
         commonMain.dependencies {
-            api(project(":awake:core:math"))
-            implementation(project(":awake:core:io"))
+            implementation(libs.kotlinx.serialization.json)
         }
-
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
@@ -31,7 +29,7 @@ kotlin {
 
 mavenPublishing {
     pom {
-        name.set("Awake Core Audio")
-        description.set("Multiplatform audio playback, WAV decoding, procedural synthesis, and 3D spatial attenuation")
+        name.set("Awake Project")
+        description.set("Portable Awake project manifest format and compatibility validation")
     }
 }

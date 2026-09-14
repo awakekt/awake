@@ -14,24 +14,20 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.awakekt.awake.core.audio"
+        namespace = "com.awakekt.awake.core.io"
     }
 
     sourceSets {
-        commonMain.dependencies {
-            api(project(":awake:core:math"))
-            implementation(project(":awake:core:io"))
-        }
-
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }
 
 mavenPublishing {
     pom {
-        name.set("Awake Core Audio")
-        description.set("Multiplatform audio playback, WAV decoding, procedural synthesis, and 3D spatial attenuation")
+        name.set("Awake Core IO")
+        description.set("Portable asynchronous file, resource, and byte-stream capabilities")
     }
 }

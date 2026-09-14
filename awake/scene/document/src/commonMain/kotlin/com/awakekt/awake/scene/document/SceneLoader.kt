@@ -6,6 +6,8 @@
 package com.awakekt.awake.scene.document
 
 import com.awakekt.awake.core.host.readResourceBytes
+import com.awakekt.awake.core.io.AssetPath
+import com.awakekt.awake.core.io.AssetSource
 import kotlinx.serialization.json.Json
 
 /**
@@ -32,6 +34,10 @@ object SceneLoader {
     fun encode(document: SceneDocument, json: Json = DefaultSceneJson): String =
         json.encodeToString(document)
 
+    /** Serializes [document] to UTF-8 JSON bytes without choosing a storage destination. */
+    fun encodeBytes(document: SceneDocument, json: Json = DefaultSceneJson): ByteArray =
+        encode(document, json).encodeToByteArray()
+
     /** Deserializes [text] JSON string into a [SceneDocument]. */
     fun decode(text: String, json: Json = DefaultSceneJson): SceneDocument {
         val normalized = normalizeLegacyDiscriminators(text)
@@ -39,6 +45,10 @@ object SceneLoader {
             if (document.version > SCENE_SCHEMA_VERSION) throw SceneSchemaVersionException(document.version)
         }
     }
+
+    /** Deserializes UTF-8 JSON [bytes] without performing any filesystem I/O. */
+    fun decodeBytes(bytes: ByteArray, json: Json = DefaultSceneJson): SceneDocument =
+        decode(bytes.decodeToString(), json)
 
     private val LEGACY_DISCRIMINATORS = listOf("meshRenderer", "spinControl", "pbrMaterial", "prefabLink")
 
@@ -58,6 +68,10 @@ object SceneLoader {
     /** Loads and decodes a scene document from a resource asset path. */
     suspend fun loadFromResource(path: String, json: Json = DefaultSceneJson): SceneDocument =
         decode(readResourceBytes(path).decodeToString(), json)
+
+    /** Loads a scene through an injected asset source; storage and download policy stay outside the codec. */
+    suspend fun load(path: AssetPath, source: AssetSource, json: Json = DefaultSceneJson): SceneDocument =
+        decodeBytes(source.read(path).getOrThrow(), json)
 
     /** Instantiates [document] using a custom [SceneInstantiationAdapter]. */
     fun <Node, Instance> instantiate(

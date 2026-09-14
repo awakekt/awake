@@ -18,6 +18,10 @@ import com.awakekt.awake.core.animation.Bone
 import com.awakekt.awake.core.animation.Skeleton
 import com.awakekt.awake.core.animation.Skin
 import com.awakekt.awake.core.geometry.NormalizedInt
+import com.awakekt.awake.core.io.BinaryReader
+import com.awakekt.awake.core.io.AssetPath
+import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.io.resolve
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
@@ -65,6 +69,24 @@ private val GltfJson = Json { ignoreUnknownKeys = true }
  *   practice.
  */
 object GltfParser {
+    /** Loads a glTF asset and its relative `.bin`/image sidecars through Core [AssetSource]. */
+    suspend fun load(path: AssetPath, source: AssetSource): Result<GltfMesh> = runCatching {
+        val json = source.read(path).getOrThrow().decodeToString()
+        val external = loadExternalResources(json, path, source).getOrThrow()
+        parse(json, external)
+    }
+
+    /** Fetches all non-data URIs referenced by [json], resolved relative to [assetPath]. */
+    suspend fun loadExternalResources(
+        json: String,
+        assetPath: AssetPath,
+        source: AssetSource,
+    ): Result<Map<String, ByteArray>> = runCatching {
+        externalUris(json).associateWith { uri ->
+            source.read(assetPath.resolve(uri)).getOrThrow()
+        }
+    }
+
     /**
      * Parses the first mesh from a glTF JSON string.
      *
@@ -580,8 +602,7 @@ object GltfParser {
 
     /** Signed 16-bit little-endian -- unlike [readUShortLe], the high byte's own sign extends
      * through [Byte.toInt] before the shift, so this correctly reads negative values. */
-    private fun readShortLe(bytes: ByteArray, offset: Int): Int =
-        (bytes[offset].toInt() and 0xFF) or (bytes[offset + 1].toInt() shl 8)
+    private fun readShortLe(bytes: ByteArray, offset: Int): Int = BinaryReader(bytes).readShortLeAt(offset)
 
     private fun readIndexAccessor(
         document: GltfDocument,
@@ -640,14 +661,11 @@ object GltfParser {
         }
     }
 
-    private fun readFloatLe(bytes: ByteArray, offset: Int): Float =
-        Float.fromBits(readUIntLe(bytes, offset))
+    private fun readFloatLe(bytes: ByteArray, offset: Int): Float = BinaryReader(bytes).readFloatLeAt(offset)
 
     private fun readUShortLe(bytes: ByteArray, offset: Int): Int =
-        (bytes[offset].toInt() and 0xFF) or ((bytes[offset + 1].toInt() and 0xFF) shl 8)
+        BinaryReader(bytes).readUnsignedShortLeAt(offset)
 
-    private fun readUIntLe(bytes: ByteArray, offset: Int): Int = (bytes[offset].toInt() and 0xFF) or
-        ((bytes[offset + 1].toInt() and 0xFF) shl 8) or
-        ((bytes[offset + 2].toInt() and 0xFF) shl 16) or
-        ((bytes[offset + 3].toInt() and 0xFF) shl 24)
+    private fun readUIntLe(bytes: ByteArray, offset: Int): Int =
+        BinaryReader(bytes).readUnsignedIntLeAt(offset).toInt()
 }

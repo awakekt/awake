@@ -39,6 +39,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":awake:core:image"))
+            implementation(project(":awake:core:io"))
             // Mat4/Quat/Vec3 (node transforms), createBitmap/readResourceBytes (base color
             // texture decode, external buffer/image resource loading).
             implementation(project(":awake:core:math"))
