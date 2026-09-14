@@ -111,6 +111,9 @@ jobs:
       - name: Verify the publication closure
         run: python3 tools/verify_publication_closure.py
 
+      - name: Verify Core capability boundaries
+        run: python3 tools/verify_capability_boundaries.py
+
       - name: Verify API surface
         run: ./gradlew apiCheck
 
@@ -176,15 +179,13 @@ jobs:
   # the next push, so this path stays deliberately light.
   snapshot:
     name: Publish snapshot to Maven Central
-    timeout-minutes: 30
+    timeout-minutes: 60
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
     needs: [natives, verify, consumer]
     runs-on: macos-14
     env:
       MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
       MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-      SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
-      SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -237,12 +238,11 @@ jobs:
           ./gradlew publishAllPublicationsToMavenCentralRepository \
                     -PisMainHost=true \
                     -Pawake.prebuiltNatives=$PWD/build/collected-natives \
-                    --no-configuration-cache
+                    --no-configuration-cache \
+                    --max-workers=4
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
-          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ env.SIGNING_KEY }}
-          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ env.SIGNING_PASSWORD }}
 
   # Tags only. What lands here is permanent: Central does not allow a version to be replaced, so
   # every check that would be embarrassing to discover afterwards runs before the upload.
