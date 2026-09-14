@@ -6,11 +6,7 @@ __pycache__/
 /gradle/gradle-daemon-jvm.properties
 local.properties
 /.idea
-.claude/*
-!.claude/AGENTS.md
-!.claude/settings.json
-!.claude/commands/
-.agents/commands/
+.claude/
 # `skills add` mirrors the kmp-* skills as symlinks — committing those would only ship broken
 # links. Ignore the vendored ones by name, wherever they land: they are reproducible from
 # skills-lock.json, so losing them costs a re-sync.

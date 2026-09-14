@@ -33,10 +33,13 @@ This skill defines the operational boundary between **GitHub Milestones & Issues
 
 ## Invariants for AI Agents
 
-1. **No Scratch Checklists in Git**:
+1. **No Scratch Checklists in Git & No Issue Spam**:
    - Never create scratch `.md` task checklist files in `docs/` that get committed.
    - Never make a Git commit solely to check off an item or update a markdown task status.
-   - Use GitHub Issues assigned to active milestones for task tracking.
+   - **Hierarchy & Granularity**: Never spam top-level root issues for individual rows in an audit matrix, checklist cells, or micro-tweaks.
+   - **Parent Epics**: Broad capabilities, audits, or multi-step roadmaps must be filed as a single **Parent Issue** (Epic).
+   - **Sub-Issues**: Discrete sub-tasks or follow-up gaps must be linked as **Sub-Issues** under the Parent Issue using `./tools/gh-sub-issue.sh` or tracked as markdown task lists (`- [ ]`) within the Parent Issue description.
+   - **Direct PRs**: Micro-fixes resolved immediately in active stacked PRs do not need standalone top-level issues.
 
 2. **Atomic Commits & PR Squashing**:
    - Never push intermediate micro-commits (e.g. `style: reword comment`, `fix typo`, `step 1 of 5`) directly to `main`.
@@ -58,14 +61,26 @@ This skill defines the operational boundary between **GitHub Milestones & Issues
    - GitHub stacked PRs are public preview; verify the final diff and base branch after every
      rebase. See `docs/release-process.md` for the repository-level workflow.
 
-4. **Querying & Managing Milestones via `gh` CLI**:
+4. **Querying & Managing Milestones, Epics & Sub-Issues via CLI**:
    - List milestones:
      ```bash
      gh api repos/awakekt/awake/milestones --jq '.[] | "\(.number): \(.title) - \(.description)"'
      ```
-   - Create an issue linked to a milestone:
+   - Create a parent issue / epic linked to a milestone:
      ```bash
-     gh issue create --title "<title>" --body "<body>" --milestone "<milestone-name>"
+     gh issue create --title "feat: <epic title>" --body "<body>" --milestone "<milestone-name>"
+     ```
+   - Create a sub-issue directly linked to a parent:
+     ```bash
+     python3 ~/.agents/skills/kmp-github-issue-governance/scripts/gh_sub_issue.py create <parent-number> --title "<title>" --body-file <payload.md> [--label "<label>"] [--milestone "<milestone>"]
+     ```
+   - Attach an existing issue as a sub-issue of a parent:
+     ```bash
+     python3 ~/.agents/skills/kmp-github-issue-governance/scripts/gh_sub_issue.py add <parent-number> <child-number>
+     ```
+   - List all sub-issues of a parent issue:
+     ```bash
+     python3 ~/.agents/skills/kmp-github-issue-governance/scripts/gh_sub_issue.py list <parent-number>
      ```
    - Close an issue when work lands:
      ```bash
