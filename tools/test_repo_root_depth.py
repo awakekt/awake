@@ -48,6 +48,11 @@ def scripts_declaring_a_root() -> list[tuple[Path, int, int]]:
         ):
             if any(part in {"node_modules", ".venv", ".pytest_cache"} for part in path.parts):
                 continue
+            # kmp-* under .agents/skills is an ignored deployment of the external skill bundle.
+            # Its source owns its own root-depth contract; Awake owns the tracked awake-* skills
+            # and the repository tools below.
+            if directory == ".agents/skills" and any(part.startswith("kmp-") for part in path.parts):
+                continue
             text = path.read_text()
             if path.suffix == ".sh":
                 shell = SHELL_ROOT_EXPR.search(text)

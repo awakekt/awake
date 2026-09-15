@@ -14,7 +14,7 @@ Arguments (all optional):
 
 If `$ARGUMENTS` names a file or path, use that as the primary source. Otherwise inspect
 `README.md`, `GETTING_STARTED.md`, `INSTALL.md`, `RELEASING.md`, `PLAN.md`,
-`KNOWN_ISSUES.md`, `docs/`, `agents/`, `commands/`, and the touched skill docs. `PLAN.md`
+`KNOWN_ISSUES.md`, `docs/`, `.agents/commands/`, `.agents/skills/`, and the touched skill docs. `PLAN.md`
 rots silently if skipped — its shipped-skill count, version header, and "Open Defects"
 line are claims that go stale every release unless checked against reality.
 
@@ -26,13 +26,13 @@ If the requested work is organizing active planning docs or bug lanes, still use
 `kmp-project-docs-maintainer` and follow its `docs/mvp/` and
 single-file `docs/bugs/0-bug.md` rule unless the bug lane needs multiple files.
 If the requested work is `SKILL.md` routing, freshness, or skill-map maintenance,
-use `agents/docs-maintainer.md` directly; there is no separate consumer skill for it.
+use `awake-docs-maintainer` directly; there is no separate consumer skill for it.
 If the requested work changes the README skill map or architecture diagram, keep the
 diagram aligned with the routing text and agent/command roles.
 
 ## Step 2 — Load the docs agent
 
-Load `agents/docs-maintainer.md` and follow its workflow.
+Load `.agents/skills/awake/agents/awake-docs-maintainer.md` and follow its workflow.
 
 ## Step 3 — Edit docs
 
@@ -42,19 +42,18 @@ consistent across all touched files.
 
 ## Step 4 — Validate
 
-If `skills/*` docs or routing text changed, run:
+If `.agents/skills/*` docs or routing text changed, run the Awake repository checks:
 
 ```bash
-python3 scripts/scan_skill_issues.py
-python3 skills/kmp-audit/scripts/audit_skills_repo.py .
-python3 skills/kmp-expert/scripts/validate_skill_map.py --repo-root .
-python3 skills/kmp-expert/scripts/validate_keyword_routing.py --repo-root .
+python3 tools/verify_agent_skills_sync.py
+python3 tools/verify_skill_spec.py
+python3 tools/verify_ui_doc_refs.py
 ```
 
 If only repo docs changed, at minimum run:
 
 ```bash
-python3 scripts/scan_skill_issues.py
+python3 tools/verify_ui_doc_refs.py
 ```
 
 ## Step 5 — Report

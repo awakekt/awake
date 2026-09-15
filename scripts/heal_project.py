@@ -5,12 +5,11 @@
 """heal_project.py — Comprehensive Project Health, Hooks, Tech Debt, and Topology Doctor
 
 Automates:
-  1. Documentation Healing: Rebuilds docs/README.md sitemap and archives completed tasks.
+  1. Documentation Healing: Rebuilds docs/README.md's sitemap.
   2. Tech Debt & Scattered Comments Healing: Scans and classifies actionable vs orphan TODOs.
-  3. Git Hooks Healing: Verifies and installs .git/hooks/pre-commit.
-  4. Scripts & Tools Hygiene: Ensures executable permissions (chmod +x) on scripts/ and tools/.
-  5. Provenance Lockfile Healing: Updates .agents/skills.lock with upstream SemVer.
-  6. Topology Verification: Checks standard project structure (docs, scripts, tools, .agents).
+  3. Git Hooks Healing: Installs a project pre-commit hook when hooks/pre-commit exists.
+  4. Scripts & Tools Hygiene: Ensures executable permissions on scripts/, tools/, and hooks/.
+  5. Provenance Lockfile Healing: Refreshes the lockfile when its generator exists.
 """
 
 import argparse

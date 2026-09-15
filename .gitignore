@@ -22,6 +22,10 @@ skills/kmp-*
 .DS_Store
 build/
 !build-logic/src/**
+
+# UI showcase captures and reports are generated under each sample's build directory.
+/samples/*/snapshots/
+
 **/.DS_Store
 /captures
 .externalNativeBuild

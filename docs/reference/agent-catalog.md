@@ -10,13 +10,14 @@ For real routing examples, see
 
 Awake operates as both a Kotlin Multiplatform game engine library and a full-stack game development
 studio.
-To maintain high cohesion and prevent context fragmentation, the repository organizes agents into a
-**Dual-Suite Architecture**:
+To maintain high cohesion and prevent context fragmentation, the repository organizes agents into
+two product suites plus repository governance:
 
 1. **Engine Framework Suite**: 6 engineering agents responsible for core engine algorithms, graphics
    backends, UI subsystems, platform glue, and architecture governance.
 2. **Game Studio Creative Suite**: 6 creative personas responsible for full-stack game production in
    `samples/` (production, mechanics design, narrative, camera direction, art/VFX, and audio).
+3. **Repository Governance**: documentation maintenance and cross-surface routing consistency.
 
 ## Naming Standard
 
@@ -61,6 +62,12 @@ The capability tiers below serve as a design taxonomy for picking which provider
 | `awake-game-runtime-engineer`     | Active | `:awake:engine:platform`, `:awake:engine:bootstrap`, optional Compose app integration, scene-session adoption, `:app:studio`, `:samples:ui-showcase`, MVI state flow          | `balanced-coding` | `claude-sonnet-5` |
 | `awake-platform-release-engineer` | Active | `androidMain`, `iosMain`, `desktopMain`, `wasmJs`, `build-logic`, CI workflows, Maven Central publishing                                                                      | `balanced-coding` | `claude-sonnet-5` |
 | `awake-architecture-auditor`      | Active | Cross-module boundaries, KMP clean architecture, framework-versus-game ownership, Detekt rules, API leakage audits                                                            | `flagship-coding` | `claude-opus-5`   |
+
+### Repository Governance
+
+| Agent | Status | Primary Scope | Preferred Tier | Assigned Model |
+|---|---|---|---|---|
+| `awake-docs-maintainer` | Active | README, `docs/`, agent catalog, skill/command routing, and repository documentation hygiene | `balanced-coding` | `claude-sonnet-5` |
 
 ### Suite B: Game Studio Creative Suite (Full-Stack Game Creation)
 
@@ -114,6 +121,8 @@ A new agent must pass all three criteria:
 ---
 
 ## Current File Map
+
+- [awake-docs-maintainer.md](../../skills/awake/agents/awake-docs-maintainer.md)
 
 - [awake-engine-core-engineer.md](../../skills/awake/agents/awake-engine-core-engineer.md)
 - [awake-render-backend-engineer.md](../../skills/awake/agents/awake-render-backend-engineer.md)

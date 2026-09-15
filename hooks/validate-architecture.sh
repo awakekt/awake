@@ -16,7 +16,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-AUDIT_SCRIPT="$REPO_ROOT/.claude/skills/kmp-audit/scripts/audit_project.py"
+AUDIT_SCRIPT="$REPO_ROOT/.agents/skills/kmp-audit/scripts/audit_project.py"
+if [[ ! -f "$AUDIT_SCRIPT" ]]; then
+  AUDIT_SCRIPT="$REPO_ROOT/.claude/skills/kmp-audit/scripts/audit_project.py"
+fi
 
 # Optional overrides for testability
 MODIFIED_FILE="${1:-}"

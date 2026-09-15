@@ -10,7 +10,7 @@
 third_party/shadcn-ui-ref/ checkout (see tools/shadcn/fetch_shadcn_reference.sh) and writes a
 generated Kotlin ground-truth object:
 
-    awake/engine/ui/ui-shadcn/src/commonTest/kotlin/com/awakekt/awake/ui/
+    awake/ui/shadcn/src/commonMain/kotlin/com/awakekt/awake/ui/
     shadcn/ShadcnReferenceTokens.kt
 
 Canonical source: the capture app's `:root`/`.dark` CSS pair for Awake's default `neutral` theme,
@@ -50,9 +50,8 @@ OUT_FILE = (
     / "src"
     / "commonMain"
     / "kotlin"
-    / "io"
-    / "github"
-    / "awakelab"
+    / "com"
+    / "awakekt"
     / "awake"
     / "ui"
     / "shadcn"
