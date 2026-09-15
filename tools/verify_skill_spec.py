@@ -6,7 +6,7 @@
 # GATE: exit 1 means a SKILL.md violates the Agent Skills specification.
 # Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
 # a build; `scripts/awake verify` runs every one.
-"""Validates every `skills/*/SKILL.md` against https://agentskills.io/specification.
+"""Validates Awake-owned `SKILL.md` files against https://agentskills.io/specification.
 
 `verify_agent_skills_sync.py` is next door and checks something different: that skills the docs
 *cite* exist and that the four entrypoints agree. It accepts any frontmatter that parses. This
@@ -49,6 +49,20 @@ BODY_LINE_LIMIT = 500
 BODY_TOKEN_LIMIT = 5000
 
 KNOWN_FIELDS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
+
+
+def skill_paths() -> list[Path]:
+    """Return first-party skills; kmp-* entries are ignored external deployments.
+
+    Awake owns the tracked awake-* bundle. The kmp-* directories are reproducible deployments of
+    the external kmp-agent-skills project and are intentionally not this repository's metadata
+    gate; validating them here made Awake fail whenever that upstream schema changed.
+    """
+    return sorted(
+        path
+        for path in SKILLS_DIR.glob("*/SKILL.md")
+        if not path.parent.name.startswith("kmp-")
+    )
 
 
 def parse(path: Path) -> tuple[dict, str] | None:
@@ -135,7 +149,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    paths = sorted(SKILLS_DIR.glob("*/SKILL.md"))
+    paths = skill_paths()
     if not paths:
         print(f"no SKILL.md found under {SKILLS_DIR}", file=sys.stderr)
         return 2

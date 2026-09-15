@@ -6,12 +6,9 @@
 
 Automates:
   1. Sitemap synchronization in docs/README.md (extracts title, category, status).
-  2. Broken link detection and self-healing.
-  3. Automatic archival of completed task plans into docs/tasks/archive/YYYY-MM/.
-  4. Naming convention enforcement:
-     - Architecture: docs/architecture/<subsystem>.md
-     - ADRs: docs/decisions/ADR-XXX-<slug>.md
-     - Tasks: docs/tasks/YYYY-MM-DD-<slug>-plan.md
+
+The script deliberately does not rewrite links, archive tasks, or rename files; those changes need
+human review because they can alter documentation history and references.
 """
 
 import argparse

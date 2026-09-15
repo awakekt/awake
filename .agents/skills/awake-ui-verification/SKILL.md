@@ -169,7 +169,7 @@ tools. Never let one stand in for the other.**
 
 | Question | Tool | What a pass means |
 |---|---|---|
-| Did this change? | Snapshot goldens (`snapshots/ui/*.png`), signature maps | Output matches what Awake produced *before*. Says nothing about correctness. |
+| Did this change? | Snapshot goldens (`src/desktopTest/resources/baselines/components/*.png`), signature maps | Output matches what Awake produced *before*. Says nothing about correctness. |
 | Is this right, layout? | `ShadcnGeometryParityTest` vs the reference app's own `getBoundingClientRect` | Size/position match shadcn to sub-pixel, exactly, no rasterizer dependency. |
 | Is this right, everything else? | Nothing yet | Colour, border, shadow and all behavior (click/keyboard/focus/hover) have no oracle. `ShadcnReferenceComparisonTest` still runs but is demoted -- see below. |
 | Is this value right? | `ShadcnReferenceTokenExpandedTest` vs generated `ShadcnReferenceTokens.kt` | A token equals the pinned reference exactly. |

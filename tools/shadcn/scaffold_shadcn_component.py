@@ -125,10 +125,10 @@ def scaffold_component_slice(project_root: Path, name: str, category_key: str, d
 
     category_enum, category_dir = CATEGORY_MAP[category_key]
 
-    comp_file = project_root / "awake" / "ui" / "shadcn" / "src" / "commonMain" / "kotlin" / "io" / "github" / "awakelab" / "awake" / "ui" / "shadcn" / "components" / f"Shadcn{name}.kt"
-    page_file = project_root / "samples" / "ui-showcase" / "src" / "commonMain" / "kotlin" / "io" / "github" / "awakelab" / "awake" / "sample" / "uishowcase" / "ui" / "pages" / category_dir / f"{name}Page.kt"
-    test_file = project_root / "awake" / "ui" / "shadcn" / "src" / "commonTest" / "kotlin" / "io" / "github" / "awakelab" / "awake" / "ui" / "shadcn" / "components" / f"Shadcn{name}Test.kt"
-    catalog_file = project_root / "samples" / "ui-showcase" / "src" / "commonMain" / "kotlin" / "io" / "github" / "awakelab" / "awake" / "sample" / "uishowcase" / "ui" / "ShowcaseCatalog.kt"
+    comp_file = project_root / "awake" / "ui" / "shadcn" / "src" / "commonMain" / "kotlin" / "com" / "awakekt" / "awake" / "ui" / "shadcn" / "components" / f"Shadcn{name}.kt"
+    page_file = project_root / "samples" / "ui-showcase" / "src" / "commonMain" / "kotlin" / "com" / "awakekt" / "awake" / "sample" / "uishowcase" / "ui" / "pages" / category_dir / f"{name}Page.kt"
+    test_file = project_root / "awake" / "ui" / "shadcn" / "src" / "commonTest" / "kotlin" / "com" / "awakekt" / "awake" / "ui" / "shadcn" / "components" / f"Shadcn{name}Test.kt"
+    catalog_file = project_root / "samples" / "ui-showcase" / "src" / "commonMain" / "kotlin" / "com" / "awakekt" / "awake" / "sample" / "uishowcase" / "ui" / "ShowcaseCatalog.kt"
 
     print(f"\n🎨 Scaffolding Full-Stack Shadcn Component: '{name}'")
     print(f"   1. Component : {comp_file.name}")

@@ -23,6 +23,17 @@ set -euo pipefail
 
 TARGET="${1:-}"
 
+is_tracked_in_current_repo() {
+  local repo_root relative_target
+  repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+  [[ -n "$repo_root" ]] || return 1
+  case "$TARGET" in
+    "$repo_root"/*) relative_target="${TARGET#"$repo_root/"}" ;;
+    *) relative_target="$TARGET" ;;
+  esac
+  git -C "$repo_root" ls-files --error-unmatch -- "$relative_target" >/dev/null 2>&1
+}
+
 if [[ -z "$TARGET" ]]; then
   exit 0
 fi
@@ -31,6 +42,11 @@ if [[ "$TARGET" =~ (^|/)\.claude/skills/ ]] \
   || [[ "$TARGET" =~ (^|/)\.agents/skills/ ]] \
   || [[ "$TARGET" =~ (^|/)\.codex/skills/ ]] \
   || [[ "$TARGET" =~ (^|/)\.gemini/skills/ ]]; then
+  # Awake's tracked .agents/skills/awake-* files are source, not deployed mirrors.
+  # More generally, never block a file that is tracked by the current repository.
+  if is_tracked_in_current_repo; then
+    exit 0
+  fi
   cat >&2 <<'EOF'
 Blocked: this path is a deployed skill mirror, not the source. Edits here get
 silently overwritten by the next sync, or drift unnoticed until an audit

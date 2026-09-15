@@ -105,9 +105,9 @@ def scaffold_page(project_root: Path, name: str, category_key: str, description:
         sys.exit(1)
 
     category_enum, category_dir = CATEGORY_MAP[category_key]
-    pages_base = project_root / "samples" / "ui-showcase" / "src" / "commonMain" / "kotlin" / "io" / "github" / "ronjunevaldoz" / "awake" / "sample" / "uishowcase" / "ui" / "pages"
+    pages_base = project_root / "samples" / "ui-showcase" / "src" / "commonMain" / "kotlin" / "com" / "awakekt" / "awake" / "sample" / "uishowcase" / "ui" / "pages"
     target_file = pages_base / category_dir / f"{name}Page.kt"
-    catalog_file = project_root / "samples" / "ui-showcase" / "src" / "commonMain" / "kotlin" / "io" / "github" / "ronjunevaldoz" / "awake" / "sample" / "uishowcase" / "ui" / "ShowcaseCatalog.kt"
+    catalog_file = project_root / "samples" / "ui-showcase" / "src" / "commonMain" / "kotlin" / "com" / "awakekt" / "awake" / "sample" / "uishowcase" / "ui" / "ShowcaseCatalog.kt"
 
     print(f"\n🎨 Scaffolding Showcase Page: '{name}Page'")
     print(f"   Category : {category_enum} ({category_dir})")

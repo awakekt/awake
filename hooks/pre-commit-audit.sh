@@ -80,7 +80,7 @@ fi
 # boundaries, and read it with the severity mix in mind (661 findings as of removal, mostly
 # LOW comment-style):
 #
-#     python3 .claude/skills/kmp-audit/scripts/audit_project.py .
+#     python3 .agents/skills/kmp-audit/scripts/audit_project.py .
 #
 # Not moved to CI: 661 pre-existing findings would land it permanently red, which is the same
 # always-fires failure in a slower place. Worth wiring up once that backlog is triaged.

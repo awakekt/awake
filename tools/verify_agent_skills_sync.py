@@ -260,7 +260,7 @@ def main():
             print(f"  - {err}", file=sys.stderr)
         sys.exit(1)
 
-    print("\n✅ All 12 agents, 13 domain skills, 24 module READMEs, performance matrix, and entrypoints are fully synchronized!")
+    print("\n✅ All 13 agents, 13 domain skills, 24 module READMEs, performance matrix, and entrypoints are fully synchronized!")
     sys.exit(0)
 
 
