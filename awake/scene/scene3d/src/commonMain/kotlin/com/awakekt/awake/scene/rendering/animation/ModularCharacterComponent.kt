@@ -5,8 +5,8 @@
  */
 package com.awakekt.awake.scene.rendering.animation
 
-import com.awakekt.awake.core.animation.Skin
 import com.awakekt.awake.core.animation.Skeleton
+import com.awakekt.awake.core.animation.Skin
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 

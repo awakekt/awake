@@ -28,6 +28,7 @@ kotlin {
         commonMain.dependencies {
             api(project(":awake:core:color"))
             api(project(":awake:core:geometry"))
+            api(project(":awake:core:image"))
             api(project(":awake:core:math"))
         }
         commonTest.dependencies {
