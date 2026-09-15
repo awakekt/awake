@@ -30,7 +30,6 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.sample.composeshowcase.ui.ShowcaseCategory
 import com.awakekt.awake.sample.composeshowcase.ui.ShowcasePage
-import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
 
 private val GestureSurface = Color.fromHex(0xF8FAFC)
