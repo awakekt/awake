@@ -18,6 +18,7 @@ internal enum class ShowcaseCategory(val title: String) {
     Modifiers("Modifiers"),
     Styles("Styles"),
     StateDi("State & DI"),
+    Gestures("Gestures"),
 }
 
 /**
