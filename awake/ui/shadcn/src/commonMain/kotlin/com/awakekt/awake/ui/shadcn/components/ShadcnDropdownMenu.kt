@@ -9,12 +9,15 @@ import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
+import com.awakekt.awake.compose.foundation.layout.Arrangement
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.BoxMeasurePolicy
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.IntrinsicSize
+import com.awakekt.awake.compose.foundation.layout.Row
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.padding
+import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.foundation.layout.widthIn
 import com.awakekt.awake.compose.foundation.style.Style
@@ -61,6 +64,7 @@ data class ShadcnMenuItem(
     val label: String,
     val destructive: Boolean = false,
     val enabled: Boolean = true,
+    val shortcut: String? = null,
 ) : ShadcnMenuEntry
 
 data object ShadcnMenuSeparator : ShadcnMenuEntry
@@ -143,20 +147,51 @@ fun ShadcnDropdownMenu(
                             if (!item.enabled) this[SemanticsProperties.Disabled] = true
                         },
                 ) {
-                    ShadcnText(
-                        item.label,
-                        variant = ShadcnTextVariant.Small,
-                        color = when {
-                            item.destructive -> theme.palette.destructive
-                            highlighted -> theme.palette.accentForeground
-                            else -> theme.palette.popoverForeground
-                        }.withAlpha(if (item.enabled) 1f else DISABLED_ALPHA),
-                    )
+                    dropdownMenuItemContent(item, highlighted)
                 }
             }
         }
     }
     return clicked
+}
+
+context(_: Composer)
+private fun dropdownMenuItemContent(
+    item: ShadcnMenuItem,
+    highlighted: Boolean,
+) {
+    val theme = shadcnTheme
+    val textColor = when {
+        item.destructive -> theme.palette.destructive
+        highlighted -> theme.palette.accentForeground
+        else -> theme.palette.popoverForeground
+    }.withAlpha(if (item.enabled) 1f else DISABLED_ALPHA)
+
+    if (item.shortcut == null) {
+        ShadcnText(
+            item.label,
+            variant = ShadcnTextVariant.Small,
+            color = textColor,
+        )
+    } else {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetweenHorizontal,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ShadcnText(
+                item.label,
+                variant = ShadcnTextVariant.Small,
+                color = textColor,
+            )
+            ShadcnText(
+                item.shortcut,
+                variant = ShadcnTextVariant.Xs,
+                color = theme.palette.mutedForeground.withAlpha(if (item.enabled) 1f else DISABLED_ALPHA),
+                modifier = Modifier.padding(start = Tw.Spacing.s4),
+            )
+        }
+    }
 }
 
 /**
