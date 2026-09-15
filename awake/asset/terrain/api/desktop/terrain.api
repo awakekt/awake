@@ -81,6 +81,26 @@ public final class com/awakekt/awake/asset/terrain/MutableHeightmap {
 	public final fun snapshot ()Lcom/awakekt/awake/asset/terrain/Heightmap;
 }
 
+public final class com/awakekt/awake/asset/terrain/RawHeightmapCodec {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/terrain/RawHeightmapCodec;
+	public final fun decode ([BIILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/asset/terrain/RawHeightmapFormat;FFLcom/awakekt/awake/core/math/GridOrigin;)Lcom/awakekt/awake/asset/terrain/Heightmap;
+	public static synthetic fun decode$default (Lcom/awakekt/awake/asset/terrain/RawHeightmapCodec;[BIILcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/asset/terrain/RawHeightmapFormat;FFLcom/awakekt/awake/core/math/GridOrigin;ILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/Heightmap;
+	public final fun decodeFromBitmap (Lcom/awakekt/awake/core/image/Bitmap;Lcom/awakekt/awake/core/math/Vec3f;FFLcom/awakekt/awake/core/math/GridOrigin;)Lcom/awakekt/awake/asset/terrain/Heightmap;
+	public static synthetic fun decodeFromBitmap$default (Lcom/awakekt/awake/asset/terrain/RawHeightmapCodec;Lcom/awakekt/awake/core/image/Bitmap;Lcom/awakekt/awake/core/math/Vec3f;FFLcom/awakekt/awake/core/math/GridOrigin;ILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/Heightmap;
+	public final fun encode16LittleEndian (Lcom/awakekt/awake/asset/terrain/Heightmap;FF)[B
+	public static synthetic fun encode16LittleEndian$default (Lcom/awakekt/awake/asset/terrain/RawHeightmapCodec;Lcom/awakekt/awake/asset/terrain/Heightmap;FFILjava/lang/Object;)[B
+}
+
+public final class com/awakekt/awake/asset/terrain/RawHeightmapFormat : java/lang/Enum {
+	public static final field Unsigned16BigEndian Lcom/awakekt/awake/asset/terrain/RawHeightmapFormat;
+	public static final field Unsigned16LittleEndian Lcom/awakekt/awake/asset/terrain/RawHeightmapFormat;
+	public static final field Unsigned8 Lcom/awakekt/awake/asset/terrain/RawHeightmapFormat;
+	public final fun getBytesPerSample ()I
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/asset/terrain/RawHeightmapFormat;
+	public static fun values ()[Lcom/awakekt/awake/asset/terrain/RawHeightmapFormat;
+}
+
 public final class com/awakekt/awake/asset/terrain/clipmap/ClipmapRingState {
 	public fun <init> (IFLcom/awakekt/awake/core/math/Vec3f;F)V
 	public final fun component1 ()I
@@ -142,6 +162,17 @@ public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker
 	public final fun getConfig ()Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;
 	public final fun getRingStates ()Ljava/util/List;
 	public final fun update (Lcom/awakekt/awake/core/math/Vec3f;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/asset/terrain/splat/SplatWeightMapCodec {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/terrain/splat/SplatWeightMapCodec;
+	public final fun createDefault (III)Lcom/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public static synthetic fun createDefault$default (Lcom/awakekt/awake/asset/terrain/splat/SplatWeightMapCodec;IIIILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public final fun decodeFromBitmap (Lcom/awakekt/awake/core/image/Bitmap;Z)Lcom/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public static synthetic fun decodeFromBitmap$default (Lcom/awakekt/awake/asset/terrain/splat/SplatWeightMapCodec;Lcom/awakekt/awake/core/image/Bitmap;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public final fun decodeRgba ([BIIZ)Lcom/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public static synthetic fun decodeRgba$default (Lcom/awakekt/awake/asset/terrain/splat/SplatWeightMapCodec;[BIIZILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public final fun encodeRgba (Lcom/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap;)[B
 }
 
 public final class com/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap {

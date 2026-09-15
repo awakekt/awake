@@ -7,10 +7,10 @@ package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.document.toColor
-import com.awakekt.awake.scene.document.toSceneColor
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.document.toColor
+import com.awakekt.awake.scene.document.toSceneColor
 import kotlin.reflect.KClass
 
 object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
