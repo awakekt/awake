@@ -30,12 +30,22 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.sample.composeshowcase.ui.ShowcaseCategory
 import com.awakekt.awake.sample.composeshowcase.ui.ShowcasePage
+import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 private val GestureSurface = Color.fromHex(0xF8FAFC)
 private val GestureBorder = Color.fromHex(0xCBD5E1)
 private val GestureBlue = Color.fromHex(0x2563EB)
 private val GesturePurple = Color.fromHex(0x7C3AED)
 private val GestureText = Color.fromHex(0x334155)
+
+private fun rounded(value: Float): String = value.roundToInt().toString()
+
+private fun roundedHundredths(value: Float): String =
+    (value * 100f).roundToInt().let { cents ->
+        val fractional = (if (cents < 0) -cents else cents) % 100
+        "${cents / 100}.${fractional.toString().padStart(2, '0')}"
+    }
 
 private class DragDemoState {
     var x: Int = 24
@@ -130,9 +140,9 @@ internal val GesturesPage = ShowcasePage(
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedByHorizontal(12.dp)) {
-                Text("pan=(%.0f, %.0f)".format(transform.panX, transform.panY), style = TextStyle.Default.copy(color = GestureText))
-                Text("zoom=%.2f".format(transform.zoom), style = TextStyle.Default.copy(color = GestureText))
-                Text("rotation=%.0f°".format(transform.rotation), style = TextStyle.Default.copy(color = GestureText))
+                Text("pan=(${rounded(transform.panX)}, ${rounded(transform.panY)})", style = TextStyle.Default.copy(color = GestureText))
+                Text("zoom=${roundedHundredths(transform.zoom)}", style = TextStyle.Default.copy(color = GestureText))
+                Text("rotation=${rounded(transform.rotation)}°", style = TextStyle.Default.copy(color = GestureText))
             }
         }
     },
