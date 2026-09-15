@@ -74,6 +74,7 @@ fun ShadcnMenubarMenu(
     onItemSelected: (Int) -> Unit,
     modifier: Modifier = Modifier,
     id: String? = null,
+    triggerModifier: Modifier = Modifier,
 ) {
     val anchor = remember { PopupAnchor() }
     val density = LocalDensity.current
@@ -84,6 +85,7 @@ fun ShadcnMenubarMenu(
             label = title,
             variant = if (isOpen) ShadcnButtonVariant.Secondary else ShadcnButtonVariant.Ghost,
             size = ShadcnButtonSizeVariant.Sm,
+            modifier = triggerModifier,
             onClick = { onOpenChange(!isOpen) },
         )
         if (isPresent(isOpen, alpha)) {
@@ -98,6 +100,7 @@ fun ShadcnMenubarMenu(
             ) {
                 ShadcnDropdownMenu(
                     entries = entries,
+                    id = id,
                     modifier = Modifier.alpha(alpha).semantics {
                         if (id != null) this[SemanticsProperties.TestTag] = id
                     },
