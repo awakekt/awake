@@ -16,6 +16,7 @@ public final class com/awakekt/awake/scene/audio/AudioSource {
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAutoPlay ()Z
 	public final fun getClip ()Lcom/awakekt/awake/core/audio/AudioClip;
+	public final fun getHasAutoPlayed ()Z
 	public final fun getLoop ()Z
 	public final fun getMaxDistance ()F
 	public final fun getPlayingHandle ()Lcom/awakekt/awake/core/audio/SoundHandle;
@@ -24,11 +25,13 @@ public final class com/awakekt/awake/scene/audio/AudioSource {
 	public final fun isPlaying ()Z
 	public final fun isSpatial3D ()Z
 	public final fun setAutoPlay (Z)V
+	public final fun setHasAutoPlayed (Z)V
 	public final fun setLoop (Z)V
 	public final fun setMaxDistance (F)V
 	public final fun setPlayingHandle (Lcom/awakekt/awake/core/audio/SoundHandle;)V
 	public final fun setSpatial3D (Z)V
 	public final fun setVolume (F)V
+	public final fun stop ()V
 	public fun toString ()Ljava/lang/String;
 }
 
