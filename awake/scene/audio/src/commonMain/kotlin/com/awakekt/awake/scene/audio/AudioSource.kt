@@ -28,6 +28,12 @@ data class AudioSource(
 ) {
     var playingHandle: SoundHandle? = null
     val isPlaying: Boolean get() = playingHandle?.isPlaying == true
+    var hasAutoPlayed: Boolean = false
+
+    fun stop() {
+        playingHandle?.stop()
+        playingHandle = null
+    }
 }
 
 /**

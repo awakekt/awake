@@ -24,7 +24,12 @@ class JvmAudioPlayer : AudioPlayer {
 
     private var activeMusicClip: Clip? = null
 
-    override fun playSound(clip: AudioClip, volume: Float, pan: Float): SoundHandle? {
+    override fun playSound(
+        clip: AudioClip,
+        volume: Float,
+        pan: Float,
+        loop: Boolean,
+    ): SoundHandle? {
         val totalVolume = (masterVolume * sfxVolume * volume).coerceIn(0f, 1f)
         if (totalVolume <= 0.0001f) return null
 
@@ -44,17 +49,32 @@ class JvmAudioPlayer : AudioPlayer {
             // Apply Stereo Panning
             applyPan(jvmClip, pan)
 
-            jvmClip.start()
+            if (loop) {
+                jvmClip.loop(Clip.LOOP_CONTINUOUSLY)
+            } else {
+                jvmClip.start()
+            }
 
             object : SoundHandle {
                 override val isPlaying: Boolean
-                    get() = jvmClip.isRunning
+                    get() = runCatching { jvmClip.isOpen && jvmClip.isRunning }.getOrDefault(false)
 
                 override fun stop() {
-                    if (jvmClip.isRunning) {
-                        jvmClip.stop()
+                    runCatching {
+                        if (jvmClip.isRunning) {
+                            jvmClip.stop()
+                        }
+                        if (jvmClip.isOpen) {
+                            jvmClip.close()
+                        }
                     }
-                    jvmClip.close()
+                }
+
+                override fun update(volume: Float, pan: Float) {
+                    if (!jvmClip.isOpen) return
+                    val dynamicVolume = (masterVolume * sfxVolume * volume).coerceIn(0f, 1f)
+                    applyGain(jvmClip, dynamicVolume)
+                    applyPan(jvmClip, pan)
                 }
             }
         }.getOrNull()

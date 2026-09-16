@@ -48,10 +48,10 @@ public abstract interface class com/awakekt/awake/core/audio/AudioPlayer {
 	public abstract fun getSfxVolume ()F
 	public abstract fun playMusic (Lcom/awakekt/awake/core/audio/AudioClip;FZ)V
 	public static synthetic fun playMusic$default (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;FZILjava/lang/Object;)V
-	public abstract fun playSound (Lcom/awakekt/awake/core/audio/AudioClip;FF)Lcom/awakekt/awake/core/audio/SoundHandle;
-	public static synthetic fun playSound$default (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;FFILjava/lang/Object;)Lcom/awakekt/awake/core/audio/SoundHandle;
-	public fun playSound3D (Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/core/audio/SoundHandle;
-	public static synthetic fun playSound3D$default (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public abstract fun playSound (Lcom/awakekt/awake/core/audio/AudioClip;FFZ)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public static synthetic fun playSound$default (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;FFZILjava/lang/Object;)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public fun playSound3D (Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FZ)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public static synthetic fun playSound3D$default (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FZILjava/lang/Object;)Lcom/awakekt/awake/core/audio/SoundHandle;
 	public abstract fun setMasterVolume (F)V
 	public abstract fun setMusicVolume (F)V
 	public abstract fun setSfxVolume (F)V
@@ -60,9 +60,9 @@ public abstract interface class com/awakekt/awake/core/audio/AudioPlayer {
 
 public final class com/awakekt/awake/core/audio/AudioPlayer$DefaultImpls {
 	public static synthetic fun playMusic$default (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;FZILjava/lang/Object;)V
-	public static synthetic fun playSound$default (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;FFILjava/lang/Object;)Lcom/awakekt/awake/core/audio/SoundHandle;
-	public static fun playSound3D (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/core/audio/SoundHandle;
-	public static synthetic fun playSound3D$default (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public static synthetic fun playSound$default (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;FFZILjava/lang/Object;)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public static fun playSound3D (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FZ)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public static synthetic fun playSound3D$default (Lcom/awakekt/awake/core/audio/AudioPlayer;Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FZILjava/lang/Object;)Lcom/awakekt/awake/core/audio/SoundHandle;
 }
 
 public final class com/awakekt/awake/core/audio/AudioPlayerFactory {
@@ -79,27 +79,39 @@ public final class com/awakekt/awake/core/audio/JvmAudioPlayer : com/awakekt/awa
 	public fun getMusicVolume ()F
 	public fun getSfxVolume ()F
 	public fun playMusic (Lcom/awakekt/awake/core/audio/AudioClip;FZ)V
-	public fun playSound (Lcom/awakekt/awake/core/audio/AudioClip;FF)Lcom/awakekt/awake/core/audio/SoundHandle;
-	public fun playSound3D (Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public fun playSound (Lcom/awakekt/awake/core/audio/AudioClip;FFZ)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public fun playSound3D (Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FZ)Lcom/awakekt/awake/core/audio/SoundHandle;
 	public fun setMasterVolume (F)V
 	public fun setMusicVolume (F)V
 	public fun setSfxVolume (F)V
 	public fun stopMusic ()V
 }
 
-public final class com/awakekt/awake/core/audio/NoOpAudioPlayer : com/awakekt/awake/core/audio/AudioPlayer {
+public class com/awakekt/awake/core/audio/NoOpAudioPlayer : com/awakekt/awake/core/audio/AudioPlayer {
 	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun dispose ()V
 	public fun getMasterVolume ()F
 	public fun getMusicVolume ()F
 	public fun getSfxVolume ()F
 	public fun playMusic (Lcom/awakekt/awake/core/audio/AudioClip;FZ)V
-	public fun playSound (Lcom/awakekt/awake/core/audio/AudioClip;FF)Lcom/awakekt/awake/core/audio/SoundHandle;
-	public fun playSound3D (Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;F)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public fun playSound (Lcom/awakekt/awake/core/audio/AudioClip;FFZ)Lcom/awakekt/awake/core/audio/SoundHandle;
+	public fun playSound3D (Lcom/awakekt/awake/core/audio/AudioClip;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;FZ)Lcom/awakekt/awake/core/audio/SoundHandle;
 	public fun setMasterVolume (F)V
 	public fun setMusicVolume (F)V
 	public fun setSfxVolume (F)V
 	public fun stopMusic ()V
+}
+
+public class com/awakekt/awake/core/audio/NoOpSoundHandle : com/awakekt/awake/core/audio/SoundHandle {
+	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun isPlaying ()Z
+	public fun setPlaying (Z)V
+	public fun stop ()V
+	public fun update (FF)V
 }
 
 public final class com/awakekt/awake/core/audio/PositionalAudioMath {
@@ -112,6 +124,13 @@ public final class com/awakekt/awake/core/audio/PositionalAudioMath {
 public abstract interface class com/awakekt/awake/core/audio/SoundHandle {
 	public abstract fun isPlaying ()Z
 	public abstract fun stop ()V
+	public fun update (FF)V
+	public static synthetic fun update$default (Lcom/awakekt/awake/core/audio/SoundHandle;FFILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/core/audio/SoundHandle$DefaultImpls {
+	public static fun update (Lcom/awakekt/awake/core/audio/SoundHandle;FF)V
+	public static synthetic fun update$default (Lcom/awakekt/awake/core/audio/SoundHandle;FFILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/core/audio/SoundSpecBuilder {

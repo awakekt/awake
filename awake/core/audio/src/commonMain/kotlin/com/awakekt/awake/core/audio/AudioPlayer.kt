@@ -12,6 +12,7 @@ import kotlin.math.sqrt
 interface SoundHandle {
     val isPlaying: Boolean
     fun stop()
+    fun update(volume: Float = 1f, pan: Float = 0f) {}
 }
 
 /**
@@ -55,7 +56,12 @@ interface AudioPlayer {
     var sfxVolume: Float
     var musicVolume: Float
 
-    fun playSound(clip: AudioClip, volume: Float = 1f, pan: Float = 0f): SoundHandle?
+    fun playSound(
+        clip: AudioClip,
+        volume: Float = 1f,
+        pan: Float = 0f,
+        loop: Boolean = false,
+    ): SoundHandle?
 
     fun playSound3D(
         clip: AudioClip,
@@ -63,6 +69,7 @@ interface AudioPlayer {
         listenerPos: Vec3f,
         listenerRight: Vec3f,
         maxDistance: Float = 50f,
+        loop: Boolean = false,
     ): SoundHandle? {
         val dx = emitterPos.x - listenerPos.x
         val dy = emitterPos.y - listenerPos.y
@@ -73,7 +80,7 @@ interface AudioPlayer {
         if (attenuation <= 0.001f) return null
 
         val pan = PositionalAudioMath.computePan(emitterPos, listenerPos, listenerRight)
-        return playSound(clip, volume = attenuation, pan = pan)
+        return playSound(clip, volume = attenuation, pan = pan, loop = loop)
     }
 
     fun playMusic(clip: AudioClip, volume: Float = 0.6f, loop: Boolean = true)
