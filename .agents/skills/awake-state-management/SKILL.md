@@ -24,13 +24,15 @@ retained Compose renders the state.
 |---|---|
 | Simulation that ticks, collides, renders, or replicates | ECS components and systems |
 | Authored scene/provider configuration that must save | `SceneDocument` and versioned provider payload |
-| Session/editor mode, selection, panel data, async progress, or user action state | Explicit Store/Contract or a thin state holder |
-| A shared UI value with no asynchronous work | Hoist to the lowest shared UI owner; use explicit state/events |
+| Entity authoring tool state (brush size, dynamics, layers, companion asset paths) | Ephemeral ECS capability component on the entity (`*BrushComponent`, `*AssetReference`) |
+| Session/editor mode, selection, panel layout, async progress, or user action state | Explicit Store/Contract or a thin state holder |
+| A shared UI value with no asynchronous work (active tab, picker visibility) | Hoist to the lowest shared UI owner; use explicit state/events |
 | A private transient widget detail | `remember` in the retained node |
 
 Do not put entities, renderer objects, a `World`, or mutable provider resources in Store state. Store
 stable IDs, immutable display data, and operation state; the effect handler or session resolves the
-live engine object when it executes.
+live engine object when it executes. Never store canonical entity tool parameters or asset links in
+Store or UI state holders—they belong on the entity's ECS components.
 
 Use full MVI only when a coherent feature has state transitions plus user actions and/or one-shot
 effects. A simple static surface or local toggle does not need a Contract. Keep one Contract per

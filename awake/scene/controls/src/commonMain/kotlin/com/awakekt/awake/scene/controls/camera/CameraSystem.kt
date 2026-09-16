@@ -29,8 +29,15 @@ class CameraSystem(
     private val inputProvider: () -> GameplayInput,
     /** Optional screen boundaries the 3D scene is confined to. */
     private val viewportBounds: () -> Rectangle?,
+    /** Configurable gesture policy for camera navigation. */
+    private val gesturePolicy: CameraGesturePolicy = CameraGesturePolicy.Default,
 ) : System {
-    constructor(inputProvider: () -> GameplayInput) : this(inputProvider, { null })
+    constructor(inputProvider: () -> GameplayInput) : this(inputProvider, { null }, CameraGesturePolicy.Default)
+    constructor(inputProvider: () -> GameplayInput, viewportBounds: () -> Rectangle?) : this(
+        inputProvider,
+        viewportBounds,
+        CameraGesturePolicy.Default,
+    )
 
     private var lastPointerX = 0f
     private var lastPointerY = 0f
@@ -48,7 +55,8 @@ class CameraSystem(
 
         val bounds = viewportBounds()
         val inViewport = bounds?.contains(input.pointerX, input.pointerY) ?: true
-        val dragging = if (wasDragging) input.pointerDown else (input.pointerDown && inViewport)
+        val isDragActive = gesturePolicy.isOrbitDragging.isDragging(input)
+        val dragging = if (wasDragging) isDragActive else (isDragActive && inViewport)
         val dx = if (dragging && wasDragging) input.pointerX - lastPointerX else 0f
         val dy = if (dragging && wasDragging) input.pointerY - lastPointerY else 0f
         lastPointerX = input.pointerX
@@ -77,16 +85,18 @@ class CameraSystem(
         dy: Float,
         inViewport: Boolean,
     ) {
+        val yawSign = if (gesturePolicy.invertYaw) -1f else 1f
+        val pitchSign = if (gesturePolicy.invertPitch) -1f else 1f
         if (config.mode.usesYaw) {
-            config.yaw += dx * LOOK_SENSITIVITY
+            config.yaw += dx * gesturePolicy.lookSensitivity * yawSign
         }
         if (config.mode.usesPitch) {
-            config.pitch = (config.pitch - dy * LOOK_SENSITIVITY)
+            config.pitch = (config.pitch - dy * gesturePolicy.lookSensitivity * pitchSign)
                 .coerceIn(-PITCH_LIMIT, PITCH_LIMIT)
         }
         if (config.mode.usesZoom && inViewport) {
             val scroll = input.scrollDeltaY
-            config.distance = (config.distance - scroll * ZOOM_SENSITIVITY)
+            config.distance = (config.distance - scroll * gesturePolicy.zoomSensitivity)
                 .coerceIn(config.minDistance, config.maxDistance)
         }
     }

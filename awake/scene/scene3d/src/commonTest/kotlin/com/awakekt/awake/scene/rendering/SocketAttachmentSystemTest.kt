@@ -13,13 +13,13 @@ import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.animation.ModularCharacterComponent
+import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.animation.SocketAttachmentComponent
 import com.awakekt.awake.scene.rendering.animation.SocketAttachmentSystem
+import kotlin.math.PI
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.math.PI
 
 class SocketAttachmentSystemTest {
 

@@ -1113,13 +1113,21 @@ public abstract interface annotation class com/awakekt/awake/ui/shadcn/component
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnTabsKt {
-	public static final fun ShadcnTabs (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)V
-	public static synthetic fun ShadcnTabs$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static final fun ShadcnTabs (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant;Lkotlin/jvm/functions/Function1;)V
+	public static synthetic fun ShadcnTabs$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnTabsScope {
 	public final fun tab (Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Lkotlin/jvm/functions/Function1;)V
 	public static synthetic fun tab$default (Lcom/awakekt/awake/ui/shadcn/components/ShadcnTabsScope;Ljava/lang/String;Ljava/lang/String;ZLjava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant : java/lang/Enum {
+	public static final field Line Lcom/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant;
+	public static final field Pill Lcom/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant;
+	public static fun values ()[Lcom/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant;
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnTextKt {

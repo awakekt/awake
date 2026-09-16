@@ -20,6 +20,8 @@ import com.awakekt.awake.asset.terrain.splat.TerrainSplatWeightMap
  * @property tilingScale World-space UV tiling frequency for diffuse textures.
  * @property clipmapConfig Concentric LOD ring configuration for dynamic camera tracking.
  * @property isVisible Visibility toggle for terrain render passes.
+ * @property material Optional surface material containing diffuse layers and colormap textures.
+ * @property revision Invalidation counter incremented when height samples or splat weights are modified.
  */
 data class TerrainComponent(
     var heightmap: Heightmap,
@@ -27,4 +29,6 @@ data class TerrainComponent(
     var tilingScale: Float = 16.0f,
     val clipmapConfig: TerrainClipmapConfig = TerrainClipmapConfig(),
     var isVisible: Boolean = true,
+    var material: TerrainMaterial? = null,
+    var revision: Int = 0,
 )
