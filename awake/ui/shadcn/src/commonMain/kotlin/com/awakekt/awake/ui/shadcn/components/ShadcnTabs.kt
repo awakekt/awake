@@ -7,12 +7,15 @@
 
 package com.awakekt.awake.ui.shadcn.components
 
+import com.awakekt.awake.compose.foundation.BorderSides
 import com.awakekt.awake.compose.foundation.background
+import com.awakekt.awake.compose.foundation.border
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.hoverable
 import com.awakekt.awake.compose.foundation.interaction.InteractionSource
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.Row
+import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.height
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.runtime.Composer
@@ -30,8 +33,18 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.tailwind.Tw
 import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
 
+/** Visual appearance of the tabs bar. */
+enum class ShadcnTabsVariant {
+    /** Pill-style tab list with muted background container and elevated active pill. */
+    Pill,
+
+    /** Underline-style tab list with bottom border and active indicator line. */
+    Line,
+}
+
 /**
- * shadcn's tab bar: a muted `rounded-lg p-[3px] h-9` list with `rounded-md` triggers inside.
+ * shadcn's tab bar: a muted `rounded-lg p-[3px] h-9` list with `rounded-md` triggers inside,
+ * or a clean underline-style tab strip with [ShadcnTabsVariant.Line].
  *
  * **An inactive trigger is `text-foreground/60`, not `text-muted-foreground`.** Sixty percent of the
  * *foreground* is a different colour from the muted token, and it is what makes an inactive tab read
@@ -46,21 +59,36 @@ fun ShadcnTabs(
     selectedValue: String,
     onSelectedChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    variant: ShadcnTabsVariant = ShadcnTabsVariant.Pill,
     content: ShadcnTabsScope.() -> Unit,
 ) {
     val items = remember(content) { ShadcnTabsScope().apply(content).items }
     val theme = shadcnTheme
 
     key("shadcn-tabs-bar") {
-        Row(
-            modifier
-                .height(ShadcnTabsHeight)
-                .background(theme.palette.muted, theme.radii.lg)
-                .padding(ShadcnTabsListPadding),
-        ) {
-            items.forEach { item ->
-                key(item.value) {
-                    ShadcnTabTrigger(item, selectedValue, onSelectedChange)
+        if (variant == ShadcnTabsVariant.Line) {
+            Row(
+                modifier
+                    .height(ShadcnTabsHeight)
+                    .border(1.dp, theme.palette.border, sides = BorderSides(top = false, end = false, bottom = true, start = false)),
+            ) {
+                items.forEach { item ->
+                    key(item.value) {
+                        ShadcnTabLineTrigger(item, selectedValue, onSelectedChange)
+                    }
+                }
+            }
+        } else {
+            Row(
+                modifier
+                    .height(ShadcnTabsHeight)
+                    .background(theme.palette.muted, theme.radii.lg)
+                    .padding(ShadcnTabsListPadding),
+            ) {
+                items.forEach { item ->
+                    key(item.value) {
+                        ShadcnTabTrigger(item, selectedValue, onSelectedChange)
+                    }
                 }
             }
         }
@@ -101,6 +129,55 @@ private fun ShadcnTabTrigger(
                 this[SemanticsProperties.TestTag] = item.tag ?: "parity-tabs.${item.label}"
                 this[SemanticsProperties.Selected] = active
                 if (!item.enabled) this[SemanticsProperties.Disabled] = true
+            },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val body = item.content
+        if (body == null) {
+            ShadcnText(
+                item.label,
+                variant = ShadcnTextVariant.Small,
+                color = if (active || interaction.isHovered) {
+                    theme.palette.foreground
+                } else {
+                    theme.palette.foreground.withAlpha(ShadcnTabsInactiveAlpha)
+                },
+            )
+        } else {
+            body()
+        }
+    }
+}
+
+context(_: Composer)
+private fun ShadcnTabLineTrigger(
+    item: ShadcnTab,
+    selectedValue: String,
+    onSelectedChange: (String) -> Unit,
+) {
+    val theme = shadcnTheme
+    val interaction = remember(item.value) { InteractionSource() }
+    val active = item.value == selectedValue
+    Box(
+        Modifier
+            .height(ShadcnTabsHeight)
+            .hoverable(interaction, enabled = item.enabled)
+            .clickable(interaction) { if (item.enabled) onSelectedChange(item.value) }
+            .padding(horizontal = Tw.Spacing.s2, vertical = Tw.Spacing.s1)
+            .semantics {
+                this[SemanticsProperties.Role] = SemanticsRole.Tab
+                this[SemanticsProperties.Label] = item.label
+                this[SemanticsProperties.TestTag] = item.tag ?: "parity-tabs.${item.label}"
+                this[SemanticsProperties.Selected] = active
+                if (!item.enabled) this[SemanticsProperties.Disabled] = true
+            }
+            .let {
+                if (active) {
+                    it.border(2.dp, theme.palette.foreground, sides = BorderSides(top = false, end = false, bottom = true, start = false))
+                } else {
+                    it
+                }
             },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalAlignment = Alignment.CenterVertically,

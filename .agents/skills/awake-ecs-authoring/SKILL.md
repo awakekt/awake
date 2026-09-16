@@ -59,6 +59,21 @@ rejects it because a tag has exactly one canonical value.
 Calling `components()`, `componentsA()`, or `componentsB()` for an `EcsTag` lazily materializes
 repeated singleton references for source compatibility. `componentAt` does not materialize one.
 
+### Editor Capability Components vs Persistent Components vs UI State
+
+The ECS `World` is the **Single Source of Truth** for both runtime simulation and editor authoring.
+
+1. **Persistent Scene Components** (`TerrainComponent`, `TerrainAssetReference`):
+   - Represent the persistent scene entity saved to scene documents (`.scene.json`) or asset manifests (`.terrain.json`).
+   - Must carry all asset provenance references (`assetPath`, `splatMapPath`, `colorMapPath`, `heightmapAssetPath`, `layers`).
+2. **Ephemeral Tool Capability Components** (`TerrainBrushComponent`, `CameraGizmoComponent`, `Selectable`):
+   - Attached to the entity in `World` only while actively authoring.
+   - Hold interactive tool state: brush radius, strength, falloff, sculpt tool, brush shape, target height, active layer, viewport shading mode (`Textured`, `SplatRgba`, `Satellite`).
+   - Systems (`TerrainMeshRuntimeSystem`, `TerrainBrushViewportTool`) read directly from these components each frame.
+3. **Stateless UI Panels**:
+   - Compose UI panels and inspector state holders (`*InspectorState`) are pure observers and controllers.
+   - **Never store canonical domain or tool state in UI-only memory.** UI state must synchronize with the entity's ECS components in the `World` immediately on interaction.
+
 ## Systems
 
 ```kotlin
@@ -175,5 +190,6 @@ through to whatever outer extension does match.
 - [ ] No structural mutation during `queryEach` iteration.
 - [ ] Camera entities carry both `Camera` and `CameraComponent`.
 - [ ] Teardown destroys only entities this feature spawned, plus its GPU resources.
+- [ ] Editor tool parameters and asset references live in ECS components on the entity, never in UI-only memory.
 - [ ] New nested DSL receivers are `@DslMarker`-annotated.
 - [ ] ECS storage changes include matched ordinary/tag benchmarks, GC evidence, and all-target tests.

@@ -218,4 +218,21 @@ class ShadcnControlsTest {
 
         assertEquals(4f, quad.radius, 0.5f, "the checkbox is not rounded-[4px]")
     }
+
+    @Test
+    fun lineVariantTabsRendersTriggers() {
+        val frame = composeFrame(300, 80) {
+            provideShadcnTheme(theme) {
+                com.awakekt.awake.ui.shadcn.components.ShadcnTabs(
+                    selectedValue = "map",
+                    onSelectedChange = {},
+                    variant = com.awakekt.awake.ui.shadcn.components.ShadcnTabsVariant.Line,
+                ) {
+                    tab("inspector", "Inspector")
+                    tab("map", "Map Editor")
+                }
+            }
+        }
+        assertTrue(frame.primitivesOf<DrawCommand.Glyph>().isNotEmpty())
+    }
 }
