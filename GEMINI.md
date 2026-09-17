@@ -31,6 +31,8 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 - [Awake Core Math](.agents/skills/awake-core-math/SKILL.md): Vec3f, Quat, Mat4, Bounds, and geometry
 - [Awake State Management](.agents/skills/awake-state-management/SKILL.md): Reactive state and event flows
 - [Awake Framework Boundary](.agents/skills/awake-framework-boundary/SKILL.md): Rules separating core engine from game packs
+- [Awake Capability Extraction](.agents/skills/awake-capability-extraction/SKILL.md): Cross-repository capability ownership and duplicate prevention
+- [Awake Codec and Asset Source](.agents/skills/awake-codec-and-asset-source/SKILL.md): Pure byte codecs and asynchronous asset resolution
 - [Awake Copyright & Provenance](.agents/skills/awake-copyright-provenance/SKILL.md): License and attribution rules
 
 ### Rendering, Pipelines & Shaders
@@ -72,9 +74,18 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 - [Awake Tailwind to Compose](.agents/skills/awake-tailwind-to-compose/SKILL.md): Tailwind classes to Compose modifiers
 - [Awake Web to Compose](.agents/skills/awake-web-to-compose/SKILL.md): Web layout patterns to Compose
 
+### Multiplatform Capability Design
+- [KMP Platform Capability Design](.agents/skills/kmp-platform-capability-design/SKILL.md): Weakest-platform-first API and adapter design
+- [KMP Conformance Contract Testing](.agents/skills/kmp-conformance-contract-testing/SKILL.md): Shared contract tests and reference implementations
+
 ### Release Process & Repository Flow
 - [Awake Release Process & Branching Guidelines](docs/release-process.md): Branching flow, SemVer channels, CHANGELOG rules, and `./scripts/release.py` usage
 - [Awake Milestone Workflow](.agents/skills/awake-milestone-workflow/SKILL.md): Repository hygiene, GitHub milestone tracking, and commit squashing rules
+
+**Pull Request & Release Invariants**:
+1. Every PR must be created with `--milestone "<milestone>"` (e.g. `gh pr create --milestone "v0.1.0-beta.1"`). Never create a PR without an assigned milestone.
+2. Every `feat:` and `fix:` PR must add a bullet entry to `CHANGELOG.md` under `## [Unreleased]`. CI enforces this.
+3. When all issues/PRs for an active milestone are merged, cut the release via `./scripts/release.py cut --channel <channel>`, push the tag, and close the milestone.
 
 Use `feat/*`, `fix/*`, `refactor/*`, or `docs/*` for topic branches. For dependent layers,
 create a linear stacked PR chain with each PR targeting the branch immediately below it; review

@@ -82,6 +82,11 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 - [Awake Release Process & Branching Guidelines](docs/release-process.md): Branching flow, SemVer channels, CHANGELOG rules, and `./scripts/release.py` usage
 - [Awake Milestone Workflow](.agents/skills/awake-milestone-workflow/SKILL.md): Repository hygiene, GitHub milestone tracking, and commit squashing rules
 
+**Pull Request & Release Invariants**:
+1. Every PR must be created with `--milestone "<milestone>"` (e.g. `gh pr create --milestone "v0.1.0-beta.1"`). Never create a PR without an assigned milestone.
+2. Every `feat:` and `fix:` PR must add a bullet entry to `CHANGELOG.md` under `## [Unreleased]`. CI enforces this.
+3. When all issues/PRs for an active milestone are merged, cut the release via `./scripts/release.py cut --channel <channel>`, push the tag, and close the milestone.
+
 Use `feat/*`, `fix/*`, `refactor/*`, or `docs/*` for topic branches. For dependent layers,
 create a linear stacked PR chain with each PR targeting the branch immediately below it; review
 and merge from the bottom upward. Follow `docs/release-process.md` before creating or retargeting
