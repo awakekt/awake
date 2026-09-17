@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.3] - 2026-09-18
+
 ### Added
 
 - **Slider drag completion callback.** Core sliders now expose a single release/keyboard completion
@@ -22,9 +24,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   moving-platform behavior.
 - **Named skeletal sockets.** glTF bone names are preserved, skeletons support name lookup, and
   socket attachments now follow joint translation and rotation in world space.
+- **Pure terrain asset codecs (`RawHeightmapCodec`, `SplatWeightMapCodec`).** Added pure byte codecs
+  and `TerrainMaterial` contracts in `:awake:asset:terrain` for synchronous, headless terrain decoding
+  and splat painting.
+- **Audio playback lifecycle and dynamic spatial positioning.** Extended `:awake:core:audio` with
+  playback state transitions, looping, volume and pitch modulation, and dynamic 3D listener-relative
+  spatial updates.
+- **shadcn Tabs Ghost variant.** Added containerless `Ghost` variant for toolbar and editor tab bars
+  without heavy background containers.
 
 ### Fixed
 
+- **Context menu secondary press dismissal.** Added auto-dismissal on secondary click outside menu
+  bounds to match native desktop interaction paradigms.
+- **Shadow map texel snapping.** Stabilized directional light cascaded shadow map texel snapping to
+  eliminate sub-pixel swimming artifacts during camera movement.
 - **Desktop Vulkan environment rendering.** Map the generic environment packet into Vulkan's frame
   context so the shared skybox feature no longer inherits the default hidden-environment flag.
 - **Button-group divider visibility.** Use a readable interaction divider tint instead of the 10%-alpha
