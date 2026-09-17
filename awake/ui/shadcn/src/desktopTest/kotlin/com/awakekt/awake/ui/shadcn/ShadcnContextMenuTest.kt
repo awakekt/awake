@@ -7,10 +7,13 @@ package com.awakekt.awake.ui.shadcn
 
 import com.awakekt.awake.compose.foundation.clickable
 import com.awakekt.awake.compose.foundation.layout.Box
+import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
+import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.testing.ComposeTestSession
 import com.awakekt.awake.compose.testing.composeTestSession
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.compose.ui.semantics.testTag
@@ -69,6 +72,82 @@ class ShadcnContextMenuTest {
 
         world.session.clickAt(VIEWPORT - EDGE, VIEWPORT - EDGE)
         assertTrue(leavesWithinTheFade(world.session), "an outside press did not close the context menu")
+    }
+
+    @Test
+    fun secondaryPressingOutsideClosesIt() {
+        val session = composeTestSession(VIEWPORT, VIEWPORT) {
+            provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
+                Column(Modifier.fillMaxSize()) {
+                    shadcnContextMenu(
+                        entries = listOf("A1", "A2").map(::ShadcnMenuItem),
+                        onItemSelected = {},
+                        modifier = Modifier.size(100.dp).testTag("targetA"),
+                        menuModifier = Modifier.testTag("menuA"),
+                        id = "menuA",
+                    ) {
+                        Box(Modifier.fillMaxSize())
+                    }
+                }
+            }
+        }
+        session.frame()
+        // Right click on target A
+        session.frame(secondaryPressAt(50, 50))
+        assertTrue(session.frame().semantics.firstNotNullOfOrNull { it.find("menuA") } != null, "menu A did not open")
+
+        // Right click outside target A and outside the popup
+        session.frame(secondaryPressAt(300, 300))
+        var menuAGone = false
+        repeat(FADE_FRAMES) {
+            if (session.frame().semantics.firstNotNullOfOrNull { it.find("menuA") } == null) {
+                menuAGone = true
+            }
+        }
+        assertTrue(menuAGone, "an outside secondary press did not close the context menu")
+    }
+
+    @Test
+    fun openingAnotherContextMenuClosesTheFirst() {
+        val session = composeTestSession(VIEWPORT, VIEWPORT) {
+            provideShadcnTheme(ShadcnThemeValues(ShadcnTheme)) {
+                Column(Modifier.fillMaxSize()) {
+                    shadcnContextMenu(
+                        entries = listOf("A1", "A2").map(::ShadcnMenuItem),
+                        onItemSelected = {},
+                        modifier = Modifier.size(100.dp).testTag("targetA"),
+                        menuModifier = Modifier.testTag("menuA"),
+                        id = "menuA",
+                    ) {
+                        Box(Modifier.fillMaxSize())
+                    }
+                    shadcnContextMenu(
+                        entries = listOf("B1", "B2").map(::ShadcnMenuItem),
+                        onItemSelected = {},
+                        modifier = Modifier.size(100.dp).testTag("targetB"),
+                        menuModifier = Modifier.testTag("menuB"),
+                        id = "menuB",
+                    ) {
+                        Box(Modifier.fillMaxSize())
+                    }
+                }
+            }
+        }
+        session.frame()
+        session.frame(secondaryPressAt(50, 50))
+        assertTrue(session.frame().semantics.firstNotNullOfOrNull { it.find("menuA") } != null, "menu A did not open")
+
+        // Right click on target B (at y = 150)
+        session.frame(secondaryPressAt(50, 150))
+        assertTrue(session.frame().semantics.firstNotNullOfOrNull { it.find("menuB") } != null, "menu B did not open")
+
+        var menuAGone = false
+        repeat(FADE_FRAMES) {
+            if (session.frame().semantics.firstNotNullOfOrNull { it.find("menuA") } == null) {
+                menuAGone = true
+            }
+        }
+        assertTrue(menuAGone, "menu A remained open after menu B was opened")
     }
 
     @Test

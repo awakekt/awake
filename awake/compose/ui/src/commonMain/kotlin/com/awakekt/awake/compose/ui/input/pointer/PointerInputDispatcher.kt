@@ -115,11 +115,15 @@ class PointerInputDispatcher(
         val modal = root.activeModalLayer()
         isModalOpen = modal != null
         val dismissable = root.activeDismissableLayer()
-        if (event.type == PointerEventType.Press && dismissable != null && !dismissable.contains(x, y)) {
-            dismissable.onDismissRequest?.invoke()
-            event.consume()
-            updateHover(modal ?: root, x, y)
-            return true
+        if (dismissable != null && !dismissable.contains(x, y)) {
+            if (event.type == PointerEventType.Press) {
+                dismissable.onDismissRequest?.invoke()
+                event.consume()
+                updateHover(modal ?: root, x, y)
+                return true
+            } else if (event.type == PointerEventType.SecondaryPress) {
+                dismissable.onDismissRequest?.invoke()
+            }
         }
         val hitRoot = modal ?: root
 
