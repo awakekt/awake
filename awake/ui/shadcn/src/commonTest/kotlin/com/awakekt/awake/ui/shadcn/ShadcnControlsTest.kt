@@ -235,4 +235,23 @@ class ShadcnControlsTest {
         }
         assertTrue(frame.primitivesOf<DrawCommand.Glyph>().isNotEmpty())
     }
+
+    @Test
+    fun ghostVariantTabsRendersTriggersWithoutContainerBackground() {
+        val frame = composeFrame(300, 80) {
+            provideShadcnTheme(theme) {
+                com.awakekt.awake.ui.shadcn.components.ShadcnTabs(
+                    selectedValue = "scene",
+                    onSelectedChange = {},
+                    variant = com.awakekt.awake.ui.shadcn.components.ShadcnTabsVariant.Ghost,
+                ) {
+                    tab("scene", "Scene")
+                    tab("game", "Game")
+                }
+            }
+        }
+        assertTrue(frame.primitivesOf<DrawCommand.Glyph>().isNotEmpty())
+        val quads = frame.primitivesOf<DrawCommand.RoundedQuad>()
+        assertTrue(quads.all { it.w < 200f })
+    }
 }
