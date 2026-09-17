@@ -1123,6 +1123,7 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnTabsScope {
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant : java/lang/Enum {
+	public static final field Ghost Lcom/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant;
 	public static final field Line Lcom/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant;
 	public static final field Pill Lcom/awakekt/awake/ui/shadcn/components/ShadcnTabsVariant;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
