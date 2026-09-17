@@ -79,9 +79,7 @@ fun shadcnContextMenu(
             }
             // Local coordinates, so the caller's own placed origin turns them into root space.
             .onSecondaryPress { x, y ->
-                state.anchor.x = origin.x + x
-                state.anchor.y = origin.y + y
-                state.open = true
+                state.openAt(origin.x + x, origin.y + y)
             },
     ) {
         content?.let { it() }
@@ -90,7 +88,7 @@ fun shadcnContextMenu(
             Layer(
                 kind = LayerKind.Popup,
                 dismissOnOutsideClick = true,
-                onDismissRequest = { state.open = false },
+                onDismissRequest = { state.close() },
                 // A zero-sized anchor at the pointer: "below" a point is at the point.
                 positionProvider = remember {
                     AnchoredBelowPositionProvider(
@@ -106,12 +104,14 @@ fun shadcnContextMenu(
                     id = id,
                 )?.let { selected ->
                     onItemSelected(selected)
-                    state.open = false
+                    state.close()
                 }
             }
         }
     }
 }
+
+private var activeContextMenuState: ContextMenuState? = null
 
 /**
  * Where the menu was opened, and whether it is.
@@ -122,4 +122,22 @@ fun shadcnContextMenu(
 private class ContextMenuState {
     val anchor = PopupAnchor()
     var open: Boolean = false
+
+    fun openAt(x: Int, y: Int) {
+        if (activeContextMenuState != null && activeContextMenuState != this) {
+            activeContextMenuState?.close()
+        }
+        anchor.x = x
+        anchor.y = y
+        open = true
+        activeContextMenuState = this
+    }
+
+    fun close() {
+        open = false
+        if (activeContextMenuState == this) {
+            activeContextMenuState = null
+        }
+    }
 }
+

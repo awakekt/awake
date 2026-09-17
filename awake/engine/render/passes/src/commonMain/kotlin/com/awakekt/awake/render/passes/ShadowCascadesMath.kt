@@ -13,6 +13,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.times
 import com.awakekt.awake.render.passes.DirectionalShadowBox
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.pow
@@ -128,18 +129,33 @@ private fun boxAround(
     for (corner in corners) {
         radius = max(radius, (corner - center).length3())
     }
-    // Rounded up to a whole texel so the box's size is stable against float wobble in the
-    // corners, which would otherwise resize it slightly every frame and undo the snapping below.
-    val texelWorldSize = radius * 2f / texelsPerCascade
-    val snapped = Vec3f(
-        floor(center.x / texelWorldSize) * texelWorldSize,
-        floor(center.y / texelWorldSize) * texelWorldSize,
-        floor(center.z / texelWorldSize) * texelWorldSize,
-    )
+    // Stabilize radius to whole texel units so camera rotation does not cause fractional radius jitter.
+    val initialTexelSize = (radius * 2f) / texelsPerCascade
+    radius = ceil(radius / initialTexelSize) * initialTexelSize
+    val texelWorldSize = (radius * 2f) / texelsPerCascade
+
+    // Compute the light coordinate system basis vectors (camera looking from eye towards center).
+    val f = Vec3f(-lightDirection.x, -lightDirection.y, -lightDirection.z)
+    val s = f.cross(up).normalized()
+    val u = s.cross(f).normalized()
+
+    // Project center onto the light's view plane (right and up axes).
+    val coordX = s.dot(center)
+    val coordY = u.dot(center)
+
+    // Snap to integer texel increments in light view space to prevent shadow shimmering/flickering.
+    val snappedX = floor(coordX / texelWorldSize) * texelWorldSize
+    val snappedY = floor(coordY / texelWorldSize) * texelWorldSize
+
+    // Shift center by the snapping delta in the light's basis plane.
+    val deltaX = snappedX - coordX
+    val deltaY = snappedY - coordY
+    val snappedCenter = center + s * deltaX + u * deltaY
+
     // Behind the slice by its own radius plus depth margin, so nothing between the light and the
     // slice is clipped away and left unable to cast into it.
-    val eye = snapped + lightDirection * (radius + radius * DEPTH_MARGIN)
-    val view = Mat4.setLookAt(eye = eye, center = snapped, up = up)
+    val eye = snappedCenter + lightDirection * (radius + radius * DEPTH_MARGIN)
+    val view = Mat4.setLookAt(eye = eye, center = snappedCenter, up = up)
     val projection = Mat4.orthographic(
         left = -radius,
         right = radius,

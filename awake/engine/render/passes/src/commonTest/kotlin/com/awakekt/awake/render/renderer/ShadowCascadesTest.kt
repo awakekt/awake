@@ -128,6 +128,36 @@ class ShadowCascadesTest {
     }
 
     @Test
+    fun cameraMovementSnapsInLightViewSpace() {
+        val base = Lens(eye = Vec3f(0f, 5f, 20f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.5f, far = 200f)
+        val moved = Lens(
+            eye = Vec3f(0.137f, 5.25f, 20.89f),
+            center = Vec3f(0.137f, 0.25f, 0.89f),
+            fovYRadians = 1f,
+            near = 0.5f,
+            far = 200f,
+        )
+
+        val boxesA = cascadeShadowBoxes(base, ASPECT, LIGHT, ClipSpace.Vulkan)
+        val boxesB = cascadeShadowBoxes(moved, ASPECT, LIGHT, ClipSpace.Vulkan)
+
+        val staticWorldPoint = Vec3f(2f, 1f, -3f)
+        boxesA.zip(boxesB).forEachIndexed { index, (a, b) ->
+            val clipA = Vec4(staticWorldPoint.x, staticWorldPoint.y, staticWorldPoint.z, 1f) * a.viewProjection
+            val clipB = Vec4(staticWorldPoint.x, staticWorldPoint.y, staticWorldPoint.z, 1f) * b.viewProjection
+            val texelClipSize = 2f / DEFAULT_SHADOW_MAP_SIZE
+            val diffX = abs(clipA.x - clipB.x) / texelClipSize
+            val diffY = abs(clipA.y - clipB.y) / texelClipSize
+            val fracX = abs(diffX - kotlin.math.round(diffX))
+            val fracY = abs(diffY - kotlin.math.round(diffY))
+            assertTrue(
+                fracX < 0.05f && fracY < 0.05f,
+                "Cascade $index shadow map shifted by fractional texels: fracX=$fracX, fracY=$fracY",
+            )
+        }
+    }
+
+    @Test
     fun theNearCascadeResolvesCentimetres() {
         // The studio camera: 45 degrees, 16:9, seeing 100m.
         val camera = Lens(
