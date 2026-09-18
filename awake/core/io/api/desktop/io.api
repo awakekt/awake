@@ -343,6 +343,13 @@ public abstract interface class com/awakekt/awake/core/io/ResourceReader {
 	public abstract fun read-gIAlu-s (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/core/io/Sha256 {
+	public static final field INSTANCE Lcom/awakekt/awake/core/io/Sha256;
+	public final fun digest ([B)[B
+	public final fun digestHex (Ljava/lang/String;)Ljava/lang/String;
+	public final fun digestHex ([B)Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/core/io/WriteMode : java/lang/Enum {
 	public static final field Append Lcom/awakekt/awake/core/io/WriteMode;
 	public static final field CreateNew Lcom/awakekt/awake/core/io/WriteMode;
