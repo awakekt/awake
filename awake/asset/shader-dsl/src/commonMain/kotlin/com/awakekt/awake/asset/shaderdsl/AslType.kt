@@ -47,6 +47,9 @@ sealed interface AslType {
     /** `texture_2d<f32>` texture resource. */
     object Texture2dF32 : AslType
 
+    /** `texture_cube<f32>` cubemap color texture resource. */
+    object TextureCubeF32 : AslType
+
     /** `texture_2d_array<f32>` -- N same-sized layers a shader indexes, not N bindings. */
     object Texture2dArrayF32 : AslType
 

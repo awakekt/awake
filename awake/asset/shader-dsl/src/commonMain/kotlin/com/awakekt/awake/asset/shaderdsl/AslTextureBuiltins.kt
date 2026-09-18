@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions")
+
 package com.awakekt.awake.asset.shaderdsl
 
 import com.awakekt.awake.core.geometry.GpuDataShape
@@ -220,6 +222,14 @@ fun textureSampleCompareLevelCube(
     return AslCall("textureSampleCompareLevel", listOf(texture, sampler, direction, depthRef), F32)
 }
 
+private val SupportedTextureDimensionTypes = setOf(
+    AslType.Texture2dF32,
+    AslType.TextureCubeF32,
+    AslType.TextureDepth2d,
+    AslType.TextureDepth2dArray,
+    AslType.TextureDepthCube,
+)
+
 /**
  * WGSL `textureDimensions` builtin.
  *
@@ -227,10 +237,7 @@ fun textureSampleCompareLevelCube(
  * @return The texture dimensions as `vec2<u32>`.
  */
 fun textureDimensions(texture: AslExpr): AslExpr {
-    if (texture.type != AslType.Texture2dF32 &&
-        texture.type != AslType.TextureDepth2d &&
-        texture.type != AslType.TextureDepth2dArray
-    ) {
+    if (texture.type !in SupportedTextureDimensionTypes) {
         throw AslDefinitionException("textureDimensions needs a texture, got ${texture.type}.")
     }
     return AslCall("textureDimensions", listOf(texture), AslType.Vec2U)
@@ -249,8 +256,60 @@ fun textureDimensions(texture: AslExpr): AslExpr {
 fun textureSample(texture: AslExpr, sampler: AslExpr, uv: AslExpr): AslExpr {
     if (texture.type != AslType.Texture2dF32 || sampler.type != AslType.Sampler) {
         throw AslDefinitionException(
-            "textureSample needs (texture, sampler), got ${'$'}{texture.type}/${'$'}{sampler.type}.",
+            "textureSample needs (texture, sampler), got ${texture.type}/${sampler.type}.",
         )
     }
     return AslCall("textureSample", listOf(texture, sampler, uv), AslType.Data(GpuDataShape.Vec4))
+}
+
+/**
+ * WGSL `textureSample` builtin for cubemap color textures with implicit level-of-detail.
+ *
+ * @param texture The cubemap texture expression (`texture_cube<f32>`).
+ * @param sampler The sampler expression.
+ * @param direction The 3D ray direction vector (`vec3f`).
+ * @return The sampled `vec4f` value.
+ */
+fun textureSampleCube(
+    texture: AslExpr,
+    sampler: AslExpr,
+    direction: AslExpr,
+): AslExpr {
+    val problem = when {
+        texture.type != AslType.TextureCubeF32 || sampler.type != AslType.Sampler ->
+            "needs (cubemap texture, sampler), got ${texture.type}/${sampler.type}"
+        direction.type != AslType.Data(GpuDataShape.Vec3) ->
+            "takes a vec3f direction, got ${direction.type}"
+        else -> null
+    }
+    if (problem != null) throw AslDefinitionException("textureSampleCube $problem.")
+    return AslCall("textureSample", listOf(texture, sampler, direction), AslType.Data(GpuDataShape.Vec4))
+}
+
+/**
+ * WGSL `textureSampleLevel` builtin for cubemap color textures with explicit level-of-detail.
+ *
+ * @param texture The cubemap texture expression (`texture_cube<f32>`).
+ * @param sampler The sampler expression.
+ * @param direction The 3D ray direction vector (`vec3f`).
+ * @param level The mip level (`f32`).
+ * @return The sampled `vec4f` value.
+ */
+fun textureSampleLevelCube(
+    texture: AslExpr,
+    sampler: AslExpr,
+    direction: AslExpr,
+    level: AslExpr,
+): AslExpr {
+    val problem = when {
+        texture.type != AslType.TextureCubeF32 || sampler.type != AslType.Sampler ->
+            "needs (cubemap texture, sampler), got ${texture.type}/${sampler.type}"
+        direction.type != AslType.Data(GpuDataShape.Vec3) ->
+            "takes a vec3f direction, got ${direction.type}"
+        level.type != F32 ->
+            "takes an f32 level, got ${level.type}"
+        else -> null
+    }
+    if (problem != null) throw AslDefinitionException("textureSampleLevelCube $problem.")
+    return AslCall("textureSampleLevel", listOf(texture, sampler, direction, level), AslType.Data(GpuDataShape.Vec4))
 }

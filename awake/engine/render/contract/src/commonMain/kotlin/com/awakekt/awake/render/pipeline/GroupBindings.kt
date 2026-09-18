@@ -52,12 +52,14 @@ enum class ShaderStage {
  *   the same either way -- there, dimensionality lives in the image view -- so only WebGPU's
  *   `viewDimension` reads it, and every existing `kind == SampledTexture` test keeps matching
  *   arrays instead of silently skipping them.
+ * @property cubemap Whether a [ResourceKind.SampledTexture] is `texture_cube` rather than `texture_2d`.
  */
 data class ResourceBinding(
     val binding: Int,
     val kind: ResourceKind,
     val stages: Set<ShaderStage>,
     val arrayed: Boolean = false,
+    val cubemap: Boolean = false,
     val textureSampleType: TextureSampleType = TextureSampleType.Float,
     val samplerType: SamplerType = SamplerType.Filtering,
     val minBindingSize: Long = 0L,
@@ -71,6 +73,12 @@ data class ResourceBinding(
         }
         require(!arrayed || kind == ResourceKind.SampledTexture) {
             "Only a sampled texture can be arrayed; binding $binding is $kind."
+        }
+        require(!cubemap || kind == ResourceKind.SampledTexture) {
+            "Only a sampled texture can be a cubemap; binding $binding is $kind."
+        }
+        require(!arrayed || !cubemap) {
+            "A binding cannot be both arrayed and a cubemap; binding $binding has both set."
         }
         require(kind == ResourceKind.SampledTexture || textureSampleType == TextureSampleType.Float) {
             "Only a sampled texture can declare a sample type; binding $binding is $kind."

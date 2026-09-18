@@ -73,6 +73,8 @@ internal fun Renderer.uploadTexture(asset: TextureAsset): Texture =
         asset.data,
         asset.width,
         asset.height,
+        layerCount = asset.layerCount,
+        isCubemap = asset.isCubemap,
     ).let(textureResources::register)
 
 internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): RenderTarget {

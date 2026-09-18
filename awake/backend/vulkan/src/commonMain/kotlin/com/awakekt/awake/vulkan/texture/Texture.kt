@@ -22,6 +22,7 @@ import com.awakekt.awake.vulkan.handles.SamplerHandle
 import com.awakekt.awake.vulkan.models.info.VkBufferCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkBufferImageCopy
 import com.awakekt.awake.vulkan.models.info.VkBufferUsageFlagBits
+import com.awakekt.awake.vulkan.models.info.VkImageCreateFlagBits
 import com.awakekt.awake.vulkan.models.info.VkImageCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkImageLayout2
 import com.awakekt.awake.vulkan.models.info.VkImageSubresourceRange
@@ -56,6 +57,7 @@ class Texture(
     samplerCreateInfo: VkSamplerCreateInfo = VkSamplerCreateInfo(),
     /** More than one uploads a `VK_IMAGE_VIEW_TYPE_2D_ARRAY`; see [TextureAsset.layerCount]. */
     private val layerCount: Int = 1,
+    private val isCubemap: Boolean = false,
 ) {
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
@@ -70,7 +72,7 @@ class Texture(
         // Neither backend has GPU-side mip generation (no vkCmdBlitImage binding here, no
         // native blit-based mip gen in WebGPU either) -- the whole chain is box-filtered on
         // the CPU once at load time and every level uploaded directly. See MipChain.kt.
-        val asset = TextureAsset(data, width, height, layerCount)
+        val asset = TextureAsset(data, width, height, layerCount, isCubemap)
         // Array textures ship level 0 only. A chain per layer would need a box filter that
         // respects layer boundaries and interleaved buffer offsets, and the arrays this exists
         // for -- splat layers, lookup tables -- are sampled at an explicit level anyway.
@@ -130,6 +132,7 @@ class Texture(
                     sharingMode = VkSharingMode2.VK_SHARING_MODE_EXCLUSIVE,
                     mipLevels = mipLevels.size,
                     arrayLayers = layerCount,
+                    flags = if (isCubemap) VkImageCreateFlagBits.VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT else 0,
                 ),
             )
             val imageRequirements = VulkanImages.vkGetImageMemoryRequirements(device, rawImage)
@@ -212,10 +215,10 @@ class Texture(
                 device,
                 VkImageViewCreateInfo(
                     image = rawImage,
-                    viewType = if (layerCount > 1) {
-                        VkImageViewType.VK_IMAGE_VIEW_TYPE_2D_ARRAY
-                    } else {
-                        VkImageViewType.VK_IMAGE_VIEW_TYPE_2D
+                    viewType = when {
+                        isCubemap -> VkImageViewType.VK_IMAGE_VIEW_TYPE_CUBE
+                        layerCount > 1 -> VkImageViewType.VK_IMAGE_VIEW_TYPE_2D_ARRAY
+                        else -> VkImageViewType.VK_IMAGE_VIEW_TYPE_2D
                     },
                     format = VkFormat.VK_FORMAT_R8G8B8A8_UNORM,
                     subresourceRange = VkImageSubresourceRange(

@@ -930,20 +930,22 @@ public final class com/awakekt/awake/render/pipeline/PipelineVariant$Overlay : c
 }
 
 public final class com/awakekt/awake/render/pipeline/ResourceBinding {
-	public fun <init> (ILcom/awakekt/awake/render/pipeline/ResourceKind;Ljava/util/Set;ZLcom/awakekt/awake/render/pipeline/TextureSampleType;Lcom/awakekt/awake/render/pipeline/SamplerType;J)V
-	public synthetic fun <init> (ILcom/awakekt/awake/render/pipeline/ResourceKind;Ljava/util/Set;ZLcom/awakekt/awake/render/pipeline/TextureSampleType;Lcom/awakekt/awake/render/pipeline/SamplerType;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ILcom/awakekt/awake/render/pipeline/ResourceKind;Ljava/util/Set;ZZLcom/awakekt/awake/render/pipeline/TextureSampleType;Lcom/awakekt/awake/render/pipeline/SamplerType;J)V
+	public synthetic fun <init> (ILcom/awakekt/awake/render/pipeline/ResourceKind;Ljava/util/Set;ZZLcom/awakekt/awake/render/pipeline/TextureSampleType;Lcom/awakekt/awake/render/pipeline/SamplerType;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component2 ()Lcom/awakekt/awake/render/pipeline/ResourceKind;
 	public final fun component3 ()Ljava/util/Set;
 	public final fun component4 ()Z
-	public final fun component5 ()Lcom/awakekt/awake/render/pipeline/TextureSampleType;
-	public final fun component6 ()Lcom/awakekt/awake/render/pipeline/SamplerType;
-	public final fun component7 ()J
-	public final fun copy (ILcom/awakekt/awake/render/pipeline/ResourceKind;Ljava/util/Set;ZLcom/awakekt/awake/render/pipeline/TextureSampleType;Lcom/awakekt/awake/render/pipeline/SamplerType;J)Lcom/awakekt/awake/render/pipeline/ResourceBinding;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/ResourceBinding;ILcom/awakekt/awake/render/pipeline/ResourceKind;Ljava/util/Set;ZLcom/awakekt/awake/render/pipeline/TextureSampleType;Lcom/awakekt/awake/render/pipeline/SamplerType;JILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/ResourceBinding;
+	public final fun component5 ()Z
+	public final fun component6 ()Lcom/awakekt/awake/render/pipeline/TextureSampleType;
+	public final fun component7 ()Lcom/awakekt/awake/render/pipeline/SamplerType;
+	public final fun component8 ()J
+	public final fun copy (ILcom/awakekt/awake/render/pipeline/ResourceKind;Ljava/util/Set;ZZLcom/awakekt/awake/render/pipeline/TextureSampleType;Lcom/awakekt/awake/render/pipeline/SamplerType;J)Lcom/awakekt/awake/render/pipeline/ResourceBinding;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/ResourceBinding;ILcom/awakekt/awake/render/pipeline/ResourceKind;Ljava/util/Set;ZZLcom/awakekt/awake/render/pipeline/TextureSampleType;Lcom/awakekt/awake/render/pipeline/SamplerType;JILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/ResourceBinding;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getArrayed ()Z
 	public final fun getBinding ()I
+	public final fun getCubemap ()Z
 	public final fun getKind ()Lcom/awakekt/awake/render/pipeline/ResourceKind;
 	public final fun getMinBindingSize ()J
 	public final fun getSamplerType ()Lcom/awakekt/awake/render/pipeline/SamplerType;
@@ -1265,21 +1267,27 @@ public abstract interface class com/awakekt/awake/render/texture/RenderTarget {
 }
 
 public final class com/awakekt/awake/render/texture/TextureAsset {
-	public fun <init> ([BIII)V
-	public synthetic fun <init> ([BIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> ([BIIIZ)V
+	public synthetic fun <init> ([BIIIZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()[B
 	public final fun component2 ()I
 	public final fun component3 ()I
 	public final fun component4 ()I
-	public final fun copy ([BIII)Lcom/awakekt/awake/render/texture/TextureAsset;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/texture/TextureAsset;[BIIIILjava/lang/Object;)Lcom/awakekt/awake/render/texture/TextureAsset;
+	public final fun component5 ()Z
+	public final fun copy ([BIIIZ)Lcom/awakekt/awake/render/texture/TextureAsset;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/texture/TextureAsset;[BIIIZILjava/lang/Object;)Lcom/awakekt/awake/render/texture/TextureAsset;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getData ()[B
 	public final fun getHeight ()I
 	public final fun getLayerCount ()I
 	public final fun getWidth ()I
 	public fun hashCode ()I
+	public final fun isCubemap ()Z
 	public final fun layerOffset (I)I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/texture/TextureAssetKt {
+	public static final fun createCubemapAsset (Ljava/util/List;I)Lcom/awakekt/awake/render/texture/TextureAsset;
 }
 

@@ -450,6 +450,19 @@ fun AslShaderBuilder.texture2d(group: Int, binding: Int): AslHandleProvider<AslR
     }
 
 /**
+ * Declares a `texture_cube<f32>` resource at the specified [group] and [binding].
+ *
+ * @param group The bind group index.
+ * @param binding The binding index.
+ * @return A handle provider for the texture reference.
+ */
+fun AslShaderBuilder.textureCube(group: Int, binding: Int): AslHandleProvider<AslRef> =
+    AslHandleProvider { name ->
+        textureBindings += AslTextureBinding(name, group, binding, AslType.TextureCubeF32)
+        AslRef(name, AslType.TextureCubeF32)
+    }
+
+/**
  * Declares a `texture_2d_array<f32>` resource at the specified [group] and [binding].
  *
  * One binding holding N same-sized layers a shader indexes, rather than N separate bindings --

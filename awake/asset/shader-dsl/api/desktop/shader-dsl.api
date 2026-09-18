@@ -326,6 +326,7 @@ public final class com/awakekt/awake/asset/shaderdsl/AslShaderBuilderKt {
 	public static final fun storageArrayOfArrays (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;Ljava/lang/String;Ljava/lang/String;IILjava/lang/String;Lcom/awakekt/awake/core/geometry/GpuDataShape;I)Lcom/awakekt/awake/asset/shaderdsl/AslStorageArrays;
 	public static final fun texture2d (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;II)Lcom/awakekt/awake/asset/shaderdsl/AslHandleProvider;
 	public static final fun texture2dArray (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;II)Lcom/awakekt/awake/asset/shaderdsl/AslHandleProvider;
+	public static final fun textureCube (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;II)Lcom/awakekt/awake/asset/shaderdsl/AslHandleProvider;
 	public static final fun textureDepth2d (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;II)Lcom/awakekt/awake/asset/shaderdsl/AslHandleProvider;
 	public static final fun textureDepth2dArray (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;II)Lcom/awakekt/awake/asset/shaderdsl/AslHandleProvider;
 	public static final fun textureDepthCube (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;II)Lcom/awakekt/awake/asset/shaderdsl/AslHandleProvider;
@@ -378,7 +379,9 @@ public final class com/awakekt/awake/asset/shaderdsl/AslTextureBuiltinsKt {
 	public static final fun textureSampleArrayLevelDepth (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public static final fun textureSampleCompareLevel (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public static final fun textureSampleCompareLevelCube (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static final fun textureSampleCube (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public static final fun textureSampleLevel (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static final fun textureSampleLevelCube (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public static final fun textureSampleLevelDepth (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 }
 
@@ -435,6 +438,10 @@ public final class com/awakekt/awake/asset/shaderdsl/AslType$Texture2dArrayF32 :
 
 public final class com/awakekt/awake/asset/shaderdsl/AslType$Texture2dF32 : com/awakekt/awake/asset/shaderdsl/AslType {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdsl/AslType$Texture2dF32;
+}
+
+public final class com/awakekt/awake/asset/shaderdsl/AslType$TextureCubeF32 : com/awakekt/awake/asset/shaderdsl/AslType {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderdsl/AslType$TextureCubeF32;
 }
 
 public final class com/awakekt/awake/asset/shaderdsl/AslType$TextureDepth2d : com/awakekt/awake/asset/shaderdsl/AslType {
