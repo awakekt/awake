@@ -23,8 +23,13 @@ public abstract interface class com/awakekt/awake/vulkan/application/GlfwWindowI
 	public abstract fun cursorY ()D
 	public abstract fun framebufferScaleX ()F
 	public abstract fun framebufferScaleY ()F
+	public fun isFocused ()Z
 	public abstract fun isKeyDown (I)Z
 	public abstract fun isMouseButtonDown (I)Z
+}
+
+public final class com/awakekt/awake/vulkan/application/GlfwWindowInput$DefaultImpls {
+	public static fun isFocused (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)Z
 }
 
 public final class com/awakekt/awake/vulkan/application/GlfwWindowInputKt {

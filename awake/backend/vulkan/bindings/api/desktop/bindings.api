@@ -2378,6 +2378,7 @@ public final class com/awakekt/awake/vulkan/gen/VulkanWindow {
 	public final fun glfwGetKey (JI)I
 	public final fun glfwGetMouseButton (JI)I
 	public final fun glfwGetRequiredInstanceExtensions ()[Ljava/lang/String;
+	public final fun glfwGetWindowAttrib (JI)I
 	public final fun glfwGetWindowHeight (J)I
 	public final fun glfwGetWindowWidth (J)I
 	public final fun glfwInit ()Z

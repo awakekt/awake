@@ -73,11 +73,15 @@ public final class com/awakekt/awake/engine/bootstrap/dsl/WindowBackendDsl {
 
 public final class com/awakekt/awake/engine/bootstrap/dsl/WindowDsl {
 	public final fun getBackend ()Lcom/awakekt/awake/engine/bootstrap/dsl/WindowBackendDsl;
+	public final fun getBackgroundFrameRate ()I
 	public final fun getFrameRateMode ()Lcom/awakekt/awake/core/host/FrameRateMode;
 	public final fun getPresentMode ()Lcom/awakekt/awake/engine/platform/config/PresentMode;
+	public final fun getThrottleCpuWhenNotForeground ()Z
 	public final fun getTitle ()Ljava/lang/String;
+	public final fun setBackgroundFrameRate (I)V
 	public final fun setFrameRateMode (Lcom/awakekt/awake/core/host/FrameRateMode;)V
 	public final fun setPresentMode (Lcom/awakekt/awake/engine/platform/config/PresentMode;)V
+	public final fun setThrottleCpuWhenNotForeground (Z)V
 	public final fun setTitle (Ljava/lang/String;)V
 	public final fun size (II)V
 }

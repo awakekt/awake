@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan.application
 import com.awakekt.awake.vulkan.gen.VulkanWindow
 
 internal const val GLFW_PRESS = 1
+internal const val GLFW_FOCUSED = 0x00020001
 
 /**
  * Seam between [pollGlfwInput]/[pollGlfwTextInput]'s translation logic and the real GLFW
@@ -25,6 +26,7 @@ interface GlfwWindowInput {
     fun framebufferScaleX(): Float
     fun framebufferScaleY(): Float
     fun consumeScrollDeltaY(): Double
+    fun isFocused(): Boolean = true
 }
 
 private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
@@ -33,6 +35,7 @@ private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
     override fun cursorX(): Double = VulkanWindow.glfwGetCursorPos(window)[0]
     override fun cursorY(): Double = VulkanWindow.glfwGetCursorPos(window)[1]
     override fun consumeScrollDeltaY(): Double = VulkanWindow.glfwConsumeScrollDeltaY(window)
+    override fun isFocused(): Boolean = VulkanWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
 
     override fun framebufferScaleX(): Float = framebufferScale().first
     override fun framebufferScaleY(): Float = framebufferScale().second

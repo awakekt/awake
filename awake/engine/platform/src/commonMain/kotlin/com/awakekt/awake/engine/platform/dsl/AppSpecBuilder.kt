@@ -97,6 +97,12 @@ class AppWindowConfigBuilder {
     /** Target frame rate mode. See [FrameRateMode]; `Auto` unless a caller says. */
     var frameRateMode: FrameRateMode = FrameRateMode.Auto
 
+    /** Whether to throttle CPU/GPU frame rate when the window is not in the foreground. Defaults to true. */
+    var throttleCpuWhenNotForeground: Boolean = true
+
+    /** Target frame rate when unfocused if [throttleCpuWhenNotForeground] is true. Defaults to 15 FPS. */
+    var backgroundFrameRate: Int = WindowConfig.DEFAULT_BACKGROUND_FRAME_RATE
+
     fun size(width: Int, height: Int) {
         this.width = width
         this.height = height
@@ -109,6 +115,8 @@ class AppWindowConfigBuilder {
         backend = backend.selection,
         presentMode = presentMode,
         frameRateMode = frameRateMode,
+        throttleCpuWhenNotForeground = throttleCpuWhenNotForeground,
+        backgroundFrameRate = backgroundFrameRate,
     )
 }
 

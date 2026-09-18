@@ -73,25 +73,36 @@ public final class com/awakekt/awake/engine/platform/config/PresentMode : java/l
 }
 
 public final class com/awakekt/awake/engine/platform/config/WindowConfig {
-	public fun <init> (Ljava/lang/String;IILcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;Lcom/awakekt/awake/engine/platform/config/PresentMode;Lcom/awakekt/awake/core/host/FrameRateMode;)V
-	public synthetic fun <init> (Ljava/lang/String;IILcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;Lcom/awakekt/awake/engine/platform/config/PresentMode;Lcom/awakekt/awake/core/host/FrameRateMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public static final field Companion Lcom/awakekt/awake/engine/platform/config/WindowConfig$Companion;
+	public static final field DEFAULT_BACKGROUND_FRAME_RATE I
+	public fun <init> (Ljava/lang/String;IILcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;Lcom/awakekt/awake/engine/platform/config/PresentMode;Lcom/awakekt/awake/core/host/FrameRateMode;ZI)V
+	public synthetic fun <init> (Ljava/lang/String;IILcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;Lcom/awakekt/awake/engine/platform/config/PresentMode;Lcom/awakekt/awake/core/host/FrameRateMode;ZIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()I
 	public final fun component3 ()I
 	public final fun component4 ()Lcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;
 	public final fun component5 ()Lcom/awakekt/awake/engine/platform/config/PresentMode;
 	public final fun component6 ()Lcom/awakekt/awake/core/host/FrameRateMode;
-	public final fun copy (Ljava/lang/String;IILcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;Lcom/awakekt/awake/engine/platform/config/PresentMode;Lcom/awakekt/awake/core/host/FrameRateMode;)Lcom/awakekt/awake/engine/platform/config/WindowConfig;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/engine/platform/config/WindowConfig;Ljava/lang/String;IILcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;Lcom/awakekt/awake/engine/platform/config/PresentMode;Lcom/awakekt/awake/core/host/FrameRateMode;ILjava/lang/Object;)Lcom/awakekt/awake/engine/platform/config/WindowConfig;
+	public final fun component7 ()Z
+	public final fun component8 ()I
+	public final fun copy (Ljava/lang/String;IILcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;Lcom/awakekt/awake/engine/platform/config/PresentMode;Lcom/awakekt/awake/core/host/FrameRateMode;ZI)Lcom/awakekt/awake/engine/platform/config/WindowConfig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/engine/platform/config/WindowConfig;Ljava/lang/String;IILcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;Lcom/awakekt/awake/engine/platform/config/PresentMode;Lcom/awakekt/awake/core/host/FrameRateMode;ZIILjava/lang/Object;)Lcom/awakekt/awake/engine/platform/config/WindowConfig;
+	public final fun effectiveFrameRateMode (Z)Lcom/awakekt/awake/core/host/FrameRateMode;
+	public static synthetic fun effectiveFrameRateMode$default (Lcom/awakekt/awake/engine/platform/config/WindowConfig;ZILjava/lang/Object;)Lcom/awakekt/awake/core/host/FrameRateMode;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBackend ()Lcom/awakekt/awake/engine/platform/dsl/AppWindowBackend;
+	public final fun getBackgroundFrameRate ()I
 	public final fun getFrameRateMode ()Lcom/awakekt/awake/core/host/FrameRateMode;
 	public final fun getHeight ()I
 	public final fun getPresentMode ()Lcom/awakekt/awake/engine/platform/config/PresentMode;
+	public final fun getThrottleCpuWhenNotForeground ()Z
 	public final fun getTitle ()Ljava/lang/String;
 	public final fun getWidth ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/engine/platform/config/WindowConfig$Companion {
 }
 
 public abstract interface class com/awakekt/awake/engine/platform/core/AppModule : com/awakekt/awake/engine/platform/lifecycle/AppInstaller {
@@ -169,11 +180,15 @@ public final class com/awakekt/awake/engine/platform/dsl/AppWindowConfigBuilder 
 	public fun <init> ()V
 	public final fun build ()Lcom/awakekt/awake/engine/platform/config/WindowConfig;
 	public final fun getBackend ()Lcom/awakekt/awake/engine/platform/dsl/AppWindowBackendBuilder;
+	public final fun getBackgroundFrameRate ()I
 	public final fun getFrameRateMode ()Lcom/awakekt/awake/core/host/FrameRateMode;
 	public final fun getPresentMode ()Lcom/awakekt/awake/engine/platform/config/PresentMode;
+	public final fun getThrottleCpuWhenNotForeground ()Z
 	public final fun getTitle ()Ljava/lang/String;
+	public final fun setBackgroundFrameRate (I)V
 	public final fun setFrameRateMode (Lcom/awakekt/awake/core/host/FrameRateMode;)V
 	public final fun setPresentMode (Lcom/awakekt/awake/engine/platform/config/PresentMode;)V
+	public final fun setThrottleCpuWhenNotForeground (Z)V
 	public final fun setTitle (Ljava/lang/String;)V
 	public final fun size (II)V
 }
