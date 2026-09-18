@@ -469,12 +469,15 @@ private fun litShadow(
             val offsetNdcXy = let("offsetNdcXy", offsetProjected.xy / offsetProjected.w)
             val sampleUv = let("sampleUv", ndcToUv(offsetNdcXy, clipSpace))
             iff(
-                (sampleUv.x lt 0f.lit) or (sampleUv.x gt 1f.lit) or
-                    (sampleUv.y lt 0f.lit) or (sampleUv.y gt 1f.lit) or
+                (ndc.x lt -1f.lit) or (ndc.x gt 1f.lit) or
+                    (ndc.y lt -1f.lit) or (ndc.y gt 1f.lit) or
                     (ndc.z lt 0f.lit) or (ndc.z gt 1f.lit),
             ) { continueLoop() }
             assign(resolved, 1.lit)
             val bias = let("bias", worldBias * u.cascadeDepthScales[cascade].x)
+            val minUv = let("minUv", texel * toF32(pcfRadius))
+            val maxUv = let("maxUv", vec2(1f.lit) - minUv)
+            val clampedSampleUv = let("clampedSampleUv", clamp(sampleUv, minUv, maxUv))
             val offsetNdc = ndc
             val shadow = variable("shadow", 0f.lit)
             val samples = variable("samples", 0f.lit)
@@ -488,7 +491,7 @@ private fun litShadow(
                         textureSampleCompareLevel(
                             shadowMap,
                             shadowMapSampler,
-                            sampleUv + offset,
+                            clampedSampleUv + offset,
                             cascade,
                             offsetNdc.z - bias,
                         ),

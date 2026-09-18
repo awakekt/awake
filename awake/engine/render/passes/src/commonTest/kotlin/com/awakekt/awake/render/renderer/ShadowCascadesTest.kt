@@ -128,6 +128,39 @@ class ShadowCascadesTest {
     }
 
     @Test
+    fun cameraOrbitingAndRotationPreservesExactProjectionScaling() {
+        val base = Lens(eye = Vec3f(0f, 5f, 20f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.5f, far = 200f)
+        val initialBoxes = cascadeShadowBoxes(base, ASPECT, LIGHT, ClipSpace.Vulkan)
+
+        for (angleDeg in 5..360 step 15) {
+            val rad = angleDeg * (kotlin.math.PI.toFloat() / 180f)
+            val rotatedEye = Vec3f(kotlin.math.sin(rad) * 20f, 5f, kotlin.math.cos(rad) * 20f)
+            val rotatedCamera = Lens(
+                eye = rotatedEye,
+                center = Vec3f(0f, 0f, 0f),
+                fovYRadians = 1f,
+                near = 0.5f,
+                far = 200f,
+            )
+            val boxes = cascadeShadowBoxes(rotatedCamera, ASPECT, LIGHT, ClipSpace.Vulkan)
+            initialBoxes.zip(boxes).forEachIndexed { index, (initial, current) ->
+                assertEquals(
+                    initial.projection.m00,
+                    current.projection.m00,
+                    0.00001f,
+                    "Cascade $index projection scale drifted during orbit at $angleDeg degrees",
+                )
+                assertEquals(
+                    initial.projection.m11,
+                    current.projection.m11,
+                    0.00001f,
+                    "Cascade $index projection scale drifted during orbit at $angleDeg degrees",
+                )
+            }
+        }
+    }
+
+    @Test
     fun cameraMovementSnapsInLightViewSpace() {
         val base = Lens(eye = Vec3f(0f, 5f, 20f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.5f, far = 200f)
         val moved = Lens(

@@ -6,17 +6,16 @@
 package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.math.ClipSpace
-import com.awakekt.awake.core.math.Frustum
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.times
 import com.awakekt.awake.render.passes.DirectionalShadowBox
 import kotlin.math.abs
-import kotlin.math.ceil
 import kotlin.math.floor
-import kotlin.math.max
 import kotlin.math.pow
+import kotlin.math.sqrt
+import kotlin.math.tan
 
 /** How many cascades a directional light splits into unless a caller says otherwise. */
 const val DEFAULT_SHADOW_CASCADES = 3
@@ -89,49 +88,61 @@ fun cascadeShadowBoxes(
     val up = if (abs(lightDirection.y) > UP_PARALLEL_LIMIT) Vec3f(0f, 0f, 1f) else Vec3f(0f, 1f, 0f)
     var sliceNear = camera.near
     return splits.map { sliceFar ->
-        val slice = Lens(
-            eye = camera.eye,
-            center = camera.center,
-            up = camera.up,
-            fovYRadians = camera.fovYRadians,
-            near = sliceNear,
-            far = sliceFar,
-        ).also {
-            // Carried, not defaulted: a slice that forgets its camera is orthographic is fitted
-            // as a cone, and every cascade then covers a volume the camera does not render.
-            it.projection = camera.projection
-            it.orthoHalfHeight = camera.orthoHalfHeight
-        }
+        val currentNear = sliceNear
         sliceNear = sliceFar
-        boxAround(Frustum.corners(slice, aspect), lightDirection, up, clipSpace, texelsPerCascade)
+        boxAroundSlice(
+            camera = camera,
+            sliceNear = currentNear,
+            sliceFar = sliceFar,
+            aspect = aspect,
+            lightDirection = lightDirection,
+            up = up,
+            clipSpace = clipSpace,
+            texelsPerCascade = texelsPerCascade,
+        )
     }
 }
 
-/** The stable box around one slice: sphere fit, texel-snapped centre, ortho projection. */
-private fun boxAround(
-    corners: List<Vec3f>,
+/** The stable box around one slice: analytical sphere fit, light-space texel-snapped centre, ortho projection. */
+@Suppress("LongParameterList")
+private fun boxAroundSlice(
+    camera: Lens,
+    sliceNear: Float,
+    sliceFar: Float,
+    aspect: Float,
     lightDirection: Vec3f,
     up: Vec3f,
     clipSpace: ClipSpace,
     texelsPerCascade: Int,
 ): DirectionalShadowBox {
-    var centerX = 0f
-    var centerY = 0f
-    var centerZ = 0f
-    for (corner in corners) {
-        centerX += corner.x
-        centerY += corner.y
-        centerZ += corner.z
+    val forward = (camera.center - camera.eye).let { dir ->
+        val len = dir.length3()
+        if (len > 0.0001f) dir.scale(1f / len) else Vec3f(0f, 0f, -1f)
     }
-    val count = corners.size.toFloat()
-    val center = Vec3f(centerX / count, centerY / count, centerZ / count)
-    var radius = 0f
-    for (corner in corners) {
-        radius = max(radius, (corner - center).length3())
+
+    val zc: Float
+    val radius: Float
+    if (camera.projection == Lens.Projection.Orthographic) {
+        val h = camera.orthoHalfHeight
+        val w = h * aspect
+        zc = (sliceNear + sliceFar) * 0.5f
+        val halfDepth = (sliceFar - sliceNear) * 0.5f
+        radius = sqrt(halfDepth * halfDepth + w * w + h * h)
+    } else {
+        val tanHalfFov = tan(camera.fovYRadians * 0.5f)
+        val k = tanHalfFov * sqrt(1f + aspect * aspect)
+        val kSq = k * k
+        val zIdeal = (sliceNear + sliceFar) * 0.5f * (1f + kSq)
+        if (zIdeal >= sliceFar) {
+            zc = sliceFar
+            radius = k * sliceFar
+        } else {
+            zc = zIdeal
+            radius = sqrt((sliceFar - zc) * (sliceFar - zc) + kSq * sliceFar * sliceFar)
+        }
     }
-    // Stabilize radius to whole texel units so camera rotation does not cause fractional radius jitter.
-    val initialTexelSize = (radius * 2f) / texelsPerCascade
-    radius = ceil(radius / initialTexelSize) * initialTexelSize
+
+    val center = camera.eye + forward * zc
     val texelWorldSize = (radius * 2f) / texelsPerCascade
 
     // Compute the light coordinate system basis vectors (camera looking from eye towards center).
