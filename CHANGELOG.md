@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Pull request governance and milestone policy.** Added CI verification and agent workflow invariants requiring every pull request to be linked to an active milestone and to update `CHANGELOG.md`.
+
 ## [0.1.0-alpha.3] - 2026-09-18
 
 ### Added

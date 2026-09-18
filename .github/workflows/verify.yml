@@ -52,3 +52,6 @@ jobs:
 
       - name: Verify agent skills and catalog sync
         run: python3 tools/verify_agent_skills_sync.py
+
+      - name: Verify PR milestone and changelog policy
+        run: python3 tools/verify_pr_governance.py
