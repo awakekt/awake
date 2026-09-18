@@ -89,4 +89,8 @@ actual object VulkanWindow {
     // a TODO -- iOS has no GLFW cursor to set, but a caller forwarding UiFrameOutput.effects.
     // cursor here should be able to do so unconditionally across platforms.
     actual fun glfwSetCursorShape(window: Long, shape: Int) = Unit
+
+    actual fun glfwGetWindowAttrib(window: Long, attrib: Int): Int {
+        TODO("Not applicable on iOS -- see VulkanWindow.kt's doc comment.")
+    }
 }

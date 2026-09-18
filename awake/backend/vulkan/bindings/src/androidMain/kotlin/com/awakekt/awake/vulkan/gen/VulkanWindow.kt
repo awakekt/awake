@@ -90,4 +90,8 @@ actual object VulkanWindow {
     // crash a real run), a caller polling UiFrameOutput.effects.cursor and forwarding it here
     // should be able to do so unconditionally across platforms.
     actual fun glfwSetCursorShape(window: Long, shape: Int) = Unit
+
+    actual fun glfwGetWindowAttrib(window: Long, attrib: Int): Int {
+        TODO("Not applicable on Android -- see VulkanWindow.kt's doc comment.")
+    }
 }

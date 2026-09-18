@@ -104,10 +104,13 @@ fun runVulkanDesktopGame(
         application.create(window)
         while (!VulkanWindow.glfwWindowShouldClose(window)) {
             VulkanWindow.glfwPollEvents()
+            val isFocused = VulkanWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
+            DesktopFrameLoop.isWindowFocused = isFocused
             pollInput(window, game.input)
             pollGlfwTextInput(window, game.input)
             beforeFrame()
-            DesktopFrameLoop.tick(game.windowConfig.frameRateMode) { deltaTime ->
+            val effectiveMode = game.windowConfig.effectiveFrameRateMode(isFocused)
+            DesktopFrameLoop.tick(effectiveMode) { deltaTime ->
                 application.update(deltaTime.toFloat())
             }
             cursor?.let { applyUiCursor(window, it()) }

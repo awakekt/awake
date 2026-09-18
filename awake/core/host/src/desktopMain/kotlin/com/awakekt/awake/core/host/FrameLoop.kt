@@ -6,6 +6,19 @@
 package com.awakekt.awake.core.host
 
 object DesktopFrameLoop : FrameLoop {
+    /**
+     * Whether the host window currently has input focus.
+     */
+    @Volatile
+    var isWindowFocused: Boolean = true
+
+    /**
+     * Optional background frame rate cap applied when [isWindowFocused] is false.
+     * When null, the caller-specified [FrameRateMode] is used directly without background throttling.
+     */
+    @Volatile
+    var backgroundFrameRate: Int? = null
+
     private var previousFrameTime = System.nanoTime()
 
     override fun tick(
@@ -19,13 +32,19 @@ object DesktopFrameLoop : FrameLoop {
 
         onUpdate(deltaTime)
 
+        val effectiveMode = if (!isWindowFocused && backgroundFrameRate != null) {
+            FrameRateMode.Capped(backgroundFrameRate!!.coerceAtLeast(1))
+        } else {
+            mode
+        }
+
         val frameWorkNanos = System.nanoTime() - currentFrameTime
-        when (mode) {
+        when (effectiveMode) {
             is FrameRateMode.Auto, FrameRateMode.Unlimited -> {
                 // No artificial sleep throttling; display presentation / vsync controls cadence.
             }
             is FrameRateMode.Capped -> {
-                val desiredFrameTimeNanos = 1_000_000_000L / mode.targetFps
+                val desiredFrameTimeNanos = 1_000_000_000L / effectiveMode.targetFps
                 val sleepNanos = desiredFrameTimeNanos - frameWorkNanos
                 if (sleepNanos > 0) {
                     val sleepMillis = sleepNanos / 1_000_000L
@@ -38,5 +57,11 @@ object DesktopFrameLoop : FrameLoop {
 
     override fun tick(onUpdate: (deltaTime: Double) -> Unit) {
         tick(FrameRateMode.Auto, onUpdate)
+    }
+
+    internal fun resetForTest() {
+        isWindowFocused = true
+        backgroundFrameRate = null
+        previousFrameTime = System.nanoTime()
     }
 }

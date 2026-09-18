@@ -42,4 +42,64 @@ class DesktopFrameLoopTest {
         }
         assertTrue(secondDelta >= 0.010, "Expected second delta >= 10ms, but was ${secondDelta * 1000}ms")
     }
+
+    @Test
+    fun desktopFrameLoopThrottlesWhenUnfocusedWithBackgroundRate() {
+        try {
+            DesktopFrameLoop.backgroundFrameRate = 30
+            DesktopFrameLoop.isWindowFocused = false
+
+            // Prime the previousFrameTime
+            DesktopFrameLoop.tick(FrameRateMode.Unlimited) {}
+
+            var delta = -1.0
+            DesktopFrameLoop.tick(FrameRateMode.Unlimited) { d ->
+                delta = d
+            }
+            // 30 FPS target is ~33.3ms. Expect delta to be at least 20ms accounting for timer granularity.
+            assertTrue(delta >= 0.020, "Expected throttled delta >= 20ms, but was ${delta * 1000}ms")
+        } finally {
+            DesktopFrameLoop.resetForTest()
+        }
+    }
+
+    @Test
+    fun desktopFrameLoopDoesNotThrottleWhenFocused() {
+        try {
+            DesktopFrameLoop.backgroundFrameRate = 15
+            DesktopFrameLoop.isWindowFocused = true
+
+            // Prime the previousFrameTime
+            DesktopFrameLoop.tick(FrameRateMode.Unlimited) {}
+
+            var delta = -1.0
+            DesktopFrameLoop.tick(FrameRateMode.Unlimited) { d ->
+                delta = d
+            }
+            // In unlimited mode when focused, no sleep occurs (typically < 10ms).
+            assertTrue(delta < 0.050, "Expected unthrottled delta < 50ms, but was ${delta * 1000}ms")
+        } finally {
+            DesktopFrameLoop.resetForTest()
+        }
+    }
+
+    @Test
+    fun desktopFrameLoopDoesNotThrottleWhenBackgroundRateIsNull() {
+        try {
+            DesktopFrameLoop.backgroundFrameRate = null
+            DesktopFrameLoop.isWindowFocused = false
+
+            // Prime the previousFrameTime
+            DesktopFrameLoop.tick(FrameRateMode.Unlimited) {}
+
+            var delta = -1.0
+            DesktopFrameLoop.tick(FrameRateMode.Unlimited) { d ->
+                delta = d
+            }
+            // With null backgroundFrameRate, unlimited mode should not sleep
+            assertTrue(delta < 0.050, "Expected unthrottled delta < 50ms, but was ${delta * 1000}ms")
+        } finally {
+            DesktopFrameLoop.resetForTest()
+        }
+    }
 }

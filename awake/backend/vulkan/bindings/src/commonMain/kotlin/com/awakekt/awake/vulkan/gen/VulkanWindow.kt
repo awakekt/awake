@@ -94,4 +94,10 @@ expect object VulkanWindow {
      * project's `UiCursor` -- see `ResizablePanelGroup.kt`'s `handle()`), then applies it via
      * `glfwSetCursor`, so a real per-frame call never re-creates a cursor object. */
     fun glfwSetCursorShape(window: Long, shape: Int)
+
+    /**
+     * Returns the value of the specified window attribute (`glfwGetWindowAttrib`), such as
+     * `GLFW_FOCUSED` (0x00020001).
+     */
+    fun glfwGetWindowAttrib(window: Long, attrib: Int): Int
 }

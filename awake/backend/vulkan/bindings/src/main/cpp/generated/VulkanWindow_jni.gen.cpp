@@ -440,3 +440,23 @@ Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwSetCursorShape(
     }
     glfwSetCursor(reinterpret_cast<GLFWwindow*>(window_ptr), cursor);
 }
+
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetWindowAttrib(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window,
+        jint attrib) {
+    // --- Marshalling ---
+    void* window_ptr = reinterpret_cast<void*>(window);
+
+    // --- Error handling ---
+    if (!window_ptr) {
+        throw_illegal_state(env, "glfwGetWindowAttrib: window not initialized");
+        return 0;
+    }
+
+    return static_cast<jint>(glfwGetWindowAttrib(reinterpret_cast<GLFWwindow*>(window_ptr), static_cast<int>(attrib)));
+}
+

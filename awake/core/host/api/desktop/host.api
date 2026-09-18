@@ -5,6 +5,10 @@ public final class com/awakekt/awake/core/host/BinaryExtensionsKt {
 
 public final class com/awakekt/awake/core/host/DesktopFrameLoop : com/awakekt/awake/core/host/FrameLoop {
 	public static final field INSTANCE Lcom/awakekt/awake/core/host/DesktopFrameLoop;
+	public final fun getBackgroundFrameRate ()Ljava/lang/Integer;
+	public final fun isWindowFocused ()Z
+	public final fun setBackgroundFrameRate (Ljava/lang/Integer;)V
+	public final fun setWindowFocused (Z)V
 	public fun tick (Lcom/awakekt/awake/core/host/FrameRateMode;Lkotlin/jvm/functions/Function1;)V
 	public fun tick (Lkotlin/jvm/functions/Function1;)V
 }

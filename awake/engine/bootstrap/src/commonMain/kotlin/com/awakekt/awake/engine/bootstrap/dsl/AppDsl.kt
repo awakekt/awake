@@ -131,6 +131,24 @@ class WindowDsl internal constructor(
             builder.frameRateMode = value
         }
 
+    /**
+     * Whether to throttle the frame rate when the window is not in the foreground. Defaults to true.
+     */
+    var throttleCpuWhenNotForeground: Boolean
+        get() = builder.throttleCpuWhenNotForeground
+        set(value) {
+            builder.throttleCpuWhenNotForeground = value
+        }
+
+    /**
+     * Target frame rate when unfocused if [throttleCpuWhenNotForeground] is true. Defaults to 15 FPS.
+     */
+    var backgroundFrameRate: Int
+        get() = builder.backgroundFrameRate
+        set(value) {
+            builder.backgroundFrameRate = value
+        }
+
     fun size(width: Int, height: Int) {
         builder.size(width, height)
     }
