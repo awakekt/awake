@@ -355,8 +355,24 @@ Run the focused source test and the strict site build together:
 
 ```bash
 ./gradlew <owning-module>:desktopTest --tests "*<ExampleOrCaptureTest>*"
-(cd website && mkdocs build --strict)
+(cd website && AWAKE_DOCS_VERSION=0.1.0-alpha.4 mkdocs build --strict)
 ```
 
 The docs workflow must use the same strict build. A missing snippet region, broken internal link,
 missing navigation target, or missing image should fail before deployment.
+
+### Versioned public docs
+
+Public docs are published from the same Git tag as the Awake library release. Mike keeps each
+release at its exact library version (for example `0.1.0-alpha.4`) and Material exposes the
+version selector. A non-development release updates `latest`; a `dev` release is available under
+the `dev` alias without moving the stable default.
+
+The installation version is rendered from `AWAKE_DOCS_VERSION`. Local previews use the fallback
+in `website/mkdocs.yml`; release CI sets it from the tag. Do not hardcode a second version into a
+guide page. When repairing or seeding a published version, run the workflow from the matching
+release tag and enter the version without the leading `v`.
+
+Historical versions should remain readable and should only be rebuilt from the same release tag.
+If a page needs a current explanation, update the current branch and let the next release publish
+it; do not silently rewrite an older release's docs from `main`.

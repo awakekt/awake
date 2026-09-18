@@ -21,8 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cleaned the public MkDocs site.** Replaced internal development-document passthroughs with
   curated public pages, removed speculative editor/roadmap pages, aligned examples with
   `0.1.0-alpha.4`, added a compiler-verified Button example with a reviewed render capture,
-  documented the public example workflow, and made the Cloudflare deployment fail on strict-build
-  or deploy errors.
+  documented the public example workflow, added release-coupled versioned docs with a Material
+  version selector, and made the Cloudflare deployment fail on strict-build or deploy errors.
 
 ## [0.1.0-alpha.4] - 2026-09-19
 

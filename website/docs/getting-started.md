@@ -9,7 +9,7 @@ Add the following to your `libs.versions.toml`:
 
 ```toml
 [versions]
-awake = "0.1.0-alpha.4"
+awake = "{{ awake_version }}"
 
 [libraries]
 awake-bootstrap = { group = "com.awakekt.awake.engine", name = "bootstrap", version.ref = "awake" }

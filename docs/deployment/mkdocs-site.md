@@ -16,22 +16,24 @@ When `mkdocs build` runs, this file is automatically placed into the root of `we
 
 ## Automated Deployment Workflow
 
-The workflow [.github/workflows/docs.yml](../../.github/workflows/docs.yml) triggers on:
-- Pushes to `main` modifying `website/**` or `.github/workflows/docs.yml`.
-- Manual trigger via **Actions -> Documentation -> Run workflow**.
+The workflow [.github/workflows/docs.yml](../../.github/workflows/docs.yml) publishes a version when
+an annotated `v*` release tag is pushed. A manual **Actions -> Documentation -> Run workflow** run
+is available for seeding or repairing a version and requires the full version without the leading
+`v`.
 
-### 1. GitHub Pages (Active)
-GitHub Pages builds the MkDocs site and deploys it via `actions/deploy-pages@v4`.
-- **DNS Setup (Cloudflare DNS)**:
-  - Type: `CNAME`
-  - Name: `docs`
-  - Target: `awakekt.github.io`
-  - Proxy: DNS only (Gray cloud) or Proxied with Full SSL.
-- **GitHub Repo Settings**:
-  - In **Settings -> Pages**: Custom domain should be set to `docs.awakekt.com` with **Enforce HTTPS** checked.
+The workflow uses [Mike](https://github.com/jimporter/mike) to retain each release under its exact
+Awake/Maven version, such as `/0.1.0-alpha.4/`. The Material version selector is configured with
+Mike's provider. Non-development releases move the `latest` alias and root default; `dev` tags are
+published under the `dev` alias without changing `latest`.
 
-### 2. Cloudflare Pages (Direct Deployment)
-The workflow also includes direct deployment to Cloudflare Pages (project `awake-docs`) when the repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are configured.
+The source checkout for a tag is the source of truth for that version. This keeps installation
+examples and API guidance aligned with the library that users download, instead of rebuilding an
+old version from current `main`.
+
+### Cloudflare Pages (Direct Deployment)
+
+The versioned `gh-pages` branch is uploaded directly to Cloudflare Pages (project `awake-docs`)
+when the repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are configured.
 - To use Cloudflare Pages directly, attach `docs.awakekt.com` as a custom domain under the `awake-docs` project in the Cloudflare dashboard.
 
 ## Local Development & Verification
@@ -39,8 +41,7 @@ The workflow also includes direct deployment to Cloudflare Pages (project `awake
 To preview the documentation site locally:
 
 ```bash
-cd website
-mkdocs serve
+AWAKE_DOCS_VERSION=0.1.0-alpha.4 mkdocs serve --config-file website/mkdocs.yml
 ```
 
 Visit `http://127.0.0.1:8000` to browse changes in real time.

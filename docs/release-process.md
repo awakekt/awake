@@ -175,6 +175,11 @@ This command automatically:
 4. Commits `CHANGELOG.md` alone (`chore(release): cut vX.Y.Z-channel.N`).
 5. Creates an annotated Git tag `vX.Y.Z-channel.N`.
 
+Pushing that tag also publishes the matching version of the public MkDocs site. The documentation
+workflow keeps the full Maven version in the URL and in installation examples, moves the `latest`
+alias only for non-development releases, and exposes older releases through the site version
+selector.
+
 ---
 
 ## 6. Repository Hygiene: GitHub Milestones vs. In-Repo Docs

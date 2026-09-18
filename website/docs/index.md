@@ -6,6 +6,9 @@ platform-specific code at the edge of the application.
 
 > Awake is alpha software. APIs and published artifacts can change between releases.
 
+This site is versioned with the Awake library. Use the version selector in the header when you
+need documentation for a different release.
+
 ## What you can build
 
 - Share application and scene code across supported Kotlin Multiplatform targets.

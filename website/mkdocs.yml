@@ -1,6 +1,18 @@
 site_name: Awake Engine
 site_url: https://docs.awakekt.com/
 repo_url: https://github.com/awakekt/awake
+hooks:
+  - hooks.py
+plugins:
+  - search
+  - mike:
+      alias_type: copy
+      canonical_version: latest
+      version_selector: true
+extra:
+  awake_version: 0.1.0-alpha.4
+  version:
+    provider: mike
 theme:
   name: material
   palette:

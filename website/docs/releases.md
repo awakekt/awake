@@ -4,17 +4,22 @@ Awake is in the alpha stage. The public API and published module set may change 
 Use the [GitHub Releases](https://github.com/awakekt/awake/releases) page as the authoritative
 source for release notes and published versions.
 
-## Current example version
+## Versioned documentation
 
-The installation examples in this site currently use `0.1.0-alpha.4`:
+Every published Awake release has a matching documentation version. Use the version selector in
+the site header to switch between releases; the installation examples on each version use the
+same library version as that release.
+
+The current default release is:
 
 ```toml
 [versions]
-awake = "0.1.0-alpha.4"
+awake = "{{ awake_version }}"
 ```
 
-When using another release, keep all Awake modules on the same version and check that the target
-platform is listed in that release’s notes.
+When using another release, open that version of the documentation, keep all Awake modules on the
+same version, and check that the target platform is listed in that release’s notes. Development
+builds are published separately and are not promoted to the stable `latest` alias.
 
 ## Compatibility guidance
 
