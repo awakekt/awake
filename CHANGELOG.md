@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **MutableState and mutableStateOf restoration.** Restored `State<T>`, `MutableState<T>`, and `mutableStateOf(initial)` with Kotlin property delegation (`getValue`/`setValue`) and destructuring operators in `:awake:compose:runtime`, providing standard, idiomatic local state containers for `remember` across all Compose UI targets.
 - **Sealed skybox mode hierarchy, cubemap orientation, and clip-space math helpers.** Refactored `Skybox.mode` into a sealed interface (`Procedural`, `Cubemap`, `SolidColor`) with backward-compatible property delegates, introduced `CubemapFaces` orientation definitions and 90° FOV lens projection, added `unprojectFarRay` and `unprojectClipToWorld` in `shader-dsl`, and scoped the clip space decision matrix to engine skills.
 - **Cubemap texture and runtime shader pipeline.** Added 6-face cubemap metadata validation and packing in `TextureAsset`, cubemap binding contracts in `ResourceBinding`, ASL `textureCube` resource bindings and `textureSampleCube`/`textureSampleLevelCube` builtins in `shader-dsl`, hardware cubemap image view creation for Vulkan (`VK_IMAGE_VIEW_TYPE_CUBE`) and WebGPU (`GPUTextureViewDimension.Cube`), and `SkyboxCubemapShader` with uniform layout packing in `shader-pack`.
 - **Pull request governance and milestone policy.** Added CI verification and agent workflow invariants requiring every pull request to be linked to an active milestone and to update `CHANGELOG.md`.
