@@ -48,9 +48,11 @@ import com.awakekt.awake.scene.rendering.spatial.Occluder
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /** [com.awakekt.awake.scene.rendering.RenderSystem3D] doesn't shade anything itself -- it just resolves the scene's [com.awakekt.awake.scene.rendering.Light] entity
  * (or [com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT] when there isn't one) into the backend-neutral [com.awakekt.awake.render.passes.uniforms.SceneLight]
@@ -778,6 +780,90 @@ class RenderSystemTest {
         assertEquals(chestMesh, renderer.lastDrawCalls[1].mesh)
         assertEquals(poseFloats, renderer.lastDrawCalls[0].extraUniformFloats)
         assertEquals(poseFloats, renderer.lastDrawCalls[1].extraUniformFloats)
+    }
+
+    @Test
+    fun skipsPlanningWhenRealtimeIsDisabledAndSceneIsNotDirty() {
+        val world = worldWithPrimaryCamera()
+        val renderer = RecordingRenderer()
+        var realtime = false
+        var dirty = false
+
+        val system = RenderSystem3D(
+            renderer,
+            isRealtimeProvider = { realtime },
+            isDirtyProvider = { dirty },
+        )
+
+        // First frame: initial plan must run to populate lastPlannedFrame
+        system.update(world, 1f / 60f)
+        assertEquals(1, renderer.submissionCount)
+        assertTrue(system.lastFramePlanned)
+
+        // Second frame: not realtime and not dirty -> plan is skipped, but cached frame is drawn
+        system.update(world, 1f / 60f)
+        assertEquals(2, renderer.submissionCount)
+        assertFalse(system.lastFramePlanned)
+
+        // Dirtiness triggers re-plan
+        dirty = true
+        system.update(world, 1f / 60f)
+        assertEquals(3, renderer.submissionCount)
+        assertTrue(system.lastFramePlanned)
+
+        // Clean again -> skips re-plan
+        dirty = false
+        system.update(world, 1f / 60f)
+        assertEquals(4, renderer.submissionCount)
+        assertFalse(system.lastFramePlanned)
+    }
+
+    @Test
+    fun triggersReplanWhenCameraMovesEvenIfRealtimeIsDisabled() {
+        val world = worldWithPrimaryCamera()
+        val renderer = RecordingRenderer()
+
+        val system = RenderSystem3D(
+            renderer,
+            isRealtimeProvider = { false },
+            isDirtyProvider = { false },
+        )
+
+        // First frame: plans
+        system.update(world, 1f / 60f)
+        assertTrue(system.lastFramePlanned)
+
+        // Second frame: unchanged -> skipped
+        system.update(world, 1f / 60f)
+        assertFalse(system.lastFramePlanned)
+
+        // Move camera eye
+        val camera = primaryCamera(world)!!
+        camera.lens.eye.x += 1.5f
+        system.update(world, 1f / 60f)
+        assertTrue(system.lastFramePlanned)
+
+        // Next frame unchanged -> skipped
+        system.update(world, 1f / 60f)
+        assertFalse(system.lastFramePlanned)
+    }
+
+    @Test
+    fun alwaysPlansWhenRealtimeIsEnabled() {
+        val world = worldWithPrimaryCamera()
+        val renderer = RecordingRenderer()
+
+        val system = RenderSystem3D(
+            renderer,
+            isRealtimeProvider = { true },
+            isDirtyProvider = { false },
+        )
+
+        system.update(world, 1f / 60f)
+        assertTrue(system.lastFramePlanned)
+
+        system.update(world, 1f / 60f)
+        assertTrue(system.lastFramePlanned)
     }
 
     private fun fakeMesh(): Mesh = object : Mesh {

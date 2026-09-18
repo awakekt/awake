@@ -480,6 +480,8 @@ class SceneAppLifecycleRuntime internal constructor(
 fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
     viewportProvider: () -> RenderViewport? = { null },
     renderWorldProvider: (World) -> World = { it },
+    isRealtimeProvider: () -> Boolean = { true },
+    isDirtyProvider: () -> Boolean = { false },
 ): List<System> =
     listOf(
         TransformSystem(),
@@ -488,6 +490,8 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
             gpuDrawPreparer,
             viewportProvider = viewportProvider,
             renderWorldProvider = renderWorldProvider,
+            isRealtimeProvider = isRealtimeProvider,
+            isDirtyProvider = isDirtyProvider,
         ),
         DebugVisualizationSystem(renderer),
     )
