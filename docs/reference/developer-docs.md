@@ -293,8 +293,8 @@ The public developer site lives under `website/`. It is a separate publication b
 Every public example should have one source of truth:
 
 1. Prefer an existing compiled sample, tutorial test, or showcase fixture.
-2. Add a narrow `START-doc:<name>` / `END-doc:<name>` region around the example when the source
-   file contains more than the guide needs.
+2. Add a narrow `--8<-- [start:<name>]` / `--8<-- [end:<name>]` region around the example when
+   the source file contains more than the guide needs.
 3. Include that region in a fenced code block with `pymdownx.snippets`.
 4. Run the owning Gradle test or sample build in CI so a changed API breaks the documentation
    workflow.
@@ -302,14 +302,14 @@ Every public example should have one source of truth:
 Example source (illustrative structure; use a real compiled API in the repository):
 
 ```kotlin
-// START-doc:bootstrap-app
+// --8<-- [start:bootstrap-app]
 val game = app {
     window {
         title = "My Awake App"
         backend.vulkan()
     }
 }
-// END-doc:bootstrap-app
+// --8<-- [end:bootstrap-app]
 ```
 
 Example page:
