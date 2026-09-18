@@ -91,41 +91,48 @@ class DepthPrePassFeature(
         viewProjections: List<Mat4>,
     ) {
         require(viewProjections.isNotEmpty()) { "A layered depth pass needs at least one matrix." }
-        // EVERY layer, not just the ones this frame's cascade set fills. A layer that is never
-        // rendered is never written, and sampling the array then reads an image subresource in an
-        // undefined layout -- which the validation layer rejects and a driver may render as
-        // anything. A configuration with fewer cascades than layers repeats its last one, so the
-        // extra passes are duplicates rather than holes.
         val allPipelines = buildList {
             add(depthOnlyPipeline)
             addAll(variantPipelines.values)
             addAll(keyedVariantPipelines.values)
         }.distinct()
-        for (cascade in 0 until depthTarget.layers) {
-            val source = viewProjections[minOf(cascade, viewProjections.lastIndex)]
+        val activeCount = minOf(viewProjections.size, depthTarget.layers)
+        for (cascade in 0 until activeCount) {
+            val source = viewProjections[cascade]
             allPipelines.forEach { it.writeCascade(cascade, source) }
             recordCascade(encoder, draws, cascade)
         }
+        for (layer in activeCount until minOf(4, depthTarget.layers)) {
+            allPipelines.forEach { it.writeCascade(layer, Mat4()) }
+            recordCascade(encoder, emptyList(), layer)
+        }
     }
 
-    /** Missing layers are still cleared, keeping every sampled subresource initialized without
-     * making this backend interpret why a layer was requested. */
+    /** Records only the requested subpasses, avoiding redundant passes over unused layers. */
     fun recordCommands(
         encoder: GPUCommandEncoder,
         subPasses: List<GpuSubPass>,
     ) {
         if (subPasses.isEmpty()) return
-        val byLayer = subPasses.associateBy { it.targetLayer }
         val allPipelines = buildList {
             add(depthOnlyPipeline)
             addAll(variantPipelines.values)
             addAll(keyedVariantPipelines.values)
+            addAll(formatPipelines.values)
         }.distinct()
-        for (layer in 0 until depthTarget.layers) {
-            val subPass = byLayer[layer]
-            val source = subPass?.viewProjection ?: Mat4()
-            allPipelines.forEach { it.writeCascade(layer, source) }
-            recordCascade(encoder, subPass?.resolvedDraws.orEmpty(), layer)
+        for (subPass in subPasses) {
+            val layer = subPass.targetLayer
+            if (layer in 0 until depthTarget.layers) {
+                allPipelines.forEach { it.writeCascade(layer, subPass.viewProjection) }
+                recordCascade(encoder, subPass.resolvedDraws, layer)
+            }
+        }
+        val activeLayers = subPasses.map { it.targetLayer }.toSet()
+        for (cascade in 0 until minOf(4, depthTarget.layers)) {
+            if (cascade !in activeLayers) {
+                allPipelines.forEach { it.writeCascade(cascade, Mat4()) }
+                recordCascade(encoder, emptyList(), cascade)
+            }
         }
     }
 
