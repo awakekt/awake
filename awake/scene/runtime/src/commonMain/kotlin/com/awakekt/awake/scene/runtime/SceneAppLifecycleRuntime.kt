@@ -449,6 +449,10 @@ class SceneAppLifecycleRuntime internal constructor(
         return result
     }
 
+    /** Returns a named scene entity, creating and naming it when the scene did not declare one. */
+    fun findOrCreateEntity(name: String): Entity =
+        findEntity(name) ?: world.create().also { world.add(it, Name(name)) }
+
     fun requireEntity(name: String): Entity =
         findEntity(name) ?: error("Entity with name '$name' not found")
 

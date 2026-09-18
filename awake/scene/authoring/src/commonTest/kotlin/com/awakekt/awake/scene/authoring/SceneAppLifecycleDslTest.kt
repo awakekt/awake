@@ -42,6 +42,7 @@ import com.awakekt.awake.scene.authoring.dsl.cameraEntity
 import com.awakekt.awake.scene.authoring.dsl.meshEntity
 import com.awakekt.awake.scene.authoring.dsl.transform
 import com.awakekt.awake.scene.authoring.infrastructure.cameraSystem
+import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.controls.camera.CameraSystem
 import com.awakekt.awake.scene.runtime.LocalFrameStats
 import com.awakekt.awake.scene.runtime.LocalRenderer
@@ -104,6 +105,26 @@ class SceneAppLifecycleDslTest {
 
         assertEquals(1, recordingRenderer.meshDestroyCount)
         assertEquals(1, recordingRenderer.materialDestroyCount)
+    }
+
+    @Test
+    fun runtimeCanFindOrCreateNamedEntity() = runTest {
+        val game = app {
+            scene("named-entity-proof") {
+                entity("existing")
+            }
+        }
+
+        game.ready(RecordingRenderer())
+        val runtime = game.requireService<SceneAppLifecycleRuntime>()
+
+        val created = runtime.findOrCreateEntity("created")
+
+        assertEquals(created, runtime.findEntity("created"))
+        assertEquals("created", runtime.world.get<Name>(created)?.value)
+        assertEquals(created, runtime.findOrCreateEntity("created"))
+
+        game.dispose()
     }
 
     @Test
