@@ -1,22 +1,23 @@
 # Button
 
-The `shadcnButton` component provides a versatile slot-based button.
+`ShadcnButton` is a slot-based button from `awake:ui:shadcn`.
 
 ## Usage
 
+<!-- Illustrative example; use the KDoc in the corresponding release source for the exact overload. -->
+
 ```kotlin
-shadcnButton(
+ShadcnButton(
+    "Click me",
+    variant = ShadcnButtonVariant.Default,
     onClick = { println("Clicked!") },
-    variant = ShadcnButtonVariant.Primary
-) {
-    text("Click Me")
-}
+)
 ```
 
 ## Variants
 
 Available variants include:
-- `Primary`
+- `Default`
 - `Secondary`
 - `Outline`
 - `Ghost`

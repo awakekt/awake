@@ -1,8 +1,7 @@
 # Getting Started
 
-The smallest dependency-only desktop app uses the published engine bootstrap and Vulkan backend.
-Awake owns the GLFW window, frame loop, input polling, and standard `VulkanEngine` construction;
-your project only supplies the app lifecycle and render plan.
+The smallest published desktop setup uses Awake's bootstrap and Vulkan modules. Awake owns the
+GLFW window and frame loop; your application supplies its lifecycle and render plan.
 
 ## Installation
 
@@ -10,7 +9,7 @@ Add the following to your `libs.versions.toml`:
 
 ```toml
 [versions]
-awake = "0.1.0-alpha.1"
+awake = "0.1.0-alpha.4"
 
 [libraries]
 awake-bootstrap = { group = "com.awakekt.awake.engine", name = "bootstrap", version.ref = "awake" }
@@ -35,7 +34,7 @@ kotlin {
 }
 ```
 
-## Creating a Game
+## Creating an Application
 
 Define the lifecycle in `commonMain`, then launch it from `desktopMain`:
 
@@ -47,28 +46,19 @@ val game = app {
         size(1280, 720)
         backend.vulkan()
     }
-    render { frame ->
-        // Update your game state here.
-    }
 }
 ```
 
-```kotlin
-// desktopMain
-fun main() = runVulkanDesktopGame(game, MyRenderPlan)
-```
+The `app { }` block is shared code. A desktop entry point calls
+`runVulkanDesktopGame(game, renderPlan)` from `desktopMain`; the render plan is the application’s
+shader and pipeline declaration.
 
-`MyRenderPlan` is the app's shader and pipeline declaration. Apps that need custom backend
-construction can use the existing `applicationFactory` overload instead.
+Apps that need custom backend construction can use the `applicationFactory` overload instead.
 
-For a scene or Compose UI, add those published feature modules and install them in the same
-`app {}` root; they remain optional rather than hidden engine policy.
+For scenes, physics, or UI, add the corresponding published feature modules and install them in the
+same application root. These capabilities remain optional.
 
-The repository's executable example is:
+The repository’s compiler-checked showcase entry point is
+[`EngineShowcaseApp.kt`](https://github.com/awakekt/awake/blob/main/samples/engine-showcase/src/commonMain/kotlin/com/awakekt/awake/showcase/app/EngineShowcaseApp.kt).
 
-```kotlin
---8<-- "samples/engine-showcase/src/commonMain/kotlin/com/awakekt/awake/showcase/app/EngineShowcaseApp.kt"
-```
-
-> [!NOTE]
-> The example above is pulled directly from the `samples/engine-showcase` module, ensuring it always compiles and stays up-to-date with the latest Engine APIs.
+Use [Releases](releases.md) to select a compatible artifact version before adding more modules.

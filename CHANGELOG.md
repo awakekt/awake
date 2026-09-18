@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Retired deprecated editor shims.** Removed deprecated `EditorProviderKind.Dock` from `:awake:editor:contract`.
 - **Stripped redundant `Editor` prefix from `:awake:editor:contract` plugin/provider types.** Canonical names are now `PluginId`, `PluginMetadata`, `PluginRegistry`, `PluginLifecycle`, `ProviderId`, `ProviderMetadata`, `ProviderConfiguration`, `ProviderCodec`, `ProviderRegistry`, `ComponentProvider`, `AssetProvider`, `EnvironmentProvider`, `AnimationProvider`, `BuildProvider`. Old `Editor*` names remain as deprecated typealiases for zero-churn migration.
 - **Removed `contributesDockTab` and `dockTabTitle` from `PluginManifest`.** These stale fields from the retired `EditorDock` era have been fully removed. Bottom panel contributions are now declared by plugin `createProviders()` returning `ProviderKind.BottomPanel` providers.
+- **Cleaned the public MkDocs site.** Replaced internal development-document passthroughs with
+  curated public pages, removed speculative editor/roadmap pages, aligned examples with
+  `0.1.0-alpha.4`, and made the Cloudflare deployment fail on strict-build or deploy errors.
 
 ## [0.1.0-alpha.4] - 2026-09-19
 

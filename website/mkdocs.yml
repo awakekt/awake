@@ -26,21 +26,14 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
-  - Awake Studio: studio.md
-  - Editor Suite:
-      - Overview: editor/index.md
-      - Scene Editor: editor/scene.md
-      - Physics Editor: editor/physics.md
-      - AI Editor: editor/ai.md
-      - Render Editor: editor/render.md
   - Core & ECS:
       - Core: engine/core.md
       - Core Math: core/math.md
       - ECS Runtime: engine/ecs.md
       - Scene Runtime: engine/scene.md
-      - Scene Navigation: scene/navigation.md
       - Scene Authoring: scene/authoring.md
       - Scene Rendering: scene/rendering.md
+      - Scene Navigation: scene/navigation.md
       - Scene AI: scene/ai.md
       - Scene World: scene/world.md
       - App & Bootstrap: engine/bootstrap.md
@@ -60,8 +53,8 @@ nav:
       - Design System: ui/index.md
       - Shadcn Components: ui/shadcn.md
       - Material 3: ui/material3.md
-  - Roadmap & Releases:
-      - Release Process & Milestones: roadmap.md
+  - Releases & Support:
+      - Releases: releases.md
   - Guides:
       - Theming: guides/theming.md
       - UI Components:
