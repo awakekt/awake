@@ -452,8 +452,8 @@ public final class com/awakekt/awake/vulkan/texture/OffscreenRenderTarget : com/
 }
 
 public final class com/awakekt/awake/vulkan/texture/Texture {
-	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lkotlin/jvm/functions/Function1;[BIILcom/awakekt/awake/vulkan/models/info/VkSamplerCreateInfo;I)V
-	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lkotlin/jvm/functions/Function1;[BIILcom/awakekt/awake/vulkan/models/info/VkSamplerCreateInfo;IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lkotlin/jvm/functions/Function1;[BIILcom/awakekt/awake/vulkan/models/info/VkSamplerCreateInfo;IZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/vulkan/device/GraphicsDevice;Lkotlin/jvm/functions/Function1;[BIILcom/awakekt/awake/vulkan/models/info/VkSamplerCreateInfo;IZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun destroy ()V
 	public final fun getImage-9sb2zSw ()J
 	public final fun getImageMemory-2Tv7bSw ()J

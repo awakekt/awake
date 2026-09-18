@@ -37,6 +37,7 @@ object PackShaderSets {
     val SkinnedTextured = aslShaderSet(SkinnedTexturedShader)
     val SkinnedInstanced = aslShaderSet(::skinnedInstancedLitShadowShader)
     val Skybox = aslShaderSet(SkyboxShader)
+    val SkyboxCubemap = aslShaderSet(SkyboxCubemapShader)
     val Particle = aslShaderSet(ParticleShader)
     val Terrain = aslShaderSet(TerrainShader)
     val TerrainSplat = aslShaderSet(TerrainSplatShader)

@@ -62,6 +62,8 @@ fun AslShaderDefinition.bindingsForGroup(group: Int): GroupBindings? {
                         stages,
                         arrayed = texture.type == AslType.Texture2dArrayF32 ||
                             texture.type == AslType.TextureDepth2dArray,
+                        cubemap = texture.type == AslType.TextureCubeF32 ||
+                            texture.type == AslType.TextureDepthCube,
                         textureSampleType = texture.type.toTextureSampleType(),
                         samplerType = texture.type.toSamplerType(),
                     ),

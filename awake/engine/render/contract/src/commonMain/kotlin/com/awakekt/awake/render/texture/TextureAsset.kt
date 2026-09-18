@@ -24,9 +24,15 @@ data class TextureAsset(
      * single-layer case stays exactly what it was and nothing downstream needs a second type.
      */
     val layerCount: Int = 1,
+    /** Whether this texture represents a 6-face cubemap (+X, -X, +Y, -Y, +Z, -Z). */
+    val isCubemap: Boolean = false,
 ) {
     init {
         require(layerCount >= 1) { "A texture holds at least one layer; was $layerCount." }
+        if (isCubemap) {
+            require(layerCount == 6) { "A cubemap texture must have exactly 6 layers; was $layerCount." }
+            require(width == height) { "Cubemap faces must be square; was ${width}x${height}." }
+        }
         require(data.size == width * height * RGBA_BYTES * layerCount) {
             "A ${width}x$height RGBA8 texture of $layerCount layer(s) needs " +
                 "${width * height * RGBA_BYTES * layerCount} bytes, got ${data.size}. A size " +
@@ -46,7 +52,8 @@ data class TextureAsset(
         return data.contentEquals(other.data) &&
             width == other.width &&
             height == other.height &&
-            layerCount == other.layerCount
+            layerCount == other.layerCount &&
+            isCubemap == other.isCubemap
     }
 
     override fun hashCode(): Int {
@@ -54,8 +61,35 @@ data class TextureAsset(
         result = 31 * result + width
         result = 31 * result + height
         result = 31 * result + layerCount
+        result = 31 * result + isCubemap.hashCode()
         return result
     }
+}
+
+/**
+ * Assembles 6 square face buffers (+X, -X, +Y, -Y, +Z, -Z) into a single 6-layer cubemap [TextureAsset].
+ */
+fun createCubemapAsset(
+    faces: List<ByteArray>,
+    faceSize: Int,
+): TextureAsset {
+    require(faces.size == 6) { "A cubemap requires exactly 6 faces (+X, -X, +Y, -Y, +Z, -Z); got ${faces.size}." }
+    require(faceSize > 0) { "Face size must be positive; got $faceSize." }
+    val faceBytes = faceSize * faceSize * RGBA_BYTES
+    val combined = ByteArray(faceBytes * 6)
+    faces.forEachIndexed { i, faceData ->
+        require(faceData.size == faceBytes) {
+            "Face $i size mismatch: expected $faceBytes bytes (${faceSize}x${faceSize} RGBA8), got ${faceData.size}."
+        }
+        faceData.copyInto(combined, destinationOffset = i * faceBytes)
+    }
+    return TextureAsset(
+        data = combined,
+        width = faceSize,
+        height = faceSize,
+        layerCount = 6,
+        isCubemap = true,
+    )
 }
 
 private const val RGBA_BYTES = 4

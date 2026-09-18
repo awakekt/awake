@@ -33,6 +33,13 @@ public final class com/awakekt/awake/asset/shaderpack/AslShadowShadersKt {
 	public static final fun skinnedInstancedLitShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/AslSkyboxCubemapShaderKt {
+	public static final fun getSkyboxCubemapShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getSkyboxCubemapUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public static final fun skyboxCubemapUniformFloats (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;F)[F
+	public static synthetic fun skyboxCubemapUniformFloats$default (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;FILjava/lang/Object;)[F
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslSkyboxShaderKt {
 	public static final fun getSkyboxShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
@@ -108,6 +115,7 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getSkinnedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkinnedTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkybox ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getSkyboxCubemap ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrainSplat ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
@@ -135,6 +143,13 @@ public final class com/awakekt/awake/asset/shaderpack/ShadowUniformsKt {
 
 public final class com/awakekt/awake/asset/shaderpack/SkyboxContentFeatureKt {
 	public static final fun skyboxContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SkyboxCubemapFields {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/SkyboxCubemapFields;
+	public final fun getCameraEye ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getExposure ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getInverseViewProjection ()Lcom/awakekt/awake/render/renderer/UniformField;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/SkyboxFields {

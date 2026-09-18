@@ -32,6 +32,10 @@ object VkImageType {
     const val VK_IMAGE_TYPE_3D = 2
 }
 
+object VkImageCreateFlagBits {
+    const val VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT = 0x00000010
+}
+
 object VkImageTiling {
     const val VK_IMAGE_TILING_OPTIMAL = 0
     const val VK_IMAGE_TILING_LINEAR = 1

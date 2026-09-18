@@ -3243,6 +3243,11 @@ public final class com/awakekt/awake/vulkan/models/info/VkGraphicsPipelineCreate
 	public final fun getSubpass ()I
 }
 
+public final class com/awakekt/awake/vulkan/models/info/VkImageCreateFlagBits {
+	public static final field INSTANCE Lcom/awakekt/awake/vulkan/models/info/VkImageCreateFlagBits;
+	public static final field VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT I
+}
+
 public final class com/awakekt/awake/vulkan/models/info/VkImageCreateInfo {
 	public fun <init> (IIIIIIIIIIII)V
 	public synthetic fun <init> (IIIIIIIIIIIIILkotlin/jvm/internal/DefaultConstructorMarker;)V

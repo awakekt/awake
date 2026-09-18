@@ -25,6 +25,7 @@ internal fun wgslTypeName(type: AslType): String = when (type) {
     AslType.Vec2U -> "vec2<u32>"
     is AslType.ArrayData -> "array<${wgslType(type.shape)}, ${type.count}>"
     AslType.Texture2dF32 -> "texture_2d<f32>"
+    AslType.TextureCubeF32 -> "texture_cube<f32>"
     AslType.Texture2dArrayF32 -> "texture_2d_array<f32>"
     AslType.TextureDepth2d -> "texture_depth_2d"
     AslType.TextureDepth2dArray -> "texture_depth_2d_array"

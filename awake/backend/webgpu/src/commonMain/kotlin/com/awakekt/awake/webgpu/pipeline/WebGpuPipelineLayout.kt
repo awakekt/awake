@@ -70,7 +70,11 @@ private fun ResourceBinding.toWebGpuLayoutEntry() = BindGroupLayoutEntry(
                 TextureSampleType.Sint -> GPUTextureSampleType.Sint
                 TextureSampleType.Uint -> GPUTextureSampleType.Uint
             },
-            viewDimension = if (arrayed) GPUTextureViewDimension.TwoDArray else GPUTextureViewDimension.TwoD,
+            viewDimension = when {
+                cubemap -> GPUTextureViewDimension.Cube
+                arrayed -> GPUTextureViewDimension.TwoDArray
+                else -> GPUTextureViewDimension.TwoD
+            },
         )
     } else {
         null

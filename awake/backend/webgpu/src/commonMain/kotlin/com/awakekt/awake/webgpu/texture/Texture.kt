@@ -45,6 +45,7 @@ class Texture(
     width: Int,
     height: Int,
     layerCount: Int = 1,
+    isCubemap: Boolean = false,
 ) {
     val texture: GPUTexture
     val view: GPUTextureView
@@ -52,7 +53,7 @@ class Texture(
 
     init {
         val device = graphicsDevice.wgpuContext.device
-        val asset = TextureAsset(data, width, height, layerCount)
+        val asset = TextureAsset(data, width, height, layerCount, isCubemap)
         // mipChain downsamples one image, so it cannot describe an array's layers. Arrays upload
         // their base level only until something needs otherwise.
         val mipLevels = if (layerCount > 1) listOf(asset) else asset.mipChain()
@@ -65,8 +66,8 @@ class Texture(
                 ),
                 format = GPUTextureFormat.RGBA8Unorm,
                 usage = GPUTextureUsage.TextureBinding or GPUTextureUsage.CopyDst,
-                // Still TwoD: an array texture is a 2D texture with layers, and only the view
-                // below says "2d-array".
+                // Still TwoD: an array or cubemap texture is a 2D texture with layers, and only the view
+                // below says "2d-array" or "cube".
                 dimension = GPUTextureDimension.TwoD,
                 mipLevelCount = mipLevels.size.toUInt(),
             ),
@@ -90,10 +91,10 @@ class Texture(
         }
         view = texture.createView(
             TextureViewDescriptor(
-                dimension = if (layerCount > 1) {
-                    GPUTextureViewDimension.TwoDArray
-                } else {
-                    GPUTextureViewDimension.TwoD
+                dimension = when {
+                    isCubemap -> GPUTextureViewDimension.Cube
+                    layerCount > 1 -> GPUTextureViewDimension.TwoDArray
+                    else -> GPUTextureViewDimension.TwoD
                 },
             ),
         )
