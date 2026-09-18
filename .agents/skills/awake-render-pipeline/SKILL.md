@@ -68,6 +68,27 @@ The root `verifyRenderContractBoundary` task is also wired into `check`; it reje
 render-pipeline imports in `render:contract` and prevents source packets from regressing to
 authored `Mesh`/`Material` fields.
 
+## 0.6 Clip Space, NDC & Ray Unprojection Decision Matrix
+
+Whenever writing or reviewing a shader (ASL or native WGSL/GLSL), check whether the shader samples screen-space textures (shadow maps, depth textures, g-buffers), unprojects rays (skybox, raymarching, SSR), or inspects cubemap faces.
+
+### 1. Clip Space & NDC Invariants
+- **Vulkan NDC**: X in `[-1, 1]`, Y in `[-1, 1]` (downward, `flipY = true`), Z in `[0, 1]`.
+- **WebGPU NDC**: X in `[-1, 1]`, Y in `[-1, 1]` (upward, `flipY = false`), Z in `[0, 1]`.
+- **NDC to UV**: Never hand-roll `xy * 0.5 + 0.5`. Use `ndcToUv(ndc, clipSpace)` from `awake:asset:shader-dsl` or `ClipSpace.toNormalizedCoords(...)`. Hand-rolling produces flipped textures/shadows across backends (`depth_fog` and `lit_shadow` previously suffered from inverted Y on WebGPU).
+- **Unprojecting Rays & World Positions**:
+  - Transform clip-space `vec4f(ndc, depth, 1.0)` by `inverseViewProjection` and divide by `.w`.
+  - Use `unprojectFarRay(inverseVp, cameraEye, ndc)` from `awake:asset:shader-dsl` for skybox and atmospheric ray directions.
+  - Use `unprojectClipToWorld(inverseVp, ndc, depth)` from `awake:asset:shader-dsl` for screen-space depth reconstruction.
+  - **Algebraic Invariance**: Because `inverseViewProjection` is the exact inverse of the active backend's projection matrix, the resulting world coordinates are invariant to backend Y-flips. Never add backend-conditional `flipY` branches to unprojection math.
+
+### 2. Cubemap Inspection & Face Projections
+- **Canonical Axes**: Always use `CubemapFaces.Faces` (`com.awakekt.awake.core.math.CubemapFaces`) for the 6 faces (+X, -X, +Y, -Y, +Z, -Z).
+- **Face Lens & Projection**:
+  - Always use `CubemapFaces.lens(near, far)` with square unit aspect (`1.0f`) and 90° FOV (`PI / 2`).
+  - Side faces (+X, -X, +Z, -Z) use canonical `Vec3f.DOWN` (`(0, -1, 0)`) as up vector.
+  - +Y uses `(0, 0, 1)` and -Y uses `(0, 0, -1)`.
+
 ## 1. Strategy pattern for render features — in place, keep it that way
 
 `Renderer` used to wire each pass as its own nullable field (`skyboxRenderPipeline`,

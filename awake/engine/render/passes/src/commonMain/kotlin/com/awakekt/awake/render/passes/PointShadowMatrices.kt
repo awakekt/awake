@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.core.math.CubemapFaces
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.times
@@ -40,21 +41,11 @@ fun pointShadowMatrices(
         far = range,
         clipSpace = clipSpace,
     ).also { if (clipSpace.flipY) it.m11 *= -1f }
-    val faces = arrayOf(
-        Face(Vec3f.RIGHT, Vec3f.DOWN),
-        Face(Vec3f.LEFT, Vec3f.DOWN),
-        Face(Vec3f.UP, Vec3f.FORWARD),
-        Face(Vec3f.DOWN, Vec3f.BACK),
-        Face(Vec3f.BACK, Vec3f.DOWN),
-        Face(Vec3f.FORWARD, Vec3f.DOWN),
-    )
-    val matrices = faces.map { face ->
+    val matrices = CubemapFaces.Faces.map { face ->
         val target = position + face.direction
         Mat4.setLookAt(position, target, face.up) * projection
     }
     return PointShadowMatrices(position, nearPlane, range, matrices)
 }
-
-private data class Face(val direction: Vec3f, val up: Vec3f)
 
 private const val DEFAULT_POINT_SHADOW_NEAR = 0.05f

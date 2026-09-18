@@ -14,10 +14,13 @@ import com.awakekt.awake.scene.rendering.light.LightBinding.toComponent
 import com.awakekt.awake.scene.rendering.light.SceneAmbientLight
 import com.awakekt.awake.scene.rendering.light.SceneLight
 import com.awakekt.awake.scene.rendering.sky.SceneSkybox
+import com.awakekt.awake.scene.rendering.sky.Skybox
 import com.awakekt.awake.scene.rendering.sky.SkyboxBinding.toComponent
+import com.awakekt.awake.scene.rendering.sky.SkyboxBinding.toSceneComponent
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class SceneEnvironmentSerializationTest {
@@ -43,6 +46,36 @@ class SceneEnvironmentSerializationTest {
         val component = deserialized.toComponent()
         assertEquals(0.8f, component.horizonColor.r)
         assertTrue(component.zenithColor.r in 0.19f..0.21f)
+        assertIs<Skybox.Mode.Procedural>(component.mode)
+    }
+
+    @Test
+    fun testSkyboxSealedModesSerialization() {
+        val cubemapSkybox = Skybox(
+            enabled = true,
+            mode = Skybox.Mode.Cubemap(assetPath = "textures/sky.ktx2", exposure = 1.5f),
+        )
+        val cubemapScene = cubemapSkybox.toSceneComponent()
+        assertEquals("Cubemap", cubemapScene.type)
+        assertEquals("textures/sky.ktx2", cubemapScene.cubemapPath)
+        assertEquals(1.5f, cubemapScene.exposure)
+
+        val restoredCubemap = cubemapScene.toComponent()
+        assertIs<Skybox.Mode.Cubemap>(restoredCubemap.mode)
+        val cubemapMode = restoredCubemap.mode as Skybox.Mode.Cubemap
+        assertEquals("textures/sky.ktx2", cubemapMode.assetPath)
+        assertEquals(1.5f, cubemapMode.exposure)
+
+        val solidSkybox = Skybox(
+            enabled = true,
+            mode = Skybox.Mode.SolidColor(color = com.awakekt.awake.core.color.Color(0.2f, 0.3f, 0.4f, 1f)),
+        )
+        val solidScene = solidSkybox.toSceneComponent()
+        assertEquals("SolidColor", solidScene.type)
+        val restoredSolid = solidScene.toComponent()
+        assertIs<Skybox.Mode.SolidColor>(restoredSolid.mode)
+        val solidMode = restoredSolid.mode as Skybox.Mode.SolidColor
+        assertEquals(0.2f, solidMode.color.r)
     }
 
     @Test

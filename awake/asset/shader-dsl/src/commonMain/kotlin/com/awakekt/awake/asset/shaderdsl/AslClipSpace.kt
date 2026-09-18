@@ -28,3 +28,44 @@ fun ndcToUv(ndcXy: AslExpr, clipSpace: ClipSpace): AslExpr {
     val v = if (clipSpace.flipY) (ndcXy.y + 1f.lit) * 0.5f.lit else (1f.lit - ndcXy.y) * 0.5f.lit
     return vec2(u, v)
 }
+
+/**
+ * Unprojects a screen-space normalized device coordinate [ndcXy] to a normalized world-space ray direction.
+ *
+ * Emits the far-plane point at NDC z = 1.0, transforms it through [inverseViewProjection], applies the
+ * perspective divide by w, and subtracts [cameraEye], normalizing the resulting ray.
+ *
+ * Because [inverseViewProjection] is the exact algebraic inverse of the active backend's projection matrix,
+ * the resulting world-space ray is completely agnostic to backend-specific Y-inversion (Vulkan flipY)
+ * or depth range conventions.
+ *
+ * @param inverseViewProjection A `mat4x4<f32>` expression inverting the scene's view-projection matrix.
+ * @param cameraEye A `vec3<f32>` or `vec4<f32>` expression representing the world-space camera position.
+ * @param ndcXy A `vec2<f32>` expression representing screen-space NDC coordinates in `[-1, 1]`.
+ */
+fun unprojectFarRay(
+    inverseViewProjection: AslExpr,
+    cameraEye: AslExpr,
+    ndcXy: AslExpr,
+): AslExpr {
+    val far = inverseViewProjection * vec4(ndcXy, 1f.lit, 1f.lit)
+    return normalize(far.xyz / far.w - cameraEye.xyz)
+}
+
+/**
+ * Unprojects a screen-space normalized device coordinate [ndcXy] and depth sample [depth] to a world-space position.
+ *
+ * Transforms the NDC coordinate through [inverseViewProjection] and applies the perspective divide by w.
+ *
+ * @param inverseViewProjection A `mat4x4<f32>` expression inverting the scene's view-projection matrix.
+ * @param ndcXy A `vec2<f32>` expression representing screen-space NDC coordinates in `[-1, 1]`.
+ * @param depth A `f32` expression representing the fragment or sampled buffer depth (default 1.0 on far plane).
+ */
+fun unprojectClipToWorld(
+    inverseViewProjection: AslExpr,
+    ndcXy: AslExpr,
+    depth: AslExpr = 1f.lit,
+): AslExpr {
+    val clip = inverseViewProjection * vec4(ndcXy, depth, 1f.lit)
+    return clip.xyz / clip.w
+}
