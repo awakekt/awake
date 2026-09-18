@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.4] - 2026-09-19
+
 ### Added
 
 - **Named scene entity creation helper.** Added `SceneAppLifecycleRuntime.findOrCreateEntity(name)` to retrieve or instantiate and label missing scene entities during runtime authoring and testing.
