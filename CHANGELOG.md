@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Rotation-invariant shadow cascade stabilization and allocation-free chart rendering.** Derived analytical bounding spheres for frustum cascades in `ShadowCascadesMath` to eliminate projection scaling wobble on camera rotation/orbit, corrected cascade containment and border PCF clamping in `AslShadowShaders`, and added `showDots = false` option with direct path evaluation in `ShadcnLineChart` to eliminate per-frame allocations and canvas draw call spikes.
 - **Selective shadow depth pre-pass recording.** Restrict Vulkan and WebGPU depth pre-pass loops to only active directional cascades and authored subpasses instead of clearing and submitting passes across all 28 shadow array layers each frame.
 
 ## [0.1.0-alpha.3] - 2026-09-18

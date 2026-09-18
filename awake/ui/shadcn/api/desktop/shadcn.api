@@ -450,8 +450,8 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnChartKt {
 	public static synthetic fun ShadcnChartContainer$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 	public static final fun ShadcnChartLegend (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;)V
 	public static synthetic fun ShadcnChartLegend$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;ILjava/lang/Object;)V
-	public static final fun ShadcnLineChart-I6KT2OU (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;FZ)V
-	public static synthetic fun ShadcnLineChart-I6KT2OU$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;FZILjava/lang/Object;)V
+	public static final fun ShadcnLineChart-VWNT_Rc (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;FZZ)V
+	public static synthetic fun ShadcnLineChart-VWNT_Rc$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;FZZILjava/lang/Object;)V
 	public static final fun ShadcnPieChart-kjBm1DY (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;FZLjava/lang/String;Ljava/lang/String;)V
 	public static synthetic fun ShadcnPieChart-kjBm1DY$default (Lcom/awakekt/awake/compose/runtime/Composer;Ljava/util/List;Lcom/awakekt/awake/compose/ui/Modifier;FZLjava/lang/String;Ljava/lang/String;ILjava/lang/Object;)V
 }

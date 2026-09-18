@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-@file:Suppress("FunctionNaming", "ktlint:standard:function-naming")
+@file:Suppress("FunctionNaming", "ktlint:standard:function-naming", "LongMethod")
 
 package com.awakekt.awake.ui.shadcn.components
 
@@ -197,9 +197,15 @@ fun ShadcnLineChart(
     modifier: Modifier = Modifier,
     height: Dp = 200.dp,
     showAreaFill: Boolean = false,
+    showDots: Boolean = true,
 ) {
     val theme = shadcnTheme
-    val maxValue = series.flatMap { it.values }.maxOrNull()?.coerceAtLeast(1f) ?: 1f
+    var maxValue = 1f
+    for (s in series) {
+        for (v in s.values) {
+            if (v > maxValue) maxValue = v
+        }
+    }
 
     Canvas(modifier.fillMaxWidth().height(height)) {
         val w = this.width.toFloat()
@@ -212,53 +218,63 @@ fun ShadcnLineChart(
             drawRect(x = 0f, y = y, width = w, height = 1f, color = gridColor)
         }
 
-        if (categories.size < 2 || series.isEmpty()) return@Canvas
+        val numCategories = categories.size
+        if (numCategories < 2 || series.isEmpty()) return@Canvas
 
-        val stepX = w / (categories.size - 1)
+        val stepX = w / (numCategories - 1)
 
         series.forEach { s ->
-            val points = s.values.mapIndexed { idx, valY ->
-                val x = idx * stepX
-                val y = h - (valY / maxValue) * (h - 20f)
-                x to y
-            }
+            val values = s.values
+            if (values.isEmpty()) return@forEach
 
             // Draw area fill if requested
-            if (showAreaFill && points.isNotEmpty()) {
+            if (showAreaFill) {
                 val fillPath = drawPath {
-                    moveTo(points.first().first, h)
-                    points.forEach { (px, py) -> lineTo(px, py) }
-                    lineTo(points.last().first, h)
+                    val firstY = h - (values[0] / maxValue) * (h - 20f)
+                    moveTo(0f, h)
+                    lineTo(0f, firstY)
+                    for (idx in 1 until values.size) {
+                        val x = idx * stepX
+                        val y = h - (values[idx] / maxValue) * (h - 20f)
+                        lineTo(x, y)
+                    }
+                    val lastX = (values.size - 1) * stepX
+                    lineTo(lastX, h)
                     close()
                 }
                 drawPath(fillPath, s.color.withAlpha(0.15f))
             }
 
             // Draw line path
-            if (points.isNotEmpty()) {
-                val linePath = drawPath {
-                    moveTo(points.first().first, points.first().second)
-                    for (i in 1 until points.size) {
-                        lineTo(points[i].first, points[i].second)
-                    }
+            val linePath = drawPath {
+                val firstY = h - (values[0] / maxValue) * (h - 20f)
+                moveTo(0f, firstY)
+                for (idx in 1 until values.size) {
+                    val x = idx * stepX
+                    val y = h - (values[idx] / maxValue) * (h - 20f)
+                    lineTo(x, y)
                 }
-                drawStrokedPath(
-                    linePath,
-                    DrawStroke(width = 2.5f.dp, cap = StrokeCap.Round, join = StrokeJoin.Round),
-                    s.color,
-                )
             }
+            drawStrokedPath(
+                linePath,
+                DrawStroke(width = 2.5f.dp, cap = StrokeCap.Round, join = StrokeJoin.Round),
+                s.color,
+            )
 
             // Draw point dots
-            points.forEach { (px, py) ->
-                drawRoundedRect(
-                    x = px - 3f,
-                    y = py - 3f,
-                    width = 6f,
-                    height = 6f,
-                    color = s.color,
-                    radius = 3f,
-                )
+            if (showDots) {
+                for (idx in values.indices) {
+                    val px = idx * stepX
+                    val py = h - (values[idx] / maxValue) * (h - 20f)
+                    drawRoundedRect(
+                        x = px - 3f,
+                        y = py - 3f,
+                        width = 6f,
+                        height = 6f,
+                        color = s.color,
+                        radius = 3f,
+                    )
+                }
             }
         }
     }
