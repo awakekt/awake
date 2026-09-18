@@ -66,6 +66,9 @@ public final class com/awakekt/awake/asset/shaderdsl/AslChainIndex : com/awakekt
 
 public final class com/awakekt/awake/asset/shaderdsl/AslClipSpaceKt {
 	public static final fun ndcToUv (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static final fun unprojectClipToWorld (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static synthetic fun unprojectClipToWorld$default (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public static final fun unprojectFarRay (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 }
 
 public final class com/awakekt/awake/asset/shaderdsl/AslComparisonsKt {

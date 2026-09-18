@@ -154,6 +154,28 @@ public final class com/awakekt/awake/core/math/ClipSpace : java/lang/Enum {
 	public static fun values ()[Lcom/awakekt/awake/core/math/ClipSpace;
 }
 
+public final class com/awakekt/awake/core/math/CubemapFaceOrientation {
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)Lcom/awakekt/awake/core/math/CubemapFaceOrientation;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/math/CubemapFaceOrientation;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)Lcom/awakekt/awake/core/math/CubemapFaceOrientation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDirection ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getUp ()Lcom/awakekt/awake/core/math/Vec3f;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/math/CubemapFaces {
+	public static final field COUNT I
+	public static final field INSTANCE Lcom/awakekt/awake/core/math/CubemapFaces;
+	public final fun getFaces ()[Lcom/awakekt/awake/core/math/CubemapFaceOrientation;
+	public final fun lens (Lcom/awakekt/awake/core/math/Vec3f;IFF)Lcom/awakekt/awake/core/math/Lens;
+	public static synthetic fun lens$default (Lcom/awakekt/awake/core/math/CubemapFaces;Lcom/awakekt/awake/core/math/Vec3f;IFFILjava/lang/Object;)Lcom/awakekt/awake/core/math/Lens;
+	public final fun orientation (I)Lcom/awakekt/awake/core/math/CubemapFaceOrientation;
+}
+
 public final class com/awakekt/awake/core/math/Frustum {
 	public static final field INSTANCE Lcom/awakekt/awake/core/math/Frustum;
 	public final fun corners (Lcom/awakekt/awake/core/math/Lens;F)Ljava/util/List;
