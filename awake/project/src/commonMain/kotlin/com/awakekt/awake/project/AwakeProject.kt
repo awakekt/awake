@@ -8,7 +8,7 @@ package com.awakekt.awake.project
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-/** Settings embedded in [AwakeProjectManifest]. */
+/** Settings embedded in the legacy [AwakeProjectManifest]. */
 @Serializable
 data class AwakeProjectSettings(
     val targetFrameRate: Int = 60,
@@ -16,15 +16,24 @@ data class AwakeProjectSettings(
     val defaultRenderer: String = "Vulkan",
 )
 
-/** The portable `awake.project.json` metadata document. */
+/**
+ * The legacy `awake.project.json` metadata document.
+ *
+ * New integrations should use [AwakeProjectManifestV1]. The nullable engine fields are
+ * intentional: the old model must not invent an engine version for a project created elsewhere.
+ */
+@Deprecated(
+    message = "Use AwakeProjectManifestV1 for the canonical project contract.",
+    replaceWith = ReplaceWith("AwakeProjectManifestV1"),
+)
 @Serializable
 data class AwakeProjectManifest(
     val name: String,
     val id: String,
-    val engineVersion: String = "0.1.0",
-    val minEngineVersion: String = "0.1.0-alpha.1",
+    val engineVersion: String? = null,
+    val minEngineVersion: String? = null,
     val defaultScene: String = "scenes/main.scene.json",
-    val createdWith: String = "0.1.0-dev.10",
+    val createdWith: String? = null,
     val assetDirectories: List<String> = listOf("assets"),
     /** Declarative plugin identifiers only; installation and loading remain product policy. */
     val plugins: List<String> = emptyList(),
@@ -41,6 +50,7 @@ data class AwakeProjectManifest(
 }
 
 /** Pure JSON and SemVer validation for project metadata. */
+@Suppress("DEPRECATION")
 object AwakeProjectValidator {
     private val json = Json {
         prettyPrint = true
@@ -54,7 +64,13 @@ object AwakeProjectValidator {
         json.decodeFromString(AwakeProjectManifest.serializer(), jsonString)
 
     fun isCompatible(manifest: AwakeProjectManifest, currentEngineVersion: String): Boolean =
-        parseSemVer(currentEngineVersion) >= parseSemVer(manifest.minEngineVersion)
+        manifest.minEngineVersion?.let { isVersionAtLeast(currentEngineVersion, it) } ?: true
+
+    fun isCompatible(manifest: AwakeProjectManifestV1, currentEngineVersion: String): Boolean =
+        manifest.minEngineVersion?.let { isVersionAtLeast(currentEngineVersion, it) } ?: true
+
+    private fun isVersionAtLeast(currentVersion: String, minimumVersion: String): Boolean =
+        parseSemVer(currentVersion) >= parseSemVer(minimumVersion)
 
     internal fun parseSemVer(version: String): SemVer {
         val match = Regex("^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$")

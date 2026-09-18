@@ -73,7 +73,9 @@ if (secretPropsFile.exists()) {
 }
 
 extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
-    publishToMavenCentral()
+    // Snapshots remain directly available from Central's snapshot repository. Releases are
+    // validated and published automatically, so CI does not require a Central Portal click.
+    publishToMavenCentral(automaticRelease = true)
     // Central snapshots are disposable integration artifacts. Keeping their sources jar is useful
     // to consumers, but generating Dokka for every KMP publication adds a large amount of work.
     // Releases retain the full documentation jar below.

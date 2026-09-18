@@ -28,6 +28,8 @@ data class AwakeProjectManifestV1(
     val id: String,
     val name: String,
     val version: String,
+    /** Minimum engine version required to open this project; omitted means no declared minimum. */
+    val minEngineVersion: String? = null,
     val entryScene: String,
     val author: String = "",
     val assetRoots: List<String> = listOf("assets"),
@@ -73,30 +75,29 @@ object AwakeProjectV1Validator {
         json.decodeFromString(AwakeAssetsLockV1.serializer(), value)
 
     fun manifestIssues(manifest: AwakeProjectManifestV1): List<String> = buildList {
-        if (manifest.formatVersion != 1) {
-            add("formatVersion must be 1")
-        }
-        if (!manifest.id.matches(projectIdPattern)) {
-            add("id must be a reverse-domain identifier")
-        }
-        if (manifest.name.isBlank()) {
-            add("name must not be blank")
-        }
-        if (!manifest.version.matches(semverPattern)) {
-            add("version must be semantic version")
+        if (manifest.formatVersion != 1) add("formatVersion must be 1")
+        if (!manifest.id.matches(projectIdPattern)) add("id must be a reverse-domain identifier")
+        if (manifest.name.isBlank()) add("name must not be blank")
+        if (!manifest.version.matches(semverPattern)) add("version must be semantic version")
+        if (manifest.minEngineVersion != null && !manifest.minEngineVersion.matches(semverPattern)) {
+            add("minEngineVersion must be semantic version")
         }
         if (!isSafeProjectPath(manifest.entryScene)) {
             add("entryScene must be a safe project-relative path")
         }
-        if (manifest.assetRoots.isEmpty()) {
-            add("assetRoots must not be empty")
+        if (manifest.assetRoots.isEmpty()) add("assetRoots must not be empty")
+        addAll(assetRootIssues(manifest.assetRoots))
+        addAll(pluginIssues(manifest.plugins))
+    }
+
+    private fun assetRootIssues(assetRoots: List<String>): List<String> = buildList {
+        assetRoots.forEachIndexed { index, root ->
+            if (!isSafeProjectPath(root)) add("assetRoots[$index] must be a safe project-relative path")
         }
-        manifest.assetRoots.forEachIndexed { index, root ->
-            if (!isSafeProjectPath(root)) {
-                add("assetRoots[$index] must be a safe project-relative path")
-            }
-        }
-        manifest.plugins.forEachIndexed { index, plugin ->
+    }
+
+    private fun pluginIssues(plugins: List<AwakeProjectPluginReferenceV1>): List<String> = buildList {
+        plugins.forEachIndexed { index, plugin ->
             if (!plugin.id.matches(projectIdPattern)) {
                 add("plugins[$index].id must be a reverse-domain identifier")
             }
