@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Named scene entity creation helper.** Added `SceneAppLifecycleRuntime.findOrCreateEntity(name)` to retrieve or instantiate and label missing scene entities during runtime authoring and testing.
 - **Autonomous 3D scene dirtiness tracking and frame loop pacing override.** Added `isRealtimeProvider` and `isDirtyProvider` parameters to `RenderSystem3D` and `defaultInfrastructureSystems` with allocation-free primitive camera and viewport change tracking, enabling the engine to bypass full scene re-planning and draw call compilation on static viewports. Added `frameRateOverride` to `DesktopFrameLoop` to allow host applications to dynamically rebind target frame rates at runtime.
 - **Window focus throttling and background frame rate pacing.** Added `throttleCpuWhenNotForeground` and configurable `backgroundFrameRate` to `WindowConfig` and `AppWindowConfigBuilder`, bound GLFW window focus querying (`glfwGetWindowAttrib(window, GLFW_FOCUSED)`), and wired focus-adaptive frame pacing into `DesktopFrameLoop` and `VulkanDesktopHost` to eliminate unnecessary CPU/GPU battery drain when unfocused.
 - **MutableState and mutableStateOf restoration.** Restored `State<T>`, `MutableState<T>`, and `mutableStateOf(initial)` with Kotlin property delegation (`getValue`/`setValue`) and destructuring operators in `:awake:compose:runtime`, providing standard, idiomatic local state containers for `remember` across all Compose UI targets.
