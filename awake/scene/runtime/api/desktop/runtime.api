@@ -96,6 +96,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public fun dispose ()V
 	public final fun findCamera (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/camera/Camera;
 	public final fun findEntity-XHcgaUg (Ljava/lang/String;)Lcom/awakekt/awake/ecs/Entity;
+	public final fun findOrCreateEntity-bssdaRw (Ljava/lang/String;)J
 	public final fun findTransform (Ljava/lang/String;)Lcom/awakekt/awake/scene/core/transform/Transform;
 	public final fun getAverageFrameTimeMs ()F
 	public final fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
