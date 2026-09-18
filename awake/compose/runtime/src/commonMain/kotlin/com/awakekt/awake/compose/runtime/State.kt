@@ -5,23 +5,67 @@
  */
 package com.awakekt.awake.compose.runtime
 
-/*
- * There is no observable state type here, and that is deliberate.
- *
- * `mutableStateOf` and `recomposeScope` existed together: state was observable so that writing it
- * could mark a hand-placed restart boundary dirty and let the next pass skip everything else. That
- * pairing is gone. This engine composes the whole tree every frame by design -- see
- * `ComposeHost.frame` -- so nothing needs to be told that a value changed, and a scope that could
- * skip was only ever a trap: state read through a plain field silently never invalidated it, which
- * shipped three times (hover, focus, typing) before the pattern was recognised.
- *
- * State that must outlive a frame is held the way the rest of this engine already holds it: a
- * plain class with plain `var`s, kept across passes by [remember]. `ScrollState`, `TextFieldState`,
- * `LazyListState` and `InteractionSource` are all that shape.
- *
- *     val picker = remember { ScenePickerState() }   // class ScenePickerState { var expanded = false }
- *
- * The divergence from Compose is recorded in `docs/reference/compose-engine/15-compose-parity.md`.
- * Reintroducing observation means reintroducing skipping, which needs restart boundaries the
- * compiler generates rather than ones a caller remembers to place.
+import kotlin.reflect.KProperty
+
+/**
+ * A value holder that can be read.
  */
+interface State<out T> {
+    val value: T
+}
+
+/**
+ * A mutable value holder that can be read and written.
+ *
+ * Commonly used with [remember] and property delegation:
+ * ```kotlin
+ * var count by remember { mutableStateOf(0) }
+ * ```
+ */
+interface MutableState<T> : State<T> {
+    override var value: T
+
+    operator fun component1(): T = value
+    operator fun component2(): (T) -> Unit = { value = it }
+}
+
+/**
+ * Default implementation of [MutableState].
+ */
+class SnapshotMutableState<T>(
+    override var value: T,
+) : MutableState<T> {
+    override fun toString(): String = "MutableState(value=$value)"
+}
+
+/**
+ * Creates a new [MutableState] initialized with [value].
+ *
+ * Commonly combined with [remember] to retain state across passes:
+ * ```kotlin
+ * var expanded by remember { mutableStateOf(false) }
+ * ```
+ */
+fun <T> mutableStateOf(value: T): MutableState<T> = SnapshotMutableState(value)
+
+/**
+ * Permits using [State] as a property delegate.
+ *
+ * Example:
+ * ```kotlin
+ * val count by state
+ * ```
+ */
+operator fun <T> State<T>.getValue(thisRef: Any?, property: KProperty<*>): T = value
+
+/**
+ * Permits using [MutableState] as a mutable property delegate.
+ *
+ * Example:
+ * ```kotlin
+ * var count by mutableState
+ * ```
+ */
+operator fun <T> MutableState<T>.setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+    this.value = value
+}

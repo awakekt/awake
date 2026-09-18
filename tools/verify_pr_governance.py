@@ -38,12 +38,16 @@ def main() -> int:
     if not milestone or not milestone.get("title"):
         if pr_number:
             try:
+                env = dict(os.environ)
+                if "GITHUB_TOKEN" in env and "GH_TOKEN" not in env:
+                    env["GH_TOKEN"] = env["GITHUB_TOKEN"]
                 proc = subprocess.run(
                     ["gh", "pr", "view", str(pr_number), "--json", "milestone"],
                     cwd=ROOT,
                     capture_output=True,
                     text=True,
                     check=False,
+                    env=env,
                 )
                 if proc.returncode == 0:
                     data = json.loads(proc.stdout)

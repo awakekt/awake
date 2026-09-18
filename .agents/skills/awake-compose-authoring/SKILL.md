@@ -49,11 +49,18 @@ context(_: Composer)
 fun EditorPanel(/* ... */) { /* ... */ }
 ```
 
-Every UI tree is reconciled each frame, all of it. There is no skipping and no observable state:
-no `recomposeScope`, no `mutableStateOf`, no `$changed` masks, no snapshot isolation. A value that
-must outlive a frame is a plain class with plain `var`s, held across passes by `remember` --
-`ScrollState`, `TextFieldState` and `InteractionSource` are all that shape. `remember` retains it
-in the matching retained node; it is not persisted state or an asynchronous lifecycle. App,
+Every UI tree is reconciled each frame, all of it in a predictable synchronous pass. Local mutable
+state is held using `mutableStateOf` (or state holder classes) wrapped in `remember`:
+
+```kotlin
+var expanded by remember { mutableStateOf(false) }
+var selectedIndex by remember { mutableStateOf(0) }
+```
+
+`remember` retains the `MutableState` instance across passes in the matching retained node; it is
+not persisted document state or an asynchronous lifecycle. Complex component state (`ScrollState`,
+`TextFieldState`, `InteractionSource`) are plain classes also held across passes by `remember`.
+Writing `state.value` updates the value immediately for subsequent phases and future passes. App,
 session, document, and provider state stay in explicit caller-owned contracts. Async work remains
 outside the engine and its result is read on a later frame.
 
