@@ -90,6 +90,8 @@ internal class DepthPrePassFeature(
         cascades: GpuShadowCascadeData,
     ) = recordCommands(commandBuffer, drawCalls, castFormat, cascades.viewProjections)
 
+    private val initializedLayers = BooleanArray(depthTarget.layers)
+
     /** Records the generic packet's arbitrary layered depth resource. */
     fun recordCommands(
         commandBuffer: Long,
@@ -98,44 +100,64 @@ internal class DepthPrePassFeature(
         viewProjections: List<Mat4>,
     ) {
         require(viewProjections.isNotEmpty()) { "A layered depth pass needs at least one matrix." }
-        // EVERY layer, not just the ones this frame's cascade set fills. A layer that is never
-        // rendered is never written, and sampling the array then reads an image subresource in an
-        // undefined layout -- which the validation layer rejects and a driver may render as
-        // anything. A configuration with fewer cascades than layers repeats its last one, so the
-        // extra passes are duplicates rather than holes.
+        // Each rendered cascade writes and transitions its layer to SHADER_READ_ONLY_OPTIMAL.
+        // Unrendered layers are transitioned once with an empty pass to satisfy Vulkan layout
+        // invariants without incurring per-frame render pass overhead.
         val allPipelines = buildList {
             add(depthOnlyPipeline)
             addAll(variantPipelines.values)
             addAll(keyedVariantPipelines.values)
             addAll(formatPipelines.values)
         }.distinct()
-        for (cascade in 0 until depthTarget.layers) {
-            val source = viewProjections[minOf(cascade, viewProjections.lastIndex)]
+        val activeCount = minOf(viewProjections.size, depthTarget.layers)
+        for (cascade in 0 until activeCount) {
+            val source = viewProjections[cascade]
             allPipelines.forEach { it.writeCascade(cascade, source) }
             recordCascade(commandBuffer, drawCalls, castFormat, cascade)
+            initializedLayers[cascade] = true
+        }
+        for (layer in activeCount until depthTarget.layers) {
+            if (!initializedLayers[layer]) {
+                recordCascade(commandBuffer, emptyList(), castFormat, layer)
+                initializedLayers[layer] = true
+            }
         }
     }
 
-    /** Missing layers are still cleared, keeping every sampled subresource initialized without
-     * making this backend interpret why a layer was requested. */
+    /** Records only the requested subpasses, avoiding redundant passes over unused layers. */
     fun recordCommands(
         commandBuffer: Long,
         subPasses: List<GpuSubPass>,
         castFormat: VertexFormat,
     ) {
         if (subPasses.isEmpty()) return
-        val byLayer = subPasses.associateBy { it.targetLayer }
         val allPipelines = buildList {
             add(depthOnlyPipeline)
             addAll(variantPipelines.values)
             addAll(keyedVariantPipelines.values)
             addAll(formatPipelines.values)
         }.distinct()
+        for (subPass in subPasses) {
+            val layer = subPass.targetLayer
+            if (layer in 0 until depthTarget.layers) {
+                allPipelines.forEach { it.writeCascade(layer, subPass.viewProjection) }
+                recordCascade(commandBuffer, subPass.resolvedDraws, castFormat, layer)
+                initializedLayers[layer] = true
+            }
+        }
+        val activeLayers = subPasses.map { it.targetLayer }.toSet()
+        for (cascade in 0 until minOf(4, depthTarget.layers)) {
+            if (cascade !in activeLayers) {
+                allPipelines.forEach { it.writeCascade(cascade, Mat4()) }
+                recordCascade(commandBuffer, emptyList(), castFormat, cascade)
+                initializedLayers[cascade] = true
+            }
+        }
         for (layer in 0 until depthTarget.layers) {
-            val subPass = byLayer[layer]
-            val source = subPass?.viewProjection ?: Mat4()
-            allPipelines.forEach { it.writeCascade(layer, source) }
-            recordCascade(commandBuffer, subPass?.resolvedDraws.orEmpty(), castFormat, layer)
+            if (!initializedLayers[layer]) {
+                recordCascade(commandBuffer, emptyList(), castFormat, layer)
+                initializedLayers[layer] = true
+            }
         }
     }
 
