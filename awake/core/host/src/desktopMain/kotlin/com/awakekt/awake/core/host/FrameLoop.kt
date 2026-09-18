@@ -19,6 +19,13 @@ object DesktopFrameLoop : FrameLoop {
     @Volatile
     var backgroundFrameRate: Int? = null
 
+    /**
+     * Optional explicit frame rate mode override set dynamically at runtime (e.g. by editor preferences).
+     * When null, the caller-specified [FrameRateMode] is used.
+     */
+    @Volatile
+    var frameRateOverride: FrameRateMode? = null
+
     private var previousFrameTime = System.nanoTime()
 
     override fun tick(
@@ -32,10 +39,11 @@ object DesktopFrameLoop : FrameLoop {
 
         onUpdate(deltaTime)
 
+        val baseMode = frameRateOverride ?: mode
         val effectiveMode = if (!isWindowFocused && backgroundFrameRate != null) {
             FrameRateMode.Capped(backgroundFrameRate!!.coerceAtLeast(1))
         } else {
-            mode
+            baseMode
         }
 
         val frameWorkNanos = System.nanoTime() - currentFrameTime
@@ -62,6 +70,7 @@ object DesktopFrameLoop : FrameLoop {
     internal fun resetForTest() {
         isWindowFocused = true
         backgroundFrameRate = null
+        frameRateOverride = null
         previousFrameTime = System.nanoTime()
     }
 }

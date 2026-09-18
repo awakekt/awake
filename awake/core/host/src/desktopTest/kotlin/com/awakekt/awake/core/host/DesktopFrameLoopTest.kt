@@ -102,4 +102,24 @@ class DesktopFrameLoopTest {
             DesktopFrameLoop.resetForTest()
         }
     }
+
+    @Test
+    fun desktopFrameLoopRespectsFrameRateOverride() {
+        try {
+            DesktopFrameLoop.isWindowFocused = true
+            DesktopFrameLoop.frameRateOverride = FrameRateMode.Capped(30)
+
+            // Prime the previousFrameTime
+            DesktopFrameLoop.tick(FrameRateMode.Unlimited) {}
+
+            var delta = -1.0
+            DesktopFrameLoop.tick(FrameRateMode.Unlimited) { d ->
+                delta = d
+            }
+            // 30 FPS target is ~33.3ms. Expect delta to be at least 20ms accounting for timer granularity.
+            assertTrue(delta >= 0.020, "Expected override capped delta >= 20ms, but was ${delta * 1000}ms")
+        } finally {
+            DesktopFrameLoop.resetForTest()
+        }
+    }
 }
