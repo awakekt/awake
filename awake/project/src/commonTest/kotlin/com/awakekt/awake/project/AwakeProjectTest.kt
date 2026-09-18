@@ -8,8 +8,10 @@ package com.awakekt.awake.project
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
+@Suppress("DEPRECATION")
 class AwakeProjectTest {
     @Test
     fun preservesTheExistingManifestJsonShape() {
@@ -23,6 +25,47 @@ class AwakeProjectTest {
         assertFalse(AwakeProjectValidator.isCompatible(manifest, "0.1.0-alpha.1"))
         assertTrue(AwakeProjectValidator.isCompatible(manifest, "0.1.0"))
         assertTrue(AwakeProjectValidator.isCompatible(manifest, "1.0.0"))
+    }
+
+    @Test
+    fun canonicalManifestCompatibilityUsesExplicitMinimumEngineVersion() {
+        val manifest = AwakeProjectManifestV1(
+            id = "com.example.demo",
+            name = "Demo",
+            version = "1.0.0",
+            minEngineVersion = "0.1.0-beta.1",
+            entryScene = "scenes/main.scene.json",
+        )
+
+        assertFalse(AwakeProjectValidator.isCompatible(manifest, "0.1.0-alpha.3"))
+        assertTrue(AwakeProjectValidator.isCompatible(manifest, "0.1.0-beta.1"))
+    }
+
+    @Test
+    fun canonicalManifestWithoutEngineMinimumDoesNotInventCompatibilityRequirement() {
+        val manifest = AwakeProjectManifestV1(
+            id = "com.example.demo",
+            name = "Demo",
+            version = "1.0.0",
+            entryScene = "scenes/main.scene.json",
+        )
+
+        assertTrue(AwakeProjectValidator.isCompatible(manifest, "0.0.1"))
+    }
+
+    @Test
+    fun legacyManifestDoesNotInventEngineMetadata() {
+        val manifest = AwakeProjectManifest(name = "Demo", id = "demo")
+
+        assertNull(manifest.engineVersion)
+        assertNull(manifest.minEngineVersion)
+        assertNull(manifest.createdWith)
+        assertTrue(AwakeProjectValidator.isCompatible(manifest, "0.0.1"))
+    }
+
+    @Test
+    fun buildInfoExposesTheGradleDerivedEngineVersion() {
+        assertTrue(AwakeEngineBuildInfo.VERSION.matches(Regex("\\d+\\.\\d+\\.\\d+.*")))
     }
 
     @Test

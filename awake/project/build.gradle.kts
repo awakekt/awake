@@ -12,7 +12,29 @@ plugins {
     id("com.awakekt.awake.plugin.spotless")
 }
 
+val generateAwakeEngineBuildInfo = tasks.register("generateAwakeEngineBuildInfo") {
+    val outputDirectory = layout.buildDirectory.dir("generated/awake/buildInfo/commonMain")
+    outputs.dir(outputDirectory)
+    doLast {
+        val outputFile = outputDirectory.get().file(
+            "com/awakekt/awake/project/AwakeProjectBuildInfo.generated.kt",
+        ).asFile
+        outputFile.parentFile.mkdirs()
+        outputFile.writeText(
+            """
+            |package com.awakekt.awake.project
+            |
+            |internal const val AWAKE_ENGINE_VERSION: String = "${project.version}"
+            |""".trimMargin() + "\n",
+        )
+    }
+}
+
 kotlin {
+    sourceSets.commonMain {
+        kotlin.srcDir(generateAwakeEngineBuildInfo)
+    }
+
     android {
         namespace = "com.awakekt.awake.project"
     }
