@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Cubemap texture and runtime shader pipeline.** Added 6-face cubemap metadata validation and packing in `TextureAsset`, cubemap binding contracts in `ResourceBinding`, ASL `textureCube` resource bindings and `textureSampleCube`/`textureSampleLevelCube` builtins in `shader-dsl`, hardware cubemap image view creation for Vulkan (`VK_IMAGE_VIEW_TYPE_CUBE`) and WebGPU (`GPUTextureViewDimension.Cube`), and `SkyboxCubemapShader` with uniform layout packing in `shader-pack`.
 - **Pull request governance and milestone policy.** Added CI verification and agent workflow invariants requiring every pull request to be linked to an active milestone and to update `CHANGELOG.md`.
+- **Version-one project contract.** Added the shared `awake.project.json` and `assets.lock.json` models and structural validators for Core and Studio consumers, including project-relative path, plugin, version, and SHA-256 pin checks.
+- **Portable SHA-256 content digest.** Added a multiplatform Core IO digest utility for reusable content identity and integrity verification.
 
 ### Fixed
 
