@@ -36,6 +36,22 @@ def main() -> int:
 
     # 1. Verify Milestone Assignment
     if not milestone or not milestone.get("title"):
+        if pr_number:
+            try:
+                proc = subprocess.run(
+                    ["gh", "pr", "view", str(pr_number), "--json", "milestone"],
+                    cwd=ROOT,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if proc.returncode == 0:
+                    data = json.loads(proc.stdout)
+                    milestone = data.get("milestone")
+            except Exception:
+                pass
+
+    if not milestone or not milestone.get("title"):
         errors.append(
             f"❌ PR #{pr_number} is missing an assigned GitHub Milestone.\n"
             f"   Run: gh pr edit {pr_number} --milestone \"<milestone-title>\""
