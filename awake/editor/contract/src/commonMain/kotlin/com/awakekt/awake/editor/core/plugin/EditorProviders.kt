@@ -28,9 +28,6 @@ enum class EditorProviderKind {
     /** A tab or panel in the bottom panel tray. See `EditorBottomPanelContribution` in the shell package. */
     BottomPanel,
 
-    @Deprecated("Renamed to BottomPanel", ReplaceWith("EditorProviderKind.BottomPanel"))
-    Dock,
-
     /** A toolbar action or control contributed by a plugin. */
     Toolbar,
 

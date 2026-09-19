@@ -1,11 +1,11 @@
-public final class com/awakekt/awake/project/AwakeAssetLockEntryV1 {
-	public static final field Companion Lcom/awakekt/awake/project/AwakeAssetLockEntryV1$Companion;
+public final class com/awakekt/awake/project/AwakeAssetLockEntry {
+	public static final field Companion Lcom/awakekt/awake/project/AwakeAssetLockEntry$Companion;
 	public fun <init> (Ljava/lang/String;Ljava/lang/Long;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/Long;
-	public final fun copy (Ljava/lang/String;Ljava/lang/Long;)Lcom/awakekt/awake/project/AwakeAssetLockEntryV1;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeAssetLockEntryV1;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeAssetLockEntryV1;
+	public final fun copy (Ljava/lang/String;Ljava/lang/Long;)Lcom/awakekt/awake/project/AwakeAssetLockEntry;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeAssetLockEntry;Ljava/lang/String;Ljava/lang/Long;ILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeAssetLockEntry;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getSha256 ()Ljava/lang/String;
 	public final fun getSizeBytes ()Ljava/lang/Long;
@@ -13,31 +13,31 @@ public final class com/awakekt/awake/project/AwakeAssetLockEntryV1 {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class com/awakekt/awake/project/AwakeAssetLockEntryV1$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeAssetLockEntryV1$$serializer;
+public final synthetic class com/awakekt/awake/project/AwakeAssetLockEntry$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeAssetLockEntry$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/project/AwakeAssetLockEntryV1;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/project/AwakeAssetLockEntry;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/project/AwakeAssetLockEntryV1;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/project/AwakeAssetLockEntry;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/project/AwakeAssetLockEntryV1$Companion {
+public final class com/awakekt/awake/project/AwakeAssetLockEntry$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/project/AwakeAssetsLockV1 {
-	public static final field Companion Lcom/awakekt/awake/project/AwakeAssetsLockV1$Companion;
+public final class com/awakekt/awake/project/AwakeAssetsLock {
+	public static final field Companion Lcom/awakekt/awake/project/AwakeAssetsLock$Companion;
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;ILjava/util/Map;)V
 	public synthetic fun <init> (Ljava/lang/String;ILjava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()I
 	public final fun component3 ()Ljava/util/Map;
-	public final fun copy (Ljava/lang/String;ILjava/util/Map;)Lcom/awakekt/awake/project/AwakeAssetsLockV1;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeAssetsLockV1;Ljava/lang/String;ILjava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeAssetsLockV1;
+	public final fun copy (Ljava/lang/String;ILjava/util/Map;)Lcom/awakekt/awake/project/AwakeAssetsLock;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeAssetsLock;Ljava/lang/String;ILjava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeAssetsLock;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAssets ()Ljava/util/Map;
 	public final fun getFormatVersion ()I
@@ -46,18 +46,18 @@ public final class com/awakekt/awake/project/AwakeAssetsLockV1 {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class com/awakekt/awake/project/AwakeAssetsLockV1$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeAssetsLockV1$$serializer;
+public final synthetic class com/awakekt/awake/project/AwakeAssetsLock$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeAssetsLock$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/project/AwakeAssetsLockV1;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/project/AwakeAssetsLock;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/project/AwakeAssetsLockV1;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/project/AwakeAssetsLock;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/project/AwakeAssetsLockV1$Companion {
+public final class com/awakekt/awake/project/AwakeAssetsLock$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
@@ -68,29 +68,31 @@ public final class com/awakekt/awake/project/AwakeEngineBuildInfo {
 
 public final class com/awakekt/awake/project/AwakeProjectManifest {
 	public static final field Companion Lcom/awakekt/awake/project/AwakeProjectManifest$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/project/AwakeProjectSettings;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/project/AwakeProjectSettings;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
-	public final fun component2 ()Ljava/lang/String;
+	public final fun component10 ()Ljava/util/List;
+	public final fun component2 ()I
 	public final fun component3 ()Ljava/lang/String;
 	public final fun component4 ()Ljava/lang/String;
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Ljava/lang/String;
-	public final fun component7 ()Ljava/util/List;
-	public final fun component8 ()Ljava/util/List;
-	public final fun component9 ()Lcom/awakekt/awake/project/AwakeProjectSettings;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/project/AwakeProjectSettings;)Lcom/awakekt/awake/project/AwakeProjectManifest;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeProjectManifest;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/project/AwakeProjectSettings;ILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeProjectManifest;
+	public final fun component7 ()Ljava/lang/String;
+	public final fun component8 ()Ljava/lang/String;
+	public final fun component9 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/project/AwakeProjectManifest;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeProjectManifest;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeProjectManifest;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAssetDirectories ()Ljava/util/List;
-	public final fun getCreatedWith ()Ljava/lang/String;
-	public final fun getDefaultScene ()Ljava/lang/String;
-	public final fun getEngineVersion ()Ljava/lang/String;
+	public final fun getAssetRoots ()Ljava/util/List;
+	public final fun getAuthor ()Ljava/lang/String;
+	public final fun getEntryScene ()Ljava/lang/String;
+	public final fun getFormatVersion ()I
 	public final fun getId ()Ljava/lang/String;
 	public final fun getMinEngineVersion ()Ljava/lang/String;
 	public final fun getName ()Ljava/lang/String;
 	public final fun getPlugins ()Ljava/util/List;
-	public final fun getSettings ()Lcom/awakekt/awake/project/AwakeProjectSettings;
+	public final fun getSchema ()Ljava/lang/String;
+	public final fun getVersion ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -110,54 +112,8 @@ public final class com/awakekt/awake/project/AwakeProjectManifest$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/project/AwakeProjectManifestV1 {
-	public static final field Companion Lcom/awakekt/awake/project/AwakeProjectManifestV1$Companion;
-	public fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)V
-	public synthetic fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()Ljava/lang/String;
-	public final fun component10 ()Ljava/util/List;
-	public final fun component2 ()I
-	public final fun component3 ()Ljava/lang/String;
-	public final fun component4 ()Ljava/lang/String;
-	public final fun component5 ()Ljava/lang/String;
-	public final fun component6 ()Ljava/lang/String;
-	public final fun component7 ()Ljava/lang/String;
-	public final fun component8 ()Ljava/lang/String;
-	public final fun component9 ()Ljava/util/List;
-	public final fun copy (Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/project/AwakeProjectManifestV1;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeProjectManifestV1;Ljava/lang/String;ILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeProjectManifestV1;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getAssetRoots ()Ljava/util/List;
-	public final fun getAuthor ()Ljava/lang/String;
-	public final fun getEntryScene ()Ljava/lang/String;
-	public final fun getFormatVersion ()I
-	public final fun getId ()Ljava/lang/String;
-	public final fun getMinEngineVersion ()Ljava/lang/String;
-	public final fun getName ()Ljava/lang/String;
-	public final fun getPlugins ()Ljava/util/List;
-	public final fun getSchema ()Ljava/lang/String;
-	public final fun getVersion ()Ljava/lang/String;
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class com/awakekt/awake/project/AwakeProjectManifestV1$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeProjectManifestV1$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/project/AwakeProjectManifestV1;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/project/AwakeProjectManifestV1;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class com/awakekt/awake/project/AwakeProjectManifestV1$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class com/awakekt/awake/project/AwakeProjectPluginReferenceV1 {
-	public static final field Companion Lcom/awakekt/awake/project/AwakeProjectPluginReferenceV1$Companion;
+public final class com/awakekt/awake/project/AwakeProjectPluginReference {
+	public static final field Companion Lcom/awakekt/awake/project/AwakeProjectPluginReference$Companion;
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
@@ -166,8 +122,8 @@ public final class com/awakekt/awake/project/AwakeProjectPluginReferenceV1 {
 	public final fun component4 ()Ljava/lang/String;
 	public final fun component5 ()Ljava/lang/String;
 	public final fun component6 ()Z
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/awakekt/awake/project/AwakeProjectPluginReferenceV1;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeProjectPluginReferenceV1;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeProjectPluginReferenceV1;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/awakekt/awake/project/AwakeProjectPluginReference;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeProjectPluginReference;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeProjectPluginReference;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getEntrypointClass ()Ljava/lang/String;
 	public final fun getId ()Ljava/lang/String;
@@ -179,70 +135,30 @@ public final class com/awakekt/awake/project/AwakeProjectPluginReferenceV1 {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final synthetic class com/awakekt/awake/project/AwakeProjectPluginReferenceV1$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeProjectPluginReferenceV1$$serializer;
+public final synthetic class com/awakekt/awake/project/AwakeProjectPluginReference$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeProjectPluginReference$$serializer;
 	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/project/AwakeProjectPluginReferenceV1;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/project/AwakeProjectPluginReference;
 	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
 	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/project/AwakeProjectPluginReferenceV1;)V
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/project/AwakeProjectPluginReference;)V
 	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
 	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
 }
 
-public final class com/awakekt/awake/project/AwakeProjectPluginReferenceV1$Companion {
+public final class com/awakekt/awake/project/AwakeProjectPluginReference$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class com/awakekt/awake/project/AwakeProjectSettings {
-	public static final field Companion Lcom/awakekt/awake/project/AwakeProjectSettings$Companion;
-	public fun <init> ()V
-	public fun <init> (IILjava/lang/String;)V
-	public synthetic fun <init> (IILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public final fun component1 ()I
-	public final fun component2 ()I
-	public final fun component3 ()Ljava/lang/String;
-	public final fun copy (IILjava/lang/String;)Lcom/awakekt/awake/project/AwakeProjectSettings;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/project/AwakeProjectSettings;IILjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/project/AwakeProjectSettings;
-	public fun equals (Ljava/lang/Object;)Z
-	public final fun getDefaultRenderer ()Ljava/lang/String;
-	public final fun getPhysicsTickRate ()I
-	public final fun getTargetFrameRate ()I
-	public fun hashCode ()I
-	public fun toString ()Ljava/lang/String;
-}
-
-public final synthetic class com/awakekt/awake/project/AwakeProjectSettings$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
-	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeProjectSettings$$serializer;
-	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
-	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/project/AwakeProjectSettings;
-	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
-	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
-	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/project/AwakeProjectSettings;)V
-	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
-	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
-}
-
-public final class com/awakekt/awake/project/AwakeProjectSettings$Companion {
-	public final fun serializer ()Lkotlinx/serialization/KSerializer;
-}
-
-public final class com/awakekt/awake/project/AwakeProjectV1Validator {
-	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeProjectV1Validator;
-	public final fun assetsLockIssues (Lcom/awakekt/awake/project/AwakeAssetsLockV1;)Ljava/util/List;
-	public final fun decodeAssetsLock (Ljava/lang/String;)Lcom/awakekt/awake/project/AwakeAssetsLockV1;
-	public final fun decodeManifest (Ljava/lang/String;)Lcom/awakekt/awake/project/AwakeProjectManifestV1;
-	public final fun encodeAssetsLock (Lcom/awakekt/awake/project/AwakeAssetsLockV1;)Ljava/lang/String;
-	public final fun encodeManifest (Lcom/awakekt/awake/project/AwakeProjectManifestV1;)Ljava/lang/String;
-	public final fun isSafeProjectPath (Ljava/lang/String;)Z
-	public final fun manifestIssues (Lcom/awakekt/awake/project/AwakeProjectManifestV1;)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/project/AwakeProjectValidator {
 	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeProjectValidator;
-	public final fun decode (Ljava/lang/String;)Lcom/awakekt/awake/project/AwakeProjectManifest;
-	public final fun encode (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/lang/String;
+	public final fun assetsLockIssues (Lcom/awakekt/awake/project/AwakeAssetsLock;)Ljava/util/List;
+	public final fun decodeAssetsLock (Ljava/lang/String;)Lcom/awakekt/awake/project/AwakeAssetsLock;
+	public final fun decodeManifest (Ljava/lang/String;)Lcom/awakekt/awake/project/AwakeProjectManifest;
+	public final fun encodeAssetsLock (Lcom/awakekt/awake/project/AwakeAssetsLock;)Ljava/lang/String;
+	public final fun encodeManifest (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/lang/String;
 	public final fun isCompatible (Lcom/awakekt/awake/project/AwakeProjectManifest;Ljava/lang/String;)Z
-	public final fun isCompatible (Lcom/awakekt/awake/project/AwakeProjectManifestV1;Ljava/lang/String;)Z
+	public final fun isSafeProjectPath (Ljava/lang/String;)Z
+	public final fun manifestIssues (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/util/List;
 }
 

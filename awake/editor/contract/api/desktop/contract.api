@@ -208,7 +208,6 @@ public final class com/awakekt/awake/editor/core/plugin/EditorProviderKind : jav
 	public static final field BottomPanel Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 	public static final field Build Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 	public static final field Component Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
-	public static final field Dock Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 	public static final field EntityTemplate Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 	public static final field Environment Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 	public static final field FloatingCard Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;

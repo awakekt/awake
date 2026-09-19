@@ -17,15 +17,16 @@ Use this skill whenever evaluating a new engine feature, editor panel, asset pip
 
 ---
 
-## The Golden Principle
+## The Golden Principle: 3-Layer Ecosystem
 
-> **"Runtime Engine Libraries are Free; Studio Productivity & Enterprise Workflow is Pro."**
+> **"Runtime Libraries & Editor Contracts are Free; Studio Productivity & Enterprise Workflow is Pro."**
 
-- **Awake Core (Free & Open-Source)**:
-  Every runtime library required to compile, run, and ship a complete game on Desktop, iOS, Android, and WASM (`:awake:scene`, `:awake:ui:shadcn`, `:awake:physics`, `:awake:navigation`, `:awake:ai`, `:awake:audio`, `:awake:scene:dialogue`).
-
-- **Awake Pro (Commercial & Studio Tier)**:
-  Visual node graph editors in Studio, asset optimization pipelines, real-time team collaboration, cloud build systems, and enterprise SLAs.
+- **Layer 1: Awake Core Runtime (Free & Open-Source, Apache 2.0)**:
+  Every runtime library required to compile, run, and ship a complete game on Desktop, iOS, Android, and WASM (`:awake:scene`, `:awake:ui:shadcn`, `:awake:physics`, `:awake:navigation`, `:awake:ai`, `:awake:audio`, `:awake:project`).
+- **Layer 2: Awake Core Editor (Free & Open-Source, Apache 2.0)**:
+  Vendor-neutral editor plugin contracts and provider interfaces (`:awake:editor:contract`, `com.awakekt:awake-editor-contract`). Third-party plugins and asset converters target this public layer with zero commercial licensing lock-in.
+- **Layer 3: Awake Studio Pro (Commercial Studio Tier)**:
+  Visual node graph editors, commercial authoring panels, real-time team collaboration, cloud build systems, secure signature verification pipeline (`StudioPluginPipeline`), and enterprise SLAs.
 
 ---
 

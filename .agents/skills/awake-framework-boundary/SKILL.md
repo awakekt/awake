@@ -6,12 +6,18 @@ metadata:
   last-updated: '2026-08-20'
 ---
 
-# Awake Framework Boundary
+## The Three-Layer Ecosystem Architecture
 
-Read [framework-game-boundary.md](../../docs/reference/framework-game-boundary.md) before
-deciding where a capability belongs.
+Awake enforces strict boundaries across three distinct architectural layers:
 
-Classify the proposal as **Awake capability**, **consumer/game code**, or **defer**.
+1. **Layer 1: Awake Core Engine (`awaken`)** (Apache 2.0):
+   Runtime engine libraries required to compile, execute, and ship games on Desktop, iOS, Android, and WASM (`:awake:scene`, `:awake:physics`, `:awake:render`, `:awake:ui:shadcn`, `:awake:project`, etc.).
+2. **Layer 2: Awake Core Editor (`awaken:awake:editor:contract`)** (Apache 2.0):
+   Public, vendor-neutral editor contracts and extension points (`com.awakekt:awake-editor-contract`). Enables any developer or toolmaker to author editor plugins without closed-source Studio dependencies.
+3. **Layer 3: Awake Studio Pro (`awake-pro`)** (Commercial):
+   Commercial desktop application (`:app:studio`), visual inspectors, collaborative workflows, and the secure runtime loader (`StudioPluginPipeline`).
+
+## Framework vs Game Boundary Rules
 
 1. A future MMORPG is one consumer, not justification for a new Awake module.
 2. Prefer consumer-side composition. Promote only after two credible consumers demonstrate the
