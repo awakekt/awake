@@ -276,7 +276,6 @@ val verifyCapabilityBoundaries = tasks.register("verifyCapabilityBoundaries") {
             "import kotlinx.browser.",
             "import platform.Foundation.",
             "import com.awakekt.awake.studio.",
-            "import com.awakekt.awake.editor.",
         )
         val duplicatedReaderPatterns = listOf(
             Regex("\\b(readFileBytes|readPlatformTextFile|assetBytesReader|externalResourceReader)\\b"),
@@ -289,6 +288,9 @@ val verifyCapabilityBoundaries = tasks.register("verifyCapabilityBoundaries") {
                 lines.forEachIndexed { index, line ->
                     if (forbiddenImports.any(line::contains)) {
                         add("${file.relativeTo(rootDir)}:${index + 1}: platform or Pro import in commonMain")
+                    }
+                    if (line.contains("import com.awakekt.awake.editor.") && !file.path.contains("awake/editor/")) {
+                        add("${file.relativeTo(rootDir)}:${index + 1}: editor import in core module")
                     }
                     duplicatedReaderPatterns.forEach { pattern ->
                         if (pattern.containsMatchIn(line)) {

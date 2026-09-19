@@ -14,7 +14,8 @@ import kotlinx.serialization.json.Json
 data class AwakeProjectPluginReferenceV1(
     val id: String,
     val path: String,
-    val version: String,
+    val version: String = "",
+    val sha256: String? = null,
     val entrypointClass: String? = null,
     val required: Boolean = false,
 )
@@ -104,8 +105,11 @@ object AwakeProjectV1Validator {
             if (!isSafeProjectPath(plugin.path)) {
                 add("plugins[$index].path must be a safe project-relative path")
             }
-            if (!plugin.version.matches(semverPattern)) {
+            if (plugin.version.isNotBlank() && !plugin.version.matches(semverPattern)) {
                 add("plugins[$index].version must be semantic version")
+            }
+            if (plugin.sha256 != null && !plugin.sha256.matches(sha256Pattern)) {
+                add("plugins[$index].sha256 must be a lowercase SHA-256 digest")
             }
             if (plugin.entrypointClass != null && plugin.entrypointClass.isBlank()) {
                 add("plugins[$index].entrypointClass must not be blank")

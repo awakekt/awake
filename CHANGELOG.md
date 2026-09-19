@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Public editor plugin contract and project plugin SHA-256 pin.** Added public `:awake:editor:contract` module with `EditorPlugin`, `EditorProvider`, `PluginManifest`, and `AssetConverterPlugin` contracts for open-source and commercial plugin authoring. Added optional `sha256` content integrity pin and default version semantics to `AwakeProjectPluginReferenceV1` in `:awake:project`.
+
 ## [0.1.0-alpha.4] - 2026-09-19
 
 ### Added
