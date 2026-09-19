@@ -18,21 +18,25 @@ import kotlin.test.assertSame
 class Vec3MutabilityTest {
     @Test
     fun normalizeMutatesInPlaceAndReturnsTheSameInstance() {
-        val v = Vec3f(0f, 3f, 0f)
-        val returned = v.normalize()
+        // --8<-- [start:normalize-in-place]
+        val forward = Vec3f(0f, 3f, 0f)
+        val returned = forward.normalize()
+        // --8<-- [end:normalize-in-place]
 
-        assertSame(v, returned)
-        assertEquals(1f, v.y, TOLERANCE)
-        assertEquals(1f, v.length3(), TOLERANCE)
+        assertSame(forward, returned)
+        assertEquals(1f, forward.y, TOLERANCE)
+        assertEquals(1f, forward.length3(), TOLERANCE)
     }
 
     @Test
     fun normalizedLeavesTheReceiverUntouched() {
-        val v = Vec3f(0f, 3f, 0f)
-        val unit = v.normalized()
+        // --8<-- [start:normalized-copy]
+        val direction = Vec3f(0f, 3f, 0f)
+        val unit = direction.normalized()
+        // --8<-- [end:normalized-copy]
 
-        assertNotSame(v, unit)
-        assertEquals(3f, v.y, TOLERANCE)
+        assertNotSame(direction, unit)
+        assertEquals(3f, direction.y, TOLERANCE)
         assertEquals(1f, unit.y, TOLERANCE)
     }
 
