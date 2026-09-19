@@ -13,5 +13,8 @@ world during the application update and render phases.
 The ECS is platform-neutral and does not depend on Vulkan, WebGPU, physics, or UI. Those systems
 can be layered on top of the same world.
 
+Continue with the [ECS tutorial and samples](ecs-tutorial.md) for the planned task flow, or use
+the [scene runtime](scene.md) when the world needs scene components and lifecycle management.
+
 For exact APIs and target availability, consult the KDoc and release notes for the version you are
 using.

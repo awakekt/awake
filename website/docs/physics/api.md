@@ -13,3 +13,6 @@ and raycasting. It is independent of a native physics engine.
 - `RaycastHit` reports the hit position, normal, distance, and body.
 
 Use [Jolt](jolt.md) when an application needs the native Jolt implementation.
+
+See [Physics tutorials and samples](tutorial.md) for the planned integration path and current
+sample status.

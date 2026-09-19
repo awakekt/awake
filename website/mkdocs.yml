@@ -37,40 +37,49 @@ theme:
     - content.tabs.link
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - Core & ECS:
-      - Core: engine/core.md
-      - Core Math: core/math.md
-      - ECS Runtime: engine/ecs.md
-      - Scene Runtime: engine/scene.md
-      - Scene Authoring: scene/authoring.md
-      - Scene Rendering: scene/rendering.md
-      - Scene Navigation: scene/navigation.md
-      - Scene AI: scene/ai.md
-      - Scene World: scene/world.md
-      - App & Bootstrap: engine/bootstrap.md
-  - Rendering & Backends:
-      - Hardware Interface (RHI): rendering/rhi.md
-      - Vulkan Backend: rendering/vulkan.md
-      - WebGPU Backend: rendering/webgpu.md
-      - Terrain Authoring: asset/terrain.md
+  - Start Here:
+      - Install & First App: getting-started.md
+      - Releases & Compatibility: releases.md
+  - Core:
+      - Overview: engine/core.md
+      - Tutorials & Samples: core/tutorial.md
+      - Math:
+          - Guide & Verified Samples: core/math.md
+      - ECS:
+          - Overview: engine/ecs.md
+          - Tutorial & Samples: engine/ecs-tutorial.md
+      - Application Bootstrap: engine/bootstrap.md
+  - Scene:
+      - Overview: engine/scene.md
+      - Tutorials & Samples: scene/tutorial.md
+      - Authoring: scene/authoring.md
+      - Rendering: scene/rendering.md
+      - Navigation: scene/navigation.md
+      - AI: scene/ai.md
+      - World: scene/world.md
+  - Backends:
+      - Overview: rendering/rhi.md
+      - Tutorials & Samples: rendering/tutorial.md
+      - Vulkan: rendering/vulkan.md
+      - WebGPU: rendering/webgpu.md
       - Shader DSL: asset/shader-dsl.md
       - Shaders & Pipelines: rendering/shaders.md
       - Naga Shader Compiler: rendering/shader-compiler.md
   - Physics:
-      - Physics API: physics/api.md
-      - Jolt Bridge: physics/jolt.md
-  - UI & Compose:
+      - Overview: physics/api.md
+      - Tutorials & Samples: physics/tutorial.md
+      - Jolt: physics/jolt.md
+  - UI:
+      - Overview: ui/index.md
+      - Tutorials & Samples: ui/tutorial.md
       - Compose Runtime: ui/compose.md
-      - Design System: ui/index.md
-      - Shadcn Components: ui/shadcn.md
-      - Material 3: ui/material3.md
-  - Releases & Support:
-      - Releases: releases.md
-  - Guides:
       - Theming: guides/theming.md
-      - UI Components:
-          - Buttons: guides/components/button.md
+      - Components:
+          - Button: guides/components/button.md
+          - Shadcn: ui/shadcn.md
+          - Material 3: ui/material3.md
+  - Assets:
+      - Terrain: asset/terrain.md
 markdown_extensions:
   - attr_list
   - pymdownx.superfences:

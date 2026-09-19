@@ -3,6 +3,10 @@
 The smallest published desktop setup uses Awake's bootstrap and Vulkan modules. Awake owns the
 GLFW window and frame loop; your application supplies its lifecycle and render plan.
 
+This is the single public source for published dependency coordinates. Feature guides link here
+instead of repeating version tables, so the version selector and installation examples stay in
+sync.
+
 ## Installation
 
 Add the following to your `libs.versions.toml`:

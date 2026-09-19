@@ -280,6 +280,9 @@ The public developer site lives under `website/`. It is a separate publication b
 
 - Write audience-facing explanations in `website/docs/`; do not publish `docs/` or module
   `README.md` files wholesale.
+- Organize the public site by reader task: each major area gets an overview, focused guides, and a
+  tutorials/samples index. Keep dependency installation in the shared getting-started guide and
+  link to it from area pages instead of repeating version and artifact tables.
 - Keep API signatures, parameter details, and lifecycle contracts in KDoc/Dokka rather than
   duplicating them in prose pages.
 - Link each page to the next useful page in the reader's task flow. Prefer two or three meaningful

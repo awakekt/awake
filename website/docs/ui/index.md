@@ -12,3 +12,6 @@ add visual policy on top.
 
 Choose one component family for a screen. Keep generic behavior in the Compose/Foundation layer so
 visual policy remains replaceable.
+
+Follow [UI tutorials and samples](tutorial.md) for the recommended setup order and the verified
+Button example.

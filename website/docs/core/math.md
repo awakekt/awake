@@ -4,6 +4,9 @@ Awake’s platform-neutral math module supplies the vectors, matrices, rotations
 and geometry primitives used by scenes, physics, and rendering. This page focuses on the first
 decision a game loop makes: turning a target direction into a unit movement or camera direction.
 
+Add the shared [Awake dependencies](../getting-started.md) before using these APIs. This guide is
+task-oriented; the release-matched KDoc remains the complete reference.
+
 ## Normalize a direction
 
 `Vec3f` has two deliberately different normalization forms. The imperative `normalize()` reuses

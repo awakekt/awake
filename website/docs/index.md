@@ -29,3 +29,14 @@ need documentation for a different release.
 
 [Getting Started](getting-started.md){ .md-button .md-button--primary }
 [Releases and compatibility](releases.md){ .md-button }
+
+## Find your path
+
+| I want to... | Start here |
+|---|---|
+| Install Awake and launch an application | [Install & First App](getting-started.md) |
+| Learn math or ECS fundamentals | [Core](engine/core.md) |
+| Build a scene | [Scene tutorials and samples](scene/tutorial.md) |
+| Choose a graphics backend | [Backend tutorials and samples](rendering/tutorial.md) |
+| Add simulation | [Physics tutorials and samples](physics/tutorial.md) |
+| Build a HUD or tool UI | [UI tutorials and samples](ui/tutorial.md) |

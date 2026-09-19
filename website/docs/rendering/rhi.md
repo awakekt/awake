@@ -16,4 +16,5 @@ command execution. Scene concepts such as cameras, lights, and materials are res
 reach the hardware boundary.
 
 See [Vulkan](vulkan.md), [WebGPU](webgpu.md), and [Shaders and pipelines](shaders.md) for the
-public integration points.
+public integration points. The [backend tutorials and samples](tutorial.md) put those pages in
+the recommended order.

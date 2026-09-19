@@ -17,3 +17,5 @@ systems, serialized scene documents, runtime loading, and authoring helpers.
 
 Use [Scene Authoring](../scene/authoring.md) when constructing scenes in Kotlin and [Scene
 Rendering](../scene/rendering.md) when making entities visible.
+
+For the complete learning path, see [Scene tutorials and samples](../scene/tutorial.md).
