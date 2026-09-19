@@ -2,7 +2,7 @@
 <p align="center">A code-first Kotlin Multiplatform engine for building interactive 2D and 3D applications.</p>
 
 <p align="center">
-  <a href="https://github.com/awakekt/awake/releases/tag/v0.1.0-alpha.2"><img src="https://img.shields.io/badge/Release-v0.1.0--alpha.2-blue.svg" alt="Release v0.1.0-alpha.2"></a>
+  <a href="https://github.com/awakekt/awake/releases/tag/v0.1.0-alpha.4"><img src="https://img.shields.io/badge/Release-v0.1.0--alpha.4-blue.svg" alt="Release v0.1.0-alpha.4"></a>
   <a href="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml"><img src="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml/badge.svg" alt="Build and publish"></a>
   <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.4.10-blue.svg?logo=kotlin" alt="Kotlin"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="Apache 2.0 license"></a>
@@ -36,12 +36,12 @@ commands.
 
 ## Install
 
-Awake artifacts are published to Maven Central. The latest version currently available there is
-`0.1.0-alpha.1`; add it and only the modules your application uses to `gradle/libs.versions.toml`:
+Awake artifacts are published to Maven Central. The latest release is `0.1.0-alpha.4`; add it and
+only the modules your application uses to `gradle/libs.versions.toml`:
 
 ```toml
 [versions]
-awake = "0.1.0-alpha.1"
+awake = "0.1.0-alpha.4"
 
 [libraries]
 awake-bootstrap = { group = "com.awakekt.awake.engine", name = "bootstrap", version.ref = "awake" }

@@ -7,6 +7,7 @@ package com.awakekt.awake.sample.uishowcase.ui.pages.inputs
 
 import com.awakekt.awake.compose.foundation.layout.Spacer
 import com.awakekt.awake.compose.foundation.layout.height
+import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.dp
@@ -34,11 +35,7 @@ internal val ButtonPage = ShowcasePage(
     notes = listOf("Supports text labels, icons, and custom slot API blocks."),
     hero = {
         val clicks = remember { ClickCount() }
-        ShadcnButton(
-            "Button",
-            variant = ShadcnButtonVariant.Default,
-            onClick = { clicks.value += 1 },
-        )
+        buttonBasicExample { clicks.value += 1 }
         Spacer(Modifier.height(8.dp))
         ShadcnText("Interaction proof: ${clicks.value} clicks", variant = ShadcnTextVariant.Muted)
     },
@@ -57,3 +54,14 @@ internal val ButtonPage = ShowcasePage(
         }
     },
 )
+
+context(_: Composer)
+internal fun buttonBasicExample(onClick: () -> Unit) {
+    // --8<-- [start:button-basic]
+    ShadcnButton(
+        "Button",
+        variant = ShadcnButtonVariant.Default,
+        onClick = onClick,
+    )
+    // --8<-- [end:button-basic]
+}

@@ -27,6 +27,7 @@ class JoltBackendSmokeTest {
     fun aBoxFalls() = runTest {
         val world = createJoltPhysicsWorld()
         try {
+            // --8<-- [start:jolt-falling-body]
             val box = world.createBody(
                 BoxShape(Vec3f(0.5f, 0.5f, 0.5f)),
                 Vec3f(0f, 10f, 0f),
@@ -39,6 +40,7 @@ class JoltBackendSmokeTest {
             // this exists to prove the binding runs at all, not to re-measure gravity.
             val y = world.syncTransforms().single { it.handle == box }.position.y
             assertTrue(y < 9.5f, "the box did not fall: y=$y")
+            // --8<-- [end:jolt-falling-body]
         } finally {
             world.destroy()
         }

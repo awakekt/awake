@@ -1,1 +1,0 @@
---8<-- "docs/release-process.md"

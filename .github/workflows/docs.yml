@@ -2,18 +2,17 @@ name: Documentation
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - 'website/**'
-      - '.github/workflows/docs.yml'
+    tags:
+      - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Awake version to publish, without the leading v (for example 0.1.0-alpha.4)'
+        required: true
+        type: string
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-  deployments: write
+  contents: write
 
 concurrency:
   group: pages
@@ -27,6 +26,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -34,32 +35,59 @@ jobs:
           python-version: '3.12'
 
       - name: Install documentation dependencies
-        run: pip install mkdocs-material
+        run: pip install "mkdocs-material==9.7.6" "mike==2.2.0"
+
+      - name: Resolve documentation version
+        id: docs-version
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          version="$INPUT_VERSION"
+          if [ -z "$version" ]; then
+            version="$REF_NAME"
+          fi
+          version="${version#v}"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Unsupported Awake version: $version" >&2
+            exit 1
+          fi
+          alias=latest
+          if [[ "$version" == *-dev.* ]]; then
+            alias=dev
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "alias=$alias" >> "$GITHUB_OUTPUT"
 
       - name: Build documentation
         working-directory: website
-        run: mkdocs build
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: website/site
-
-      - name: Ensure Cloudflare Pages project exists
-        if: env.CLOUDFLARE_API_TOKEN != ''
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        uses: cloudflare/wrangler-action@v4
-        continue-on-error: true
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages project create awake-docs --production-branch=main
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          AWAKE_DOCS_VERSION: ${{ steps.docs-version.outputs.version }}
+        run: mkdocs build --strict
+
+      - name: Publish versioned documentation
+        working-directory: website
+        env:
+          AWAKE_DOCS_VERSION: ${{ steps.docs-version.outputs.version }}
+          DOCS_VERSION: ${{ steps.docs-version.outputs.version }}
+          DOCS_ALIAS: ${{ steps.docs-version.outputs.alias }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mike deploy "$DOCS_VERSION" "$DOCS_ALIAS" --update-aliases --alias-type copy --push
+          if [ "$DOCS_ALIAS" = "latest" ]; then
+            mike set-default latest --push
+          fi
+
+      - name: Prepare Cloudflare Pages site
+        run: |
+          git fetch origin gh-pages --depth=1
+          rm -rf "$RUNNER_TEMP/awake-docs-site"
+          mkdir -p "$RUNNER_TEMP/awake-docs-site"
+          git archive origin/gh-pages | tar -x -C "$RUNNER_TEMP/awake-docs-site"
+          cp website/docs/CNAME "$RUNNER_TEMP/awake-docs-site/CNAME"
 
       - name: Deploy to Cloudflare Pages
-        if: env.CLOUDFLARE_API_TOKEN != ''
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -67,18 +95,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy website/site --project-name=awake-docs --commit-dirty=true
+          command: pages deploy "$RUNNER_TEMP/awake-docs-site" --project-name=awake-docs
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy:
-    name: Deploy to GitHub Pages
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        continue-on-error: true
-        uses: actions/deploy-pages@v4

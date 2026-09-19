@@ -1,27 +1,42 @@
 # Awake Engine
 
-![Awake Banner](https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml/badge.svg)
+Awake is a code-first Kotlin Multiplatform runtime for interactive 2D and 3D applications. It
+combines application lifecycle, scenes, rendering, physics, and retained UI while keeping
+platform-specific code at the edge of the application.
 
-**The modern, code-first 3D game engine in Kotlin.**  
-Fast, type-safe, and zero-allocation — build your game once and ship to Desktop (macOS, Windows, Linux), Mobile (Android, iOS), and the Web (Wasm) with native Vulkan and WebGPU performance.
+> Awake is alpha software. APIs and published artifacts can change between releases.
 
-## Key Features
+This site is versioned with the Awake library. Use the version selector in the header when you
+need documentation for a different release.
 
-- **Next-Gen Graphics** — Physically-Based Rendering (PBR), cascaded shadows, GPU skinning, and runtime Naga shaders powered by native Vulkan and WebGPU.
-- **Zero-Allocation ECS** — Cache-friendly sparse-set entity-component-system designed for rock-solid 120 FPS game loops.
-- **Declarative HUDs & Menus** — Build reactive in-game interfaces and developer tools with Compose and 23+ ready-to-use Shadcn components.
-- **Fast Physics & Collision** — Powered by Jolt Physics with real-time rigid bodies, terrain heightfield colliders, raycasting, and character controllers.
-- **Code-First Workflow** — Author scenes, systems, and assets in pure Kotlin without reflection, runtime bytecode manipulation, or editor lock-in.
+## What you can build
 
-## Engine Subsystems
+- Share application and scene code across supported Kotlin Multiplatform targets.
+- Compose ECS worlds, scene components, render passes, physics, and UI as independent modules.
+- Use Vulkan on native desktop targets and WebGPU in the browser.
+- Author game and tool behavior in Kotlin without a required editor project format.
 
-- `awake:core:*` — High-performance 3D math (`Vec3f`, `Mat4`, `Quat`), geometry, animation, and image loaders.
-- `awake:ecs:*` — High-performance sparse-set ECS and archetype queries.
-- `awake:scene:*` — Scene runtime, Jolt physics, cameras, lighting, modular characters, and Behavior Tree AI.
-- `awake:engine:bootstrap` — Application bootstrap, windowing, and frame loop lifecycle.
-- `awake:engine:render:contract` — Backend-neutral Render Hardware Interface (`GpuDevice`, `Renderer`, `GpuPassInput`).
-- `awake:compose:*` & `awake:ui:shadcn` — Retained Compose UI engine and complete Shadcn design system.
-- `awake:backend:*` — Native graphics and physics drivers (`vulkan`, `webgpu`, `jolt`).
+## Main modules
+
+| Area | Modules | Purpose |
+|---|---|---|
+| Runtime | `engine:bootstrap`, `engine:platform` | Application lifecycle, windowing, and frame scheduling |
+| ECS | `ecs` | Entities, components, systems, and queries |
+| Scenes | `scene:scene-core`, `scene:scene3d`, `scene:authoring` | Transforms, cameras, lights, meshes, and scene DSLs |
+| Rendering | `engine:render:*`, `backend:vulkan`, `backend:webgpu` | Backend-neutral render contracts and platform backends |
+| Physics | `physics:api`, `backend:jolt` | Physics contracts and Jolt integration |
+| UI | `compose:*`, `ui:shadcn` | Retained UI runtime and published Shadcn components |
 
 [Getting Started](getting-started.md){ .md-button .md-button--primary }
-[Roadmap & Milestones](roadmap.md){ .md-button }
+[Releases and compatibility](releases.md){ .md-button }
+
+## Explore Awake
+
+| I want to... | Start here |
+|---|---|
+| Install the library and launch an application | [Installation](getting-started.md) |
+| Use math, ECS, and application lifecycle APIs | [Core](engine/core.md) |
+| Author entities and render a world | [Scene](engine/scene.md) |
+| Select Vulkan or WebGPU | [Rendering & Backends](rendering/rhi.md) |
+| Add rigid-body simulation | [Physics API](physics/api.md) |
+| Build an in-game UI | [UI Runtime](ui/index.md) |

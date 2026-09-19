@@ -1,30 +1,20 @@
 # Theming
 
-Awake uses a custom design system based on shadcn/ui principles, adapted for high-performance game HUDs.
+Awake UI separates neutral layout behavior from visual tokens. A component family supplies colors,
+typography, radii, spacing, and state variants; the same layout and input primitives can then be
+used with a different visual system.
 
-## UI Tokens
+## Shadcn themes
 
-The theme is driven by `UiColorTokens`. You can customize the look of your UI by providing a custom `UiTheme`.
+Shadcn components read their values from a scoped `ShadcnThemeValues` provider. Install the theme
+around the subtree that uses Shadcn recipes with `provideShadcnTheme`, then compose components
+inside that scope.
 
-```kotlin
-val CustomTheme = UiTheme(
-    tokens = UiColorTokens(
-        primary = Color.fromHex("#3b82f6"),
-        background = Color.fromHex("#020617"),
-        // ...
-    )
-)
-```
+The theme value types and their KDoc are the source of truth for constructing a theme. Keep
+application branding in the theme layer rather than overriding individual component internals.
 
-## Applying a Theme
+## Choosing a family
 
-Apply the theme in your `gameUi` definition:
-
-```kotlin
-gameUi {
-    theme(CustomTheme)
-    overlay {
-        // Your UI components
-    }
-}
-```
+- Use Shadcn for the published component recipes and visual language.
+- Build a custom visual system directly on Compose Foundation when the application needs different
+  branding or component behavior.

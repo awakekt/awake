@@ -80,6 +80,7 @@ class AppLifecycleDslTest {
 
     @Test
     fun gameDslCapturesWindowConfiguration() {
+        // --8<-- [start:desktop-app-window]
         val game = app {
             window {
                 title = "Hello Cube"
@@ -88,6 +89,7 @@ class AppLifecycleDslTest {
                 frameRateMode = FrameRateMode.Capped(120)
             }
         }
+        // --8<-- [end:desktop-app-window]
 
         assertEquals("Hello Cube", game.windowConfig.title)
         assertEquals(1600, game.windowConfig.width)

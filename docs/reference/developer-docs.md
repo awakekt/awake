@@ -270,3 +270,115 @@ The combination we want is:
 
 That gives us a docs system we can grow alongside the upcoming DSL instead of bolting it on
 after the fact.
+
+## Public MkDocs Site
+
+The public developer site lives under `website/`. It is a separate publication boundary from
+`docs/`, which remains the repository's internal architecture and engineering reference.
+
+### Public content rules
+
+- Write audience-facing explanations in `website/docs/`; do not publish `docs/` or module
+  `README.md` files wholesale.
+- Organize navigation around Awake's library features and concepts, not a repeated tutorial/sample
+  index. A feature page should explain what it provides, how to add its artifact, and how to use it
+  with a verified example where one exists. Keep the version declaration and baseline setup in the
+  shared installation page; feature pages link to the exact relevant dependency section.
+- Publish only modules that are available to consumers in the documented release. Keep in-repo
+  prototypes and modules without a published artifact out of the public navigation until they ship.
+- Keep API signatures, parameter details, and lifecycle contracts in KDoc/Dokka rather than
+  duplicating them in prose pages.
+- Link each page to the next useful page in the reader's task flow. Prefer two or three meaningful
+  "See also" links over a link to every related module.
+- Link to the complete source example when a page shows only a focused excerpt.
+- Do not expose branch rules, milestone checklists, migration plans, agent instructions, audits, or
+  unfinished implementation status in the public site.
+
+### Code examples
+
+Every public example should have one source of truth:
+
+1. Prefer an existing compiled sample, tutorial test, or showcase fixture.
+2. Add a narrow `--8<-- [start:<name>]` / `--8<-- [end:<name>]` region around the example when
+   the source file contains more than the guide needs.
+3. Include that region in a fenced code block with `pymdownx.snippets`.
+4. Run the owning Gradle test or sample build in CI so a changed API breaks the documentation
+   workflow.
+
+Example source (illustrative structure; use a real compiled API in the repository):
+
+```kotlin
+// --8<-- [start:bootstrap-app]
+val game = app {
+    window {
+        title = "My Awake App"
+        backend.vulkan()
+    }
+}
+// --8<-- [end:bootstrap-app]
+```
+
+Example page:
+
+````markdown
+```kotlin
+--8<-- "samples/engine-showcase/src/commonMain/kotlin/.../Example.kt:bootstrap-app"
+```
+````
+
+If an example cannot be compiler-verified, label it as illustrative and link to the canonical
+source. Do not present an unverified snippet as a complete application.
+
+### Rendered images in public docs
+
+Yes, a captured render can be attached to a MkDocs page. MkDocs copies image files below
+`website/docs/` into the generated site, so a page can reference a committed capture directly:
+
+```markdown
+![Default Shadcn button rendered by Awake](assets/ui/button-default.png)
+```
+
+Use two image paths for two different purposes:
+
+- **Stable guide image:** inspect and approve a deterministic PNG or WebP, then commit it under
+  `website/docs/assets/<area>/` with descriptive alt text.
+- **Generated visual report:** keep the full capture, semantic JSON, diff, and metadata under
+  `build/reports/` or `build/ui-previews/`; publish it as a CI/report artifact or copy it into the
+  site during the docs build when a gallery is required.
+
+For a UI guide, generate the capture from `composeFrame(...)`, `composeTestSession(...)`, or the
+owning showcase test. For a backend-rendering guide, use the real headless Vulkan/WebGPU capture
+path. A screenshot is visual evidence, not the only correctness oracle: pair it with semantic,
+geometry, or behavior assertions where those facts matter.
+
+Every committed capture must record enough provenance to reproduce it: owning test or sample,
+viewport, target/backend, theme/state, and the command that generated it. Inspect a fresh image
+before publishing it; never refresh a baseline merely to make a test green.
+
+### Public-site validation
+
+Run the focused source test and the strict site build together:
+
+```bash
+./gradlew <owning-module>:desktopTest --tests "*<ExampleOrCaptureTest>*"
+(cd website && AWAKE_DOCS_VERSION=0.1.0-alpha.4 mkdocs build --strict)
+```
+
+The docs workflow must use the same strict build. A missing snippet region, broken internal link,
+missing navigation target, or missing image should fail before deployment.
+
+### Versioned public docs
+
+Public docs are published from the same Git tag as the Awake library release. Mike keeps each
+release at its exact library version (for example `0.1.0-alpha.4`) and Material exposes the
+version selector. A non-development release updates `latest`; a `dev` release is available under
+the `dev` alias without moving the stable default.
+
+The installation version is rendered from `AWAKE_DOCS_VERSION`. Local previews use the fallback
+in `website/mkdocs.yml`; release CI sets it from the tag. Do not hardcode a second version into a
+guide page. When repairing or seeding a published version, run the workflow from the matching
+release tag and enter the version without the leading `v`.
+
+Historical versions should remain readable and should only be rebuilt from the same release tag.
+If a page needs a current explanation, update the current branch and let the next release publish
+it; do not silently rewrite an older release's docs from `main`.

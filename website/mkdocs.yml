@@ -1,6 +1,18 @@
 site_name: Awake Engine
 site_url: https://docs.awakekt.com/
 repo_url: https://github.com/awakekt/awake
+hooks:
+  - hooks.py
+plugins:
+  - search
+  - mike:
+      alias_type: copy
+      canonical_version: latest
+      version_selector: true
+extra:
+  awake_version: 0.1.0-alpha.4
+  version:
+    provider: mike
 theme:
   name: material
   palette:
@@ -25,48 +37,41 @@ theme:
     - content.tabs.link
 nav:
   - Home: index.md
-  - Getting Started: getting-started.md
-  - Awake Studio: studio.md
-  - Editor Suite:
-      - Overview: editor/index.md
-      - Scene Editor: editor/scene.md
-      - Physics Editor: editor/physics.md
-      - AI Editor: editor/ai.md
-      - Render Editor: editor/render.md
-  - Core & ECS:
-      - Core: engine/core.md
-      - Core Math: core/math.md
-      - ECS Runtime: engine/ecs.md
+  - Get Started:
+      - Installation: getting-started.md
+  - Core:
+      - Core Runtime: engine/core.md
+      - Math: core/math.md
+      - Entity Component System: engine/ecs.md
+      - Application Lifecycle: engine/bootstrap.md
+  - Scene:
       - Scene Runtime: engine/scene.md
-      - Scene Navigation: scene/navigation.md
       - Scene Authoring: scene/authoring.md
       - Scene Rendering: scene/rendering.md
-      - Scene AI: scene/ai.md
-      - Scene World: scene/world.md
-      - App & Bootstrap: engine/bootstrap.md
+      - Navigation: scene/navigation.md
+      - AI: scene/ai.md
+      - World Streaming: scene/world.md
   - Rendering & Backends:
-      - Hardware Interface (RHI): rendering/rhi.md
-      - Vulkan Backend: rendering/vulkan.md
-      - WebGPU Backend: rendering/webgpu.md
-      - Terrain Authoring: asset/terrain.md
-      - Shader DSL: asset/shader-dsl.md
+      - Render Hardware Interface: rendering/rhi.md
+      - Vulkan: rendering/vulkan.md
+      - WebGPU: rendering/webgpu.md
       - Shaders & Pipelines: rendering/shaders.md
-      - Naga Shader Compiler: rendering/shader-compiler.md
+      - Shader DSL: asset/shader-dsl.md
+      - Shader Compiler: rendering/shader-compiler.md
   - Physics:
       - Physics API: physics/api.md
-      - Jolt Bridge: physics/jolt.md
-  - UI & Compose:
+      - Jolt Backend: physics/jolt.md
+  - UI:
+      - UI Runtime: ui/index.md
       - Compose Runtime: ui/compose.md
-      - Design System: ui/index.md
-      - Shadcn Components: ui/shadcn.md
-      - Material 3: ui/material3.md
-  - Roadmap & Releases:
-      - Release Process & Milestones: roadmap.md
-  - Guides:
+      - Shadcn: ui/shadcn.md
       - Theming: guides/theming.md
-      - UI Components:
-          - Buttons: guides/components/button.md
+      - Button: guides/components/button.md
+  - Assets:
+      - Terrain: asset/terrain.md
+  - Releases & Compatibility: releases.md
 markdown_extensions:
+  - attr_list
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
