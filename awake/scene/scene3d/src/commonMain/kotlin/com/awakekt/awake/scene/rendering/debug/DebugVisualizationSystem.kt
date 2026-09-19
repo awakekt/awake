@@ -73,28 +73,50 @@ fun debugVisualizationLines(
         return emptyList()
     }
     val lines = ArrayList<LineSegment>()
+    appendFrustumLines(world, settings, lines)
+    appendBoundsLines(world, settings, lines)
+    appendLightLines(world, renderer, settings, lines)
+    if (settings.showGrid) {
+        val cameraEye = primaryCamera(world)?.lens?.eye ?: Vec3f.ZERO
+        emitGridLines(lines, settings, cameraEye)
+    }
+    if (settings.showAxisLines) emitAxisLines(lines, settings)
+    return lines
+}
+
+private fun appendFrustumLines(
+    world: World,
+    settings: WorldDebugSettings,
+    lines: MutableList<LineSegment>,
+) {
+    if (!settings.showFrustum) return
     // Deliberately NOT primaryCamera -- see WorldDebugSettings.frustumTargetEntityId's own
     // doc comment for why drawing the viewport's own camera's frustum is invisible by
     // construction. No target (or a target with no Camera) draws nothing, rather than
     // falling back to primaryCamera and reintroducing that same invisible case.
-    if (settings.showFrustum) {
-        // The REAL viewport aspect, not CONSERVATIVE_ASPECT -- that constant is deliberately
-        // wider than any real viewport (a safety margin for RenderSystem3D's own CPU-side
-        // frustum-cull check, see its own doc comment), so reusing it here drew a visibly wider
-        // box than the camera's actual fovY/aspect would ever really see. The render packet owns
-        // any optional viewport rect; this scene-side debug pass keeps its conservative fallback
-        // because it runs before packet execution.
-        val aspect = CONSERVATIVE_ASPECT
-        settings.frustumTargetEntityId
-            ?.let { targetId -> world.cameraOf(targetId) }
-            ?.let {
-                lines += frustumDebugLines(
-                    it.lens.visualizedFarClamped(),
-                    aspect,
-                    FRUSTUM_COLOR,
-                )
-            }
-    }
+    // The REAL viewport aspect, not CONSERVATIVE_ASPECT -- that constant is deliberately
+    // wider than any real viewport (a safety margin for RenderSystem3D's own CPU-side
+    // frustum-cull check, see its own doc comment), so reusing it here drew a visibly wider
+    // box than the camera's actual fovY/aspect would ever really see. The render packet owns
+    // any optional viewport rect; this scene-side debug pass keeps its conservative fallback
+    // because it runs before packet execution.
+    val aspect = CONSERVATIVE_ASPECT
+    settings.frustumTargetEntityId
+        ?.let { targetId -> world.cameraOf(targetId) }
+        ?.let {
+            lines += frustumDebugLines(
+                it.lens.visualizedFarClamped(),
+                aspect,
+                FRUSTUM_COLOR,
+            )
+        }
+}
+
+private fun appendBoundsLines(
+    world: World,
+    settings: WorldDebugSettings,
+    lines: MutableList<LineSegment>,
+) {
     if (settings.showBounds) {
         world.family<Transform, MeshBounds>().forEach { _, transform, bounds ->
             lines += boundsDebugLines(bounds.localBounds, transform.worldMatrix, BOUNDS_COLOR)
@@ -102,10 +124,9 @@ fun debugVisualizationLines(
     }
     if (settings.showInstanceBounds) {
         world.family<InstancedMeshRenderer>().forEach { _, instanced ->
-            instanced.mesh.localBounds?.let { bounds ->
-                instanced.transforms.forEach { transform ->
-                    lines += boundsDebugLines(bounds, transform, INSTANCE_BOUNDS_COLOR)
-                }
+            val bounds = instanced.mesh.localBounds ?: return@forEach
+            instanced.transforms.forEach { transform ->
+                lines += boundsDebugLines(bounds, transform, INSTANCE_BOUNDS_COLOR)
             }
         }
     }
@@ -117,35 +138,38 @@ fun debugVisualizationLines(
             lines += boundsDebugLines(occluder.localBounds, transform.worldMatrix, OCCLUDER_COLOR)
         }
     }
-    if (settings.showLights || settings.showShadowFrustum) {
-        // Falls back to DEFAULT_SCENE_LIGHT, same as RenderSystem3D.sceneLight() -- a scene
-        // with no Light entity (most of Studio's examples) still shades with that default
-        // direction, so the debugger should show the direction that's actually lighting it.
-        val light = world.family<Light>().components().firstOrNull()
-        val direction = light?.direction ?: DEFAULT_SCENE_LIGHT.direction
-        if (settings.showLights) {
-            lines += lightGizmoLines(
-                directionalShadowBox(direction, renderer.clipSpace).eye,
-                direction,
-                LIGHT_COLOR,
-            )
-        }
-        if (settings.showShadowFrustum) {
-            lines += cascadeBoxLines(
-                world,
-                direction,
-                renderer.clipSpace,
-                // The same aspect RenderSystem3D fits cascades with, not the viewport's own: a box
-                // drawn at a different aspect than the one sampled is a picture of a box nobody
-                // renders from.
-                CONSERVATIVE_ASPECT,
-            )
-        }
+}
+
+private fun appendLightLines(
+    world: World,
+    renderer: Renderer,
+    settings: WorldDebugSettings,
+    lines: MutableList<LineSegment>,
+) {
+    if (!settings.showLights && !settings.showShadowFrustum) return
+    // Falls back to DEFAULT_SCENE_LIGHT, same as RenderSystem3D.sceneLight() -- a scene
+    // with no Light entity (most of Studio's examples) still shades with that default
+    // direction, so the debugger should show the direction that's actually lighting it.
+    val light = world.family<Light>().components().firstOrNull()
+    val direction = light?.direction ?: DEFAULT_SCENE_LIGHT.direction
+    if (settings.showLights) {
+        lines += lightGizmoLines(
+            directionalShadowBox(direction, renderer.clipSpace).eye,
+            direction,
+            LIGHT_COLOR,
+        )
     }
-    val cameraEye = primaryCamera(world)?.lens?.eye ?: Vec3f.ZERO
-    if (settings.showGrid) emitGridLines(lines, settings, cameraEye)
-    if (settings.showAxisLines) emitAxisLines(lines, settings)
-    return lines
+    if (settings.showShadowFrustum) {
+        lines += cascadeBoxLines(
+            world,
+            direction,
+            renderer.clipSpace,
+            // The same aspect RenderSystem3D fits cascades with, not the viewport's own: a box
+            // drawn at a different aspect than the one sampled is a picture of a box nobody
+            // renders from.
+            CONSERVATIVE_ASPECT,
+        )
+    }
 }
 
 private fun WorldDebugSettings.hasAnyDebugLines(): Boolean =
