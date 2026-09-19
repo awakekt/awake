@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Canonicalized `:awake:project` and retired `V1` suffixes.** Replaced legacy `AwakeProjectManifestV1`, `AwakeProjectPluginReferenceV1`, `AwakeAssetsLockV1`, `AwakeAssetLockEntryV1`, and `AwakeProjectV1Validator` with canonical `AwakeProjectManifest`, `AwakeProjectPluginReference`, `AwakeAssetsLock`, `AwakeAssetLockEntry`, and `AwakeProjectValidator`. Fully retired deprecated legacy `AwakeProject.kt` manifest format.
 - **Retired deprecated editor shims.** Removed deprecated `EditorProviderKind.Dock` from `:awake:editor:contract`.
+- **Stripped redundant `Editor` prefix from `:awake:editor:contract` plugin/provider types.** Canonical names are now `PluginId`, `PluginMetadata`, `PluginRegistry`, `PluginLifecycle`, `ProviderId`, `ProviderMetadata`, `ProviderConfiguration`, `ProviderCodec`, `ProviderRegistry`, `ComponentProvider`, `AssetProvider`, `EnvironmentProvider`, `AnimationProvider`, `BuildProvider`. Old `Editor*` names remain as deprecated typealiases for zero-churn migration.
+- **Removed `contributesDockTab` and `dockTabTitle` from `PluginManifest`.** These stale fields from the retired `EditorDock` era have been fully removed. Bottom panel contributions are now declared by plugin `createProviders()` returning `ProviderKind.BottomPanel` providers.
 
 ## [0.1.0-alpha.4] - 2026-09-19
 
