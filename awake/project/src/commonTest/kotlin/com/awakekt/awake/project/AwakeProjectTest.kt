@@ -11,25 +11,36 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@Suppress("DEPRECATION")
 class AwakeProjectTest {
     @Test
-    fun preservesTheExistingManifestJsonShape() {
-        val manifest = AwakeProjectManifest(name = "Demo", id = "demo")
-        assertEquals(manifest, AwakeProjectValidator.decode(AwakeProjectValidator.encode(manifest)))
+    fun projectManifestRoundTripsAndValidates() {
+        val manifest = AwakeProjectManifest(
+            id = "com.example.game",
+            name = "Example Game",
+            version = "1.0.0",
+            entryScene = "scenes/main.scene.json",
+            assetRoots = listOf("assets", "shared-assets"),
+            plugins = listOf(
+                AwakeProjectPluginReference(
+                    id = "com.example.tools",
+                    path = "plugins/tools.awakeplugin",
+                    version = "2.1.0",
+                    required = true,
+                ),
+            ),
+        )
+
+        val restored = AwakeProjectValidator.decodeManifest(
+            AwakeProjectValidator.encodeManifest(manifest),
+        )
+
+        assertEquals(manifest, restored)
+        assertTrue(AwakeProjectValidator.manifestIssues(restored).isEmpty())
     }
 
     @Test
-    fun comparesPrereleaseVersionsBeforeStableVersions() {
-        val manifest = AwakeProjectManifest(name = "Demo", id = "demo", minEngineVersion = "0.1.0-beta.1")
-        assertFalse(AwakeProjectValidator.isCompatible(manifest, "0.1.0-alpha.1"))
-        assertTrue(AwakeProjectValidator.isCompatible(manifest, "0.1.0"))
-        assertTrue(AwakeProjectValidator.isCompatible(manifest, "1.0.0"))
-    }
-
-    @Test
-    fun canonicalManifestCompatibilityUsesExplicitMinimumEngineVersion() {
-        val manifest = AwakeProjectManifestV1(
+    fun manifestCompatibilityUsesExplicitMinimumEngineVersion() {
+        val manifest = AwakeProjectManifest(
             id = "com.example.demo",
             name = "Demo",
             version = "1.0.0",
@@ -39,27 +50,20 @@ class AwakeProjectTest {
 
         assertFalse(AwakeProjectValidator.isCompatible(manifest, "0.1.0-alpha.3"))
         assertTrue(AwakeProjectValidator.isCompatible(manifest, "0.1.0-beta.1"))
+        assertTrue(AwakeProjectValidator.isCompatible(manifest, "0.1.0"))
+        assertTrue(AwakeProjectValidator.isCompatible(manifest, "1.0.0"))
     }
 
     @Test
-    fun canonicalManifestWithoutEngineMinimumDoesNotInventCompatibilityRequirement() {
-        val manifest = AwakeProjectManifestV1(
+    fun manifestWithoutEngineMinimumDoesNotInventCompatibilityRequirement() {
+        val manifest = AwakeProjectManifest(
             id = "com.example.demo",
             name = "Demo",
             version = "1.0.0",
             entryScene = "scenes/main.scene.json",
         )
 
-        assertTrue(AwakeProjectValidator.isCompatible(manifest, "0.0.1"))
-    }
-
-    @Test
-    fun legacyManifestDoesNotInventEngineMetadata() {
-        val manifest = AwakeProjectManifest(name = "Demo", id = "demo")
-
-        assertNull(manifest.engineVersion)
         assertNull(manifest.minEngineVersion)
-        assertNull(manifest.createdWith)
         assertTrue(AwakeProjectValidator.isCompatible(manifest, "0.0.1"))
     }
 
@@ -69,61 +73,35 @@ class AwakeProjectTest {
     }
 
     @Test
-    fun versionOneManifestRoundTripsAndValidates() {
-        val manifest = AwakeProjectManifestV1(
-            id = "com.example.game",
-            name = "Example Game",
-            version = "1.0.0",
-            entryScene = "scenes/main.scene.json",
-            assetRoots = listOf("assets", "shared-assets"),
-            plugins = listOf(
-                AwakeProjectPluginReferenceV1(
-                    id = "com.example.tools",
-                    path = "plugins/tools.awakeplugin",
-                    version = "2.1.0",
-                    required = true,
-                ),
-            ),
-        )
-
-        val restored = AwakeProjectV1Validator.decodeManifest(
-            AwakeProjectV1Validator.encodeManifest(manifest),
-        )
-
-        assertEquals(manifest, restored)
-        assertTrue(AwakeProjectV1Validator.manifestIssues(restored).isEmpty())
-    }
-
-    @Test
-    fun versionOneValidatorsRejectUnsafePathsAndInvalidPins() {
-        val manifest = AwakeProjectManifestV1(
+    fun validatorsRejectUnsafePathsAndInvalidPins() {
+        val manifest = AwakeProjectManifest(
             id = "com.example.game",
             name = "Example Game",
             version = "1.0.0",
             entryScene = "../outside.scene.json",
         )
-        val lock = AwakeAssetsLockV1(
+        val lock = AwakeAssetsLock(
             assets = mapOf(
-                "assets/world.zip" to AwakeAssetLockEntryV1("not-a-digest", -1),
+                "assets/world.zip" to AwakeAssetLockEntry("not-a-digest", -1),
             ),
         )
 
-        assertTrue(AwakeProjectV1Validator.manifestIssues(manifest).isNotEmpty())
-        assertTrue(AwakeProjectV1Validator.assetsLockIssues(lock).isNotEmpty())
-        assertFalse(AwakeProjectV1Validator.isSafeProjectPath("../outside"))
-        assertTrue(AwakeProjectV1Validator.isSafeProjectPath("assets/world.zip"))
+        assertTrue(AwakeProjectValidator.manifestIssues(manifest).isNotEmpty())
+        assertTrue(AwakeProjectValidator.assetsLockIssues(lock).isNotEmpty())
+        assertFalse(AwakeProjectValidator.isSafeProjectPath("../outside"))
+        assertTrue(AwakeProjectValidator.isSafeProjectPath("assets/world.zip"))
     }
 
     @Test
-    fun versionOnePluginReferenceSupportsSha256DigestAndOmittedVersion() {
+    fun pluginReferenceSupportsSha256DigestAndOmittedVersion() {
         val validHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-        val manifest = AwakeProjectManifestV1(
+        val manifest = AwakeProjectManifest(
             id = "com.example.game",
             name = "Example Game",
             version = "1.0.0",
             entryScene = "scenes/main.scene.json",
             plugins = listOf(
-                AwakeProjectPluginReferenceV1(
+                AwakeProjectPluginReference(
                     id = "com.example.tools",
                     path = "plugins/tools.awakeplugin",
                     sha256 = validHash,
@@ -132,22 +110,22 @@ class AwakeProjectTest {
             ),
         )
 
-        val json = AwakeProjectV1Validator.encodeManifest(manifest)
-        val decoded = AwakeProjectV1Validator.decodeManifest(json)
+        val json = AwakeProjectValidator.encodeManifest(manifest)
+        val decoded = AwakeProjectValidator.decodeManifest(json)
 
         assertEquals(manifest, decoded)
-        assertTrue(AwakeProjectV1Validator.manifestIssues(decoded).isEmpty())
+        assertTrue(AwakeProjectValidator.manifestIssues(decoded).isEmpty())
 
         val invalidManifest = manifest.copy(
             plugins = listOf(
-                AwakeProjectPluginReferenceV1(
+                AwakeProjectPluginReference(
                     id = "com.example.tools",
                     path = "plugins/tools.awakeplugin",
                     sha256 = "INVALID_HASH",
                 ),
             ),
         )
-        val issues = AwakeProjectV1Validator.manifestIssues(invalidManifest)
+        val issues = AwakeProjectValidator.manifestIssues(invalidManifest)
         assertTrue(issues.any { it.contains("sha256 must be a lowercase SHA-256 digest") })
     }
 }

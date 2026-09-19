@@ -2,6 +2,13 @@
 
 Welcome to **Awake Engine**. This repository is the core Kotlin Multiplatform 3D/2D game engine runtime powered by Vulkan, WebGPU, and Compose Multiplatform.
 
+## Three-Layer Architecture Boundary
+
+Awake enforces strict boundaries across three distinct architectural layers:
+1. **Layer 1: Awake Core Engine (`awaken`)** (Apache 2.0): Runtime engine libraries (`:awake:scene`, `:awake:physics`, `:awake:render`, `:awake:ui:shadcn`, `:awake:project`, etc.).
+2. **Layer 2: Awake Core Editor (`awaken:awake:editor:contract`)** (Apache 2.0): Public, vendor-neutral editor contracts, provider extension points, and project plugin metadata published under `com.awakekt:awake-editor-contract`.
+3. **Layer 3: Awake Studio Pro (`awake-pro`)** (Commercial): Desktop authoring application (`:app:studio`), visual inspectors, collaborative workflows, and the secure runtime loader (`StudioPluginPipeline`).
+
 ## Skill precedence and technology boundaries
 
 Project-owned `awake-*` skills are authoritative for Awake engine code and the
@@ -25,6 +32,7 @@ All engine-specific skills and architectural rules are located in `.agents/skill
 
 ### Core Engine & Lifecycle
 - [Awake Engine Overview](.agents/skills/awake/SKILL.md): Engine directory layout and conventions
+- [Awake Core Editor](.agents/skills/awake-core-editor/SKILL.md): Vendor-neutral editor plugin contracts, manifests, and provider extension points
 - [Awake App Composition](.agents/skills/awake-app-composition/SKILL.md): Composing applications and engine subsystems
 - [Awake ECS Authoring](.agents/skills/awake-ecs-authoring/SKILL.md): Entity-Component-System design rules
 - [Awake Scene Runtime](.agents/skills/awake-ecs-scene-runtime/SKILL.md): SceneAppLifecycleRuntime & frame loops

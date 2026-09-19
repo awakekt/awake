@@ -9,7 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Public editor plugin contract and project plugin SHA-256 pin.** Added public `:awake:editor:contract` module with `EditorPlugin`, `EditorProvider`, `PluginManifest`, and `AssetConverterPlugin` contracts for open-source and commercial plugin authoring. Added optional `sha256` content integrity pin and default version semantics to `AwakeProjectPluginReferenceV1` in `:awake:project`.
+- **Public editor plugin contract and project plugin SHA-256 pin.** Added public `:awake:editor:contract` module with `EditorPlugin`, `EditorProvider`, `PluginManifest`, and `AssetConverterPlugin` contracts for open-source and commercial plugin authoring. Added optional `sha256` content integrity pin and default version semantics to `AwakeProjectPluginReference` in `:awake:project`.
+- **Three-layer architecture governance and Awake Core Editor skill.** Formally codified the 3-layer architecture (Awake Core, Awake Core Editor, Awake Studio Pro) across agent guides and skills, adding the new `awake-core-editor` skill.
+
+### Changed
+
+- **Canonicalized `:awake:project` and retired `V1` suffixes.** Replaced legacy `AwakeProjectManifestV1`, `AwakeProjectPluginReferenceV1`, `AwakeAssetsLockV1`, `AwakeAssetLockEntryV1`, and `AwakeProjectV1Validator` with canonical `AwakeProjectManifest`, `AwakeProjectPluginReference`, `AwakeAssetsLock`, `AwakeAssetLockEntry`, and `AwakeProjectValidator`. Fully retired deprecated legacy `AwakeProject.kt` manifest format.
+- **Retired deprecated editor shims.** Removed deprecated `EditorProviderKind.Dock` from `:awake:editor:contract`.
 
 ## [0.1.0-alpha.4] - 2026-09-19
 
