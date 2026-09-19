@@ -11,7 +11,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.movement.MovementControl
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.rendering.Camera
+import com.awakekt.awake.scene.rendering.camera.Camera
 import kotlin.math.sqrt
 
 /**

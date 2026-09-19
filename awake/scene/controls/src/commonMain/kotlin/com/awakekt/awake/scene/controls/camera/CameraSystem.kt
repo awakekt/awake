@@ -15,7 +15,7 @@ import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraMode
 import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.rendering.Camera
+import com.awakekt.awake.scene.rendering.camera.Camera
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.exp
@@ -48,7 +48,6 @@ class CameraSystem(
 
     // Scratch vectors -- this runs every frame, so the pose math must not allocate.
     private val forward = Vec3f()
-    private val desiredEye = Vec3f()
 
     override fun update(world: World, delta: Float) {
         val input = inputProvider()
@@ -112,7 +111,9 @@ class CameraSystem(
             CameraMode.ThirdPerson -> {
                 config.pitch = THIRD_PERSON_PITCH
                 config.yaw = 0f
-                config.distance = THIRD_PERSON_DISTANCE
+                if (config.distance <= 0f) {
+                    config.distance = THIRD_PERSON_DISTANCE
+                }
             }
 
             CameraMode.FreeFly -> {
@@ -165,8 +166,7 @@ class CameraSystem(
             CameraMode.ThirdPerson -> {
                 core.center.set(pivot)
                 forwardFrom(config.yaw, config.pitch, forward)
-                desiredEye.set(core.center).sub(forward.scale(config.distance))
-                core.eye.lerp(desiredEye, (1f - exp(-SMOOTHING * dt)).coerceIn(0f, 1f))
+                core.eye.set(core.center).sub(forward.scale(config.distance))
             }
 
             CameraMode.FreeFly -> {

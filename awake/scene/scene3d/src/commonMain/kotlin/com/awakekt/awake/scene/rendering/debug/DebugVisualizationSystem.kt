@@ -29,6 +29,7 @@ import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.LodGroup
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
+import com.awakekt.awake.scene.rendering.primaryCamera
 import com.awakekt.awake.scene.rendering.spatial.Occluder
 import kotlin.math.abs
 import kotlin.math.min
@@ -141,7 +142,8 @@ fun debugVisualizationLines(
             )
         }
     }
-    if (settings.showGrid) emitGridLines(lines, settings)
+    val cameraEye = primaryCamera(world)?.lens?.eye ?: Vec3f.ZERO
+    if (settings.showGrid) emitGridLines(lines, settings, cameraEye)
     if (settings.showAxisLines) emitAxisLines(lines, settings)
     return lines
 }
@@ -149,10 +151,14 @@ fun debugVisualizationLines(
 private fun WorldDebugSettings.hasAnyDebugLines(): Boolean =
     showFrustum || showBounds || showInstanceBounds || showOcclusion || showLights || showShadowFrustum || showGrid || showAxisLines
 
-private fun emitGridLines(lines: MutableList<LineSegment>, settings: WorldDebugSettings) {
+private fun emitGridLines(
+    lines: MutableList<LineSegment>,
+    settings: WorldDebugSettings,
+    center: Vec3f = Vec3f.ZERO
+) {
     val extent = settings.gridFadeDistance.coerceAtLeast(10f)
     val step = settings.gridScale.coerceAtLeast(0.1f)
-    val gridPairs = Grid.generateGridLines(extent = extent, step = step)
+    val gridPairs = Grid.generateGridLines(extent = extent, step = step, center = center)
     val majorInterval = 5
     gridPairs.forEachIndexed { index, (start, end) ->
         val isMajor = (index % majorInterval) == 0
@@ -243,7 +249,13 @@ private fun cascadeBoxLines(
             val depth = 2f / box.projection.m22
             val localBox = Aabb(Vec3f(-half, -half, 0f), Vec3f(half, half, -abs(depth)))
             box.view.inverse()
-                ?.let { boundsDebugLines(localBox, it, CASCADE_COLORS[index % CASCADE_COLORS.size]) }
+                ?.let {
+                    boundsDebugLines(
+                        localBox,
+                        it,
+                        CASCADE_COLORS[index % CASCADE_COLORS.size]
+                    )
+                }
                 .orEmpty()
         }
 }

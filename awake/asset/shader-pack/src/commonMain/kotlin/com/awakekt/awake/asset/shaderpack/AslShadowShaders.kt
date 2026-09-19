@@ -390,30 +390,83 @@ private fun litShadow(
         )
     }
 
+    /** Samples a single cascade's PCF shadow depth; returns -1.0f if out of bounds. */
+    val sampleSingleCascade = fn("sampleSingleCascade") {
+        val cascade by param(AslType.I32)
+        val world by param(GpuDataShape.Vec3)
+        val normal by param(GpuDataShape.Vec3)
+        val nDotL by param(F32)
+        val slopeScale by param(F32)
+        val texSize by param(GpuDataShape.Vec2)
+        val texel by param(GpuDataShape.Vec2)
+
+        val texelWorld = let("texelWorld", u.cascadeDepthScales[cascade].y * texel.x)
+        val worldBias = let(
+            "worldBias",
+            texelWorld * (shadowBiasTexels + shadowSlopeTexels * slopeScale),
+        )
+        val grazing = let(
+            "grazing",
+            clamp((0.45f.lit - nDotL) * 20f.lit, 0f.lit, 1f.lit),
+        )
+        val slide = let(
+            "slide",
+            texelWorld * normalOffsetTexels * grazing / max(nDotL, epsilon),
+        )
+        val projected = let(
+            "projected",
+            u.cascadeViewProjections[cascade] * vec4(world, 1f.lit),
+        )
+        iff(projected.w le 0f.lit) { returnValue(-1f.lit) }
+        val ndc = let("ndc", projected.xyz / projected.w)
+        iff(
+            (ndc.x lt -1f.lit) or (ndc.x gt 1f.lit) or
+                (ndc.y lt -1f.lit) or (ndc.y gt 1f.lit) or
+                (ndc.z lt 0f.lit) or (ndc.z gt 1f.lit),
+        ) { returnValue(-1f.lit) }
+
+        val offsetProjected = let(
+            "offsetProjected",
+            u.cascadeViewProjections[cascade] * vec4(world + normal * slide, 1f.lit),
+        )
+        val offsetNdcXy = let("offsetNdcXy", offsetProjected.xy / offsetProjected.w)
+        val sampleUv = let("sampleUv", ndcToUv(offsetNdcXy, clipSpace))
+        val bias = let("bias", worldBias * u.cascadeDepthScales[cascade].x)
+        val minUv = let("minUv", texel * toF32(pcfRadius))
+        val maxUv = let("maxUv", vec2(1f.lit) - minUv)
+        val clampedSampleUv = let("clampedSampleUv", clamp(sampleUv, minUv, maxUv))
+        val offsetNdc = ndc
+        val shadow = variable("shadow", 0f.lit)
+        val samples = variable("samples", 0f.lit)
+        loopI32("dx", -pcfRadius, pcfRadius) { dx ->
+            loopI32("dy", -pcfRadius, pcfRadius) { dy ->
+                val offset = let("offset", vec2(toF32(dx), toF32(dy)) * texel)
+                val tapLit = let(
+                    "tapLit",
+                    textureSampleCompareLevel(
+                        shadowMap,
+                        shadowMapSampler,
+                        clampedSampleUv + offset,
+                        cascade,
+                        offsetNdc.z - bias,
+                    ),
+                )
+                assign(shadow, shadow + tapLit)
+                assign(samples, samples + 1f.lit)
+            }
+        }
+        returnValue(shadow / samples)
+    }
+
     /**
      * How lit this fragment is, from whichever cascade contains it.
-     *
-     * Chosen by containment rather than by comparing a view distance against split planes: the
-     * boxes were fitted to spheres around frustum slices, so a distance test agrees with them
-     * only approximately, and where it disagrees a fragment samples a cascade that does not
-     * cover it -- which reads as a band of missing shadow at a cascade boundary. Testing the
-     * projection directly cannot disagree with the fit, because it IS the fit.
-     *
-     * Near cascade first, so the first containing cascade is also the highest-resolution one.
+     * Smoothly blends across cascade boundaries to prevent popping/flickering.
      */
     val sampleShadow = fn("sampleShadow") {
         val world by param(GpuDataShape.Vec3)
         val normal by param(GpuDataShape.Vec3)
         val nDotL by param(F32)
-        // How much depth one texel of this surface covers, as the light gets glancing:
-        // tan(acos(nDotL)), written out as sqrt(1 - n^2)/n. Clamped because it runs to infinity at
-        // the horizon, where an unbounded bias would detach every shadow in the frame.
-        //
-        // This was (1 - n)/n, described as the same shape without the square root. It is not: the
-        // two differ by sqrt((1 + n)/(1 - n)), which is 1.7x at n = 0.5, 2.4x at 0.7 and 4.4x at
-        // 0.9. They agree only at grazing angles, so the cheap form was shortest exactly where a
-        // face points AT the light -- and a spinning cube sweeps its lit faces through that band,
-        // which is why the studio's cube stippled at some yaws and not others.
+
         val slopeScale = let(
             "slopeScale",
             min(sqrt(max(1f.lit - nDotL * nDotL, 0f.lit)) / max(nDotL, epsilon), maxSlopeScale),
@@ -422,88 +475,41 @@ private fun litShadow(
         val texel = let("texel", 1f.lit / texSize)
         val lit = variable("lit", 1f.lit)
         val resolved = variable("resolved", 0.lit)
+        val blendStart = 0.8f.lit
+
         loopI32("cascade", 0.lit, (MAX_SHADOW_CASCADES - 1).lit) { cascade ->
             iff(resolved gt 0.lit) { continueLoop() }
-            // One texel as a distance: this cascade's world width times the map's own texel size.
-            // Derived rather than passed, so a map resized at runtime cannot leave it stale.
-            val texelWorld = let("texelWorld", u.cascadeDepthScales[cascade].y * texel.x)
-            // Bias sized to THIS cascade's texel, then converted to its depth range below. A far
-            // cascade gets a proportionally larger bias because its error is proportionally
-            // larger, which a single distance cannot express for both ends of the split scheme.
-            val worldBias = let(
-                "worldBias",
-                texelWorld * (shadowBiasTexels + shadowSlopeTexels * slopeScale),
+            val primaryShadow = let(
+                "primaryShadow",
+                sampleSingleCascade(cascade, world, normal, nDotL, slopeScale, texSize, texel),
             )
-            // Divided by n dot l, not scaled by (1 - n dot l): one texel of the map covers
-            // texel/nDotL of THIS surface, so that is how far the lookup has to move to leave
-            // the texel it shares with whatever stands above it. The two agree for a surface
-            // facing the light and diverge exactly where the artefact lives -- at nDotL 0.2 the
-            // old form moved 1.6 texels and this moves 7.7.
-            // A normal slide is only needed for a grazing receiver. Applying it to an ordinary
-            // ground receiver moves the lookup laterally in light space and is the classic
-            // peter-panning symptom: the shadow starts visibly away from the caster's base.
-            // Keep the full grazing protection while fading it out over a narrow, shared range.
-            val grazing = let(
-                "grazing",
-                clamp((0.45f.lit - nDotL) * 20f.lit, 0f.lit, 1f.lit),
-            )
-            val slide = let(
-                "slide",
-                texelWorld * normalOffsetTexels * grazing / max(nDotL, epsilon),
-            )
-            // Containment answers for the FRAGMENT, not for the offset lookup. Selecting on the
-            // offset position couples the two: growing the offset can push a fragment out of one
-            // cascade into the next, and the artefact it was meant to fix then moves rather than
-            // shrinks -- which is what made this constant behave chaotically when swept.
+            iff(primaryShadow lt 0f.lit) { continueLoop() }
+
+            assign(resolved, 1.lit)
+            assign(lit, primaryShadow)
+
             val projected = let(
-                "projected",
+                "proj",
                 u.cascadeViewProjections[cascade] * vec4(world, 1f.lit),
             )
-            iff(projected.w le 0f.lit) { continueLoop() }
-            // NDC depth is already 0..1 (ClipSpace.depthZeroToOne) -- no *0.5+0.5 remap.
-            val ndc = let("ndc", projected.xyz / projected.w)
-            val offsetProjected = let(
-                "offsetProjected",
-                u.cascadeViewProjections[cascade] * vec4(world + normal * slide, 1f.lit),
+            val cNdc = let("cNdc", projected.xyz / projected.w)
+            val distToEdge = let(
+                "distToEdge",
+                max(max(abs(cNdc.x), abs(cNdc.y)), abs(cNdc.z * 2f.lit - 1f.lit)),
             )
-            val offsetNdcXy = let("offsetNdcXy", offsetProjected.xy / offsetProjected.w)
-            val sampleUv = let("sampleUv", ndcToUv(offsetNdcXy, clipSpace))
-            iff(
-                (ndc.x lt -1f.lit) or (ndc.x gt 1f.lit) or
-                    (ndc.y lt -1f.lit) or (ndc.y gt 1f.lit) or
-                    (ndc.z lt 0f.lit) or (ndc.z gt 1f.lit),
-            ) { continueLoop() }
-            assign(resolved, 1.lit)
-            val bias = let("bias", worldBias * u.cascadeDepthScales[cascade].x)
-            val minUv = let("minUv", texel * toF32(pcfRadius))
-            val maxUv = let("maxUv", vec2(1f.lit) - minUv)
-            val clampedSampleUv = let("clampedSampleUv", clamp(sampleUv, minUv, maxUv))
-            val offsetNdc = ndc
-            val shadow = variable("shadow", 0f.lit)
-            val samples = variable("samples", 0f.lit)
-            loopI32("dx", -pcfRadius, pcfRadius) { dx ->
-                loopI32("dy", -pcfRadius, pcfRadius) { dy ->
-                    val offset = let("offset", vec2(toF32(dx), toF32(dy)) * texel)
-                    // The GPU compares (LessEqual, set at sampler creation) and filters the
-                    // results: each tap is already a lit fraction, not a depth.
-                    val tapLit = let(
-                        "tapLit",
-                        textureSampleCompareLevel(
-                            shadowMap,
-                            shadowMapSampler,
-                            clampedSampleUv + offset,
-                            cascade,
-                            offsetNdc.z - bias,
-                        ),
-                    )
-                    assign(shadow, shadow + tapLit)
-                    assign(samples, samples + 1f.lit)
+
+            iff((cascade lt (MAX_SHADOW_CASCADES - 1).lit) and (distToEdge gt blendStart)) {
+                val nextCascade = let("nextCascade", cascade + 1.lit)
+                val nextShadow = let(
+                    "nextShadow",
+                    sampleSingleCascade(nextCascade, world, normal, nDotL, slopeScale, texSize, texel),
+                )
+                iff(nextShadow ge 0f.lit) {
+                    val alpha = let("blendAlpha", clamp((distToEdge - blendStart) / (1f.lit - blendStart), 0f.lit, 1f.lit))
+                    assign(lit, mix(primaryShadow, nextShadow, alpha))
                 }
             }
-            assign(lit, shadow / samples)
         }
-        // Nothing contained it: beyond the last cascade, where an unshadowed fragment is the
-        // honest answer and a guessed one would flicker as the camera moves.
         returnValue(lit)
     }
 
