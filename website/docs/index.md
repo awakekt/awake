@@ -25,18 +25,18 @@ need documentation for a different release.
 | Scenes | `scene:scene-core`, `scene:scene3d`, `scene:authoring` | Transforms, cameras, lights, meshes, and scene DSLs |
 | Rendering | `engine:render:*`, `backend:vulkan`, `backend:webgpu` | Backend-neutral render contracts and platform backends |
 | Physics | `physics:api`, `backend:jolt` | Physics contracts and Jolt integration |
-| UI | `compose:*`, `ui:shadcn`, `ui:material3` | Retained UI runtime and component families |
+| UI | `compose:*`, `ui:shadcn` | Retained UI runtime and published Shadcn components |
 
 [Getting Started](getting-started.md){ .md-button .md-button--primary }
 [Releases and compatibility](releases.md){ .md-button }
 
-## Find your path
+## Explore Awake
 
 | I want to... | Start here |
 |---|---|
-| Install Awake and launch an application | [Install & First App](getting-started.md) |
-| Learn math or ECS fundamentals | [Core](engine/core.md) |
-| Build a scene | [Scene tutorials and samples](scene/tutorial.md) |
-| Choose a graphics backend | [Backend tutorials and samples](rendering/tutorial.md) |
-| Add simulation | [Physics tutorials and samples](physics/tutorial.md) |
-| Build a HUD or tool UI | [UI tutorials and samples](ui/tutorial.md) |
+| Install the library and launch an application | [Installation](getting-started.md) |
+| Use math, ECS, and application lifecycle APIs | [Core](engine/core.md) |
+| Author entities and render a world | [Scene](engine/scene.md) |
+| Select Vulkan or WebGPU | [Rendering & Backends](rendering/rhi.md) |
+| Add rigid-body simulation | [Physics API](physics/api.md) |
+| Build an in-game UI | [UI Runtime](ui/index.md) |

@@ -13,8 +13,9 @@ designed to be usable without a renderer or a platform backend.
 Core does not create windows, select a graphics backend, or own a scene. Add the modules your
 application needs rather than depending on the entire engine.
 
-Start with [Install and first app](../getting-started.md), then use the [core tutorials and
-samples](../core/tutorial.md) to choose a focused path through math and ECS.
+Install the specific module you need from the [installation guide](../getting-started.md). Most
+applications start with [core math](../core/math.md), add the [ECS](ecs.md) for world state, then
+compose optional scene and rendering modules.
 
 ## Related pages
 

@@ -3,6 +3,9 @@
 Awake AI provides behavior-tree and finite-state-machine primitives that can be driven by ECS
 systems.
 
+Install [`awake:ai`](../getting-started.md#scene-authoring) in the source set that uses the AI
+systems.
+
 ## Behavior trees
 
 The behavior-tree DSL includes sequence, selector, parallel, inverter, repeater, cooldown,

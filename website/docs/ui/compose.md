@@ -3,6 +3,9 @@
 Awake Compose is a retained UI runtime with a Compose-shaped Kotlin API. It is designed to share a
 frame with simulation and rendering rather than to replace the platform’s application UI toolkit.
 
+For a component-based UI, add [`awake:compose:foundation`](../getting-started.md#ui). It brings the
+Compose runtime and UI primitives required by the layout and input APIs.
+
 ## Runtime layers
 
 - Runtime composition and retained state.

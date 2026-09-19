@@ -2,6 +2,8 @@
 
 `ShadcnButton` is a slot-based button from `awake:ui:shadcn`.
 
+Add [`awake:ui:shadcn`](../../getting-started.md#ui) to `commonMain` before using the component.
+
 ## Usage
 
 The example below is extracted from the compiled UI showcase, so the docs use the same API that

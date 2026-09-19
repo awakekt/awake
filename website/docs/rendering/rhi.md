@@ -15,6 +15,6 @@ This separation keeps backend code focused on devices, buffers, textures, sample
 command execution. Scene concepts such as cameras, lights, and materials are resolved before they
 reach the hardware boundary.
 
-See [Vulkan](vulkan.md), [WebGPU](webgpu.md), and [Shaders and pipelines](shaders.md) for the
-public integration points. The [backend tutorials and samples](tutorial.md) put those pages in
-the recommended order.
+Choose [Vulkan](vulkan.md) for native desktop or [WebGPU](webgpu.md) for WasmJs. The
+[installation guide](../getting-started.md#graphics-backends) lists the corresponding artifacts.
+Use [Shaders and pipelines](shaders.md) to define GPU work for either backend.

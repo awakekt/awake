@@ -1,5 +1,9 @@
 # Shader DSL
 
+Add [`awake:asset:shader-dsl`](../getting-started.md#graphics-backends) to use the Kotlin shader
+authoring API. Keep generated shader compiler and backend dependencies aligned with the selected
+release.
+
 The Awake Shader DSL (ASL) lets applications describe procedural shader expressions in Kotlin and
 emit WGSL text. The emitted source enters the normal shader validation and backend pipeline.
 

@@ -4,14 +4,12 @@ Awake’s UI modules provide retained HUDs, overlays, and tool interfaces for en
 The neutral UI runtime supplies layout, drawing, input, and modifier behavior; component modules
 add visual policy on top.
 
-## Component families
+## Compose Foundation and Shadcn
 
-- `ui:shadcn` provides Shadcn-style themes, tokens, and component recipes.
-- `ui:material3` provides Material 3 color and component contracts.
-- `ui:headless` provides unstyled primitives for custom design systems.
+Compose Foundation provides neutral layout, drawing, input, and modifier behavior. The published
+Shadcn module adds themes, tokens, and component recipes on top. Keep application-specific visual
+policy in the theme layer so it remains replaceable.
 
-Choose one component family for a screen. Keep generic behavior in the Compose/Foundation layer so
-visual policy remains replaceable.
-
-Follow [UI tutorials and samples](tutorial.md) for the recommended setup order and the verified
-Button example.
+Add [Compose Foundation and the component family you need](../getting-started.md#ui) to your
+application. The [Button reference](../guides/components/button.md) shows a compiled Shadcn usage
+example and a reviewed render.

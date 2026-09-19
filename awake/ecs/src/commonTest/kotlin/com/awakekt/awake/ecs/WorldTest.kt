@@ -14,6 +14,21 @@ import kotlin.test.assertTrue
 
 class WorldTest {
     @Test
+    fun docsExampleCreatesAComponentAndQueriesItsEntities() {
+        // --8<-- [start:ecs-component-query]
+        data class Position(val x: Float, val y: Float)
+
+        val world = World()
+        val player = world.create()
+        world.add(player, Position(4f, 2f))
+        val positionedEntities = world.query(Position::class)
+        // --8<-- [end:ecs-component-query]
+
+        assertEquals(listOf(player), positionedEntities)
+        assertEquals(Position(4f, 2f), world.get<Position>(player))
+    }
+
+    @Test
     fun recycledEntityKeepsSameIdButGetsNewGeneration() {
         val world = World()
         val first = world.create()

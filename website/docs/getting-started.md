@@ -1,15 +1,11 @@
-# Getting Started
+# Installation
 
-The smallest published desktop setup uses Awake's bootstrap and Vulkan modules. Awake owns the
-GLFW window and frame loop; your application supplies its lifecycle and render plan.
+Awake is published to Maven Central. Use one Awake version across every module; the version shown
+here follows the selected documentation version.
 
-This is the single public source for published dependency coordinates. Feature guides link here
-instead of repeating version tables, so the version selector and installation examples stay in
-sync.
+## Add the desktop runtime
 
-## Installation
-
-Add the following to your `libs.versions.toml`:
+Add the version and base artifacts to `gradle/libs.versions.toml`:
 
 ```toml
 [versions]
@@ -21,7 +17,7 @@ awake-shaders = { group = "com.awakekt.awake.asset", name = "shaders", version.r
 awake-vulkan = { group = "com.awakekt.awake.backend", name = "vulkan", version.ref = "awake" }
 ```
 
-For a JVM desktop target:
+Add dependencies to the source sets that use them:
 
 ```kotlin
 kotlin {
@@ -38,31 +34,88 @@ kotlin {
 }
 ```
 
-## Creating an Application
+## Create an application
 
-Define the lifecycle in `commonMain`, then launch it from `desktopMain`:
+Define the lifecycle in shared code. This window configuration is extracted from the compiled
+bootstrap tests:
 
 ```kotlin
-// commonMain
-val game = app {
-    window {
-        title = "My Awake App"
-        size(1280, 720)
-        backend.vulkan()
-    }
-}
+import com.awakekt.awake.engine.bootstrap.dsl.app
+
+--8<-- "awake/engine/bootstrap/src/commonTest/kotlin/com/awakekt/awake/engine/bootstrap/AppLifecycleDslTest.kt:desktop-app-window"
 ```
 
-The `app { }` block is shared code. A desktop entry point calls
-`runVulkanDesktopGame(game, renderPlan)` from `desktopMain`; the render plan is the application’s
-shader and pipeline declaration.
+On desktop, pass the lifecycle and a render plan to `runVulkanDesktopGame` from `desktopMain`.
+For the complete compiled application entry point, see the
+[Engine Showcase](https://github.com/awakekt/awake/blob/main/samples/engine-showcase/src/desktopMain/kotlin/com/awakekt/awake/showcase/app/Main.kt).
 
-Apps that need custom backend construction can use the `applicationFactory` overload instead.
+## Add feature modules
 
-For scenes, physics, or UI, add the corresponding published feature modules and install them in the
-same application root. These capabilities remain optional.
+Add the relevant alias to the `[libraries]` section above and use it from the indicated source set.
+Gradle resolves each module's published transitive dependencies.
 
-The repository’s compiler-checked showcase entry point is
-[`EngineShowcaseApp.kt`](https://github.com/awakekt/awake/blob/main/samples/engine-showcase/src/commonMain/kotlin/com/awakekt/awake/showcase/app/EngineShowcaseApp.kt).
+### Core Math and ECS
 
-Use [Releases](releases.md) to select a compatible artifact version before adding more modules.
+```toml
+awake-math = { group = "com.awakekt.awake.core", name = "math", version.ref = "awake" }
+awake-ecs = { group = "com.awakekt.awake", name = "ecs", version.ref = "awake" }
+```
+
+Use `libs.awake.math` and/or `libs.awake.ecs` in `commonMain`.
+
+### Scene authoring
+
+```toml
+awake-scene-authoring = { group = "com.awakekt.awake.scene", name = "authoring", version.ref = "awake" }
+awake-scene-3d = { group = "com.awakekt.awake.scene", name = "scene3d", version.ref = "awake" }
+awake-navigation = { group = "com.awakekt.awake", name = "navigation", version.ref = "awake" }
+awake-ai = { group = "com.awakekt.awake", name = "ai", version.ref = "awake" }
+awake-scene-world = { group = "com.awakekt.awake.scene", name = "world", version.ref = "awake" }
+```
+
+Use `libs.awake.scene.authoring` in `commonMain`. This artifact brings its public scene API
+dependencies. Add the `scene3d`, `navigation`, `ai`, or `scene.world` alias only when you use that
+capability directly.
+
+### Graphics backends
+
+The desktop Vulkan artifact is included in the base setup. For WasmJs, add this alias and use
+`libs.awake.webgpu` in `wasmJsMain`:
+
+```toml
+awake-webgpu = { group = "com.awakekt.awake.backend", name = "webgpu", version.ref = "awake" }
+```
+
+For shader authoring, add `libs.awake.asset.shader.dsl` using this alias:
+
+```toml
+awake-asset-shader-dsl = { group = "com.awakekt.awake.asset", name = "shader-dsl", version.ref = "awake" }
+```
+
+### Physics
+
+```toml
+awake-physics-api = { group = "com.awakekt.awake.physics", name = "api", version.ref = "awake" }
+awake-jolt = { group = "com.awakekt.awake.backend", name = "jolt", version.ref = "awake" }
+```
+
+Use `libs.awake.physics.api` in shared code and `libs.awake.jolt` only on supported native targets.
+
+### UI
+
+```toml
+awake-compose-foundation = { group = "com.awakekt.awake.compose", name = "foundation", version.ref = "awake" }
+awake-ui-shadcn = { group = "com.awakekt.awake.ui", name = "shadcn", version.ref = "awake" }
+```
+
+Use `libs.awake.compose.foundation` and `libs.awake.ui.shadcn` in `commonMain`. Shadcn depends on
+the foundation APIs. See [Releases and compatibility](releases.md) for target availability and
+the exact published module set.
+
+### Terrain assets
+
+```toml
+awake-terrain = { group = "com.awakekt.awake.asset", name = "terrain", version.ref = "awake" }
+```
+
+Use `libs.awake.terrain` in the source set that creates terrain data.

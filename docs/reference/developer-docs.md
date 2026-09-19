@@ -280,9 +280,12 @@ The public developer site lives under `website/`. It is a separate publication b
 
 - Write audience-facing explanations in `website/docs/`; do not publish `docs/` or module
   `README.md` files wholesale.
-- Organize the public site by reader task: each major area gets an overview, focused guides, and a
-  tutorials/samples index. Keep dependency installation in the shared getting-started guide and
-  link to it from area pages instead of repeating version and artifact tables.
+- Organize navigation around Awake's library features and concepts, not a repeated tutorial/sample
+  index. A feature page should explain what it provides, how to add its artifact, and how to use it
+  with a verified example where one exists. Keep the version declaration and baseline setup in the
+  shared installation page; feature pages link to the exact relevant dependency section.
+- Publish only modules that are available to consumers in the documented release. Keep in-repo
+  prototypes and modules without a published artifact out of the public navigation until they ship.
 - Keep API signatures, parameter details, and lifecycle contracts in KDoc/Dokka rather than
   duplicating them in prose pages.
 - Link each page to the next useful page in the reader's task flow. Prefer two or three meaningful

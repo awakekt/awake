@@ -15,6 +15,6 @@ application branding in the theme layer rather than overriding individual compon
 
 ## Choosing a family
 
-- Use Shadcn for the Awake Shadcn visual language and its recipe catalog.
-- Use Material 3 when the application follows Material color and component conventions.
-- Use headless primitives when the application owns its entire visual system.
+- Use Shadcn for the published component recipes and visual language.
+- Build a custom visual system directly on Compose Foundation when the application needs different
+  branding or component behavior.

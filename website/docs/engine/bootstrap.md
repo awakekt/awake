@@ -5,16 +5,12 @@ modules, and per-frame work.
 
 ## Minimal application
 
-```kotlin
-import com.awakekt.awake.engine.bootstrap.dsl.app
+Add `awake:engine:bootstrap` to shared code and a backend artifact to the platform source set as
+shown in [Installation](../getting-started.md#installation). This window setup is extracted from
+the compiled bootstrap test suite:
 
-val game = app {
-    window {
-        title = "My Awake App"
-        size(1280, 720)
-        backend.vulkan()
-    }
-}
+```kotlin
+--8<-- "awake/engine/bootstrap/src/commonTest/kotlin/com/awakekt/awake/engine/bootstrap/AppLifecycleDslTest.kt:desktop-app-window"
 ```
 
 The lifecycle is shared code. A platform entry point supplies the matching host, such as

@@ -14,3 +14,7 @@ Vulkan or WebGPU code; the selected backend consumes the render contract.
 
 `RenderSystem3D` assembles draw work, performs the scene-side visibility decisions, and submits it
 to the selected `Renderer`.
+
+The [scene authoring artifact](../getting-started.md#scene-authoring) exposes the common scene
+rendering APIs. For the complete compiled integration, see the
+[Engine Showcase](https://github.com/awakekt/awake/tree/main/samples/engine-showcase).

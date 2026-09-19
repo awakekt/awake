@@ -22,6 +22,7 @@ class SceneDslTest {
     fun worldSceneBuildsEntitiesWithNamesAndModifiers() {
         val world = World()
 
+        // --8<-- [start:author-scene]
         world.scene {
             entity("camera") {
                 camera()
@@ -33,6 +34,7 @@ class SceneDslTest {
                 }
             }
         }
+        // --8<-- [end:author-scene]
 
         val cameraEntity = world.query(Name::class).first { world.get<Name>(it)?.value == "camera" }
         assertNotNull(world.get<CameraRig>(cameraEntity))

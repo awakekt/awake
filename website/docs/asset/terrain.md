@@ -3,6 +3,9 @@
 The terrain module provides heightmaps, terrain mesh generation, geometry clipmaps, and texture
 splatting data for landscape rendering.
 
+Install [`awake:asset:terrain`](../getting-started.md#terrain-assets) in the source set that builds
+or consumes terrain data.
+
 ## Core types
 
 - `Heightmap` samples elevation and interpolated normals.

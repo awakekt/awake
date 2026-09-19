@@ -3,6 +3,9 @@
 The scene-world module contains optional large-world primitives: cell coordinates, partitioning,
 streaming hooks, and a floating origin.
 
+Install [`awake:scene:world`](../getting-started.md#scene-authoring) only when the application
+needs world streaming or floating-origin support.
+
 `FloatingOriginSystem` keeps the active area near the numeric origin so floating-point precision
 remains useful at large distances. `AsyncWorldCellStream` loads and unloads cells by coordinate;
 application code decides what each cell contains.

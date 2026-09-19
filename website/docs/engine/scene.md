@@ -15,7 +15,7 @@ systems, serialized scene documents, runtime loading, and authoring helpers.
 `SceneDocument` is the authored representation. A scene loader validates and instantiates it into a
 `World`; a scene manager owns replacement and teardown of the active scene.
 
-Use [Scene Authoring](../scene/authoring.md) when constructing scenes in Kotlin and [Scene
-Rendering](../scene/rendering.md) when making entities visible.
-
-For the complete learning path, see [Scene tutorials and samples](../scene/tutorial.md).
+Install the [scene authoring module](../getting-started.md#scene-authoring) to use the Kotlin DSL.
+The [authoring API](../scene/authoring.md) creates entities and attaches components; the
+[scene rendering API](../scene/rendering.md) turns visible components into backend-neutral draw
+work.
