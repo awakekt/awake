@@ -14,8 +14,8 @@ import kotlin.test.assertTrue
 class EditorPluginRegistryTest {
     @Test
     fun installsLinkedPluginsInOrderAndRegistersTheirProviders() {
-        val providers = EditorProviders()
-        val plugins = EditorPluginRegistry(providers)
+        val providers = ProviderRegistry()
+        val plugins = PluginRegistry(providers)
         val transform = RecordingPlugin("awake.transform", "transform")
         val gltf = RecordingPlugin("awake.gltf", "gltf")
 
@@ -27,8 +27,8 @@ class EditorPluginRegistryTest {
 
     @Test
     fun rejectsAnIncompatiblePluginBeforeItCreatesProviders() {
-        val providers = EditorProviders()
-        val plugins = EditorPluginRegistry(providers)
+        val providers = ProviderRegistry()
+        val plugins = PluginRegistry(providers)
         val plugin = RecordingPlugin("private.terrain", "terrain", requiredApiVersion = 2)
 
         assertFailsWith<IllegalArgumentException> {
@@ -42,8 +42,8 @@ class EditorPluginRegistryTest {
 
     @Test
     fun rejectsDuplicatePluginIdsAndRollsBackAConflictingProviderBatch() {
-        val providers = EditorProviders()
-        val plugins = EditorPluginRegistry(providers)
+        val providers = ProviderRegistry()
+        val plugins = PluginRegistry(providers)
         plugins.install(RecordingPlugin("awake.transform", "transform"))
 
         assertFailsWith<IllegalArgumentException> {
@@ -59,21 +59,21 @@ class EditorPluginRegistryTest {
 
     @Test
     fun uninstallsPluginAndDisposesAndRemovesItsProviders() {
-        val providers = EditorProviders()
-        val plugins = EditorPluginRegistry(providers)
+        val providers = ProviderRegistry()
+        val plugins = PluginRegistry(providers)
         val plugin = RecordingPlugin("community.tool", "tool.viewer", "tool.panel")
 
         plugins.install(plugin)
         assertEquals(listOf(plugin.metadata), plugins.installed)
         assertEquals(listOf("tool.viewer", "tool.panel"), providers.all.map { it.metadata.id.value })
 
-        val uninstalled = plugins.uninstall(EditorPluginId("community.tool"))
+        val uninstalled = plugins.uninstall(PluginId("community.tool"))
         assertTrue(uninstalled)
         assertEquals(emptyList(), plugins.installed)
         assertEquals(emptyList(), providers.all)
         assertTrue(plugin.disposed)
 
-        val uninstallMissing = plugins.uninstall(EditorPluginId("community.tool"))
+        val uninstallMissing = plugins.uninstall(PluginId("community.tool"))
         assertFalse(uninstallMissing)
     }
 }
@@ -81,19 +81,19 @@ class EditorPluginRegistryTest {
 private class RecordingPlugin(
     id: String,
     private vararg val providerIds: String,
-    requiredApiVersion: Int = EditorPluginApi.currentVersion.value,
+    requiredApiVersion: Int = PluginApi.currentVersion.value,
 ) : EditorPlugin,
-    EditorPluginLifecycle {
+    PluginLifecycle {
     var createdCount = 0
         private set
     var disposed = false
         private set
 
-    override val metadata = EditorPluginMetadata(
-        id = EditorPluginId(id),
+    override val metadata = PluginMetadata(
+        id = PluginId(id),
         displayName = id,
         version = "1.0.0",
-        requiredApiVersion = EditorPluginApiVersion(requiredApiVersion),
+        requiredApiVersion = PluginApiVersion(requiredApiVersion),
     )
 
     override fun createProviders(): List<EditorProvider> {
@@ -106,13 +106,13 @@ private class RecordingPlugin(
     }
 }
 
-private class RecordingPluginProvider(id: String) : EditorComponentProvider {
-    override val metadata = EditorProviderMetadata(EditorProviderId(id), id)
-    override val codec: EditorProviderCodec = PluginTestCodec
+private class RecordingPluginProvider(id: String) : ComponentProvider {
+    override val metadata = ProviderMetadata(ProviderId(id), id)
+    override val codec: ProviderCodec = PluginTestCodec
 }
 
-private object PluginTestCodec : EditorProviderCodec {
+private object PluginTestCodec : ProviderCodec {
     override val currentVersion = 1
 
-    override fun validate(configuration: EditorProviderConfiguration): List<EditorValidationMessage> = emptyList()
+    override fun validate(configuration: ProviderConfiguration): List<ValidationMessage> = emptyList()
 }

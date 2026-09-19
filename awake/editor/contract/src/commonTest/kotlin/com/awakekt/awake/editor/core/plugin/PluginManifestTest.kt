@@ -34,8 +34,6 @@ class PluginManifestTest {
             category = "World",
             tags = listOf("terrain", "brush"),
             documentationUrl = "https://docs.awakekt.com/plugins/terrain",
-            contributesDockTab = true,
-            dockTabTitle = "Terrain Editor",
         )
 
         val json = manifest.toJson()

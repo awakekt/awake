@@ -34,8 +34,10 @@ data class PluginDependency(
  * @property version SemVer version string (e.g. "1.2.0").
  * @property author Author or studio name.
  * @property description Short description of the extension capabilities.
- * @property entrypointClass Fully-qualified class name implementing [EditorPlugin].
- * @property requiredApiVersion Required [EditorPluginApiVersion] integer value.
+ * @property entrypointClass Fully-qualified class name implementing [EditorPlugin]. When non-blank
+ *   the plugin archive **must** contain a non-empty bytecode payload; a metadata-only archive with
+ *   a declared entrypoint is rejected by the pipeline.
+ * @property requiredApiVersion Required [PluginApiVersion] integer value.
  * @property minEngineVersion Optional minimum Awake engine SemVer version string.
  * @property supportedPlatforms List of supported platform identifiers (e.g. "desktop", "android", "ios", "wasmJs").
  * @property targetJvmVersion Optional target JVM bytecode major version.
@@ -45,8 +47,6 @@ data class PluginDependency(
  * @property category Primary discovery category.
  * @property tags List of search/discovery tag keywords.
  * @property documentationUrl Optional URL link to documentation.
- * @property contributesDockTab Whether this plugin automatically contributes a bottom dock panel.
- * @property dockTabTitle Optional custom title for the bottom dock tab.
  */
 @Serializable
 data class PluginManifest(
@@ -66,8 +66,6 @@ data class PluginManifest(
     val category: String = "Tools",
     val tags: List<String> = emptyList(),
     val documentationUrl: String = "",
-    val contributesDockTab: Boolean = true,
-    val dockTabTitle: String? = null,
 ) {
     init {
         require(id.isNotBlank()) { "Plugin ID must not be blank." }
