@@ -35,9 +35,9 @@ internal class VulkanDrawPreparer(
         context: GpuDrawPreparationContext,
     ): GpuResolvedDraw? {
         if (sourceIndex == 0) materialUsage.clear()
-        val cascades = context.shadowViewProjections.takeIf { it.isNotEmpty() }?.let {
-            GpuShadowCascadeData(it, FloatArray(it.size) { Float.MAX_VALUE })
-        }
+        val cascades = context.shadowCascadeData ?: context.shadowViewProjections
+            .takeIf { it.isNotEmpty() }
+            ?.let { GpuShadowCascadeData(it, FloatArray(it.size) { Float.MAX_VALUE }) }
         val prepared = renderer.prepareGpuDraw(
             cmd = request,
             frameIndex = renderer.swapchainManager.currentFrame,
@@ -46,6 +46,7 @@ internal class VulkanDrawPreparer(
             materialUsage = materialUsage,
             viewProjection = context.viewProjection,
             cameraPosition = context.cameraEye,
+            cameraForward = context.cameraForward,
             lightUniforms = context.passUniforms,
             shadowCascades = cascades,
             fogColor = context.environment.fogColor,

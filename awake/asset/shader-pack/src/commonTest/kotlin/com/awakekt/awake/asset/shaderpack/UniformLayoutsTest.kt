@@ -26,10 +26,9 @@ class UniformLayoutsTest {
     @Test
     fun litShadowUniformLayoutTotalIncludesEveryCascade() {
         // 104 before cascades, when one lightMvp covered the whole shadow. The block now carries
-        // MAX_SHADOW_CASCADES world-to-light matrices instead of that one (+48), and one vec4 per
-        // cascade of depth scale (+16) so a world-space bias means the same offset in each --
-        // the price of the cascade set being uniform data rather than a second binding.
-        assertEquals(168, LitShadowUniformLayout.total)
+        // MAX_SHADOW_CASCADES world-to-light matrices (+48), depth scale/split data (+16), and a
+        // camera-forward vector for split-aligned blending (+4).
+        assertEquals(172, LitShadowUniformLayout.total)
     }
 
     @Test

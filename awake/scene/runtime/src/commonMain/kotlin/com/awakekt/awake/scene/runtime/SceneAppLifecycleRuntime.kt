@@ -497,5 +497,5 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
             isRealtimeProvider = isRealtimeProvider,
             isDirtyProvider = isDirtyProvider,
         ),
-        DebugVisualizationSystem(renderer),
+        DebugVisualizationSystem(renderer, viewportProvider),
     )

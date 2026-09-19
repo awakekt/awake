@@ -87,9 +87,13 @@ public final class com/awakekt/awake/render/passes/DirectionalShadowBoxKt {
 
 public final class com/awakekt/awake/render/passes/DrawUniformPackingKt {
 	public static final fun instancedUniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FI)[F
+	public static final fun instancedUniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FILcom/awakekt/awake/core/math/Vec3f;)[F
 	public static synthetic fun instancedUniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FIILjava/lang/Object;)[F
+	public static synthetic fun instancedUniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FILcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)[F
 	public static final fun uniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;F)[F
+	public static final fun uniformFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;)[F
 	public static synthetic fun uniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)[F
+	public static synthetic fun uniformFloats$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)[F
 }
 
 public final class com/awakekt/awake/render/passes/GpuResourcePool {
@@ -349,7 +353,9 @@ public final class com/awakekt/awake/render/passes/uniforms/EnvironmentUniforms$
 
 public final class com/awakekt/awake/render/passes/uniforms/GpuShadowUniformsKt {
 	public static final fun gpuLitShadowUniforms (Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;F)[F
+	public static final fun gpuLitShadowUniforms (Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;)[F
 	public static synthetic fun gpuLitShadowUniforms$default (Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;FILjava/lang/Object;)[F
+	public static synthetic fun gpuLitShadowUniforms$default (Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;FLcom/awakekt/awake/core/math/Vec3f;ILjava/lang/Object;)[F
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/MaterialUniformLayouts {
@@ -444,7 +450,9 @@ public final class com/awakekt/awake/render/passes/uniforms/SceneDefaultsKt {
 
 public final class com/awakekt/awake/render/passes/uniforms/SceneFrameUniforms {
 	public fun <init> (Lcom/awakekt/awake/render/passes/uniforms/SceneLightUniforms;Lcom/awakekt/awake/core/math/Vec3f;[F)V
+	public fun <init> (Lcom/awakekt/awake/render/passes/uniforms/SceneLightUniforms;Lcom/awakekt/awake/core/math/Vec3f;[FLcom/awakekt/awake/core/math/Vec3f;)V
 	public final fun getCameraEye ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getCameraForward ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getFog ()[F
 	public final fun getLight ()Lcom/awakekt/awake/render/passes/uniforms/SceneLightUniforms;
 }

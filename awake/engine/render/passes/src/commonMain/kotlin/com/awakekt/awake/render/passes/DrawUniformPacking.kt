@@ -41,6 +41,27 @@ fun RenderDrawCommand.uniformFloats(
     shadowCascades: GpuShadowCascadeData? = null,
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
+): FloatArray = uniformFloats(
+    materialUniformFloatCount = materialUniformFloatCount,
+    viewProjection = viewProjection,
+    cameraEye = cameraEye,
+    lightPayload = lightPayload,
+    shadowCascades = shadowCascades,
+    fogColor = fogColor,
+    fogDensity = fogDensity,
+    cameraForward = Vec3f(0f, 0f, -1f),
+)
+
+/** Packs uniforms with an explicit camera direction for stable cascade selection. */
+fun RenderDrawCommand.uniformFloats(
+    materialUniformFloatCount: Int,
+    viewProjection: Mat4,
+    cameraEye: Vec3f,
+    lightPayload: FloatArray,
+    shadowCascades: GpuShadowCascadeData? = null,
+    fogColor: Color = Color.Black,
+    fogDensity: Float = 0f,
+    cameraForward: Vec3f,
 ): FloatArray {
     val mvp = model * viewProjection
     return when (
@@ -59,6 +80,7 @@ fun RenderDrawCommand.uniformFloats(
             lightPayload = lightPayload,
             cascades = shadowCascades ?: GpuShadowCascadeData.UNSHADOWED,
             cameraEye = cameraEye,
+            cameraForward = cameraForward,
             fogColor = fogColor,
             fogDensity = fogDensity,
         )
@@ -97,6 +119,29 @@ fun RenderDrawCommand.instancedUniformFloats(
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
     materialUniformFloatCount: Int = 0,
+): FloatArray = instancedUniformFloats(
+    kind = kind,
+    viewProjection = viewProjection,
+    lightPayload = lightPayload,
+    cameraEye = cameraEye,
+    shadowCascades = shadowCascades,
+    fogColor = fogColor,
+    fogDensity = fogDensity,
+    materialUniformFloatCount = materialUniformFloatCount,
+    cameraForward = Vec3f(0f, 0f, -1f),
+)
+
+/** Packs instanced uniforms with an explicit camera direction for stable cascade selection. */
+fun RenderDrawCommand.instancedUniformFloats(
+    kind: InstancedDrawKind,
+    viewProjection: Mat4,
+    lightPayload: FloatArray,
+    cameraEye: Vec3f = Vec3f(0f, 0f, 0f),
+    shadowCascades: GpuShadowCascadeData? = null,
+    fogColor: Color = Color.Black,
+    fogDensity: Float = 0f,
+    materialUniformFloatCount: Int = 0,
+    cameraForward: Vec3f,
 ): FloatArray = when (kind) {
     InstancedDrawKind.Particle -> UniformWriter(ParticleUniformLayout)
         .put(viewProjection.data, UniformFields.Mvp)
@@ -116,6 +161,7 @@ fun RenderDrawCommand.instancedUniformFloats(
                 lightPayload = lightPayload,
                 cascades = shadowCascades ?: GpuShadowCascadeData.UNSHADOWED,
                 cameraEye = cameraEye,
+                cameraForward = cameraForward,
                 fogColor = fogColor,
                 fogDensity = fogDensity,
             )

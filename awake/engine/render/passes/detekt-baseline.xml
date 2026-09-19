@@ -7,7 +7,6 @@
     <ID>EndOfSentenceFormat:DebugGeometry.kt$* Produces 3D aura outline lines around [bounds] transformed by [worldMatrix]: * - Luminous corner brackets (arms wrapping each of the 8 corners) * - Ground/base circular aura ring * - Subtle connecting contour edges</ID>
     <ID>InvalidPackageDeclaration:DrawCallPipeline.kt$package com.awakekt.awake.render.pipeline</ID>
     <ID>LongParameterList:DebugLineVertices.kt$( out: FloatArray, offset: Int, x: Float, y: Float, z: Float, color: Color, )</ID>
-    <ID>LongParameterList:GpuShadowUniforms.kt$( transform: Mat4, extraUniformFloats: FloatArray, vertexAnimation: Vec3f, timeSeconds: Float, mvp: Mat4, lightPayload: FloatArray, cascades: ShadowCascadeUniforms, cameraEye: Vec3f, fogColor: Color = Color.Black, fogDensity: Float = 0f, )</ID>
     <ID>LongParameterList:PbrUniforms.kt$( mvp: Mat4, model: Mat4, lightPayload: FloatArray, extraUniformFloats: FloatArray, cameraEye: Vec3f, fogColor: Color, fogDensity: Float, alphaCutoff: Float = 0.5f, )</ID>
     <ID>MatchingDeclarationName:DrawCallPipeline.kt$InstancedDrawKind</ID>
     <ID>MatchingDeclarationName:ParticleUniforms.kt$ParticleExtraFields</ID>

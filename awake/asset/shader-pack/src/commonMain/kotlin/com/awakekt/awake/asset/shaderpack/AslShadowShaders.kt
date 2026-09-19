@@ -42,6 +42,7 @@ import com.awakekt.awake.asset.shaderdsl.saturate
 import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.sin
+import com.awakekt.awake.asset.shaderdsl.smoothstep
 import com.awakekt.awake.asset.shaderdsl.sqrt
 import com.awakekt.awake.asset.shaderdsl.storageArrayOfArrays
 import com.awakekt.awake.asset.shaderdsl.texture2d
@@ -459,8 +460,9 @@ private fun litShadow(
     }
 
     /**
-     * How lit this fragment is, from whichever cascade contains it.
-     * Smoothly blends across cascade boundaries to prevent popping/flickering.
+     * Selects by camera-space depth and blends across a narrow fitted split overlap. Blending at
+     * light-map edges made the weight move as the camera moved and sampled a second map across
+     * large portions of the image, causing temporal shimmer and unnecessary PCF work.
      */
     val sampleShadow = fn("sampleShadow") {
         val world by param(GpuDataShape.Vec3)
@@ -473,39 +475,44 @@ private fun litShadow(
         )
         val texSize = let("texSize", vec2(textureDimensions(shadowMap)))
         val texel = let("texel", 1f.lit / texSize)
+        val cameraPosition = u.cameraPosition!!
+        val cameraForward = u.cameraForward!!
+        val viewDepth = let(
+            "viewDepth",
+            dot(world - cameraPosition.xyz, normalize(cameraForward.xyz)),
+        )
         val lit = variable("lit", 1f.lit)
         val resolved = variable("resolved", 0.lit)
-        val blendStart = 0.8f.lit
 
         loopI32("cascade", 0.lit, (MAX_SHADOW_CASCADES - 1).lit) { cascade ->
             iff(resolved gt 0.lit) { continueLoop() }
+            val splitFar = let("splitFar", u.cascadeDepthScales[cascade].z)
+            val blendStart = let("blendStart", u.cascadeDepthScales[cascade].w)
+            val blendEnd = let("blendEnd", splitFar + (splitFar - blendStart))
+            iff(viewDepth gt blendEnd) { continueLoop() }
             val primaryShadow = let(
                 "primaryShadow",
                 sampleSingleCascade(cascade, world, normal, nDotL, slopeScale, texSize, texel),
             )
-            iff(primaryShadow lt 0f.lit) { continueLoop() }
+            iff(primaryShadow lt 0f.lit) {
+                // The fit should contain this camera slice. If a custom matrix does not, report
+                // it unshadowed instead of sampling a different depth slice by accident.
+                assign(resolved, 1.lit)
+                continueLoop()
+            }
 
             assign(resolved, 1.lit)
             assign(lit, primaryShadow)
-
-            val projected = let(
-                "proj",
-                u.cascadeViewProjections[cascade] * vec4(world, 1f.lit),
-            )
-            val cNdc = let("cNdc", projected.xyz / projected.w)
-            val distToEdge = let(
-                "distToEdge",
-                max(max(abs(cNdc.x), abs(cNdc.y)), abs(cNdc.z * 2f.lit - 1f.lit)),
-            )
-
-            iff((cascade lt (MAX_SHADOW_CASCADES - 1).lit) and (distToEdge gt blendStart)) {
+            iff(
+                (toF32(cascade) lt (cameraForward.w - 1f.lit)) and (viewDepth gt blendStart),
+            ) {
                 val nextCascade = let("nextCascade", cascade + 1.lit)
                 val nextShadow = let(
                     "nextShadow",
                     sampleSingleCascade(nextCascade, world, normal, nDotL, slopeScale, texSize, texel),
                 )
                 iff(nextShadow ge 0f.lit) {
-                    val alpha = let("blendAlpha", clamp((distToEdge - blendStart) / (1f.lit - blendStart), 0f.lit, 1f.lit))
+                    val alpha = let("blendAlpha", smoothstep(blendStart, blendEnd, viewDepth))
                     assign(lit, mix(primaryShadow, nextShadow, alpha))
                 }
             }
@@ -563,10 +570,15 @@ private fun litShadow(
 
     fragment {
         val n = let("n", normalize(normal))
-        val l = let("l", normalize(u.lightDirection.xyz))
+        val directionalLength = let("directionalLength", length(u.lightDirection.xyz))
+        val directionalEnabled = let("directionalEnabled", directionalLength gt epsilon)
+        val l = let(
+            "l",
+            normalize(select(vec3(0f.lit, 1f.lit, 0f.lit), u.lightDirection.xyz, directionalEnabled)),
+        )
         val v = let("v", normalize(u.cameraPosition!!.xyz - worldPos))
         val h = let("h", normalize(v + l))
-        val nDotL = let("nDotL", max(dot(n, l), 0f.lit))
+        val nDotL = let("nDotL", select(0f.lit, max(dot(n, l), 0f.lit), directionalEnabled))
         val nDotV = let("nDotV", max(dot(n, v), epsilon))
         val nDotH = let("nDotH", max(dot(n, h), 0f.lit))
         val metallic = let("metallic", clamp(u.material!!.x, 0f.lit, 1f.lit))

@@ -71,7 +71,7 @@ object MaterialUniformLayouts {
     )
 
     /**
-     * Everything `lit_shadow.wgsl` declares = 104 floats.
+     * Everything `lit_shadow.wgsl` declares = 172 floats.
      *
      * `awake:asset:shader-pack` re-exports this as `LitShadowUniformLayout` rather than
      * declaring its own. It used to declare one, so the struct had two Kotlin descriptions --
@@ -93,6 +93,7 @@ object MaterialUniformLayouts {
         UniformFields.Model,
         UniformFields.VertexAnimation,
         UniformFields.CameraPosition,
+        UniformFields.CameraForward,
         UniformFields.Material,
         UniformFields.FogColor,
     )

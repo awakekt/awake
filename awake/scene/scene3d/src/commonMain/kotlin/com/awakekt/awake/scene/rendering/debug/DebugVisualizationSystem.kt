@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("TooManyFunctions")
+
 package com.awakekt.awake.scene.rendering.debug
 
 import com.awakekt.awake.core.color.Color
@@ -21,8 +23,8 @@ import com.awakekt.awake.render.passes.directionalShadowBox
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.rendering.CONSERVATIVE_ASPECT
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.Light
 import com.awakekt.awake.scene.rendering.RenderSystem3D
@@ -46,10 +48,19 @@ import kotlin.math.min
  */
 class DebugVisualizationSystem(
     private val renderer: Renderer,
+    private val viewportProvider: () -> RenderViewport?,
 ) : System {
+    /** Retains the original constructor used by standalone debug-system consumers. */
+    constructor(renderer: Renderer) : this(renderer, { null })
+
     override fun update(world: World, delta: Float) {
         val settings = world.family<WorldDebugSettings>().components().firstOrNull() ?: return
-        val lines = debugVisualizationLines(world, renderer, settings)
+        val lines = debugVisualizationLines(
+            world,
+            renderer,
+            settings,
+            viewportProvider()?.aspect ?: renderer.surfaceAspect,
+        )
         if (lines.isNotEmpty()) renderer.drawDebugLines(lines)
     }
 }
@@ -68,14 +79,22 @@ fun debugVisualizationLines(
     world: World,
     renderer: Renderer,
     settings: WorldDebugSettings,
+): List<LineSegment> = debugVisualizationLines(world, renderer, settings, renderer.surfaceAspect)
+
+/** Builds debug lines with an explicit viewport aspect when a scene is rendered off-screen. */
+fun debugVisualizationLines(
+    world: World,
+    renderer: Renderer,
+    settings: WorldDebugSettings,
+    viewportAspect: Float,
 ): List<LineSegment> {
     if (!settings.hasAnyDebugLines()) {
         return emptyList()
     }
     val lines = ArrayList<LineSegment>()
-    appendFrustumLines(world, settings, lines)
+    appendFrustumLines(world, settings, viewportAspect, lines)
     appendBoundsLines(world, settings, lines)
-    appendLightLines(world, renderer, settings, lines)
+    appendLightLines(world, renderer, settings, viewportAspect, lines)
     if (settings.showGrid) {
         val cameraEye = primaryCamera(world)?.lens?.eye ?: Vec3f.ZERO
         emitGridLines(lines, settings, cameraEye)
@@ -87,6 +106,7 @@ fun debugVisualizationLines(
 private fun appendFrustumLines(
     world: World,
     settings: WorldDebugSettings,
+    viewportAspect: Float,
     lines: MutableList<LineSegment>,
 ) {
     if (!settings.showFrustum) return
@@ -94,19 +114,12 @@ private fun appendFrustumLines(
     // doc comment for why drawing the viewport's own camera's frustum is invisible by
     // construction. No target (or a target with no Camera) draws nothing, rather than
     // falling back to primaryCamera and reintroducing that same invisible case.
-    // The REAL viewport aspect, not CONSERVATIVE_ASPECT -- that constant is deliberately
-    // wider than any real viewport (a safety margin for RenderSystem3D's own CPU-side
-    // frustum-cull check, see its own doc comment), so reusing it here drew a visibly wider
-    // box than the camera's actual fovY/aspect would ever really see. The render packet owns
-    // any optional viewport rect; this scene-side debug pass keeps its conservative fallback
-    // because it runs before packet execution.
-    val aspect = CONSERVATIVE_ASPECT
     settings.frustumTargetEntityId
         ?.let { targetId -> world.cameraOf(targetId) }
         ?.let {
             lines += frustumDebugLines(
                 it.lens.visualizedFarClamped(),
-                aspect,
+                viewportAspect,
                 FRUSTUM_COLOR,
             )
         }
@@ -144,6 +157,7 @@ private fun appendLightLines(
     world: World,
     renderer: Renderer,
     settings: WorldDebugSettings,
+    viewportAspect: Float,
     lines: MutableList<LineSegment>,
 ) {
     if (!settings.showLights && !settings.showShadowFrustum) return
@@ -164,10 +178,7 @@ private fun appendLightLines(
             world,
             direction,
             renderer.clipSpace,
-            // The same aspect RenderSystem3D fits cascades with, not the viewport's own: a box
-            // drawn at a different aspect than the one sampled is a picture of a box nobody
-            // renders from.
-            CONSERVATIVE_ASPECT,
+            viewportAspect,
         )
     }
 }
@@ -258,13 +269,13 @@ private val CASCADE_COLORS = listOf(
  *
  * Fitted to the same camera `RenderSystem3D` fits them to, so what is drawn is what is sampled.
  */
-private fun cascadeBoxLines(
+internal fun cascadeBoxLines(
     world: World,
     direction: Vec3f,
     clipSpace: com.awakekt.awake.core.math.ClipSpace,
     aspect: Float,
 ): List<LineSegment> {
-    val camera = world.family<Camera>().components().firstOrNull()?.lens ?: return emptyList()
+    val camera = primaryCamera(world)?.lens ?: return emptyList()
     return cascadeShadowBoxes(camera, aspect, direction, clipSpace)
         .flatMapIndexed { index, box ->
             // The box in ITS OWN space is the ortho volume; the view matrix's inverse puts that

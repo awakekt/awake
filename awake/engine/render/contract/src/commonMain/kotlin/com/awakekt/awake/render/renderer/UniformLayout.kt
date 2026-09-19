@@ -163,6 +163,7 @@ object UniformFields {
     val VertexAnimation = UniformField("vertexAnimation", GpuDataShape.Vec4)
     val Model = UniformField("model", GpuDataShape.Mat4)
     val CameraPosition = UniformField("cameraPosition", GpuDataShape.Vec4)
+    val CameraForward = UniformField("cameraForward", GpuDataShape.Vec4)
     val FogColor = UniformField("fogColor", GpuDataShape.Vec4)
     val PbrFactors = UniformField("pbrFactors", GpuDataShape.Vec4)
 

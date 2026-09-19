@@ -25,11 +25,7 @@ internal fun primaryCamera(world: World): Camera? {
     return null
 }
 
-/** ponytail: neither [RenderSystem3D] nor [DebugVisualizationSystem] knows the renderer's actual
- * viewport aspect ratio (`System.update(world, delta)` takes no viewport size, and `Renderer`
- * doesn't expose one) -- widening the frustum's horizontal extent past any real device's
- * aspect ratio (ultra-wide monitors included) keeps this a false-negative-only approximation:
- * it may under-cull on a narrow screen, never cull something actually visible. Upgrade path:
- * expose the renderer's real aspect ratio and pass it through here once that's a free contract
- * change to make. */
+/** Deliberately wider than real viewports for CPU-side culling only. Projection and cascade fitting
+ * use the live viewport aspect; using this margin there would lower shadow-map resolution and leave
+ * the shadow debugger showing volumes the renderer does not sample. */
 internal const val CONSERVATIVE_ASPECT = 3f

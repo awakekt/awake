@@ -12,6 +12,9 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.math.times
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_MAP_SIZE
+import com.awakekt.awake.render.passes.DirectionalShadowBox
+import com.awakekt.awake.render.passes.cascadeBlendStartDistances
+import com.awakekt.awake.render.passes.cascadeShadowBoxesWithBlendFraction
 import com.awakekt.awake.render.passes.cascadeShadowBoxes
 import com.awakekt.awake.render.passes.cascadeSplitDistances
 import kotlin.math.abs
@@ -78,6 +81,76 @@ class ShadowCascadesTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun adjacentCascadesBothCoverTheSplitBlendBand() {
+        val camera = Lens(
+            eye = Vec3f(0f, 5f, 20f),
+            center = Vec3f(0f, 0f, 0f),
+            fovYRadians = 1f,
+            near = 0.5f,
+            far = 100f,
+        )
+        val splits = cascadeSplitDistances(camera.near, camera.far)
+        val blendStarts = cascadeBlendStartDistances(camera.near, splits)
+        val boxes = cascadeShadowBoxes(camera, ASPECT, LIGHT, ClipSpace.Vulkan, splits)
+        val zeroBlendBoxes = cascadeShadowBoxesWithBlendFraction(
+            camera,
+            ASPECT,
+            LIGHT,
+            ClipSpace.Vulkan,
+            splits,
+            blendFraction = 0f,
+        )
+        var zeroBlendMisses = 0
+
+        for (cascade in 0 until splits.lastIndex) {
+            val blendEnd = splits[cascade] + (splits[cascade] - blendStarts[cascade])
+            val overlapSlice = Lens(
+                eye = camera.eye,
+                center = camera.center,
+                up = camera.up,
+                fovYRadians = camera.fovYRadians,
+                near = blendStarts[cascade],
+                far = blendEnd,
+            )
+            Frustum.corners(overlapSlice, ASPECT).forEach { corner ->
+                assertTrue(
+                    boxes[cascade].containsClipPoint(corner) && boxes[cascade + 1].containsClipPoint(corner),
+                    "Blend-band corner $corner is not covered by both cascades $cascade and ${cascade + 1}.",
+                )
+                if (!zeroBlendBoxes[cascade].containsClipPoint(corner)) zeroBlendMisses++
+            }
+        }
+        assertTrue(zeroBlendMisses > 0, "The non-overlapping fit should miss the post-split blend band.")
+    }
+
+    @Test
+    fun wideViewportFitCoversVisibleFarCorners() {
+        val camera = Lens(
+            eye = Vec3f(0f, 5f, 20f),
+            center = Vec3f(0f, 0f, 0f),
+            fovYRadians = 0.785f,
+            near = 0.1f,
+            far = 100f,
+        )
+        val wideAspect = 21f / 9f
+        val splits = cascadeSplitDistances(camera.near, camera.far)
+        val boxes = cascadeShadowBoxes(camera, wideAspect, Vec3f(0f, 1f, 0f), ClipSpace.Vulkan, splits)
+        val oldFixedAspectBoxes = cascadeShadowBoxes(camera, 16f / 9f, Vec3f(0f, 1f, 0f), ClipSpace.Vulkan, splits)
+        var fixedAspectMisses = 0
+        var sliceNear = camera.near
+
+        boxes.forEachIndexed { index, box ->
+            val slice = Lens(camera.eye, camera.center, camera.up, camera.fovYRadians, sliceNear, splits[index])
+            sliceNear = splits[index]
+            Frustum.corners(slice, wideAspect).forEach { corner ->
+                assertTrue(box.containsClipPoint(corner), "21:9 cascade $index misses visible corner $corner.")
+                if (!oldFixedAspectBoxes[index].containsClipPoint(corner)) fixedAspectMisses++
+            }
+        }
+        assertTrue(fixedAspectMisses > 0, "The fixed 16:9 negative control should miss wide-frustum corners.")
     }
 
     @Test
@@ -234,5 +307,11 @@ class ShadowCascadesTest {
         const val MAX_NEAR_TEXEL_METRES = 0.015f
         const val TOLERANCE = 0.01f
         val LIGHT = Vec3f(0.4f, 1f, 0.2f)
+    }
+
+    private fun DirectionalShadowBox.containsClipPoint(point: Vec3f): Boolean {
+        val clip = Vec4(point.x, point.y, point.z, 1f) * viewProjection
+        return abs(clip.x) <= 1f + TOLERANCE && abs(clip.y) <= 1f + TOLERANCE &&
+            clip.z >= -TOLERANCE && clip.z <= 1f + TOLERANCE
     }
 }

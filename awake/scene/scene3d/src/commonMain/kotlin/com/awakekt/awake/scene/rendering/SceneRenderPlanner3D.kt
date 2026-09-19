@@ -37,22 +37,23 @@ internal class SceneRenderPlanner3D(
     val lastOccludedCount: Int get() = geometryFeature.lastOccludedCount
 
     fun plan(world: World, camera: Camera, elapsedTimeSeconds: Float): PlannedFrame {
+        val viewport = rendererViewport()
+        val aspect = viewport?.aspect ?: rendererAspect()
         drawCalls.clear()
         val geometryFrame = geometryFeature.begin(world, camera, elapsedTimeSeconds)
         drawCalls += geometryFrame.beforeParticles
-        val contributions = featureCollector.collect(world, camera, elapsedTimeSeconds)
+        val contributions = featureCollector.collect(world, camera, elapsedTimeSeconds, aspect)
         drawCalls += contributions.particleDraws
         drawCalls += geometryFeature.finish(world, geometryFrame, camera)
         drawCalls += contributions.authoredDraws
 
-        val viewport = rendererViewport()
         val passInput = ScenePassCompiler.compile(
             lens = camera.lens,
             drawCalls = drawCalls,
             light = contributions.light,
             environment = contributions.environment,
             clipSpace = rendererClipSpace,
-            aspect = viewport?.aspect ?: rendererAspect(),
+            aspect = aspect,
             viewport = viewport,
             drawPreparer = drawPreparer,
         )
