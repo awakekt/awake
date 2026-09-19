@@ -12,9 +12,9 @@ import com.awakekt.awake.core.di.module
 import kotlin.jvm.JvmInline
 
 @JvmInline
-value class EditorProviderId(val value: String) {
+value class ProviderId(val value: String) {
     init {
-        require(value.isNotBlank()) { "An editor provider ID must not be blank." }
+        require(value.isNotBlank()) { "A provider ID must not be blank." }
     }
 }
 
@@ -56,40 +56,40 @@ enum class EditorProviderKind {
     FloatingCard,
 }
 
-data class EditorProviderMetadata(
-    val id: EditorProviderId,
+data class ProviderMetadata(
+    val id: ProviderId,
     val displayName: String,
 ) {
     init {
-        require(displayName.isNotBlank()) { "An editor provider display name must not be blank." }
+        require(displayName.isNotBlank()) { "A provider display name must not be blank." }
     }
 }
 
-data class EditorProviderConfiguration(
+data class ProviderConfiguration(
     val version: Int,
     val payload: String,
 ) {
     init {
-        require(version >= 1) { "An editor provider configuration version must be positive." }
+        require(version >= 1) { "A provider configuration version must be positive." }
     }
 }
 
-enum class EditorValidationSeverity { Warning, Error }
+enum class ValidationSeverity { Warning, Error }
 
-data class EditorValidationMessage(
-    val severity: EditorValidationSeverity,
+data class ValidationMessage(
+    val severity: ValidationSeverity,
     val message: String,
 ) {
     init {
-        require(message.isNotBlank()) { "An editor validation message must not be blank." }
+        require(message.isNotBlank()) { "A validation message must not be blank." }
     }
 }
 
 /** Versioned codec contract. Persisted payloads remain opaque to the generic editor. */
-interface EditorProviderCodec {
+interface ProviderCodec {
     val currentVersion: Int
 
-    fun validate(configuration: EditorProviderConfiguration): List<EditorValidationMessage>
+    fun validate(configuration: ProviderConfiguration): List<ValidationMessage>
 }
 
 /**
@@ -97,30 +97,30 @@ interface EditorProviderCodec {
  * orders, resolves, validates, and disposes them.
  */
 interface EditorProvider {
-    val metadata: EditorProviderMetadata
+    val metadata: ProviderMetadata
     val kind: EditorProviderKind
-    val codec: EditorProviderCodec
+    val codec: ProviderCodec
 
     fun dispose() {}
 }
 
-interface EditorComponentProvider : EditorProvider {
+interface ComponentProvider : EditorProvider {
     override val kind: EditorProviderKind get() = EditorProviderKind.Component
 }
 
-interface EditorAssetProvider : EditorProvider {
+interface AssetProvider : EditorProvider {
     override val kind: EditorProviderKind get() = EditorProviderKind.Asset
 }
 
-interface EditorEnvironmentProvider : EditorProvider {
+interface EnvironmentProvider : EditorProvider {
     override val kind: EditorProviderKind get() = EditorProviderKind.Environment
 }
 
-interface EditorAnimationProvider : EditorProvider {
+interface AnimationProvider : EditorProvider {
     override val kind: EditorProviderKind get() = EditorProviderKind.Animation
 }
 
-interface EditorBuildProvider : EditorProvider {
+interface BuildProvider : EditorProvider {
     override val kind: EditorProviderKind get() = EditorProviderKind.Build
 
     /** Cancels provider-owned work before editor shutdown or an explicit user cancellation. */
@@ -134,9 +134,9 @@ interface EditorBuildProvider : EditorProvider {
  * impossible to resolve safely. Registration order is preserved for deterministic presentation.
  */
 @Suppress("TooManyFunctions")
-class EditorProviders {
+class ProviderRegistry {
     private val ordered = mutableListOf<EditorProvider>()
-    private val byId = mutableMapOf<EditorProviderId, EditorProvider>()
+    private val byId = mutableMapOf<ProviderId, EditorProvider>()
     private var disposed = false
 
     val all: List<EditorProvider> get() = ordered
@@ -150,7 +150,7 @@ class EditorProviders {
      * leaving a partially registered capability behind when one of its IDs conflicts.
      */
     fun registerAll(providers: List<EditorProvider>) {
-        check(!disposed) { "Cannot register an editor provider after the registry is disposed." }
+        check(!disposed) { "Cannot register a provider after the registry is disposed." }
         val duplicateId = providers
             .groupingBy { it.metadata.id }
             .eachCount()
@@ -158,14 +158,14 @@ class EditorProviders {
             .firstOrNull { it.value > 1 }
             ?.key
         require(duplicateId == null) {
-            "More than one editor provider was supplied for '${duplicateId?.value}'."
+            "More than one provider was supplied for '${duplicateId?.value}'."
         }
         val registeredId = providers
             .asSequence()
             .map { it.metadata.id }
             .firstOrNull { it in byId }
         require(registeredId == null) {
-            "An editor provider is already registered for '${registeredId?.value}'."
+            "A provider is already registered for '${registeredId?.value}'."
         }
         providers.forEach { provider ->
             byId[provider.metadata.id] = provider
@@ -192,19 +192,19 @@ class EditorProviders {
         providers.asReversed().forEach(::unregister)
     }
 
-    fun find(id: EditorProviderId): EditorProvider? = byId[id]
+    fun find(id: ProviderId): EditorProvider? = byId[id]
 
     fun ofKind(kind: EditorProviderKind): List<EditorProvider> = ordered.filter { it.kind == kind }
 
     fun validate(
-        id: EditorProviderId,
-        configuration: EditorProviderConfiguration,
-    ): List<EditorValidationMessage> = requireNotNull(find(id)) {
-        "No editor provider is registered for '${id.value}'."
+        id: ProviderId,
+        configuration: ProviderConfiguration,
+    ): List<ValidationMessage> = requireNotNull(find(id)) {
+        "No provider is registered for '${id.value}'."
     }.codec.validate(configuration)
 
     fun cancelBuilds() {
-        ordered.filterIsInstance<EditorBuildProvider>().forEach(EditorBuildProvider::cancel)
+        ordered.filterIsInstance<BuildProvider>().forEach(BuildProvider::cancel)
     }
 
     fun dispose() {
@@ -217,12 +217,49 @@ class EditorProviders {
 
     /** Exports registered providers as an Awake DI [Module]. */
     fun toDiModule(): Module = module {
-        instance(this@EditorProviders)
+        instance(this@ProviderRegistry)
         ordered.forEach { provider ->
             instance(provider, qualifier = provider.metadata.id.value)
         }
     }
 
-    /** Creates an Awake DI [Container] populated with registered editor providers. */
+    /** Creates an Awake DI [Container] populated with registered providers. */
     fun toContainer(): Container = container(toDiModule())
 }
+
+// ── Backward-compatible typealiases (compile-time only, zero runtime cost) ───
+@Deprecated("Use ProviderId", ReplaceWith("ProviderId"))
+typealias EditorProviderId = ProviderId
+
+@Deprecated("Use ProviderMetadata", ReplaceWith("ProviderMetadata"))
+typealias EditorProviderMetadata = ProviderMetadata
+
+@Deprecated("Use ProviderConfiguration", ReplaceWith("ProviderConfiguration"))
+typealias EditorProviderConfiguration = ProviderConfiguration
+
+@Deprecated("Use ValidationSeverity", ReplaceWith("ValidationSeverity"))
+typealias EditorValidationSeverity = ValidationSeverity
+
+@Deprecated("Use ValidationMessage", ReplaceWith("ValidationMessage"))
+typealias EditorValidationMessage = ValidationMessage
+
+@Deprecated("Use ProviderCodec", ReplaceWith("ProviderCodec"))
+typealias EditorProviderCodec = ProviderCodec
+
+@Deprecated("Use ProviderRegistry", ReplaceWith("ProviderRegistry"))
+typealias EditorProviders = ProviderRegistry
+
+@Deprecated("Use ComponentProvider", ReplaceWith("ComponentProvider"))
+typealias EditorComponentProvider = ComponentProvider
+
+@Deprecated("Use AssetProvider", ReplaceWith("AssetProvider"))
+typealias EditorAssetProvider = AssetProvider
+
+@Deprecated("Use EnvironmentProvider", ReplaceWith("EnvironmentProvider"))
+typealias EditorEnvironmentProvider = EnvironmentProvider
+
+@Deprecated("Use AnimationProvider", ReplaceWith("AnimationProvider"))
+typealias EditorAnimationProvider = AnimationProvider
+
+@Deprecated("Use BuildProvider", ReplaceWith("BuildProvider"))
+typealias EditorBuildProvider = BuildProvider
