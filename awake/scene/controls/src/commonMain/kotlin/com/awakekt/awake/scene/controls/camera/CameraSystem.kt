@@ -15,10 +15,9 @@ import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraMode
 import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.rendering.Camera
+import com.awakekt.awake.scene.rendering.camera.Camera
 import kotlin.math.PI
 import kotlin.math.cos
-import kotlin.math.exp
 import kotlin.math.sin
 
 /**
@@ -48,8 +47,8 @@ class CameraSystem(
 
     // Scratch vectors -- this runs every frame, so the pose math must not allocate.
     private val forward = Vec3f()
-    private val desiredEye = Vec3f()
 
+    @Suppress("UnusedParameter") // System.update supplies frame delta; this rig applies its pose directly.
     override fun update(world: World, delta: Float) {
         val input = inputProvider()
 
@@ -74,7 +73,7 @@ class CameraSystem(
             }
 
             applyCameraRigInput(config, input, dx, dy, inViewport)
-            updateCameraPose(config, camera, targetTransform, delta)
+            updateCameraPose(config, camera, targetTransform)
         }
     }
 
@@ -112,7 +111,9 @@ class CameraSystem(
             CameraMode.ThirdPerson -> {
                 config.pitch = THIRD_PERSON_PITCH
                 config.yaw = 0f
-                config.distance = THIRD_PERSON_DISTANCE
+                if (config.distance <= 0f) {
+                    config.distance = THIRD_PERSON_DISTANCE
+                }
             }
 
             CameraMode.FreeFly -> {
@@ -141,7 +142,6 @@ class CameraSystem(
         config: CameraRig,
         camera: Camera,
         target: Transform?,
-        dt: Float,
     ) {
         // A rig with no target used to leave EVERY mode except FreeFly doing nothing at all:
         // no pose written, no error, a camera that silently ignores input. The orbit and top-down
@@ -165,8 +165,7 @@ class CameraSystem(
             CameraMode.ThirdPerson -> {
                 core.center.set(pivot)
                 forwardFrom(config.yaw, config.pitch, forward)
-                desiredEye.set(core.center).sub(forward.scale(config.distance))
-                core.eye.lerp(desiredEye, (1f - exp(-SMOOTHING * dt)).coerceIn(0f, 1f))
+                core.eye.set(core.center).sub(forward.scale(config.distance))
             }
 
             CameraMode.FreeFly -> {
@@ -208,6 +207,8 @@ class CameraSystem(
         const val CINEMATIC_OFFSET = 10f
         const val CINEMATIC_HEIGHT = 5f
 
+        // Retained in the public API dump for binary compatibility; third-person poses are now direct.
         const val SMOOTHING = 10f
+
     }
 }
