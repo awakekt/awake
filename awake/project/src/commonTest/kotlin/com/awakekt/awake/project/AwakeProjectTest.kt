@@ -113,4 +113,41 @@ class AwakeProjectTest {
         assertFalse(AwakeProjectV1Validator.isSafeProjectPath("../outside"))
         assertTrue(AwakeProjectV1Validator.isSafeProjectPath("assets/world.zip"))
     }
+
+    @Test
+    fun versionOnePluginReferenceSupportsSha256DigestAndOmittedVersion() {
+        val validHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+        val manifest = AwakeProjectManifestV1(
+            id = "com.example.game",
+            name = "Example Game",
+            version = "1.0.0",
+            entryScene = "scenes/main.scene.json",
+            plugins = listOf(
+                AwakeProjectPluginReferenceV1(
+                    id = "com.example.tools",
+                    path = "plugins/tools.awakeplugin",
+                    sha256 = validHash,
+                    required = true,
+                ),
+            ),
+        )
+
+        val json = AwakeProjectV1Validator.encodeManifest(manifest)
+        val decoded = AwakeProjectV1Validator.decodeManifest(json)
+
+        assertEquals(manifest, decoded)
+        assertTrue(AwakeProjectV1Validator.manifestIssues(decoded).isEmpty())
+
+        val invalidManifest = manifest.copy(
+            plugins = listOf(
+                AwakeProjectPluginReferenceV1(
+                    id = "com.example.tools",
+                    path = "plugins/tools.awakeplugin",
+                    sha256 = "INVALID_HASH",
+                ),
+            ),
+        )
+        val issues = AwakeProjectV1Validator.manifestIssues(invalidManifest)
+        assertTrue(issues.any { it.contains("sha256 must be a lowercase SHA-256 digest") })
+    }
 }
