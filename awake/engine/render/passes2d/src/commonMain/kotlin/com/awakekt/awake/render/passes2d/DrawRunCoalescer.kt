@@ -125,16 +125,15 @@ object DrawRunCoalescer {
             while (index < primitives.size && primitives[index]::class == first::class) index += 1
             val slice = primitives.subList(runStart, index)
             val safeInteriorRect = safeInteriorRectStack.lastOrNull()
-            // Rect clips only affect the scissor command. Path clips change the generated
-            // geometry, so retain only spans that are outside an active path clip. Clip commands
-            // themselves also update state and must always be replayed in emission order.
+            // Rect clips only affect the scissor command. Path clips change generated geometry,
+            // so include their active context in the retained-span key. Clip commands themselves
+            // update state and must always be replayed in emission order.
             val cacheable = retained != null &&
-                activePathClips.isEmpty() &&
                 first !is DrawCommand.ClipPathPush &&
                 first !is DrawCommand.ClipPush &&
                 first !is DrawCommand.ClipPop
             if (cacheable) {
-                retained.find(slice, maxQuadsPerRun)?.let { cached ->
+                retained.find(slice, maxQuadsPerRun, activePathClips, safeInteriorRect)?.let { cached ->
                     runs.addAll(cached)
                     continue
                 }
@@ -266,7 +265,14 @@ object DrawRunCoalescer {
                     if (canExactClip(activePathClips)) {
                         // Clipping needs real coordinates, so this path materialises. Rare: it
                         // takes a path-shaped clip to be open, and a rect clip is a scissor.
-                        val clipped = meshSlice.map { exactClipColored(it.placedMesh(), activePathClips) }
+                        val clipped = meshSlice.map { primitive ->
+                            val placed = primitive.placedMesh()
+                            if (canSkipExactClip(safeInteriorRect, placed.bounds())) {
+                                placed
+                            } else {
+                                exactClipColored(placed, activePathClips)
+                            }
+                        }
                         chunkColoredVertexTriangleMeshes(runs, clipped, maxQuadsPerRun)
                     } else {
                         // Placement folded into the copy the staging pass already makes: a
@@ -346,14 +352,23 @@ object DrawRunCoalescer {
                 }
             }
             if (cacheable) {
-                retained.store(slice, maxQuadsPerRun, runs.subList(stagedRunStart, runs.size))
+                retained.store(
+                    primitives = slice,
+                    maxQuadsPerRun = maxQuadsPerRun,
+                    pathClips = activePathClips,
+                    safeInteriorRect = safeInteriorRect,
+                    runs = runs.subList(stagedRunStart, runs.size),
+                )
             }
         }
         return runs
     }
 
     fun canSkipExactClip(safeInteriorRect: Rectangle?, x: Float, y: Float, w: Float, h: Float): Boolean =
-        safeInteriorRect != null && safeInteriorRect.contains(Rectangle(x, y, w, h))
+        canSkipExactClip(safeInteriorRect, Rectangle(x, y, w, h))
+
+    fun canSkipExactClip(safeInteriorRect: Rectangle?, bounds: Rectangle): Boolean =
+        safeInteriorRect != null && safeInteriorRect.contains(bounds)
 
     fun canExactClip(paths: List<DrawPath>): Boolean = paths.isNotEmpty() && paths.all { it.convexClipContour() != null }
 

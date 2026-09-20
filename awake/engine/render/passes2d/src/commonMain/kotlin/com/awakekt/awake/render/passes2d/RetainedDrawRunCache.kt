@@ -6,6 +6,8 @@
 package com.awakekt.awake.render.passes2d
 
 import com.awakekt.awake.core.graphics2d.DrawCommand
+import com.awakekt.awake.core.graphics2d.DrawPath
+import com.awakekt.awake.core.math2d.Rectangle
 
 /**
  * Bounded retained storage for the backend-neutral result of UI draw-run staging.
@@ -26,21 +28,30 @@ class RetainedDrawRunCache(
         val hash: Int,
         val maxQuadsPerRun: Int,
         val primitives: List<DrawCommand>,
+        val pathClips: List<DrawPath>,
+        val safeInteriorRect: Rectangle?,
         val runs: List<StagedDrawRun>,
     )
 
     private val entries = ArrayList<Entry>(capacity)
 
     /** Returns a retained span and promotes it to most-recently-used, or `null` on a miss. */
-    fun find(primitives: List<DrawCommand>, maxQuadsPerRun: Int): List<StagedDrawRun>? {
-        val hash = primitives.hashCode()
+    fun find(
+        primitives: List<DrawCommand>,
+        maxQuadsPerRun: Int,
+        pathClips: List<DrawPath> = emptyList(),
+        safeInteriorRect: Rectangle? = null,
+    ): List<StagedDrawRun>? {
+        val hash = retainedHash(primitives, pathClips, safeInteriorRect)
         var index = entries.lastIndex
         while (index >= 0) {
             val entry = entries[index]
             if (
                 entry.hash == hash &&
                 entry.maxQuadsPerRun == maxQuadsPerRun &&
-                entry.primitives == primitives
+                entry.primitives == primitives &&
+                entry.pathClips == pathClips &&
+                entry.safeInteriorRect == safeInteriorRect
             ) {
                 entries.removeAt(index)
                 entries.add(entry)
@@ -55,21 +66,28 @@ class RetainedDrawRunCache(
     fun store(
         primitives: List<DrawCommand>,
         maxQuadsPerRun: Int,
+        pathClips: List<DrawPath> = emptyList(),
+        safeInteriorRect: Rectangle? = null,
         runs: List<StagedDrawRun>,
     ) {
         if (capacity == 0 || primitives.isEmpty()) return
         val snapshot = primitives.map(DrawCommand::retentionSnapshot)
-        val hash = snapshot.hashCode()
+        val clipSnapshot = pathClips.map { it.copy(commands = it.commands.toList()) }
+        val hash = retainedHash(snapshot, clipSnapshot, safeInteriorRect)
         entries.removeAll {
             it.hash == hash &&
                 it.maxQuadsPerRun == maxQuadsPerRun &&
-                it.primitives == snapshot
+                it.primitives == snapshot &&
+                it.pathClips == clipSnapshot &&
+                it.safeInteriorRect == safeInteriorRect
         }
         entries.add(
             Entry(
                 hash = hash,
                 maxQuadsPerRun = maxQuadsPerRun,
                 primitives = snapshot,
+                pathClips = clipSnapshot,
+                safeInteriorRect = safeInteriorRect,
                 runs = runs.toList(),
             ),
         )
@@ -77,6 +95,12 @@ class RetainedDrawRunCache(
     }
 
     fun clear() = entries.clear()
+
+    private fun retainedHash(
+        primitives: List<DrawCommand>,
+        pathClips: List<DrawPath>,
+        safeInteriorRect: Rectangle?,
+    ): Int = 31 * (31 * primitives.hashCode() + pathClips.hashCode()) + (safeInteriorRect?.hashCode() ?: 0)
 
     companion object {
         /** Keeps the common case bounded without making large Studio screens churn the cache. */
