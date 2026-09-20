@@ -66,6 +66,7 @@ public final class com/awakekt/awake/render/passes2d/DrawRunCoalescer {
 	public static synthetic fun buildTextureRun$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/core/math2d/Rectangle;ILjava/lang/Object;)Lcom/awakekt/awake/render/passes2d/StagedDrawRun$TextureRun;
 	public final fun canExactClip (Ljava/util/List;)Z
 	public final fun canSkipExactClip (Lcom/awakekt/awake/core/math2d/Rectangle;FFFF)Z
+	public final fun canSkipExactClip (Lcom/awakekt/awake/core/math2d/Rectangle;Lcom/awakekt/awake/core/math2d/Rectangle;)Z
 	public final fun coalesce (Ljava/util/List;I)Ljava/util/List;
 	public final fun coalesce (Ljava/util/List;ILcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;)Ljava/util/List;
 	public static synthetic fun coalesce$default (Lcom/awakekt/awake/render/passes2d/DrawRunCoalescer;Ljava/util/List;IILjava/lang/Object;)Ljava/util/List;
@@ -100,8 +101,10 @@ public final class com/awakekt/awake/render/passes2d/RetainedDrawRunCache {
 	public fun <init> (I)V
 	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun clear ()V
-	public final fun find (Ljava/util/List;I)Ljava/util/List;
-	public final fun store (Ljava/util/List;ILjava/util/List;)V
+	public final fun find (Ljava/util/List;ILjava/util/List;Lcom/awakekt/awake/core/math2d/Rectangle;)Ljava/util/List;
+	public static synthetic fun find$default (Lcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Ljava/util/List;ILjava/util/List;Lcom/awakekt/awake/core/math2d/Rectangle;ILjava/lang/Object;)Ljava/util/List;
+	public final fun store (Ljava/util/List;ILjava/util/List;Lcom/awakekt/awake/core/math2d/Rectangle;Ljava/util/List;)V
+	public static synthetic fun store$default (Lcom/awakekt/awake/render/passes2d/RetainedDrawRunCache;Ljava/util/List;ILjava/util/List;Lcom/awakekt/awake/core/math2d/Rectangle;Ljava/util/List;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/render/passes2d/RetainedDrawRunCache$Companion {
