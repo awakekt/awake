@@ -44,7 +44,7 @@ store.close()
 
 ### B. `ReducerStore<S, I, E>` (UDF / MVI Contract)
 
-Follows the engine's Store/Contract boundary defined in `.agents/skills/awake-state-management`.
+Follows the engine's Store/Contract boundary defined in the installed `awake-state-management` guidance.
 
 ```kotlin
 // 1. Contract

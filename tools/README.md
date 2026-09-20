@@ -6,7 +6,7 @@
 > | Question | Read |
 > |---|---|
 > | *Is anything wrong?* | `scripts/awake verify` — every gate, one run |
-> | *Which tool answers my question, and may I re-record this baseline?* | [`skills/awake-ui-verification`](../skills/awake-ui-verification/SKILL.md) — judgment |
+> | *Which tool answers my question, and may I re-record this baseline?* | installed `awake-ui-verification` skill — judgment |
 > | *What proof does this kind of UI change require?* | [`docs/reference/ui-validation.md`](../docs/reference/ui-validation.md) — policy |
 > | *What commands do I run, in what order?* | [`docs/reference/ui-parity-tool.md`](../docs/reference/ui-parity-tool.md) — procedure |
 > | *What is this script, and can it fail a build?* | [`tools/README.md`](README.md) — catalogue |
@@ -41,10 +41,9 @@ tools/
   jni-binding-generator/ unrelated to UI; own owners
 ```
 
-The UI evidence scripts live in `skills/awake-ui-verification/scripts/` with the guidance that
-explains when to run them, and the SVG converter in `skills/awake-ui-icons/scripts/`. Both moved
-because they are standalone; everything above stayed because it is coupled to data or to a sibling
-script in the same folder.
+The UI evidence scripts live in `tools/shadcn/` beside their manifests and reference pipeline, and
+the SVG converter lives in `tools/icons/` beside the icon source tooling. Agent skills explain
+when to use them, but product tooling remains runnable without an installed agent bundle.
 
 ## Three kinds of tool
 
@@ -96,9 +95,8 @@ Read the **Don't** column first — each one is a mistake that has actually been
 |---|---|---|---|
 | `verify_generated.py` | GATE | Before a commit that touches a generator or its output; automatically under `awake verify` | Don't add a generator whose output is not byte-deterministic — `instantiate_roboto.py` is excluded for exactly this, and a gate that always fails gets ignored, then removed |
 | `verify_detekt_baselines.py` | GATE | Automatically; it needs no arguments | Don't "fix" it with `./gradlew detektBaseline` — that regenerates, absorbing *new* findings as accepted debt. Delete the named entries instead |
-| `verify_agent_skills_sync.py` | GATE | After editing a vendored skill | Don't fix a diff by editing the vendored copy; edit the source and re-sync, or the next sync silently reverts you |
 | `test_repo_root_depth.py` | GATE | Automatically; it needs no arguments | Don't "fix" a failure by changing the expected depth. It is telling you a script moved and its path resolution did not follow |
-| `test_awake_ui_cli.py`, `shadcn/test_vendor_reference_components.py`, `skills/…/test_compare_component_crops.py` | GATE | Automatically, under `awake verify`'s `tool-tests` | Don't add a tool without a test. These ran for weeks with no CI invoking pytest at all — 17 tests passing into a void |
+| `test_awake_ui_cli.py`, `shadcn/test_vendor_reference_components.py`, `shadcn/test_compare_component_crops.py` | GATE | Automatically, under `awake verify`'s `tool-tests` | Don't add a tool without a test. These ran for weeks with no CI invoking pytest at all — 17 tests passing into a void |
 
 ### shadcn pipeline (`tools/shadcn/`)
 
@@ -114,7 +112,7 @@ Ordered as the pipeline runs: `fetch → extract → vendor → verify → captu
 | `compare_parity.py` | INVESTIGATION | Diagnosing a specific visual difference | Don't cite its mismatch % as a fidelity score. It is only as good as the crop alignment; a `poor` crop row means the framing differs too much to conclude anything |
 | `port_progress.py` | INVESTIGATION | Checking how far Stage 3's port has got | Don't make it a gate. Mid-port it is red on purpose, and a gate that is red for weeks is one people stop reading — then it is still unread on the day it matters |
 
-### UI evidence (`skills/awake-ui-verification/scripts/`)
+### UI evidence (`tools/shadcn/`)
 
 | Tool | Kind | Run it when | Don't |
 |---|---|---|---|
@@ -123,7 +121,7 @@ Ordered as the pipeline runs: `fetch → extract → vendor → verify → captu
 | `generate_ui_status.py` | INVESTIGATION | After landing UI work, to refresh the matrix | Don't hand-edit `ui-fidelity-status.md`. Every row is a probe against source, which is what stops it claiming done for unwired work |
 | `ui_preview_server.py`, `ui_preview_watch.sh` | INVESTIGATION | Eyeballing during iteration | Don't cite it as proof of anything. It is a viewer |
 
-### Assets (`tools/fonts-tooling/`, `tools/icons/`, `skills/awake-ui-icons/scripts/`)
+### Assets (`tools/fonts-tooling/`, `tools/icons/`)
 
 | Tool | Kind | Run it when | Don't |
 |---|---|---|---|
@@ -184,7 +182,7 @@ tools/shadcn/fetch_shadcn_reference.sh
 python3 tools/shadcn/extract_shadcn_tokens.py
 ./gradlew :samples:ui-showcase:desktopTest --tests "*ShadcnReferenceComparisonTest*"
 scripts/awake ui report
-python3 skills/awake-ui-verification/scripts/generate_ui_status.py
+python3 tools/shadcn/generate_ui_status.py
 ```
 
 The generated reports are status aids, not independent sources of truth. If they disagree with
@@ -198,12 +196,12 @@ flattened to line segments, and how the font atlas ended up with mismatched glyp
 
 | Script | Generates | Notes |
 |---|---|---|
-| `svg_to_ui_image_vector.py` | `UiImageVector` glyph data (e.g. `HeroIcons.kt`) | Preserves curves as real cubic Beziers, converts SVG arcs exactly, keeps nested `evenodd` subpaths as holes. Rejects what the engine cannot render (strokes, transforms, crossing subpaths). Run `--self-test` after editing. See `skills/awake-ui-icons/SKILL.md`. |
+| `svg_to_ui_image_vector.py` | `UiImageVector` glyph data (e.g. `HeroIcons.kt`) | Preserves curves as real cubic Beziers, converts SVG arcs exactly, keeps nested `evenodd` subpaths as holes. Rejects what the engine cannot render (strokes, transforms, crossing subpaths). Run `--self-test` after editing. |
 | `:awake:ui:font-atlas-generator` (`generateFontAtlas` task, Kotlin/JVM, not a `tools/*.py` script) | `RobotoRegularUiFontData.kt` (packed glyph atlas + metrics) | Reads glyph metrics from the TTF's own outline geometry (`Font.createGlyphVector`) and rasterizes a separate antialiased atlas bitmap via `Graphics2D`. Glyph offsets and advances must stay in the same coordinate space — mixing cell-relative offsets with pen-relative advances produces uneven letter spacing. Replaced the former `generate_ui_font_atlas.py`, which derived metrics from the antialiased raster ink bbox and quantized them to 1/64 em. |
 
 ```bash
-python3 skills/awake-ui-icons/scripts/svg_to_ui_image_vector.py icon.svg --name chevronDown --dp 16 --source "Heroicons chevron-down (20/solid)"
-python3 skills/awake-ui-icons/scripts/svg_to_ui_image_vector.py --self-test
+python3 tools/icons/svg_to_ui_image_vector.py icon.svg --name chevronDown --dp 16 --source "Heroicons chevron-down (20/solid)"
+python3 tools/icons/svg_to_ui_image_vector.py --self-test
 ```
 
 ## Font fidelity
@@ -236,8 +234,7 @@ Read `docs/reference/shadcn-reference-pipeline.md` first.
 | `capture_shadcn_local.py` | Builds and serves `reference-app/`, then screenshots each case from `shadcn_reference_cases.json` into `docs/reference/shadcn-previews-local/`. Components come verbatim from the pinned checkout, so the reference is shadcn's own source. Captures states a docs page cannot show (focus, disabled, hover, open overlays) and any theme or radius. A case may name its own `selector` when Radix portals its content outside `#case`. |
 | `compare_parity.py` | Diffs an Awake render against a reference capture: aligned crop, heatmap, mismatch metrics. Pairing lives in `shadcn_parity_pairs.json`. |
 
-Three more live in [`skills/awake-ui-verification/scripts/`](../skills/awake-ui-verification/scripts/),
-next to the guidance that says when to run them:
+Three more live in [`tools/shadcn/`](shadcn/):
 
 | Script | Purpose |
 |---|---|
@@ -250,7 +247,7 @@ next to the guidance that says when to run them:
 tools/shadcn/fetch_shadcn_reference.sh
 ./gradlew :samples:ui-showcase:desktopTest --tests "*ShadcnReferenceComparisonTest*"
 scripts/awake ui report
-python3 skills/awake-ui-verification/scripts/generate_ui_status.py
+python3 tools/shadcn/generate_ui_status.py
 ```
 
 ### Semantic component crops
@@ -266,7 +263,7 @@ Use the same state/content on both sides; for a grouped case, repeat `--node-id`
 semantic bounds before diffing:
 
 ```bash
-python3 skills/awake-ui-verification/scripts/compare_component_crops.py \
+python3 tools/shadcn/compare_component_crops.py \
   --awake-png samples/ui-showcase/build/ui-previews/<preview-id>.png \
   --semantic-json samples/ui-showcase/build/ui-previews/<preview-id>.json \
   --node-id <component-node-id> \
@@ -293,7 +290,7 @@ than its `tools/shadcn/shadcn_parity_baseline.json` entry by more than the basel
 absolute distance from shadcn/ui -- that distance is real and stays untargeted. Re-record the
 baseline the same way as any other golden here, `-DAWAKE_RECORD_SNAPSHOTS=true`, only after
 reading the diff PNG under `build/reports/shadcn-parity/` and confirming the drift is intended
-(see `skills/awake-ui-verification/SKILL.md`).
+(see the installed `awake-ui-verification` skill for review guidance).
 
 ### `awake ui` command line
 
@@ -329,7 +326,7 @@ row together before expanding the command's supported combinations.
 ## Icon fidelity
 
 Proves each shipped `HeroIcons` `UiImageVector` renders the same shape as the official
-Heroicons SVG it was generated from, automatically -- see `skills/awake-ui-icons/SKILL.md`.
+Heroicons SVG it was generated from automatically.
 
 | Script | Purpose |
 |---|---|

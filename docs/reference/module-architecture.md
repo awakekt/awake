@@ -93,7 +93,7 @@ and `.git/modules` fixed up. Their paths are also hardcoded in CI — the `ios-n
 action, three `actions/checkout` steps, and the natives artifact path in `build-and-publish.yml`.
 A wrong one fails during MoltenVK's build, tens of minutes into a run.
 
-Beyond that, **348 Gradle-path references across 89 files**, including `.agents/skills/*.md`,
+Beyond that, **348 Gradle-path references across 89 files**, including historical agent guidance,
 `README.md` and both workflows. Docs do not fail the build, so those rot silently.
 
 ### Recommended sequence

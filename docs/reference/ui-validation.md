@@ -6,7 +6,7 @@
 > | Question | Read |
 > |---|---|
 > | *Is anything wrong?* | `scripts/awake verify` — every gate, one run |
-> | *Which tool answers my question, and may I re-record this baseline?* | [`awake-ui-verification`](../../.agents/skills/awake-ui-verification/SKILL.md) — judgment |
+> | *Which tool answers my question, and may I re-record this baseline?* | installed `awake-ui-verification` skill — judgment |
 > | *What proof does this kind of UI change require?* | [`docs/reference/ui-validation.md`](ui-validation.md) — policy |
 > | *What commands do I run, in what order?* | [`docs/reference/ui-parity-tool.md`](ui-parity-tool.md) — procedure |
 > | *What is this script, and can it fail a build?* | [`tools/README.md`](../../tools/README.md) — catalogue |
@@ -434,7 +434,7 @@ naming scheme, so it is not counted as one of the 23 -- flagged here rather than
 dropped; reconcile when card gets tagged for a geometry oracle.
 
 The older 23-component claims below predate the manifest-backed report and may be stale. Run
-`python3 .agents/skills/awake-ui-verification/scripts/generate_ui_parity_report.py` after every capture;
+`python3 tools/shadcn/generate_ui_parity_report.py` after every capture;
 its report is the source of truth for current coverage and missing-oracle work.
 
 Adding a component's layout row: tag the reference app's JSX with `data-parity-id` matching
@@ -473,7 +473,7 @@ no oracle exists for them.
   under `build/reports/shadcn-parity/`, and prints a summary table. Absolute mismatch against
   the real upstream reference is expected and stays untargeted -- pixel-perfect parity with
   shadcn/ui isn't the goal -- but *drift* is gated, see below.
-- `.agents/skills/awake-ui-verification/scripts/compare_component_crops.py` for component-level parity when a page preview contains
+- `tools/shadcn/compare_component_crops.py` for component-level parity when a page preview contains
   several widgets. The reference side is cropped automatically by
   `tools/shadcn/capture_shadcn_local.py` using the reference app's `#case`/portal selector; the Awake
   side is cropped by semantic node ID from the generated preview JSON. This is the canonical
@@ -528,7 +528,7 @@ override, which changes pixels the radius token doesn't touch.)
 **Same record convention as everywhere else** (`ShadcnParityScreenshotTest`,
 `UiShowcasePreviewDocsTest`): `-DAWAKE_RECORD_SNAPSHOTS=true` overwrites
 `tools/shadcn/shadcn_parity_baseline.json` with the current run's numbers instead of gating. Follow
-`.agents/skills/awake-ui-verification/SKILL.md`'s re-recording discipline -- run without recording
+the installed `awake-ui-verification` skill's re-recording discipline -- run without recording
 first, read `build/reports/shadcn-parity/<name>_diff.png`, explain the drift, only then record.
 
 **Not every pair is gated.** A pair whose aligned crop doesn't cover most of its own content

@@ -18,7 +18,7 @@ val generateImageVectors = tasks.register<GenerateImageVectorsTask>("generateIma
     outputDirectory.set(generatedRoot)
     generatorScript.set(
         rootProject.layout.projectDirectory.file(
-            ".agents/skills/awake-ui-icons/scripts/svg_to_ui_image_vector.py",
+            "tools/icons/svg_to_ui_image_vector.py",
         ),
     )
     // Python is already a build requirement nowhere else, so name the escape hatches up front

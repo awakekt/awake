@@ -52,7 +52,7 @@ fun UiPrimitiveScope.cardA() { val a = animateFloat("fade", target = 1f) }
 fun UiPrimitiveScope.cardB() { val a = animateFloat("fade", target = 0f) }
 
 // ✅ derive a unique id from each widget's own id, the same convention required for any
-// stateful widget (see skills/awake-ui-authoring/SKILL.md's "unique id" section)
+// stateful widget (see the public Awake UI authoring skill's "unique id" section)
 fun UiPrimitiveScope.card(id: String, visible: Boolean) {
     val alpha = animateFloatTween("$id.fade", target = if (visible) 1f else 0f)
 }
@@ -117,7 +117,8 @@ button(id, modifier = Modifier.scale(scale)) { text("Hover me") }
 
 **Never use this for anything that must visibly finish.** Convergence time scales with
 `ln(startValue / snapDistance)` -- fast early, then an imperceptibly slow crawl right before the
-final snap. `skills/awake-shadcn-recipe-authoring/SKILL.md` documents the exact shipped symptom: a real
+final snap. The public [`awake-shadcn-recipe-authoring`](https://github.com/awakekt/awake-agent-skills/tree/main/skills/awake-shadcn-recipe-authoring)
+skill documents the exact shipped symptom: a real
 120px collapse *looked* fully collapsed within ~10 frames while the container kept an invisible
 sub-pixel sliver of leftover height for dozens more frames, then hard-snapped once it finally
 crossed `snapDistance` -- reported live as **"slowly hidden, then snap."** A wrap-sized parent
@@ -350,7 +351,7 @@ val height = context.animateFloatTween(id, target, durationMs = COLLAPSE_DURATIO
 ```
 
 Do not invent a local `AnimationSpec`-shaped wrapper type to paper over this in one component --
-that is exactly the kind of new, non-Compose-shaped surface `skills/awake-ui-authoring/SKILL.md`'s
+that is exactly the kind of new, non-Compose-shaped surface in the public [`awake-ui-authoring`](https://github.com/awakekt/awake-agent-skills/tree/main/skills/awake-ui-authoring)
 "New `Modifier`/layout extensions must match Compose's real API" rule (same rule applies to any
 Compose-mimicking surface, not just `Modifier`) says to check against `mirror-map.md` before
 adding. If a real reusable spec type is needed, it is a `ui-core`/`ui-animation` API design task,
@@ -378,4 +379,4 @@ not a per-component workaround.
 - [`UiEasing.kt`](../../awake/ui/graphics/src/commonMain/kotlin/com/awakekt/awake/ui/api/UiEasing.kt) -- `Easing`, presets, `CubicBezierEasing`
 - [`mirror-map.md`](mirror-map.md) -- status table (Animation primitives section, State hooks section for the shared identity model)
 - [`compose-modifier-layout-guidance.md`](compose-modifier-layout-guidance.md) -- `Modifier`/layout how-to, GraphicsLayer section (`alpha()`/`scale()`/`graphicsLayer()`), Layout DSL section (trial-measurement model this doc's guard section depends on)
-- [`skills/awake-shadcn-recipe-authoring/SKILL.md`](../../skills/awake-shadcn-recipe-authoring/SKILL.md) -- the `animateFloat` vs `animateFloatTween` decision from a real `shadcnCollapsibleCard` build
+- [`awake-shadcn-recipe-authoring`](https://github.com/awakekt/awake-agent-skills/tree/main/skills/awake-shadcn-recipe-authoring) -- the `animateFloat` vs `animateFloatTween` decision from a real `shadcnCollapsibleCard` build

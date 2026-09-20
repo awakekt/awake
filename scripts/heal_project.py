@@ -9,7 +9,6 @@ Automates:
   2. Tech Debt & Scattered Comments Healing: Scans and classifies actionable vs orphan TODOs.
   3. Git Hooks Healing: Installs a project pre-commit hook when hooks/pre-commit exists.
   4. Scripts & Tools Hygiene: Ensures executable permissions on scripts/, tools/, and hooks/.
-  5. Provenance Lockfile Healing: Refreshes the lockfile when its generator exists.
 """
 
 import argparse
@@ -31,7 +30,7 @@ except ImportError:
 def fix_executable_permissions(repo_root: Path) -> int:
     print("\n🔧 Checking Script & Tool Permissions...")
     fixed = 0
-    for subdir in ["scripts", "tools", "hooks", ".agents/skills/scripts"]:
+    for subdir in ["scripts", "tools", "hooks"]:
         d = repo_root / subdir
         if d.exists():
             for p in d.rglob("*"):
@@ -116,27 +115,6 @@ def heal_git_hooks(repo_root: Path, dry_run: bool = False) -> bool:
     return True
 
 
-def heal_lockfile(repo_root: Path, dry_run: bool = False) -> bool:
-    print("\n🔒 Checking .agents/skills.lock...")
-    lock_generator = Path(__file__).resolve().parent / "generate_skills_lock.py"
-    if lock_generator.exists() and (repo_root / ".agents" / "skills").exists():
-        if dry_run:
-            print("  [dry-run] would regenerate .agents/skills.lock")
-        else:
-            res = subprocess.run(
-                [sys.executable, str(lock_generator), "--project", str(repo_root)],
-                capture_output=True,
-                text=True,
-            )
-            if res.returncode == 0:
-                print(f"  {res.stdout.strip()}")
-            else:
-                print(f"  ⚠️ Warning: {res.stderr.strip()}")
-    else:
-        print("  ℹ️ No .agents/skills/ directory found to lock.")
-    return True
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description="Comprehensive KMP Project Doctor & Self-Healer")
     parser.add_argument("--project", default=".", help="Path to project root (default: current directory)")
@@ -158,9 +136,6 @@ def main() -> int:
 
     # 4. Hooks
     heal_git_hooks(project_root, args.dry_run)
-
-    # 5. Lockfile
-    heal_lockfile(project_root, args.dry_run)
 
     print(f"\n🎉 Project Doctor Complete for {project_root.name}!\n")
     return 0

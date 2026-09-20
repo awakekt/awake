@@ -51,7 +51,7 @@ is not the same as absent.
 |---|---|
 | Hardware | `awake:backend:vulkan`, `awake:backend:webgpu` |
 | Engine-provided optional content (skybox, shadow) | `awake:asset:shaders` for the declaration, `awake:engine:render:passes` for shared recording |
-| Game-authored content | `samples/<game>/` -- see `skills/awake-framework-boundary/SKILL.md` |
+| Game-authored content | `samples/<game>/` -- see the public [`awake-framework-boundary`](https://github.com/awakekt/awake-agent-skills/tree/main/skills/awake-framework-boundary) skill |
 
 No new module is needed; all three already exist with the right dependency edges.
 
@@ -127,4 +127,3 @@ scene vocabulary with its target home — is in
 [render-hardware-interface.md § HAL vs Render Graph](render-hardware-interface.md#hal-vs-render-graph--the-complete-vocabulary-boundary).
 Do not add new scene types, scene constants, or scene parameters to `render:contract` before
 reading that section and applying the third-backend test.
-

@@ -109,7 +109,7 @@ Compose capabilities only when a real screen is blocked.
 `ui-core` measures a container by **re-executing its own content lambda** as a throwaway trial pass.
 On `samples:ui-showcase`'s Checkout Form that is 7,696 trial passes and ~44.7 ms per frame, and it
 multiplies with nesting (`TrialMeasureScalingTest`: 3^depth → 2^depth). Every mitigation so far is a
-constant factor inside the same model — see `skills/awake-ui-performance/SKILL.md`, which says so
+constant factor inside the same model — see the public [`awake-ui-performance`](https://github.com/awakekt/awake-agent-skills/tree/main/skills/awake-ui-performance) skill, which says so
 outright, and `docs/tasks/archive/2026-08-02-trial-measure-double-execution.md`, which named the fix
 and deferred it.
 

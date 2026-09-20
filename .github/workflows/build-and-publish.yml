@@ -120,8 +120,11 @@ jobs:
       - name: Verify documented Maven coordinates
         run: python3 tools/verify_doc_coordinates.py
 
-      - name: Verify agent skills and catalog sync
-        run: python3 tools/verify_agent_skills_sync.py
+      - name: Verify product documentation
+        run: python3 tools/verify_project_docs.py
+
+      - name: Verify no product tooling depends on agent bundles
+        run: python3 tools/verify_no_agent_runtime_dependencies.py
 
   # Builds awake-template against these artifacts, the way someone who clicked "Use this template"
   # would. Every bug this has caught -- a package namespace the template never followed, two

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """rename_shadcn_components.py — lowercase `shadcn*` entry points to PascalCase.
 
-The rule this serves, from `.agents/skills/awake-ui-authoring/SKILL.md`:
+The rule this serves is documented by the installed `awake-ui-authoring` skill:
 
     A public `context(Composer)` `Unit` visual component is a PascalCase noun
     (`ShadcnButton`), not a lowercase helper. Keep an old lowercase `shadcn*`

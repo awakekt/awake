@@ -6,10 +6,8 @@
 """Every tool script derives the repo root by climbing from `__file__`. Moving one breaks that.
 
 That is not hypothetical: `compare_component_crops.py`, `generate_ui_status.py` and
-`generate_ui_parity_report.py` moved from `tools/` into `.agents/skills/awake-ui-verification/scripts/`
-and kept `parent.parent`, which had been correct one directory up. Two then resolved paths against
-`skills/awake-ui-verification/` and one crashed outright -- and nothing noticed, because no test ran
-them.
+`generate_ui_parity_report.py` moved into `tools/shadcn/` and kept a deeper root calculation.
+They then resolved paths outside the checkout and nothing noticed because no test ran them.
 
 Checking the climb count against the file's real depth catches the whole class without executing
 anything: a script at depth N must climb exactly N levels.
@@ -33,10 +31,7 @@ ROOT_EXPR = re.compile(r"Path\(__file__\)\.resolve\(\)(\.parents\[(\d+)\]|(?:\.p
 # could not see it, which is why the gate passed while a moved script was broken.
 SHELL_ROOT_EXPR = re.compile(r"""cd\s+"\$\(dirname\s+"\$0"\)((?:/\.\.)+)"?""")
 
-# ".agents/skills", not "skills": skills moved there and this tuple kept the old root, so the
-# shell branch below silently dropped from 3 matches to 2 and the walk stopped seeing every
-# script the docstring above says it covers.
-SEARCH_DIRS = ("tools", ".agents/skills", "scripts")
+SEARCH_DIRS = ("tools", "scripts")
 
 
 def scripts_declaring_a_root() -> list[tuple[Path, int, int]]:
@@ -47,11 +42,6 @@ def scripts_declaring_a_root() -> list[tuple[Path, int, int]]:
             [*(REPO_ROOT / directory).rglob("*.py"), *(REPO_ROOT / directory).rglob("*.sh")],
         ):
             if any(part in {"node_modules", ".venv", ".pytest_cache"} for part in path.parts):
-                continue
-            # kmp-* under .agents/skills is an ignored deployment of the external skill bundle.
-            # Its source owns its own root-depth contract; Awake owns the tracked awake-* skills
-            # and the repository tools below.
-            if directory == ".agents/skills" and any(part.startswith("kmp-") for part in path.parts):
                 continue
             text = path.read_text()
             if path.suffix == ".sh":

@@ -34,7 +34,7 @@ import com.awakekt.awake.core.math2d.dp
  * Caps are `b`/`r`/`s` (butt, round, square) and joins `m`/`r`/`b` (miter, round, bevel), so a
  * 1.5-wide round-capped round-joined outline is `s1.5rr:`.
  *
- * Emitted by `.agents/skills/awake-ui-icons/scripts/svg_to_ui_image_vector.py --packed`; the
+ * Emitted by `tools/icons/svg_to_ui_image_vector.py --packed`; the
  * builder form it replaces is still the readable one, and both must produce an equal [ImageVector]
  * (`PackedImageVectorParityTest`).
  */
