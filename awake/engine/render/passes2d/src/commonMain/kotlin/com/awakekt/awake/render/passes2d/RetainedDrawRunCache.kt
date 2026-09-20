@@ -31,7 +31,18 @@ class RetainedDrawRunCache(
         val pathClips: List<DrawPath>,
         val safeInteriorRect: Rectangle?,
         val runs: List<StagedDrawRun>,
-    )
+    ) {
+        fun matches(
+            hash: Int,
+            maxQuadsPerRun: Int,
+            primitives: List<DrawCommand>,
+            pathClips: List<DrawPath>,
+            safeInteriorRect: Rectangle?,
+        ): Boolean =
+            (this.hash == hash && this.maxQuadsPerRun == maxQuadsPerRun) &&
+                this.primitives.retainedEquals(primitives) &&
+                (this.pathClips == pathClips && this.safeInteriorRect == safeInteriorRect)
+    }
 
     private val entries = ArrayList<Entry>(capacity)
 
@@ -46,13 +57,7 @@ class RetainedDrawRunCache(
         var index = entries.lastIndex
         while (index >= 0) {
             val entry = entries[index]
-            if (
-                entry.hash == hash &&
-                entry.maxQuadsPerRun == maxQuadsPerRun &&
-                entry.primitives.retainedEquals(primitives) &&
-                entry.pathClips == pathClips &&
-                entry.safeInteriorRect == safeInteriorRect
-            ) {
+            if (entry.matches(hash, maxQuadsPerRun, primitives, pathClips, safeInteriorRect)) {
                 entries.removeAt(index)
                 entries.add(entry)
                 return entry.runs
@@ -75,11 +80,7 @@ class RetainedDrawRunCache(
         val clipSnapshot = pathClips.map { it.copy(commands = it.commands.toList()) }
         val hash = retainedHash(snapshot, clipSnapshot, safeInteriorRect)
         entries.removeAll {
-            it.hash == hash &&
-                it.maxQuadsPerRun == maxQuadsPerRun &&
-                it.primitives.retainedEquals(snapshot) &&
-                it.pathClips == clipSnapshot &&
-                it.safeInteriorRect == safeInteriorRect
+            it.matches(hash, maxQuadsPerRun, snapshot, clipSnapshot, safeInteriorRect)
         }
         entries.add(
             Entry(
@@ -135,45 +136,54 @@ private fun List<DrawCommand>.retainedHashCode(): Int = fold(1) { result, primit
 }
 
 private fun DrawCommand.retainedHashCode(): Int {
-    if (this !is DrawCommand.Mesh) return hashCode()
-    val key = retainedGeometryKey ?: return hashCode()
-    var result = key.hashCode()
-    result = 31 * result + mesh.vertices.size
-    result = 31 * result + mesh.indices.size
-    result = 31 * result + offsetX.hashCode()
-    result = 31 * result + offsetY.hashCode()
-    result = 31 * result + scaleX.hashCode()
-    result = 31 * result + scaleY.hashCode()
-    result = 31 * result + alpha.hashCode()
-    result = 31 * result + (tokenId?.hashCode() ?: 0)
-    result = 31 * result + rotationDegrees.hashCode()
-    result = 31 * result + pivotX.hashCode()
-    return 31 * result + pivotY.hashCode()
+    val meshCommand = this as? DrawCommand.Mesh
+    val key = meshCommand?.retainedGeometryKey
+    return if (meshCommand == null || key == null) {
+        hashCode()
+    } else {
+        var result = key.hashCode()
+        result = 31 * result + meshCommand.mesh.vertices.size
+        result = 31 * result + meshCommand.mesh.indices.size
+        result = 31 * result + meshCommand.offsetX.hashCode()
+        result = 31 * result + meshCommand.offsetY.hashCode()
+        result = 31 * result + meshCommand.scaleX.hashCode()
+        result = 31 * result + meshCommand.scaleY.hashCode()
+        result = 31 * result + meshCommand.alpha.hashCode()
+        result = 31 * result + (meshCommand.tokenId?.hashCode() ?: 0)
+        result = 31 * result + meshCommand.rotationDegrees.hashCode()
+        result = 31 * result + meshCommand.pivotX.hashCode()
+        31 * result + meshCommand.pivotY.hashCode()
+    }
 }
 
-private fun List<DrawCommand>.retainedEquals(other: List<DrawCommand>): Boolean {
-    if (size != other.size) return false
-    for (index in indices) {
-        if (!get(index).retainedEquals(other[index])) return false
-    }
-    return true
-}
+private fun List<DrawCommand>.retainedEquals(other: List<DrawCommand>): Boolean =
+    size == other.size && indices.all { get(it).retainedEquals(other[it]) }
 
-private fun DrawCommand.retainedEquals(other: DrawCommand): Boolean {
-    if (this === other) return true
-    if (this is DrawCommand.Mesh && other is DrawCommand.Mesh) {
-        val key = retainedGeometryKey
-        if (key != null && key === other.retainedGeometryKey && mesh === other.mesh) {
-            return offsetX == other.offsetX &&
-                offsetY == other.offsetY &&
-                scaleX == other.scaleX &&
-                scaleY == other.scaleY &&
-                alpha == other.alpha &&
-                tokenId == other.tokenId &&
-                rotationDegrees == other.rotationDegrees &&
-                pivotX == other.pivotX &&
-                pivotY == other.pivotY
-        }
+private fun DrawCommand.retainedEquals(other: DrawCommand): Boolean =
+    when {
+        this === other -> true
+        this is DrawCommand.Mesh && other is DrawCommand.Mesh && hasSameRetainedGeometry(other) ->
+            hasSamePlacement(other)
+        else -> this == other
     }
-    return this == other
-}
+
+private fun DrawCommand.Mesh.hasSameRetainedGeometry(other: DrawCommand.Mesh): Boolean =
+    retainedGeometryKey != null &&
+        retainedGeometryKey === other.retainedGeometryKey &&
+        mesh === other.mesh
+
+private fun DrawCommand.Mesh.hasSamePlacement(other: DrawCommand.Mesh): Boolean =
+    hasSamePosition(other) && hasSameScale(other) && hasSameAppearance(other)
+
+private fun DrawCommand.Mesh.hasSamePosition(other: DrawCommand.Mesh): Boolean =
+    offsetX == other.offsetX && offsetY == other.offsetY
+
+private fun DrawCommand.Mesh.hasSameScale(other: DrawCommand.Mesh): Boolean =
+    scaleX == other.scaleX && scaleY == other.scaleY
+
+private fun DrawCommand.Mesh.hasSameAppearance(other: DrawCommand.Mesh): Boolean =
+    alpha == other.alpha &&
+        tokenId == other.tokenId &&
+        rotationDegrees == other.rotationDegrees &&
+        pivotX == other.pivotX &&
+        pivotY == other.pivotY

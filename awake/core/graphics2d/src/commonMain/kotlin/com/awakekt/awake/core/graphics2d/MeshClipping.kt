@@ -212,9 +212,10 @@ private fun clipColoredPolygonToConvexContour(
     clip: List<DrawPoint>,
     orientation: Float,
 ): List<ColoredVertex> {
-    if (subject.isEmpty()) return emptyList()
+    if (subject.isEmpty() || orientation == 0f) {
+        return if (orientation == 0f) subject else emptyList()
+    }
     var output = subject
-    if (orientation == 0f) return subject
     val isCounterClockwise = orientation > 0f
 
     for (i in clip.indices) {
