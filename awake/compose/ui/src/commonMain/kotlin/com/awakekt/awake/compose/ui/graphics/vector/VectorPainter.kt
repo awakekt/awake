@@ -8,6 +8,7 @@ package com.awakekt.awake.compose.ui.graphics.vector
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
+import com.awakekt.awake.compose.ui.graphics.drawscope.drawRetainedMesh
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.merge
@@ -33,6 +34,7 @@ class VectorPainter internal constructor(private val image: ImageVector) {
     private var slot: Rectangle? = null
     private var tint: Color? = null
     private var mesh: ColoredTriangleMesh? = null
+    private var retainedGeometryKey: Any = Any()
 
     /**
      * Draws [image] into [slot], tessellating only when the slot or [tint] has moved.
@@ -41,7 +43,8 @@ class VectorPainter internal constructor(private val image: ImageVector) {
      * other path takes this.
      */
     fun draw(scope: DrawScope, slot: Rectangle, tint: Color) {
-        scope.drawMesh(meshFor(slot, tint))
+        val mesh = meshFor(slot, tint)
+        scope.drawRetainedMesh(mesh, retainedGeometryKey)
     }
 
     private fun meshFor(slot: Rectangle, tint: Color): ColoredTriangleMesh {
@@ -63,6 +66,7 @@ class VectorPainter internal constructor(private val image: ImageVector) {
         this.slot = slot
         this.tint = tint
         mesh = built
+        retainedGeometryKey = Any()
         return built
     }
 }

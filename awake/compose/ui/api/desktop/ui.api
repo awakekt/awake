@@ -455,6 +455,10 @@ public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScope$Def
 	public static fun getLayoutDirection (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;)Lcom/awakekt/awake/compose/ui/unit/LayoutDirection;
 }
 
+public final class com/awakekt/awake/compose/ui/graphics/drawscope/DrawScopeKt {
+	public static final fun drawRetainedMesh (Lcom/awakekt/awake/compose/ui/graphics/drawscope/DrawScope;Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;Ljava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/compose/ui/graphics/drawscope/GraphicsLayerFrame {
 	public fun <init> (IFFIIFFFIIFLjava/util/List;)V
 	public synthetic fun <init> (IFFIIFFFIIFLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

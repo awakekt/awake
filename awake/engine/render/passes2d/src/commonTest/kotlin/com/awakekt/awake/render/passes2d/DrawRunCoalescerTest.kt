@@ -6,7 +6,10 @@
 package com.awakekt.awake.render.passes2d
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
+import com.awakekt.awake.core.graphics2d.ColoredVertex
 import com.awakekt.awake.core.graphics2d.DrawCommand
+import com.awakekt.awake.core.graphics2d.DrawPoint
 import com.awakekt.awake.core.graphics2d.DrawStroke
 import com.awakekt.awake.core.graphics2d.UiLinearGradient
 import com.awakekt.awake.core.graphics2d.drawPath
@@ -17,6 +20,47 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class DrawRunCoalescerTest {
+
+    @Test
+    fun aMeshInsideASafeInteriorSkipsPathClipping() {
+        val mesh = ColoredTriangleMesh(
+            vertices = listOf(
+                ColoredVertex(DrawPoint(0f, 0f), Color(1f, 1f, 1f, 1f)),
+                ColoredVertex(DrawPoint(10f, 0f), Color(1f, 1f, 1f, 1f)),
+                ColoredVertex(DrawPoint(10f, 10f), Color(1f, 1f, 1f, 1f)),
+                ColoredVertex(DrawPoint(0f, 10f), Color(1f, 1f, 1f, 1f)),
+            ),
+            indices = intArrayOf(0, 1, 2, 2, 3, 0),
+        )
+        val clip = drawPath {
+            moveTo(-100f, -100f)
+            lineTo(100f, -100f)
+            lineTo(100f, 100f)
+            lineTo(-100f, 100f)
+            close()
+        }
+        val safeInterior = Rectangle(-50f, -50f, 100f, 100f)
+        val bounds = Rectangle(-100f, -100f, 200f, 200f)
+
+        val withSafeInterior = DrawRunCoalescer.coalesce(
+            listOf(
+                DrawCommand.ClipPathPush(clip, bounds, safeInterior),
+                DrawCommand.Mesh(mesh),
+                DrawCommand.ClipPop(bounds),
+            ),
+        ).filterIsInstance<StagedDrawRun.QuadRun>().single()
+        val withoutSafeInterior = DrawRunCoalescer.coalesce(
+            listOf(
+                DrawCommand.ClipPathPush(clip, bounds),
+                DrawCommand.Mesh(mesh),
+                DrawCommand.ClipPop(bounds),
+            ),
+        ).filterIsInstance<StagedDrawRun.QuadRun>().single()
+
+        // Safe-interior placement preserves four vertices; exact clipping triangulates the
+        // clipped quad into six. Each staged vertex has the same stride in both runs.
+        assertEquals(withoutSafeInterior.vertices.size * 2 / 3, withSafeInterior.vertices.size)
+    }
 
     @Test
     fun testCoalesceSimpleQuads() {
@@ -196,6 +240,37 @@ class DrawRunCoalescerTest {
     }
 
     @Test
+    fun retainedMeshKeySkipsGeometryComparisonAndInvalidatesWhenReplaced() {
+        val cache = RetainedDrawRunCache()
+        val mesh = ColoredTriangleMesh(
+            vertices = listOf(
+                ColoredVertex(DrawPoint(0f, 0f), Color(1f, 1f, 1f, 1f)),
+                ColoredVertex(DrawPoint(10f, 0f), Color(1f, 1f, 1f, 1f)),
+                ColoredVertex(DrawPoint(10f, 10f), Color(1f, 1f, 1f, 1f)),
+            ),
+            indices = intArrayOf(0, 1, 2),
+        )
+        val key = Any()
+        fun command(geometry: ColoredTriangleMesh, geometryKey: Any) =
+            DrawCommand.Mesh(geometry).also { it.retainedGeometryKey = geometryKey }
+
+        val firstRuns = DrawRunCoalescer.coalesce(listOf(command(mesh, key)), retained = cache)
+        val unchangedRuns = DrawRunCoalescer.coalesce(listOf(command(mesh, key)), retained = cache)
+        assertTrue(firstRuns.single() === unchangedRuns.single())
+
+        val changedMesh = mesh.copy(
+            vertices = mesh.vertices.mapIndexed { index, vertex ->
+                if (index == 0) vertex.copy(position = DrawPoint(-1f, 0f)) else vertex
+            },
+        )
+        val changedRuns = DrawRunCoalescer.coalesce(
+            listOf(command(changedMesh, Any())),
+            retained = cache,
+        )
+        assertTrue(firstRuns.single() !== changedRuns.single())
+    }
+
+    @Test
     fun retainedCacheMissesWhenGeometryChanges() {
         val cache = RetainedDrawRunCache()
         val firstRuns = DrawRunCoalescer.coalesce(
@@ -213,7 +288,7 @@ class DrawRunCoalescerTest {
     }
 
     @Test
-    fun retainedCacheReusesGeometryInsideRectClipButNotPathClip() {
+    fun retainedCacheReusesGeometryInsideRectAndPathClips() {
         val cache = RetainedDrawRunCache()
         val rectClipped = listOf(
             DrawCommand.ClipPush(Rectangle(0f, 0f, 100f, 100f)),
@@ -238,7 +313,27 @@ class DrawRunCoalescerTest {
         )
         val firstPathRuns = DrawRunCoalescer.coalesce(pathClipped, retained = cache)
         val secondPathRuns = DrawRunCoalescer.coalesce(pathClipped, retained = cache)
-        assertTrue(firstPathRuns[1] !== secondPathRuns[1])
+        assertTrue(firstPathRuns[1] === secondPathRuns[1])
+
+        val smallerPath = drawPath {
+            moveTo(0f, 0f)
+            lineTo(15f, 0f)
+            lineTo(15f, 100f)
+            lineTo(0f, 100f)
+            close()
+        }
+        val changedPathRuns = DrawRunCoalescer.coalesce(
+            listOf(
+                DrawCommand.ClipPathPush(smallerPath, Rectangle(0f, 0f, 100f, 100f)),
+                DrawCommand.Quad(10f, 10f, 20f, 20f, Color(1f, 1f, 1f, 1f)),
+                DrawCommand.ClipPop(Rectangle(0f, 0f, 200f, 200f)),
+            ),
+            retained = cache,
+        )
+        assertTrue(firstPathRuns[1] !== changedPathRuns[1])
+        val firstGeometry = (firstPathRuns[1] as StagedDrawRun.QuadRun).vertices
+        val changedGeometry = (changedPathRuns[1] as StagedDrawRun.QuadRun).vertices
+        assertTrue(!firstGeometry.contentEquals(changedGeometry))
     }
 
     /**

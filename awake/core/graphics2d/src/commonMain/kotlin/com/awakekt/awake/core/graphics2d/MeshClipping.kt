@@ -113,6 +113,7 @@ private fun TexturedTriangleMesh.clipToConvexContour(clipContour: List<DrawPoint
 private fun ColoredTriangleMesh.clipToConvexContour(clipContour: List<DrawPoint>): ColoredTriangleMesh {
     if (vertices.isEmpty() || indices.isEmpty()) return this
 
+    val clipOrientation = polygonSignedArea(clipContour)
     val clippedVertices = ArrayList<ColoredVertex>()
     val clippedIndices = ArrayList<Int>()
     var index = 0
@@ -122,7 +123,7 @@ private fun ColoredTriangleMesh.clipToConvexContour(clipContour: List<DrawPoint>
             vertices[indices[index + 1]],
             vertices[indices[index + 2]],
         )
-        val clippedPolygon = clipColoredPolygonToConvexContour(triangle, clipContour)
+        val clippedPolygon = clipColoredPolygonToConvexContour(triangle, clipContour, clipOrientation)
         if (clippedPolygon.size >= 3) {
             val base = clippedVertices.size
             clippedVertices += clippedPolygon
@@ -206,11 +207,15 @@ private fun clipTexturedPolygonToConvexContour(subject: List<TexturedVertex>, cl
     return output
 }
 
-private fun clipColoredPolygonToConvexContour(subject: List<ColoredVertex>, clip: List<DrawPoint>): List<ColoredVertex> {
-    if (subject.isEmpty()) return emptyList()
+private fun clipColoredPolygonToConvexContour(
+    subject: List<ColoredVertex>,
+    clip: List<DrawPoint>,
+    orientation: Float,
+): List<ColoredVertex> {
+    if (subject.isEmpty() || orientation == 0f) {
+        return if (orientation == 0f) subject else emptyList()
+    }
     var output = subject
-    val orientation = polygonSignedArea(clip)
-    if (orientation == 0f) return subject
     val isCounterClockwise = orientation > 0f
 
     for (i in clip.indices) {
