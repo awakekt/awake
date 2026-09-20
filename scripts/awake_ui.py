@@ -285,7 +285,7 @@ def validate_cases(cases: Iterable[dict], spec: ComponentSpec, theme: str, stric
             )
         command = [
             sys.executable,
-            ".agents/skills/awake-ui-verification/scripts/compare_component_crops.py",
+            "tools/shadcn/compare_component_crops.py",
             "--awake-png", case["awakePng"],
             "--semantic-json", case["semanticJson"],
             "--reference-png", case["referencePng"],
@@ -315,7 +315,7 @@ def validate_component(args: argparse.Namespace) -> int:
 def report_parity(args: argparse.Namespace) -> int:
     command = [
         sys.executable,
-        ".agents/skills/awake-ui-verification/scripts/generate_ui_parity_report.py",
+        "tools/shadcn/generate_ui_parity_report.py",
         "--manifest",
         str(PARITY_CASES),
     ]
@@ -542,19 +542,21 @@ GATES: list[tuple[str, list[str], str]] = [
         "tool-tests",
         [
             sys.executable, "-m", "pytest", "-q",
-            # ".agents/skills", not "skills": there is no skills/ at the repo root, and pytest
-            # exits on the bad argument before collecting anything -- so this gate reported
-            # FAILED on every run while never executing a single test.
-            "tools", ".agents/skills",
+            "tools",
             # The vendored MoltenVK/SPIRV trees carry their own test_*.py that are not ours.
             "--ignore=awake",
         ],
         "unit tests for the tools themselves",
     ),
     (
-        "agent-skills-sync",
-        ["python3", "tools/verify_agent_skills_sync.py"],
-        "vendored skills match their source",
+        "agent-runtime-boundary",
+        ["python3", "tools/verify_no_agent_runtime_dependencies.py"],
+        "build and developer tooling do not require installed agent bundles",
+    ),
+    (
+        "agent-skills-lock",
+        ["python3", "tools/verify_agent_skills_lock.py"],
+        "declared agent sources are pinned and public Awake does not consume Studio skills",
     ),
     (
         "detekt-baselines",
@@ -562,9 +564,9 @@ GATES: list[tuple[str, list[str], str]] = [
         "no baseline suppresses a file that no longer exists",
     ),
     (
-        "skill-spec",
-        ["python3", "tools/verify_skill_spec.py"],
-        "every SKILL.md is valid per the Agent Skills specification",
+        "project-docs",
+        ["python3", "tools/verify_project_docs.py"],
+        "required Awake module and performance documentation is present",
     ),
 ]
 

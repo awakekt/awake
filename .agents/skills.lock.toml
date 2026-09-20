@@ -1,0 +1,75 @@
+# Immutable agent-skill sources for this checkout. Deploy with the public Core installer;
+# none of these files are required to build, test, or release Awake itself.
+version = 1
+
+[[source]]
+id = "awake-core"
+kind = "maintained-core"
+source = "https://github.com/awakekt/awake-agent-skills.git"
+tag = "v0.1.6"
+commit = "460781299c086895a4cbd8f371a05620a5a42c90"
+archive_sha256 = "b1fac43c177ccc651cd66b0386f7c275a957a6767d4079261dc2b27e8330b87a"
+license = "Apache-2.0"
+skill_root = "skills"
+skills_target = ".agents/skills"
+skills = [
+  "awake", "awake-app-composition", "awake-capability-extraction", "awake-codec-and-asset-source",
+  "awake-compose-authoring", "awake-copyright-provenance", "awake-core-editor", "awake-core-math",
+  "awake-conformance-contract-testing", "awake-ecs-authoring", "awake-ecs-scene-runtime",
+  "awake-fbx-asset-cooking", "awake-framework-boundary",
+  "awake-milestone-workflow", "awake-physics-jolt", "awake-platform-capability-design",
+  "awake-render-headless-verification",
+  "awake-render-pipeline", "awake-render-vulkan", "awake-render-webgpu", "awake-shadcn-parity-workflow",
+  "awake-shadcn-recipe-authoring", "awake-shadcn-recipe-consuming", "awake-shadcn-to-compose",
+  "awake-state-management", "awake-tailwind-to-compose", "awake-terrain-authoring", "awake-ui-authoring",
+  "awake-ui-css-modifier", "awake-ui-design-audit", "awake-ui-icons", "awake-ui-layout-guidance",
+  "awake-ui-performance", "awake-ui-verification", "awake-web-to-compose",
+]
+command_root = "skills/awake/commands"
+commands_target = ".agents/commands"
+commands = ["compare-ui-component-crops.md", "review-ui-snapshots.md", "verify-ui-parity.md"]
+
+[[source]]
+id = "kmp-agent-skills"
+kind = "vendor"
+source = "https://github.com/ronjunevaldoz/kmp-agent-skills.git"
+tag = "v3.0.13"
+commit = "9257b2f56c2d79df6779fd352c3f0f621f9fbc24"
+archive_sha256 = "fcdf0f843c37da59dc5187e9ef62c238253819f9b25b63d5da401d315b2e02e3"
+license = "Apache-2.0"
+skill_root = "skills"
+skills_target = ".agents/skills"
+skills = [
+  "kmp-analytics", "kmp-android-cli", "kmp-api-mimicry", "kmp-audit",
+  "kmp-benchmark", "kmp-biometric-auth", "kmp-ci-github-actions", "kmp-clean-architecture",
+  "kmp-code-quality", "kmp-compose-accessibility", "kmp-compose-adaptive-layout", "kmp-compose-animation",
+  "kmp-compose-design-system", "kmp-compose-design-system-extended", "kmp-compose-graphics-modifiers", "kmp-compose-preview-driven-development",
+  "kmp-compose-slot-api", "kmp-compose-state-container", "kmp-compose-state-hoisting", "kmp-compose-web-performance",
+  "kmp-coroutines-flow-patterns", "kmp-crash-reporting", "kmp-datastore", "kmp-deep-linking",
+  "kmp-delivery-lifecycle", "kmp-dependency-injection", "kmp-desktop-app", "kmp-docs-site",
+  "kmp-expect-actual", "kmp-expert", "kmp-feature-flags", "kmp-feature-scaffold",
+  "kmp-flavor-environment", "kmp-form-validation", "kmp-github-issue-governance", "kmp-image-loading",
+  "kmp-imagevector-generator", "kmp-in-app-purchases", "kmp-jni-pro", "kmp-kotlin-rpc",
+  "kmp-kotlinpoet", "kmp-ktor-auth-service", "kmp-layout-system", "kmp-legal-docs",
+  "kmp-lessons", "kmp-library-publishing", "kmp-logging", "kmp-mcp-sdk",
+  "kmp-migration", "kmp-mongodb-database", "kmp-mvi", "kmp-native-authoring",
+  "kmp-navigation", "kmp-network-layer", "kmp-offline-first", "kmp-openrewrite",
+  "kmp-paging", "kmp-permissions", "kmp-presenter-module", "kmp-proguard-r8",
+  "kmp-project-docs-maintainer", "kmp-push-notifications", "kmp-refactor", "kmp-release",
+  "kmp-repository-pattern", "kmp-resilience", "kmp-roborazzi", "kmp-security",
+  "kmp-shadcn-compose", "kmp-shadcn-compose-layouts", "kmp-shared-resources", "kmp-skill-harvester",
+  "kmp-sqldelight-setup", "kmp-token-saver", "kmp-unit-testing", "kmp-workmanager",
+  "kmp-xcframework-spm",
+]
+command_root = "commands"
+commands_target = ".agents/commands"
+commands = [
+  "kmp-audit-adaptive.md", "kmp-audit-design-visual.md", "kmp-audit-screenshots.md", "kmp-check-updates.md",
+  "kmp-clean-comments.md", "kmp-doctor.md", "kmp-execute-ticket.md", "kmp-fix-design.md",
+  "kmp-generate-palette.md", "kmp-harvest-lessons.md", "kmp-heal-docs.md", "kmp-implement-feature.md",
+  "kmp-maintain-docs.md", "kmp-migrate-to-shadcn.md", "kmp-modify-skill.md", "kmp-new-project.md",
+  "kmp-new-skill.md", "kmp-new-task.md", "kmp-record-design-baselines.md", "kmp-refine-skill.md",
+  "kmp-release-notes.md", "kmp-report-skill-issue.md", "kmp-review-changes.md", "kmp-run-audit.md",
+  "kmp-setup-agents.md", "kmp-setup-hooks.md", "kmp-submit-issue.md", "kmp-summarize-issues.md",
+  "kmp-sync-local-skills.md", "kmp-update-design-system.md", "kmp-update-skills.md", "kmp-vectorize.md", "kmp-verify.md",
+]

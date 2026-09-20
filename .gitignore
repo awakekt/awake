@@ -7,16 +7,13 @@ __pycache__/
 local.properties
 /.idea
 .claude/
-# `skills add` mirrors the kmp-* skills as symlinks — committing those would only ship broken
-# links. Ignore the vendored ones by name, wherever they land: they are reproducible from
-# skills-lock.json, so losing them costs a re-sync.
-#
-# The awake-* skills under .agents/skills/ are NOT vendored (skills-lock.json has 70 entries and
-# none are awake-*) and are tracked. A blanket `.agents/skills/` ignore used to cover them, which
-# left 26 first-party skill directories -- the ones CLAUDE.md cites as this project's
-# architectural rules -- existing in no commit and recoverable from nothing.
-skills/kmp-*
-.agents/skills/kmp-*
+# Agent bundles are reproducible deployments, never Awake source. The only tracked file beneath
+# .agents is the immutable source declaration consumed by awake-agent-skills.
+.agents/vendor/
+.agents/skills/
+.agents/commands/
+!.agents/
+!.agents/skills.lock.toml
 .artifacts/
 .codex/
 .DS_Store

@@ -41,7 +41,7 @@ Awake keeps project guidance in three layers:
 
 1. `docs/*` for canonical project truth
 2. agent entrypoints for startup hints
-3. `skills/awake/*` for repo-local execution guidance
+3. the pinned `awake-agent-skills` release for execution guidance
 
 Use them like this:
 
@@ -57,26 +57,26 @@ Use them like this:
     - canonical UI correctness gate for previews, semantic checks, truncation/content-fit rules,
       and animation/state proof requirements
 - `docs/reference/ai-collaboration.md`
-    - the cross-agent contract for `docs/*`, entrypoints, and `skills/*`
+    - the cross-agent contract for product docs/tooling and independently pinned skill bundles
 - `docs/reference/agent-catalog.md`
-    - the canonical roster, naming convention, and responsibility map for repo-local agents
+    - the boundary and link to the public technical catalog; Studio roles are private overlays
 - `docs/reference/agent-starter-pack.md`
     - the reusable downstream starter shape for multi-agent repo setup
 - `docs/reference/agent-routing.md`
-    - real Awake examples for choosing the right repo-local agent
+    - public technical routing and the boundary to Studio-only work
 - `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/AGENTS.md`
     - thin startup files that point assistants at the canonical docs
-- `skills/awake/agents/*.md`
-    - task-specific working guidance for ECS, engine, and other Awake domains
-- `skills/awake/commands/*.md`
-    - repo-local operational commands and review workflows
-- `skills/awake/templates/*.md`
-    - reusable templates for new repo-local agent docs
+- installed `awake-agent-skills` agent personas
+    - immutable, task-specific guidance deployed from the reviewed public lock pin
+- installed `awake-agent-skills` commands
+    - immutable operational commands deployed from the reviewed public lock pin
+- installed `awake-agent-skills` templates
+    - reusable templates maintained by the public skills repository
 
 Rule of thumb:
 
 - if the guidance answers "how is Awake designed?", put it in `docs/*`
-- if it answers "how should an agent work on Awake?", put it in `skills/*`
+- if it answers "how should an agent work on Awake?", put it in the owning skills repository
 
 ## What Belongs Where
 
@@ -142,7 +142,7 @@ same `--continuous` task graph with a tiny static file server that injects a rel
 poll into the served HTML:
 
 ```bash
-./skills/awake-ui-verification/scripts/ui_preview_watch.sh 8090
+./tools/shadcn/ui_preview_watch.sh 8090
 # open http://127.0.0.1:8090
 ```
 
@@ -166,7 +166,7 @@ more than one is run at once). `.claude/launch.json`'s `port` field must match t
 | 8086 | `apps/studio` dev                                                                   | `:app:studio:wasmJsBrowserDevelopmentRun`              |
 | 8087 | `apps/studio` prod preview                                                          | `:app:studio:wasmJsBrowserProductionRun`               |
 | 8088 | `samples/net-demo` dev (browser client; needs the desktop server on 9540)           | `:samples:net-demo:wasmJsBrowserDevelopmentRun`        |
-| 8090 | `skills/awake-ui-verification/scripts/ui_preview_watch.sh` / `ui_preview_server.py` | live-reload static file server                         |
+| 8090 | `tools/shadcn/ui_preview_watch.sh` / `ui_preview_server.py` | live-reload static file server                         |
 
 Convention: when adding a new dev-server tool (a new sample's wasmJs target, a new preview
 script, etc.), reserve the next free port in this range, wire it into the module's

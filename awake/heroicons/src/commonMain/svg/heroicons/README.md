@@ -14,6 +14,6 @@ bundle.
 | License | MIT, retained verbatim in `LICENSE` |
 
 Files are copied unmodified from the release's `optimized/` tree. Adding a glyph means copying its
-SVG out of **that same release** -- see `.agents/skills/awake-ui-icons/SKILL.md`. Taking one from
+SVG out of **that same release** -- regenerate it with `tools/icons/svg_to_ui_image_vector.py`. Taking one from
 `master` instead leaves the vendored set spanning two upstream versions with nothing recording it,
 which is the exact problem pinning a version was meant to end.

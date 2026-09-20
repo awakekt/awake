@@ -22,8 +22,7 @@ function* at a buffer boundary, not an arithmetic type.
 
 Generalizing math types across primitives is a standing temptation, and in Kotlin it is a
 trap: there are no numeric generics that stay unboxed. `Vec3<T : Number>` boxes, and per-frame
-boxing is precisely what the [awake-core-math](../../.agents/skills/awake-core-math/SKILL.md)
-skill forbids. So every variant is hand-written, permanent public API, carries its own
+boxing is precisely what the installed `awake-core-math` guidance forbids. So every variant is hand-written, permanent public API, carries its own
 operator set, tests, and binary-compatibility surface. The cost is real and paid forever;
 each type must earn it.
 

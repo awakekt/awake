@@ -6,7 +6,7 @@
 > | Question | Read |
 > |---|---|
 > | *Is anything wrong?* | `scripts/awake verify` — every gate, one run |
-> | *Which tool answers my question, and may I re-record this baseline?* | [`skills/awake-ui-verification`](../../skills/awake-ui-verification/SKILL.md) — judgment |
+> | *Which tool answers my question, and may I re-record this baseline?* | [`awake-ui-verification`](https://github.com/awakekt/awake-agent-skills/tree/main/skills/awake-ui-verification) — judgment |
 > | *What proof does this kind of UI change require?* | [`docs/reference/ui-validation.md`](ui-validation.md) — policy |
 > | *What commands do I run, in what order?* | [`docs/reference/ui-parity-tool.md`](ui-parity-tool.md) — procedure |
 > | *What is this script, and can it fail a build?* | [`tools/README.md`](../../tools/README.md) — catalogue |
@@ -166,4 +166,4 @@ Translate source classes, not screenshots.
 All authored values are `Dp`; convert to pixels only at the layout/render boundary. Crop
 `--padding` is comparison framing only—it must never conceal wrong component padding or spacing.
 Geometry is the primary dimension oracle; image diffs evaluate paint after geometry and content
-are aligned. See `skills/awake-ui-authoring/SKILL.md` for the full unit and ownership rules.
+are aligned. See the public [`awake-ui-authoring`](https://github.com/awakekt/awake-agent-skills/tree/main/skills/awake-ui-authoring) skill for the full unit and ownership rules.

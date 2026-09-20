@@ -1,135 +1,59 @@
 # AI Collaboration
 
-This document is the canonical source for how Awake organizes project guidance for agents.
+Awake keeps architecture and product tooling independently usable from agent tooling.
 
-## Purpose
+## Ownership
 
-Awake supports multiple assistants. To keep Claude, Codex, Gemini, and repo-local skills in
-sync, the repository uses a three-layer model:
-
-1. `docs/*` holds canonical project truth
-2. agent entrypoints stay thin and point to canonical docs
-3. `skills/*` provides repo-local execution guidance
-
-## Ownership Model
-
-| Surface | Role | What Belongs Here |
+| Surface | Source of truth | Purpose |
 |---|---|---|
-| `docs/architecture.md` and `docs/reference/*` | Canonical truth | Stable architecture, ownership rules, state categories, module boundaries, long-lived technical guidance |
-| `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.claude/AGENTS.md` | Entry points | Bootstrap config, read-this-first links, short critical guardrails |
-| `skills/awake/agents/*.md` | Repo-local role overlays | How an agent should approach ECS, engine, UI, or other Awake-specific work |
-| `skills/awake/commands/*.md` | Repo-local commands | Operational workflows such as reviews, audits, and validation helpers |
+| `docs/*` | This repository | Architecture, module boundaries, product workflows, and contributor rules |
+| `scripts/`, `tools/`, Gradle, CI, hooks | This repository | Reproducible product builds, generators, checks, and evidence |
+| [`awake-agent-skills`](https://github.com/awakekt/awake-agent-skills) | Public Core skills repository | Public `awake-*` guidance, technical personas, and agent workflow helpers |
+| Pinned third-party bundles | Their upstream repositories | Unmodified vendor `kmp-*` skills and commands |
+| `awake-studio-agent-skills` | Private Studio repository | `studio-*` scoring, commercial workflows, and creative/Studio personas |
 
-## Decision Rule
+`AGENTS.md`, `CLAUDE.md`, and `GEMINI.md` are short bootstrap entrypoints. They point to this
+documentation and, when needed, to the pinned agent bundle; they are not a second architecture
+manual.
 
-- If a rule answers "how is Awake designed?", put it in `docs/*`.
-- If a rule answers "how should an agent work on Awake?", put it in `skills/*`.
-- If a rule is needed only so an assistant boots correctly, keep it short in an entrypoint
-  file and point back to the canonical doc.
+## Installation and update policy
 
-## Entry Points
-
-Awake keeps multiple entrypoint files so different assistants can discover the same project:
-
-- [AGENTS.md](../../AGENTS.md)
-- [CLAUDE.md](../../CLAUDE.md)
-- [GEMINI.md](../../GEMINI.md)
-- [.claude/AGENTS.md](../../.claude/AGENTS.md)
-
-Those files should stay small. They should:
-
-- identify the canonical docs to read first
-- identify the canonical skill location
-- keep only a few critical guardrails that are worth duplicating at startup
-
-They should not become the long-form home for architecture policy.
-
-## Repo-Local Skills
-
-Awake's tracked skill files live under:
-
-- `skills/awake/agents/*.md`
-- `skills/awake/commands/*.md`
-- `skills/awake/templates/*.md`
-
-These are the canonical repo-local skill sources. The matching `.claude/agents` and
-`.claude/commands/awake` paths are symlinks into `skills/awake/`.
-
-Rules:
-
-- edit the tracked files under `skills/awake/`, not the symlinked `.claude/` paths
-- keep workflow instructions in skills, not canonical architecture policy
-- when a skill needs a project rule, link to the relevant `docs/*` page instead of copying
-  the whole policy into the skill
-
-See also:
-
-- [docs/reference/agent-starter-pack.md](agent-starter-pack.md)
-- [docs/reference/agent-routing.md](agent-routing.md)
-- [docs/reference/engineering-change-summaries.md](engineering-change-summaries.md)
-- [docs/reference/glossary/](glossary/) — plain-English vocabulary: [2D](glossary/2d.md), [3D](glossary/3d.md), [UI testing](glossary/ui-testing.md)
-
-## Duplication Policy
-
-Allowed duplication:
-
-- a one-line reminder in an entrypoint file
-- a one-line reminder in a skill doc that points to the canonical doc
-
-Avoid:
-
-- re-stating the same architecture rule in `AGENTS.md`, `.claude/AGENTS.md`, and multiple
-  repo-local skills
-- letting `skills/*` turn into parallel architecture docs
-
-## Quality Gate Policy
-
-Detekt is not optional for code pushes. The repository keeps a tracked
-[.githooks/pre-push](../../.githooks/pre-push) hook that runs
-`./gradlew detekt` before pushing Kotlin, Gradle, Detekt config, build-logic, or workflow
-changes.
-
-Local setup:
+The public Awake checkout tracks only `.agents/skills.lock.toml`, never deployed skill content.
+The lock records each source's kind, URL, tag, immutable commit, archive digest, license, exposed
+names, and deployment targets. Bootstrap with the public installer:
 
 ```bash
-git config core.hooksPath .githooks
+git clone https://github.com/awakekt/awake-agent-skills .agents/vendor/awake-agent-skills-bootstrap
+python3 .agents/vendor/awake-agent-skills-bootstrap/scripts/install_consumer.py --project .
 ```
 
-Rules:
+The installer verifies origin, revision, and archive digest, caches each source under
+`.agents/vendor/<source>@<sha>`, and deploys only lock-declared names into `.agents/skills` and
+`.agents/commands`. Those copies are immutable. Upgrade a bundle by reviewing a lockfile change;
+never patch an installed copy.
 
-- run Detekt before pushing code changes, even when a narrower test suite passed
-- do not treat existing Detekt debt as permission to add more debt
-- use `AWAKE_SKIP_DETEKT_HOOK=1` only for an explicit, reviewed emergency bypass
-- when Detekt is already red, either fix the touched-module findings or deliberately
-  re-baseline existing debt in a separate debt-tracking change before relying on the hook
-- keep broad legacy cleanup separate from feature/fix commits
-- the same push also runs `./gradlew desktopApiCheck`. When it fails, run `./gradlew desktopApiDump`
-  and **read the diff before committing it**: an added line is a re-dump, a removed one is a
-  breaking change that happens to make the gate green. `AWAKE_SKIP_API_HOOK=1` bypasses it, and is
-  separate from the Detekt flag on purpose
-- `desktopApiCheck`, not `apiCheck`: the aggregate pulls iOS cinterop into its graph and fails on a
-  machine without the MoltenVK and JoltC submodules built, having compared no API at all
+Public Awake never includes a `maintained-studio` source. A Studio checkout may add its own
+private lock entry using `studio-*` names, which may extend but never replace public `awake-*`
+guidance.
 
-## Model Selection Rule
+## Decision rule
 
-Repo-local agent files keep a `model:` frontmatter field containing the active provider model ID (e.g. `claude-opus-5`, `claude-sonnet-5`) so that runner tooling (Claude Code agent dispatch) can resolve an executable model.
+- Put product behavior, validation, and long-lived technical design in this repository.
+- Put how an agent should apply that design in the owning skills repository.
+- Put an executable product dependency in `scripts/` or `tools/`; it must run on a clean checkout
+  with no agent bundle installed.
+- Put installer, catalog, schema, or agent-workflow support in a skills repository. Gradle, Awake
+  CI, `scripts/awake`, hooks, and product tools must not invoke it.
 
-Rules:
+For product gates, use [`scripts/awake verify`](../../scripts/awake) and the documented `tools/`
+commands. Agent package validation and installer tests run in the repository that owns the bundle.
 
-- use the provider mapping in
-  [docs/reference/agent-catalog.md](agent-catalog.md) to choose the appropriate model ID for the agent's capability tier (`flagship-coding`, `balanced-coding`, or `fast-utility`)
-- update the mapping table in the catalog when a provider ships a new model generation
+## Read order
 
-## Read Order
+1. [Architecture](../architecture.md) and the relevant reference document.
+2. This collaboration boundary.
+3. The public [Core agent catalog](https://github.com/awakekt/awake-agent-skills/blob/main/docs/agent-catalog.md), if agent routing is useful.
+4. The matching installed public skill, if it is available.
 
-For most Awake work:
-
-1. [docs/architecture.md](../architecture.md)
-2. [docs/reference/ai-collaboration.md](ai-collaboration.md)
-3. [docs/reference/agent-catalog.md](agent-catalog.md)
-4. [docs/reference/ui-ownership.md](ui-ownership.md)
-5. [docs/reference/ui-validation.md](ui-validation.md)
-6. [docs/reference/game-structure.md](game-structure.md)
-7. [docs/mvp-plan.md](../mvp-plan.md)
-8. [docs/tasks.md](../tasks.md)
-9. the relevant `skills/awake/agents/*.md` file for the task
+Studio-only tasks require a Studio checkout and its private overlay; they are deliberately not
+available through this public repository.
