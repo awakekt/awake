@@ -129,6 +129,7 @@ class MaterialUniformsTest {
             ),
             cameraEye = Vec3f.ZERO,
             fog = floatArrayOf(0f, 0f, 0f, 0f),
+            cameraForward = Vec3f(0f, 0f, -1f),
         )
 
         val packed = litShadowUniforms(
@@ -143,6 +144,8 @@ class MaterialUniformsTest {
         assertEquals(6f, packed[offset + 1])
         assertEquals(0.8f, packed[offset + 2])
         assertEquals(3.5f, packed[offset + 3])
+        val forwardOffset = MaterialUniformLayouts.LitShadow.offsetOf(UniformFields.CameraForward)
+        assertContentEquals(floatArrayOf(0f, 0f, -1f, 1f), packed.copyOfRange(forwardOffset, forwardOffset + 4))
     }
 
     @Test
@@ -168,6 +171,7 @@ class MaterialUniformsTest {
             light = light,
             cameraEye = Vec3f(4f, 5f, 6f),
             fog = floatArrayOf(0.1f, 0.2f, 0.3f, 0.04f),
+            cameraForward = Vec3f(0f, -1f, 0f),
         )
         assertContentEquals(
             litShadowUniforms(draw, model, cascades, frame),
@@ -180,6 +184,7 @@ class MaterialUniformsTest {
                 lightPayload = light.packed,
                 cascades = cascades,
                 cameraEye = frame.cameraEye,
+                cameraForward = frame.cameraForward,
                 fogColor = Color(0.1f, 0.2f, 0.3f),
                 fogDensity = 0.04f,
             ),

@@ -16,7 +16,16 @@ class GpuShadowCascadeData(
     val splitDistances: FloatArray,
     val depthScales: FloatArray = FloatArray(viewProjections.size) { scaleAlong(viewProjections[it], DEPTH_AXIS) },
     val worldExtents: FloatArray = FloatArray(viewProjections.size) { 2f / scaleAlong(viewProjections[it], WIDTH_AXIS) },
+    val blendStartDistances: FloatArray,
 ) {
+    /** Retains the original constructor and defaults for source and binary compatibility. */
+    constructor(
+        viewProjections: List<Mat4>,
+        splitDistances: FloatArray,
+        depthScales: FloatArray = FloatArray(viewProjections.size) { scaleAlong(viewProjections[it], DEPTH_AXIS) },
+        worldExtents: FloatArray = FloatArray(viewProjections.size) { 2f / scaleAlong(viewProjections[it], WIDTH_AXIS) },
+    ) : this(viewProjections, splitDistances, depthScales, worldExtents, splitDistances.copyOf())
+
     init {
         require(viewProjections.isNotEmpty()) { "A shadow needs at least one cascade." }
         require(viewProjections.size == splitDistances.size) {
@@ -26,12 +35,16 @@ class GpuShadowCascadeData(
         require(viewProjections.size <= MAX_SHADOW_CASCADES) {
             "${viewProjections.size} cascades exceeds the $MAX_SHADOW_CASCADES the uniform block holds."
         }
+        require(blendStartDistances.size == splitDistances.size) {
+            "Every cascade needs its own blend start: ${splitDistances.size} splits, " +
+                "${blendStartDistances.size} blend starts."
+        }
     }
 
     /** How many cascades a depth pass actually renders; the rest are padding. */
     val count: Int get() = viewProjections.size
 
-    /** One vec4 per cascade: depth scale in x, world extent in y, the rest padding. */
+    /** One vec4 per cascade: depth scale in x, world extent in y, split far in z, blend start in w. */
     fun depthScaleFloats(): FloatArray {
         val field = UniformFields.CascadeDepthScales
         val floats = FloatArray(field.floats)
@@ -42,8 +55,8 @@ class GpuShadowCascadeData(
                 index = index,
                 x = depthScales[cascade],
                 y = worldExtents[cascade],
-                z = 0f,
-                w = 0f,
+                z = splitDistances[cascade],
+                w = blendStartDistances[cascade],
             )
         }
         return floats

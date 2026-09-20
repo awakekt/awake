@@ -50,6 +50,8 @@ class ShadowUniforms internal constructor(
     val vertexAnimation: AslExpr,
     /** Everything below exists only in lit_shadow; shadow_depth stops after vertexAnimation. */
     val cameraPosition: AslExpr?,
+    /** xyz = normalized camera forward, w = active cascade count. */
+    val cameraForward: AslExpr?,
     /** x = metallic, y = roughness. */
     val material: AslExpr?,
     /** rgb = fog colour, a = fog DENSITY (not alpha); density 0 makes applyFog a no-op. */
@@ -77,6 +79,7 @@ fun AslShaderBuilder.shadowUniforms(includeLitTail: Boolean): ShadowUniforms {
         model = handles.value("model"),
         vertexAnimation = handles.value("vertexAnimation"),
         cameraPosition = if (includeLitTail) handles.value("cameraPosition") else null,
+        cameraForward = if (includeLitTail) handles.value("cameraForward") else null,
         material = if (includeLitTail) handles.value("material") else null,
         fogColor = if (includeLitTail) handles.value("fogColor") else null,
     )

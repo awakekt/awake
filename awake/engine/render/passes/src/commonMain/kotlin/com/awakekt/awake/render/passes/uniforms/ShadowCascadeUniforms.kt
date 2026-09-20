@@ -9,6 +9,7 @@ import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
 import com.awakekt.awake.render.passes.cascadeShadowBoxes
+import com.awakekt.awake.render.passes.cascadeBlendStartDistances
 import com.awakekt.awake.render.passes.cascadeSplitDistances
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformLayout
@@ -36,14 +37,15 @@ fun shadowCascadeUniforms(
     val splits = cascadeSplitDistances(camera.near, minOf(camera.far, shadowDistance), count)
     val boxes = cascadeShadowBoxes(camera, aspect, light.direction, clipSpace, splits)
     return ShadowCascadeUniforms(
-        boxes.map { it.viewProjection },
-        splits,
+        viewProjections = boxes.map { it.viewProjection },
+        splitDistances = splits,
         // |m22| IS ndc-depth-per-world-unit for an orthographic box (see Mat4.orthographic),
         // so the shader gets the conversion without being told the near and far it came from.
-        FloatArray(boxes.size) { abs(boxes[it].projection.m22) },
+        depthScales = FloatArray(boxes.size) { abs(boxes[it].projection.m22) },
         // 2/m00 is the box's world width, for the same reason: an ortho projection maps that
         // width onto -1..1.
-        FloatArray(boxes.size) { 2f / abs(boxes[it].projection.m00) },
+        worldExtents = FloatArray(boxes.size) { 2f / abs(boxes[it].projection.m00) },
+        blendStartDistances = cascadeBlendStartDistances(camera.near, splits),
     )
 }
 

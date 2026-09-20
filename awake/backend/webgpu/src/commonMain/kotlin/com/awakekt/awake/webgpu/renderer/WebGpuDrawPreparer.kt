@@ -23,9 +23,9 @@ internal class WebGpuDrawPreparer(
         sourceIndex: Int,
         context: GpuDrawPreparationContext,
     ): GpuResolvedDraw? {
-        val cascades = context.shadowViewProjections.takeIf { it.isNotEmpty() }?.let {
-            GpuShadowCascadeData(it, FloatArray(it.size) { Float.MAX_VALUE })
-        }
+        val cascades = context.shadowCascadeData ?: context.shadowViewProjections
+            .takeIf { it.isNotEmpty() }
+            ?.let { GpuShadowCascadeData(it, FloatArray(it.size) { Float.MAX_VALUE }) }
         val primary = PrimaryPipelineBinding(
             renderer.renderPipeline.handle,
             renderer.wireframe && renderer.wireframeRenderPipeline != null,
@@ -38,6 +38,7 @@ internal class WebGpuDrawPreparer(
             primary = primary,
             viewProjection = context.viewProjection,
             cameraEye = context.cameraEye,
+            cameraForward = context.cameraForward,
             lightUniforms = context.passUniforms,
             shadowCascades = cascades,
             fogColor = context.environment.fogColor,

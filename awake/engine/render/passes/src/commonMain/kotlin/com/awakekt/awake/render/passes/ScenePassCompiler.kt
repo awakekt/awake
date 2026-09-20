@@ -7,9 +7,11 @@ package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.prepareAll
 import com.awakekt.awake.render.command.sortForRecording
@@ -37,11 +39,9 @@ object ScenePassCompiler {
         drawPreparer: GpuDrawPreparer? = null,
     ): GpuPassInput {
         val viewProjection = lens.viewProjectionMatrix(aspect, clipSpace)
-        val shadowViewProjections = if (light != null && environment.shadowsEnabled) {
-            light.shadowCascades()?.viewProjections.orEmpty()
-        } else {
-            emptyList()
-        }
+        val cameraForward = lens.forwardDirection()
+        val shadowCascadeData = shadowCascadeData(light, environment)
+        val shadowViewProjections = shadowCascadeData?.viewProjections.orEmpty()
         val packedPassUniforms = sceneLightUniforms(light ?: DEFAULT_SCENE_LIGHT, lens.eye).packed
 
         val resolved = drawPreparer?.let {
@@ -51,10 +51,12 @@ object ScenePassCompiler {
                     GpuDrawPreparationContext(
                         viewProjection = viewProjection,
                         cameraEye = lens.eye,
+                        cameraForward = cameraForward,
                         passUniforms = packedPassUniforms,
                         environment = environment.toGpuState(),
                         viewport = viewport,
                         shadowViewProjections = shadowViewProjections,
+                        shadowCascadeData = shadowCascadeData,
                     ),
                 ),
             )
@@ -98,3 +100,14 @@ object ScenePassCompiler {
         )
     }
 }
+
+private fun Lens.forwardDirection(): Vec3f = (center - eye).let { direction ->
+    val length = direction.length3()
+    if (length > 0.0001f) direction.scale(1f / length) else Vec3f(0f, 0f, -1f)
+}
+
+private fun shadowCascadeData(
+    light: SceneLight?,
+    environment: EnvironmentUniforms,
+): GpuShadowCascadeData? =
+    if (light != null && environment.shadowsEnabled) light.shadowCascades() else null

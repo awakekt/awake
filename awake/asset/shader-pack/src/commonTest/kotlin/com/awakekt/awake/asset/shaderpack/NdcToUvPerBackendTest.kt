@@ -104,6 +104,19 @@ class NdcToUvPerBackendTest {
         }
     }
 
+    @Test
+    fun cascadeBlendUsesCameraDepthRatherThanMovingLightMapEdges() {
+        val fragment = (PackShaderSets.LitShadow.webGpu[ShaderStage.FRAGMENT] as ShaderSource.InlineText).sourceCode
+
+        assertTrue("cameraForward" in fragment, "Cascade split selection needs the active camera direction.")
+        assertTrue("viewDepth" in fragment, "The cascade selector must measure depth along the camera view axis.")
+        assertTrue("smoothstep" in fragment, "The split overlap should use a continuous blend weight.")
+        assertTrue(
+            "distToEdge" !in fragment,
+            "The previous light-map-edge blend moved with the fitted maps instead of the camera's split planes.",
+        )
+    }
+
     /**
      * Only the conversion differs between a shader's two backends.
      *

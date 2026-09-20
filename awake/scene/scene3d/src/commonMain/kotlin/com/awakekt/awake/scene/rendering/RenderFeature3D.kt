@@ -19,7 +19,17 @@ interface RenderFeature3D {
 data class RenderFeatureContext3D(
     val camera: Camera,
     val elapsedTimeSeconds: Float,
-)
+    val viewportAspect: Float,
+) {
+    /** Keeps the original two-argument constructor for existing feature implementations. */
+    constructor(camera: Camera, elapsedTimeSeconds: Float) : this(camera, elapsedTimeSeconds, 16f / 9f)
+
+    /** Keeps the original data-class copy shape and preserves the frame's viewport aspect. */
+    fun copy(
+        camera: Camera = this.camera,
+        elapsedTimeSeconds: Float = this.elapsedTimeSeconds,
+    ): RenderFeatureContext3D = RenderFeatureContext3D(camera, elapsedTimeSeconds, viewportAspect)
+}
 
 /** Data a feature contributes; GPU submission remains owned by [RenderSystem3D]. */
 data class RenderContribution(
@@ -34,7 +44,7 @@ internal class SceneLightingFeature3D(
 ) : RenderFeature3D {
     override fun collect(world: World, context: RenderFeatureContext3D): RenderContribution =
         RenderContribution(
-            light = compiler.sceneLight(world, context.camera),
+            light = compiler.sceneLight(world, context.camera, context.viewportAspect),
             environment = compiler.environmentUniforms(world),
         )
 }

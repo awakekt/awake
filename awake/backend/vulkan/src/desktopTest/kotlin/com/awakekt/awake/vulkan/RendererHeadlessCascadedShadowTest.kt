@@ -52,6 +52,7 @@ import org.junit.AfterClass
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import kotlin.time.TimeSource
 import com.awakekt.awake.render.material.Material as RenderMaterial
 import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 import com.awakekt.awake.scene.rendering.light.SceneLight as SceneDocumentLight
@@ -104,6 +105,60 @@ class RendererHeadlessCascadedShadowTest {
                     "scene further than $SCENE_OFFSET units.",
             )
         } finally {
+            target.destroy()
+        }
+    }
+
+    /** Diagnostic-only before/after workload for the shadow shader; never a hardware CI gate. */
+    @Test
+    fun cascadedShadowFrameTimingIsDiagnostic() {
+        val renderer = sharedRenderer()
+        val target = renderer.createRenderTarget(TIMING_WIDTH, TIMING_HEIGHT)
+        var groundMesh: RenderMesh? = null
+        var casterMesh: RenderMesh? = null
+        var material: RenderMaterial? = null
+        try {
+            val ground = renderer.createMesh(centredPlane(TIMING_GROUND_HALF, y = 0f)).also { groundMesh = it }
+            val caster = renderer.createMesh(generate { cube(size = TIMING_CASTER_SIZE) }).also { casterMesh = it }
+            val shared = renderer.createMaterial(LitShadowUniformLayout).also { material = it }
+            val camera = Lens(
+                eye = Vec3f(4f, 8f, 12f),
+                center = Vec3f(0f, 0f, 0f),
+                fovYRadians = 1f,
+                near = 0.1f,
+                far = 100f,
+            )
+            val base = SceneLight(direction = PROBE_LIGHT, color = Vec3f(1f, 1f, 1f))
+            val light = base.copy(cascades = shadowCascadeUniforms(base, camera, TIMING_ASPECT, renderer.clipSpace))
+            val draws = listOf(RenderDrawCommand(ground, shared), RenderDrawCommand(caster, shared))
+            repeat(TIMING_WARMUP_FRAMES) {
+                renderer.renderSceneToTexture(target, camera, draws, light)
+                runBlocking { renderer.readPixels(target) }
+            }
+
+            // The longer sample separates steady-state latency from occasional queue/readback stalls.
+            val frameTimesMs = DoubleArray(TIMING_FRAMES) {
+                val start = TimeSource.Monotonic.markNow()
+                renderer.renderSceneToTexture(target, camera, draws, light)
+                runBlocking { renderer.readPixels(target) }
+                start.elapsedNow().inWholeNanoseconds / 1_000_000.0
+            }.apply { sort() }
+            val meanMs = frameTimesMs.sum() / frameTimesMs.size
+            println(
+                "Headless Vulkan cascaded-shadow timing ($TIMING_WIDTH x $TIMING_HEIGHT, " +
+                    "$TIMING_FRAMES frames; diagnostic only, not a CI threshold): " +
+                    "mean=%.3fms p50=%.3fms p95=%.3fms equivalent=%.1f FPS".format(
+                        meanMs,
+                        frameTimesMs[frameTimesMs.size / 2],
+                        frameTimesMs[(frameTimesMs.size * 95 / 100).coerceAtMost(frameTimesMs.lastIndex)],
+                        1000.0 / meanMs,
+                    ),
+            )
+            assertTrue(meanMs > 0.0, "The diagnostic shadow frame timing measured zero.")
+        } finally {
+            groundMesh?.destroy()
+            casterMesh?.destroy()
+            material?.destroy()
             target.destroy()
         }
     }
@@ -818,6 +873,13 @@ class RendererHeadlessCascadedShadowTest {
         }
 
         private const val TARGET_SIZE = 128
+        private const val TIMING_WIDTH = 640
+        private const val TIMING_HEIGHT = 360
+        private const val TIMING_WARMUP_FRAMES = 30
+        private const val TIMING_FRAMES = 120
+        private const val TIMING_GROUND_HALF = 20f
+        private const val TIMING_CASTER_SIZE = 2f
+        private const val TIMING_ASPECT = 16f / 9f
         private const val MAX_FRAMES_IN_FLIGHT = 1
         private const val BYTES_PER_PIXEL = 4
         private const val ASPECT = 1f

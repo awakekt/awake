@@ -27,7 +27,9 @@ import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.LineSegment
+import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
+import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -280,6 +282,47 @@ class RenderSystemTest {
         RenderSystem3D(renderer).update(world, 1f / 60f)
 
         assertNotNull(renderer.lastLight?.cascades, "Cascades are the default, not the opt-in.")
+    }
+
+    @Test
+    fun shadowFitUsesTheLiveViewportAspect() {
+        val world = worldWithPrimaryDirectionalLight()
+        val renderer = RecordingRenderer()
+        val viewport = RenderViewport(x = 0f, y = 0f, width = 2100f, height = 900f)
+        val camera = Lens(
+            eye = Vec3f(0f, 0f, 5f),
+            center = Vec3f(0f, 0f, 0f),
+            fovYRadians = 1f,
+            near = 0.1f,
+            far = 100f,
+        )
+
+        RenderSystem3D(renderer, viewportProvider = { viewport }).update(world, 1f / 60f)
+
+        val actual = requireNotNull(renderer.lastLight?.cascades)
+        val light = requireNotNull(renderer.lastLight)
+        val expected = shadowCascadeUniforms(
+            SceneLight(direction = light.direction, color = light.color),
+            camera,
+            viewport.aspect,
+            renderer.clipSpace,
+        )
+        val fixedSurfaceAspect = shadowCascadeUniforms(
+            SceneLight(direction = light.direction, color = light.color),
+            camera,
+            renderer.surfaceAspect,
+            renderer.clipSpace,
+        )
+
+        assertEquals(expected.count, actual.viewProjections.size)
+        actual.viewProjections.zip(expected.viewProjections).forEach { (rendered, expectedBox) ->
+            assertContentEquals(expectedBox.data, rendered.data)
+        }
+        assertTrue(
+            actual.viewProjections.zip(fixedSurfaceAspect.viewProjections)
+                .any { (rendered, oldFit) -> !rendered.data.contentEquals(oldFit.data) },
+            "The viewport fit must differ from the renderer-wide 16:9 fit on an ultrawide viewport.",
+        )
     }
 
     @Test

@@ -54,7 +54,7 @@ internal class SceneLightingCompiler(
      * A point light's position comes from its entity's `Transform`, so a point light without one
      * is skipped rather than silently placed at the origin.
      */
-    fun sceneLight(world: World, camera: Camera): SceneLight {
+    fun sceneLight(world: World, camera: Camera, viewportAspect: Float): SceneLight {
         var directional: Light? = null
         var directionalHasTransformRotation = false
         // Reused, not rebuilt: this runs every frame, and `skills/awake-core-math` rules out
@@ -150,20 +150,17 @@ internal class SceneLightingCompiler(
         // Allocates per frame, but only while shadows are on, and the caller that used to build
         // one fixed box allocated the same kind of thing.
         if (sun?.shadowsEnabled != true || world.debugSettingsOrNull()?.shadowsEnabledOverride == false) return base
-        return shadowedLight(world, camera, base)
+        return shadowedLight(world, camera, base, viewportAspect)
     }
 
     /** [base] plus whichever shadow fit is in force -- cascades, or the single box. */
-    fun shadowedLight(world: World, camera: Camera, base: SceneLight): SceneLight {
+    fun shadowedLight(world: World, camera: Camera, base: SceneLight, viewportAspect: Float): SceneLight {
         // Fitted to THIS camera's frustum, in slices. The fixed box `directionalShadowBox` still
         // builds covers a volume at the origin, which is right for a demo scene sitting there and
         // wrong for anything that walks away from it -- the shadows simply stop.
-        // The REAL viewport aspect, not CONSERVATIVE_ASPECT. That constant is deliberately wider
-        // than any real viewport so this system's own cull test never drops something visible --
-        // harmless there, expensive here: a frustum three times too wide gives cascade boxes
-        // roughly 1.4x too large in every direction, and a cascade's texel size IS its box size
-        // over the map's fixed 2048. That was half of why shadow edges looked like stairs.
-        val aspect = DEFAULT_SHADOW_FIT_ASPECT
+        // The same live viewport aspect used for the camera projection. The conservative culling
+        // aspect is intentionally broader and would waste shadow resolution if used for fitting.
+        val aspect = viewportAspect
         // The single fixed box, when a viewer asks for it: `SceneLight.shadowCascades()` turns a
         // lone viewProjection into a one-cascade set, so a backend still has exactly one path.
         val boxOnly = world.debugSettingsOrNull()?.cascadedShadows == false
@@ -220,5 +217,4 @@ internal class SceneLightingCompiler(
     }
 }
 
-private const val DEFAULT_SHADOW_FIT_ASPECT = 16f / 9f
 private const val POINT_SHADOW_NEAR = 0.05f

@@ -12,6 +12,7 @@ import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
 
 /** Packs the same ABI from backend-owned source adapter data. */
+@Suppress("LongParameterList")
 fun gpuLitShadowUniforms(
     transform: Mat4,
     extraUniformFloats: FloatArray,
@@ -23,6 +24,34 @@ fun gpuLitShadowUniforms(
     cameraEye: Vec3f,
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
+): FloatArray = gpuLitShadowUniforms(
+    transform = transform,
+    extraUniformFloats = extraUniformFloats,
+    vertexAnimation = vertexAnimation,
+    timeSeconds = timeSeconds,
+    mvp = mvp,
+    lightPayload = lightPayload,
+    cascades = cascades,
+    cameraEye = cameraEye,
+    fogColor = fogColor,
+    fogDensity = fogDensity,
+    cameraForward = Vec3f(0f, 0f, -1f),
+)
+
+/** Packs the lit-shadow block with an explicit camera direction for cascade selection. */
+@Suppress("LongParameterList")
+fun gpuLitShadowUniforms(
+    transform: Mat4,
+    extraUniformFloats: FloatArray,
+    vertexAnimation: Vec3f,
+    timeSeconds: Float,
+    mvp: Mat4,
+    lightPayload: FloatArray,
+    cascades: ShadowCascadeUniforms,
+    cameraEye: Vec3f,
+    fogColor: Color = Color.Black,
+    fogDensity: Float = 0f,
+    cameraForward: Vec3f,
 ): FloatArray {
     val lightLayout = MaterialUniformLayouts.SceneLight
     val light = lightPayload.copyOf(lightLayout.total)
@@ -50,6 +79,7 @@ fun gpuLitShadowUniforms(
         .put(transform.data, UniformFields.Model)
         .put(UniformFields.VertexAnimation, vertexAnimation, timeSeconds)
         .put(cameraPositionFloats(cameraEye), UniformFields.CameraPosition)
+        .put(UniformFields.CameraForward, cameraForward, cascades.count.toFloat())
         .put(material, UniformFields.Material)
         .put(fogUniformFloats(fogColor, fogDensity), UniformFields.FogColor)
         .build()

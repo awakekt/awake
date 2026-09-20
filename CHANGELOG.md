@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Public editor plugin contract and project plugin SHA-256 pin.** Added public `:awake:editor:contract` module with `EditorPlugin`, `EditorProvider`, `PluginManifest`, and `AssetConverterPlugin` contracts for open-source and commercial plugin authoring. Added optional `sha256` content integrity pin and default version semantics to `AwakeProjectPluginReference` in `:awake:project`.
 - **Three-layer architecture governance and Awake Core Editor skill.** Formally codified the 3-layer architecture (Awake Core, Awake Core Editor, Awake Studio Pro) across agent guides and skills, adding the new `awake-core-editor` skill.
 
+### Fixed
+
+- **Camera-motion shadow shimmer and ultrawide cascade under-coverage.** Select and blend cascades by camera depth over a fitted overlap, use the live viewport aspect for cascade fitting, and make the shadow-frustum overlay match the active camera and viewport. Restrict the extra PCF sampling to split transition bands instead of broad light-map edges.
+
 ### Changed
 
 - **Separated agent-skill ownership from Awake product tooling.** Public `awake-*` guidance now ships from the Apache-2.0 `awake-agent-skills` bundle, Studio scoring and creative roles ship from a private `studio-*` overlay, vendor KMP content is pinned upstream, and UI/icon tooling now lives in stable `tools/` paths independent of agent installation.

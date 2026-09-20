@@ -123,6 +123,7 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/ShadowUniforms {
+	public final fun getCameraForward ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getCameraPosition ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getCascadeDepthScales ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
 	public final fun getCascadeViewProjections ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;

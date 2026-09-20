@@ -110,7 +110,12 @@ class SceneFrameUniforms(
     val light: SceneLightUniforms,
     val cameraEye: Vec3f,
     val fog: FloatArray,
-)
+    val cameraForward: Vec3f,
+) {
+    /** Retains the original constructor for callers without explicit camera-forward metadata. */
+    constructor(light: SceneLightUniforms, cameraEye: Vec3f, fog: FloatArray) :
+        this(light, cameraEye, fog, Vec3f(0f, 0f, -1f))
+}
 
 /**
  * The complete `textured.wgsl` uniform block for one draw.
@@ -257,6 +262,7 @@ fun litShadowUniforms(
     .put(drawCall.model.data, UniformFields.Model)
     .put(UniformFields.VertexAnimation, drawCall.vertexAnimation, drawCall.timeSeconds)
     .put(cameraPositionFloats(frame.cameraEye), UniformFields.CameraPosition)
+    .put(UniformFields.CameraForward, frame.cameraForward, cascades.count.toFloat())
     .put(pbrMaterialFloats(drawCall), UniformFields.Material)
     .put(frame.fog, UniformFields.FogColor)
     .build()

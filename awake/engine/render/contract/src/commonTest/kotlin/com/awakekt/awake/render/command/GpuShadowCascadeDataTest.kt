@@ -43,7 +43,7 @@ class GpuShadowCascadeDataTest {
         val matrixStride = UniformFields.CascadeViewProjections.floats /
             UniformFields.CascadeViewProjections.count
 
-        assertContentEquals(floatArrayOf(0.25f, 8f, 0f, 0f), depth.copyOfRange(0, depthStride))
+        assertContentEquals(floatArrayOf(0.25f, 8f, 10f, 10f), depth.copyOfRange(0, depthStride))
         assertContentEquals(
             matrices.copyOfRange(0, matrixStride),
             matrices.copyOfRange(matrixStride, matrixStride * 2),

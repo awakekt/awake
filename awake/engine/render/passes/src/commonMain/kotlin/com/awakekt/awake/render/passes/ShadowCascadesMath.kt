@@ -20,6 +20,9 @@ import kotlin.math.tan
 /** How many cascades a directional light splits into unless a caller says otherwise. */
 const val DEFAULT_SHADOW_CASCADES = 3
 
+/** Fraction of a slice reserved on either side of its split for blending adjacent maps. */
+internal const val DEFAULT_CASCADE_BLEND_FRACTION = 0.05f
+
 /**
  * How far each cascade's far plane sits, blending a uniform split with a logarithmic one.
  *
@@ -52,8 +55,29 @@ fun cascadeSplitDistances(
     }
 }
 
+/** The view-depth at which each cascade starts blending into its successor. */
+internal fun cascadeBlendStartDistances(
+    near: Float,
+    splits: FloatArray,
+    blendFraction: Float = DEFAULT_CASCADE_BLEND_FRACTION,
+): FloatArray {
+    require(near > 0f) { "Cascades need a positive near plane, got $near." }
+    require(blendFraction in 0f..0.5f) { "Cascade blend fraction must be in 0..0.5, got $blendFraction." }
+    var sliceNear = near
+    return FloatArray(splits.size) { index ->
+        val splitFar = splits[index]
+        require(splitFar > sliceNear) {
+            "Cascade split $index must be beyond its start: $sliceNear..$splitFar."
+        }
+        val blendStart = splitFar - (splitFar - sliceNear) * blendFraction
+        sliceNear = splitFar
+        blendStart
+    }
+}
+
 /**
- * One shadow box per cascade, each fitted to its own slice of [camera]'s frustum.
+ * One shadow box per cascade, fitted to its own depth slice and the narrow overlap at adjacent
+ * split planes.
  *
  * This is what [directionalShadowBox] cannot do: that one covers a fixed volume at the origin, so
  * a camera far from it looks at shadows rendered somewhere else, and a camera looking a long way
@@ -74,6 +98,8 @@ fun cascadeSplitDistances(
  * @param splits Each cascade's far distance -- see [cascadeSplitDistances].
  * @param texelsPerCascade The depth map's side in pixels, used only for that snapping. A wrong
  * value here costs stability, not correctness.
+ * Each fitted slice overlaps its neighbors by [DEFAULT_CASCADE_BLEND_FRACTION] of the preceding
+ * slice, which supplies map coverage for the shader's split blend.
  * @return one box per entry in [splits], near slice first.
  */
 fun cascadeShadowBoxes(
@@ -83,17 +109,39 @@ fun cascadeShadowBoxes(
     clipSpace: ClipSpace,
     splits: FloatArray = cascadeSplitDistances(camera.near, camera.far),
     texelsPerCascade: Int = DEFAULT_SHADOW_MAP_SIZE,
+): List<DirectionalShadowBox> = cascadeShadowBoxesWithBlendFraction(
+    camera = camera,
+    aspect = aspect,
+    direction = direction,
+    clipSpace = clipSpace,
+    splits = splits,
+    texelsPerCascade = texelsPerCascade,
+    blendFraction = DEFAULT_CASCADE_BLEND_FRACTION,
+)
+
+/** Internal seam for verifying fitted overlap coverage without changing the public API shape. */
+@Suppress("LongParameterList")
+internal fun cascadeShadowBoxesWithBlendFraction(
+    camera: Lens,
+    aspect: Float,
+    direction: Vec3f,
+    clipSpace: ClipSpace,
+    splits: FloatArray,
+    texelsPerCascade: Int = DEFAULT_SHADOW_MAP_SIZE,
+    blendFraction: Float,
 ): List<DirectionalShadowBox> {
     val lightDirection = direction.normalized()
     val up = if (abs(lightDirection.y) > UP_PARALLEL_LIMIT) Vec3f(0f, 0f, 1f) else Vec3f(0f, 1f, 0f)
+    val blendStarts = cascadeBlendStartDistances(camera.near, splits, blendFraction)
     var sliceNear = camera.near
-    return splits.map { sliceFar ->
+    return splits.mapIndexed { index, sliceFar ->
         val currentNear = sliceNear
+        val blendWidth = (sliceFar - currentNear) * blendFraction
         sliceNear = sliceFar
         boxAroundSlice(
             camera = camera,
-            sliceNear = currentNear,
-            sliceFar = sliceFar,
+            sliceNear = if (index == 0) currentNear else blendStarts[index - 1],
+            sliceFar = if (index == splits.lastIndex) sliceFar else sliceFar + blendWidth,
             aspect = aspect,
             lightDirection = lightDirection,
             up = up,

@@ -21,13 +21,18 @@ public abstract interface class com/awakekt/awake/scene/rendering/RenderFeature3
 
 public final class com/awakekt/awake/scene/rendering/RenderFeatureContext3D {
 	public fun <init> (Lcom/awakekt/awake/scene/rendering/camera/Camera;F)V
+	public fun <init> (Lcom/awakekt/awake/scene/rendering/camera/Camera;FF)V
 	public final fun component1 ()Lcom/awakekt/awake/scene/rendering/camera/Camera;
 	public final fun component2 ()F
+	public final fun component3 ()F
 	public final fun copy (Lcom/awakekt/awake/scene/rendering/camera/Camera;F)Lcom/awakekt/awake/scene/rendering/RenderFeatureContext3D;
+	public final fun copy (Lcom/awakekt/awake/scene/rendering/camera/Camera;FF)Lcom/awakekt/awake/scene/rendering/RenderFeatureContext3D;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/RenderFeatureContext3D;Lcom/awakekt/awake/scene/rendering/camera/Camera;FFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/RenderFeatureContext3D;
 	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/RenderFeatureContext3D;Lcom/awakekt/awake/scene/rendering/camera/Camera;FILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/RenderFeatureContext3D;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCamera ()Lcom/awakekt/awake/scene/rendering/camera/Camera;
 	public final fun getElapsedTimeSeconds ()F
+	public final fun getViewportAspect ()F
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -252,11 +257,13 @@ public final class com/awakekt/awake/scene/rendering/debug/DebugSettingsAccessKt
 
 public final class com/awakekt/awake/scene/rendering/debug/DebugVisualizationSystem : com/awakekt/awake/ecs/System {
 	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;)V
+	public fun <init> (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/jvm/functions/Function0;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
 public final class com/awakekt/awake/scene/rendering/debug/DebugVisualizationSystemKt {
 	public static final fun debugVisualizationLines (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;)Ljava/util/List;
+	public static final fun debugVisualizationLines (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/scene/rendering/debug/WorldDebugSettings;F)Ljava/util/List;
 }
 
 public final class com/awakekt/awake/scene/rendering/debug/RenderDiagnostics {

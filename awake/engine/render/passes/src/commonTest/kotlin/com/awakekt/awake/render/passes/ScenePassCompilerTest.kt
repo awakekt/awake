@@ -14,6 +14,7 @@ import com.awakekt.awake.render.command.BufferHandle
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuResolvedDraw
+import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.material.Material
@@ -103,6 +104,10 @@ class ScenePassCompilerTest {
 
         assertTrue(input.resolvedPath)
         assertEquals(Vec3f(0f, 2f, 3f), received?.cameraEye)
+        val expectedForward = Vec3f(0f, -2f / kotlin.math.sqrt(13f), -3f / kotlin.math.sqrt(13f))
+        assertEquals(expectedForward.x, received?.cameraForward?.x ?: Float.NaN, 0.0001f)
+        assertEquals(expectedForward.y, received?.cameraForward?.y ?: Float.NaN, 0.0001f)
+        assertEquals(expectedForward.z, received?.cameraForward?.z ?: Float.NaN, 0.0001f)
         assertEquals(viewport, received?.viewport)
         assertTrue(received?.passUniforms?.isNotEmpty() == true)
         val nonNullReceived = checkNotNull(received)
@@ -121,6 +126,7 @@ class ScenePassCompilerTest {
             override fun destroy() = Unit
         }
         var enabledMatrices = emptyList<com.awakekt.awake.core.math.Mat4>()
+        var enabledCascades: GpuShadowCascadeData? = null
         val provider = object : com.awakekt.awake.render.command.GpuDrawPreparer {
             override fun prepare(
                 request: RenderDrawCommand,
@@ -128,6 +134,7 @@ class ScenePassCompilerTest {
                 context: GpuDrawPreparationContext,
             ): GpuResolvedDraw? {
                 enabledMatrices = context.shadowViewProjections
+                enabledCascades = context.shadowCascadeData
                 return null
             }
         }
@@ -152,8 +159,13 @@ class ScenePassCompilerTest {
             drawPreparer = provider,
         )
         assertTrue(enabledMatrices.isNotEmpty())
+        assertEquals(enabledMatrices, enabledCascades?.viewProjections)
 
         var disabledMatrices = listOf(com.awakekt.awake.core.math.Mat4())
+        var disabledCascades: GpuShadowCascadeData? = GpuShadowCascadeData(
+            viewProjections = listOf(com.awakekt.awake.core.math.Mat4()),
+            splitDistances = floatArrayOf(Float.MAX_VALUE),
+        )
         val disabledProvider = object : com.awakekt.awake.render.command.GpuDrawPreparer {
             override fun prepare(
                 request: RenderDrawCommand,
@@ -161,6 +173,7 @@ class ScenePassCompilerTest {
                 context: GpuDrawPreparationContext,
             ): GpuResolvedDraw? {
                 disabledMatrices = context.shadowViewProjections
+                disabledCascades = context.shadowCascadeData
                 return null
             }
         }
@@ -174,6 +187,7 @@ class ScenePassCompilerTest {
             drawPreparer = disabledProvider,
         )
         assertTrue(disabledMatrices.isEmpty())
+        assertEquals(null, disabledCascades)
     }
 
     @Test

@@ -19,6 +19,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.renderer.LineSegment
+import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
@@ -26,6 +27,8 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.CONSERVATIVE_ASPECT
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
+import com.awakekt.awake.scene.rendering.debug.cascadeBoxLines
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.scene.rendering.debug.WorldDebugSettings
 import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
@@ -106,6 +109,31 @@ class DebugVisualizationSystemTest {
         DebugVisualizationSystem(renderer).update(world, 1f / 60f)
 
         assertEquals(null, renderer.lastDebugLines)
+    }
+
+    @Test
+    fun shadowFrustumOverlayUsesTheRenderedViewportAspect() {
+        val world = worldWithPrimaryCamera()
+        world.add(world.create(), WorldDebugSettings(showShadowFrustum = true))
+        val renderer = RecordingRenderer()
+        val viewport = RenderViewport(x = 0f, y = 0f, width = 2100f, height = 900f)
+
+        DebugVisualizationSystem(renderer) { viewport }.update(world, 1f / 60f)
+
+        val expected = cascadeBoxLines(
+            world,
+            DEFAULT_SCENE_LIGHT.direction,
+            renderer.clipSpace,
+            viewport.aspect,
+        )
+        val staleSurfaceAspect = cascadeBoxLines(
+            world,
+            DEFAULT_SCENE_LIGHT.direction,
+            renderer.clipSpace,
+            renderer.surfaceAspect,
+        )
+        assertEquals(expected, renderer.lastDebugLines)
+        assertTrue(expected != staleSurfaceAspect, "The 21:9 overlay must not reuse the full surface's default 16:9 fit.")
     }
 
     @Test
