@@ -168,12 +168,14 @@ public final class com/awakekt/awake/core/graphics2d/DrawCommand$Mesh : com/awak
 	public final fun getOffsetY ()F
 	public final fun getPivotX ()F
 	public final fun getPivotY ()F
+	public final fun getRetainedGeometryKey ()Ljava/lang/Object;
 	public final fun getRotationDegrees ()F
 	public final fun getScaleX ()F
 	public final fun getScaleY ()F
 	public final fun getTokenId ()Ljava/lang/String;
 	public fun hashCode ()I
 	public final fun placedMesh ()Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;
+	public final fun setRetainedGeometryKey (Ljava/lang/Object;)V
 	public fun toString ()Ljava/lang/String;
 }
 

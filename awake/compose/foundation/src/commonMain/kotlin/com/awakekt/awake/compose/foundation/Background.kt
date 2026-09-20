@@ -12,6 +12,7 @@ import com.awakekt.awake.compose.ui.graphics.RoundedCornerShape
 import com.awakekt.awake.compose.ui.graphics.Shape
 import com.awakekt.awake.compose.ui.graphics.ShapeOutline
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
+import com.awakekt.awake.compose.ui.graphics.drawscope.drawRetainedMesh
 import com.awakekt.awake.compose.ui.node.DrawModifierNode
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.LayoutDirection
@@ -149,13 +150,14 @@ private class BorderNode :
     // on the node, which outlives the frame; see LayoutNode's retained modifier chain.
     private var cachedKey: BorderKey? = null
     private var cachedMesh: ColoredTriangleMesh? = null
+    private var retainedMeshKey: Any = Any()
 
     override fun DrawScope.draw(drawContent: () -> Unit) {
         drawContent()
         val stroke = strokeWidth.value * density
         if (stroke <= 0f || (!sides.top && !sides.end && !sides.bottom && !sides.start)) return
         val key = BorderKey(width, height, stroke, color, shape, sides, density, layoutDirection)
-        cachedMesh?.let { if (cachedKey == key) return drawMesh(it) }
+        cachedMesh?.let { if (cachedKey == key) return drawRetainedMesh(it, retainedMeshKey) }
         // Centred on a box inset by half the stroke width, so the ring's solid band lands inside
         // this node's bounds -- the same "inside, not centred on the edge" contract the old
         // edge-strip draw had, but as one continuous stroked outline instead of four independent
@@ -180,7 +182,8 @@ private class BorderNode :
         )
         cachedKey = key
         cachedMesh = mesh
-        drawMesh(mesh)
+        retainedMeshKey = Any()
+        drawRetainedMesh(mesh, retainedMeshKey)
     }
 
     override fun toString(): String = "border($strokeWidth, $color, shape=$shape, sides=$sides)"

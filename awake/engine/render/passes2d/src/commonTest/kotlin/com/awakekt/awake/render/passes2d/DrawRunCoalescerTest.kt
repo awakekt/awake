@@ -240,6 +240,37 @@ class DrawRunCoalescerTest {
     }
 
     @Test
+    fun retainedMeshKeySkipsGeometryComparisonAndInvalidatesWhenReplaced() {
+        val cache = RetainedDrawRunCache()
+        val mesh = ColoredTriangleMesh(
+            vertices = listOf(
+                ColoredVertex(DrawPoint(0f, 0f), Color(1f, 1f, 1f, 1f)),
+                ColoredVertex(DrawPoint(10f, 0f), Color(1f, 1f, 1f, 1f)),
+                ColoredVertex(DrawPoint(10f, 10f), Color(1f, 1f, 1f, 1f)),
+            ),
+            indices = intArrayOf(0, 1, 2),
+        )
+        val key = Any()
+        fun command(geometry: ColoredTriangleMesh, geometryKey: Any) =
+            DrawCommand.Mesh(geometry).also { it.retainedGeometryKey = geometryKey }
+
+        val firstRuns = DrawRunCoalescer.coalesce(listOf(command(mesh, key)), retained = cache)
+        val unchangedRuns = DrawRunCoalescer.coalesce(listOf(command(mesh, key)), retained = cache)
+        assertTrue(firstRuns.single() === unchangedRuns.single())
+
+        val changedMesh = mesh.copy(
+            vertices = mesh.vertices.mapIndexed { index, vertex ->
+                if (index == 0) vertex.copy(position = DrawPoint(-1f, 0f)) else vertex
+            },
+        )
+        val changedRuns = DrawRunCoalescer.coalesce(
+            listOf(command(changedMesh, Any())),
+            retained = cache,
+        )
+        assertTrue(firstRuns.single() !== changedRuns.single())
+    }
+
+    @Test
     fun retainedCacheMissesWhenGeometryChanges() {
         val cache = RetainedDrawRunCache()
         val firstRuns = DrawRunCoalescer.coalesce(

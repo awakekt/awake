@@ -23,6 +23,11 @@ import com.awakekt.awake.core.math2d.Dp
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.intersect
 
+/** Private bridge for scopes that can preserve geometry the caller guarantees is immutable. */
+internal interface RetainedMeshDrawScope {
+    fun drawRetainedMeshInternal(mesh: ColoredTriangleMesh, retentionKey: Any)
+}
+
 /**
  * Where a node paints itself.
  *
@@ -201,6 +206,20 @@ interface DrawScope {
     fun emit(primitive: UiDrawPrimitive)
 }
 
+/**
+ * Draws immutable, already-tessellated [mesh] using [retentionKey] to identify its geometry
+ * across frames. Replace the key whenever the mesh's vertices or indices change. Renderers that
+ * support retained UI runs can then reuse the staged geometry without hashing every vertex.
+ */
+fun DrawScope.drawRetainedMesh(mesh: ColoredTriangleMesh, retentionKey: Any) {
+    val retainedScope = this as? RetainedMeshDrawScope
+    if (retainedScope != null) {
+        retainedScope.drawRetainedMeshInternal(mesh, retentionKey)
+    } else {
+        drawMesh(mesh)
+    }
+}
+
 /** A renderer-neutral offscreen paint pass requested by [Modifier.graphicsLayer]. */
 data class GraphicsLayerFrame(
     val id: Int,
@@ -263,7 +282,8 @@ internal interface LayerDrawScope {
 @Suppress("TooManyFunctions")
 internal class PaintScope :
     DrawScope,
-    LayerDrawScope {
+    LayerDrawScope,
+    RetainedMeshDrawScope {
     private val clipStack = ArrayDeque<Rectangle>()
     private val fullClip = Rectangle(-1e9f, -1e9f, 2e9f, 2e9f)
     private var output = mutableListOf<UiDrawPrimitive>()
@@ -652,9 +672,17 @@ internal class PaintScope :
     }
 
     override fun drawMesh(mesh: ColoredTriangleMesh) {
+        emitMesh(mesh, retentionKey = null)
+    }
+
+    override fun drawRetainedMeshInternal(mesh: ColoredTriangleMesh, retentionKey: Any) {
+        emitMesh(mesh, retentionKey)
+    }
+
+    private fun emitMesh(mesh: ColoredTriangleMesh, retentionKey: Any?) {
         // The same mapping drawPath applies, carried beside the mesh instead of baked into it --
         // the caller is holding these triangles across frames, so they must not be rewritten here.
-        output += UiDrawPrimitive.Mesh(
+        val primitive = UiDrawPrimitive.Mesh(
             mesh = mesh,
             offsetX = transform.mapX(originX),
             offsetY = transform.mapY(originY),
@@ -662,6 +690,8 @@ internal class PaintScope :
             scaleY = transform.scaleY,
             alpha = alpha,
         )
+        primitive.retainedGeometryKey = retentionKey
+        output += primitive
     }
 
     override fun drawStrokedPath(path: DrawPath, stroke: DrawStroke, color: Color) {

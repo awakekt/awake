@@ -160,6 +160,14 @@ sealed class DrawCommand {
         val pivotY: Float = 0f,
     ) : UiDrawPrimitive() {
         /**
+         * Optional identity key for mesh geometry that is immutable across draws. A renderer may
+         * use this to retain staged data without re-reading every vertex on each frame. Replace
+         * the key whenever the mesh contents change. This hint is excluded from data-class
+         * equality and copying.
+         */
+        var retainedGeometryKey: Any? = null
+
+        /**
          * These triangles with the placement and alpha folded in.
          *
          * The one definition of where a mesh lands, so a backend staging it and a rasterizer

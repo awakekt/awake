@@ -49,7 +49,7 @@ class RetainedDrawRunCache(
             if (
                 entry.hash == hash &&
                 entry.maxQuadsPerRun == maxQuadsPerRun &&
-                entry.primitives == primitives &&
+                entry.primitives.retainedEquals(primitives) &&
                 entry.pathClips == pathClips &&
                 entry.safeInteriorRect == safeInteriorRect
             ) {
@@ -77,7 +77,7 @@ class RetainedDrawRunCache(
         entries.removeAll {
             it.hash == hash &&
                 it.maxQuadsPerRun == maxQuadsPerRun &&
-                it.primitives == snapshot &&
+                it.primitives.retainedEquals(snapshot) &&
                 it.pathClips == clipSnapshot &&
                 it.safeInteriorRect == safeInteriorRect
         }
@@ -100,7 +100,7 @@ class RetainedDrawRunCache(
         primitives: List<DrawCommand>,
         pathClips: List<DrawPath>,
         safeInteriorRect: Rectangle?,
-    ): Int = 31 * (31 * primitives.hashCode() + pathClips.hashCode()) + (safeInteriorRect?.hashCode() ?: 0)
+    ): Int = 31 * (31 * primitives.retainedHashCode() + pathClips.hashCode()) + (safeInteriorRect?.hashCode() ?: 0)
 
     companion object {
         /** Keeps the common case bounded without making large Studio screens churn the cache. */
@@ -114,14 +114,66 @@ class RetainedDrawRunCache(
  * retained as-is.
  */
 private fun DrawCommand.retentionSnapshot(): DrawCommand = when (this) {
-    is DrawCommand.Mesh -> copy(
-        mesh = mesh.copy(
-            vertices = mesh.vertices.toList(),
-            indices = mesh.indices.copyOf(),
-        ),
-    )
+    is DrawCommand.Mesh -> if (retainedGeometryKey == null) {
+        copy(
+            mesh = mesh.copy(
+                vertices = mesh.vertices.toList(),
+                indices = mesh.indices.copyOf(),
+            ),
+        )
+    } else {
+        copy().also { it.retainedGeometryKey = retainedGeometryKey }
+    }
     is DrawCommand.FilledPath -> copy(path = path.copy(commands = path.commands.toList()))
     is DrawCommand.StrokedPath -> copy(path = path.copy(commands = path.commands.toList()))
     is DrawCommand.ClipPathPush -> copy(path = path.copy(commands = path.commands.toList()))
     else -> this
+}
+
+private fun List<DrawCommand>.retainedHashCode(): Int = fold(1) { result, primitive ->
+    31 * result + primitive.retainedHashCode()
+}
+
+private fun DrawCommand.retainedHashCode(): Int {
+    if (this !is DrawCommand.Mesh) return hashCode()
+    val key = retainedGeometryKey ?: return hashCode()
+    var result = key.hashCode()
+    result = 31 * result + mesh.vertices.size
+    result = 31 * result + mesh.indices.size
+    result = 31 * result + offsetX.hashCode()
+    result = 31 * result + offsetY.hashCode()
+    result = 31 * result + scaleX.hashCode()
+    result = 31 * result + scaleY.hashCode()
+    result = 31 * result + alpha.hashCode()
+    result = 31 * result + (tokenId?.hashCode() ?: 0)
+    result = 31 * result + rotationDegrees.hashCode()
+    result = 31 * result + pivotX.hashCode()
+    return 31 * result + pivotY.hashCode()
+}
+
+private fun List<DrawCommand>.retainedEquals(other: List<DrawCommand>): Boolean {
+    if (size != other.size) return false
+    for (index in indices) {
+        if (!get(index).retainedEquals(other[index])) return false
+    }
+    return true
+}
+
+private fun DrawCommand.retainedEquals(other: DrawCommand): Boolean {
+    if (this === other) return true
+    if (this is DrawCommand.Mesh && other is DrawCommand.Mesh) {
+        val key = retainedGeometryKey
+        if (key != null && key === other.retainedGeometryKey && mesh === other.mesh) {
+            return offsetX == other.offsetX &&
+                offsetY == other.offsetY &&
+                scaleX == other.scaleX &&
+                scaleY == other.scaleY &&
+                alpha == other.alpha &&
+                tokenId == other.tokenId &&
+                rotationDegrees == other.rotationDegrees &&
+                pivotX == other.pivotX &&
+                pivotY == other.pivotY
+        }
+    }
+    return this == other
 }
