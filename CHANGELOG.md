@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **KMP desktop run-task runtime classpath resolution.** Resolve desktop runtime dependencies from
+  the KMP main compilation's named runtime configuration and report missing target configuration
+  clearly instead of failing with an absent Gradle provider.
 - **Third-person camera orbit smoothing.** Restored delta-time-based eye easing without changing other camera modes.
 - **Retained unchanged UI draw runs across frames.** Include active clip context in cached geometry keys, skip exact clipping for meshes wholly inside a clip's safe interior, and let vector painters and cached borders reuse staged geometry by stable identity rather than hashing every vertex each frame.
 - **Camera-motion shadow shimmer and ultrawide cascade under-coverage.** Select and blend cascades by camera depth over a fitted overlap, use the live viewport aspect for cascade fitting, and make the shadow-frustum overlay match the active camera and viewport. Restrict the extra PCF sampling to split transition bands instead of broad light-map edges.
