@@ -12,8 +12,8 @@
 # package namespace the engine had already renamed, and how two libraries came to declare the same
 # Android namespace: both are invisible from inside either repository.
 #
-# So this copies the template somewhere with no engine beside it, points its version catalog at the
-# version this working tree produces, and builds every target it declares.
+# So this copies the template somewhere with no engine beside it, points its Core and Vulkan
+# catalog entries at the two versions this working tree produces, and builds every target it declares.
 #
 # Usage:
 #   tools/check_template_consumer.sh <path-to-awake-template> [work-dir]
@@ -47,21 +47,37 @@ mkdir -p "$CHECKOUT"
 # caches and local.properties behind -- the same content a fresh clone would have.
 git -C "$TEMPLATE_SOURCE" archive HEAD | tar -x -C "$CHECKOUT"
 
-# Ask Gradle for the version that was actually assigned to the publications. Do not duplicate the
-# root build's git-describe/bump rules here: an abbreviated implementation used to point the
-# template at alpha.2-SNAPSHOT while the build correctly published alpha.3-SNAPSHOT.
-VERSION=$(cd "$ENGINE_ROOT" && ./gradlew -q :awake:backend:vulkan:bindings:properties \
+# Ask Gradle for the versions actually assigned to each publication family. Do not duplicate the
+# root build's git-describe/bump rules here.
+CORE_VERSION=$(cd "$ENGINE_ROOT" && ./gradlew -q :awake:core:math:properties \
   --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')
-if [[ -z "$VERSION" ]]; then
-  echo "Could not read the engine version from Gradle" >&2
+VULKAN_VERSION=$(cd "$ENGINE_ROOT" && ./gradlew -q :awake:backend:vulkan:properties \
+  --no-configuration-cache | awk '$1 == "version:" { print $2; exit }')
+if [[ -z "$CORE_VERSION" || -z "$VULKAN_VERSION" ]]; then
+  echo "Could not read both publication-family versions from Gradle" >&2
   exit 1
 fi
 
-echo "==> Pointing the template at Awake $VERSION"
-# The catalog pins whatever the last release was; this run is about the artifacts built here.
+echo "==> Pointing the template at Core $CORE_VERSION and Vulkan $VULKAN_VERSION"
+# The catalog pins whatever releases the template last used; this run is about the artifacts built
+# here. The transformation also lets Core CI exercise the new split before the template PR merges.
 CATALOG="$CHECKOUT/gradle/libs.versions.toml"
-sed -i.bak -E "s/^awake = \".*\"/awake = \"$VERSION\"/" "$CATALOG" && rm -f "$CATALOG.bak"
-grep -E '^awake = ' "$CATALOG"
+CORE_VERSION="$CORE_VERSION" VULKAN_VERSION="$VULKAN_VERSION" perl -0pi -e \
+  's/^awake = ".*"$/awake = "$ENV{CORE_VERSION}"/m;
+   if (!/^awake-vulkan = /m) {
+     s/^(awake = ".*")$/$1\nawake-vulkan = "$ENV{VULKAN_VERSION}"/m;
+   } else {
+     s/^awake-vulkan = ".*"$/awake-vulkan = "$ENV{VULKAN_VERSION}"/m;
+   }
+   s/(^awake-backend-vulkan = \{[^\n]*version\.ref = )"awake"/${1}"awake-vulkan"/m' \
+  "$CATALOG"
+
+# Snapshot family artifacts are served from Central's dedicated snapshot repository.
+SETTINGS="$CHECKOUT/settings.gradle.kts"
+if ! rg -q 'central\.sonatype\.com/repository/maven-snapshots' "$SETTINGS"; then
+  perl -0pi -e 's#(dependencyResolutionManagement\s*\{\s*repositories\s*\{\n)#$1        maven("https://central.sonatype.com/repository/maven-snapshots/")\n#' "$SETTINGS"
+fi
+grep -E '^awake(-vulkan)? = ' "$CATALOG"
 
 # Android needs an SDK location, and a fresh copy has no local.properties.
 if [[ -n "${ANDROID_HOME:-}" ]]; then
@@ -100,5 +116,5 @@ else
 fi
 
 echo
-echo "Template builds against Awake $VERSION as a published dependency."
+echo "Template builds against Core $CORE_VERSION and Vulkan $VULKAN_VERSION as published dependencies."
 echo "Checkout kept at $CHECKOUT"

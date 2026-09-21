@@ -44,6 +44,9 @@ jobs:
       - name: Verify the publication closure
         run: python3 tools/verify_publication_closure.py
 
+      - name: Test publication inventory and version-family POM checks
+        run: python3 -m unittest tools.test_publication_inventory
+
       - name: Verify API surface
         run: ./gradlew apiCheck
 

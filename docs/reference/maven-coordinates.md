@@ -1,178 +1,108 @@
-# Maven coordinates
+# Maven coordinates and publication dependency graph
 
-The frozen publication surface: what an external consumer resolves, under what coordinates, and
-what deliberately stays unpublished. Phase 1 of the
-[Maven Central publication plan](../tasks/2026-08-29-maven-central-publication-plan.md).
+This page is the current Maven publication inventory, generated from the module build scripts. CI checks
+that every published main-source `api` and `implementation` project dependency also has a publication.
 
-Nothing here is aspirational — every coordinate below was printed from the build itself, not
-derived by hand. Regenerate with:
+Regenerate the table and machine-readable inventory with:
 
 ```bash
-./gradlew -I <init-script> printAwakeCoordinates -q
+python3 tools/verify_publication_closure.py --markdown
+python3 tools/verify_publication_closure.py --json
 ```
 
-## Namespace
+The Gradle modules listed here are published KMP root coordinates or single-platform artifacts; KMP
+root publications may also publish platform-specific companion coordinates.
 
-| Concern | Value |
-|---|---|
-| Maven group root | `com.awakekt.awake` |
-| Kotlin package root | `com.awakekt.awake` |
-| Version | derived from the nearest `v*` tag |
+## Dependency guidance for consumers
 
-The group keeps the hyphen and the package cannot: a hyphen is legal in a group ID and illegal in a
-Kotlin package name. They are intentionally spelled differently, and this is the one place that
-says so.
+Declare the Awake artifacts your code directly uses. Gradle and Maven follow the published metadata
+to bring in their internal dependencies; consumers should not copy the entire closure into their own
+version catalog. `api` edges expose dependency types on the published compile API. `implementation`
+edges remain required runtime dependencies but are not part of the consumer-facing compile API.
 
-## How a coordinate is derived
+A CI closure failure means a published POM or Gradle module file would name an Awake project that has
+no published artifact. Test-source dependencies are intentionally excluded.
 
-`group` carries the module's **parent path**; `artifactId` is the module's own directory name.
+## Release families
 
-```text
-:awake:compose:runtime  ->  com.awakekt.awake.compose:runtime
-:awake:scene:runtime    ->  com.awakekt.awake.scene:runtime
-:awake:ecs              ->  com.awakekt.awake:ecs
-```
+| Family | Published modules | Version source |
+|---|---:|---|
+| Core | 59 | Existing root `v*` tags and the shared Core release train |
+| Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 
-The parent path is load-bearing rather than decorative. Gradle identifies a project by the
-capability `group:name`, and `name` is only the last path segment, so a single flat group would
-give `:awake:compose:runtime` and `:awake:scene:runtime` the same coordinate — and Gradle resolves
-that by silently substituting one project for the other. Five names collide in this repo:
-`animation`, `benchmark`, `physics`, `runtime` and `ui`. A configuration-time check in the root
-build fails the build if any pair ever shares coordinates again, because the last occurrence
-surfaced as a circular task graph pointing at neither culprit.
+Vulkan snapshots pin the exact Core snapshot used for integration. Vulkan releases depend on an
+exact, published non-snapshot Core release. The family workflow assigns that Core version to
+non-Vulkan dependencies and verifies the complete pinned Core dependency closure exists on Maven
+Central before release upload. The published POM and Gradle module metadata carry the same exact
+dependency versions. No published Core module has a main-source dependency on the Vulkan family.
 
-## Version scheme
+For development, use `0.1.0-SNAPSHOT` for the Vulkan family until its first `vulkan-vX.Y.Z` tag.
+Commits after a family release use the next patch `-SNAPSHOT`; a family tag publishes only the three
+Vulkan modules. Core `v*` releases and main snapshots do not publish or change their Vulkan versions.
 
-Derived from `git describe --tags --match v*`:
+## Publication inventory
 
-| Git state | Version | Publishable |
-|---|---|---|
-| HEAD exactly on `v0.1.0-dev.1` | `0.1.0-dev.1` | Yes — immutable release |
-| 3 commits past that tag | `0.1.0-dev.2-SNAPSHOT` | Snapshot only |
-| No reachable tag | `0.1.0-dev.0-SNAPSHOT` | Snapshot only |
-
-A stable version therefore cannot drift from its tag, and an untagged build cannot be mistaken for
-a release.
-
-## Published surface
-
-The template consumes four artifacts directly:
-
-| Coordinate | Module |
-|---|---|
-| `com.awakekt.awake.engine:bootstrap` | `:awake:engine:bootstrap` |
-| `com.awakekt.awake.asset:shaders` | `:awake:asset:shaders` |
-| `com.awakekt.awake.backend:vulkan` | `:awake:backend:vulkan` |
-| `com.awakekt.awake.backend:webgpu` | `:awake:backend:webgpu` |
-
-Their `api` and `implementation` closure over **main** source sets is 38 modules. Test-only edges
-are excluded — a `commonTest` dependency never reaches a consumer.
-
-Two modules override the derived coordinate deliberately, and keep the names their consumers
-already use:
-
-| Module | Coordinate |
-|---|---|
-| `:awake:backend:vulkan:bindings` | `com.awakekt.awake:vulkan-kmp` |
-| `:awake:backend:vulkan:bindings:android-native` | `com.awakekt.awake:vulkan-kmp-android-native` |
-
-`android-native` is a plain Android library rather than a KMP one -- AGP's KMP plugin has no
-`externalNativeBuild`, which is why the CMake/NDK build lives in its own module -- so it declares an
-`AndroidSingleVariantLibrary` publication of its own instead of taking the shared convention.
-
-### Already publishing before Phase 2 (21)
-
-`com.awakekt.awake.asset`: `gltf`, `shader-compiler`, `shader-dsl`, `shader-pack`, `shaders`,
-`terrain` · `com.awakekt.awake.backend.vulkan`: `bindings` ·
-`com.awakekt.awake.core`: `animation`, `color`, `geometry`, `graphics2d`, `host`, `image`,
-`input`, `logging`, `math`, `math2d` · `com.awakekt.awake.engine.render`: `passes2d` ·
-`com.awakekt.awake`: `ecs`, `scene`
-
-### Enabled in Phase 2 (18)
-
-All of these now apply `awake.publish-convention`.
-
-| Coordinate | Module | Why it ships |
-|---|---|---|
-| `com.awakekt.awake.engine:bootstrap` | `:awake:engine:bootstrap` | Direct template dependency |
-| `com.awakekt.awake.backend:vulkan` | `:awake:backend:vulkan` | Direct template dependency |
-| `com.awakekt.awake.backend:webgpu` | `:awake:backend:webgpu` | Direct template dependency |
-| `com.awakekt.awake.engine:platform` | `:awake:engine:platform` | App lifecycle and windowing |
-| `com.awakekt.awake.engine:compose` | `:awake:engine:compose` | UI host used by bootstrap |
-| `com.awakekt.awake.engine.render:contract` | `:awake:engine:render:contract` | `Renderer`, `Mesh`, `Material` |
-| `com.awakekt.awake.engine.render:passes` | `:awake:engine:render:passes` | Render features and pipelines |
-| `com.awakekt.awake.compose:runtime` | `:awake:compose:runtime` | Composer used by every UI |
-| `com.awakekt.awake.compose:ui` | `:awake:compose:ui` | Modifiers, layout, semantics |
-| `com.awakekt.awake.core:text` | `:awake:core:text` | Font and shaping types |
-| `com.awakekt.awake.physics:api` | `:awake:physics:api` | Physics facade |
-| `com.awakekt.awake.scene:scene-core` | `:awake:scene:scene-core` | Components, systems, streaming |
-| `com.awakekt.awake.scene:scene3d` | `:awake:scene:scene3d` | Camera, lights, mesh renderer |
-| `com.awakekt.awake.scene:runtime` | `:awake:scene:runtime` | Scene documents and lifecycle |
-| `com.awakekt.awake.scene:authoring` | `:awake:scene:authoring` | The scene/app DSL |
-| `com.awakekt.awake.scene:controls` | `:awake:scene:controls` | Camera and input controls |
-| `com.awakekt.awake.scene:physics` | `:awake:scene:physics` | Physics components and systems |
-| `com.awakekt.awake.scene:navigation` | `:awake:scene:navigation` | NavGrid, streamed navigation, path requests |
-| `com.awakekt.awake.compose:foundation` | `:awake:compose:foundation` | Layout and modifier API |
-
-`:awake:scene:navigation` and `:awake:compose:foundation` are in the list although nothing the four
-template artifacts reach depends on them. Both are consumer-facing — a game needs navigation, a UI
-needs `Column`, `Row` and the modifier API — and a coordinate is free to add before the first
-release and permanent after it. That was open decision 2; it is now taken.
-
-### Deliberately not published
-
-| Module | Reason |
-|---|---|
-| `:samples:*` | Demonstrations. They consume the engine; nothing consumes them. |
-| `:awake:*:benchmark`, `:awake:ecs:benchmark` | Measurement harnesses, not API. |
-| `:awake:backend:vulkan:generator`, `:awake:tailwind-generator`, `:awake:ui:font-atlas-generator` | Build-time code generators. |
-| `:awake:asset:mesh-optimizer` | Asset-cooking tool, not runtime. |
-| `:awake:compose:ui-testing` | Test infrastructure. |
-| `:awake:editor`, `:awake:editor:scene` | Editor shell — not part of the runtime a game ships. |
-| `:awake:ui:shadcn`, `:awake:ui:material3`, `:awake:heroicons`, `:awake:tailwind` | Design-system surface pending the `:awake:compose` migration; publishing now would freeze names that are about to move. |
-| `:awake:backend:jolt` | Physics backend not yet in the template's supported matrix. |
-
-## Guarding what is produced
-
-Two scripts, both runnable by hand and both cheap:
-
-| Script | Answers |
-|---|---|
-| `tools/verify_publication_closure.py` | Does a published module depend on an unpublished one? |
-| `tools/verify_published_artifacts.py` | Did `publishToMavenLocal` produce POMs Central will accept, with sources, javadoc and module metadata? |
-
-The second needs a local publish first:
-
-```bash
-./gradlew publishToMavenLocal -PisMainHost=true
-python3 tools/verify_published_artifacts.py
-```
-
-## Guarding the closure
-
-`tools/verify_publication_closure.py` fails when a published module depends on an unpublished one.
-A project dependency becomes a coordinate in the published POM, so an unpublished edge builds,
-publishes and passes every test here, then fails in a consumer's build — the worst place to learn
-about it. Test-source edges are ignored, because a `commonTest` dependency never reaches anyone.
-
-It reports no failures. The one it used to -- `:awake:backend:vulkan` needing
-`:awake:engine:render:testing` from `commonMain` -- is resolved: see decision 1.
-
-## Open decisions
-
-**1. `:awake:engine:render:testing` was in the shipped closure. Resolved.**
-`FrameCapture` and `PixelMap` now live in `:awake:engine:render:contract` under
-`com.awakekt.awake.render.capture`, and `:awake:backend:vulkan` depends on
-`:awake:engine:render:testing` from tests only. Rendering into an offscreen target and reading its
-pixels back is a renderer capability; that it was first needed by tests is how it ended up in a
-module named *testing*, not what it is. The two detekt findings on `PixelMap.blend` moved with the
-file rather than being re-suppressed.
-
-**2. `:awake:scene:navigation` and `:awake:compose:foundation` — decided: both publish.**
-Neither is reachable from the four template artifacts, so neither would have shipped, and a
-consumer could have used neither navigation nor foundation's layout API. Both now publish.
-
-**3. WebGPU's snapshot dependency.**
-`:awake:backend:webgpu` depends on snapshot `wgpu4k` artifacts. A released Awake artifact must not
-depend on a snapshot an external consumer cannot resolve — either the dependency reaches a stable
-version first, or the repository hosting it is documented as required.
+| Coordinate | Gradle module | Release family | Direct main-source project dependencies |
+|---|---|---|---|
+| `com.awakekt.awake:ai` | `:awake:ai` | `core` | `api` → `:awake:ecs` |
+| `com.awakekt.awake.ai:behavior` | `:awake:ai:behavior` | `core` | `api` → `:awake:ai`; `api` → `:awake:core:math`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `api` → `:awake:navigation` |
+| `com.awakekt.awake.asset:gltf` | `:awake:asset:gltf` | `core` | `implementation` → `:awake:core:image`; `implementation` → `:awake:core:io`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:geometry`; `implementation` → `:awake:core:animation` |
+| `com.awakekt.awake.asset:shader-compiler` | `:awake:asset:shader-compiler` | `core` | — |
+| `com.awakekt.awake.asset:shader-dsl` | `:awake:asset:shader-dsl` | `core` | `api` → `:awake:core:geometry`; `api` → `:awake:engine:render:contract` |
+| `com.awakekt.awake.asset:shader-pack` | `:awake:asset:shader-pack` | `core` | `api` → `:awake:engine:render:contract`; `api` → `:awake:asset:shaders`; `api` → `:awake:engine:render:passes`; `api` → `:awake:asset:shader-dsl`; `api` → `:awake:asset:terrain` |
+| `com.awakekt.awake.asset:shaders` | `:awake:asset:shaders` | `core` | `implementation` → `:awake:core:host`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes`; `api` → `:awake:asset:shader-dsl` |
+| `com.awakekt.awake.asset:terrain` | `:awake:asset:terrain` | `core` | `api` → `:awake:core:color`; `api` → `:awake:core:geometry`; `api` → `:awake:core:image`; `api` → `:awake:core:math` |
+| `com.awakekt.awake.backend:jolt` | `:awake:backend:jolt` | `core` | `api` → `:awake:physics:api`; `implementation` → `:awake:core:math` |
+| `com.awakekt.awake.backend:vulkan` | `:awake:backend:vulkan` | `vulkan` | `implementation` → `:awake:engine:render:passes2d`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:host`; `implementation` → `:awake:core:image`; `implementation` → `:awake:core:input`; `implementation` → `:awake:core:logging`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:text`; `api` → `:awake:engine:render:contract`; `implementation` → `:awake:engine:render:passes`; `api` → `:awake:backend:vulkan:bindings`; `api` → `:awake:engine:platform`; `api` → `:awake:asset:shaders`; `implementation` → `:awake:asset:shader-compiler`; `api` → `:awake:engine:render:testing`; `implementation` → `:awake:asset:shader-pack` |
+| `com.awakekt.awake:vulkan-kmp` | `:awake:backend:vulkan:bindings` | `vulkan` | `api` → `:awake:backend:vulkan:bindings:android-native` |
+| `com.awakekt.awake:vulkan-kmp-android-native` | `:awake:backend:vulkan:bindings:android-native` | `vulkan` | — |
+| `com.awakekt.awake.backend:webgpu` | `:awake:backend:webgpu` | `core` | `implementation` → `:awake:engine:render:passes2d`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:host`; `implementation` → `:awake:core:input`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:text`; `api` → `:awake:engine:render:contract`; `implementation` → `:awake:engine:render:passes`; `api` → `:awake:asset:shaders`; `implementation` → `:awake:asset:shader-pack`; `api` → `:awake:engine:render:testing`; `api` → `:awake:engine:platform` |
+| `com.awakekt.awake.compose:di` | `:awake:compose:di` | `core` | `api` → `:awake:compose:runtime`; `api` → `:awake:core:di` |
+| `com.awakekt.awake.compose:foundation` | `:awake:compose:foundation` | `core` | `api` → `:awake:compose:ui` |
+| `com.awakekt.awake.compose:runtime` | `:awake:compose:runtime` | `core` | — |
+| `com.awakekt.awake.compose:state` | `:awake:compose:state` | `core` | `api` → `:awake:compose:runtime`; `api` → `:awake:core:state` |
+| `com.awakekt.awake.compose:ui` | `:awake:compose:ui` | `core` | `api` → `:awake:core:graphics2d`; `api` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `api` → `:awake:core:color`; `api` → `:awake:core:input`; `api` → `:awake:compose:runtime`; `api` → `:awake:core:text` |
+| `com.awakekt.awake.compose:ui-testing` | `:awake:compose:ui-testing` | `core` | `api` → `:awake:compose:foundation`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:engine:render:testing`; `implementation` → `:awake:core:text` |
+| `com.awakekt.awake.core:animation` | `:awake:core:animation` | `core` | `implementation` → `:awake:core:math` |
+| `com.awakekt.awake.core:audio` | `:awake:core:audio` | `core` | `api` → `:awake:core:math`; `implementation` → `:awake:core:io` |
+| `com.awakekt.awake.core:color` | `:awake:core:color` | `core` | — |
+| `com.awakekt.awake.core:config` | `:awake:core:config` | `core` | — |
+| `com.awakekt.awake.core:di` | `:awake:core:di` | `core` | — |
+| `com.awakekt.awake.core:geometry` | `:awake:core:geometry` | `core` | `api` → `:awake:core:math` |
+| `com.awakekt.awake.core:graphics2d` | `:awake:core:graphics2d` | `core` | `api` → `:awake:core:math2d`; `api` → `:awake:core:color`; `api` → `:awake:core:geometry` |
+| `com.awakekt.awake.core:host` | `:awake:core:host` | `core` | — |
+| `com.awakekt.awake.core:image` | `:awake:core:image` | `core` | — |
+| `com.awakekt.awake.core:input` | `:awake:core:input` | `core` | — |
+| `com.awakekt.awake.core:io` | `:awake:core:io` | `core` | — |
+| `com.awakekt.awake.core:logging` | `:awake:core:logging` | `core` | — |
+| `com.awakekt.awake.core:math` | `:awake:core:math` | `core` | `api` → `:awake:core:math2d` |
+| `com.awakekt.awake.core:math2d` | `:awake:core:math2d` | `core` | — |
+| `com.awakekt.awake.core:state` | `:awake:core:state` | `core` | — |
+| `com.awakekt.awake.core:text` | `:awake:core:text` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color` |
+| `com.awakekt.awake:ecs` | `:awake:ecs` | `core` | — |
+| `com.awakekt.awake.editor:contract` | `:awake:editor:contract` | `core` | `api` → `:awake:core:math`; `api` → `:awake:core:input`; `api` → `:awake:core:state`; `api` → `:awake:core:di` |
+| `com.awakekt.awake.engine:bootstrap` | `:awake:engine:bootstrap` | `core` | `implementation` → `:awake:core:di`; `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `api` → `:awake:engine:platform` |
+| `com.awakekt.awake.engine:compose` | `:awake:engine:compose` | `core` | `api` → `:awake:engine:platform`; `api` → `:awake:compose:ui`; `api` → `:awake:core:text` |
+| `com.awakekt.awake.engine:platform` | `:awake:engine:platform` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `api` → `:awake:core:host`; `implementation` → `:awake:core:image`; `implementation` → `:awake:core:input`; `implementation` → `:awake:core:logging`; `api` → `:awake:engine:render:contract` |
+| `com.awakekt.awake.engine.render:contract` | `:awake:engine:render:contract` | `core` | `api` → `:awake:core:graphics2d`; `api` → `:awake:core:text`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:math`; `api` → `:awake:core:geometry` |
+| `com.awakekt.awake.engine.render:passes` | `:awake:engine:render:passes` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `api` → `:awake:core:math`; `api` → `:awake:engine:render:contract` |
+| `com.awakekt.awake.engine.render:passes2d` | `:awake:engine:render:passes2d` | `core` | `api` → `:awake:engine:render:passes`; `api` → `:awake:engine:render:contract`; `api` → `:awake:core:math`; `api` → `:awake:core:graphics2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:geometry` |
+| `com.awakekt.awake.engine.render:testing` | `:awake:engine:render:testing` | `core` | `implementation` → `:awake:core:color`; `api` → `:awake:engine:render:contract` |
+| `com.awakekt.awake:heroicons` | `:awake:heroicons` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `api` → `:awake:compose:ui` |
+| `com.awakekt.awake:navigation` | `:awake:navigation` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:world`; `api` → `:awake:asset:terrain`; `api` → `:awake:engine:render:contract` |
+| `com.awakekt.awake.net:api` | `:awake:net:api` | `core` | — |
+| `com.awakekt.awake.physics:api` | `:awake:physics:api` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:geometry` |
+| `com.awakekt.awake:project` | `:awake:project` | `core` | — |
+| `com.awakekt.awake.scene:audio` | `:awake:scene:audio` | `core` | `api` → `:awake:core:audio`; `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:scene:scene-core` |
+| `com.awakekt.awake.scene:authoring` | `:awake:scene:authoring` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:scene3d`; `api` → `:awake:scene:controls`; `api` → `:awake:scene:runtime`; `api` → `:awake:scene:audio`; `api` → `:awake:engine:bootstrap` |
+| `com.awakekt.awake.scene:binding` | `:awake:scene:binding` | `core` | `api` → `:awake:ecs`; `api` → `:awake:core:logging`; `api` → `:awake:scene:document` |
+| `com.awakekt.awake.scene:controls` | `:awake:scene:controls` | `core` | `api` → `:awake:core:input`; `api` → `:awake:scene:scene-core`; `implementation` → `:awake:core:math`; `api` → `:awake:scene:scene3d`; `api` → `:awake:compose:ui` |
+| `com.awakekt.awake.scene:document` | `:awake:scene:document` | `core` | `api` → `:awake:core:math`; `api` → `:awake:core:color`; `api` → `:awake:core:logging`; `api` → `:awake:core:host`; `api` → `:awake:core:io` |
+| `com.awakekt.awake.scene:physics` | `:awake:scene:physics` | `core` | `implementation` → `:awake:core:math`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:world`; `api` → `:awake:physics:api`; `api` → `:awake:core:animation`; `api` → `:awake:engine:render:contract` |
+| `com.awakekt.awake.scene:runtime` | `:awake:scene:runtime` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:host`; `implementation` → `:awake:core:input`; `api` → `:awake:core:logging`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:world`; `api` → `:awake:scene:scene3d`; `api` → `:awake:core:math`; `api` → `:awake:core:audio`; `api` → `:awake:scene:audio`; `api` → `:awake:ecs`; `api` → `:awake:engine:platform`; `api` → `:awake:engine:compose`; `api` → `:awake:core:text`; `api` → `:awake:compose:ui`; `api` → `:awake:engine:render:contract`; `api` → `:awake:compose:runtime` |
+| `com.awakekt.awake.scene:scene-core` | `:awake:scene:scene-core` | `core` | `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding` |
+| `com.awakekt.awake.scene:scene3d` | `:awake:scene:scene3d` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math`; `api` → `:awake:core:color`; `implementation` → `:awake:core:animation`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:world`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `api` → `:awake:engine:render:contract`; `api` → `:awake:engine:render:passes`; `api` → `:awake:asset:terrain`; `api` → `:awake:asset:shader-pack` |
+| `com.awakekt.awake.scene:world` | `:awake:scene:world` | `core` | `api` → `:awake:scene:scene-core` |
+| `com.awakekt.awake:tailwind` | `:awake:tailwind` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `api` → `:awake:compose:foundation` |
+| `com.awakekt.awake.ui:builder` | `:awake:ui:builder` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `implementation` → `:awake:tailwind`; `implementation` → `:awake:heroicons`; `implementation` → `:awake:compose:foundation`; `implementation` → `:awake:ui:shadcn` |
+| `com.awakekt.awake.ui:shadcn` | `:awake:ui:shadcn` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `api` → `:awake:tailwind`; `api` → `:awake:heroicons`; `api` → `:awake:compose:foundation` |

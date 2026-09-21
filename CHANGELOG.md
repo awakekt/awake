@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Dependency-aware Vulkan release family.** Version the Vulkan renderer, raw bindings, and Android JNI bridge together, independently from the shared Core release train, with exact stable Core dependency pins.
 - **Stable shadow cascade transitions and camera-centered debug grid.** Blend shadow sampling across cascade edges, keep third-person camera poses synchronized with their targets, and center the infinite grid overlay on the active camera.
 - **Public editor plugin contract and project plugin SHA-256 pin.** Added public `:awake:editor:contract` module with `EditorPlugin`, `EditorProvider`, `PluginManifest`, and `AssetConverterPlugin` contracts for open-source and commercial plugin authoring. Added optional `sha256` content integrity pin and default version semantics to `AwakeProjectPluginReference` in `:awake:project`.
 - **Three-layer architecture governance and Awake Core Editor skill.** Formally codified the 3-layer architecture (Awake Core, Awake Core Editor, Awake Studio Pro) across agent guides and skills, adding the new `awake-core-editor` skill.
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Publication inventory and release dependency validation.** Inventory every published coordinate and direct API/runtime edge, and reject snapshot dependencies instead of rewriting them to unverified stable versions.
 - **Separated agent-skill ownership from Awake product tooling.** Public `awake-*` guidance now ships from the Apache-2.0 `awake-agent-skills` bundle, Studio scoring and creative roles ship from a private `studio-*` overlay, vendor KMP content is pinned upstream, and UI/icon tooling now lives in stable `tools/` paths independent of agent installation.
 - **Canonicalized `:awake:project` and retired `V1` suffixes.** Replaced legacy `AwakeProjectManifestV1`, `AwakeProjectPluginReferenceV1`, `AwakeAssetsLockV1`, `AwakeAssetLockEntryV1`, and `AwakeProjectV1Validator` with canonical `AwakeProjectManifest`, `AwakeProjectPluginReference`, `AwakeAssetsLock`, `AwakeAssetLockEntry`, and `AwakeProjectValidator`. Fully retired deprecated legacy `AwakeProject.kt` manifest format.
 - **Retired deprecated editor shims.** Removed deprecated `EditorProviderKind.Dock` from `:awake:editor:contract`.
