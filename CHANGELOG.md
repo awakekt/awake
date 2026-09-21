@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Published Awake Gradle plugins.** Publish only the `application`, `library`, `shader-pipeline`, `dokka`, `detekt`, and `spotless` plugin IDs to Maven Central, using the engine's tag-derived version and keeping internal convention markers private.
 - **Dependency-aware Vulkan release family.** Version the Vulkan renderer, raw bindings, and Android JNI bridge together, independently from the shared Core release train, with exact stable Core dependency pins.
 - **Stable shadow cascade transitions and camera-centered debug grid.** Blend shadow sampling across cascade edges, keep third-person camera poses synchronized with their targets, and center the infinite grid overlay on the active camera.
 - **Public editor plugin contract and project plugin SHA-256 pin.** Added public `:awake:editor:contract` module with `EditorPlugin`, `EditorProvider`, `PluginManifest`, and `AssetConverterPlugin` contracts for open-source and commercial plugin authoring. Added optional `sha256` content integrity pin and default version semantics to `AwakeProjectPluginReference` in `:awake:project`.

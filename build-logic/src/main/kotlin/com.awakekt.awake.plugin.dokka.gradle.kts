@@ -12,6 +12,10 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
+val sourceRepository = providers.gradleProperty("awake.dokka.sourceRepository")
+    .map { it.trimEnd('/') }
+    .orElse("https://github.com/awakekt/awake/blob/main")
+
 dokka {
     // 1. Configure the primary HTML website generation publication task
     dokkaPublications.html {
@@ -61,7 +65,7 @@ dokka {
         sourceLink {
             localDirectory.set(projectDir.resolve("src"))
             val relativePath = project.path.removePrefix(":").replace(":", "/")
-            remoteUrl.set(URI("https://github.com/awakekt/awake/blob/main/$relativePath/src"))
+            remoteUrl.set(URI("${sourceRepository.get().trimEnd('/')}/$relativePath/src"))
             remoteLineSuffix.set("#L")
         }
     }

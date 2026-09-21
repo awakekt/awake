@@ -170,6 +170,9 @@ jobs:
       - name: Verify no product tooling depends on agent bundles
         run: python3 tools/verify_no_agent_runtime_dependencies.py
 
+      - name: Verify the public Awake Gradle plugin set
+        run: ./gradlew -p build-logic verifyAwakePluginPublications build --no-configuration-cache
+
   # Builds awake-template against these artifacts, the way someone who clicked "Use this template"
   # would. Every bug this has caught -- a package namespace the template never followed, two
   # libraries claiming one Android namespace -- is invisible from inside either repository, because
@@ -303,6 +306,8 @@ jobs:
                     -Pawake.publishFamily=core \
                     --no-configuration-cache \
                     --max-workers=4
+          ./gradlew -p build-logic publishAllPublicationsToMavenCentralRepository \
+                    --no-configuration-cache
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
@@ -423,6 +428,8 @@ jobs:
           ./gradlew publishAllPublicationsToMavenCentralRepository \
                     -PisMainHost=true \
                     -Pawake.publishFamily=core \
+                    --no-configuration-cache
+          ./gradlew -p build-logic publishAllPublicationsToMavenCentralRepository \
                     --no-configuration-cache
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
