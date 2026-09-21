@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup JDK
         uses: actions/setup-java@v5
@@ -36,7 +36,9 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Setup Gradle (with cache)
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
 
       - name: Install NDK and CMake
         run: |
@@ -64,6 +66,24 @@ jobs:
       - name: Every desktop test source set compiles
         run: ./gradlew compileTestKotlinDesktop
 
+      # This deterministic geometry-cost ratchet protects the CPU-side UI upload workload; it is
+      # not a real-device FPS measurement.
+      # Keep it as an explicit PR check so the test cannot silently regress to compile-only.
+      - name: Core UI frame-cost ratchet (FPS proxy)
+        run: >-
+          ./gradlew :awake:ui:shadcn:desktopTest
+          --tests com.awakekt.awake.ui.shadcn.UiFrameCostRatchetTest
+          --no-daemon --stacktrace
+
+      - name: Upload Core UI frame-cost report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: core-ui-frame-cost-proxy
+          path: awake/ui/shadcn/build/test-results/desktopTest/TEST-com.awakekt.awake.ui.shadcn.UiFrameCostRatchetTest.xml
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Jolt desktop physics tests
         run: ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest
 
@@ -88,7 +108,7 @@ jobs:
 
       - name: Upload test reports on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: engine-showcase-test-reports
           path: samples/engine-showcase/build/reports/tests/
@@ -108,7 +128,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup JDK
         uses: actions/setup-java@v5
@@ -117,7 +137,9 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Setup Gradle (with cache)
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
 
       # libvulkan-dev: Vulkan headers + loader, for CMake's find_package(Vulkan) and
       # desktopMain's System.loadLibrary("awake-vulkan") to link/load against at run time.
@@ -154,7 +176,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # The shared iOS-native action builds both MoltenVK and JoltC from these pinned submodules.
           submodules: recursive
@@ -166,7 +188,9 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Setup Gradle (with cache)
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
 
       - name: Install Vulkan tools (macOS)
         run: brew install vulkan-loader molten-vk glfw
@@ -209,7 +233,7 @@ jobs:
 
       - name: Upload iOS physics test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-physics-test-results
           path: |
@@ -224,7 +248,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup JDK
         uses: actions/setup-java@v5
@@ -233,7 +257,9 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
 
       - name: Setup Gradle (with cache)
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
 
       - name: Wasm/WebGPU browser verification (headless Chrome)
         run: ./gradlew :samples:ui-showcase:wasmJsBrowserTest :samples:engine-showcase:wasmJsBrowserTest
