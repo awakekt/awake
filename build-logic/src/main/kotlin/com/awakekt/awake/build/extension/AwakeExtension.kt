@@ -43,10 +43,7 @@ class AwakeDesktopAppSpec(private val project: Project) {
             classpath = project.files(
                 project.layout.buildDirectory.dir("classes/kotlin/desktop/main"),
                 project.layout.buildDirectory.dir("processedResources/desktop/main"),
-                project.provider {
-                    val kotlinExt = project.extensions.findByType(KotlinMultiplatformExtension::class.java)
-                    kotlinExt?.jvm("desktop")?.compilations?.findByName("main")?.runtimeDependencyFiles
-                },
+                project.desktopRuntimeDependencyConfiguration(),
             )
             environment(VulkanDesktopEnv.environment())
             if (HostOs.isMac) {
