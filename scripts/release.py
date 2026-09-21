@@ -34,7 +34,9 @@ def run(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
 
 
 def get_latest_tag(channel: str = "") -> str:
-    match_pattern = f"v*-{channel}.*" if channel else "v*"
+    # Root Core versions begin v followed by a digit; `v*` would also match the independent
+    # `vulkan-v*` family tags and could advance the wrong release stream.
+    match_pattern = f"v[0-9]*-{channel}.*" if channel else "v[0-9]*"
     result = run(
         ["git", "describe", "--tags", "--match", match_pattern, "--abbrev=0"],
         check=False,
@@ -42,9 +44,9 @@ def get_latest_tag(channel: str = "") -> str:
     if result.returncode == 0 and result.stdout.strip():
         return result.stdout.strip()
 
-    # Fallback to general v* tag lookup
+    # Fallback to the latest Core version tag
     result_fallback = run(
-        ["git", "describe", "--tags", "--match", "v*", "--abbrev=0"], check=False
+        ["git", "describe", "--tags", "--match", "v[0-9]*", "--abbrev=0"], check=False
     )
     return (
         result_fallback.stdout.strip() if result_fallback.returncode == 0 else ""

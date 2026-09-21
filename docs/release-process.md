@@ -43,7 +43,7 @@ To maintain high development velocity while ensuring release stability:
 
 ## 2. Versioning & Lifecycle Scheme
 
-Version numbers are derived dynamically from Git tags using `git describe` in `build.gradle.kts`:
+The shared Core train is derived dynamically from Git tags using `git describe` in `build.gradle.kts`:
 
 | Phase                 | Tag Format       | Maven Version   | Description                                               |
 |:----------------------|:-----------------|:----------------|:----------------------------------------------------------|
@@ -55,6 +55,35 @@ Version numbers are derived dynamically from Git tags using `git describe` in `b
 
 > **SNAPSHOT Behavior:** Any local or CI commit after a tag automatically appends `-SNAPSHOT` (e.g.,
 `0.1.0-alpha.2-SNAPSHOT`), ensuring unreleased local builds never collide with published releases.
+
+### Independent Vulkan family
+
+The Vulkan renderer, raw bindings, and Android JNI bridge are one release family of three published
+modules. No published Core module depends on them, so they use a separate version without splitting
+the repository. The other 59 published modules remain on the shared Core train.
+
+| Git state | Vulkan version | Behavior |
+|---|---|---|
+| No `vulkan-v*` tag | `0.1.0-SNAPSHOT` | Initial family snapshot |
+| HEAD on `vulkan-v0.1.0` | `0.1.0` | Immutable Vulkan-family release |
+| Commits after `vulkan-v0.1.0` | `0.1.1-SNAPSHOT` | Next patch snapshot |
+
+Vulkan snapshots pin `awake.coreVersion` to the exact Core snapshot they integrate with. Vulkan
+releases must pin it to an exact published, non-snapshot Core release; the workflow selects the
+latest reachable Core release tag and verifies its complete dependency closure exists on Maven
+Central before upload. Local publication may pass `-Pawake.coreVersion=<version>` explicitly. Both
+the Maven POM and Gradle module metadata use that Core version for non-Vulkan dependencies and the
+family version for Vulkan-family dependencies. Snapshot POMs may contain snapshot dependencies;
+release verification rejects them and does not strip the suffix.
+
+Core `v*` snapshots and releases publish only the Core family. Vulkan snapshots publish only when a
+Vulkan-family source/build change occurs; `vulkan-v*` tags publish only the three Vulkan modules.
+Consumers normally declare the modules they directly use and let Maven/Gradle resolve their
+published dependency metadata; they do not need to list the full internal closure themselves.
+
+Release verification rejects SNAPSHOT dependencies instead of stripping the suffix and guessing a
+stable version. The current WebGPU backend still uses upstream SNAPSHOT dependencies, so a Core
+release will remain blocked until those dependencies have verified stable coordinates.
 
 ---
 

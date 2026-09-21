@@ -324,7 +324,7 @@ val gitDerivedVersion: String = run {
                 "describe",
                 "--tags",
                 "--match",
-                "v*",
+                "v[0-9]*",
                 "--always",
             )
         }.standardOutput.asText.get().trim()
@@ -339,6 +339,84 @@ val gitDerivedVersion: String = run {
             val bumped = Regex("""(\d+)$""").replace(base) { (it.value.toInt() + 1).toString() }
             "$bumped-SNAPSHOT"
         }
+    }
+}
+
+// Vulkan's renderer, raw bindings, and Android JNI bridge ship as one versioned family. They
+// depend on the Core release train, but no published Core module depends on them, so their release
+// cadence can be independent without changing the coordinates of unrelated artifacts.
+val vulkanFamilyProjects = setOf(
+    ":awake:backend:vulkan",
+    ":awake:backend:vulkan:bindings",
+    ":awake:backend:vulkan:bindings:android-native",
+)
+val gitDerivedVulkanVersion: String = run {
+    val describe = runCatching {
+        providers.exec {
+            commandLine(
+                "git", "-C", rootDir.absolutePath,
+                "describe", "--tags", "--long", "--match", "vulkan-v*", "--always",
+            )
+        }.standardOutput.asText.get().trim()
+    }.getOrDefault("")
+    val matched = Regex("""^vulkan-v(\d+\.\d+\.\d+)-(\d+)-g[0-9a-f]+$""").matchEntire(describe)
+    when {
+        matched == null -> "0.1.0-SNAPSHOT"
+        matched.groupValues[2].toInt() == 0 -> matched.groupValues[1]
+        else -> {
+            val baseVersion = matched.groupValues[1]
+            val latestTag = "vulkan-v$baseVersion"
+            val sourceDiff = runCatching {
+                providers.exec {
+                    commandLine(
+                        "git", "-C", rootDir.absolutePath,
+                        "diff", "--name-only", latestTag, "--", "awake/backend/vulkan",
+                    )
+                }.standardOutput.asText.get().trim()
+            }.getOrDefault("")
+            val untrackedSource = runCatching {
+                providers.exec {
+                    commandLine(
+                        "git", "-C", rootDir.absolutePath,
+                        "ls-files", "--others", "--exclude-standard", "--", "awake/backend/vulkan",
+                    )
+                }.standardOutput.asText.get().trim()
+            }.getOrDefault("")
+            if (sourceDiff.isBlank() && untrackedSource.isBlank()) {
+                // Core-only changes do not advance the Vulkan train or republish its artifacts.
+                baseVersion
+            } else {
+                val (major, minor, patch) = baseVersion.split('.').map(String::toInt)
+                "$major.$minor.${patch + 1}-SNAPSHOT"
+            }
+        }
+    }
+}
+
+val publishFamily = providers.gradleProperty("awake.publishFamily").orNull
+require(publishFamily == null || publishFamily in setOf("core", "vulkan")) {
+    "awake.publishFamily must be either 'core' or 'vulkan', not '$publishFamily'."
+}
+val pinnedCoreVersion = providers.gradleProperty("awake.coreVersion").orNull
+    ?: if (gitDerivedVulkanVersion.endsWith("-SNAPSHOT")) {
+        gitDerivedVersion
+    } else {
+        runCatching {
+            providers.exec {
+                commandLine(
+                    "git", "-C", rootDir.absolutePath,
+                    "describe", "--abbrev=0", "--tags", "--match", "v[0-9]*",
+                )
+            }.standardOutput.asText.get().trim().removePrefix("v")
+        }.getOrNull()?.takeIf(String::isNotBlank)
+    }
+if (publishFamily == "vulkan") {
+    require(!pinnedCoreVersion.isNullOrBlank()) {
+        "Publishing the Vulkan family requires an exact Core version pin. " +
+            "Pass -Pawake.coreVersion=<version>."
+    }
+    require(gitDerivedVulkanVersion.endsWith("-SNAPSHOT") || !pinnedCoreVersion.endsWith("-SNAPSHOT")) {
+        "A Vulkan release must depend on stable Core, got '$pinnedCoreVersion'."
     }
 }
 
@@ -372,7 +450,23 @@ allprojects {
             ?.takeIf { it.isNotEmpty() }
             ?.let { append('.').append(it) }
     }
-    version = gitDerivedVersion
+    version = when {
+        path in vulkanFamilyProjects -> gitDerivedVulkanVersion
+        publishFamily == "vulkan" -> pinnedCoreVersion!!
+        else -> gitDerivedVersion
+    }
+}
+
+// Keep the root Vanniktech bulk task usable while selecting one release family at a time. The
+// default (no property) still builds/publishes every configured module for local verification.
+tasks.withType<org.gradle.api.publish.maven.tasks.AbstractPublishToMaven>().configureEach {
+    onlyIf("publishes the requested Awake release family") {
+        when (publishFamily) {
+            "core" -> project.path !in vulkanFamilyProjects
+            "vulkan" -> project.path in vulkanFamilyProjects
+            else -> true
+        }
+    }
 }
 
 // Two projects sharing `group:name` is not a naming nit -- Gradle substitutes one for the other and

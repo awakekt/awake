@@ -16,6 +16,7 @@ on:
       - 'release/**'
     tags:
       - 'v*'
+      - 'vulkan-v*'
 
 permissions:
   contents: write
@@ -24,6 +25,46 @@ env:
   JAVA_VERSION: '17'
 
 jobs:
+  # Only Vulkan-family changes need the multi-runner native build. Core commits and releases keep
+  # their existing publication train without rebuilding or republishing the Vulkan artifacts.
+  changes:
+    name: Detect Vulkan-family changes
+    runs-on: ubuntu-latest
+    outputs:
+      vulkan: ${{ steps.filter.outputs.vulkan }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: filter
+        shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/vulkan-v* ]]; then
+            echo "vulkan=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "vulkan=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ -z "$BEFORE_SHA" || "$BEFORE_SHA" =~ ^0+$ ]]; then
+            echo "vulkan=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed_paths=$(git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA")
+          if grep -Eq '^awake/backend/vulkan/' <<< "$changed_paths"; then
+            echo "vulkan=true" >> "$GITHUB_OUTPUT"
+          elif [[ -z "$(git tag --list 'vulkan-v*' | head -n 1)" ]] && \
+            grep -Eq '^(build\.gradle\.kts|build-logic/.*|\.github/workflows/build-and-publish\.yml)$' <<< "$changed_paths"; then
+            # Bootstrap the independent train once. Afterwards, only Vulkan-family source changes
+            # publish a snapshot; Core-only commits neither bump nor republish the family.
+            echo "vulkan=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "vulkan=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # A host compiles only its own native library, so a jar covering more than one platform has to be
   # assembled from several runners. Each uploads just its `natives/<platform>/` directory; the
   # publish jobs below merge them before packaging.
@@ -111,6 +152,9 @@ jobs:
       - name: Verify the publication closure
         run: python3 tools/verify_publication_closure.py
 
+      - name: Test publication inventory
+        run: python3 -m unittest tools.test_publication_inventory
+
       - name: Verify Core capability boundaries
         run: python3 tools/verify_capability_boundaries.py
 
@@ -135,6 +179,8 @@ jobs:
   # untested anywhere in this repository.
   consumer:
     name: Verify template consumer integration
+    if: ${{ !startsWith(github.ref, 'refs/tags/vulkan-v') }}
+    needs: [natives]
     timeout-minutes: 30
     runs-on: macos-14
     steps:
@@ -167,13 +213,47 @@ jobs:
 
       - uses: ./.github/actions/ios-native
 
+      - name: Collect desktop natives for local publication
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: build/collected-natives/natives
+
+      - name: Name collected native directories by platform
+        run: |
+          cd build/collected-natives/natives
+          for d in native-*; do mv "$d" "${d#native-}"; done
+          ls -R .
+
       # Maven Local rather than the snapshot repository: this has to pass *before* anything is
       # uploaded, including the snapshot a consumer would otherwise be the first to try.
+      - name: Resolve both publication-family versions
+        run: |
+          echo "CORE_VERSION=$(./gradlew -q :awake:core:math:properties --no-configuration-cache \
+            | awk '/^version:/ { print $2 }')" >> "$GITHUB_ENV"
+          echo "VULKAN_VERSION=$(./gradlew -q :awake:backend:vulkan:properties --no-configuration-cache \
+            | awk '/^version:/ { print $2 }')" >> "$GITHUB_ENV"
+
       - name: Publish this build locally
-        run: ./gradlew publishToMavenLocal -PisMainHost=true --no-configuration-cache
+        run: |
+          if [[ "$VULKAN_VERSION" == *-SNAPSHOT ]]; then
+            ./gradlew publishToMavenLocal -PisMainHost=true \
+              -Pawake.prebuiltNatives=$PWD/build/collected-natives \
+              --no-configuration-cache
+          else
+            # A Core-only change tests against the last published Vulkan release rather than
+            # rebuilding that immutable coordinate with a newer Core snapshot in local Maven.
+            ./gradlew publishToMavenLocal -PisMainHost=true -Pawake.publishFamily=core \
+              --no-configuration-cache
+          fi
 
       - name: Verify what was published
-        run: python3 tools/verify_published_artifacts.py
+        run: |
+          python3 tools/verify_published_artifacts.py --family core --version "$CORE_VERSION"
+          if [[ "$VULKAN_VERSION" == *-SNAPSHOT ]]; then
+            python3 tools/verify_published_artifacts.py --family vulkan --version "$VULKAN_VERSION" \
+              --core-version "$CORE_VERSION"
+          fi
 
       - name: Build the template against it
         run: tools/check_template_consumer.sh consumer/awake-template "$RUNNER_TEMP/consumer"
@@ -184,7 +264,7 @@ jobs:
     name: Publish snapshot to Maven Central
     timeout-minutes: 60
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
-    needs: [natives, verify, consumer]
+    needs: [verify, consumer]
     runs-on: macos-14
     env:
       MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -210,26 +290,6 @@ jobs:
 
       - uses: ./.github/actions/ios-native
 
-      - name: Collect the per-platform natives
-        uses: actions/download-artifact@v4
-        with:
-          pattern: native-*
-          path: build/collected-natives/natives
-          # `native-macos-arm64/libawake-vulkan.dylib` must land at `natives/macos-arm64/...`, so the
-          # artifact name has to become the directory name rather than an extra level above it.
-          merge-multiple: false
-
-      - name: Name the collected directories by platform
-        run: |
-          cd build/collected-natives/natives
-          for d in native-*; do mv "$d" "${d#native-}"; done
-          ls -R .
-
-      - name: Verify every supported platform has a native library
-        run: |
-          ./gradlew :awake:backend:vulkan:bindings:verifyDesktopNatives \
-                    -Pawake.prebuiltNatives=$PWD/build/collected-natives
-
       - name: Refuse to publish a snapshot from a tag build
         run: |
           case "${{ github.ref }}" in
@@ -240,9 +300,53 @@ jobs:
         run: |
           ./gradlew publishAllPublicationsToMavenCentralRepository \
                     -PisMainHost=true \
-                    -Pawake.prebuiltNatives=$PWD/build/collected-natives \
+                    -Pawake.publishFamily=core \
                     --no-configuration-cache \
                     --max-workers=4
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
+
+  vulkan-snapshot:
+    name: Publish changed Vulkan-family snapshot
+    timeout-minutes: 60
+    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && needs.changes.outputs.vulkan == 'true'
+    needs: [changes, natives, verify, snapshot]
+    runs-on: macos-14
+    env:
+      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Vulkan (macOS)
+        run: brew install vulkan-loader molten-vk glfw
+
+      - uses: ./.github/actions/ios-native
+
+      - name: Collect Vulkan desktop natives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: build/collected-natives/natives
+
+      - name: Flatten native artifact directories
+        run: |
+          cd build/collected-natives/natives
+          for d in native-*; do mv "$d" "${d#native-}"; done
+
+      - name: Verify and publish only the Vulkan family
+        run: bash tools/publish_vulkan_family.sh snapshot "$PWD/build/collected-natives"
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
@@ -252,8 +356,8 @@ jobs:
   release:
     name: Publish release to Maven Central
     timeout-minutes: 30
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [natives, verify, consumer]
+    if: startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/vulkan-v')
+    needs: [verify, consumer]
     runs-on: macos-14
     env:
       MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -287,33 +391,12 @@ jobs:
 
       - uses: ./.github/actions/ios-native
 
-      - name: Collect the per-platform natives
-        uses: actions/download-artifact@v4
-        with:
-          pattern: native-*
-          path: build/collected-natives/natives
-          merge-multiple: false
-
-      - name: Name the collected directories by platform
-        run: |
-          cd build/collected-natives/natives
-          for d in native-*; do mv "$d" "${d#native-}"; done
-          ls -R .
-
-      # The gate this whole job exists for: the published jar carried only the host's library for
-      # its entire life because nothing ever checked, and a consumer on another OS only finds out
-      # at run time.
-      - name: Verify every supported platform has a native library
-        run: |
-          ./gradlew :awake:backend:vulkan:bindings:verifyDesktopNatives \
-                    -Pawake.prebuiltNatives=$PWD/build/collected-natives
-
       # A tag whose version derives to a snapshot means `git describe` did not see the tag -- a
       # shallow clone, or a tag that never reached the runner. Publishing anyway would put a
       # -SNAPSHOT on the release path and quietly produce no release at all.
       - name: Refuse to release a snapshot version
         run: |
-          VERSION=$(./gradlew -q :awake:backend:vulkan:bindings:properties --no-configuration-cache \
+          VERSION=$(./gradlew -q :awake:core:math:properties --no-configuration-cache \
                     | awk '/^version:/ { print $2 }')
           echo "Releasing $VERSION from ${{ github.ref }}"
           case "$VERSION" in
@@ -328,16 +411,18 @@ jobs:
       # while it is still free to fail. Central accepts uploads it cannot later be told to forget.
       - name: Verify what will be published
         run: |
+          VERSION=$(./gradlew -q :awake:core:math:properties --no-configuration-cache \
+                    | awk '/^version:/ { print $2 }')
           ./gradlew publishToMavenLocal -PisMainHost=true \
-                    -Pawake.prebuiltNatives=$PWD/build/collected-natives \
+                    -Pawake.publishFamily=core \
                     --no-configuration-cache
-          python3 tools/verify_published_artifacts.py
+          python3 tools/verify_published_artifacts.py --version "$VERSION" --family core
 
       - name: Publish to Maven Central
         run: |
           ./gradlew publishAllPublicationsToMavenCentralRepository \
                     -PisMainHost=true \
-                    -Pawake.prebuiltNatives=$PWD/build/collected-natives \
+                    -Pawake.publishFamily=core \
                     --no-configuration-cache
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
@@ -353,6 +438,68 @@ jobs:
             echo "GitHub release for ${{ github.ref_name }} already exists."
           else
             echo "Creating GitHub release for ${{ github.ref_name }}..."
+            gh release create "${{ github.ref_name }}" \
+              --title "${{ github.ref_name }}" \
+              --generate-notes
+          fi
+
+  vulkan-release:
+    name: Publish Vulkan-family release to Maven Central
+    timeout-minutes: 60
+    if: startsWith(github.ref, 'refs/tags/vulkan-v')
+    needs: [natives, verify]
+    runs-on: macos-14
+    env:
+      MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+      MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+      SIGNING_PASSWORD: ${{ secrets.GPG_SIGNING_PASSWORD }}
+      SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+      ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
+      ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Install Vulkan (macOS)
+        run: brew install vulkan-loader molten-vk glfw
+
+      - uses: ./.github/actions/ios-native
+
+      - name: Collect Vulkan desktop natives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: native-*
+          path: build/collected-natives/natives
+
+      - name: Flatten native artifact directories
+        run: |
+          cd build/collected-natives/natives
+          for d in native-*; do mv "$d" "${d#native-}"; done
+
+      - name: Verify and publish only the Vulkan family
+        run: bash tools/publish_vulkan_family.sh release "$PWD/build/collected-natives"
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ env.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ env.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ env.SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ env.SIGNING_PASSWORD }}
+
+      - name: Ensure GitHub Release exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
+            echo "GitHub Release for ${{ github.ref_name }} already exists."
+          else
             gh release create "${{ github.ref_name }}" \
               --title "${{ github.ref_name }}" \
               --generate-notes

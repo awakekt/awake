@@ -92,15 +92,32 @@ def published_coordinates() -> dict[str, set[str]]:
 
 
 def resolvable_versions() -> set[str]:
-    versions = {t.removeprefix("v") for t in run(["git", "tag", "--list", "v*"]).splitlines() if t}
-    describe = run(["git", "describe", "--tags", "--match", "v*", "--always"])
+    versions = {t.removeprefix("v") for t in run(["git", "tag", "--list", "v[0-9]*"]).splitlines() if t}
+    describe = run(["git", "describe", "--tags", "--match", "v[0-9]*", "--always"])
     exact = re.match(r"^v(.+?)-(\d+)-g[0-9a-f]+$", describe)
     if exact:
         base = exact.group(1)
         versions.add(re.sub(r"(\d+)$", lambda m: str(int(m.group(1)) + 1), base))
     elif describe.startswith("v"):
         versions.add(describe.removeprefix("v"))
-    return versions | {f"{v}-SNAPSHOT" for v in versions}
+
+    vulkan_tags = run(["git", "tag", "--list", "vulkan-v*"]).splitlines()
+    vulkan_versions = {tag.removeprefix("vulkan-v") for tag in vulkan_tags}
+    vulkan_describe = run(
+        ["git", "describe", "--tags", "--long", "--match", "vulkan-v*", "--always"]
+    )
+    family_match = re.match(r"^vulkan-v(\d+\.\d+\.\d+)-(\d+)-g[0-9a-f]+$", vulkan_describe)
+    if family_match:
+        base, distance = family_match.group(1), int(family_match.group(2))
+        if distance == 0:
+            vulkan_versions.add(base)
+        else:
+            major, minor, patch = (int(part) for part in base.split("."))
+            vulkan_versions.add(f"{major}.{minor}.{patch + 1}-SNAPSHOT")
+    else:
+        vulkan_versions.add("0.1.0-SNAPSHOT")
+    vulkan_versions |= {f"{v}-SNAPSHOT" for v in vulkan_versions if not v.endswith("-SNAPSHOT")}
+    return versions | {f"{v}-SNAPSHOT" for v in versions} | vulkan_versions
 
 
 def is_exempt(path: Path) -> bool:

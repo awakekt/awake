@@ -11,7 +11,6 @@ import com.vanniktech.maven.publish.MavenPublishBaseExtension
 import com.vanniktech.maven.publish.SourcesJar
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.tasks.AbstractPublishToMaven
-import org.gradle.api.publish.maven.MavenPublication
 import java.util.Properties
 
 plugins {
@@ -24,27 +23,9 @@ val publicationsFromMainHost =
     listOf("android", "desktop", "iosArm64", "iosSimulatorArm64", "kotlinMultiplatform")
 
 extensions.configure<PublishingExtension>("publishing") {
-    publications.withType<MavenPublication>().configureEach {
-        pom.withXml {
-            // Maven Central strictly forbids -SNAPSHOT dependencies in release POMs.
-            // When publishing a release, strip -SNAPSHOT from any dependencies (e.g. pre-release third-party libraries).
-            if (!project.version.toString().endsWith("-SNAPSHOT")) {
-                val root = asNode()
-                val dependenciesList = root.get("dependencies") as? groovy.util.NodeList
-                val dependenciesNode = dependenciesList?.firstOrNull() as? groovy.util.Node
-                dependenciesNode?.children()?.forEach { dep ->
-                    if (dep is groovy.util.Node) {
-                        val versionList = dep.get("version") as? groovy.util.NodeList
-                        val versionNode = versionList?.firstOrNull() as? groovy.util.Node
-                        val ver = versionNode?.text() ?: ""
-                        if (ver.endsWith("-SNAPSHOT")) {
-                            versionNode?.setValue(ver.removeSuffix("-SNAPSHOT"))
-                        }
-                    }
-                }
-            }
-        }
-    }
+    // Never rewrite a SNAPSHOT dependency to a guessed stable version in a published POM. The
+    // release workflow verifies locally published POMs and fails before upload if any dependency
+    // remains a snapshot; maintainers must update and verify the real dependency instead.
     publications {
         matching { it.name in publicationsFromMainHost }.all {
             val targetPublication = this@all
