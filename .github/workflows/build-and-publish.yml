@@ -25,45 +25,26 @@ env:
   JAVA_VERSION: '17'
 
 jobs:
-  # Only Vulkan-family changes need the multi-runner native build. Core commits and releases keep
-  # their existing publication train without rebuilding or republishing the Vulkan artifacts.
-  changes:
-    name: Detect Vulkan-family changes
+  # Classify the change once. Core publication remains independent from the Vulkan family, so a
+  # Core-only commit can skip the native matrix while still running the Core consumer gate.
+  platform-impact:
+    name: Detect platform impact
     runs-on: ubuntu-latest
     outputs:
-      vulkan: ${{ steps.filter.outputs.vulkan }}
+      core: ${{ steps.impact.outputs.core }}
+      ios: ${{ steps.impact.outputs.ios }}
+      vulkan: ${{ steps.impact.outputs.vulkan }}
+      web: ${{ steps.impact.outputs.web }}
+      docs_only: ${{ steps.impact.outputs.docs_only }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - id: filter
-        shell: bash
-        env:
-          BEFORE_SHA: ${{ github.event.before }}
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/vulkan-v* ]]; then
-            echo "vulkan=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            echo "vulkan=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if [[ -z "$BEFORE_SHA" || "$BEFORE_SHA" =~ ^0+$ ]]; then
-            echo "vulkan=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          changed_paths=$(git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA")
-          if grep -Eq '^awake/backend/vulkan/' <<< "$changed_paths"; then
-            echo "vulkan=true" >> "$GITHUB_OUTPUT"
-          elif [[ -z "$(git tag --list 'vulkan-v*' | head -n 1)" ]] && \
-            grep -Eq '^(build\.gradle\.kts|build-logic/.*|\.github/workflows/build-and-publish\.yml)$' <<< "$changed_paths"; then
-            # Bootstrap the independent train once. Afterwards, only Vulkan-family source changes
-            # publish a snapshot; Core-only commits neither bump nor republish the family.
-            echo "vulkan=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "vulkan=false" >> "$GITHUB_OUTPUT"
-          fi
+      - id: impact
+        uses: ./.github/actions/detect-platform-impact
+        with:
+          base-sha: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          head-sha: ${{ github.sha }}
 
   # A host compiles only its own native library, so a jar covering more than one platform has to be
   # assembled from several runners. Each uploads just its `natives/<platform>/` directory; the
@@ -71,6 +52,8 @@ jobs:
   natives:
     name: Build native libraries (${{ matrix.platform }})
     timeout-minutes: 30
+    needs: platform-impact
+    if: needs.platform-impact.outputs.vulkan == 'true'
     strategy:
       # One platform failing should not hide whether the others built -- verifyDesktopNatives is
       # what decides if the set is complete.
@@ -182,8 +165,14 @@ jobs:
   # untested anywhere in this repository.
   consumer:
     name: Verify template consumer integration
-    if: ${{ !startsWith(github.ref, 'refs/tags/vulkan-v') }}
-    needs: [natives]
+    if: >-
+      ${{
+        always() &&
+        !startsWith(github.ref, 'refs/tags/vulkan-v') &&
+        needs.platform-impact.result == 'success' &&
+        (needs.natives.result == 'success' || needs.natives.result == 'skipped')
+      }}
+    needs: [platform-impact, natives]
     timeout-minutes: 30
     runs-on: macos-14
     steps:
@@ -216,13 +205,29 @@ jobs:
 
       - uses: ./.github/actions/ios-native
 
+      # Resolve versions before downloading natives. Core-only changes use the last published
+      # Vulkan release and therefore do not need the native artifact matrix at all.
+      - name: Resolve both publication-family versions
+        id: versions
+        shell: bash
+        run: |
+          core_version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache \
+            | awk '/^version:/ { print $2 }')
+          vulkan_version=$(./gradlew -q :awake:backend:vulkan:properties --no-configuration-cache \
+            | awk '/^version:/ { print $2 }')
+          echo "CORE_VERSION=$core_version" >> "$GITHUB_ENV"
+          echo "VULKAN_VERSION=$vulkan_version" >> "$GITHUB_ENV"
+          echo "vulkan_snapshot=$([[ "$vulkan_version" == *-SNAPSHOT ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
       - name: Collect desktop natives for local publication
+        if: steps.versions.outputs.vulkan_snapshot == 'true'
         uses: actions/download-artifact@v4
         with:
           pattern: native-*
           path: build/collected-natives/natives
 
       - name: Name collected native directories by platform
+        if: steps.versions.outputs.vulkan_snapshot == 'true'
         run: |
           cd build/collected-natives/natives
           for d in native-*; do mv "$d" "${d#native-}"; done
@@ -230,13 +235,6 @@ jobs:
 
       # Maven Local rather than the snapshot repository: this has to pass *before* anything is
       # uploaded, including the snapshot a consumer would otherwise be the first to try.
-      - name: Resolve both publication-family versions
-        run: |
-          echo "CORE_VERSION=$(./gradlew -q :awake:core:math:properties --no-configuration-cache \
-            | awk '/^version:/ { print $2 }')" >> "$GITHUB_ENV"
-          echo "VULKAN_VERSION=$(./gradlew -q :awake:backend:vulkan:properties --no-configuration-cache \
-            | awk '/^version:/ { print $2 }')" >> "$GITHUB_ENV"
-
       - name: Publish this build locally
         run: |
           if [[ "$VULKAN_VERSION" == *-SNAPSHOT ]]; then
@@ -315,8 +313,8 @@ jobs:
   vulkan-snapshot:
     name: Publish changed Vulkan-family snapshot
     timeout-minutes: 60
-    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && needs.changes.outputs.vulkan == 'true'
-    needs: [changes, natives, verify, snapshot]
+    if: (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) && needs.platform-impact.outputs.vulkan == 'true'
+    needs: [platform-impact, natives, verify, snapshot]
     runs-on: macos-14
     env:
       MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}

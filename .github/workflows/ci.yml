@@ -20,8 +20,32 @@ env:
   NDK_VERSION: '26.1.10909125'
 
 jobs:
+  platform-impact:
+    name: Detect platform impact
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.impact.outputs.core }}
+      ios: ${{ steps.impact.outputs.ios }}
+      vulkan: ${{ steps.impact.outputs.vulkan }}
+      web: ${{ steps.impact.outputs.web }}
+      docs_only: ${{ steps.impact.outputs.docs_only }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Classify changed targets
+        id: impact
+        uses: ./.github/actions/detect-platform-impact
+        with:
+          base-sha: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          head-sha: ${{ github.sha }}
+
   build:
     name: Multiplatform Core & ECS Build
+    needs: platform-impact
+    if: needs.platform-impact.outputs.core == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -39,6 +63,29 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
         with:
           cache-provider: basic
+
+      - name: Resolve Rust compiler version
+        id: rust-version
+        shell: bash
+        run: echo "version=$(rustc --version | tr ' ' '_')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Cargo downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: naga-cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock') }}
+          restore-keys: |
+            naga-cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
+
+      - name: Cache Naga desktop build
+        uses: actions/cache@v4
+        with:
+          path: awake/asset/shader-compiler/rust-native/target
+          key: naga-desktop-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}
+          restore-keys: |
+            naga-desktop-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
 
       - name: Install NDK and CMake
         run: |
@@ -123,6 +170,8 @@ jobs:
   # packages and is the only job that builds awake:backend:vulkan's desktop-native C++ library.
   desktop-vulkan-smoke:
     name: Desktop Vulkan Smoke Test (Linux lavapipe)
+    needs: platform-impact
+    if: needs.platform-impact.outputs.vulkan == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -140,6 +189,29 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
         with:
           cache-provider: basic
+
+      - name: Resolve Rust compiler version
+        id: rust-version
+        shell: bash
+        run: echo "version=$(rustc --version | tr ' ' '_')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Cargo downloads
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: naga-cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock') }}
+          restore-keys: |
+            naga-cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
+
+      - name: Cache Naga desktop build
+        uses: actions/cache@v4
+        with:
+          path: awake/asset/shader-compiler/rust-native/target
+          key: naga-desktop-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}
+          restore-keys: |
+            naga-desktop-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
 
       # libvulkan-dev: Vulkan headers + loader, for CMake's find_package(Vulkan) and
       # desktopMain's System.loadLibrary("awake-vulkan") to link/load against at run time.
@@ -171,6 +243,8 @@ jobs:
   # 2026-08-31 were on this binding, which shares no code with any target covered above.
   ios-physics:
     name: iOS Jolt Physics & Metal Interop
+    needs: platform-impact
+    if: needs.platform-impact.outputs.ios == 'true'
     runs-on: macos-latest
     timeout-minutes: 45
 
@@ -211,13 +285,17 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: cargo-ios-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.lock') }}
+          key: cargo-ios-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock') }}
+          restore-keys: |
+            cargo-ios-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
 
       - name: Cache Naga native build
         uses: actions/cache@v4
         with:
           path: awake/asset/shader-compiler/rust-native/target
-          key: naga-ios-sim-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}
+          key: naga-ios-sim-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}
+          restore-keys: |
+            naga-ios-sim-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
 
       - uses: ./.github/actions/ios-native
 
@@ -243,6 +321,8 @@ jobs:
           if-no-files-found: warn
 
   web-verification:
+    needs: platform-impact
+    if: needs.platform-impact.outputs.web == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
