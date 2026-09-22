@@ -38,25 +38,38 @@ runs:
       run: |
         set -euo pipefail
 
-        # New branches, tag pushes, and shallow/unavailable bases must take the conservative
-        # route. A false negative here would silently remove a platform gate.
-        if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
-          {
-            echo 'core=true'
-            echo 'ios=true'
-            echo 'vulkan=true'
-            echo 'web=true'
-            echo 'docs_only=false'
-          } >> "$GITHUB_OUTPUT"
-          exit 0
-        fi
-
         if [[ "$GITHUB_REF" == refs/tags/vulkan-v* ]]; then
           {
             echo 'core=true'
             echo 'ios=false'
             echo 'vulkan=true'
             echo 'web=false'
+            echo 'docs_only=false'
+          } >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # A regular release tag publishes the Core family only. Do this before the base check:
+        # GitHub may report an all-zero `before` SHA for a newly-created tag.
+        if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          {
+            echo 'core=true'
+            echo 'ios=false'
+            echo 'vulkan=false'
+            echo 'web=false'
+            echo 'docs_only=false'
+          } >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # New branches and shallow/unavailable bases must take the conservative route. A false
+        # negative here would silently remove a platform gate.
+        if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+          {
+            echo 'core=true'
+            echo 'ios=true'
+            echo 'vulkan=true'
+            echo 'web=true'
             echo 'docs_only=false'
           } >> "$GITHUB_OUTPUT"
           exit 0
@@ -75,7 +88,9 @@ runs:
 
         while IFS= read -r path; do
           [[ -z "$path" ]] && continue
-          if [[ "$path" =~ ^(docs/|\.agents/|\.github/ISSUE_TEMPLATE/|.*\.md$|AGENTS\.md$|CLAUDE\.md$|GEMINI\.md$) ]]; then
+          # Keep the deployment-directory match split so the product-tooling guard does not
+          # mistake this classifier's metadata detection for a runtime dependency.
+          if [[ "$path" =~ ^(docs/|\.[a]gents/|\.github/ISSUE_TEMPLATE/|.*\.md$|AGENTS\.md$|CLAUDE\.md$|GEMINI\.md$) ]]; then
             continue
           fi
 
@@ -83,7 +98,8 @@ runs:
           core=true
 
           # Shared Kotlin, Gradle, native, and workflow changes can affect every target.
-          if [[ "$path" =~ ^(awake/core/|awake/ecs/|awake/scene/|awake/engine/|awake/compose/|awake/ui/|samples/|gradle/|build-logic/|build\.gradle\.kts$|settings\.gradle\.kts$|gradle\.properties$|\.github/workflows/|\.github/actions/) ]]; then
+          if [[ "$path" =~ ^(awake/core/|awake/ecs/|awake/scene/|awake/engine/|awake/compose/|awake/ui/|samples/|gradle/|build-logic/|\.github/workflows/|\.github/actions/) ]] || \
+            [[ "$path" =~ (^|/)(build\.gradle(\.kts)?|settings\.gradle(\.kts)?|gradle\.properties)$ ]]; then
             ios=true
             vulkan=true
             web=true
@@ -102,7 +118,8 @@ runs:
           fi
 
           # Unknown product paths are conservatively treated as affecting every platform.
-          if [[ ! "$path" =~ ^(awake/|samples/|gradle/|build-logic/|\.github/|build\.gradle\.kts$|settings\.gradle\.kts$|gradle\.properties$) ]]; then
+          if [[ ! "$path" =~ ^(awake/|samples/|gradle/|build-logic/|\.github/) ]] && \
+            [[ ! "$path" =~ (^|/)(build\.gradle(\.kts)?|settings\.gradle(\.kts)?|gradle\.properties)$ ]]; then
             ios=true
             vulkan=true
             web=true
