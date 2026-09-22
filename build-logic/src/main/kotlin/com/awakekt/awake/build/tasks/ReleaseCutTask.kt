@@ -7,9 +7,11 @@ package com.awakekt.awake.build.tasks
 
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import java.time.LocalDate
 
 /** Cuts a Core release without requiring a Python runtime. */
+@DisableCachingByDefault(because = "Creates release tags and updates the repository changelog")
 abstract class ReleaseCutTask : DefaultTask() {
     @TaskAction
     fun cut() {
