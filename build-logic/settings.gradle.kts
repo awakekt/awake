@@ -4,6 +4,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 pluginManagement {
+    plugins {
+        id("com.vanniktech.maven.publish") version "0.36.0"
+    }
     repositories {
         gradlePluginPortal()
         google()

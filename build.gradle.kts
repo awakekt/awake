@@ -309,38 +309,9 @@ tasks.matching { it.name == "check" }.configureEach {
     dependsOn(verifyCapabilityBoundaries)
 }
 
-// Version comes from the latest v* git tag, so publishing is "tag + push" and the
-// number can never drift from the tag:
-//   HEAD exactly on v0.1.0-dev.1  ->  0.1.0-dev.1          (publishable, immutable)
-//   3 commits after that tag      ->  0.1.0-dev.2-SNAPSHOT (local/CI only, never released)
-//   no tag reachable              ->  0.1.0-dev.0-SNAPSHOT
-val gitDerivedVersion: String = run {
-    val describe = runCatching {
-        providers.exec {
-            commandLine(
-                "git",
-                "-C",
-                rootDir.absolutePath,
-                "describe",
-                "--tags",
-                "--match",
-                "v[0-9]*",
-                "--always",
-            )
-        }.standardOutput.asText.get().trim()
-    }.getOrDefault("")
-    val hasNoReleaseTag = describe.matches(Regex("^[0-9a-f]{7,}$"))
-    val exact = Regex("""^v(.+?)-(\d+)-g[0-9a-f]+$""").find(describe)
-    when {
-        describe.isEmpty() || hasNoReleaseTag -> "0.1.0-dev.0-SNAPSHOT"
-        exact == null -> describe.removePrefix("v")
-        else -> {
-            val base = exact.groupValues[1]
-            val bumped = Regex("""(\d+)$""").replace(base) { (it.value.toInt() + 1).toString() }
-            "$bumped-SNAPSHOT"
-        }
-    }
-}
+// The build-logic publication build uses the same tag-derived version script.
+apply(from = "gradle/git-derived-version.gradle.kts")
+val gitDerivedVersion: String = extra["gitDerivedVersion"] as String
 
 // Vulkan's renderer, raw bindings, and Android JNI bridge ship as one versioned family. They
 // depend on the Core release train, but no published Core module depends on them, so their release
