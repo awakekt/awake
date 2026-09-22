@@ -390,6 +390,7 @@ private external fun jsIndexedDbRead(namespace: String, path: String): Promise<J
   };
 })
 """)
+@Suppress("LongParameterList")
 private external fun jsIndexedDbPut(
     namespace: String,
     path: String,
