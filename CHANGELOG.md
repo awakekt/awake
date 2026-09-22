@@ -59,6 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Composable project storage and streaming integrity.** Added a writable Core overlay filesystem,
   chunked SHA-256 sessions, and a versioned IndexedDB Wasm filesystem that keeps browser metadata
   separate from lazily loaded file content.
+- **Bounded browser storage migration.** Existing v1 Base64/localStorage files are migrated once
+  into the v2 IndexedDB metadata/content stores with file-count and byte-size limits.
 - **Derived project compatibility metadata.** Canonical project manifests can declare an explicit `minEngineVersion`, while the published project module exposes the Git-derived engine version without hardcoded defaults; Central releases now publish automatically after validation.
 
 ### Fixed

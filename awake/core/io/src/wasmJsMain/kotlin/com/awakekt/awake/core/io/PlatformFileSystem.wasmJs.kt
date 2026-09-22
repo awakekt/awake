@@ -23,11 +23,14 @@ import kotlin.js.Promise
  * compose this writable layer with [OverlayFileSystem] instead of writing into their remote source.
  */
 actual fun createPlatformFileSystem(root: String?): FileSystem =
-    IndexedDbFileSystem("awake.core.io.v2:${root ?: "default"}")
+    IndexedDbFileSystem(root ?: "default")
 
 private class IndexedDbFileSystem(
-    private val namespace: String,
+    private val root: String,
 ) : FileSystem {
+    private val namespace = "awake.core.io.v2:$root"
+    private val legacyKey = "awake.core.io.v1:$root"
+    private val migrationKey = "awake.core.io.v2:migrated:$root"
     private val metadata = linkedMapOf<FilePath, StoredMetadata>()
     private val watchers = mutableListOf<Watcher>()
     private var loaded = false
@@ -155,7 +158,13 @@ private class IndexedDbFileSystem(
         val next = staged.list(FilePath.Root, recursive = true).getOrThrow()
             .filter { it.kind == FileKind.File }
             .associate { it.path to staged.read(it.path).getOrThrow() }
-        metadata.keys.toList().forEach { delete(it, recursive = true).getOrThrow() }
+        metadata.keys.toList()
+            .sortedByDescending { it.value.length }
+            .forEach { path ->
+                if (metadata.remove(path) != null) {
+                    jsIndexedDbDelete(namespace, path.value).await<JsAny?>()
+                }
+            }
         next.forEach { (path, bytes) -> write(path, bytes).getOrThrow() }
         value
     }
@@ -175,7 +184,49 @@ private class IndexedDbFileSystem(
             metadata[path] = stored
             clock = maxOf(clock, stored.modifiedAtEpochMs ?: 0L)
         }
+        migrateLegacyLocalStorage()
         loaded = true
+    }
+
+    /**
+     * Migrates the old Base64/localStorage format once, with hard bounds so a corrupt legacy value
+     * cannot freeze project opening or allocate an unbounded in-memory bundle.
+     */
+    private suspend fun migrateLegacyLocalStorage() {
+        if (jsStorageGet(migrationKey) == "done") return
+        val encoded = jsStorageGet(legacyKey) ?: run {
+            jsStorageSet(migrationKey, "done")
+            return
+        }
+        var fileCount = 0
+        var totalBytes = 0L
+        encoded.lineSequence().filter(String::isNotEmpty).forEach { line ->
+            require(++fileCount <= LEGACY_MAX_FILES) {
+                "Legacy browser storage contains more than $LEGACY_MAX_FILES files."
+            }
+            val separator = line.indexOf(':')
+            if (separator <= 0) return@forEach
+            val path = runCatching { FilePath.of(Base64.decode(line.substring(0, separator)).decodeToString()) }
+                .getOrNull() ?: return@forEach
+            val bytes = runCatching { Base64.decode(line.substring(separator + 1)) }
+                .getOrNull() ?: return@forEach
+            totalBytes += bytes.size
+            require(totalBytes <= LEGACY_MAX_BYTES) {
+                "Legacy browser storage exceeds the ${LEGACY_MAX_BYTES / (1024 * 1024)} MiB migration limit."
+            }
+            ensureParentDirectories(path)
+            val stored = StoredMetadata(FileKind.File, bytes.size.toLong(), nextTimestamp())
+            metadata[path] = stored
+            jsIndexedDbPut(
+                namespace,
+                path.value,
+                stored.kind.name,
+                stored.sizeBytes,
+                stored.modifiedAtEpochMs,
+                Base64.encode(bytes),
+            ).await<JsAny?>()
+        }
+        jsStorageSet(migrationKey, "done")
     }
 
     private suspend fun ensureParentDirectories(path: FilePath) {
@@ -262,6 +313,11 @@ private class IndexedDbFileSystem(
     ) {
         fun matches(candidate: FilePath): Boolean =
             path == FilePath.Root || candidate == path || (recursive && candidate.value.startsWith("${path.value}/"))
+    }
+
+    private companion object {
+        const val LEGACY_MAX_FILES = 10_000
+        const val LEGACY_MAX_BYTES = 32L * 1024L * 1024L
     }
 }
 
@@ -383,3 +439,9 @@ private external fun jsIndexedDbDelete(namespace: String, path: String): Promise
 })
 """)
 private external fun jsIndexedDbMove(namespace: String, from: String, to: String, content: String?): Promise<JsAny?>
+
+@JsFun("(key) => globalThis.localStorage ? globalThis.localStorage.getItem(key) : null")
+private external fun jsStorageGet(key: String): String?
+
+@JsFun("(key, value) => { if (globalThis.localStorage) globalThis.localStorage.setItem(key, value); }")
+private external fun jsStorageSet(key: String, value: String)
