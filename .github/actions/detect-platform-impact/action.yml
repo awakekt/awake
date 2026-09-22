@@ -1,0 +1,142 @@
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Detect platform impact
+description: Classify the change set so unrelated platform jobs can be skipped safely.
+inputs:
+  base-sha:
+    description: Commit to diff against. For a pull request this is the merge base; for a push it is the previous commit.
+    required: true
+  head-sha:
+    description: Commit containing the change set.
+    required: true
+outputs:
+  core:
+    description: Whether shared engine, desktop, or Android compilation is needed.
+    value: ${{ steps.classify.outputs.core }}
+  ios:
+    description: Whether iOS simulator/native interop validation is needed.
+    value: ${{ steps.classify.outputs.ios }}
+  vulkan:
+    description: Whether desktop Vulkan validation is needed.
+    value: ${{ steps.classify.outputs.vulkan }}
+  web:
+    description: Whether Web/Wasm validation is needed.
+    value: ${{ steps.classify.outputs.web }}
+  docs_only:
+    description: Whether all changed paths are documentation or agent metadata.
+    value: ${{ steps.classify.outputs.docs_only }}
+runs:
+  using: composite
+  steps:
+    - id: classify
+      shell: bash
+      env:
+        BASE_SHA: ${{ inputs.base-sha }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+      run: |
+        set -euo pipefail
+
+        if [[ "$GITHUB_REF" == refs/tags/vulkan-v* ]]; then
+          {
+            echo 'core=true'
+            echo 'ios=false'
+            echo 'vulkan=true'
+            echo 'web=false'
+            echo 'docs_only=false'
+          } >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # A regular release tag publishes the Core family only. Do this before the base check:
+        # GitHub may report an all-zero `before` SHA for a newly-created tag.
+        if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          {
+            echo 'core=true'
+            echo 'ios=false'
+            echo 'vulkan=false'
+            echo 'web=false'
+            echo 'docs_only=false'
+          } >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        # New branches and shallow/unavailable bases must take the conservative route. A false
+        # negative here would silently remove a platform gate.
+        if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+          {
+            echo 'core=true'
+            echo 'ios=true'
+            echo 'vulkan=true'
+            echo 'web=true'
+            echo 'docs_only=false'
+          } >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        changed_paths=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+        if [[ -z "$changed_paths" ]]; then
+          changed_paths=".github/workflows/ci.yml"
+        fi
+
+        core=false
+        ios=false
+        vulkan=false
+        web=false
+        docs_only=true
+
+        while IFS= read -r path; do
+          [[ -z "$path" ]] && continue
+          # Keep the deployment-directory match split so the product-tooling guard does not
+          # mistake this classifier's metadata detection for a runtime dependency.
+          if [[ "$path" =~ ^(docs/|\.[a]gents/|\.github/ISSUE_TEMPLATE/|.*\.md$|AGENTS\.md$|CLAUDE\.md$|GEMINI\.md$) ]]; then
+            continue
+          fi
+
+          docs_only=false
+          core=true
+
+          # Shared Kotlin, Gradle, native, and workflow changes can affect every target.
+          if [[ "$path" =~ ^(awake/core/|awake/ecs/|awake/scene/|awake/engine/|awake/compose/|awake/ui/|samples/|gradle/|build-logic/|\.github/workflows/|\.github/actions/) ]] || \
+            [[ "$path" =~ (^|/)(build\.gradle(\.kts)?|settings\.gradle(\.kts)?|gradle\.properties)$ ]]; then
+            ios=true
+            vulkan=true
+            web=true
+          fi
+
+          if [[ "$path" =~ ^(awake/backend/jolt/|awake/scene/physics/|awake/asset/shader-compiler/|awake/backend/vulkan/bindings/ios-native/) ]]; then
+            ios=true
+          fi
+
+          if [[ "$path" =~ ^(awake/backend/vulkan/|awake/engine/render/|awake/asset/shader-compiler/) ]]; then
+            vulkan=true
+          fi
+
+          if [[ "$path" =~ ^(awake/backend/webgpu/|samples/|awake/compose/|awake/ui/) ]]; then
+            web=true
+          fi
+
+          # Unknown product paths are conservatively treated as affecting every platform.
+          if [[ ! "$path" =~ ^(awake/|samples/|gradle/|build-logic/|\.github/) ]] && \
+            [[ ! "$path" =~ (^|/)(build\.gradle(\.kts)?|settings\.gradle(\.kts)?|gradle\.properties)$ ]]; then
+            ios=true
+            vulkan=true
+            web=true
+          fi
+        done <<< "$changed_paths"
+
+        if [[ "$docs_only" == true ]]; then
+          core=false
+          ios=false
+          vulkan=false
+          web=false
+        fi
+
+        {
+          echo "core=$core"
+          echo "ios=$ios"
+          echo "vulkan=$vulkan"
+          echo "web=$web"
+          echo "docs_only=$docs_only"
+        } >> "$GITHUB_OUTPUT"

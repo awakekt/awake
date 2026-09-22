@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Detect Vulkan publication impact
+description: Decide whether the independent Vulkan release train must be rebuilt and published.
+inputs:
+  base-sha:
+    description: Commit to diff against. For a push this is the previous commit.
+    required: true
+  head-sha:
+    description: Commit containing the change set.
+    required: true
+outputs:
+  vulkan_publish:
+    description: Whether the independent Vulkan publication train must run.
+    value: ${{ steps.classify.outputs.vulkan_publish }}
+runs:
+  using: composite
+  steps:
+    - id: classify
+      shell: bash
+      env:
+        BASE_SHA: ${{ inputs.base-sha }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+      run: |
+        set -euo pipefail
+
+        if [[ "$GITHUB_REF" == refs/tags/vulkan-v* ]]; then
+          echo 'vulkan_publish=true' >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+          echo 'vulkan_publish=false' >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        if [[ -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+          echo 'vulkan_publish=true' >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        changed_paths=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
+        if grep -Eq '^awake/backend/vulkan/' <<< "$changed_paths"; then
+          echo 'vulkan_publish=true' >> "$GITHUB_OUTPUT"
+        elif [[ -z "$(git tag --list 'vulkan-v*' | head -n 1)" ]] && \
+          grep -Eq '^(build\.gradle\.kts|build-logic/|\.github/workflows/build-and-publish\.yml|\.github/actions/detect-platform-impact/action\.yml|\.github/actions/detect-vulkan-publication-impact/action\.yml)$' <<< "$changed_paths"; then
+          # Bootstrap the independent train once. After its first tag, Core-only changes do not
+          # advance or republish immutable Vulkan coordinates.
+          echo 'vulkan_publish=true' >> "$GITHUB_OUTPUT"
+        else
+          echo 'vulkan_publish=false' >> "$GITHUB_OUTPUT"
+        fi
