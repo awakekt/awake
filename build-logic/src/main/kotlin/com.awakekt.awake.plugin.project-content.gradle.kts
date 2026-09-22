@@ -50,6 +50,11 @@ val checkProjectContent = tasks.register("checkProjectContent") {
     dependsOn(validateProject, verifyAssetsLock, generateProjectIndex)
 }
 
-tasks.matching { it.name == "check" }.configureEach {
+val check = tasks.findByName("check")?.let { tasks.named("check") }
+    ?: tasks.register("check") {
+        group = "verification"
+        description = "Run project-content verification."
+    }
+check.configure {
     dependsOn(checkProjectContent)
 }
