@@ -15,6 +15,7 @@ plugins {
     alias(libs.plugins.vanniktech.publish) apply false
     alias(libs.plugins.binary.compat)
     alias(libs.plugins.kover)
+    id("com.awakekt.awake.plugin.repository-tooling")
 }
 
 apiValidation {

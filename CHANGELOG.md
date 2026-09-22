@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Consolidated maintained repository verification and release tooling into Gradle, retaining Python only for visual and vendored tooling.
 - **Target-aware CI and Naga caching.** Classify Core, iOS, Vulkan, Web/Wasm, and docs-only changes before platform jobs, skip unrelated native matrices, and cache desktop and iOS Naga builds with Rust and source-aware keys.
 - **Publication inventory and release dependency validation.** Inventory every published coordinate and direct API/runtime edge, and reject snapshot dependencies instead of rewriting them to unverified stable versions.
 - **Separated agent-skill ownership from Awake product tooling.** Public `awake-*` guidance now ships from the Apache-2.0 `awake-agent-skills` bundle, Studio scoring and creative roles ship from a private `studio-*` overlay, vendor KMP content is pinned upstream, and UI/icon tooling now lives in stable `tools/` paths independent of agent installation.

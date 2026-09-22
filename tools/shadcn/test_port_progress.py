@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# GATE: exit 1 means the tool itself is broken; runs under `awake verify`'s tool-tests gate.
+# GATE: exit 1 means the visual helper itself is broken; run with the visual tooling tests.
 """A progress report that miscounts is worse than none -- it reads as authoritative.
 
 The cases here are the ones that would silently misreport: a receiver on the declaration, a file

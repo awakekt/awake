@@ -5,7 +5,7 @@
 #
 # GENERATOR: writes tools/shadcn/reference-app/src/ui/*.tsx from the pinned checkout.
 # Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; `scripts/awake verify` runs every one.
+# a build; visual tooling tests cover the helper itself.
 """Vendors shadcn's own component sources into the reference app, from the pinned checkout.
 
 Those files are what `capture_shadcn_local.py` screenshots, and those screenshots are the reference

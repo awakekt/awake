@@ -5,7 +5,7 @@
 #
 # INVESTIGATION: renders a font externally for eyeball comparison.
 # Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; `scripts/awake verify` runs every one.
+# a build; visual tooling tests cover the helper itself.
 """Renders text samples with the real Roboto TTF and saves them as reference PNGs.
 
 Answers a question the atlas metrics alone cannot: when our renderer draws 'a'

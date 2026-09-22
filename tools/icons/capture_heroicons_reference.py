@@ -5,7 +5,7 @@
 #
 # INVESTIGATION: renders upstream icons for eyeball comparison.
 # Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; `scripts/awake verify` runs every one.
+# a build; visual tooling tests cover the helper itself.
 """Downloads the official Heroicons SVG for every icon in heroicons_manifest.json and
 rasterizes it to a fixed-size reference PNG -- the ground truth the icon-fidelity guard
 (ui-headless desktopTest `IconFidelityTest`) compares our shipped `UiImageVector`s against.

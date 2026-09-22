@@ -193,7 +193,9 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 To cut a release from the current `[Unreleased]` batch, run:
 
 ```bash
-./scripts/release.py cut [--channel dev|alpha|beta|rc|stable] [--bump patch|minor|major]
+./gradlew releaseCut -Prelease.channel=dev -Prelease.bump=patch
+# preview without editing CHANGELOG.md, committing, or tagging
+./gradlew releaseCut -Prelease.channel=dev -Prelease.dryRun=true
 ```
 
 This command automatically:

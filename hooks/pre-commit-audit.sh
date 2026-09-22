@@ -71,7 +71,7 @@ if [[ -n "$NON_TEST_KT" ]] && ! echo "$STAGED_ALL" | grep -qx "CHANGELOG.md"; th
 fi
 
 # The architecture audit used to run here and was removed 2026-08-22, because it could not
-# succeed: audit_project.py only accepts a project root, so it always scanned the whole repo,
+# succeed: the old audit helper only accepted a project root, so it always scanned the whole repo,
 # which takes ~2m05s against a 20s alarm. Every commit paid 20 seconds to print "found issues
 # or timed out" -- a message that was true either way and so carried no information. A warning
 # that always fires trains you to stop reading warnings, which costs more than the check gave.

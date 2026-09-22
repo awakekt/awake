@@ -5,7 +5,7 @@
 #
 # INVESTIGATION: screenshots the pinned reference app. Proves nothing on its own.
 # Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; `scripts/awake verify` runs every one.
+# a build; visual tooling tests cover the helper itself.
 """Captures shadcn reference PNGs from the local reference app.
 
 Replaces scraping ui.shadcn.com. That page could only ever show whatever its

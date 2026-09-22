@@ -45,7 +45,7 @@ guidance.
 - Put installer, catalog, schema, or agent-workflow support in a skills repository. Gradle, Awake
   CI, `scripts/awake`, hooks, and product tools must not invoke it.
 
-For product gates, use [`scripts/awake verify`](../../scripts/awake) and the documented `tools/`
+For product gates, use `./gradlew awakeVerify` and the documented `tools/`
 commands. Agent package validation and installer tests run in the repository that owns the bundle.
 
 ## Read order

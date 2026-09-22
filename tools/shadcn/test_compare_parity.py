@@ -5,7 +5,7 @@
 #
 # GATE: exit 1 means the offset-alignment search regressed.
 # Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; `scripts/awake verify` runs every one.
+# a build; visual tooling tests cover the helper itself.
 """Unit tests for find_best_offset in compare_parity.py.
 
 Anchoring two independently-trimmed crops at (0, 0) treats a 1-2px trim discrepancy as a

@@ -5,7 +5,7 @@
 #
 # INVESTIGATION: summarises manifest-backed evidence.
 # Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; `scripts/awake verify` runs every one.
+# a build; visual tooling tests cover the helper itself.
 """Generate a manifest-backed shadcn parity report.
 
 This is the canonical report for the new parity tool. It reports independent geometry, padding,

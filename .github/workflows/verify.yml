@@ -38,28 +38,10 @@ jobs:
 
       - uses: ./.github/actions/ios-native
 
-      - name: Verify Core capability boundaries
-        run: python3 tools/verify_capability_boundaries.py
-
-      - name: Verify the publication closure
-        run: python3 tools/verify_publication_closure.py
-
-      - name: Test publication inventory and version-family POM checks
-        run: python3 -m unittest tools.test_publication_inventory
+      - name: Verify Awake repository gates
+        run: ./gradlew awakeVerify --no-configuration-cache
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify API surface
         run: ./gradlew apiCheck
-
-      - name: Verify documented Maven coordinates
-        run: python3 tools/verify_doc_coordinates.py
-
-      - name: Verify product documentation
-        run: python3 tools/verify_project_docs.py
-
-      - name: Verify no product tooling depends on agent bundles
-        run: python3 tools/verify_no_agent_runtime_dependencies.py
-
-      - name: Verify PR milestone and changelog policy
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python3 tools/verify_pr_governance.py

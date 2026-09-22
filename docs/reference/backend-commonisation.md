@@ -5,7 +5,7 @@ and which parts can realistically be shared — so the next pass is chosen on ev
 on which file happened to annoy someone.
 
 Re-measured 2026-09-11 (was 2026-08-23). Kotlin lines in `commonMain`/`wasmJsMain`, tests and
-`build/` excluded. Re-measure with `python3 tools/loc_survey.py`; do not trust these numbers after
+`build/` excluded. Re-measure with `git ls-files '*.kt' | xargs wc -l`; do not trust these numbers after
 a large refactor.
 
 ## Distribution
@@ -34,7 +34,7 @@ The denominator also grew as generic packet execution, explicit binding metadata
 seams became real code. Both backends still retain native allocation and command encoding; the
 remaining commonisation work is the source-resource preparation seam and feature-family parity,
 not moving driver API wrappers into `render:passes`. The per-package table is generated from the
-current tree by `tools/loc_survey.py`; rerun it after a large refactor. The content-feature provider
+current tree with the tracked-source line count command above; rerun it after a large refactor. The content-feature provider
 list still adds a per-backend `*ContentFeature` and `SkyboxContentFeature`; those files remain
 ledger entries for phase 3 of
 [the content-split plan](../tasks/2026-08-23-backend-content-split-plan.md) deletes. A pass that
@@ -94,7 +94,7 @@ bodies (`readResourceBytes` and friends).
 ## Re-measuring
 
 ```bash
-python3 tools/loc_survey.py
+git ls-files '*.kt' | xargs wc -l
 ```
 
 Prints the per-package split, the shared total and the whole-stack percentage in one go.

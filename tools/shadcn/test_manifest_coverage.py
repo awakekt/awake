@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# GATE: exit 1 means a component in scripts/awake_ui.py's COMPONENTS mapping lost its manifest
+# GATE: exit 1 means a component in the visual CLI's COMPONENTS mapping lost its manifest
 # case -- the exact silent-drift failure mode that motivated collapsing two duplicate case files
 # into tools/shadcn/shadcn_parity_manifest.json.
 """Every component the CLI knows how to preview/validate must resolve at least one manifest case."""
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-MODULE = REPO_ROOT / "scripts" / "awake_ui.py"
+MODULE = REPO_ROOT / "tools" / "shadcn" / "awake_ui.py"
 _spec = importlib.util.spec_from_file_location("awake_ui", MODULE)
 awake_ui = importlib.util.module_from_spec(_spec)
 sys.modules["awake_ui"] = awake_ui
