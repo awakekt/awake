@@ -8,12 +8,14 @@ package com.awakekt.awake.build.tasks
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipFile
 import javax.xml.parsers.DocumentBuilderFactory
 
 /** Verifies the Maven-local files produced by a publication before Central upload. */
+@DisableCachingByDefault(because = "Inspects the external Maven local repository and publication metadata")
 abstract class VerifyPublishedArtifactsTask : DefaultTask() {
     @TaskAction
     fun verify() {
