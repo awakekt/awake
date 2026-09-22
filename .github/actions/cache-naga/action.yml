@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: Cache Naga native build
+description: Cache Rust dependencies and the target directory used by Naga native builds.
+inputs:
+  variant:
+    description: Cache namespace, such as desktop or ios-sim.
+    required: true
+  target-path:
+    description: Naga Cargo target directory to cache.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Resolve Rust compiler version
+      id: rust-version
+      shell: bash
+      run: echo "version=$(rustc --version | tr ' ' '_')" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Cargo downloads
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+        key: naga-cargo-${{ inputs.variant }}-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock') }}
+        restore-keys: |
+          naga-cargo-${{ inputs.variant }}-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
+
+    - name: Cache Naga native build
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.target-path }}
+        key: naga-${{ inputs.variant }}-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}
+        restore-keys: |
+          naga-${{ inputs.variant }}-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-

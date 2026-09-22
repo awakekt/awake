@@ -64,28 +64,10 @@ jobs:
         with:
           cache-provider: basic
 
-      - name: Resolve Rust compiler version
-        id: rust-version
-        shell: bash
-        run: echo "version=$(rustc --version | tr ' ' '_')" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Cargo downloads
-        uses: actions/cache@v4
+      - uses: ./.github/actions/cache-naga
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: naga-cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock') }}
-          restore-keys: |
-            naga-cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
-
-      - name: Cache Naga desktop build
-        uses: actions/cache@v4
-        with:
-          path: awake/asset/shader-compiler/rust-native/target
-          key: naga-desktop-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}
-          restore-keys: |
-            naga-desktop-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
+          variant: desktop
+          target-path: awake/asset/shader-compiler/rust-native/target
 
       - name: Install NDK and CMake
         run: |
@@ -190,28 +172,10 @@ jobs:
         with:
           cache-provider: basic
 
-      - name: Resolve Rust compiler version
-        id: rust-version
-        shell: bash
-        run: echo "version=$(rustc --version | tr ' ' '_')" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Cargo downloads
-        uses: actions/cache@v4
+      - uses: ./.github/actions/cache-naga
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: naga-cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock') }}
-          restore-keys: |
-            naga-cargo-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
-
-      - name: Cache Naga desktop build
-        uses: actions/cache@v4
-        with:
-          path: awake/asset/shader-compiler/rust-native/target
-          key: naga-desktop-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}
-          restore-keys: |
-            naga-desktop-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
+          variant: desktop
+          target-path: awake/asset/shader-compiler/rust-native/target
 
       # libvulkan-dev: Vulkan headers + loader, for CMake's find_package(Vulkan) and
       # desktopMain's System.loadLibrary("awake-vulkan") to link/load against at run time.
@@ -274,28 +238,10 @@ jobs:
         with:
           targets: aarch64-apple-ios-sim
 
-      - name: Resolve Rust compiler version
-        id: rust-version
-        shell: bash
-        run: echo "version=$(rustc --version | tr ' ' '_')" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Cargo downloads
-        uses: actions/cache@v4
+      - uses: ./.github/actions/cache-naga
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: cargo-ios-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock') }}
-          restore-keys: |
-            cargo-ios-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
-
-      - name: Cache Naga native build
-        uses: actions/cache@v4
-        with:
-          path: awake/asset/shader-compiler/rust-native/target
-          key: naga-ios-sim-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-${{ hashFiles('awake/asset/shader-compiler/rust-native/Cargo.toml', 'awake/asset/shader-compiler/rust-native/Cargo.lock', 'awake/asset/shader-compiler/rust-native/src/**') }}
-          restore-keys: |
-            naga-ios-sim-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.rust-version.outputs.version }}-
+          variant: ios-sim
+          target-path: awake/asset/shader-compiler/rust-native/target
 
       - uses: ./.github/actions/ios-native
 
