@@ -39,6 +39,21 @@ gradle_args=(
   --no-configuration-cache
   --max-workers=4
 )
+
+# Keep this family publish deliberately narrow. The root aggregate tasks publish every
+# publication in Awake Core, which can accidentally republish unrelated modules when the
+# Vulkan workflow is only assembling the three Vulkan coordinates.
+vulkan_local_tasks=(
+  :awake:backend:vulkan:publishToMavenLocal
+  :awake:backend:vulkan:bindings:publishToMavenLocal
+  :awake:backend:vulkan:bindings:android-native:publishToMavenLocal
+)
+vulkan_central_tasks=(
+  :awake:backend:vulkan:publishAllPublicationsToMavenCentralRepository
+  :awake:backend:vulkan:bindings:publishAllPublicationsToMavenCentralRepository
+  :awake:backend:vulkan:bindings:android-native:publishAllPublicationsToMavenCentralRepository
+)
+
 version="$(./gradlew -q :awake:backend:vulkan:properties "${gradle_args[@]}" | awk '/^version:/ { print $2 }')"
 if [[ -z "$version" ]]; then
   echo "Could not derive the Vulkan family version." >&2
@@ -61,7 +76,7 @@ else
 fi
 
 echo "Verifying Vulkan $version against Core $core_version"
-./gradlew publishToMavenLocal "${gradle_args[@]}"
+./gradlew "${vulkan_local_tasks[@]}" "${gradle_args[@]}"
 ./gradlew verifyPublishedArtifacts "-Pawake.verifyPublishedVersion=$version" -Pawake.verifyPublishedFamily=vulkan --no-configuration-cache
 
-./gradlew publishAllPublicationsToMavenCentralRepository "${gradle_args[@]}"
+./gradlew "${vulkan_central_tasks[@]}" "${gradle_args[@]}"

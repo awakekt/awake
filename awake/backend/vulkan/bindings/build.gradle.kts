@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import com.awakekt.awake.build.extension.*
+import java.util.zip.ZipFile
+import org.gradle.jvm.tasks.Jar
 // Raw generated Vulkan API surface, split out of :awake:backend:vulkan (see
 // docs/tasks/2026-08-09-application-seam-and-module-naming-plan.md, Part 3): gen/ (JNI-backed
 // vkCreate*/vkDestroy* calls), handles/, models/, enums/, plus the small hand-authored
@@ -169,13 +171,15 @@ val startOnFirstThread = if (HostOs.isMac) {
 // job has ever compiled the desktop C++ on it, so promising it would be a guess. macOS arm64 and
 // Linux x86_64 are built by existing runners.
 val requiredNativePlatforms = listOf("macos-arm64", "linux-x86_64")
+val desktopJar = tasks.named<Jar>("desktopJar")
 
 // A one-platform jar is indistinguishable from a correct one until a consumer on another OS tries
 // to load it, and then it fails at run time with "not found for platform". The published jar
 // carried only the host's library for its whole life because nothing ever looked.
 tasks.register("verifyDesktopNatives") {
     group = "verification"
-    description = "Fail if the desktop jar's resources are missing a native library for a supported platform."
+    description = "Fail if the final desktop jar is missing a native library for a supported platform."
+    dependsOn(desktopJar)
     doLast {
         val roots = buildList {
             add(layout.buildDirectory.dir("generated/natives-resources").get().asFile)
@@ -194,7 +198,24 @@ tasks.register("verifyDesktopNatives") {
                 "A host builds only its own library, so a release assembles them from per-OS CI runs " +
                 "and passes -Pawake.prebuiltNatives=<collected dir>."
         }
-        println("Desktop natives present for: ${requiredNativePlatforms.joinToString(", ")}")
+
+        val archive = desktopJar.get().archiveFile.get().asFile
+        check(archive.isFile) { "The final desktop publication jar was not produced: $archive" }
+        val archiveEntries = ZipFile(archive).use { zip -> zip.entries().asSequence().map { it.name }.toSet() }
+        val missingFromArchive = requiredNativePlatforms.filter { platform ->
+            val fileName = when {
+                platform.startsWith("macos-") -> "libawake-vulkan.dylib"
+                platform.startsWith("linux-") -> "libawake-vulkan.so"
+                else -> "libawake-vulkan"
+            }
+            "natives/$platform/$fileName" !in archiveEntries
+        }
+        check(missingFromArchive.isEmpty()) {
+            "The final desktop jar is missing native libraries for: ${missingFromArchive.joinToString(", ")}. " +
+                "Inspect $archive and ensure CI's collected native root is passed to " +
+                "-Pawake.prebuiltNatives."
+        }
+        println("Final desktop jar contains natives for: ${requiredNativePlatforms.joinToString(", ")}")
     }
 }
 

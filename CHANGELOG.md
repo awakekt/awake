@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Vulkan publication scope and native verification.** Publish only the three Vulkan family
+  modules, and verify the final desktop JAR contains both supported native library paths before
+  Maven publication.
 - **KMP desktop run-task runtime classpath resolution.** Resolve desktop runtime dependencies from
   the KMP main compilation's named runtime configuration and report missing target configuration
   clearly instead of failing with an absent Gradle provider.
