@@ -53,15 +53,17 @@ data class AwakeAssetsLock(
     val assets: Map<String, AwakeAssetLockEntry> = emptyMap(),
 )
 
+private val projectSemverPattern = Regex("^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
+private val projectSemverParserPattern = Regex("^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$")
+private val projectSha256Pattern = Regex("^[0-9a-f]{64}$")
+private val projectIdPattern = Regex("^[a-z][a-z0-9]*(\\.[a-z0-9-]+)+$")
+private val projectDrivePathPattern = Regex("^[A-Za-z]:.*")
+
 /** Pure JSON, SemVer, and structural validation for the project contract. */
 object AwakeProjectValidator {
     private val json = Json {
         ignoreUnknownKeys = false
     }
-
-    private val semverPattern = Regex("^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
-    private val sha256Pattern = Regex("^[0-9a-f]{64}$")
-    private val projectIdPattern = Regex("^[a-z][a-z0-9]*(\\.[a-z0-9-]+)+$")
 
     fun encodeManifest(manifest: AwakeProjectManifest): String =
         json.encodeToString(AwakeProjectManifest.serializer(), manifest)
@@ -79,8 +81,7 @@ object AwakeProjectValidator {
         manifest.minEngineVersion?.let { parseSemVer(currentEngineVersion) >= parseSemVer(it) } ?: true
 
     internal fun parseSemVer(version: String): SemVer {
-        val match = Regex("^v?(\\d+)\\.(\\d+)\\.(\\d+)(?:-([0-9A-Za-z.-]+))?(?:\\+[0-9A-Za-z.-]+)?$")
-            .matchEntire(version)
+        val match = projectSemverParserPattern.matchEntire(version)
             ?: throw IllegalArgumentException("Invalid SemVer: $version")
         return SemVer(
             major = match.groupValues[1].toInt(),
@@ -111,8 +112,8 @@ object AwakeProjectValidator {
         if (manifest.formatVersion != 1) add("formatVersion must be 1")
         if (!manifest.id.matches(projectIdPattern)) add("id must be a reverse-domain identifier")
         if (manifest.name.isBlank()) add("name must not be blank")
-        if (!manifest.version.matches(semverPattern)) add("version must be semantic version")
-        if (manifest.minEngineVersion != null && !manifest.minEngineVersion.matches(semverPattern)) {
+        if (!manifest.version.matches(projectSemverPattern)) add("version must be semantic version")
+        if (manifest.minEngineVersion != null && !manifest.minEngineVersion.matches(projectSemverPattern)) {
             add("minEngineVersion must be semantic version")
         }
         if (!isSafeProjectPath(manifest.entryScene)) {
@@ -131,7 +132,7 @@ object AwakeProjectValidator {
             if (!isSafeProjectPath(path)) {
                 add("asset path '$path' must be a safe project-relative path")
             }
-            if (!pin.sha256.matches(sha256Pattern)) {
+            if (!pin.sha256.matches(projectSha256Pattern)) {
                 add("asset '$path' must have a lowercase SHA-256 digest")
             }
             if (pin.sizeBytes != null && pin.sizeBytes < 0) {
@@ -141,24 +142,30 @@ object AwakeProjectValidator {
     }
 
     fun isSafeProjectPath(path: String): Boolean {
-        val normalized = path.replace('\\', '/')
-        if (normalized.isBlank() || normalized.startsWith('/') || normalized.matches(Regex("^[A-Za-z]:.*"))) {
-            return false
-        }
-        return normalized.split('/').none { segment -> segment.isBlank() || segment == ".." }
+        if (path.isBlank()) return false
+        val hasInvalidPrefix = '\\' in path || path.startsWith('/') || path.matches(projectDrivePathPattern)
+        return !hasInvalidPrefix && path.split('/').none(::isUnsafePathSegment)
     }
+
+    private fun isUnsafePathSegment(segment: String): Boolean =
+        segment.isBlank() || segment == "." || segment == ".."
 }
 
+internal fun isSha256Digest(value: String): Boolean = value.matches(projectSha256Pattern)
+
 private fun assetRootIssues(assetRoots: List<String>): List<String> = buildList {
+    if (assetRoots.distinct().size != assetRoots.size) {
+        add("assetRoots must not contain duplicates")
+    }
     assetRoots.forEachIndexed { index, root ->
         if (!AwakeProjectValidator.isSafeProjectPath(root)) add("assetRoots[$index] must be a safe project-relative path")
     }
 }
 
 private fun pluginIssues(plugins: List<AwakeProjectPluginReference>): List<String> = buildList {
-    val semverPattern = Regex("^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$")
-    val sha256Pattern = Regex("^[0-9a-f]{64}$")
-    val projectIdPattern = Regex("^[a-z][a-z0-9]*(\\.[a-z0-9-]+)+$")
+    if (plugins.map { it.id }.distinct().size != plugins.size) {
+        add("plugins must not contain duplicate ids")
+    }
     plugins.forEachIndexed { index, plugin ->
         if (!plugin.id.matches(projectIdPattern)) {
             add("plugins[$index].id must be a reverse-domain identifier")
@@ -166,10 +173,10 @@ private fun pluginIssues(plugins: List<AwakeProjectPluginReference>): List<Strin
         if (!AwakeProjectValidator.isSafeProjectPath(plugin.path)) {
             add("plugins[$index].path must be a safe project-relative path")
         }
-        if (plugin.version.isNotBlank() && !plugin.version.matches(semverPattern)) {
+        if (plugin.version.isNotBlank() && !plugin.version.matches(projectSemverPattern)) {
             add("plugins[$index].version must be semantic version")
         }
-        if (plugin.sha256 != null && !plugin.sha256.matches(sha256Pattern)) {
+        if (plugin.sha256 != null && !plugin.sha256.matches(projectSha256Pattern)) {
             add("plugins[$index].sha256 must be a lowercase SHA-256 digest")
         }
         if (plugin.entrypointClass != null && plugin.entrypointClass.isBlank()) {

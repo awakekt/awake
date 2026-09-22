@@ -89,7 +89,29 @@ class AwakeProjectTest {
         assertTrue(AwakeProjectValidator.manifestIssues(manifest).isNotEmpty())
         assertTrue(AwakeProjectValidator.assetsLockIssues(lock).isNotEmpty())
         assertFalse(AwakeProjectValidator.isSafeProjectPath("../outside"))
+        assertFalse(AwakeProjectValidator.isSafeProjectPath("assets/./world.zip"))
+        assertFalse(AwakeProjectValidator.isSafeProjectPath("assets//world.zip"))
+        assertFalse(AwakeProjectValidator.isSafeProjectPath("assets\\world.zip"))
         assertTrue(AwakeProjectValidator.isSafeProjectPath("assets/world.zip"))
+    }
+
+    @Test
+    fun manifestRejectsDuplicateRootsAndPlugins() {
+        val manifest = AwakeProjectManifest(
+            id = "com.example.game",
+            name = "Example Game",
+            version = "1.0.0",
+            entryScene = "scenes/main.scene.json",
+            assetRoots = listOf("assets", "assets"),
+            plugins = listOf(
+                AwakeProjectPluginReference("com.example.tools", "plugins/tools.awakeplugin"),
+                AwakeProjectPluginReference("com.example.tools", "plugins/other.awakeplugin"),
+            ),
+        )
+
+        val issues = AwakeProjectValidator.manifestIssues(manifest)
+        assertTrue(issues.any { it.contains("assetRoots must not contain duplicates") })
+        assertTrue(issues.any { it.contains("plugins must not contain duplicate ids") })
     }
 
     @Test
