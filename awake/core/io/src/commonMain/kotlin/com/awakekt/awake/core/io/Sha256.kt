@@ -26,93 +26,21 @@ object Sha256 {
         0x90befffa.toInt(), 0xa4506ceb.toInt(), 0xbef9a3f7.toInt(), 0xc67178f2.toInt(),
     )
 
-    @Suppress("LongMethod")
-    fun digest(data: ByteArray): ByteArray {
-        var h0 = 0x6a09e667
-        var h1 = 0xbb67ae85.toInt()
-        var h2 = 0x3c6ef372
-        var h3 = 0xa54ff53a.toInt()
-        var h4 = 0x510e527f
-        var h5 = 0x9b05688c.toInt()
-        var h6 = 0x1f83d9ab
-        var h7 = 0x5be0cd19
+    fun digest(data: ByteArray): ByteArray = Accumulator().apply { update(data) }.finish()
 
-        val bitLength = data.size.toLong() * 8L
-        val paddingLength = ((56 - (data.size + 1) % 64) + 64) % 64
-        val padded = ByteArray(data.size + 1 + paddingLength + 8)
-        data.copyInto(padded)
-        padded[data.size] = 0x80.toByte()
-
-        for (i in 0 until 8) {
-            padded[padded.size - 1 - i] = ((bitLength ushr (i * 8)) and 0xFF).toByte()
-        }
-
-        val schedule = IntArray(64)
-        var offset = 0
-        while (offset < padded.size) {
-            for (i in 0 until 16) {
-                val index = offset + i * 4
-                schedule[i] = ((padded[index].toInt() and 0xFF) shl 24) or
-                    ((padded[index + 1].toInt() and 0xFF) shl 16) or
-                    ((padded[index + 2].toInt() and 0xFF) shl 8) or
-                    (padded[index + 3].toInt() and 0xFF)
+    /** Hashes a stream without collecting the complete file in memory. */
+    suspend fun digest(session: ByteReadSession, chunkSize: Int = DEFAULT_CHUNK_SIZE): ByteArray {
+        require(chunkSize > 0) { "chunkSize must be positive" }
+        val accumulator = Accumulator()
+        try {
+            while (true) {
+                val chunk = session.readChunk(chunkSize) ?: break
+                accumulator.update(chunk)
             }
-            for (i in 16 until 64) {
-                val s0 = (schedule[i - 15] rotateRight 7) xor
-                    (schedule[i - 15] rotateRight 18) xor (schedule[i - 15] ushr 3)
-                val s1 = (schedule[i - 2] rotateRight 17) xor
-                    (schedule[i - 2] rotateRight 19) xor (schedule[i - 2] ushr 10)
-                schedule[i] = schedule[i - 16] + s0 + schedule[i - 7] + s1
-            }
-
-            var a = h0
-            var b = h1
-            var c = h2
-            var d = h3
-            var e = h4
-            var f = h5
-            var g = h6
-            var h = h7
-
-            for (i in 0 until 64) {
-                val s1 = (e rotateRight 6) xor (e rotateRight 11) xor (e rotateRight 25)
-                val ch = (e and f) xor (e.inv() and g)
-                val temp1 = h + s1 + ch + roundConstants[i] + schedule[i]
-                val s0 = (a rotateRight 2) xor (a rotateRight 13) xor (a rotateRight 22)
-                val maj = (a and b) xor (a and c) xor (b and c)
-                val temp2 = s0 + maj
-
-                h = g
-                g = f
-                f = e
-                e = d + temp1
-                d = c
-                c = b
-                b = a
-                a = temp1 + temp2
-            }
-
-            h0 += a
-            h1 += b
-            h2 += c
-            h3 += d
-            h4 += e
-            h5 += f
-            h6 += g
-            h7 += h
-            offset += 64
+            return accumulator.finish()
+        } finally {
+            session.close()
         }
-
-        val result = ByteArray(32)
-        val hash = intArrayOf(h0, h1, h2, h3, h4, h5, h6, h7)
-        for (i in hash.indices) {
-            val value = hash[i]
-            result[i * 4] = (value ushr 24).toByte()
-            result[i * 4 + 1] = (value ushr 16).toByte()
-            result[i * 4 + 2] = (value ushr 8).toByte()
-            result[i * 4 + 3] = value.toByte()
-        }
-        return result
     }
 
     fun digestHex(text: String): String = digestHex(text.encodeToByteArray())
@@ -122,6 +50,122 @@ object Sha256 {
         if (hex.length == 1) "0$hex" else hex
     }
 
+    suspend fun digestHex(session: ByteReadSession, chunkSize: Int = DEFAULT_CHUNK_SIZE): String =
+        digest(session, chunkSize).toHex()
+
+    private class Accumulator {
+        private val state = intArrayOf(
+            0x6a09e667,
+            0xbb67ae85.toInt(),
+            0x3c6ef372,
+            0xa54ff53a.toInt(),
+            0x510e527f,
+            0x9b05688c.toInt(),
+            0x1f83d9ab,
+            0x5be0cd19,
+        )
+        private val buffer = ByteArray(64)
+        private val schedule = IntArray(64)
+        private var buffered = 0
+        private var totalBytes = 0L
+
+        fun update(data: ByteArray) {
+            var offset = 0
+            totalBytes += data.size.toLong()
+            while (offset < data.size) {
+                val copied = minOf(64 - buffered, data.size - offset)
+                data.copyInto(buffer, buffered, offset, offset + copied)
+                buffered += copied
+                offset += copied
+                if (buffered == 64) {
+                    processBlock(buffer)
+                    buffered = 0
+                }
+            }
+        }
+
+        fun finish(): ByteArray {
+            buffer[buffered++] = 0x80.toByte()
+            if (buffered > 56) {
+                buffer.fill(0, buffered, 64)
+                processBlock(buffer)
+                buffered = 0
+            }
+            buffer.fill(0, buffered, 56)
+            val bitLength = totalBytes * 8L
+            for (i in 0 until 8) {
+                buffer[63 - i] = (bitLength ushr (i * 8)).toByte()
+            }
+            processBlock(buffer)
+
+            val result = ByteArray(32)
+            for (i in state.indices) {
+                val value = state[i]
+                result[i * 4] = (value ushr 24).toByte()
+                result[i * 4 + 1] = (value ushr 16).toByte()
+                result[i * 4 + 2] = (value ushr 8).toByte()
+                result[i * 4 + 3] = value.toByte()
+            }
+            return result
+        }
+
+        @Suppress("LongMethod")
+        private fun processBlock(block: ByteArray) {
+            for (i in 0 until 16) {
+                val index = i * 4
+                schedule[i] = ((block[index].toInt() and 0xFF) shl 24) or
+                    ((block[index + 1].toInt() and 0xFF) shl 16) or
+                    ((block[index + 2].toInt() and 0xFF) shl 8) or
+                    (block[index + 3].toInt() and 0xFF)
+            }
+            for (i in 16 until 64) {
+                val s0 = (schedule[i - 15] rotateRight 7) xor
+                    (schedule[i - 15] rotateRight 18) xor (schedule[i - 15] ushr 3)
+                val s1 = (schedule[i - 2] rotateRight 17) xor
+                    (schedule[i - 2] rotateRight 19) xor (schedule[i - 2] ushr 10)
+                schedule[i] = schedule[i - 16] + s0 + schedule[i - 7] + s1
+            }
+
+            var a = state[0]
+            var b = state[1]
+            var c = state[2]
+            var d = state[3]
+            var e = state[4]
+            var f = state[5]
+            var g = state[6]
+            var h = state[7]
+            for (i in 0 until 64) {
+                val s1 = (e rotateRight 6) xor (e rotateRight 11) xor (e rotateRight 25)
+                val ch = (e and f) xor (e.inv() and g)
+                val temp1 = h + s1 + ch + roundConstants[i] + schedule[i]
+                val s0 = (a rotateRight 2) xor (a rotateRight 13) xor (a rotateRight 22)
+                val maj = (a and b) xor (a and c) xor (b and c)
+                val temp2 = s0 + maj
+                h = g
+                g = f
+                f = e
+                e = d + temp1
+                d = c
+                c = b
+                b = a
+                a = temp1 + temp2
+            }
+            state[0] += a
+            state[1] += b
+            state[2] += c
+            state[3] += d
+            state[4] += e
+            state[5] += f
+            state[6] += g
+            state[7] += h
+        }
+    }
+
     private infix fun Int.rotateRight(distance: Int): Int =
         (this ushr distance) or (this shl (32 - distance))
+
+    private fun ByteArray.toHex(): String = joinToString("") {
+        val hex = (it.toInt() and 0xFF).toString(16)
+        if (hex.length == 1) "0$hex" else hex
+    }
 }

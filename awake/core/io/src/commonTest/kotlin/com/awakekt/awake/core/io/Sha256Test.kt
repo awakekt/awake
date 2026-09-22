@@ -7,6 +7,7 @@ package com.awakekt.awake.core.io
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.coroutines.test.runTest
 
 class Sha256Test {
     @Test
@@ -19,5 +20,17 @@ class Sha256Test {
             "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
             Sha256.digestHex("abc"),
         )
+    }
+
+    @Test
+    fun hashesReadSessionWithoutChangingTheDigest() = runTest {
+        val bytes = ByteArray(DEFAULT_CHUNK_SIZE * 2 + 19) { (it % 251).toByte() }
+        val fileSystem = InMemoryFileSystem()
+        val path = FilePath.of("large.bin")
+        fileSystem.write(path, bytes).getOrThrow()
+
+        val sessionDigest = Sha256.digestHex(fileSystem.openRead(path).getOrThrow(), chunkSize = 17)
+
+        assertEquals(Sha256.digestHex(bytes), sessionDigest)
     }
 }
