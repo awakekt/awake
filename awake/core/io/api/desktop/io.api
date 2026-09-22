@@ -369,6 +369,13 @@ public final class com/awakekt/awake/core/io/Sha256 {
 	public static synthetic fun digestHex$default (Lcom/awakekt/awake/core/io/Sha256;Lcom/awakekt/awake/core/io/ByteReadSession;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
+public final class com/awakekt/awake/core/io/Sha256$Stream {
+	public fun <init> ()V
+	public final fun finish ()[B
+	public final fun finishHex ()Ljava/lang/String;
+	public final fun update ([B)V
+}
+
 public final class com/awakekt/awake/core/io/WriteMode : java/lang/Enum {
 	public static final field Append Lcom/awakekt/awake/core/io/WriteMode;
 	public static final field CreateNew Lcom/awakekt/awake/core/io/WriteMode;

@@ -33,4 +33,13 @@ class Sha256Test {
 
         assertEquals(Sha256.digestHex(bytes), sessionDigest)
     }
+
+    @Test
+    fun incrementalStreamMatchesWholeInputDigest() {
+        val stream = Sha256.Stream()
+        stream.update("first".encodeToByteArray())
+        stream.update("-second".encodeToByteArray())
+
+        assertEquals(Sha256.digestHex("first-second"), stream.finishHex())
+    }
 }

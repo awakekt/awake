@@ -26,18 +26,18 @@ object Sha256 {
         0x90befffa.toInt(), 0xa4506ceb.toInt(), 0xbef9a3f7.toInt(), 0xc67178f2.toInt(),
     )
 
-    fun digest(data: ByteArray): ByteArray = Accumulator().apply { update(data) }.finish()
+    fun digest(data: ByteArray): ByteArray = Stream().apply { update(data) }.finish()
 
     /** Hashes a stream without collecting the complete file in memory. */
     suspend fun digest(session: ByteReadSession, chunkSize: Int = DEFAULT_CHUNK_SIZE): ByteArray {
         require(chunkSize > 0) { "chunkSize must be positive" }
-        val accumulator = Accumulator()
+        val stream = Stream()
         try {
             while (true) {
                 val chunk = session.readChunk(chunkSize) ?: break
-                accumulator.update(chunk)
+                stream.update(chunk)
             }
-            return accumulator.finish()
+            return stream.finish()
         } finally {
             session.close()
         }
@@ -52,6 +52,25 @@ object Sha256 {
 
     suspend fun digestHex(session: ByteReadSession, chunkSize: Int = DEFAULT_CHUNK_SIZE): String =
         digest(session, chunkSize).toHex()
+
+    /** Incremental SHA-256 state for adapters that both consume and verify a byte stream. */
+    class Stream {
+        private val accumulator = Accumulator()
+        private var finished = false
+
+        fun update(data: ByteArray) {
+            check(!finished) { "SHA-256 stream is already finished." }
+            accumulator.update(data)
+        }
+
+        fun finish(): ByteArray {
+            check(!finished) { "SHA-256 stream is already finished." }
+            finished = true
+            return accumulator.finish()
+        }
+
+        fun finishHex(): String = finish().toHex()
+    }
 
     private class Accumulator {
         private val state = intArrayOf(
