@@ -4,113 +4,442 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 @file:OptIn(kotlin.js.ExperimentalWasmJsInterop::class, kotlin.io.encoding.ExperimentalEncodingApi::class)
-@file:Suppress("TooManyFunctions")
+@file:Suppress("TooManyFunctions", "LongMethod")
 
 package com.awakekt.awake.core.io
 
+import kotlinx.coroutines.await
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlin.io.encoding.Base64
+import kotlin.js.JsAny
+import kotlin.js.Promise
 
 /**
- * Browser filesystem adapter.
+ * Browser-local filesystem backed by versioned IndexedDB records.
  *
- * A browser cannot access a project directory without a user-selected File System Access handle.
- * The default Core adapter therefore uses the same transactional reference implementation as
- * desktop, and persists its file bytes in localStorage when that capability exists. Studio can
- * provide a user-selected handle later without changing the Core [FileSystem] contract.
+ * Metadata and content are stored separately. The metadata index is loaded when the filesystem is
+ * first used; file bytes are fetched from IndexedDB only for [openRead]. URL projects should
+ * compose this writable layer with [OverlayFileSystem] instead of writing into their remote source.
  */
 actual fun createPlatformFileSystem(root: String?): FileSystem =
-    WasmVirtualFileSystem(storageKey(root ?: "default"))
+    IndexedDbFileSystem(root ?: "default")
 
-private class WasmVirtualFileSystem(private val key: String) : FileSystem {
-    private val delegate = InMemoryFileSystem(loadFiles(key))
+private class IndexedDbFileSystem(
+    private val root: String,
+) : FileSystem {
+    private val namespace = "awake.core.io.v2:$root"
+    private val legacyKey = "awake.core.io.v1:$root"
+    private val migrationKey = "awake.core.io.v2:migrated:$root"
+    private val metadata = linkedMapOf<FilePath, StoredMetadata>()
+    private val watchers = mutableListOf<Watcher>()
+    private var loaded = false
+    private var clock = 0L
 
-    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = delegate.openRead(path)
-
-    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> =
-        delegate.openWrite(path, mode).map { session ->
-            PersistingWriteSession(session) { persist() }
+    override suspend fun openRead(path: FilePath): Result<ByteReadSession> = runCatching {
+        ensureLoaded()
+        val entry = metadata[path] ?: throw FileSystemException(FileSystemError.NotFound(path))
+        if (entry.kind != FileKind.File) {
+            throw FileSystemException(FileSystemError.Conflict(path, "A directory cannot be read as a file."))
         }
+        val encoded = jsIndexedDbRead(namespace, path.value).await<JsAny?>()?.toString()
+            ?: throw FileSystemException(FileSystemError.NotFound(path))
+        val bytes = Base64.decode(encoded)
+        check(bytes.size.toLong() == entry.sizeBytes) { "IndexedDB content size mismatch for '${path.value}'." }
+        ByteArrayReadSession(bytes)
+    }
 
-    override suspend fun read(path: FilePath): Result<ByteArray> = delegate.read(path)
+    override suspend fun openWrite(path: FilePath, mode: WriteMode): Result<ByteWriteSession> = runCatching {
+        ensureLoaded()
+        if (metadata[path]?.kind == FileKind.Directory) {
+            throw FileSystemException(FileSystemError.Conflict(path, "A directory cannot be written as a file."))
+        }
+        if (mode == WriteMode.CreateNew && metadata.containsKey(path)) {
+            throw FileSystemException(FileSystemError.AlreadyExists(path))
+        }
+        val initial = if (mode == WriteMode.Append) read(path).getOrThrow() else ByteArray(0)
+        IndexedDbWriteSession(initial) { bytes ->
+            val existed = metadata[path]?.kind == FileKind.File
+            ensureParentDirectories(path)
+            val stored = StoredMetadata(FileKind.File, bytes.size.toLong(), nextTimestamp())
+            metadata[path] = stored
+            jsIndexedDbPut(
+                namespace,
+                path.value,
+                stored.kind.name,
+                stored.sizeBytes,
+                stored.modifiedAtEpochMs,
+                Base64.encode(bytes),
+            ).await<JsAny?>()
+            notify(
+                FileChangeBatch(
+                    listOf(if (existed) FileChange.Modified(fileEntry(path, stored)) else FileChange.Created(fileEntry(path, stored))),
+                ),
+            )
+        }
+    }
 
-    override suspend fun write(path: FilePath, bytes: ByteArray, mode: WriteMode): Result<Unit> =
-        delegate.write(path, bytes, mode).persistIfSuccessful()
-
-    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = delegate.list(path, recursive)
-
-    override suspend fun stat(path: FilePath): Result<FileEntry?> = delegate.stat(path)
-
-    override suspend fun createDirectories(path: FilePath): Result<Unit> =
-        delegate.createDirectories(path).persistIfSuccessful()
-
-    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> =
-        delegate.delete(path, recursive).persistIfSuccessful()
-
-    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> =
-        delegate.move(from, to, replace).persistIfSuccessful()
-
-    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> =
-        delegate.transaction(block).persistIfSuccessful()
-
-    override fun watch(path: FilePath, recursive: Boolean, listener: (FileChangeBatch) -> Unit): FileWatch =
-        delegate.watch(path, recursive, listener)
-
-    private suspend fun persist(): Result<Unit> = runCatching {
-        val entries = delegate.list(FilePath.Root, recursive = true).getOrThrow()
-            .filter { it.kind == FileKind.File }
+    override suspend fun list(path: FilePath, recursive: Boolean): Result<List<FileEntry>> = runCatching {
+        ensureLoaded()
+        if (path != FilePath.Root && !metadata.containsKey(path)) {
+            throw FileSystemException(FileSystemError.NotFound(path))
+        }
+        metadata.keys
+            .filter { it != path && isChild(path, it, recursive) }
+            .map { fileEntry(it, metadata.getValue(it)) }
             .sortedBy { it.path.value }
-        val files = entries.map { entry ->
-            "${Base64.encode(entry.path.value.encodeToByteArray())}:${Base64.encode(delegate.read(entry.path).getOrThrow())}"
-        }.joinToString("\n")
-        jsStorageSet(key, files)
-    }.fold(
-        onSuccess = { Result.success(Unit) },
-        onFailure = { Result.failure(it.toStorageException()) },
+    }
+
+    override suspend fun stat(path: FilePath): Result<FileEntry?> = runCatching {
+        ensureLoaded()
+        metadata[path]?.let { fileEntry(path, it) }
+    }
+
+    override suspend fun createDirectories(path: FilePath): Result<Unit> = runCatching {
+        ensureLoaded()
+        ensureParentDirectories(path)
+        if (metadata[path] == null) {
+            val stored = StoredMetadata(FileKind.Directory, null, nextTimestamp())
+            metadata[path] = stored
+            jsIndexedDbPut(namespace, path.value, stored.kind.name, null, stored.modifiedAtEpochMs, null).await<JsAny?>()
+        }
+    }
+
+    override suspend fun delete(path: FilePath, recursive: Boolean): Result<Unit> = runCatching {
+        ensureLoaded()
+        if (path == FilePath.Root) {
+            throw FileSystemException(FileSystemError.InvalidPath(path.value, "The root cannot be deleted."))
+        }
+        val entry = metadata[path] ?: throw FileSystemException(FileSystemError.NotFound(path))
+        val children = if (entry.kind == FileKind.Directory) metadata.keys.filter { it.value.startsWith("${path.value}/") } else emptyList()
+        if (children.isNotEmpty() && !recursive) {
+            throw FileSystemException(FileSystemError.Conflict(path, "Directory is not empty."))
+        }
+        val targets = children + path
+        targets.forEach {
+            metadata.remove(it)
+            jsIndexedDbDelete(namespace, it.value).await<JsAny?>()
+        }
+        notify(FileChangeBatch(targets.map(FileChange::Deleted)))
+    }
+
+    override suspend fun move(from: FilePath, to: FilePath, replace: Boolean): Result<Unit> = runCatching {
+        ensureLoaded()
+        val source = metadata[from] ?: throw FileSystemException(FileSystemError.NotFound(from))
+        if (!replace && metadata.containsKey(to)) {
+            throw FileSystemException(FileSystemError.AlreadyExists(to))
+        }
+        ensureParentDirectories(to)
+        val targets = if (source.kind == FileKind.Directory) {
+            metadata.keys.filter { it == from || it.value.startsWith("${from.value}/") }
+        } else {
+            listOf(from)
+        }
+        targets.sortedBy { it.value.length }.forEach { oldPath ->
+            val newPath = remap(from, to, oldPath)
+            val oldMetadata = metadata.getValue(oldPath)
+            val content = if (oldMetadata.kind == FileKind.File) {
+                jsIndexedDbRead(namespace, oldPath.value).await<JsAny?>()?.toString()
+            } else null
+            metadata.remove(oldPath)
+            metadata[newPath] = oldMetadata
+            jsIndexedDbMove(namespace, oldPath.value, newPath.value, content).await<JsAny?>()
+        }
+        notify(FileChangeBatch(listOf(FileChange.Moved(from, to))))
+    }
+
+    override suspend fun <T> transaction(block: suspend FileTransaction.() -> T): Result<T> = runCatching {
+        ensureLoaded()
+        val snapshot = metadata.keys
+            .filter { metadata.getValue(it).kind == FileKind.File }
+            .associateWith { read(it).getOrThrow() }
+        val staged = InMemoryFileSystem(snapshot)
+        val value = staged.transaction(block).getOrThrow()
+        val next = staged.list(FilePath.Root, recursive = true).getOrThrow()
+            .filter { it.kind == FileKind.File }
+            .associate { it.path to staged.read(it.path).getOrThrow() }
+        metadata.keys.toList()
+            .sortedByDescending { it.value.length }
+            .forEach { path ->
+                if (metadata.remove(path) != null) {
+                    jsIndexedDbDelete(namespace, path.value).await<JsAny?>()
+                }
+            }
+        next.forEach { (path, bytes) -> write(path, bytes).getOrThrow() }
+        value
+    }
+
+    override fun watch(path: FilePath, recursive: Boolean, listener: (FileChangeBatch) -> Unit): FileWatch {
+        val watcher = Watcher(path, recursive, listener)
+        watchers += watcher
+        return FileWatch { watchers.remove(watcher) }
+    }
+
+    private suspend fun ensureLoaded() {
+        if (loaded) return
+        val encoded = jsIndexedDbList(namespace).await<JsAny?>()?.toString().orEmpty()
+        Json.decodeFromString<List<StoredMetadataRecord>>(encoded).forEach { record ->
+            val path = FilePath.of(record.path)
+            val stored = StoredMetadata(FileKind.valueOf(record.kind), record.sizeBytes, record.modifiedAtEpochMs)
+            metadata[path] = stored
+            clock = maxOf(clock, stored.modifiedAtEpochMs ?: 0L)
+        }
+        migrateLegacyLocalStorage()
+        loaded = true
+    }
+
+    /**
+     * Migrates the old Base64/localStorage format once, with hard bounds so a corrupt legacy value
+     * cannot freeze project opening or allocate an unbounded in-memory bundle.
+     */
+    private suspend fun migrateLegacyLocalStorage() {
+        if (jsStorageGet(migrationKey) == "done") return
+        val encoded = jsStorageGet(legacyKey) ?: run {
+            jsStorageSet(migrationKey, "done")
+            return
+        }
+        var fileCount = 0
+        var totalBytes = 0L
+        encoded.lineSequence().filter(String::isNotEmpty).forEach { line ->
+            require(++fileCount <= LEGACY_MAX_FILES) {
+                "Legacy browser storage contains more than $LEGACY_MAX_FILES files."
+            }
+            val separator = line.indexOf(':')
+            if (separator <= 0) return@forEach
+            val path = runCatching { FilePath.of(Base64.decode(line.substring(0, separator)).decodeToString()) }
+                .getOrNull() ?: return@forEach
+            val bytes = runCatching { Base64.decode(line.substring(separator + 1)) }
+                .getOrNull() ?: return@forEach
+            totalBytes += bytes.size
+            require(totalBytes <= LEGACY_MAX_BYTES) {
+                "Legacy browser storage exceeds the ${LEGACY_MAX_BYTES / (1024 * 1024)} MiB migration limit."
+            }
+            ensureParentDirectories(path)
+            val stored = StoredMetadata(FileKind.File, bytes.size.toLong(), nextTimestamp())
+            metadata[path] = stored
+            jsIndexedDbPut(
+                namespace,
+                path.value,
+                stored.kind.name,
+                stored.sizeBytes,
+                stored.modifiedAtEpochMs,
+                Base64.encode(bytes),
+            ).await<JsAny?>()
+        }
+        jsStorageSet(migrationKey, "done")
+    }
+
+    private suspend fun ensureParentDirectories(path: FilePath) {
+        val parts = path.value.split('/').dropLast(1)
+        var current = ""
+        for (part in parts) {
+            current = listOf(current, part).filter(String::isNotEmpty).joinToString("/")
+            val parent = FilePath.of(current)
+            if (metadata[parent] == null) {
+                val stored = StoredMetadata(FileKind.Directory, null, nextTimestamp())
+                metadata[parent] = stored
+                jsIndexedDbPut(namespace, parent.value, stored.kind.name, null, stored.modifiedAtEpochMs, null).await<JsAny?>()
+            }
+        }
+    }
+
+    private fun nextTimestamp(): Long = ++clock
+
+    private fun fileEntry(path: FilePath, value: StoredMetadata): FileEntry =
+        FileEntry(path, value.kind, value.sizeBytes, value.modifiedAtEpochMs)
+
+    private fun notify(batch: FileChangeBatch) {
+        watchers.toList().forEach { watcher ->
+            val visible = batch.changes.filter { change ->
+                val paths = when (change) {
+                    is FileChange.Created -> listOf(change.entry.path)
+                    is FileChange.Modified -> listOf(change.entry.path)
+                    is FileChange.Deleted -> listOf(change.path)
+                    is FileChange.Moved -> listOf(change.from, change.to)
+                }
+                paths.any(watcher::matches)
+            }
+            if (visible.isNotEmpty()) watcher.listener(FileChangeBatch(visible))
+        }
+    }
+
+    private data class StoredMetadata(val kind: FileKind, val sizeBytes: Long?, val modifiedAtEpochMs: Long?)
+
+    @Serializable
+    private data class StoredMetadataRecord(
+        val path: String,
+        val kind: String,
+        val sizeBytes: Long? = null,
+        val modifiedAtEpochMs: Long? = null,
     )
 
-    private suspend fun <T> Result<T>.persistIfSuccessful(): Result<T> {
-        if (isFailure) return this
-        val persistence = persist()
-        return persistence.fold(
-            onSuccess = { this },
-            onFailure = { Result.failure(it) },
-        )
+    private class ByteArrayReadSession(private val bytes: ByteArray) : ByteReadSession {
+        private var offset = 0
+        override suspend fun readChunk(maxBytes: Int): ByteArray? {
+            require(maxBytes > 0) { "maxBytes must be positive" }
+            if (offset >= bytes.size) return null
+            val end = (offset + maxBytes).coerceAtMost(bytes.size)
+            return bytes.copyOfRange(offset, end).also { offset = end }
+        }
+        override fun close() = Unit
+    }
+
+    private class IndexedDbWriteSession(
+        initial: ByteArray,
+        private val commitBytes: suspend (ByteArray) -> Unit,
+    ) : ByteWriteSession {
+        private val chunks = mutableListOf(initial)
+        private var closed = false
+        override suspend fun writeChunk(bytes: ByteArray) {
+            check(!closed) { "Write session is closed" }
+            chunks += bytes.copyOf()
+        }
+        override suspend fun commit(): Result<Unit> = runCatching {
+            check(!closed) { "Write session is closed" }
+            commitBytes(chunks.flattenToByteArray())
+            closed = true
+        }
+        override suspend fun abort() {
+            closed = true
+            chunks.clear()
+        }
+        override fun close() { closed = true }
+    }
+
+    private data class Watcher(
+        val path: FilePath,
+        val recursive: Boolean,
+        val listener: (FileChangeBatch) -> Unit,
+    ) {
+        fun matches(candidate: FilePath): Boolean =
+            path == FilePath.Root || candidate == path || (recursive && candidate.value.startsWith("${path.value}/"))
+    }
+
+    private companion object {
+        const val LEGACY_MAX_FILES = 10_000
+        const val LEGACY_MAX_BYTES = 32L * 1024L * 1024L
     }
 }
 
-private class PersistingWriteSession(
-    private val delegate: ByteWriteSession,
-    private val persist: suspend () -> Result<Unit>,
-) : ByteWriteSession {
-    override suspend fun writeChunk(bytes: ByteArray) = delegate.writeChunk(bytes)
-
-    override suspend fun commit(): Result<Unit> = delegate.commit().fold(
-        onSuccess = { persist() },
-        onFailure = { Result.failure(it) },
-    )
-
-    override suspend fun abort() = delegate.abort()
-
-    override fun close() = delegate.close()
+private fun isChild(parent: FilePath, candidate: FilePath, recursive: Boolean): Boolean {
+    val prefix = if (parent == FilePath.Root) "" else "${parent.value}/"
+    if (!candidate.value.startsWith(prefix)) return false
+    return recursive || !candidate.value.removePrefix(prefix).contains('/')
 }
 
-private fun loadFiles(key: String): Map<FilePath, ByteArray> {
-    val encoded = runCatching { jsStorageGet(key) }.getOrNull() ?: return emptyMap()
-    return encoded.lineSequence().filter { it.isNotEmpty() }.mapNotNull { line ->
-        val separator = line.indexOf(':')
-        if (separator <= 0) return@mapNotNull null
-        runCatching {
-            FilePath.of(Base64.decode(line.substring(0, separator)).decodeToString()) to
-                Base64.decode(line.substring(separator + 1))
-        }.getOrNull()
-    }.toMap()
+private fun remap(from: FilePath, to: FilePath, path: FilePath): FilePath {
+    val suffix = path.value.removePrefix(from.value).removePrefix("/")
+    return FilePath.of(listOf(to.value, suffix).filter(String::isNotEmpty).joinToString("/"))
 }
 
-private fun storageKey(root: String): String = "awake.core.io.v1:$root"
+@JsFun("""
+(namespace) => new Promise((resolve, reject) => {
+  if (!globalThis.indexedDB) { resolve('[]'); return; }
+  const request = indexedDB.open('awake-core-io-v2', 1);
+  request.onupgradeneeded = () => {
+    const db = request.result;
+    if (!db.objectStoreNames.contains('metadata')) db.createObjectStore('metadata');
+    if (!db.objectStoreNames.contains('content')) db.createObjectStore('content');
+  };
+  request.onerror = () => reject(request.error);
+  request.onsuccess = () => {
+    const db = request.result;
+    const cursor = db.transaction('metadata', 'readonly').objectStore('metadata').openCursor();
+    const records = [];
+    cursor.onerror = () => reject(cursor.error);
+    cursor.onsuccess = () => {
+      const item = cursor.result;
+      if (item) {
+        if (item.value.namespace === namespace) records.push(item.value);
+        item.continue();
+      } else resolve(JSON.stringify(records.map(({path, kind, sizeBytes, modifiedAtEpochMs}) => ({path, kind, sizeBytes, modifiedAtEpochMs}))));
+    };
+  };
+})
+""")
+private external fun jsIndexedDbList(namespace: String): Promise<JsAny?>
 
-private fun Throwable.toStorageException(): FileSystemException =
-    this as? FileSystemException
-        ?: FileSystemException(FileSystemError.IoFailure("persist", message ?: "Browser storage failed."))
+@JsFun("""
+(namespace, path) => new Promise((resolve, reject) => {
+  if (!globalThis.indexedDB) { resolve(null); return; }
+  const request = indexedDB.open('awake-core-io-v2', 1);
+  request.onerror = () => reject(request.error);
+  request.onsuccess = () => {
+    const db = request.result;
+    const result = db.transaction('content', 'readonly').objectStore('content').get(namespace + ':' + path);
+    result.onerror = () => reject(result.error);
+    result.onsuccess = () => resolve(result.result ?? null);
+  };
+})
+""")
+private external fun jsIndexedDbRead(namespace: String, path: String): Promise<JsAny?>
+
+@JsFun("""
+(namespace, path, kind, sizeBytes, modifiedAtEpochMs, content) => new Promise((resolve, reject) => {
+  if (!globalThis.indexedDB) { resolve(null); return; }
+  const request = indexedDB.open('awake-core-io-v2', 1);
+  request.onerror = () => reject(request.error);
+  request.onsuccess = () => {
+    const db = request.result;
+    const tx = db.transaction(['metadata', 'content'], 'readwrite');
+    const key = namespace + ':' + path;
+    tx.objectStore('metadata').put({namespace, path, kind, sizeBytes, modifiedAtEpochMs}, key);
+    if (content == null) tx.objectStore('content').delete(key); else tx.objectStore('content').put(content, key);
+    tx.oncomplete = () => resolve(null);
+    tx.onerror = () => reject(tx.error);
+  };
+})
+""")
+@Suppress("LongParameterList")
+private external fun jsIndexedDbPut(
+    namespace: String,
+    path: String,
+    kind: String,
+    sizeBytes: Long?,
+    modifiedAtEpochMs: Long?,
+    content: String?,
+): Promise<JsAny?>
+
+@JsFun("""
+(namespace, path) => new Promise((resolve, reject) => {
+  if (!globalThis.indexedDB) { resolve(null); return; }
+  const request = indexedDB.open('awake-core-io-v2', 1);
+  request.onerror = () => reject(request.error);
+  request.onsuccess = () => {
+    const db = request.result;
+    const tx = db.transaction(['metadata', 'content'], 'readwrite');
+    const key = namespace + ':' + path;
+    tx.objectStore('metadata').delete(key); tx.objectStore('content').delete(key);
+    tx.oncomplete = () => resolve(null);
+    tx.onerror = () => reject(tx.error);
+  };
+})
+""")
+private external fun jsIndexedDbDelete(namespace: String, path: String): Promise<JsAny?>
+
+@JsFun("""
+(namespace, from, to, content) => new Promise((resolve, reject) => {
+  if (!globalThis.indexedDB) { resolve(null); return; }
+  const request = indexedDB.open('awake-core-io-v2', 1);
+  request.onerror = () => reject(request.error);
+  request.onsuccess = () => {
+    const db = request.result;
+    const tx = db.transaction(['metadata', 'content'], 'readwrite');
+    const fromKey = namespace + ':' + from, toKey = namespace + ':' + to;
+    const metadataStore = tx.objectStore('metadata'), contentStore = tx.objectStore('content');
+    const source = metadataStore.get(fromKey);
+    source.onerror = () => reject(source.error);
+    source.onsuccess = () => {
+      const value = source.result;
+      metadataStore.delete(fromKey); contentStore.delete(fromKey);
+      if (value) { value.path = to; metadataStore.put(value, toKey); if (content != null) contentStore.put(content, toKey); }
+    };
+    tx.oncomplete = () => resolve(null);
+    tx.onerror = () => reject(tx.error);
+  };
+})
+""")
+private external fun jsIndexedDbMove(namespace: String, from: String, to: String, content: String?): Promise<JsAny?>
 
 @JsFun("(key) => globalThis.localStorage ? globalThis.localStorage.getItem(key) : null")
 private external fun jsStorageGet(key: String): String?

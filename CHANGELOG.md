@@ -56,6 +56,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Pull request governance and milestone policy.** Added CI verification and agent workflow invariants requiring every pull request to be linked to an active milestone and to update `CHANGELOG.md`.
 - **Version-one project contract.** Added the shared `awake.project.json` and `assets.lock.json` models and structural validators for Core and Studio consumers, including project-relative path, plugin, version, and SHA-256 pin checks.
 - **Portable SHA-256 content digest.** Added a multiplatform Core IO digest utility for reusable content identity and integrity verification.
+- **Composable project storage and streaming integrity.** Added a writable Core overlay filesystem,
+  chunked SHA-256 sessions, and a versioned IndexedDB Wasm filesystem that keeps browser metadata
+  separate from lazily loaded file content.
+- **Bounded browser storage migration.** Existing v1 Base64/localStorage files are migrated once
+  into the v2 IndexedDB metadata/content stores with file-count and byte-size limits.
 - **Derived project compatibility metadata.** Canonical project manifests can declare an explicit `minEngineVersion`, while the published project module exposes the Git-derived engine version without hardcoded defaults; Central releases now publish automatically after validation.
 
 ### Fixed
