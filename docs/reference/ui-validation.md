@@ -5,7 +5,7 @@
 >
 > | Question | Read |
 > |---|---|
-> | *Is anything wrong?* | `scripts/awake verify` — every gate, one run |
+> | *Is anything wrong?* | `./gradlew awakeVerify` — every repository gate |
 > | *Which tool answers my question, and may I re-record this baseline?* | installed `awake-ui-verification` skill — judgment |
 > | *What proof does this kind of UI change require?* | [`docs/reference/ui-validation.md`](ui-validation.md) — policy |
 > | *What commands do I run, in what order?* | [`docs/reference/ui-parity-tool.md`](ui-parity-tool.md) — procedure |

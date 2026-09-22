@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Iterable
 
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_CASES = REPO_ROOT / "tools" / "shadcn" / "shadcn_reference_cases.json"
 PARITY_CASES = REPO_ROOT / "tools" / "shadcn" / "shadcn_parity_manifest.json"
 PARITY_TEST = ":samples:ui-showcase:desktopTest"
@@ -516,98 +516,9 @@ def performance_report(args: argparse.Namespace) -> int:
     return 0
 
 
-# Every gate in the repo, in one place. A gate is a tool that FAILS -- exit non-zero means the tree
-# is wrong. That is the distinction `docs/tasks/2026-08-23-ui-tooling-formalization-plan.md` draws
-# between a gate, a generator (writes a committed file) and an investigation tool (produces evidence
-# for a human and proves nothing on its own).
-#
-# Adding a gate is one row. Anything not listed here cannot fail a build, by definition.
-GATES: list[tuple[str, list[str], str]] = [
-    (
-        "shadcn-reference",
-        ["tools/shadcn/verify_shadcn_reference.sh"],
-        "generated token table is current; reports upstream drift without failing",
-    ),
-    (
-        "generated-files",
-        ["python3", "tools/verify_generated.py"],
-        "committed generated files still match their generators",
-    ),
-    (
-        "ui-doc-refs",
-        ["python3", "tools/verify_ui_doc_refs.py"],
-        "active UI documentation does not advertise deleted modules",
-    ),
-    (
-        "tool-tests",
-        [
-            sys.executable, "-m", "pytest", "-q",
-            "tools",
-            # The vendored MoltenVK/SPIRV trees carry their own test_*.py that are not ours.
-            "--ignore=awake",
-        ],
-        "unit tests for the tools themselves",
-    ),
-    (
-        "agent-runtime-boundary",
-        ["python3", "tools/verify_no_agent_runtime_dependencies.py"],
-        "build and developer tooling do not require installed agent bundles",
-    ),
-    (
-        "agent-skills-lock",
-        ["python3", "tools/verify_agent_skills_lock.py"],
-        "declared agent sources are pinned and public Awake does not consume Studio skills",
-    ),
-    (
-        "detekt-baselines",
-        ["python3", "tools/verify_detekt_baselines.py"],
-        "no baseline suppresses a file that no longer exists",
-    ),
-    (
-        "project-docs",
-        ["python3", "tools/verify_project_docs.py"],
-        "required Awake module and performance documentation is present",
-    ),
-]
-
-
-def verify(args: argparse.Namespace) -> int:
-    """Runs every gate and reports each one, rather than stopping at the first failure.
-
-    Stopping early hides how much is wrong, and the whole point of one command is to answer "is
-    anything wrong" in a single run.
-    """
-    only = getattr(args, "only", None)
-    selected = [g for g in GATES if only is None or g[0] == only]
-    if not selected:
-        fail(f"no gate named {only!r}. Known: {', '.join(name for name, _, _ in GATES)}")
-
-    failures: list[str] = []
-    for name, command, what in selected:
-        # flush: the subprocess writes straight to the terminal, so an unflushed header
-        # lands after the output it is meant to introduce.
-        print(f"\n=== {name}: {what} ===", flush=True)
-        result = subprocess.run(command, cwd=REPO_ROOT, check=False)
-        if result.returncode != 0:
-            failures.append(name)
-
-    print()
-    if failures:
-        print(f"FAILED: {', '.join(failures)}")
-        return 1
-    print(f"OK: {len(selected)} gate(s) passed")
-    return 0
-
-
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="awake", description=__doc__)
-    commands = parser.add_subparsers(dest="area", required=True)
-    verify_cmd = commands.add_parser("verify", help="Run every gate -- the answer to \"is anything wrong\"")
-    verify_cmd.add_argument("--only", help="run a single gate by name")
-    verify_cmd.set_defaults(handler=verify)
-
-    ui = commands.add_parser("ui", help="Generate and validate UI reference fixtures")
-    ui_commands = ui.add_subparsers(dest="command", required=True)
+    parser = argparse.ArgumentParser(prog="awake-ui", description=__doc__)
+    ui_commands = parser.add_subparsers(dest="command", required=True)
 
     reference = ui_commands.add_parser("reference", help="Capture a pinned official shadcn reference")
     reference.add_argument("--component", required=True)

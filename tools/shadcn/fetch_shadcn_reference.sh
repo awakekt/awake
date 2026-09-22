@@ -5,7 +5,7 @@
 #
 # GENERATOR: writes the gitignored third_party/ checkout. Idempotent.
 # Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; `scripts/awake verify` runs every one.
+# a build; visual tooling tests cover the helper itself.
 #
 # Pins a real, reproducible checkout of shadcn-ui/ui into third_party/shadcn-ui-ref/ (gitignored)
 # so shadcn parity/reference tooling (tools/shadcn/extract_shadcn_tokens.py, ShadcnParityScreenshotTest,

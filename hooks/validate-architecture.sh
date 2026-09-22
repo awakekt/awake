@@ -39,4 +39,4 @@ if [[ -n "$MODIFIED_FILE" && "$MODIFIED_FILE" == *.kt && -f "$MODIFIED_FILE" ]];
   fi
 fi
 
-python3 "$REPO_ROOT/tools/verify_capability_boundaries.py"
+"$REPO_ROOT/gradlew" awakeVerify --no-configuration-cache

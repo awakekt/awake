@@ -62,10 +62,6 @@ fi
 
 echo "Verifying Vulkan $version against Core $core_version"
 ./gradlew publishToMavenLocal "${gradle_args[@]}"
-verify_args=(--version "$version" --family vulkan --core-version "$core_version")
-if [[ "$channel" == "release" ]]; then
-  verify_args+=(--verify-central)
-fi
-python3 tools/verify_published_artifacts.py "${verify_args[@]}"
+./gradlew verifyPublishedArtifacts "-Pawake.verifyPublishedVersion=$version" -Pawake.verifyPublishedFamily=vulkan --no-configuration-cache
 
 ./gradlew publishAllPublicationsToMavenCentralRepository "${gradle_args[@]}"

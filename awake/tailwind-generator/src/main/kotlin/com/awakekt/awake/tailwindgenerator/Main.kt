@@ -14,7 +14,7 @@ import java.io.File
 
 // Where Dp/Sp actually live. This said `ui.api` long after they moved to `core.math2d`, so the
 // generator emitted a dead import and running it produced a file that would not compile -- the
-// committed Tw.kt had been hand-fixed instead. Found by tools/verify_generated.py.
+// committed Tw.kt had been hand-fixed instead. Found by the Gradle awakeVerify gate.
 private const val UI_PACKAGE = "com.awakekt.awake.core.math2d"
 private const val TARGET_PACKAGE = "com.awakekt.awake.tailwind"
 

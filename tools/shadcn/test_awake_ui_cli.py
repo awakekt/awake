@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# GATE: exit 1 means the tool itself is broken; runs under `awake verify`'s tool-tests gate.
+# GATE: exit 1 means the visual CLI itself is broken; run with the visual tooling tests.
 import importlib.util
 import json
 import sys
@@ -14,7 +14,7 @@ from pathlib import Path
 from PIL import Image
 
 
-SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "awake_ui.py"
+SCRIPT = Path(__file__).resolve().parent / "awake_ui.py"
 SPEC = importlib.util.spec_from_file_location("awake_ui", SCRIPT)
 awake_ui = importlib.util.module_from_spec(SPEC)
 assert SPEC and SPEC.loader
@@ -24,12 +24,12 @@ SPEC.loader.exec_module(awake_ui)
 
 class AwakeUiCliTest(unittest.TestCase):
     def test_report_performance_and_inspect_are_public_cli_commands(self) -> None:
-        report = awake_ui.build_parser().parse_args(["ui", "report"])
+        report = awake_ui.build_parser().parse_args(["report"])
         performance = awake_ui.build_parser().parse_args([
-            "ui", "performance", "--component", "button", "--theme", "dark",
+            "performance", "--component", "button", "--theme", "dark",
         ])
         inspect = awake_ui.build_parser().parse_args([
-            "ui", "inspect", "--component", "button-group", "--state", "vertical", "--theme", "both",
+            "inspect", "--component", "button-group", "--state", "vertical", "--theme", "both",
         ])
         self.assertIs(report.handler, awake_ui.report_parity)
         self.assertIs(performance.handler, awake_ui.performance_report)
@@ -38,7 +38,7 @@ class AwakeUiCliTest(unittest.TestCase):
         self.assertEqual(inspect.state, "vertical")
 
     def test_audit_discovers_every_manifest_component(self) -> None:
-        audit = awake_ui.build_parser().parse_args(["ui", "audit", "--theme", "both"])
+        audit = awake_ui.build_parser().parse_args(["audit", "--theme", "both"])
         matrix = awake_ui.manifest_component_specs("both")
         manifest_components = {
             case["component"] for case in awake_ui.load_json(awake_ui.PARITY_CASES)["cases"]

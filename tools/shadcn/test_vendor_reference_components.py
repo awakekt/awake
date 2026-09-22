@@ -5,7 +5,7 @@
 #
 # GATE: exit 1 means the vendoring transform is wrong.
 # Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; `scripts/awake verify` runs every one.
+# a build; visual tooling tests cover the helper itself.
 """Unit tests for the alias rewrite in vendor_reference_components.py.
 
 The rewrite is the whole judgement in that script -- everything else is copying files. It runs

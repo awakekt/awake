@@ -6,7 +6,7 @@
 # kmp-agent-skills bundle against the latest GitHub release, using the
 # .kmp-agent-skills-version marker sync-local-assistant-skills.sh writes.
 #
-# Unlike scripts/check_updates.py (which assumes cwd is a git clone of this
+# Unlike the removed legacy update helper (which assumed cwd was a git clone of this
 # repo and uses `git rev-list`/`git show`), this works from any machine that
 # only has the synced skills/ directory — no git clone required, just curl.
 #

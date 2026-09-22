@@ -6,8 +6,7 @@ that every published main-source `api` and `implementation` project dependency a
 Regenerate the table and machine-readable inventory with:
 
 ```bash
-python3 tools/verify_publication_closure.py --markdown
-python3 tools/verify_publication_closure.py --json
+./gradlew awakeVerify --no-configuration-cache
 ```
 
 The Gradle modules listed here are published KMP root coordinates or single-platform artifacts; KMP

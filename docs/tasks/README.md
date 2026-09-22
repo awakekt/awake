@@ -117,7 +117,7 @@ confirming each survives, rather than asserting it.
 - ~~**detekt baselines are stale**~~ — measured and fixed 2026-08-23: 34 of 525 entries named files
   that no longer existed, and 32 of those were `awake/ui/graphics` alone, whose baseline was **80%
   dead** after `UiPath`/`UiGradient` moved to `core:graphics2d`. Pruned, and
-  `tools/verify_detekt_baselines.py` now gates it.
+  the Gradle `awakeVerify` task now gates it.
 - **`ComposeFrameProbe`'s allocation ratchet is breached and the reading is no longer stable.**
   Five runs gave 35537, 35537, under-ceiling, 35177, 35177 against a 35000 B ceiling. The probe's
   own note says readings "are exact now" and to "keep the ratchet above the band"; neither holds.
@@ -182,8 +182,8 @@ confirming each survives, rather than asserting it.
 - **Three plans have no `Status:` line** (`modifier-layout-compose-parity`,
   `render-3d-bugfixes-and-shader-module-split`, `shadcn-parity-tool`), so nothing says whether they
   are live, superseded or done. Adding one to each is cheap and makes this index honest.
-- **`AGENTS.md`/`GEMINI.md` drift from `CLAUDE.md`.** Pre-existing; `verify_agent_skills_sync.py`
-  checks the mandatory-skill lists match but not the rest of the content.
+- **`AGENTS.md`/`GEMINI.md` drift from `CLAUDE.md`.** Pre-existing; the skills repository owns
+  bundle synchronization, while Awake verifies only its pinned consumer lock.
 - **`ronjunevaldoz/kmp-agent-skills#6`** — docs-hygiene consumer-project gap, open.
 - **Figma design tokens** — deferred deletion of `design-tokens.json` and the Figma test utilities
   from `ui-shadcn`, waiting on the module rename.

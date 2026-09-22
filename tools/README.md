@@ -5,7 +5,7 @@
 >
 > | Question | Read |
 > |---|---|
-> | *Is anything wrong?* | `scripts/awake verify` — every gate, one run |
+> | *Is anything wrong?* | `./gradlew awakeVerify` — every repository gate |
 > | *Which tool answers my question, and may I re-record this baseline?* | installed `awake-ui-verification` skill — judgment |
 > | *What proof does this kind of UI change require?* | [`docs/reference/ui-validation.md`](../docs/reference/ui-validation.md) — policy |
 > | *What commands do I run, in what order?* | [`docs/reference/ui-parity-tool.md`](../docs/reference/ui-parity-tool.md) — procedure |
@@ -17,8 +17,10 @@ This folder contains the implementation details behind Awake's UI workflow. Star
 single front door instead of choosing scripts yourself:
 
 ```bash
-scripts/awake ui <reference|preview|validate|report|performance> ...
+python3 tools/shadcn/awake_ui.py <reference|preview|validate|report|performance> ...
 ```
+
+`scripts/awake ui ...` remains a convenience wrapper for that visual entrypoint.
 
 Use the lower-level tools only when you are maintaining the reference pipeline, adding a new
 fixture, or investigating a renderer/font/icon problem.
@@ -31,8 +33,6 @@ workflow across three folders. Kind is on each script's own header line instead,
 
 ```
 tools/
-  verify_*.py            repo-wide GATEs. Top level because they belong to `awake verify`,
-                         not to any one domain
   shadcn/                the whole shadcn pipeline: pin, extract, vendor, verify, capture,
                          compare, its JSON configs, and reference-app/ (the React app the
                          parity screenshots come from)
@@ -58,12 +58,17 @@ needs looking at.
 | **INVESTIGATION** | Produces evidence for a human. Proves nothing on its own | no |
 
 ```bash
-scripts/awake verify          # every GATE, one run -- "is anything wrong?"
-scripts/awake verify --only shadcn-reference
+./gradlew awakeVerify       # every maintained repository gate
+scripts/awake ui report     # visual parity evidence
 ```
 
-`awake verify` is the single answer to "is anything wrong". A tool not listed in its `GATES` table
-cannot fail a build, by definition.
+Repository gates live in build-logic. Visual tools may produce evidence or fail their own visual
+checks, but they are not dependencies of the product build.
+
+Ownership is intentionally narrow: maintained Python belongs in `tools/shadcn/`, `tools/icons/`,
+or `tools/fonts-tooling/` for visual evidence; `tools/jni-binding-generator/` is pinned vendor
+code; and `website/hooks.py` belongs to the external MkDocs documentation toolchain. Repository
+policy, release, publication, and source validation are Kotlin/Gradle tasks, not Python scripts.
 
 **Generators are the dangerous middle.** One looks like a gate — it runs, it succeeds — but it
 *writes*, so nobody notices when the committed output stops matching. That already happened:
@@ -75,28 +80,18 @@ Every generator that can be gated now is:
 | Generator | Staleness gate |
 |---|---|
 | `extract_shadcn_tokens.py` | `verify_shadcn_reference.sh` — also reports upstream drift |
-| `vendor_reference_components.py` | `verify_generated.py` (`reference-components`), via the script's own `--check` |
-| `:awake:tailwind-generator` | `verify_generated.py` (`tailwind-scale`) |
-| `:awake:ui:font-atlas-generator` | `verify_generated.py` (`font-atlas`) |
+| `vendor_reference_components.py` | the script's own `--check` mode |
+| `:awake:tailwind-generator` | Gradle generator task and generated-source review |
+| `:awake:ui:font-atlas-generator` | Gradle generator task and generated-source review |
 | `instantiate_roboto.py` | **none, deliberately.** Its output is a TTF and re-running rewrites `head.modified` plus checksums — nine bytes, every glyph identical. A gate that always fails is worse than no gate; gating it needs a normalised compare that ignores the volatile tables. |
 | `svg_to_ui_image_vector.py` | **not possible.** One-shot: one SVG in, one Kotlin val out, destination chosen by the caller, with no recorded mapping of which SVG produced which icon. There is nothing to re-run, so nothing to diff. A gate needs a manifest that does not exist. |
 
-The four gates are declared in one table in `scripts/awake_ui.py`; adding one is a row. There is no
-per-generator wrapper script, because all of them are "run a command, diff some paths" and four
-bespoke copies would drift apart.
+The repository gate set is declared by the Gradle repository-tooling plugin. Add a Gradle task when
+a new product invariant needs to be enforced; do not add a standalone Python verifier.
 
 ## Every tool: what it is, when to run it, and what not to do with it
 
 Read the **Don't** column first — each one is a mistake that has actually been made here.
-
-### Repo-wide gates (`tools/`)
-
-| Tool | Kind | Run it when | Don't |
-|---|---|---|---|
-| `verify_generated.py` | GATE | Before a commit that touches a generator or its output; automatically under `awake verify` | Don't add a generator whose output is not byte-deterministic — `instantiate_roboto.py` is excluded for exactly this, and a gate that always fails gets ignored, then removed |
-| `verify_detekt_baselines.py` | GATE | Automatically; it needs no arguments | Don't "fix" it with `./gradlew detektBaseline` — that regenerates, absorbing *new* findings as accepted debt. Delete the named entries instead |
-| `test_repo_root_depth.py` | GATE | Automatically; it needs no arguments | Don't "fix" a failure by changing the expected depth. It is telling you a script moved and its path resolution did not follow |
-| `test_awake_ui_cli.py`, `shadcn/test_vendor_reference_components.py`, `shadcn/test_compare_component_crops.py` | GATE | Automatically, under `awake verify`'s `tool-tests` | Don't add a tool without a test. These ran for weeks with no CI invoking pytest at all — 17 tests passing into a void |
 
 ### shadcn pipeline (`tools/shadcn/`)
 
@@ -230,7 +225,7 @@ Read `docs/reference/shadcn-reference-pipeline.md` first.
 |---|---|
 | `fetch_shadcn_reference.sh` | Clones `shadcn-ui/ui` at a pinned SHA into `third_party/` (gitignored). Everything below depends on it. |
 | `extract_shadcn_tokens.py` | Parses the pinned registry's new-york/neutral theme into `ShadcnReferenceTokens.kt`, the numeric ground truth for token tests. |
-| `vendor_reference_components.py` | Copies `src/ui/*.tsx` from the pinned checkout into `reference-app/`, rewriting shadcn's `@/registry/...` aliases to relative paths. `--check` reports drift without writing, which is how `verify_generated.py` gates it. An unmapped alias is a hard error, never a silent passthrough. |
+| `vendor_reference_components.py` | Copies `src/ui/*.tsx` from the pinned checkout into `reference-app/`, rewriting shadcn's `@/registry/...` aliases to relative paths. `--check` reports drift without writing. An unmapped alias is a hard error, never a silent passthrough. |
 | `capture_shadcn_local.py` | Builds and serves `reference-app/`, then screenshots each case from `shadcn_reference_cases.json` into `docs/reference/shadcn-previews-local/`. Components come verbatim from the pinned checkout, so the reference is shadcn's own source. Captures states a docs page cannot show (focus, disabled, hover, open overlays) and any theme or radius. A case may name its own `selector` when Radix portals its content outside `#case`. |
 | `compare_parity.py` | Diffs an Awake render against a reference capture: aligned crop, heatmap, mismatch metrics. Pairing lives in `shadcn_parity_pairs.json`. |
 

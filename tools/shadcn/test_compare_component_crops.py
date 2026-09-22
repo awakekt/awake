@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# GATE: exit 1 means the tool itself is broken; runs under `awake verify`'s tool-tests gate.
+# GATE: exit 1 means the visual helper itself is broken; run with the visual tooling tests.
 import json
 import sys
 import tempfile
@@ -12,7 +12,7 @@ from pathlib import Path
 
 from PIL import Image
 
-# Keep the standalone helper importable both as `python3 tools/test_...py` and
+# Keep the standalone helper importable both as `python3 tools/shadcn/test_...py` and
 # through unittest discovery from the repository root. The tools directory is
 # intentionally a script collection rather than a Python package.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
