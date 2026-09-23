@@ -108,38 +108,62 @@ object AwakeProjectValidator {
         }
     }
 
-    fun manifestIssues(manifest: AwakeProjectManifest): List<String> = buildList {
-        if (manifest.formatVersion != 1) add("formatVersion must be 1")
-        if (!manifest.id.matches(projectIdPattern)) add("id must be a reverse-domain identifier")
-        if (manifest.name.isBlank()) add("name must not be blank")
-        if (!manifest.version.matches(projectSemverPattern)) add("version must be semantic version")
+    fun manifestIssueDetails(manifest: AwakeProjectManifest): List<ProjectContentIssue> = buildList {
+        if (manifest.formatVersion != 1) add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "formatVersion must be 1"))
+        if (!manifest.id.matches(projectIdPattern)) {
+            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "id must be a reverse-domain identifier"))
+        }
+        if (manifest.name.isBlank()) add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "name must not be blank"))
+        if (!manifest.version.matches(projectSemverPattern)) {
+            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "version must be semantic version"))
+        }
         if (manifest.minEngineVersion != null && !manifest.minEngineVersion.matches(projectSemverPattern)) {
-            add("minEngineVersion must be semantic version")
+            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "minEngineVersion must be semantic version"))
         }
         if (!isSafeProjectPath(manifest.entryScene)) {
-            add("entryScene must be a safe project-relative path")
+            add(
+                ProjectContentIssue(
+                    code = ProjectIssueCode.UNSAFE_PATH,
+                    message = "entryScene must be a safe project-relative path",
+                    path = manifest.entryScene,
+                ),
+            )
         }
-        if (manifest.assetRoots.isEmpty()) add("assetRoots must not be empty")
+        if (manifest.assetRoots.isEmpty()) {
+            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "assetRoots must not be empty"))
+        }
         addAll(assetRootIssues(manifest.assetRoots))
         addAll(pluginIssues(manifest.plugins))
     }
 
-    fun assetsLockIssues(lock: AwakeAssetsLock): List<String> = buildList {
+    fun manifestIssues(manifest: AwakeProjectManifest): List<String> =
+        manifestIssueDetails(manifest).map { it.message }
+
+    fun assetsLockIssueDetails(lock: AwakeAssetsLock): List<ProjectContentIssue> = buildList {
         if (lock.formatVersion != 1) {
-            add("formatVersion must be 1")
+            add(ProjectContentIssue(ProjectIssueCode.ASSET_LOCK_INVALID, "formatVersion must be 1"))
         }
         lock.assets.forEach { (path, pin) ->
             if (!isSafeProjectPath(path)) {
-                add("asset path '$path' must be a safe project-relative path")
+                add(
+                    ProjectContentIssue(
+                        code = ProjectIssueCode.UNSAFE_PATH,
+                        message = "asset path '$path' must be a safe project-relative path",
+                        path = path,
+                    ),
+                )
             }
             if (!pin.sha256.matches(projectSha256Pattern)) {
-                add("asset '$path' must have a lowercase SHA-256 digest")
+                add(ProjectContentIssue(ProjectIssueCode.ASSET_LOCK_INVALID, "asset '$path' must have a lowercase SHA-256 digest", path))
             }
             if (pin.sizeBytes != null && pin.sizeBytes < 0) {
-                add("asset '$path' sizeBytes must not be negative")
+                add(ProjectContentIssue(ProjectIssueCode.ASSET_LOCK_INVALID, "asset '$path' sizeBytes must not be negative", path))
             }
         }
     }
+
+    fun assetsLockIssues(lock: AwakeAssetsLock): List<String> =
+        assetsLockIssueDetails(lock).map { it.message }
 
     fun isSafeProjectPath(path: String): Boolean {
         if (path.isBlank()) return false
@@ -153,34 +177,48 @@ object AwakeProjectValidator {
 
 internal fun isSha256Digest(value: String): Boolean = value.matches(projectSha256Pattern)
 
-private fun assetRootIssues(assetRoots: List<String>): List<String> = buildList {
+private fun assetRootIssues(assetRoots: List<String>): List<ProjectContentIssue> = buildList {
     if (assetRoots.distinct().size != assetRoots.size) {
-        add("assetRoots must not contain duplicates")
+        add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "assetRoots must not contain duplicates"))
     }
     assetRoots.forEachIndexed { index, root ->
-        if (!AwakeProjectValidator.isSafeProjectPath(root)) add("assetRoots[$index] must be a safe project-relative path")
+        if (!AwakeProjectValidator.isSafeProjectPath(root)) {
+            add(
+                ProjectContentIssue(
+                    code = ProjectIssueCode.UNSAFE_PATH,
+                    message = "assetRoots[$index] must be a safe project-relative path",
+                    path = root,
+                ),
+            )
+        }
     }
 }
 
-private fun pluginIssues(plugins: List<AwakeProjectPluginReference>): List<String> = buildList {
+private fun pluginIssues(plugins: List<AwakeProjectPluginReference>): List<ProjectContentIssue> = buildList {
     if (plugins.map { it.id }.distinct().size != plugins.size) {
-        add("plugins must not contain duplicate ids")
+        add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "plugins must not contain duplicate ids"))
     }
     plugins.forEachIndexed { index, plugin ->
         if (!plugin.id.matches(projectIdPattern)) {
-            add("plugins[$index].id must be a reverse-domain identifier")
+            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "plugins[$index].id must be a reverse-domain identifier"))
         }
         if (!AwakeProjectValidator.isSafeProjectPath(plugin.path)) {
-            add("plugins[$index].path must be a safe project-relative path")
+            add(
+                ProjectContentIssue(
+                    code = ProjectIssueCode.UNSAFE_PATH,
+                    message = "plugins[$index].path must be a safe project-relative path",
+                    path = plugin.path,
+                ),
+            )
         }
         if (plugin.version.isNotBlank() && !plugin.version.matches(projectSemverPattern)) {
-            add("plugins[$index].version must be semantic version")
+            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "plugins[$index].version must be semantic version"))
         }
         if (plugin.sha256 != null && !plugin.sha256.matches(projectSha256Pattern)) {
-            add("plugins[$index].sha256 must be a lowercase SHA-256 digest")
+            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "plugins[$index].sha256 must be a lowercase SHA-256 digest"))
         }
         if (plugin.entrypointClass != null && plugin.entrypointClass.isBlank()) {
-            add("plugins[$index].entrypointClass must not be blank")
+            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "plugins[$index].entrypointClass must not be blank"))
         }
     }
 }

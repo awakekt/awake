@@ -152,6 +152,7 @@ public final class com/awakekt/awake/project/AwakeProjectPluginReference$Compani
 
 public final class com/awakekt/awake/project/AwakeProjectValidator {
 	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeProjectValidator;
+	public final fun assetsLockIssueDetails (Lcom/awakekt/awake/project/AwakeAssetsLock;)Ljava/util/List;
 	public final fun assetsLockIssues (Lcom/awakekt/awake/project/AwakeAssetsLock;)Ljava/util/List;
 	public final fun decodeAssetsLock (Ljava/lang/String;)Lcom/awakekt/awake/project/AwakeAssetsLock;
 	public final fun decodeManifest (Ljava/lang/String;)Lcom/awakekt/awake/project/AwakeProjectManifest;
@@ -159,7 +160,27 @@ public final class com/awakekt/awake/project/AwakeProjectValidator {
 	public final fun encodeManifest (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/lang/String;
 	public final fun isCompatible (Lcom/awakekt/awake/project/AwakeProjectManifest;Ljava/lang/String;)Z
 	public final fun isSafeProjectPath (Ljava/lang/String;)Z
+	public final fun manifestIssueDetails (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/util/List;
 	public final fun manifestIssues (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/project/ProjectContentIssue {
+	public fun <init> (Lcom/awakekt/awake/project/ProjectIssueCode;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/project/ProjectIssueSeverity;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/project/ProjectIssueCode;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/project/ProjectIssueSeverity;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/project/ProjectIssueCode;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lcom/awakekt/awake/project/ProjectIssueSeverity;
+	public final fun copy (Lcom/awakekt/awake/project/ProjectIssueCode;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/project/ProjectIssueSeverity;)Lcom/awakekt/awake/project/ProjectContentIssue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/project/ProjectContentIssue;Lcom/awakekt/awake/project/ProjectIssueCode;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/project/ProjectIssueSeverity;ILjava/lang/Object;)Lcom/awakekt/awake/project/ProjectContentIssue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Lcom/awakekt/awake/project/ProjectIssueCode;
+	public final fun getCodeValue ()Ljava/lang/String;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getPath ()Ljava/lang/String;
+	public final fun getSeverity ()Lcom/awakekt/awake/project/ProjectIssueSeverity;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/project/ProjectContentReport {
@@ -205,9 +226,12 @@ public final class com/awakekt/awake/project/ProjectContentSpec {
 
 public final class com/awakekt/awake/project/ProjectContentValidator {
 	public static final field INSTANCE Lcom/awakekt/awake/project/ProjectContentValidator;
+	public final fun assetsLockIssueDetails (Lcom/awakekt/awake/project/AwakeAssetsLock;)Ljava/util/List;
 	public final fun assetsLockIssues (Lcom/awakekt/awake/project/AwakeAssetsLock;)Ljava/util/List;
+	public final fun indexIssueDetails (Lcom/awakekt/awake/project/ProjectIndex;)Ljava/util/List;
 	public final fun indexIssues (Lcom/awakekt/awake/project/ProjectIndex;)Ljava/util/List;
 	public final fun isUnderAssetRoot (Ljava/lang/String;Ljava/util/List;)Z
+	public final fun manifestIssueDetails (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/util/List;
 	public final fun manifestIssues (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/util/List;
 }
 
@@ -275,5 +299,29 @@ public final synthetic class com/awakekt/awake/project/ProjectIndexEntry$$serial
 
 public final class com/awakekt/awake/project/ProjectIndexEntry$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/project/ProjectIssueCode : java/lang/Enum {
+	public static final field ASSET_HASH_MISMATCH Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static final field ASSET_LOCK_INVALID Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static final field ASSET_REFERENCE_MISSING Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static final field DUPLICATE_INDEX_PATH Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static final field ENTRY_SCENE_MISSING Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static final field INDEX_INVALID Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static final field INVALID_MANIFEST Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static final field REQUIRED_PLUGIN_MISSING Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static final field UNSAFE_PATH Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public final fun getValue ()Ljava/lang/String;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/project/ProjectIssueCode;
+	public static fun values ()[Lcom/awakekt/awake/project/ProjectIssueCode;
+}
+
+public final class com/awakekt/awake/project/ProjectIssueSeverity : java/lang/Enum {
+	public static final field ERROR Lcom/awakekt/awake/project/ProjectIssueSeverity;
+	public static final field WARNING Lcom/awakekt/awake/project/ProjectIssueSeverity;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/project/ProjectIssueSeverity;
+	public static fun values ()[Lcom/awakekt/awake/project/ProjectIssueSeverity;
 }
 
