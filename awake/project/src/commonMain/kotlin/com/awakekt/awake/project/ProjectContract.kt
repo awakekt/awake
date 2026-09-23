@@ -108,62 +108,11 @@ object AwakeProjectValidator {
         }
     }
 
-    fun manifestIssueDetails(manifest: AwakeProjectManifest): List<ProjectContentIssue> = buildList {
-        if (manifest.formatVersion != 1) add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "formatVersion must be 1"))
-        if (!manifest.id.matches(projectIdPattern)) {
-            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "id must be a reverse-domain identifier"))
-        }
-        if (manifest.name.isBlank()) add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "name must not be blank"))
-        if (!manifest.version.matches(projectSemverPattern)) {
-            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "version must be semantic version"))
-        }
-        if (manifest.minEngineVersion != null && !manifest.minEngineVersion.matches(projectSemverPattern)) {
-            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "minEngineVersion must be semantic version"))
-        }
-        if (!isSafeProjectPath(manifest.entryScene)) {
-            add(
-                ProjectContentIssue(
-                    code = ProjectIssueCode.UNSAFE_PATH,
-                    message = "entryScene must be a safe project-relative path",
-                    path = manifest.entryScene,
-                ),
-            )
-        }
-        if (manifest.assetRoots.isEmpty()) {
-            add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "assetRoots must not be empty"))
-        }
-        addAll(assetRootIssues(manifest.assetRoots))
-        addAll(pluginIssues(manifest.plugins))
-    }
-
     fun manifestIssues(manifest: AwakeProjectManifest): List<String> =
-        manifestIssueDetails(manifest).map { it.message }
-
-    fun assetsLockIssueDetails(lock: AwakeAssetsLock): List<ProjectContentIssue> = buildList {
-        if (lock.formatVersion != 1) {
-            add(ProjectContentIssue(ProjectIssueCode.ASSET_LOCK_INVALID, "formatVersion must be 1"))
-        }
-        lock.assets.forEach { (path, pin) ->
-            if (!isSafeProjectPath(path)) {
-                add(
-                    ProjectContentIssue(
-                        code = ProjectIssueCode.UNSAFE_PATH,
-                        message = "asset path '$path' must be a safe project-relative path",
-                        path = path,
-                    ),
-                )
-            }
-            if (!pin.sha256.matches(projectSha256Pattern)) {
-                add(ProjectContentIssue(ProjectIssueCode.ASSET_LOCK_INVALID, "asset '$path' must have a lowercase SHA-256 digest", path))
-            }
-            if (pin.sizeBytes != null && pin.sizeBytes < 0) {
-                add(ProjectContentIssue(ProjectIssueCode.ASSET_LOCK_INVALID, "asset '$path' sizeBytes must not be negative", path))
-            }
-        }
-    }
+        projectManifestIssueDetails(manifest).map { it.message }
 
     fun assetsLockIssues(lock: AwakeAssetsLock): List<String> =
-        assetsLockIssueDetails(lock).map { it.message }
+        projectAssetsLockIssueDetails(lock).map { it.message }
 
     fun isSafeProjectPath(path: String): Boolean {
         if (path.isBlank()) return false
@@ -176,6 +125,57 @@ object AwakeProjectValidator {
 }
 
 internal fun isSha256Digest(value: String): Boolean = value.matches(projectSha256Pattern)
+
+internal fun projectManifestIssueDetails(manifest: AwakeProjectManifest): List<ProjectContentIssue> = buildList {
+    if (manifest.formatVersion != 1) add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "formatVersion must be 1"))
+    if (!manifest.id.matches(projectIdPattern)) {
+        add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "id must be a reverse-domain identifier"))
+    }
+    if (manifest.name.isBlank()) add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "name must not be blank"))
+    if (!manifest.version.matches(projectSemverPattern)) {
+        add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "version must be semantic version"))
+    }
+    if (manifest.minEngineVersion != null && !manifest.minEngineVersion.matches(projectSemverPattern)) {
+        add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "minEngineVersion must be semantic version"))
+    }
+    if (!AwakeProjectValidator.isSafeProjectPath(manifest.entryScene)) {
+        add(
+            ProjectContentIssue(
+                code = ProjectIssueCode.UNSAFE_PATH,
+                message = "entryScene must be a safe project-relative path",
+                path = manifest.entryScene,
+            ),
+        )
+    }
+    if (manifest.assetRoots.isEmpty()) {
+        add(ProjectContentIssue(ProjectIssueCode.INVALID_MANIFEST, "assetRoots must not be empty"))
+    }
+    addAll(assetRootIssues(manifest.assetRoots))
+    addAll(pluginIssues(manifest.plugins))
+}
+
+internal fun projectAssetsLockIssueDetails(lock: AwakeAssetsLock): List<ProjectContentIssue> = buildList {
+    if (lock.formatVersion != 1) {
+        add(ProjectContentIssue(ProjectIssueCode.ASSET_LOCK_INVALID, "formatVersion must be 1"))
+    }
+    lock.assets.forEach { (path, pin) ->
+        if (!AwakeProjectValidator.isSafeProjectPath(path)) {
+            add(
+                ProjectContentIssue(
+                    code = ProjectIssueCode.UNSAFE_PATH,
+                    message = "asset path '$path' must be a safe project-relative path",
+                    path = path,
+                ),
+            )
+        }
+        if (!pin.sha256.matches(projectSha256Pattern)) {
+            add(ProjectContentIssue(ProjectIssueCode.ASSET_LOCK_INVALID, "asset '$path' must have a lowercase SHA-256 digest", path))
+        }
+        if (pin.sizeBytes != null && pin.sizeBytes < 0) {
+            add(ProjectContentIssue(ProjectIssueCode.ASSET_LOCK_INVALID, "asset '$path' sizeBytes must not be negative", path))
+        }
+    }
+}
 
 private fun assetRootIssues(assetRoots: List<String>): List<ProjectContentIssue> = buildList {
     if (assetRoots.distinct().size != assetRoots.size) {

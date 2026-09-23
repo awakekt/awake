@@ -152,7 +152,6 @@ public final class com/awakekt/awake/project/AwakeProjectPluginReference$Compani
 
 public final class com/awakekt/awake/project/AwakeProjectValidator {
 	public static final field INSTANCE Lcom/awakekt/awake/project/AwakeProjectValidator;
-	public final fun assetsLockIssueDetails (Lcom/awakekt/awake/project/AwakeAssetsLock;)Ljava/util/List;
 	public final fun assetsLockIssues (Lcom/awakekt/awake/project/AwakeAssetsLock;)Ljava/util/List;
 	public final fun decodeAssetsLock (Ljava/lang/String;)Lcom/awakekt/awake/project/AwakeAssetsLock;
 	public final fun decodeManifest (Ljava/lang/String;)Lcom/awakekt/awake/project/AwakeProjectManifest;
@@ -160,7 +159,6 @@ public final class com/awakekt/awake/project/AwakeProjectValidator {
 	public final fun encodeManifest (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/lang/String;
 	public final fun isCompatible (Lcom/awakekt/awake/project/AwakeProjectManifest;Ljava/lang/String;)Z
 	public final fun isSafeProjectPath (Ljava/lang/String;)Z
-	public final fun manifestIssueDetails (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/util/List;
 	public final fun manifestIssues (Lcom/awakekt/awake/project/AwakeProjectManifest;)Ljava/util/List;
 }
 
