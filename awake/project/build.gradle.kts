@@ -17,7 +17,7 @@ val generateAwakeEngineBuildInfo = tasks.register("generateAwakeEngineBuildInfo"
     outputs.dir(outputDirectory)
     doLast {
         val outputFile = outputDirectory.get().file(
-            "com/awakekt/awake/project/AwakeProjectBuildInfo.generated.kt",
+            "com/awakekt/awake/project/AwakeEngineBuildInfo.generated.kt",
         ).asFile
         outputFile.parentFile.mkdirs()
         outputFile.writeText(

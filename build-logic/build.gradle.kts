@@ -16,6 +16,7 @@ version = extra["gitDerivedVersion"] as String
 val publicPluginIds = setOf(
     "com.awakekt.awake.plugin.application",
     "com.awakekt.awake.plugin.library",
+    "com.awakekt.awake.plugin.project-content",
     "com.awakekt.awake.plugin.shader-pipeline",
     "com.awakekt.awake.plugin.dokka",
     "com.awakekt.awake.plugin.detekt",
@@ -36,6 +37,7 @@ dependencies {
     implementation(libs.spotless.gradle.plugin)
     implementation(libs.dokka.gradle.plugin)
     implementation(libs.download.gradle.plugin)
+    implementation(libs.kotlinx.serialization.json)
     implementation("com.vanniktech:gradle-maven-publish-plugin:0.36.0")
     testImplementation(gradleTestKit())
     testImplementation(kotlin("test"))
