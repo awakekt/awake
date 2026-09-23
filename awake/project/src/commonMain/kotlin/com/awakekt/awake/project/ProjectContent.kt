@@ -78,13 +78,13 @@ object ProjectContentValidator {
         AwakeProjectValidator.manifestIssues(manifest)
 
     fun manifestIssueDetails(manifest: AwakeProjectManifest): List<ProjectContentIssue> =
-        AwakeProjectValidator.manifestIssueDetails(manifest)
+        projectManifestIssueDetails(manifest)
 
     fun assetsLockIssues(lock: AwakeAssetsLock): List<String> =
         AwakeProjectValidator.assetsLockIssues(lock)
 
     fun assetsLockIssueDetails(lock: AwakeAssetsLock): List<ProjectContentIssue> =
-        AwakeProjectValidator.assetsLockIssueDetails(lock)
+        projectAssetsLockIssueDetails(lock)
 
     fun isUnderAssetRoot(path: String, assetRoots: List<String>): Boolean =
         assetRoots.any { root -> path == root || path.startsWith("$root/") }
