@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Snapshot publication after verification.** Ensure successful `main` verification cannot silently skip publishing the Core snapshot consumed by downstream projects.
+
 - **Project-content Gradle task validation.** Declared explicit cache policies for project
   validation, asset-lock, and project-index tasks so Gradle plugin validation and Maven
   publication remain reliable on the supported Gradle version.
