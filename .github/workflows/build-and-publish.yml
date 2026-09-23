@@ -256,7 +256,13 @@ jobs:
   snapshot:
     name: Publish snapshot to Maven Central
     timeout-minutes: 60
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+    if: >-
+      ${{
+        always() &&
+        (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) &&
+        needs.verify.result == 'success' &&
+        needs.consumer.result == 'success'
+      }}
     needs: [verify, consumer]
     runs-on: macos-14
     env:
