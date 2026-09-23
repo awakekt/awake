@@ -35,6 +35,7 @@ import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 
 abstract class ProjectContentExtension @Inject constructor(objects: ObjectFactory) {
     val manifestFile: RegularFileProperty = objects.fileProperty()
@@ -46,6 +47,7 @@ abstract class ProjectContentExtension @Inject constructor(objects: ObjectFactor
     val indexBaseUrl: Property<String> = objects.property(String::class.java)
 }
 
+@DisableCachingByDefault(because = "Validates the mutable project directory and has no declared output")
 abstract class ValidateProjectTask : DefaultTask() {
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -208,6 +210,7 @@ abstract class ValidateProjectTask : DefaultTask() {
     }
 }
 
+@DisableCachingByDefault(because = "Reads and hashes the mutable project asset tree")
 abstract class VerifyAssetsLockTask : DefaultTask() {
     @get:InputFile
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -245,6 +248,7 @@ abstract class VerifyAssetsLockTask : DefaultTask() {
     }
 }
 
+@DisableCachingByDefault(because = "Scans the mutable project asset tree to generate a lock file")
 abstract class GenerateAssetsLockTask : DefaultTask() {
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
@@ -279,6 +283,7 @@ abstract class GenerateAssetsLockTask : DefaultTask() {
     }
 }
 
+@DisableCachingByDefault(because = "Scans the mutable project tree to generate an index")
 abstract class GenerateProjectIndexTask : DefaultTask() {
     @get:OutputFile
     abstract val outputFile: RegularFileProperty
