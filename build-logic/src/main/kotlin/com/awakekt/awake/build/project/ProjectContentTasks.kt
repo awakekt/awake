@@ -101,6 +101,7 @@ abstract class ValidateProjectTask : DefaultTask() {
 
     private fun validateScenes(root: File, roots: List<String>, errors: MutableList<String>) {
         root.walkTopDown()
+            .onEnter { directory -> directory == root || (!directory.name.startsWith(".") && directory.name != "build") }
             .filter { it.isFile && (it.name.endsWith(".scene.json") || it.name.endsWith(".awakescene")) }
             .forEach { sceneFile ->
                 val relative = sceneFile.relativeTo(root).invariantSeparatorsPath

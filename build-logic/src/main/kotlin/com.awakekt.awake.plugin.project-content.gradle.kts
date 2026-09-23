@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 import com.awakekt.awake.build.project.GenerateAssetsLockTask
 import com.awakekt.awake.build.project.GenerateProjectIndexTask
 import com.awakekt.awake.build.project.ProjectContentExtension
@@ -10,7 +15,7 @@ projectContent.assetsLockFile.convention(layout.projectDirectory.file("assets.lo
 projectContent.indexOutputFile.convention(layout.buildDirectory.file("project.index.json"))
 projectContent.assetRoots.set(listOf("assets"))
 projectContent.indexRoots.set(listOf("assets", "scenes", "plugins"))
-projectContent.indexRootPath.convention("/awake-project")
+projectContent.indexRootPath.convention("/project")
 projectContent.indexBaseUrl.convention("files")
 
 val validateProject = tasks.register<ValidateProjectTask>("validateProject") {

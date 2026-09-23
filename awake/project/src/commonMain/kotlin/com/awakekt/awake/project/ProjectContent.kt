@@ -42,14 +42,14 @@ data class ProjectContentSpec(
     val assetsLockPath: String = "assets.lock.json",
     val assetRoots: List<String> = listOf("assets"),
     val indexRoots: List<String> = listOf("assets", "scenes", "plugins"),
-    val indexRootPath: String = "/awake-project",
+    val indexRootPath: String = "/project",
 )
 
 /** Metadata-only browser transport index. Asset bytes are fetched from [files] URLs on demand. */
 @Serializable
 data class ProjectIndex(
     val formatVersion: Int = 2,
-    val rootPath: String = "/awake-project",
+    val rootPath: String = "/project",
     val files: List<ProjectIndexEntry> = emptyList(),
 )
 
