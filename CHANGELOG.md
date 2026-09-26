@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Pluggable terrain surface shading.** `terrainClipmapVertexStage()` is the shared clipmap vertex stage; a surface shader adds only its fragment stage and bindings from `TERRAIN_SURFACE_FIRST_BINDING`. `terrainContentFeature` now reads bindings from the `ShaderSet` it is given and accepts `surfaceTextures`. `TerrainShader` renders pixel-identically. **Breaking:** removed the unused `TerrainSplatShader`, `PackShaderSets.TerrainSplat`, `TerrainMaterial`, and `TerrainComponent.material`.
 - **Manual Release workflow.** Actions → Release opens a `chore(release): cut <tag>` PR via `releaseCut`; merging it tags the merge commit and triggers Publish. Workflow and job names are shortened (CI, Verify, Publish, Docs, Deploy Samples…).
 - **Configurable Spotless SPDX license header.** `com.awakekt.awake.plugin.spotless` reads `awake.spotless.spdxLicense` (default `Apache-2.0`) so consumers under another license, such as Awake Studio's `AGPL-3.0-only OR LicenseRef-AwakeKt-Commercial`, keep their own file headers.
 - **Cross-platform Awake application icon.** Applied the approved Ember Signal mark to the Engine Showcase Android adaptive launcher icon, iOS AppIcon catalog, Desktop taskbar/Dock identity, and Wasm favicon; the SVG master and 1024px PNG now ship with the sample assets.

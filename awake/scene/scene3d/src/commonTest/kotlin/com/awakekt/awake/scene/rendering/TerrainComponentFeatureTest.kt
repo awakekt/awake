@@ -5,17 +5,38 @@
  */
 package com.awakekt.awake.scene.rendering
 
+import com.awakekt.awake.asset.shaderdsl.dot
+import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.max
+import com.awakekt.awake.asset.shaderdsl.normalize
+import com.awakekt.awake.asset.shaderdsl.sampler
+import com.awakekt.awake.asset.shaderdsl.shader
+import com.awakekt.awake.asset.shaderdsl.texture2dArray
+import com.awakekt.awake.asset.shaderdsl.textureSampleArray
+import com.awakekt.awake.asset.shaderdsl.times
+import com.awakekt.awake.asset.shaderdsl.vec2
+import com.awakekt.awake.asset.shaderdsl.vec4
+import com.awakekt.awake.asset.shaderdsl.x
+import com.awakekt.awake.asset.shaderdsl.xyz
+import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
+import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
+import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaders.RenderBackend
+import com.awakekt.awake.asset.shaders.aslShaderSet
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.pipeline.BindingLayout
+import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.ResourceKind
+import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.rendering.terrain.TerrainComponent
 import com.awakekt.awake.scene.rendering.terrain.terrainContentFeature
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 /**
@@ -74,7 +95,55 @@ class TerrainComponentFeatureTest {
         assertEquals("terrain", source.resolve(RenderBackend.WebGpu).name)
     }
 
+    /** A surface shader's bindings come from its own set, so its textures reach the pipeline. */
+    @Test
+    fun surfaceTexturesJoinTheHeightmapAtTheSurfaceShadersBindings() {
+        val feature = terrainContentFeature(
+            SURFACE_SHADERS,
+            component(),
+            mapOf(TERRAIN_SURFACE_FIRST_BINDING to LAYERS),
+        ).resolve(RenderBackend.WebGpu)
+
+        assertEquals(setOf(1, TERRAIN_SURFACE_FIRST_BINDING), feature.textures.keys)
+        assertEquals(LAYERS.layerCount, feature.textures.getValue(TERRAIN_SURFACE_FIRST_BINDING).layerCount)
+    }
+
+    @Test
+    fun aSurfaceTextureAtAClipmapBindingIsRejected() {
+        assertFailsWith<IllegalArgumentException> {
+            terrainContentFeature(SHADERS, component(), mapOf(1 to LAYERS))
+        }
+    }
+
+    /** `ContentFeature` catches a declared surface binding left without pixel data. */
+    @Test
+    fun aSurfaceShaderWithoutItsTexturesFailsToResolve() {
+        assertFailsWith<IllegalArgumentException> {
+            terrainContentFeature(SURFACE_SHADERS, component()).resolve(RenderBackend.Vulkan)
+        }
+    }
+
     private companion object {
         val SHADERS = PackShaderSets.Terrain
+
+        val LAYERS = TextureAsset(ByteArray(2 * 2 * 4 * 3), width = 2, height = 2, layerCount = 3)
+
+        val SURFACE_SHADERS = aslShaderSet(
+            shader("terrain_surface_probe") {
+                val terrain = terrainClipmapVertexStage()
+                val group = BindingLayout.Standard.slot(BindingSemantic.Material)
+                val layers by texture2dArray(group = group, binding = TERRAIN_SURFACE_FIRST_BINDING)
+                val layerSampler by sampler(group = group, binding = TERRAIN_SURFACE_FIRST_BINDING + 1)
+                fragment {
+                    val uv = let("uv", vec2(terrain.worldPosition.x, terrain.worldPosition.z))
+                    val albedo = let("albedo", textureSampleArray(layers, layerSampler, uv, 0.lit))
+                    val light = let(
+                        "light",
+                        max(dot(normalize(terrain.worldNormal), normalize(terrain.sunDirection.xyz)), 0f.lit),
+                    )
+                    colorOutput(vec4(albedo.xyz * light, 1f.lit))
+                }
+            },
+        )
     }
 }
