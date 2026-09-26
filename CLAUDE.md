@@ -51,6 +51,7 @@ Before touching `Renderer.kt`, a render-contract type, or a backend renderer, ac
 3. When all issues/PRs for an active milestone are merged, cut the release via `./gradlew releaseCut -Prelease.channel=<channel>`, push the tag, and close the milestone.
 
 Use `feat/*`, `fix/*`, `refactor/*`, or `docs/*` for topic branches. For dependent layers,
-create a linear stacked PR chain with each PR targeting the branch immediately below it; review
-and merge from the bottom upward. Follow `docs/release-process.md` before creating or retargeting
-stacked PRs.
+create a linear stacked PR chain with each PR targeting the branch immediately below it. Review
+bottom-up, then collapse: once every layer is green, squash-merge each PR into the branch below it
+from the top down, and squash the bottom PR into `main` once. Follow `docs/release-process.md`
+before creating or retargeting stacked PRs.
