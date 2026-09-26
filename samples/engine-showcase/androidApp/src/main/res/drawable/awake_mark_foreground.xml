@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+  ~
+  ~ SPDX-License-Identifier: Apache-2.0
+  -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+    <path android:fillColor="#FF6B35" android:pathData="M505,208L505,339L346,618L266,765L194,690L415,275Z" />
+    <path android:fillColor="#8A2E20" android:pathData="M266,765L346,618L402,674Z" />
+    <path android:fillColor="#FFE29A" android:pathData="M505,208L598,275L818,690L747,765L664,618L505,339Z" />
+    <path android:fillColor="#D9482B" android:pathData="M609,674L664,618L747,765Z" />
+    <path android:fillColor="#FFE29A" android:pathData="M505,522L594,575L505,630L418,575Z" />
+    <path android:fillColor="#8A2E20" android:pathData="M418,575L505,630L505,726L418,671Z" />
+    <path android:fillColor="#D9482B" android:pathData="M594,575L505,630L505,726L594,671Z" />
+</vector>
