@@ -29,6 +29,10 @@ val ktlintVersion = if (project.path.startsWith(":awake:compose") ||
     "1.5.0"
 }
 
+// Consumers under a different license (e.g. AGPL-3.0-only OR LicenseRef-Commercial) set
+// `awake.spotless.spdxLicense` in gradle.properties instead of fighting the header step.
+val spdxLicense = providers.gradleProperty("awake.spotless.spdxLicense").orElse("Apache-2.0").get()
+
 extensions.configure<SpotlessExtension> {
     kotlin {
         target("src/**/*.kt")
@@ -97,7 +101,7 @@ extensions.configure<SpotlessExtension> {
             /*
              * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
              *
-             * SPDX-License-Identifier: Apache-2.0
+             * SPDX-License-Identifier: $spdxLicense
              */
             """.trimIndent(),
             "^(/\\*\\*|package |@file|import |expect |actual |fun |class |object |interface |val |var |private |internal |public )"
