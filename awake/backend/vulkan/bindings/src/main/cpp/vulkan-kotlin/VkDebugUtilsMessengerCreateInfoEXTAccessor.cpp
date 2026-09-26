@@ -39,7 +39,16 @@ VkBool32 VkDebugUtilsMessengerCreateInfoEXTAccessor::onDebugUtilsMessage(
         VkDebugUtilsMessageTypeFlagsEXT messageTypes,
         const VkDebugUtilsMessengerCallbackDataEXT *callbackData,
         void *userData) {
-
+    JNIEnv *env = nullptr;
+    bool attached = false;
+    if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) == JNI_EDETACHED) {
+#ifdef __ANDROID__
+        if (vm->AttachCurrentThread(&env, nullptr) != JNI_OK) return VK_FALSE;
+#else
+        if (vm->AttachCurrentThread(reinterpret_cast<void **>(&env), nullptr) != JNI_OK) return VK_FALSE;
+#endif
+        attached = true;
+    }
 
     jclass callbackInterface = env->GetObjectClass(callbackObj);
 //
@@ -77,7 +86,11 @@ VkBool32 VkDebugUtilsMessengerCreateInfoEXTAccessor::onDebugUtilsMessage(
     jobject callbackResult = env->CallObjectMethod(callbackObj, invokeMethod, arg1, arg2, jData,
                                                    arg4);
     VkBool32 eventFlag = VK_FALSE;
-    if (callbackResult != nullptr) {
+    if (env->ExceptionCheck()) {
+        // A throwing Kotlin callback must not leave an exception pending inside a Vulkan call.
+        env->ExceptionDescribe();
+        env->ExceptionClear();
+    } else if (callbackResult != nullptr) {
         jclass boolClass = env->FindClass("java/lang/Boolean");
         jmethodID booleanValueMethod = env->GetMethodID(boolClass, "booleanValue", "()Z");
         jboolean returnResult = env->CallBooleanMethod(callbackResult, booleanValueMethod);
@@ -88,8 +101,12 @@ VkBool32 VkDebugUtilsMessengerCreateInfoEXTAccessor::onDebugUtilsMessage(
     }
     env->DeleteLocalRef(arg1);
     env->DeleteLocalRef(arg2);
+    env->DeleteLocalRef(arg4);
+    env->DeleteLocalRef(jData);
     env->DeleteLocalRef(integerClass);
+    env->DeleteLocalRef(stringClass);
     env->DeleteLocalRef(callbackInterface);
+    if (attached) vm->DetachCurrentThread();
     // Returning false tells the layer not to stop when the event occurs, so
     // they see the same behavior with and without validation layers enabled.
     return eventFlag;
