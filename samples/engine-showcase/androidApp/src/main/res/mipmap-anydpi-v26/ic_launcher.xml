@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+  ~
+  ~ SPDX-License-Identifier: Apache-2.0
+  -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/awake_brand_background" />
+    <foreground android:drawable="@drawable/awake_mark_foreground" />
+    <monochrome android:drawable="@drawable/awake_mark_monochrome" />
+</adaptive-icon>

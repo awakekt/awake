@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		F1F8A0012E74200000E1280A /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1F8A0022E74200000E1280A /* iOSApp.swift */; };
 		F1F8A0032E74200000E1280A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1F8A0042E74200000E1280A /* ContentView.swift */; };
+		F1F8A0112E74200000E1280A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F1F8A0122E74200000E1280A /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -16,6 +17,7 @@
 		F1F8A0022E74200000E1280A /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		F1F8A0042E74200000E1280A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		F1F8A0052E74200000E1280A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F1F8A0122E74200000E1280A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -40,6 +42,7 @@
 		F1F8A0072E74200000E1280A /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				F1F8A0122E74200000E1280A /* Assets.xcassets */,
 				F1F8A0022E74200000E1280A /* iOSApp.swift */,
 				F1F8A0042E74200000E1280A /* ContentView.swift */,
 				F1F8A0052E74200000E1280A /* Info.plist */,
@@ -101,6 +104,17 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		F1F8A0102E74200000E1280A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1F8A0112E74200000E1280A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXShellScriptBuildPhase section */
 		F1F8A00A2E74200000E1280A /* Compile KMP Framework */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -138,6 +152,7 @@
 		F1F8A00E2E74200000E1280A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -207,6 +222,7 @@
 		F1F8A00F2E74200000E1280A /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
