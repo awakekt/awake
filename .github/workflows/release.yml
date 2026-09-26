@@ -1,0 +1,128 @@
+name: Release
+
+# Manual Core release. `main` only accepts pull requests, so a release is two steps:
+#   1. Run this workflow: it promotes CHANGELOG.md with `releaseCut` and opens a release PR.
+#   2. Merge that PR: the push to `main` tags the merge commit, and the tag triggers Publish.
+# RELEASE_TOKEN (fine-grained PAT: Contents + Pull requests read/write) is required because
+# PRs and tags pushed with GITHUB_TOKEN do not trigger CI or Publish.
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Release channel'
+        required: true
+        default: dev
+        type: choice
+        options: [dev, alpha, beta, rc, stable]
+      bump:
+        description: 'Version bump (none keeps the current base version)'
+        required: true
+        default: none
+        type: choice
+        options: [none, patch, minor, major]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check release token
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          [[ -n "$RELEASE_TOKEN" ]] || { echo "RELEASE_TOKEN secret is not set." >&2; exit 1; }
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Cut release
+        id: cut
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          BUMP: ${{ inputs.bump }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          bump_arg=()
+          [[ "$BUMP" != none ]] && bump_arg=("-Prelease.bump=$BUMP")
+          ./gradlew releaseCut "-Prelease.channel=$CHANNEL" "${bump_arg[@]}" --no-configuration-cache
+          tag="$(git tag --points-at HEAD 'v*' | head -n 1)"
+          [[ -n "$tag" ]] || { echo "releaseCut did not create a tag." >&2; exit 1; }
+          # The tag is created on the merge commit after review; drop the local one.
+          git tag -d "$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Open release pull request
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          TAG: ${{ steps.cut.outputs.tag }}
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null; then
+            echo "$TAG already exists." >&2
+            exit 1
+          fi
+          branch="release-cut/$TAG"
+          git switch -c "$branch"
+          git push origin "$branch"
+          milestone="$(gh api "repos/$GITHUB_REPOSITORY/milestones" --jq ".[] | select(.title == \"$TAG\") | .title")"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore(release): cut $TAG" \
+            --body "Promotes \`## [Unreleased]\` to \`$TAG\`. Merging tags the merge commit and publishes it." \
+            ${milestone:+--milestone "$milestone"}
+
+  tag:
+    name: Tag
+    if: >-
+      github.event_name == 'push' &&
+      startsWith(github.event.head_commit.message, 'chore(release): cut v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Tag release commit
+        env:
+          MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          tag="$(sed -nE '1s/^chore\(release\): cut (v[0-9][^ ]*).*/\1/p' <<<"$MESSAGE")"
+          [[ -n "$tag" ]] || { echo "Could not read the tag from: $MESSAGE" >&2; exit 1; }
+          grep -qF "## [${tag#v}]" CHANGELOG.md || { echo "CHANGELOG.md has no section for $tag." >&2; exit 1; }
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "$tag already exists." >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "Release $tag"
+          git push origin "$tag"

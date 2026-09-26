@@ -1,4 +1,4 @@
-name: Awake Engine CI
+name: CI
 
 on:
   push:
@@ -21,7 +21,7 @@ env:
 
 jobs:
   platform-impact:
-    name: Detect platform impact
+    name: Changes
     runs-on: ubuntu-latest
     outputs:
       core: ${{ steps.impact.outputs.core }}
@@ -43,7 +43,7 @@ jobs:
           head-sha: ${{ github.sha }}
 
   build:
-    name: Multiplatform Core & ECS Build
+    name: Build (JVM/Native)
     needs: platform-impact
     if: needs.platform-impact.outputs.core == 'true'
     runs-on: ubuntu-latest
@@ -151,7 +151,7 @@ jobs:
   # headlessly. Separate job (not steps in `build` above) since it needs its own apt
   # packages and is the only job that builds awake:backend:vulkan's desktop-native C++ library.
   desktop-vulkan-smoke:
-    name: Desktop Vulkan Smoke Test (Linux lavapipe)
+    name: Vulkan (Linux)
     needs: platform-impact
     if: needs.platform-impact.outputs.vulkan == 'true'
     runs-on: ubuntu-latest
@@ -206,7 +206,7 @@ jobs:
   # Jolt asks for -- and it compiled cleanly throughout. Three of the four physics bugs found on
   # 2026-08-31 were on this binding, which shares no code with any target covered above.
   ios-physics:
-    name: iOS Jolt Physics & Metal Interop
+    name: Physics (iOS)
     needs: platform-impact
     if: needs.platform-impact.outputs.ios == 'true'
     runs-on: macos-latest
@@ -267,6 +267,7 @@ jobs:
           if-no-files-found: warn
 
   web-verification:
+    name: Web
     needs: platform-impact
     if: needs.platform-impact.outputs.web == 'true'
     runs-on: ubuntu-latest

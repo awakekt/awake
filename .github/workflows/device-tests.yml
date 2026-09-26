@@ -11,7 +11,7 @@
 # checking daily and is not worth several minutes of emulator boot, and its attendant flakiness,
 # on every change. iOS is the opposite case and runs per-PR in ci.yml: JoltC shares no code with
 # anything else, and it is where the bugs have actually been.
-name: Device tests
+name: Device Tests
 
 on:
   schedule:

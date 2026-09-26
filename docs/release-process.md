@@ -206,6 +206,19 @@ This command automatically:
 4. Commits `CHANGELOG.md` alone (`chore(release): cut vX.Y.Z-channel.N`).
 5. Creates an annotated Git tag `vX.Y.Z-channel.N`.
 
+### From GitHub Actions
+
+`main` only accepts pull requests, so the **Release** workflow splits the same steps in two:
+
+1. Actions → **Release** → *Run workflow*, choose the channel and bump. The `Prepare` job runs
+   `releaseCut`, pushes a `release-cut/<tag>` branch, and opens a `chore(release): cut <tag>` PR.
+2. Merge that PR once CI passes. The `Tag` job tags the merge commit and pushes the tag, which
+   triggers **Publish** (Maven Central) and **Docs**.
+
+The workflow needs a `RELEASE_TOKEN` repository secret: a fine-grained personal access token for
+this repository with *Contents* and *Pull requests* read/write. `GITHUB_TOKEN` cannot be used
+because the PRs and tags it creates do not trigger other workflows.
+
 Pushing that tag also publishes the matching version of the public MkDocs site. The documentation
 workflow keeps the full Maven version in the URL and in installation examples, moves the `latest`
 alias only for non-development releases, and exposes older releases through the site version
