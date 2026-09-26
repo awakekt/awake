@@ -3,8 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-import com.awakekt.awake.build.extension.*
-import com.awakekt.awake.build.tasks.*
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.KotlinMultiplatform
 import com.vanniktech.maven.publish.MavenPublishBaseExtension
@@ -96,7 +94,7 @@ extensions.configure<MavenPublishBaseExtension>("mavenPublishing") {
         }
         scm {
             connection.set("scm:git:git://github.com/awakekt/awake.git")
-            developerConnection.set("scm:git:ssh://github.com:awakekt/awake.git")
+            developerConnection.set("scm:git:ssh://git@github.com/awakekt/awake.git")
             url.set("https://github.com/awakekt/awake")
         }
         developers {

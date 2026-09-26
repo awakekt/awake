@@ -4,7 +4,6 @@ agp = "9.2.1"
 detekt = "1.23.8"
 spotless = "7.0.2"
 dokka = "2.0.0"
-download = "5.6.0"
 fleks = "2.14"
 artemis-odb = "2.3.0"
 ashley = "1.7.3"
@@ -82,7 +81,6 @@ kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.re
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 spotless-gradle-plugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
-download-gradle-plugin = { module = "de.undercouch:gradle-download-task", version.ref = "download" }
 lwjgl-bom = { module = "org.lwjgl:lwjgl-bom", version.ref = "lwjgl" }
 lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
 lwjgl-glfw = { module = "org.lwjgl:lwjgl-glfw", version.ref = "lwjgl" }
@@ -144,16 +142,3 @@ vanniktech-publish = { id = "com.vanniktech.maven.publish", version.ref = "vanni
 binary-compat = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binary-compat" }
 kotlinx-benchmark = { id = "org.jetbrains.kotlinx.benchmark", version.ref = "kotlinx-benchmark" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
-awake-library = { id = "com.awakekt.awake.plugin.library" }
-awake-application = { id = "com.awakekt.awake.plugin.application" }
-awake-publish = { id = "com.awakekt.awake.plugin.publish" }
-awake-dokka = { id = "com.awakekt.awake.plugin.dokka" }
-awake-detekt = { id = "com.awakekt.awake.plugin.detekt" }
-awake-spotless = { id = "com.awakekt.awake.plugin.spotless" }
-awake-shader-pipeline = { id = "com.awakekt.awake.plugin.shader-pipeline" }
-awake-test-resources = { id = "com.awakekt.awake.plugin.test-resources" }
-awake-ui-ownership = { id = "com.awakekt.awake.plugin.ui-ownership" }
-awake-ui-authored-units = { id = "com.awakekt.awake.plugin.ui-authored-units" }
-awake-ui-preview-report = { id = "com.awakekt.awake.plugin.ui-preview-report" }
-awake-backend-layering = { id = "com.awakekt.awake.plugin.backend-layering" }
-awake-render-extensibility = { id = "com.awakekt.awake.plugin.render-extensibility" }

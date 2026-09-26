@@ -3,8 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-import com.awakekt.awake.build.extension.*
-import com.awakekt.awake.build.tasks.*
 import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 import java.net.URI
 

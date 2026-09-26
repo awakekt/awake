@@ -10,7 +10,7 @@
 // externalNativeBuild; :awake-vulkan's androidMain depends on this module.
 plugins {
     id("com.awakekt.awake.plugin.android-library")
-    // No awake.dokka-convention here: this module has no Kotlin plugin at all (pure
+    // No com.awakekt.awake.plugin.dokka here: this module has no Kotlin plugin at all (pure
     // com.android.library CMake/NDK build, generated JNI stubs only) -- Dokka's Android
     // integration logs "could not get Android Extension" trying to inspect it anyway, with
     // nothing to document.

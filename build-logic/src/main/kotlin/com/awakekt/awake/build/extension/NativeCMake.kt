@@ -14,8 +14,8 @@ import java.io.File
 /**
  * CMake plumbing shared by every module that builds a native library.
  *
- * Three modules do -- `backend:vulkan:bindings` (desktop JNI), its `android-native` sibling, and
- * `backend:jolt` (iOS static libs) -- and each had hand-rolled the same configure/build `Exec`
+ * Two modules do -- `backend:vulkan:bindings` (desktop JNI) and `backend:jolt` (iOS static
+ * libs); `android-native` builds through AGP's `externalNativeBuild` instead. Each had hand-rolled the same configure/build `Exec`
  * pair, the same ccache discovery, and the same "manual, CMake is slow" rationale. Registering
  * them once means a fix reaches all of them: the missing `dependsOn` that left `desktopTest`
  * failing with `UnsatisfiedLinkError` in every fresh clone was exactly the kind of wiring that

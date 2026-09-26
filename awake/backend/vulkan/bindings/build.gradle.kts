@@ -28,7 +28,6 @@ plugins {
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
-    id("com.awakekt.awake.plugin.native-build")
 }
 
 // Mirrored Khronos API: the Vulkan spec is the documentation for Vk* names, and demanding

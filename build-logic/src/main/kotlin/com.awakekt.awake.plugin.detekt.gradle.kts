@@ -3,8 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-import com.awakekt.awake.build.extension.*
-import com.awakekt.awake.build.tasks.*
 import io.gitlab.arturbosch.detekt.Detekt
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import io.gitlab.arturbosch.detekt.extensions.DetektExtension
@@ -23,20 +21,10 @@ extensions.configure<DetektExtension> {
     baseline = layout.projectDirectory.file("detekt-baseline.xml").asFile
 }
 
-tasks.withType<Detekt>().configureEach {
-    setSource(
-        fileTree("src") {
-            include("**/*.kt")
-            exclude("**/build/**", "**/attic/**")
-        }
-    )
+fun detektSources() = fileTree("src") {
+    include("**/*.kt")
+    exclude("**/build/**", "**/attic/**")
 }
 
-tasks.withType<DetektCreateBaselineTask>().configureEach {
-    setSource(
-        fileTree("src") {
-            include("**/*.kt")
-            exclude("**/build/**", "**/attic/**")
-        }
-    )
-}
+tasks.withType<Detekt>().configureEach { setSource(detektSources()) }
+tasks.withType<DetektCreateBaselineTask>().configureEach { setSource(detektSources()) }
