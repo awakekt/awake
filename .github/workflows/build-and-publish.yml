@@ -113,6 +113,32 @@ jobs:
           path: awake/backend/vulkan/bindings/build/generated/natives-resources/natives/${{ matrix.platform }}
           if-no-files-found: error
 
+  # The Vulkan renderer compiles every WGSL shader through naga at runtime, so the Android
+  # shader-compiler AAR must carry libawake_naga.so. It is gitignored build output; build it here
+  # and hand it to every job that publishes, or Android apps render nothing.
+  naga-android:
+    name: Naga (Android)
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust Android targets and cargo-ndk
+        run: |
+          rustup target add aarch64-linux-android x86_64-linux-android
+          cargo install cargo-ndk --locked
+
+      - name: Build libawake_naga.so
+        working-directory: awake/asset/shader-compiler/rust-native
+        run: ANDROID_NDK_HOME="$ANDROID_NDK_LATEST_HOME" cargo ndk -t arm64-v8a -t x86_64 -o ../src/androidMain/jniLibs build --release
+
+      - name: Upload naga-android
+        uses: actions/upload-artifact@v4
+        with:
+          name: naga-android
+          path: awake/asset/shader-compiler/src/androidMain/jniLibs
+          if-no-files-found: error
+
   # What must hold before anything is uploaded anywhere. Runs for snapshots and releases alike:
   # a snapshot nobody can resolve wastes the same afternoon a broken release does.
   verify:
@@ -163,9 +189,10 @@ jobs:
         always() &&
         !startsWith(github.ref, 'refs/tags/vulkan-v') &&
         needs.platform-impact.result == 'success' &&
+        needs.naga-android.result == 'success' &&
         (needs.natives.result == 'success' || needs.natives.result == 'skipped')
       }}
-    needs: [platform-impact, natives]
+    needs: [platform-impact, natives, naga-android]
     timeout-minutes: 30
     runs-on: macos-14
     steps:
@@ -226,6 +253,11 @@ jobs:
           for d in native-*; do mv "$d" "${d#native-}"; done
           ls -R .
 
+      - name: Collect naga-android
+        uses: actions/download-artifact@v4
+        with:
+          name: naga-android
+          path: awake/asset/shader-compiler/src/androidMain/jniLibs
       # Maven Local rather than the snapshot repository: this has to pass *before* anything is
       # uploaded, including the snapshot a consumer would otherwise be the first to try.
       - name: Publish this build locally
@@ -261,9 +293,10 @@ jobs:
         always() &&
         (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')) &&
         needs.verify.result == 'success' &&
-        needs.consumer.result == 'success'
+        needs.consumer.result == 'success' &&
+        needs.naga-android.result == 'success'
       }}
-    needs: [verify, consumer]
+    needs: [verify, consumer, naga-android]
     runs-on: macos-14
     env:
       MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -295,6 +328,11 @@ jobs:
             refs/tags/*) echo "A tag must go through the release job." && exit 1 ;;
           esac
 
+      - name: Collect naga-android
+        uses: actions/download-artifact@v4
+        with:
+          name: naga-android
+          path: awake/asset/shader-compiler/src/androidMain/jniLibs
       - name: Publish snapshots
         run: |
           ./gradlew publishAllPublicationsToMavenCentralRepository \
@@ -358,7 +396,7 @@ jobs:
     name: Release
     timeout-minutes: 30
     if: startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/vulkan-v')
-    needs: [verify, consumer]
+    needs: [verify, consumer, naga-android]
     runs-on: macos-14
     env:
       MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
@@ -410,6 +448,11 @@ jobs:
 
       # Local publication first: the same inspection a consumer's resolution would perform, run
       # while it is still free to fail. Central accepts uploads it cannot later be told to forget.
+      - name: Collect naga-android
+        uses: actions/download-artifact@v4
+        with:
+          name: naga-android
+          path: awake/asset/shader-compiler/src/androidMain/jniLibs
       - name: Verify what will be published
         run: |
           VERSION=$(./gradlew -q :awake:core:math:properties --no-configuration-cache \

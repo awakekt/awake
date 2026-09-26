@@ -16,6 +16,9 @@
 class VkDebugUtilsMessengerCreateInfoEXTAccessor {
 private:
     JNIEnv *env;
+    // Vulkan invokes the messenger on whichever thread made the failing call, so the callback
+    // must look up that thread's JNIEnv instead of reusing the creating thread's.
+    JavaVM *vm = nullptr;
     jobject callbackObj;
     jobject obj;
     jclass clazz;
@@ -31,6 +34,7 @@ private:
     // Private constructor
     VkDebugUtilsMessengerCreateInfoEXTAccessor(JNIEnv *env, jobject obj) {
         this->env = env;
+        env->GetJavaVM(&vm);
         this->obj = env->NewGlobalRef(obj);
         clazz = (jclass) env->NewGlobalRef(env->GetObjectClass(obj));
         sTypeField = env->GetFieldID(clazz, "sType",

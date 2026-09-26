@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Android renders again.** The published `shader-compiler` Android AAR never contained `libawake_naga.so`, so every WGSL shader failed and Android apps showed a black screen; Publish now builds it with cargo-ndk and `verifyPublishedArtifacts` rejects an AAR without both ABIs. The Vulkan debug-messenger callback also looked up the `JNIEnv*` of the thread that created the instance, which aborted the render thread the first time a validation message fired off the main thread; it now uses the calling thread's env.
 - **Snapshot publication after verification.** Ensure successful `main` verification cannot silently skip publishing the Core snapshot consumed by downstream projects.
 
 - **Project-content Gradle task validation.** Declared explicit cache policies for project
