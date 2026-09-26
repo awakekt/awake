@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1600" viewBox="0 0 1600 1600" role="img" aria-labelledby="title description">
+  <title id="title">AwakeKt Ember Signal usage reference</title>
+  <desc id="description">Approved original Ember Signal mark applied consistently to AwakeKt Studio and AwakeKt Engine in dark and light contexts.</desc>
+  <defs>
+    <radialGradient id="board" cx="35%" cy="0%" r="90%">
+      <stop offset="0" stop-color="#202431"/>
+      <stop offset="1" stop-color="#0D1016"/>
+    </radialGradient>
+    <radialGradient id="mark-background" cx="36%" cy="20%" r="92%">
+      <stop offset="0" stop-color="#24202A"/>
+      <stop offset="0.56" stop-color="#15151C"/>
+      <stop offset="1" stop-color="#10131A"/>
+    </radialGradient>
+    <linearGradient id="left-beam" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF4D2E"/>
+      <stop offset="1" stop-color="#FF9F1C"/>
+    </linearGradient>
+    <linearGradient id="right-beam" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF0B3"/>
+      <stop offset="1" stop-color="#FFD166"/>
+    </linearGradient>
+    <linearGradient id="cube-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFB84A"/>
+      <stop offset="1" stop-color="#FFE29A"/>
+    </linearGradient>
+    <g id="ember-signal">
+      <rect width="1024" height="1024" rx="184" fill="url(#mark-background)"/>
+      <path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#left-beam)"/>
+      <path d="M266 765 346 618 402 674Z" fill="#8A2E20"/>
+      <path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#right-beam)"/>
+      <path d="M609 674 664 618 747 765Z" fill="#D9482B"/>
+      <path d="m505 522 89 53-89 55-87-55Z" fill="url(#cube-top)"/>
+      <path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/>
+      <path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/>
+    </g>
+  </defs>
+
+  <rect width="1600" height="1015" fill="url(#board)"/>
+  <text x="112" y="126" fill="#FFF8EE" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="54" font-weight="600">AwakeKt Ember Signal</text>
+  <text x="112" y="180" fill="#AAB4C5" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="26" font-weight="400">One approved ember-and-gold mark for AwakeKt Studio and AwakeKt Engine</text>
+
+  <rect x="112" y="256" width="1376" height="274" rx="32" fill="#141923" stroke="#2D3748" stroke-width="2"/>
+  <g transform="translate(170 315) scale(.152344)"><use href="#ember-signal"/></g>
+  <text x="376" y="376" fill="#FFF8EE" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="74" font-weight="600" letter-spacing="-.8">AwakeKt</text>
+  <text x="690" y="376" fill="#FFD166" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="74" font-weight="500" letter-spacing="-.8">Studio</text>
+  <text x="378" y="430" fill="#AAB4C5" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="25">Professional tools for interactive creation</text>
+  <text x="1244" y="340" fill="#FFD166" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="20" font-weight="600" text-anchor="end" letter-spacing="2">PRODUCT LABEL</text>
+
+  <rect x="112" y="570" width="1376" height="274" rx="32" fill="#141923" stroke="#2D3748" stroke-width="2"/>
+  <g transform="translate(170 629) scale(.152344)"><use href="#ember-signal"/></g>
+  <text x="376" y="690" fill="#FFF8EE" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="74" font-weight="600" letter-spacing="-.8">AwakeKt</text>
+  <text x="690" y="690" fill="#FFD166" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="74" font-weight="500" letter-spacing="-.8">Engine</text>
+  <text x="378" y="744" fill="#AAB4C5" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="25">Runtime and tools for interactive experiences</text>
+  <text x="1244" y="654" fill="#FFD166" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="20" font-weight="600" text-anchor="end" letter-spacing="2">PLATFORM LABEL</text>
+
+  <rect x="112" y="884" width="1376" height="84" rx="26" fill="#141923" stroke="#2D3748" stroke-width="2"/>
+  <g transform="translate(164 902) scale(.046875)"><use href="#ember-signal"/></g>
+  <g transform="translate(250 909) scale(.033203)"><use href="#ember-signal"/></g>
+  <text x="322" y="925" fill="#FFF8EE" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="22" font-weight="600">Mark only at small sizes</text>
+  <text x="322" y="954" fill="#AAB4C5" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="19">Android/iOS app icons, taskbar/Dock icons, and favicons</text>
+
+  <rect y="1015" width="1600" height="585" fill="#F7F3EE"/>
+  <text x="112" y="1112" fill="#1B202B" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="46" font-weight="600">Light mode</text>
+  <text x="112" y="1154" fill="#5D6470" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="22">Keep the original icon on its dark field. Do not recolor it for product or theme.</text>
+
+  <rect x="112" y="1202" width="650" height="250" rx="28" fill="#FFFFFF" stroke="#E3DCD3" stroke-width="2"/>
+  <g transform="translate(160 1253) scale(.128906)"><use href="#ember-signal"/></g>
+  <text x="340" y="1320" fill="#1B202B" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="54" font-weight="600" letter-spacing="-.6">AwakeKt</text>
+  <text x="561" y="1320" fill="#9A6500" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="54" font-weight="500" letter-spacing="-.6">Studio</text>
+  <text x="342" y="1368" fill="#5D6470" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="19">Use a darker text-only gold for contrast.</text>
+
+  <rect x="826" y="1202" width="662" height="250" rx="28" fill="#FFFFFF" stroke="#E3DCD3" stroke-width="2"/>
+  <g transform="translate(874 1253) scale(.128906)"><use href="#ember-signal"/></g>
+  <text x="1054" y="1320" fill="#1B202B" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="54" font-weight="600" letter-spacing="-.6">AwakeKt</text>
+  <text x="1275" y="1320" fill="#9A6500" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="54" font-weight="500" letter-spacing="-.6">Engine</text>
+  <text x="1056" y="1368" fill="#5D6470" font-family="system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="19">The same contrast rule applies to both products.</text>
+</svg>

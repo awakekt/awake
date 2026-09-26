@@ -121,6 +121,7 @@ the version you are using.
 - [Module guide](awake/README.md)
 - [Release process](docs/release-process.md)
 - [Architecture decisions and references](docs/reference/)
+- [AwakeKt brand system](docs/reference/brand-system.md)
 
 ## Contributing
 
@@ -129,3 +130,5 @@ Issues and pull requests are welcome on [GitHub](https://github.com/awakekt/awak
 a change. Security issues should follow the [security policy](SECURITY.md).
 
 Awake is available under the [Apache License 2.0](LICENSE.md).
+The AwakeKt and Awake names, and the Ember Signal mark, are governed separately by the
+[trademark notice](TRADEMARKS.md).

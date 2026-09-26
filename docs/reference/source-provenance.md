@@ -37,3 +37,10 @@ specific. Missing licensing information means the code cannot be copied.
 `reuse lint` checks declared per-file copyright/license metadata. ScanCode reports detected
 copyright, license, package, and dependency evidence. PMD CPD reports internal copy/paste
 similarity. None can determine that all code is original; treat every result as a review lead.
+
+## Brand assets
+
+The provenance registry records externally sourced code and assets; it does not establish the
+ownership of project-authored names or marks. The [AwakeKt brand system](brand-system.md) records the
+Ember Signal source master, its dated issue and merge history, and its approved use. The separate
+[trademark notice](../../TRADEMARKS.md) governs brand use.
