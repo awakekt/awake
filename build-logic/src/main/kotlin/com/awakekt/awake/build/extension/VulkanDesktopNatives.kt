@@ -72,6 +72,9 @@ fun JavaExec.wireVulkanDesktopNatives(bindingsProject: Project?) {
 /**
  * Registers a standard desktop application execution task [taskName] for [mainClassName].
  */
+@Deprecated(
+    "Unused; configure the run task with the application plugin's `awake { desktopApp { mainClass = ... } }` instead.",
+)
 fun Project.registerDesktopRunTask(
     mainClassName: String,
     taskName: String = "run",

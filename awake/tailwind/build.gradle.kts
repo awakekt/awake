@@ -10,7 +10,6 @@ plugins {
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
     id("com.awakekt.awake.plugin.spotless")
-    id("com.awakekt.awake.plugin.ui-ownership")
 }
 
 kotlin {
