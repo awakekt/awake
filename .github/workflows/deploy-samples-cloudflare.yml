@@ -1,4 +1,4 @@
-name: Deploy samples to Cloudflare Pages
+name: Deploy Samples
 
 on:
   workflow_dispatch:
@@ -25,7 +25,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build and deploy samples
+    name: Deploy
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository

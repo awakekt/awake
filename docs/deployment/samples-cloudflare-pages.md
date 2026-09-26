@@ -20,7 +20,7 @@ with Wrangler. Cloudflare's Wrangler action supports Pages direct uploads; the c
    - `CLOUDFLARE_API_TOKEN`
    - `CLOUDFLARE_ACCOUNT_ID`
 
-4. Push to `main`, or run **Deploy samples to Cloudflare Pages** manually from the Actions tab.
+4. Push to `main`, or run **Deploy Samples** manually from the Actions tab.
 
 The workflow is intentionally separate from the normal CI workflow. A sample deployment does not
 publish Maven artifacts and does not require changing the Git history or the squash procedure.

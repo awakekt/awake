@@ -1,4 +1,4 @@
-name: Documentation
+name: Docs
 
 on:
   push:
@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build Documentation Site
+    name: Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:

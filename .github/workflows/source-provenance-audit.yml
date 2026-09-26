@@ -1,4 +1,4 @@
-name: Source provenance audit
+name: Provenance Audit
 
 on:
   workflow_dispatch:

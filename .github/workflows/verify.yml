@@ -1,4 +1,4 @@
-name: Repository Verification
+name: Verify
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ env:
 
 jobs:
   verify:
-    name: Verify API, docs & Core boundaries
+    name: Verify
     runs-on: macos-14
     timeout-minutes: 30
 
