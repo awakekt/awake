@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Configurable Spotless SPDX license header.** `com.awakekt.awake.plugin.spotless` reads `awake.spotless.spdxLicense` (default `Apache-2.0`) so consumers under another license, such as Awake Studio's `AGPL-3.0-only OR LicenseRef-AwakeKt-Commercial`, keep their own file headers.
 - **Cross-platform Awake application icon.** Applied the approved Ember Signal mark to the Engine Showcase Android adaptive launcher icon, iOS AppIcon catalog, Desktop taskbar/Dock identity, and Wasm favicon; the SVG master and 1024px PNG now ship with the sample assets.
 - **Project content validation and browser index tooling.** Added the generic `ProjectContent*` contract, metadata-only `ProjectIndex`, streaming-safe path and digest checks, and Gradle tasks for project validation, asset-lock verification, lock generation, and index generation.
 - **Stable project-content diagnostics.** Added machine-readable `ProjectIssueCode` values and path-aware `ProjectContentIssue` details while preserving the existing string validation APIs.
