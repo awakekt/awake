@@ -84,7 +84,8 @@ Every pull request should:
 
 Use the repository pull request template. Topic branches target `main` unless the release process
 explicitly calls for a stacked or release branch. Maintainers squash and merge after the required
-checks pass.
+checks pass. `main` does not require a branch to be up to date before merging, so a PR is not
+re-run just because another PR landed first; CI on `main` after each merge is the backstop.
 
 ## License and provenance
 

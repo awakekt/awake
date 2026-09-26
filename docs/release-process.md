@@ -26,11 +26,15 @@ To maintain high development velocity while ensuring release stability:
       `feat/physics-sockets -> main`, then `feat/common-tests-across-platforms -> feat/physics-sockets`.
     - Preserve linear ancestry between layers. Do not create a dependent branch by cherry-picking
       the lower layer onto a separate history; create it directly from the lower branch.
-    - Review and merge from the bottom upward. A middle PR must not be closed while PRs remain
-      above it; update or dissolve the stack first.
-    - When a lower layer changes, rebase the branches above it and push with
-      `--force-with-lease`. GitHub's stacked-PR support and the `gh stack` extension can automate
-      this flow; the feature is currently public preview.
+    - Review from the bottom upward. A middle PR must not be closed while PRs remain above it;
+      update or dissolve the stack first.
+    - When a lower layer changes before merging, rebase the branches above it and push with
+      `--force-with-lease`.
+    - **Merge by collapsing the stack.** `main` only accepts squash merges, so squashing the bottom
+      PR first leaves its original commit in every branch above it, which then needs another
+      rebase and CI run. Instead, once every layer is green, squash-merge each PR into the branch
+      below it from the top down, then squash the bottom PR into `main` once. The bottom PR's CI
+      re-runs on the collapsed branch; that run is the gate for the whole stack.
 
 4. **Release Branches (Major & Minor Cuts)**:
     - Cut a dedicated branch when preparing major or minor releases (e.g. `release/v0.1.0` or
