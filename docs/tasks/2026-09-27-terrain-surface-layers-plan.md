@@ -15,14 +15,16 @@ that a better surface model can replace it and so that the authoring tools can b
 ## Current state
 
 - `terrainContentFeature` draws the clipmap heightfield with `TerrainShader`: vertex-stage
-  displacement and ring morphing, then one constant shade. The geometry carries a single upward
-  normal, so every terrain pixel is the same grey.
+  displacement, ring morphing and heightmap normals, lit by one directional light over a constant
+  grey base colour.
 - The feature reads its bindings from `TerrainShader` directly. A consumer cannot add a surface
   texture or a fragment stage without copying the whole feature and its vertex stage.
 - `TerrainSplatShader` (4 layers, RGBA weightmap, `texture_2d_array`) is exactly that copy. It
   duplicates the clipmap vertex stage line for line, and nothing draws with it.
-- `TerrainComponent.splatMap` and `TerrainMaterial` (colour map, diffuse layers) exist, and no
-  render path reads either.
+- `TerrainMaterial` (colour map, diffuse layers) has no reader. `TerrainComponent.splatMap` has no
+  render reader; Studio's terrain authoring reads it to export splat images.
+- Content features are resolved once from `RenderPlan` when the engine starts (`VulkanEngine`,
+  `WebGpuEngine`). Terrain that arrives with a scene loaded later has no path to a pipeline.
 - `ContentFeature` already binds arrayed textures (`TextureAsset.layerCount > 1`, validated
   against the declared binding). That D28 primitive landed, so the missing piece is the terrain
   seam, not texture arrays.
@@ -81,13 +83,13 @@ Rejected:
 ## Boundary
 
 D28 put "splat layer selection, tiling and terrain material authoring" in a consumer starter-kit
-and kept draw emission from a `Heightmap` in Awake. This plan keeps that split and adds two Core
+and kept draw emission from a `Heightmap` in Awake. This plan keeps that split and adds three Core
 seams. Each seam meets the framework boundary's limitation test. There are two consumers (the
 private consumer pack and the Studio template), and neither can do this through public APIs today.
 
 | Owner | Scope |
 |---|---|
-| Core (`awaken`, Apache-2.0) | Terrain surface seam, heightmap normals, and the `terrain` scene binding with a surface-provider registry. No layer vocabulary. |
+| Core (`awaken`, Apache-2.0) | Terrain surface seam, runtime content-feature attachment, and the `terrain` scene binding with a surface-provider registry. No layer vocabulary. |
 | Terrain layers runtime (see open decision 1) | Palette and control-map model, codecs, surface shader, surface provider. |
 | Editor contract (`awake:editor:contract`, Apache-2.0) | `TerrainImporter`: a source format converted to the runtime's canonical files. |
 | Studio Pro (`awake-pro`, commercial) | Palette editor, control-map painting, rule-based auto-material, import wizards. |
@@ -97,15 +99,15 @@ private consumer pack and the Studio template), and neither can do this through 
 
 | Seam | Limitation it removes |
 |---|---|
-| `terrainContentFeature(surface: TerrainSurface?)` plus a shared ASL clipmap vertex stage | Bindings are read from `TerrainShader`, so a surface means forking the feature. `TerrainSplatShader` shows the fork already happened once. |
-| Normals derived from the heightmap in the shared vertex stage | Every surface model needs a real normal, and the base shader needs one too. Deriving it belongs with displacement, not in each surface. |
+| `terrainContentFeature` takes its bindings from the `ShaderSet` it is given and accepts surface textures; a shared ASL clipmap vertex stage | Bindings are read from `TerrainShader`, so a surface means forking the feature. `TerrainSplatShader` shows the fork already happened once. |
+| Attach and detach a content feature on a running engine | Content features are fixed at engine start, so terrain loaded with a scene (every Studio project, every streamed world) cannot get a pipeline or upload its textures. |
 | `terrain` scene binding in Core, with `surface: { provider, version, payload }` | A shipped game cannot load Studio-authored terrain without Studio code. |
 | `TerrainSurfaceProvider` registry keyed by provider id | Lets a scene name a surface model without Core knowing it. An unknown provider falls back to base shading with a warning and keeps the payload, the same as `SceneExtension`. |
 
 ```kotlin
 // Core: declares what a surface adds. The clipmap geometry, tracker and vertex stage stay Core's.
 class TerrainSurface(
-    val shader: AslShaderDefinition,           // built on the shared clipmap vertex stage
+    val shaders: ShaderSet,                    // built on the shared clipmap vertex stage
     val textures: Map<Int, TextureAsset>,      // bindings beyond the heightmap
 )
 
@@ -115,8 +117,9 @@ interface TerrainSurfaceProvider {
 }
 ```
 
-Deleted by this plan: `TerrainSplatShader`, and `TerrainComponent.splatMap`/`material` in favour
-of a surface reference. D28 already called for removing the unused splat shader.
+Deleted by this plan: `TerrainSplatShader` and `TerrainMaterial`, which have no reader. D28
+already called for removing the unused splat shader. `TerrainComponent.splatMap` goes in phase 3,
+once Studio's splat export moves to the layers runtime.
 
 ## Terrain layers runtime
 
@@ -137,9 +140,9 @@ of a surface reference. D28 already called for removing the unused splat shader.
 - Per-layer tiling and blend parameters live in an N×1 RGBA8 layer table texture, because a
   content feature owns one uniform block with a fixed layout. Validate the RGBA8 precision
   against the tiling range in phase 2.
-- Budget, since arrays are raw RGBA8 with a CPU mip chain: the measured 59-layer palette at 256² come to
-  about 20 MB of albedo; at 1024² the same palette is about 330 MB. The importer caps layer
-  size, and compressed formats are a Core follow-up.
+- Budget, since arrays are raw RGBA8 with a CPU mip chain: the measured 59-layer palette at 256²
+  comes to about 20 MB of albedo; at 1024² the same palette is about 330 MB. The importer caps
+  layer size, and compressed formats are a Core follow-up.
 
 ## Importers
 
@@ -167,15 +170,17 @@ The consumer pack's importer, for example:
 
 ### Phase 1 — Core seams
 
-- Extract the clipmap vertex stage into a shared ASL building block. Rebuild `TerrainShader` on
-  it and add heightmap normals.
-- `terrainContentFeature` accepts an optional `TerrainSurface`.
+- Extract the clipmap vertex stage into a shared ASL building block and rebuild `TerrainShader`
+  on it.
+- `terrainContentFeature` takes its bindings from the `ShaderSet` it is given and accepts
+  surface textures.
+- Engines attach and detach content features at runtime.
 - Move the `terrain` scene binding from Studio into Core and add the provider registry.
-- Delete `TerrainSplatShader`, `TerrainComponent.splatMap` and `TerrainMaterial`.
+- Delete `TerrainSplatShader` and `TerrainMaterial`.
 
 **Gate:**
-- Before re-recording anything, state which baseline pixels change: only shading changes, and
-  coverage stays identical. Audit the diff against that statement.
+- Rebuilding `TerrainShader` on the shared stage changes no pixel. State that before running the
+  baseline and treat any diff as a bug.
 - A provider fixture renders through the seam on Vulkan and WebGPU.
 - An unknown provider falls back to base shading and keeps its payload through a save round-trip.
 
@@ -197,6 +202,7 @@ Data model, codecs, surface shader and provider.
 - The layers provider is compiled into the desktop and web builds. The web build cannot load
   plugin code, so compile-time inclusion is the only route there.
 - The terrain inspector shows the palette.
+- Studio's splat export moves to the layers runtime, and `TerrainComponent.splatMap` is removed.
 
 **Gate:** Studio's Mountain template renders its layers on desktop and at studio.awakekt.com.
 
