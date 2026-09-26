@@ -6,7 +6,7 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-09-20` | **Total Tracked Docs**: `211`
+**Last Self-Healed**: `2026-09-26` | **Total Tracked Docs**: `212`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
@@ -59,6 +59,7 @@
 | **Reference** | [`Agent Starter Pack`](reference/agent-starter-pack.md) | `Active` | Use a source/deployment split when adding agent guidance to another repository. |
 | **Reference** | [`AI Collaboration`](reference/ai-collaboration.md) | `Active` | Awake keeps architecture and product tooling independently usable from agent tooling. |
 | **Reference** | [`API Layering`](reference/api-layering.md) | `Active` | Awake separates public API into three layers: **core**, **helpers**, and **sugar**. This |
+| **Reference** | [`AwakeKt brand system`](reference/brand-system.md) | `Stable` | Canonical Ember Signal assets, approved palette, platform-icon rules, and provenance record. |
 | **Reference** | [`Backend commonisation: where the duplication actually is`](reference/backend-commonisation.md) | `Active` | Vulkan and WebGPU are hand-authored side by side. This is the measurement of how much, where, |
 | **Reference** | [`Jetpack Compose Guidance: Animation`](reference/compose-animation-guidance.md) | `Active` | A sibling doc rather than a section of `compose-modifier-layout-guidance.md` because animation |
 | **Reference** | [`01 — Layout`](reference/compose-engine/01-layout.md) | `Active` | Supersedes the layout half of `docs/reference/compose-modifier-layout-guidance.md`. |
