@@ -30,7 +30,7 @@ import org.gradle.work.DisableCachingByDefault
  *
  * Writes into `build/generated`, not `src/`: registering that with `kotlin.srcDir` lets Gradle infer
  * the compile dependency, which is the ~20 lines of `dependsOn`/`mustRunAfter` that
- * `awake.shader-pipeline-convention` needs precisely because it writes into `src/`.
+ * `com.awakekt.awake.plugin.shader-pipeline` needs precisely because it writes into `src/`.
  */
 @DisableCachingByDefault(because = "Generates ImageVector source code")
 abstract class GenerateImageVectorsTask : DefaultTask() {

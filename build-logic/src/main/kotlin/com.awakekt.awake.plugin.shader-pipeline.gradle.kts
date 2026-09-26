@@ -49,7 +49,7 @@ tasks.named("check").configure {
 }
 
 // Every consumer of src/appMain/resources (or a directory tree that folds it in, like
-// awake.test-resources-convention's merge Sync) must run after syncAwakeShaders writes into
+// com.awakekt.awake.plugin.test-resources's merge Sync) must run after syncAwakeShaders writes into
 // it, or Gradle's implicit-dependency validation fails the build. New consumers keep showing
 // up under different names (*ProcessResources, process*JavaRes, syncAwakeTestResources) --
 // matched by pattern here instead of adding one `dependsOn` per module per new consumer task.

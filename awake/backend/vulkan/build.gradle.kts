@@ -124,7 +124,7 @@ tasks.named<Test>("desktopTest") {
     environment(desktopVulkanEnv)
     // `-DAWAKE_RECORD_SNAPSHOTS=true` on the Gradle CLI only sets the property on Gradle's own
     // JVM -- desktopTest runs in a forked test JVM, so forward it explicitly. Same fix
-    // awake.ui-preview-report-convention applies for the ui-preview modules.
+    // com.awakekt.awake.plugin.ui-preview-report applies for the ui-preview modules.
     System.getProperty("AWAKE_RECORD_SNAPSHOTS")
         ?.let { systemProperty("AWAKE_RECORD_SNAPSHOTS", it) }
     // Headless Vulkan tests exercise native loader / instance lifecycle paths that have

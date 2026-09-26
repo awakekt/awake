@@ -699,7 +699,7 @@ style:
   # Off deliberately, and it must stay off unless the decision below is revisited as a whole.
   #
   # Two gates format this repo, and they disagreed. Spotless/ktlint
-  # (build-logic/src/main/kotlin/awake.spotless-convention.gradle.kts) sets
+  # (build-logic/src/main/kotlin/com.awakekt.awake.plugin.spotless.gradle.kts) sets
   # ktlint_standard_max-line-length to "disabled" with a stated reason: this codebase's own
   # convention is a descriptive multi-line explanation above a declaration, and it carries many
   # long string literals -- shader paths, error messages -- that cannot be wrapped meaningfully.

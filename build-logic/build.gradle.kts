@@ -36,7 +36,6 @@ dependencies {
     implementation(libs.detekt.gradle.plugin)
     implementation(libs.spotless.gradle.plugin)
     implementation(libs.dokka.gradle.plugin)
-    implementation(libs.download.gradle.plugin)
     implementation(libs.kotlinx.serialization.json)
     implementation("com.vanniktech:gradle-maven-publish-plugin:0.36.0")
     testImplementation(gradleTestKit())
@@ -76,7 +75,7 @@ extensions.configure<com.vanniktech.maven.publish.MavenPublishBaseExtension>("ma
 
 // Precompiled script plugins also generate marker publications for internal Awake build
 // conventions. Keep those available to this build's composite consumers, but publish only the
-// six stable IDs explicitly supported by the public build-logic artifact.
+// stable IDs in publicPluginIds, explicitly supported by the public build-logic artifact.
 afterEvaluate {
     val publishing = extensions.getByType<org.gradle.api.publish.PublishingExtension>()
     publishing.publications
@@ -91,7 +90,7 @@ afterEvaluate {
 
 val verifyAwakePluginPublications = tasks.register("verifyAwakePluginPublications") {
     group = "verification"
-    description = "Checks that only Awake's six supported Gradle plugin markers are published."
+    description = "Checks that only Awake's supported Gradle plugin markers are published."
     doLast {
         val publishing = project.extensions.getByType<org.gradle.api.publish.PublishingExtension>()
         val markerIds = publishing.publications

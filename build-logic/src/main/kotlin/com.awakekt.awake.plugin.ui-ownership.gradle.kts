@@ -18,7 +18,7 @@ val classifiedUiModules = setOf(
     ":samples:ui-showcase",
 )
 check(project.path in classifiedUiModules) {
-    "Unclassified module applies awake.ui-ownership-convention: ${project.path}. " +
+    "Unclassified module applies com.awakekt.awake.plugin.ui-ownership: ${project.path}. " +
             "Add it to classifiedUiModules with explicit (possibly empty) rules."
 }
 

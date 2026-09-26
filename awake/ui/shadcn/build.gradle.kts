@@ -52,7 +52,7 @@ awakeTestResources {
 tasks.named<Test>("desktopTest") {
     // `-DAWAKE_RECORD_SNAPSHOTS=true` on the Gradle CLI only sets the property on Gradle's own
     // JVM -- desktopTest runs in a forked test JVM, so forward it explicitly. Same fix
-    // awake.ui-preview-report-convention applies for the ui-preview modules.
+    // com.awakekt.awake.plugin.ui-preview-report applies for the ui-preview modules.
     System.getProperty("AWAKE_RECORD_SNAPSHOTS")
         ?.let { systemProperty("AWAKE_RECORD_SNAPSHOTS", it) }
 
@@ -68,7 +68,7 @@ tasks.named<Test>("desktopTest") {
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
-// The Core-import boundary is enforced by verifyUiOwnership (awake.ui-ownership-convention);
+// The Core-import boundary is enforced by verifyUiOwnership (com.awakekt.awake.plugin.ui-ownership);
 // the former auditUiShadcnHeadlessBoundary/verifyUiShadcnClasspath/
 // reportUiShadcnMigrationProgress tasks were deleted 2026-08-17 — the first duplicated
 // the convention's rules without being wired into `check`, the second asserted the opposite
