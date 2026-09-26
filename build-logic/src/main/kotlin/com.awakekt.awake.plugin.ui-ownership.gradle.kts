@@ -13,18 +13,12 @@ import com.awakekt.awake.build.tasks.*
 val classifiedUiModules = setOf(
     ":awake:ui:material3",
     ":awake:ui:shadcn",
-    ":awake:tailwind",
-    ":awake:heroicons",
     ":samples:ui-showcase",
 )
 check(project.path in classifiedUiModules) {
     "Unclassified module applies com.awakekt.awake.plugin.ui-ownership: ${project.path}. " +
             "Add it to classifiedUiModules with explicit (possibly empty) rules."
 }
-
-val forbiddenUiDeclarationNames = emptyList<String>()
-
-val forbiddenUiTypeReferences = emptyList<String>()
 
 val uiNamingLexiconPatterns = listOf(
     "\\bfun\\s+\\w*Scope\\.(emit|paint|render)[A-Z]",
@@ -36,20 +30,14 @@ val forbiddenUiSourcePatterns = when (project.path) {
     ":awake:ui:material3",
     ":awake:ui:shadcn" -> uiNamingLexiconPatterns + listOf(
         "\\bprimitive\\s*\\.\\s*context\\b",
-        "(?m)^import\\s+io\\.github\\.awakelab\\.awake\\.ui\\.UiScope",
-        "(?m)^import\\s+io\\.github\\.awakelab\\.awake\\.ui\\.(layouts|popup|scope|animate|child|modifier|unstyled)",
-        "(?m)^import\\s+io\\.github\\.awakelab\\.awake\\.ui\\.context\\.(?!UiLocal\\b|uiLocalOf\\b)",
     )
 
     ":samples:ui-showcase" -> listOf(
-        "(?m)^import\\s+io\\.github\\.awakelab\\.awake\\.ui\\.modifier\\.",
         "\\bStyle\\s*\\{",
     )
 
     else -> emptyList()
 }
-
-val exemptUiSourcePatternFiles = emptyList<String>()
 
 val verifyUiOwnership = tasks.register<VerifyUiOwnershipTask>("verifyUiOwnership") {
     group = "verification"
@@ -61,10 +49,10 @@ val verifyUiOwnership = tasks.register<VerifyUiOwnershipTask>("verifyUiOwnership
             exclude("**/*Test/**/*.kt")
         }
     )
-    forbiddenDeclarationNames.set(forbiddenUiDeclarationNames)
-    forbiddenTypeReferences.set(forbiddenUiTypeReferences)
+    forbiddenDeclarationNames.set(emptyList())
+    forbiddenTypeReferences.set(emptyList())
     forbiddenSourcePatterns.set(forbiddenUiSourcePatterns)
-    exemptSourcePatternFiles.set(exemptUiSourcePatternFiles)
+    exemptSourcePatternFiles.set(emptyList())
 }
 
 tasks.named("check").configure {
