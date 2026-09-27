@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`SceneManager` loads scenes with a caller's components.** `SceneManager(world, componentRegistry)` adds the registry's bindings to the globally registered ones on every load, so a kit's or a game's scene components (for example `registerAiBehaviors()`) load through `SceneManager` without being registered globally first. The one-argument constructor is unchanged.
 - **Node graph canvas.** New module `com.awakekt.awake.ui:node-graph-canvas`: `NodeGraphCanvas`, a controlled editing surface for `:awake:node-graph` documents. Nodes render as a header, one row per port pair and a caller-owned body slot; wires are curves coloured by port type. Dragging between ports connects or reconnects, dragging nodes moves the selection, Shift/Ctrl-drag box-selects, the wheel zooms around the pointer, and every edit is reported as a `NodeGraphIntent` for the caller to apply. Zoom scales node content through density, so text stays sharp and controls are hit where they are drawn; labels hide below a legible zoom, and idle wires redraw retained meshes.
 
 ### Fixed

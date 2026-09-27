@@ -221,6 +221,8 @@ public final class com/awakekt/awake/scene/runtime/SceneLocalsKt {
 
 public final class com/awakekt/awake/scene/runtime/SceneManager {
 	public fun <init> (Lcom/awakekt/awake/ecs/World;)V
+	public fun <init> (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun close ()V
 	public final fun getCurrent ()Lcom/awakekt/awake/scene/binding/Scene;
 	public final fun switchTo (Lcom/awakekt/awake/scene/document/SceneDocument;)Lcom/awakekt/awake/scene/binding/Scene;

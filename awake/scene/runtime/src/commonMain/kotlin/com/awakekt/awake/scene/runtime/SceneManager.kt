@@ -7,10 +7,12 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.Scene
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.destroy
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
+import kotlin.jvm.JvmOverloads
 
 /**
  * Owns the currently-loaded [Scene], if any -- the only thing that may create or destroy one
@@ -21,7 +23,15 @@ import com.awakekt.awake.scene.document.SceneLoader
  * its own `world` after setup, so there is no real case where a single [SceneManager] needs to
  * switch which [World] it targets.
  */
-class SceneManager(private val world: World) {
+class SceneManager @JvmOverloads constructor(
+    private val world: World,
+    /**
+     * Scene components to load with on top of the globally registered ones, such as a kit's
+     * (`registerAiBehaviors()`) or a game's own. Its resolvers are added to a registry built on
+     * every load, so built-in bindings are present however early this one was created.
+     */
+    private val componentRegistry: SceneComponentRegistry? = null,
+) {
     init {
         DefaultSceneComponentResolvers.install()
     }
@@ -34,9 +44,14 @@ class SceneManager(private val world: World) {
      * forget the teardown half. */
     fun switchTo(document: SceneDocument): Scene {
         current?.destroy()
-        val scene = SceneLoader.instantiate(document, world)
+        val scene = SceneLoader.instantiate(document, world, loadRegistry())
         current = scene
         return scene
+    }
+
+    /** Globally registered bindings as they are now, plus the caller's. */
+    private fun loadRegistry(): SceneComponentRegistry = SceneComponentRegistry().also { registry ->
+        componentRegistry?.resolvers?.forEach(registry::register)
     }
 
     /** Tears down the current scene without loading a replacement -- e.g. app shutdown. */
