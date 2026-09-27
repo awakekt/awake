@@ -755,6 +755,7 @@ public final class com/awakekt/awake/render/pipeline/PipelineRegistry {
 	public final fun get (Lcom/awakekt/awake/render/pipeline/PipelineSpec;)Ljava/lang/Object;
 	public final fun getSpecs ()Ljava/util/Set;
 	public final fun register (Ljava/util/List;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun remove (Lcom/awakekt/awake/render/pipeline/PipelineSpec;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/render/pipeline/PipelineRequest {

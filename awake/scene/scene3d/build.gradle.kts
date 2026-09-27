@@ -33,7 +33,10 @@ kotlin {
             // terrainContentFeature(TerrainComponent) adapts the pack's feature to the ECS
             // component. Acyclic: shader-pack knows nothing of the scene layer.
             api(project(":awake:asset:shader-pack"))
-            implementation(libs.kotlinx.serialization.json)
+            // TerrainSurfaceReference carries a JsonElement payload, and TerrainContentSystem
+            // takes the CoroutineScope its surface providers resolve in.
+            api(libs.kotlinx.serialization.json)
+            api(libs.kotlinx.coroutines.core)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
