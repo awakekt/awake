@@ -333,7 +333,17 @@ jobs:
         with:
           name: naga-android
           path: awake/asset/shader-compiler/src/androidMain/jniLibs
+      # A tag pushed right after its commit makes this main run derive the release version; the tag
+      # run owns that publication.
+      - name: Resolve snapshot version
+        id: snapshot-version
+        run: |
+          version=$(./gradlew -q :awake:core:math:properties --no-configuration-cache | awk '/^version:/ { print $2 }')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          [[ "$version" == *-SNAPSHOT ]] || echo "::notice::$version is a release version; the tag run publishes it."
+
       - name: Publish snapshots
+        if: endsWith(steps.snapshot-version.outputs.version, '-SNAPSHOT')
         run: |
           ./gradlew publishAllPublicationsToMavenCentralRepository \
                     -PisMainHost=true \
