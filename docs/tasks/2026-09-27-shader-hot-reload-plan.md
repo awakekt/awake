@@ -2,7 +2,7 @@
 
 Date: 2026-09-27
 Status: **proposed** — phase 0 can start now. It must land before the
-[shader graph](2026-09-27-shader-graph-plan.md) editor, whose live preview is its first consumer.
+[shader graph](2026-09-27-shader-graph-plan.md) editor, whose live preview is its first consumer. Tracked in [#106](https://github.com/awakekt/awake/issues/106).
 
 ## Goal
 

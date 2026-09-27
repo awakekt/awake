@@ -24,8 +24,8 @@ widget. The consumers, in order, are:
 
 | Step | Work | Where |
 |---|---|---|
-| 1 | Graph model and node registry | Phase 1 here |
-| 2 | Canvas widget | Phase 2 here |
+| 1 | Graph model and node registry | Phase 1 here, [#104](https://github.com/awakekt/awake/issues/104) |
+| 2 | Canvas widget | Phases 0 and 2 here, [#105](https://github.com/awakekt/awake/issues/105) |
 | 3 | Blueprint runtime: event graphs as data, interpreted by an ECS system, reloadable while running | [blueprint-runtime](2026-09-27-blueprint-runtime-plan.md) (stub; design discussion pending) |
 | 4 | Studio blueprint editor and live debugger | awake-pro, planned when step 3's runtime lands |
 | 5 | AI state trees on the same canvas: the hybrid runtime from the [behavior tree plan](archive/2026-08-30-behavior-tree-state-machine-plan.md) | Own plan, not yet written |
