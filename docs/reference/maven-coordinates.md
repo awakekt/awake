@@ -26,7 +26,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 61 | Existing root `v*` tags and the shared Core release train |
+| Core | 62 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 
 Vulkan snapshots pin the exact Core snapshot used for integration. Vulkan releases depend on an
@@ -106,4 +106,5 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.scene:world` | `:awake:scene:world` | `core` | `api` → `:awake:scene:scene-core` |
 | `com.awakekt.awake:tailwind` | `:awake:tailwind` | `core` | `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `api` → `:awake:compose:foundation` |
 | `com.awakekt.awake.ui:builder` | `:awake:ui:builder` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `implementation` → `:awake:tailwind`; `implementation` → `:awake:heroicons`; `implementation` → `:awake:compose:foundation`; `implementation` → `:awake:ui:shadcn` |
+| `com.awakekt.awake.ui:node-graph-canvas` | `:awake:ui:node-graph-canvas` | `core` | `api` → `:awake:node-graph`; `api` → `:awake:compose:foundation`; `implementation` → `:awake:core:color` |
 | `com.awakekt.awake.ui:shadcn` | `:awake:ui:shadcn` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `api` → `:awake:tailwind`; `api` → `:awake:heroicons`; `api` → `:awake:compose:foundation` |

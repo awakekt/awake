@@ -11,6 +11,7 @@ This document is the canonical source for Awake's current reusable UI boundaries
 | `:awake:compose:foundation` | Foundation-shaped layout and neutral controls such as text fields, sliders, selection, and scrolling | Branded colors, variants, or upstream-specific recipes |
 | `:awake:ui:material3` | Material 3 color schemes, components, and screen recipes such as `Scaffold` | Shadcn tokens, recipes, or product branding |
 | `:awake:ui:shadcn` | Shadcn themes, tokens, variants, and `shadcn*` recipes | Core layout/runtime mechanics |
+| `:awake:ui:node-graph-canvas` | The node-graph editing surface: node placement, wires, pan and zoom, and selection and wiring gestures, reported as intents | Graph semantics (`:awake:node-graph` and each graph kind), palettes, inspectors, undo, and design-system styling |
 | `:awake:compose:ui-testing` | Frame composition, semantics, rasterization, and UI verification helpers | Production UI behavior |
 | `:samples:*` | Showcase pages, debug shells, and sample-specific adapters | Reusable widgets and design-system policy |
 

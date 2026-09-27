@@ -1,7 +1,7 @@
 # Node graph plan
 
 Date: 2026-09-27
-Status: **active** — phases 0–2 (graph model, node registry, canvas) can start now. Each consumer
+Status: **active** — phases 0 and 1 are done (#108); phase 2 is in review (#110). Each consumer
 has its own plan or section, listed under "Sequence".
 
 ## Goal
@@ -62,7 +62,7 @@ Steps 1 and 2 share no files with step 3's runtime work and can run in parallel 
 `:awake:compose` has everything a node canvas needs except the canvas itself:
 
 - drawing: `Canvas`, `DrawPath.cubicTo`, `Modifier.scale` and `graphicsLayer`;
-- gestures: `Modifier.draggable` and `Modifier.transformable` (pinch and pan);
+- gestures: `Modifier.draggable` and `Modifier.transformable` (pinch and pan; one pointer pans);
 - pointer events `Press`, `SecondaryPress`, `Move`, `Release` and `Wheel`, with modifier keys;
 - public `ModifierNodeElement` and `PointerInputNode` for custom gesture handling.
 
@@ -207,7 +207,8 @@ data class GraphEdge(val fromNode: String, val fromPort: String, val toNode: Str
   - It draws the wire being dragged and marks a rejected target using the kind's `canConnect`.
 - **Input.**
   - Drag on empty space pans.
-  - The wheel zooms around the cursor, and pinch zooms through `transformable`.
+  - The wheel zooms around the cursor. Pinch is a follow-up: `transformable` pans with one pointer,
+    which would take over node dragging.
   - Shift-click adds to the selection.
   - Box select.
 - **Nodes.** The canvas draws each node's header and ports. The node body is the caller's slot.
@@ -218,16 +219,15 @@ data class GraphEdge(val fromNode: String, val fromPort: String, val toNode: Str
 
 ## Phases
 
-### Phase 0 — confirm prerequisites
+### Phase 0 — confirm prerequisites (done)
 
-- Pointer coordinates under `Modifier.scale`/`graphicsLayer` reach children in transformed
-  space. If they don't, the canvas transforms them itself.
-- Font atlas text stays legible across the zoom range. Pick the zoom below which labels are
-  hidden.
-- Measure `ComposeFrameProbe` frame time for 200 plain positioned boxes, as the budget baseline
-  for phase 2.
-
-**Gate:** each item is answered from code or a headless run, not assumed.
+- **Transformed pointers: no.** `Modifier.scale` transforms painting only, and the pointer
+  dispatcher hit-tests laid-out positions. The canvas therefore zooms node content through a
+  scaled `LocalDensity`, which really lays it out larger, so hits land where things are drawn.
+- **Legibility.** Titles are hidden below zoom 0.5 and port labels below 0.6. These are style
+  values, and layout does not change when they toggle.
+- **Budget.** `ComposeFrameProbe` measures about 38 KB per frame for 60 plain boxes. The engine
+  cannot reach "nothing per frame", so the canvas gate is a ratchet (phase 2).
 
 ### Phase 1 — `:awake:node-graph`
 
@@ -250,8 +250,10 @@ The canvas widget as designed above.
 - Interaction tests: connect; reject an incompatible wire; box select; zoom keeps the world
   point under the cursor fixed.
 - A headless raster baseline of a fixed graph, including a highlighted node.
-- At rest, a 200-node graph allocates nothing per frame, and its frame time is within the budget
-  measured in phase 0.
+- At rest, a 200-node graph stays under a bytes-per-frame ratchet (`NodeGraphCanvasFrameProbe`).
+  Measured 343 KB with every node visible and 451 KB for an editor view; nearly all of it is the
+  engine's per-node text work, and the canvas's own share (wires, culling, zoomed-out labels) was
+  cut to a few KB.
 
 ## Limits and follow-ups
 

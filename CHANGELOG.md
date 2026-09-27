@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Node graph canvas.** New module `com.awakekt.awake.ui:node-graph-canvas`: `NodeGraphCanvas`, a controlled editing surface for `:awake:node-graph` documents. Nodes render as a header, one row per port pair and a caller-owned body slot; wires are curves coloured by port type. Dragging between ports connects or reconnects, dragging nodes moves the selection, Shift/Ctrl-drag box-selects, the wheel zooms around the pointer, and every edit is reported as a `NodeGraphIntent` for the caller to apply. Zoom scales node content through density, so text stays sharp and controls are hit where they are drawn; labels hide below a legible zoom, and idle wires redraw retained meshes.
+
 ### Fixed
 
 - **WebGPU consumers resolve the tested wgpu4k builds.** The WebGPU backend's published metadata named the floating io.ygdrasil SNAPSHOTs, so a consumer picked up webgpu-ktypes build 4, which does not match wgpu4k, and its web app stalled before the first frame with no error. The backend now publishes the pinned builds as dependency constraints.
