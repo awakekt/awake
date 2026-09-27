@@ -15,13 +15,13 @@ class SceneCatalogTest {
     fun registersAndFindsEntries() {
         val catalog = SceneCatalog()
 
-        catalog.register(SceneCatalogEntry("flarine", "Flarine Town"))
-        catalog.register(SceneCatalogEntry("arena", "Madrigal Arena"))
+        catalog.register(SceneCatalogEntry("harbor", "Harbor Town"))
+        catalog.register(SceneCatalogEntry("arena", "Desert Arena"))
 
         assertEquals(2, catalog.all.size)
-        val entry = catalog.find("flarine")
+        val entry = catalog.find("harbor")
         assertNotNull(entry)
-        assertEquals("Flarine Town", entry.displayName)
+        assertEquals("Harbor Town", entry.displayName)
     }
 
     @Test
@@ -30,17 +30,17 @@ class SceneCatalogTest {
         val json = """
             {
               "version": 1,
-              "name": "Darkon City",
+              "name": "Mountain City",
               "nodes": []
             }
         """.trimIndent()
 
-        val registered = catalog.registerJson("darkon", "Darkon Default", json)
-        assertEquals("Darkon City", registered.displayName)
+        val registered = catalog.registerJson("mountain", "Mountain Default", json)
+        assertEquals("Mountain City", registered.displayName)
         assertNotNull(registered.document)
 
-        val retrieved = catalog.find("darkon")
+        val retrieved = catalog.find("mountain")
         assertNotNull(retrieved)
-        assertEquals("Darkon City", retrieved.displayName)
+        assertEquals("Mountain City", retrieved.displayName)
     }
 }
