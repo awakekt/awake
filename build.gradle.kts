@@ -402,6 +402,32 @@ val pinnedYgdrasilSnapshots = mapOf(
     "v29.0.0-SNAPSHOT" to "v29.0.0-20260716.085936-2", // wgpu4k-native, kffi
 )
 
+/** The io.ygdrasil modules each pinned family publishes, as the WebGPU backend reaches them. */
+val ygdrasilModules = mapOf(
+    "0.0.10-SNAPSHOT" to listOf("webgpu-ktypes", "webgpu-ktypes-descriptors", "webgpu-ktypes-web"),
+    "0.2.0-SNAPSHOT" to listOf("wgpu4k", "wgpu4k-toolkit"),
+    "v29.0.0-SNAPSHOT" to listOf("wgpu4k-native", "kffi"),
+)
+
+// A consumer resolves the published metadata, not this build, so the resolution rule below never
+// reaches it: the floating SNAPSHOTs there pick up the newest builds again, and a mismatched pair
+// stalls the web backend before its first frame. Publishing the pins as constraints makes a
+// consumer resolve the builds this one was tested with.
+project(":awake:backend:webgpu") {
+    pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
+        dependencies.constraints {
+            ygdrasilModules.forEach { (floating, modules) ->
+                val pinned = pinnedYgdrasilSnapshots.getValue(floating)
+                for (module in modules) {
+                    for (platform in listOf("", "-jvm", "-wasm-js")) {
+                        add("commonMainImplementation", "io.ygdrasil:$module$platform:$pinned")
+                    }
+                }
+            }
+        }
+    }
+}
+
 allprojects {
     // Maven namespace and package root: com.awakekt.awake.
     //
