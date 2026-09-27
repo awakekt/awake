@@ -97,6 +97,8 @@ object ScenePassCompiler {
             resolvedOpaqueDraws = resolvedOpaque,
             resolvedTransparentDraws = resolved?.transparent.orEmpty(),
             resolvedPath = resolved != null,
+            cameraForward = cameraForward,
+            shadowCascadeData = shadowCascadeData,
         )
     }
 }

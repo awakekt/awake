@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan.renderer
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuEnvironmentState
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.PreparedDraw
@@ -129,6 +130,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
     postPasses: List<GpuSubPass> = emptyList(),
     environment: GpuEnvironmentState = GpuEnvironmentState.Default,
     sceneViewport: RenderViewport? = null,
+    passInput: GpuPassInput? = null,
 ) {
     Vulkan.vkBeginCommandBuffer(
         commandBuffer,
@@ -159,6 +161,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
         viewProjection = viewProjection,
         cameraEye = cameraEye,
         environment = environment,
+        passInput = passInput,
     )
     val viewport = VkViewport(
         width = swapchainManager.extent.width.toFloat(),

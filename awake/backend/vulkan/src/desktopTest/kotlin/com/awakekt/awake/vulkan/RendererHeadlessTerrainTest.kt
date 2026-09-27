@@ -8,13 +8,14 @@ package com.awakekt.awake.vulkan
 import com.awakekt.awake.asset.shadercompiler.NagaShaderCompiler
 import com.awakekt.awake.asset.shaderdsl.bindingsForGroup
 import com.awakekt.awake.asset.shaderpack.TerrainRenderFeature
-import com.awakekt.awake.asset.shaderpack.TerrainShader
 import com.awakekt.awake.asset.shaderpack.TerrainUniformLayout
+import com.awakekt.awake.asset.shaderpack.terrainShader
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapGeometry
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapTracker
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.ContentGeometry
@@ -25,6 +26,7 @@ import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.vulkan.material.Material
 import com.awakekt.awake.vulkan.mesh.Mesh
 import com.awakekt.awake.vulkan.pipeline.PipelineTable
@@ -34,11 +36,12 @@ import com.awakekt.awake.vulkan.pipeline.UiShaderPairs
 import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.renderer.Renderer
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
+import com.awakekt.awake.vulkan.texture.DepthTarget
 import com.awakekt.awake.vulkan.texture.Texture
-import kotlinx.coroutines.runBlocking
-import org.junit.AfterClass
 import kotlin.test.Test
 import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
+import org.junit.AfterClass
 
 /**
  * D28's first pixels: a clipmap heightfield, drawn.
@@ -227,9 +230,12 @@ class RendererHeadlessTerrainTest {
             cachedPipelines.clear()
             cachedMesh?.destroy()
             cachedMesh = null
+            cachedShadowPlaceholder?.destroy()
+            cachedShadowPlaceholder = null
             cachedDevice?.destroy()
             cachedDevice = null
         }
+        private var cachedShadowPlaceholder: DepthTarget? = null
         private lateinit var flatFeature: TerrainRenderFeature
         private lateinit var raisedFeature: TerrainRenderFeature
 
@@ -261,10 +267,12 @@ class RendererHeadlessTerrainTest {
             val pipelineLayoutMaterial = Material(graphicsDevice)
             val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
             val transferContext = TransferContext(graphicsDevice)
+            val shadowPlaceholder = DepthTarget.placeholder(graphicsDevice, transferContext::runOneTimeCommands).also { cachedShadowPlaceholder = it }
 
             val materialGroup = BindingLayout.Standard.slot(BindingSemantic.Material)
             // Compiled from ASL at test time -- no committed .spv for terrain, and none needed.
-            val terrainSpirv = NagaShaderCompiler.wgslToSpirv(TerrainShader.emitWgsl())
+            val terrainDefinition = terrainShader(ClipSpace.Vulkan)
+            val terrainSpirv = NagaShaderCompiler.wgslToSpirv(terrainDefinition.emitWgsl())
             val merged = TerrainClipmapGeometry.buildMergedClipmapMesh(CONFIG)
             val mesh = Mesh(
                 graphicsDevice,
@@ -287,7 +295,9 @@ class RendererHeadlessTerrainTest {
                     fragmentEntryPoint = "fragmentMain",
                     uniforms = TerrainUniformLayout.Layout,
                     framesInFlight = MAX_FRAMES_IN_FLIGHT,
-                    materialBindings = TerrainShader.bindingsForGroup(materialGroup),
+                    materialBindings = terrainDefinition.bindingsForGroup(materialGroup),
+                    extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(shadowPlaceholder.descriptorSetLayout)),
+                    engineBoundSemantics = setOf(BindingSemantic.ShadowDepth),
                 ).also { cachedPipelines += it }
                 // The same uploads VulkanEngine performs for a real ContentFeature.
                 val encoded = encodeHeightmap(heightmap)
@@ -349,7 +359,7 @@ class RendererHeadlessTerrainTest {
                     )
                 },
                 maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
-            ).also { cachedRenderer = it }
+            ).also { cachedRenderer = it.apply { bindShadowDepth(shadowPlaceholder) } }
         }
 
         class EncodedHeights(
