@@ -119,12 +119,7 @@ internal class DepthPrePassFeature(
             recordCascade(commandBuffer, drawCalls, castFormat, cascade)
             initializedLayers[cascade] = true
         }
-        for (layer in activeCount until depthTarget.layers) {
-            if (!initializedLayers[layer]) {
-                recordCascade(commandBuffer, emptyList(), castFormat, layer)
-                initializedLayers[layer] = true
-            }
-        }
+        initializeLayers(commandBuffer, castFormat)
     }
 
     /** Records only the requested subpasses, avoiding redundant passes over unused layers. */
@@ -156,6 +151,16 @@ internal class DepthPrePassFeature(
                 initializedLayers[cascade] = true
             }
         }
+        initializeLayers(commandBuffer, castFormat)
+    }
+
+    /**
+     * Moves every layer no pass has rendered yet out of `UNDEFINED`, once, with an empty pass.
+     *
+     * Also called on frames that render no depth at all: the scene pass binds the whole array
+     * whether or not shadows ran, and sampling an `UNDEFINED` layer is invalid.
+     */
+    fun initializeLayers(commandBuffer: Long, castFormat: VertexFormat) {
         for (layer in 0 until depthTarget.layers) {
             if (!initializedLayers[layer]) {
                 recordCascade(commandBuffer, emptyList(), castFormat, layer)

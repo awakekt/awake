@@ -402,8 +402,10 @@ class Renderer internal constructor(
      * a depth write followed by a fragment-shader sample on one queue, which `DepthTarget`'s
      * render pass now declares as an outgoing subpass dependency.
      *
-     * A no-op when no pre-pass was opted into ([depthPrePass] is null) or it is runtime-disabled
-     * (the packet's environment flag). Must be called outside an active render pass.
+     * A no-op when no pre-pass was opted into ([depthPrePass] is null). When it is runtime-disabled
+     * (the packet's environment flag) it renders nothing but still initialises the target's layers
+     * once, because the scene pass binds them either way. Must be called outside an active render
+     * pass.
      */
     internal fun recordDepthPrePass(
         commandBuffer: Long,
@@ -412,7 +414,10 @@ class Renderer internal constructor(
         shadowsEnabled: Boolean,
     ) {
         val feature = depthPrePass ?: return
-        if (!shadowsEnabled || cascades == null) return
+        if (!shadowsEnabled || cascades == null) {
+            feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat)
+            return
+        }
         feature.recordCommands(commandBuffer, drawCalls, renderPipeline.vertexFormat, cascades)
     }
 
@@ -423,7 +428,10 @@ class Renderer internal constructor(
         shadowsEnabled: Boolean,
     ) {
         val feature = depthPrePass ?: return
-        if (!shadowsEnabled || subPasses.isEmpty()) return
+        if (!shadowsEnabled || subPasses.isEmpty()) {
+            feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat)
+            return
+        }
         feature.recordCommands(commandBuffer, subPasses, renderPipeline.vertexFormat)
     }
 
