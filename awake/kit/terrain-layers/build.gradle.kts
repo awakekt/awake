@@ -23,10 +23,13 @@ kotlin {
             // TerrainSurface and TerrainSurfaceProvider, and through them the shared clipmap stage.
             api(project(":awake:scene:scene3d"))
             api(project(":awake:core:io"))
+            // createBitmap: layer albedo and height images are ordinary PNGs.
+            implementation(project(":awake:core:image"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

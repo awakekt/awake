@@ -122,6 +122,35 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLayerTexturesKt {
 	public static synthetic fun packLayerArray$default (Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/render/texture/TextureAsset;
 }
 
+public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersPayload {
+	public static final field Companion Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getControl ()Ljava/lang/String;
+	public final fun getPalette ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/kit/terrainlayers/TerrainLayersPayload$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersPayload$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersShaderKt {
 	public static final field CONTROL_INDICES_BINDING I
 	public static final field CONTROL_WEIGHTS_BINDING I
@@ -133,5 +162,15 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersShaderKt {
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceKt {
 	public static final fun terrainLayersSurface (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;)Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurface;
+}
+
+public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProvider : com/awakekt/awake/scene/rendering/terrain/TerrainSurfaceProvider {
+	public fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun resolve (Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurfaceReference;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProviderKt {
+	public static final field TERRAIN_LAYERS_PROVIDER Ljava/lang/String;
 }
 
