@@ -29,12 +29,15 @@ import kotlinx.coroutines.runBlocking
 /**
  * A headless renderer with the cascaded shadow pass, and what frees it -- the device last, which
  * is where validation errors surface.
+ *
+ * [presentable] boots the way `VulkanEngine` does for a `HeadlessSurface`: stand-in swapchain
+ * images and sync objects, so `draw` and `readPresentedPixels` work.
  */
-internal fun newHeadlessShadowRenderer(size: Int): Pair<Renderer, () -> Unit> {
+internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false): Pair<Renderer, () -> Unit> {
     val graphicsDevice = GraphicsDevice()
     graphicsDevice.createHeadless()
     val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
-    swapchainManager.createHeadless(size, size)
+    if (presentable) swapchainManager.createHeadlessPresentable(size, size) else swapchainManager.createHeadless(size, size)
     val depthTarget = DepthTarget(graphicsDevice, layers = MAX_SHADOW_TARGET_LAYERS, arrayed = true, comparison = true)
     val descriptorSetLayout = Material.createDescriptorSetLayout(graphicsDevice)
     val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
@@ -80,8 +83,11 @@ internal fun newHeadlessShadowRenderer(size: Int): Pair<Renderer, () -> Unit> {
         uiShaderPairs = runBlocking { defaultUiShaderPairs() },
         maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
     )
+    if (presentable) swapchainManager.createSyncObjects()
     return renderer to {
         renderer.destroy()
+        swapchainManager.destroy()
+        if (presentable) swapchainManager.destroySyncObjects()
         cleanup()
         graphicsDevice.destroy()
     }

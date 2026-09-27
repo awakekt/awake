@@ -113,10 +113,7 @@ internal suspend fun Renderer.performReadPresentedPixels(): TextureAsset {
     Vulkan.vkWaitForFences(device, swapchainManager.inFlightFences, true, Long.MAX_VALUE)
     val width = swapchainManager.extent.width
     val height = swapchainManager.extent.height
-    // The frame just drawn is the one BEFORE the manager's current slot, which draw() advanced.
-    val drawn = (swapchainManager.currentFrame + swapchainManager.imageViews.size - 1) %
-        swapchainManager.imageViews.size
-    return readImageBytes(swapchainManager.headlessImages[drawn], width, height)
+    return readImageBytes(swapchainManager.headlessImages[swapchainManager.lastHeadlessImage], width, height)
 }
 
 internal fun Renderer.performCreateRenderTarget(width: Int, height: Int): RenderTarget {

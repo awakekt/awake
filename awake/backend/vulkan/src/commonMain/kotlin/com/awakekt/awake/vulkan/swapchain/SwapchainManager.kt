@@ -82,6 +82,10 @@ class SwapchainManager(
     var headlessImages = LongArray(0)
         private set
     private var headlessImageMemory = LongArray(0)
+
+    /** The stand-in image the latest headless frame drew into. */
+    internal var lastHeadlessImage = 0
+
     val inFlightFences = LongArray(maxFramesInFlight)
     internal var imagesInFlight = LongArray(0)
     var currentFrame = 0
@@ -176,6 +180,9 @@ class SwapchainManager(
         height: Int,
         format: VkFormat = VkFormat.VK_FORMAT_R8G8B8A8_UNORM,
     ) {
+        require(graphicsDevice.swapchainExtensionEnabled) {
+            "Headless presentable images use PRESENT_SRC_KHR, which needs VK_KHR_swapchain; this device does not offer it."
+        }
         imageFormat = format
         extent = VkExtent2D(width, height)
         headlessImages = LongArray(HEADLESS_IMAGE_COUNT) {
@@ -325,7 +332,8 @@ class SwapchainManager(
         headlessImageMemory.forEach { VulkanBuffers.vkFreeMemory(device, it) }
         headlessImages = LongArray(0)
         headlessImageMemory = LongArray(0)
-        Vulkan.vkDestroySwapchainKHR(device, swapChain)
+        // Headless owns no swapchain, and its device need not load the entry point at all.
+        if (swapChain != 0L) Vulkan.vkDestroySwapchainKHR(device, swapChain)
     }
 
     fun createSyncObjects() {

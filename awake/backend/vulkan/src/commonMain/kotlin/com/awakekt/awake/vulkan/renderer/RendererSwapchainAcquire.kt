@@ -76,6 +76,7 @@ private fun Renderer.acquirePresentedImage(currentFrame: Int): Int? {
  */
 private fun Renderer.headlessImageIndex(currentFrame: Int): Int {
     val index = currentFrame % swapchainManager.imageViews.size
+    swapchainManager.lastHeadlessImage = index
     val pending = swapchainManager.imagesInFlight[index]
     if (pending != 0L) Vulkan.vkWaitForFences(device, longArrayOf(pending), true, Long.MAX_VALUE)
     swapchainManager.imagesInFlight[index] = swapchainManager.inFlightFences[currentFrame]
