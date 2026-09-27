@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **WebGPU desktop renders again.** A `webgpu-ktypes` snapshot published on 2026-09-26 broke binary compatibility with the only `wgpu4k` snapshot there is, so every WebGPU desktop run failed with `NoSuchMethodError` once Gradle refreshed its snapshot cache. Every io.ygdrasil SNAPSHOT, including transitive requests, is now pinned to the builds published together on 2026-07-16.
 - **Headless presentable Vulkan rendering is valid.** `VulkanEngine` boots a `HeadlessSurface` into stand-in images that end each frame in `PRESENT_SRC_KHR`, but headless devices never enabled `VK_KHR_swapchain`, so every render pass using that layout was invalid (VUID-VkAttachmentDescription-finalLayout-parameter). Headless devices now enable it when offered, and presentable mode refuses a device without it. Teardown no longer calls `vkDestroySwapchainKHR` with no swapchain, which crashed the JVM on such a device, and `readPresentedPixels` reads the image `draw` wrote instead of inferring it from the frame slot, which was wrong whenever frames in flight differed from the image count.
 
 ## [0.1.0-alpha.7] - 2026-09-27

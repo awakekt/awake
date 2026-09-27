@@ -392,6 +392,16 @@ if (publishFamily == "vulkan") {
     }
 }
 
+/**
+ * The io.ygdrasil builds published together on 2026-07-16, keyed by the floating version each
+ * family declares. Move a family forward only together with the others it links against.
+ */
+val pinnedYgdrasilSnapshots = mapOf(
+    "0.0.10-SNAPSHOT" to "0.0.10-20260716.185724-3", // webgpu-ktypes, -descriptors, -web
+    "0.2.0-SNAPSHOT" to "0.2.0-20260716.235022-2", // wgpu4k, wgpu4k-toolkit
+    "v29.0.0-SNAPSHOT" to "v29.0.0-20260716.085936-2", // wgpu4k-native, kffi
+)
+
 allprojects {
     // Maven namespace and package root: com.awakekt.awake.
     //
@@ -426,6 +436,18 @@ allprojects {
         path in vulkanFamilyProjects -> gitDerivedVulkanVersion
         publishFamily == "vulkan" -> pinnedCoreVersion!!
         else -> gitDerivedVersion
+    }
+    // io.ygdrasil (wgpu4k and its type libraries) publishes only SNAPSHOTs, and each family
+    // resolves to its newest build on its own -- webgpu-ktypes build 4 (2026-09-26) broke binary
+    // compatibility with the only wgpu4k build there is, and every WebGPU desktop run failed with
+    // NoSuchMethodError. Pinned here rather than in the catalog so transitive requests, which
+    // name the floating SNAPSHOT, land on the same builds as direct ones.
+    configurations.configureEach {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "io.ygdrasil") {
+                pinnedYgdrasilSnapshots[requested.version]?.let { useVersion(it) }
+            }
+        }
     }
 }
 

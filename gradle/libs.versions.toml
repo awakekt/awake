@@ -21,7 +21,8 @@ leakcanary = "2.14"
 vanniktech-publish = "0.36.0"
 binary-compat = "0.17.0"
 # Phase 2.5 (Web/WebGPU) spike -- no stable release yet (last tag v0.1.1, June 2025), this
-# is a Sonatype snapshot build (see settings.gradle.kts's snapshot repo addition).
+# is a Sonatype snapshot build (see settings.gradle.kts's snapshot repo addition). The exact
+# builds every io.ygdrasil SNAPSHOT resolves to are pinned in the root build.gradle.kts.
 wgpu4k = "0.2.0-SNAPSHOT"
 # Descriptor types (BufferDescriptor, BindGroupDescriptor, ...). On wasmJs these arrive via
 # wgpu4k-toolkit; the toolkit is wasm-only, so the desktop test target needs them declared.
