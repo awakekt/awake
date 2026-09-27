@@ -96,9 +96,6 @@ kotlin {
             // fails the test instead of silently leaving it checking something else.
             implementation(project(":awake:scene:runtime"))
         }
-        androidMain.dependencies {
-            implementation(libs.leakcanary.android)
-        }
     }
 }
 
