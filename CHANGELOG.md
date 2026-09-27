@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Terrain ends at its heightmap.** Clipmap rings reach past the heightmap and its sampler repeats, so terrain tiled across the view; vertices beyond the footprint now collapse onto its edge. Heightmap UVs also put the first and last samples on texel centres, where they had been half a texel off with edge heights averaged against the opposite edge.
 - **Vulkan shadows no longer drop out on macOS.** MoltenVK up to 1.4.1 ignores render-pass subpass dependencies, so the scene pass could sample a shadow-map layer the depth pass was still writing and render a frame with no shadows. Each depth pass now records an explicit memory barrier, which also makes `RendererHeadlessCascadedShadowTest` deterministic (about 1 in 5 processes failed before).
 
 ## [0.1.0-alpha.6] - 2026-09-27
