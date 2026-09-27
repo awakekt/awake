@@ -263,36 +263,16 @@ private fun litShadow(
     val dielectricF0 = const("DIELECTRIC_F0", 0.04f)
     val minRoughness = const("MIN_ROUGHNESS", 0.05f)
     val invGamma = const("INV_GAMMA", 1.0f / 2.2f)
-    // Bias measured in TEXELS of whichever cascade is sampled, not in metres and not in NDC.
-    //
-    // A texel is the only unit the error is actually in: the map stores one depth for a whole
-    // texel, so a surface crossing that texel is misrepresented by its own slope across it. A
-    // fixed distance is therefore too much in a near cascade (the shadow detaches) and too little
-    // in a far one (the surface scales), and NDC -- what this used to be -- is both at once,
-    // since every cascade maps a different world range into 0..1.
-    //
-    // These are the RECEIVER'S share of the bias only. The depth pass applies the source share
-    // with the rasterizer's own per-polygon slope (`SHADOW_DEPTH_BIAS_CONSTANT`/`_SLOPE` in the
-    // contract), which is why these are small: 2.5/3 was the floor while the receiver carried
-    // everything, and no receiver-side constant could remove the per-texel waffle a tilted face
-    // shows -- the receiver estimates slope from its own nDotL, the error lives in the MAP's
-    // polygons. Swept 2026-09-01 against the hardware comparison sampler: 1.5/2 with offset 1
-    // leaves the studio cube at worst 1 self-shadowed pixel per yaw on both backends, and
-    // 1.5/1 with offset 0.5 is the measured cliff where the grazing-face probe fails again.
-    val shadowBiasTexels = const("SHADOW_BIAS_TEXELS", 1.5f)
-    val shadowSlopeTexels = const("SHADOW_SLOPE_BIAS_TEXELS", 2f)
-    val maxSlopeScale = const("SHADOW_MAX_SLOPE_SCALE", 8f)
-    // How far along the surface normal the lookup moves, in shadow-map texels. Bias alone cannot
-    // fix a surface lit edge-on: its map texels store whatever stands above it (a box's own top
-    // face), which is not an approximation of this surface but a different one. Moving the
-    // LOOKUP samples clear of that shared texel, and unlike more bias it does not detach the
-    // shadow from the caster.
-    val normalOffsetTexels = const("SHADOW_NORMAL_OFFSET_TEXELS", 1f)
-    // Five-by-five comparison PCF keeps the existing texel footprint while hiding the stair-step
-    // edges that are especially visible in the directional/cascade samples. Point shadows retain
-    // the hardware-filtered single lookup because their perspective footprint already varies per
-    // fragment and a second kernel there would multiply the cost for every point-light slot.
-    val pcfRadius = constI32("PCF_RADIUS", 2)
+    val cascades = cascadeShadowSampling(
+        CascadeShadowInputs(u.cascadeViewProjections, u.cascadeDepthScales, u.cameraPosition!!, u.cameraForward!!),
+        shadowMap,
+        shadowMapSampler,
+        clipSpace,
+        epsilon,
+    )
+    val shadowBiasTexels = cascades.biasTexels
+    val shadowSlopeTexels = cascades.slopeBiasTexels
+    val maxSlopeScale = cascades.maxSlopeScale
 
     /** Samples the six-face layered point map. The depth pass uses the same 90-degree
      * perspective projection for every face, so the comparison reference is the perspective
@@ -391,135 +371,6 @@ private fun litShadow(
         )
     }
 
-    /** Samples a single cascade's PCF shadow depth; returns -1.0f if out of bounds. */
-    val sampleSingleCascade = fn("sampleSingleCascade") {
-        val cascade by param(AslType.I32)
-        val world by param(GpuDataShape.Vec3)
-        val normal by param(GpuDataShape.Vec3)
-        val nDotL by param(F32)
-        val slopeScale by param(F32)
-        val texSize by param(GpuDataShape.Vec2)
-        val texel by param(GpuDataShape.Vec2)
-
-        val texelWorld = let("texelWorld", u.cascadeDepthScales[cascade].y * texel.x)
-        val worldBias = let(
-            "worldBias",
-            texelWorld * (shadowBiasTexels + shadowSlopeTexels * slopeScale),
-        )
-        val grazing = let(
-            "grazing",
-            clamp((0.45f.lit - nDotL) * 20f.lit, 0f.lit, 1f.lit),
-        )
-        val slide = let(
-            "slide",
-            texelWorld * normalOffsetTexels * grazing / max(nDotL, epsilon),
-        )
-        val projected = let(
-            "projected",
-            u.cascadeViewProjections[cascade] * vec4(world, 1f.lit),
-        )
-        iff(projected.w le 0f.lit) { returnValue(-1f.lit) }
-        val ndc = let("ndc", projected.xyz / projected.w)
-        iff(
-            (ndc.x lt -1f.lit) or (ndc.x gt 1f.lit) or
-                (ndc.y lt -1f.lit) or (ndc.y gt 1f.lit) or
-                (ndc.z lt 0f.lit) or (ndc.z gt 1f.lit),
-        ) { returnValue(-1f.lit) }
-
-        val offsetProjected = let(
-            "offsetProjected",
-            u.cascadeViewProjections[cascade] * vec4(world + normal * slide, 1f.lit),
-        )
-        val offsetNdcXy = let("offsetNdcXy", offsetProjected.xy / offsetProjected.w)
-        val sampleUv = let("sampleUv", ndcToUv(offsetNdcXy, clipSpace))
-        val bias = let("bias", worldBias * u.cascadeDepthScales[cascade].x)
-        val minUv = let("minUv", texel * toF32(pcfRadius))
-        val maxUv = let("maxUv", vec2(1f.lit) - minUv)
-        val clampedSampleUv = let("clampedSampleUv", clamp(sampleUv, minUv, maxUv))
-        val offsetNdc = ndc
-        val shadow = variable("shadow", 0f.lit)
-        val samples = variable("samples", 0f.lit)
-        loopI32("dx", -pcfRadius, pcfRadius) { dx ->
-            loopI32("dy", -pcfRadius, pcfRadius) { dy ->
-                val offset = let("offset", vec2(toF32(dx), toF32(dy)) * texel)
-                val tapLit = let(
-                    "tapLit",
-                    textureSampleCompareLevel(
-                        shadowMap,
-                        shadowMapSampler,
-                        clampedSampleUv + offset,
-                        cascade,
-                        offsetNdc.z - bias,
-                    ),
-                )
-                assign(shadow, shadow + tapLit)
-                assign(samples, samples + 1f.lit)
-            }
-        }
-        returnValue(shadow / samples)
-    }
-
-    /**
-     * Selects by camera-space depth and blends across a narrow fitted split overlap. Blending at
-     * light-map edges made the weight move as the camera moved and sampled a second map across
-     * large portions of the image, causing temporal shimmer and unnecessary PCF work.
-     */
-    val sampleShadow = fn("sampleShadow") {
-        val world by param(GpuDataShape.Vec3)
-        val normal by param(GpuDataShape.Vec3)
-        val nDotL by param(F32)
-
-        val slopeScale = let(
-            "slopeScale",
-            min(sqrt(max(1f.lit - nDotL * nDotL, 0f.lit)) / max(nDotL, epsilon), maxSlopeScale),
-        )
-        val texSize = let("texSize", vec2(textureDimensions(shadowMap)))
-        val texel = let("texel", 1f.lit / texSize)
-        val cameraPosition = u.cameraPosition!!
-        val cameraForward = u.cameraForward!!
-        val viewDepth = let(
-            "viewDepth",
-            dot(world - cameraPosition.xyz, normalize(cameraForward.xyz)),
-        )
-        val lit = variable("lit", 1f.lit)
-        val resolved = variable("resolved", 0.lit)
-
-        loopI32("cascade", 0.lit, (MAX_SHADOW_CASCADES - 1).lit) { cascade ->
-            iff(resolved gt 0.lit) { continueLoop() }
-            val splitFar = let("splitFar", u.cascadeDepthScales[cascade].z)
-            val blendStart = let("blendStart", u.cascadeDepthScales[cascade].w)
-            val blendEnd = let("blendEnd", splitFar + (splitFar - blendStart))
-            iff(viewDepth gt blendEnd) { continueLoop() }
-            val primaryShadow = let(
-                "primaryShadow",
-                sampleSingleCascade(cascade, world, normal, nDotL, slopeScale, texSize, texel),
-            )
-            iff(primaryShadow lt 0f.lit) {
-                // The fit should contain this camera slice. If a custom matrix does not, report
-                // it unshadowed instead of sampling a different depth slice by accident.
-                assign(resolved, 1.lit)
-                continueLoop()
-            }
-
-            assign(resolved, 1.lit)
-            assign(lit, primaryShadow)
-            iff(
-                (toF32(cascade) lt (cameraForward.w - 1f.lit)) and (viewDepth gt blendStart),
-            ) {
-                val nextCascade = let("nextCascade", cascade + 1.lit)
-                val nextShadow = let(
-                    "nextShadow",
-                    sampleSingleCascade(nextCascade, world, normal, nDotL, slopeScale, texSize, texel),
-                )
-                iff(nextShadow ge 0f.lit) {
-                    val alpha = let("blendAlpha", smoothstep(blendStart, blendEnd, viewDepth))
-                    assign(lit, mix(primaryShadow, nextShadow, alpha))
-                }
-            }
-        }
-        returnValue(lit)
-    }
-
     // GGX/Trowbridge-Reitz normal distribution.
     val distributionGgx = fn("distributionGgx") {
         val nDotH by param(F32)
@@ -592,7 +443,7 @@ private fun litShadow(
                 max(4f.lit * nDotV * nDotL, epsilon),
         )
         val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * color / pi)
-        val shadowFactor = let("shadowFactor", sampleShadow(worldPos, n, nDotL))
+        val shadowFactor = let("shadowFactor", cascades.sampleShadow(worldPos, n, nDotL))
         val direct =
             variable("direct", (diffuse + specular) * u.lightColor.xyz * nDotL * shadowFactor)
         // Point lights: the colour slot selects the light's six-face layer base; zero keeps the
