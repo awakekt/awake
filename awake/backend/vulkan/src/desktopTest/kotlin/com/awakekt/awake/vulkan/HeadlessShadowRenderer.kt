@@ -1,0 +1,108 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+package com.awakekt.awake.vulkan
+
+import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.render.passes.OpaqueRenderFeature
+import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
+import com.awakekt.awake.render.passes2d.UiRenderFeature
+import com.awakekt.awake.vulkan.commands.TransferContext
+import com.awakekt.awake.vulkan.debug.LineRenderPipeline
+import com.awakekt.awake.vulkan.device.GraphicsDevice
+import com.awakekt.awake.vulkan.handles.DescriptorSetLayoutHandle
+import com.awakekt.awake.vulkan.material.Material
+import com.awakekt.awake.vulkan.pipeline.DepthOnlyPipeline
+import com.awakekt.awake.vulkan.pipeline.DepthPrePassFeature
+import com.awakekt.awake.vulkan.pipeline.PipelineTable
+import com.awakekt.awake.vulkan.pipeline.RenderPipeline
+import com.awakekt.awake.vulkan.pipeline.VulkanLinePass
+import com.awakekt.awake.vulkan.pipeline.VulkanUiPass
+import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
+import com.awakekt.awake.vulkan.renderer.Renderer
+import com.awakekt.awake.vulkan.swapchain.SwapchainManager
+import com.awakekt.awake.vulkan.texture.DepthTarget
+import kotlinx.coroutines.runBlocking
+
+/**
+ * A headless renderer with the cascaded shadow pass, and what frees it -- the device last, which
+ * is where validation errors surface.
+ */
+internal fun newHeadlessShadowRenderer(size: Int): Pair<Renderer, () -> Unit> {
+    val graphicsDevice = GraphicsDevice()
+    graphicsDevice.createHeadless()
+    val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
+    swapchainManager.createHeadless(size, size)
+    val depthTarget = DepthTarget(graphicsDevice, layers = MAX_SHADOW_TARGET_LAYERS, arrayed = true, comparison = true)
+    val descriptorSetLayout = Material.createDescriptorSetLayout(graphicsDevice)
+    val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
+    val primary = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        sceneRenderPass,
+        descriptorSetLayout,
+        runBlocking { packShaderPair("lit_shadow") },
+        VertexFormat.PositionNormalColor,
+        vertexEntryPoint = "vertexMain",
+        fragmentEntryPoint = "fragmentMain",
+        extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
+    )
+    val transferContext = TransferContext(graphicsDevice)
+    val cleanup = headlessCleanup(
+        graphicsDevice,
+        transferContext,
+        sceneRenderPass,
+        descriptorSetLayout,
+        primary,
+    )
+    val renderer = Renderer(
+        graphicsDevice = graphicsDevice,
+        swapchainManager = swapchainManager,
+        pipelines = PipelineTable(primary = primary, primaryFormat = VertexFormat.PositionNormalColor),
+        renderFeatures = listOf(
+            OpaqueRenderFeature(
+                VulkanLinePass(
+                    LineRenderPipeline(
+                        graphicsDevice,
+                        swapchainManager,
+                        sceneRenderPass,
+                        runBlocking { packShaderPair("debug_line") },
+                        MAX_FRAMES_IN_FLIGHT,
+                    ),
+                ),
+            ),
+            UiRenderFeature(VulkanUiPass()),
+        ),
+        depthPrePass = depthPrePass(graphicsDevice, depthTarget, descriptorSetLayout),
+        transferContext = transferContext,
+        uiShaderPairs = runBlocking { defaultUiShaderPairs() },
+        maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
+    )
+    return renderer to {
+        renderer.destroy()
+        cleanup()
+        graphicsDevice.destroy()
+    }
+}
+
+/** The cascade depth pass: one pipeline, one block slot per layer. */
+private fun depthPrePass(
+    graphicsDevice: GraphicsDevice,
+    depthTarget: DepthTarget,
+    descriptorSetLayout: DescriptorSetLayoutHandle,
+) = DepthPrePassFeature(
+    depthTarget,
+    DepthOnlyPipeline(
+        graphicsDevice,
+        depthTarget.renderPass,
+        descriptorSetLayout,
+        runBlocking { packShaderPair("shadow_depth") },
+        VertexFormat.PositionNormalColor,
+        depthTarget.size,
+        cascadeCount = depthTarget.layers,
+    ),
+)
+
+private const val MAX_FRAMES_IN_FLIGHT = 1
