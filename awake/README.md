@@ -8,108 +8,142 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 
 ## core — foundation, no engine concepts
 
-`awake:core` itself no longer exists; it was five independent packages wearing one module name.
-
 | Module | What it is |
 |---|---|
-| `core:color` | `Color`. One file, zero dependencies, 17 consumers -- the most-depended-on type in the group |
-| `core:input` | Pointer/key/text input state, plus the Android IME bridges |
-| `core:image` | `Bitmap` decode per platform, `BitmapRgba8` |
-| `core:host` | Services the host platform provides: `FrameLoop`, `FixedTimestepLoop`, resource bytes |
-| `core:math` | `Vec3/4`, `Mat3/4`, `Quat`, `Ray`, `Frustum`, `Aabb`, `Plane`, `Lens`, `ClipSpace`, `Angle`. 3D math. Depends only on `core:math2d`, for the `Vec2` its projections return |
-| `core:math2d` | `Vec2`, `Rectangle`, `Size2D`, `Dp`, `Sp`, `UiDensity` — screen-space 2D primitives and units. Zero dependencies |
-| `core:graphics2d` | `UiDrawPrimitive`, `UiPath`, `UiGradient`, the CPU tessellators, `RendererVertexWriters`, `UiVertexLayout` — the 2D draw vocabulary both UI engines emit and both backends consume |
-| `core:geometry` | `MeshGeometry`, `VertexFormat`, `VertexAttribute`, `GpuDataShape`, `VertexSemantic`, `MeshSimplifier`, `NormalizedInt` — the CPU mesh-data vocabulary. One dependency (`core:math`), no UI |
-| `core:animation` | Skeleton, skin, clip sampling, crossfade blending |
+| `core:color` | `Color`. Zero dependencies; the most-depended-on type in the group |
+| `core:math` | `Vec3/4`, `Mat3/4`, `Quat`, `Ray`, `Frustum`, `Aabb`, `Plane`, camera projections |
+| `core:math2d` | `Vec2`, `Rectangle`, `Size2D`, `Dp`, `Sp` — screen-space primitives and units |
+| `core:geometry` | Portable mesh geometry math, no file I/O |
+| `core:graphics2d` | The CPU 2D draw vocabulary between 2D producers and renderers |
+| `core:animation` | Skeletons, skin bindings, animation clips, crossfades |
+| `core:image` | Per-platform bitmap decode, `BitmapRgba8` |
+| `core:text` | Font atlases, glyph metrics, bundled UI fonts |
+| `core:input` | Pointer, key, and text input state, plus the Android IME bridges |
+| `core:audio` | `AudioClip`, `AudioPlayer`, WAV decoding, a simple synthesizer |
+| `core:host` | Host services: `FrameLoop`, `FixedTimestepLoop`, resource bytes |
+| `core:io` | Asynchronous, root-relative file and byte-source contracts |
+| `core:config` | Typed configuration from environment and platform sources |
+| `core:logging` | `Log`, sinks, and an in-memory ring buffer |
+| `core:di` | A small dependency-injection container: modules, keys, bindings |
+| `core:state` | Reactive stores and unidirectional state contracts |
 
 ## ecs — entity storage and iteration
 
 | Module | What it is |
 |---|---|
-| `ecs` | Sparse-set component storage, families, tag columns, `System` |
-| `ecs:benchmark` | kotlinx-benchmark harness comparing against Fleks |
+| `ecs` | Dependency-free sparse-set Entity Component System |
+| `ecs:benchmark` | Benchmarks (not published) |
 
-## engine + backend — rendering and application lifecycle
+## engine — application lifecycle and backend-neutral rendering
 
-> Both group names are layer names, not subsystems, and rendering is split across them. See the
-> architecture doc's [target grouping](../docs/reference/module-architecture.md#target-grouping--decided).
+> `engine` and `backend` are layer names, not subsystems, and rendering is split across them. See
+> the architecture doc's [target grouping](../docs/reference/module-architecture.md#target-grouping--decided).
 
 | Module | What it is |
 |---|---|
-| `engine:render:contract` | `Renderer`, `DrawCall`, `Material`, `Mesh` (GPU handle), uniform layouts. CPU mesh data lives in `core:geometry` |
-| `engine:render:passes` | Backend-neutral **3D** pass logic: feature dispatch, opaque/sky recording, instance packing, uniform packers, pools |
-| `engine:render:passes2d` | Backend-neutral **2D** pass logic: run coalescing, mesh upload, command recording, `UiPass`/`UiRenderFeature` |
-| `engine:platform` | `GraphicsEngine` bootstrap shared by both backends |
-| `engine:bootstrap` | App lifecycle DSL |
-| `engine:app` | `AwakeApplication` — the `expect`/`actual` seam picking a backend per target |
-| `backend:vulkan` | Vulkan renderer. Android, desktop, iOS. MoltenVK on Apple platforms |
-| `backend:vulkan:bindings` | JNI/cinterop surface, plus its generator |
-| `backend:webgpu` | WebGPU renderer via wgpu4k. wasmJs only |
-| `backend:jolt` | Jolt physics bridge |
+| `engine:platform` | Turns the host's frame callbacks into a portable application lifecycle |
+| `engine:bootstrap` | The `app { }` builders on top of `engine:platform` |
+| `engine:compose` | Hosts Compose UI on the engine; the platform never depends on it |
+| `engine:render:contract` | Cross-backend rendering vocabulary and contracts |
+| `engine:render:passes` | Shared 3D render-pass logic and draw recording |
+| `engine:render:passes2d` | Shared 2D render-pass logic |
+| `engine:render:testing` | Headless render sessions, `NoopRenderer`, pixel and timing baselines |
+| `engine:render:parity` | Cross-backend pixel parity tests (not published) |
+
+## backend — platform implementations
+
+| Module | What it is |
+|---|---|
+| `backend:vulkan` | Vulkan renderer for desktop, Android, and iOS (MoltenVK). **Versioned separately** |
+| `backend:vulkan:bindings` | Kotlin Multiplatform Vulkan API bindings. Versioned with `backend:vulkan` |
+| `backend:vulkan:bindings:android-native` | The Android JNI bridge. Versioned with `backend:vulkan` |
+| `backend:vulkan:generator` | Generates the bindings (not published) |
+| `backend:webgpu` | WebGPU renderer for WasmJs. Snapshot-only while it depends on a wgpu4k snapshot |
+| `backend:jolt` | Jolt Physics implementation of `physics:api` |
 
 ## physics
 
 | Module | What it is |
 |---|---|
-| `physics:api` | `PhysicsWorld`, `BodyHandle` — backend-neutral |
+| `physics:api` | Rigid bodies, collision shapes, motion types, queries |
 
 ## scene — ECS components and systems on top of the engine
 
 | Module | What it is |
 |---|---|
-| `scene:scene-core` | `Transform`, `Name`, hierarchy, `TransformSystem`, `SpinControl`. What every scene has |
-| `scene:scene3d` | `MeshRenderer`, `Camera`, `Light`, `ParticleEmitter`, `RenderSystem3D` |
-| `scene:controls` | `camera` (rig, modes, input) and `movement` (control, player input, matrix-relative) |
-| `scene:physics` | `PhysicsBody` and `PhysicsSystem`, plus `character` and `streaming` |
-| `scene:navigation` | `NavMesh` and `PathRequest` (the contract), plus `NavGridTile`, slope bake, A* + smoothing |
-| `scene:world` | Cell coordinates, partitioning, async streaming, floating origin |
-| `scene:ai` | `PatrolBehavior`, `ChaseBehavior`, `FleeBehavior`, `RouteFollower` and their systems. Depends on navigation; navigation does not depend on it |
-| `scene:runtime` | Scene JSON load/save, entity instantiation |
-| `scene:authoring` | The `scene { }` DSL |
-| `scene` | Aggregator re-exporting the modules above |
+| `scene:scene-core` | `Transform`, names, and their systems |
+| `scene:scene3d` | Cameras, lights, meshes, and 3D scene rendering |
+| `scene:scene3d:benchmark` | Benchmarks (not published) |
+| `scene:authoring` | Type-safe DSL for building entity hierarchies, lights, and cameras |
+| `scene:document` | Serializable scene documents, prefabs, and catalogs |
+| `scene:binding` | Resolves document components onto live entities |
+| `scene:runtime` | Scene app lifecycle, asset resolution, and project launching |
+| `scene:controls` | Camera rigs, input processing, gameplay key bindings |
+| `scene:physics` | Physics bodies, character controller, and the physics system |
+| `scene:audio` | Audio sources and the audio system |
+| `scene:world` | Open-world cells, partitioning, streaming, floating origin |
 
-## editor — the scene editor and its extension points
-
-| Module | What it is |
-|---|---|
-| `editor` | Store, selection, tools, undo, providers, `EditorPlugin`. Knows nothing of ECS — `EditorEntityId` is a string, and `EditorFieldScope`/`EditorInspector<T>` name no entity or world |
-| `editor:scene` | The ECS adapter: gizmo, hierarchy, inspector sections, `SceneComponentInspector` |
-| `editor:physics` | Makes `PhysicsBody` inspectable. Exists because `editor:scene` must not depend on the physics backend and `scene:physics` must not depend on an editor |
-| `editor:ai` | Inspectors for `PatrolBehavior`, `ChaseBehavior`, `FleeBehavior` |
-| `editor:render` | Inspectors for `PbrMaterial`, `Light`, `MeshRenderer`, `Camera` |
-
-## ui — component families and UI support
-
-Hand-written, not Compose. See [ui/README.md](ui/README.md) and
-[docs/reference/ui-ownership.md](../docs/reference/ui-ownership.md) for which layer owns what.
+## gameplay
 
 | Module | What it is |
 |---|---|
-| `ui:graphics` | Draw primitives, `Rectangle`, geometry |
-| `ui:text` | Font atlas, glyph metrics, shaping |
-| `ui:ui-core` | Layout engine, modifiers, measurement — Compose-UI-shaped |
-| `ui:headless` | Unstyled controls and layout — Foundation-shaped |
-| `ui:material3` | Material 3 color schemes and components, beginning with `Scaffold` |
-| `ui:shadcn` | Shadcn recipes and theme tokens |
-| `ui:animation` | Tweening and transitions |
-| `ui:tailwind`, `ui:tailwind-generator` | Tailwind-style token generation |
-| `ui:heroicons` | Generated icon vectors |
-| `ui:testing` | Rasterizer, semantic inspection, snapshot harness |
+| `ai` | Behavior trees and finite state machines |
+| `ai:behavior` | Navmesh-backed patrol, chase, and flee behaviors |
+| `navigation` | A* grid pathfinding, field search, path smoothing |
+| `net:api` | Transport and packet-buffer contracts |
+
+## project and tooling data
+
+| Module | What it is |
+|---|---|
+| `project` | The `awake.project.json` contract, content validation, and project index |
+| `node-graph` | Graph documents, node registry, and validation shared by node-graph editors and runtimes |
+| `editor:contract` | Vendor-neutral editor plugin, provider, and asset-converter contracts |
+
+## compose — retained UI runtime
+
+See [docs/reference/compose-engine/](../docs/reference/compose-engine/).
+
+| Module | What it is |
+|---|---|
+| `compose:runtime` | Composition, recomposition, and state |
+| `compose:ui` | Layout, modifiers, measurement, drawing, semantics |
+| `compose:foundation` | Basic layouts, text, and interaction building blocks |
+| `compose:state` | Bridge from `core:state` stores into composition |
+| `compose:di` | Ambient `core:di` injection through the UI tree |
+| `compose:ui-testing` | Rasterizer, semantics queries, component frames for tests |
+
+## ui — component families and UI tools
+
+| Module | What it is |
+|---|---|
+| `ui:shadcn` | shadcn/ui themes, tokens, variants, and component recipes |
+| `ui:material3` | Material 3 components and theme contracts (not yet published) |
+| `ui:node-graph-canvas` | The editing surface for `node-graph` documents |
+| `ui:builder` | Visual UI builder: palette, canvas, drop targets, code generation |
+| `ui:benchmark` | UI frame benchmarks (not published) |
+| `ui:font-atlas-generator` | Generates the bundled font atlases (not published) |
+| `tailwind` | Tailwind-style tokens (`Tw`), OKLCH colors, layout helpers |
+| `tailwind-generator` | Generates the `tailwind` tokens (not published) |
+| `heroicons` | Generated icon vectors |
 
 ## asset — content pipelines
 
 | Module | What it is |
 |---|---|
-| `asset:gltf` | glTF parsing: meshes, skins, animations, PBR materials |
-| `asset:shaders` | `ShaderSet`/`ShaderSource` contract only |
-| `asset:shader-pack` | The shipped `.wgsl` set and its uniform layouts — opt-in content |
-| `asset:mesh-optimizer` | Decimation CLI over `core:geometry` |
+| `asset:gltf` | glTF 2.0 (`.glb`/`.gltf`) parsing: meshes, skins, animations, PBR materials |
+| `asset:shaders` | `ShaderSet`/`ShaderSource` contract, uniform and descriptor layouts |
+| `asset:shader-pack` | The shipped WGSL shader set and its uniform layouts — opt-in content |
+| `asset:shader-dsl` | Author shaders in Kotlin |
+| `asset:shader-compiler` | Runtime WGSL→SPIR-V through naga |
+| `asset:terrain` | Terrain data, geometry generation, heightfield sculpting, splatting |
+| `asset:mesh-optimizer` | Mesh decimation CLI over `core:geometry` (not published) |
 
-## compose
+## kit — optional feature kits
 
 | Module | What it is |
 |---|---|
-| `compose:runtime`, `compose:ui`, `compose:foundation` | Retained layout engine, in design. See [docs/reference/compose-engine/](../docs/reference/compose-engine/) |
+| `kit:terrain-layers` | Layered terrain: layer palettes, control maps, surface shading |
 
 ---
 

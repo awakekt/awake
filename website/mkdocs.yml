@@ -10,7 +10,8 @@ plugins:
       canonical_version: latest
       version_selector: true
 extra:
-  awake_version: 0.1.0-alpha.4
+  awake_version: 0.1.0-alpha.7
+  awake_vulkan_version: 0.1.0
   version:
     provider: mike
 theme:

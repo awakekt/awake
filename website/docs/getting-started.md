@@ -1,7 +1,8 @@
 # Installation
 
-Awake is published to Maven Central. Use one Awake version across every module; the version shown
-here follows the selected documentation version.
+Awake is published to Maven Central. Core modules share one version; the Vulkan backend has its own
+release train, built against a specific Core release. The versions shown here follow the selected
+documentation version.
 
 ## Add the desktop runtime
 
@@ -10,11 +11,12 @@ Add the version and base artifacts to `gradle/libs.versions.toml`:
 ```toml
 [versions]
 awake = "{{ awake_version }}"
+awake-vulkan = "{{ awake_vulkan_version }}"
 
 [libraries]
 awake-bootstrap = { group = "com.awakekt.awake.engine", name = "bootstrap", version.ref = "awake" }
 awake-shaders = { group = "com.awakekt.awake.asset", name = "shaders", version.ref = "awake" }
-awake-vulkan = { group = "com.awakekt.awake.backend", name = "vulkan", version.ref = "awake" }
+awake-vulkan = { group = "com.awakekt.awake.backend", name = "vulkan", version.ref = "awake-vulkan" }
 ```
 
 Add dependencies to the source sets that use them:
@@ -79,11 +81,19 @@ capability directly.
 
 ### Graphics backends
 
-The desktop Vulkan artifact is included in the base setup. For WasmJs, add this alias and use
+The desktop Vulkan artifact is included in the base setup.
+
+The WebGPU backend for WasmJs is not in Maven Central releases yet: it builds on a wgpu4k snapshot,
+so it is published only as a snapshot. Add the snapshot repository, a snapshot version, and use
 `libs.awake.webgpu` in `wasmJsMain`:
 
+```kotlin
+// settings.gradle.kts, dependencyResolutionManagement.repositories
+maven("https://central.sonatype.com/repository/maven-snapshots/")
+```
+
 ```toml
-awake-webgpu = { group = "com.awakekt.awake.backend", name = "webgpu", version.ref = "awake" }
+awake-webgpu = { group = "com.awakekt.awake.backend", name = "webgpu", version = "<snapshot version>" }
 ```
 
 For shader authoring, add `libs.awake.asset.shader.dsl` using this alias:
