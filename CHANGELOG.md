@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Find entities by name.** `EntityNames(world).find(name)` returns the live entity carrying that `Name`. Hits are checked on use and misses rebuild the index once, so an existing name costs a map lookup, renames are followed and destroyed entities are never returned.
 - **Node graph canvas.** New module `com.awakekt.awake.ui:node-graph-canvas`: `NodeGraphCanvas`, a controlled editing surface for `:awake:node-graph` documents. Nodes render as a header, one row per port pair and a caller-owned body slot; wires are curves coloured by port type. Dragging between ports connects or reconnects, dragging nodes moves the selection, Shift/Ctrl-drag box-selects, the wheel zooms around the pointer, and every edit is reported as a `NodeGraphIntent` for the caller to apply. Zoom scales node content through density, so text stays sharp and controls are hit where they are drawn; labels hide below a legible zoom, and idle wires redraw retained meshes.
 
 ### Fixed
