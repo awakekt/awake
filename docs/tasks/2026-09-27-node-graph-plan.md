@@ -36,9 +36,10 @@ Steps 1 and 2 share no files with step 3's runtime work and can run in parallel 
 
 ## Decisions made
 
-1. Node graphs get their own Core module group, `:awake:node-graph`. The canvas is built on
-   `compose:foundation`, but no node-graph code goes into any `:awake:compose` module. Compose
-   stays a general UI engine.
+1. The graph model is its own Core module, `:awake:node-graph`. The canvas is
+   `:awake:ui:node-graph-canvas`, beside the other UI libraries built on compose, as
+   [ui-ownership](../reference/ui-ownership.md) describes. No node-graph code goes into any
+   `:awake:compose` module, so compose stays a general UI engine.
 2. Blueprints are the first consumer, AI state trees the second, and shader graphs the third.
 3. Every graph is data the engine validates. Generated Kotlin is never an output. This keeps web
    and iOS working, since neither can load code, and it keeps later LLM output safe.
@@ -122,12 +123,14 @@ plan's hard rule.
 | Module | Holds | Depends on |
 |---|---|---|
 | `:awake:node-graph` | document, node registry, graph kinds, validation, codec | kotlinx-serialization |
-| `:awake:node-graph:canvas` | canvas widget | `:awake:node-graph`, `compose:foundation` |
+| `:awake:ui:node-graph-canvas` | canvas widget | `:awake:node-graph`, `compose:foundation` |
 
-- The layout follows the `:awake:ai` / `:awake:ai:behavior` precedent: the model at the group
-  root and the UI as a child. Consumers that only need to load or run graphs, such as game
-  servers and headless tools, depend on the root and never pull in UI.
-- Packages are `com.awakekt.awake.nodegraph` and `com.awakekt.awake.nodegraph.canvas`.
+- The model and the UI live apart. Consumers that only load or run graphs, such as game servers
+  and headless tools, depend on `:awake:node-graph` and never pull in UI.
+- The canvas sits in `:awake:ui`, the group that holds UI libraries built on compose
+  (`material3`, `shadcn`). It gets a row in [ui-ownership](../reference/ui-ownership.md) when it
+  lands.
+- Packages are `com.awakekt.awake.nodegraph` and `com.awakekt.awake.ui.nodegraph`.
 - Consumer modules are listed in their own plans.
 - The modules are named "node-graph" rather than "graph" because "render graph" is already a
   term in this repo.
@@ -239,7 +242,7 @@ Document, node registry, kinds, validation, catalogue export, and a versioned JS
 - A graph naming an unregistered node type is refused.
 - The module has no compose or render dependency.
 
-### Phase 2 — `:awake:node-graph:canvas`
+### Phase 2 — `:awake:ui:node-graph-canvas`
 
 The canvas widget as designed above.
 
