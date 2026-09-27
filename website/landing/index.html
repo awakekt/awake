@@ -12,12 +12,8 @@
   <meta name="description" content="A code-first Kotlin Multiplatform engine: scenes, Vulkan and WebGPU rendering, Jolt physics, and retained UI for desktop, Android, iOS, and the web.">
   <link rel="icon" href="awake-mark.svg" type="image/svg+xml">
   <script>
-    // Resolve the theme before first paint: saved choice, else the OS preference.
-    (() => {
-      const stored = localStorage.getItem("awake-theme");
-      const light = stored ? stored === "light" : matchMedia("(prefers-color-scheme: light)").matches;
-      document.documentElement.dataset.theme = light ? "light" : "dark";
-    })();
+    // Light by default; apply a saved choice before first paint.
+    document.documentElement.dataset.theme = localStorage.getItem("awake-theme") === "dark" ? "dark" : "light";
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -61,9 +57,10 @@
       --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
     }
 
-    /* Light theme: neutral surface, darker gold for text (brand-system.md), mark unchanged. */
-    :root { color-scheme: dark; }
-    :root[data-theme="light"] {
+    /* Light is the default theme: neutral surface, darker gold for text (brand-system.md), mark
+       unchanged. Dark applies only when chosen with the toggle. */
+    :root[data-theme="dark"] { color-scheme: dark; }
+    :root:not([data-theme="dark"]) {
         --bg: #F6F6F7;
         --text: #16161C;
         --text-muted: #4E4A55;
@@ -163,8 +160,8 @@
     .theme-toggle:active { transform: scale(0.97); }
     .theme-toggle svg { width: 18px; height: 18px; }
     .theme-toggle .icon-sun { display: none; }
-    :root[data-theme="light"] .theme-toggle .icon-sun { display: block; }
-    :root[data-theme="light"] .theme-toggle .icon-moon { display: none; }
+    :root:not([data-theme="dark"]) .theme-toggle .icon-sun { display: block; }
+    :root:not([data-theme="dark"]) .theme-toggle .icon-moon { display: none; }
     .nav .version {
       font-family: var(--mono);
       font-size: 13px;
