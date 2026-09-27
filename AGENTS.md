@@ -9,6 +9,15 @@ Awake enforces strict boundaries across three distinct architectural layers:
 2. **Layer 2: Awake Core Editor (`awaken:awake:editor:contract`)** (Apache 2.0): Public, vendor-neutral editor contracts, provider extension points, and project plugin metadata published under `com.awakekt:awake-editor-contract`.
 3. **Layer 3: Awake Studio Pro (`awake-pro`)** (Commercial): Desktop authoring application (`:app:studio`), visual inspectors, collaborative workflows, and the secure runtime loader (`StudioPluginPipeline`).
 
+## No third-party game brands
+
+Never name a specific commercial game, its publisher, or its characters, places, items, or
+proprietary file formats anywhere in this repository or its GitHub activity: code, tests,
+fixtures, docs, commit messages, branch names, PRs, issues, and review comments. Call a consumer
+game "a private consumer pack", describe its formats generically ("a legacy tiled terrain
+format"), and use neutral fixture names ("Harbor Town"). Check the diff and any PR or issue text
+for such names before committing or posting.
+
 ## Skill precedence and technology boundaries
 
 Project-owned `awake-*` skills are authoritative for Awake engine code and the
