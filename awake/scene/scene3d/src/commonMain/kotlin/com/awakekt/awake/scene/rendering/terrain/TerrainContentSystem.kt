@@ -32,6 +32,9 @@ import kotlinx.coroutines.launch
  * uploads textures, so it starts from [update] on the frame thread instead. A host accepts one
  * terrain per shader set; a second is logged and not drawn.
  *
+ * With [surfacedOnly], a terrain without a reference is left alone, so another renderer (an
+ * editor's mutable preview, say) can draw it.
+ *
  * Call [detachAll] when the scene is disposed: systems have no dispose hook of their own.
  */
 class TerrainContentSystem(
@@ -39,6 +42,7 @@ class TerrainContentSystem(
     private val scope: CoroutineScope,
     private val providers: Map<String, TerrainSurfaceProvider> = emptyMap(),
     private val baseShaders: ShaderSet = PackShaderSets.Terrain,
+    private val surfacedOnly: Boolean = false,
 ) : System {
     private val log = Logger("scene-terrain")
 
@@ -52,7 +56,10 @@ class TerrainContentSystem(
 
     /** A field rather than a lambda in [update], so querying allocates nothing per frame. */
     private val trackNew: (Entity, TerrainComponent) -> Unit = { entity, terrain ->
-        if (find(entity) == null) track(entity, terrain, frameWorld?.get<TerrainSurfaceReference>(entity))
+        if (find(entity) == null) {
+            val reference = frameWorld?.get<TerrainSurfaceReference>(entity)
+            if (reference != null || !surfacedOnly) track(entity, terrain, reference)
+        }
     }
 
     override fun update(world: World, delta: Float) {

@@ -76,6 +76,17 @@ class TerrainContentSystemTest {
     }
 
     @Test
+    fun surfacedOnlyLeavesATerrainWithoutASurfaceToAnotherRenderer() {
+        val surfacedOnly = TerrainContentSystem(host, scope, surfacedOnly = true)
+        spawnTerrain()
+        spawnTerrain(TerrainSurfaceReference("not.installed", 1, JsonObject(emptyMap())))
+
+        repeat(2) { surfacedOnly.update(world, 0f) }
+
+        assertEquals(1, host.attached.size)
+    }
+
+    @Test
     fun destroyingTheEntityDetachesItsTerrain() {
         val entity = spawnTerrain()
         repeat(2) { system.update(world, 0f) }

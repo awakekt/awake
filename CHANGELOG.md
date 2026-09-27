@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Terrain content can draw only surfaced terrains.** `TerrainContentSystem(surfacedOnly = true)` skips terrains without a `TerrainSurfaceReference`, so an editor can keep its own mutable preview for those and still draw layered terrain through the content system.
 - **glTF images embedded in GLB buffers.** `GltfImage.bufferView` is parsed and material textures resolve their encoded bytes from the GLB binary chunk, with range checks, in addition to data URIs and pre-fetched external URIs.
 
 ### Fixed
