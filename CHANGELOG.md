@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Terrain content can draw only surfaced terrains.** `TerrainContentSystem(surfacedOnly = true)` skips terrains without a `TerrainSurfaceReference`, so an editor can keep its own mutable preview for those and still draw layered terrain through the content system.
 - **Node graph documents and registry.** New module `com.awakekt.awake:node-graph`: the shared model behind blueprint, state-tree and shader graph editors. `NodeGraph` documents with ordered edges, `GraphKind` rules for port compatibility and cycles, an explicit `NodeRegistry` of documented `NodeSpec`s with a JSON catalogue export, validation that reports every `GraphIssue` by node id, and a strict `NodeGraphJson` codec whose `load` refuses any graph that does not validate.
 - **glTF images embedded in GLB buffers.** `GltfImage.bufferView` is parsed and material textures resolve their encoded bytes from the GLB binary chunk, with range checks, in addition to data URIs and pre-fetched external URIs.
 

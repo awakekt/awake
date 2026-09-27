@@ -1350,8 +1350,8 @@ public final class com/awakekt/awake/scene/rendering/terrain/TerrainComponentFea
 }
 
 public final class com/awakekt/awake/scene/rendering/terrain/TerrainContentSystem : com/awakekt/awake/ecs/System {
-	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lkotlinx/coroutines/CoroutineScope;Ljava/util/Map;Lcom/awakekt/awake/asset/shaders/ShaderSet;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lkotlinx/coroutines/CoroutineScope;Ljava/util/Map;Lcom/awakekt/awake/asset/shaders/ShaderSet;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lkotlinx/coroutines/CoroutineScope;Ljava/util/Map;Lcom/awakekt/awake/asset/shaders/ShaderSet;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lkotlinx/coroutines/CoroutineScope;Ljava/util/Map;Lcom/awakekt/awake/asset/shaders/ShaderSet;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun detachAll ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
