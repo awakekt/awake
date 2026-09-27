@@ -19,6 +19,7 @@ import com.awakekt.awake.asset.shaderdsl.floor
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.lit
 import com.awakekt.awake.asset.shaderdsl.max
+import com.awakekt.awake.asset.shaderdsl.min
 import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.mix
 import com.awakekt.awake.asset.shaderdsl.normalize
@@ -188,13 +189,10 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
         val morphedX = let("morphedX", mix(localPosition.x, coarseX, alpha))
         val morphedZ = let("morphedZ", mix(localPosition.z, coarseZ, alpha))
 
-        // UV from world position, not the mesh's own attribute -- see TerrainSampling.
-        val worldX = let("worldX", morphedX + ring.x)
-        val worldZ = let("worldZ", morphedZ + ring.y)
-        val uv = let(
-            "uv",
-            vec2(worldX / terrainSampling.x + 0.5f.lit, worldZ / terrainSampling.y + 0.5f.lit),
-        )
+        val ground = groundPoint(morphedX + ring.x, morphedZ + ring.y, terrainSampling)
+        val worldX = ground.x
+        val worldZ = ground.z
+        val uv = ground.uv
 
         val height = let(
             "height",
@@ -213,6 +211,32 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
     return TerrainClipmapOutputs(worldNormal, worldPosition, sunDirection, terrainParams, terrainSampling)
 }
 
+/** A vertex's world X/Z on the heightmap, and the UV that samples it. */
+private class GroundPoint(val x: AslExpr, val z: AslExpr, val uv: AslExpr)
+
+/**
+ * Rings reach past the heightmap, and its sampler repeats: a vertex beyond the footprint
+ * collapses onto its edge, so the terrain ends there instead of tiling.
+ *
+ * UV comes from world position, not the mesh's own attribute -- see TerrainSampling. The first
+ * and last samples are texel centres, half a texel in from each side: the footprint spans
+ * (width - 1) texels of a width-texel texture.
+ */
+private fun AslBlockBuilder.groundPoint(x: AslExpr, z: AslExpr, terrainSampling: AslExpr): GroundPoint {
+    val halfX = let("halfFootprintX", terrainSampling.x * 0.5f.lit)
+    val halfZ = let("halfFootprintZ", terrainSampling.y * 0.5f.lit)
+    val worldX = let("worldX", clamp(x, -halfX, halfX))
+    val worldZ = let("worldZ", clamp(z, -halfZ, halfZ))
+    val uv = let(
+        "uv",
+        vec2(
+            worldX / terrainSampling.x * (1f.lit - terrainSampling.z) + 0.5f.lit,
+            worldZ / terrainSampling.y * (1f.lit - terrainSampling.w) + 0.5f.lit,
+        ),
+    )
+    return GroundPoint(worldX, worldZ, uv)
+}
+
 /**
  * Central differences across one texel each way. The clipmap generators give every vertex the
  * same upward normal, so without this a displaced heightfield lights as though it were flat. The
@@ -227,25 +251,18 @@ private fun AslBlockBuilder.heightmapNormal(
 ): AslExpr {
     val stepU = let("stepU", terrainSampling.z)
     val stepV = let("stepV", terrainSampling.w)
-    val heightLeft = let(
-        "heightLeft",
-        decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x - stepU, uv.y), 0f.lit)),
-    )
-    val heightRight = let(
-        "heightRight",
-        decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x + stepU, uv.y), 0f.lit)),
-    )
-    val heightDown = let(
-        "heightDown",
-        decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x, uv.y - stepV), 0f.lit)),
-    )
-    val heightUp = let(
-        "heightUp",
-        decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x, uv.y + stepV), 0f.lit)),
-    )
-    // World distance the two samples span on each axis.
-    val spanX = let("spanX", 2f.lit * stepU * terrainSampling.x)
-    val spanZ = let("spanZ", 2f.lit * stepV * terrainSampling.y)
+    // Neighbours stay on texel centres: past the edge the repeating sampler reads the far side.
+    val left = let("normalLeft", max(uv.x - stepU, stepU * 0.5f.lit))
+    val right = let("normalRight", min(uv.x + stepU, 1f.lit - stepU * 0.5f.lit))
+    val down = let("normalDown", max(uv.y - stepV, stepV * 0.5f.lit))
+    val up = let("normalUp", min(uv.y + stepV, 1f.lit - stepV * 0.5f.lit))
+    val heightLeft = let("heightLeft", decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(left, uv.y), 0f.lit)))
+    val heightRight = let("heightRight", decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(right, uv.y), 0f.lit)))
+    val heightDown = let("heightDown", decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x, down), 0f.lit)))
+    val heightUp = let("heightUp", decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x, up), 0f.lit)))
+    // World distance the two samples span on each axis: one texel is footprint / (width - 1).
+    val spanX = let("spanX", (right - left) / (1f.lit - stepU) * terrainSampling.x)
+    val spanZ = let("spanZ", (up - down) / (1f.lit - stepV) * terrainSampling.y)
     val slopeX = let("slopeX", (heightRight - heightLeft) * terrainParams.x / spanX)
     val slopeZ = let("slopeZ", (heightUp - heightDown) * terrainParams.x / spanZ)
     return normalize(vec3(-slopeX, 1f.lit, -slopeZ))
