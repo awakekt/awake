@@ -25,5 +25,7 @@ with Wrangler. Cloudflare's Wrangler action supports Pages direct uploads; the c
 The workflow is intentionally separate from the normal CI workflow. A sample deployment does not
 publish Maven artifacts and does not require changing the Git history or the squash procedure.
 
-For the custom domain, attach `demo.awakekt.com` (or `samples.awakekt.com`) to the Pages project
-in Cloudflare after the first successful deployment (`studio.awakekt.com` is reserved for Awake Pro).
+The workflow attaches `https://demo.awakekt.com/` to the Pages project on every run. It also
+creates the proxied `CNAME` to `awake-samples.pages.dev` when `CLOUDFLARE_API_TOKEN` has Zone:Read
+and DNS:Edit on `awakekt.com`; otherwise the run prints the record to add by hand.
+(`studio.awakekt.com` is reserved for Awake Studio.)
