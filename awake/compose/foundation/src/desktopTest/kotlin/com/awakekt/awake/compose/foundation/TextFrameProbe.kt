@@ -105,10 +105,13 @@ class TextFrameProbe {
         const val MEASURED_FRAMES = 1000
         const val PHASE_SAMPLES = 200
 
-        // Ratchet, not a target: about 10% above the measurement, lowered as fixes land.
-        // 292,977 B on first measurement. 126,176 after each node started reusing last frame's
-        // measurement and glyph run (layout went from 110 KB to 5 KB) and no-op style merges
+        // Ratchet, not a target: lowered as fixes land. 292,977 B on first measurement; 126,672 after
+        // each node started reusing last frame's measurement and glyph run, and no-op style merges
         // stopped allocating. Most of what is left is one Glyph primitive per character in paint.
-        const val CEILING_BYTES_PER_FRAME = 140_000L
+        //
+        // Run alone the figure is exact and repeats. Inside the full desktopTest JVM it has also read
+        // 151,345, because escape analysis depends on how earlier tests left the JIT. The ceiling
+        // sits above that, still far below the 293 KB a regression back to per-frame re-shaping gives.
+        const val CEILING_BYTES_PER_FRAME = 165_000L
     }
 }

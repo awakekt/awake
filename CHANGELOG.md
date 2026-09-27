@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Oversized corner radii shrink together, as CSS border-radius does.** `RoundedCornerShape` clamped each corner to half the short side, which kept `rounded-full` pills symmetric but cut a one-ended full radius such as `rounded-t-full` to half height. All radii now scale by the one factor that fits the tightest side, which keeps pills and circles exact and lets a one-ended radius reach the whole short side. This fixes `PaintTest.roundedCornerShapeClampsAdjacentCornersLikeCompose`, which had been failing on `main`.
 - **Unchanged text is no longer re-shaped every frame.** Each `Text` node keeps its last measurement and glyph run on its retained paint node and reuses them while the text, style, font and density are unchanged, and `TextStyle.then` returns an existing instance when a merge changes nothing. `TextFrameProbe` (60 labels) went from 293 KB to 126 KB allocated per frame (layout 110 KB to 5 KB) and from 0.29 ms to 0.16 ms, with rendered output unchanged; the node-graph canvas editor view fell from 451 KB to about 260 KB.
 - **WebGPU consumers resolve the tested wgpu4k builds.** The WebGPU backend's published metadata named the floating io.ygdrasil SNAPSHOTs, so a consumer picked up webgpu-ktypes build 4, which does not match wgpu4k, and its web app stalled before the first frame with no error. The backend now publishes the pinned builds as dependency constraints.
 
