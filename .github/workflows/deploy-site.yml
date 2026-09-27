@@ -1,0 +1,86 @@
+name: Deploy Site
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'website/landing/**'
+      - '.github/workflows/deploy-site.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-site
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Ensure Pages project exists
+        uses: cloudflare/wrangler-action@v4
+        continue-on-error: true
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create awakekt-site --production-branch=main
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy website/landing --project-name=awakekt-site
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      # Idempotent. DNS records need Zone:Read and DNS:Edit on awakekt.com; without them the step
+      # only attaches the domains and prints the CNAMEs to add by hand. Cloudflare flattens the
+      # apex CNAME.
+      - name: Attach awakekt.com and www.awakekt.com
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PAGES_PROJECT: awakekt-site
+          DOMAINS: awakekt.com www.awakekt.com
+          ZONE: awakekt.com
+        run: |
+          api() { curl --fail-with-body --silent --show-error --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" "$@"; }
+          pages="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/${PAGES_PROJECT}"
+          target="$(api "$pages" | jq -r '.result.subdomain')"
+          zone_id="$(api "https://api.cloudflare.com/client/v4/zones?name=${ZONE}" 2>/dev/null | jq -r '.result[0].id // empty')" || true
+
+          for domain in $DOMAINS; do
+            if api "${pages}/domains" | jq -e --arg d "$domain" '.result[] | select(.name == $d)' >/dev/null; then
+              echo "$domain is already attached to $PAGES_PROJECT."
+            else
+              api --request POST --header "Content-Type: application/json" \
+                --data "$(jq -nc --arg d "$domain" '{name: $d}')" "${pages}/domains" | jq -e '.success' >/dev/null
+              echo "Attached $domain to $PAGES_PROJECT."
+            fi
+
+            manual="Add a proxied CNAME $domain -> $target in the $ZONE zone."
+            if [[ -z "$zone_id" ]]; then
+              echo "::notice::Token cannot read the $ZONE zone. $manual"
+              continue
+            fi
+            records="https://api.cloudflare.com/client/v4/zones/${zone_id}/dns_records"
+            existing="$(api "${records}?name=${domain}" | jq -c '.result')"
+            if jq -e --arg t "$target" '.[] | select(.type == "CNAME" and .content == $t)' <<<"$existing" >/dev/null; then
+              echo "CNAME $domain -> $target already exists."
+            elif [[ "$(jq length <<<"$existing")" != 0 ]]; then
+              echo "::warning::A different DNS record already exists for $domain; not overwriting it. $manual"
+            elif api --request POST --header "Content-Type: application/json" \
+                --data "$(jq -nc --arg n "$domain" --arg t "$target" '{type: "CNAME", name: $n, content: $t, ttl: 1, proxied: true}')" \
+                "$records" >/dev/null; then
+              echo "Created CNAME $domain -> $target."
+            else
+              echo "::notice::Token cannot edit DNS for $ZONE. $manual"
+            fi
+          done
