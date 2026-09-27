@@ -1,3 +1,7 @@
+public final class com/awakekt/awake/asset/shaderpack/AslCascadeShadowKt {
+	public static final fun cascadeShadowSampling (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;Lcom/awakekt/awake/asset/shaderpack/CascadeShadowInputs;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/core/math/ClipSpace;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderpack/CascadeShadowSampling;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/AslDepthFogShaderKt {
 	public static final fun depthFogShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
@@ -54,6 +58,22 @@ public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 
 public final class com/awakekt/awake/asset/shaderpack/AslTexturedShaderKt {
 	public static final fun getTexturedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/CascadeShadowInputs {
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)V
+	public final fun getCameraForward ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getCameraPosition ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getDepthScales ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
+	public final fun getViewProjections ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/CascadeShadowSampling {
+	public fun <init> (Lcom/awakekt/awake/asset/shaderdsl/AslFunctionHandle;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)V
+	public final fun getBiasTexels ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getMaxSlopeScale ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getSampleShadow ()Lcom/awakekt/awake/asset/shaderdsl/AslFunctionHandle;
+	public final fun getSlopeBiasTexels ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/DepthFogContentFeatureKt {
