@@ -8,11 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://docs.awakekt.com/latest/releases/">
+        <link rel="canonical" href="https://docs.awakekt.com/latest/ui/">
       
       
-        <link rel="prev" href="../asset/terrain/">
+        <link rel="prev" href="../physics/jolt/">
       
+      
+        <link rel="next" href="compose/">
       
       
         
@@ -23,7 +25,7 @@
     
     
       
-        <title>Releases & Compatibility - Awake Engine</title>
+        <title>UI Runtime - Awake Engine</title>
       
     
     
@@ -74,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#releases-and-compatibility" class="md-skip">
+        <a href="#ui-design-systems" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Releases & Compatibility
+              UI Runtime
             
           </span>
         </div>
@@ -1159,6 +1161,8 @@
       
   
   
+    
+  
   
   
     
@@ -1185,15 +1189,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../ui/" class="md-nav__link ">
+            <a href="./" class="md-nav__link md-nav__link--active">
               
   
   
@@ -1211,13 +1215,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+              <label class="md-nav__link md-nav__link--active" for="__nav_7" id="__nav_7_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1237,7 +1241,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ui/compose/" class="md-nav__link">
+      <a href="compose/" class="md-nav__link">
         
   
   
@@ -1265,7 +1269,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ui/shadcn/" class="md-nav__link">
+      <a href="shadcn/" class="md-nav__link">
         
   
   
@@ -1444,37 +1448,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Releases & Compatibility
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../releases/" class="md-nav__link">
         
   
   
@@ -1490,48 +1467,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#versioned-documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Versioned documentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#compatibility-guidance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compatibility guidance
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1563,21 +1498,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#versioned-documentation" class="md-nav__link">
+  <a href="#compose-foundation-and-shadcn" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Versioned documentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#compatibility-guidance" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Compatibility guidance
+        Compose Foundation and Shadcn
       
     </span>
   </a>
@@ -1604,29 +1528,17 @@
   
 
 
-<h1 id="releases-and-compatibility">Releases and compatibility</h1>
-<p>Awake is in the alpha stage. The public API and published module set may change between releases.
-Use the <a href="https://github.com/awakekt/awake/releases">GitHub Releases</a> page as the authoritative
-source for release notes and published versions.</p>
-<h2 id="versioned-documentation">Versioned documentation</h2>
-<p>Every published Awake release has a matching documentation version. Use the version selector in
-the site header to switch between releases; the installation examples on each version use the
-same library version as that release.</p>
-<p>The current default release is:</p>
-<div class="highlight"><pre><span></span><code><span class="k">[versions]</span>
-<span class="n">awake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.0-alpha.8"</span>
-</code></pre></div>
-<p>When using another release, open that version of the documentation, keep all Awake modules on the
-same version, and check that the target platform is listed in that release’s notes. Development
-builds are published separately and are not promoted to the stable <code>latest</code> alias.</p>
-<h2 id="compatibility-guidance">Compatibility guidance</h2>
-<ul>
-<li>Native desktop applications use the Vulkan backend.</li>
-<li>Browser applications use the WebGPU backend through WasmJs.</li>
-<li>Android and iOS support depends on the specific module and release.</li>
-<li>Internal repository plans, milestone checklists, and branch rules are not part of the public
-  compatibility contract.</li>
-</ul>
+<h1 id="ui-design-systems">UI design systems</h1>
+<p>Awake’s UI modules provide retained HUDs, overlays, and tool interfaces for engine applications.
+The neutral UI runtime supplies layout, drawing, input, and modifier behavior; component modules
+add visual policy on top.</p>
+<h2 id="compose-foundation-and-shadcn">Compose Foundation and Shadcn</h2>
+<p>Compose Foundation provides neutral layout, drawing, input, and modifier behavior. The published
+Shadcn module adds themes, tokens, and component recipes on top. Keep application-specific visual
+policy in the theme layer so it remains replaceable.</p>
+<p>Add <a href="../getting-started/#ui">Compose Foundation and the component family you need</a> to your
+application. The <a href="../guides/components/button/">Button reference</a> shows a compiled Shadcn usage
+example and a reviewed render.</p>
 
 
 
