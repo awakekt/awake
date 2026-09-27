@@ -6,7 +6,6 @@
     <ID>LongParameterList:UniformLayout.kt$UniformField$( destination: FloatArray, index: Int, x: Float, y: Float, z: Float, w: Float, )</ID>
     <ID>LongParameterList:UniformLayout.kt$UniformLayout$( destination: FloatArray, field: UniformField, index: Int, x: Float, y: Float, z: Float, w: Float, )</ID>
     <ID>LongParameterList:UniformLayout.kt$UniformLayout$( destination: FloatArray, field: UniformField, x: Float, y: Float, z: Float, w: Float, )</ID>
-    <ID>NestedBlockDepth:MipChain.kt$private fun TextureAsset.boxDownsample(newWidth: Int, newHeight: Int): TextureAsset</ID>
     <ID>OutdatedDocumentation:GroupBindings.kt$ResourceBinding</ID>
     <ID>ReturnCount:PixelMap.kt$PixelMap$fun blend(x: Int, y: Int, r: Float, g: Float, b: Float, srcA: Float)</ID>
     <ID>TooManyFunctions:UniformWriter.kt$UniformWriter</ID>

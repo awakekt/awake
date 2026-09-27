@@ -40,6 +40,5 @@ object PackShaderSets {
     val SkyboxCubemap = aslShaderSet(SkyboxCubemapShader)
     val Particle = aslShaderSet(ParticleShader)
     val Terrain = aslShaderSet(TerrainShader)
-    val TerrainSplat = aslShaderSet(TerrainSplatShader)
     val InfiniteGrid = aslShaderSet(InfiniteGridShader)
 }

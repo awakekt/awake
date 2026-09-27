@@ -5,11 +5,9 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
-import com.awakekt.awake.asset.shaderdsl.bindingsForGroup
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.ShaderSet
-import com.awakekt.awake.asset.shaders.ShaderStage
-import com.awakekt.awake.asset.shaders.source
+import com.awakekt.awake.asset.shaders.spec
 import com.awakekt.awake.asset.shaders.stagesFor
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
@@ -25,7 +23,6 @@ import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.pipeline.BindingSemantic
-import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.texture.TextureAsset
 
 /** Grey the heightfield is shaded with. Terrain colour is authored world policy (D28); this is
@@ -50,9 +47,13 @@ private const val VERTEX_BINDING = 0
  * uploaded once, as a `ContentFeature` texture -- terrain geometry is load-time data, and
  * `ContentFeature`'s own note explains why per-frame swapping has no path here.
  *
- * @param shaders The terrain shader set, per backend.
+ * @param shaders The terrain shader set, per backend. Its bindings are read from the set itself,
+ * so a surface shader built on [terrainClipmapVertexStage] draws through this feature unchanged.
  * @param heightmap Elevation source, sampled in the vertex stage.
  * @param config Ring layout; its `ringCount` must fit [MAX_CLIPMAP_RINGS].
+ * @param surfaceTextures Pixel data for the surface shader's own sampled textures, keyed by
+ * binding from [TERRAIN_SURFACE_FIRST_BINDING]. `ContentFeature` rejects a set that does not
+ * match the shader's declarations exactly.
  * @param isVisible Read every frame. A lambda rather than a flag so an ECS component can own the
  * answer without this module depending on the scene layer -- see `:awake:scene:scene3d`'s own
  * `terrainContentFeature` overload, which passes a `TerrainComponent`'s.
@@ -61,33 +62,27 @@ fun terrainContentFeature(
     shaders: ShaderSet,
     heightmap: Heightmap,
     config: TerrainClipmapConfig = TerrainClipmapConfig(),
+    surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
     isVisible: () -> Boolean = { true },
 ): ContentFeatureSource {
     require(config.ringCount <= MAX_CLIPMAP_RINGS) {
         "A clipmap of ${config.ringCount} rings exceeds the $MAX_CLIPMAP_RINGS slots " +
             "TerrainUniformLayout reserves."
     }
+    val reserved = surfaceTextures.keys.filter { it < TERRAIN_SURFACE_FIRST_BINDING }
+    require(reserved.isEmpty()) {
+        "Surface textures at bindings $reserved collide with the clipmap stage's bindings " +
+            "0 until $TERRAIN_SURFACE_FIRST_BINDING."
+    }
     val encoded = heightmap.encodeForSampling()
     return ContentFeatureSource { backend ->
-        val stages = shaders.stagesFor(backend)
-        val materialBindings = requireNotNull(
-            TerrainShader.bindingsForGroup(
-                com.awakekt.awake.render.pipeline.BindingLayout.Standard
-                    .slot(BindingSemantic.Material),
-            ),
-        )
         ContentFeature(
             name = "terrain",
-            spec = PipelineSpec(
+            spec = shaders.stagesFor(backend).spec(
                 vertexFormat = VertexFormat.PositionNormalColorUv,
-                vertexShader = stages.source(ShaderStage.VERTEX),
-                fragmentShader = stages.source(ShaderStage.FRAGMENT),
-                bindingsByGroup = mapOf(0 to materialBindings),
-                bindingsMetadataAvailable = stages.bindingsMetadataAvailable,
-                materialBindings = materialBindings,
                 uniforms = TerrainUniformLayout.Layout,
             ),
-            textures = mapOf(HEIGHTMAP_BINDING to encoded.texture),
+            textures = surfaceTextures + (HEIGHTMAP_BINDING to encoded.texture),
             geometry = TerrainClipmapGeometry.buildMergedClipmapMesh(config),
         ) { pipeline, uniforms, geometry ->
             TerrainRenderFeature(

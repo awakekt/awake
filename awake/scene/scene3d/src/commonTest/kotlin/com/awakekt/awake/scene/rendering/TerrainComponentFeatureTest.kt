@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering
 
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
+import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
 import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
@@ -16,6 +17,7 @@ import com.awakekt.awake.scene.rendering.terrain.TerrainComponent
 import com.awakekt.awake.scene.rendering.terrain.terrainContentFeature
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 
 /**
@@ -72,6 +74,34 @@ class TerrainComponentFeatureTest {
 
         assertEquals("terrain", source.resolve(RenderBackend.Vulkan).name)
         assertEquals("terrain", source.resolve(RenderBackend.WebGpu).name)
+    }
+
+    /** A surface shader's bindings come from its own set, so its textures reach the pipeline. */
+    @Test
+    fun surfaceTexturesJoinTheHeightmapAtTheSurfaceShadersBindings() {
+        val feature = terrainContentFeature(
+            PROBE_SURFACE_SHADERS,
+            component(),
+            mapOf(TERRAIN_SURFACE_FIRST_BINDING to PROBE_LAYERS),
+        ).resolve(RenderBackend.WebGpu)
+
+        assertEquals(setOf(1, TERRAIN_SURFACE_FIRST_BINDING), feature.textures.keys)
+        assertEquals(PROBE_LAYERS.layerCount, feature.textures.getValue(TERRAIN_SURFACE_FIRST_BINDING).layerCount)
+    }
+
+    @Test
+    fun aSurfaceTextureAtAClipmapBindingIsRejected() {
+        assertFailsWith<IllegalArgumentException> {
+            terrainContentFeature(SHADERS, component(), mapOf(1 to PROBE_LAYERS))
+        }
+    }
+
+    /** `ContentFeature` catches a declared surface binding left without pixel data. */
+    @Test
+    fun aSurfaceShaderWithoutItsTexturesFailsToResolve() {
+        assertFailsWith<IllegalArgumentException> {
+            terrainContentFeature(PROBE_SURFACE_SHADERS, component()).resolve(RenderBackend.Vulkan)
+        }
     }
 
     private companion object {

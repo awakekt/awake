@@ -32,7 +32,7 @@ In Awake, terrain rendering is split into two complementary "cousin" paradigms d
 | **Primary Class** | `TerrainClipmapGeometry`, `TerrainClipmapTracker` | `MeshCellStreamer`, `HeightFieldCellStreaming` |
 | **Memory Model** | **Constant $O(1)$**: Fixed number of concentric rings | **Dynamic**: Budgeted cache of active cells around player |
 | **Mesh Lifecycle** | Meshes created once on attach; transforms updated per frame | Meshes spawned and destroyed dynamically in coroutines |
-| **GPU Displacement** | Vertex texture fetch via `AslTerrainShader` / `AslTerrainSplatShader` | Pre-computed mesh geometry or localized patch displacement |
+| **GPU Displacement** | Vertex texture fetch via `terrainClipmapVertexStage` (`AslTerrainShader`) | Pre-computed mesh geometry or localized patch displacement |
 | **Physics Collision** | Single continuous heightfield or centralized collider | Per-tile Jolt physics shapes (`heightFieldTile`) |
 | **Ideal For** | Island maps, flight simulators, continuous single regions | Multi-zone open worlds, seamless multi-kilometer MMOs |
 
@@ -52,7 +52,7 @@ In Awake, terrain rendering is split into two complementary "cousin" paradigms d
 
 ### 3. Multi-Texture Splatting (`splat/`)
 * **`TerrainSplatWeightMap`**: Stores and validates 4-channel (`rgba`) weight data for multi-texture ground blending.
-* **Shader Integration**: Seamlessly pairs with `PackShaderSets.TerrainSplat` (`AslTerrainSplatShader` in `awake:asset:shader-pack`) to blend a 4-layer `texture_2d_array` diffuse texture across ground surfaces.
+* **Shader Integration**: Core ships no splat shader. A consuming pack writes a surface shader over `terrainClipmapVertexStage` (`awake:asset:shader-pack`) and passes its textures to `terrainContentFeature(surfaceTextures = ...)`.
 
 ---
 

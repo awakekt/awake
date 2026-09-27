@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.rendering.terrain
 import com.awakekt.awake.asset.shaderpack.terrainContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.ShaderSet
+import com.awakekt.awake.render.texture.TextureAsset
 
 /**
  * Renders [terrain], with the component itself as the single source of what gets drawn.
@@ -24,10 +25,15 @@ import com.awakekt.awake.asset.shaders.ShaderSet
  * Lives in the scene layer rather than the shader pack because it is the only piece that knows
  * about ECS components; the pack takes a plain heightmap and a visibility lambda.
  */
-fun terrainContentFeature(shaders: ShaderSet, terrain: TerrainComponent): ContentFeatureSource =
+fun terrainContentFeature(
+    shaders: ShaderSet,
+    terrain: TerrainComponent,
+    surfaceTextures: Map<Int, TextureAsset> = emptyMap(),
+): ContentFeatureSource =
     terrainContentFeature(
         shaders = shaders,
         heightmap = terrain.heightmap,
         config = terrain.clipmapConfig,
+        surfaceTextures = surfaceTextures,
         isVisible = { terrain.isVisible },
     )

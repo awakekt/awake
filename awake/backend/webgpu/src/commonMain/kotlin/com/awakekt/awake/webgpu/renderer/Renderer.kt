@@ -5,6 +5,10 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
+import com.awakekt.awake.asset.shaders.AttachedContentFeature
+import com.awakekt.awake.asset.shaders.ContentFeatureHost
+import com.awakekt.awake.asset.shaders.ContentFeatureSource
+import com.awakekt.awake.core.color.Color as AwakeColor
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
@@ -18,11 +22,14 @@ import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.material.Material as RenderMaterial
+import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
-import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
+import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.renderer.LineSegment
+import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
@@ -44,10 +51,6 @@ import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.ui.DynamicMesh
 import com.awakekt.awake.webgpu.ui.UiRenderPipeline
 import com.awakekt.awake.webgpu.ui.UiTargetCompositePipeline
-import com.awakekt.awake.core.color.Color as AwakeColor
-import com.awakekt.awake.render.material.Material as RenderMaterial
-import com.awakekt.awake.render.mesh.Mesh as RenderMesh
-import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import io.ygdrasil.webgpu.Color as GpuColor
 
 /**
@@ -89,7 +92,8 @@ class Renderer internal constructor(
     internal val sceneDepthPass: DepthPrePassFeature? = null,
     internal val renderFeatures: List<RenderFeature<WebGpuRenderFrameContext>> = emptyList(),
 ) : RenderRenderer,
-    GpuDrawPreparationSource {
+    GpuDrawPreparationSource,
+    ContentFeatureHost {
     override val gpuDrawPreparer: GpuDrawPreparer by lazy {
         WebGpuDrawPreparer(this)
     }
@@ -120,6 +124,14 @@ class Renderer internal constructor(
     // ("pixel-space is Y-down, NDC is Y-up") -- so unlike Vulkan (+Y down NDC) no flip is
     // needed here. Depth is 0..1 on both, unlike OpenGL's -1..1.
     override val clipSpace: ClipSpace = ClipSpace.WebGpu
+
+    /** Where [attachContentFeature] goes, set by the engine that built this renderer. */
+    internal var contentFeatureHost: ContentFeatureHost? = null
+
+    override suspend fun attachContentFeature(source: ContentFeatureSource): AttachedContentFeature =
+        checkNotNull(contentFeatureHost) {
+            "This renderer was built without an engine, so it cannot attach content features."
+        }.attachContentFeature(source)
 
     override val surfaceAspect: Float
         get() = graphicsDevice.wgpuContext.renderingContext.let { context ->

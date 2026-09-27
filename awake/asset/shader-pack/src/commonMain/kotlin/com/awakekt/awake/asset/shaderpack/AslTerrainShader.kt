@@ -5,7 +5,10 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
+import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
+import com.awakekt.awake.asset.shaderdsl.AslDefinitionException
 import com.awakekt.awake.asset.shaderdsl.AslExpr
+import com.awakekt.awake.asset.shaderdsl.AslShaderBuilder
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.abs
 import com.awakekt.awake.asset.shaderdsl.clamp
@@ -87,45 +90,55 @@ object TerrainUniformLayout {
     val Layout = UniformLayout(ViewProjection, SunDirection, TerrainParams, TerrainSampling, RingParams)
 }
 
+/** First material-group binding a terrain surface may declare. 0-2 belong to [terrainClipmapVertexStage]. */
+const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
+
 /**
- * Draws a clipmap heightfield: geometry positioned per ring, displaced by sampling a heightmap
- * in the **vertex** stage, lit by one directional light.
+ * What [terrainClipmapVertexStage] hands a fragment stage.
  *
- * Deliberately not splatting. Four-layer weightmap blending is authored world policy and belongs
- * to a consuming pack (see [D28](../../../../../../../../docs/decisions/D28-open-world-framework-boundary.md));
- * displacing and lighting a heightfield is generic to any 3D engine. The practical consequence
- * is that this needs one `texture_2d`, not the `texture_2d_array` the retired hand-written
- * splat shader wanted -- so terrain draws without waiting on array-texture support.
+ * @property worldNormal Heightmap normal, interpolated; normalise before use.
+ * @property sunDirection `xyz` toward the light, `w` the ambient term.
+ * @property terrainParams [TerrainUniformLayout.TerrainParams]; `z` is the base grey.
+ * @property terrainSampling [TerrainUniformLayout.TerrainSampling]; `xy` is the heightmap's world
+ * footprint.
+ */
+class TerrainClipmapOutputs internal constructor(
+    val worldNormal: AslExpr,
+    private val exportedWorldPosition: AslExpr?,
+    val sunDirection: AslExpr,
+    val terrainParams: AslExpr,
+    val terrainSampling: AslExpr,
+) {
+    /**
+     * Displaced world position. A surface derives its texture coordinates from it, since the
+     * stage owns the varyings struct and a surface cannot add one.
+     */
+    val worldPosition: AslExpr
+        get() = exportedWorldPosition ?: throw AslDefinitionException(
+            "worldPosition was not exported; call terrainClipmapVertexStage(exportWorldPosition = true).",
+        )
+}
+
+/**
+ * Declares a clipmap heightfield's uniform block, heightmap bindings, varyings and vertex stage,
+ * and returns what a fragment stage reads.
+ *
+ * Every terrain shader shares this stage, so a surface shader writes only its fragment stage and
+ * declares its own bindings from [TERRAIN_SURFACE_FIRST_BINDING].
  *
  * **Ring level rides in the vertex colour channel.** The clipmap meshes are distinct geometry
  * per ring, so one instanced draw cannot cover them, and one draw per ring would need one
- * uniform block per ring. Merging them into a single mesh and tagging each vertex with its ring
- * level makes it one draw against one block, indexing [TerrainUniformLayout.RingParams]. The
- * colour channel is free: `TerrainClipmapGeometry` writes a constant `(1, 1, 1)` into every
- * vertex and nothing reads it.
+ * uniform block per ring. The merged mesh tags each vertex with its ring level, which indexes
+ * [TerrainUniformLayout.RingParams].
  *
- * The morph is kept -- it is geometry behaviour, snapping a vertex toward the coarser parent
- * grid as it approaches its ring's outer edge so an LOD transition does not pop. The splat
- * shader's `textureSample` becomes `textureSampleLevel` at mip 0: a vertex stage has no implicit
- * derivatives to pick a mip from, which is a compile error rather than a wrong picture.
+ * The morph snaps a vertex toward the coarser parent grid as it nears its ring's outer edge, so
+ * an LOD transition does not pop. Heights are read with `textureSampleLevel` at mip 0: a vertex
+ * stage has no implicit derivatives.
+ *
+ * @param exportWorldPosition Whether to pass [TerrainClipmapOutputs.worldPosition] to the fragment
+ * stage. Off only for a fragment stage that never reads it, which ASL rejects as dead.
  */
-/**
- * Reconstructs a 16-bit height from the two 8-bit channels it was split across.
- *
- * `r` carries the high byte and `g` the low one, so the value is `(r * 256 + g) / 65535` in byte
- * terms -- which, given a sampler hands back each channel already divided by 255, is
- * `(r * 256 + g) / 257`.
- *
- * **Bilinear filtering across the split is safe, and that is not obvious.** The hardware
- * interpolates the two channels independently, so where the high byte steps the low byte wraps
- * 255 -> 0 and interpolates the wrong way. The error that introduces is bounded by half a low
- * byte, `1/512` -- smaller than the `1/256` quantisation an 8-bit heightmap has *everywhere*. So
- * this is strictly better than the single-channel encoding it replaces, including at the
- * boundaries where it is least accurate.
- */
-internal fun decodeHeight(sample: AslExpr): AslExpr = (sample.x * 256f.lit + sample.y) / 257f.lit
-
-val TerrainShader: AslShaderDefinition = shader("terrain") {
+fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = true): TerrainClipmapOutputs {
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
     val u = uniformBlock("Uniforms", group = group, binding = 0)
     val handles = u.fieldsFrom(TerrainUniformLayout.Layout)
@@ -140,7 +153,12 @@ val TerrainShader: AslShaderDefinition = shader("terrain") {
 
     val out = varyings("VertexOutput")
     val worldNormal by out.varying(GpuDataShape.Vec3, location = 0)
-    val shade by out.varying(GpuDataShape.Vec3, location = 1)
+    val worldPosition = if (exportWorldPosition) {
+        val worldPosition by out.varying(GpuDataShape.Vec3, location = 1)
+        worldPosition
+    } else {
+        null
+    }
 
     vertex {
         val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
@@ -178,58 +196,97 @@ val TerrainShader: AslShaderDefinition = shader("terrain") {
             vec2(worldX / terrainSampling.x + 0.5f.lit, worldZ / terrainSampling.y + 0.5f.lit),
         )
 
-        // Vertex-stage sampling has no implicit derivatives, so the mip is explicit.
         val height = let(
             "height",
             decodeHeight(textureSampleLevel(heightmap, heightmapSampler, uv, 0f.lit)),
         )
-        val worldPosition = let(
-            "worldPosition",
+        val displaced = let(
+            "displaced",
             vec3(worldX, height * terrainParams.x + terrainParams.w, worldZ),
         )
 
-        // Central differences across one texel each way. The clipmap generators give every
-        // vertex the same upward normal, so without this a displaced heightfield lights as
-        // though it were flat. The height bias cancels in a difference, so only the scale
-        // applies. Sampled at mip 0 for the same reason the height itself is.
-        val stepU = let("stepU", terrainSampling.z)
-        val stepV = let("stepV", terrainSampling.w)
-        val heightLeft = let(
-            "heightLeft",
-            decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x - stepU, uv.y), 0f.lit)),
-        )
-        val heightRight = let(
-            "heightRight",
-            decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x + stepU, uv.y), 0f.lit)),
-        )
-        val heightDown = let(
-            "heightDown",
-            decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x, uv.y - stepV), 0f.lit)),
-        )
-        val heightUp = let(
-            "heightUp",
-            decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x, uv.y + stepV), 0f.lit)),
-        )
-        // World distance the two samples span on each axis.
-        val spanX = let("spanX", 2f.lit * stepU * terrainSampling.x)
-        val spanZ = let("spanZ", 2f.lit * stepV * terrainSampling.y)
-        val slopeX = let("slopeX", (heightRight - heightLeft) * terrainParams.x / spanX)
-        val slopeZ = let("slopeZ", (heightUp - heightDown) * terrainParams.x / spanZ)
-
-        out.position set viewProjection * vec4(worldPosition, 1f.lit)
-        worldNormal set normalize(vec3(-slopeX, 1f.lit, -slopeZ))
-        shade set vec3(terrainParams.z, terrainParams.z, terrainParams.z)
+        out.position set viewProjection * vec4(displaced, 1f.lit)
+        worldNormal set heightmapNormal(heightmap, heightmapSampler, uv, terrainSampling, terrainParams)
+        worldPosition?.let { it set displaced }
     }
 
+    return TerrainClipmapOutputs(worldNormal, worldPosition, sunDirection, terrainParams, terrainSampling)
+}
+
+/**
+ * Central differences across one texel each way. The clipmap generators give every vertex the
+ * same upward normal, so without this a displaced heightfield lights as though it were flat. The
+ * height bias cancels in a difference, so only the scale (`terrainParams.x`) applies.
+ */
+private fun AslBlockBuilder.heightmapNormal(
+    heightmap: AslExpr,
+    heightmapSampler: AslExpr,
+    uv: AslExpr,
+    terrainSampling: AslExpr,
+    terrainParams: AslExpr,
+): AslExpr {
+    val stepU = let("stepU", terrainSampling.z)
+    val stepV = let("stepV", terrainSampling.w)
+    val heightLeft = let(
+        "heightLeft",
+        decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x - stepU, uv.y), 0f.lit)),
+    )
+    val heightRight = let(
+        "heightRight",
+        decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x + stepU, uv.y), 0f.lit)),
+    )
+    val heightDown = let(
+        "heightDown",
+        decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x, uv.y - stepV), 0f.lit)),
+    )
+    val heightUp = let(
+        "heightUp",
+        decodeHeight(textureSampleLevel(heightmap, heightmapSampler, vec2(uv.x, uv.y + stepV), 0f.lit)),
+    )
+    // World distance the two samples span on each axis.
+    val spanX = let("spanX", 2f.lit * stepU * terrainSampling.x)
+    val spanZ = let("spanZ", 2f.lit * stepV * terrainSampling.y)
+    val slopeX = let("slopeX", (heightRight - heightLeft) * terrainParams.x / spanX)
+    val slopeZ = let("slopeZ", (heightUp - heightDown) * terrainParams.x / spanZ)
+    return normalize(vec3(-slopeX, 1f.lit, -slopeZ))
+}
+
+/**
+ * Reconstructs a 16-bit height from the two 8-bit channels it was split across.
+ *
+ * `r` carries the high byte and `g` the low one, so the value is `(r * 256 + g) / 65535` in byte
+ * terms -- which, given a sampler hands back each channel already divided by 255, is
+ * `(r * 256 + g) / 257`.
+ *
+ * **Bilinear filtering across the split is safe, and that is not obvious.** The hardware
+ * interpolates the two channels independently, so where the high byte steps the low byte wraps
+ * 255 -> 0 and interpolates the wrong way. The error that introduces is bounded by half a low
+ * byte, `1/512` -- smaller than the `1/256` quantisation an 8-bit heightmap has *everywhere*. So
+ * this is strictly better than the single-channel encoding it replaces, including at the
+ * boundaries where it is least accurate.
+ */
+internal fun decodeHeight(sample: AslExpr): AslExpr = (sample.x * 256f.lit + sample.y) / 257f.lit
+
+/**
+ * The engine's neutral terrain surface: the clipmap heightfield in a constant grey, lit by one
+ * directional light.
+ *
+ * Surface colour is authored world policy and belongs to a consuming pack (D28,
+ * `docs/architecture/decisions/D28-open-world-framework-boundary.md`); a pack supplies its own
+ * fragment stage over [terrainClipmapVertexStage].
+ */
+val TerrainShader: AslShaderDefinition = shader("terrain") {
+    val terrain = terrainClipmapVertexStage(exportWorldPosition = false)
+
     fragment {
-        val normal = let("normal", normalize(worldNormal))
+        val normal = let("normal", normalize(terrain.worldNormal))
         // Not negated: SceneLight.direction already points TOWARD the light, which is how every
-        // other lit shader in the pack reads it. The retired splat shader negated it -- the
-        // opposite convention, and never compiled, so nothing caught it.
-        val toLight = let("toLight", normalize(sunDirection.xyz))
-        val ambient = let("ambient", sunDirection.w)
+        // other lit shader in the pack reads it.
+        val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
+        val ambient = let("ambient", terrain.sunDirection.w)
         val diffuse = let("diffuse", max(dot(normal, toLight), 0f.lit))
         val lighting = let("lighting", ambient + (1f.lit - ambient) * diffuse)
-        colorOutput(vec4(shade * lighting, 1f.lit))
+        val base = let("base", terrain.terrainParams.z)
+        colorOutput(vec4(vec3(base, base, base) * lighting, 1f.lit))
     }
 }
