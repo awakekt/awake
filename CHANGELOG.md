@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **WebGPU consumers resolve the tested wgpu4k builds.** The WebGPU backend's published metadata named the floating io.ygdrasil SNAPSHOTs, so a consumer picked up webgpu-ktypes build 4, which does not match wgpu4k, and its web app stalled before the first frame with no error. The backend now publishes the pinned builds as dependency constraints.
+
 ## [0.1.0-alpha.8] - 2026-09-27
 
 ### Added
