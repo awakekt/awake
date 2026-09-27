@@ -54,7 +54,10 @@ abstract class ReleaseCutTask : DefaultTask() {
 
     private fun latestCoreTag(channel: String): String {
         val pattern = if (channel.isBlank()) "v[0-9]*" else "v[0-9]*-$channel.*"
-        return run("git", "describe", "--tags", "--match", pattern, "--abbrev=0", allowFailure = true)
+        // Every tag, not just those reachable from HEAD: a squash-merged release commit leaves its tag
+        // off main, and `git describe` would then re-cut an existing version.
+        return run("git", "tag", "--list", pattern, "--sort=-v:refname", allowFailure = true)
+            .lineSequence().firstOrNull().orEmpty()
     }
 
     private fun run(vararg command: String, allowFailure: Boolean = false): String {
