@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.vulkan
 
-import com.awakekt.awake.asset.shadercompiler.NagaShaderCompiler
 import com.awakekt.awake.asset.shaderdsl.lit
 import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.normalize
@@ -21,30 +20,17 @@ import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainContentFeature
-import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.aslShaderSet
-import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
-import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
-import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
-import com.awakekt.awake.vulkan.commands.TransferContext
-import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.material.Material
-import com.awakekt.awake.vulkan.pipeline.PipelineTable
-import com.awakekt.awake.vulkan.pipeline.RenderPipeline
-import com.awakekt.awake.vulkan.pipeline.ShaderPair
-import com.awakekt.awake.vulkan.pipeline.VulkanPipelineFactory
-import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
-import com.awakekt.awake.vulkan.renderer.Renderer
-import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import kotlinx.coroutines.runBlocking
 import org.junit.AfterClass
 import kotlin.test.Test
@@ -119,26 +105,17 @@ class RendererHeadlessContentAttachTest {
 
     private class Frame(val covered: Int, val green: Int)
 
-    private fun render(): Frame {
-        val renderer = shared().renderer
-        val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
-        try {
-            renderer.renderToTexture(
-                target,
-                Lens(
-                    eye = Vec3f(0f, EYE_HEIGHT, EYE_DISTANCE),
-                    center = Vec3f(0f, 0f, 0f),
-                    fovYRadians = 1f,
-                    near = 0.1f,
-                    far = 500f,
-                ),
-                emptyList(),
-            )
-            return count(runBlocking { renderer.readPixels(target) }.data)
-        } finally {
-            target.destroy()
-        }
-    }
+    private fun render(): Frame = count(
+        shared().render(
+            Lens(
+                eye = Vec3f(0f, EYE_HEIGHT, EYE_DISTANCE),
+                center = Vec3f(0f, 0f, 0f),
+                fovYRadians = 1f,
+                near = 0.1f,
+                far = 500f,
+            ),
+        ),
+    )
 
     /** Non-clear pixels, and how many of them are layer 1's green. */
     private fun count(pixels: ByteArray): Frame {
@@ -155,14 +132,10 @@ class RendererHeadlessContentAttachTest {
         return Frame(covered, green)
     }
 
-    private class Fixture(val renderer: Renderer, val attacher: ContentFeatureAttacher<RenderPipeline>)
-
     private companion object {
         val CONFIG = TerrainClipmapConfig(ringCount = 2, ringResolution = 16, baseSpacing = 1f)
 
         const val SAMPLES = 16
-        const val TARGET_SIZE = 128
-        const val MAX_FRAMES_IN_FLIGHT = 1
         const val BYTES_PER_PIXEL = 4
         const val CLEAR_TOLERANCE = 12
         const val EYE_HEIGHT = 6f
@@ -220,79 +193,15 @@ class RendererHeadlessContentAttachTest {
             },
         )
 
-        private var fixture: Fixture? = null
-        private var cachedDevice: GraphicsDevice? = null
-        private var cachedCleanup: (() -> Unit)? = null
+        private var fixture: HeadlessContentAttachFixture? = null
 
-        fun shared(): Fixture {
-            fixture?.let { return it }
-
-            val graphicsDevice = GraphicsDevice().also { cachedDevice = it }
-            graphicsDevice.createHeadless()
-            val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
-            swapchainManager.createHeadless(TARGET_SIZE, TARGET_SIZE)
-            val material = Material(graphicsDevice)
-            val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
-            val transferContext = TransferContext(graphicsDevice)
-            val registry = PipelineRegistry(
-                VulkanPipelineFactory(
-                    graphicsDevice = graphicsDevice,
-                    swapchainManager = swapchainManager,
-                    renderPass = sceneRenderPass,
-                    descriptorSetLayout = material.descriptorSetLayout,
-                    framesInFlight = MAX_FRAMES_IN_FLIGHT,
-                    loadShaders = { spec ->
-                        NagaShaderCompiler.wgslToSpirv(spec.vertexShader.resolveBytes().decodeToString())
-                            .let { ShaderPair(it, it) }
-                    },
-                ),
-            )
-            val attacher = ContentFeatureAttacher(VulkanContentFeatureGpu(graphicsDevice, transferContext, registry))
-
-            // Required by Renderer; nothing draws through it, since the test issues no draw calls.
-            val primary = RenderPipeline(
-                graphicsDevice,
-                swapchainManager,
-                sceneRenderPass,
-                material.descriptorSetLayout,
-                runBlocking { packShaderPair("triangle") },
-                VertexFormat.PositionColorUv,
-                vertexEntryPoint = "vertexMain",
-                fragmentEntryPoint = "fragmentMain",
-            )
-            val renderer = Renderer(
-                graphicsDevice = graphicsDevice,
-                swapchainManager = swapchainManager,
-                pipelines = PipelineTable(primary = primary, primaryFormat = VertexFormat.PositionColorUv),
-                uiShaderPairs = runBlocking { defaultUiShaderPairs() },
-                transferContext = transferContext,
-                renderFeatures = listOf(attacher.beforeGeometry, attacher.afterGeometry),
-                maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
-            )
-            val cleanup = headlessCleanup(
-                graphicsDevice,
-                transferContext,
-                sceneRenderPass,
-                material.descriptorSetLayout,
-                primary,
-            )
-            cachedCleanup = {
-                registry.destroyAll { it.destroy() }
-                attacher.releaseAll()
-                cleanup()
-            }
-            return Fixture(renderer, attacher).also { fixture = it }
-        }
+        fun shared(): HeadlessContentAttachFixture = fixture ?: HeadlessContentAttachFixture.create().also { fixture = it }
 
         @AfterClass
         @JvmStatic
         fun releaseSharedRenderer() {
-            fixture?.renderer?.destroy()
+            fixture?.release()
             fixture = null
-            cachedCleanup?.invoke()
-            cachedCleanup = null
-            cachedDevice?.destroy()
-            cachedDevice = null
         }
     }
 }
