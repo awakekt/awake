@@ -26,12 +26,19 @@ data class TextStyle(
         val Default = TextStyle()
     }
 
-    infix fun then(other: TextStyle): TextStyle = TextStyle(
-        color = other.color ?: color,
-        size = other.size ?: size,
-        lineHeight = other.lineHeight ?: lineHeight,
-        scale = other.scale,
-        weight = other.weight,
-        letterSpacing = other.letterSpacing,
-    )
+    infix fun then(other: TextStyle): TextStyle {
+        val mergedColor = other.color ?: color
+        val mergedSize = other.size ?: size
+        val mergedLineHeight = other.lineHeight ?: lineHeight
+        // A merge that changes nothing returns an instance that already exists. Every Text merges
+        // its style over the inherited one every frame, and most of those merges are no-ops.
+        val isOther = mergedColor == other.color && mergedSize == other.size && mergedLineHeight == other.lineHeight
+        val keepsOwnFields = mergedColor == color && mergedSize == size && mergedLineHeight == lineHeight
+        val keepsOwnRest = other.scale == scale && other.weight == weight && other.letterSpacing == letterSpacing
+        return when {
+            isOther -> other
+            keepsOwnFields && keepsOwnRest -> this
+            else -> TextStyle(mergedColor, mergedSize, mergedLineHeight, other.scale, other.weight, other.letterSpacing)
+        }
+    }
 }
