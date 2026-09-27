@@ -22,8 +22,8 @@ const val MAX_LAYER_TILING: Float = 64f
  * @property albedo Colour image, repeated across the terrain. Its alpha is ignored.
  * @property height Optional greyscale image driving height blending; without one the layer is flat.
  * @property tiling World units one repeat of [albedo] covers, within [MIN_LAYER_TILING]..[MAX_LAYER_TILING].
- * @property blendSharpness How far this layer's [height] lifts it over its neighbours: 0 ignores the
- * height image, 1 lets a raised surface (stones in sand) cover its neighbour where they meet.
+ * @property blendSharpness 0 blends linearly by weight, as most legacy terrain formats do; 1 lets
+ * the surface standing higher by weight plus [height] cover its neighbour where they meet.
  * @property physicalMaterial Opaque id for gameplay (footsteps, friction); the renderer ignores it.
  */
 @Serializable
