@@ -1,0 +1,422 @@
+<!--
+  SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Samples · AwakeKt Engine</title>
+  <meta name="description" content="Run AwakeKt Engine samples in the browser: a WebGPU scene showcase and the Awake UI component gallery, compiled from Kotlin to WebAssembly.">
+  <link rel="icon" href="awake-mark.svg" type="image/svg+xml">
+  <script>
+    // Same theme key as awakekt.com, so a choice made there carries over.
+    document.documentElement.dataset.theme = localStorage.getItem("awake-theme") === "dark" ? "dark" : "light";
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Ember Signal palette (docs/reference/brand-system.md), shared with website/landing. */
+      --field-0: #10131A;
+      --field-1: #15151C;
+      --ember: #FF6B35;
+      --gold: #FFD166;
+
+      --text: #ECEAE6;
+      --text-muted: #A7A3AD;
+      --text-faint: #7E7A86;
+      --line: rgba(236, 234, 230, 0.09);
+      --line-strong: rgba(236, 234, 230, 0.16);
+      --line-hover: rgba(236, 234, 230, 0.30);
+      --surface: var(--field-1);
+
+      --radius-control: 8px;
+      --radius-panel: 12px;
+
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-7: 48px;
+      --space-8: 72px;
+
+      --bg: var(--field-0);
+      --accent-text: var(--gold);
+
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --sans: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    }
+
+    :root[data-theme="dark"] { color-scheme: dark; }
+    :root:not([data-theme="dark"]) {
+      --bg: #F6F6F7;
+      --surface: #FFFFFF;
+      --text: #16161C;
+      --text-muted: #4E4A55;
+      --text-faint: #66626D;
+      --line: rgba(22, 22, 28, 0.10);
+      --line-strong: rgba(22, 22, 28, 0.20);
+      --line-hover: rgba(22, 22, 28, 0.36);
+      --accent-text: #9A6500;
+      color-scheme: light;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 400 17px/1.6 var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    code { font: 400 0.88em/1 var(--mono); }
+
+    :focus-visible {
+      outline: 2px solid var(--accent-text);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    .skip {
+      position: absolute;
+      left: var(--space-4);
+      top: -48px;
+      padding: var(--space-2) var(--space-3);
+      background: #FFD166;
+      color: #10131A;
+      border-radius: var(--radius-control);
+      z-index: 10;
+    }
+    .skip:focus { top: var(--space-4); }
+
+    .wrap {
+      width: min(1120px, 100% - 2 * var(--space-5));
+      margin-inline: auto;
+    }
+
+    /* Header */
+    .site-header { border-bottom: 1px solid var(--line); }
+    .site-header .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-5);
+      height: 64px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand .section { color: var(--text-faint); font-weight: 400; }
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-5);
+      font-size: 15px;
+    }
+    .nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 150ms ease;
+    }
+    .theme-toggle {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-control);
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: transform 140ms var(--ease-out), color 150ms ease;
+    }
+    .theme-toggle:active { transform: scale(0.97); }
+    .theme-toggle svg { width: 18px; height: 18px; }
+    .theme-toggle .icon-sun { display: none; }
+    :root:not([data-theme="dark"]) .theme-toggle .icon-sun { display: block; }
+    :root:not([data-theme="dark"]) .theme-toggle .icon-moon { display: none; }
+
+    /* Intro */
+    .intro { padding-block: var(--space-8) var(--space-7); }
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 4.2vw, 48px);
+      line-height: 1.12;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+    .lede {
+      margin: var(--space-4) 0 0;
+      max-width: 36em;
+      color: var(--text-muted);
+      font-size: 18px;
+    }
+    .gpu-status {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      margin: var(--space-5) 0 0;
+      font-size: 14px;
+      color: var(--text-faint);
+    }
+    .gpu-status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-faint);
+      flex: none;
+    }
+    .gpu-status[data-state="ok"]::before { background: #3BB273; }
+    .gpu-status[data-state="missing"] { color: var(--text-muted); }
+    .gpu-status[data-state="missing"]::before { background: var(--ember); }
+
+    /* Sample cards */
+    .samples {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-5);
+      margin: 0;
+      padding: 0 0 var(--space-8);
+      list-style: none;
+    }
+    .card {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-panel);
+      overflow: hidden;
+      text-decoration: none;
+      transition: border-color 150ms ease, transform 160ms var(--ease-out);
+    }
+    .card:active { transform: scale(0.99); }
+    .card img {
+      display: block;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 1200 / 702;
+      object-fit: cover;
+      background: #050816;
+      border-bottom: 1px solid var(--line);
+    }
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      padding: var(--space-5);
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.3;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .card p { margin: var(--space-2) 0 0; color: var(--text-muted); }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: var(--space-4) 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .tags li {
+      padding: 2px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font: 400 12.5px/1.6 var(--mono);
+      color: var(--text-faint);
+    }
+    .open {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: auto;
+      padding-top: var(--space-5);
+      font-weight: 500;
+      color: var(--accent-text);
+    }
+    .open svg { width: 16px; height: 16px; transition: transform 160ms var(--ease-out); }
+
+    .site-footer {
+      border-top: 1px solid var(--line);
+      padding-block: var(--space-6);
+      color: var(--text-faint);
+      font-size: 14px;
+    }
+    .site-footer .wrap {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+    .site-footer nav { display: flex; gap: var(--space-5); }
+    .site-footer a { color: var(--text-muted); text-decoration: none; transition: color 150ms ease; }
+
+    @media (hover: hover) and (pointer: fine) {
+      .nav a:hover, .site-footer a:hover, .theme-toggle:hover { color: var(--text); }
+      .card:hover { border-color: var(--line-hover); }
+      .card:hover .open svg { transform: translateX(3px); }
+    }
+
+    /* One-time entrance for the intro and cards. */
+    .reveal {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: reveal 280ms var(--ease-out) forwards;
+    }
+    .intro .reveal:nth-child(2) { animation-delay: 60ms; }
+    .intro .reveal:nth-child(3) { animation-delay: 120ms; }
+    .samples .reveal { animation-delay: 140ms; }
+    .samples li:nth-child(2) .reveal { animation-delay: 200ms; }
+    @keyframes reveal { to { opacity: 1; transform: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { animation: none; opacity: 1; transform: none; }
+      .card, .theme-toggle { transition: border-color 150ms ease, color 150ms ease; }
+      .card:active, .theme-toggle:active { transform: none; }
+      .open svg { transition: none; }
+      .card:hover .open svg { transform: none; }
+    }
+
+    @media (max-width: 800px) {
+      .samples { grid-template-columns: 1fr; }
+      .intro { padding-block: var(--space-7) var(--space-6); }
+    }
+    @media (max-width: 560px) {
+      .nav a:not(.nav-docs) { display: none; }
+      .brand .section { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="https://awakekt.com/">
+        <img src="awake-mark.svg" alt="" width="28" height="28">
+        <span>AwakeKt Engine <span class="section">/ Samples</span></span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a class="nav-docs" href="https://docs.awakekt.com/">Docs</a>
+        <a href="https://github.com/awakekt/awake">GitHub</a>
+        <button class="theme-toggle" type="button" aria-label="Switch to light theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <div class="intro">
+      <h1 class="reveal">Samples</h1>
+      <p class="lede reveal">Two apps built with AwakeKt Engine, compiled from Kotlin to WebAssembly and rendered with WebGPU right in this tab.</p>
+      <p class="gpu-status reveal" role="status">Checking for WebGPU…</p>
+    </div>
+
+    <ul class="samples">
+      <li>
+        <a class="card reveal" href="./engine/">
+          <img src="engine-preview.webp" alt="Point lights scene: three cubes on a floor lit by red, green and blue lights, with the showcase menu and frame diagnostics" width="1200" height="702">
+          <div class="card-body">
+            <h2>Engine showcase</h2>
+            <p>Scenes that exercise the renderer, animation, physics, and navigation. Toggle debug views and read frame timings live.</p>
+            <ul class="tags" aria-label="Scenes">
+              <li>Point lights</li>
+              <li>Cascaded shadows</li>
+              <li>Heightfield terrain</li>
+              <li>glTF viewer</li>
+              <li>Skinned mesh</li>
+              <li>Instancing</li>
+              <li>Navigation</li>
+              <li>Particles</li>
+            </ul>
+            <span class="open">Open engine showcase
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </div>
+        </a>
+      </li>
+      <li>
+        <a class="card reveal" href="./ui/">
+          <img src="ui-preview.webp" alt="UI showcase: a sidebar of components next to an Aspect Ratio example with preview and code tabs" width="1200" height="702">
+          <div class="card-body">
+            <h2>UI showcase</h2>
+            <p>The Awake UI component gallery. Every component is laid out and drawn by the engine, with examples and notes beside each one.</p>
+            <ul class="tags" aria-label="Component groups">
+              <li>Inputs</li>
+              <li>Layout</li>
+              <li>Overlays</li>
+              <li>Status</li>
+              <li>Typography</li>
+              <li>Blocks</li>
+            </ul>
+            <span class="open">Open UI showcase
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </span>
+          </div>
+        </a>
+      </li>
+    </ul>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>Source in <code>samples/</code> on GitHub. Apache-2.0.</span>
+      <nav aria-label="Footer">
+        <a href="https://awakekt.com/">Home</a>
+        <a href="https://docs.awakekt.com/">Docs</a>
+        <a href="https://github.com/awakekt/awake/tree/main/samples">Sample source</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector(".theme-toggle");
+    const syncToggleLabel = () => {
+      const light = document.documentElement.dataset.theme === "light";
+      toggle.setAttribute("aria-label", light ? "Switch to dark theme" : "Switch to light theme");
+    };
+    syncToggleLabel();
+    toggle.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("awake-theme", next);
+      syncToggleLabel();
+    });
+
+    const status = document.querySelector(".gpu-status");
+    const report = (ok) => {
+      status.dataset.state = ok ? "ok" : "missing";
+      status.textContent = ok
+        ? "WebGPU is available in this browser."
+        : "WebGPU isn't available here. Try a current Chrome or Edge, or Safari 26 or later.";
+    };
+    if (!navigator.gpu) {
+      report(false);
+    } else {
+      navigator.gpu.requestAdapter().then((adapter) => report(adapter != null), () => report(false));
+    }
+  </script>
+</body>
+</html>

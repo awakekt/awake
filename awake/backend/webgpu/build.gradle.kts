@@ -131,6 +131,7 @@ kotlin {
         named("wasmJsMain") {
             dependencies {
                 implementation(libs.kotlinx.browser)
+                implementation(project(":awake:core:logging"))
             }
         }
     }

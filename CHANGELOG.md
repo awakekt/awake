@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Unchanged text is no longer re-shaped every frame.** Each `Text` node keeps its last measurement and glyph run on its retained paint node and reuses them while the text, style, font and density are unchanged, and `TextStyle.then` returns an existing instance when a merge changes nothing. `TextFrameProbe` (60 labels) went from 293 KB to 126 KB allocated per frame (layout 110 KB to 5 KB) and from 0.29 ms to 0.16 ms, with rendered output unchanged; the node-graph canvas editor view fell from 451 KB to about 260 KB.
 - **WebGPU consumers resolve the tested wgpu4k builds.** The WebGPU backend's published metadata named the floating io.ygdrasil SNAPSHOTs, so a consumer picked up webgpu-ktypes build 4, which does not match wgpu4k, and its web app stalled before the first frame with no error. The backend now publishes the pinned builds as dependency constraints.
+- **WebGPU startup failures reach the browser console.** `GraphicsEngine` reports a failed start through `Log`, which has no sink on the web by default, so a failure left a black canvas and an empty console. `launchWebGpuGame` now installs a `PrintLogSink` at warning level when the app has not installed one.
+- **The hosted engine showcase renders again.** The samples site shipped only each showcase's `index.html` from its processed resources, so models, scenes and textures were missing and the engine showcase stayed black. The site now ships every processed resource, caches only content-hashed `.wasm` as immutable, and has a redesigned index page matching awakekt.com.
 
 ## [0.1.0-alpha.8] - 2026-09-27
 

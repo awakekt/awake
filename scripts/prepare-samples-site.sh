@@ -39,14 +39,13 @@ mkdir -p "$site_dir/engine" "$site_dir/ui"
 cp -R "$engine_dist/." "$site_dir/engine/"
 cp -R "$ui_dist/." "$site_dir/ui/"
 
-# The webpack output directory contains the JS/Wasm bundle; the HTML entry point is a processed
-# resource and is emitted beside it only for some Kotlin plugin versions.
-if [[ -f samples/engine-showcase/build/processedResources/wasmJs/main/index.html ]]; then
-  cp samples/engine-showcase/build/processedResources/wasmJs/main/index.html "$site_dir/engine/index.html"
-fi
-if [[ -f samples/ui-showcase/build/processedResources/wasmJs/main/index.html ]]; then
-  cp samples/ui-showcase/build/processedResources/wasmJs/main/index.html "$site_dir/ui/index.html"
-fi
+# The webpack output holds only the JS/Wasm bundle. index.html and the runtime assets (models,
+# scenes, textures) are processed resources; without them Pages answers each asset request with
+# its HTML fallback.
+for sample in engine:engine-showcase ui:ui-showcase; do
+  resources="samples/${sample#*:}/build/processedResources/wasmJs/main"
+  [[ -d "$resources" ]] && cp -R "$resources/." "$site_dir/${sample%%:*}/"
+done
 
 for bundle_dir in "$site_dir/engine" "$site_dir/ui"; do
   bundle_js="$(find "$bundle_dir" -maxdepth 1 -type f -name '*.js' ! -name '*.map' -print -quit)"
@@ -59,37 +58,14 @@ for bundle_dir in "$site_dir/engine" "$site_dir/ui"; do
   done
 done
 
-cat > "$site_dir/index.html" <<'EOF'
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Awake Engine Samples</title>
-  <style>
-    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #050816; color: #f5f7ff; }
-    main { width: min(42rem, calc(100% - 3rem)); }
-    a { color: #9cc5ff; }
-    li { margin: 0.8rem 0; }
-  </style>
-</head>
-<body>
-  <main>
-    <h1>Awake Engine Samples</h1>
-    <ul>
-      <li><a href="./engine/">Engine Showcase</a> — WebGPU rendering and scene samples</li>
-      <li><a href="./ui/">UI Showcase</a> — Awake UI component gallery</li>
-    </ul>
-  </main>
-</body>
-</html>
-EOF
+# The index page lives in website/samples; the mark is shared with the landing page.
+cp website/samples/* "$site_dir/"
+cp website/landing/awake-mark.svg "$site_dir/"
 
 cat > "$site_dir/_headers" <<'EOF'
-/engine/*
+/engine/*.wasm
   Cache-Control: public, max-age=31536000, immutable
-/ui/*
+/ui/*.wasm
   Cache-Control: public, max-age=31536000, immutable
 EOF
 
