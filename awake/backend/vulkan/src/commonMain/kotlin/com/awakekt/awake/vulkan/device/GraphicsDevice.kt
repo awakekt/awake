@@ -43,6 +43,10 @@ class GraphicsDevice {
     var graphicsQueue: Long = 0
     var presentQueue: Long = 0
 
+    /** Whether the logical device loaded `VK_KHR_swapchain`, which headless devices do only if offered. */
+    internal var swapchainExtensionEnabled = false
+        private set
+
     private var nativeWindow: Any? = null
     private var failOnValidationError = false
     private val validationErrors = mutableListOf<String>()
@@ -207,7 +211,9 @@ class GraphicsDevice {
         // losing anything real (the plain, no-layer `deviceExtensions` query above already
         // returns the physical device's actual extension list).
         val requiredDeviceExtensions = buildList {
-            if (surface != 0L) add("VK_KHR_swapchain")
+            // Headless too when the device has it: presentable headless images end each frame in
+            // PRESENT_SRC_KHR, a layout only this extension defines.
+            if (surface != 0L || SWAPCHAIN_EXTENSION in availableDeviceExtensions) add(SWAPCHAIN_EXTENSION)
             if ("VK_KHR_portability_subset" in availableDeviceExtensions) {
                 add("VK_KHR_portability_subset")
             }
@@ -223,6 +229,7 @@ class GraphicsDevice {
             ppEnabledExtensionNames = requiredDeviceExtensions.toTypedArray(),
         )
         device = Vulkan.vkCreateDevice(physicalDevice, deviceInfo)
+        swapchainExtensionEnabled = SWAPCHAIN_EXTENSION in requiredDeviceExtensions
 
         graphicsQueue = Vulkan.vkGetDeviceQueue(device, indices.graphicsFamily!!, 0)
         presentQueue = Vulkan.vkGetDeviceQueue(device, indices.presentFamily!!, 0)
@@ -245,6 +252,8 @@ class GraphicsDevice {
     private fun VkDebugUtilsMessageSeverityFlagBitsEXT.isValidationError(): Boolean =
         this == VkDebugUtilsMessageSeverityFlagBitsEXT.VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
 }
+
+private const val SWAPCHAIN_EXTENSION = "VK_KHR_swapchain"
 
 /** The Khronos validation layer, the only instance layer this engine asks for. */
 internal const val VALIDATION_LAYER = "VK_LAYER_KHRONOS_validation"

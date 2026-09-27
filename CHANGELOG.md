@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Headless presentable Vulkan rendering is valid.** `VulkanEngine` boots a `HeadlessSurface` into stand-in images that end each frame in `PRESENT_SRC_KHR`, but headless devices never enabled `VK_KHR_swapchain`, so every render pass using that layout was invalid (VUID-VkAttachmentDescription-finalLayout-parameter). Headless devices now enable it when offered, and presentable mode refuses a device without it. Teardown no longer calls `vkDestroySwapchainKHR` with no swapchain, which crashed the JVM on such a device, and `readPresentedPixels` reads the image `draw` wrote instead of inferring it from the frame slot, which was wrong whenever frames in flight differed from the image count.
+
 ## [0.1.0-alpha.7] - 2026-09-27
 
 ### Added
