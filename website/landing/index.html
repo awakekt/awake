@@ -1,0 +1,523 @@
+<!--
+  SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AwakeKt Engine: a Kotlin Multiplatform engine for 2D and 3D apps</title>
+  <meta name="description" content="A code-first Kotlin Multiplatform engine: scenes, Vulkan and WebGPU rendering, Jolt physics, and retained UI for desktop, Android, iOS, and the web.">
+  <link rel="icon" href="awake-mark.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Ember Signal palette (docs/reference/brand-system.md). */
+      --field-0: #10131A;
+      --field-1: #15151C;
+      --field-2: #24202A;
+      --ember: #FF6B35;
+      --ember-deep: #D9482B;
+      --gold: #FFD166;
+      --gold-soft: #FFE29A;
+      --amber: #FF9F1C;
+
+      --text: #ECEAE6;
+      --text-muted: #A7A3AD;
+      --text-faint: #7E7A86;
+      --line: rgba(236, 234, 230, 0.09);
+      --line-strong: rgba(236, 234, 230, 0.16);
+
+      --radius-control: 8px;
+      --radius-panel: 12px;
+
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-7: 48px;
+      --space-8: 72px;
+      --space-9: 112px;
+
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --sans: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      background: var(--field-0);
+      color: var(--text);
+      font: 400 17px/1.6 var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+
+    :not(pre) > code {
+      font: 400 0.88em/1 var(--mono);
+      color: var(--text);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+      border-radius: 4px;
+    }
+
+    .skip {
+      position: absolute;
+      left: var(--space-4);
+      top: -48px;
+      padding: var(--space-2) var(--space-3);
+      background: var(--gold);
+      color: var(--field-0);
+      border-radius: var(--radius-control);
+      z-index: 10;
+    }
+    .skip:focus { top: var(--space-4); }
+
+    .wrap {
+      width: min(1120px, 100% - 2 * var(--space-5));
+      margin-inline: auto;
+    }
+
+    /* Header */
+    .site-header {
+      border-bottom: 1px solid var(--line);
+    }
+    .site-header .wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-5);
+      height: 64px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+    }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: var(--space-5);
+      font-size: 15px;
+    }
+    .nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 150ms ease;
+    }
+    .nav .version {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text-faint);
+    }
+
+    /* Hero */
+    .hero {
+      padding-block: var(--space-9) var(--space-8);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+      gap: var(--space-8);
+      align-items: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 4.2vw, 48px);
+      line-height: 1.12;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      max-width: 15ch;
+    }
+    .lede {
+      margin: var(--space-5) 0 0;
+      max-width: 34em;
+      color: var(--text-muted);
+      font-size: 18px;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      margin-top: var(--space-6);
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 var(--space-5);
+      border-radius: var(--radius-control);
+      font-weight: 500;
+      font-size: 16px;
+      text-decoration: none;
+      transition: transform 140ms var(--ease-out), background-color 150ms ease, border-color 150ms ease;
+    }
+    .button:active { transform: scale(0.97); }
+    .button-primary { background: var(--ember); color: var(--field-0); }
+    .button-secondary { border: 1px solid var(--line-strong); color: var(--text); }
+    .alpha-note {
+      margin: var(--space-4) 0 0;
+      font-size: 14px;
+      color: var(--text-faint);
+    }
+
+    /* Code panels */
+    .code {
+      margin: 0;
+      background: var(--field-1);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-panel);
+      overflow: hidden;
+    }
+    .code-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--line);
+      font: 400 13px/1 var(--mono);
+      color: var(--text-faint);
+    }
+    .code pre {
+      margin: 0;
+      padding: var(--space-5);
+      overflow-x: auto;
+      font: 400 14px/1.7 var(--mono);
+      color: var(--text);
+      tab-size: 4;
+    }
+    .tok-k { color: var(--amber); }
+    .tok-s { color: var(--gold); }
+    .tok-n { color: var(--gold-soft); }
+    .tok-c { color: var(--text-faint); }
+    .copy {
+      font: inherit;
+      color: var(--text-muted);
+      background: none;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: transform 140ms var(--ease-out), color 150ms ease;
+    }
+    .copy:active { transform: scale(0.97); }
+
+    /* Sections */
+    section { padding-block: var(--space-8); border-top: 1px solid var(--line); }
+    h2 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.25;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .section-lede {
+      margin: var(--space-3) 0 0;
+      max-width: 38em;
+      color: var(--text-muted);
+    }
+
+    .layers {
+      margin: var(--space-6) 0 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid var(--line);
+    }
+    .layers li {
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr) minmax(0, 1fr);
+      gap: var(--space-5);
+      padding-block: var(--space-5);
+      border-bottom: 1px solid var(--line);
+      align-items: baseline;
+    }
+    .layers h3 { margin: 0; font-size: 17px; font-weight: 600; }
+    .layers p { margin: 0; color: var(--text-muted); }
+    .layers code {
+      font: 400 13.5px/1.7 var(--mono);
+      color: var(--text-faint);
+    }
+
+    .platforms {
+      margin-top: var(--space-6);
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border: 1px solid var(--line);
+      border-radius: var(--radius-panel);
+      overflow: hidden;
+    }
+    .platform { padding: var(--space-5); }
+    .platform + .platform { border-left: 1px solid var(--line); }
+    .platform h3 { margin: 0; font-size: 17px; font-weight: 600; }
+    .platform p { margin: var(--space-2) 0 0; color: var(--text-muted); font-size: 15px; }
+    .platform .backend { font-family: var(--mono); font-size: 13.5px; color: var(--gold); }
+    .footnote { margin: var(--space-4) 0 0; font-size: 14px; color: var(--text-faint); max-width: 44em; }
+
+    .install {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: var(--space-7);
+      align-items: start;
+    }
+    .install ol { margin: var(--space-5) 0 0; padding-left: 1.2em; color: var(--text-muted); }
+    .install li + li { margin-top: var(--space-2); }
+    .install a { color: var(--gold); text-underline-offset: 3px; }
+
+    .studio {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-5);
+    }
+    .studio p { margin: var(--space-2) 0 0; color: var(--text-muted); max-width: 40em; }
+
+    .site-footer {
+      border-top: 1px solid var(--line);
+      padding-block: var(--space-6);
+      color: var(--text-faint);
+      font-size: 14px;
+    }
+    .site-footer .wrap {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+    .site-footer nav { display: flex; gap: var(--space-5); }
+    .site-footer a { color: var(--text-muted); text-decoration: none; transition: color 150ms ease; }
+
+    @media (hover: hover) and (pointer: fine) {
+      .nav a:hover, .site-footer a:hover { color: var(--text); }
+      .button-primary:hover { background: #FF7D4D; }
+      .button-secondary:hover { border-color: rgba(236, 234, 230, 0.32); }
+      .copy:hover { color: var(--text); }
+    }
+
+    /* One-time entrance for the hero only. */
+    .reveal {
+      opacity: 0;
+      transform: translateY(8px);
+      animation: reveal 280ms var(--ease-out) forwards;
+    }
+    .reveal:nth-child(2) { animation-delay: 60ms; }
+    .reveal:nth-child(3) { animation-delay: 120ms; }
+    .reveal:nth-child(4) { animation-delay: 180ms; }
+    .hero .code.reveal { animation-delay: 120ms; }
+    @keyframes reveal { to { opacity: 1; transform: none; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { animation: none; opacity: 1; transform: none; }
+      .button, .copy { transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease; }
+      .button:active, .copy:active { transform: none; }
+    }
+
+    @media (max-width: 900px) {
+      .hero, .install { grid-template-columns: 1fr; gap: var(--space-7); }
+      .hero { padding-block: var(--space-8) var(--space-7); }
+      .layers li { grid-template-columns: 1fr; gap: var(--space-2); }
+      .platforms { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .platform:nth-child(3) { border-left: 0; }
+      .platform:nth-child(n + 3) { border-top: 1px solid var(--line); }
+      .nav .version { display: none; }
+    }
+    @media (max-width: 560px) {
+      .code pre { font-size: 12.5px; padding: var(--space-4); }
+      .nav a:not(.nav-docs) { display: none; }
+      .platforms { grid-template-columns: 1fr; }
+      .platform + .platform { border-left: 0; border-top: 1px solid var(--line); }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="./">
+        <img src="awake-mark.svg" alt="" width="28" height="28">
+        <span>AwakeKt Engine</span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <span class="version">v0.1.0-alpha.7</span>
+        <a class="nav-docs" href="https://docs.awakekt.com/">Docs</a>
+        <a href="https://demo.awakekt.com/">Samples</a>
+        <a href="https://github.com/awakekt/awake">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap hero">
+      <div>
+        <h1 class="reveal">A Kotlin engine for 2D and 3D apps</h1>
+        <p class="lede reveal">Write scenes, systems, and UI in Kotlin. Awake renders with Vulkan and WebGPU, simulates
+          with Jolt, and keeps platform code at the edge, so the same app runs on desktop, Android, iOS,
+          and the web.</p>
+        <div class="actions reveal">
+          <a class="button button-primary" href="https://docs.awakekt.com/getting-started/">Get started</a>
+          <a class="button button-secondary" href="https://demo.awakekt.com/">Open the samples</a>
+        </div>
+        <p class="alpha-note reveal">Early alpha. APIs and published modules can change between releases.</p>
+      </div>
+
+      <figure class="code reveal" aria-label="Example Awake app">
+        <div class="code-bar"><span>HarborApp.kt</span></div>
+<pre><code><span class="tok-k">val</span> cube = <span class="tok-n">generate</span> { <span class="tok-n">cube</span>(colored = <span class="tok-k">true</span>) }
+
+<span class="tok-k">val</span> game = <span class="tok-n">app</span> {
+    <span class="tok-n">window</span> {
+        title = <span class="tok-s">"Harbor"</span>
+        <span class="tok-n">size</span>(1280, 720)
+        backend.<span class="tok-n">vulkan</span>()
+    }
+    <span class="tok-n">scene</span>(<span class="tok-s">"harbor"</span>) {
+        <span class="tok-n">assets</span> {
+            <span class="tok-n">mesh</span>(<span class="tok-s">"cube"</span>) { renderer.<span class="tok-n">createMesh</span>(cube) }
+        }
+        <span class="tok-n">fixedSystem</span>(<span class="tok-s">"spin"</span>) { <span class="tok-n">SpinSystem</span>() }
+    }
+}</code></pre>
+      </figure>
+    </div>
+
+    <section aria-labelledby="layers-title">
+      <div class="wrap">
+        <h2 id="layers-title">Take the parts you need</h2>
+        <p class="section-lede">Awake is a set of small modules, not one framework. Start with the runtime and add scenes,
+          rendering, physics, or UI as the app grows.</p>
+        <ul class="layers">
+          <li>
+            <h3>Runtime</h3>
+            <p>Application lifecycle and platform startup behind one <code>app { }</code> entry point.</p>
+            <code>engine:bootstrap · engine:platform</code>
+          </li>
+          <li>
+            <h3>Scenes</h3>
+            <p>A sparse-set ECS with transforms, cameras, lights, and scene documents you can save and load.</p>
+            <code>ecs · scene:scene3d · scene:document</code>
+          </li>
+          <li>
+            <h3>Rendering</h3>
+            <p>Backend-neutral render passes over Vulkan and WebGPU. Shaders are WGSL, compiled at runtime where needed.</p>
+            <code>engine:render:* · backend:vulkan · backend:webgpu</code>
+          </li>
+          <li>
+            <h3>Physics</h3>
+            <p>Rigid bodies, shapes, and a character controller, backed by Jolt on native targets.</p>
+            <code>physics:api · backend:jolt</code>
+          </li>
+          <li>
+            <h3>UI</h3>
+            <p>A retained, Compose-shaped UI runtime with shadcn components, drawn by the same renderer.</p>
+            <code>compose:foundation · ui:shadcn</code>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section aria-labelledby="platforms-title">
+      <div class="wrap">
+        <h2 id="platforms-title">One codebase, four targets</h2>
+        <div class="platforms">
+          <div class="platform">
+            <h3>Desktop</h3>
+            <p><span class="backend">Vulkan</span><br>Linux x86-64, and Apple silicon macOS through MoltenVK.</p>
+          </div>
+          <div class="platform">
+            <h3>Android</h3>
+            <p><span class="backend">Vulkan</span><br>Android 13 (API 33) and later.</p>
+          </div>
+          <div class="platform">
+            <h3>iOS</h3>
+            <p><span class="backend">Vulkan</span><br>Through MoltenVK on Metal.</p>
+          </div>
+          <div class="platform">
+            <h3>Web</h3>
+            <p><span class="backend">WebGPU</span><br>Kotlin/Wasm in current browsers.</p>
+          </div>
+        </div>
+        <p class="footnote">The WebGPU backend is published as a snapshot until its wgpu4k dependency has a stable release.
+          Check the <a href="https://github.com/awakekt/awake/releases">release notes</a> for per-release platform details.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="install-title">
+      <div class="wrap install">
+        <div>
+          <h2 id="install-title">Install from Maven Central</h2>
+          <ol>
+            <li>Add the versions and the modules you use to <code>gradle/libs.versions.toml</code>.</li>
+            <li>Put shared code in <code>commonMain</code> and the Vulkan host in your platform source set.</li>
+            <li>Follow the <a href="https://docs.awakekt.com/getting-started/">getting started guide</a> for the desktop host.</li>
+          </ol>
+        </div>
+        <figure class="code" aria-label="Gradle version catalog">
+          <div class="code-bar"><span>libs.versions.toml</span><button class="copy" type="button" data-copy="toml">Copy</button></div>
+<pre><code id="toml"><span class="tok-k">[versions]</span>
+awake = <span class="tok-s">"0.1.0-alpha.7"</span>
+awake-vulkan = <span class="tok-s">"0.1.0"</span>
+
+<span class="tok-k">[libraries]</span>
+awake-bootstrap = { group = <span class="tok-s">"com.awakekt.awake.engine"</span>, name = <span class="tok-s">"bootstrap"</span>, version.ref = <span class="tok-s">"awake"</span> }
+awake-shaders = { group = <span class="tok-s">"com.awakekt.awake.asset"</span>, name = <span class="tok-s">"shaders"</span>, version.ref = <span class="tok-s">"awake"</span> }
+awake-vulkan = { group = <span class="tok-s">"com.awakekt.awake.backend"</span>, name = <span class="tok-s">"vulkan"</span>, version.ref = <span class="tok-s">"awake-vulkan"</span> }</code></pre>
+        </figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="studio-title">
+      <div class="wrap studio">
+        <div>
+          <h2 id="studio-title">Prefer to build visually?</h2>
+          <p>AwakeKt Studio is the authoring app built on the engine: open a project, place assets, edit scenes,
+            and run them without writing the setup code yourself.</p>
+        </div>
+        <a class="button button-secondary" href="https://studio.awakekt.com/">Open AwakeKt Studio</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>AwakeKt Engine is available under the Apache License 2.0.</span>
+      <nav aria-label="Footer">
+        <a href="https://docs.awakekt.com/">Docs</a>
+        <a href="https://github.com/awakekt/awake">GitHub</a>
+        <a href="https://github.com/awakekt/awake/blob/main/TRADEMARKS.md">Trademarks</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll("[data-copy]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const text = document.getElementById(button.dataset.copy).textContent;
+        try {
+          await navigator.clipboard.writeText(text);
+          button.textContent = "Copied";
+        } catch {
+          button.textContent = "Select and copy";
+        }
+        setTimeout(() => { button.textContent = "Copy"; }, 1600);
+      });
+    });
+  </script>
+</body>
+</html>
