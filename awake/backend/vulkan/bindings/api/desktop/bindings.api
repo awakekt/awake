@@ -2356,6 +2356,7 @@ public final class com/awakekt/awake/vulkan/gen/VulkanImages {
 	public final fun vkBindImageMemory (JJJJ)V
 	public final fun vkCmdCopyBufferToImage (JJJLcom/awakekt/awake/vulkan/models/info/VkBufferImageCopy;)V
 	public final fun vkCmdCopyImageToBuffer (JJJLcom/awakekt/awake/vulkan/models/info/VkBufferImageCopy;)V
+	public final fun vkCmdMemoryBarrier (JIIII)V
 	public final fun vkCreateImage (JLcom/awakekt/awake/vulkan/models/info/VkImageCreateInfo;)J
 	public final fun vkCreateSampler (JLcom/awakekt/awake/vulkan/models/info/VkSamplerCreateInfo;)J
 	public final fun vkDestroyImage (JJ)V

@@ -16,8 +16,11 @@ import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkSubpassContents
+import com.awakekt.awake.vulkan.enums.flags.VkAccessFlagBits
+import com.awakekt.awake.vulkan.enums.flags.VkPipelineStageFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
+import com.awakekt.awake.vulkan.gen.VulkanImages
 import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkViewport
@@ -261,6 +264,17 @@ internal class DepthPrePassFeature(
             drawIndex += 1
         }
         Vulkan.vkCmdEndRenderPass(commandBuffer)
+        // The render pass's outgoing dependency already states this ordering, but MoltenVK up to
+        // 1.4.1 never encodes subpass dependencies: without an explicit barrier the scene pass can
+        // sample this layer while it is still being written. One per layer, so each pass waits
+        // on the one before and the scene pass waits on all of them.
+        VulkanImages.vkCmdMemoryBarrier(
+            commandBuffer,
+            srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT.value,
+            srcAccessMask = VkAccessFlagBits.VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.value,
+            dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT.value,
+            dstAccessMask = VkAccessFlagBits.VK_ACCESS_SHADER_READ_BIT.value,
+        )
     }
 
     fun destroy() {
