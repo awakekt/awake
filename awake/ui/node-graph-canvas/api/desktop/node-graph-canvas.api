@@ -1,0 +1,130 @@
+public final class com/awakekt/awake/ui/nodegraph/NodeGraphCanvasKt {
+	public static final fun NodeGraphCanvas (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/nodegraph/NodeGraph;Lcom/awakekt/awake/nodegraph/NodeRegistry;Lcom/awakekt/awake/ui/nodegraph/NodeGraphViewport;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/util/Set;Lcom/awakekt/awake/ui/nodegraph/NodeGraphCanvasStyle;Lkotlin/jvm/functions/Function3;)V
+	public static synthetic fun NodeGraphCanvas$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/nodegraph/NodeGraph;Lcom/awakekt/awake/nodegraph/NodeRegistry;Lcom/awakekt/awake/ui/nodegraph/NodeGraphViewport;Ljava/util/Set;Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/compose/ui/Modifier;Ljava/util/Set;Lcom/awakekt/awake/ui/nodegraph/NodeGraphCanvasStyle;Lkotlin/jvm/functions/Function3;ILjava/lang/Object;)V
+	public static final fun rememberNodeGraphViewport (Lcom/awakekt/awake/compose/runtime/Composer;FFF)Lcom/awakekt/awake/ui/nodegraph/NodeGraphViewport;
+	public static synthetic fun rememberNodeGraphViewport$default (Lcom/awakekt/awake/compose/runtime/Composer;FFFILjava/lang/Object;)Lcom/awakekt/awake/ui/nodegraph/NodeGraphViewport;
+}
+
+public final class com/awakekt/awake/ui/nodegraph/NodeGraphCanvasStyle {
+	public static final field Companion Lcom/awakekt/awake/ui/nodegraph/NodeGraphCanvasStyle$Companion;
+	public synthetic fun <init> (FFFFFFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (FFFFFFFFFFFFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getBackground ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getBorderColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getBorderWidth-LGk54g8 ()F
+	public final fun getCornerRadius-LGk54g8 ()F
+	public final fun getHeaderColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getHeaderHeight-LGk54g8 ()F
+	public final fun getHighlightColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getLabelColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getLabelMinZoom ()F
+	public final fun getLabelSize-7B0eUI0 ()F
+	public final fun getNodeColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getNodeWidth-LGk54g8 ()F
+	public final fun getPortColor ()Lkotlin/jvm/functions/Function1;
+	public final fun getPortHitRadius-LGk54g8 ()F
+	public final fun getPortRadius-LGk54g8 ()F
+	public final fun getPortRowHeight-LGk54g8 ()F
+	public final fun getRejectedWireColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getSelectedBorderColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getSelectionBoxBorderColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getSelectionBoxColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getTitleColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getTitleMinZoom ()F
+	public final fun getTitleSize-7B0eUI0 ()F
+	public final fun getWireWidth-LGk54g8 ()F
+}
+
+public final class com/awakekt/awake/ui/nodegraph/NodeGraphCanvasStyle$Companion {
+	public final fun getDefault ()Lcom/awakekt/awake/ui/nodegraph/NodeGraphCanvasStyle;
+	public final fun getDefaultPortColor ()Lcom/awakekt/awake/core/color/Color;
+}
+
+public abstract interface class com/awakekt/awake/ui/nodegraph/NodeGraphIntent {
+}
+
+public final class com/awakekt/awake/ui/nodegraph/NodeGraphIntent$Connect : com/awakekt/awake/ui/nodegraph/NodeGraphIntent {
+	public fun <init> (Lcom/awakekt/awake/nodegraph/GraphEdge;)V
+	public final fun component1 ()Lcom/awakekt/awake/nodegraph/GraphEdge;
+	public final fun copy (Lcom/awakekt/awake/nodegraph/GraphEdge;)Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$Connect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$Connect;Lcom/awakekt/awake/nodegraph/GraphEdge;ILjava/lang/Object;)Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$Connect;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEdge ()Lcom/awakekt/awake/nodegraph/GraphEdge;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ui/nodegraph/NodeGraphIntent$ContextMenu : com/awakekt/awake/ui/nodegraph/NodeGraphIntent {
+	public fun <init> (FFLjava/lang/String;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (FFLjava/lang/String;)Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$ContextMenu;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$ContextMenu;FFLjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$ContextMenu;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNodeId ()Ljava/lang/String;
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ui/nodegraph/NodeGraphIntent$Disconnect : com/awakekt/awake/ui/nodegraph/NodeGraphIntent {
+	public fun <init> (Lcom/awakekt/awake/nodegraph/GraphEdge;)V
+	public final fun component1 ()Lcom/awakekt/awake/nodegraph/GraphEdge;
+	public final fun copy (Lcom/awakekt/awake/nodegraph/GraphEdge;)Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$Disconnect;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$Disconnect;Lcom/awakekt/awake/nodegraph/GraphEdge;ILjava/lang/Object;)Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$Disconnect;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEdge ()Lcom/awakekt/awake/nodegraph/GraphEdge;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ui/nodegraph/NodeGraphIntent$MoveNodes : com/awakekt/awake/ui/nodegraph/NodeGraphIntent {
+	public fun <init> (Ljava/util/Set;FF)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun copy (Ljava/util/Set;FF)Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$MoveNodes;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$MoveNodes;Ljava/util/Set;FFILjava/lang/Object;)Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$MoveNodes;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDx ()F
+	public final fun getDy ()F
+	public final fun getNodeIds ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ui/nodegraph/NodeGraphIntent$Select : com/awakekt/awake/ui/nodegraph/NodeGraphIntent {
+	public fun <init> (Ljava/util/Set;)V
+	public final fun component1 ()Ljava/util/Set;
+	public final fun copy (Ljava/util/Set;)Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$Select;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$Select;Ljava/util/Set;ILjava/lang/Object;)Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent$Select;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getNodeIds ()Ljava/util/Set;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/ui/nodegraph/NodeGraphIntentKt {
+	public static final fun applyTo (Lcom/awakekt/awake/ui/nodegraph/NodeGraphIntent;Lcom/awakekt/awake/nodegraph/NodeGraph;)Lcom/awakekt/awake/nodegraph/NodeGraph;
+}
+
+public final class com/awakekt/awake/ui/nodegraph/NodeGraphViewport {
+	public fun <init> ()V
+	public fun <init> (FFFFF)V
+	public synthetic fun <init> (FFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getMaxZoom ()F
+	public final fun getMinZoom ()F
+	public final fun getPanX ()F
+	public final fun getPanY ()F
+	public final fun getZoom ()F
+	public final fun panBy (FF)V
+	public final fun toCanvasX (FF)F
+	public final fun toCanvasY (FF)F
+	public final fun toScreenX (FF)F
+	public final fun toScreenY (FF)F
+	public fun toString ()Ljava/lang/String;
+	public final fun zoomBy (FFFF)V
+}
+

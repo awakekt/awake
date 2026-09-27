@@ -13,6 +13,7 @@ import com.awakekt.awake.build.tasks.*
 val classifiedUiModules = setOf(
     ":awake:ui:material3",
     ":awake:ui:shadcn",
+    ":awake:ui:node-graph-canvas",
     ":samples:ui-showcase",
 )
 check(project.path in classifiedUiModules) {
@@ -28,7 +29,8 @@ val uiNamingLexiconPatterns = listOf(
 
 val forbiddenUiSourcePatterns = when (project.path) {
     ":awake:ui:material3",
-    ":awake:ui:shadcn" -> uiNamingLexiconPatterns + listOf(
+    ":awake:ui:shadcn",
+    ":awake:ui:node-graph-canvas" -> uiNamingLexiconPatterns + listOf(
         "\\bprimitive\\s*\\.\\s*context\\b",
     )
 
