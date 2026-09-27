@@ -2,7 +2,7 @@
 <p align="center">A code-first Kotlin Multiplatform engine for building interactive 2D and 3D applications.</p>
 
 <p align="center">
-  <a href="https://github.com/awakekt/awake/releases/tag/v0.1.0-alpha.4"><img src="https://img.shields.io/badge/Release-v0.1.0--alpha.4-blue.svg" alt="Release v0.1.0-alpha.4"></a>
+  <a href="https://github.com/awakekt/awake/releases/tag/v0.1.0-alpha.7"><img src="https://img.shields.io/badge/Release-v0.1.0--alpha.7-blue.svg" alt="Release v0.1.0-alpha.7"></a>
   <a href="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml"><img src="https://github.com/awakekt/awake/actions/workflows/build-and-publish.yml/badge.svg" alt="Build and publish"></a>
   <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Kotlin-2.4.10-blue.svg?logo=kotlin" alt="Kotlin"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="Apache 2.0 license"></a>
@@ -36,18 +36,23 @@ commands.
 
 ## Install
 
-Awake artifacts are published to Maven Central. The latest release is `0.1.0-alpha.4`; add it and
-only the modules your application uses to `gradle/libs.versions.toml`:
+Awake artifacts are published to Maven Central. Core modules share one version (latest
+`0.1.0-alpha.7`); the Vulkan backend has its own release train (latest `0.1.0`, built against Core
+`0.1.0-alpha.7`). Add only the modules your application uses to `gradle/libs.versions.toml`:
 
 ```toml
 [versions]
-awake = "0.1.0-alpha.4"
+awake = "0.1.0-alpha.7"
+awake-vulkan = "0.1.0"
 
 [libraries]
 awake-bootstrap = { group = "com.awakekt.awake.engine", name = "bootstrap", version.ref = "awake" }
 awake-shaders = { group = "com.awakekt.awake.asset", name = "shaders", version.ref = "awake" }
-awake-vulkan = { group = "com.awakekt.awake.backend", name = "vulkan", version.ref = "awake" }
+awake-vulkan = { group = "com.awakekt.awake.backend", name = "vulkan", version.ref = "awake-vulkan" }
 ```
+
+The WebGPU backend is not in Maven Central releases yet: it builds on a wgpu4k snapshot, so it is
+published only as a snapshot to `https://central.sonatype.com/repository/maven-snapshots/`.
 
 For a desktop JVM target, use the lifecycle and shared shader contract in `commonMain`, and the
 Vulkan host in `desktopMain`:
@@ -89,13 +94,14 @@ setup. The [engine showcase](samples/engine-showcase/README.md) is the complete 
 
 | Area | Modules | Purpose |
 |---|---|---|
-| Runtime | `engine:bootstrap`, `engine:platform` | Application lifecycle and platform startup |
+| Runtime | `engine:bootstrap`, `engine:platform`, `engine:compose` | Application lifecycle, platform startup, UI host |
 | ECS | `ecs` | Entity storage, components, and systems |
-| Scenes | `scene:scene-core`, `scene:scene3d`, `scene:authoring` | Transforms, cameras, lights, and scene DSL |
+| Scenes | `scene:scene-core`, `scene:scene3d`, `scene:authoring`, `scene:document`, `scene:runtime` | Transforms, cameras, lights, scene DSL and documents |
 | Rendering | `engine:render:*`, `backend:vulkan`, `backend:webgpu` | Backend-neutral passes and platform backends |
-| Content | `asset:gltf`, `asset:shaders`, `asset:shader-pack` | Models, textures, and shader definitions |
+| Content | `asset:gltf`, `asset:shaders`, `asset:shader-pack`, `asset:terrain`, `kit:terrain-layers` | Models, textures, shaders, and terrain |
 | Physics | `physics:api`, `backend:jolt` | Physics contracts and Jolt integration |
-| UI | `ui:ui-core`, `ui:headless`, `ui:shadcn` | Retained UI, controls, styling, and components |
+| UI | `compose:runtime`, `compose:ui`, `compose:foundation`, `ui:shadcn` | Retained Compose-shaped UI and shadcn components |
+| Projects | `project`, `node-graph`, `editor:contract` | Project manifests, node graphs, editor plugin contracts |
 
 You do not need every module. Start with the smallest runtime for your target, then add scene,
 rendering, physics, asset, or UI modules as your application grows. The [module guide](awake/README.md)
@@ -110,7 +116,8 @@ Awake is designed for Kotlin Multiplatform projects targeting:
 - iOS
 - WebAssembly/browser
 
-Backend and platform availability is still expanding during the alpha releases. Use the examples
+Desktop uses Vulkan (MoltenVK on macOS and iOS), Android uses Vulkan, and the browser uses
+WebGPU. Backend and platform availability is still expanding during the alpha releases. Use the examples
 and [release notes](https://github.com/awakekt/awake/releases) as the compatibility reference for
 the version you are using.
 
