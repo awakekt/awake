@@ -74,7 +74,9 @@ See the "Shaders" section of the [node-graph plan](2026-09-27-node-graph-plan.md
     regions, and swapping the colours swaps them.
 - **S3 — pack function nodes.** Extract the pure functions, which today are copied across
   `AslShadowShaders.kt` and `AslTexturedShader.kt`, into shared helpers.
-  - Gate: `AslPackDriftTest` passes with byte-identical WGSL.
+  - Gate: every `PackShaderSets` entry emits byte-identical WGSL before and after, for both clip
+    spaces. Record the emitted text before extracting and compare after; no committed `.wgsl`
+    exists to diff against.
 - **S4 — mesh target,** after the per-material shader render plan lands.
   - Gate: two materials sharing one graph render their own parameter values, and swapping the
     values swaps the colours.

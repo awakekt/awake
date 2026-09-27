@@ -1,9 +1,8 @@
 # Awake Shader DSL (ASL)
 
-Procedural shader authoring for Awake: shaders are defined in Kotlin,
-emitted as WGSL text, and fed into the existing naga shader pipeline unchanged. This module is
-pure text generation — no render contract, no GPU backend, no UI dependency. Plan and
-decisions: [2026-08-23-asl-procedural-shader-plan.md](../../docs/tasks/archive/2026-08-23-asl-procedural-shader-plan.md).
+Procedural shader authoring for Awake: shaders are defined in Kotlin and emitted as WGSL text in
+memory. This module is pure text generation, with no GPU backend and no UI dependency. Plan and
+decisions: [2026-08-23-asl-procedural-shader-plan.md](../../../docs/tasks/archive/2026-08-23-asl-procedural-shader-plan.md).
 
 ## Where ASL sits
 
@@ -13,18 +12,17 @@ flowchart LR
         DSL["Kotlin definition\nshader(&quot;foo&quot;) { }"] --> EMIT["WgslEmitter\nemitWgsl()"]
         DSL --> EVAL["AslEvaluator\nCPU fragment eval"]
     end
-    EMIT --> WGSL["foo.wgsl\n(committed)"]
-    WGSL --> VALIDATE["validateAwakeShaders\n(naga)"]
-    VALIDATE --> SYNC["syncAwakeShaders"]
-    SYNC --> SPV["Vulkan .spv"]
-    SYNC --> COPY["WebGPU .wgsl copy"]
-    SPV --> RUNTIME["shaderSet(&quot;foo&quot;)"]
-    COPY --> RUNTIME
+    EMIT --> SET["aslShaderSet(definition)\nShaderSource.InlineText"]
+    SET --> VK["Vulkan: naga (JNI) to SPIR-V\nat pipeline creation"]
+    SET --> WG["WebGPU: WGSL as-is"]
     EVAL --> PREVIEW["Terminal preview\nANSI half-blocks"]
 ```
 
-Everything right of the emitted `.wgsl` already existed; ASL only changes where that text
-comes from. `shaderSet`, `PipelineSpec`, and both backends never know ASL exists.
+- `aslShaderSet` (in `:awake:asset:shaders`) emits the WGSL once, when the shader set is built,
+  and carries it as `ShaderSource.InlineText`. No `.wgsl` or `.spv` is committed or synced.
+- Vulkan compiles the text when it creates the pipeline, through `NagaShaderCompiler`
+  (`:awake:asset:shader-compiler`). WebGPU takes WGSL directly.
+- `PipelineSpec` and both backends see only a `ShaderSet`; they never know ASL exists.
 
 ## Usage
 
@@ -87,22 +85,22 @@ probe 'checker' at uv=(0.3, 0.1)
 the shader math to hand-derived values in `AslEvaluatorTest`, and
 `AslEvaluator.traceFragment` gives tests and tools the same per-`let` trace the probe prints.
 
-## Regenerating and the dev loop
+## Checking a shader and the dev loop
 
-```bash
-./gradlew :awake:asset:shader-pack:generateAslShaders
-```
+Nothing needs regenerating, because the WGSL is emitted when the app builds its shader sets.
 
-Re-emits every generated `.wgsl` (the pack's 8 + studio's triangle), then naga-validates and
-re-syncs the `.spv`/WebGPU copies. Add `--continuous` and Gradle re-runs it on every
-definition edit — restart the app to pick up the result (in-process pipeline reload is a
-renderer feature, not ASL's). The per-module drift tests stay the CI guard;
-`AWAKE_RECORD_SHADERS=1` remains the manual fallback.
+- **Emitted text is pinned** by the golden strings in `WgslEmissionTest`.
+- **Real naga validation** runs in `NagaValidationTest` (desktop). It passes emitted WGSL to the
+  `naga` CLI when that is on `PATH`, and skips otherwise.
+- **The math** is checked on the CPU with `AslEvaluator` and `previewShader` (above).
+
+An edited definition takes effect the next time the app starts. Replacing a shader in a running
+app is planned in [shader-hot-reload](../../../docs/tasks/2026-09-27-shader-hot-reload-plan.md).
 
 ## Limitations
 
-- **WGSL feature ceiling, grown shader-by-shader.** Covered today (driven by the nine
-  generated shaders): fixed-size array uniform fields, `texture_2d<f32>`/`sampler` bindings
+- **WGSL feature ceiling, grown shader-by-shader.** Covered today, driven by the engine and pack
+  shaders that use ASL: fixed-size array uniform fields, `texture_2d<f32>`/`sampler` bindings
   (implicit and explicit-LOD sampling, derivatives), a read-only storage palette binding,
   module functions, `var`/`if`/`continue`/early-`return`, both `for` forms, local const
   arrays, `vertex_index`/`instance_index` builtins, matrix-column reads, `i32`/`u32`/`bool`,
@@ -111,21 +109,24 @@ renderer feature, not ASL's). The per-module drift tests stay the CI guard;
   real consuming shader, per the plan's no-speculation rule.
 - **Shapes, not types.** Expressions carry `GpuDataShape` for structural checks only;
   mismatched math naga would reject is naga's to reject. `UInt4` has no ASL mapping.
-- **Comments don't survive.** Emitted WGSL carries no prose; reasoning lives in the Kotlin
-  definition. Diff-reading the generated file loses the hand-written files' commentary.
+- **Comments don't survive.** Emitted WGSL carries no prose; the reasoning lives in the Kotlin
+  definition.
 - **Evaluator is fragment-only, matrix-free, texture-free.** `AslEvaluator` runs control flow
   and module functions, but matrix ops, vertex-stage evaluation, and texture sampling throw.
   It is not a software rasterizer — the preview samples UV space directly.
 - **Preview needs a true-color terminal.** ANSI 24-bit escapes; plain CI logs show escape
   noise instead of an image.
 - **Error distance.** A naga error points at the emitted WGSL line, not the Kotlin line that
-  produced it. The golden-text tests keep the mapping reviewable, but the hop is real.
+  produced it. The golden-text tests keep the mapping reviewable, but the gap between the two is
+  real.
 
 ## Related Modules
 
-- [`:awake:asset:shaders`](../shaders/README.md) — backend-neutral shader contract
-  (`ShaderSet`/`ShaderStages`) that consumes the synced output.
-- [`:awake:asset:shader-pack`](../shader-pack/) — Awake's shader stdlib; all of it is
-  generated from ASL definitions beside the `.wgsl`, drift-guarded by `AslPackDriftTest`.
+- [`:awake:asset:shaders`](../shaders/README.md): the backend-neutral shader contract
+  (`ShaderSet`/`ShaderStages`) and `aslShaderSet`, which wraps emitted WGSL for both backends.
+- [`:awake:asset:shader-pack`](../shader-pack/): Awake's shader stdlib, written in ASL and
+  emitted in memory through `PackShaderSets`.
+- [`:awake:asset:shader-compiler`](../shader-compiler/README.md): naga as a native library,
+  which Vulkan uses to compile emitted WGSL at runtime.
 - [`:awake:core:geometry`](../../core/geometry/) — `GpuDataShape`, the one value-shape enum
   ASL reuses.

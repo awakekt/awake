@@ -1,83 +1,36 @@
-### Awake Graphical User Interface (GUI)
+### Awake UI libraries (`awake:ui`)
 
-Status: **refactor in progress** — see [docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md](../../docs/audits/2026-08-17-ui-refactor-vs-recreate-audit.md).
+`awake:ui` holds UI libraries and tools built on [Awake Compose](../compose/README.md), Awake's
+retained, Compose-shaped UI engine.
 
-Awake UI is a lightweight declarative UI framework designed for game HUDs, overlays, and developer tooling within the Awake engine. Placement rules for these modules live in
-[docs/reference/ui-ownership.md](../../docs/reference/ui-ownership.md); the same
-optional-content-vs-capability principle the render backends follow is documented at
-[docs/reference/render-extensibility.md](../../docs/reference/render-extensibility.md).
+The split is one rule:
 
-### Module Architecture
+- `:awake:compose:*` is the engine: runtime, layout, drawing, modifiers, text and neutral controls.
+- `:awake:ui:*` is what is built on it: design systems, reusable widgets and UI tools.
+- Dependencies point from `ui` to `compose`, never the other way.
 
-The UI system is decomposed into focused, single-responsibility modules:
+Which module owns what is decided in
+[docs/reference/ui-ownership.md](../../docs/reference/ui-ownership.md), the canonical boundary
+document. It is not repeated here.
 
-```kotlin
-include(":awake:ui:graphics")
-include(":awake:core:text")
-include(":awake:ui:animation")
-include(":awake:ui:ui-core")
-include(":awake:ui:headless")
-include(":awake:tailwind")
-include(":awake:ui:material3")
-include(":awake:ui:shadcn")
-include(":awake:heroicons")
-include(":awake:ui:testing")
-include(":awake:ui:font-atlas-generator")
-include(":awake:tailwind-generator")
-```
+### Modules
 
-### Module Descriptions
+| Module | What it is |
+|---|---|
+| [`:awake:ui:material3`](material3/README.md) | Material 3 colour schemes, components and screen recipes such as `Scaffold` |
+| [`:awake:ui:shadcn`](shadcn/README.md) | [shadcn/ui](https://ui.shadcn.com/) themes, tokens, variants and `Shadcn*` recipes |
+| `:awake:ui:builder` | The visual UI layout builder: layout documents, drag-and-drop reflow and Kotlin code generation, drawn with shadcn |
+| `:awake:ui:benchmark` | JVM layout benchmarks (kotlinx-benchmark); not published |
+| `:awake:ui:font-atlas-generator` | Build tool that generates the embedded font-atlas sources in `:awake:core:text`; not published |
 
-One line each — the public API and its class names are KDoc'd in the source itself
-(generated via Dokka), not duplicated here.
+Related modules outside this directory:
+- `:awake:tailwind` and `:awake:tailwind-generator`: Tailwind design tokens and their generator.
+- `:awake:heroicons`: the Heroicons set.
 
-- `awake:ui:graphics` — drawing primitives, shape painters, vector paths, gradients, bounds,
-  density, icons.
-- `awake:ui:text` — SDF/MSDF font rendering, font atlas integration, typography styles.
-- `awake:ui:animation` — frame-clock driven animation, layout transitions, popup positioning,
-  shimmer sweep primitives.
-- `awake:ui:ui-core` — frame loop, runtime state, layout engine, modifiers, state hooks,
-  neutral theme mechanics. No ambient per-component style defaults; recipes pass explicit
-  `Style`. (Named `ui-core` to disambiguate from engine root `:awake:core`.)
-- `awake:ui:headless` — unstyled, accessible leaf widgets for building custom design systems.
-  Public APIs receive generic `Style`; no branded or theme-provider vocabulary.
-- `awake:ui:tailwind` — standalone Tailwind CSS design tokens.
-- `awake:ui:material3` — Material 3 color schemes and components, including `Scaffold`.
-- `awake:ui:shadcn` — [shadcn/ui](https://ui.shadcn.com/)-styled component library built on
-  Compose Foundation + Tailwind. Owns named themes and branded recipes.
-- `awake:ui:heroicons` — Heroicons icon set integration.
-- `awake:ui:testing` — snapshot test runners and interaction-test harnesses for UI components.
-- `awake:ui:font-atlas-generator` — SDF/MSDF font atlas generation tooling.
-- `awake:ui:tailwind-generator` — Tailwind-pattern style/theme generation tooling.
+The immediate-mode UI modules (`ui-core`, `graphics`, `headless`, `testing`, `animation`) were
+retired. For UI test helpers, use `:awake:compose:ui-testing`.
 
-### Dependency Flow
+### Verification
 
-```mermaid
-graph TD
-    GRAPHICS[":awake:ui:graphics<br/>(Drawing, Gradients, Shapes, Paths, Dp, Bounds)"]
-    TEXT[":awake:core:text<br/>(MSDF Font, Bitmap Font, TextStyle, FontWeight)"]
-    CORE[":awake:ui:ui-core<br/>(UiContext, Layout Engine, Alignment, Insets, Modifiers)"]
-    ANIMATION[":awake:ui:animation<br/>(animateFloat, AnimatedVisibility, Transitions, Popups)"]
-    HEADLESS[":awake:ui:headless<br/>(Unstyled Primitives & Tab Contracts)"]
-    MATERIAL3[":awake:ui:material3<br/>(Material 3 Components)"]
-    DS[":awake:ui:shadcn<br/>(Shadcn Recipes)"]
-
-    GRAPHICS --> TEXT
-    GRAPHICS --> CORE
-    TEXT --> CORE
-    CORE --> ANIMATION
-    CORE --> HEADLESS
-    GRAPHICS --> HEADLESS
-    ANIMATION --> HEADLESS
-    TEXT --> HEADLESS
-
-    HEADLESS --> MATERIAL3
-    HEADLESS --> DS
-    CORE -. "internal infrastructure" .-> DS
-```
-
-### Known gaps
-
-Tracked in [docs/reference/ui-validation.md](../../docs/reference/ui-validation.md)'s
-component coverage matrix and [docs/reference/ui-status.md](../../docs/reference/ui-status.md),
-not duplicated here.
+Current workflows and known limitations are in
+[docs/reference/ui-validation.md](../../docs/reference/ui-validation.md).

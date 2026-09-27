@@ -55,7 +55,6 @@ Sources of runtime ASL:
   - A backend must not name content.
   - `PipelineRegistry` is single-threaded and runs on the render thread.
   - Pipeline decisions stay shared; backends only translate a spec.
-- **The ASL README is stale.** It still documents `generateAslShaders`, which was removed in dev.7.
 
 ## Design
 
@@ -108,8 +107,7 @@ validation layers.
 
 - `engine-showcase` desktop builds a variant of a pack shader at runtime and swaps it on a key
   press.
-- Replace the ASL README's stale `generateAslShaders` section with the runtime replacement
-  workflow.
+- Document the runtime replacement workflow in the ASL README's dev-loop section.
 
 **Gate:**
 - The sample's pixel changes after the key press.
