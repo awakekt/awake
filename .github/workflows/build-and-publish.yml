@@ -395,7 +395,17 @@ jobs:
   release:
     name: Release
     timeout-minutes: 30
-    if: startsWith(github.ref, 'refs/tags/v') && !startsWith(github.ref, 'refs/tags/vulkan-v')
+    # Explicit results: without them GitHub skips this job whenever any transitive dependency was
+    # skipped, and `natives` is always skipped for a Core-only release (via consumer).
+    if: >-
+      ${{
+        !cancelled() &&
+        startsWith(github.ref, 'refs/tags/v') &&
+        !startsWith(github.ref, 'refs/tags/vulkan-v') &&
+        needs.verify.result == 'success' &&
+        needs.consumer.result == 'success' &&
+        needs.naga-android.result == 'success'
+      }}
     needs: [verify, consumer, naga-android]
     runs-on: macos-14
     env:
