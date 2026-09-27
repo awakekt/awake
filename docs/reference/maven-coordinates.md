@@ -26,7 +26,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 59 | Existing root `v*` tags and the shared Core release train |
+| Core | 60 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 
 Vulkan snapshots pin the exact Core snapshot used for integration. Vulkan releases depend on an
@@ -88,6 +88,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.engine.render:passes2d` | `:awake:engine:render:passes2d` | `core` | `api` → `:awake:engine:render:passes`; `api` → `:awake:engine:render:contract`; `api` → `:awake:core:math`; `api` → `:awake:core:graphics2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:geometry` |
 | `com.awakekt.awake.engine.render:testing` | `:awake:engine:render:testing` | `core` | `implementation` → `:awake:core:color`; `api` → `:awake:engine:render:contract` |
 | `com.awakekt.awake:heroicons` | `:awake:heroicons` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `api` → `:awake:compose:ui` |
+| `com.awakekt.awake.kit:terrain-layers` | `:awake:kit:terrain-layers` | `core` | `api` → `:awake:scene:scene3d`; `api` → `:awake:core:io` |
 | `com.awakekt.awake:navigation` | `:awake:navigation` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:color`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:world`; `api` → `:awake:asset:terrain`; `api` → `:awake:engine:render:contract` |
 | `com.awakekt.awake.net:api` | `:awake:net:api` | `core` | — |
 | `com.awakekt.awake.physics:api` | `:awake:physics:api` | `core` | `implementation` → `:awake:core:math`; `implementation` → `:awake:core:geometry` |

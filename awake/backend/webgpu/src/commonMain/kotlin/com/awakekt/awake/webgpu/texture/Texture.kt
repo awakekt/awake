@@ -54,9 +54,9 @@ class Texture(
     init {
         val device = graphicsDevice.wgpuContext.device
         val asset = TextureAsset(data, width, height, layerCount, isCubemap)
-        // mipChain downsamples one image, so it cannot describe an array's layers. Arrays upload
-        // their base level only until something needs otherwise.
-        val mipLevels = if (layerCount > 1) listOf(asset) else asset.mipChain()
+        // Arrays get a full chain: tiled terrain layers are sampled with implicit LOD and shimmer
+        // without one. Cubemaps stay single-level; the sky samples its base level only.
+        val mipLevels = if (isCubemap) listOf(asset) else asset.mipChain()
         texture = device.createTexture(
             TextureDescriptor(
                 size = Extent3D(

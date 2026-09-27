@@ -1216,6 +1216,99 @@ public final class com/awakekt/awake/scene/rendering/spatial/SpatialIndexSystem 
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/scene/rendering/terrain/SceneTerrain : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrain$Companion;
+	public fun <init> (IIFFFLjava/util/List;FZLcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;)V
+	public synthetic fun <init> (IIFFFLjava/util/List;FZLcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()F
+	public final fun component8 ()Z
+	public final fun component9 ()Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;
+	public final fun copy (IIFFFLjava/util/List;FZLcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;)Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrain;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrain;IIFFFLjava/util/List;FZLcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrain;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getDepth ()I
+	public final fun getSamples ()Ljava/util/List;
+	public final fun getScaleX ()F
+	public final fun getScaleY ()F
+	public final fun getScaleZ ()F
+	public final fun getSurface ()Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;
+	public final fun getTilingScale ()F
+	public final fun getWidth ()I
+	public fun hashCode ()I
+	public final fun isVisible ()Z
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/terrain/SceneTerrain$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrain$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrain;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrain;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/terrain/SceneTerrain$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface$Companion;
+	public fun <init> (Ljava/lang/String;ILkotlinx/serialization/json/JsonElement;)V
+	public synthetic fun <init> (Ljava/lang/String;ILkotlinx/serialization/json/JsonElement;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun copy (Ljava/lang/String;ILkotlinx/serialization/json/JsonElement;)Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;Ljava/lang/String;ILkotlinx/serialization/json/JsonElement;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getProvider ()Ljava/lang/String;
+	public final fun getVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/terrain/SceneTerrainSurface$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/terrain/TerrainBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/terrain/TerrainBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/terrain/SceneTerrain;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/terrain/TerrainComponent;)Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrain;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/terrain/SceneTerrain;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/rendering/terrain/TerrainClipmapSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public final fun clear ()V
@@ -1254,5 +1347,38 @@ public final class com/awakekt/awake/scene/rendering/terrain/TerrainComponent {
 public final class com/awakekt/awake/scene/rendering/terrain/TerrainComponentFeatureKt {
 	public static final fun terrainContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/scene/rendering/terrain/TerrainComponent;Ljava/util/Map;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 	public static synthetic fun terrainContentFeature$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/scene/rendering/terrain/TerrainComponent;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+}
+
+public final class com/awakekt/awake/scene/rendering/terrain/TerrainContentSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lkotlinx/coroutines/CoroutineScope;Ljava/util/Map;Lcom/awakekt/awake/asset/shaders/ShaderSet;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lkotlinx/coroutines/CoroutineScope;Ljava/util/Map;Lcom/awakekt/awake/asset/shaders/ShaderSet;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun detachAll ()V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/rendering/terrain/TerrainSurface {
+	public fun <init> (Lcom/awakekt/awake/asset/shaders/ShaderSet;Ljava/util/Map;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/shaders/ShaderSet;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getShaders ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getTextures ()Ljava/util/Map;
+}
+
+public abstract interface class com/awakekt/awake/scene/rendering/terrain/TerrainSurfaceProvider {
+	public abstract fun resolve (Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurfaceReference;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/scene/rendering/terrain/TerrainSurfaceReference {
+	public fun <init> (Ljava/lang/String;ILkotlinx/serialization/json/JsonElement;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun copy (Ljava/lang/String;ILkotlinx/serialization/json/JsonElement;)Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurfaceReference;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurfaceReference;Ljava/lang/String;ILkotlinx/serialization/json/JsonElement;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurfaceReference;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getPayload ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getProvider ()Ljava/lang/String;
+	public final fun getVersion ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
