@@ -20,6 +20,25 @@ public final class com/awakekt/awake/scene/physics/PhysicsBody {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/physics/PhysicsContact {
+	public synthetic fun <init> (JJLcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/physics/ContactPhase;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-IB_h3Cs ()J
+	public final fun component2-IB_h3Cs ()J
+	public final fun component3-L99-wGo ()Lcom/awakekt/awake/ecs/Entity;
+	public final fun component4-L99-wGo ()Lcom/awakekt/awake/ecs/Entity;
+	public final fun component5 ()Lcom/awakekt/awake/physics/ContactPhase;
+	public final fun copy-eMYRe34 (JJLcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/physics/ContactPhase;)Lcom/awakekt/awake/scene/physics/PhysicsContact;
+	public static synthetic fun copy-eMYRe34$default (Lcom/awakekt/awake/scene/physics/PhysicsContact;JJLcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/physics/ContactPhase;ILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/PhysicsContact;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getA-IB_h3Cs ()J
+	public final fun getB-IB_h3Cs ()J
+	public final fun getEntityA-L99-wGo ()Lcom/awakekt/awake/ecs/Entity;
+	public final fun getEntityB-L99-wGo ()Lcom/awakekt/awake/ecs/Entity;
+	public final fun getPhase ()Lcom/awakekt/awake/physics/ContactPhase;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/scene/physics/PhysicsDebugLinesKt {
 	public static final fun physicsDebugLines (Lcom/awakekt/awake/ecs/World;)Ljava/util/List;
 }
@@ -31,6 +50,8 @@ public final class com/awakekt/awake/scene/physics/PhysicsOriginShiftListener : 
 
 public final class com/awakekt/awake/scene/physics/PhysicsSystem : com/awakekt/awake/ecs/InterpolatedSystem {
 	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;)V
+	public final fun entityFor-wfAf70w (J)Lcom/awakekt/awake/ecs/Entity;
+	public final fun getContacts ()Ljava/util/List;
 	public fun interpolate (Lcom/awakekt/awake/ecs/World;F)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }

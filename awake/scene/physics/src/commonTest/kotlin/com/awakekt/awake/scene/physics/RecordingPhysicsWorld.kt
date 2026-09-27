@@ -138,6 +138,12 @@ internal class RecordingPhysicsWorld : PhysicsWorld {
     override fun setContinuousCollision(handle: BodyHandle, enabled: Boolean) = Unit
     override fun setContactReporting(handle: BodyHandle, enabled: Boolean) = Unit
 
-    override fun drainContacts(action: (ContactEvent) -> Unit) = Unit
+    /** Contacts the next [drainContacts] hands over, as a backend's step would have queued them. */
+    val pendingContacts = mutableListOf<ContactEvent>()
+
+    override fun drainContacts(action: (ContactEvent) -> Unit) {
+        pendingContacts.forEach(action)
+        pendingContacts.clear()
+    }
     override fun destroy() = Unit
 }

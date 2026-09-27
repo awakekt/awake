@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Physics contacts reach every system that wants them.** `PhysicsSystem` now drains the world's contacts after each step and republishes them as `contacts`, a list of `PhysicsContact` pairs with the entities their bodies belong to, readable by any number of systems registered after it; `entityFor(handle)` is public. Draining every step also stops the contact buffer growing in a game that never reads it. **Behaviour change:** code that called `PhysicsWorld.drainContacts` itself while a `PhysicsSystem` runs now receives nothing and should read `PhysicsSystem.contacts`. The engine showcase's goal zone moved over, and its linear body-to-entity scan is gone.
 - **Node graph canvas.** New module `com.awakekt.awake.ui:node-graph-canvas`: `NodeGraphCanvas`, a controlled editing surface for `:awake:node-graph` documents. Nodes render as a header, one row per port pair and a caller-owned body slot; wires are curves coloured by port type. Dragging between ports connects or reconnects, dragging nodes moves the selection, Shift/Ctrl-drag box-selects, the wheel zooms around the pointer, and every edit is reported as a `NodeGraphIntent` for the caller to apply. Zoom scales node content through density, so text stays sharp and controls are hit where they are drawn; labels hide below a legible zoom, and idle wires redraw retained meshes.
 
 ### Fixed
