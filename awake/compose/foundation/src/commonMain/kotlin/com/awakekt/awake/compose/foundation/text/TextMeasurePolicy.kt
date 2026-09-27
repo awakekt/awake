@@ -34,8 +34,8 @@ import kotlin.math.roundToInt
  */
 class TextMeasurePolicy(
     private val source: () -> String,
-    private val style: TextStyle,
-    private val font: UiFont,
+    internal val style: TextStyle,
+    internal val font: UiFont,
     private val singleLine: Boolean = false,
 ) : MeasurePolicy {
 
@@ -55,11 +55,18 @@ class TextMeasurePolicy(
      */
     internal val text: String get() = source()
 
+    /**
+     * Last frame's measurement and run for the same node, when the caller keeps one.
+     *
+     * `Text` hands in the cache its retained paint node owns; a hit skips line breaking and the
+     * alignment-line map. Without one, every measure and paint is computed fresh.
+     */
+    internal var cache: TextLayoutCache? = null
+
     override fun MeasureScope.measure(
         measurables: List<Measurable>,
         constraints: Constraints,
     ): MeasureResult {
-        val glyphPx = glyphPixels()
         // Wrapping is decided here and remembered, not recomputed by the painter: two greedy passes
         // at different widths do not have to agree, and a box the right height with the words on the
         // wrong lines is invisible to a geometry oracle.
@@ -68,6 +75,15 @@ class TextMeasurePolicy(
         } else {
             constraints.maxWidth.toFloat()
         }
+        val cached = cache
+        if (cached != null && cached.hasMeasurement(this@TextMeasurePolicy, density, fontScale, wrapWidthPx)) {
+            return layout(
+                constraints.constrainWidth(cached.width),
+                constraints.constrainHeight(cached.height),
+                cached.alignmentLines,
+            ) {}
+        }
+        val glyphPx = glyphPixels()
         val lines = linesAt(glyphPx, wrapWidthPx)
         // Placeables are integer-pixel sized today. Quantize the complete intrinsic line once,
         // after weighted glyph advances and letter spacing have been summed, so sibling rows do
@@ -92,6 +108,8 @@ class TextMeasurePolicy(
             FirstBaseline to firstBaseline,
             LastBaseline to lastBaseline,
         )
+        cached?.storeMeasurement(width, height, alignmentLines)
+        cached?.keyMeasurement(this@TextMeasurePolicy, density, fontScale, wrapWidthPx)
         return layout(
             constraints.constrainWidth(width),
             constraints.constrainHeight(height),
@@ -130,7 +148,8 @@ class TextMeasurePolicy(
     }
 
     /** The width the last measure wrapped at, so painting reproduces the same lines. */
-    private var wrapWidthPx: Float = Float.POSITIVE_INFINITY
+    internal var wrapWidthPx: Float = Float.POSITIVE_INFINITY
+        private set
 
     private fun Density.linesAt(glyphPx: Float, maxWidthPx: Float): List<String> =
         breakIntoLines(text, maxWidthPx) { lineWidth(it, glyphPx) }
@@ -174,7 +193,7 @@ class TextMeasurePolicy(
 
     /** The same arithmetic painting and the caret use, so the three cannot drift apart. */
     internal fun runFor(density: Float, fontScale: Float): TextRun =
-        TextRun(text, style, font, glyphPixels(density, fontScale), density, wrapWidthPx)
+        cache?.runFor(this, density, fontScale, wrapWidthPx) ?: buildRun(density, fontScale)
 
     internal fun glyphPixels(density: Float, fontScale: Float): Float {
         val sizeSp = style.size ?: DefaultFontSize
@@ -182,3 +201,7 @@ class TextMeasurePolicy(
         return (sizeSp.value * density * fontScale * snapped).coerceAtLeast(1f)
     }
 }
+
+/** A fresh run from [TextMeasurePolicy]'s inputs and its last wrap width. */
+internal fun TextMeasurePolicy.buildRun(density: Float, fontScale: Float): TextRun =
+    TextRun(text, style, font, glyphPixels(density, fontScale), density, wrapWidthPx)

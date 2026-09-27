@@ -108,8 +108,9 @@ internal class TextRun(
 
     fun paint(scope: DrawScope, color: Color, offsetX: Float = 0f, offsetY: Float = 0f) {
         var y = offsetY
-        for (line in lineLayouts) {
-            paintLine(line.text, scope, color, offsetX, y + lineTopPaddingPx)
+        // Indexed: this runs for every text node every frame, and a List iterator is an allocation.
+        for (i in lineLayouts.indices) {
+            paintLine(lineLayouts[i].text, scope, color, offsetX, y + lineTopPaddingPx)
             y += lineHeightPx
         }
     }

@@ -95,15 +95,15 @@ class NodeGraphCanvasFrameProbe {
         const val WARMUP_FRAMES = 500
         const val MEASURED_FRAMES = 300
 
-        // Ratchets, not targets: about 10% above the measurement, lowered as fixes land. Measured
-        // 2026-09-27 on an M-series Mac: 343 KB (all visible) and 451 KB (editor view) per frame.
+        // Ratchets, not targets: about 10% above the worst of three runs, lowered as fixes land.
+        // First measured 2026-09-27 at 343 KB (all visible) and 451 KB (editor view) per frame. The
+        // editor view fell to 257-267 KB once unchanged Text stopped re-shaping every frame; the
+        // all-visible view, which composes almost no text below labelMinZoom, stayed at 334-359 KB.
         //
-        // Where it goes, measured by phase: nearly all of it is the engine's per-node work -- each
-        // Text re-measured and one primitive per glyph, every frame. The canvas's own share is
-        // small: idle wires redraw retained meshes (about 3 KB for 60 wires, from about 48 KB when
-        // they were stroked paths), and below labelMinZoom the port labels are not composed at all,
-        // which is what took the all-visible case from 1.36 MB to 343 KB.
+        // The canvas's own share is small: idle wires redraw retained meshes, and below
+        // labelMinZoom the port labels are not composed at all. What remains is mostly the engine's
+        // per-node work, chiefly one primitive per glyph.
         const val ALL_VISIBLE_CEILING = 380_000L
-        const val EDITOR_VIEW_CEILING = 500_000L
+        const val EDITOR_VIEW_CEILING = 295_000L
     }
 }
