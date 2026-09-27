@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.5] - 2026-09-27
+
 ### Added
 
 - **Manual Release workflow.** Actions → Release opens a `chore(release): cut <tag>` PR via `releaseCut`; merging it tags the merge commit and triggers Publish. Workflow and job names are shortened (CI, Verify, Publish, Docs, Deploy Samples…).
