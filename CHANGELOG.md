@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Terrain ends at its heightmap.** Clipmap rings reach past the heightmap and its sampler repeats, so terrain tiled across the view; vertices beyond the footprint now collapse onto its edge. Heightmap UVs also put the first and last samples on texel centres, where they had been half a texel off with edge heights averaged against the opposite edge.
+
 ## [0.1.0-alpha.6] - 2026-09-27
 
 ### Added
