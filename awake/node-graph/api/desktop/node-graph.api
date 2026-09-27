@@ -1,0 +1,307 @@
+public final class com/awakekt/awake/nodegraph/ConfigFieldSpec {
+	public static final field Companion Lcom/awakekt/awake/nodegraph/ConfigFieldSpec$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Lkotlinx/serialization/json/JsonElement;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;)Lcom/awakekt/awake/nodegraph/ConfigFieldSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/nodegraph/ConfigFieldSpec;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlinx/serialization/json/JsonElement;ILjava/lang/Object;)Lcom/awakekt/awake/nodegraph/ConfigFieldSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDefault ()Lkotlinx/serialization/json/JsonElement;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getName ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/nodegraph/ConfigFieldSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/nodegraph/ConfigFieldSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/nodegraph/ConfigFieldSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/nodegraph/ConfigFieldSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/ConfigFieldSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/GraphEdge {
+	public static final field Companion Lcom/awakekt/awake/nodegraph/GraphEdge$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/nodegraph/GraphEdge;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/nodegraph/GraphEdge;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/nodegraph/GraphEdge;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFromNode ()Ljava/lang/String;
+	public final fun getFromPort ()Ljava/lang/String;
+	public final fun getToNode ()Ljava/lang/String;
+	public final fun getToPort ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/nodegraph/GraphEdge$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/nodegraph/GraphEdge$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/nodegraph/GraphEdge;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/nodegraph/GraphEdge;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/GraphEdge$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/GraphIssue {
+	public fun <init> (Lcom/awakekt/awake/nodegraph/GraphIssueCode;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/nodegraph/GraphIssueCode;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Lcom/awakekt/awake/nodegraph/GraphIssueCode;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/nodegraph/GraphIssue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/nodegraph/GraphIssue;Lcom/awakekt/awake/nodegraph/GraphIssueCode;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/nodegraph/GraphIssue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCode ()Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public final fun getMessage ()Ljava/lang/String;
+	public final fun getNodeId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/nodegraph/GraphIssueCode : java/lang/Enum {
+	public static final field CYCLE Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static final field DANGLING_EDGE Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static final field DUPLICATE_NODE_ID Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static final field INCOMPATIBLE_PORTS Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static final field INPUT_ALREADY_CONNECTED Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static final field KIND_MISMATCH Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static final field UNKNOWN_CONFIG_FIELD Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static final field UNKNOWN_NODE_TYPE Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static final field UNKNOWN_PORT Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static final field UNSUPPORTED_FORMAT_VERSION Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+	public static fun values ()[Lcom/awakekt/awake/nodegraph/GraphIssueCode;
+}
+
+public abstract interface class com/awakekt/awake/nodegraph/GraphKind {
+	public fun canConnect (Lcom/awakekt/awake/nodegraph/PortSpec;Lcom/awakekt/awake/nodegraph/PortSpec;)Z
+	public abstract fun getAllowsCycles ()Z
+	public abstract fun getId ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/nodegraph/GraphKind$DefaultImpls {
+	public static fun canConnect (Lcom/awakekt/awake/nodegraph/GraphKind;Lcom/awakekt/awake/nodegraph/PortSpec;Lcom/awakekt/awake/nodegraph/PortSpec;)Z
+}
+
+public final class com/awakekt/awake/nodegraph/GraphNode {
+	public static final field Companion Lcom/awakekt/awake/nodegraph/GraphNode$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;FFLkotlinx/serialization/json/JsonObject;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;FFLkotlinx/serialization/json/JsonObject;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()Lkotlinx/serialization/json/JsonObject;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;FFLkotlinx/serialization/json/JsonObject;)Lcom/awakekt/awake/nodegraph/GraphNode;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/nodegraph/GraphNode;Ljava/lang/String;Ljava/lang/String;FFLkotlinx/serialization/json/JsonObject;ILjava/lang/Object;)Lcom/awakekt/awake/nodegraph/GraphNode;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getConfig ()Lkotlinx/serialization/json/JsonObject;
+	public final fun getId ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public final fun getX ()F
+	public final fun getY ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/nodegraph/GraphNode$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/nodegraph/GraphNode$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/nodegraph/GraphNode;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/nodegraph/GraphNode;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/GraphNode$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/InvalidNodeGraphException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/util/List;)V
+	public final fun getIssues ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/nodegraph/NodeCatalogue {
+	public static final field Companion Lcom/awakekt/awake/nodegraph/NodeCatalogue$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/List;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/util/List;)Lcom/awakekt/awake/nodegraph/NodeCatalogue;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/nodegraph/NodeCatalogue;Ljava/lang/String;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/nodegraph/NodeCatalogue;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getKind ()Ljava/lang/String;
+	public final fun getNodes ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/nodegraph/NodeCatalogue$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/nodegraph/NodeCatalogue$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/nodegraph/NodeCatalogue;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/nodegraph/NodeCatalogue;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/NodeCatalogue$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/NodeGraph {
+	public static final field Companion Lcom/awakekt/awake/nodegraph/NodeGraph$Companion;
+	public static final field FORMAT_VERSION I
+	public fun <init> (Ljava/lang/String;ILjava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;ILjava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()I
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;ILjava/util/List;Ljava/util/List;)Lcom/awakekt/awake/nodegraph/NodeGraph;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/nodegraph/NodeGraph;Ljava/lang/String;ILjava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/nodegraph/NodeGraph;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getEdges ()Ljava/util/List;
+	public final fun getFormatVersion ()I
+	public final fun getKind ()Ljava/lang/String;
+	public final fun getNodes ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/nodegraph/NodeGraph$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/nodegraph/NodeGraph$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/nodegraph/NodeGraph;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/nodegraph/NodeGraph;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/NodeGraph$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/NodeGraphJson {
+	public static final field INSTANCE Lcom/awakekt/awake/nodegraph/NodeGraphJson;
+	public final fun decode (Ljava/lang/String;)Lcom/awakekt/awake/nodegraph/NodeGraph;
+	public final fun decodeCatalogue (Ljava/lang/String;)Lcom/awakekt/awake/nodegraph/NodeCatalogue;
+	public final fun encode (Lcom/awakekt/awake/nodegraph/NodeGraph;)Ljava/lang/String;
+	public final fun encodeCatalogue (Lcom/awakekt/awake/nodegraph/NodeCatalogue;)Ljava/lang/String;
+	public final fun load (Ljava/lang/String;Lcom/awakekt/awake/nodegraph/NodeRegistry;)Lcom/awakekt/awake/nodegraph/NodeGraph;
+}
+
+public final class com/awakekt/awake/nodegraph/NodeRegistry {
+	public fun <init> (Lcom/awakekt/awake/nodegraph/GraphKind;)V
+	public final fun catalogue ()Lcom/awakekt/awake/nodegraph/NodeCatalogue;
+	public final fun get (Ljava/lang/String;)Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public final fun getKind ()Lcom/awakekt/awake/nodegraph/GraphKind;
+	public final fun getSpecs ()Ljava/util/Collection;
+	public final fun register (Lcom/awakekt/awake/nodegraph/NodeSpec;)Lcom/awakekt/awake/nodegraph/NodeRegistry;
+	public final fun validate (Lcom/awakekt/awake/nodegraph/NodeGraph;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/nodegraph/NodeSpec {
+	public static final field Companion Lcom/awakekt/awake/nodegraph/NodeSpec$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Ljava/util/List;
+	public final fun component6 ()Ljava/util/List;
+	public final fun component7 ()Ljava/util/List;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/nodegraph/NodeSpec;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getConfig ()Ljava/util/List;
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getDisplayName ()Ljava/lang/String;
+	public final fun getInputs ()Ljava/util/List;
+	public final fun getOutputs ()Ljava/util/List;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/nodegraph/NodeSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/nodegraph/NodeSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/nodegraph/NodeSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/NodeSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/PortSpec {
+	public static final field Companion Lcom/awakekt/awake/nodegraph/PortSpec$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Lcom/awakekt/awake/nodegraph/PortSpec;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/nodegraph/PortSpec;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZILjava/lang/Object;)Lcom/awakekt/awake/nodegraph/PortSpec;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDescription ()Ljava/lang/String;
+	public final fun getMultiple ()Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/nodegraph/PortSpec$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/nodegraph/PortSpec$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/nodegraph/PortSpec;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/nodegraph/PortSpec;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/nodegraph/PortSpec$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
