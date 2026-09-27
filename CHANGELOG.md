@@ -10,11 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Headless presentable Vulkan rendering is valid.** `VulkanEngine` boots a `HeadlessSurface` into stand-in images that end each frame in `PRESENT_SRC_KHR`, but headless devices never enabled `VK_KHR_swapchain`, so every render pass using that layout was invalid (VUID-VkAttachmentDescription-finalLayout-parameter). Headless devices now enable it when offered, and presentable mode refuses a device without it. Teardown no longer calls `vkDestroySwapchainKHR` with no swapchain, which crashed the JVM on such a device, and `readPresentedPixels` reads the image `draw` wrote instead of inferring it from the frame slot, which was wrong whenever frames in flight differed from the image count.
-- **Terrain ends at its heightmap.** Clipmap rings reach past the heightmap and its sampler repeats, so terrain tiled across the view; vertices beyond the footprint now collapse onto its edge. Heightmap UVs also put the first and last samples on texel centres, where they had been half a texel off with edge heights averaged against the opposite edge.
-- **Vulkan's first frame with shadows off is valid.** The scene pass binds the shadow map whether or not the depth pass runs, so a renderer whose first frame had shadows disabled sampled layers still in `UNDEFINED` (VUID-vkCmdDraw-None-09600). Every layer is now initialised once before that first bind.
-- **Vulkan shadows no longer drop out on macOS.** MoltenVK up to 1.4.1 ignores render-pass subpass dependencies, so the scene pass could sample a shadow-map layer the depth pass was still writing and render a frame with no shadows. Each depth pass now records an explicit memory barrier, which also makes `RendererHeadlessCascadedShadowTest` deterministic (about 1 in 5 processes failed before).
 
-## [0.1.0-alpha.6] - 2026-09-27
+## [0.1.0-alpha.7] - 2026-09-27
 
 ### Added
 
@@ -35,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Terrain ends at its heightmap.** Clipmap rings reach past the heightmap and its sampler repeats, so terrain tiled across the view; vertices beyond the footprint now collapse onto its edge. Heightmap UVs also put the first and last samples on texel centres, where they had been half a texel off with edge heights averaged against the opposite edge.
+- **Vulkan's first frame with shadows off is valid.** The scene pass binds the shadow map whether or not the depth pass runs, so a renderer whose first frame had shadows disabled sampled layers still in `UNDEFINED` (VUID-vkCmdDraw-None-09600). Every layer is now initialised once before that first bind.
+- **Vulkan shadows no longer drop out on macOS.** MoltenVK up to 1.4.1 ignores render-pass subpass dependencies, so the scene pass could sample a shadow-map layer the depth pass was still writing and render a frame with no shadows. Each depth pass now records an explicit memory barrier, which also makes `RendererHeadlessCascadedShadowTest` deterministic (about 1 in 5 processes failed before).
+- **Core releases no longer blocked by WebGPU.** Maven Central rejected the release because the WebGPU backend depends on a wgpu4k SNAPSHOT. `:awake:backend:webgpu` is now held out of Central releases while wgpu4k is a SNAPSHOT; it still publishes as a snapshot.
 - **Texture arrays get mip chains.** `TextureAsset.mipChain()` downsamples each array layer on its own, and both backends upload every level of an array texture instead of level 0 only, so tiled terrain layers sampled with implicit LOD no longer shimmer at a distance. Cubemaps stay single-level.
 - **Vulkan backend no longer ships LeakCanary.** `vulkan-android` declared `leakcanary-android` as a runtime dependency, so every consumer's signed release crashed on launch with "LeakCanary in non-debuggable build". Apps that want it add it as `debugImplementation`; the engine showcase does.
 - **Android renders again.** The published `shader-compiler` Android AAR never contained `libawake_naga.so`, so every WGSL shader failed and Android apps showed a black screen; Publish now builds it with cargo-ndk and `verifyPublishedArtifacts` rejects an AAR without both ABIs. The Vulkan debug-messenger callback also looked up the `JNIEnv*` of the thread that created the instance, which aborted the render thread the first time a validation message fired off the main thread; it now uses the calling thread's env.
