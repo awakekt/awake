@@ -15,16 +15,13 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.core.math.times
-import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.directionalShadowBox
 import com.awakekt.awake.render.passes.pointShadowMatrices
 import com.awakekt.awake.render.passes.shadowCascadeUniforms
-import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes.uniforms.PointLight
 import com.awakekt.awake.render.passes.uniforms.PointShadowLight
 import com.awakekt.awake.render.passes.uniforms.SceneLight
-import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.scene.document.SceneDocument
@@ -32,21 +29,7 @@ import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
-import com.awakekt.awake.vulkan.commands.TransferContext
-import com.awakekt.awake.vulkan.debug.LineRenderPipeline
-import com.awakekt.awake.vulkan.device.GraphicsDevice
-import com.awakekt.awake.vulkan.handles.DescriptorSetLayoutHandle
-import com.awakekt.awake.vulkan.material.Material
-import com.awakekt.awake.vulkan.pipeline.DepthOnlyPipeline
-import com.awakekt.awake.vulkan.pipeline.DepthPrePassFeature
-import com.awakekt.awake.vulkan.pipeline.PipelineTable
-import com.awakekt.awake.vulkan.pipeline.RenderPipeline
-import com.awakekt.awake.vulkan.pipeline.VulkanLinePass
-import com.awakekt.awake.vulkan.pipeline.VulkanUiPass
-import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.renderer.Renderer
-import com.awakekt.awake.vulkan.swapchain.SwapchainManager
-import com.awakekt.awake.vulkan.texture.DepthTarget
 import kotlinx.coroutines.runBlocking
 import org.junit.AfterClass
 import java.io.File
@@ -852,18 +835,14 @@ class RendererHeadlessCascadedShadowTest {
 
     companion object {
         private var cachedRenderer: Renderer? = null
-        private var cachedDevice: GraphicsDevice? = null
-        private var cachedCleanup: (() -> Unit)? = null
+        private var releaseCached: (() -> Unit)? = null
 
         @AfterClass
         @JvmStatic
         fun releaseSharedRenderer() {
-            cachedRenderer?.destroy()
+            releaseCached?.invoke()
+            releaseCached = null
             cachedRenderer = null
-            cachedCleanup?.invoke()
-            cachedCleanup = null
-            cachedDevice?.destroy()
-            cachedDevice = null
         }
 
         private const val TARGET_SIZE = 128
@@ -874,7 +853,6 @@ class RendererHeadlessCascadedShadowTest {
         private const val TIMING_GROUND_HALF = 20f
         private const val TIMING_CASTER_SIZE = 2f
         private const val TIMING_ASPECT = 16f / 9f
-        private const val MAX_FRAMES_IN_FLIGHT = 1
         private const val BYTES_PER_PIXEL = 4
         private const val ASPECT = 1f
 
@@ -979,76 +957,12 @@ class RendererHeadlessCascadedShadowTest {
          */
         private const val MAX_CONTACT_GAP = 0.08f
 
-        /** The cascade depth pass: one pipeline, one block slot per layer. */
-        private fun depthPrePass(
-            graphicsDevice: GraphicsDevice,
-            depthTarget: DepthTarget,
-            descriptorSetLayout: DescriptorSetLayoutHandle,
-        ) = DepthPrePassFeature(
-            depthTarget,
-            DepthOnlyPipeline(
-                graphicsDevice,
-                depthTarget.renderPass,
-                descriptorSetLayout,
-                runBlocking { packShaderPair("shadow_depth") },
-                VertexFormat.PositionNormalColor,
-                depthTarget.size,
-                cascadeCount = depthTarget.layers,
-            ),
-        )
-
-        private fun sharedRenderer(): Renderer {
-            cachedRenderer?.let { return it }
-
-            val graphicsDevice = GraphicsDevice().also { cachedDevice = it }
-            graphicsDevice.createHeadless()
-            val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
-            swapchainManager.createHeadless(TARGET_SIZE, TARGET_SIZE)
-            val depthTarget = DepthTarget(graphicsDevice, layers = MAX_SHADOW_TARGET_LAYERS, arrayed = true, comparison = true)
-            val descriptorSetLayout = Material.createDescriptorSetLayout(graphicsDevice)
-            val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
-            val primary = RenderPipeline(
-                graphicsDevice,
-                swapchainManager,
-                sceneRenderPass,
-                descriptorSetLayout,
-                runBlocking { packShaderPair("lit_shadow") },
-                VertexFormat.PositionNormalColor,
-                vertexEntryPoint = "vertexMain",
-                fragmentEntryPoint = "fragmentMain",
-                extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
-            )
-            val transferContext = TransferContext(graphicsDevice)
-            cachedCleanup = headlessCleanup(
-                graphicsDevice,
-                transferContext,
-                sceneRenderPass,
-                descriptorSetLayout,
-                primary,
-            )
-            return Renderer(
-                graphicsDevice = graphicsDevice,
-                swapchainManager = swapchainManager,
-                pipelines = PipelineTable(primary = primary, primaryFormat = VertexFormat.PositionNormalColor),
-                renderFeatures = listOf(
-                    OpaqueRenderFeature(
-                        VulkanLinePass(
-                            LineRenderPipeline(
-                                graphicsDevice,
-                                swapchainManager,
-                                sceneRenderPass,
-                                runBlocking { packShaderPair("debug_line") },
-                                MAX_FRAMES_IN_FLIGHT,
-                            ),
-                        ),
-                    ),
-                    UiRenderFeature(VulkanUiPass()),
-                ),
-                depthPrePass = depthPrePass(graphicsDevice, depthTarget, descriptorSetLayout),
-                transferContext = transferContext,
-                uiShaderPairs = runBlocking { defaultUiShaderPairs() },
-                maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
-            ).also { cachedRenderer = it }
+        private fun sharedRenderer(): Renderer = cachedRenderer ?: newRenderer().let { (renderer, release) ->
+            cachedRenderer = renderer
+            releaseCached = release
+            renderer
         }
+
+        private fun newRenderer() = newHeadlessShadowRenderer(TARGET_SIZE)
     }
 }
