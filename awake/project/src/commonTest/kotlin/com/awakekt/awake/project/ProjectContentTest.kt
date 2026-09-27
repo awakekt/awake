@@ -14,13 +14,13 @@ class ProjectContentTest {
     @Test
     fun projectIndexUsesMetadataOnlyEntries() {
         val index = ProjectIndex(
-            rootPath = "/flyffawaken",
+            rootPath = "/example-project",
             files = listOf(
                 ProjectIndexEntry(
-                    path = "assets/models/aibat.glb",
+                    path = "assets/models/example.glb",
                     sizeBytes = 42,
                     sha256 = "a".repeat(64),
-                    url = "files/assets/models/aibat.glb",
+                    url = "files/assets/models/example.glb",
                 ),
             ),
         )

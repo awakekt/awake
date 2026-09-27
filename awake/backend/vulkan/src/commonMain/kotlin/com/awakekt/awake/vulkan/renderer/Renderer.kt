@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
+import com.awakekt.awake.asset.shaders.AttachedContentFeature
+import com.awakekt.awake.asset.shaders.ContentFeatureHost
+import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
@@ -20,18 +23,21 @@ import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.material.Material as RenderMaterial
+import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.SharedOpaqueRenderFeature
 import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes.recordPassFeatures
-import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
+import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.renderer.LineSegment
+import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
@@ -61,9 +67,6 @@ import com.awakekt.awake.vulkan.texture.OffscreenRenderTarget
 import com.awakekt.awake.vulkan.texture.Texture
 import com.awakekt.awake.vulkan.ui.DynamicMesh
 import com.awakekt.awake.vulkan.ui.UiRenderPipeline
-import com.awakekt.awake.render.material.Material as RenderMaterial
-import com.awakekt.awake.render.mesh.Mesh as RenderMesh
-import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 
 /**
  * Generic packet renderer: the `Renderer.draw(GpuPassInput)` entry point --
@@ -132,7 +135,8 @@ class Renderer internal constructor(
      * [shadowsEnabled] because nothing about it is a shadow. */
     private val sceneDepthPass: DepthPrePassFeature? = null,
 ) : RenderRenderer,
-    GpuDrawPreparationSource {
+    GpuDrawPreparationSource,
+    ContentFeatureHost {
     override val gpuDrawPreparer: GpuDrawPreparer by lazy {
         VulkanDrawPreparer(this)
     }
@@ -140,6 +144,14 @@ class Renderer internal constructor(
     internal val gpuPassExecutor: GpuPassExecutor by lazy { RendererGpuPassExecutor(this) }
 
     override val clipSpace: ClipSpace = ClipSpace.Vulkan
+
+    /** Where [attachContentFeature] goes, set by the engine that built this renderer. */
+    internal var contentFeatureHost: ContentFeatureHost? = null
+
+    override suspend fun attachContentFeature(source: ContentFeatureSource): AttachedContentFeature =
+        checkNotNull(contentFeatureHost) {
+            "This renderer was built without an engine, so it cannot attach content features."
+        }.attachContentFeature(source)
 
     override val surfaceAspect: Float
         get() = swapchainManager.extent.let { extent ->

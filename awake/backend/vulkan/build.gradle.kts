@@ -95,6 +95,9 @@ kotlin {
             // showcase's own scene FILE rather than a copy of its numbers, so the scene drifting
             // fails the test instead of silently leaving it checking something else.
             implementation(project(":awake:scene:runtime"))
+            // Test-only: the layered terrain surface's pixel tests need a real device, and this
+            // module is where headless renderers are built. The kit never reaches the backend.
+            implementation(project(":awake:kit:terrain-layers"))
         }
     }
 }

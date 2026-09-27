@@ -73,11 +73,9 @@ class Texture(
         // native blit-based mip gen in WebGPU either) -- the whole chain is box-filtered on
         // the CPU once at load time and every level uploaded directly. See MipChain.kt.
         val asset = TextureAsset(data, width, height, layerCount, isCubemap)
-        // Array textures ship level 0 only. A chain per layer would need a box filter that
-        // respects layer boundaries and interleaved buffer offsets, and the arrays this exists
-        // for -- splat layers, lookup tables -- are sampled at an explicit level anyway.
-        // ponytail: single-level arrays; add per-layer chains if one ever needs distance filtering.
-        val mipLevels = if (layerCount > 1) listOf(asset) else asset.mipChain()
+        // Arrays get a full chain: tiled terrain layers are sampled with implicit LOD and shimmer
+        // without one. Cubemaps stay single-level; the sky samples its base level only.
+        val mipLevels = if (isCubemap) listOf(asset) else asset.mipChain()
         val combined = ByteArray(mipLevels.sumOf { it.data.size })
         var writeOffset = 0
         val levelOffsets = IntArray(mipLevels.size)
@@ -160,24 +158,24 @@ class Texture(
                     layerCount = layerCount,
                 )
                 if (layerCount > 1) {
-                    // One copy per layer at level 0. A single copy with layerCount = N would
-                    // need every layer contiguous at one offset, which is how `data` is laid
-                    // out -- but stating the offset per layer keeps this correct if the packing
-                    // ever changes, and costs N commands on an upload that happens once.
-                    repeat(layerCount) { layer ->
-                        VulkanImages.vkCmdCopyBufferToImage(
-                            commandBuffer,
-                            stagingBuffer,
-                            rawImage,
-                            VkBufferImageCopy(
-                                imageWidth = width,
-                                imageHeight = height,
-                                bufferOffset = asset.layerOffset(layer).toLong(),
-                                mipLevel = 0,
-                                baseArrayLayer = layer,
-                                layerCount = 1,
-                            ),
-                        )
+                    // One copy per layer per level, each at its stated offset: correct whatever
+                    // the packing, for N x levels commands on an upload that happens once.
+                    mipLevels.forEachIndexed { index, level ->
+                        repeat(layerCount) { layer ->
+                            VulkanImages.vkCmdCopyBufferToImage(
+                                commandBuffer,
+                                stagingBuffer,
+                                rawImage,
+                                VkBufferImageCopy(
+                                    imageWidth = level.width,
+                                    imageHeight = level.height,
+                                    bufferOffset = (levelOffsets[index] + level.layerOffset(layer)).toLong(),
+                                    mipLevel = index,
+                                    baseArrayLayer = layer,
+                                    layerCount = 1,
+                                ),
+                            )
+                        }
                     }
                 } else {
                     mipLevels.forEachIndexed { index, level ->
