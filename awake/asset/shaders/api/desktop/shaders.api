@@ -10,8 +10,46 @@ public final class com/awakekt/awake/asset/shaders/AslUiShadersKt {
 	public static final fun getUiTextureShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
+public abstract interface class com/awakekt/awake/asset/shaders/AttachedContentFeature {
+	public abstract fun detach ()V
+}
+
+public final class com/awakekt/awake/asset/shaders/AttachedContentSlot : com/awakekt/awake/render/passes/RenderFeature {
+	public fun <init> ()V
+	public fun destroy ()V
+	public fun getPass ()Lcom/awakekt/awake/render/passes/RenderPassSlot;
+	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
+}
+
+public final class com/awakekt/awake/asset/shaders/ContentFeatureAttacher : com/awakekt/awake/asset/shaders/ContentFeatureHost {
+	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;)V
+	public fun attachContentFeature (Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun getAfterGeometry ()Lcom/awakekt/awake/asset/shaders/AttachedContentSlot;
+	public final fun getBeforeGeometry ()Lcom/awakekt/awake/asset/shaders/AttachedContentSlot;
+	public final fun releaseAll ()V
+}
+
+public abstract interface class com/awakekt/awake/asset/shaders/ContentFeatureGpu {
+	public abstract fun awaitIdle ()V
+	public abstract fun destroyPipeline (Lcom/awakekt/awake/render/command/UniformBlockOwner;)V
+	public abstract fun getBackend ()Lcom/awakekt/awake/asset/shaders/RenderBackend;
+	public abstract fun getRegistry ()Lcom/awakekt/awake/render/pipeline/PipelineRegistry;
+	public abstract fun handle (Lcom/awakekt/awake/render/command/UniformBlockOwner;)Lcom/awakekt/awake/render/command/PipelineHandle;
+	public abstract fun upload (Lcom/awakekt/awake/render/command/UniformBlockOwner;Lcom/awakekt/awake/render/passes/ContentFeature;)Lcom/awakekt/awake/asset/shaders/ContentUpload;
+}
+
+public abstract interface class com/awakekt/awake/asset/shaders/ContentFeatureHost {
+	public abstract fun attachContentFeature (Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public abstract interface class com/awakekt/awake/asset/shaders/ContentFeatureSource {
 	public abstract fun resolve (Lcom/awakekt/awake/asset/shaders/RenderBackend;)Lcom/awakekt/awake/render/passes/ContentFeature;
+}
+
+public final class com/awakekt/awake/asset/shaders/ContentUpload {
+	public fun <init> (Lcom/awakekt/awake/render/passes/ContentGeometry;Lkotlin/jvm/functions/Function0;)V
+	public final fun getGeometry ()Lcom/awakekt/awake/render/passes/ContentGeometry;
+	public final fun release ()V
 }
 
 public final class com/awakekt/awake/asset/shaders/EngineShaderSets {
@@ -106,6 +144,10 @@ public final class com/awakekt/awake/asset/shaders/ResolvedShader$Wgsl : com/awa
 	public final fun getSource ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/shaders/RuntimeContentFeaturesKt {
+	public static final fun buildContentFeature (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;Lcom/awakekt/awake/render/passes/ContentFeature;Ljava/util/List;)Lcom/awakekt/awake/render/passes/RenderFeature;
 }
 
 public abstract interface class com/awakekt/awake/asset/shaders/RuntimeShaderResolver {

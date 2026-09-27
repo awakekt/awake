@@ -133,4 +133,21 @@ class PipelineRegistryTest {
         assertEquals(2, destroyed.size)
         assertTrue(registry.specs.isEmpty())
     }
+
+    /** A removed spec compiles afresh on its next registration rather than reusing the old one. */
+    @Test
+    fun removeForgetsOnlyThatSpec() = runTest {
+        val factory = CountingFactory()
+        val registry = PipelineRegistry(factory)
+        val removed = spec()
+        val kept = spec(format = VertexFormat.PositionUv)
+        registry.register(listOf(request(removed), request(kept, PipelineKey.Particle)))
+
+        assertTrue(registry.remove(removed) != null)
+        assertEquals(null, registry.remove(removed))
+        assertEquals(setOf(kept), registry.specs)
+
+        registry.register(listOf(request(removed)))
+        assertEquals(3, factory.built.size)
+    }
 }

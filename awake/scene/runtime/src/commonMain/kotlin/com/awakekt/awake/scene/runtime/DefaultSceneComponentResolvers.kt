@@ -13,6 +13,7 @@ import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinControlBinding
 import com.awakekt.awake.scene.rendering.AmbientLight
+import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 import com.awakekt.awake.scene.rendering.Fog
 import com.awakekt.awake.scene.rendering.Light
 import com.awakekt.awake.scene.rendering.Skybox
@@ -31,8 +32,10 @@ import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.ScenePbrMaterial
 import com.awakekt.awake.scene.rendering.sky.SceneSkybox
 import com.awakekt.awake.scene.rendering.sky.SkyboxBinding
+import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
+import com.awakekt.awake.scene.rendering.terrain.TerrainBinding
+import com.awakekt.awake.scene.rendering.terrain.TerrainComponent
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers.install
-import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 
 /**
  * Built-in resolvers and bindings for standard core scene components.
@@ -50,6 +53,7 @@ object DefaultSceneComponentResolvers {
     val SkyboxResolver: SceneComponentBinding<Skybox, SceneSkybox> = SkyboxBinding
     val FogResolver: SceneComponentBinding<Fog, SceneFog> = FogBinding
     val AmbientLightResolver: SceneComponentBinding<AmbientLight, SceneAmbientLight> = AmbientLightBinding
+    val TerrainResolver: SceneComponentBinding<TerrainComponent, SceneTerrain> = TerrainBinding
     val PrefabLinkResolver: SceneComponentResolver = PrefabLinkBinding
 
     val bindings: List<SceneComponentBinding<*, *>> = listOf(
@@ -61,6 +65,7 @@ object DefaultSceneComponentResolvers {
         SkyboxBinding,
         FogBinding,
         AmbientLightBinding,
+        TerrainBinding,
     )
 
     val all: List<SceneComponentResolver> = listOf(
@@ -72,6 +77,7 @@ object DefaultSceneComponentResolvers {
         SkyboxBinding,
         FogBinding,
         AmbientLightBinding,
+        TerrainBinding,
         PrefabLinkBinding,
     )
 

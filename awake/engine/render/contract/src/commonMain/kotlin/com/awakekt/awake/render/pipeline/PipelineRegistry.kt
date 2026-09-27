@@ -83,6 +83,9 @@ class PipelineRegistry<P>(private val factory: PipelineFactory<P>) {
      */
     operator fun get(spec: PipelineSpec): P? = compiled[spec]
 
+    /** Forgets [spec]'s pipeline and hands it back for the caller to destroy, or null if none. */
+    fun remove(spec: PipelineSpec): P? = compiled.remove(spec)
+
     /** Hands every compiled pipeline to [destroy] and empties the registry. */
     fun destroyAll(destroy: (P) -> Unit) {
         compiled.values.forEach(destroy)

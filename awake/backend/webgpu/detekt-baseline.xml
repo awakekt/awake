@@ -32,7 +32,7 @@
     <ID>TooGenericExceptionCaught:WebGpuUploadContext.kt$WebGpuUploadContext$failure: Throwable</ID>
     <ID>TooGenericExceptionThrown:WebGpuUploadContextTest.kt$WebGpuUploadContextTest$throw RuntimeException("Simulated device loss during WebGPU upload")</ID>
     <ID>TooManyFunctions:GpuBufferPoolManager.kt$GpuBufferPoolManager</ID>
-    <ID>TooManyFunctions:Renderer.kt$Renderer : RenderRendererGpuDrawPreparationSource</ID>
+    <ID>TooManyFunctions:Renderer.kt$Renderer : RenderRendererGpuDrawPreparationSourceContentFeatureHost</ID>
     <ID>TooManyFunctions:WebGpuCanvasHost.kt$com.awakekt.awake.webgpu.application.WebGpuCanvasHost.kt</ID>
     <ID>UnusedPrivateProperty:Material.kt$Material$/** Sampled textures past the base-color one, in binding order -- [pbrTextures] fills them * positionally, the same rule Vulkan's `PBR_TEXTURE_BINDINGS` applies to its own writes. */ private val pbrBindings = materialPbrBindings(bindings)</ID>
     <ID>UnusedPrivateProperty:Mesh.kt$Mesh$runOneTimeCommands: ((commandBuffer: Long) -> Unit) -> Unit</ID>

@@ -56,7 +56,7 @@
     <ID>TooGenericExceptionThrown:SwapchainManager.kt$SwapchainManager$throw Exception("No valid usage flags found")</ID>
     <ID>TooGenericExceptionThrown:TransferContextUploadTest.kt$TransferContextUploadTest$throw RuntimeException("Simulated device loss during transfer submission")</ID>
     <ID>TooManyFunctions:LineMesh.kt$LineMesh</ID>
-    <ID>TooManyFunctions:Renderer.kt$Renderer : RenderRendererGpuDrawPreparationSource</ID>
+    <ID>TooManyFunctions:Renderer.kt$Renderer : RenderRendererGpuDrawPreparationSourceContentFeatureHost</ID>
     <ID>TooManyFunctions:RendererUiPipelines.kt$com.awakekt.awake.vulkan.renderer.RendererUiPipelines.kt</ID>
     <ID>TooManyFunctions:UiRenderPipeline.kt$UiRenderPipeline</ID>
     <ID>TooManyFunctions:VulkanEngine.kt$VulkanEngine : GraphicsEngine</ID>

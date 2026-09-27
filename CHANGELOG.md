@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Layered terrain kit.** New optional module `com.awakekt.awake.kit:terrain-layers`: an unbounded layer palette (`*.terrainpalette.json`), a top-4 index/weight control map per texel (`TerrainControlMap.reduce`, binary `*.terrainctl`), and `TerrainLayersShader`, which merges the four control texels around each pixel into four slots and height-blends only those, so per-pixel cost does not grow with the palette. `terrainLayersSurface()` returns the `TerrainSurface` for `terrainContentFeature`, and `TerrainLayersSurfaceProvider` loads one from project files when a scene terrain's `surface` names `awake.terrain.layers`. An optional `TerrainLightmap` (`*.terrainlight`) carries baked lighting: RGB multiplies the surface with 128 as x1, and alpha hands lighting over from the scene's sun to the bake.
+- **Terrain in scene documents.** `"component": "terrain"` is a Core binding (`TerrainBinding`, installed by `DefaultSceneComponentResolvers`): embedded heights plus an optional `surface: { provider, version, payload }` that Core preserves unread. `TerrainContentSystem` draws every `TerrainComponent` entity through `ContentFeatureHost`, resolving its surface with the matching `TerrainSurfaceProvider` or falling back to base shading, and detaches it when the entity or component goes away. **Breaking for hosts that registered their own `terrain` scene class:** two classes with one serial name make every scene encode and decode throw.
+- **Runtime content features.** Cast the app's renderer to `ContentFeatureHost` and `attachContentFeature(source)` to draw a content feature that arrives with a scene; `detach()` frees its pipeline, textures and geometry after the GPU is idle. Both engines build plan and attached features through one shared path, which now uploads arrayed and cubemap content textures with their real layer count. Features that sample scene depth, or share a registered pipeline spec, are rejected at attach.
+- **Pluggable terrain surface shading.** `terrainClipmapVertexStage()` is the shared clipmap vertex stage; a surface shader adds only its fragment stage and bindings from `TERRAIN_SURFACE_FIRST_BINDING`. `terrainContentFeature` now reads bindings from the `ShaderSet` it is given and accepts `surfaceTextures`. `TerrainShader` renders pixel-identically. **Breaking:** removed the unused `TerrainSplatShader`, `PackShaderSets.TerrainSplat`, `TerrainMaterial`, and `TerrainComponent.material`.
+
 ### Fixed
 
+- **Texture arrays get mip chains.** `TextureAsset.mipChain()` downsamples each array layer on its own, and both backends upload every level of an array texture instead of level 0 only, so tiled terrain layers sampled with implicit LOD no longer shimmer at a distance. Cubemaps stay single-level.
 - **Vulkan shadows no longer drop out on macOS.** MoltenVK up to 1.4.1 ignores render-pass subpass dependencies, so the scene pass could sample a shadow-map layer the depth pass was still writing and render a frame with no shadows. Each depth pass now records an explicit memory barrier, which also makes `RendererHeadlessCascadedShadowTest` deterministic (about 1 in 5 processes failed before).
 
 ## [0.1.0-alpha.5] - 2026-09-27

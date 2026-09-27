@@ -46,11 +46,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslSkyboxShaderKt {
 
 public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 	public static final field MAX_CLIPMAP_RINGS I
+	public static final field TERRAIN_SURFACE_FIRST_BINDING I
 	public static final fun getTerrainShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
-}
-
-public final class com/awakekt/awake/asset/shaderpack/AslTerrainSplatShaderKt {
-	public static final fun getTerrainSplatShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun terrainClipmapVertexStage (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;Z)Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;
+	public static synthetic fun terrainClipmapVertexStage$default (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslTexturedShaderKt {
@@ -117,7 +116,6 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getSkybox ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getSkyboxCubemap ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTerrain ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
-	public final fun getTerrainSplat ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getTriangle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 }
@@ -171,9 +169,17 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxUniformsKt {
 	public static final fun skyboxUniformFloats (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;)[F
 }
 
+public final class com/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs {
+	public final fun getSunDirection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getTerrainParams ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getTerrainSampling ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getWorldNormal ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getWorldPosition ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/TerrainContentFeatureKt {
-	public static final fun terrainContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
-	public static synthetic fun terrainContentFeature$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static final fun terrainContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Ljava/util/Map;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun terrainContentFeature$default (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/terrain/Heightmap;Lcom/awakekt/awake/asset/terrain/clipmap/TerrainClipmapConfig;Ljava/util/Map;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/TerrainRenderFeature : com/awakekt/awake/render/passes/RenderFeature {

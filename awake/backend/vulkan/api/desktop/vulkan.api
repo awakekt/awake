@@ -339,8 +339,9 @@ public final class com/awakekt/awake/vulkan/pipeline/VulkanShaderResolver : com/
 	public fun resolve (Lcom/awakekt/awake/render/pipeline/ShaderSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
-public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awake/render/command/GpuDrawPreparationSource, com/awakekt/awake/render/renderer/Renderer {
+public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awake/asset/shaders/ContentFeatureHost, com/awakekt/awake/render/command/GpuDrawPreparationSource, com/awakekt/awake/render/renderer/Renderer {
 	public static final field Companion Lcom/awakekt/awake/vulkan/renderer/Renderer$Companion;
+	public fun attachContentFeature (Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun awaitFrameResources ()V
 	public fun capability (Lcom/awakekt/awake/render/pipeline/GpuCapabilityKind;)Lcom/awakekt/awake/render/pipeline/GpuCapability;
 	public fun compositeUiTargets (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/renderer/UiTargetCompositeMode;)V
