@@ -39,6 +39,7 @@ class TerrainLayersSurfaceProviderTest {
         "terrain/textures/rock.png" to byteArrayOf(20),
         "terrain/textures/rock_height.png" to byteArrayOf(99),
         "terrain/region.terrainctl" to TerrainControlMapCodec.encode(CONTROL),
+        "terrain/region.terrainlight" to TerrainLightmapCodec.encode(LIGHT),
     )
     private val assets = AssetSource { path ->
         files[path.value]?.let { Result.success(it) } ?: Result.failure(NoSuchElementException(path.value))
@@ -59,6 +60,20 @@ class TerrainLayersSurfaceProviderTest {
         assertEquals(20, layers.data[16].toInt() and 0xFF, "rock's albedo is the second layer")
         assertEquals(99, layers.data[16 + 3].toInt() and 0xFF, "rock's height lands in alpha")
         assertEquals(CONTROL.width, surface.textures.getValue(CONTROL_INDICES_BINDING).width)
+        assertEquals(TerrainLightmap.Neutral.texture(), surface.textures.getValue(LIGHTMAP_BINDING), "no lightmap in the payload")
+    }
+
+    @Test
+    fun aPayloadNamingALightmapBindsIt() = runTest {
+        val payload = buildJsonObject {
+            put("palette", "terrain/region.terrainpalette.json")
+            put("control", "terrain/region.terrainctl")
+            put("lightmap", "terrain/region.terrainlight")
+        }
+
+        val surface = provider.resolve(reference().copy(payload = payload))
+
+        assertEquals(LIGHT.texture(), surface.textures.getValue(LIGHTMAP_BINDING))
     }
 
     @Test
@@ -96,7 +111,7 @@ class TerrainLayersSurfaceProviderTest {
         system.update(world, 0f)
 
         assertEquals(
-            setOf(1, LAYER_ALBEDO_BINDING, LAYER_TABLE_BINDING, CONTROL_INDICES_BINDING, CONTROL_WEIGHTS_BINDING),
+            setOf(1, LAYER_ALBEDO_BINDING, LAYER_TABLE_BINDING, CONTROL_INDICES_BINDING, CONTROL_WEIGHTS_BINDING, LIGHTMAP_BINDING),
             host.attached.single().textures.keys,
         )
     }
@@ -134,5 +149,7 @@ class TerrainLayersSurfaceProviderTest {
         )
 
         val CONTROL = TerrainControlMap.reduce(4, 4, layerCount = 2) { layer, x, _ -> if ((x < 2) == (layer == 0)) 1f else 0f }.controlMap
+
+        val LIGHT = TerrainLightmap(4, 4, ByteArray(4 * 4 * 4) { if (it % 4 == 3) -1 else 64 })
     }
 }

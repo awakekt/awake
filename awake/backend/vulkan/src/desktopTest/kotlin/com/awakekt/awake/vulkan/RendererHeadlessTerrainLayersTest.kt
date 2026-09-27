@@ -13,6 +13,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.kit.terrainlayers.TerrainControlMap
 import com.awakekt.awake.kit.terrainlayers.TerrainLayer
 import com.awakekt.awake.kit.terrainlayers.TerrainLayerPalette
+import com.awakekt.awake.kit.terrainlayers.TerrainLightmap
 import com.awakekt.awake.kit.terrainlayers.packLayerArray
 import com.awakekt.awake.kit.terrainlayers.terrainLayersSurface
 import com.awakekt.awake.render.texture.TextureAsset
@@ -51,18 +52,37 @@ class RendererHeadlessTerrainLayersTest {
     /** Positive control: the same scene with a control map of only the red layer must fail the split check. */
     @Test
     fun aControlMapOfOneLayerFailsTheSplitCheck() {
-        val frame = render(TerrainControlMap.reduce(SAMPLES, SAMPLES, layerCount = 2) { layer, _, _ -> if (layer == RED) 1f else 0f }.controlMap)
+        val frame = render(allRed())
 
         assertTrue(frame.leftIsRed())
         assertFalse(frame.rightIsGreen(), "The right half is green with no green in the control map: ${frame.summary()}")
     }
 
+    /** Baked light halves the left half (x0.5) and leaves the right (x1); alpha 255 ignores the sun. */
+    @Test
+    fun aLightmapScalesTheSurfaceItCovers() {
+        val halved = TerrainLightmap(SAMPLES, SAMPLES, ByteArray(SAMPLES * SAMPLES * 4) { index ->
+            val x = (index / 4) % SAMPLES
+            if (index % 4 == 3) -1 else if (x < SAMPLES / 2) HALF_LIGHT else NEUTRAL_LIGHT
+        })
+
+        val lit = render(allRed(), halved)
+        val neutral = render(allRed())
+
+        val litRatio = lit.redMean(left = true) / lit.redMean(left = false)
+        val neutralRatio = neutral.redMean(left = true) / neutral.redMean(left = false)
+        assertTrue(litRatio in 0.4f..0.6f, "Left over right red is $litRatio under a lightmap halving the left: ${lit.summary()}")
+        assertTrue(neutralRatio > 0.9f, "Without a lightmap both halves should match, but left over right is $neutralRatio.")
+    }
+
+    private fun allRed() = TerrainControlMap.reduce(SAMPLES, SAMPLES, layerCount = 2) { layer, _, _ -> if (layer == RED) 1f else 0f }.controlMap
+
     private fun split() = TerrainControlMap.reduce(SAMPLES, SAMPLES, layerCount = 2) { layer, x, _ ->
         if ((x < SAMPLES / 2) == (layer == RED)) 1f else 0f
     }.controlMap
 
-    private fun render(control: TerrainControlMap): Frame {
-        val surface = terrainLayersSurface(PALETTE, packLayerArray(listOf(solid(255, 0, 0), solid(0, 255, 0))), control)
+    private fun render(control: TerrainControlMap, lightmap: TerrainLightmap = TerrainLightmap.Neutral): Frame {
+        val surface = terrainLayersSurface(PALETTE, packLayerArray(listOf(solid(255, 0, 0), solid(0, 255, 0))), control, lightmap)
         val attached = runBlocking {
             shared().attacher.attachContentFeature(
                 terrainContentFeature(surface.shaders, FLAT, CONFIG, surfaceTextures = surface.textures),
@@ -96,6 +116,8 @@ class RendererHeadlessTerrainLayersTest {
             return if (count == 0) 0f to 0f else red / count to green / count
         }
 
+        fun redMean(left: Boolean) = if (left) mean(0, size * 2 / 5).first else mean(size * 3 / 5, size).first
+
         fun leftIsRed() = mean(0, size * 2 / 5).let { (r, g) -> r > DOMINANCE * g && r > MIN_CHANNEL }
 
         fun rightIsGreen() = mean(size * 3 / 5, size).let { (r, g) -> g > DOMINANCE * r && g > MIN_CHANNEL }
@@ -120,6 +142,8 @@ class RendererHeadlessTerrainLayersTest {
         const val LOW_SHARE = 0.2f
         const val HIGH_SHARE = 0.8f
         const val STEP_TOLERANCE = 0.02f
+        const val HALF_LIGHT: Byte = 64
+        const val NEUTRAL_LIGHT: Byte = -128
 
         val CONFIG = TerrainClipmapConfig(ringCount = 2, ringResolution = 16, baseSpacing = 1f)
         val FLAT = Heightmap(FloatArray(SAMPLES * SAMPLES), SAMPLES, SAMPLES, Vec3f(1f, 1f, 1f))

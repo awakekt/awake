@@ -10,7 +10,6 @@ import com.awakekt.awake.render.texture.TextureAsset
 /** Layer slots each control texel holds. The shader's per-pixel cost is fixed by this. */
 const val CONTROL_SLOTS: Int = 4
 
-private const val RGBA = 4
 private const val BYTE_MAX = 255
 
 /**
@@ -218,16 +217,17 @@ object TerrainControlMapCodec {
         )
     }
 
-    /** The largest 2D texture every WebGPU device must accept. */
-    private const val MAX_SIDE = 8192
+}
 
-    private fun writeInt(out: ByteArray, at: Int, value: Int) {
-        for (i in 0 until RGBA) out[at + i] = (value ushr (i * Byte.SIZE_BITS)).toByte()
-    }
+/** The largest 2D texture every WebGPU device must accept. */
+internal const val MAX_SIDE = 8192
 
-    private fun readInt(bytes: ByteArray, at: Int): Int {
-        var value = 0
-        for (i in 0 until RGBA) value = value or ((bytes[at + i].toInt() and BYTE_MAX) shl (i * Byte.SIZE_BITS))
-        return value
-    }
+internal fun writeInt(out: ByteArray, at: Int, value: Int) {
+    for (i in 0 until Int.SIZE_BYTES) out[at + i] = (value ushr (i * Byte.SIZE_BITS)).toByte()
+}
+
+internal fun readInt(bytes: ByteArray, at: Int): Int {
+    var value = 0
+    for (i in 0 until Int.SIZE_BYTES) value = value or ((bytes[at + i].toInt() and BYTE_MAX) shl (i * Byte.SIZE_BITS))
+    return value
 }

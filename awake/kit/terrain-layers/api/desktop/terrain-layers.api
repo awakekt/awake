@@ -124,13 +124,16 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLayerTexturesKt {
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersPayload {
 	public static final field Companion Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/kit/terrainlayers/TerrainLayersPayload;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getControl ()Ljava/lang/String;
+	public final fun getLightmap ()Ljava/lang/String;
 	public final fun getPalette ()Ljava/lang/String;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -156,12 +159,14 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersShaderKt {
 	public static final field CONTROL_WEIGHTS_BINDING I
 	public static final field LAYER_ALBEDO_BINDING I
 	public static final field LAYER_TABLE_BINDING I
+	public static final field LIGHTMAP_BINDING I
 	public static final fun getTerrainLayersShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getTerrainLayersShaders ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 }
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceKt {
-	public static final fun terrainLayersSurface (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;)Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurface;
+	public static final fun terrainLayersSurface (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;)Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurface;
+	public static synthetic fun terrainLayersSurface$default (Lcom/awakekt/awake/kit/terrainlayers/TerrainLayerPalette;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap;Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/terrain/TerrainSurface;
 }
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProvider : com/awakekt/awake/scene/rendering/terrain/TerrainSurfaceProvider {
@@ -172,5 +177,24 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProvi
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceProviderKt {
 	public static final field TERRAIN_LAYERS_PROVIDER Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/kit/terrainlayers/TerrainLightmap {
+	public static final field Companion Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap$Companion;
+	public fun <init> (II[B)V
+	public final fun copyRgba ()[B
+	public final fun getDepth ()I
+	public final fun getWidth ()I
+	public final fun texture ()Lcom/awakekt/awake/render/texture/TextureAsset;
+}
+
+public final class com/awakekt/awake/kit/terrainlayers/TerrainLightmap$Companion {
+	public final fun getNeutral ()Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;
+}
+
+public final class com/awakekt/awake/kit/terrainlayers/TerrainLightmapCodec {
+	public static final field INSTANCE Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmapCodec;
+	public final fun decode ([B)Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;
+	public final fun encode (Lcom/awakekt/awake/kit/terrainlayers/TerrainLightmap;)[B
 }
 

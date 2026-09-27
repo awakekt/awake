@@ -82,15 +82,27 @@ class TerrainLayerPaletteTest {
     }
 
     @Test
-    fun theSurfaceBindsItsFourTextures() {
+    fun theSurfaceBindsItsTexturesWithANeutralLightmapByDefault() {
         val control = TerrainControlMap.reduce(2, 2, layerCount = 2) { layer, x, _ -> if (layer == x) 1f else 0f }.controlMap
 
         val surface = terrainLayersSurface(palette, packLayerArray(listOf(solid(1), solid(2))), control)
 
         assertEquals(
-            setOf(LAYER_ALBEDO_BINDING, LAYER_TABLE_BINDING, CONTROL_INDICES_BINDING, CONTROL_WEIGHTS_BINDING),
+            setOf(LAYER_ALBEDO_BINDING, LAYER_TABLE_BINDING, CONTROL_INDICES_BINDING, CONTROL_WEIGHTS_BINDING, LIGHTMAP_BINDING),
             surface.textures.keys,
         )
+        assertEquals(TerrainLightmap.Neutral.texture(), surface.textures.getValue(LIGHTMAP_BINDING))
+    }
+
+    @Test
+    fun theLightmapCodecRoundTripsAndRejectsForeignFiles() {
+        val lightmap = TerrainLightmap(2, 1, byteArrayOf(10, 20, 30, 40, 50, 60, 70, 80))
+
+        val decoded = TerrainLightmapCodec.decode(TerrainLightmapCodec.encode(lightmap))
+
+        assertEquals(lightmap.texture(), decoded.texture())
+        assertFailsWith<IllegalArgumentException> { TerrainLightmapCodec.decode(TerrainControlMapCodec.encode(TerrainControlMap.reduce(1, 1, 1) { _, _, _ -> 1f }.controlMap)) }
+        assertFailsWith<IllegalArgumentException> { TerrainLightmapCodec.decode(TerrainLightmapCodec.encode(lightmap).copyOf(20)) }
     }
 
     @Test

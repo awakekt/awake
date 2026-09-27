@@ -57,6 +57,9 @@ const val CONTROL_INDICES_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 2
 const val CONTROL_WEIGHTS_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 3
 private const val LAYER_SAMPLER_BINDING = TERRAIN_SURFACE_FIRST_BINDING + 4
 
+/** Baked lighting. See [TerrainLightmap]. */
+const val LIGHTMAP_BINDING: Int = TERRAIN_SURFACE_FIRST_BINDING + 5
+
 /** How far below the highest surface another still shows through, in weight-plus-height units. */
 private const val BLEND_DEPTH = 0.25f
 private const val NO_LAYER = -1f
@@ -83,6 +86,7 @@ val TerrainLayersShader: AslShaderDefinition = shader("terrain_layers") {
     val controlIndices by texture2d(group = group, binding = CONTROL_INDICES_BINDING)
     val controlWeights by texture2d(group = group, binding = CONTROL_WEIGHTS_BINDING)
     val layerSampler by sampler(group = group, binding = LAYER_SAMPLER_BINDING)
+    val lightmap by texture2d(group = group, binding = LIGHTMAP_BINDING)
 
     fragment {
         val slots = mergeControlTaps(terrain.worldPosition, terrain.terrainSampling, controlIndices, controlWeights, layerSampler)
@@ -92,7 +96,15 @@ val TerrainLayersShader: AslShaderDefinition = shader("terrain_layers") {
         val ambient = let("ambient", terrain.sunDirection.w)
         val diffuse = let("diffuse", max(dot(normal, toLight), 0f.lit))
         val lighting = let("lighting", ambient + (1f.lit - ambient) * diffuse)
-        colorOutput(vec4(albedo * lighting, 1f.lit))
+        val position = terrain.worldPosition
+        val sampling = terrain.terrainSampling
+        val baked = let(
+            "baked",
+            textureSampleLevel(lightmap, layerSampler, vec2(position.x / sampling.x + 0.5f.lit, position.z / sampling.y + 0.5f.lit), 0f.lit),
+        )
+        // 128 in the lightmap is x1; its alpha hands lighting over from the sun to the bake.
+        val light = let("light", mix(lighting, 1f.lit, baked.w))
+        colorOutput(vec4(albedo * baked.xyz * 2f.lit * light, 1f.lit))
     }
 }
 

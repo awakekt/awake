@@ -15,8 +15,14 @@ import com.awakekt.awake.scene.rendering.terrain.TerrainSurface
  * @param palette The layers, in the order the control map indexes them.
  * @param albedo The palette's layers from [packLayerArray], in palette order.
  * @param control Which layers cover each texel; aligned with the terrain's heightmap.
+ * @param lightmap Baked lighting aligned with [control], or none to light by the scene alone.
  */
-fun terrainLayersSurface(palette: TerrainLayerPalette, albedo: TextureAsset, control: TerrainControlMap): TerrainSurface {
+fun terrainLayersSurface(
+    palette: TerrainLayerPalette,
+    albedo: TextureAsset,
+    control: TerrainControlMap,
+    lightmap: TerrainLightmap = TerrainLightmap.Neutral,
+): TerrainSurface {
     val issues = palette.validate()
     require(issues.isEmpty()) { "Invalid terrain layer palette: ${issues.joinToString("; ")}" }
     require(albedo.layerCount >= palette.layers.size) {
@@ -33,6 +39,7 @@ fun terrainLayersSurface(palette: TerrainLayerPalette, albedo: TextureAsset, con
             LAYER_TABLE_BINDING to layerTable(palette),
             CONTROL_INDICES_BINDING to control.indicesTexture(),
             CONTROL_WEIGHTS_BINDING to control.weightsTexture(),
+            LIGHTMAP_BINDING to lightmap.texture(),
         ),
     )
 }

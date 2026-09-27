@@ -26,11 +26,13 @@ const val TERRAIN_LAYERS_PROVIDER: String = "awake.terrain.layers"
  * @property palette Project path of the `*.terrainpalette.json`. Its layer images resolve relative
  * to it.
  * @property control Project path of the `*.terrainctl`, aligned with the terrain's heightmap.
+ * @property lightmap Project path of an optional `*.terrainlight`, aligned with [control].
  */
 @Serializable
 data class TerrainLayersPayload(
     val palette: String,
     val control: String,
+    val lightmap: String? = null,
 )
 
 /**
@@ -59,7 +61,8 @@ class TerrainLayersSurfaceProvider(
         val albedo = palette.layers.map { decodeImage(read(palettePath.resolve(it.albedo))) }
         val heights = palette.layers.map { layer -> layer.height?.let { decodeImage(read(palettePath.resolve(it))) } }
         val control = TerrainControlMapCodec.decode(read(AssetPath(payload.control)))
-        return terrainLayersSurface(palette, packLayerArray(albedo, heights), control)
+        val lightmap = payload.lightmap?.let { TerrainLightmapCodec.decode(read(AssetPath(it))) } ?: TerrainLightmap.Neutral
+        return terrainLayersSurface(palette, packLayerArray(albedo, heights), control, lightmap)
     }
 
     private suspend fun read(path: AssetPath): ByteArray =
