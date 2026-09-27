@@ -36,4 +36,6 @@ dependencies {
     implementation(project(":samples:engine-showcase"))
     implementation(project(":awake:backend:vulkan"))
     implementation(project(":awake:engine:platform"))
+    // Debug only: LeakCanary aborts non-debuggable builds, so a library must never ship it.
+    debugImplementation(libs.leakcanary.android)
 }
