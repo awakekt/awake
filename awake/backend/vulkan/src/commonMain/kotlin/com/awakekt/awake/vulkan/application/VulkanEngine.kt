@@ -6,7 +6,6 @@
 package com.awakekt.awake.vulkan.application
 
 import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
-import com.awakekt.awake.asset.shaders.ContentFeatureGpu
 import com.awakekt.awake.asset.shaders.ContentUpload
 import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.asset.shaders.RenderBackend
@@ -22,9 +21,6 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.platform.GraphicsEngine
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
-import com.awakekt.awake.render.command.PipelineHandle
-import com.awakekt.awake.render.passes.ContentFeature
-import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.RenderFeature
@@ -47,7 +43,6 @@ import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.handles.DescriptorSetLayoutHandle
 import com.awakekt.awake.vulkan.material.Material
-import com.awakekt.awake.vulkan.mesh.Mesh
 import com.awakekt.awake.vulkan.mesh.SkinnedInstanceBuffer
 import com.awakekt.awake.vulkan.models.VkExtent2D
 import com.awakekt.awake.vulkan.models.info.VkDescriptorSetLayoutCreateInfo
@@ -68,7 +63,6 @@ import com.awakekt.awake.vulkan.renderer.Renderer
 import com.awakekt.awake.vulkan.surfaceFramebufferExtent
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import com.awakekt.awake.vulkan.texture.DepthTarget
-import com.awakekt.awake.vulkan.texture.Texture
 import com.awakekt.awake.vulkan.windowLogicalExtent
 
 /**
@@ -375,7 +369,7 @@ open class VulkanEngine(
             MAX_FRAMES_IN_FLIGHT,
         )
         val content = plan.contentFeaturesFor(RenderBackend.Vulkan).groupBy { it.paint }
-        val gpu = VulkanContentGpu()
+        val gpu = VulkanContentFeatureGpu(graphicsDevice, transferContext, pipelineRegistry)
         contentAttacher = ContentFeatureAttacher(gpu)
         return buildList {
             content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
@@ -387,50 +381,6 @@ open class VulkanEngine(
         }
     }
 
-    /** This engine's half of building a content feature, at start or attached later. */
-    private inner class VulkanContentGpu : ContentFeatureGpu<RenderPipeline> {
-        override val backend = RenderBackend.Vulkan
-        override val registry: PipelineRegistry<RenderPipeline> get() = pipelineRegistry
-
-        override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline
-
-        override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload {
-            val textures = feature.textures.mapValues { (_, asset) ->
-                Texture(
-                    graphicsDevice,
-                    transferContext::runOneTimeCommands,
-                    asset.data,
-                    asset.width,
-                    asset.height,
-                    layerCount = asset.layerCount,
-                    isCubemap = asset.isCubemap,
-                )
-            }
-            // After the registry compiled the pipeline, because the layout comes from a spec and
-            // the pixels come from the feature -- see PerFrameUniformSlots.writeTextures.
-            pipeline.writeContentTextures(textures)
-            val mesh = feature.geometry?.let { source ->
-                Mesh(
-                    graphicsDevice,
-                    transferContext::runOneTimeCommands,
-                    source.vertices,
-                    source.indices,
-                    source.format,
-                )
-            }
-            // Owned here: a descriptor write or a recorded bind references these without owning them.
-            return ContentUpload(mesh?.let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }) {
-                textures.values.forEach(Texture::destroy)
-                mesh?.destroy()
-            }
-        }
-
-        override fun destroyPipeline(pipeline: RenderPipeline) = pipeline.destroy()
-
-        override fun awaitIdle() {
-            VulkanBuffers.vkDeviceWaitIdle(graphicsDevice.device)
-        }
-    }
 
     /**
      * The descriptor set layouts each pipeline family gets past set 0, densely by slot.
