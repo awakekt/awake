@@ -41,6 +41,7 @@ internal class RendererGpuPassExecutor(
             postPasses = input.postPasses,
             environment = input.environment,
             sceneViewport = input.viewport,
+            passInput = input,
         )
         renderer.submitAndPresent(currentFrame, imageIndex)
     }
@@ -94,6 +95,7 @@ internal class RendererGpuPassExecutor(
                             viewProjection = input.viewProjection,
                             cameraEye = input.cameraEye,
                             environment = input.environment,
+                            passInput = input,
                         ),
                     )
                     Vulkan.vkCmdEndRenderPass(commandBuffer)
