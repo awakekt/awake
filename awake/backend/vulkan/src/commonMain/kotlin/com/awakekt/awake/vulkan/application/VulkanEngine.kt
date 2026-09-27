@@ -5,11 +5,15 @@
  */
 package com.awakekt.awake.vulkan.application
 
+import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
+import com.awakekt.awake.asset.shaders.ContentFeatureGpu
+import com.awakekt.awake.asset.shaders.ContentUpload
 import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.asset.shaders.RenderBackend
 import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.asset.shaders.ShaderStage
+import com.awakekt.awake.asset.shaders.buildContentFeature
 import com.awakekt.awake.asset.shaders.entryPoint
 import com.awakekt.awake.asset.shaders.spec
 import com.awakekt.awake.asset.shaders.uiShaderSet
@@ -18,6 +22,7 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.engine.platform.GraphicsEngine
 import com.awakekt.awake.engine.platform.HeadlessSurface
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
+import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.ContentPaint
@@ -105,12 +110,12 @@ open class VulkanEngine(
     private lateinit var pipelineRegistry: PipelineRegistry<RenderPipeline>
     private lateinit var transferContext: TransferContext
 
-    /** Textures uploaded for content features, held only so [destroyBackend] can free them --
+    /** Uploads for the plan's content features, held only so [destroyBackend] can free them --
      * a pipeline's descriptor set references an image without owning it. */
-    private val contentTextures = mutableListOf<Texture>()
+    private val contentUploads = mutableListOf<ContentUpload>()
 
-    /** Meshes uploaded for content features, held for the same reason [contentTextures] is. */
-    private val contentMeshes = mutableListOf<Mesh>()
+    /** Content features attached after start; the renderer delegates [ContentFeatureHost] here. */
+    private lateinit var contentAttacher: ContentFeatureAttacher<RenderPipeline>
     private var syncObjectsCreated = false
 
     /** Kept as a field only because [Material]'s descriptor set layout is built from it long
@@ -370,53 +375,61 @@ open class VulkanEngine(
             MAX_FRAMES_IN_FLIGHT,
         )
         val content = plan.contentFeaturesFor(RenderBackend.Vulkan).groupBy { it.paint }
+        val gpu = VulkanContentGpu()
+        contentAttacher = ContentFeatureAttacher(gpu)
         return buildList {
-            content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(buildContentFeature(it)) }
+            content[ContentPaint.BeforeGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
+            add(contentAttacher.beforeGeometry)
             add(OpaqueRenderFeature(VulkanLinePass(lineRenderPipeline)))
-            content[ContentPaint.AfterGeometry].orEmpty().forEach { add(buildContentFeature(it)) }
+            content[ContentPaint.AfterGeometry].orEmpty().forEach { add(gpu.buildContentFeature(it, contentUploads)) }
+            add(contentAttacher.afterGeometry)
             add(UiRenderFeature(VulkanUiPass()))
         }
     }
 
-    /** One content feature, against the pipeline the registry already compiled for it. */
-    private fun buildContentFeature(feature: ContentFeature): RenderFeature<VulkanRenderFrameContext> {
-        // Registered above with every other pipeline, so a content feature costs the engine a
-        // lookup rather than a second construction path.
-        val pipeline = checkNotNull(pipelineRegistry.get(feature.spec)) {
-            "Content feature '${feature.name}' was not registered before its feature was built."
-        }
-        val block = checkNotNull(pipeline.uniformBlock) {
-            "Content feature '${feature.name}' declares uniforms, so the factory must have " +
-                "allocated a block for its pipeline."
-        }
-        // After the registry compiled the pipeline, because the layout comes from a spec and the
-        // pixels come from the feature -- see PerFrameUniformSlots.writeTextures. Held for
-        // teardown: nothing else owns them, and the pipeline outlives this call.
-        pipeline.writeContentTextures(
-            feature.textures.mapValues { (_, asset) ->
+    /** This engine's half of building a content feature, at start or attached later. */
+    private inner class VulkanContentGpu : ContentFeatureGpu<RenderPipeline> {
+        override val backend = RenderBackend.Vulkan
+        override val registry: PipelineRegistry<RenderPipeline> get() = pipelineRegistry
+
+        override fun handle(pipeline: RenderPipeline): PipelineHandle = pipeline
+
+        override fun upload(pipeline: RenderPipeline, feature: ContentFeature): ContentUpload {
+            val textures = feature.textures.mapValues { (_, asset) ->
                 Texture(
                     graphicsDevice,
                     transferContext::runOneTimeCommands,
                     asset.data,
                     asset.width,
                     asset.height,
-                ).also { contentTextures += it }
-            },
-        )
-        // Uploaded here for the same reason the textures above are: the engine has the device,
-        // the feature does not. Owned for teardown -- a recorded bind references a buffer
-        // without owning it.
-        val geometry = feature.geometry?.let { source ->
-            Mesh(
-                graphicsDevice,
-                transferContext::runOneTimeCommands,
-                source.vertices,
-                source.indices,
-                source.format,
-            ).also { contentMeshes += it }
-                .let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }
+                    layerCount = asset.layerCount,
+                    isCubemap = asset.isCubemap,
+                )
+            }
+            // After the registry compiled the pipeline, because the layout comes from a spec and
+            // the pixels come from the feature -- see PerFrameUniformSlots.writeTextures.
+            pipeline.writeContentTextures(textures)
+            val mesh = feature.geometry?.let { source ->
+                Mesh(
+                    graphicsDevice,
+                    transferContext::runOneTimeCommands,
+                    source.vertices,
+                    source.indices,
+                    source.format,
+                )
+            }
+            // Owned here: a descriptor write or a recorded bind references these without owning them.
+            return ContentUpload(mesh?.let { ContentGeometry(it.vertexBinding, it.indexBinding, it.indexCount) }) {
+                textures.values.forEach(Texture::destroy)
+                mesh?.destroy()
+            }
         }
-        return feature.build(pipeline, block, geometry)
+
+        override fun destroyPipeline(pipeline: RenderPipeline) = pipeline.destroy()
+
+        override fun awaitIdle() {
+            VulkanBuffers.vkDeviceWaitIdle(graphicsDevice.device)
+        }
     }
 
     /**
@@ -613,7 +626,7 @@ open class VulkanEngine(
                 maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
                 depthPrePass = depthPrePass,
                 sceneDepthPass = sceneDepthPass,
-            )
+            ).also { it.contentFeatureHost = contentAttacher }
             createdRenderer = renderer
             swapchainManager.createSyncObjects()
             syncObjectsCreated = true
@@ -671,10 +684,9 @@ open class VulkanEngine(
         pipelineRegistry.destroyAll { it.destroy() }
         // Uploaded for content features above. The pipeline holds only descriptor writes
         // referencing them, not ownership, so nothing else would free the images.
-        contentTextures.forEach { it.destroy() }
-        contentTextures.clear()
-        contentMeshes.forEach { it.destroy() }
-        contentMeshes.clear()
+        contentUploads.forEach(ContentUpload::release)
+        contentUploads.clear()
+        contentAttacher.releaseAll()
         skinnedInstanceDescriptorSetLayout?.let {
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, it.handle)
         }
