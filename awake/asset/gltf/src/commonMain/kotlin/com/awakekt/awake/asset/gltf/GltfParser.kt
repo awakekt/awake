@@ -211,19 +211,21 @@ object GltfParser {
             readMaterialImageBytes(
                 document,
                 material?.pbrMetallicRoughness?.baseColorTexture,
+                buffers,
                 externalResources,
             )
         val metallicRoughnessImageBytes = readMaterialImageBytes(
             document,
             material?.pbrMetallicRoughness?.metallicRoughnessTexture,
+            buffers,
             externalResources,
         )
         val normalImageBytes =
-            readMaterialImageBytes(document, material?.normalTexture, externalResources)
+            readMaterialImageBytes(document, material?.normalTexture, buffers, externalResources)
         val occlusionImageBytes =
-            readMaterialImageBytes(document, material?.occlusionTexture, externalResources)
+            readMaterialImageBytes(document, material?.occlusionTexture, buffers, externalResources)
         val emissiveImageBytes =
-            readMaterialImageBytes(document, material?.emissiveTexture, externalResources)
+            readMaterialImageBytes(document, material?.emissiveTexture, buffers, externalResources)
         val pbr = material?.pbrMetallicRoughness
         val baseColorFactor = pbr?.baseColorFactor?.toFloatArray() ?: floatArrayOf(1f, 1f, 1f, 1f)
         val metallicFactor = pbr?.metallicFactor ?: 1f
@@ -252,25 +254,40 @@ object GltfParser {
         )
     }
 
-    /** Resolves a material texture reference (e.g. [GltfPbrMetallicRoughness.baseColorTexture],
-     * [GltfMaterial.normalTexture]) -> texture -> image, returning that image's still-encoded
-     * bytes -- decoded from its base64 data URI, or looked up in [externalResources] for an
-     * external image `uri` -- `null` at any missing link in that chain ([textureRef] itself
-     * `null`, no such texture/image, or an external image whose bytes the caller didn't
-     * provide). Shared by every PBR channel reader in [readPrimitive] -- see [GltfParser]'s own
-     * doc comment for which channels those cover. */
+    /** Resolves a material texture to its still-encoded image bytes, from a data URI, a
+     * pre-fetched external URI, or a GLB buffer view. Returns null when the material has no
+     * texture image. Shared by every PBR channel reader in [readPrimitive]. */
     private fun readMaterialImageBytes(
         document: GltfDocument,
         textureRef: GltfTextureRef?,
+        buffers: List<ByteArray>,
         externalResources: Map<String, ByteArray>,
     ): ByteArray? {
-        val uri = textureRef
+        val image = textureRef
             ?.let { document.textures.getOrNull(it.index) }
             ?.source
             ?.let { document.images.getOrNull(it) }
-            ?.uri
-            ?: return null
-        return if (uri.startsWith("data:")) decodeBase64DataUri(uri) else externalResources[uri]
+        val uri = image?.uri
+        return when {
+            uri != null -> if (uri.startsWith("data:")) decodeBase64DataUri(uri) else externalResources[uri]
+            else -> image?.bufferView?.let { readImageBufferView(document, it, buffers) }
+        }
+    }
+
+    /** Copies the bytes of the GLB buffer view that stores an embedded image. */
+    private fun readImageBufferView(document: GltfDocument, bufferViewIndex: Int, buffers: List<ByteArray>): ByteArray {
+        val view = document.bufferViews.getOrElse(bufferViewIndex) {
+            error("glTF image references bufferView $bufferViewIndex, out of range (${document.bufferViews.size} views).")
+        }
+        val buffer = buffers.getOrElse(view.buffer) {
+            error("glTF image bufferView $bufferViewIndex references buffer ${view.buffer}, out of range (${buffers.size} buffers).")
+        }
+        val start = view.byteOffset
+        val end = start.toLong() + view.byteLength.toLong()
+        require(start >= 0 && view.byteLength >= 0 && end <= buffer.size.toLong()) {
+            "glTF image bufferView $bufferViewIndex range [$start, $end) exceeds buffer size ${buffer.size}."
+        }
+        return buffer.copyOfRange(start, end.toInt())
     }
 
     /**

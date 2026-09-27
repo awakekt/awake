@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **glTF images embedded in GLB buffers.** `GltfImage.bufferView` is parsed and material textures resolve their encoded bytes from the GLB binary chunk, with range checks, in addition to data URIs and pre-fetched external URIs.
+
 ### Fixed
 
 - **Release tooling finds every release tag.** `releaseCut` now reads all `v*` tags instead of those reachable from `HEAD`, so a squash-merged release commit no longer makes it re-cut an existing version; the snapshot job skips publishing when a just-pushed tag makes the commit resolve to a release version.
