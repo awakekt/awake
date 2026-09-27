@@ -1,38 +1,117 @@
 # Blueprint runtime plan
 
 Date: 2026-09-27
-Status: **stub** — records the current state and the prerequisites. The design is settled in its
-own discussion, which has not happened yet. Consumer 1 of the
-[node-graph plan](2026-09-27-node-graph-plan.md).
+Status: **proposed** — the seven design decisions below are made. Phase 0 (prerequisites) can
+start. Consumer 1 of the [node-graph plan](2026-09-27-node-graph-plan.md).
 
 ## Goal
 
-Event-driven game logic authored as node graphs. For example: player enters a trigger → open the
-door → wait 2 s → close it.
+Event-driven game logic authored as node graphs, edited in Awake Studio and reloaded into the
+running game. For example: player enters a trigger → open the door → wait 2 s → close it.
 
-- **Coders** write nodes in Kotlin.
-- **Non-coders** wire them in Studio.
+- **Coders** write node types in Kotlin.
+- **Non-coders** wire those nodes in Studio, with no code.
 - **An LLM**, as a planned future extension, composes the same graphs from the same catalogue.
 
+Blueprints run inside ECS. One `BlueprintSystem` runs the graph of every entity that carries a
+`BlueprintComponent`, and nodes act through the same components Kotlin systems use. Heavy
+per-frame work over many entities stays in Kotlin systems; blueprints are for event-driven,
+per-entity logic.
+
 AI decision-making (state trees) is a separate runtime and a separate plan. It shares the graph
-model, registry and canvas.
+model, registry, canvas and the latent-action mechanism below.
 
-## Direction so far
+## Decisions
 
-These points came out of the node-graph discussion. Any of them can be reopened:
+1. **Execution model: execution wires plus data wires.**
+   - Execution wires say what happens next.
+   - Data wires carry values. A data input is read when the node that needs it runs. A pure node
+     upstream is evaluated then, once per execution step. An event or action output upstream
+     reports the value that node stored when it ran.
+   - An input with no wire uses the value set on the node (`GraphNode.config`).
+2. **Per-entity state: a compiled program plus one component.**
+   - A graph compiles once per asset into a `BlueprintProgram`: nodes by index, their executors,
+     resolved input sources and execution successors.
+   - Each entity holds a `BlueprintComponent` with typed value slots (`FloatArray`, `IntArray`,
+     `Array<Any?>`) for node outputs and variables, plus its pending latent actions.
+   - Running a graph at rest allocates nothing.
+3. **Long-running nodes: latent actions.**
+   - A latent node (`Delay`, later `MoveTo`) suspends execution. The runtime records it in the
+     instance's pending list and polls it every tick until it reports done, then continues from
+     its output. Pending actions can be cancelled.
+   - Latent state lives in the instance's slots, not in objects, so waiting allocates nothing.
+   - No coroutines: they allocate, are hard to keep deterministic, and cannot be saved.
+   - AI state trees use the same mechanism for their long-running tasks.
+4. **Live reload.** When Studio replaces a graph, the program is recompiled. Running instances keep
+   variables whose name and type still exist, cancel their pending latent actions, and do not fire
+   `On Start` again.
+5. **Node API: plain classes.** A node type is one Kotlin object with its `NodeSpec` beside its
+   behaviour, so the palette entry and the code cannot drift apart.
 
-- **Graphs are data interpreted by a Core runtime, never generated Kotlin.**
-  - The web and iOS builds cannot load code.
-  - Studio can reload a graph into a running game.
-  - LLM output stays inside what the validator accepts.
-- **Explicit node registry, no reflection scanning.** It is the Studio palette, the coder API, and
-  later the LLM schema. An unknown node type rejects the whole graph.
-- **Runs in the fixed-step phase.** The logic is deterministic, and can run on a game server.
-- **Where nodes live.** Engine nodes (flow, math, entity, physics, animation, audio, input) live
-  in Core. Game nodes such as `DealDamage` stay in the game repository.
-- **Boundary.** Putting the runtime in Core needs the exception record that
-  [framework-game-boundary](../reference/framework-game-boundary.md) asks for. The consumers are
-  Studio and the private consumer pack.
+   ```kotlin
+   object PlaySound : ActionNode {
+       override val spec = NodeSpec(
+           type = "audio.play",
+           displayName = "Play Sound",
+           category = "Audio",
+           inputs = listOf(PortSpec("exec", EXEC, multiple = true), PortSpec("clip", ASSET)),
+           outputs = listOf(PortSpec("then", EXEC)),
+       )
+       override val effect = Effect.Presentation
+       override fun run(ctx: BlueprintContext): Step {
+           ctx.audio.play(ctx.asset("clip"))
+           return Step.Continue("then")
+       }
+   }
+   ```
+
+   - The shapes are `EventNode` (starts a chain), `ActionNode` (runs, then continues), `PureNode`
+     (computes outputs on demand) and `LatentNode` (an action that suspends).
+   - Port types are a closed set: `exec`, `bool`, `int`, `float`, `string`, `vec3`, `entity`,
+     `asset`.
+   - A graph naming a port its node does not declare is refused at load by the `:awake:node-graph`
+     validator.
+   - A Kotlin DSL can come later as sugar over these interfaces, if writing nodes gets repetitive.
+6. **Debugging.** A per-instance trace of executed node indices, off unless a debugger asks for it,
+   maps back to node ids. That drives the canvas's highlight channel. Variables can be read from the
+   instance. Breakpoints come later.
+7. **Server and networking.** Every node type declares an `Effect`: `Logic` (changes game state) or
+   `Presentation` (sound, effects, UI). The runtime can be told to skip presentation nodes, which
+   then pass execution straight through. v1 is single-player; the marker exists so that a server
+   later runs only logic, and no node has to be revisited.
+
+## Design
+
+### Modules
+
+| Module | Holds | Depends on |
+|---|---|---|
+| `:awake:blueprint` | node interfaces, `BlueprintNodes` registry, compiler, interpreter, instance state, latent actions, reload, trace | `:awake:node-graph`, `:awake:ecs` |
+| `:awake:scene:blueprint` | `BlueprintComponent` scene binding, `BlueprintSystem`, engine nodes (events, flow, entity, animation, variables, math) | `:awake:blueprint`, scene-core, scene binding, scene physics, scene3d |
+
+- The runtime has its own API independent of the scene, so it is a top-level module. The ECS glue
+  and the nodes that reach into scene components are the scene-binding layer, per
+  `awake-framework-boundary`.
+- Game-specific nodes live in the game. Nothing in Core depends back on a game.
+
+### Graph kind
+
+`awake.logic.event-graph`: no cycles in data wires; execution wires may loop back only through a
+latent node. The kind's `canConnect` allows equal types only, with `exec` never connecting to data.
+
+### Boundary exception record
+
+Required by [framework-game-boundary](../reference/framework-game-boundary.md):
+
+- **Consumers.** Studio templates, and the private consumer pack's world logic.
+- **Missing API.** A shipped game cannot run logic that was authored as data. Today, logic Studio
+  authors would need Studio code at runtime.
+- **Contract.** The graph kind, the node interfaces, `BlueprintComponent` and the `blueprint`
+  scene component.
+- **Excluded policy.** Game vocabulary: combat, quests, inventory and economy nodes stay in games.
+- **Dependency direction.** Game → `:awake:scene:blueprint` → `:awake:blueprint` →
+  `:awake:node-graph`, `:awake:ecs`. Nothing points back.
+- **Validation.** Runtime tests with test nodes, and the door sample running headless.
 
 ## Current state
 
@@ -106,26 +185,49 @@ blueprints are a second consumer. Each lands as its own PR at the bottom of the 
   after its loop. Enforcing the rule inside the ECS would be a hot-path change, gated on the ECS
   benchmark rules.
 
-## Suggested v1 slice
+## Phases
 
-A sensor-triggered door. It needs:
-- prerequisite 1 (the trigger);
-- prerequisite 3 (finding the door by name);
-- animation play, which exists;
-- a delay node, which is part of the runtime.
+### Phase 0 — prerequisites
 
-Input, audio, prefabs and the event channel are not needed.
+Three small PRs, each useful on its own:
 
-## Questions for the design discussion
+1. Contact fan-out and a public body-to-entity lookup.
+2. A component registry for `SceneManager`.
+3. Entity lookup by name.
 
-1. **Execution model.** Execution wires plus data wires, or pure data flow with events? Data is
-   pulled lazily or computed eagerly?
-2. **Instance state.** Per-entity variables, and their layout. The tick allocates nothing, which
-   is the bar the AI plan sets.
-3. **Latent nodes** (`Delay`, `MoveTo`). How execution suspends and resumes across ticks, and
-   whether this shares a mechanism with the AI plan's long-running tasks.
-4. **Reload.** What happens to running instances when Studio replaces a graph: restart, or keep
-   the variables that still match?
-5. **Node registration API.** How a coder declares ports, config and docs in Kotlin.
-6. **Debugging.** Live execution highlighting on the canvas, variable watch, breakpoints.
-7. **Server and networking.** What runs where in a server-authoritative game.
+**Gate:** each ships with tests on its own terms; see "Prerequisites" above.
+
+### Phase 1 — `:awake:blueprint` runtime
+
+Compiler, interpreter, instance state, latent actions (`Delay`), variables, reload, trace and the
+effect skip. Exercised with test-only nodes, with no scene.
+
+**Gate:**
+- Execution follows execution wires; data is read at the node that needs it; a pure node runs
+  once per step.
+- `Delay` suspends and resumes on the right tick, and a cancelled one never resumes.
+- Reload keeps matching variables, drops removed ones, cancels waits and does not refire
+  `On Start`.
+- With presentation skipped, presentation nodes pass execution through untouched.
+- The trace lists executed nodes in order.
+- An allocation probe shows a graph at rest allocates nothing.
+
+### Phase 2 — `:awake:scene:blueprint`
+
+`BlueprintComponent`, the `blueprint` scene component (graph path plus variable overrides),
+`BlueprintSystem` in the fixed phase, and the v1 engine nodes:
+
+- events: `On Start`, `On Sensor Enter`, `On Sensor Exit`;
+- flow: `Branch`, `Sequence`, `Delay`;
+- entity: `Self`, `Find By Name`, `Destroy`;
+- animation: `Play Animation`;
+- variables: `Get`, `Set`;
+- math: `Add`, `Compare`.
+
+**Gate:** the door sample. A headless test drives a body into a sensor, and the door's animator
+plays `open`, then `close` 2 s later. A positive control with the wire removed fails.
+
+### Phase 3 — Studio blueprint editor (awake-pro)
+
+Its own plan: a workspace on the canvas, the palette from the registry's catalogue, live reload
+into the preview, and the trace driving highlights.
