@@ -441,6 +441,20 @@ tasks.withType<org.gradle.api.publish.maven.tasks.AbstractPublishToMaven>().conf
     }
 }
 
+// Maven Central rejects release POMs with SNAPSHOT dependencies. The WebGPU backend builds on a
+// wgpu4k SNAPSHOT, so it stays out of Central releases (snapshots and Maven Local are unaffected)
+// until wgpu4k publishes a matching stable version.
+val releaseHeldProjects = if (libs.versions.wgpu4k.get().endsWith("-SNAPSHOT")) setOf(":awake:backend:webgpu") else emptySet()
+allprojects {
+    tasks.withType<org.gradle.api.publish.maven.tasks.PublishToMavenRepository>().configureEach {
+        onlyIf("is not held back from Maven Central releases") {
+            project.path !in releaseHeldProjects ||
+                project.version.toString().endsWith("-SNAPSHOT") ||
+                repository.name != "mavenCentral"
+        }
+    }
+}
+
 // Two projects sharing `group:name` is not a naming nit -- Gradle substitutes one for the other and
 // the failure surfaces as a circular task graph in an unrelated module, which cost a real debugging
 // session to trace. Checked at configuration time so it cannot be skipped by running a narrower
