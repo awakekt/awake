@@ -200,7 +200,9 @@ Three small PRs, each useful on its own:
 ### Phase 1 — `:awake:blueprint` runtime
 
 Compiler, interpreter, instance state, latent actions (`Delay`), variables, reload, trace and the
-effect skip. Exercised with test-only nodes, with no scene.
+effect skip, plus the scene-free core nodes: `On Start`, `Branch`, `Delay`, `Add`, `Greater` and
+typed variable get/set. There is no sequence node, because wiring one execution output to several
+nodes runs them in wire order. Exercised with test-only nodes, with no scene.
 
 **Gate:**
 - Execution follows execution wires; data is read at the node that needs it; a pure node runs
@@ -217,12 +219,11 @@ effect skip. Exercised with test-only nodes, with no scene.
 `BlueprintComponent`, the `blueprint` scene component (graph path plus variable overrides),
 `BlueprintSystem` in the fixed phase, and the v1 engine nodes:
 
-- events: `On Start`, `On Sensor Enter`, `On Sensor Exit`;
-- flow: `Branch`, `Sequence`, `Delay`;
+- events: `On Sensor Enter`, `On Sensor Exit`;
 - entity: `Self`, `Find By Name`, `Destroy`;
-- animation: `Play Animation`;
-- variables: `Get`, `Set`;
-- math: `Add`, `Compare`.
+- animation: `Play Animation`.
+
+Flow, variable and math nodes already came with phase 1.
 
 **Gate:** the door sample. A headless test drives a body into a sensor, and the door's animator
 plays `open`, then `close` 2 s later. A positive control with the wire removed fails.
