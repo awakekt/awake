@@ -246,6 +246,51 @@ class GltfParserSceneTest {
     }
 
     @Test
+    fun readsMaterialImagesEmbeddedInGlbBufferViews() {
+        val skinImage = byteArrayOf(11, 12, 13)
+        val clothingImage = byteArrayOf(21, 22, 23, 24)
+        val imageStart = triangleBinBytes().size
+        val bin = triangleBinBytes() + skinImage + clothingImage
+        val json = """
+            {
+              "bufferViews": [
+                { "buffer": 0, "byteOffset": 0, "byteLength": 36 },
+                { "buffer": 0, "byteOffset": 36, "byteLength": 6 },
+                { "buffer": 0, "byteOffset": $imageStart, "byteLength": ${skinImage.size} },
+                { "buffer": 0, "byteOffset": ${imageStart + skinImage.size}, "byteLength": ${clothingImage.size} }
+              ],
+              "accessors": [
+                { "bufferView": 0, "componentType": 5126, "count": 3, "type": "VEC3" },
+                { "bufferView": 1, "componentType": 5123, "count": 3, "type": "SCALAR" }
+              ],
+              "meshes": [{ "primitives": [
+                { "attributes": { "POSITION": 0 }, "indices": 1, "material": 0 },
+                { "attributes": { "POSITION": 0 }, "indices": 1, "material": 1 }
+              ]}],
+              "buffers": [{ "byteLength": ${bin.size} }],
+              "materials": [
+                { "pbrMetallicRoughness": { "baseColorTexture": { "index": 0 } } },
+                { "pbrMetallicRoughness": { "baseColorTexture": { "index": 1 } } }
+              ],
+              "textures": [{ "source": 0 }, { "source": 1 }],
+              "images": [
+                { "bufferView": 2, "mimeType": "image/png" },
+                { "bufferView": 3, "mimeType": "image/png" }
+              ],
+              "nodes": [{ "mesh": 0 }],
+              "scenes": [{ "nodes": [0] }],
+              "scene": 0
+            }
+        """.trimIndent()
+
+        val scene = GltfParser.parseScene(encodeGlb(json, bin))
+
+        val primitives = scene.meshes.single().primitives
+        assertEquals(skinImage.toList(), primitives[0].baseColorImageBytes?.toList())
+        assertEquals(clothingImage.toList(), primitives[1].baseColorImageBytes?.toList())
+    }
+
+    @Test
     fun primitiveWithoutMaterialHasNoBaseColorImage() {
         val glb = buildGlb(
             """

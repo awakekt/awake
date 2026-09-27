@@ -119,11 +119,12 @@ data class GltfTexture(
  */
 @Serializable
 data class GltfImage(
-    /** A `data:image/png;base64,...` (or `image/jpeg`) data URI -- external image file
-     * references are not supported. */
+    /** A data URI or an externally resolved image URI. */
     val uri: String? = null,
     /** The image's MIME type. */
     val mimeType: String? = null,
+    /** The buffer view containing an image embedded in a GLB. */
+    val bufferView: Int? = null,
 )
 
 /**
