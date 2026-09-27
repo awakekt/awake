@@ -105,3 +105,30 @@ extern "C" void awake_vulkan_images_transition_image_layout(
             0, nullptr,
             1, &barrier);
 }
+
+extern "C" void awake_vulkan_images_cmd_memory_barrier(
+        JNIEnv* env,
+        jlong commandBuffer,
+        jint srcStageMask,
+        jint srcAccessMask,
+        jint dstStageMask,
+        jint dstAccessMask) {
+    if (!commandBuffer) {
+        throw_illegal_state(env, "vkCmdMemoryBarrier: commandBuffer not initialized");
+        return;
+    }
+
+    VkMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+    barrier.srcAccessMask = static_cast<VkAccessFlags>(srcAccessMask);
+    barrier.dstAccessMask = static_cast<VkAccessFlags>(dstAccessMask);
+
+    vkCmdPipelineBarrier(
+            reinterpret_cast<VkCommandBuffer>(commandBuffer),
+            static_cast<VkPipelineStageFlags>(srcStageMask),
+            static_cast<VkPipelineStageFlags>(dstStageMask),
+            0,
+            1, &barrier,
+            0, nullptr,
+            0, nullptr);
+}

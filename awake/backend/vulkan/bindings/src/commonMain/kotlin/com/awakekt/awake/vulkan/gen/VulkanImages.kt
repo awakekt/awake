@@ -46,6 +46,22 @@ expect object VulkanImages {
         layerCount: Int = 1,
     )
 
+    /**
+     * Records a global memory barrier: [srcAccessMask] writes in [srcStageMask] recorded before
+     * it are made visible to [dstAccessMask] in [dstStageMask] after it.
+     *
+     * For orderings a render pass already declares as a `VkSubpassDependency`: MoltenVK up to
+     * 1.4.1 never encodes those as Metal fences, and only an explicit barrier orders its encoders.
+     */
+    @JniNative("awake_vulkan_images_cmd_memory_barrier")
+    fun vkCmdMemoryBarrier(
+        commandBuffer: Long,
+        srcStageMask: Int,
+        srcAccessMask: Int,
+        dstStageMask: Int,
+        dstAccessMask: Int,
+    )
+
     fun vkCmdCopyBufferToImage(
         commandBuffer: Long,
         srcBuffer: Long,

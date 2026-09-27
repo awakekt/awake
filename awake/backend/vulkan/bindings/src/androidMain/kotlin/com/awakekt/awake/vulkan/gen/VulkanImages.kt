@@ -29,6 +29,15 @@ actual object VulkanImages {
         layerCount: Int,
     )
 
+    @JniNative("awake_vulkan_images_cmd_memory_barrier")
+    actual external fun vkCmdMemoryBarrier(
+        commandBuffer: Long,
+        srcStageMask: Int,
+        srcAccessMask: Int,
+        dstStageMask: Int,
+        dstAccessMask: Int,
+    )
+
     actual external fun vkCmdCopyBufferToImage(
         commandBuffer: Long,
         srcBuffer: Long,

@@ -30,6 +30,14 @@ extern "C" void awake_vulkan_images_transition_image_layout(
         jint levelCount,
         jint layerCount);
 
+extern "C" void awake_vulkan_images_cmd_memory_barrier(
+        JNIEnv* env,
+        jlong commandBuffer,
+        jint srcStageMask,
+        jint srcAccessMask,
+        jint dstStageMask,
+        jint dstAccessMask);
+
 // --- Struct marshalling: VkBufferImageCopy ---
 struct JNI_VkBufferImageCopy {
     int32_t imageWidth;
@@ -490,6 +498,29 @@ Java_com_awakekt_awake_vulkan_gen_VulkanImages_vkTransitionImageLayout(
 
     awake_vulkan_images_transition_image_layout(
         env, commandBuffer, image, oldLayout, newLayout, levelCount, layerCount);
+}
+
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanImages_vkCmdMemoryBarrier(
+        JNIEnv* env,
+        jclass clazz,
+        jlong commandBuffer,
+        jint srcStageMask,
+        jint srcAccessMask,
+        jint dstStageMask,
+        jint dstAccessMask) {
+    // --- Marshalling ---
+    void* commandBuffer_ptr = reinterpret_cast<void*>(commandBuffer);
+
+    // --- Error handling ---
+    if (!commandBuffer_ptr) {
+        throw_illegal_state(env, "vkCmdMemoryBarrier: commandBuffer not initialized");
+        return;
+    }
+
+    awake_vulkan_images_cmd_memory_barrier(
+        env, commandBuffer, srcStageMask, srcAccessMask, dstStageMask, dstAccessMask);
 }
 
 

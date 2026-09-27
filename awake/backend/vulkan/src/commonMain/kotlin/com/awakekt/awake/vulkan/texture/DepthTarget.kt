@@ -313,7 +313,8 @@ class DepthTarget(
                 // used to come from draining the GPU on a fence between the two passes, which
                 // cost a full CPU round-trip every frame to express a dependency the GPU can
                 // honour by itself. Declared here, both passes record into one command buffer and
-                // the CPU never waits.
+                // the CPU never waits. MoltenVK up to 1.4.1 ignores it, so `DepthPrePassFeature`
+                // also records the same ordering as an explicit barrier.
                 VkSubpassDependency(
                     srcSubpass = 0,
                     dstSubpass = VK_SUBPASS_EXTERNAL,

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Vulkan shadows no longer drop out on macOS.** MoltenVK up to 1.4.1 ignores render-pass subpass dependencies, so the scene pass could sample a shadow-map layer the depth pass was still writing and render a frame with no shadows. Each depth pass now records an explicit memory barrier, which also makes `RendererHeadlessCascadedShadowTest` deterministic (about 1 in 5 processes failed before).
+
 ## [0.1.0-alpha.5] - 2026-09-27
 
 ### Added

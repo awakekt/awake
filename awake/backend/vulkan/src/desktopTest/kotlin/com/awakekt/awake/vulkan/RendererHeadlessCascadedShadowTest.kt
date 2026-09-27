@@ -651,12 +651,6 @@ class RendererHeadlessCascadedShadowTest {
         val renderer = sharedRenderer()
         val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
         try {
-            // Twice, and the second frame is the one measured. The renderer is shared with the
-            // other tests here, and whichever ran before left its own light in the material's
-            // uniform buffer; a first frame after that measures the handover rather than this
-            // scene. JUnit does not fix method order, so without this the result changes between
-            // runs of the same code.
-            renderer.renderGrazingFace(target)
             val pixels = renderer.renderGrazingFace(target)
 
             val speckles = selfShadowedFacePixels(pixels)

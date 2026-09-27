@@ -32,6 +32,7 @@ import platform.MoltenVK.VK_PIPELINE_STAGE_TRANSFER_BIT
 import platform.MoltenVK.VK_QUEUE_FAMILY_IGNORED
 import platform.MoltenVK.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO
 import platform.MoltenVK.VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER
+import platform.MoltenVK.VK_STRUCTURE_TYPE_MEMORY_BARRIER
 import platform.MoltenVK.VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO
 import platform.MoltenVK.VK_SUCCESS
 import platform.MoltenVK.VkImageVar
@@ -39,6 +40,7 @@ import platform.MoltenVK.VkSamplerVar
 import platform.MoltenVK.VkBufferImageCopy as NativeVkBufferImageCopy
 import platform.MoltenVK.VkImageCreateInfo as NativeVkImageCreateInfo
 import platform.MoltenVK.VkImageMemoryBarrier as NativeVkImageMemoryBarrier
+import platform.MoltenVK.VkMemoryBarrier as NativeVkMemoryBarrier
 import platform.MoltenVK.VkSamplerCreateInfo as NativeVkSamplerCreateInfo
 import platform.MoltenVK.vkBindImageMemory as nativeVkBindImageMemory
 import platform.MoltenVK.vkCmdCopyBufferToImage as nativeVkCmdCopyBufferToImage
@@ -231,6 +233,33 @@ actual object VulkanImages {
             null,
             1u,
             barrier.ptr,
+        )
+    }
+
+    actual fun vkCmdMemoryBarrier(
+        commandBuffer: Long,
+        srcStageMask: Int,
+        srcAccessMask: Int,
+        dstStageMask: Int,
+        dstAccessMask: Int,
+    ) = memScoped {
+        val barrier = alloc<NativeVkMemoryBarrier>().apply {
+            sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER
+            pNext = null
+            this.srcAccessMask = srcAccessMask.toUInt()
+            this.dstAccessMask = dstAccessMask.toUInt()
+        }
+        nativeVkCmdPipelineBarrier(
+            commandBuffer.toCPointer(),
+            srcStageMask.toUInt(),
+            dstStageMask.toUInt(),
+            0u,
+            1u,
+            barrier.ptr,
+            0u,
+            null,
+            0u,
+            null,
         )
     }
 
