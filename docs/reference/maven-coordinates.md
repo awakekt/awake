@@ -1,9 +1,15 @@
 # Maven coordinates and publication dependency graph
 
-This page is the current Maven publication inventory, generated from the module build scripts. CI checks
-that every published main-source `api` and `implementation` project dependency also has a publication.
+This page is the current Maven publication inventory. **It is maintained by hand:** a pull request
+that adds, removes or re-wires a published module updates its row and the family counts below. Rows
+are sorted by Gradle module path.
 
-Regenerate the table and machine-readable inventory with:
+`awakeVerify` guards two things the table depends on, but it does not write the table:
+
+- **Publication closure.** Every published module's main-source `api` and `implementation` project
+  dependencies must also be published.
+- **Known coordinates.** Every `com.awakekt.awake:*` coordinate mentioned in active Markdown must
+  belong to a published module.
 
 ```bash
 ./gradlew awakeVerify --no-configuration-cache
