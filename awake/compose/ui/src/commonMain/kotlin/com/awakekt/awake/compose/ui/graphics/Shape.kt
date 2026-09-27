@@ -109,16 +109,26 @@ class RoundedCornerShape(
         val physicalBottomRight = if (layoutDirection == LayoutDirection.Ltr) bottomEnd else bottomStart
         val physicalBottomLeft = if (layoutDirection == LayoutDirection.Ltr) bottomStart else bottomEnd
 
-        // Resolve a full/pill radius symmetrically. A radius larger than half the short side must
-        // not consume the entire edge for one corner and leave the opposite corner at zero: that
-        // turns `rounded-full` into an asymmetric generic path instead of the rounded-quad fast
-        // path, and makes circles render as visibly non-circular geometry.
-        val minimum = min(bounds.width, bounds.height)
-        val maximum = minimum / 2f
-        val topLeft = radius(physicalTopLeft).coerceAtMost(maximum)
-        val topRight = radius(physicalTopRight).coerceAtMost(maximum)
-        val bottomRight = radius(physicalBottomRight).coerceAtMost(maximum)
-        val bottomLeft = radius(physicalBottomLeft).coerceAtMost(maximum)
+        // Oversized radii shrink together, as CSS border-radius does: when any side's two radii
+        // add up to more than that side, every radius is scaled by the one factor that makes the
+        // tightest side fit. A uniform `rounded-full` therefore lands every corner on half the
+        // short side, keeping pills and circles symmetric, while a radius on one end only, like
+        // `rounded-t-full`, can still reach the whole short side.
+        val requestedTopLeft = radius(physicalTopLeft)
+        val requestedTopRight = radius(physicalTopRight)
+        val requestedBottomRight = radius(physicalBottomRight)
+        val requestedBottomLeft = radius(physicalBottomLeft)
+        val fit = minOf(
+            1f,
+            sideFit(bounds.width, requestedTopLeft + requestedTopRight),
+            sideFit(bounds.height, requestedTopRight + requestedBottomRight),
+            sideFit(bounds.width, requestedBottomRight + requestedBottomLeft),
+            sideFit(bounds.height, requestedBottomLeft + requestedTopLeft),
+        )
+        val topLeft = requestedTopLeft * fit
+        val topRight = requestedTopRight * fit
+        val bottomRight = requestedBottomRight * fit
+        val bottomLeft = requestedBottomLeft * fit
         if (topLeft == 0f && topRight == 0f && bottomRight == 0f && bottomLeft == 0f) {
             return ShapeOutline.Rectangle(bounds)
         }
@@ -220,3 +230,6 @@ data object CircleShape : Shape {
 }
 
 private fun Size2D.bounds(): BoundsRectangle = BoundsRectangle(0f, 0f, width, height)
+
+/** How far two corner radii on one side must shrink to fit its [length]; 1 or more when they fit. */
+private fun sideFit(length: Float, radii: Float): Float = if (radii > length) length / radii else 1f
