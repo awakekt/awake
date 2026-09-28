@@ -14,21 +14,21 @@ import kotlin.test.assertEquals
  * these must never silently drift, since the two backends' uniform-buffer writes are hand-
  * concatenated to match, not generated from this layout. */
 class UniformLayoutsTest {
-    // 60 + 32 and 68 + 32: MAX_POINT_LIGHTS slots x two vec4 arrays (positions+range, colours).
+    // 64 + 32 and 72 + 32: MAX_POINT_LIGHTS slots x two vec4 arrays (positions+range, colours).
     // These numbers are the shader's struct size, so a change here without the matching .wgsl
     // edit is the mismatch the test exists to catch.
 
     @Test
-    fun texturedUniformLayoutTotalIsNinetyTwo() {
-        assertEquals(92, TexturedUniformLayout.total)
+    fun texturedUniformLayoutTotalIsNinetySix() {
+        assertEquals(96, TexturedUniformLayout.total)
     }
 
     @Test
     fun litShadowUniformLayoutTotalIncludesEveryCascade() {
         // 104 before cascades, when one lightMvp covered the whole shadow. The block now carries
         // MAX_SHADOW_CASCADES world-to-light matrices (+48), depth scale/split data (+16), and a
-        // camera-forward vector for split-aligned blending (+4).
-        assertEquals(172, LitShadowUniformLayout.total)
+        // camera-forward vector for split-aligned blending (+4), then the debug view (+4).
+        assertEquals(176, LitShadowUniformLayout.total)
     }
 
     @Test

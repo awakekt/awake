@@ -8,6 +8,7 @@ package com.awakekt.awake.render.passes.uniforms
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
 
@@ -52,6 +53,7 @@ fun gpuLitShadowUniforms(
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
     cameraForward: Vec3f,
+    debugView: GpuDebugView = GpuDebugView.Off,
 ): FloatArray {
     val lightLayout = MaterialUniformLayouts.SceneLight
     val light = lightPayload.copyOf(lightLayout.total)
@@ -82,5 +84,6 @@ fun gpuLitShadowUniforms(
         .put(UniformFields.CameraForward, cameraForward, cascades.count.toFloat())
         .put(material, UniformFields.Material)
         .put(fogUniformFloats(fogColor, fogDensity), UniformFields.FogColor)
+        .putDebugView(debugView, cameraForward)
         .build()
 }

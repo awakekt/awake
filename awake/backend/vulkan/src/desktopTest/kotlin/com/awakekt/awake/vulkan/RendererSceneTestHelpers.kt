@@ -10,6 +10,7 @@ import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
+import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
@@ -22,6 +23,7 @@ internal fun Renderer.renderSceneToTexture(
     drawCalls: List<RenderDrawCommand>,
     light: SceneLight = DEFAULT_SCENE_LIGHT,
     viewport: RenderViewport? = null,
+    environment: EnvironmentUniforms = EnvironmentUniforms.Default,
 ) {
     renderToTexture(
         target,
@@ -29,6 +31,7 @@ internal fun Renderer.renderSceneToTexture(
             lens = camera,
             drawCalls = drawCalls,
             light = light,
+            environment = environment,
             clipSpace = clipSpace,
             aspect = viewport?.clampedTo(target.width.toFloat(), target.height.toFloat())?.aspect
                 ?: target.width.toFloat() / target.height.toFloat(),

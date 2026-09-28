@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.times
+import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.uniforms.DrawUniformPlan
 import com.awakekt.awake.render.passes.uniforms.InstancedUniformLayout
@@ -62,6 +63,7 @@ fun RenderDrawCommand.uniformFloats(
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
     cameraForward: Vec3f,
+    debugView: GpuDebugView = GpuDebugView.Off,
 ): FloatArray {
     val mvp = model * viewProjection
     return when (
@@ -83,6 +85,7 @@ fun RenderDrawCommand.uniformFloats(
             cameraForward = cameraForward,
             fogColor = fogColor,
             fogDensity = fogDensity,
+            debugView = debugView,
         )
 
         DrawUniformPlan.Skinned -> UniformWriter(SkinnedUniformLayout)
@@ -98,6 +101,8 @@ fun RenderDrawCommand.uniformFloats(
             cameraEye = cameraEye,
             fogColor = fogColor,
             fogDensity = fogDensity,
+            debugView = debugView,
+            cameraForward = cameraForward,
         )
 
         DrawUniformPlan.Lit -> litUniforms(
@@ -142,6 +147,7 @@ fun RenderDrawCommand.instancedUniformFloats(
     fogDensity: Float = 0f,
     materialUniformFloatCount: Int = 0,
     cameraForward: Vec3f,
+    debugView: GpuDebugView = GpuDebugView.Off,
 ): FloatArray = when (kind) {
     InstancedDrawKind.Particle -> UniformWriter(ParticleUniformLayout)
         .put(viewProjection.data, UniformFields.Mvp)
@@ -164,6 +170,7 @@ fun RenderDrawCommand.instancedUniformFloats(
                 cameraForward = cameraForward,
                 fogColor = fogColor,
                 fogDensity = fogDensity,
+                debugView = debugView,
             )
         } else {
             UniformWriter(InstancedUniformLayout)

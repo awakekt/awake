@@ -502,8 +502,16 @@ private fun litShadow(
         val ambient = let("ambient", color * ambientStrength)
         // Reinhard: the specular lobe blows past 1.0 at low roughness.
         val mapped = let("mapped", (ambient + direct) / (ambient + direct + vec3(1f.lit)))
+        val surface = DebugSurface(
+            normal = n,
+            worldPosition = worldPos,
+            albedo = linearToSrgb(color),
+            shadow = shadowFactor,
+            shadowCascade = cascades.shadowCascade(worldPos),
+        )
         // Encode before writing -- the swapchain is _UNORM and nothing downstream encodes.
-        colorOutput(vec4(applyFog(linearToSrgb(mapped), worldPos), 1f.lit))
+        val shaded = vec4(applyFog(linearToSrgb(mapped), worldPos), 1f.lit)
+        colorOutput(debugViewColor(u.debugView!!, u.cameraPosition, surface, shaded))
     }
 }
 

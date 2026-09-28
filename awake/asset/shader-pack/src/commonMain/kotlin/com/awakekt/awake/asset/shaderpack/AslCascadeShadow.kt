@@ -6,6 +6,7 @@
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslArrayHandle
+import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslFunctionHandle
 import com.awakekt.awake.asset.shaderdsl.AslShaderBuilder
@@ -73,12 +74,16 @@ class CascadeShadowInputs(
  *
  * @property sampleShadow `sampleShadow(world: vec3, normal: vec3, nDotL: f32) -> f32`: 1 lit,
  *   0 fully shadowed, 1 outside every cascade.
+ * @property shadowCascade `shadowCascade(world: vec3) -> i32`: the cascade [sampleShadow] reads
+ *   first at that point, or -1 where it reads none. ASL rejects an unused function, so a shader
+ *   declaring this must hand it to [debugViewColor] through [DebugSurface.shadowCascade].
  * @property biasTexels Receiver depth bias, in texels of the sampled layer.
  * @property slopeBiasTexels Receiver slope bias, in texels, scaled by the surface's slope.
  * @property maxSlopeScale The largest slope factor the bias applies.
  */
 class CascadeShadowSampling(
     val sampleShadow: AslFunctionHandle,
+    val shadowCascade: AslFunctionHandle,
     val biasTexels: AslExpr,
     val slopeBiasTexels: AslExpr,
     val maxSlopeScale: AslExpr,
@@ -157,17 +162,7 @@ fun AslShaderBuilder.cascadeShadowSampling(
             "slide",
             texelWorld * normalOffsetTexels * grazing / max(nDotL, epsilon),
         )
-        val projected = let(
-            "projected",
-            inputs.viewProjections[cascade] * vec4(world, 1f.lit),
-        )
-        iff(projected.w le 0f.lit) { returnValue(-1f.lit) }
-        val ndc = let("ndc", projected.xyz / projected.w)
-        iff(
-            (ndc.x lt -1f.lit) or (ndc.x gt 1f.lit) or
-                (ndc.y lt -1f.lit) or (ndc.y gt 1f.lit) or
-                (ndc.z lt 0f.lit) or (ndc.z gt 1f.lit),
-        ) { returnValue(-1f.lit) }
+        val ndc = cascadeNdc(inputs, cascade, world, outside = -1f.lit)
 
         val offsetProjected = let(
             "offsetProjected",
@@ -218,18 +213,13 @@ fun AslShaderBuilder.cascadeShadowSampling(
         )
         val texSize = let("texSize", vec2(textureDimensions(shadowMap)))
         val texel = let("texel", 1f.lit / texSize)
-        val viewDepth = let(
-            "viewDepth",
-            dot(world - inputs.cameraPosition.xyz, normalize(inputs.cameraForward.xyz)),
-        )
+        val viewDepth = cascadeViewDepth(inputs, world)
         val lit = variable("lit", 1f.lit)
         val resolved = variable("resolved", 0.lit)
 
         loopI32("cascade", 0.lit, (MAX_SHADOW_CASCADES - 1).lit) { cascade ->
             iff(resolved gt 0.lit) { continueLoop() }
-            val splitFar = let("splitFar", inputs.depthScales[cascade].z)
-            val blendStart = let("blendStart", inputs.depthScales[cascade].w)
-            val blendEnd = let("blendEnd", splitFar + (splitFar - blendStart))
+            val (blendStart, blendEnd) = cascadeBlend(inputs, cascade)
             iff(viewDepth gt blendEnd) { continueLoop() }
             val primaryShadow = let(
                 "primaryShadow",
@@ -261,5 +251,46 @@ fun AslShaderBuilder.cascadeShadowSampling(
         returnValue(lit)
     }
 
-    return CascadeShadowSampling(sampleShadow, shadowBiasTexels, shadowSlopeTexels, maxSlopeScale)
+    val shadowCascade = fn("shadowCascade", returns = AslType.I32) {
+        val world by param(GpuDataShape.Vec3)
+        val viewDepth = cascadeViewDepth(inputs, world)
+        loopI32("cascade", 0.lit, (MAX_SHADOW_CASCADES - 1).lit) { cascade ->
+            val (_, blendEnd) = cascadeBlend(inputs, cascade)
+            iff(viewDepth gt blendEnd) { continueLoop() }
+            cascadeNdc(inputs, cascade, world, outside = (-1).lit)
+            returnValue(cascade)
+        }
+        returnValue((-1).lit)
+    }
+
+    return CascadeShadowSampling(sampleShadow, shadowCascade, shadowBiasTexels, shadowSlopeTexels, maxSlopeScale)
+}
+
+/** Depth along the camera's forward axis: what picks a cascade. */
+private fun AslBlockBuilder.cascadeViewDepth(inputs: CascadeShadowInputs, world: AslExpr): AslExpr = let(
+    "viewDepth",
+    dot(world - inputs.cameraPosition.xyz, normalize(inputs.cameraForward.xyz)),
+)
+
+/** [cascade]'s blend start and end: its split far plus the same overlap again. */
+private fun AslBlockBuilder.cascadeBlend(inputs: CascadeShadowInputs, cascade: AslExpr): Pair<AslExpr, AslExpr> {
+    val splitFar = let("splitFar", inputs.depthScales[cascade].z)
+    val blendStart = let("blendStart", inputs.depthScales[cascade].w)
+    return blendStart to let("blendEnd", splitFar + (splitFar - blendStart))
+}
+
+/** [world] in [cascade]'s light NDC; returns [outside] from the enclosing function when the cascade does not contain it. */
+private fun AslBlockBuilder.cascadeNdc(inputs: CascadeShadowInputs, cascade: AslExpr, world: AslExpr, outside: AslExpr): AslExpr {
+    val projected = let(
+        "projected",
+        inputs.viewProjections[cascade] * vec4(world, 1f.lit),
+    )
+    iff(projected.w le 0f.lit) { returnValue(outside) }
+    val ndc = let("ndc", projected.xyz / projected.w)
+    iff(
+        (ndc.x lt -1f.lit) or (ndc.x gt 1f.lit) or
+            (ndc.y lt -1f.lit) or (ndc.y gt 1f.lit) or
+            (ndc.z lt 0f.lit) or (ndc.z gt 1f.lit),
+    ) { returnValue(outside) }
+    return ndc
 }

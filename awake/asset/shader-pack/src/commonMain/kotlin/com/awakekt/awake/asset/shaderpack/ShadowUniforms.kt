@@ -56,6 +56,8 @@ class ShadowUniforms internal constructor(
     val material: AslExpr?,
     /** rgb = fog colour, a = fog DENSITY (not alpha); density 0 makes applyFog a no-op. */
     val fogColor: AslExpr?,
+    /** `UniformFields.DebugView`; see [debugViewColor]. */
+    val debugView: AslExpr?,
 )
 
 fun AslShaderBuilder.shadowUniforms(includeLitTail: Boolean): ShadowUniforms {
@@ -82,5 +84,6 @@ fun AslShaderBuilder.shadowUniforms(includeLitTail: Boolean): ShadowUniforms {
         cameraForward = if (includeLitTail) handles.value("cameraForward") else null,
         material = if (includeLitTail) handles.value("material") else null,
         fogColor = if (includeLitTail) handles.value("fogColor") else null,
+        debugView = if (includeLitTail) handles.value("debugView") else null,
     )
 }

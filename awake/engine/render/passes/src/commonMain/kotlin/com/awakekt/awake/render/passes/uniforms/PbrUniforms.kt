@@ -8,6 +8,7 @@ package com.awakekt.awake.render.passes.uniforms
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.UniformFields
@@ -149,6 +150,7 @@ fun texturedUniforms(
         UniformFields.EmissiveFactor,
     )
     .put(frame.fog, UniformFields.FogColor)
+    .putDebugView(GpuDebugView.Off, frame.cameraForward)
     .build()
 
 /** Packs the unshadowed textured PBR block from the backend-neutral draw payload. The light
@@ -164,6 +166,8 @@ fun texturedUniforms(
     fogColor: Color,
     fogDensity: Float,
     alphaCutoff: Float = 0.5f,
+    debugView: GpuDebugView = GpuDebugView.Off,
+    cameraForward: Vec3f = Vec3f(0f, 0f, -1f),
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTextured)
     .put(mvp.data, UniformFields.Mvp)
     .put(
@@ -177,6 +181,7 @@ fun texturedUniforms(
     .put(UniformFields.CameraPosition, cameraEye)
     .putPbrTexturedFactors(extraUniformFloats, alphaCutoff)
     .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
+    .putDebugView(debugView, cameraForward)
     .build()
 
 /** Packs the ordinary untextured lit block. A draw with PBR factors uses [Lit]; a plain draw
@@ -265,4 +270,5 @@ fun litShadowUniforms(
     .put(UniformFields.CameraForward, frame.cameraForward, cascades.count.toFloat())
     .put(pbrMaterialFloats(drawCall), UniformFields.Material)
     .put(frame.fog, UniformFields.FogColor)
+    .putDebugView(GpuDebugView.Off, frame.cameraForward)
     .build()

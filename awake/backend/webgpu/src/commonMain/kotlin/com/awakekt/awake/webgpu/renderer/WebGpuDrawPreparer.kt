@@ -43,6 +43,7 @@ internal class WebGpuDrawPreparer(
             shadowCascades = cascades,
             fogColor = context.environment.fogColor,
             fogDensity = context.environment.fogDensity,
+            debugView = context.environment.debugView,
         ) ?: return null
         val resolved = draw.toGpuResolvedDraw()
         val gpuPrepared = draw

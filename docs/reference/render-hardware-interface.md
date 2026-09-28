@@ -214,6 +214,7 @@ handles. The verifier makes a regression a build failure.
 | `UniformLayout`, `UniformWriter`, `UniformField`, `UniformFields` | GPU buffer packing — needed by both the passes layer and backends |
 | `LineSegment` | Geometry for `drawDebugLines` — feeds a hardware capability, not content |
 | `ShadowsEnabled` flag | App-facing toggle the backend only reads — does not require knowing what a shadow is |
+| `GpuDebugView` | Numbers the backend forwards to shared uniform packing and features — it never branches on them; `RenderDebugView` in `render:passes` owns what each code means |
 
 ### Scene / content vocabulary — must NOT live in `render:contract` ❌
 
