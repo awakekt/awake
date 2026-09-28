@@ -66,6 +66,9 @@ private const val WATER_SURFACE_Y = 0.6f + 1f
 internal object ShowcasePhysics {
     var world: PhysicsWorld? = null
 
+    /** The system running [world], once built; triggers read its published contacts. */
+    var physicsSystem: PhysicsSystem? = null
+
     /**
      * Runs [PhysicsSystem] once [world] exists, and does nothing before that.
      *
@@ -79,7 +82,10 @@ internal object ShowcasePhysics {
 
         override fun update(world: World, delta: Float) {
             val physicsWorld = ShowcasePhysics.world ?: return
-            val system = delegate ?: PhysicsSystem(physicsWorld).also { delegate = it }
+            val system = delegate ?: PhysicsSystem(physicsWorld).also {
+                delegate = it
+                physicsSystem = it
+            }
             system.update(world, delta)
         }
 
@@ -227,9 +233,9 @@ internal object TerrainPhysicsExampleDriver {
      * measures a distance -- but by Jolt reporting that it entered, which is the difference
      * between a trigger and a poll.
      *
-     * Registered on the fixed step *after* physics, because [PhysicsWorld.drainContacts] hands
-     * over what the last [PhysicsWorld.step] produced. It is also the world's only drain: two
-     * callers would each see the events the other did not.
+     * Registered on the fixed step *after* physics, because it reads the contacts
+     * [PhysicsSystem] published for the step that just ran. Any other trigger can read the same
+     * list.
      */
     fun goalZoneSystem(): System = object : System {
         override fun update(world: World, delta: Float) {
@@ -237,14 +243,15 @@ internal object TerrainPhysicsExampleDriver {
             val zone = goalZone?.let { world.get<PhysicsBody>(it) }?.handle
             val pool = water?.let { world.get<PhysicsBody>(it) }?.handle
 
-            // One drain for both triggers, because there can only be one: drainContacts hands over
-            // the events since the last call and forgets them, so a second caller would see only
-            // what the first left behind -- which is nothing.
-            physicsWorld.drainContacts { event ->
+            // PhysicsSystem drained this step's contacts; read them rather than draining again,
+            // which would hand this system nothing.
+            val contacts = ShowcasePhysics.physicsSystem?.contacts ?: return
+            for (i in contacts.indices) {
+                val event = contacts[i]
                 val other = when {
                     event.a == zone || event.a == pool -> event.b
                     event.b == zone || event.b == pool -> event.a
-                    else -> return@drainContacts
+                    else -> continue
                 }
                 val trigger = if (event.a == other) event.b else event.a
                 when {
@@ -294,11 +301,9 @@ internal object TerrainPhysicsExampleDriver {
             reachedByPlayer = true
             return
         }
-        var target: Entity? = null
-        world.queryEach(PhysicsBody::class) { entity, physicsBody ->
-            if (physicsBody.handle == body && !physicsBody.sensor) target = entity
-        }
-        val entity = target ?: return
+        val entity = ShowcasePhysics.physicsSystem?.entityFor(body)
+            ?.takeIf { world.isAlive(it) && world.get<PhysicsBody>(it)?.sensor == false }
+            ?: return
 
         world.get<PhysicsBody>(entity)?.handle = null
         physicsWorld.destroyBody(body)

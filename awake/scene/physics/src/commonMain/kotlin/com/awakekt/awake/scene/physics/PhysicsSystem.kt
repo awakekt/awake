@@ -11,6 +11,7 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.BodyHandle
+import com.awakekt.awake.physics.ContactEvent
 import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.core.transform.Transform
@@ -32,6 +33,12 @@ import com.awakekt.awake.scene.physics.PhysicsBody
  * [PhysicsWorld.step]/[PhysicsWorld.syncTransforms] are each called exactly once per
  * [update] -- never once per body -- matching [PhysicsWorld.syncTransforms]'s own "batched
  * readback" contract.
+ *
+ * It is also the world's one [PhysicsWorld.drainContacts] caller. A drain hands its events to one
+ * caller and forgets them, so this system drains after every step and republishes the step's events
+ * as [contacts], which any number of systems registered after it can read. Draining here
+ * unconditionally also stops the buffer growing in a game that never reads contacts. Code that
+ * called [PhysicsWorld.drainContacts] itself now receives nothing and should read [contacts].
  */
 class PhysicsSystem(
     private val physicsWorld: PhysicsWorld,
@@ -59,6 +66,41 @@ class PhysicsSystem(
      * record here it would have no pose at all rather than the one it came to rest in.
      */
     private val poses = LinkedHashMap<BodyHandle, BodyPose>()
+
+    private val stepContacts = ArrayList<PhysicsContact>()
+    private var drainingWorld: World? = null
+
+    // Built once, so a step with no contacts allocates nothing.
+    private val collectContact: (ContactEvent) -> Unit = { event ->
+        stepContacts += PhysicsContact(
+            a = event.a,
+            b = event.b,
+            entityA = liveEntity(event.a),
+            entityB = liveEntity(event.b),
+            phase = event.phase,
+        )
+    }
+
+    /**
+     * Every contact the last [update]'s step reported, in the order the backend reported them.
+     *
+     * Replaced on each [update], so a system registered after this one in the fixed phase reads
+     * the step that just ran. Reading does not consume: every reader sees the same list. Events are
+     * per touching sub-shape pair, as [PhysicsWorld.drainContacts] describes; deduplicate by pair if
+     * that matters.
+     */
+    val contacts: List<PhysicsContact> get() = stepContacts
+
+    /**
+     * The entity this system built [handle] for, or `null` for a body it did not build.
+     *
+     * May name an entity destroyed since; check `World.isAlive` before acting on it. [contacts]
+     * already resolves to live entities only.
+     */
+    fun entityFor(handle: BodyHandle): Entity? = handleToEntity[handle]
+
+    private fun liveEntity(handle: BodyHandle): Entity? =
+        handleToEntity[handle]?.takeIf { drainingWorld?.isAlive(it) == true }
 
     override fun update(world: World, delta: Float) {
         val family = world.family<Transform, PhysicsBody>()
@@ -106,6 +148,11 @@ class PhysicsSystem(
             }
             poses.getOrPut(handle) { BodyPose(position, rotation) }.record(position, rotation)
         }
+
+        stepContacts.clear()
+        drainingWorld = world
+        physicsWorld.drainContacts(collectContact)
+        drainingWorld = null
     }
 
     /**
