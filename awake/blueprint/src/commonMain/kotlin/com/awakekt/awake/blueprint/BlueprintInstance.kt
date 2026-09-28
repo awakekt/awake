@@ -6,6 +6,10 @@
 package com.awakekt.awake.blueprint
 
 import com.awakekt.awake.ecs.Entity
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.floatOrNull
+import kotlinx.serialization.json.intOrNull
 
 /**
  * One entity's running copy of a [BlueprintProgram]: its slot values, its pending waits and, when a
@@ -37,6 +41,25 @@ class BlueprintInstance(program: BlueprintProgram, val owner: Entity = NoEntity)
         return read(variable.slot, variable.type)
     }
 
+    /**
+     * Sets a variable from a JSON value, as a scene's variable overrides do. Entity variables have no
+     * JSON form and cannot be set this way.
+     *
+     * @throws IllegalArgumentException when the program has no such variable or [value] does not fit its type.
+     */
+    fun setVariable(name: String, value: JsonPrimitive) {
+        val variable = requireNotNull(program.variables.firstOrNull { it.name == name }) { "No variable '$name'." }
+        val i = Slots.index(variable.slot)
+        val fits = when (variable.type) {
+            PortTypes.FLOAT -> value.floatOrNull?.also { values.floats[i] = it }
+            PortTypes.INT -> value.intOrNull?.also { values.ints[i] = it }
+            PortTypes.BOOL -> value.booleanOrNull?.also { values.ints[i] = if (it) 1 else 0 }
+            PortTypes.STRING -> value.takeIf { it.isString }?.also { values.refs[i] = it.content }
+            else -> null
+        }
+        requireNotNull(fits) { "Variable '$name' is ${variable.type}; $value cannot be set on it." }
+    }
+
     internal fun read(slot: Int, type: String): Any? {
         val index = Slots.index(slot)
         return when (Slots.kind(slot)) {
@@ -48,6 +71,9 @@ class BlueprintInstance(program: BlueprintProgram, val owner: Entity = NoEntity)
     }
 
     internal fun addPending(node: Int) {
+        // A wait triggered again while pending restarts: its state is shared, so a second entry would
+        // poll it twice per tick and continue its chain twice.
+        for (i in 0 until pendingCount) if (pending[i] == node) return
         if (pendingCount == pending.size) pending = pending.copyOf(pending.size * 2)
         pending[pendingCount++] = node
     }

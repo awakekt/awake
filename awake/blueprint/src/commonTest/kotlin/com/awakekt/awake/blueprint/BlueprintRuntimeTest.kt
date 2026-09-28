@@ -8,6 +8,7 @@ package com.awakekt.awake.blueprint
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.nodegraph.GraphIssueCode
 import com.awakekt.awake.nodegraph.InvalidNodeGraphException
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -115,6 +116,25 @@ class BlueprintRuntimeTest {
     }
 
     @Test
+    fun aDelayTriggeredAgainWhileWaitingRestarts() {
+        val instance = run {
+            node("touched", "test.touched")
+            node("wait", "flow.delay", "seconds" to 1f)
+            node("done", "test.log", "label" to "done")
+            wire("touched.then", "wait.exec")
+            wire("wait.then", "done.exec")
+        }
+        interpreter.fire(instance, "test.touched")
+        repeat(30) { interpreter.tick(instance, TICK) }
+        interpreter.fire(instance, "test.touched")
+
+        repeat(59) { interpreter.tick(instance, TICK) }
+        assertEquals(emptyList(), log, "the second trigger restarts the full second")
+        repeat(2) { interpreter.tick(instance, TICK) }
+        assertEquals(listOf("done"), log)
+    }
+
+    @Test
     fun anExecutionLoopThroughADelayIsAllowed() {
         val instance = run {
             node("start", "event.start")
@@ -141,6 +161,25 @@ class BlueprintRuntimeTest {
         }
         assertEquals(listOf("hp=40.0"), log)
         assertEquals(40f, instance.variable("hp"))
+    }
+
+    @Test
+    fun variablesAreSetFromJsonValuesOfTheirOwnType() {
+        val instance = run {
+            node("hp", "var.get.float", "name" to "hp")
+            node("open", "var.get.bool", "name" to "open")
+            node("label", "var.get.string", "name" to "label")
+            node("target", "var.get.entity", "name" to "target")
+        }
+        instance.setVariable("hp", JsonPrimitive(12))
+        instance.setVariable("open", JsonPrimitive(true))
+        instance.setVariable("label", JsonPrimitive("gate"))
+        assertEquals(listOf(12f, true, "gate"), listOf(instance.variable("hp"), instance.variable("open"), instance.variable("label")))
+
+        assertFailsWith<IllegalArgumentException> { instance.setVariable("hp", JsonPrimitive("tall")) }
+        assertFailsWith<IllegalArgumentException> { instance.setVariable("label", JsonPrimitive(3)) }
+        assertFailsWith<IllegalArgumentException> { instance.setVariable("target", JsonPrimitive("door")) }
+        assertFailsWith<IllegalArgumentException> { instance.setVariable("missing", JsonPrimitive(1)) }
     }
 
     @Test

@@ -32,7 +32,7 @@ no published artifact. Test-source dependencies are intentionally excluded.
 
 | Family | Published modules | Version source |
 |---|---:|---|
-| Core | 63 | Existing root `v*` tags and the shared Core release train |
+| Core | 64 | Existing root `v*` tags and the shared Core release train |
 | Vulkan | 3 | `vulkan-v*` tags; renderer, raw bindings, and Android JNI bridge move together |
 
 Vulkan snapshots pin the exact Core snapshot used for integration. Vulkan releases depend on an
@@ -104,6 +104,7 @@ Vulkan modules. Core `v*` releases and main snapshots do not publish or change t
 | `com.awakekt.awake.scene:audio` | `:awake:scene:audio` | `core` | `api` → `:awake:core:audio`; `api` → `:awake:core:math`; `api` → `:awake:ecs`; `api` → `:awake:scene:scene-core` |
 | `com.awakekt.awake.scene:authoring` | `:awake:scene:authoring` | `core` | `implementation` → `:awake:core:graphics2d`; `implementation` → `:awake:core:math2d`; `implementation` → `:awake:core:color`; `implementation` → `:awake:core:input`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:scene3d`; `api` → `:awake:scene:controls`; `api` → `:awake:scene:runtime`; `api` → `:awake:scene:audio`; `api` → `:awake:engine:bootstrap` |
 | `com.awakekt.awake.scene:binding` | `:awake:scene:binding` | `core` | `api` → `:awake:ecs`; `api` → `:awake:core:logging`; `api` → `:awake:scene:document` |
+| `com.awakekt.awake.scene:blueprint` | `:awake:scene:blueprint` | `core` | `api` → `:awake:blueprint`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:document`; `api` → `:awake:scene:binding`; `api` → `:awake:scene:physics`; `implementation` → `:awake:scene:scene3d`; `implementation` → `:awake:core:animation` |
 | `com.awakekt.awake.scene:controls` | `:awake:scene:controls` | `core` | `api` → `:awake:core:input`; `api` → `:awake:scene:scene-core`; `implementation` → `:awake:core:math`; `api` → `:awake:scene:scene3d`; `api` → `:awake:compose:ui` |
 | `com.awakekt.awake.scene:document` | `:awake:scene:document` | `core` | `api` → `:awake:core:math`; `api` → `:awake:core:color`; `api` → `:awake:core:logging`; `api` → `:awake:core:host`; `api` → `:awake:core:io` |
 | `com.awakekt.awake.scene:physics` | `:awake:scene:physics` | `core` | `implementation` → `:awake:core:math`; `api` → `:awake:scene:scene-core`; `api` → `:awake:scene:world`; `api` → `:awake:physics:api`; `api` → `:awake:core:animation`; `api` → `:awake:engine:render:contract` |

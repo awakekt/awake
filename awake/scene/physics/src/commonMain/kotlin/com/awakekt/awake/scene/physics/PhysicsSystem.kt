@@ -99,6 +99,22 @@ class PhysicsSystem(
      */
     fun entityFor(handle: BodyHandle): Entity? = handleToEntity[handle]
 
+    /**
+     * Destroys [entity]'s body, if this system built one, and forgets it.
+     *
+     * Call before `World.destroy`: destroying the entity first drops the only reference to the
+     * handle and leaves a body that is invisible, still solid and unreachable.
+     */
+    fun destroyBody(world: World, entity: Entity) {
+        val body = world.get<PhysicsBody>(entity) ?: return
+        val handle = body.handle ?: return
+        physicsWorld.destroyBody(handle)
+        handleToEntity.remove(handle)
+        builtMotionType.remove(handle)
+        poses.remove(handle)
+        body.handle = null
+    }
+
     private fun liveEntity(handle: BodyHandle): Entity? =
         handleToEntity[handle]?.takeIf { drainingWorld?.isAlive(it) == true }
 

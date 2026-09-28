@@ -48,7 +48,7 @@ val instance = BlueprintInstance(program, owner = entity)
 val interpreter = BlueprintInterpreter()
 
 interpreter.start(instance)                              // fires On Start once
-interpreter.fire(instance, "physics.onSensorEnter") { it.setEntity("other", body) }
+interpreter.fire(instance, "event.sensor.enter") { it.setEntity("other", body) }
 interpreter.tick(instance, delta)                        // every fixed step: polls waits
 interpreter.reload(instance, BlueprintCompiler.compile(edited, nodes))
 ```
@@ -57,8 +57,11 @@ interpreter.reload(instance, BlueprintCompiler.compile(edited, nodes))
   order.
 - **Data.** Data is read when the node that needs it runs, and a pure node runs at most once per
   step.
+- **Waits.** A wait triggered again while it is waiting restarts; it never runs twice at once.
 - **Reload.** Reload keeps variables whose name and type still exist, cancels waits and fires
   nothing.
+- **Variables.** `instance.setVariable(name, JsonPrimitive(2.5))` sets a starting value, as scene
+  overrides do.
 - **Tracing.** Set `instance.trace = BlueprintTrace()` to record executed nodes for a debugger.
 
 ## Core nodes
