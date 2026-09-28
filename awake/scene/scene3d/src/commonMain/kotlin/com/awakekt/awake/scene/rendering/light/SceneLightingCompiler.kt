@@ -138,6 +138,7 @@ internal class SceneLightingCompiler(
                 color = sun.color * sun.intensity,
                 points = pointLights,
                 pointShadows = pointShadows,
+                ambient = sun.ambient,
             )
         }
         // More importantly, do not route a point-only scene through the directional shadow fit:

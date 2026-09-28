@@ -31,6 +31,19 @@ import kotlin.test.assertNull
 
 class SceneCompilerTest {
     @Test
+    fun theSunsAmbientReachesTheFramesLight() {
+        fun ambient(light: Light): Float? {
+            val world = World()
+            world.add(world.create(), light)
+            val camera = Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f))
+            return SceneLightingCompiler(ClipSpace.WebGpu).sceneLight(world, camera, viewportAspect = 1f).ambient
+        }
+
+        assertEquals(0.5f, ambient(Light(type = Light.Type.Directional, ambient = 0.5f)))
+        assertNull(ambient(Light(type = Light.Type.Directional)), "an unset ambient keeps each shader's own")
+    }
+
+    @Test
     fun theLightsShadowDistanceSetsTheFarCascadeSplit() {
         fun farSplit(cameraFar: Float, light: Light): Float {
             val world = World()

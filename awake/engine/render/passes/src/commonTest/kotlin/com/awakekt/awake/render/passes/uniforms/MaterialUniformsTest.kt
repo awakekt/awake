@@ -164,6 +164,14 @@ class MaterialUniformsTest {
     }
 
     @Test
+    fun aScenesAmbientRidesInTheColourPadSlot() {
+        val light = SceneLight(direction = Vec3f(1f, 2f, 3f), color = Vec3f(4f, 5f, 6f), ambient = 0.5f)
+        // Index 7, lightColor.w; 0 there (no ambient set) tells every shader to keep its own.
+        assertEquals(0.5f, sceneLightFloats(light)[7])
+        assertEquals(0f, sceneLightFloats(light.copy(ambient = null))[7])
+    }
+
+    @Test
     fun litShadowPacksVertexAnimationParametersAndFrameTime() {
         val drawCall = RenderDrawCommand(
             mesh = FakeMesh(),

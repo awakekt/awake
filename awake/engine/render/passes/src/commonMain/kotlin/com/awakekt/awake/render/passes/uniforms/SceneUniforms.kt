@@ -27,7 +27,7 @@ import com.awakekt.awake.render.renderer.uniformFloats
 fun sceneLightFloats(light: SceneLight, shadowTexelDepthScale: Float = 0f): FloatArray =
     UniformWriter(MaterialUniformLayouts.DirectionalLight)
         .put(UniformFields.LightDirection, light.direction, shadowTexelDepthScale)
-        .put(UniformFields.LightColor, light.color)
+        .put(UniformFields.LightColor, light.color, light.ambient ?: 0f)
         .build()
 
 /** Selects the directional prefix from either a directional-only or complete scene-light payload. */

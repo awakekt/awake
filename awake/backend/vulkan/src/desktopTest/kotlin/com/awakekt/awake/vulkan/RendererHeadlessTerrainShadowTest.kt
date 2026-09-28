@@ -63,14 +63,30 @@ class RendererHeadlessTerrainShadowTest {
         }
     }
 
+    /** A scene's ambient is the terrain's shade floor: at 0.8 the shadowed patch keeps most of its colour. */
+    @Test
+    fun aSceneAmbientLiftsTheTerrainsShade() {
+        val (renderer, _) = shared()
+        val target = renderer.createRenderTarget(SIZE, SIZE)
+        try {
+            val default = renderer.patches(target, cascades = true)
+            val bright = renderer.patches(target, cascades = true, ambient = 0.8f)
+
+            assertTrue(default.shadowSide < default.lit * 0.6f, "Default shade ${default.shadowSide} of ${default.lit}.")
+            assertTrue(bright.shadowSide > bright.lit * 0.75f, "Shade ${bright.shadowSide} of ${bright.lit} under ambient 0.8.")
+        } finally {
+            target.destroy()
+        }
+    }
+
     /** Mean brightness of the patch the shadow falls on, and of its mirror across the plate. */
     private class Patches(val shadowSide: Float, val lit: Float)
 
-    private fun Renderer.patches(target: RenderTarget, cascades: Boolean): Patches {
+    private fun Renderer.patches(target: RenderTarget, cascades: Boolean, ambient: Float? = null): Patches {
         val plate = createMesh(plate())
         val material = createMaterial(LitShadowUniformLayout)
         try {
-            val light = SceneLight(direction = LIGHT, color = Vec3f(1f, 1f, 1f))
+            val light = SceneLight(direction = LIGHT, color = Vec3f(1f, 1f, 1f), ambient = ambient)
             renderSceneToTexture(
                 target,
                 CAMERA,

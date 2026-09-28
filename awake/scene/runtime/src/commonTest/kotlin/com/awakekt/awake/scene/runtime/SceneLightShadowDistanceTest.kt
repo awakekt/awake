@@ -36,6 +36,21 @@ class SceneLightShadowDistanceTest {
     }
 
     @Test
+    fun anAuthoredAmbientSurvivesSaveAndLoadAndMustBeAShare() {
+        val world = World()
+        world.add(world.create().also { world.add(it, Transform()) }, Light(type = Light.Type.Directional, ambient = 0.5f))
+
+        val loaded = SceneLoader.instantiate(SceneLoader.decode(SceneLoader.encode(SceneLoader.fromWorld(world, name = "region")))).world
+
+        assertEquals(0.5f, loaded.sun().ambient)
+        fun issues(ambient: Float) = SceneValidator.validate(
+            SceneDocument(nodes = listOf(SceneNode(name = "sun", components = listOf(SceneLight(type = SceneLight.Type.Directional, ambient = ambient))))),
+        )
+        assertTrue(issues(0.5f).isEmpty())
+        listOf(0f, -0.1f, 1.5f, Float.NaN).forEach { assertEquals(1, issues(it).size, "ambient $it must be rejected.") }
+    }
+
+    @Test
     fun aSceneWithoutTheFieldKeepsTheOldReach() {
         val document = SceneLoader.decode(
             """

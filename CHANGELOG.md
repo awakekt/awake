@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Terrain casts shadows.** Clipmap terrain is displaced on the GPU, so no shadow pass drew it and hills and cliffs cast nothing. `RenderSystem3D` now submits each visible terrain's heightmap as a mesh drawn into the shadow maps only -- up to 513 samples a side, every n-th sample past that -- rebuilt when the heightmap or its revision changes. `RenderDrawCommand.shadowsOnly` marks such a draw for any other stand-in caster: the pass compiler hands it to every shadow pass and keeps it out of the scene.
+- **Scenes set the ambient light.** `SceneLight.ambient` (`Light.ambient` at runtime) on the directional light is how much of a surface's colour shows with no direct light, above 0 and up to 1. `lit_shadow`, the textured shader and terrain (base and layered) use it in place of their own 0.08 or 0.35; unset, each keeps its own, so existing scenes look the same. It travels in the scene light payload's `lightColor.w`, where 0 means unset.
 
 ### Fixed
 

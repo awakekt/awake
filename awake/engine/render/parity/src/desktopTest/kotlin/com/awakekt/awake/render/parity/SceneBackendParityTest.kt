@@ -73,6 +73,21 @@ class SceneBackendParityTest {
         }
     }
 
+    /** A scene's ambient replaces the shader's: at 0.5, mid-grey 128 comes out as encode(decode(128) x 0.5), about 93. */
+    @Test
+    fun aSceneAmbientSetsTheTexturedShadeOnBothBackends() {
+        BACKEND_ORDER.forEach { backend ->
+            val pixels = session(backend).renderer.renderTexturedPbrScene(
+                texture = TextureAsset(ByteArray(2 * 2 * 4) { if (it % 4 == 3) -1 else MID_GREY.toByte() }, 2, 2),
+                sunDirection = Vec3f(0f, -1f, 0f),
+                ambient = 0.5f,
+            )
+            val red = pixels[(SCENE_SIZE / 2 * SCENE_SIZE + SCENE_SIZE / 2) * 4].toInt() and 0xFF
+            val shade = if (backend == HeadlessUiBackend.WebGpu) SRGB_TO_LINEAR[red] else red
+            assertTrue(kotlin.math.abs(shade - HALF_AMBIENT_SHADE) <= SHADE_TOLERANCE, "$backend shade $shade under ambient 0.5, expected about $HALF_AMBIENT_SHADE")
+        }
+    }
+
     /** Time picks the frame; frames play in reading order from the image's top-left and wrap. */
     @Test
     fun aFrameSheetPlaysItsFramesInReadingOrderOnBothBackends() {
@@ -297,6 +312,9 @@ class SceneBackendParityTest {
         /** 255 x ((128 / 255)^2.2 x 0.08)^(1 / 2.2). */
         const val AMBIENT_SHADE = 41
         const val SHADE_TOLERANCE = 6
+
+        /** 255 x ((128 / 255)^2.2 x 0.5)^(1 / 2.2). */
+        const val HALF_AMBIENT_SHADE = 93
 
         /** Red, green, blue, yellow: frames 0 to 3 of [FRAME_SHEET]. */
         val FRAME_COLOURS = listOf(

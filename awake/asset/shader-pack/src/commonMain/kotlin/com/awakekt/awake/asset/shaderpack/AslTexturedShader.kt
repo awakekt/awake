@@ -260,7 +260,9 @@ private fun textured(clipSpace: ClipSpace): AslShaderDefinition = shader("textur
         // lightColor is authored as reflectance, not radiance -- pay back the BRDF's 1/PI.
         val radiance = let("radiance", lightColor.xyz * pi * nDotL * shadowFactor)
         val specularOut = let("specularOut", specular * radiance)
-        val ambient = let("ambient", albedo * ambientStrength * occlusion)
+        // The scene's ambient when it sets one (lightColor.w above 0), this shader's otherwise.
+        val ambientShare = let("ambientShare", select(ambientStrength, lightColor.w, lightColor.w gt 0f.lit))
+        val ambient = let("ambient", albedo * ambientShare * occlusion)
         val litColor = variable(
             "lit",
             ambient + diffuse * radiance + specularOut / (specularOut + vec3(1f.lit)) + emissive,
