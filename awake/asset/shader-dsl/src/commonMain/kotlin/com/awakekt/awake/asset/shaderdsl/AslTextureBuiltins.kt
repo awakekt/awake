@@ -41,6 +41,40 @@ fun textureSampleLevel(
 }
 
 /**
+ * WGSL `textureSampleGrad` builtin: samples with caller-supplied UV derivatives.
+ *
+ * For UVs that jump inside a primitive, such as a frame sheet wrapped with `fract`: implicit
+ * derivatives see the jump and select the smallest mip along the seam, while derivatives of the
+ * unwrapped UV keep the filtering the texture would have had. It also has no uniformity
+ * requirement.
+ *
+ * @param texture The texture expression.
+ * @param sampler The sampler expression.
+ * @param uv The texture coordinates.
+ * @param ddx The UV derivative along screen x.
+ * @param ddy The UV derivative along screen y.
+ * @return The sampled `vec4f` value.
+ */
+fun textureSampleGrad(
+    texture: AslExpr,
+    sampler: AslExpr,
+    uv: AslExpr,
+    ddx: AslExpr,
+    ddy: AslExpr,
+): AslExpr {
+    if (texture.type != AslType.Texture2dF32 || sampler.type != AslType.Sampler) {
+        throw AslDefinitionException(
+            "textureSampleGrad needs (texture, sampler), got ${texture.type}/${sampler.type}.",
+        )
+    }
+    return AslCall(
+        "textureSampleGrad",
+        listOf(texture, sampler, uv, ddx, ddy),
+        AslType.Data(GpuDataShape.Vec4),
+    )
+}
+
+/**
  * WGSL `textureSampleLevel` builtin for 2D array textures.
  *
  * [layer] selects which layer of [texture] to read; it filters within that layer, never across

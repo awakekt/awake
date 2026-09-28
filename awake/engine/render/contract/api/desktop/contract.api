@@ -1271,6 +1271,8 @@ public final class com/awakekt/awake/render/renderer/UniformFields {
 	public final fun getPbrFactors ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getPointLightColors ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getPointLightPositions ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getTextureFrames ()Lcom/awakekt/awake/render/renderer/UniformField;
+	public final fun getTextureScroll ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public final fun getVertexAnimation ()Lcom/awakekt/awake/render/renderer/UniformField;
 }
 

@@ -45,6 +45,8 @@ object MaterialUniformLayouts {
         UniformFields.PbrFactors,
         UniformFields.BaseColorFactor,
         UniformFields.EmissiveFactor,
+        UniformFields.TextureFrames,
+        UniformFields.TextureScroll,
     )
 
     /** A standalone camera position field used by source packers. */
@@ -110,10 +112,12 @@ object MaterialUniformLayouts {
         UniformFields.PbrFactors,
         UniformFields.BaseColorFactor,
         UniformFields.EmissiveFactor,
+        UniformFields.TextureFrames,
+        UniformFields.TextureScroll,
         UniformFields.FogColor,
     )
 
-    /** Full textured glTF PBR = 96 floats. */
+    /** Full textured glTF PBR = 104 floats. */
     val PbrTextured = UniformLayout(
         UniformFields.Mvp,
         UniformFields.LightDirection,
@@ -125,6 +129,8 @@ object MaterialUniformLayouts {
         UniformFields.PbrFactors,
         UniformFields.BaseColorFactor,
         UniformFields.EmissiveFactor,
+        UniformFields.TextureFrames,
+        UniformFields.TextureScroll,
         UniformFields.FogColor,
         UniformFields.DebugView,
     )
@@ -134,5 +140,4 @@ object MaterialUniformLayouts {
 val PBR_MATERIAL_FLOATS: Int = UniformFields.PbrFactors.floats
 
 /** The material block of [MaterialUniformLayouts.PbrTextured] -- see [pbrTexturedMaterialFloats]. */
-val PBR_TEXTURED_MATERIAL_FLOATS: Int =
-    UniformFields.PbrFactors.floats + UniformFields.BaseColorFactor.floats + UniformFields.EmissiveFactor.floats
+val PBR_TEXTURED_MATERIAL_FLOATS: Int = MaterialUniformLayouts.PbrTexturedMaterial.total
