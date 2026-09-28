@@ -336,9 +336,9 @@ private const val STUDIO_NEAR = 0.1f
 private const val STUDIO_FAR = 100f
 
 /** The engine's default sun -- the scene names a directional light and no direction. */
-private const val SUN_X = 0.4f
-private const val SUN_Y = 0.8f
-private const val SUN_Z = 0.4f
+internal const val SUN_X = 0.4f
+internal const val SUN_Y = 0.8f
+internal const val SUN_Z = 0.4f
 
 /** The studio viewport is wider than tall, and the cascade fit is sensitive to this. */
 private const val STUDIO_ASPECT = 1.5f

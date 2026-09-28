@@ -8,7 +8,6 @@ package com.awakekt.awake.asset.shaderpack
 import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslDefinitionException
 import com.awakekt.awake.asset.shaderdsl.AslExpr
-import com.awakekt.awake.asset.shaderdsl.AslFunctionHandle
 import com.awakekt.awake.asset.shaderdsl.AslLayoutHandles
 import com.awakekt.awake.asset.shaderdsl.AslShaderBuilder
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
@@ -97,7 +96,7 @@ object TerrainUniformLayout {
     /**
      * Ends with the cascade fields `lit_shadow` reads, under the same names and packing, so one
      * writer fills both. The camera forward's `w` is the active cascade count; 0 means no shadow
-     * pass, and a surface samples nothing.
+     * pass, and a surface samples nothing. Then the debug view, as every scene shader has it.
      */
     val Layout = UniformLayout(
         ViewProjection,
@@ -109,6 +108,7 @@ object TerrainUniformLayout {
         UniformFields.CascadeDepthScales,
         UniformFields.CameraPosition,
         UniformFields.CameraForward,
+        UniformFields.DebugView,
     )
 }
 
@@ -124,7 +124,9 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
  * @property terrainSampling [TerrainUniformLayout.TerrainSampling]; `xy` is the heightmap's world
  * footprint.
  * @property cascades The block's cascade fields, for [terrainShadowSampling].
+ * @property debugView The block's `UniformFields.DebugView`, for [debugViewColor].
  */
+@Suppress("LongParameterList") // Pure aggregation of the stage's derived handles.
 class TerrainClipmapOutputs internal constructor(
     val worldNormal: AslExpr,
     private val exportedWorldPosition: AslExpr?,
@@ -132,6 +134,7 @@ class TerrainClipmapOutputs internal constructor(
     val terrainParams: AslExpr,
     val terrainSampling: AslExpr,
     val cascades: CascadeShadowInputs,
+    val debugView: AslExpr,
 ) {
     /**
      * Displaced world position. A surface derives its texture coordinates from it, since the
@@ -231,7 +234,8 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
         worldPosition?.let { it set displaced }
     }
 
-    return TerrainClipmapOutputs(worldNormal, worldPosition, sunDirection, terrainParams, terrainSampling, handles.cascadeInputs())
+    val debugView = handles.value("debugView")
+    return TerrainClipmapOutputs(worldNormal, worldPosition, sunDirection, terrainParams, terrainSampling, handles.cascadeInputs(), debugView)
 }
 
 /** The cascade fields [TerrainUniformLayout] ends with. */
@@ -243,8 +247,8 @@ private fun AslLayoutHandles.cascadeInputs() = CascadeShadowInputs(
 )
 
 /**
- * Declares the engine's shadow map for a terrain surface and returns
- * `sampleShadow(world: vec3, normal: vec3, nDotL: f32) -> f32`: how much of the sun reaches a
+ * Declares the engine's shadow map for a terrain surface and returns its lookups:
+ * `sampleShadow(world: vec3, normal: vec3, nDotL: f32) -> f32` is how much of the sun reaches a
  * point, 1 lit and 0 shadowed. It is 1 wherever no cascade reaches, including every frame the
  * engine renders no shadows, since the cascade count is then 0.
  *
@@ -252,12 +256,12 @@ private fun AslLayoutHandles.cascadeInputs() = CascadeShadowInputs(
  * @param clipSpace The backend's clip space; a terrain shader that samples shadows is built once
  * per backend, like `lit_shadow`.
  */
-fun AslShaderBuilder.terrainShadowSampling(terrain: TerrainClipmapOutputs, clipSpace: ClipSpace): AslFunctionHandle {
+fun AslShaderBuilder.terrainShadowSampling(terrain: TerrainClipmapOutputs, clipSpace: ClipSpace): CascadeShadowSampling {
     val shadowGroup = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth)
     val shadowMap by textureDepth2dArray(group = shadowGroup, binding = 0)
     val shadowMapSampler by samplerComparison(group = shadowGroup, binding = 1)
     val epsilon = const("TERRAIN_SHADOW_EPSILON", 0.0001f)
-    return cascadeShadowSampling(terrain.cascades, shadowMap, shadowMapSampler, clipSpace, epsilon).sampleShadow
+    return cascadeShadowSampling(terrain.cascades, shadowMap, shadowMapSampler, clipSpace, epsilon)
 }
 
 /** A vertex's world X/Z on the heightmap, and the UV that samples it. */
@@ -343,7 +347,7 @@ internal fun decodeHeight(sample: AslExpr): AslExpr = (sample.x * 256f.lit + sam
  */
 fun terrainShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain") {
     val terrain = terrainClipmapVertexStage()
-    val sampleShadow = terrainShadowSampling(terrain, clipSpace)
+    val shadows = terrainShadowSampling(terrain, clipSpace)
 
     fragment {
         val normal = let("normal", normalize(terrain.worldNormal))
@@ -352,9 +356,17 @@ fun terrainShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain")
         val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
         val ambient = let("ambient", terrain.sunDirection.w)
         val nDotL = let("nDotL", max(dot(normal, toLight), 0f.lit))
-        val shadow = let("shadow", sampleShadow(terrain.worldPosition, normal, nDotL))
+        val shadow = let("shadow", shadows.sampleShadow(terrain.worldPosition, normal, nDotL))
         val lighting = let("lighting", ambient + (1f.lit - ambient) * nDotL * shadow)
         val base = let("base", terrain.terrainParams.z)
-        colorOutput(vec4(vec3(base, base, base) * lighting, 1f.lit))
+        val surface = DebugSurface(
+            normal = normal,
+            worldPosition = terrain.worldPosition,
+            albedo = vec3(base, base, base),
+            shadow = shadow,
+            shadowCascade = shadows.shadowCascade(terrain.worldPosition),
+        )
+        val shaded = vec4(vec3(base, base, base) * lighting, 1f.lit)
+        colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
     }
 }

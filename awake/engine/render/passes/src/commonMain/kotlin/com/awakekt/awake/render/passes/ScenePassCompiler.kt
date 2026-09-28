@@ -11,6 +11,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.prepareAll
@@ -43,6 +44,7 @@ object ScenePassCompiler {
         val shadowCascadeData = shadowCascadeData(light, environment)
         val shadowViewProjections = shadowCascadeData?.viewProjections.orEmpty()
         val packedPassUniforms = sceneLightUniforms(light ?: DEFAULT_SCENE_LIGHT, lens.eye).packed
+        val gpuEnvironment = environment.toGpuState(viewDepthRange = lens.far)
 
         val resolved = drawPreparer?.let {
             sortForRecording(
@@ -53,7 +55,7 @@ object ScenePassCompiler {
                         cameraEye = lens.eye,
                         cameraForward = cameraForward,
                         passUniforms = packedPassUniforms,
-                        environment = environment.toGpuState(),
+                        environment = gpuEnvironment,
                         viewport = viewport,
                         shadowViewProjections = shadowViewProjections,
                         shadowCascadeData = shadowCascadeData,
@@ -76,16 +78,7 @@ object ScenePassCompiler {
             )
         }
         if (light != null && environment.shadowsEnabled && resolved != null) {
-            light.pointShadows.flatMap { pointShadow ->
-                pointShadow.viewProjections.mapIndexed { face, faceVp ->
-                    GpuSubPass(
-                        target = null,
-                        targetLayer = pointShadow.baseLayer + face,
-                        viewProjection = faceVp,
-                        resolvedDraws = resolvedOpaque,
-                    )
-                }
-            }.also { prePasses += it }
+            prePasses += light.pointShadowPrePasses(resolvedOpaque)
         }
         return GpuPassInput(
             prePasses = prePasses,
@@ -93,7 +86,7 @@ object ScenePassCompiler {
             cameraEye = lens.eye,
             viewport = viewport,
             passUniforms = packedPassUniforms,
-            environment = environment.toGpuState(),
+            environment = gpuEnvironment,
             resolvedOpaqueDraws = resolvedOpaque,
             resolvedTransparentDraws = resolved?.transparent.orEmpty(),
             resolvedPath = resolved != null,
@@ -102,6 +95,19 @@ object ScenePassCompiler {
         )
     }
 }
+
+/** One depth sub-pass per point-shadow cube face, each into its own layer. */
+private fun SceneLight.pointShadowPrePasses(draws: List<GpuResolvedDraw>): List<GpuSubPass> =
+    pointShadows.flatMap { pointShadow ->
+        pointShadow.viewProjections.mapIndexed { face, faceVp ->
+            GpuSubPass(
+                target = null,
+                targetLayer = pointShadow.baseLayer + face,
+                viewProjection = faceVp,
+                resolvedDraws = draws,
+            )
+        }
+    }
 
 private fun Lens.forwardDirection(): Vec3f = (center - eye).let { direction ->
     val length = direction.length3()

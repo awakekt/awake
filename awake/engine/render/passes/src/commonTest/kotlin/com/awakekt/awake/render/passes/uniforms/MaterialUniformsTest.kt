@@ -91,9 +91,9 @@ class MaterialUniformsTest {
         // Lit: MVP(16) + lightDir(4) + lightColor(4) + pbr(4) = 28 floats
         assertEquals(28, MaterialUniformLayouts.Lit.total)
 
-        // PbrTextured: MVP(16) + lightDir(4) + lightColor(4) + model(16) + camPos(4) + pbr(4) + baseColor(4) + emissive(4) + fog(4) = 60 floats
-        // 60 + 32: the PBR path gained MAX_POINT_LIGHTS slots in two vec4 arrays.
-        assertEquals(92, MaterialUniformLayouts.PbrTextured.total)
+        // PbrTextured: MVP(16) + lightDir(4) + lightColor(4) + model(16) + camPos(4) + pbr(4) + baseColor(4) + emissive(4) + fog(4) + debugView(4) = 64 floats
+        // 64 + 32: the PBR path gained MAX_POINT_LIGHTS slots in two vec4 arrays.
+        assertEquals(96, MaterialUniformLayouts.PbrTextured.total)
     }
 
     @Test

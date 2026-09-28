@@ -14,6 +14,7 @@ import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapGeometry
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapTracker
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.UniformBlock
@@ -23,6 +24,7 @@ import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
+import com.awakekt.awake.render.passes.uniforms.putDebugView
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.texture.TextureAsset
@@ -241,6 +243,7 @@ class TerrainRenderFeature(
             } else {
                 put(UniformFields.CameraForward, 0f, 0f, -1f, 0f)
             }
+            putDebugView(context.environment.debugView, forward ?: NO_FORWARD)
         }
         val recorder: CommandRecorder = context.recorder
         recorder.bindPipeline(pipeline)
@@ -255,6 +258,7 @@ class TerrainRenderFeature(
 
     private companion object {
         const val AMBIENT = 0.35f
+        val NO_FORWARD = Vec3f(0f, 0f, -1f)
 
         /** Where the directional light's direction starts in a pass's packed scene light. */
         val LIGHT_DIRECTION = MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.LightDirection)

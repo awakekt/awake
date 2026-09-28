@@ -14,7 +14,9 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.passes.uniforms.RenderDebugView
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.rendering.debug.debugSettings
 import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.LodGroup
 import com.awakekt.awake.scene.rendering.mesh.LodLevel
@@ -54,6 +56,21 @@ class SceneCompilerTest {
         assertEquals(Color.fromHex(0x3355CC), environment.zenithColor)
         assertEquals(0.25f, environment.fogDensity)
         assertEquals(Color.fromHex(0x33AA55), environment.fogColor)
+    }
+
+    @Test
+    fun lightingCompilerCarriesTheDebugViewFromTheWorldsDebugSettings() {
+        val world = World()
+        world.debugSettings().apply {
+            renderDebugView = RenderDebugView.ShadowMap
+            renderDebugLayer = 2
+        }
+
+        val environment = SceneLightingCompiler(ClipSpace.WebGpu).environmentUniforms(world)
+
+        assertEquals(RenderDebugView.ShadowMap, environment.debugView)
+        assertEquals(2, environment.debugLayer)
+        assertEquals(RenderDebugView.Off, SceneLightingCompiler(ClipSpace.WebGpu).environmentUniforms(World()).debugView)
     }
 
     @Test

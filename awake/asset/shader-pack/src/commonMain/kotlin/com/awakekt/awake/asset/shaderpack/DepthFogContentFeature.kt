@@ -13,6 +13,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.inverse
 import com.awakekt.awake.render.command.CommandRecorder
+import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.passes.ContentFeature
@@ -81,7 +82,8 @@ class DepthFogRenderFeature(
     override val pass = RenderPassSlot.Scene
 
     override fun recordCommands(context: RenderFrameContext) {
-        if (!isVisible()) return
+        // A debug view's colours are data; fog over them would misreport it.
+        if (!isVisible() || context.environment.debugView != GpuDebugView.Off) return
         // Null when this frame's viewProjection is singular -- no world position to unproject a
         // fog distance from, the same guard the sky makes for the same reason.
         val inverse = context.viewProjection.inverse() ?: return

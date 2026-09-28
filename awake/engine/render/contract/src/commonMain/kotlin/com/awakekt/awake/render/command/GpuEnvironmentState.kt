@@ -21,6 +21,8 @@ data class GpuEnvironmentState(
     val fogDensity: Float = 0f,
     val fogColor: Color = Color.Black,
     val shadowsEnabled: Boolean = true,
+    /** A diagnostic that replaces the scene shaders' lit output; [GpuDebugView.Off] renders normally. */
+    val debugView: GpuDebugView = GpuDebugView.Off,
 ) {
     companion object {
         val Default = GpuEnvironmentState()

@@ -90,6 +90,7 @@ private fun textured(): AslShaderDefinition = shader("textured") {
     val baseColorFactor = handles.value("baseColorFactor")
     val emissiveFactor = handles.value("emissiveFactor")
     val fogColor = handles.value("fogColor")
+    val debugView = handles.value("debugView")
 
     val baseColorTexture by texture2d(
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -251,7 +252,8 @@ private fun textured(): AslShaderDefinition = shader("textured") {
             val pSpecularOut = let("pSpecularOut", pSpecular * pRadiance)
             assign(litColor, litColor + pDiffuse * pRadiance + pSpecularOut / (pSpecularOut + vec3(1f.lit)))
         }
-        colorOutput(vec4(applyFog(litColor, worldPos), baseColorSample.a * baseColorFactor.a))
+        val shaded = vec4(applyFog(litColor, worldPos), baseColorSample.a * baseColorFactor.a)
+        colorOutput(debugViewColor(debugView, cameraPosition, DebugSurface(n, worldPos, albedo), shaded))
     }
 }
 

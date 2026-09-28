@@ -71,7 +71,7 @@ object MaterialUniformLayouts {
     )
 
     /**
-     * Everything `lit_shadow.wgsl` declares = 172 floats.
+     * Everything `lit_shadow.wgsl` declares = 176 floats.
      *
      * `awake:asset:shader-pack` re-exports this as `LitShadowUniformLayout` rather than
      * declaring its own. It used to declare one, so the struct had two Kotlin descriptions --
@@ -96,6 +96,7 @@ object MaterialUniformLayouts {
         UniformFields.CameraForward,
         UniformFields.Material,
         UniformFields.FogColor,
+        UniformFields.DebugView,
     )
 
     /** Everything `textured.wgsl` reads after its MVP -- see [LitShadow]: 44 floats. */
@@ -112,7 +113,7 @@ object MaterialUniformLayouts {
         UniformFields.FogColor,
     )
 
-    /** Full textured glTF PBR = 60 floats. */
+    /** Full textured glTF PBR = 96 floats. */
     val PbrTextured = UniformLayout(
         UniformFields.Mvp,
         UniformFields.LightDirection,
@@ -125,6 +126,7 @@ object MaterialUniformLayouts {
         UniformFields.BaseColorFactor,
         UniformFields.EmissiveFactor,
         UniformFields.FogColor,
+        UniformFields.DebugView,
     )
 }
 

@@ -214,6 +214,6 @@ class ScenePassCompilerTest {
             aspect = 1f,
         )
 
-        assertEquals(environment.toGpuState(), input.environment)
+        assertEquals(environment.toGpuState(viewDepthRange = 10f), input.environment)
     }
 }
