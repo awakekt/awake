@@ -33,6 +33,11 @@ Web:
 ./gradlew :samples:engine-showcase:wasmJsBrowserDevelopmentRun
 ```
 
+**Replacing the lit shader while it runs (desktop):** press L to toggle between the shipped
+`lit_shadow` and a brighter-ambient variant built at runtime. Press K to try a variant that does not
+compile; it is refused, a warning is printed, and the current shader keeps drawing. See
+`ShowcaseShaderSwap` and the ASL README's dev-loop section.
+
 ## Showcases
 
 | Id | Title | What it proves |

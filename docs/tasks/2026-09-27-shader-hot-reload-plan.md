@@ -1,7 +1,7 @@
 # Shader hot reload plan
 
 Date: 2026-09-27
-Status: **active** — phases 0 and 1 are done; phase 2 (sample and docs) is next. It must land
+Status: **done** — phases 0–2 have landed; the limits below are open follow-ups. It had to land
 before the [shader graph](2026-09-27-shader-graph-plan.md) editor, whose live preview is its first
 consumer. Tracked in [#106](https://github.com/awakekt/awake/issues/106).
 
@@ -110,7 +110,7 @@ validation layers.
 pipeline fails the count; dropping the binding check fails the refusal test, and validation reports
 `VUID-VkGraphicsPipelineCreateInfo-layout-07988`.
 
-### Phase 2 — sample and docs
+### Phase 2 — sample and docs (done)
 
 - `engine-showcase` desktop builds a variant of a pack shader at runtime and swaps it on a key
   press.
@@ -119,6 +119,13 @@ pipeline fails the count; dropping the binding check fails the refusal test, and
 **Gate:**
 - The sample's pixel changes after the key press.
 - A deliberately broken variant is logged, and the sample keeps running on the old shader.
+
+**Result:** `ShowcaseShaderSwap` in the engine showcase. L toggles `litShadowShader(clipSpace,
+ambientStrength = 0.6f)`, a variant the pack now exposes; its default emits the shipped WGSL byte for
+byte. K tries the shipped WGSL with a syntax error appended. `ShaderSwapSceneFrameTest` runs the
+showcase headless with zero-delta frames: L changes the frame, K logs a warning and leaves the frame
+identical, and L again restores the shipped frame exactly. Positive control: a variant with the
+shipped ambient strength fails the L check. The desktop showcase now prints warnings.
 
 ## Limits and follow-ups
 
