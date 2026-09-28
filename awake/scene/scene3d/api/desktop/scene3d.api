@@ -595,6 +595,12 @@ public final class com/awakekt/awake/scene/rendering/light/SceneLight$Type$Compa
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/rendering/light/SceneViewLighting {
+	public fun <init> (Lcom/awakekt/awake/core/math/ClipSpace;)V
+	public final fun environment (Lcom/awakekt/awake/ecs/World;)Lcom/awakekt/awake/render/passes/uniforms/EnvironmentUniforms;
+	public final fun light (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;F)Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
+}
+
 public final class com/awakekt/awake/scene/rendering/mesh/InstancedMeshRenderer {
 	public fun <init> (Lcom/awakekt/awake/render/mesh/Mesh;Lcom/awakekt/awake/render/material/Material;Ljava/util/List;)V
 	public final fun component1 ()Lcom/awakekt/awake/render/mesh/Mesh;
