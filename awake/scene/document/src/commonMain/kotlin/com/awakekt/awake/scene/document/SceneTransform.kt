@@ -11,7 +11,7 @@ import kotlinx.serialization.Serializable
  * Serializable 3D local transform spatial descriptor.
  *
  * @property position Local translation vector.
- * @property rotation Local Euler angles rotation vector in degrees.
+ * @property rotation Local Euler angles in radians, applied X, then Y, then Z (`Mat4.setEulerTRS`).
  * @property scale Local scaling vector.
  */
 @Serializable
