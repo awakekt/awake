@@ -96,3 +96,23 @@ tasks.named<Test>("desktopTest") {
     // prevents wgpu-native/GLFW driver collisions on macOS.
     setForkEvery(1)
 }
+
+// Renders every parity scenario to PNGs on headless Vulkan, for the PR evidence workflow:
+//   ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir=<dir>
+tasks.register<JavaExec>("captureRenderEvidence") {
+    group = "verification"
+    description = "Render the parity scenarios to PNGs (headless Vulkan)."
+    val desktopMain = kotlin.targets.getByName("desktop").compilations.getByName("main")
+    dependsOn(desktopMain.compileAllTaskName, ":awake:backend:vulkan:bindings:buildDesktopNative")
+    classpath = files(desktopMain.output.allOutputs, desktopMain.runtimeDependencyFiles)
+    mainClass.set("com.awakekt.awake.render.parity.RenderEvidenceKt")
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(25)) })
+    useNagaShaderCompiler(this)
+    jvmArgs("-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
+    environment(desktopVulkanEnv)
+    args(
+        providers.gradleProperty("evidence.dir")
+            .orElse(layout.buildDirectory.dir("reports/render-evidence").map { it.asFile.absolutePath })
+            .get(),
+    )
+}

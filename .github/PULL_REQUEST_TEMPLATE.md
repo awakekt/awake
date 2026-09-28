@@ -30,11 +30,13 @@ Fixes #
 - [ ] Verified the affected platform(s), or explained why hardware verification is not applicable.
 - [ ] For UI changes: checked light/dark states, interaction, layout, and visual parity.
 
-## UI evidence
+## Visual evidence
 
-<!-- Required for UI or visual changes. Attach screenshots or a short recording; write “Not applicable” otherwise. -->
+<!-- Engine rendering: the Render Evidence workflow comments before/after renders of the parity
+scenarios automatically. If your change is visible somewhere those scenarios don't cover (a sample,
+a UI component, a new pass), add a scenario to `RenderEvidence.kt` or attach screenshots here. -->
 
-Not applicable
+Rendered by the Render Evidence workflow.
 
 ## Change hygiene
 
