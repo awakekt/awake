@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.12] - 2026-09-29
+
 ### Added
 
 - **Terrain casts shadows.** Clipmap terrain is displaced on the GPU, so no shadow pass drew it and hills and cliffs cast nothing. `RenderSystem3D` now submits each visible terrain's heightmap as a mesh drawn into the shadow maps only -- up to 513 samples a side, every n-th sample past that -- rebuilt when the heightmap or its revision changes. `RenderDrawCommand.shadowsOnly` marks such a draw for any other stand-in caster: the pass compiler hands it to every shadow pass and keeps it out of the scene.
@@ -22,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Cubemap skies draw.** `Skybox.Mode.Cubemap` (`SceneSkybox(type = "Cubemap", cubemapPath = ...)` in a scene file) rendered nothing. `SkyboxCubemapSystem(host, scope, assets)` now reads the path as a cubemap strip -- six square faces side by side, +X, -X, +Y, -Y, +Z, -Z, each laid out as the GPU samples a cube face -- and draws it behind the scene through `skyboxCubemapContentFeature(cubemap)`; another path swaps it and leaving cubemap mode removes it. An app registers the system like `TerrainContentSystem`. `decodeCubemapStrip` decodes a strip, and a content feature can now bind a cube texture.
-
 
 ## [0.1.0-alpha.10] - 2026-09-28
 
