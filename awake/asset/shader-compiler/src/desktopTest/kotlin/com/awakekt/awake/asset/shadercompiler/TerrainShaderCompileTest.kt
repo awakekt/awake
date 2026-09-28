@@ -23,6 +23,7 @@ import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
+import com.awakekt.awake.asset.shaderpack.terrainClipmapDiscardUnderFinerRing
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainShader
 import com.awakekt.awake.core.math.ClipSpace
@@ -123,6 +124,7 @@ class TerrainShaderCompileTest {
             val layers by texture2dArray(group = group, binding = TERRAIN_SURFACE_FIRST_BINDING)
             val layerSampler by sampler(group = group, binding = TERRAIN_SURFACE_FIRST_BINDING + 1)
             fragment {
+                terrainClipmapDiscardUnderFinerRing(terrain)
                 val uv = let(
                     "uv",
                     vec2(

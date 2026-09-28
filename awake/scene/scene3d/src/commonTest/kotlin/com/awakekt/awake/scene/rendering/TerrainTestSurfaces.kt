@@ -20,6 +20,7 @@ import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
+import com.awakekt.awake.asset.shaderpack.terrainClipmapDiscardUnderFinerRing
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaders.aslShaderSet
 import com.awakekt.awake.render.pipeline.BindingLayout
@@ -37,6 +38,7 @@ internal val PROBE_SURFACE_SHADERS = aslShaderSet(
         val layers by texture2dArray(group = group, binding = TERRAIN_SURFACE_FIRST_BINDING)
         val layerSampler by sampler(group = group, binding = TERRAIN_SURFACE_FIRST_BINDING + 1)
         fragment {
+            terrainClipmapDiscardUnderFinerRing(terrain)
             val uv = let("uv", vec2(terrain.worldPosition.x, terrain.worldPosition.z))
             val albedo = let("albedo", textureSampleArray(layers, layerSampler, uv, 0.lit))
             val light = let(

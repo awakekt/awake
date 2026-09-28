@@ -18,13 +18,17 @@ import kotlin.test.assertTrue
 
 class TerrainClipmapGeometryTest {
 
+    private companion object {
+        const val CAMERA_STEPS = 400
+    }
+
     @Test
     fun clipmapConfigComputesConsistentExtents() {
         val config = TerrainClipmapConfig(ringCount = 5, ringResolution = 64, baseSpacing = 2.0f)
         assertEquals(5, config.ringCount)
         assertEquals(64, config.ringResolution)
         assertEquals(2.0f, config.baseSpacing)
-        assertEquals(126.0f, config.coreExtent) // (64 - 1) * 2.0 = 126m
+        assertEquals(128.0f, config.coreExtent) // 64 cells * 2.0 = 128m
 
         assertEquals(2.0f, config.spacingForLevel(0))
         assertEquals(4.0f, config.spacingForLevel(1))
@@ -32,11 +36,11 @@ class TerrainClipmapGeometryTest {
         assertEquals(16.0f, config.spacingForLevel(3))
         assertEquals(32.0f, config.spacingForLevel(4))
 
-        assertEquals(126.0f, config.extentForLevel(0))
-        assertEquals(252.0f, config.extentForLevel(1))
-        assertEquals(504.0f, config.extentForLevel(2))
-        assertEquals(1008.0f, config.extentForLevel(3))
-        assertEquals(2016.0f, config.extentForLevel(4))
+        assertEquals(128.0f, config.extentForLevel(0))
+        assertEquals(256.0f, config.extentForLevel(1))
+        assertEquals(512.0f, config.extentForLevel(2))
+        assertEquals(1024.0f, config.extentForLevel(3))
+        assertEquals(2048.0f, config.extentForLevel(4))
     }
 
     @Test
@@ -45,36 +49,30 @@ class TerrainClipmapGeometryTest {
         val core = TerrainClipmapGeometry.buildCoreMesh(config)
 
         assertEquals(VertexFormat.PositionNormalColorUv, core.format)
-        val expectedVertices = 32 * 32
+        val expectedVertices = 33 * 33
         val stride = VertexFormat.PositionNormalColorUv.strideFloats
         assertEquals(expectedVertices * stride, core.vertices.size)
 
-        val expectedQuads = (32 - 1) * (32 - 1)
-        val expectedIndices = expectedQuads * 6
+        val expectedIndices = 32 * 32 * 6
         assertEquals(expectedIndices, core.indices.size)
 
-        // All indices are in valid range
         for (index in core.indices) {
             assertTrue(index in 0 until expectedVertices, "Index $index out of bounds [0, $expectedVertices)")
         }
     }
 
     @Test
-    fun ringMeshCullsInnerHoleProperly() {
+    fun ringMeshCullsOnlyTheCellsTheFinerLevelAlwaysCovers() {
         val config = TerrainClipmapConfig(ringCount = 4, ringResolution = 32, baseSpacing = 1.0f)
         val ring1 = TerrainClipmapGeometry.buildRingMesh(1, config)
 
         assertEquals(VertexFormat.PositionNormalColorUv, ring1.format)
-        val expectedVertices = 32 * 32
         val stride = VertexFormat.PositionNormalColorUv.strideFloats
-        assertEquals(expectedVertices * stride, ring1.vertices.size)
+        assertEquals(33 * 33 * stride, ring1.vertices.size)
 
-        // Total quads: (31 * 31) = 961. Inner hole quads: (16 * 16) = 256. Ring quads = 705.
-        val totalQuads = (32 - 1) * (32 - 1)
-        val holeQuads = (32 / 2) * (32 / 2)
-        val expectedQuads = totalQuads - holeQuads
-        val expectedIndices = expectedQuads * 6
-        assertEquals(expectedIndices, ring1.indices.size)
+        // 32 x 32 cells, less the 12 x 12 middle (cells 10 until 22) that the finer level covers
+        // however both have snapped.
+        assertEquals((32 * 32 - 12 * 12) * 6, ring1.indices.size)
     }
 
     @Test
@@ -84,31 +82,52 @@ class TerrainClipmapGeometryTest {
         assertEquals(6, meshes.size)
     }
 
+    /**
+     * What makes the rings watertight, wherever the camera is: each level's border lies on the next
+     * level's grid (so the two share vertices), every level contains the one inside it, and the
+     * cells a ring's mesh leaves out are always under the finer level.
+     */
     @Test
-    fun clipmapTrackerSnapsCameraToGridSteps() {
-        val config = TerrainClipmapConfig(ringCount = 4, ringResolution = 64, baseSpacing = 2.0f)
+    fun levelsNestOnSharedGridLinesForEveryCameraPosition() {
+        val config = TerrainClipmapConfig(ringCount = 5, ringResolution = 16, baseSpacing = 1f)
         val tracker = TerrainClipmapTracker(config)
+        val holes = (1 until config.ringCount).associateWith { missingCells(TerrainClipmapGeometry.buildRingMesh(it, config), config.ringResolution) }
 
-        // Move camera to arbitrary world coordinates
-        val rings = tracker.update(Vec3f(15.7f, 100.0f, -33.2f))
-        assertEquals(4, rings.size)
-
-        // Level 0: spacing = 2.0 -> snapped to multiple of 2.0 (15.7 -> 16.0, -33.2 -> -34.0)
-        assertEquals(16.0f, rings[0].snappedCenter.x)
-        assertEquals(-34.0f, rings[0].snappedCenter.z)
-
-        // Level 1: spacing = 4.0 -> snapped to multiple of 4.0 (15.7 -> 16.0, -33.2 -> -32.0)
-        assertEquals(16.0f, rings[1].snappedCenter.x)
-        assertEquals(-32.0f, rings[1].snappedCenter.z)
-
-        // Level 2: spacing = 8.0 -> snapped to multiple of 8.0 (15.7 -> 16.0, -33.2 -> -32.0)
-        assertEquals(16.0f, rings[2].snappedCenter.x)
-        assertEquals(-32.0f, rings[2].snappedCenter.z)
-
-        // Level 3: spacing = 16.0 -> snapped to multiple of 16.0 (15.7 -> 16.0, -33.2 -> -32.0)
-        assertEquals(16.0f, rings[3].snappedCenter.x)
-        assertEquals(-32.0f, rings[3].snappedCenter.z)
+        repeat(CAMERA_STEPS) { step ->
+            val rings = tracker.update(Vec3f(step * 0.37f - 70f, 0f, 55f - step * 0.61f))
+            rings.forEach { ring ->
+                listOf(ring.minX, ring.maxX, ring.minZ, ring.maxZ).forEach { edge ->
+                    assertTrue(onGrid(edge, ring.spacing * 2f), "level ${ring.level} border $edge is off the coarser grid")
+                }
+            }
+            rings.zipWithNext { finer, coarser ->
+                assertTrue(
+                    finer.minX >= coarser.minX && finer.maxX <= coarser.maxX && finer.minZ >= coarser.minZ && finer.maxZ <= coarser.maxZ,
+                    "level ${coarser.level} does not contain level ${finer.level} at step $step",
+                )
+                holes.getValue(coarser.level).forEach { (x, z) ->
+                    val cellMinX = coarser.minX + x * coarser.spacing
+                    val cellMinZ = coarser.minZ + z * coarser.spacing
+                    assertTrue(
+                        cellMinX >= finer.minX && cellMinX + coarser.spacing <= finer.maxX &&
+                            cellMinZ >= finer.minZ && cellMinZ + coarser.spacing <= finer.maxZ,
+                        "cell ($x, $z) cut from level ${coarser.level} is not under level ${finer.level} at step $step",
+                    )
+                }
+            }
+        }
     }
+
+    /** Cells of a `cells` x `cells` grid mesh that no triangle covers. */
+    private fun missingCells(mesh: com.awakekt.awake.core.geometry.MeshGeometry, cells: Int): Set<Pair<Int, Int>> {
+        val side = cells + 1
+        val covered = mesh.indices.toList().chunked(3).mapTo(HashSet()) { triangle ->
+            triangle.minOf { it % side } to triangle.minOf { it / side }
+        }
+        return (0 until cells).flatMap { x -> (0 until cells).map { z -> x to z } }.filterNot { it in covered }.toSet()
+    }
+
+    private fun onGrid(value: Float, step: Float): Boolean = kotlin.math.abs(value / step - kotlin.math.round(value / step)) < 1e-4f
 
     @Test
     fun clipmapTrackerComputesMorphFactorCorrectly() {

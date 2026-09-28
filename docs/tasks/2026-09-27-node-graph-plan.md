@@ -88,7 +88,8 @@ Steps 1 and 2 share no files with step 3's runtime work and can run in parallel 
   - `TerrainSurfaceProvider` returns a `ShaderSet` plus textures, and `TerrainContentSystem`
     attaches it at runtime.
   - A missing or failing provider falls back to base shading, with the payload kept.
-  - A surface calls `terrainClipmapVertexStage`, declares textures from binding 3, computes its
+  - A surface calls `terrainClipmapVertexStage` (and `terrainClipmapDiscardUnderFinerRing` in its
+    fragment stage), declares textures from binding 3, computes its
     own lighting, and can add no uniform fields.
 - Meshes cannot name a shader:
   - `PipelineTable` is keyed only by `VertexFormat`, is built once at engine start, and never

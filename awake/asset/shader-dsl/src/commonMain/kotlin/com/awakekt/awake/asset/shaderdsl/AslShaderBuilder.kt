@@ -29,6 +29,22 @@ open class AslBlockBuilder internal constructor() {
     internal val statements = mutableListOf<AslStatement>()
 
     /**
+     * Blocks being built inside this one right now. A stage-only statement such as
+     * [AslFragmentBuilder.discard] reached from inside one (`this@fragment.discard()` in an [iff])
+     * would land here, outside the block, so it checks this and refuses.
+     */
+    internal var openNestedBlocks = 0
+
+    private fun nested(build: AslBlockBuilder.() -> Unit): List<AslStatement> {
+        openNestedBlocks++
+        try {
+            return AslBlockBuilder().apply(build).statements
+        } finally {
+            openNestedBlocks--
+        }
+    }
+
+    /**
      * Declares an immutable local variable -- WGSL `let`.
      *
      * @param name The name of the variable.
@@ -77,7 +93,7 @@ open class AslBlockBuilder internal constructor() {
         if (condition.type != AslType.Bool) {
             throw AslDefinitionException("iff needs a bool condition, got ${condition.type}.")
         }
-        statements += AslIf(condition, AslBlockBuilder().apply(block).statements)
+        statements += AslIf(condition, nested(block))
     }
 
     /**
@@ -92,7 +108,7 @@ open class AslBlockBuilder internal constructor() {
      */
     fun loopI32(name: String, start: AslExpr, endInclusive: AslExpr, block: AslBlockBuilder.(AslExpr) -> Unit) {
         val counter = AslRef(name, AslType.I32)
-        statements += AslForI32(name, start, endInclusive, AslBlockBuilder().apply { block(counter) }.statements)
+        statements += AslForI32(name, start, endInclusive, nested { block(counter) })
     }
 
     /**
@@ -107,7 +123,7 @@ open class AslBlockBuilder internal constructor() {
      */
     fun loopU32(name: String, start: AslExpr, endExclusive: AslExpr, block: AslBlockBuilder.(AslExpr) -> Unit) {
         val counter = AslRef(name, AslType.U32)
-        statements += AslForU32(name, start, endExclusive, AslBlockBuilder().apply { block(counter) }.statements)
+        statements += AslForU32(name, start, endExclusive, nested { block(counter) })
     }
 
     /**
@@ -412,7 +428,20 @@ class AslFragmentBuilder internal constructor() : AslBlockBuilder() {
 
     /** Discards the current fragment before it can write a depth or color value. */
     fun discard() {
+        if (openNestedBlocks > 0) {
+            throw AslDefinitionException(
+                "discard() inside a nested block would discard unconditionally, outside it; use discardIf(condition).",
+            )
+        }
         statements += AslDiscard
+    }
+
+    /** Discards the current fragment where [condition] holds. */
+    fun discardIf(condition: AslExpr) {
+        if (condition.type != AslType.Bool) {
+            throw AslDefinitionException("discardIf needs a bool condition, got ${condition.type}.")
+        }
+        statements += AslIf(condition, listOf(AslDiscard))
     }
 
     /**

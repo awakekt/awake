@@ -45,6 +45,7 @@ import com.awakekt.awake.asset.shaderpack.DebugSurface
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
 import com.awakekt.awake.asset.shaderpack.debugLayerColor
 import com.awakekt.awake.asset.shaderpack.debugViewColor
+import com.awakekt.awake.asset.shaderpack.terrainClipmapDiscardUnderFinerRing
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainShadowSampling
 import com.awakekt.awake.asset.shaders.aslShaderSet
@@ -98,6 +99,7 @@ fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = shader("ter
     val lightmap by texture2d(group = group, binding = LIGHTMAP_BINDING)
 
     fragment {
+        terrainClipmapDiscardUnderFinerRing(terrain)
         val slots = mergeControlTaps(terrain.worldPosition, terrain.terrainSampling, controlIndices, controlWeights, layerSampler)
         val albedo = blendLayers(slots, terrain.worldPosition, albedoLayers, layerParams, layerSampler)
         val normal = let("normal", normalize(terrain.worldNormal))

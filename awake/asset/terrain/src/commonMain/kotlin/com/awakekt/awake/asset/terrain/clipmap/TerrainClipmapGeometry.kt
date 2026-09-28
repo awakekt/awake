@@ -10,12 +10,18 @@ import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
 import com.awakekt.awake.core.geometry.gridTriangleIndices
+import kotlin.math.ceil
+import kotlin.math.floor
 
 /**
  * Configuration for Geometry Clipmap terrain mesh generation.
  *
+ * Every level is a square of [ringResolution] cells per side, so [ringResolution] + 1 vertices, at
+ * twice the spacing of the level inside it. An even cell count is what lets a level's border fall
+ * on the next level's grid lines, where the two can share vertices and leave no seam.
+ *
  * @property ringCount Total number of concentric nested LOD rings (Level 0 core + rings 1..ringCount-1).
- * @property ringResolution Number of grid vertices along one side of each ring (must be an even integer >= 16).
+ * @property ringResolution Grid cells along one side of each level (an even integer >= 16).
  * @property baseSpacing World-space meter spacing between adjacent grid samples at Level 0.
  */
 data class TerrainClipmapConfig(
@@ -34,7 +40,7 @@ data class TerrainClipmapConfig(
     }
 
     /** World-space side extent of the inner Level 0 core grid in meters. */
-    val coreExtent: Float get() = (ringResolution - 1) * baseSpacing
+    val coreExtent: Float get() = ringResolution * baseSpacing
 
     /** World-space meter spacing for a specific LOD level. */
     fun spacingForLevel(level: Int): Float {
@@ -43,7 +49,7 @@ data class TerrainClipmapConfig(
     }
 
     /** World-space side extent of ring level [level] in meters. */
-    fun extentForLevel(level: Int): Float = (ringResolution - 1) * spacingForLevel(level)
+    fun extentForLevel(level: Int): Float = ringResolution * spacingForLevel(level)
 }
 
 /**
@@ -53,6 +59,9 @@ data class TerrainClipmapConfig(
  * and normalized texture coordinates $(U, V)$ suitable for GPU vertex texture displacement.
  */
 object TerrainClipmapGeometry {
+
+    /** How far, in a level's own cells, the finer level's centre can sit from its centre. */
+    private const val ALWAYS_COVERED_MARGIN = 1.5f
 
     private val FORMAT = VertexFormat.PositionNormalColorUv
 
@@ -90,12 +99,12 @@ object TerrainClipmapGeometry {
     }
 
     /**
-     * Builds the solid $(N \times N)$ Level 0 core grid centered at local origin $(0, 0)$.
+     * Builds the solid $(N \times N)$-cell Level 0 core grid centered at local origin $(0, 0)$.
      */
     fun buildCoreMesh(config: TerrainClipmapConfig): MeshGeometry {
-        val n = config.ringResolution
+        val n = config.ringResolution + 1
         val spacing = config.baseSpacing
-        val halfExtent = (n - 1) * spacing * 0.5f
+        val halfExtent = config.coreExtent * 0.5f
 
         val vertices = flatGridVertices(n, spacing, halfExtent)
 
@@ -103,20 +112,27 @@ object TerrainClipmapGeometry {
     }
 
     /**
-     * Builds an annular concentric ring mesh for level [level] >= 1, culling the inner
-     * $(N/2 \times N/2)$ hole where the higher-resolution interior ring resides.
+     * Builds an annular concentric ring mesh for level [level] >= 1.
+     *
+     * The level inside covers the middle half, but it snaps on its own finer grid, so where it
+     * sits moves by up to 1.5 of this level's cells. The shader discards what the finer level
+     * covers (`terrainClipmapDiscardUnderFinerRing`); the hole cut here is only the part it
+     * covers wherever it has snapped, which saves drawing it twice.
      */
     fun buildRingMesh(level: Int, config: TerrainClipmapConfig): MeshGeometry {
         require(level in 1 until config.ringCount) {
             "Ring level must be in [1, ${config.ringCount}); was $level."
         }
 
-        val n = config.ringResolution
+        val cells = config.ringResolution
+        val n = cells + 1
         val spacing = config.spacingForLevel(level)
-        val halfExtent = (n - 1) * spacing * 0.5f
+        val halfExtent = config.extentForLevel(level) * 0.5f
 
-        val innerStart = n / 4
-        val innerEnd = innerStart + (n / 2) // Inner hole bounds in grid units
+        // The finer level spans cells/4 of these cells either side of its centre, which is within
+        // 1.5 cells of this one's: cells fully inside that, for every snap, are always covered.
+        val innerStart = ceil(cells / 4f + ALWAYS_COVERED_MARGIN).toInt()
+        val innerEnd = floor(cells * 3f / 4f - ALWAYS_COVERED_MARGIN).toInt()
 
         val vertices = flatGridVertices(n, spacing, halfExtent)
 
