@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Cubemap skies draw.** `Skybox.Mode.Cubemap` (`SceneSkybox(type = "Cubemap", cubemapPath = ...)` in a scene file) rendered nothing. `SkyboxCubemapSystem(host, scope, assets)` now reads the path as a cubemap strip -- six square faces side by side, +X, -X, +Y, -Y, +Z, -Z, each laid out as the GPU samples a cube face -- and draws it behind the scene through `skyboxCubemapContentFeature(cubemap)`; another path swaps it and leaving cubemap mode removes it. An app registers the system like `TerrainContentSystem`. `decodeCubemapStrip` decodes a strip, and a content feature can now bind a cube texture.
+
 ## [0.1.0-alpha.10] - 2026-09-28
 
 ### Added

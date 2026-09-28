@@ -201,6 +201,11 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxContentFeatureKt {
 	public static final fun skyboxContentFeature (Lcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/SkyboxCubemapContentFeatureKt {
+	public static final fun skyboxCubemapContentFeature (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+	public static synthetic fun skyboxCubemapContentFeature$default (Lcom/awakekt/awake/render/texture/TextureAsset;FLcom/awakekt/awake/asset/shaders/ShaderSet;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/SkyboxCubemapFields {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/shaderpack/SkyboxCubemapFields;
 	public final fun getCameraEye ()Lcom/awakekt/awake/render/renderer/UniformField;
