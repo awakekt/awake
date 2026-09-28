@@ -38,7 +38,8 @@ public final class com/awakekt/awake/asset/shaderpack/AslShadowShadersKt {
 	public static final fun getSceneDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun instancedLitShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
-	public static final fun litShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun litShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;F)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static synthetic fun litShadowShader$default (Lcom/awakekt/awake/core/math/ClipSpace;FILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun skinnedInstancedLitShadowShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 

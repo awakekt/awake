@@ -56,6 +56,7 @@ internal fun engineShowcaseModule(initialShowcaseId: String = DEFAULT_SHOWCASE_I
                     }
                 }
             }
+            shaderSwapSystem()
             frameSystem("showcase-2d-demo") {
                 val runtime = this
                 object : System {

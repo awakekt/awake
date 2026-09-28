@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Replace a running shader without a restart (Vulkan).** `renderer.capability(ShaderReplacement)` returns a `ShaderReplacement` whose `replace(old, new)` rebuilds every pipeline running the `old` shader program with `new`, in place, so the renderer, the pipeline table and content features all draw with it from the next frame. `ShaderStages.program()` turns an ASL set into a `ShaderProgram`. A replacement that does not compile, or binds differently from the pipeline, is refused with `ShaderReplacementException` and changes nothing; replacements chain. Call it on the render thread between frames. WebGPU returns null for now, and depth-only and debug-line pipelines are not replaced.
+- **Lit shader variants, and a hot reload sample.** `litShadowShader(clipSpace, ambientStrength)` builds a variant of the shipped `lit_shadow`; the default emits the shipped shader byte for byte. The engine showcase uses it on desktop: L swaps the lit shader for a brighter-ambient variant while the showcase runs, and K tries a broken one, which is refused and printed as a warning. The desktop showcase now prints warnings and errors.
 
 ### Fixed
 

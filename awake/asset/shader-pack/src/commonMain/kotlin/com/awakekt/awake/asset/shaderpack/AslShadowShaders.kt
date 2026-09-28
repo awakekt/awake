@@ -181,6 +181,7 @@ val MaskedTexturedDepthShader: AslShaderDefinition = shader("shadow_depth_masked
  * @param instanced Whether this shader draws instanced geometry.
  * @param skinned Whether this shader applies joint-palette skinning transforms.
  * @param shaderName Emitted shader definition name.
+ * @param ambientStrength How much of the surface colour shows with no light on it.
  */
 @Suppress("LongMethod")
 private fun litShadow(
@@ -188,6 +189,7 @@ private fun litShadow(
     instanced: Boolean = false,
     skinned: Boolean = false,
     shaderName: String = "lit_shadow",
+    ambientStrength: Float = DEFAULT_AMBIENT_STRENGTH,
 ): AslShaderDefinition = shader(shaderName) {
     val u = shadowUniforms(includeLitTail = true)
     val shadowMap by textureDepth2dArray(
@@ -257,7 +259,7 @@ private fun litShadow(
         worldPos set (model * vec4(animatedPosition, 1f.lit)).xyz
     }
 
-    val ambientStrength = const("AMBIENT_STRENGTH", 0.08f)
+    val ambient = const("AMBIENT_STRENGTH", ambientStrength)
     val pi = const("PI", 3.14159265359f)
     val epsilon = const("EPSILON", 0.0001f)
     val dielectricF0 = const("DIELECTRIC_F0", 0.04f)
@@ -499,9 +501,9 @@ private fun litShadow(
                 direct + (pDiffuse + pSpecular) * u.pointLightColors[i].xyz * pNdotL * attenuation * pointShadow,
             )
         }
-        val ambient = let("ambient", color * ambientStrength)
+        val ambientColor = let("ambient", color * ambient)
         // Reinhard: the specular lobe blows past 1.0 at low roughness.
-        val mapped = let("mapped", (ambient + direct) / (ambient + direct + vec3(1f.lit)))
+        val mapped = let("mapped", (ambientColor + direct) / (ambientColor + direct + vec3(1f.lit)))
         val surface = DebugSurface(
             normal = n,
             worldPosition = worldPos,
@@ -515,8 +517,16 @@ private fun litShadow(
     }
 }
 
-/** `lit_shadow` for [clipSpace]. One definition; the emitted V axis follows the backend. */
-fun litShadowShader(clipSpace: ClipSpace): AslShaderDefinition = litShadow(clipSpace)
+/**
+ * `lit_shadow` for [clipSpace]. One definition; the emitted V axis follows the backend.
+ *
+ * [ambientStrength] makes a variant: how much of the surface colour shows with no light on it. The
+ * default is the shipped shader, emitted byte for byte.
+ */
+fun litShadowShader(clipSpace: ClipSpace, ambientStrength: Float = DEFAULT_AMBIENT_STRENGTH): AslShaderDefinition =
+    litShadow(clipSpace, ambientStrength = ambientStrength)
+
+private const val DEFAULT_AMBIENT_STRENGTH = 0.08f
 
 /** Shadowed scene variant for non-skinned instance transforms. */
 fun instancedLitShadowShader(clipSpace: ClipSpace): AslShaderDefinition =

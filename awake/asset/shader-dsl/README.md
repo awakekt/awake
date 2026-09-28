@@ -94,8 +94,34 @@ Nothing needs regenerating, because the WGSL is emitted when the app builds its 
   `naga` CLI when that is on `PATH`, and skips otherwise.
 - **The math** is checked on the CPU with `AslEvaluator` and `previewShader` (above).
 
-An edited definition takes effect the next time the app starts. Replacing a shader in a running
-app is planned in [shader-hot-reload](../../../docs/tasks/2026-09-27-shader-hot-reload-plan.md).
+An edited Kotlin definition takes effect the next time the app starts.
+
+### Replacing a shader in a running app
+
+A definition built at runtime can replace one a running app draws with, with no restart. This is
+what a shader editor's live preview does. Vulkan only for now:
+
+```kotlin
+val replacement = renderer.capability(ShaderReplacement) ?: return   // null on WebGPU
+val old = PackShaderSets.LitShadow.vulkan.program()
+val new = aslShaderSet { litShadowShader(it, ambientStrength = 0.6f) }.vulkan.program()
+try {
+    replacement.replace(old, new)   // every pipeline running `old` now runs `new`
+} catch (e: ShaderReplacementException) {
+    // did not compile, or binds differently: nothing changed
+}
+```
+
+- **When to call it.** On the render thread between frames, for example from a system's `update`.
+  It waits for the GPU, so it costs a hitch.
+- **Chaining.** `new` is what the next call replaces.
+- **Bindings.** A replacement must declare the same bindings as the shader it replaces, because the
+  pipeline keeps its layout. Changing bindings needs a new pipeline.
+- **Limits.** Depth-only and debug-line pipelines are not replaced, and vertex inputs are not
+  checked. See the [shader-hot-reload plan](../../../docs/tasks/2026-09-27-shader-hot-reload-plan.md).
+
+The engine showcase shows it: press L to toggle a brighter-ambient `lit_shadow`, and K to try a
+broken variant, which is refused and logged.
 
 ## Limitations
 
