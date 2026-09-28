@@ -57,6 +57,7 @@ internal class SceneDrawCollector(
                     roughness = pbr.roughness,
                     baseColorFactor = pbr.baseColorFactor,
                     emissiveFactor = pbr.emissiveFactor,
+                    textureAnimation = pbr.textureAnimation,
                 )
 
                 else -> EMPTY_DRAW_EXTRAS

@@ -177,6 +177,15 @@ object UniformFields {
     val EmissiveFactor = UniformField("emissiveFactor", GpuDataShape.Vec4)
 
     /**
+     * A textured material's frame sheet: `x` columns, `y` rows, `z` frames per second, `w` frame
+     * count. A 1 x 1 sheet is a still texture sampled exactly as before.
+     */
+    val TextureFrames = UniformField("textureFrames", GpuDataShape.Vec4)
+
+    /** `xy` = UV scroll per second, `z` = the draw's time in seconds, which both animations read. */
+    val TextureScroll = UniformField("textureScroll", GpuDataShape.Vec4)
+
+    /**
      * `xyz` = the camera's forward axis divided by the linear-depth range, so its dot with a
      * point's offset from the eye is 0..1 across that range; `w` = the debug view code, 0 for the
      * lit image. Written by `render:passes`, which defines the codes.

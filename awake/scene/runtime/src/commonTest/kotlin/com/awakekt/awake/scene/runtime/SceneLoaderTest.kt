@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.binding.renderableRequests
@@ -22,20 +23,23 @@ import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.SceneSchemaVersionException
 import com.awakekt.awake.scene.document.SceneTransform
 import com.awakekt.awake.scene.document.SceneVec3
+import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.light.SceneLight
+import com.awakekt.awake.scene.rendering.mesh.MaterialBinding
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.ScenePbrMaterial
-import kotlinx.coroutines.test.runTest
+import com.awakekt.awake.scene.rendering.mesh.SceneTextureAnimation
 import kotlin.math.PI
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
+import kotlinx.coroutines.test.runTest
 
 class SceneLoaderTest {
     init {
@@ -251,6 +255,32 @@ class SceneLoaderTest {
         )
 
         assertEquals(document, SceneLoader.decode(SceneLoader.encode(document)))
+    }
+
+    /** A texture animation survives the file, reaches the ECS material, and exports back unchanged. */
+    @Test
+    fun aTextureAnimationRoundTripsThroughTheFileAndTheWorld() {
+        val authored = ScenePbrMaterial(
+            roughness = 0.3f,
+            textureAnimation = SceneTextureAnimation(columns = 8, rows = 7, frameCount = 54, framesPerSecond = 12f, scrollU = 0.05f),
+        )
+        val document = SceneDocument(nodes = listOf(SceneNode(name = "water", components = listOf(authored))))
+
+        val decoded = SceneLoader.decode(SceneLoader.encode(document)).nodes.single().components.single() as ScenePbrMaterial
+        assertEquals(authored, decoded)
+
+        val live = with(MaterialBinding) { decoded.toComponent() }
+        assertEquals(TextureAnimation(8, 7, 54, 12f, 0.05f, 0f), live.textureAnimation)
+        assertEquals(authored, with(MaterialBinding) { live.toSceneComponent() })
+        // A still material exports no animation at all, rather than a 1 x 1 sheet.
+        assertNull(with(MaterialBinding) { PbrMaterial().toSceneComponent() }.textureAnimation)
+    }
+
+    @Test
+    fun aFrameSheetThatCannotHoldItsFramesIsInvalid() {
+        val issues = ScenePbrMaterial(textureAnimation = SceneTextureAnimation(columns = 2, rows = 2, frameCount = 5)).validate("node")
+
+        assertEquals(listOf("node.textureAnimation"), issues.map { it.path })
     }
 
     @Test

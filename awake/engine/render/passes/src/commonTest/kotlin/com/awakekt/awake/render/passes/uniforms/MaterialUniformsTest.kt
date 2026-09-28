@@ -46,6 +46,7 @@ class MaterialUniformsTest {
         assertEquals(0.5f, floats[1])
     }
 
+    /** A payload from before texture animation keeps its factors and plays a still texture. */
     @Test
     fun testPbrTexturedMaterialFloatsSupplied() {
         val custom = FloatArray(12) { it.toFloat() }
@@ -56,9 +57,55 @@ class MaterialUniformsTest {
             extraUniformFloats = custom,
         )
         val floats = pbrTexturedMaterialFloats(drawCall)
-        assertEquals(12, floats.size)
+        assertEquals(PBR_TEXTURED_MATERIAL_FLOATS, floats.size)
         assertEquals(0f, floats[0])
         assertEquals(11f, floats[11])
+        assertVec4(1f, 1f, 0f, 1f, MaterialUniformLayouts.PbrTexturedMaterial.readVec4(floats, UniformFields.TextureFrames))
+    }
+
+    @Test
+    fun textureAnimationAndTheDrawsTimeReachTheTexturedBlock() {
+        val animation = TextureAnimation(columns = 8, rows = 7, frameCount = 54, framesPerSecond = 12f, scrollU = 0.25f, scrollV = -0.5f)
+        val payload = pbrMaterialFloats(0f, 1f, Color.White, Color.Transparent, animation)
+        val drawCall = RenderDrawCommand(
+            mesh = FakeMesh(),
+            material = FakeMaterial(),
+            extraUniformFloats = payload,
+            timeSeconds = 3.5f,
+        )
+
+        val material = pbrTexturedMaterialFloats(drawCall)
+        val layout = MaterialUniformLayouts.PbrTexturedMaterial
+        assertVec4(8f, 7f, 12f, 54f, layout.readVec4(material, UniformFields.TextureFrames))
+        assertVec4(0.25f, -0.5f, 3.5f, 0f, layout.readVec4(material, UniformFields.TextureScroll))
+
+        // The explicit writer the backends call lands the same values in the full block.
+        val block = texturedUniforms(
+            mvp = Mat4(),
+            model = Mat4(),
+            lightPayload = FloatArray(
+                listOf(UniformFields.LightDirection, UniformFields.LightColor, UniformFields.PointLightPositions, UniformFields.PointLightColors)
+                    .sumOf { it.floats },
+            ),
+            extraUniformFloats = payload,
+            cameraEye = com.awakekt.awake.core.math.Vec3f(0f, 0f, 0f),
+            fogColor = Color.Black,
+            fogDensity = 0f,
+            timeSeconds = 3.5f,
+        )
+        val full = MaterialUniformLayouts.PbrTextured
+        assertVec4(8f, 7f, 12f, 54f, full.readVec4(block, UniformFields.TextureFrames))
+        assertVec4(0.25f, -0.5f, 3.5f, 0f, full.readVec4(block, UniformFields.TextureScroll))
+    }
+
+    @Test
+    fun aFrameSheetMustHoldItsFrames() {
+        kotlin.test.assertFailsWith<IllegalArgumentException> { TextureAnimation(columns = 2, rows = 2, frameCount = 5) }
+        kotlin.test.assertFailsWith<IllegalArgumentException> { TextureAnimation(framesPerSecond = -1f) }
+    }
+
+    private fun assertVec4(x: Float, y: Float, z: Float, w: Float, actual: com.awakekt.awake.core.math.Vec4) {
+        assertEquals(listOf(x, y, z, w), listOf(actual.x, actual.y, actual.z, actual.w))
     }
 
     @Test
@@ -86,14 +133,15 @@ class MaterialUniformsTest {
     @Test
     fun testMaterialUniformLayouts() {
         assertEquals(4, PBR_MATERIAL_FLOATS)
-        assertEquals(12, PBR_TEXTURED_MATERIAL_FLOATS)
+        // pbr(4) + baseColor(4) + emissive(4) + textureFrames(4) + textureScroll(4)
+        assertEquals(20, PBR_TEXTURED_MATERIAL_FLOATS)
 
         // Lit: MVP(16) + lightDir(4) + lightColor(4) + pbr(4) = 28 floats
         assertEquals(28, MaterialUniformLayouts.Lit.total)
 
         // PbrTextured: MVP(16) + lightDir(4) + lightColor(4) + model(16) + camPos(4) + pbr(4) + baseColor(4) + emissive(4) + fog(4) + debugView(4) = 64 floats
-        // 64 + 32: the PBR path gained MAX_POINT_LIGHTS slots in two vec4 arrays.
-        assertEquals(96, MaterialUniformLayouts.PbrTextured.total)
+        // 64 + 32: the PBR path gained MAX_POINT_LIGHTS slots in two vec4 arrays; + 8 for texture animation.
+        assertEquals(104, MaterialUniformLayouts.PbrTextured.total)
     }
 
     @Test

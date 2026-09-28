@@ -7,13 +7,16 @@ package com.awakekt.awake.render.parity
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
+import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.testing.HeadlessRenderSession
+import com.awakekt.awake.render.texture.TextureAsset
 import org.junit.AfterClass
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.math.pow
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -49,6 +52,20 @@ class SceneBackendParityTest {
             kotlin.math.abs(vulkan - webGpu) <= TEXTURED_COVERAGE_TOLERANCE,
             "textured PBR coverage diverged: Vulkan $vulkan px, WebGPU $webGpu px",
         )
+    }
+
+    /** Time picks the frame; frames play in reading order from the image's top-left and wrap. */
+    @Test
+    fun aFrameSheetPlaysItsFramesInReadingOrderOnBothBackends() {
+        val sheet = TextureAnimation(columns = 2, rows = 2, framesPerSecond = 1f)
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val played = FRAME_TIMES.map { time ->
+                renderer.renderTexturedPbrScene(texture = FRAME_SHEET, textureAnimation = sheet, timeSeconds = time)
+                    .brightChannelsAt(SCENE_SIZE / 2, SCENE_SIZE / 2)
+            }
+            assertEquals((FRAME_COLOURS + FRAME_COLOURS.first()).map { it.brightChannels() }, played, "$backend frames")
+        }
     }
 
     @Test
@@ -168,6 +185,15 @@ class SceneBackendParityTest {
             ?.let { it.sumOf { (x, _) -> x } / it.size to it.sumOf { (_, y) -> y } / it.size }
     }
 
+    /** The channels at least half as bright as the brightest: a colour's hue, whatever the lighting. */
+    private fun ByteArray.brightChannelsAt(x: Int, y: Int): Set<Int> =
+        copyOfRange((y * SCENE_SIZE + x) * 4, (y * SCENE_SIZE + x) * 4 + 3).brightChannels()
+
+    private fun ByteArray.brightChannels(): Set<Int> {
+        val channels = take(3).map { it.toInt() and 0xFF }
+        return channels.indices.filter { channels[it] * 2 >= channels.max() }.toSet()
+    }
+
     private fun redSum(backend: HeadlessUiBackend, pixels: ByteArray): Int = pixels.asSequence()
         .filterIndexed { index, _ -> index % 4 == 0 }
         .sumOf { byte ->
@@ -218,6 +244,28 @@ class SceneBackendParityTest {
         /** Antialiasing and PBR rounding move a centroid by a pixel; a mirrored lookup moves it
          * across the ground. */
         const val CENTROID_TOLERANCE = 3
+
+        /** Red, green, blue, yellow: frames 0 to 3 of [FRAME_SHEET]. */
+        val FRAME_COLOURS = listOf(
+            byteArrayOf(-1, 0, 0),
+            byteArrayOf(0, -1, 0),
+            byteArrayOf(0, 0, -1),
+            byteArrayOf(-1, -1, 0),
+        )
+
+        /** A 2 x 2 frame sheet of 2 x 2 texels per frame. Data row 0 is the image's bottom row. */
+        val FRAME_SHEET = TextureAsset(
+            data = ByteArray(4 * 4 * 4) { index ->
+                val texel = index / 4
+                val frame = (if (texel / 4 < 2) 2 else 0) + (if (texel % 4 < 2) 0 else 1)
+                if (index % 4 == 3) -1 else FRAME_COLOURS[frame][index % 4]
+            },
+            width = 4,
+            height = 4,
+        )
+
+        /** Mid-frame at one frame a second: frames 0 to 3, then frame 0 again. */
+        val FRAME_TIMES = listOf(0.5f, 1.5f, 2.5f, 3.5f, 4.5f)
 
         const val TEXTURED_RED_THRESHOLD = 20
         const val MIN_TEXTURED_PIXELS = 200

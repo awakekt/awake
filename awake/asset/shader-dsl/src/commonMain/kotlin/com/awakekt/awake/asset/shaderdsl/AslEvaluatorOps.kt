@@ -78,7 +78,7 @@ internal fun builtinCall(function: String, args: List<FloatArray>): FloatArray =
     "saturate" -> FloatArray(args[0].size) { args[0][it].coerceIn(0f, 1f) }
     "select" -> if (args[2][0] != 0f) args[1] else args[0]
     "f32" -> args[0]
-    "textureSampleLevel", "textureSampleCompareLevel", "textureDimensions" ->
+    "textureSampleLevel", "textureSampleGrad", "textureSampleCompareLevel", "textureDimensions" ->
         throw AslDefinitionException("Evaluator has no texture support; probe math around it.")
     else -> throw AslDefinitionException("Evaluator has no builtin '$function'.")
 }
