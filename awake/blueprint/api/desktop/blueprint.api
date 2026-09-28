@@ -1,0 +1,253 @@
+public abstract interface class com/awakekt/awake/blueprint/ActionNode : com/awakekt/awake/blueprint/BlueprintNode {
+	public abstract fun run (Lcom/awakekt/awake/blueprint/BlueprintContext;)Lcom/awakekt/awake/blueprint/Step;
+}
+
+public final class com/awakekt/awake/blueprint/ActionNode$DefaultImpls {
+	public static fun getEffect (Lcom/awakekt/awake/blueprint/ActionNode;)Lcom/awakekt/awake/blueprint/Effect;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintCompiler {
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/BlueprintCompiler;
+	public final fun compile (Lcom/awakekt/awake/nodegraph/NodeGraph;Lcom/awakekt/awake/blueprint/BlueprintNodes;)Lcom/awakekt/awake/blueprint/BlueprintProgram;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintContext {
+	public final fun asset (Ljava/lang/String;)Ljava/lang/String;
+	public final fun bool (Ljava/lang/String;)Z
+	public final fun entity-bssdaRw (Ljava/lang/String;)J
+	public final fun float (Ljava/lang/String;)F
+	public final fun getOwner-LaMO_uA ()J
+	public final fun int (Ljava/lang/String;)I
+	public final fun setBool (Ljava/lang/String;Z)V
+	public final fun setEntity-Fr3QF18 (Ljava/lang/String;J)V
+	public final fun setFloat (Ljava/lang/String;F)V
+	public final fun setInt (Ljava/lang/String;I)V
+	public final fun setStateFloat (IF)V
+	public final fun setString (Ljava/lang/String;Ljava/lang/String;)V
+	public final fun stateFloat (I)F
+	public final fun string (Ljava/lang/String;)Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintGraphKind : com/awakekt/awake/nodegraph/GraphKind {
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/BlueprintGraphKind;
+	public fun canConnect (Lcom/awakekt/awake/nodegraph/PortSpec;Lcom/awakekt/awake/nodegraph/PortSpec;)Z
+	public fun getAllowsCycles ()Z
+	public fun getId ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintInstance {
+	public static final field INITIAL_PENDING I
+	public synthetic fun <init> (Lcom/awakekt/awake/blueprint/BlueprintProgram;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/blueprint/BlueprintProgram;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getOwner-LaMO_uA ()J
+	public final fun getProgram ()Lcom/awakekt/awake/blueprint/BlueprintProgram;
+	public final fun getTrace ()Lcom/awakekt/awake/blueprint/BlueprintTrace;
+	public final fun isWaiting ()Z
+	public final fun setTrace (Lcom/awakekt/awake/blueprint/BlueprintTrace;)V
+	public final fun variable (Ljava/lang/String;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintInstanceKt {
+	public static final fun getNoEntity ()J
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintInterpreter {
+	public static final field INITIAL_POLLING I
+	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun cancelPending (Lcom/awakekt/awake/blueprint/BlueprintInstance;)V
+	public final fun fire (Lcom/awakekt/awake/blueprint/BlueprintInstance;Ljava/lang/String;Lcom/awakekt/awake/blueprint/EventPayload;)V
+	public static synthetic fun fire$default (Lcom/awakekt/awake/blueprint/BlueprintInterpreter;Lcom/awakekt/awake/blueprint/BlueprintInstance;Ljava/lang/String;Lcom/awakekt/awake/blueprint/EventPayload;ILjava/lang/Object;)V
+	public final fun getRunPresentation ()Z
+	public final fun reload (Lcom/awakekt/awake/blueprint/BlueprintInstance;Lcom/awakekt/awake/blueprint/BlueprintProgram;)V
+	public final fun start (Lcom/awakekt/awake/blueprint/BlueprintInstance;)V
+	public final fun tick (Lcom/awakekt/awake/blueprint/BlueprintInstance;F)V
+}
+
+public abstract interface class com/awakekt/awake/blueprint/BlueprintNode {
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public abstract fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintNode$DefaultImpls {
+	public static fun getEffect (Lcom/awakekt/awake/blueprint/BlueprintNode;)Lcom/awakekt/awake/blueprint/Effect;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintNodes {
+	public static final field Companion Lcom/awakekt/awake/blueprint/BlueprintNodes$Companion;
+	public fun <init> ()V
+	public final fun get (Ljava/lang/String;)Lcom/awakekt/awake/blueprint/BlueprintNode;
+	public final fun getRegistry ()Lcom/awakekt/awake/nodegraph/NodeRegistry;
+	public final fun register (Lcom/awakekt/awake/blueprint/BlueprintNode;)Lcom/awakekt/awake/blueprint/BlueprintNodes;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintNodes$Companion {
+	public final fun core ()Lcom/awakekt/awake/blueprint/BlueprintNodes;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintProgram {
+	public final fun getGraph ()Lcom/awakekt/awake/nodegraph/NodeGraph;
+	public final fun getVariables ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintTrace {
+	public static final field DEFAULT_CAPACITY I
+	public fun <init> ()V
+	public fun <init> (I)V
+	public synthetic fun <init> (IILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
+	public final fun getCapacity ()I
+	public final fun nodeIds (Lcom/awakekt/awake/blueprint/BlueprintProgram;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/blueprint/BlueprintVariable {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;I)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;I)Lcom/awakekt/awake/blueprint/BlueprintVariable;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/blueprint/BlueprintVariable;Ljava/lang/String;Ljava/lang/String;IILjava/lang/Object;)Lcom/awakekt/awake/blueprint/BlueprintVariable;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getName ()Ljava/lang/String;
+	public final fun getType ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/blueprint/CoreNodes {
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/CoreNodes;
+	public final fun getAll ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/blueprint/CoreNodes$Add : com/awakekt/awake/blueprint/PureNode {
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/CoreNodes$Add;
+	public fun evaluate (Lcom/awakekt/awake/blueprint/BlueprintContext;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+}
+
+public final class com/awakekt/awake/blueprint/CoreNodes$Branch : com/awakekt/awake/blueprint/ActionNode {
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/CoreNodes$Branch;
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public fun run (Lcom/awakekt/awake/blueprint/BlueprintContext;)Lcom/awakekt/awake/blueprint/Step;
+}
+
+public final class com/awakekt/awake/blueprint/CoreNodes$Delay : com/awakekt/awake/blueprint/LatentNode {
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/CoreNodes$Delay;
+	public fun cancel (Lcom/awakekt/awake/blueprint/BlueprintContext;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getFloatState ()I
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public fun poll (Lcom/awakekt/awake/blueprint/BlueprintContext;F)Lcom/awakekt/awake/blueprint/Step;
+	public fun run (Lcom/awakekt/awake/blueprint/BlueprintContext;)Lcom/awakekt/awake/blueprint/Step;
+}
+
+public final class com/awakekt/awake/blueprint/CoreNodes$Greater : com/awakekt/awake/blueprint/PureNode {
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/CoreNodes$Greater;
+	public fun evaluate (Lcom/awakekt/awake/blueprint/BlueprintContext;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+}
+
+public final class com/awakekt/awake/blueprint/CoreNodes$OnStart : com/awakekt/awake/blueprint/EventNode {
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/CoreNodes$OnStart;
+	public static final field TYPE Ljava/lang/String;
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+}
+
+public final class com/awakekt/awake/blueprint/CoreNodes$VariableGet : com/awakekt/awake/blueprint/PureNode, com/awakekt/awake/blueprint/VariableNode {
+	public fun evaluate (Lcom/awakekt/awake/blueprint/BlueprintContext;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public fun getVariableType ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/blueprint/CoreNodes$VariableSet : com/awakekt/awake/blueprint/ActionNode, com/awakekt/awake/blueprint/VariableNode {
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public fun getVariableType ()Ljava/lang/String;
+	public fun run (Lcom/awakekt/awake/blueprint/BlueprintContext;)Lcom/awakekt/awake/blueprint/Step;
+}
+
+public final class com/awakekt/awake/blueprint/Effect : java/lang/Enum {
+	public static final field Logic Lcom/awakekt/awake/blueprint/Effect;
+	public static final field Presentation Lcom/awakekt/awake/blueprint/Effect;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/blueprint/Effect;
+	public static fun values ()[Lcom/awakekt/awake/blueprint/Effect;
+}
+
+public abstract interface class com/awakekt/awake/blueprint/EventNode : com/awakekt/awake/blueprint/BlueprintNode {
+}
+
+public final class com/awakekt/awake/blueprint/EventNode$DefaultImpls {
+	public static fun getEffect (Lcom/awakekt/awake/blueprint/EventNode;)Lcom/awakekt/awake/blueprint/Effect;
+}
+
+public abstract interface class com/awakekt/awake/blueprint/EventPayload {
+	public abstract fun write (Lcom/awakekt/awake/blueprint/BlueprintContext;)V
+}
+
+public abstract interface class com/awakekt/awake/blueprint/LatentNode : com/awakekt/awake/blueprint/ActionNode {
+	public fun cancel (Lcom/awakekt/awake/blueprint/BlueprintContext;)V
+	public fun getFloatState ()I
+	public abstract fun poll (Lcom/awakekt/awake/blueprint/BlueprintContext;F)Lcom/awakekt/awake/blueprint/Step;
+}
+
+public final class com/awakekt/awake/blueprint/LatentNode$DefaultImpls {
+	public static fun cancel (Lcom/awakekt/awake/blueprint/LatentNode;Lcom/awakekt/awake/blueprint/BlueprintContext;)V
+	public static fun getEffect (Lcom/awakekt/awake/blueprint/LatentNode;)Lcom/awakekt/awake/blueprint/Effect;
+	public static fun getFloatState (Lcom/awakekt/awake/blueprint/LatentNode;)I
+}
+
+public final class com/awakekt/awake/blueprint/PortTypes {
+	public static final field ASSET Ljava/lang/String;
+	public static final field BOOL Ljava/lang/String;
+	public static final field ENTITY Ljava/lang/String;
+	public static final field EXEC Ljava/lang/String;
+	public static final field FLOAT Ljava/lang/String;
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/PortTypes;
+	public static final field INT Ljava/lang/String;
+	public static final field STRING Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/blueprint/PureNode : com/awakekt/awake/blueprint/BlueprintNode {
+	public abstract fun evaluate (Lcom/awakekt/awake/blueprint/BlueprintContext;)V
+}
+
+public final class com/awakekt/awake/blueprint/PureNode$DefaultImpls {
+	public static fun getEffect (Lcom/awakekt/awake/blueprint/PureNode;)Lcom/awakekt/awake/blueprint/Effect;
+}
+
+public abstract interface class com/awakekt/awake/blueprint/Step {
+}
+
+public final class com/awakekt/awake/blueprint/Step$Continue : com/awakekt/awake/blueprint/Step {
+	public fun <init> (Ljava/lang/String;)V
+	public final fun getOutput ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/blueprint/Step$Stop : com/awakekt/awake/blueprint/Step {
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/Step$Stop;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/blueprint/Step$Suspend : com/awakekt/awake/blueprint/Step {
+	public static final field INSTANCE Lcom/awakekt/awake/blueprint/Step$Suspend;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/blueprint/VariableNode : com/awakekt/awake/blueprint/BlueprintNode {
+	public abstract fun getVariableType ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/blueprint/VariableNode$DefaultImpls {
+	public static fun getEffect (Lcom/awakekt/awake/blueprint/VariableNode;)Lcom/awakekt/awake/blueprint/Effect;
+}
+
