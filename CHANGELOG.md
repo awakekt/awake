@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Terrain casts shadows.** Clipmap terrain is displaced on the GPU, so no shadow pass drew it and hills and cliffs cast nothing. `RenderSystem3D` now submits each visible terrain's heightmap as a mesh drawn into the shadow maps only -- up to 513 samples a side, every n-th sample past that -- rebuilt when the heightmap or its revision changes. `RenderDrawCommand.shadowsOnly` marks such a draw for any other stand-in caster: the pass compiler hands it to every shadow pass and keeps it out of the scene.
 
+### Fixed
+
+- **Textured meshes keep their shade out of the sun.** The textured PBR shader lit a glTF base-colour texture's sRGB bytes as if they were linear and wrote the result unencoded, while targets take sRGB-encoded colour, as `lit_shadow` writes it. Lit faces came out about right, but a face lit by ambient alone lost almost all of it: mid-grey 128 came out as 10, near black, on Vulkan and in the browser. Base colour and emissive textures are now decoded to linear, and the output is encoded, as `lit_shadow` does; that face now comes out as 41.
+
 ## [0.1.0-alpha.11] - 2026-09-29
 
 ### Added
