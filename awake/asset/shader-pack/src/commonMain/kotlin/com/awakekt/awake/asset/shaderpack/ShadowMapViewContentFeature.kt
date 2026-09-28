@@ -12,6 +12,7 @@ import com.awakekt.awake.asset.shaderdsl.floor
 import com.awakekt.awake.asset.shaderdsl.fullScreenTriangleCorner
 import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.lt
 import com.awakekt.awake.asset.shaderdsl.ndcToUv
 import com.awakekt.awake.asset.shaderdsl.plus
 import com.awakekt.awake.asset.shaderdsl.samplerComparison
@@ -47,7 +48,7 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.renderer.UniformField
 import com.awakekt.awake.render.renderer.UniformLayout
 
-/** `x` = the shadow-map array layer to show. */
+/** `x` = the shadow-map array layer to show; negative shows an empty map. */
 val ShadowMapViewLayer = UniformField("layer", GpuDataShape.Vec4)
 
 val ShadowMapViewUniformLayout = UniformLayout(ShadowMapViewLayer)
@@ -98,14 +99,15 @@ fun shadowMapViewShader(clipSpace: ClipSpace): AslShaderDefinition = shader("sha
             assign(low, select(low, mid, stored))
             assign(high, select(mid, high, stored))
         }
-        val depth = let("depth", (low + high) * 0.5f.lit)
+        val depth = let("depth", select((low + high) * 0.5f.lit, 1f.lit, layer.x lt 0f.lit))
         colorOutput(vec4(vec3(depth), 1f.lit))
     }
 }
 
 /**
  * The shadow map viewer, as a feature an app opts into. Draws only while the pass's debug view is
- * [RenderDebugView.ShadowMap], over everything, at the layer the pass names.
+ * [RenderDebugView.ShadowMap], over everything, at the layer the pass names. A negative layer
+ * draws an empty map, for a caller asking about a layer nothing wrote.
  */
 fun shadowMapViewContentFeature(): ContentFeatureSource = ContentFeatureSource { backend ->
     val stages = aslShaderSet(::shadowMapViewShader).stagesFor(backend)

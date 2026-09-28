@@ -63,6 +63,20 @@ class RendererHeadlessShadowMapViewTest {
         assertTrue(matches(off, expected) < expected.size / 2, "The lit frame already reads as this depth.")
     }
 
+    /** A negative layer asks for a layer nothing wrote: the map reads empty, never a real layer. */
+    @Test
+    fun aNegativeLayerShowsAnEmptyMap() {
+        val (renderer, _) = shared()
+        val light = SceneLight(direction = LIGHT, color = Vec3f(1f, 1f, 1f))
+        val cascaded = light.copy(cascades = shadowCascadeUniforms(light, CAMERA, 1f, renderer.clipSpace))
+
+        val empty = renderer.render(cascaded, RenderDebugView.ShadowMap, layer = -1)
+        val layerZero = renderer.render(cascaded, RenderDebugView.ShadowMap, layer = 0)
+
+        assertTrue(pixels().all { empty.grey(it) == MAX_CHANNEL }, "A negative layer drew depth.")
+        assertTrue(pixels().any { layerZero.grey(it) < MAX_CHANNEL }, "Layer 0 is empty too, so the check above proves nothing.")
+    }
+
     private fun matches(frame: Frame, expected: Map<Pair<Int, Int>, Float>) =
         expected.count { (pixel, depth) -> abs(frame.grey(pixel) - depth * MAX_CHANNEL) <= DEPTH_TOLERANCE }
 
