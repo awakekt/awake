@@ -10,6 +10,9 @@ package com.awakekt.awake.webgpu.application
 import com.awakekt.awake.core.host.MAX_FRAME_DELTA_SECONDS
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.PointerButton
+import com.awakekt.awake.core.logging.Log
+import com.awakekt.awake.core.logging.LogLevel
+import com.awakekt.awake.core.logging.PrintLogSink
 import io.ygdrasil.webgpu.CompositeAlphaMode
 import io.ygdrasil.webgpu.GPUTextureUsage
 import io.ygdrasil.webgpu.GPUUncapturedErrorCallback
@@ -46,6 +49,9 @@ fun launchWebGpuGame(
         "WebGPU is unavailable in this browser or device. " +
             "Use a current Chrome/Edge build with WebGPU enabled and a compatible adapter."
     }
+    // GraphicsEngine reports startup failures through Log; with no sink they vanish and the
+    // canvas stays black with an empty console.
+    if (!Log.hasSinks) Log.install(PrintLogSink(minimumLevel = LogLevel.Warn))
     val resolvedApplication = applicationFactory()
     val input = resolvedApplication.input
 

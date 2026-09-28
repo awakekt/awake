@@ -10,6 +10,8 @@ on:
       - 'samples/engine-showcase/**'
       - 'samples/ui-showcase/**'
       - 'scripts/prepare-samples-site.sh'
+      - 'website/samples/**'
+      - 'website/landing/awake-mark.svg'
       - '.github/workflows/deploy-samples-cloudflare.yml'
       - 'gradle/**'
       - 'build.gradle.kts'
