@@ -5,12 +5,15 @@
  */
 package com.awakekt.awake.vulkan.device
 
+import com.awakekt.awake.core.config.EnvSource
+import com.awakekt.awake.core.config.defaultPlatformEnvSource
 import com.awakekt.awake.vulkan.Version
 import com.awakekt.awake.vulkan.Version.Companion.vkVersion
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.createSurface
 import com.awakekt.awake.vulkan.destroySurfaceWindow
 import com.awakekt.awake.vulkan.enums.VkPhysicalDeviceType
+import com.awakekt.awake.vulkan.enums.VkResult
 import com.awakekt.awake.vulkan.enums.flags.VkDebugUtilsMessageSeverityFlagBitsEXT
 import com.awakekt.awake.vulkan.gen.VulkanWindow
 import com.awakekt.awake.vulkan.models.info.VkApplicationInfo
@@ -21,6 +24,7 @@ import com.awakekt.awake.vulkan.models.info.debug.DebugUtilsFormattedCallback
 import com.awakekt.awake.vulkan.models.info.debug.VkDebugUtilsMessengerCreateInfoEXT
 import com.awakekt.awake.vulkan.models.physicaldevice.VkPhysicalDevice
 import com.awakekt.awake.vulkan.utils.QueueFamilyIndices
+import com.awakekt.awake.vulkan.utils.VkResultException
 import com.awakekt.awake.vulkan.utils.findQueueFamilies
 import com.awakekt.awake.vulkan.utils.getAppExtProps
 import com.awakekt.awake.vulkan.utils.getAppLayerProps
@@ -93,12 +97,24 @@ class GraphicsDevice {
      * worth risking for `glfwInit` either) -- a headless [GraphicsDevice] never creates a window
      * or surface, so it doesn't need GLFW's platform-surface instance extensions anyway. */
     private fun createInstance(includeGlfwExtensions: Boolean = true) {
+        val layers = selectInstanceLayers(getAppLayerProps(), validationRequested())
+        instance = try {
+            createInstance(layers, includeGlfwExtensions)
+        } catch (e: VkResultException) {
+            // A layer the loader lists can still fail to load, e.g. a Homebrew layer seen by an
+            // app's bundled loader. Validation is a debugging aid, so start without it.
+            if (layers.isEmpty() || e.result != VkResult.VK_ERROR_LAYER_NOT_PRESENT) throw e
+            println("Awake/Vulkan: validation was requested but $layers failed to load; continuing without it")
+            createInstance(emptyList(), includeGlfwExtensions)
+        }
+    }
+
+    private fun createInstance(layerProperties: List<String>, includeGlfwExtensions: Boolean): Long {
         val appInfo = VkApplicationInfo(
             pApplicationName = "Awake Vulkan - Application",
             pEngineName = "Awake Vulkan - Engine",
             apiVersion = Version(1, 3, 0).vkVersion,
         )
-        val layerProperties = selectInstanceLayers(getAppLayerProps())
         val layerExtProps = layerProperties.map { layer ->
             getAppExtProps(layer)
         }.flatten()
@@ -124,7 +140,7 @@ class GraphicsDevice {
             ppEnabledLayerNames = layerProperties.toTypedArray(),
             ppEnabledExtensionNames = extProperties.toTypedArray(),
         )
-        instance = Vulkan.vkCreateInstance(createInfo)
+        return Vulkan.vkCreateInstance(createInfo)
     }
 
     private fun setupDebugMessenger() {
@@ -259,19 +275,26 @@ private const val SWAPCHAIN_EXTENSION = "VK_KHR_swapchain"
 internal const val VALIDATION_LAYER = "VK_LAYER_KHRONOS_validation"
 
 /**
- * Which of the [installed] instance layers to enable: the Khronos validation layer, and nothing
- * else.
+ * Whether the Khronos validation layer was asked for, with `-Dawake.vulkan.validation=true` or
+ * `AWAKE_VULKAN_VALIDATION=1`.
  *
- * `createInstance` used to pass `getAppLayerProps()` straight through -- every layer present on
- * the machine, enabled unconditionally, in every build. That is not the same thing as "validation
- * is on": a developer with API-dump, screenshot, frame-capture, or vendor overlay layers installed
- * had all of them injected into every run, which changes timing, output, and sometimes rendering.
- * It also made behavior depend on what a given machine happened to have installed, so a
- * reproduction on one desktop was not a reproduction on another.
- *
- * Naming the one layer we want keeps the existing validation behavior -- including the
- * `failOnValidationError` path headless tests rely on -- and drops the rest. Returns empty when
- * validation is not installed, which is the same instance-creation path as before.
+ * Off unless asked: validation is developer tooling, and a shipped app must not change behavior,
+ * or fail to start, because the user's machine has the Vulkan SDK installed. The Gradle `run` task
+ * and desktop tests turn it on.
  */
-internal fun selectInstanceLayers(installed: List<String>): List<String> =
-    installed.filter { it == VALIDATION_LAYER }
+internal fun validationRequested(env: EnvSource = defaultPlatformEnvSource()): Boolean =
+    env.get(VALIDATION_PROPERTY)?.trim()?.lowercase() in setOf("1", "true", "yes", "on")
+
+/** Read as `awake.vulkan.validation` and `AWAKE_VULKAN_VALIDATION`. */
+internal const val VALIDATION_PROPERTY = "awake.vulkan.validation"
+
+/**
+ * Which of the [installed] instance layers to enable: the Khronos validation layer when
+ * [validation] is requested, and nothing else.
+ *
+ * Only the named layer, never every installed one: API-dump, frame-capture, or vendor overlay
+ * layers would otherwise be injected into every run and change timing, output, and sometimes
+ * rendering.
+ */
+internal fun selectInstanceLayers(installed: List<String>, validation: Boolean): List<String> =
+    if (validation) installed.filter { it == VALIDATION_LAYER } else emptyList()
