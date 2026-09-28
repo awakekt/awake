@@ -24,6 +24,20 @@ API, why a consumer adapter is insufficient, and the smallest framework contract
 | Profiling, diagnostics, test primitives | Bots, load tests, dashboards, deployment, moderation, anti-abuse |
 | Platform-neutral extension points | Zones, shards, guilds, chat, economy, live operations |
 
+## Where a Capability Lives
+
+| Capability | Home |
+|---|---|
+| Anything a shipped game needs at runtime, when it is neutral engine capability | Awake Core (Apache 2.0, Maven Central) |
+| Authored world policy and game rules | The consuming game or content pack |
+| Authoring productivity, team and cloud workflows | Studio Pro (commercial; its own skills score the placement) |
+| A public starting point for a new game | `awake-template` |
+
+Runtime is never commercial: whatever a Studio scene uses must run from Awake or the game's own
+code, and a Studio Pro tool emits data that runtime reads. A capability reaches Awake only
+through the Decision Rule and an Exception Record. Awake and its editor contract never depend on
+Studio Pro. There is no separate starter-kits repository.
+
 ## Promotion Test
 
 Before promoting game or sample code into Awake, answer all questions:
@@ -47,6 +61,9 @@ Before promoting game or sample code into Awake, answer all questions:
 | Narrow transport port | Possible future Awake contract | Extract only after demonstrated lifecycle reuse. |
 | Stable entity serialization extension point | Candidate for Awake | General lifecycle seam if persistence format remains external. |
 | Character database and anti-duplication locks | MMORPG repository | Persistence and operational policy. |
+| Texture or UV animation on a material, set from a scene file | Awake | Neutral render capability a content-only pack cannot add itself. |
+| A water look (ripples, shoreline, foam) | Consuming pack | Authored world policy; Awake supplies the surface-shader seam, scene depth and time. |
+| River, lake and flow-painting tools | Studio Pro | Commercial authoring workflow over pack or Awake data. |
 
 ## Agent Routing
 
