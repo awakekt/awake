@@ -9,11 +9,14 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
 import com.awakekt.awake.render.command.GpuEnvironmentState
+import com.awakekt.awake.render.command.GpuPassInput
+import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.pipeline.BindingSemantic
 
 /**
  * Which of the two render passes a feature's commands are valid inside. Not a feature
@@ -85,6 +88,25 @@ interface RenderFrameContext {
      * comes back, which is correct on both.
      */
     fun sceneDepthBinding(pipeline: PipelineHandle): MaterialBinding? = null
+
+    /**
+     * The pass this frame records, when it came from the scene compiler; null on the direct draw
+     * paths. What a feature needs from the scene's lighting (cascades, camera forward, the packed
+     * scene light) is read from here.
+     */
+    val passInput: GpuPassInput? get() = null
+
+    /** This frame's shadow cascades, or null when no shadow pass renders. */
+    val shadowCascades: GpuShadowCascadeData? get() = passInput?.shadowCascadeData
+
+    /**
+     * This frame's engine-owned group [semantic] (the shadow map, say) for [pipeline], when its
+     * shader declares it. Same contract as [sceneDepthBinding]: WebGPU builds a bind group per
+     * pipeline, Vulkan returns null and binds its own set when the pipeline is bound. With no shadow
+     * pass the engine binds a placeholder shadow map, so a shader that declares that group still
+     * draws; it just has no cascades to read.
+     */
+    fun engineBinding(pipeline: PipelineHandle, semantic: BindingSemantic): MaterialBinding? = null
 }
 
 /**

@@ -15,6 +15,7 @@ import com.awakekt.awake.vulkan.enums.VkImageLayout
 import com.awakekt.awake.vulkan.enums.VkImageViewType
 import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
 import com.awakekt.awake.vulkan.enums.VkShaderStageFlagBits
+import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.enums.flags.VkAccessFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkPipelineStageFlagBits
@@ -23,6 +24,9 @@ import com.awakekt.awake.vulkan.gen.VulkanDescriptors
 import com.awakekt.awake.vulkan.gen.VulkanImages
 import com.awakekt.awake.vulkan.models.VkAttachmentDescription
 import com.awakekt.awake.vulkan.models.VkAttachmentReference
+import com.awakekt.awake.vulkan.models.VkClearDepthStencilValue
+import com.awakekt.awake.vulkan.models.VkExtent2D
+import com.awakekt.awake.vulkan.models.VkRect2D
 import com.awakekt.awake.vulkan.models.VkSubpassDependency
 import com.awakekt.awake.vulkan.models.info.VkCompareOp2
 import com.awakekt.awake.vulkan.models.info.VkDescriptorImageInfo
@@ -38,6 +42,7 @@ import com.awakekt.awake.vulkan.models.info.VkImageSubresourceRange
 import com.awakekt.awake.vulkan.models.info.VkImageUsageFlagBits2
 import com.awakekt.awake.vulkan.models.info.VkImageViewCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkMemoryAllocateInfo
+import com.awakekt.awake.vulkan.models.info.VkRenderPassBeginInfo
 import com.awakekt.awake.vulkan.models.info.VkRenderPassCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkSamplerAddressMode
 import com.awakekt.awake.vulkan.models.info.VkSamplerCreateInfo
@@ -327,6 +332,27 @@ class DepthTarget(
         ),
     )
 
+    /**
+     * Clears every layer to the far plane with an empty pass, which also leaves each in the
+     * `SHADER_READ_ONLY_OPTIMAL` layout its render pass ends in. For a target nothing renders
+     * into but a pipeline still samples, where an `UNDEFINED` layer would be invalid to read.
+     */
+    fun clearToFar(commandBuffer: Long) {
+        for (layer in 0 until layers) {
+            Vulkan.vkCmdBeginRenderPass(
+                commandBuffer,
+                VkRenderPassBeginInfo(
+                    renderPass = renderPass,
+                    framebuffer = framebuffers[layer],
+                    renderArea = VkRect2D(extent = VkExtent2D(size, size)),
+                    pClearValues = arrayOf(VkClearDepthStencilValue(depth = 1f, stencil = 0)),
+                ),
+                VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
+            )
+            Vulkan.vkCmdEndRenderPass(commandBuffer)
+        }
+    }
+
     fun destroy() {
         framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
         layerViews.forEach { Vulkan.vkDestroyImageView(device, it) }
@@ -340,6 +366,17 @@ class DepthTarget(
     }
 
     companion object {
+        /**
+         * A 1x1 comparison array cleared to the far plane: what an engine binds where a shader
+         * declares a depth-array group that no pass renders into this run.
+         *
+         * @param graphicsDevice The device the target is created on.
+         * @param runOneTimeCommands Records and submits the clear, e.g. `TransferContext::runOneTimeCommands`.
+         */
+        fun placeholder(graphicsDevice: GraphicsDevice, runOneTimeCommands: ((Long) -> Unit) -> Unit): DepthTarget =
+            DepthTarget(graphicsDevice, size = 1, layers = 1, arrayed = true, comparison = true)
+                .also { target -> runOneTimeCommands(target::clearToFar) }
+
         /** 2048x2048 -- enough resolution for this demo's grid-sized scene without being a
          * real memory/bandwidth cost (a single D32 depth image, ~16MB). */
         const val DEFAULT_SIZE = 2048

@@ -115,6 +115,16 @@ class PaintTest {
     }
 
     @Test
+    fun oversizedUniformRadiusStaysASymmetricPill() {
+        // rounded-full: every corner lands on half the short side and stays on the uniform path.
+        val pill = RoundedCornerShape(9999.dp).createOutline(Size2D(80f, 40f), density = 1f)
+        assertEquals(20f, assertIs<ShapeOutline.Rounded>(pill).radius)
+
+        val circle = RoundedCornerShape(9999.dp).createOutline(Size2D(40f, 40f), density = 1f)
+        assertEquals(20f, assertIs<ShapeOutline.Rounded>(circle).radius)
+    }
+
+    @Test
     fun graphicsLayerCapturesContentAndLeavesOneTexturePlaceholder() {
         val root = LayoutNode(passthrough)
         composeInto(root) {

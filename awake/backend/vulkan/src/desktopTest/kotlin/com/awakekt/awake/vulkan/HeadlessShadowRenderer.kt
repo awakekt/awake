@@ -5,10 +5,16 @@
  */
 package com.awakekt.awake.vulkan
 
+import com.awakekt.awake.asset.shadercompiler.NagaShaderCompiler
+import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
+import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
+import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.pipeline.PipelineRegistry
+import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -18,7 +24,9 @@ import com.awakekt.awake.vulkan.pipeline.DepthOnlyPipeline
 import com.awakekt.awake.vulkan.pipeline.DepthPrePassFeature
 import com.awakekt.awake.vulkan.pipeline.PipelineTable
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
+import com.awakekt.awake.vulkan.pipeline.ShaderPair
 import com.awakekt.awake.vulkan.pipeline.VulkanLinePass
+import com.awakekt.awake.vulkan.pipeline.VulkanPipelineFactory
 import com.awakekt.awake.vulkan.pipeline.VulkanUiPass
 import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.renderer.Renderer
@@ -32,6 +40,9 @@ import kotlinx.coroutines.runBlocking
  *
  * [presentable] boots the way `VulkanEngine` does for a `HeadlessSurface`: stand-in swapchain
  * images and sync objects, so `draw` and `readPresentedPixels` work.
+ *
+ * Content features attach through the renderer's `ContentFeatureHost`, wired as `VulkanEngine`
+ * wires it: a runtime pipeline gets the shadow map when its shader declares it.
  */
 internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false): Pair<Renderer, () -> Unit> {
     val graphicsDevice = GraphicsDevice()
@@ -53,6 +64,8 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false):
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
     )
     val transferContext = TransferContext(graphicsDevice)
+    val registry = contentPipelines(graphicsDevice, swapchainManager, sceneRenderPass, descriptorSetLayout, depthTarget)
+    val attacher = ContentFeatureAttacher(VulkanContentFeatureGpu(graphicsDevice, transferContext, registry))
     val cleanup = headlessCleanup(
         graphicsDevice,
         transferContext,
@@ -65,17 +78,9 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false):
         swapchainManager = swapchainManager,
         pipelines = PipelineTable(primary = primary, primaryFormat = VertexFormat.PositionNormalColor),
         renderFeatures = listOf(
-            OpaqueRenderFeature(
-                VulkanLinePass(
-                    LineRenderPipeline(
-                        graphicsDevice,
-                        swapchainManager,
-                        sceneRenderPass,
-                        runBlocking { packShaderPair("debug_line") },
-                        MAX_FRAMES_IN_FLIGHT,
-                    ),
-                ),
-            ),
+            lineFeature(graphicsDevice, swapchainManager, sceneRenderPass),
+            attacher.beforeGeometry,
+            attacher.afterGeometry,
             UiRenderFeature(VulkanUiPass()),
         ),
         depthPrePass = depthPrePass(graphicsDevice, depthTarget, descriptorSetLayout),
@@ -83,8 +88,11 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false):
         uiShaderPairs = runBlocking { defaultUiShaderPairs() },
         maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
     )
+    renderer.contentFeatureHost = attacher
     if (presentable) swapchainManager.createSyncObjects()
     return renderer to {
+        attacher.releaseAll()
+        registry.destroyAll { it.destroy() }
         renderer.destroy()
         swapchainManager.destroy()
         if (presentable) swapchainManager.destroySyncObjects()
@@ -92,6 +100,41 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false):
         graphicsDevice.destroy()
     }
 }
+
+/** Debug lines, drawn with the opaque geometry. */
+private fun lineFeature(graphicsDevice: GraphicsDevice, swapchainManager: SwapchainManager, sceneRenderPass: Long) =
+    OpaqueRenderFeature(
+        VulkanLinePass(
+            LineRenderPipeline(
+                graphicsDevice,
+                swapchainManager,
+                sceneRenderPass,
+                runBlocking { packShaderPair("debug_line") },
+                MAX_FRAMES_IN_FLIGHT,
+            ),
+        ),
+    )
+
+/** Pipelines for attached content, given the shadow map when a shader declares it. */
+private fun contentPipelines(
+    graphicsDevice: GraphicsDevice,
+    swapchainManager: SwapchainManager,
+    sceneRenderPass: Long,
+    descriptorSetLayout: DescriptorSetLayoutHandle,
+    depthTarget: DepthTarget,
+) = PipelineRegistry(
+    VulkanPipelineFactory(
+        graphicsDevice = graphicsDevice,
+        swapchainManager = swapchainManager,
+        renderPass = sceneRenderPass,
+        descriptorSetLayout = descriptorSetLayout,
+        framesInFlight = MAX_FRAMES_IN_FLIGHT,
+        declaredEngineSetLayouts = mapOf(BindingSemantic.ShadowDepth to DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
+        loadShaders = { spec ->
+            NagaShaderCompiler.wgslToSpirv(spec.vertexShader.resolveBytes().decodeToString()).let { ShaderPair(it, it) }
+        },
+    ),
+)
 
 /** The cascade depth pass: one pipeline, one block slot per layer. */
 private fun depthPrePass(
