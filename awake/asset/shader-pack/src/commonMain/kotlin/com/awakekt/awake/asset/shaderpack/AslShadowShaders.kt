@@ -160,7 +160,7 @@ val MaskedTexturedDepthShader: AslShaderDefinition = shader("shadow_depth_masked
     fragment {
         val sampled = let("baseColorSample", textureSample(baseColorTexture, baseColorSampler, uv))
         val alpha = let("alpha", sampled.a * baseColorFactor.a)
-        iff(alpha lt pbrFactors.z) { this@fragment.discard() }
+        discardIf(alpha lt pbrFactors.z)
     }
 }
 

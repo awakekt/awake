@@ -154,6 +154,7 @@ public final class com/awakekt/awake/asset/shaderdsl/AslForU32 : com/awakekt/awa
 public final class com/awakekt/awake/asset/shaderdsl/AslFragmentBuilder : com/awakekt/awake/asset/shaderdsl/AslBlockBuilder {
 	public final fun colorOutput (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)V
 	public final fun discard ()V
+	public final fun discardIf (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)V
 	public final fun position ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 }
 

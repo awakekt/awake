@@ -27,4 +27,14 @@ class MaskedDepthShaderTest {
         assertTrue("discard;" in fragment)
         assertTrue("pbrFactors.z" in fragment)
     }
+
+    /** It emitted `discard;` ahead of an empty `if`, so a masked caster cast no shadow at all. */
+    @Test
+    fun maskedTexturedDepthDiscardsOnlyBelowTheCutoff() {
+        val fragment = MaskedTexturedDepthShader.emitWgsl().substringAfter("@fragment")
+        val discard = fragment.indexOf("discard;")
+        val condition = fragment.lastIndexOf("if (", discard)
+
+        assertTrue(discard > 0 && condition in 0 until discard && "}" !in fragment.substring(condition, discard), fragment)
+    }
 }
