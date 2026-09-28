@@ -752,18 +752,20 @@ public final class com/awakekt/awake/scene/rendering/mesh/PbrMaterial {
 
 public final class com/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$Companion;
-	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;)V
-	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;Z)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component2 ()Ljava/lang/String;
 	public final fun component3 ()Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
-	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public final fun component4 ()Z
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;Z)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getCullMode ()Lcom/awakekt/awake/scene/rendering/mesh/SceneMeshRenderer$CullMode;
 	public final fun getMaterial ()Ljava/lang/String;
 	public final fun getMesh ()Ljava/lang/String;
+	public final fun getTransparent ()Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 	public fun validate (Ljava/lang/String;)Ljava/util/List;

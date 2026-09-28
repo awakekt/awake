@@ -18,6 +18,8 @@ import kotlinx.serialization.json.JsonNames
  * @property mesh Mesh asset resource identifier or primitive shape name.
  * @property material Material asset resource identifier.
  * @property cullMode GPU face culling mode.
+ * @property transparent Draws in the transparent pass: alpha-blended by the material's alpha,
+ *   depth-tested but not depth-written, sorted back to front. See [MeshRenderer.transparent].
  */
 @Serializable
 @SerialName("mesh_renderer")
@@ -27,6 +29,7 @@ data class SceneMeshRenderer(
     @OptIn(ExperimentalSerializationApi::class)
     @JsonNames("cull_mode", "cullMode")
     val cullMode: CullMode = CullMode.None,
+    val transparent: Boolean = false,
 ) : SceneComponent {
     /** GPU face culling mode enumeration. */
     enum class CullMode {
