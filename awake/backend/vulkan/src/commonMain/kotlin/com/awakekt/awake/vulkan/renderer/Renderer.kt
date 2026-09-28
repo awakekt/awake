@@ -35,6 +35,9 @@ import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.CullMode
+import com.awakekt.awake.render.pipeline.GpuCapability
+import com.awakekt.awake.render.pipeline.GpuCapabilityKind
+import com.awakekt.awake.render.pipeline.ShaderReplacement
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
@@ -152,6 +155,16 @@ class Renderer internal constructor(
         checkNotNull(contentFeatureHost) {
             "This renderer was built without an engine, so it cannot attach content features."
         }.attachContentFeature(source)
+
+    /** Set by the engine that built this renderer, over its pipeline registry. */
+    internal var shaderReplacement: ShaderReplacement? = null
+
+    // Safe: each branch returns the capability its kind names.
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : GpuCapability> capability(kind: GpuCapabilityKind<T>): T? = when (kind) {
+        ShaderReplacement -> shaderReplacement as T?
+        else -> null
+    }
 
     override val surfaceAspect: Float
         get() = swapchainManager.extent.let { extent ->

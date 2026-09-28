@@ -1,8 +1,9 @@
 # Shader hot reload plan
 
 Date: 2026-09-27
-Status: **proposed** — phase 0 can start now. It must land before the
-[shader graph](2026-09-27-shader-graph-plan.md) editor, whose live preview is its first consumer. Tracked in [#106](https://github.com/awakekt/awake/issues/106).
+Status: **active** — phases 0 and 1 are done; phase 2 (sample and docs) is next. It must land
+before the [shader graph](2026-09-27-shader-graph-plan.md) editor, whose live preview is its first
+consumer. Tracked in [#106](https://github.com/awakekt/awake/issues/106).
 
 ## Goal
 
@@ -58,40 +59,42 @@ Sources of runtime ASL:
 
 ## Design
 
-- **API.** `replaceShader(old: ShaderSet, new: ShaderSet)`, offered as a `GpuCapability`. WebGPU
-  returns null until it can swap.
-  - The caller builds `new` from a runtime ASL definition with `aslShaderSet`.
-  - The engine matches pipelines by the old set's WGSL text, so the backend never names a shader
-    or any content.
-- **Compile off the render thread.** The new WGSL is compiled with `NagaShaderCompiler` before
-  anything is queued, so a syntax error never reaches the render thread and is returned to the
-  caller.
-- **Swap on the render thread,** at the start of a frame:
-  1. Find every pipeline whose spec uses the old text: registry pipelines, depth-only pipelines
-     and the line pipeline.
-  2. Reject the swap if the new set's bindings or vertex inputs differ from the spec. That kind of
-     change needs a new layout, not a swap.
-  3. Run `vkDeviceWaitIdle`.
-  4. Create the new `VkPipeline` from the retained inputs.
-  5. Swap it in and destroy the old one.
+As built in phase 1:
 
-  A failed create keeps the old pipeline and reports the error.
-- **Retained inputs.** `RenderPipeline`, `DepthOnlyPipeline` and `LineRenderPipeline` keep what
-  they need to rebuild.
-- **Stale registry keys.** The registry keeps its original spec as the key. Detach still removes
-  by that spec, so it stays consistent.
-- **Replacements chain.** The swapped-in set becomes the `old` for the next replacement, so an
-  editor can replace the same shader repeatedly.
+- **API.** `ShaderReplacement`, a `GpuCapability` in `render:contract`:
+  `replace(old: ShaderProgram, new: ShaderProgram): Int`. A `ShaderProgram` is a vertex source, a
+  fragment source and the bindings per group; `ShaderStages.program()` builds one from an ASL set.
+  Vulkan's renderer returns it from `capability(ShaderReplacement)`; WebGPU returns null.
+  - The contract cannot name `ShaderSet`, which lives in `asset:shaders` above it, so the API takes
+    sources rather than sets.
+  - Pipelines are matched by the sources they run, so the backend never names a shader or content.
+- **Checks before anything changes.** The new sources compile, and every matched pipeline's bindings
+  must equal the new program's; unknown bindings are refused. Then every replacement `VkPipeline` is
+  built. A failure at any step destroys what was built and throws `ShaderReplacementException`.
+- **Swap.** `vkDeviceWaitIdle`, then each `RenderPipeline` swaps its new `VkPipeline` in and destroys
+  the old one. The wrapper keeps its pipeline layout, cache and fixed state, which is all a rebuild
+  needs, so everything holding the wrapper draws with the new shaders from the next frame.
+- **Where it runs.** On the render thread between frames, like content-feature attach and detach,
+  which already wait idle and destroy pipelines mid-run. The compile is synchronous there: there is
+  no render-thread task queue, and a naga compile is milliseconds.
+- **Stale registry keys.** The registry keeps each pipeline under the spec it was built from, so
+  detach still finds it. What a pipeline runs after a replacement is tracked beside the registry.
+- **Replacements chain.** The swapped-in program is what the next replacement matches.
 
 ## Phases
 
-### Phase 0 — spike
+### Phase 0 — spike (done)
 
 Replace one `VkPipeline` inside its wrapper, under 2 frames in flight, with validation layers on.
 
 **Gate:** a clean validation log. If it isn't clean, the reason is recorded.
 
-### Phase 1 — Vulkan swap primitive
+**Result:** clean. The replacement runs while both frame slots are still in flight. With the
+`vkDeviceWaitIdle` removed, validation reports `VUID-vkDestroyPipeline-pipeline-00765` (a pipeline
+destroyed while a command buffer uses it) at every replacement, so the wait is required and the log
+check is live.
+
+### Phase 1 — Vulkan swap primitive (done)
 
 **Gate:** a headless Vulkan test with two pipelines, one drawing red and one drawing blue, plus
 validation layers.
@@ -102,6 +105,10 @@ validation layers.
 - Invalid WGSL is rejected before queueing, and red stays.
 - A binding change is rejected, and red stays.
 - Validation layers report nothing.
+
+**Result:** `RendererHeadlessShaderReplacementTest`, all of the above. Positive controls: matching every
+pipeline fails the count; dropping the binding check fails the refusal test, and validation reports
+`VUID-VkGraphicsPipelineCreateInfo-layout-07988`.
 
 ### Phase 2 — sample and docs
 
@@ -114,6 +121,14 @@ validation layers.
 - A deliberately broken variant is logged, and the sample keeps running on the old shader.
 
 ## Limits and follow-ups
+
+- **Depth-only and debug-line pipelines.** Not in the registry, so never replaced. Replacing a lit
+  shader leaves the depth pre-pass drawing with its own depth shader, which is what it should do.
+- **Vertex inputs are not checked.** An ASL definition records its vertex format only through
+  `inputsFrom`, so there is nothing reliable to compare. A replacement reading an input the
+  pipeline's format lacks is a caller error that validation reports.
+- **Compile on the render thread.** Fine for a preview; move it off-thread if a large shader drops a
+  frame.
 
 - **Pipelines are per vertex format today.** Replacing the lit shader changes every mesh of
   that format. Per-material shaders are a separate render plan (step 2 of the node-graph

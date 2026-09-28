@@ -1014,6 +1014,34 @@ public final class com/awakekt/awake/render/pipeline/SamplerType : java/lang/Enu
 	public static fun values ()[Lcom/awakekt/awake/render/pipeline/SamplerType;
 }
 
+public final class com/awakekt/awake/render/pipeline/ShaderProgram {
+	public fun <init> (Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Ljava/util/Map;)V
+	public final fun component1 ()Lcom/awakekt/awake/render/pipeline/ShaderSource;
+	public final fun component2 ()Lcom/awakekt/awake/render/pipeline/ShaderSource;
+	public final fun component3 ()Ljava/util/Map;
+	public final fun copy (Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Ljava/util/Map;)Lcom/awakekt/awake/render/pipeline/ShaderProgram;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lcom/awakekt/awake/render/pipeline/ShaderSource;Lcom/awakekt/awake/render/pipeline/ShaderSource;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/render/pipeline/ShaderProgram;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBindingsByGroup ()Ljava/util/Map;
+	public final fun getFragment ()Lcom/awakekt/awake/render/pipeline/ShaderSource;
+	public final fun getVertex ()Lcom/awakekt/awake/render/pipeline/ShaderSource;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/render/pipeline/ShaderReplacement : com/awakekt/awake/render/pipeline/GpuCapability {
+	public static final field Companion Lcom/awakekt/awake/render/pipeline/ShaderReplacement$Companion;
+	public abstract fun replace (Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class com/awakekt/awake/render/pipeline/ShaderReplacement$Companion : com/awakekt/awake/render/pipeline/GpuCapabilityKind {
+}
+
+public final class com/awakekt/awake/render/pipeline/ShaderReplacementException : java/lang/IllegalArgumentException {
+	public fun <init> (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Throwable;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+}
+
 public abstract interface class com/awakekt/awake/render/pipeline/ShaderSource {
 }
 

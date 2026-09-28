@@ -124,6 +124,8 @@ class RenderPipeline(
     // exists to avoid growing further.
     private val extraDescriptorSetLayouts = extraDescriptorSetLayouts
     private val cullMode = cullMode
+    private val polygonMode = polygonMode
+    private val variant = variant
     private val graphicsDevice = graphicsDevice
     private val swapchainManager = swapchainManager
     private val device get() = graphicsDevice.device
@@ -173,35 +175,50 @@ class RenderPipeline(
     // safe and avoids a leak. renderPass isn't touched -- it's caller-owned.
     init {
         try {
-            createGraphicsPipeline(
-                descriptorSetLayout = uniformSlots
-                    ?.let { DescriptorSetLayoutHandle(it.descriptorSetLayout) }
-                    ?: descriptorSetLayout,
-                shaders = shaders,
-                vertexFormat = vertexFormat,
-                vertexEntryPoint = vertexEntryPoint,
-                fragmentEntryPoint = fragmentEntryPoint,
-                polygonMode = polygonMode,
-                variant = variant,
+            pipelineLayout = createPipelineLayout(
+                device,
+                uniformSlots?.let { DescriptorSetLayoutHandle(it.descriptorSetLayout) } ?: descriptorSetLayout,
+                extraDescriptorSetLayouts,
             )
+            pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
+            graphicsPipeline = longArrayOf(buildPipeline(shaders, vertexEntryPoint, fragmentEntryPoint))
         } catch (e: Throwable) {
             destroy()
             throw e
         }
     }
 
-    private fun createGraphicsPipeline(
-        descriptorSetLayout: DescriptorSetLayoutHandle,
-        shaders: ShaderPair,
-        vertexFormat: VertexFormat,
-        vertexEntryPoint: String,
-        fragmentEntryPoint: String,
-        polygonMode: VkPolygonMode,
-        variant: PipelineVariant,
-    ) {
+    /**
+     * A new `VkPipeline` with this one's layout and state, running [shaders]. It is not bound until
+     * [swapIn]; destroy it with [destroyPipeline] if it never is.
+     */
+    internal fun buildPipeline(shaders: ShaderPair, vertexEntryPoint: String, fragmentEntryPoint: String): Long {
         // WARNING: make sure the .spv vulkan version match, this might cause out of memory
         val fragShaderModule = createShaderModule(device, shaders.fragment.toShaderIntArray())
         val vertShaderModule = createShaderModule(device, shaders.vertex.toShaderIntArray())
+        try {
+            val createInfos = createInfos(fragShaderModule, vertShaderModule, vertexEntryPoint, fragmentEntryPoint)
+            return Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, createInfos)[0]
+        } finally {
+            Vulkan.vkDestroyShaderModule(device, fragShaderModule)
+            Vulkan.vkDestroyShaderModule(device, vertShaderModule)
+        }
+    }
+
+    /** Makes [pipeline] the one this wrapper binds, destroying the previous one. The GPU must be idle. */
+    internal fun swapIn(pipeline: Long) {
+        Vulkan.vkDestroyPipeline(device, graphicsPipeline[0])
+        graphicsPipeline = longArrayOf(pipeline)
+    }
+
+    internal fun destroyPipeline(pipeline: Long) = Vulkan.vkDestroyPipeline(device, pipeline)
+
+    private fun createInfos(
+        fragShaderModule: Long,
+        vertShaderModule: Long,
+        vertexEntryPoint: String,
+        fragmentEntryPoint: String,
+    ): Array<VkGraphicsPipelineCreateInfo> {
         val shaderStages = arrayOf(
             VkPipelineShaderStageCreateInfo(
                 stage = VkShaderStageFlagBits.FRAGMENT,
@@ -214,10 +231,7 @@ class RenderPipeline(
                 pName = vertexEntryPoint,
             ),
         )
-
-        pipelineLayout = createPipelineLayout(device, descriptorSetLayout, extraDescriptorSetLayouts)
-
-        val createInfos = arrayOf(
+        return arrayOf(
             VkGraphicsPipelineCreateInfo(
                 pStages = shaderStages,
                 pVertexInputState = vertexInputState(vertexFormat, variant),
@@ -235,11 +249,6 @@ class RenderPipeline(
                 basePipelineIndex = -1, // Optional
             ),
         )
-        pipelineCache = Vulkan.vkCreatePipelineCache(device, VkPipelineCacheCreateInfo())
-        graphicsPipeline = Vulkan.vkCreateGraphicsPipelines(device, pipelineCache, createInfos)
-
-        Vulkan.vkDestroyShaderModule(device, fragShaderModule)
-        Vulkan.vkDestroyShaderModule(device, vertShaderModule)
     }
 
     /** Binds the (single) graphics pipeline. Render-pass begin/end and descriptor-set
