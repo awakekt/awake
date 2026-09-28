@@ -38,6 +38,9 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         generated/com_awakekt_awake_vulkan_gen_VulkanImages_jni.gen.cpp
         VulkanImages_native.cpp)
 
+# 16 KB LOAD alignment, required by Google Play for Android 15+ (NDK r26 defaults to 4 KB).
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE "-Wl,-z,max-page-size=16384")
+
 # jni-utils.h (vendored jni-binding-generator helper header the generated file needs).
 # Path depth: cpp -> main -> src -> vulkan -> backend -> awake -> repo root (6 levels) --
 # this module lives at awake/backend/vulkan/src/main/cpp since the Phase 0 nested-module
