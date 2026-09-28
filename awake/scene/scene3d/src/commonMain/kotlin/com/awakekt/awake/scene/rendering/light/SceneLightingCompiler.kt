@@ -12,7 +12,6 @@ import com.awakekt.awake.ecs.firstOrNull
 import com.awakekt.awake.ecs.singleOrNull
 import com.awakekt.awake.render.passes.directionalShadowBox
 import com.awakekt.awake.render.passes.pointShadowMatrices
-import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
@@ -20,6 +19,7 @@ import com.awakekt.awake.render.passes.uniforms.POINT_SHADOW_FACE_COUNT
 import com.awakekt.awake.render.passes.uniforms.PointLight
 import com.awakekt.awake.render.passes.uniforms.PointShadowLight
 import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.passes.uniforms.shadowCascadeUniforms
 import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
@@ -151,11 +151,17 @@ internal class SceneLightingCompiler(
         // Allocates per frame, but only while shadows are on, and the caller that used to build
         // one fixed box allocated the same kind of thing.
         if (sun?.shadowsEnabled != true || world.debugSettingsOrNull()?.shadowsEnabledOverride == false) return base
-        return shadowedLight(world, camera, base, viewportAspect)
+        return shadowedLight(world, camera, base, viewportAspect, sun.shadowDistance)
     }
 
-    /** [base] plus whichever shadow fit is in force -- cascades, or the single box. */
-    fun shadowedLight(world: World, camera: Camera, base: SceneLight, viewportAspect: Float): SceneLight {
+    /** [base] plus whichever shadow fit is in force -- cascades out to [shadowDistance], or the single box. */
+    fun shadowedLight(
+        world: World,
+        camera: Camera,
+        base: SceneLight,
+        viewportAspect: Float,
+        shadowDistance: Float,
+    ): SceneLight {
         // Fitted to THIS camera's frustum, in slices. The fixed box `directionalShadowBox` still
         // builds covers a volume at the origin, which is right for a demo scene sitting there and
         // wrong for anything that walks away from it -- the shadows simply stop.
@@ -168,7 +174,7 @@ internal class SceneLightingCompiler(
         val cascades = if (boxOnly) {
             null
         } else {
-            shadowCascadeUniforms(base, camera.lens, aspect, clipSpace)
+            shadowCascadeUniforms(base, camera.lens, aspect, clipSpace, shadowDistance = shadowDistance)
         }
         if (cascades == null) {
             return base.copy(
