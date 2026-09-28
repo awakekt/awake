@@ -36,6 +36,10 @@ data class GpuPassInput(
     val environment: GpuEnvironmentState = GpuEnvironmentState.Default,
     /** True when the compiler deliberately selected resolved packets, including zero draws. */
     val resolvedPath: Boolean = false,
+    /** The camera's forward direction; a shadow cascade is chosen by depth along it. */
+    val cameraForward: Vec3f? = null,
+    /** This frame's shadow cascades, or null when no shadow pass renders. */
+    val shadowCascadeData: GpuShadowCascadeData? = null,
 ) {
     /** Canonical draw sequence for executors; legacy lists are deliberately excluded. */
     val resolvedDraws: List<GpuResolvedDraw>
@@ -72,8 +76,11 @@ data class GpuPassInput(
         if (environment != other.environment) return false
         if (resolvedPath != other.resolvedPath) return false
 
-        return true
+        return sameShadowInputs(other)
     }
+
+    private fun sameShadowInputs(other: GpuPassInput): Boolean =
+        cameraForward == other.cameraForward && shadowCascadeData == other.shadowCascadeData
 
     override fun hashCode(): Int {
         var result = prePasses.hashCode()
@@ -86,6 +93,8 @@ data class GpuPassInput(
         result = 31 * result + passUniforms.contentHashCode()
         result = 31 * result + environment.hashCode()
         result = 31 * result + resolvedPath.hashCode()
+        result = 31 * result + (cameraForward?.hashCode() ?: 0)
+        result = 31 * result + (shadowCascadeData?.hashCode() ?: 0)
         return result
     }
 }

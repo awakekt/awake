@@ -120,6 +120,13 @@ open class VulkanEngine(
      * [depthTarget]; only the matrix its pass renders from differs. */
     private var sceneDepthTarget: DepthTarget? = null
 
+    /**
+     * A 1x1 shadow map bound in place of [depthTarget] when the plan renders no shadows, so a
+     * content shader that declares the shadow-map group still has one to read. It has no cascades,
+     * so a shader that follows the cascade count never samples it.
+     */
+    private var depthPrePassPlaceholder: DepthTarget? = null
+
     /** The `@group(1)` joint-palette set layout `skinnedInstancedRenderPipeline`'s layout is
      * built from -- see `SkinnedInstanceBuffer.createDescriptorSetLayout` for why each pooled
      * buffer creates its own compatible copy instead of sharing this handle. */
@@ -451,6 +458,22 @@ open class VulkanEngine(
         }
     }
 
+    /** [depthPrePassPlaceholder]'s value: a placeholder only when the plan renders no shadow map. */
+    private fun depthPlaceholderWithoutPrePass(): DepthTarget? =
+        if (depthTarget == null) DepthTarget.placeholder(graphicsDevice, transferContext::runOneTimeCommands) else null
+
+    /** The shadow-map layout, real or placeholder, for pipelines the start-up maps do not list. */
+    private fun declaredEngineSetLayouts(): Map<BindingSemantic, DescriptorSetLayoutHandle> {
+        val target = depthTarget ?: depthPrePassPlaceholder ?: return emptyMap()
+        return mapOf(BindingSemantic.ShadowDepth to DescriptorSetLayoutHandle(target.descriptorSetLayout))
+    }
+
+    /** Binds [depthPrePassPlaceholder] wherever a pipeline reads the shadow map; the real target binds itself. */
+    private fun bindDepthPlaceholder(renderer: Renderer) {
+        val placeholder = depthPrePassPlaceholder ?: return
+        renderer.commandRecorder.engineDescriptorSets += BindingSemantic.ShadowDepth to placeholder.binding().descriptorSetHandle
+    }
+
     /** Which engine-owned groups each pipeline family reads, for the recorder to bind. */
     private fun engineSemanticsByKey(): Map<PipelineKey, Set<BindingSemantic>> = buildMap {
         val keys = depthTargetPipelineKeys() + sceneDepthPipelineKeys()
@@ -549,6 +572,8 @@ open class VulkanEngine(
                 .takeIf { it }
                 ?.let { SkinnedInstanceBuffer.createDescriptorSetLayout(graphicsDevice) }
             skinnedInstanceDescriptorSetLayout = paletteLayout
+            transferContext = TransferContext(graphicsDevice)
+            depthPrePassPlaceholder = depthPlaceholderWithoutPrePass()
             pipelineRegistry = PipelineRegistry(
                 VulkanPipelineFactory(
                     graphicsDevice = graphicsDevice,
@@ -558,13 +583,14 @@ open class VulkanEngine(
                     extraDescriptorSetLayouts = extraSetLayouts(paletteLayout),
                     engineSemanticsByKey = engineSemanticsByKey(),
                     framesInFlight = MAX_FRAMES_IN_FLIGHT,
+                    declaredEngineSetLayouts = declaredEngineSetLayouts(),
+                    emptySetLayout = ::emptySetLayout,
                     loadShaders = ::loadShaderPair,
                 ),
             )
             requestedPipelines = pipelineRegistry.register(plan.toPipelineRequests(RenderBackend.Vulkan))
             depthPrePass = buildDepthPrePassFeature(depthTarget)
             sceneDepthPass = buildSceneDepthFeature()
-            transferContext = TransferContext(graphicsDevice)
             renderFeatures = buildRenderFeatures()
             val renderer = Renderer(
                 graphicsDevice = graphicsDevice,
@@ -576,7 +602,10 @@ open class VulkanEngine(
                 maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
                 depthPrePass = depthPrePass,
                 sceneDepthPass = sceneDepthPass,
-            ).also { it.contentFeatureHost = contentAttacher }
+            ).also { renderer ->
+                renderer.contentFeatureHost = contentAttacher
+                bindDepthPlaceholder(renderer)
+            }
             createdRenderer = renderer
             swapchainManager.createSyncObjects()
             syncObjectsCreated = true
@@ -670,6 +699,8 @@ open class VulkanEngine(
         // with no owner at all. Destroy it only in that case.
         if (depthPrePass == null) depthTarget?.destroy()
         if (sceneDepthPass == null) sceneDepthTarget?.destroy()
+        depthPrePassPlaceholder?.destroy()
+        depthPrePassPlaceholder = null
         depthTarget = null
         sceneDepthTarget = null
         if (::swapchainManager.isInitialized) {

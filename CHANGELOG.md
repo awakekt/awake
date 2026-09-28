@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Find entities by name.** `EntityNames(world).find(name)` returns the live entity carrying that `Name`. Hits are checked on use and misses rebuild the index once, so an existing name costs a map lookup, renames are followed and destroyed entities are never returned.
+- **Terrain receives cascaded shadows.** The base and layered terrain surfaces sample the engine's shadow map, lit by the scene's own sun instead of a fixed default; the layered surface dims its bake toward the ambient floor in shadow. Behind it, content features can read the frame's shadows: `GpuPassInput` carries `cameraForward` and `shadowCascadeData`, `RenderFrameContext` exposes `passInput`, `shadowCascades` and `engineBinding(pipeline, semantic)`, a runtime-attached pipeline gets each engine-owned group its shader declares, and an engine with no shadow pass binds a placeholder shadow map. **Breaking:** `TerrainShader` and `TerrainLayersShader` are now `terrainShader(clipSpace)` and `terrainLayersShader(clipSpace)`, since shadow sampling depends on the backend's clip space.
 - **Node graph canvas.** New module `com.awakekt.awake.ui:node-graph-canvas`: `NodeGraphCanvas`, a controlled editing surface for `:awake:node-graph` documents. Nodes render as a header, one row per port pair and a caller-owned body slot; wires are curves coloured by port type. Dragging between ports connects or reconnects, dragging nodes moves the selection, Shift/Ctrl-drag box-selects, the wheel zooms around the pointer, and every edit is reported as a `NodeGraphIntent` for the caller to apply. Zoom scales node content through density, so text stays sharp and controls are hit where they are drawn; labels hide below a legible zoom, and idle wires redraw retained meshes.
+- **Find entities by name.** `EntityNames(world).find(name)` returns the live entity carrying that `Name`. Hits are checked on use and misses rebuild the index once, so an existing name costs a map lookup, renames are followed and destroyed entities are never returned.
 
 ### Fixed
 

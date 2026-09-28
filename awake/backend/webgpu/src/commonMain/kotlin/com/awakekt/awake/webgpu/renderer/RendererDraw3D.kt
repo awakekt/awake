@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu.renderer
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuEnvironmentState
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.passes.debug.lineSegmentVertices
 import com.awakekt.awake.render.renderer.LineSegment
@@ -30,6 +31,7 @@ internal fun Renderer.sceneContext(
     cameraEye: Vec3f,
     surface: SurfaceSize,
     environment: GpuEnvironmentState = GpuEnvironmentState.Default,
+    passInput: GpuPassInput? = null,
 ): WebGpuFrameContext = WebGpuFrameContext(
     renderer = this,
     encoder = encoder,
@@ -41,6 +43,7 @@ internal fun Renderer.sceneContext(
     environment = environment,
     surfaceWidth = surface.width,
     surfaceHeight = surface.height,
+    passInput = passInput,
 )
 
 /** What a pass is drawing into, so [sceneContext] takes one argument for it rather than two. */
