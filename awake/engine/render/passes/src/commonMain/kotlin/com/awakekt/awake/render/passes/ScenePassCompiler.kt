@@ -14,7 +14,6 @@ import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
-import com.awakekt.awake.render.command.prepareAll
 import com.awakekt.awake.render.command.sortForRecording
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
@@ -46,24 +45,29 @@ object ScenePassCompiler {
         val packedPassUniforms = sceneLightUniforms(light ?: DEFAULT_SCENE_LIGHT, lens.eye).packed
         val gpuEnvironment = environment.toGpuState(viewDepthRange = lens.far)
 
-        val resolved = drawPreparer?.let {
-            sortForRecording(
-                it.prepareAll(
-                    drawCalls,
-                    GpuDrawPreparationContext(
-                        viewProjection = viewProjection,
-                        cameraEye = lens.eye,
-                        cameraForward = cameraForward,
-                        passUniforms = packedPassUniforms,
-                        environment = gpuEnvironment,
-                        viewport = viewport,
-                        shadowViewProjections = shadowViewProjections,
-                        shadowCascadeData = shadowCascadeData,
-                    ),
-                ),
+        // One preparation pass in source order, so every draw keeps its own source index; the
+        // shadow-only ones are then kept out of the scene and handed to the shadow passes.
+        val shadowOnly = ArrayList<GpuResolvedDraw>()
+        val resolved = drawPreparer?.let { preparer ->
+            val context = GpuDrawPreparationContext(
+                viewProjection = viewProjection,
+                cameraEye = lens.eye,
+                cameraForward = cameraForward,
+                passUniforms = packedPassUniforms,
+                environment = gpuEnvironment,
+                viewport = viewport,
+                shadowViewProjections = shadowViewProjections,
+                shadowCascadeData = shadowCascadeData,
             )
+            val visible = ArrayList<GpuResolvedDraw>(drawCalls.size)
+            drawCalls.forEachIndexed { index, request ->
+                val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
+                if (!request.shadowsOnly) visible += draw else if (!draw.transparent) shadowOnly += draw
+            }
+            sortForRecording(visible)
         }
         val resolvedOpaque = resolved?.opaqueByPipeline?.values?.flatten().orEmpty()
+        val casters = if (shadowOnly.isEmpty()) resolvedOpaque else resolvedOpaque + shadowOnly
 
         val prePasses = ArrayList<GpuSubPass>()
         // The scene compiler has already applied the authoritative shadow toggle when it
@@ -74,11 +78,11 @@ object ScenePassCompiler {
                 target = null,
                 targetLayer = layer,
                 viewProjection = cascadeVp,
-                resolvedDraws = if (resolved == null) emptyList() else resolvedOpaque,
+                resolvedDraws = if (resolved == null) emptyList() else casters,
             )
         }
         if (light != null && environment.shadowsEnabled && resolved != null) {
-            prePasses += light.pointShadowPrePasses(resolvedOpaque)
+            prePasses += light.pointShadowPrePasses(casters)
         }
         return GpuPassInput(
             prePasses = prePasses,
