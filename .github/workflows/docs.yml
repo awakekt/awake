@@ -95,5 +95,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy "$RUNNER_TEMP/awake-docs-site" --project-name=awake-docs
+          # wrangler-action runs this without a shell, so $RUNNER_TEMP would stay literal.
+          command: pages deploy "${{ runner.temp }}/awake-docs-site" --project-name=awake-docs
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}

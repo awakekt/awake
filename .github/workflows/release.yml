@@ -104,12 +104,16 @@ jobs:
       startsWith(github.event.head_commit.message, 'chore(release): cut v')
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      # A tag pushed with the default token does not start the publish workflow, so tagging needs
+      # RELEASE_TOKEN. Without it the maintainer tags by hand; say how instead of failing.
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          token: ${{ secrets.RELEASE_TOKEN }}
+          token: ${{ secrets.RELEASE_TOKEN || github.token }}
 
       - name: Tag release commit
         env:
@@ -119,8 +123,12 @@ jobs:
           [[ -n "$tag" ]] || { echo "Could not read the tag from: $MESSAGE" >&2; exit 1; }
           grep -qF "## [${tag#v}]" CHANGELOG.md || { echo "CHANGELOG.md has no section for $tag." >&2; exit 1; }
           if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
-            echo "$tag already exists." >&2
-            exit 1
+            echo "::notice::$tag already exists."
+            exit 0
+          fi
+          if [[ -z "$RELEASE_TOKEN" ]]; then
+            echo "::notice::RELEASE_TOKEN is not set. Tag by hand: git tag -a $tag -m \"Release $tag\" ${GITHUB_SHA} && git push origin $tag"
+            exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
