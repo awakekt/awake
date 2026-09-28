@@ -27,6 +27,11 @@ fun drawUniformPlan(
     materialUniformFloatCount: Int,
     hasShadowCascades: Boolean,
 ): DrawUniformPlan = when {
+    // Exact, and first: the textured block is larger than lit_shadow's, so "at least" cannot tell them apart.
+    format == VertexFormat.PositionNormalColorUv &&
+        materialUniformFloatCount == MaterialUniformLayouts.PbrTextured.total ->
+        DrawUniformPlan.TexturedPbr
+
     materialUniformFloatCount >= MaterialUniformLayouts.LitShadow.total &&
         format in setOf(VertexFormat.PositionNormalColor, VertexFormat.PositionNormalColorUv) ->
         DrawUniformPlan.LitShadow
@@ -34,10 +39,6 @@ fun drawUniformPlan(
     format == VertexFormat.PositionNormalColorSkin ||
         format == VertexFormat.PositionNormalColorUvSkin ->
         DrawUniformPlan.Skinned
-
-    format == VertexFormat.PositionNormalColorUv &&
-        materialUniformFloatCount >= MaterialUniformLayouts.PbrTextured.total ->
-        DrawUniformPlan.TexturedPbr
 
     else -> DrawUniformPlan.Lit
 }

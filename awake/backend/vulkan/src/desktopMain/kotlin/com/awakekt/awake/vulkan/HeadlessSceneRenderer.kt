@@ -83,6 +83,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         VertexFormat.PositionNormalColorUv,
         vertexEntryPoint = "vertexMain",
         fragmentEntryPoint = "fragmentMain",
+        extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
     )
     val depthPrePass = DepthPrePassFeature(
         depthTarget,

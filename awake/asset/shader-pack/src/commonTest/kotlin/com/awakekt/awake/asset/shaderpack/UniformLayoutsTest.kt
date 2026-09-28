@@ -19,8 +19,9 @@ class UniformLayoutsTest {
     // edit is the mismatch the test exists to catch.
 
     @Test
-    fun texturedUniformLayoutTotalIsOneHundredFour() {
-        assertEquals(104, TexturedUniformLayout.total)
+    fun texturedUniformLayoutTotalIsOneHundredEightyEight() {
+        // 104, then the sun's cascades: four matrices (+64), their depth scales (+16) and camera forward (+4).
+        assertEquals(188, TexturedUniformLayout.total)
     }
 
     @Test

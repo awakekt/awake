@@ -117,7 +117,10 @@ object MaterialUniformLayouts {
         UniformFields.FogColor,
     )
 
-    /** Full textured glTF PBR = 104 floats. */
+    /**
+     * Full textured glTF PBR = 188 floats. The cascade fields come last so the masked depth
+     * shader's view of the block keeps its offsets.
+     */
     val PbrTextured = UniformLayout(
         UniformFields.Mvp,
         UniformFields.LightDirection,
@@ -133,6 +136,9 @@ object MaterialUniformLayouts {
         UniformFields.TextureScroll,
         UniformFields.FogColor,
         UniformFields.DebugView,
+        UniformFields.CascadeViewProjections,
+        UniformFields.CascadeDepthScales,
+        UniformFields.CameraForward,
     )
 }
 

@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuDebugView
+import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.UniformFields
@@ -203,6 +204,7 @@ fun texturedUniforms(
     )
     .put(frame.fog, UniformFields.FogColor)
     .putDebugView(GpuDebugView.Off, frame.cameraForward)
+    .putCascades(GpuShadowCascadeData.UNSHADOWED, frame.cameraForward)
     .build()
 
 /** Packs the unshadowed textured PBR block from the backend-neutral draw payload. The light
@@ -222,6 +224,7 @@ fun texturedUniforms(
     debugView: GpuDebugView = GpuDebugView.Off,
     cameraForward: Vec3f = Vec3f(0f, 0f, -1f),
     timeSeconds: Float = 0f,
+    shadowCascades: GpuShadowCascadeData = GpuShadowCascadeData.UNSHADOWED,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTextured)
     .put(mvp.data, UniformFields.Mvp)
     .put(
@@ -243,7 +246,14 @@ fun texturedUniforms(
     )
     .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
     .putDebugView(debugView, cameraForward)
+    .putCascades(shadowCascades, cameraForward)
     .build()
+
+/** The sun's cascades; `cameraForward.w` is their count, 0 when nothing casts. */
+private fun UniformWriter.putCascades(cascades: GpuShadowCascadeData, cameraForward: Vec3f): UniformWriter = this
+    .put(cascades.matrixFloats(), UniformFields.CascadeViewProjections)
+    .put(cascades.depthScaleFloats(), UniformFields.CascadeDepthScales)
+    .put(UniformFields.CameraForward, cameraForward, cascades.count.toFloat())
 
 /** Packs the ordinary untextured lit block. A draw with PBR factors uses [Lit]; a plain draw
  * uses [Primary]. The source payload may contain the textured superset, so only the four

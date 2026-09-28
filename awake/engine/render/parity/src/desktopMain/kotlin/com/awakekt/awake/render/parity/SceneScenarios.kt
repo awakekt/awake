@@ -41,11 +41,20 @@ const val SCENE_SIZE: Int = 128
  * was extended to catch put it on the opposite side of the ground from the caster, which is a
  * correct-looking picture unless something compares the two backends.
  */
-fun Renderer.renderShadowScene(): ByteArray {
+fun Renderer.renderShadowScene(texturedGround: Boolean = false): ByteArray {
     val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
-    val ground = createMesh(plane(GROUND_HALF, y = 0f))
+    val ground = createMesh(if (texturedGround) texturedPlane() else plane(GROUND_HALF, y = 0f))
     val caster = createMesh(plane(CASTER_HALF, y = CASTER_Y, r = 1f, g = 0f, b = 0f))
     val material = createMaterial(LitShadowUniformLayout)
+    val groundMaterial = if (texturedGround) {
+        createMaterial(
+            texture = SolidWhite,
+            uniformFloatCount = MaterialUniformLayouts.PbrTextured.total,
+            pbrTextures = PbrTextureSet(),
+        )
+    } else {
+        material
+    }
     return try {
         val lens = Lens(
             eye = Vec3f(0f, EYE_Y, EYE_Z),
@@ -61,7 +70,7 @@ fun Renderer.renderShadowScene(): ByteArray {
             target,
             ScenePassCompiler.compile(
                 lens = lens,
-                drawCalls = listOf(RenderDrawCommand(ground, material), RenderDrawCommand(caster, material)),
+                drawCalls = listOf(RenderDrawCommand(ground, groundMaterial), RenderDrawCommand(caster, material)),
                 light = light,
                 clipSpace = clipSpace,
                 aspect = 1f,
@@ -73,6 +82,7 @@ fun Renderer.renderShadowScene(): ByteArray {
         ground.destroy()
         caster.destroy()
         material.destroy()
+        if (texturedGround) groundMaterial.destroy()
         target.destroy()
     }
 }
@@ -207,6 +217,8 @@ private val SolidOrange = TextureAsset(
     width = 2,
     height = 2,
 )
+
+private val SolidWhite = TextureAsset(data = ByteArray(2 * 2 * 4) { -1 }, width = 2, height = 2)
 
 /** Position/normal/colour/UV plane used by [renderTexturedPbrScene]. */
 private fun texturedPlane() = MeshGeometry(
