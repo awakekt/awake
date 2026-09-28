@@ -30,4 +30,11 @@ interface WindowLifecycle {
     fun resume()
     fun resize(x: Int, y: Int, width: Int, height: Int)
     fun dispose()
+
+    /** The window lost its surface (Android: the app went to the background). The renderer and
+     * the app stay alive; nothing is drawn until [restoreSurface]. */
+    fun releaseSurface() = Unit
+
+    /** A new [surface] replaces the one given up in [releaseSurface]. */
+    fun restoreSurface(surface: Any) = Unit
 }

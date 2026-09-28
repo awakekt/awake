@@ -332,8 +332,10 @@ class SwapchainManager(
         headlessImageMemory.forEach { VulkanBuffers.vkFreeMemory(device, it) }
         headlessImages = LongArray(0)
         headlessImageMemory = LongArray(0)
+        imageViews = emptyList()
         // Headless owns no swapchain, and its device need not load the entry point at all.
         if (swapChain != 0L) Vulkan.vkDestroySwapchainKHR(device, swapChain)
+        swapChain = 0
     }
 
     fun createSyncObjects() {

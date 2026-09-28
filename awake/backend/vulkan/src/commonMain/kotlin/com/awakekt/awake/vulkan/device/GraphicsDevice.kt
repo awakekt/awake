@@ -71,6 +71,17 @@ class GraphicsDevice {
         createLogicalDevice(indices)
     }
 
+    /**
+     * Swaps the presentation surface for [window] on the same instance and device, or releases it
+     * when [window] is null. The caller must have destroyed the swapchain built on the old surface.
+     */
+    fun replaceSurface(window: Any?) {
+        if (surface != 0L) Vulkan.vkDestroySurfaceKHR(instance, surface)
+        surface = 0L
+        nativeWindow = window
+        if (window != null) surface = createSurface(instance, window)
+    }
+
     /** Desktop-only headless variant of [create] for pure offscreen rendering (no window, no
      * `VkSurfaceKHR`, no swapchain -- see `Renderer`'s createHeadless doc comment and
      * docs/reference/decision-log.md's pixel-baseline-testing entry). `surface` stays `0L`

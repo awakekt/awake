@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Android apps survive going to the background.** `VulkanView` disposed the whole engine when its surface was destroyed and built a new device when it came back, while the app kept resources made on the old device, so the first draw after returning failed. The surface is now released and replaced on the same device and renderer: `WindowLifecycle` gains `releaseSurface()`/`restoreSurface(surface)`, the app is paused in between, and the engine is disposed when the view detaches.
+- **A second Vulkan debug messenger no longer aborts the process.** The messenger's JNI accessor was copied on every use, and the copy freed the global references the singleton still held; recreating the device (an Android app returning from the background) then freed them again and ART aborted with a stale global reference. The accessor is now returned by reference and can't be copied.
+
 ## [0.1.0-alpha.12] - 2026-09-29
 
 ### Added
@@ -21,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **A second Vulkan debug messenger no longer aborts the process.** The messenger's JNI accessor was copied on every use, and the copy freed the global references the singleton still held; recreating the device (an Android app returning from the background) then freed them again and ART aborted with a stale global reference. The accessor is now returned by reference and can't be copied.
 
 ## [0.1.0-alpha.11] - 2026-09-29
 
