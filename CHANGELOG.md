@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.10] - 2026-09-28
+
 ### Added
 
 - **Ragdolls, world-stream content and glTF simplification are free runtime.** They lived in Studio's commercial modules, but a shipped game needs them at runtime, which is never commercial. New `com.awakekt.awake.physics:ragdoll` (`humanoidRagdoll`, `RagdollRig`, `Ragdoll`, `RagdollSkeleton`, on `physics:api` only) and `com.awakekt.awake.scene:worldstream` (`MeshCellStreamer`, `PhysicsCellStreamer`, `heightFieldCellStreamer`, `VirtualTerrainCellStreamListener`, `WorldstreamTerrainDriver`); `ProceduralTerrainSplatGenerator` joins `asset:terrain`'s splat package and `GltfMesh.simplified` joins `asset:gltf`.
