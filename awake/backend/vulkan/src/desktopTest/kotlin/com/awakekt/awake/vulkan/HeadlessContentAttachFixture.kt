@@ -10,9 +10,12 @@ import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
 import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.render.passes.ScenePassCompiler
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.PipelineRegistry
+import com.awakekt.awake.render.pipeline.ShaderSource
 import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -22,6 +25,7 @@ import com.awakekt.awake.vulkan.pipeline.PipelineTable
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 import com.awakekt.awake.vulkan.pipeline.ShaderPair
 import com.awakekt.awake.vulkan.pipeline.VulkanPipelineFactory
+import com.awakekt.awake.vulkan.pipeline.VulkanShaderReplacement
 import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.renderer.Renderer
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
@@ -46,6 +50,22 @@ internal class HeadlessContentAttachFixture private constructor(
     private val device: GraphicsDevice,
     private val cleanup: () -> Unit,
 ) {
+    /** One frame through `draw`, into the stand-in swapchain images; needs a presentable fixture. */
+    fun draw(lens: Lens) {
+        renderer.draw(
+            ScenePassCompiler.compile(
+                lens = lens,
+                drawCalls = emptyList(),
+                light = DEFAULT_SCENE_LIGHT,
+                environment = EnvironmentUniforms.Default,
+                clipSpace = renderer.clipSpace,
+                aspect = 1f,
+                viewport = null,
+                drawPreparer = renderer.gpuDrawPreparer,
+            ),
+        )
+    }
+
     /** One frame of whatever is attached, as tightly packed RGBA8 rows. */
     fun render(lens: Lens, environment: EnvironmentUniforms = EnvironmentUniforms.Default): ByteArray {
         val target = renderer.createRenderTarget(size, size)
@@ -67,13 +87,17 @@ internal class HeadlessContentAttachFixture private constructor(
 
     companion object {
         const val TARGET_SIZE = 128
-        private const val MAX_FRAMES_IN_FLIGHT = 1
 
-        fun create(): HeadlessContentAttachFixture {
+        /**
+         * [presentable] boots the stand-in swapchain images and sync objects `VulkanEngine` uses
+         * headless, so [draw] and `readPresentedPixels` work with [framesInFlight] frames in flight.
+         */
+        fun create(framesInFlight: Int = 1, presentable: Boolean = false): HeadlessContentAttachFixture {
             val graphicsDevice = GraphicsDevice()
             graphicsDevice.createHeadless()
-            val swapchainManager = SwapchainManager(graphicsDevice, MAX_FRAMES_IN_FLIGHT)
-            swapchainManager.createHeadless(TARGET_SIZE, TARGET_SIZE)
+            val swapchainManager = SwapchainManager(graphicsDevice, framesInFlight).apply {
+                if (presentable) createHeadlessPresentable(TARGET_SIZE, TARGET_SIZE) else createHeadless(TARGET_SIZE, TARGET_SIZE)
+            }
             val material = Material(graphicsDevice)
             val sceneRenderPass = createSceneRenderPass(graphicsDevice, swapchainManager)
             val transferContext = TransferContext(graphicsDevice)
@@ -86,14 +110,11 @@ internal class HeadlessContentAttachFixture private constructor(
                     swapchainManager = swapchainManager,
                     renderPass = sceneRenderPass,
                     descriptorSetLayout = material.descriptorSetLayout,
-                    framesInFlight = MAX_FRAMES_IN_FLIGHT,
+                    framesInFlight = framesInFlight,
                     declaredEngineSetLayouts = mapOf(
                         BindingSemantic.ShadowDepth to DescriptorSetLayoutHandle(shadowPlaceholder.descriptorSetLayout),
                     ),
-                    loadShaders = { spec ->
-                        NagaShaderCompiler.wgslToSpirv(spec.vertexShader.resolveBytes().decodeToString())
-                            .let { ShaderPair(it, it) }
-                    },
+                    loadShaders = { spec -> compileWgsl(spec.vertexShader) },
                 ),
             )
             val attacher = ContentFeatureAttacher(VulkanContentFeatureGpu(graphicsDevice, transferContext, registry))
@@ -115,16 +136,26 @@ internal class HeadlessContentAttachFixture private constructor(
                 uiShaderPairs = runBlocking { defaultUiShaderPairs() },
                 transferContext = transferContext,
                 renderFeatures = listOf(attacher.beforeGeometry, attacher.afterGeometry),
-                maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
+                maxFramesInFlight = framesInFlight,
             )
             renderer.bindShadowDepth(shadowPlaceholder)
+            renderer.shaderReplacement = VulkanShaderReplacement(graphicsDevice, registry) { vertex, _ -> compileWgsl(vertex) }
+            if (presentable) swapchainManager.createSyncObjects()
             val headless = headlessCleanup(graphicsDevice, transferContext, sceneRenderPass, material.descriptorSetLayout, primary)
             return HeadlessContentAttachFixture(renderer, attacher, graphicsDevice) {
                 registry.destroyAll { it.destroy() }
                 attacher.releaseAll()
                 shadowPlaceholder.destroy()
+                if (presentable) {
+                    swapchainManager.destroy()
+                    swapchainManager.destroySyncObjects()
+                }
                 headless()
             }
         }
     }
 }
+
+/** An ASL program's one WGSL module as SPIR-V, both stages picking their own entry point from it. */
+private suspend fun compileWgsl(source: ShaderSource): ShaderPair =
+    NagaShaderCompiler.wgslToSpirv(source.resolveBytes().decodeToString()).let { ShaderPair(it, it) }

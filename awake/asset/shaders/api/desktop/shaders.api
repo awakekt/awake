@@ -211,6 +211,7 @@ public final class com/awakekt/awake/asset/shaders/ShaderSet {
 
 public final class com/awakekt/awake/asset/shaders/ShaderSetLoadingKt {
 	public static final fun entryPoint (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStage;)Ljava/lang/String;
+	public static final fun program (Lcom/awakekt/awake/asset/shaders/ShaderStages;)Lcom/awakekt/awake/render/pipeline/ShaderProgram;
 	public static final fun resourcePath (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStage;)Ljava/lang/String;
 	public static final fun source (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/asset/shaders/ShaderStage;)Lcom/awakekt/awake/render/pipeline/ShaderSource;
 	public static final fun spec (Lcom/awakekt/awake/asset/shaders/ShaderStages;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/PipelineVariant;Lcom/awakekt/awake/render/pipeline/BindingLayout;Lcom/awakekt/awake/render/pipeline/GroupBindings;ZLjava/util/Map;ZLcom/awakekt/awake/render/renderer/UniformLayout;)Lcom/awakekt/awake/render/pipeline/PipelineSpec;

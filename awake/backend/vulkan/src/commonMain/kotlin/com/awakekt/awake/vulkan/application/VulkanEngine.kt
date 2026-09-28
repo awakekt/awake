@@ -56,6 +56,7 @@ import com.awakekt.awake.vulkan.pipeline.VulkanLinePass
 import com.awakekt.awake.vulkan.pipeline.VulkanPipelineFactory
 import com.awakekt.awake.vulkan.pipeline.VulkanRenderFrameContext
 import com.awakekt.awake.vulkan.pipeline.VulkanShaderResolver
+import com.awakekt.awake.vulkan.pipeline.VulkanShaderReplacement
 import com.awakekt.awake.vulkan.pipeline.VulkanUiPass
 import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.pipeline.requireSpirV
@@ -604,6 +605,9 @@ open class VulkanEngine(
                 sceneDepthPass = sceneDepthPass,
             ).also { renderer ->
                 renderer.contentFeatureHost = contentAttacher
+                renderer.shaderReplacement = VulkanShaderReplacement(graphicsDevice, pipelineRegistry) { vertex, fragment ->
+                    loadShaderPair(shaderResolver, vertex, fragment)
+                }
                 bindDepthPlaceholder(renderer)
             }
             createdRenderer = renderer

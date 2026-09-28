@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Replace a running shader without a restart (Vulkan).** `renderer.capability(ShaderReplacement)` returns a `ShaderReplacement` whose `replace(old, new)` rebuilds every pipeline running the `old` shader program with `new`, in place, so the renderer, the pipeline table and content features all draw with it from the next frame. `ShaderStages.program()` turns an ASL set into a `ShaderProgram`. A replacement that does not compile, or binds differently from the pipeline, is refused with `ShaderReplacementException` and changes nothing; replacements chain. Call it on the render thread between frames. WebGPU returns null for now, and depth-only and debug-line pipelines are not replaced.
+
 ### Fixed
 
 - **Projects keep opening once the engine reaches alpha.10.** `AwakeProjectValidator.isCompatible` compared pre-release tags as text, so `0.1.0-alpha.10-SNAPSHOT` sorted before `0.1.0-alpha.4` and an engine at alpha.10 refused every project requiring alpha.4 or later. Numeric parts now compare as numbers, and a `-SNAPSHOT` sorts just below the version it leads to.

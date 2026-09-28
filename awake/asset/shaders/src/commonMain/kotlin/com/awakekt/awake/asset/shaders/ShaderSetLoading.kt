@@ -10,6 +10,7 @@ import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineSpec
 import com.awakekt.awake.render.pipeline.PipelineVariant
+import com.awakekt.awake.render.pipeline.ShaderProgram
 import com.awakekt.awake.render.pipeline.ShaderSource
 import com.awakekt.awake.render.pipeline.entryPoint
 import com.awakekt.awake.render.renderer.UniformLayout
@@ -59,6 +60,13 @@ fun ShaderStages.spec(
     bindingsMetadataAvailable = bindingsMetadataAvailable,
     usesMaterialGroup = usesMaterialGroup,
     uniforms = uniforms,
+)
+
+/** These graphics stages as a [ShaderProgram], for a [com.awakekt.awake.render.pipeline.ShaderReplacement]. */
+fun ShaderStages.program(): ShaderProgram = ShaderProgram(
+    vertex = source(ShaderStage.VERTEX),
+    fragment = source(ShaderStage.FRAGMENT),
+    bindingsByGroup = bindingsByGroup.takeIf { bindingsMetadataAvailable },
 )
 
 /** [name]'s pipeline build wrapped so a resource-not-found/shader-module-creation failure says
