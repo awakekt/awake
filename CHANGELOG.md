@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Terrain casts shadows.** Clipmap terrain is displaced on the GPU, so no shadow pass drew it and hills and cliffs cast nothing. `RenderSystem3D` now submits each visible terrain's heightmap as a mesh drawn into the shadow maps only -- up to 513 samples a side, every n-th sample past that -- rebuilt when the heightmap or its revision changes. `RenderDrawCommand.shadowsOnly` marks such a draw for any other stand-in caster: the pass compiler hands it to every shadow pass and keeps it out of the scene.
+
 ## [0.1.0-alpha.11] - 2026-09-29
 
 ### Added

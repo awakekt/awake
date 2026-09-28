@@ -14,6 +14,7 @@ import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
+import com.awakekt.awake.scene.rendering.terrain.TerrainShadowCasters
 
 class RenderSystem3D(
     private val renderer: Renderer,
@@ -48,6 +49,7 @@ class RenderSystem3D(
         rendererViewport = viewportProvider,
         drawPreparer = drawPreparer,
         features = features,
+        terrainCasters = TerrainShadowCasters(renderer),
     )
     private var elapsedTimeSeconds = 0f
     private var lastPlannedFrame: SceneRenderPlanner3D.PlannedFrame? = null

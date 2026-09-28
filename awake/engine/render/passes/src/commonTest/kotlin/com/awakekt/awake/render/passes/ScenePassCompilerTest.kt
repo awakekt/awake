@@ -65,6 +65,42 @@ class ScenePassCompilerTest {
         assertEquals(1, input.resolvedOpaqueDraws.size)
     }
 
+    /** A shadow-only draw casts in every shadow pass but never reaches the scene. */
+    @Test
+    fun aShadowOnlyDrawIsDrawnIntoTheShadowPassesOnly() {
+        val mesh = object : Mesh {
+            override val format = VertexFormat.PositionNormalColor
+            override val sizeBytes = 0L
+            override fun destroy() = Unit
+        }
+        val material = object : Material {
+            override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
+            override fun destroy() = Unit
+        }
+        val drawsBySource = HashMap<Int, GpuResolvedDraw>()
+        val input = ScenePassCompiler.compile(
+            lens = Lens(eye = Vec3f(0f, 1f, 2f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 10f),
+            drawCalls = listOf(RenderDrawCommand(mesh, material), RenderDrawCommand(mesh, material, shadowsOnly = true)),
+            light = SceneLight(direction = Vec3f(0f, -1f, 0f), color = Vec3f(1f, 1f, 1f), viewProjection = com.awakekt.awake.core.math.Mat4()),
+            clipSpace = ClipSpace.Vulkan,
+            aspect = 1f,
+            drawPreparer = GpuDrawPreparer { _, sourceIndex, _ ->
+                GpuResolvedDraw(
+                    pipeline = object : PipelineHandle {},
+                    materialBinding = object : MaterialBinding {},
+                    vertexBuffer = object : BufferHandle {},
+                    indexBuffer = null,
+                    elementCount = 3,
+                ).also { drawsBySource[sourceIndex] = it }
+            },
+        )
+
+        val (visible, shadowOnly) = drawsBySource.getValue(0) to drawsBySource.getValue(1)
+        assertEquals(listOf(visible), input.resolvedOpaqueDraws)
+        assertTrue(input.prePasses.isNotEmpty())
+        input.prePasses.forEach { pass -> assertEquals(listOf(visible, shadowOnly), pass.resolvedDraws) }
+    }
+
     @Test
     fun drawPreparerReceivesCompiledFrameContext() {
         val mesh = object : Mesh {

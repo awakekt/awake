@@ -11,6 +11,7 @@ import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.renderer.RenderViewport
+import com.awakekt.awake.scene.rendering.terrain.TerrainShadowCasters
 
 /**
  * Renderer-free 3D scene extraction and pass planning.
@@ -25,6 +26,7 @@ internal class SceneRenderPlanner3D(
     private val rendererViewport: () -> RenderViewport?,
     drawPreparer: GpuDrawPreparer?,
     features: List<RenderFeature3D> = emptyList(),
+    private val terrainCasters: TerrainShadowCasters? = null,
 ) {
     private val drawPreparer: GpuDrawPreparer = requireNotNull(drawPreparer) {
         "SceneRenderPlanner3D requires a GpuDrawPreparer from the render-pipeline bootstrap"
@@ -45,6 +47,7 @@ internal class SceneRenderPlanner3D(
         val contributions = featureCollector.collect(world, camera, elapsedTimeSeconds, aspect)
         drawCalls += contributions.particleDraws
         drawCalls += geometryFeature.finish(world, geometryFrame, camera)
+        terrainCasters?.collect(world, drawCalls)
         drawCalls += contributions.authoredDraws
 
         val passInput = ScenePassCompiler.compile(

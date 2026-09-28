@@ -37,6 +37,9 @@ data class GpuDrawRequest(
     val alphaMode: AlphaMode = AlphaMode.Opaque,
     val alphaCutoff: Float = DEFAULT_ALPHA_CUTOFF,
     val transparent: Boolean = false,
+    /** Drawn into shadow maps only, never into the scene: a stand-in caster for something the
+     * scene draws another way, such as GPU-displaced terrain. */
+    val shadowsOnly: Boolean = false,
 )
 
 private val EMPTY_UNIFORM_FLOATS = FloatArray(0)
