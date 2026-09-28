@@ -46,6 +46,7 @@ import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
 import com.awakekt.awake.webgpu.pipeline.WebGpuRenderFrameContext
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
+import com.awakekt.awake.webgpu.texture.DepthTarget
 import com.awakekt.awake.webgpu.texture.OffscreenRenderTarget
 import com.awakekt.awake.webgpu.texture.Texture
 import com.awakekt.awake.webgpu.ui.DynamicMesh
@@ -127,6 +128,10 @@ class Renderer internal constructor(
 
     /** Where [attachContentFeature] goes, set by the engine that built this renderer. */
     internal var contentFeatureHost: ContentFeatureHost? = null
+
+    /** A 1x1 shadow map bound for a pipeline that declares the group when [depthPrePass] is null;
+     * set by the engine, destroyed here. */
+    internal var depthPrePassPlaceholder: DepthTarget? = null
 
     override suspend fun attachContentFeature(source: ContentFeatureSource): AttachedContentFeature =
         checkNotNull(contentFeatureHost) {
@@ -274,6 +279,7 @@ class Renderer internal constructor(
         lineMesh.destroy()
         depthPrePass?.destroy()
         sceneDepthPass?.destroy()
+        depthPrePassPlaceholder?.destroy()
     }
 
     companion object {

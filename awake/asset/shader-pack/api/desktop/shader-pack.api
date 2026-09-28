@@ -51,9 +51,10 @@ public final class com/awakekt/awake/asset/shaderpack/AslSkyboxShaderKt {
 public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 	public static final field MAX_CLIPMAP_RINGS I
 	public static final field TERRAIN_SURFACE_FIRST_BINDING I
-	public static final fun getTerrainShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun terrainClipmapVertexStage (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;Z)Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;
 	public static synthetic fun terrainClipmapVertexStage$default (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;
+	public static final fun terrainShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun terrainShadowSampling (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;Lcom/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs;Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslFunctionHandle;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslTexturedShaderKt {
@@ -190,6 +191,7 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxUniformsKt {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs {
+	public final fun getCascades ()Lcom/awakekt/awake/asset/shaderpack/CascadeShadowInputs;
 	public final fun getSunDirection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getTerrainParams ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getTerrainSampling ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;

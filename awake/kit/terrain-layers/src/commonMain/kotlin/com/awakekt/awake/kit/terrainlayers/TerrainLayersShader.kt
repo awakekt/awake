@@ -43,7 +43,9 @@ import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
+import com.awakekt.awake.asset.shaderpack.terrainShadowSampling
 import com.awakekt.awake.asset.shaders.aslShaderSet
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 
@@ -77,9 +79,13 @@ private const val CONTROL_TAPS = 4
  * returns each texel exactly: content textures share one sampler, and the DSL has no
  * `textureLoad`. Every texture sample sits outside the merge's branches, where implicit
  * derivatives are defined.
+ *
+ * The engine's shadows darken both lighting paths: the sun's direct share, and the bake down to
+ * the ambient floor, since a bake cannot know what stands on the terrain now.
  */
-val TerrainLayersShader: AslShaderDefinition = shader("terrain_layers") {
+fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain_layers") {
     val terrain = terrainClipmapVertexStage()
+    val sampleShadow = terrainShadowSampling(terrain, clipSpace)
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
     val albedoLayers by texture2dArray(group = group, binding = LAYER_ALBEDO_BINDING)
     val layerParams by texture2d(group = group, binding = LAYER_TABLE_BINDING)
@@ -94,8 +100,9 @@ val TerrainLayersShader: AslShaderDefinition = shader("terrain_layers") {
         val normal = let("normal", normalize(terrain.worldNormal))
         val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
         val ambient = let("ambient", terrain.sunDirection.w)
-        val diffuse = let("diffuse", max(dot(normal, toLight), 0f.lit))
-        val lighting = let("lighting", ambient + (1f.lit - ambient) * diffuse)
+        val nDotL = let("nDotL", max(dot(normal, toLight), 0f.lit))
+        val shadow = let("shadow", sampleShadow(terrain.worldPosition, normal, nDotL))
+        val lighting = let("lighting", ambient + (1f.lit - ambient) * nDotL * shadow)
         val position = terrain.worldPosition
         val sampling = terrain.terrainSampling
         val baked = let(
@@ -103,13 +110,13 @@ val TerrainLayersShader: AslShaderDefinition = shader("terrain_layers") {
             textureSampleLevel(lightmap, layerSampler, vec2(position.x / sampling.x + 0.5f.lit, position.z / sampling.y + 0.5f.lit), 0f.lit),
         )
         // 128 in the lightmap is x1; its alpha hands lighting over from the sun to the bake.
-        val light = let("light", mix(lighting, 1f.lit, baked.w))
+        val light = let("light", mix(lighting, mix(ambient, 1f.lit, shadow), baked.w))
         colorOutput(vec4(albedo * baked.xyz * 2f.lit * light, 1f.lit))
     }
 }
 
-/** [TerrainLayersShader] for both backends. */
-val TerrainLayersShaders = aslShaderSet(TerrainLayersShader)
+/** [terrainLayersShader] for both backends. */
+val TerrainLayersShaders = aslShaderSet(::terrainLayersShader)
 
 /** A merge slot: a palette index (or [NO_LAYER]) and its accumulated weight, both mutable. */
 private class Slot(val layer: AslExpr, val weight: AslExpr)
