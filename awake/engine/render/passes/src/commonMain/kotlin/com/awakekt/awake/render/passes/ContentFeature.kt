@@ -91,15 +91,19 @@ class ContentFeature(
                 "pipeline declares sampled textures at ${declared.sorted()}. Every declared " +
                 "binding needs pixel data and every supplied texture needs a binding."
         }
-        // Layer count is the one texture property the shader also states, so it is the one that
-        // can disagree. Sampling a 2D view through a `texture_2d_array` declaration is a Vulkan
-        // validation error naming a descriptor index, far from the mismatched asset.
+        // The texture's shape -- 2D, array or cube -- is the one property the shader also states,
+        // so it is the one that can disagree. Sampling a 2D view through a `texture_2d_array`
+        // declaration is a Vulkan validation error naming a descriptor index, far from the asset.
         sampled.forEach { entry ->
-            val layers = textures.getValue(entry.binding).layerCount
-            require(entry.arrayed == (layers > 1)) {
-                val declaredAs = if (entry.arrayed) "texture_2d_array" else "texture_2d"
-                "Content feature '$name' declares binding ${entry.binding} as $declaredAs but " +
-                    "supplies $layers layer(s) there."
+            val texture = textures.getValue(entry.binding)
+            val (declaredAs, matches) = when {
+                entry.cubemap -> "texture_cube" to texture.isCubemap
+                entry.arrayed -> "texture_2d_array" to (texture.layerCount > 1 && !texture.isCubemap)
+                else -> "texture_2d" to (texture.layerCount == 1)
+            }
+            require(matches) {
+                val supplied = if (texture.isCubemap) "a cubemap" else "${texture.layerCount} layer(s)"
+                "Content feature '$name' declares binding ${entry.binding} as $declaredAs but supplies $supplied there."
             }
         }
         require(geometry == null || spec.vertexFormat == geometry.format) {

@@ -1062,6 +1062,10 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleVisual {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/rendering/sky/CubemapStripKt {
+	public static final fun decodeCubemapStrip ([BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/scene/rendering/sky/SceneSkybox : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox$Companion;
 	public fun <init> ()V
@@ -1219,6 +1223,11 @@ public final class com/awakekt/awake/scene/rendering/sky/SkyboxBinding : com/awa
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 	public final fun toComponent (Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;)Lcom/awakekt/awake/scene/rendering/sky/Skybox;
 	public final fun toSceneComponent (Lcom/awakekt/awake/scene/rendering/sky/Skybox;)Lcom/awakekt/awake/scene/rendering/sky/SceneSkybox;
+}
+
+public final class com/awakekt/awake/scene/rendering/sky/SkyboxCubemapSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureHost;Lkotlinx/coroutines/CoroutineScope;Lcom/awakekt/awake/core/io/AssetSource;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
 public final class com/awakekt/awake/scene/rendering/sky/SkyboxKt {
