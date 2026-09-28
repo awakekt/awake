@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The Android Vulkan library is 16 KB page aligned.** `libawake-vulkan.so` (arm64-v8a and x86_64) linked with 4 KB LOAD segments, which Google Play rejects for apps targeting Android 15+. It now links with `-z max-page-size=16384`.
 - **Textured meshes keep their shade out of the sun.** The textured PBR shader lit a glTF base-colour texture's sRGB bytes as if they were linear and wrote the result unencoded, while targets take sRGB-encoded colour, as `lit_shadow` writes it. Lit faces came out about right, but a face lit by ambient alone lost almost all of it: mid-grey 128 came out as 10, near black, on Vulkan and in the browser. Base colour and emissive textures are now decoded to linear, and the output is encoded, as `lit_shadow` does; that face now comes out as 41.
 
 ## [0.1.0-alpha.11] - 2026-09-29
@@ -22,9 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Cubemap skies draw.** `Skybox.Mode.Cubemap` (`SceneSkybox(type = "Cubemap", cubemapPath = ...)` in a scene file) rendered nothing. `SkyboxCubemapSystem(host, scope, assets)` now reads the path as a cubemap strip -- six square faces side by side, +X, -X, +Y, -Y, +Z, -Z, each laid out as the GPU samples a cube face -- and draws it behind the scene through `skyboxCubemapContentFeature(cubemap)`; another path swaps it and leaving cubemap mode removes it. An app registers the system like `TerrainContentSystem`. `decodeCubemapStrip` decodes a strip, and a content feature can now bind a cube texture.
 
-### Fixed
-
-- **The Android Vulkan library is 16 KB page aligned.** `libawake-vulkan.so` (arm64-v8a and x86_64) linked with 4 KB LOAD segments, which Google Play rejects for apps targeting Android 15+. It now links with `-z max-page-size=16384`.
 
 ## [0.1.0-alpha.10] - 2026-09-28
 
