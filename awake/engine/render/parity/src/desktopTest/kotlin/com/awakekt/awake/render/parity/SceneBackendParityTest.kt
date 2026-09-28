@@ -6,6 +6,7 @@
 package com.awakekt.awake.render.parity
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.testing.HeadlessRenderSession
@@ -53,6 +54,23 @@ class SceneBackendParityTest {
             kotlin.math.abs(vulkan - webGpu) <= TEXTURED_COVERAGE_TOLERANCE,
             "textured PBR coverage diverged: Vulkan $vulkan px, WebGPU $webGpu px",
         )
+    }
+
+    /**
+     * A texture is sRGB: lit only by ambient, mid-grey 128 comes out as encode(decode(128) x 0.08),
+     * about 41, not the 10 that lighting the raw bytes and writing them unencoded gives.
+     */
+    @Test
+    fun anAmbientLitTextureKeepsItsShadeOnBothBackends() {
+        BACKEND_ORDER.forEach { backend ->
+            val pixels = session(backend).renderer.renderTexturedPbrScene(
+                texture = TextureAsset(ByteArray(2 * 2 * 4) { if (it % 4 == 3) -1 else MID_GREY.toByte() }, 2, 2),
+                sunDirection = Vec3f(0f, -1f, 0f),
+            )
+            val red = pixels[(SCENE_SIZE / 2 * SCENE_SIZE + SCENE_SIZE / 2) * 4].toInt() and 0xFF
+            val shade = if (backend == HeadlessUiBackend.WebGpu) SRGB_TO_LINEAR[red] else red
+            assertTrue(kotlin.math.abs(shade - AMBIENT_SHADE) <= SHADE_TOLERANCE, "$backend ambient shade $shade, expected about $AMBIENT_SHADE")
+        }
     }
 
     /** Time picks the frame; frames play in reading order from the image's top-left and wrap. */
@@ -195,7 +213,7 @@ class SceneBackendParityTest {
     private fun ByteArray.shadowCentroid(below: (lit: Int) -> Int = { it - SHADOW_MARGIN }): Pair<Int, Int>? {
         val ground = (GROUND_TOP..GROUND_BOTTOM).flatMap { y ->
             (0 until SCENE_SIZE).map { x -> x to y }
-        }.filter { (x, y) -> luminanceAt(x, y) > 0 }
+        }.filter { (x, y) -> luminanceAt(x, y) > 0 && isGreyAt(x, y) }
         // The ground is most of the frame, so its lit value is the most common one in it.
         val lit = ground.groupingBy { (x, y) -> luminanceAt(x, y) }.eachCount().maxByOrNull { it.value }?.key
         val shadowed = ground.filter { (x, y) -> lit != null && luminanceAt(x, y) < below(lit) }
@@ -214,6 +232,13 @@ class SceneBackendParityTest {
     }
 
     private fun shadowLevel(lit: Int): Int = lit * 3 / 4
+
+    /** Ground and its shadow are grey; the red caster is not, whatever its brightness. */
+    private fun ByteArray.isGreyAt(x: Int, y: Int): Boolean {
+        val offset = (y * SCENE_SIZE + x) * 4
+        val channels = (0..2).map { this[offset + it].toInt() and 0xFF }
+        return channels.max() - channels.min() <= GREY_SPREAD
+    }
 
     private fun redSum(backend: HeadlessUiBackend, pixels: ByteArray): Int = pixels.asSequence()
         .filterIndexed { index, _ -> index % 4 == 0 }
@@ -265,6 +290,13 @@ class SceneBackendParityTest {
         /** Antialiasing and PBR rounding move a centroid by a pixel; a mirrored lookup moves it
          * across the ground. */
         const val CENTROID_TOLERANCE = 3
+
+        const val MID_GREY = 128
+        const val GREY_SPREAD = 16
+
+        /** 255 x ((128 / 255)^2.2 x 0.08)^(1 / 2.2). */
+        const val AMBIENT_SHADE = 41
+        const val SHADE_TOLERANCE = 6
 
         /** Red, green, blue, yellow: frames 0 to 3 of [FRAME_SHEET]. */
         val FRAME_COLOURS = listOf(

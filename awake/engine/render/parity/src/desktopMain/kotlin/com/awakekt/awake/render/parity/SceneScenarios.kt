@@ -100,6 +100,7 @@ fun Renderer.renderTexturedPbrScene(
     texture: TextureAsset = SolidOrange,
     textureAnimation: TextureAnimation = TextureAnimation.None,
     timeSeconds: Float = 0f,
+    sunDirection: Vec3f = Vec3f(0f, 1f, 0f),
 ): ByteArray {
     val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
     val mesh = createMesh(texturedPlane())
@@ -133,7 +134,7 @@ fun Renderer.renderTexturedPbrScene(
             ScenePassCompiler.compile(
                 lens = lens,
                 drawCalls = listOf(draw),
-                light = SceneLight(direction = Vec3f(0f, 1f, 0f), color = Vec3f(1f, 1f, 1f)),
+                light = SceneLight(direction = sunDirection, color = Vec3f(1f, 1f, 1f)),
                 environment = environment,
                 clipSpace = clipSpace,
                 aspect = 1f,

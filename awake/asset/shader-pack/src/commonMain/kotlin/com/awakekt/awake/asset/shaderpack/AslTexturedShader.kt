@@ -150,6 +150,20 @@ private fun textured(clipSpace: ClipSpace): AslShaderDefinition = shader("textur
     val epsilon = const("EPSILON", 0.0001f)
     val dielectricF0 = const("DIELECTRIC_F0", 0.04f)
     val minRoughness = const("MIN_ROUGHNESS", 0.05f)
+    val gamma = const("GAMMA", 2.2f)
+    val invGamma = const("INV_GAMMA", 1.0f / 2.2f)
+
+    // glTF stores base colour and emissive as sRGB; lighting needs them linear.
+    val srgbToLinear = fn("srgbToLinear", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val encoded by param(GpuDataShape.Vec3)
+        returnValue(pow(max(encoded, vec3(0f.lit)), vec3(gamma)))
+    }
+
+    // Targets are UNORM and take sRGB-encoded colour, as lit_shadow writes it.
+    val linearToSrgb = fn("linearToSrgb", returns = AslType.Data(GpuDataShape.Vec3)) {
+        val linear by param(GpuDataShape.Vec3)
+        returnValue(pow(max(linear, vec3(0f.lit)), vec3(invGamma)))
+    }
     val cascades = cascadeShadowSampling(cascadeInputs, shadowMap, shadowMapSampler, clipSpace, epsilon)
 
     val distributionGgx = fn("distributionGgx") {
@@ -215,7 +229,7 @@ private fun textured(clipSpace: ClipSpace): AslShaderDefinition = shader("textur
     fragment {
         val (sampleUv, uvDx, uvDy) = animatedTextureUv(uv, textureFrames, textureScroll)
         val baseColorSample = let("baseColorSample", textureSampleGrad(baseColorTexture, baseColorSampler, sampleUv, uvDx, uvDy))
-        val albedo = let("albedo", baseColorSample.rgb * color * baseColorFactor.rgb)
+        val albedo = let("albedo", srgbToLinear(baseColorSample.rgb) * color * baseColorFactor.rgb)
         // glTF convention: G = roughness, B = metalness; factor * texture channel.
         val metallicRoughness =
             let("metallicRoughness", textureSampleGrad(metallicRoughnessTexture, baseColorSampler, sampleUv, uvDx, uvDy))
@@ -223,7 +237,7 @@ private fun textured(clipSpace: ClipSpace): AslShaderDefinition = shader("textur
         val roughness = let("roughness", clamp(metallicRoughness.g * pbrFactors.y, minRoughness, 1f.lit))
         val occlusion = let("occlusion", textureSampleGrad(occlusionTexture, baseColorSampler, sampleUv, uvDx, uvDy).r)
         val emissive =
-            let("emissive", textureSampleGrad(emissiveTexture, baseColorSampler, sampleUv, uvDx, uvDy).rgb * emissiveFactor.rgb)
+            let("emissive", srgbToLinear(textureSampleGrad(emissiveTexture, baseColorSampler, sampleUv, uvDx, uvDy).rgb) * emissiveFactor.rgb)
         val tangentNormal =
             let("tangentNormal", textureSampleGrad(normalTexture, baseColorSampler, sampleUv, uvDx, uvDy).xyz * 2f.lit - vec3(1f.lit))
 
@@ -276,8 +290,8 @@ private fun textured(clipSpace: ClipSpace): AslShaderDefinition = shader("textur
             val pSpecularOut = let("pSpecularOut", pSpecular * pRadiance)
             assign(litColor, litColor + pDiffuse * pRadiance + pSpecularOut / (pSpecularOut + vec3(1f.lit)))
         }
-        val shaded = vec4(applyFog(litColor, worldPos), baseColorSample.a * baseColorFactor.a)
-        val surface = DebugSurface(n, worldPos, albedo, shadow = shadowFactor, shadowCascade = cascades.shadowCascade(worldPos))
+        val shaded = vec4(applyFog(linearToSrgb(litColor), worldPos), baseColorSample.a * baseColorFactor.a)
+        val surface = DebugSurface(n, worldPos, linearToSrgb(albedo), shadow = shadowFactor, shadowCascade = cascades.shadowCascade(worldPos))
         colorOutput(debugViewColor(debugView, cameraPosition, surface, shaded))
     }
 }
