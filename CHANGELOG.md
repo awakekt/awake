@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.9] - 2026-09-28
+
 ### Added
 
 - **Scene files can author blended meshes.** `SceneMeshRenderer.transparent` (default `false`) serializes and reaches `MeshRenderer.transparent`, so a scene can draw water or glass in the transparent pass, blended by its material's alpha.
