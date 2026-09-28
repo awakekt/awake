@@ -326,7 +326,19 @@ open class WebGpuEngine(
             depthPrePass = depthPrePass,
             sceneDepthPass = sceneDepthPass,
             renderFeatures = renderFeatures,
-        ).also { it.contentFeatureHost = attacher }
+        ).also { renderer ->
+            renderer.contentFeatureHost = attacher
+            // A content shader may declare the shadow-map group without any shadow pass to fill it.
+            if (depthPrePass == null) {
+                renderer.depthPrePassPlaceholder = com.awakekt.awake.webgpu.texture.DepthTarget(
+                    graphicsDevice,
+                    size = 1,
+                    layers = 1,
+                    arrayed = true,
+                    comparison = true,
+                )
+            }
+        }
 
         return BackendResources(
             renderer = renderer,

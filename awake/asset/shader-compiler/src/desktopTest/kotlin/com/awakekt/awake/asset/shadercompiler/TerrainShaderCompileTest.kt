@@ -23,8 +23,9 @@ import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
-import com.awakekt.awake.asset.shaderpack.TerrainShader
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
+import com.awakekt.awake.asset.shaderpack.terrainShader
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.ResourceKind
@@ -35,18 +36,33 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** [TerrainShader] and a surface shader on the shared clipmap stage, validated by naga. */
+/** The base terrain shader and a surface shader on the shared clipmap stage, validated by naga. */
 class TerrainShaderCompileTest {
 
-    private val wgsl = TerrainShader.emitWgsl()
+    private val terrain = terrainShader(ClipSpace.Vulkan)
+    private val wgsl = terrain.emitWgsl()
 
     @Test
-    fun theTerrainShaderValidatesAndCompilesToSpirv() {
-        assertNull(NagaShaderCompiler.validate(wgsl), "WGSL validation failed for the terrain shader.")
+    fun theTerrainShaderValidatesAndCompilesToSpirvForEitherClipSpace() {
+        for (clipSpace in ClipSpace.entries) {
+            val source = terrainShader(clipSpace).emitWgsl()
+            assertNull(NagaShaderCompiler.validate(source), "WGSL validation failed for the $clipSpace terrain shader.")
 
-        val spirv = NagaShaderCompiler.wgslToSpirv(wgsl)
-        assertTrue(spirv.isNotEmpty(), "Compiled SPIR-V byte array must not be empty.")
-        assertTrue(spirv.size % 4 == 0, "SPIR-V words must be 4-byte aligned.")
+            val spirv = NagaShaderCompiler.wgslToSpirv(source)
+            assertTrue(spirv.isNotEmpty(), "Compiled SPIR-V byte array must not be empty.")
+            assertTrue(spirv.size % 4 == 0, "SPIR-V words must be 4-byte aligned.")
+        }
+    }
+
+    /** The engine's shadow map, in the group every lit shader reads it from, sampled per fragment. */
+    @Test
+    fun theTerrainShaderReadsTheShadowMapGroup() {
+        val bindings = assertNotNull(terrain.bindingsForGroup(BindingLayout.Standard.slot(BindingSemantic.ShadowDepth)))
+
+        assertEquals(listOf(0, 1), bindings.entries.map { it.binding })
+        assertTrue(assertNotNull(bindings.at(0)).arrayed)
+        assertEquals(setOf(ShaderStage.Fragment), bindings.at(0)?.stages)
+        assertEquals(ResourceKind.Sampler, bindings.at(1)?.kind)
     }
 
     /**
@@ -57,7 +73,7 @@ class TerrainShaderCompileTest {
      */
     @Test
     fun theHeightmapIsSampledFromTheVertexStage() {
-        val bindings = assertNotNull(TerrainShader.bindingsForGroup(0))
+        val bindings = assertNotNull(terrain.bindingsForGroup(0))
 
         assertEquals(ResourceKind.SampledTexture, bindings.at(1)?.kind)
         assertEquals(setOf(ShaderStage.Vertex), bindings.at(1)?.stages)
@@ -72,7 +88,7 @@ class TerrainShaderCompileTest {
     /** One block for every ring -- see `TerrainUniformLayout`'s own note on why. */
     @Test
     fun theUniformBlockIsTheOnlyBufferBinding() {
-        val bindings = assertNotNull(TerrainShader.bindingsForGroup(0))
+        val bindings = assertNotNull(terrain.bindingsForGroup(0))
 
         assertEquals(listOf(0, 1, 2), bindings.entries.map { it.binding })
         assertEquals(ResourceKind.UniformBuffer, bindings.at(0)?.kind)

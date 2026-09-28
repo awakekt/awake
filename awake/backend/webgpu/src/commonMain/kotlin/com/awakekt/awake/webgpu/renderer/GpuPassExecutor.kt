@@ -85,6 +85,7 @@ internal class RendererGpuPassExecutor(
                         input.cameraEye,
                         SurfaceSize(renderingContext.width.toInt(), renderingContext.height.toInt()),
                         input.environment,
+                        input,
                     ),
                 )
                 end()
@@ -159,6 +160,7 @@ internal class RendererGpuPassExecutor(
                     environment = input.environment,
                     surfaceWidth = offscreen.width,
                     surfaceHeight = offscreen.height,
+                    passInput = input,
                 ),
             )
             end()

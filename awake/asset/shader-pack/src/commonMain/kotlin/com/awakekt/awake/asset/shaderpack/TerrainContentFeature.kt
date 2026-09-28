@@ -22,7 +22,9 @@ import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
+import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.texture.TextureAsset
 
 /** Grey the heightfield is shaded with. Terrain colour is authored world policy (D28); this is
@@ -187,6 +189,10 @@ class TerrainRenderFeature(
     private val ringParams = FloatArray(TerrainUniformLayout.RingParams.floats)
     private val terrainParams = FloatArray(TerrainUniformLayout.TerrainParams.floats)
 
+    /** Written on a frame with no shadow pass: no cascades, and a count of 0 in the forward's `w`. */
+    private val noCascadeMatrices = FloatArray(UniformFields.CascadeViewProjections.floats)
+    private val noCascadeScales = FloatArray(UniformFields.CascadeDepthScales.floats)
+
     override fun recordCommands(context: RenderFrameContext) {
         // Before the tracker updates: a hidden terrain should cost nothing, and its rings have no
         // meaning to keep current while nothing reads them.
@@ -209,18 +215,37 @@ class TerrainRenderFeature(
             z = BASE_SHADE,
             w = heightBias,
         )
+        val pass = context.passInput
+        val cascades = context.shadowCascades
+        val forward = pass?.cameraForward
         // Written in layout order -- UniformWriter checks each field against the layout's next
         // slot, so a reordering here is an error rather than a wrongly-shaped buffer.
         uniforms.write(context.frameIndex) {
             put(TerrainUniformLayout.ViewProjection, context.viewProjection)
-            put(TerrainUniformLayout.SunDirection, context.light.direction, AMBIENT)
+            // The scene's own light when the pass carries it: the cascades are fitted to that
+            // light, so shading and shadows have to agree on where the sun is.
+            val light = pass?.passUniforms
+            if (light != null && light.size >= LIGHT_DIRECTION + 3) {
+                put(TerrainUniformLayout.SunDirection, light[LIGHT_DIRECTION], light[LIGHT_DIRECTION + 1], light[LIGHT_DIRECTION + 2], AMBIENT)
+            } else {
+                put(TerrainUniformLayout.SunDirection, context.light.direction, AMBIENT)
+            }
             put(terrainParams, TerrainUniformLayout.TerrainParams)
             put(sampling, TerrainUniformLayout.TerrainSampling)
             put(ringParams, TerrainUniformLayout.RingParams)
+            put(cascades?.matrixFloats() ?: noCascadeMatrices, UniformFields.CascadeViewProjections)
+            put(cascades?.depthScaleFloats() ?: noCascadeScales, UniformFields.CascadeDepthScales)
+            put(UniformFields.CameraPosition, context.cameraEye)
+            if (forward != null && cascades != null) {
+                put(UniformFields.CameraForward, forward, cascades.count.toFloat())
+            } else {
+                put(UniformFields.CameraForward, 0f, 0f, -1f, 0f)
+            }
         }
         val recorder: CommandRecorder = context.recorder
         recorder.bindPipeline(pipeline)
         recorder.bindMaterial(BindingSemantic.Material, uniforms.binding(context.frameIndex))
+        context.engineBinding(pipeline, BindingSemantic.ShadowDepth)?.let { recorder.bindMaterial(BindingSemantic.ShadowDepth, it) }
         recorder.bindVertexBuffer(VERTEX_BINDING, geometry.vertexBuffer)
         geometry.indexBuffer?.let { recorder.bindIndexBuffer(it) }
         recorder.drawIndexed(geometry.elementCount)
@@ -230,5 +255,8 @@ class TerrainRenderFeature(
 
     private companion object {
         const val AMBIENT = 0.35f
+
+        /** Where the directional light's direction starts in a pass's packed scene light. */
+        val LIGHT_DIRECTION = MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.LightDirection)
     }
 }

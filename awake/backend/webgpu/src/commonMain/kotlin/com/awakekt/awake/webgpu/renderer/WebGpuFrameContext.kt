@@ -9,15 +9,18 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
 import com.awakekt.awake.render.command.GpuEnvironmentState
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes2d.UiRun
+import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.webgpu.debug.LineMesh
 import com.awakekt.awake.webgpu.pipeline.WebGpuCommandRecorder
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuRenderFrameContext
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiPipelineSet
+import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
 import com.awakekt.awake.webgpu.ui.DynamicMesh
 import io.ygdrasil.webgpu.GPURenderPassEncoder
 
@@ -38,6 +41,7 @@ internal class WebGpuFrameContext(
     override val environment: GpuEnvironmentState = GpuEnvironmentState.Default,
     override val surfaceWidth: Int,
     override val surfaceHeight: Int,
+    override val passInput: GpuPassInput? = null,
 ) : WebGpuRenderFrameContext {
 
     /** Single-buffered on this backend; the ports still take it because Vulkan's resources are
@@ -54,6 +58,21 @@ internal class WebGpuFrameContext(
     override fun sceneDepthBinding(pipeline: PipelineHandle): MaterialBinding? {
         val depthTarget = renderer.sceneDepthPass?.depthTarget ?: return null
         return renderer.bufferPools.sceneDepthBindingFor(pipeline as WebGpuPipelineHandle, depthTarget)
+    }
+
+    /** The engine's target for [semantic] as a group built against [pipeline]'s layout, or null
+     * when the pipeline declares no such group. The depth pre-pass target falls back to
+     * [Renderer.depthPrePassPlaceholder] when the plan has no pre-pass. */
+    override fun engineBinding(pipeline: PipelineHandle, semantic: BindingSemantic): MaterialBinding? {
+        val handle = pipeline as WebGpuPipelineHandle
+        if (!handle.hasBindingGroup(handle.bindingLayout.slot(semantic))) return null
+        return when (semantic) {
+            BindingSemantic.ShadowDepth -> (renderer.depthPrePass?.depthTarget ?: renderer.depthPrePassPlaceholder)
+                ?.let { renderer.bufferPools.shadowBindingFor(handle, it) }
+            BindingSemantic.SceneDepth -> renderer.sceneDepthPass?.depthTarget
+                ?.let { renderer.bufferPools.sceneDepthBindingFor(handle, it) }
+            else -> null
+        }
     }
 
     override val lineMesh: LineMesh get() = renderer.lineMesh

@@ -9,6 +9,7 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
 import com.awakekt.awake.render.command.GpuEnvironmentState
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
@@ -34,6 +35,7 @@ internal class VulkanFrameContext(
     override val viewProjection: Mat4,
     override val cameraEye: Vec3f,
     override val environment: GpuEnvironmentState = GpuEnvironmentState.Default,
+    override val passInput: GpuPassInput? = null,
 ) : VulkanRenderFrameContext {
     override val lineMesh get() = renderer.lineMesh
     override val uiRuns get() = renderer.uiRuns

@@ -160,8 +160,8 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersShaderKt {
 	public static final field LAYER_ALBEDO_BINDING I
 	public static final field LAYER_TABLE_BINDING I
 	public static final field LIGHTMAP_BINDING I
-	public static final fun getTerrainLayersShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getTerrainLayersShaders ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public static final fun terrainLayersShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainLayersSurfaceKt {
