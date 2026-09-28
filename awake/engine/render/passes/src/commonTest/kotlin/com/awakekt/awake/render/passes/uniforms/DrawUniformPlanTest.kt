@@ -8,6 +8,7 @@ package com.awakekt.awake.render.passes.uniforms
 import com.awakekt.awake.core.geometry.VertexFormat
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class DrawUniformPlanTest {
     @Test
@@ -44,6 +45,16 @@ class DrawUniformPlanTest {
                 hasShadowCascades = false,
             ),
         )
+    }
+
+    /** The textured block outgrew lit_shadow's, so a UV mesh's plan follows the exact block size. */
+    @Test
+    fun aUvMeshPicksTexturedOrLitShadowByItsExactBlock() {
+        fun plan(floats: Int) = drawUniformPlan(VertexFormat.PositionNormalColorUv, floats, hasShadowCascades = true)
+
+        assertTrue(MaterialUniformLayouts.PbrTextured.total > MaterialUniformLayouts.LitShadow.total)
+        assertEquals(DrawUniformPlan.TexturedPbr, plan(MaterialUniformLayouts.PbrTextured.total))
+        assertEquals(DrawUniformPlan.LitShadow, plan(MaterialUniformLayouts.LitShadow.total))
     }
 
     @Test

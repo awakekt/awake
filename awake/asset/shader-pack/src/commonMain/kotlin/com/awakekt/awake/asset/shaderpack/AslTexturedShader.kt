@@ -40,10 +40,12 @@ import com.awakekt.awake.asset.shaderdsl.pow
 import com.awakekt.awake.asset.shaderdsl.r
 import com.awakekt.awake.asset.shaderdsl.rgb
 import com.awakekt.awake.asset.shaderdsl.sampler
+import com.awakekt.awake.asset.shaderdsl.samplerComparison
 import com.awakekt.awake.asset.shaderdsl.saturate
 import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.texture2d
+import com.awakekt.awake.asset.shaderdsl.textureDepth2dArray
 import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.textureSampleGrad
 import com.awakekt.awake.asset.shaderdsl.times
@@ -60,19 +62,20 @@ import com.awakekt.awake.asset.shaderdsl.z
 import com.awakekt.awake.core.geometry.GpuDataShape
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.geometry.VertexSemantic
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.passes.uniforms.MAX_POINT_LIGHTS
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 
 /**
- * glTF metallic-roughness PBR for `PositionNormalColorUv` -- same Cook-Torrance BRDF as
- * lit_shadow, reading metallic/roughness/normal/occlusion/emissive from textures, no shadow
- * map. A material with no map binds a 1x1 neutral placeholder, so all five sample
+ * glTF metallic-roughness PBR for `PositionNormalColorUv` -- same Cook-Torrance BRDF and cascaded
+ * sun shadow as lit_shadow, reading metallic/roughness/normal/occlusion/emissive from textures.
+ * A material with no map binds a 1x1 neutral placeholder, so all five sample
  * unconditionally. The uniform struct derives from [MaterialUniformLayouts.PbrTextured] --
  * whose field is named `pbrFactors`; the hand-written file drifted to `material`, and the
- * derivation is what ends that class of mismatch. Bindings 3/4 are the shadow map in the
- * shared descriptor-set layout, left unused here so numbering stays stable across shaders.
+ * derivation is what ends that class of mismatch. Material bindings 3/4 stay unused so numbering
+ * matches the other shaders; the shadow map is the engine's `ShadowDepth` group.
  *
  * The TBN basis is reconstructed per-pixel from screen-space derivatives (no TANGENT
  * attribute exists on this path); the `mat3 * v` of the hand-written file is expanded to its
@@ -80,7 +83,7 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  * upgrade path unchanged: MikkTSpace tangents at load time plus a tangent vertex slot.
  */
 @Suppress("LongMethod")
-private fun textured(): AslShaderDefinition = shader("textured") {
+private fun textured(clipSpace: ClipSpace): AslShaderDefinition = shader("textured") {
     val u = uniformBlock(
         "Uniforms",
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -101,6 +104,14 @@ private fun textured(): AslShaderDefinition = shader("textured") {
     val textureScroll = handles.value("textureScroll")
     val fogColor = handles.value("fogColor")
     val debugView = handles.value("debugView")
+    val cascadeInputs = CascadeShadowInputs(
+        handles.array("cascadeViewProjections"),
+        handles.array("cascadeDepthScales"),
+        cameraPosition,
+        handles.value("cameraForward"),
+    )
+    val shadowMap by textureDepth2dArray(group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth), binding = 0)
+    val shadowMapSampler by samplerComparison(group = BindingLayout.Standard.slot(BindingSemantic.ShadowDepth), binding = 1)
 
     val baseColorTexture by texture2d(
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -139,6 +150,7 @@ private fun textured(): AslShaderDefinition = shader("textured") {
     val epsilon = const("EPSILON", 0.0001f)
     val dielectricF0 = const("DIELECTRIC_F0", 0.04f)
     val minRoughness = const("MIN_ROUGHNESS", 0.05f)
+    val cascades = cascadeShadowSampling(cascadeInputs, shadowMap, shadowMapSampler, clipSpace, epsilon)
 
     val distributionGgx = fn("distributionGgx") {
         val nDotH by param(F32)
@@ -230,8 +242,9 @@ private fun textured(): AslShaderDefinition = shader("textured") {
                 max(4f.lit * nDotV * nDotL, epsilon),
         )
         val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * albedo / pi)
+        val shadowFactor = let("shadowFactor", cascades.sampleShadow(worldPos, n, nDotL))
         // lightColor is authored as reflectance, not radiance -- pay back the BRDF's 1/PI.
-        val radiance = let("radiance", lightColor.xyz * pi * nDotL)
+        val radiance = let("radiance", lightColor.xyz * pi * nDotL * shadowFactor)
         val specularOut = let("specularOut", specular * radiance)
         val ambient = let("ambient", albedo * ambientStrength * occlusion)
         val litColor = variable(
@@ -264,11 +277,13 @@ private fun textured(): AslShaderDefinition = shader("textured") {
             assign(litColor, litColor + pDiffuse * pRadiance + pSpecularOut / (pSpecularOut + vec3(1f.lit)))
         }
         val shaded = vec4(applyFog(litColor, worldPos), baseColorSample.a * baseColorFactor.a)
-        colorOutput(debugViewColor(debugView, cameraPosition, DebugSurface(n, worldPos, albedo), shaded))
+        val surface = DebugSurface(n, worldPos, albedo, shadow = shadowFactor, shadowCascade = cascades.shadowCascade(worldPos))
+        colorOutput(debugViewColor(debugView, cameraPosition, surface, shaded))
     }
 }
 
-val TexturedShader: AslShaderDefinition = textured()
+/** `textured` for [clipSpace]: the shadow lookup's V axis follows the backend, as in lit_shadow. */
+fun texturedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace)
 
 /**
  * The UV to sample a textured material at, and its screen derivatives, after the material's

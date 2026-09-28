@@ -6,6 +6,7 @@
 package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.bindingsForGroup
+import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.GroupBindings
@@ -27,7 +28,7 @@ class TexturedShaderBindingsTest {
 
     @Test
     fun theTexturedShaderDeclaresExactlyTheStandardMaterialGroup() {
-        val derived = assertNotNull(TexturedShader.bindingsForGroup(materialGroup))
+        val derived = assertNotNull(texturedShader(ClipSpace.WebGpu).bindingsForGroup(materialGroup))
 
         assertEquals(GroupBindings.StandardMaterial, derived)
     }
@@ -35,7 +36,7 @@ class TexturedShaderBindingsTest {
     /** Stated separately from the equality above so a failure says which half broke. */
     @Test
     fun derivedKindsAndOrderMatchTheContract() {
-        val derived = assertNotNull(TexturedShader.bindingsForGroup(materialGroup))
+        val derived = assertNotNull(texturedShader(ClipSpace.WebGpu).bindingsForGroup(materialGroup))
 
         assertEquals(listOf(0, 1, 2, 5, 6, 7, 8), derived.entries.map { it.binding })
         assertEquals(ResourceKind.UniformBuffer, derived.at(0)?.kind)
@@ -50,7 +51,7 @@ class TexturedShaderBindingsTest {
      */
     @Test
     fun stagesComeFromWhereTheShaderActuallyReadsEachBinding() {
-        val derived = assertNotNull(TexturedShader.bindingsForGroup(materialGroup))
+        val derived = assertNotNull(texturedShader(ClipSpace.WebGpu).bindingsForGroup(materialGroup))
 
         assertEquals(setOf(ShaderStage.Vertex, ShaderStage.Fragment), derived.at(0)?.stages)
         assertEquals(
@@ -61,6 +62,6 @@ class TexturedShaderBindingsTest {
 
     @Test
     fun aGroupTheShaderDoesNotUseIsAbsentRatherThanEmpty() {
-        assertNull(TexturedShader.bindingsForGroup(materialGroup + 7))
+        assertNull(texturedShader(ClipSpace.WebGpu).bindingsForGroup(materialGroup + 7))
     }
 }

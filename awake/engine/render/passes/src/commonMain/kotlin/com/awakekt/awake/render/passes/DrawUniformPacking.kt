@@ -104,6 +104,7 @@ fun RenderDrawCommand.uniformFloats(
             debugView = debugView,
             cameraForward = cameraForward,
             timeSeconds = timeSeconds,
+            shadowCascades = shadowCascades ?: GpuShadowCascadeData.UNSHADOWED,
         )
 
         DrawUniformPlan.Lit -> litUniforms(

@@ -17,6 +17,7 @@ import javax.imageio.ImageIO
 import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -140,6 +141,23 @@ class SceneBackendParityTest {
         assertTrue(webGpu == 0, "WebGPU did not cull back face: $webGpu px drawn")
     }
 
+    /** A textured ground receives the sun's shadow where an untextured one does, on both backends. */
+    @Test
+    fun aTexturedSurfaceReceivesTheSameShadow() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val untextured = assertNotNull(renderer.renderShadowScene().shadowCentroid(), "$backend lit ground")
+            val textured = assertNotNull(
+                // Relative: the textured ground's shading varies across it by more than a fixed margin.
+                renderer.renderShadowScene(texturedGround = true).also { write(backend, it, "textured-shadow-scene") }
+                    .shadowCentroid(::shadowLevel),
+                "$backend textured ground shows no shadow",
+            )
+            val drift = maxOf(kotlin.math.abs(untextured.first - textured.first), kotlin.math.abs(untextured.second - textured.second))
+            assertTrue(drift <= CENTROID_TOLERANCE, "$backend: textured shadow at $textured, untextured at $untextured")
+        }
+    }
+
     @Test
     fun theShadowLandsInTheSamePlaceOnBothBackends() {
         val centroids = BACKEND_ORDER.associateWith { backend ->
@@ -173,13 +191,14 @@ class SceneBackendParityTest {
      * from the surface -- so the same ground reads 116 on one and 180 on the other. The shadow is
      * the same 581 pixels either way; only the numbers written into them differ.
      */
-    private fun ByteArray.shadowCentroid(): Pair<Int, Int>? {
+    /** [below] maps the ground's lit level to the level a shadowed pixel falls below. */
+    private fun ByteArray.shadowCentroid(below: (lit: Int) -> Int = { it - SHADOW_MARGIN }): Pair<Int, Int>? {
         val ground = (GROUND_TOP..GROUND_BOTTOM).flatMap { y ->
             (0 until SCENE_SIZE).map { x -> x to y }
         }.filter { (x, y) -> luminanceAt(x, y) > 0 }
         // The ground is most of the frame, so its lit value is the most common one in it.
         val lit = ground.groupingBy { (x, y) -> luminanceAt(x, y) }.eachCount().maxByOrNull { it.value }?.key
-        val shadowed = ground.filter { (x, y) -> lit != null && luminanceAt(x, y) < lit - SHADOW_MARGIN }
+        val shadowed = ground.filter { (x, y) -> lit != null && luminanceAt(x, y) < below(lit) }
         return shadowed
             .takeIf { it.isNotEmpty() }
             ?.let { it.sumOf { (x, _) -> x } / it.size to it.sumOf { (_, y) -> y } / it.size }
@@ -194,6 +213,8 @@ class SceneBackendParityTest {
         return channels.indices.filter { channels[it] * 2 >= channels.max() }.toSet()
     }
 
+    private fun shadowLevel(lit: Int): Int = lit * 3 / 4
+
     private fun redSum(backend: HeadlessUiBackend, pixels: ByteArray): Int = pixels.asSequence()
         .filterIndexed { index, _ -> index % 4 == 0 }
         .sumOf { byte ->
@@ -201,7 +222,7 @@ class SceneBackendParityTest {
             if (backend == HeadlessUiBackend.WebGpu) SRGB_TO_LINEAR[v] else v
         }
 
-    private fun write(backend: HeadlessUiBackend, pixels: ByteArray) {
+    private fun write(backend: HeadlessUiBackend, pixels: ByteArray, name: String = "shadow-scene") {
         val image = BufferedImage(SCENE_SIZE, SCENE_SIZE, BufferedImage.TYPE_INT_ARGB)
         for (y in 0 until SCENE_SIZE) {
             for (x in 0 until SCENE_SIZE) {
@@ -215,7 +236,7 @@ class SceneBackendParityTest {
             }
         }
         val out = File(REPORT_DIR).apply { mkdirs() }
-        ImageIO.write(image, "png", File(out, "shadow-scene-${backend.name.lowercase()}.png"))
+        ImageIO.write(image, "png", File(out, "$name-${backend.name.lowercase()}.png"))
     }
 
     private companion object {

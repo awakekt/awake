@@ -65,7 +65,7 @@ public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslTexturedShaderKt {
-	public static final fun getTexturedShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun texturedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/CascadeShadowInputs {
