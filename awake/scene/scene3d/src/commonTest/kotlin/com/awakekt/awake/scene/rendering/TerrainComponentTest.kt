@@ -69,11 +69,12 @@ class TerrainComponentTest {
         val rings = tracker.ringStates
         assertEquals(4, rings.size)
 
-        // Level 0 (spacing 1.0) snapped center should be near (129, 0, 256)
-        assertEquals(129.0f, rings[0].snappedCenter.x, 0.1f)
+        // Each level's corner snaps to the next level's grid (twice its spacing), so its centre is
+        // the nearest such position to the camera: (128, 256) for level 0 (corners on 2 m steps)...
+        assertEquals(128.0f, rings[0].snappedCenter.x, 0.1f)
         assertEquals(256.0f, rings[0].snappedCenter.z, 0.1f)
 
-        // Level 1 (spacing 2.0) snapped center should be (128, 0, 256)
+        // ...and for level 1 (corners on 4 m steps).
         assertEquals(128.0f, rings[1].snappedCenter.x, 0.1f)
         assertEquals(256.0f, rings[1].snappedCenter.z, 0.1f)
     }

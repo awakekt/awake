@@ -18,6 +18,7 @@ import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
+import com.awakekt.awake.asset.shaderpack.terrainClipmapDiscardUnderFinerRing
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainContentFeature
 import com.awakekt.awake.asset.shaders.ContentFeatureSource
@@ -31,12 +32,12 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
 import com.awakekt.awake.vulkan.material.Material
-import kotlinx.coroutines.runBlocking
-import org.junit.AfterClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import kotlinx.coroutines.runBlocking
+import org.junit.AfterClass
 
 /**
  * Content features attached to a running renderer, through the engine's own [VulkanContentFeatureGpu]
@@ -183,6 +184,7 @@ class RendererHeadlessContentAttachTest {
                 val layers by texture2dArray(group = group, binding = TERRAIN_SURFACE_FIRST_BINDING)
                 val layerSampler by sampler(group = group, binding = TERRAIN_SURFACE_FIRST_BINDING + 1)
                 fragment {
+                    terrainClipmapDiscardUnderFinerRing(terrain)
                     val albedo = let(
                         "albedo",
                         textureSampleArrayLevel(layers, layerSampler, vec2(0.5f.lit, 0.5f.lit), 1.lit, 0f.lit),

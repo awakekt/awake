@@ -34,8 +34,7 @@ class ClipmapVertexLayoutTest {
     @Test
     fun theCoreMeshFirstVertexIsItsNegativeCorner() {
         val mesh = TerrainClipmapGeometry.buildCoreMesh(config)
-        val n = config.ringResolution
-        val halfExtent = (n - 1) * config.baseSpacing * 0.5f
+        val halfExtent = config.coreExtent * 0.5f
 
         assertEquals(VertexFormat.PositionNormalColorUv, mesh.format)
         // Position at the -x/-z corner, an up normal, white, UV origin -- in that order.
@@ -48,8 +47,8 @@ class ClipmapVertexLayoutTest {
     @Test
     fun theCoreMeshLastVertexIsItsPositiveCornerWithUvOne() {
         val mesh = TerrainClipmapGeometry.buildCoreMesh(config)
-        val n = config.ringResolution
-        val halfExtent = (n - 1) * config.baseSpacing * 0.5f
+        val n = config.ringResolution + 1
+        val halfExtent = config.coreExtent * 0.5f
 
         assertContentEquals(
             floatArrayOf(halfExtent, 0f, halfExtent, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 1f),
@@ -61,8 +60,8 @@ class ClipmapVertexLayoutTest {
     fun aRingMeshUsesItsOwnLevelSpacingAndNothingElseChanges() {
         val level = 1
         val mesh = TerrainClipmapGeometry.buildRingMesh(level, config)
-        val n = config.ringResolution
-        val halfExtent = (n - 1) * config.spacingForLevel(level) * 0.5f
+        val n = config.ringResolution + 1
+        val halfExtent = config.extentForLevel(level) * 0.5f
 
         // A ring differs from the core in spacing and in which cells it emits -- never in what a
         // vertex contains. This is the assertion that keeps those two builders honest about that.

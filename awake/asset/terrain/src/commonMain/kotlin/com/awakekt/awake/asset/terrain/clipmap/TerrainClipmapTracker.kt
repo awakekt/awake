@@ -71,8 +71,10 @@ class TerrainClipmapTracker(
     /**
      * Updates all clipmap ring positions snapped to their respective grid intervals.
      *
-     * To ensure that vertices always fall exactly on integer grid samples without shimmer,
-     * ring $k$ is snapped to multiples of its grid spacing $S_k = \text{baseSpacing} \cdot 2^k$.
+     * Each level's corner snaps to the next level's grid, twice its own spacing, not just to its
+     * own: then its border lies on that coarser level's grid lines, and the two meet vertex for
+     * vertex. Snapping only to its own spacing left the border half a coarse cell off, which is a
+     * crack.
      *
      * @param cameraPosition World-space position of the primary observer/camera.
      * @return List of updated [ClipmapRingState] from Level 0 to Level ringCount - 1.
@@ -83,9 +85,9 @@ class TerrainClipmapTracker(
             val spacing = config.spacingForLevel(level)
             val halfExtent = config.extentForLevel(level) * 0.5f
 
-            // Snap camera (X, Z) to the discrete step of this LOD ring
-            val snappedX = floor((cameraPosition.x / spacing) + 0.5f) * spacing
-            val snappedZ = floor((cameraPosition.z / spacing) + 0.5f) * spacing
+            val coarse = spacing * 2f
+            val snappedX = floor((cameraPosition.x - halfExtent) / coarse + 0.5f) * coarse + halfExtent
+            val snappedZ = floor((cameraPosition.z - halfExtent) / coarse + 0.5f) * coarse + halfExtent
 
             _ringStates.add(
                 ClipmapRingState(

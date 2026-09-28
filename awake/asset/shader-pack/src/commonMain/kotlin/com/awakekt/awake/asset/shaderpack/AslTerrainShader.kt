@@ -5,20 +5,25 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
+import com.awakekt.awake.asset.shaderdsl.AslArrayHandle
 import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
 import com.awakekt.awake.asset.shaderdsl.AslDefinitionException
 import com.awakekt.awake.asset.shaderdsl.AslExpr
+import com.awakekt.awake.asset.shaderdsl.AslFragmentBuilder
 import com.awakekt.awake.asset.shaderdsl.AslLayoutHandles
 import com.awakekt.awake.asset.shaderdsl.AslShaderBuilder
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.abs
+import com.awakekt.awake.asset.shaderdsl.and
 import com.awakekt.awake.asset.shaderdsl.clamp
 import com.awakekt.awake.asset.shaderdsl.div
 import com.awakekt.awake.asset.shaderdsl.dot
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.floor
+import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.lt
 import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.min
 import com.awakekt.awake.asset.shaderdsl.minus
@@ -125,6 +130,8 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
  * footprint.
  * @property cascades The block's cascade fields, for [terrainShadowSampling].
  * @property debugView The block's `UniformFields.DebugView`, for [debugViewColor].
+ * @property ringCell World `x`, `z` and ring level, for [terrainClipmapDiscardUnderFinerRing].
+ * @property ringParams The block's [TerrainUniformLayout.RingParams].
  */
 @Suppress("LongParameterList") // Pure aggregation of the stage's derived handles.
 class TerrainClipmapOutputs internal constructor(
@@ -135,6 +142,8 @@ class TerrainClipmapOutputs internal constructor(
     val terrainSampling: AslExpr,
     val cascades: CascadeShadowInputs,
     val debugView: AslExpr,
+    internal val ringCell: AslExpr,
+    internal val ringParams: AslArrayHandle,
 ) {
     /**
      * Displaced world position. A surface derives its texture coordinates from it, since the
@@ -159,8 +168,13 @@ class TerrainClipmapOutputs internal constructor(
  * [TerrainUniformLayout.RingParams].
  *
  * The morph snaps a vertex toward the coarser parent grid as it nears its ring's outer edge, so
- * an LOD transition does not pop. Heights are read with `textureSampleLevel` at mip 0: a vertex
- * stage has no implicit derivatives.
+ * an LOD transition does not pop, and at the edge itself it lands on the coarser level's own
+ * vertices: the two levels share that border and leave no crack. Heights are read with
+ * `textureSampleLevel` at mip 0: a vertex stage has no implicit derivatives.
+ *
+ * **Every fragment stage must call [terrainClipmapDiscardUnderFinerRing].** A coarse level is
+ * drawn under the finer one and discards what that covers; ASL rejects the stage as dead code
+ * if the call is missing, so a surface cannot forget it.
  *
  * @param exportWorldPosition Whether to pass [TerrainClipmapOutputs.worldPosition] to the fragment
  * stage. Off only for a fragment stage that never reads it, which ASL rejects as dead.
@@ -186,6 +200,7 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
     } else {
         null
     }
+    val ringCell by out.varying(GpuDataShape.Vec3, location = 2)
 
     vertex {
         val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
@@ -193,29 +208,9 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
         val ringTag = ins.input(VertexSemantic.Color)
 
         val ring = let("ring", ringParams[toU32(ringTag.x)])
-        val morphWidth = let("morphWidth", clamp(terrainParams.y, 0.05f.lit, 0.5f.lit))
+        val (morphedX, morphedZ) = morphTowardCoarserGrid(localPosition, ring, terrainParams)
 
-        // Chebyshev distance to the ring's edge, 0 at the snapped centre and 1 at the border --
-        // the same square-ring measure TerrainClipmapTracker.computeMorphFactor uses on the CPU.
-        // The ring mesh is built centred on the origin, so a local coordinate already IS the
-        // offset from that ring's snapped centre -- no subtraction needed.
-        val dx = let("dx", abs(localPosition.x) / ring.w)
-        val dz = let("dz", abs(localPosition.z) / ring.w)
-        val edgeDistance = let("edgeDistance", max(dx, dz))
-        val morphStart = let("morphStart", 1f.lit - morphWidth)
-        val alpha = let(
-            "alpha",
-            clamp((edgeDistance - morphStart) / max(1f.lit - morphStart, 0.0001f.lit), 0f.lit, 1f.lit),
-        )
-
-        // Snap toward the parent grid's twice-coarser interval as alpha reaches 1.
-        val coarseSpacing = let("coarseSpacing", ring.z * 2f.lit)
-        val coarseX = let("coarseX", floor(localPosition.x / coarseSpacing + 0.5f.lit) * coarseSpacing)
-        val coarseZ = let("coarseZ", floor(localPosition.z / coarseSpacing + 0.5f.lit) * coarseSpacing)
-        val morphedX = let("morphedX", mix(localPosition.x, coarseX, alpha))
-        val morphedZ = let("morphedZ", mix(localPosition.z, coarseZ, alpha))
-
-        val ground = groundPoint(morphedX + ring.x, morphedZ + ring.y, terrainSampling)
+        val ground = groundPoint(morphedX, morphedZ, terrainSampling)
         val worldX = ground.x
         val worldZ = ground.z
         val uv = ground.uv
@@ -232,10 +227,67 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
         out.position set viewProjection * vec4(displaced, 1f.lit)
         worldNormal set heightmapNormal(heightmap, heightmapSampler, uv, terrainSampling, terrainParams)
         worldPosition?.let { it set displaced }
+        ringCell set vec3(worldX, worldZ, ringTag.x)
     }
 
     val debugView = handles.value("debugView")
-    return TerrainClipmapOutputs(worldNormal, worldPosition, sunDirection, terrainParams, terrainSampling, handles.cascadeInputs(), debugView)
+    return TerrainClipmapOutputs(
+        worldNormal,
+        worldPosition,
+        sunDirection,
+        terrainParams,
+        terrainSampling,
+        handles.cascadeInputs(),
+        debugView,
+        ringCell,
+        ringParams,
+    )
+}
+
+/**
+ * A ring vertex's world `x`, `z`, snapped toward the parent grid as it nears the ring's edge.
+ *
+ * Chebyshev distance to the edge, 0 at the snapped centre and 1 at the border -- the same
+ * square-ring measure `TerrainClipmapTracker.computeMorphFactor` uses on the CPU. The ring mesh is
+ * built centred on the origin, so a local coordinate is already the offset from its centre. The
+ * snap is in world space: the parent's vertices are world multiples of its spacing, and a ring
+ * centre need not be.
+ */
+private fun AslBlockBuilder.morphTowardCoarserGrid(localPosition: AslExpr, ring: AslExpr, terrainParams: AslExpr): Pair<AslExpr, AslExpr> {
+    val morphWidth = let("morphWidth", clamp(terrainParams.y, 0.05f.lit, 0.5f.lit))
+    val dx = let("dx", abs(localPosition.x) / ring.w)
+    val dz = let("dz", abs(localPosition.z) / ring.w)
+    val edgeDistance = let("edgeDistance", max(dx, dz))
+    val morphStart = let("morphStart", 1f.lit - morphWidth)
+    val alpha = let(
+        "alpha",
+        clamp((edgeDistance - morphStart) / max(1f.lit - morphStart, 0.0001f.lit), 0f.lit, 1f.lit),
+    )
+    val coarseSpacing = let("coarseSpacing", ring.z * 2f.lit)
+    val gridX = let("gridX", localPosition.x + ring.x)
+    val gridZ = let("gridZ", localPosition.z + ring.y)
+    val coarseX = let("coarseX", floor(gridX / coarseSpacing + 0.5f.lit) * coarseSpacing)
+    val coarseZ = let("coarseZ", floor(gridZ / coarseSpacing + 0.5f.lit) * coarseSpacing)
+    return let("morphedX", mix(gridX, coarseX, alpha)) to let("morphedZ", mix(gridZ, coarseZ, alpha))
+}
+
+/**
+ * Discards the part of a coarse ring the next finer level already draws.
+ *
+ * Every level but the core is drawn in full under the one inside it; the finer level's footprint
+ * is its ring parameters' centre and half extent, strictly inside of which this level gives way.
+ * Their shared border is drawn by both, on the same vertices. The level rides the varying as a
+ * float that interpolation can nudge, so it is read with a half-step margin.
+ */
+fun AslFragmentBuilder.terrainClipmapDiscardUnderFinerRing(terrain: TerrainClipmapOutputs) {
+    val cell = terrain.ringCell
+    val level = let("clipmapLevel", cell.z)
+    // The core (level 0) has nothing finer; clamping keeps its index in range, and the level test
+    // below is what spares it.
+    val finer = let("finerRing", terrain.ringParams[toU32(max(level - 0.5f.lit, 0f.lit))])
+    discardIf(
+        (level gt 0.5f.lit) and (abs(cell.x - finer.x) lt finer.w) and (abs(cell.y - finer.y) lt finer.w),
+    )
 }
 
 /** The cascade fields [TerrainUniformLayout] ends with. */
@@ -350,6 +402,7 @@ fun terrainShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain")
     val shadows = terrainShadowSampling(terrain, clipSpace)
 
     fragment {
+        terrainClipmapDiscardUnderFinerRing(terrain)
         val normal = let("normal", normalize(terrain.worldNormal))
         // Not negated: SceneLight.direction already points TOWARD the light, which is how every
         // other lit shader in the pack reads it.
