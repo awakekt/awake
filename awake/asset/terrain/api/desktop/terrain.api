@@ -164,6 +164,55 @@ public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker
 	public final fun update (Lcom/awakekt/awake/core/math/Vec3f;)Ljava/util/List;
 }
 
+public final class com/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig {
+	public static final field Companion Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig$Companion;
+	public fun <init> (Ljava/util/List;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRules ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig$Companion {
+	public final fun getDesertCanyon ()Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;
+	public final fun getMountainAlpine ()Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;
+	public final fun getRollingHills ()Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;
+}
+
+public final class com/awakekt/awake/asset/terrain/splat/ProceduralTerrainRule {
+	public fun <init> (IFFFFFF)V
+	public synthetic fun <init> (IFFFFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun copy (IFFFFFF)Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainRule;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainRule;IFFFFFFILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainRule;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun evaluate (FF)F
+	public final fun getAltitudeBlend ()F
+	public final fun getLayerIndex ()I
+	public final fun getMaxAltitude ()F
+	public final fun getMaxSlopeDegrees ()F
+	public final fun getMinAltitude ()F
+	public final fun getMinSlopeDegrees ()F
+	public final fun getSlopeBlendDegrees ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/asset/terrain/splat/ProceduralTerrainSplatGenerator {
+	public static final field INSTANCE Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainSplatGenerator;
+	public final fun generateSplatMap ([FIIFFLcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;)Lcom/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap;
+	public static synthetic fun generateSplatMap$default (Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainSplatGenerator;[FIIFFLcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;ILjava/lang/Object;)Lcom/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap;
+}
+
 public final class com/awakekt/awake/asset/terrain/splat/SplatWeightMapCodec {
 	public static final field INSTANCE Lcom/awakekt/awake/asset/terrain/splat/SplatWeightMapCodec;
 	public final fun createDefault (III)Lcom/awakekt/awake/asset/terrain/splat/TerrainSplatWeightMap;

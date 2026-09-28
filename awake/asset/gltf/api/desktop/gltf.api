@@ -440,6 +440,11 @@ public final class com/awakekt/awake/asset/gltf/GltfMeshDef$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/asset/gltf/GltfMeshSimplificationKt {
+	public static final fun simplified (Lcom/awakekt/awake/asset/gltf/GltfMesh;FZ)Lcom/awakekt/awake/asset/gltf/GltfMesh;
+	public static synthetic fun simplified$default (Lcom/awakekt/awake/asset/gltf/GltfMesh;FZILjava/lang/Object;)Lcom/awakekt/awake/asset/gltf/GltfMesh;
+}
+
 public final class com/awakekt/awake/asset/gltf/GltfNode {
 	public static final field Companion Lcom/awakekt/awake/asset/gltf/GltfNode$Companion;
 	public fun <init> ()V
