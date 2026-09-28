@@ -1,0 +1,151 @@
+name: Render Evidence
+
+# Screenshot evidence for every pull request that can change what the engine draws. Renders the
+# :awake:engine:render:parity scenarios on headless Vulkan (lavapipe) for the base and the head,
+# publishes both sets to the render-evidence branch, and keeps one PR comment with a before/after
+# table. A PR that touches nothing rendering-related passes without rendering.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: render-evidence-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write        # publishes images to the render-evidence branch
+  pull-requests: write   # keeps the evidence comment up to date
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  evidence:
+    name: Render evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Decide whether this PR can change a render
+        id: scope
+        run: |
+          if [[ -z "$PR" ]]; then echo "render=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+            echo "::notice::Fork PRs cannot publish evidence images; skipping."
+            echo "render=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          changed="$(git diff --name-only "$BASE_SHA...$HEAD_SHA")"
+          if grep -E '^(awake|samples|build-logic)/' <<<"$changed" | grep -qvE '\.md$'; then
+            echo "render=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No engine, sample or build-logic changes; nothing to render."
+            echo "render=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup JDK
+        if: steps.scope.outputs.render == 'true'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        if: steps.scope.outputs.render == 'true'
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - uses: ./.github/actions/cache-naga
+        if: steps.scope.outputs.render == 'true'
+        with:
+          variant: desktop
+          target-path: awake/asset/shader-compiler/rust-native/target
+
+      - name: Install Vulkan (lavapipe) and GLFW
+        if: steps.scope.outputs.render == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers
+
+      - name: Render head
+        if: steps.scope.outputs.render == 'true'
+        run: ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/after"
+
+      - name: Render base
+        if: steps.scope.outputs.render == 'true'
+        run: |
+          mkdir -p "$RUNNER_TEMP/before"
+          git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
+          cd "$RUNNER_TEMP/base"
+          if [[ ! -f awake/engine/render/parity/src/desktopMain/kotlin/com/awakekt/awake/render/parity/RenderEvidence.kt ]]; then
+            echo "::notice::The base has no evidence capture; showing every image as new."
+            exit 0
+          fi
+          # Reuse the head's naga build: cargo output is what the head just used.
+          mkdir -p awake/asset/shader-compiler/rust-native
+          cp -R "$GITHUB_WORKSPACE/awake/asset/shader-compiler/rust-native/target" awake/asset/shader-compiler/rust-native/ || true
+          ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/before" \
+            || echo "::warning::The base failed to render; showing every image as new."
+
+      - name: Publish images
+        if: steps.scope.outputs.render == 'true'
+        run: |
+          dest="pr-$PR/$HEAD_SHA"
+          publish="$RUNNER_TEMP/publish"
+          if git ls-remote --exit-code --heads origin render-evidence >/dev/null; then
+            git fetch --depth 1 origin render-evidence
+            git worktree add "$publish" FETCH_HEAD
+            git -C "$publish" switch -c render-evidence
+          else
+            git worktree add --detach "$publish"
+            git -C "$publish" switch --orphan render-evidence
+          fi
+          mkdir -p "$publish/$dest"
+          cp -R "$RUNNER_TEMP/before" "$publish/$dest/before"
+          cp -R "$RUNNER_TEMP/after" "$publish/$dest/after"
+          cd "$publish"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$dest"
+          git commit -q -m "Render evidence for #$PR at ${HEAD_SHA:0:9}"
+          # Other PRs publish to the same branch; rebase onto theirs and retry.
+          for attempt in 1 2 3 4 5; do
+            git push origin render-evidence && exit 0
+            git pull -q --rebase origin render-evidence
+          done
+          exit 1
+
+      - name: Post comparison
+        if: steps.scope.outputs.render == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prefix="https://raw.githubusercontent.com/${{ github.repository }}/render-evidence/pr-$PR/$HEAD_SHA"
+          python3 scripts/render-evidence-comment.py "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$prefix" "$HEAD_SHA" > "$RUNNER_TEMP/comment.md"
+          existing="$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
+            --jq '[.[] | select(.body | startswith("<!-- render-evidence -->")) | .id] | first // empty')"
+          if [[ -n "$existing" ]]; then
+            gh api --method PATCH "repos/${{ github.repository }}/issues/comments/$existing" -F body=@"$RUNNER_TEMP/comment.md" >/dev/null
+          else
+            gh pr comment "$PR" --body-file "$RUNNER_TEMP/comment.md"
+          fi
+
+      - name: Upload captures
+        if: steps.scope.outputs.render == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: render-evidence-pr${{ github.event.pull_request.number }}
+          path: |
+            ${{ runner.temp }}/before
+            ${{ runner.temp }}/after
+          retention-days: 14
