@@ -501,7 +501,8 @@ private fun litShadow(
                 direct + (pDiffuse + pSpecular) * u.pointLightColors[i].xyz * pNdotL * attenuation * pointShadow,
             )
         }
-        val ambientColor = let("ambient", color * ambient)
+        // The scene's ambient when it sets one (lightColor.w above 0), this shader's otherwise.
+        val ambientColor = let("ambient", color * select(ambient, u.lightColor.w, u.lightColor.w gt 0f.lit))
         // Reinhard: the specular lobe blows past 1.0 at low roughness.
         val mapped = let("mapped", (ambientColor + direct) / (ambientColor + direct + vec3(1f.lit)))
         val surface = DebugSurface(

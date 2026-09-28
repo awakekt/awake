@@ -227,10 +227,11 @@ class TerrainRenderFeature(
             // The scene's own light when the pass carries it: the cascades are fitted to that
             // light, so shading and shadows have to agree on where the sun is.
             val light = pass?.passUniforms
-            if (light != null && light.size >= LIGHT_DIRECTION + 3) {
-                put(TerrainUniformLayout.SunDirection, light[LIGHT_DIRECTION], light[LIGHT_DIRECTION + 1], light[LIGHT_DIRECTION + 2], AMBIENT)
+            if (light != null && light.size >= LIGHT_COLOR + 4) {
+                val ambient = light[LIGHT_COLOR + 3].takeIf { it > 0f } ?: AMBIENT
+                put(TerrainUniformLayout.SunDirection, light[LIGHT_DIRECTION], light[LIGHT_DIRECTION + 1], light[LIGHT_DIRECTION + 2], ambient)
             } else {
-                put(TerrainUniformLayout.SunDirection, context.light.direction, AMBIENT)
+                put(TerrainUniformLayout.SunDirection, context.light.direction, context.light.ambient ?: AMBIENT)
             }
             put(terrainParams, TerrainUniformLayout.TerrainParams)
             put(sampling, TerrainUniformLayout.TerrainSampling)
@@ -262,5 +263,8 @@ class TerrainRenderFeature(
 
         /** Where the directional light's direction starts in a pass's packed scene light. */
         val LIGHT_DIRECTION = MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.LightDirection)
+
+        /** `w` is the scene's ambient, 0 when it keeps [AMBIENT]. */
+        val LIGHT_COLOR = MaterialUniformLayouts.SceneLight.offsetOf(UniformFields.LightColor)
     }
 }

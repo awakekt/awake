@@ -490,17 +490,19 @@ public final class com/awakekt/awake/render/passes/uniforms/SceneFrameUniforms {
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/SceneLight {
-	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Ljava/util/List;)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Ljava/util/List;Ljava/lang/Float;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Ljava/util/List;Ljava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component3 ()Ljava/util/List;
 	public final fun component4 ()Lcom/awakekt/awake/core/math/Mat4;
 	public final fun component5 ()Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
 	public final fun component6 ()Ljava/util/List;
-	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Ljava/util/List;)Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
+	public final fun component7 ()Ljava/lang/Float;
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Ljava/util/List;Ljava/lang/Float;)Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/passes/uniforms/SceneLight;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Ljava/util/List;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Ljava/util/List;Ljava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/render/passes/uniforms/SceneLight;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAmbient ()Ljava/lang/Float;
 	public final fun getCascades ()Lcom/awakekt/awake/render/command/GpuShadowCascadeData;
 	public final fun getColor ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getDirection ()Lcom/awakekt/awake/core/math/Vec3f;

@@ -40,6 +40,9 @@ data class Light(
     /** How far from the camera a [Type.Directional] light's shadow cascades reach, in world
      * units; the camera's far plane still caps it. Ignored for a point light. */
     val shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
+    /** A [Type.Directional] light's ambient: how much of a surface's colour shows with no direct
+     * light, above 0 and up to 1. Null keeps each shader's own default. Ignored for a point light. */
+    val ambient: Float? = null,
 ) {
     enum class Type {
         Directional,

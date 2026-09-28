@@ -78,6 +78,11 @@ data class SceneLight(
     val cascades: ShadowCascadeUniforms? = null,
     /** Point-shadow face projections, indexed by [PointLight.shadowBaseLayer]. */
     val pointShadows: List<PointShadowLight> = emptyList(),
+    /**
+     * How much of a surface's colour shows with no direct light, above 0 and up to 1; null keeps
+     * each shader's own default. Carried in `lightColor.w`, where 0 means that default.
+     */
+    val ambient: Float? = null,
 )
 
 /**

@@ -22,6 +22,7 @@ import kotlinx.serialization.Serializable
  * @property direction World-space emission direction vector for directional lights.
  * @property range Maximum falloff distance for point lights.
  * @property shadowDistance How far from the camera a directional light's shadows reach, in world units.
+ * @property ambient A directional light's ambient share, above 0 and up to 1; null keeps each shader's default.
  */
 @Serializable
 @SerialName("light")
@@ -35,10 +36,14 @@ data class SceneLight(
      * (which didn't have this field) keep their shadows after loading. */
     val shadowsEnabled: Boolean = true,
     val shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
+    val ambient: Float? = null,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (!shadowDistance.isFinite() || shadowDistance <= 0f) {
             add(SceneValidationIssue(path, "light.shadowDistance must be finite and > 0; was $shadowDistance"))
+        }
+        if (ambient != null && !(ambient > 0f && ambient <= 1f)) {
+            add(SceneValidationIssue(path, "light.ambient must be above 0 and at most 1; was $ambient"))
         }
     }
 
