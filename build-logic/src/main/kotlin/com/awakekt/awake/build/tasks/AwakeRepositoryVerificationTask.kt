@@ -176,7 +176,7 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
                             name.endsWith(".yml") || name.endsWith(".yaml")
                     }
                 }.toList().flatMap { path ->
-                    if (relative(path) == "hooks/block-edit-vendored-skills.sh") return@flatMap emptyList()
+                    if (relative(path) in AGENT_TOOLING) return@flatMap emptyList()
                     Files.readAllLines(path).mapIndexedNotNull { index, line ->
                         if (line.contains(".agents/")) "${relative(path)}:${index + 1}: product tooling references .agents" else null
                     }
@@ -358,6 +358,16 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
 
     companion object {
         private val PLATFORM_IMPORTS = listOf("import platform.", "import kotlinx.cinterop")
+        /**
+         * Tooling that maintains the agent runtime itself, so it names `.agents/` by necessity.
+         * Nothing in the product build or CI depends on it.
+         */
+        private val AGENT_TOOLING = setOf(
+            "hooks/block-edit-vendored-skills.sh",
+            "hooks/sync-agent-skills.sh",
+            ".github/workflows/agent-skills-lock.yml",
+        )
+
         private val PRO_BOUNDARY_TOKENS = listOf(
             "awake-pro", "com.awakekt.awake.pro.", "com.awakekt.awake.studio.", "awake-pro-core-io",
         )

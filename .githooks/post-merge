@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Re-syncs the deployed agent skills when a pull or merge moved their lockfile.
+git diff --quiet ORIG_HEAD HEAD -- .agents/skills.lock.toml 2>/dev/null && exit 0
+exec "$(git rev-parse --show-toplevel)/hooks/sync-agent-skills.sh"

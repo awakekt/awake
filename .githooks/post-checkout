@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Re-syncs the deployed agent skills when a branch switch moved their lockfile.
+# $1 = previous HEAD, $2 = new HEAD, $3 = 1 for a branch checkout. A new clone or worktree has no
+# previous HEAD; the session-start sync covers it.
+[[ "${3:-0}" == 1 && "$1" != 0000000000000000000000000000000000000000 ]] || exit 0
+git diff --quiet "$1" "$2" -- .agents/skills.lock.toml && exit 0
+exec "$(git rev-parse --show-toplevel)/hooks/sync-agent-skills.sh"

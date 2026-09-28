@@ -1,0 +1,88 @@
+name: Agent skills lock
+
+# Weekly: move .agents/skills.lock.toml to the newest agent-skill releases and open (or refresh) one
+# pull request, so pins still change only through review. Uses awake-agent-skills' bump_lock.py,
+# which writes the commit and archive digest the installer verifies. RELEASE_TOKEN (Contents + Pull
+# requests read/write) is required for the same reason as in release.yml: PRs opened with
+# GITHUB_TOKEN do not trigger CI.
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-skills-lock
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Bump
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BRANCH: chore/agent-skills-lock
+    steps:
+      - name: Check token
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          [[ -n "$RELEASE_TOKEN" ]] || { echo "RELEASE_TOKEN secret is not set." >&2; exit 1; }
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          token: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Bump pins
+        id: bump
+        run: |
+          git clone --quiet --depth 1 https://github.com/awakekt/awake-agent-skills "$RUNNER_TEMP/awake-agent-skills"
+          status=0
+          python3 "$RUNNER_TEMP/awake-agent-skills/scripts/bump_lock.py" --project . --summary "$RUNNER_TEMP/summary.md" || status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          [[ -f "$RUNNER_TEMP/summary.md" ]] && cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
+      - name: Open or refresh the pull request
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          if git diff --quiet -- .agents/skills.lock.toml; then
+            echo "Every pin is current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add .agents/skills.lock.toml
+          git commit -m "chore(skills): move agent skill pins to their newest releases"
+          git push --force origin "$BRANCH"
+          {
+            cat "$RUNNER_TEMP/summary.md"
+            echo
+            echo "After merging, pull \`main\`: the \`post-merge\` hook (or the next Claude Code session) installs the new pins."
+          } > "$RUNNER_TEMP/body.md"
+          existing="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [[ -n "$existing" ]]; then
+            gh pr edit "$existing" --body-file "$RUNNER_TEMP/body.md"
+          else
+            # Every PR carries a milestone: the earliest one still open.
+            milestone="$(gh api "repos/$GITHUB_REPOSITORY/milestones?state=open&per_page=100" --jq 'sort_by(.number) | .[0].title // empty')"
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore(skills): move agent skill pins to their newest releases" \
+              --body-file "$RUNNER_TEMP/body.md" \
+              ${milestone:+--milestone "$milestone"}
+          fi
+
+      - name: Fail on sources that could not be checked
+        if: steps.bump.outputs.status != '0'
+        run: |
+          echo "bump_lock.py could not check every source; see the step summary." >&2
+          exit 1

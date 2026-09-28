@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/hooks/sync-agent-skills.sh\"",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}
