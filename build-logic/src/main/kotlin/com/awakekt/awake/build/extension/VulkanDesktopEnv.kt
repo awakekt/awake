@@ -20,15 +20,20 @@ object VulkanDesktopEnv {
 
     private val homebrewCellars = listOf("/opt/homebrew/Cellar", "/usr/local/Cellar")
 
+    private const val VALIDATION_ENV = "AWAKE_VULKAN_VALIDATION"
+
     private const val DYLD_FALLBACK =
         "/opt/homebrew/opt/vulkan-loader/lib:/opt/homebrew/lib:/usr/local/lib"
 
-    /** `VK_ICD_FILENAMES` + `DYLD_FALLBACK_LIBRARY_PATH` for a test/run task on this host, or
-     * empty off macOS. The ICD entry is omitted when no Homebrew MoltenVK is installed — the
+    /** `VK_ICD_FILENAMES` + `DYLD_FALLBACK_LIBRARY_PATH` for a test/run task on macOS; other
+     * hosts' loaders find the driver without help. The ICD entry is omitted when no Homebrew MoltenVK is installed — the
      * task then fails at Vulkan init with the loader's own message, which names the fix
-     * better than a missing-file error here would. */
+     * better than a missing-file error here would.
+     *
+     * Every host also gets `AWAKE_VULKAN_VALIDATION=1`: the engine enables the Khronos validation
+     * layer only on request, so shipped apps never do, and build runs and tests always do. */
     fun environment(): Map<String, String> {
-        if (!HostOs.isMac) return emptyMap()
+        if (!HostOs.isMac) return mapOf(VALIDATION_ENV to "1")
         val icd = homebrewCellars.asSequence()
             .map { File("$it/molten-vk") }
             .filter { it.isDirectory }
@@ -36,6 +41,7 @@ object VulkanDesktopEnv {
             .map { File(it, "etc/vulkan/icd.d/MoltenVK_icd.json") }
             .firstOrNull { it.isFile }
         return buildMap {
+            put(VALIDATION_ENV, "1")
             if (icd != null) put("VK_ICD_FILENAMES", icd.absolutePath)
             put("DYLD_FALLBACK_LIBRARY_PATH", DYLD_FALLBACK)
         }

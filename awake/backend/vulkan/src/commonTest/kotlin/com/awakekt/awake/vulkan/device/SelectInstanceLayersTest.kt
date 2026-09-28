@@ -5,19 +5,30 @@
  */
 package com.awakekt.awake.vulkan.device
 
+import com.awakekt.awake.core.config.MapEnvSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
- * A machine with only the validation layer installed cannot tell the old behavior (enable every
- * installed layer) from the new one (enable validation), so the real-Vulkan headless tests pass
- * either way. These cases supply the layer list directly.
+ * The real-Vulkan headless tests cannot tell these cases apart on a machine with only the
+ * validation layer installed, so the layer list and request are supplied directly.
  */
 class SelectInstanceLayersTest {
 
     @Test
-    fun keepsValidationWhenInstalled() {
-        assertEquals(listOf(VALIDATION_LAYER), selectInstanceLayers(listOf(VALIDATION_LAYER)))
+    fun keepsValidationWhenRequestedAndInstalled() {
+        assertEquals(listOf(VALIDATION_LAYER), selectInstanceLayers(listOf(VALIDATION_LAYER), validation = true))
+    }
+
+    @Test
+    fun asksForNothingUnlessRequested() {
+        assertEquals(
+            emptyList(),
+            selectInstanceLayers(listOf(VALIDATION_LAYER), validation = false),
+            "an installed Vulkan SDK must not turn validation on in a shipped app",
+        )
     }
 
     @Test
@@ -31,7 +42,7 @@ class SelectInstanceLayersTest {
         )
         assertEquals(
             listOf(VALIDATION_LAYER),
-            selectInstanceLayers(installed),
+            selectInstanceLayers(installed, validation = true),
             "an API dump or frame-capture layer that happens to be installed must not be " +
                 "injected into every run",
         )
@@ -40,6 +51,14 @@ class SelectInstanceLayersTest {
     @Test
     fun asksForNothingWhenValidationIsAbsent() {
         val installed = listOf("VK_LAYER_LUNARG_api_dump", "VK_LAYER_NV_optimus")
-        assertEquals(emptyList(), selectInstanceLayers(installed))
+        assertEquals(emptyList(), selectInstanceLayers(installed, validation = true))
+    }
+
+    @Test
+    fun readsTheRequestFromTheEnvironment() {
+        assertFalse(validationRequested(MapEnvSource()))
+        assertFalse(validationRequested(MapEnvSource(mapOf(VALIDATION_PROPERTY to "false"))))
+        assertTrue(validationRequested(MapEnvSource(mapOf(VALIDATION_PROPERTY to "true"))))
+        assertTrue(validationRequested(MapEnvSource(mapOf(VALIDATION_PROPERTY to " 1 "))))
     }
 }

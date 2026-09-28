@@ -36,6 +36,7 @@ kotlin {
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:math2d"))
             implementation(project(":awake:core:color"))
+            implementation(project(":awake:core:config"))
             implementation(project(":awake:core:host"))
             implementation(project(":awake:core:image"))
             implementation(project(":awake:core:input"))
