@@ -28,15 +28,15 @@ API, why a consumer adapter is insufficient, and the smallest framework contract
 
 | Capability | Home |
 |---|---|
-| Neutral engine seam: no world or product vocabulary, generic across games | Awake Core (Apache 2.0, Maven Central) |
+| Anything a shipped game needs at runtime, when it is neutral engine capability | Awake Core (Apache 2.0, Maven Central) |
 | Authored world policy and game rules | The consuming game or content pack |
-| Reusable commercial runtime kits a game ships with, and commercial authoring tools | Studio Pro (private, commercial; its own skills describe the layout) |
+| Authoring productivity, team and cloud workflows | Studio Pro (commercial; its own skills score the placement) |
 | A public starting point for a new game | `awake-template` |
 
-A capability reaches Awake only through the Decision Rule and an Exception Record; it reaches
-Studio Pro as a product decision. Awake and its editor contract never depend on Studio Pro. The
-runtime of anything a Studio scene uses must exist where the game ships, either in Awake or in a
-commercial runtime kit the game depends on. There is no separate starter-kits repository.
+Runtime is never commercial: whatever a Studio scene uses must run from Awake or the game's own
+code, and a Studio Pro tool emits data that runtime reads. A capability reaches Awake only
+through the Decision Rule and an Exception Record. Awake and its editor contract never depend on
+Studio Pro. There is no separate starter-kits repository.
 
 ## Promotion Test
 
