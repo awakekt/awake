@@ -10,6 +10,7 @@ import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
 import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
@@ -46,10 +47,10 @@ internal class HeadlessContentAttachFixture private constructor(
     private val cleanup: () -> Unit,
 ) {
     /** One frame of whatever is attached, as tightly packed RGBA8 rows. */
-    fun render(lens: Lens): ByteArray {
+    fun render(lens: Lens, environment: EnvironmentUniforms = EnvironmentUniforms.Default): ByteArray {
         val target = renderer.createRenderTarget(size, size)
         try {
-            renderer.renderToTexture(target, lens, emptyList())
+            renderer.renderSceneToTexture(target, lens, emptyList(), environment = environment)
             return runBlocking { renderer.readPixels(target) }.data
         } finally {
             target.destroy()

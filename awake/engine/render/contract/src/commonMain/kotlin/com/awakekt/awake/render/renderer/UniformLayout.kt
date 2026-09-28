@@ -176,6 +176,13 @@ object UniformFields {
     val BaseColorFactor = UniformField("baseColorFactor", GpuDataShape.Vec4)
     val EmissiveFactor = UniformField("emissiveFactor", GpuDataShape.Vec4)
 
+    /**
+     * `xyz` = the camera's forward axis divided by the linear-depth range, so its dot with a
+     * point's offset from the eye is 0..1 across that range; `w` = the debug view code, 0 for the
+     * lit image. Written by `render:passes`, which defines the codes.
+     */
+    val DebugView = UniformField("debugView", GpuDataShape.Vec4)
+
     /** Default material ABI used by [GpuDevice] when a caller has not selected a richer layout. */
     val DefaultMaterial = UniformLayout(
         Mvp,

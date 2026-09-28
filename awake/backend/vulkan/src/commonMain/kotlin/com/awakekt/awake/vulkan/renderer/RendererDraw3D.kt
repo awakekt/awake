@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.PreparedDraw
@@ -102,6 +103,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
     shadowCascades: GpuShadowCascadeData? = null,
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
+    debugView: GpuDebugView = GpuDebugView.Off,
 ): PreparedDrawCall? {
     val mesh = cmd.mesh as Mesh
     val material = cmd.material as Material
@@ -123,6 +125,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
             shadowCascades = shadowCascades,
             fogColor = fogColor,
             fogDensity = fogDensity,
+            debugView = debugView,
             materialUniformFloatCount = material.uniformFloatCount,
         )
         val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
@@ -168,6 +171,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         shadowCascades = shadowCascades,
         fogColor = fogColor,
         fogDensity = fogDensity,
+        debugView = debugView,
     )
     val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
     return PreparedDrawCall(

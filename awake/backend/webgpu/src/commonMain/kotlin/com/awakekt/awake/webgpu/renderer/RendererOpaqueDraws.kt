@@ -10,6 +10,7 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.BufferHandle
+import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.MaterialBinding
@@ -91,6 +92,7 @@ internal fun Renderer.prepareGpuDraw(
     shadowCascades: GpuShadowCascadeData? = null,
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
+    debugView: GpuDebugView = GpuDebugView.Off,
 ): WebGpuPreparedDraw? {
     val mesh = cmd.mesh as Mesh
     val material = cmd.material as Material
@@ -109,6 +111,7 @@ internal fun Renderer.prepareGpuDraw(
             shadowCascades = shadowCascades,
             fogColor = fogColor,
             fogDensity = fogDensity,
+            debugView = debugView,
             isTransparent = isTransparent,
         )
     }
@@ -128,6 +131,7 @@ internal fun Renderer.prepareGpuDraw(
         shadowCascades = shadowCascades,
         fogColor = fogColor,
         fogDensity = fogDensity,
+        debugView = debugView,
     )
     slot?.let {
         graphicsDevice.wgpuContext.device.queue.writeBuffer(
@@ -183,6 +187,7 @@ private fun Renderer.prepareInstancedGpuDraw(
     shadowCascades: GpuShadowCascadeData? = null,
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
+    debugView: GpuDebugView = GpuDebugView.Off,
     isTransparent: Boolean,
 ): WebGpuPreparedDraw? {
     if (instanceModels.isEmpty()) return null
@@ -208,6 +213,7 @@ private fun Renderer.prepareInstancedGpuDraw(
         shadowCascades = shadowCascades,
         fogColor = fogColor,
         fogDensity = fogDensity,
+        debugView = debugView,
         materialUniformFloatCount = maxOf(
             material.uniformFloatCount,
             (pipeline.uniformByteSize(0, 0) / Float.SIZE_BYTES).toInt(),

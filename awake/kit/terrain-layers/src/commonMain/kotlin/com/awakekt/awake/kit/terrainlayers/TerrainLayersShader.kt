@@ -41,7 +41,10 @@ import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
+import com.awakekt.awake.asset.shaderpack.DebugSurface
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
+import com.awakekt.awake.asset.shaderpack.debugLayerColor
+import com.awakekt.awake.asset.shaderpack.debugViewColor
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainShadowSampling
 import com.awakekt.awake.asset.shaders.aslShaderSet
@@ -85,7 +88,7 @@ private const val CONTROL_TAPS = 4
  */
 fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain_layers") {
     val terrain = terrainClipmapVertexStage()
-    val sampleShadow = terrainShadowSampling(terrain, clipSpace)
+    val shadows = terrainShadowSampling(terrain, clipSpace)
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
     val albedoLayers by texture2dArray(group = group, binding = LAYER_ALBEDO_BINDING)
     val layerParams by texture2d(group = group, binding = LAYER_TABLE_BINDING)
@@ -101,7 +104,7 @@ fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = shader("ter
         val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
         val ambient = let("ambient", terrain.sunDirection.w)
         val nDotL = let("nDotL", max(dot(normal, toLight), 0f.lit))
-        val shadow = let("shadow", sampleShadow(terrain.worldPosition, normal, nDotL))
+        val shadow = let("shadow", shadows.sampleShadow(terrain.worldPosition, normal, nDotL))
         val lighting = let("lighting", ambient + (1f.lit - ambient) * nDotL * shadow)
         val position = terrain.worldPosition
         val sampling = terrain.terrainSampling
@@ -111,8 +114,36 @@ fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = shader("ter
         )
         // 128 in the lightmap is x1; its alpha hands lighting over from the sun to the bake.
         val light = let("light", mix(lighting, mix(ambient, 1f.lit, shadow), baked.w))
-        colorOutput(vec4(albedo * baked.xyz * 2f.lit * light, 1f.lit))
+        val surface = DebugSurface(
+            normal = normal,
+            worldPosition = position,
+            albedo = albedo,
+            shadow = shadow,
+            shadowCascade = shadows.shadowCascade(position),
+            layerWeights = layerWeightColor(slots),
+            dominantLayer = dominantLayerColor(slots),
+            lightmap = baked.xyz,
+        )
+        val shaded = vec4(albedo * baked.xyz * 2f.lit * light, 1f.lit)
+        colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
     }
+}
+
+/** Each slot's layer colour, mixed by its share. Expressions only, so only a debug view pays for them. */
+private fun layerWeightColor(slots: List<Slot>): AslExpr {
+    val total = max(slots.map { it.weight }.reduce { a, b -> a + b }, EPSILON.lit)
+    return slots.map { debugLayerColor(max(it.layer, 0f.lit)) * it.weight }.reduce { a, b -> a + b } / total
+}
+
+/** The strongest slot's layer colour; the earlier slot wins a tie. */
+private fun dominantLayerColor(slots: List<Slot>): AslExpr {
+    var layer = slots.first().layer
+    var weight = slots.first().weight
+    slots.drop(1).forEach { slot ->
+        layer = select(layer, slot.layer, slot.weight gt weight)
+        weight = max(weight, slot.weight)
+    }
+    return debugLayerColor(max(layer, 0f.lit))
 }
 
 /** [terrainLayersShader] for both backends. */

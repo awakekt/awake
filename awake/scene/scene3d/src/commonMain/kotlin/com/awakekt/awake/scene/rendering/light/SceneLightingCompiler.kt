@@ -23,6 +23,7 @@ import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.renderer.MAX_SHADOW_CASCADES
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
+import com.awakekt.awake.scene.rendering.debug.WorldDebugSettings
 import com.awakekt.awake.scene.rendering.debug.debugSettingsOrNull
 import com.awakekt.awake.scene.rendering.fog.Fog
 import com.awakekt.awake.scene.rendering.sky.Skybox
@@ -213,8 +214,11 @@ internal class SceneLightingCompiler(
             fogDensity = fogDensity,
             fogColor = fogColor,
             shadowsEnabled = shadows,
-        )
+        ).withDebugView(debug)
     }
+
+    private fun EnvironmentUniforms.withDebugView(debug: WorldDebugSettings?): EnvironmentUniforms =
+        if (debug == null) this else copy(debugView = debug.renderDebugView, debugLayer = debug.renderDebugLayer)
 }
 
 private const val POINT_SHADOW_NEAR = 0.05f

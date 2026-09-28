@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering.debug
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.render.passes.uniforms.RenderDebugView
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 
 /** Singleton toggle set for [com.awakekt.awake.scene.rendering.systems
@@ -51,4 +52,8 @@ data class WorldDebugSettings(
      * `Camera`) draws nothing, same "opt-in, no target = no lines" posture every other field
      * here already has. */
     var frustumTargetEntityId: Int? = null,
+    /** What the scene shaders draw instead of their lit colour. */
+    var renderDebugView: RenderDebugView = RenderDebugView.Off,
+    /** The shadow-map layer [RenderDebugView.ShadowMap] shows: a cascade, or a point light's face. */
+    var renderDebugLayer: Int = 0,
 )
