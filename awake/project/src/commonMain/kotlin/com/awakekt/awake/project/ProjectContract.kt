@@ -91,20 +91,49 @@ object AwakeProjectValidator {
         )
     }
 
+    /**
+     * Ordered the way Awake's own versions are cut: `alpha.10` after `alpha.9` (numeric parts as
+     * numbers, which a plain string compare gets backwards), and a `-SNAPSHOT` just below the
+     * version it leads to -- after the previous release, before this one.
+     */
     internal data class SemVer(
         val major: Int,
         val minor: Int,
         val patch: Int,
         val preRelease: String,
     ) : Comparable<SemVer> {
+        private val snapshot: Boolean get() = preRelease == SNAPSHOT || preRelease.endsWith("-$SNAPSHOT")
+        private val track: String get() = preRelease.removeSuffix(SNAPSHOT).removeSuffix("-")
+
         override fun compareTo(other: SemVer): Int {
             val numeric = compareValuesBy(this, other, SemVer::major, SemVer::minor, SemVer::patch)
             if (numeric != 0) return numeric
-            return when {
-                preRelease.isEmpty() && other.preRelease.isNotEmpty() -> 1
-                preRelease.isNotEmpty() && other.preRelease.isEmpty() -> -1
-                else -> preRelease.compareTo(other.preRelease)
+            val byTrack = when {
+                track == other.track -> 0
+                // A release line (no alpha/beta/rc) comes after every pre-release of it.
+                track.isEmpty() -> 1
+                other.track.isEmpty() -> -1
+                else -> compareIdentifiers(track.split('.'), other.track.split('.'))
             }
+            return if (byTrack != 0) byTrack else compareValues(!snapshot, !other.snapshot)
+        }
+
+        private fun compareIdentifiers(left: List<String>, right: List<String>): Int {
+            for ((a, b) in left.zip(right)) {
+                val (na, nb) = a.toIntOrNull() to b.toIntOrNull()
+                val order = when {
+                    na != null && nb != null -> na.compareTo(nb)
+                    na != null -> -1
+                    nb != null -> 1
+                    else -> a.compareTo(b)
+                }
+                if (order != 0) return order
+            }
+            return left.size.compareTo(right.size)
+        }
+
+        private companion object {
+            const val SNAPSHOT = "SNAPSHOT"
         }
     }
 

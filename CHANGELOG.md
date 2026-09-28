@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Projects keep opening once the engine reaches alpha.10.** `AwakeProjectValidator.isCompatible` compared pre-release tags as text, so `0.1.0-alpha.10-SNAPSHOT` sorted before `0.1.0-alpha.4` and an engine at alpha.10 refused every project requiring alpha.4 or later. Numeric parts now compare as numbers, and a `-SNAPSHOT` sorts just below the version it leads to.
+
 ## [0.1.0-alpha.9] - 2026-09-28
 
 ### Added

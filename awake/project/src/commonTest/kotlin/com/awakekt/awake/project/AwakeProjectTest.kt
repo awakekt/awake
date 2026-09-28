@@ -54,6 +54,33 @@ class AwakeProjectTest {
         assertTrue(AwakeProjectValidator.isCompatible(manifest, "1.0.0"))
     }
 
+    /** A two-digit pre-release sorted as text put alpha.10 before alpha.4 and refused every project. */
+    @Test
+    fun engineVersionsOrderAsTheyAreCut() {
+        val ordered = listOf(
+            "0.1.0-alpha.4-SNAPSHOT",
+            "0.1.0-alpha.4",
+            "0.1.0-alpha.9",
+            "0.1.0-alpha.10-SNAPSHOT",
+            "0.1.0-alpha.10",
+            "0.1.0-beta.1",
+            "0.1.0-SNAPSHOT",
+            "0.1.0",
+            "0.1.1-SNAPSHOT",
+        )
+        ordered.zipWithNext { lower, higher ->
+            val manifest = AwakeProjectManifest(
+                id = "com.example.demo",
+                name = "Demo",
+                version = "1.0.0",
+                minEngineVersion = higher,
+                entryScene = "scenes/main.scene.json",
+            )
+            assertFalse(AwakeProjectValidator.isCompatible(manifest, lower), "$lower must not satisfy $higher")
+            assertTrue(AwakeProjectValidator.isCompatible(manifest.copy(minEngineVersion = lower), higher), "$higher must satisfy $lower")
+        }
+    }
+
     @Test
     fun manifestWithoutEngineMinimumDoesNotInventCompatibilityRequirement() {
         val manifest = AwakeProjectManifest(
