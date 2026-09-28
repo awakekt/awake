@@ -115,4 +115,19 @@ class PhysicsContactsTest {
         assertEquals(box, system.entityFor(handleOf(box)))
         assertNull(system.entityFor(BodyHandle(999L)))
     }
+
+    @Test
+    fun destroyBodyFreesTheBodyAndForgetsIt() {
+        val box = body()
+        step()
+        val handle = handleOf(box)
+
+        system.destroyBody(world, box)
+        world.destroy(box)
+        step()
+
+        assertEquals(listOf(handle), physics.destroyed)
+        assertNull(system.entityFor(handle))
+        assertEquals(emptyList(), physics.liveBodies)
+    }
 }

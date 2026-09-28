@@ -1,8 +1,8 @@
 # Node graph plan
 
 Date: 2026-09-27
-Status: **active** — phases 0 and 1 are done (#108); phase 2 is in review (#110). Each consumer
-has its own plan or section, listed under "Sequence".
+Status: **active** — phases 0–2 are done (#108, #110). Each consumer has its own plan or section,
+listed under "Sequence".
 
 ## Goal
 
@@ -26,7 +26,7 @@ widget. The consumers, in order, are:
 |---|---|---|
 | 1 | Graph model and node registry | Phase 1 here, [#104](https://github.com/awakekt/awake/issues/104) |
 | 2 | Canvas widget | Phases 0 and 2 here, [#105](https://github.com/awakekt/awake/issues/105) |
-| 3 | Blueprint runtime: event graphs as data, interpreted by an ECS system, reloadable while running | [blueprint-runtime](2026-09-27-blueprint-runtime-plan.md) (proposed; design decided) |
+| 3 | Blueprint runtime: event graphs as data, interpreted by an ECS system, reloadable while running | [blueprint-runtime](2026-09-27-blueprint-runtime-plan.md) (active) |
 | 4 | Studio blueprint editor and live debugger | awake-pro, planned when step 3's runtime lands |
 | 5 | AI state trees on the same canvas: the hybrid runtime from the [behavior tree plan](archive/2026-08-30-behavior-tree-state-machine-plan.md) | Own plan, not yet written |
 | 6 | Shader graph, preceded by shader hot reload and a per-material shader render plan | [shader-graph](2026-09-27-shader-graph-plan.md) |

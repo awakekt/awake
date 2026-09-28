@@ -50,6 +50,7 @@ public final class com/awakekt/awake/scene/physics/PhysicsOriginShiftListener : 
 
 public final class com/awakekt/awake/scene/physics/PhysicsSystem : com/awakekt/awake/ecs/InterpolatedSystem {
 	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;)V
+	public final fun destroyBody-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)V
 	public final fun entityFor-wfAf70w (J)Lcom/awakekt/awake/ecs/Entity;
 	public final fun getContacts ()Ljava/util/List;
 	public fun interpolate (Lcom/awakekt/awake/ecs/World;F)V

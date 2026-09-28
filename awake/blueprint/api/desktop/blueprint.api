@@ -44,6 +44,7 @@ public final class com/awakekt/awake/blueprint/BlueprintInstance {
 	public final fun getTrace ()Lcom/awakekt/awake/blueprint/BlueprintTrace;
 	public final fun isWaiting ()Z
 	public final fun setTrace (Lcom/awakekt/awake/blueprint/BlueprintTrace;)V
+	public final fun setVariable (Ljava/lang/String;Lkotlinx/serialization/json/JsonPrimitive;)V
 	public final fun variable (Ljava/lang/String;)Ljava/lang/Object;
 }
 

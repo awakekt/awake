@@ -1,8 +1,9 @@
 # Blueprint runtime plan
 
 Date: 2026-09-27
-Status: **proposed** — the seven design decisions below are made. Phase 0 (prerequisites) can
-start. Consumer 1 of the [node-graph plan](2026-09-27-node-graph-plan.md).
+Status: **active** — phases 0 and 1 are done (#125, #126, #128, #129); phase 2 is
+[#123](https://github.com/awakekt/awake/issues/123). Consumer 1 of the
+[node-graph plan](2026-09-27-node-graph-plan.md).
 
 ## Goal
 

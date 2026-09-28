@@ -1,0 +1,123 @@
+public final class com/awakekt/awake/scene/blueprint/BlueprintBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/blueprint/BlueprintBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/blueprint/SceneBlueprint;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/blueprint/BlueprintComponent;)Lcom/awakekt/awake/scene/blueprint/SceneBlueprint;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/blueprint/SceneBlueprint;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/blueprint/BlueprintComponent {
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getGraph ()Ljava/lang/String;
+	public final fun getInstance ()Lcom/awakekt/awake/blueprint/BlueprintInstance;
+	public final fun getVariables ()Ljava/util/Map;
+}
+
+public final class com/awakekt/awake/scene/blueprint/BlueprintComponentKt {
+	public static final fun registerBlueprints (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
+}
+
+public final class com/awakekt/awake/scene/blueprint/BlueprintScene {
+	public final fun destroy-H_EwOg4 (J)V
+	public final fun getNames ()Lcom/awakekt/awake/scene/core/EntityNames;
+	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
+}
+
+public final class com/awakekt/awake/scene/blueprint/BlueprintSystem : com/awakekt/awake/ecs/System {
+	public static final field INITIAL_OWNERS I
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/scene/physics/PhysicsSystem;Z)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Lcom/awakekt/awake/scene/physics/PhysicsSystem;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getNodes ()Lcom/awakekt/awake/blueprint/BlueprintNodes;
+	public final fun getScene ()Lcom/awakekt/awake/scene/blueprint/BlueprintScene;
+	public final fun reload (Ljava/lang/String;Lcom/awakekt/awake/nodegraph/NodeGraph;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneBlueprint : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/blueprint/SceneBlueprint$Companion;
+	public fun <init> (Ljava/lang/String;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/util/Map;
+	public final fun copy (Ljava/lang/String;Ljava/util/Map;)Lcom/awakekt/awake/scene/blueprint/SceneBlueprint;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/blueprint/SceneBlueprint;Ljava/lang/String;Ljava/util/Map;ILjava/lang/Object;)Lcom/awakekt/awake/scene/blueprint/SceneBlueprint;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getGraph ()Ljava/lang/String;
+	public final fun getVariables ()Ljava/util/Map;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/blueprint/SceneBlueprint$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/blueprint/SceneBlueprint$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/blueprint/SceneBlueprint;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/blueprint/SceneBlueprint;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneBlueprint$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneNodes {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/blueprint/SceneNodes;
+	public static final field OTHER Ljava/lang/String;
+	public final fun all (Lcom/awakekt/awake/scene/blueprint/BlueprintScene;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneNodes$Destroy : com/awakekt/awake/blueprint/ActionNode {
+	public fun <init> (Lcom/awakekt/awake/scene/blueprint/BlueprintScene;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public fun run (Lcom/awakekt/awake/blueprint/BlueprintContext;)Lcom/awakekt/awake/blueprint/Step;
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneNodes$FindByName : com/awakekt/awake/blueprint/PureNode {
+	public fun <init> (Lcom/awakekt/awake/scene/blueprint/BlueprintScene;)V
+	public fun evaluate (Lcom/awakekt/awake/blueprint/BlueprintContext;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneNodes$OnSensorEnter : com/awakekt/awake/blueprint/EventNode {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/blueprint/SceneNodes$OnSensorEnter;
+	public static final field TYPE Ljava/lang/String;
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneNodes$OnSensorExit : com/awakekt/awake/blueprint/EventNode {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/blueprint/SceneNodes$OnSensorExit;
+	public static final field TYPE Ljava/lang/String;
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneNodes$PlayAnimation : com/awakekt/awake/blueprint/ActionNode {
+	public fun <init> (Lcom/awakekt/awake/scene/blueprint/BlueprintScene;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+	public fun run (Lcom/awakekt/awake/blueprint/BlueprintContext;)Lcom/awakekt/awake/blueprint/Step;
+}
+
+public final class com/awakekt/awake/scene/blueprint/SceneNodes$Self : com/awakekt/awake/blueprint/PureNode {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/blueprint/SceneNodes$Self;
+	public fun evaluate (Lcom/awakekt/awake/blueprint/BlueprintContext;)V
+	public fun getEffect ()Lcom/awakekt/awake/blueprint/Effect;
+	public fun getSpec ()Lcom/awakekt/awake/nodegraph/NodeSpec;
+}
+
