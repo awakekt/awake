@@ -42,6 +42,7 @@ object LightBinding : SceneComponentBinding<Light, SceneLight> {
         },
         range = range,
         shadowsEnabled = shadowsEnabled,
+        shadowDistance = shadowDistance,
     )
 
     fun Light.toSceneComponent(): SceneLight = SceneLight(
@@ -54,5 +55,6 @@ object LightBinding : SceneComponentBinding<Light, SceneLight> {
         },
         range = range,
         shadowsEnabled = shadowsEnabled,
+        shadowDistance = shadowDistance,
     )
 }

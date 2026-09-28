@@ -456,21 +456,23 @@ public final class com/awakekt/awake/scene/rendering/light/AmbientLightBinding :
 
 public final class com/awakekt/awake/scene/rendering/light/Light {
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/light/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZ)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/light/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/light/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/light/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component2 ()F
 	public final fun component3 ()Lcom/awakekt/awake/scene/rendering/light/Light$Type;
 	public final fun component4 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component5 ()F
 	public final fun component6 ()Z
-	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/light/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZ)Lcom/awakekt/awake/scene/rendering/light/Light;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/light/Light;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/light/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/light/Light;
+	public final fun component7 ()F
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/light/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZF)Lcom/awakekt/awake/scene/rendering/light/Light;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/light/Light;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/scene/rendering/light/Light$Type;Lcom/awakekt/awake/core/math/Vec3f;FZFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/light/Light;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColor ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getDirection ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getIntensity ()F
 	public final fun getRange ()F
+	public final fun getShadowDistance ()F
 	public final fun getShadowsEnabled ()Z
 	public final fun getType ()Lcom/awakekt/awake/scene/rendering/light/Light$Type;
 	public fun hashCode ()I
@@ -544,22 +546,24 @@ public final class com/awakekt/awake/scene/rendering/light/SceneAmbientLight$Com
 public final class com/awakekt/awake/scene/rendering/light/SceneLight : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/light/SceneLight$Companion;
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZ)V
-	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public final fun component2 ()F
 	public final fun component3 ()Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type;
 	public final fun component4 ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun component5 ()F
 	public final fun component6 ()Z
-	public final fun copy (Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZ)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/light/SceneLight;Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
+	public final fun component7 ()F
+	public final fun copy (Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZF)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/light/SceneLight;Lcom/awakekt/awake/scene/document/SceneColor;FLcom/awakekt/awake/scene/rendering/light/SceneLight$Type;Lcom/awakekt/awake/scene/document/SceneVec3;FZFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/light/SceneLight;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getColor ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public final fun getDirection ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun getIntensity ()F
 	public final fun getRange ()F
+	public final fun getShadowDistance ()F
 	public final fun getShadowsEnabled ()Z
 	public final fun getType ()Lcom/awakekt/awake/scene/rendering/light/SceneLight$Type;
 	public fun hashCode ()I

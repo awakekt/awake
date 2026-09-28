@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering.light
 
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
 
 private const val DEFAULT_DIRECTION_X = 0.4f
 private const val DEFAULT_DIRECTION_Y = 0.8f
@@ -36,6 +37,9 @@ data class Light(
     val range: Float = DEFAULT_POINT_RANGE,
     /** Whether this light casts shadows. Point lights use six cube-face depth projections. */
     val shadowsEnabled: Boolean = true,
+    /** How far from the camera a [Type.Directional] light's shadow cascades reach, in world
+     * units; the camera's far plane still caps it. Ignored for a point light. */
+    val shadowDistance: Float = DEFAULT_SHADOW_DISTANCE,
 ) {
     enum class Type {
         Directional,

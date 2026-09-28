@@ -14,9 +14,12 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.passes.DEFAULT_SHADOW_DISTANCE
 import com.awakekt.awake.render.passes.uniforms.RenderDebugView
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.debug.debugSettings
+import com.awakekt.awake.scene.rendering.light.Light
+import com.awakekt.awake.scene.rendering.light.SceneLightingCompiler
 import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.LodGroup
 import com.awakekt.awake.scene.rendering.mesh.LodLevel
@@ -27,6 +30,22 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 
 class SceneCompilerTest {
+    @Test
+    fun theLightsShadowDistanceSetsTheFarCascadeSplit() {
+        fun farSplit(cameraFar: Float, light: Light): Float {
+            val world = World()
+            world.add(world.create(), light)
+            val camera = Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = cameraFar))
+            val cascades = SceneLightingCompiler(ClipSpace.WebGpu).sceneLight(world, camera, viewportAspect = 1f).cascades
+            return requireNotNull(cascades).splitDistances.last()
+        }
+        val sun = Light(type = Light.Type.Directional)
+
+        assertEquals(400f, farSplit(1000f, sun.copy(shadowDistance = 400f)), 0.01f, "The authored distance is dropped.")
+        assertEquals(250f, farSplit(250f, sun.copy(shadowDistance = 400f)), 0.01f, "The camera's far plane still caps it.")
+        assertEquals(DEFAULT_SHADOW_DISTANCE, farSplit(1000f, sun), 0.01f, "An unset distance keeps today's reach.")
+    }
+
     @Test
     fun lightingCompilerReadsSkyboxAndFogWithoutRendererState() {
         val world = World()
