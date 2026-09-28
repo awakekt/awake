@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 
@@ -30,4 +31,6 @@ data class PbrMaterial(
     var emissiveFactor: Color = Color.Transparent,
     var alphaMode: AlphaMode = AlphaMode.Opaque,
     var alphaCutoff: Float = 0.5f,
+    /** How the texture moves; read by the textured shader only. */
+    var textureAnimation: TextureAnimation = TextureAnimation.None,
 )

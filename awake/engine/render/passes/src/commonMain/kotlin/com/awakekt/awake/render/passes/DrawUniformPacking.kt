@@ -103,6 +103,7 @@ fun RenderDrawCommand.uniformFloats(
             fogDensity = fogDensity,
             debugView = debugView,
             cameraForward = cameraForward,
+            timeSeconds = timeSeconds,
         )
 
         DrawUniformPlan.Lit -> litUniforms(

@@ -36,60 +36,110 @@ val DEFAULT_EMISSIVE_FACTOR: Color = Color(r = 0f, g = 0f, b = 0f, a = 0f)
  */
 fun pbrMaterialFloats(drawCall: RenderDrawCommand): FloatArray = pbrMaterialPayload(drawCall.extraUniformFloats)
 
+/**
+ * How a textured material's texture moves: a frame sheet played in reading order (left to right,
+ * then top to bottom of the image), and a UV scroll. [None] is a still texture.
+ *
+ * @property columns Frame-sheet columns.
+ * @property rows Frame-sheet rows.
+ * @property frameCount Frames played, from the first; at most [columns] x [rows].
+ * @property framesPerSecond Playback rate; 0 holds the first frame.
+ * @property scrollU UV units per second along U.
+ * @property scrollV UV units per second along V, toward the bottom of the image.
+ */
+data class TextureAnimation(
+    val columns: Int = 1,
+    val rows: Int = 1,
+    val frameCount: Int = columns * rows,
+    val framesPerSecond: Float = 0f,
+    val scrollU: Float = 0f,
+    val scrollV: Float = 0f,
+) {
+    init {
+        require(columns >= 1 && rows >= 1) { "A frame sheet needs at least one column and row: ${columns}x$rows." }
+        require(frameCount in 1..columns * rows) { "$frameCount frames do not fit a ${columns}x$rows sheet." }
+        require(framesPerSecond >= 0f && framesPerSecond.isFinite()) { "framesPerSecond must be finite and >= 0." }
+        require(scrollU.isFinite() && scrollV.isFinite()) { "The UV scroll must be finite." }
+    }
+
+    companion object {
+        /** A still texture. */
+        val None: TextureAnimation = TextureAnimation()
+    }
+}
+
 /** Packs authored PBR factors without making scene extraction know the GPU lane order. */
 fun pbrMaterialFloats(
     metallic: Float,
     roughness: Float,
     baseColorFactor: Color,
     emissiveFactor: Color,
+    textureAnimation: TextureAnimation = TextureAnimation.None,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTexturedMaterial)
     .put(UniformFields.PbrFactors, metallic, roughness, 0f, 0f)
     .put(UniformFields.BaseColorFactor, baseColorFactor)
     .put(UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, 0f)
+    .putTextureAnimation(textureAnimation)
     .build()
+
+private fun UniformWriter.putTextureAnimation(animation: TextureAnimation): UniformWriter = this
+    .put(
+        UniformFields.TextureFrames,
+        animation.columns.toFloat(),
+        animation.rows.toFloat(),
+        animation.framesPerSecond,
+        animation.frameCount.toFloat(),
+    )
+    .put(UniformFields.TextureScroll, animation.scrollU, animation.scrollV, 0f, 0f)
 
 /** Same typed defaulting for backend source adapters that carry only the raw extra payload. */
 internal fun pbrMaterialFloats(values: FloatArray): FloatArray = pbrMaterialPayload(values)
 
 /**
- * Packs `[metallic, roughness, pad, pad] + baseColorFactor.rgba + emissiveFactor.rgba` for the
- * textured glTF PBR path.
+ * Packs `[metallic, roughness, alphaCutoff, pad] + baseColorFactor.rgba + emissiveFactor.rgba` and
+ * the texture animation for the textured glTF PBR path.
  *
  * @param drawCall Supplies the factors through `extraUniformFloats`, or nothing for the defaults.
- * The third float in the metallic/roughness vec4 is reserved for the draw's alpha cutoff. The
- * lit textured shader ignores that slot today; keyed masked depth shaders can consume it without
- * changing the uniform block size or introducing a backend-specific buffer.
+ * The third float in the metallic/roughness vec4 is the draw's alpha cutoff, which masked depth
+ * shaders read; the draw's time goes in the texture scroll's `z`, which the animation reads.
  *
  * @return Exactly [PBR_TEXTURED_MATERIAL_FLOATS] floats.
  */
-fun pbrTexturedMaterialFloats(drawCall: RenderDrawCommand): FloatArray {
-    val supplied = drawCall.extraUniformFloats
+fun pbrTexturedMaterialFloats(drawCall: RenderDrawCommand): FloatArray =
+    texturedMaterialPayload(drawCall.extraUniformFloats, drawCall.alphaCutoff, drawCall.timeSeconds)
+
+/**
+ * The textured material block for [values], stamped with the draw's [alphaCutoff] and
+ * [timeSeconds]. A payload of only the three factor fields (from before texture animation) keeps
+ * its factors and plays no animation.
+ */
+private fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, timeSeconds: Float): FloatArray {
     val layout = MaterialUniformLayouts.PbrTexturedMaterial
-    if (supplied.size >= layout.total) {
-        val output = supplied.copyOf(layout.total)
-        val factors = layout.readVec4(output, UniformFields.PbrFactors)
-        layout.writeVec4(
-            destination = output,
-            field = UniformFields.PbrFactors,
-            x = factors.x,
-            y = factors.y,
-            z = drawCall.alphaCutoff,
-            w = factors.w,
-        )
-        return output
+    val output = when {
+        values.size >= layout.total -> values.copyOf(layout.total)
+        values.size >= FACTOR_FLOATS -> UniformWriter(layout)
+            .put(values, layout.offsetOf(UniformFields.PbrFactors), UniformFields.PbrFactors)
+            .put(values, layout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
+            .put(values, layout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
+            .putTextureAnimation(TextureAnimation.None)
+            .build()
+        else -> UniformWriter(layout)
+            .put(UniformFields.PbrFactors, DEFAULT_METALLIC_FACTOR, DEFAULT_ROUGHNESS_FACTOR, 0f, 0f)
+            .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
+            .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
+            .putTextureAnimation(TextureAnimation.None)
+            .build()
     }
-    return UniformWriter(layout)
-        .put(
-            UniformFields.PbrFactors,
-            DEFAULT_METALLIC_FACTOR,
-            DEFAULT_ROUGHNESS_FACTOR,
-            drawCall.alphaCutoff,
-            0f,
-        )
-        .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
-        .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
-        .build()
+    val factors = layout.readVec4(output, UniformFields.PbrFactors)
+    layout.writeVec4(output, UniformFields.PbrFactors, factors.x, factors.y, alphaCutoff, factors.w)
+    val scroll = layout.readVec4(output, UniformFields.TextureScroll)
+    layout.writeVec4(output, UniformFields.TextureScroll, scroll.x, scroll.y, timeSeconds, scroll.w)
+    return output
 }
+
+/** The factor fields a textured payload carried before texture animation. */
+private val FACTOR_FLOATS =
+    UniformFields.PbrFactors.floats + UniformFields.BaseColorFactor.floats + UniformFields.EmissiveFactor.floats
 
 private fun pbrMaterialPayload(values: FloatArray): FloatArray {
     val layout = MaterialUniformLayouts.PbrMaterial
@@ -148,6 +198,8 @@ fun texturedUniforms(
         UniformFields.PbrFactors,
         UniformFields.BaseColorFactor,
         UniformFields.EmissiveFactor,
+        UniformFields.TextureFrames,
+        UniformFields.TextureScroll,
     )
     .put(frame.fog, UniformFields.FogColor)
     .putDebugView(GpuDebugView.Off, frame.cameraForward)
@@ -157,6 +209,7 @@ fun texturedUniforms(
  * payload is the frame block produced by [sceneLightUniforms]: directional lanes followed by
  * point-light position and colour slots. Keeping this here prevents Vulkan and WebGPU from
  * independently assembling a shorter, invalid prefix of the textured layout. */
+@Suppress("LongParameterList") // One argument per draw input the block holds; DrawUniformPacking names each.
 fun texturedUniforms(
     mvp: Mat4,
     model: Mat4,
@@ -168,6 +221,7 @@ fun texturedUniforms(
     alphaCutoff: Float = 0.5f,
     debugView: GpuDebugView = GpuDebugView.Off,
     cameraForward: Vec3f = Vec3f(0f, 0f, -1f),
+    timeSeconds: Float = 0f,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTextured)
     .put(mvp.data, UniformFields.Mvp)
     .put(
@@ -179,7 +233,14 @@ fun texturedUniforms(
     )
     .put(model.data, UniformFields.Model)
     .put(UniformFields.CameraPosition, cameraEye)
-    .putPbrTexturedFactors(extraUniformFloats, alphaCutoff)
+    .put(
+        texturedMaterialPayload(extraUniformFloats, alphaCutoff, timeSeconds),
+        UniformFields.PbrFactors,
+        UniformFields.BaseColorFactor,
+        UniformFields.EmissiveFactor,
+        UniformFields.TextureFrames,
+        UniformFields.TextureScroll,
+    )
     .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
     .putDebugView(debugView, cameraForward)
     .build()
@@ -208,31 +269,6 @@ private fun UniformWriter.putPbrFactors(values: FloatArray): UniformWriter {
         return put(values, layout.offsetOf(UniformFields.PbrFactors), UniformFields.PbrFactors)
     }
     return put(UniformFields.PbrFactors, DEFAULT_METALLIC, DEFAULT_ROUGHNESS, 0f, 0f)
-}
-
-private fun UniformWriter.putPbrTexturedFactors(values: FloatArray, alphaCutoff: Float): UniformWriter {
-    val layout = MaterialUniformLayouts.PbrTexturedMaterial
-    if (values.size >= layout.total) {
-        // The packet's third lane is the authoritative alpha cutoff for masked depth passes.
-        val copy = values.copyOf(layout.total)
-        val factors = layout.readVec4(copy, UniformFields.PbrFactors)
-        layout.writeVec4(
-            destination = copy,
-            field = UniformFields.PbrFactors,
-            x = factors.x,
-            y = factors.y,
-            z = alphaCutoff,
-            w = factors.w,
-        )
-        put(copy, layout.offsetOf(UniformFields.PbrFactors), UniformFields.PbrFactors)
-        put(copy, layout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
-        put(copy, layout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
-        return this
-    }
-    put(UniformFields.PbrFactors, DEFAULT_METALLIC_FACTOR, DEFAULT_ROUGHNESS_FACTOR, alphaCutoff, 0f)
-    put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
-    put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
-    return this
 }
 
 /**

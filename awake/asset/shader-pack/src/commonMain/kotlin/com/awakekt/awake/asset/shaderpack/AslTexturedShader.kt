@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
+import com.awakekt.awake.asset.shaderdsl.AslBlockBuilder
+import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.AslType
 import com.awakekt.awake.asset.shaderdsl.F32
@@ -18,8 +20,11 @@ import com.awakekt.awake.asset.shaderdsl.dpdx
 import com.awakekt.awake.asset.shaderdsl.dpdy
 import com.awakekt.awake.asset.shaderdsl.exp
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
+import com.awakekt.awake.asset.shaderdsl.floor
+import com.awakekt.awake.asset.shaderdsl.fract
 import com.awakekt.awake.asset.shaderdsl.g
 import com.awakekt.awake.asset.shaderdsl.ge
+import com.awakekt.awake.asset.shaderdsl.gt
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.inverseSqrt
 import com.awakekt.awake.asset.shaderdsl.le
@@ -36,9 +41,11 @@ import com.awakekt.awake.asset.shaderdsl.r
 import com.awakekt.awake.asset.shaderdsl.rgb
 import com.awakekt.awake.asset.shaderdsl.sampler
 import com.awakekt.awake.asset.shaderdsl.saturate
+import com.awakekt.awake.asset.shaderdsl.select
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureSample
+import com.awakekt.awake.asset.shaderdsl.textureSampleGrad
 import com.awakekt.awake.asset.shaderdsl.times
 import com.awakekt.awake.asset.shaderdsl.unaryMinus
 import com.awakekt.awake.asset.shaderdsl.vec2
@@ -46,6 +53,7 @@ import com.awakekt.awake.asset.shaderdsl.vec3
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.w
 import com.awakekt.awake.asset.shaderdsl.x
+import com.awakekt.awake.asset.shaderdsl.xy
 import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
@@ -89,6 +97,8 @@ private fun textured(): AslShaderDefinition = shader("textured") {
     val pbrFactors = handles.value("pbrFactors")
     val baseColorFactor = handles.value("baseColorFactor")
     val emissiveFactor = handles.value("emissiveFactor")
+    val textureFrames = handles.value("textureFrames")
+    val textureScroll = handles.value("textureScroll")
     val fogColor = handles.value("fogColor")
     val debugView = handles.value("debugView")
 
@@ -191,18 +201,19 @@ private fun textured(): AslShaderDefinition = shader("textured") {
     }
 
     fragment {
-        val baseColorSample = let("baseColorSample", textureSample(baseColorTexture, baseColorSampler, uv))
+        val (sampleUv, uvDx, uvDy) = animatedTextureUv(uv, textureFrames, textureScroll)
+        val baseColorSample = let("baseColorSample", textureSampleGrad(baseColorTexture, baseColorSampler, sampleUv, uvDx, uvDy))
         val albedo = let("albedo", baseColorSample.rgb * color * baseColorFactor.rgb)
         // glTF convention: G = roughness, B = metalness; factor * texture channel.
         val metallicRoughness =
-            let("metallicRoughness", textureSample(metallicRoughnessTexture, baseColorSampler, uv))
+            let("metallicRoughness", textureSampleGrad(metallicRoughnessTexture, baseColorSampler, sampleUv, uvDx, uvDy))
         val metallic = let("metallic", clamp(metallicRoughness.b * pbrFactors.x, 0f.lit, 1f.lit))
         val roughness = let("roughness", clamp(metallicRoughness.g * pbrFactors.y, minRoughness, 1f.lit))
-        val occlusion = let("occlusion", textureSample(occlusionTexture, baseColorSampler, uv).r)
+        val occlusion = let("occlusion", textureSampleGrad(occlusionTexture, baseColorSampler, sampleUv, uvDx, uvDy).r)
         val emissive =
-            let("emissive", textureSample(emissiveTexture, baseColorSampler, uv).rgb * emissiveFactor.rgb)
+            let("emissive", textureSampleGrad(emissiveTexture, baseColorSampler, sampleUv, uvDx, uvDy).rgb * emissiveFactor.rgb)
         val tangentNormal =
-            let("tangentNormal", textureSample(normalTexture, baseColorSampler, uv).xyz * 2f.lit - vec3(1f.lit))
+            let("tangentNormal", textureSampleGrad(normalTexture, baseColorSampler, sampleUv, uvDx, uvDy).xyz * 2f.lit - vec3(1f.lit))
 
         val n = let("n", perturbNormal(normalize(normal), worldPos, uv, tangentNormal))
         val l = let("l", normalize(lightDirection.xyz))
@@ -258,3 +269,29 @@ private fun textured(): AslShaderDefinition = shader("textured") {
 }
 
 val TexturedShader: AslShaderDefinition = textured()
+
+/**
+ * The UV to sample a textured material at, and its screen derivatives, after the material's
+ * texture animation (`textureFrames`, `textureScroll`; see `TextureAnimation`).
+ *
+ * The scroll and the frame sheet work in the image's own UV space, where V runs down the image:
+ * the vertex stage flipped V for the bitmap decoder, so it is flipped back here and again at the
+ * end. Frames run in reading order. A frame wraps the UV into its cell with `fract`, which jumps
+ * inside a primitive, so the derivatives come from the unwrapped UV scaled to the cell; a 1 x 1
+ * sheet skips the wrap entirely and samples exactly as a still texture.
+ */
+private fun AslBlockBuilder.animatedTextureUv(uv: AslExpr, frames: AslExpr, scroll: AslExpr): Triple<AslExpr, AslExpr, AslExpr> {
+    val time = scroll.z
+    val imageUv = let("imageUv", vec2(uv.x, 1f.lit - uv.y) + scroll.xy * time)
+    val sheet = let("sheet", frames.xy)
+    val played = let("played", floor(time * frames.z))
+    val frame = let("frame", played - frames.w * floor(played / frames.w))
+    val cell = let("cell", vec2(frame - sheet.x * floor(frame / sheet.x), floor(frame / sheet.x)))
+    val inCell = let("inCell", (fract(imageUv) + cell) / sheet)
+    val animated = let("animated", select(imageUv, inCell, (sheet.x * sheet.y) gt 1.5f.lit))
+    return Triple(
+        let("sampleUv", vec2(animated.x, 1f.lit - animated.y)),
+        let("uvDx", dpdx(uv) / sheet),
+        let("uvDy", dpdy(uv) / sheet),
+    )
+}

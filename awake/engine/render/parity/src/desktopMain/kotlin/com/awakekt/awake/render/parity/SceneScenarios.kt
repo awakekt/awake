@@ -21,6 +21,7 @@ import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.passes.uniforms.SceneLight
+import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
 import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.Renderer
@@ -86,20 +87,14 @@ fun Renderer.renderShadowScene(): ByteArray {
  */
 fun Renderer.renderTexturedPbrScene(
     environment: EnvironmentUniforms = EnvironmentUniforms.Default.copy(shadowsEnabled = false),
+    texture: TextureAsset = SolidOrange,
+    textureAnimation: TextureAnimation = TextureAnimation.None,
+    timeSeconds: Float = 0f,
 ): ByteArray {
     val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
     val mesh = createMesh(texturedPlane())
     val material = createMaterial(
-        texture = TextureAsset(
-            data = byteArrayOf(
-                220.toByte(), 80, 40, 255.toByte(),
-                220.toByte(), 80, 40, 255.toByte(),
-                220.toByte(), 80, 40, 255.toByte(),
-                220.toByte(), 80, 40, 255.toByte(),
-            ),
-            width = 2,
-            height = 2,
-        ),
+        texture = texture,
         uniformFloatCount = MaterialUniformLayouts.PbrTextured.total,
         pbrTextures = PbrTextureSet(),
     )
@@ -119,7 +114,9 @@ fun Renderer.renderTexturedPbrScene(
                 roughness = 0.45f,
                 baseColorFactor = Color.White,
                 emissiveFactor = Color.Transparent,
+                textureAnimation = textureAnimation,
             ),
+            timeSeconds = timeSeconds,
         )
         renderToTexture(
             target,
@@ -198,6 +195,17 @@ private fun plane(half: Float, y: Float, r: Float = 1f, g: Float = 1f, b: Float 
     // Explicit: MeshGeometry defaults to PositionColorUv (8 floats per vertex), which would read
     // these 9-float vertices at the wrong stride and put the geometry nowhere visible.
     VertexFormat.PositionNormalColor,
+)
+
+private val SolidOrange = TextureAsset(
+    data = byteArrayOf(
+        220.toByte(), 80, 40, 255.toByte(),
+        220.toByte(), 80, 40, 255.toByte(),
+        220.toByte(), 80, 40, 255.toByte(),
+        220.toByte(), 80, 40, 255.toByte(),
+    ),
+    width = 2,
+    height = 2,
 )
 
 /** Position/normal/colour/UV plane used by [renderTexturedPbrScene]. */
