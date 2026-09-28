@@ -24,6 +24,20 @@ API, why a consumer adapter is insufficient, and the smallest framework contract
 | Profiling, diagnostics, test primitives | Bots, load tests, dashboards, deployment, moderation, anti-abuse |
 | Platform-neutral extension points | Zones, shards, guilds, chat, economy, live operations |
 
+## Where a Capability Lives
+
+| Capability | Home |
+|---|---|
+| Neutral engine seam: no world or product vocabulary, generic across games | Awake Core (Apache 2.0, Maven Central) |
+| Authored world policy and game rules | The consuming game or content pack |
+| Reusable commercial runtime kits a game ships with, and commercial authoring tools | Studio Pro (private, commercial; its own skills describe the layout) |
+| A public starting point for a new game | `awake-template` |
+
+A capability reaches Awake only through the Decision Rule and an Exception Record; it reaches
+Studio Pro as a product decision. Awake and its editor contract never depend on Studio Pro. The
+runtime of anything a Studio scene uses must exist where the game ships, either in Awake or in a
+commercial runtime kit the game depends on. There is no separate starter-kits repository.
+
 ## Promotion Test
 
 Before promoting game or sample code into Awake, answer all questions:
@@ -47,6 +61,9 @@ Before promoting game or sample code into Awake, answer all questions:
 | Narrow transport port | Possible future Awake contract | Extract only after demonstrated lifecycle reuse. |
 | Stable entity serialization extension point | Candidate for Awake | General lifecycle seam if persistence format remains external. |
 | Character database and anti-duplication locks | MMORPG repository | Persistence and operational policy. |
+| Texture or UV animation on a material, set from a scene file | Awake | Neutral render capability a content-only pack cannot add itself. |
+| A water look (ripples, shoreline, foam) | Consuming pack | Authored world policy; Awake supplies the surface-shader seam, scene depth and time. |
+| River, lake and flow-painting tools | Studio Pro | Commercial authoring workflow over pack or Awake data. |
 
 ## Agent Routing
 
