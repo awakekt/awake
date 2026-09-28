@@ -51,6 +51,12 @@ vendor dependencies by tag, commit, and archive digest. Never edit deployed copi
 repositories may add a private `maintained-studio` source using `studio-*` names; public Awake
 must not consume that overlay.
 
+Keeping them current is automatic once the repository hooks are on
+(`git config core.hooksPath .githooks`): `hooks/sync-agent-skills.sh` reinstalls when a pull or branch
+switch moves the lockfile, and Claude Code runs it at session start (`.claude/settings.json`). It
+syncs the main checkout, whose skills the app's worktrees under `.claude/worktrees/` read. The weekly
+**Agent skills lock** workflow opens a PR moving every pin to its newest release.
+
 Before touching `Renderer.kt`, a render-contract type, or a backend renderer, activate the pinned
 `awake-render-pipeline` guidance and read `docs/reference/render-hardware-interface.md`.
 

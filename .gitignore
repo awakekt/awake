@@ -6,7 +6,9 @@ __pycache__/
 /gradle/gradle-daemon-jvm.properties
 local.properties
 /.idea
-.claude/
+.claude/*
+# Shared Claude Code settings (the session-start skill sync); everything else here is local.
+!.claude/settings.json
 # Agent bundles are reproducible deployments, never Awake source. The only tracked file beneath
 # .agents is the immutable source declaration consumed by awake-agent-skills.
 .agents/vendor/
