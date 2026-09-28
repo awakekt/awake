@@ -77,7 +77,7 @@ internal fun engineShowcaseModule(initialShowcaseId: String = DEFAULT_SHOWCASE_I
             // Fixed, not frame: physics is the one system here that integrates, so it is the one
             // that must not see a variable delta.
             fixedSystem("physics") { ShowcasePhysics.system() }
-            // After physics, because drainContacts hands over what the last step produced.
+            // After physics, because it reads the contacts PhysicsSystem published for that step.
             fixedSystem("goalZone") { TerrainPhysicsExampleDriver.goalZoneSystem() }
             // Fixed too, and for the same reason: a character that integrates gravity on a frame
             // delta falls at a different speed on every machine.

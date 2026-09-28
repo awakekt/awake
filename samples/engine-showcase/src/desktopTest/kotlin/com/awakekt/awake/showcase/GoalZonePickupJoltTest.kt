@@ -27,8 +27,9 @@ import kotlin.test.assertTrue
  *
  * The showcase's one demonstration of physics reporting that something *happened* rather than
  * that something moved, and the only place the whole path is exercised end to end: a sensor body
- * built from a `PhysicsBody` component, Jolt's contact callback on a worker thread, the drain on
- * the frame thread, and an entity removed as a result.
+ * built from a `PhysicsBody` component, Jolt's contact callback on a worker thread, the drain in
+ * `PhysicsSystem` on the frame thread, the goal zone reading its published contacts, and an entity
+ * removed as a result.
  */
 class GoalZonePickupJoltTest {
 
@@ -37,6 +38,7 @@ class GoalZonePickupJoltTest {
     @AfterTest
     fun tearDown() {
         ShowcasePhysics.world = null
+        ShowcasePhysics.physicsSystem = null
         physics?.destroy()
         physics = null
     }
@@ -51,7 +53,7 @@ class GoalZonePickupJoltTest {
         val zone = ecs.create()
         ecs.add(zone, Transform().apply { position.set(Vec3f(0f, 0f, 0f)) })
         TerrainPhysicsExampleDriver.attachGoalZone(ecs, zone)
-        return ecs to PhysicsSystem(world)
+        return ecs to PhysicsSystem(world).also { ShowcasePhysics.physicsSystem = it }
     }
 
     private fun World.box(at: Vec3f): Entity = create().also { entity ->
