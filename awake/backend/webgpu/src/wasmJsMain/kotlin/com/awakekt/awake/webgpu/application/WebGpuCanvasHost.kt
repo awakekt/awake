@@ -238,24 +238,10 @@ fun bindWindowPointerInput(input: Input) {
     window.addEventListener("wheel") { event ->
         val wheel = event as WheelEvent
         // Accumulate the hardware delta until the runtime snapshots it, mirroring
-        // GlfwInputBridge's `input.scrollDeltaY += reader.consumeScrollDeltaY()`.
-        input.scrollDeltaX += normalizeWheelDelta(wheel.deltaX, wheel.deltaMode)
-        input.scrollDeltaY += normalizeWheelDelta(wheel.deltaY, wheel.deltaMode)
+        // GlfwInputBridge's `input.scrollDeltaY += reader.consumeScrollDeltaY()`, in its units and sign.
+        input.scrollDeltaX += domWheelToScrollDelta(wheel.deltaX, wheel.deltaMode)
+        input.scrollDeltaY += domWheelToScrollDelta(wheel.deltaY, wheel.deltaMode)
     }
-}
-
-/**
- * Browsers report wheel deltas in different units depending on `deltaMode`: raw pixels
- * (Chrome's default for most mice/trackpads), "lines" (Firefox with some mice), or "pages".
- * Desktop's GLFW scroll callback reports ~1.0 per notch (line-like), so normalize pixel/page
- * deltas down to that same rough scale rather than feeding [Input.scrollDeltaX]/[scrollDeltaY]
- * wildly different magnitudes per platform -- both get multiplied by the same
- * `UiScrollConfig.scrollSpeed` downstream in ScrollContainers.kt.
- */
-private fun normalizeWheelDelta(delta: Double, deltaMode: Int): Float = when (deltaMode) {
-    WheelEvent.DOM_DELTA_LINE -> delta.toFloat()
-    WheelEvent.DOM_DELTA_PAGE -> (delta * 32.0).toFloat()
-    else -> (delta / 100.0).toFloat() // DOM_DELTA_PIXEL
 }
 
 fun bindWindowKeyboardInput(

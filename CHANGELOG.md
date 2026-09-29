@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Scrolling goes the right way in the browser.** The WebGPU canvas host passed DOM wheel deltas through with the wrong sign: the DOM counts how far the page scrolls (positive down), GLFW how far the wheel turned (positive away from the user), and every scroll container reads GLFW's convention. A wheel turned toward the user scrolled lists up in the browser and down on desktop, and a scene camera zoomed the wrong way. Both axes are now negated to match desktop.
+
 ## [0.1.0-alpha.14] - 2026-09-29
 
 ### Fixed
