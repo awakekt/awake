@@ -17,6 +17,7 @@ public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awa
 	protected fun restoreBackendSurface (Ljava/lang/Object;)V
 	public final fun restoreSurface (Ljava/lang/Object;)V
 	public final fun resume ()V
+	public final fun setDensity (F)V
 	public final fun update (F)V
 }
 
@@ -60,6 +61,7 @@ public abstract interface class com/awakekt/awake/engine/platform/WindowLifecycl
 	public abstract fun resize (IIII)V
 	public fun restoreSurface (Ljava/lang/Object;)V
 	public abstract fun resume ()V
+	public fun setDensity (F)V
 	public abstract fun update (F)V
 }
 
@@ -68,6 +70,7 @@ public final class com/awakekt/awake/engine/platform/WindowLifecycle$DefaultImpl
 	public static fun getWindowConfig (Lcom/awakekt/awake/engine/platform/WindowLifecycle;)Lcom/awakekt/awake/engine/platform/config/WindowConfig;
 	public static fun releaseSurface (Lcom/awakekt/awake/engine/platform/WindowLifecycle;)V
 	public static fun restoreSurface (Lcom/awakekt/awake/engine/platform/WindowLifecycle;Ljava/lang/Object;)V
+	public static fun setDensity (Lcom/awakekt/awake/engine/platform/WindowLifecycle;F)V
 }
 
 public final class com/awakekt/awake/engine/platform/config/PresentMode : java/lang/Enum {

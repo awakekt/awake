@@ -37,4 +37,7 @@ interface WindowLifecycle {
 
     /** A new [surface] replaces the one given up in [releaseSurface]. */
     fun restoreSurface(surface: Any) = Unit
+
+    /** The display's physical pixels per dp, from a platform whose surface can't report it (Android). */
+    fun setDensity(density: Float) = Unit
 }

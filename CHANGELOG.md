@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Sideways scroll reaches the app on desktop.** GLFW's scroll callback kept only `yoffset`, so a trackpad's two-finger swipe left or right never arrived and `Input.scrollDeltaX` stayed 0 outside the browser. The callback now accumulates both axes and `pollGlfwInput` fills `scrollDeltaX`; `GameplayInput.scrollDeltaX` exposes it, gated like `scrollDeltaY`. The scroll functions move to `@JniNative` implementations in `VulkanWindow_native.cpp` (D11). Ships with the next Vulkan release.
+
+## [0.1.0-alpha.14] - 2026-09-29
+
+### Fixed
+
+- **Android UI is sized for the screen.** The engine reported a density of 1 on Android, because a `Surface` carries no display metrics, so dp-sized UI drew at desktop pixel size: about 2.6× too small on a typical phone. `VulkanView` now passes `displayMetrics.density` through the new `WindowLifecycle.setDensity()`, and reads it again on every surface change, so folding or moving to DeX updates it.
 - **A camera whose near plane passes the shadow distance no longer crashes.** Far enough out, a camera's near plane sat beyond the sun's `shadowDistance`, and fitting cascades to that empty range threw `Cascades need a positive near..far range`, which took the app down. Nothing that camera sees is within shadow reach, so the frame now draws without a shadow pass.
 - **Shadows stay put while the camera moves on Vulkan.** The shadow pass read each cascade's matrix from one buffer shared by every frame in flight, so while the GPU still owed a frame its shadow maps, the CPU recording the next frame overwrote them. A moving camera then had its shadow maps drawn with the next frame's cascades and sampled with its own, and flat ground and water shadowed themselves in dark patches that vanished when the camera stopped. Each frame in flight, and the offscreen frame, now has its own cascade slots. The shadow map's render pass also now waits for the previous frame's sampling before overwriting it. WebGPU orders its buffer writes on the queue and was not affected. (Ships with the next Vulkan release: it came after the 0.1.0-alpha.13 tag.)
 
