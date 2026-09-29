@@ -56,8 +56,9 @@ class MatrixRelativeMovementSystem(
             val worldMoveX = right.x * control.moveX + forward.x * control.moveZ
             val worldMoveZ = right.z * control.moveX + forward.z * control.moveZ
 
-            transform.position.x += worldMoveX * speed * delta
-            transform.position.z += worldMoveZ * speed * delta
+            val step = (control.speed ?: speed) * delta
+            transform.position.x += worldMoveX * step
+            transform.position.z += worldMoveZ * step
         }
     }
 

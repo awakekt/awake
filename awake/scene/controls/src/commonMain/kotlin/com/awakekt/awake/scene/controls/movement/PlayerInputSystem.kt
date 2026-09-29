@@ -30,6 +30,7 @@ class PlayerInputSystem(
             world.queryEach(MovementControl::class) { _, control ->
                 control.moveX = 0f
                 control.moveZ = 0f
+                control.jump = false
             }
             return
         }
@@ -48,9 +49,11 @@ class PlayerInputSystem(
             moveZ /= len
         }
 
+        val jump = input.isDown(Key.Space)
         world.queryEach(MovementControl::class) { _, control ->
             control.moveX = moveX
             control.moveZ = moveZ
+            control.jump = jump
         }
     }
 }

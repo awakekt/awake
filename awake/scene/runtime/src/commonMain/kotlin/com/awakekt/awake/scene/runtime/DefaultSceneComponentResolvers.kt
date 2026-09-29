@@ -10,6 +10,9 @@ import com.awakekt.awake.scene.binding.PrefabLinkBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
+import com.awakekt.awake.scene.controls.movement.MovementControl
+import com.awakekt.awake.scene.controls.movement.MovementControlBinding
+import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinControlBinding
@@ -55,6 +58,8 @@ object DefaultSceneComponentResolvers {
     val FogResolver: SceneComponentBinding<Fog, SceneFog> = FogBinding
     val AmbientLightResolver: SceneComponentBinding<AmbientLight, SceneAmbientLight> = AmbientLightBinding
     val TerrainResolver: SceneComponentBinding<TerrainComponent, SceneTerrain> = TerrainBinding
+    val MovementControlResolver: SceneComponentBinding<MovementControl, SceneMovementControl> =
+        MovementControlBinding
     val PrefabLinkResolver: SceneComponentResolver = PrefabLinkBinding
 
     val bindings: List<SceneComponentBinding<*, *>> = listOf(
@@ -68,6 +73,7 @@ object DefaultSceneComponentResolvers {
         AmbientLightBinding,
         TerrainBinding,
         CanvasElementBinding,
+        MovementControlBinding,
     )
 
     val all: List<SceneComponentResolver> = listOf(
@@ -81,6 +87,7 @@ object DefaultSceneComponentResolvers {
         AmbientLightBinding,
         TerrainBinding,
         CanvasElementBinding,
+        MovementControlBinding,
         PrefabLinkBinding,
     )
 
