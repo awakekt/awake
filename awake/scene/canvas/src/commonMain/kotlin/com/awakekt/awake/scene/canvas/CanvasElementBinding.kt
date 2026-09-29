@@ -38,6 +38,8 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.value = value
         it.order = order
         it.visible = visible
+        it.action = action
+        it.touchOnly = touchOnly
     }
 
     fun CanvasElement.toSceneComponent(): SceneCanvasElement = SceneCanvasElement(
@@ -54,5 +56,7 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         value = value,
         order = order,
         visible = visible,
+        action = action,
+        touchOnly = touchOnly,
     )
 }

@@ -34,3 +34,11 @@ if (world.get<CanvasElement>(jumpButton)?.consumePress() == true) jump()
 ```
 
 `consumePress()` is true once per tap.
+
+## Touch controls
+
+A `Joystick` is a round pad of `width` across; dragging its knob sets `stickX` and `stickY` from -1 to
+1, up being negative, and releasing centres it. A Button reports `isHeld` while pressed, as well as
+taps through `consumePress()`. `action` names what an element does for the game, such as `move` or
+`jump`, and a `touchOnly` element is drawn only when `SceneCanvas(world, showTouchControls = true)`,
+or `SceneAppLifecycleRuntime.showTouchControls`, says a touch screen is in use.

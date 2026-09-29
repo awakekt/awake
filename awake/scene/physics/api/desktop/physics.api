@@ -245,6 +245,7 @@ public final class com/awakekt/awake/scene/physics/character/CharacterConfig {
 
 public final class com/awakekt/awake/scene/physics/character/KinematicCharacterController {
 	public static final field DEFAULT_SYNC_DELTA F
+	public static final field LEAVE_GROUND_SPEED F
 	public static final field MIN_MOTION F
 	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/scene/physics/character/CharacterConfig;Lcom/awakekt/awake/core/math/Vec3f;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/scene/physics/character/CharacterConfig;Lcom/awakekt/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
