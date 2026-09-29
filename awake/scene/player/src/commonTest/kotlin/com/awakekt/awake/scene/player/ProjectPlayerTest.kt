@@ -8,6 +8,8 @@ package com.awakekt.awake.scene.player
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
@@ -17,6 +19,7 @@ import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraRig
 import com.awakekt.awake.scene.controls.movement.MovementControl
+import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
@@ -38,7 +41,7 @@ class ProjectPlayerTest {
         game.update(DELTA, WIDTH, HEIGHT)
 
         val world = runtime.world
-        var player = assertNotNull(world.entityNamed("Player"))
+        val player = assertNotNull(world.entityNamed("Player"))
         var cameras = 0
         world.queryEach(Camera::class) { entity, camera ->
             cameras++
@@ -96,9 +99,9 @@ class ProjectPlayerTest {
             ?: Result.failure(NoSuchElementException(path.value))
     }
 
-    private fun com.awakekt.awake.ecs.World.entityNamed(name: String): com.awakekt.awake.ecs.Entity? {
-        var found: com.awakekt.awake.ecs.Entity? = null
-        queryEach(com.awakekt.awake.scene.core.Name::class) { entity, value -> if (value.value == name) found = entity }
+    private fun World.entityNamed(name: String): Entity? {
+        var found: Entity? = null
+        queryEach(Name::class) { entity, value -> if (value.value == name) found = entity }
         return found
     }
 

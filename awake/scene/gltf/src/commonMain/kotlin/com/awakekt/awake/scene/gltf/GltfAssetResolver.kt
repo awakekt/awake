@@ -20,6 +20,7 @@ import com.awakekt.awake.core.image.createBitmap
 import com.awakekt.awake.core.image.toRgba8Bytes
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
+import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.AlphaMode
@@ -83,7 +84,9 @@ class GltfAssetResolver(
             preload(path, bytes, externalResources)
         }
         if (path !in loadedMaterialSlots) {
+            // A model whose textures fail to load still draws, untextured, with lit-shadow.
             runCatching { preloadMaterials(path, bytes) }
+                .onFailure { log.warn { "Drawing '$path' untextured: its materials failed to load (${it.message})" } }
         }
     }
 
@@ -203,6 +206,8 @@ class GltfAssetResolver(
         else -> null
     }
 }
+
+private val log = Logger("scene.gltf")
 
 private const val PRIMITIVE_MESH_PREFIX = "gltf-primitive:"
 

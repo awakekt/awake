@@ -48,6 +48,10 @@ class PlayableProject internal constructor(
 /**
  * Reads [PROJECT_MANIFEST] and its entry scene from [files], a project root, and loads the glTF
  * models the scene names. Throws [IllegalArgumentException] naming every problem in the manifest.
+ *
+ * Decoding needs Core's scene components, so this installs [DefaultSceneComponentResolvers] into the
+ * process-wide registry first, as `SceneAppLifecycleRuntime` does when it starts. Installing twice
+ * is harmless.
  */
 suspend fun loadPlayableProject(files: AssetSource): PlayableProject {
     val manifest = AwakeProjectValidator.decodeManifest(files.readText(PROJECT_MANIFEST))
