@@ -152,6 +152,8 @@ internal class SceneLightingCompiler(
         // Allocates per frame, but only while shadows are on, and the caller that used to build
         // one fixed box allocated the same kind of thing.
         if (sun?.shadowsEnabled != true || world.debugSettingsOrNull()?.shadowsEnabledOverride == false) return base
+        // A camera whose near plane is past the shadow distance sees nothing the shadows reach.
+        if (camera.lens.near >= minOf(camera.lens.far, sun.shadowDistance)) return base
         return shadowedLight(world, camera, base, viewportAspect, sun.shadowDistance)
     }
 
