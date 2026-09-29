@@ -95,6 +95,9 @@ class SceneAssetLibrary(
         }
     }
 
+    /** The name a live [mesh] was built under, or null when this library didn't build it. */
+    fun meshName(mesh: Mesh): String? = meshes.entries.firstOrNull { it.value === mesh }?.key
+
     /** Builds [name] on first use and takes a reference to it; see [releaseMaterial]. */
     fun requireMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material {
         materialHolders[name] = (materialHolders[name] ?: 0) + 1

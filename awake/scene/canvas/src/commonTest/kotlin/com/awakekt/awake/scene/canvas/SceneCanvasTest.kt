@@ -27,8 +27,11 @@ class SceneCanvasTest {
     private fun element(configure: CanvasElement.() -> Unit): Entity =
         world.create().also { world.add(it, CanvasElement().apply(configure)) }
 
-    private fun frame(host: ComposeHost = ComposeHost(), input: FrameInput = FrameInput(800, 600)): FrameOutput =
-        host.frame(input) { SceneCanvas(world) }
+    private fun frame(
+        host: ComposeHost = ComposeHost(),
+        input: FrameInput = FrameInput(800, 600),
+        touch: Boolean = false,
+    ): FrameOutput = host.frame(input) { SceneCanvas(world, showTouchControls = touch) }
 
     private fun FrameOutput.node(entity: Entity): SemanticsNode? = semantics.find("canvas-element-${entity.id}")
 
@@ -66,6 +69,54 @@ class SceneCanvasTest {
     }
 
     @Test
+    fun aButtonIsHeldWhileThePointerIsDown() {
+        lateinit var button: CanvasElement
+        element { kind = CanvasElementKind.Button; offsetX = 0f; offsetY = 0f; width = 100f; height = 40f; button = this }
+        val host = ComposeHost()
+        frame(host)
+
+        frame(host, FrameInput(800, 600, pointerX = 50, pointerY = 20, pointerDown = true, pointerPressed = true))
+        val heldOnPress = button.isHeld
+        frame(host, FrameInput(800, 600, pointerX = 50, pointerY = 20, pointerDown = true))
+        val heldAfter = button.isHeld
+        frame(host, FrameInput(800, 600, pointerX = 50, pointerY = 20, pointerReleased = true))
+
+        assertTrue(heldOnPress && heldAfter, "a button must stay held for as long as it is pressed")
+        assertFalse(button.isHeld, "releasing must let go")
+    }
+
+    @Test
+    fun draggingAJoystickDeflectsItUpToItsEdgeAndReleasingCentresIt() {
+        lateinit var stick: CanvasElement
+        element {
+            kind = CanvasElementKind.Joystick; anchor = CanvasAnchor.TopLeft
+            offsetX = 0f; offsetY = 0f; width = 100f; height = 100f
+            stick = this
+        }
+        val host = ComposeHost()
+        frame(host)
+
+        frame(host, FrameInput(800, 600, pointerX = 50, pointerY = 50, pointerDown = true, pointerPressed = true))
+        frame(host, FrameInput(800, 600, pointerX = 50, pointerY = 25, pointerDown = true))
+        val halfUp = stick.stickY
+        frame(host, FrameInput(800, 600, pointerX = 50, pointerY = -200, pointerDown = true))
+        val pinned = stick.stickY
+        frame(host, FrameInput(800, 600, pointerX = 50, pointerY = -200, pointerReleased = true))
+
+        assertEquals(-0.5f, halfUp, 0.01f, "25 of a 50 radius upward is half deflection")
+        assertEquals(-1f, pinned, 0.01f, "the knob stops at the pad's edge")
+        assertEquals(0f, stick.stickY, "releasing centres the stick")
+    }
+
+    @Test
+    fun touchOnlyElementsAppearOnlyWhereTouchControlsAreShown() {
+        val pad = element { kind = CanvasElementKind.Joystick; touchOnly = true }
+
+        assertNull(frame().node(pad))
+        assertNotNull(frame(touch = true).node(pad))
+    }
+
+    @Test
     fun savedFormRoundTripsEveryField() {
         val saved = SceneCanvasElement(
             kind = CanvasElementKind.Bar,
@@ -78,6 +129,8 @@ class SceneCanvasTest {
             fontSize = 14f,
             color = "#E5484D",
             background = "#00000080",
+            action = "jump",
+            touchOnly = true,
             value = 0.4f,
             order = 3,
             visible = false,
