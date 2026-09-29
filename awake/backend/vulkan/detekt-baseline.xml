@@ -2,12 +2,12 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>CyclomaticComplexMethod:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( commandBuffer: Long, drawCalls: List&lt;PreparedDraw>, castFormat: VertexFormat, cascade: Int, )</ID>
+    <ID>CyclomaticComplexMethod:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( commandBuffer: Long, frameIndex: Int, drawCalls: List&lt;PreparedDraw>, castFormat: VertexFormat, cascade: Int, )</ID>
     <ID>CyclomaticComplexMethod:RendererDrawUi.kt$fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List&lt;UiDrawPrimitive>, font: UiFont?)</ID>
     <ID>CyclomaticComplexMethod:VulkanEngine.kt$VulkanEngine$private suspend fun buildDepthPrePassFeature(target: DepthTarget? = depthTarget): DepthPrePassFeature?</ID>
     <ID>EmptyClassBlock:UiRenderPipeline.kt$UiRenderPipeline.Companion${ }</ID>
     <ID>LargeClass:UiRenderPipeline.kt$UiRenderPipeline</ID>
-    <ID>LongMethod:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( commandBuffer: Long, drawCalls: List&lt;PreparedDraw>, castFormat: VertexFormat, cascade: Int, )</ID>
+    <ID>LongMethod:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( commandBuffer: Long, frameIndex: Int, drawCalls: List&lt;PreparedDraw>, castFormat: VertexFormat, cascade: Int, )</ID>
     <ID>LongMethod:HeadlessSceneRenderer.kt$fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession</ID>
     <ID>LongMethod:LineRenderPipeline.kt$LineRenderPipeline$private fun createGraphicsPipeline(vertShaderCode: ByteArray, fragShaderCode: ByteArray)</ID>
     <ID>LongMethod:RendererCommandRecording.kt$internal fun Renderer.recordCommandBuffer( commandBuffer: Long, frameIndex: Int, acquiredImageIndex: Int, drawCalls: List&lt;PreparedDrawCall>, viewProjection: Mat4, cameraEye: Vec3f, cascades: GpuShadowCascadeData? = null, environment: GpuEnvironmentState = GpuEnvironmentState.Default, sceneViewport: RenderViewport? = null, )</ID>
@@ -39,7 +39,7 @@
     <ID>LongParameterList:VulkanMetalView.kt$VulkanMetalView$( frame: CValue&lt;CGRect>, private val input: Input, private val onCreate: (metalLayer: CAMetalLayer) -> Unit, private val onUpdate: (deltaSeconds: Float) -> Unit, private val onResize: (width: Int, height: Int) -> Unit, private val onPause: () -> Unit, private val onResume: () -> Unit, )</ID>
     <ID>LoopWithTooManyJumpStatements:RendererHeadlessCascadedShadowTest.kt$RendererHeadlessCascadedShadowTest$for</ID>
     <ID>MatchingDeclarationName:GpuPassExecutor.kt$RendererGpuPassExecutor : GpuPassExecutor</ID>
-    <ID>NestedBlockDepth:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( commandBuffer: Long, drawCalls: List&lt;PreparedDraw>, castFormat: VertexFormat, cascade: Int, )</ID>
+    <ID>NestedBlockDepth:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( commandBuffer: Long, frameIndex: Int, drawCalls: List&lt;PreparedDraw>, castFormat: VertexFormat, cascade: Int, )</ID>
     <ID>NestedBlockDepth:RendererHeadlessPixelBaselineTest.kt$RendererHeadlessPixelBaselineTest$@Test fun headlessCubeRenderMatchesBaseline()</ID>
     <ID>ReturnCount:RendererDraw3D.kt$internal fun VulkanRenderer.prepareGpuDraw( cmd: GpuDrawRequest, frameIndex: Int, instancedIndex: Int, isTransparent: Boolean, materialUsage: MutableMap&lt;RenderMaterial, Int> = mutableMapOf(), viewProjection: Mat4, cameraPosition: Vec3f, cameraForward: Vec3f = Vec3f(0f, 0f, -1f), lightUniforms: FloatArray, shadowCascades: GpuShadowCascadeData? = null, fogColor: Color = Color.Black, fogDensity: Float = 0f, debugView: GpuDebugView = GpuDebugView.Off, ): PreparedDrawCall?</ID>
     <ID>ReturnCount:SwapchainManager.kt$internal fun chooseSwapPresentMode( availablePresetModes: List&lt;VkPresentModeKHR>, preference: PresentMode, ): VkPresentModeKHR</ID>

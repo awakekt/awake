@@ -285,6 +285,7 @@ class RendererHeadlessShadowMapTest {
                 vertexEntryPoint = "vertexMain",
                 fragmentEntryPoint = "fragmentMain",
                 cascadeCount = depthTarget.layers,
+                framesInFlight = MAX_FRAMES_IN_FLIGHT,
             ),
         )
     }

@@ -88,16 +88,18 @@ internal class DepthPrePassFeature(
      */
     fun recordCommands(
         commandBuffer: Long,
+        frameIndex: Int,
         drawCalls: List<PreparedDraw>,
         castFormat: VertexFormat,
         cascades: GpuShadowCascadeData,
-    ) = recordCommands(commandBuffer, drawCalls, castFormat, cascades.viewProjections)
+    ) = recordCommands(commandBuffer, frameIndex, drawCalls, castFormat, cascades.viewProjections)
 
     private val initializedLayers = BooleanArray(depthTarget.layers)
 
     /** Records the generic packet's arbitrary layered depth resource. */
     fun recordCommands(
         commandBuffer: Long,
+        frameIndex: Int,
         drawCalls: List<PreparedDraw>,
         castFormat: VertexFormat,
         viewProjections: List<Mat4>,
@@ -115,8 +117,8 @@ internal class DepthPrePassFeature(
         val activeCount = minOf(viewProjections.size, depthTarget.layers)
         for (cascade in 0 until activeCount) {
             val source = viewProjections[cascade]
-            allPipelines.forEach { it.writeCascade(cascade, source) }
-            recordCascade(commandBuffer, drawCalls, castFormat, cascade)
+            allPipelines.forEach { it.writeCascade(frameIndex, cascade, source) }
+            recordCascade(commandBuffer, frameIndex, drawCalls, castFormat, cascade)
             initializedLayers[cascade] = true
         }
         initializeLayers(commandBuffer, castFormat)
@@ -125,6 +127,7 @@ internal class DepthPrePassFeature(
     /** Records only the requested subpasses, avoiding redundant passes over unused layers. */
     fun recordCommands(
         commandBuffer: Long,
+        frameIndex: Int,
         subPasses: List<GpuSubPass>,
         castFormat: VertexFormat,
     ) {
@@ -138,16 +141,16 @@ internal class DepthPrePassFeature(
         for (subPass in subPasses) {
             val layer = subPass.targetLayer
             if (layer in 0 until depthTarget.layers) {
-                allPipelines.forEach { it.writeCascade(layer, subPass.viewProjection) }
-                recordCascade(commandBuffer, subPass.resolvedDraws, castFormat, layer)
+                allPipelines.forEach { it.writeCascade(frameIndex, layer, subPass.viewProjection) }
+                recordCascade(commandBuffer, frameIndex, subPass.resolvedDraws, castFormat, layer)
                 initializedLayers[layer] = true
             }
         }
         val activeLayers = subPasses.map { it.targetLayer }.toSet()
         for (cascade in 0 until minOf(4, depthTarget.layers)) {
             if (cascade !in activeLayers) {
-                allPipelines.forEach { it.writeCascade(cascade, Mat4()) }
-                recordCascade(commandBuffer, emptyList(), castFormat, cascade)
+                allPipelines.forEach { it.writeCascade(frameIndex, cascade, Mat4()) }
+                recordCascade(commandBuffer, frameIndex, emptyList(), castFormat, cascade)
                 initializedLayers[cascade] = true
             }
         }
@@ -163,7 +166,8 @@ internal class DepthPrePassFeature(
     fun initializeLayers(commandBuffer: Long, castFormat: VertexFormat) {
         for (layer in 0 until depthTarget.layers) {
             if (!initializedLayers[layer]) {
-                recordCascade(commandBuffer, emptyList(), castFormat, layer)
+                // No draws, so no cascade set is bound and any frame's slot would do.
+                recordCascade(commandBuffer, 0, emptyList(), castFormat, layer)
                 initializedLayers[layer] = true
             }
         }
@@ -171,6 +175,7 @@ internal class DepthPrePassFeature(
 
     private fun recordCascade(
         commandBuffer: Long,
+        frameIndex: Int,
         drawCalls: List<PreparedDraw>,
         castFormat: VertexFormat,
         cascade: Int,
@@ -225,7 +230,7 @@ internal class DepthPrePassFeature(
                             commandBuffer,
                             pipeline.pipelineLayout,
                             SHADOW_CASCADE_PASS_GROUP,
-                            pipeline.cascadeBinding(cascade),
+                            pipeline.cascadeBinding(frameIndex, cascade),
                         )
                     }
                     boundPipeline = pipeline

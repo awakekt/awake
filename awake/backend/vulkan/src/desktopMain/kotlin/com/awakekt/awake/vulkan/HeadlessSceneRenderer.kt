@@ -97,6 +97,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             vertexEntryPoint = "vertexMain",
             fragmentEntryPoint = "fragmentMain",
             cascadeCount = depthTarget.layers,
+            framesInFlight = FRAMES_IN_FLIGHT,
         ),
     )
     val linePipeline = LineRenderPipeline(

@@ -56,8 +56,9 @@ internal class RendererGpuPassExecutor(
                 val sorted = sortForRecording(resolvedDraws)
                 val depthDraws = prepareDepthDraws(input)
                 runOffscreenCommands { commandBuffer ->
-                    recordDepthPrePass(commandBuffer, depthDraws, input.prePasses, input.environment.shadowsEnabled)
-                    recordSceneDepthPass(commandBuffer, depthDraws, cameraDepthPass(input.viewProjection))
+                    // The offscreen frame's own slots, past the last frame in flight, as its materials use.
+                    recordDepthPrePass(commandBuffer, commandBuffers.size, depthDraws, input.prePasses, input.environment.shadowsEnabled)
+                    recordSceneDepthPass(commandBuffer, commandBuffers.size, depthDraws, cameraDepthPass(input.viewProjection))
                     offscreen.prepareForColorAttachment(commandBuffer)
                     Vulkan.vkCmdBeginRenderPass(
                         commandBuffer,

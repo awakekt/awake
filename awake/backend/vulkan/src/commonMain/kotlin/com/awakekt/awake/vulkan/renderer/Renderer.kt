@@ -422,6 +422,7 @@ class Renderer internal constructor(
      */
     internal fun recordDepthPrePass(
         commandBuffer: Long,
+        frameIndex: Int,
         drawCalls: List<PreparedDraw>,
         cascades: GpuShadowCascadeData?,
         shadowsEnabled: Boolean,
@@ -431,11 +432,12 @@ class Renderer internal constructor(
             feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat)
             return
         }
-        feature.recordCommands(commandBuffer, drawCalls, renderPipeline.vertexFormat, cascades)
+        feature.recordCommands(commandBuffer, frameIndex, drawCalls, renderPipeline.vertexFormat, cascades)
     }
 
     internal fun recordDepthPrePass(
         commandBuffer: Long,
+        frameIndex: Int,
         drawCalls: List<PreparedDraw>,
         subPasses: List<com.awakekt.awake.render.command.GpuSubPass>,
         shadowsEnabled: Boolean,
@@ -445,7 +447,7 @@ class Renderer internal constructor(
             feature.initializeLayers(commandBuffer, renderPipeline.vertexFormat)
             return
         }
-        feature.recordCommands(commandBuffer, subPasses, renderPipeline.vertexFormat)
+        feature.recordCommands(commandBuffer, frameIndex, subPasses, renderPipeline.vertexFormat)
     }
 
     /**
@@ -457,13 +459,14 @@ class Renderer internal constructor(
      */
     internal fun recordSceneDepthPass(
         commandBuffer: Long,
+        frameIndex: Int,
         drawCalls: List<PreparedDraw>,
         camera: GpuShadowCascadeData,
     ) {
         val feature = sceneDepthPass ?: return
         // One "cascade": the camera's own view-projection. The pass machinery is the same, and
         // saying so here is smaller than a second recording path that differs only in count.
-        feature.recordCommands(commandBuffer, drawCalls, renderPipeline.vertexFormat, camera)
+        feature.recordCommands(commandBuffer, frameIndex, drawCalls, renderPipeline.vertexFormat, camera)
     }
 
     override fun waitIdle() {
