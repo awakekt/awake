@@ -151,6 +151,7 @@ private fun depthPrePass(
         VertexFormat.PositionNormalColor,
         depthTarget.size,
         cascadeCount = depthTarget.layers,
+        framesInFlight = MAX_FRAMES_IN_FLIGHT,
     ),
 )
 

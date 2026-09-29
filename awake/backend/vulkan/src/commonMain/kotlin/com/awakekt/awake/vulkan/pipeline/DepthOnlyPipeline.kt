@@ -81,19 +81,29 @@ class DepthOnlyPipeline(
      * two things.
      */
     cascadeCount: Int = 0,
+    /**
+     * Frames the renderer keeps in flight. Each gets its own cascade slots: the CPU records the
+     * next frame while the GPU may not yet have drawn this one's shadow maps.
+     */
+    framesInFlight: Int = 1,
     variant: PipelineVariant = PipelineVariant.Opaque,
     val frontFace: FrontFace = FrontFace.CounterClockwise,
     extraDescriptorSetLayouts: List<DescriptorSetLayoutHandle> = emptyList(),
 ) : VulkanPipelineHandle {
     private val device = graphicsDevice.device
 
-    /** One slot per cascade: its matrix, and the descriptor set naming it. */
+    private val cascadeCount = cascadeCount
+
+    /**
+     * One slot per cascade per frame in flight, plus the offscreen frame: its matrix, and the
+     * descriptor set naming it. Laid out frame-major, `frameIndex * cascadeCount + cascade`.
+     */
     private val cascadeSlots: PerFrameUniformSlots? = if (cascadeCount > 0) {
         PerFrameUniformSlots(
             graphicsDevice,
             CascadePassUniformLayout.total * Float.SIZE_BYTES,
             VkShaderStageFlagBits.VERTEX.value,
-            cascadeCount,
+            cascadeCount * (framesInFlight + 1),
         )
     } else {
         null
@@ -103,15 +113,15 @@ class DepthOnlyPipeline(
      * renders once from the camera and declares none. */
     val hasCascadeBlock: Boolean get() = cascadeSlots != null
 
-    /** [cascade]'s descriptor set, to bind at set 1 before rendering it. */
-    fun cascadeBinding(cascade: Int): Long =
-        requireNotNull(cascadeSlots) { "This depth pipeline has no cascade block to bind." }[cascade]
+    /** [cascade]'s descriptor set for [frameIndex], to bind at set 1 before rendering it. */
+    fun cascadeBinding(frameIndex: Int, cascade: Int): Long =
+        requireNotNull(cascadeSlots) { "This depth pipeline has no cascade block to bind." }[frameIndex * cascadeCount + cascade]
             .descriptorSetHandle
 
-    /** Writes [viewProjection] as the matrix [cascade] renders with; a no-op without a block. */
-    fun writeCascade(cascade: Int, viewProjection: Mat4) {
+    /** Writes [viewProjection] as the matrix [cascade] renders with in [frameIndex]; a no-op without a block. */
+    fun writeCascade(frameIndex: Int, cascade: Int, viewProjection: Mat4) {
         cascadeSlots?.write(
-            cascade,
+            frameIndex * cascadeCount + cascade,
             UniformWriter(CascadePassUniformLayout)
                 .put(viewProjection.data, UniformFields.CascadeViewProjection)
                 .build(),

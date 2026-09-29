@@ -217,6 +217,7 @@ open class VulkanEngine(
                 shaderSet.vulkan.entryPoint(ShaderStage.VERTEX),
                 shaderSet.vulkan.entryPoint(ShaderStage.FRAGMENT),
                 cascadeCount = map.layers,
+                framesInFlight = MAX_FRAMES_IN_FLIGHT,
             )
             val skinned = plan.depthPrePassVariants[DepthCasterKind.Skinned]?.let { variant ->
                 DepthOnlyPipeline(
@@ -229,6 +230,7 @@ open class VulkanEngine(
                     variant.vulkan.entryPoint(ShaderStage.VERTEX),
                     variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
                     cascadeCount = map.layers,
+                    framesInFlight = MAX_FRAMES_IN_FLIGHT,
                 )
             }
             val instanced = plan.depthPrePassVariants[DepthCasterKind.Instanced]?.let { variant ->
@@ -242,6 +244,7 @@ open class VulkanEngine(
                     variant.vulkan.entryPoint(ShaderStage.VERTEX),
                     variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
                     cascadeCount = map.layers,
+                    framesInFlight = MAX_FRAMES_IN_FLIGHT,
                     variant = PipelineVariant.Instanced,
                 )
             }
@@ -260,6 +263,7 @@ open class VulkanEngine(
                         variant.vulkan.entryPoint(ShaderStage.VERTEX),
                         variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
                         cascadeCount = map.layers,
+                        framesInFlight = MAX_FRAMES_IN_FLIGHT,
                         variant = PipelineVariant.Instanced,
                         extraDescriptorSetLayouts = listOf(emptySetLayout(), palette),
                     )
@@ -275,6 +279,7 @@ open class VulkanEngine(
                     variant.vulkan.entryPoint(ShaderStage.VERTEX),
                     variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
                     cascadeCount = map.layers,
+                    framesInFlight = MAX_FRAMES_IN_FLIGHT,
                     variant = PipelineVariant.AlphaBlendedParticle,
                 )
             }
@@ -294,6 +299,7 @@ open class VulkanEngine(
                                 shaderSet.vulkan.entryPoint(ShaderStage.VERTEX),
                                 shaderSet.vulkan.entryPoint(ShaderStage.FRAGMENT),
                                 cascadeCount = map.layers,
+                                framesInFlight = MAX_FRAMES_IN_FLIGHT,
                             ),
                         )
                     }
@@ -318,6 +324,7 @@ open class VulkanEngine(
                             variant.vulkan.entryPoint(ShaderStage.VERTEX),
                             variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
                             cascadeCount = map.layers,
+                            framesInFlight = MAX_FRAMES_IN_FLIGHT,
                         ),
                     )
                 }
@@ -357,6 +364,7 @@ open class VulkanEngine(
                 shaderSet.vulkan.entryPoint(ShaderStage.VERTEX),
                 shaderSet.vulkan.entryPoint(ShaderStage.FRAGMENT),
                 cascadeCount = map.layers,
+                framesInFlight = MAX_FRAMES_IN_FLIGHT,
             )
             DepthPrePassFeature(map, depthPipeline)
         }

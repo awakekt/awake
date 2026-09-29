@@ -44,9 +44,9 @@ internal fun Renderer.recordCommandBuffer(
     // Before the scene pass begins, in the same buffer: its fragment shader samples the depth this
     // writes, and DepthTarget's outgoing subpass dependency orders the two on the GPU. This used
     // to be a separate submit the CPU blocked on.
-    recordDepthPrePass(commandBuffer, drawCalls, cascades, true)
+    recordDepthPrePass(commandBuffer, frameIndex, drawCalls, cascades, true)
     // The camera's own depth, expressed as the one "cascade" this frame renders from the eye.
-    recordSceneDepthPass(commandBuffer, drawCalls, cameraDepthPass(viewProjection))
+    recordSceneDepthPass(commandBuffer, frameIndex, drawCalls, cameraDepthPass(viewProjection))
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
         VkRenderPassBeginInfo(
@@ -138,8 +138,8 @@ internal fun Renderer.recordResolvedCommandBuffer(
             flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.value,
         ),
     )
-    recordDepthPrePass(commandBuffer, depthDraws, prePasses, environment.shadowsEnabled)
-    recordSceneDepthPass(commandBuffer, depthDraws, cameraDepthPass(viewProjection))
+    recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment.shadowsEnabled)
+    recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection))
     Vulkan.vkCmdBeginRenderPass(
         commandBuffer,
         VkRenderPassBeginInfo(

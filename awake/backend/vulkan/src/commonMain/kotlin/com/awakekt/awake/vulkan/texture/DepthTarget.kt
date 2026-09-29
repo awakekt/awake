@@ -304,11 +304,14 @@ class DepthTarget(
                 ),
             ),
             pDependencies = arrayOf(
+                // Also after the previous frame's scene pass has sampled this map: one image
+                // serves every frame in flight, and this pass overwrites it.
                 VkSubpassDependency(
                     srcSubpass = VK_SUBPASS_EXTERNAL,
                     dstSubpass = 0,
                     srcStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value or
-                        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT.value,
+                        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT.value or
+                        VkPipelineStageFlagBits.VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT.value,
                     srcAccessMask = 0,
                     dstStageMask = VkPipelineStageFlagBits.VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT.value or
                         VkPipelineStageFlagBits.VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT.value,
