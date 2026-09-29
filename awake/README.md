@@ -82,6 +82,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:physics` | Physics bodies, character controller, and the physics system |
 | `scene:audio` | Audio sources and the audio system |
 | `scene:canvas` | Game UI in scenes: anchored text, panels, bars and buttons drawn over the game |
+| `scene:player` | Plays a project without the editor: built-in scene meshes and glTF models |
 | `scene:world` | Open-world cells, partitioning, streaming, floating origin |
 
 ## gameplay
