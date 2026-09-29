@@ -1,0 +1,20 @@
+public final class com/awakekt/awake/scene/player/BuiltInSceneAssetsKt {
+	public static final field LIT_SHADOW_MATERIAL Ljava/lang/String;
+	public static final fun builtInSceneAssets (Lcom/awakekt/awake/scene/authoring/SceneAssetsDsl;Lkotlin/jvm/functions/Function2;)V
+	public static synthetic fun builtInSceneAssets$default (Lcom/awakekt/awake/scene/authoring/SceneAssetsDsl;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static final fun checkeredFloorGeometry (FIF)Lcom/awakekt/awake/core/geometry/MeshGeometry;
+	public static synthetic fun checkeredFloorGeometry$default (FIFILjava/lang/Object;)Lcom/awakekt/awake/core/geometry/MeshGeometry;
+}
+
+public final class com/awakekt/awake/scene/player/PlayableProject {
+	public final fun getManifest ()Lcom/awakekt/awake/project/AwakeProjectManifest;
+	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;
+}
+
+public final class com/awakekt/awake/scene/player/ProjectPlayerKt {
+	public static final field PROJECT_MANIFEST Ljava/lang/String;
+	public static final fun loadPlayableProject (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun playProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/player/PlayableProject;)V
+	public static final fun preparePlayCamera (Lcom/awakekt/awake/ecs/World;)V
+}
+
