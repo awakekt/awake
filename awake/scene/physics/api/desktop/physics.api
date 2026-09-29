@@ -20,6 +20,25 @@ public final class com/awakekt/awake/scene/physics/PhysicsBody {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/physics/PhysicsBodyBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/physics/PhysicsBodyBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/physics/ScenePhysicsBody;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/physics/PhysicsBody;)Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/physics/PhysicsBodyBindingKt {
+	public static final fun registerPhysics (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
+}
+
 public final class com/awakekt/awake/scene/physics/PhysicsContact {
 	public synthetic fun <init> (JJLcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/ecs/Entity;Lcom/awakekt/awake/physics/ContactPhase;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1-IB_h3Cs ()J
@@ -57,6 +76,140 @@ public final class com/awakekt/awake/scene/physics/PhysicsSystem : com/awakekt/a
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/scene/physics/SceneBoxShape : com/awakekt/awake/scene/physics/SceneCollisionShape {
+	public static final field Companion Lcom/awakekt/awake/scene/physics/SceneBoxShape$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun copy (Lcom/awakekt/awake/scene/document/SceneVec3;)Lcom/awakekt/awake/scene/physics/SceneBoxShape;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/physics/SceneBoxShape;Lcom/awakekt/awake/scene/document/SceneVec3;ILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/SceneBoxShape;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHalfExtents ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/physics/SceneBoxShape$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/physics/SceneBoxShape$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/physics/SceneBoxShape;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/physics/SceneBoxShape;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/physics/SceneBoxShape$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/physics/SceneCapsuleShape : com/awakekt/awake/scene/physics/SceneCollisionShape {
+	public static final field Companion Lcom/awakekt/awake/scene/physics/SceneCapsuleShape$Companion;
+	public fun <init> ()V
+	public fun <init> (FF)V
+	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/scene/physics/SceneCapsuleShape;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/physics/SceneCapsuleShape;FFILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/SceneCapsuleShape;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getHalfHeight ()F
+	public final fun getRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/physics/SceneCapsuleShape$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/physics/SceneCapsuleShape$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/physics/SceneCapsuleShape;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/physics/SceneCapsuleShape;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/physics/SceneCapsuleShape$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public abstract interface class com/awakekt/awake/scene/physics/SceneCollisionShape {
+	public static final field Companion Lcom/awakekt/awake/scene/physics/SceneCollisionShape$Companion;
+}
+
+public final class com/awakekt/awake/scene/physics/SceneCollisionShape$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/physics/ScenePhysicsBody : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/physics/ScenePhysicsBody$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/scene/physics/SceneCollisionShape;
+	public final fun component2 ()Lcom/awakekt/awake/physics/MotionType;
+	public final fun component3 ()Ljava/lang/Integer;
+	public final fun component4 ()Z
+	public final fun copy (Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;Z)Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;Lcom/awakekt/awake/scene/physics/SceneCollisionShape;Lcom/awakekt/awake/physics/MotionType;Ljava/lang/Integer;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getLayer ()Ljava/lang/Integer;
+	public final fun getMotion ()Lcom/awakekt/awake/physics/MotionType;
+	public final fun getSensor ()Z
+	public final fun getShape ()Lcom/awakekt/awake/scene/physics/SceneCollisionShape;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/physics/ScenePhysicsBody$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/physics/ScenePhysicsBody$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/physics/ScenePhysicsBody;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/physics/ScenePhysicsBody$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/physics/SceneSphereShape : com/awakekt/awake/scene/physics/SceneCollisionShape {
+	public static final field Companion Lcom/awakekt/awake/scene/physics/SceneSphereShape$Companion;
+	public fun <init> ()V
+	public fun <init> (F)V
+	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun copy (F)Lcom/awakekt/awake/scene/physics/SceneSphereShape;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/physics/SceneSphereShape;FILjava/lang/Object;)Lcom/awakekt/awake/scene/physics/SceneSphereShape;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getRadius ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/physics/SceneSphereShape$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/physics/SceneSphereShape$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/physics/SceneSphereShape;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/physics/SceneSphereShape;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/physics/SceneSphereShape$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/physics/character/CharacterConfig {
 	public static final field DEFAULT_GROUND_PROBE_DISTANCE F
 	public static final field DEFAULT_MAX_SLIDE_ITERATIONS I
@@ -92,6 +245,7 @@ public final class com/awakekt/awake/scene/physics/character/CharacterConfig {
 
 public final class com/awakekt/awake/scene/physics/character/KinematicCharacterController {
 	public static final field DEFAULT_SYNC_DELTA F
+	public static final field LEAVE_GROUND_SPEED F
 	public static final field MIN_MOTION F
 	public fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/scene/physics/character/CharacterConfig;Lcom/awakekt/awake/core/math/Vec3f;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/physics/PhysicsWorld;Lcom/awakekt/awake/scene/physics/character/CharacterConfig;Lcom/awakekt/awake/core/math/Vec3f;ILkotlin/jvm/internal/DefaultConstructorMarker;)V

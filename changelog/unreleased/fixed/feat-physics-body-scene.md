@@ -1,0 +1,1 @@
+- **Jolt no longer crashes when two processes load it at once.** The desktop backend extracted `libjoltjni` into the shared temp directory and rewrote it on every load, so two test processes (or games) starting together could crash with SIGBUS when one rewrote the library the other had mapped. Each process now extracts into a folder of its own.

@@ -82,6 +82,8 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | `scene:physics` | Physics bodies, character controller, and the physics system |
 | `scene:audio` | Audio sources and the audio system |
 | `scene:canvas` | Game UI in scenes: anchored text, panels, bars and buttons drawn over the game |
+| `scene:character` | A walking, jumping character moved by the physics character controller, saved in scenes |
+| `scene:gltf` | glTF and GLB models in scenes: meshes, textured materials and skins |
 | `scene:world` | Open-world cells, partitioning, streaming, floating origin |
 
 ## gameplay
@@ -98,6 +100,7 @@ Paths below are Gradle coordinates minus the `:awake:` prefix.
 | Module | What it is |
 |---|---|
 | `project` | The `awake.project.json` contract, content validation, and project index |
+| `project:runtime` | Plays a project without the editor, running the systems its scene's components call for |
 | `node-graph` | Graph documents, node registry, and validation shared by node-graph editors and runtimes |
 | `editor:contract` | Vendor-neutral editor plugin, provider, and asset-converter contracts |
 
