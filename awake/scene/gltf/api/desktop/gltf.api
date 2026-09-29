@@ -1,0 +1,54 @@
+public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/awake/scene/runtime/SceneAssetResolver {
+	public fun <init> ()V
+	public fun <init> (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun canResolveMaterial (Ljava/lang/String;)Z
+	public fun canResolveMesh (Ljava/lang/String;)Z
+	public fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
+	public fun createMesh (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
+	public final fun getLoadedScene (Ljava/lang/String;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
+	public final fun materialName (Ljava/lang/String;)Ljava/lang/String;
+	public final fun materialParameters (Ljava/lang/String;)Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
+	public final fun materialSlots (Ljava/lang/String;)Ljava/util/List;
+	public final fun modelPath (Ljava/lang/String;)Ljava/lang/String;
+	public final fun preload (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun preload (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun preloadBytes (Ljava/lang/String;[B)V
+	public final fun preloadMaterials (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun setAssetSource (Lcom/awakekt/awake/core/io/AssetSource;)V
+}
+
+public final class com/awakekt/awake/scene/gltf/GltfMaterialParameters {
+	public fun <init> (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component4 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun component5 ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
+	public final fun copy (FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;)Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;FFLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/render/pipeline/AlphaMode;ILjava/lang/Object;)Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlphaMode ()Lcom/awakekt/awake/render/pipeline/AlphaMode;
+	public final fun getBaseColorFactor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getEmissiveFactor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getMetallic ()F
+	public final fun getRoughness ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/gltf/GltfMaterialSlot {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;)Lcom/awakekt/awake/scene/gltf/GltfMaterialSlot;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/gltf/GltfMaterialSlot;Ljava/lang/String;Ljava/lang/String;Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;ILjava/lang/Object;)Lcom/awakekt/awake/scene/gltf/GltfMaterialSlot;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getMaterial ()Ljava/lang/String;
+	public final fun getMesh ()Ljava/lang/String;
+	public final fun getParameters ()Lcom/awakekt/awake/scene/gltf/GltfMaterialParameters;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
