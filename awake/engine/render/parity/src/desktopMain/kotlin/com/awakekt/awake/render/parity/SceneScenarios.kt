@@ -41,20 +41,15 @@ const val SCENE_SIZE: Int = 128
  * was extended to catch put it on the opposite side of the ground from the caster, which is a
  * correct-looking picture unless something compares the two backends.
  */
-fun Renderer.renderShadowScene(texturedGround: Boolean = false): ByteArray {
+fun Renderer.renderShadowScene(texturedGround: Boolean = false, texturedCaster: Boolean = false): ByteArray {
     val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
     val ground = createMesh(if (texturedGround) texturedPlane() else plane(GROUND_HALF, y = 0f))
-    val caster = createMesh(plane(CASTER_HALF, y = CASTER_Y, r = 1f, g = 0f, b = 0f))
+    val caster = createMesh(
+        if (texturedCaster) texturedPlane(CASTER_HALF, y = CASTER_Y) else plane(CASTER_HALF, y = CASTER_Y, r = 1f, g = 0f, b = 0f),
+    )
     val material = createMaterial(LitShadowUniformLayout)
-    val groundMaterial = if (texturedGround) {
-        createMaterial(
-            texture = SolidWhite,
-            uniformFloatCount = MaterialUniformLayouts.PbrTextured.total,
-            pbrTextures = PbrTextureSet(),
-        )
-    } else {
-        material
-    }
+    val groundMaterial = if (texturedGround) texturedMaterial(SolidWhite) else material
+    val casterMaterial = if (texturedCaster) texturedMaterial(SolidOrange) else material
     return try {
         val lens = Lens(
             eye = Vec3f(0f, EYE_Y, EYE_Z),
@@ -70,7 +65,10 @@ fun Renderer.renderShadowScene(texturedGround: Boolean = false): ByteArray {
             target,
             ScenePassCompiler.compile(
                 lens = lens,
-                drawCalls = listOf(RenderDrawCommand(ground, groundMaterial), RenderDrawCommand(caster, material)),
+                drawCalls = listOf(
+                    RenderDrawCommand(ground, groundMaterial),
+                    RenderDrawCommand(caster, casterMaterial, extraUniformFloats = if (texturedCaster) WHITE_FACTORS else FloatArray(0)),
+                ),
                 light = light,
                 clipSpace = clipSpace,
                 aspect = 1f,
@@ -83,6 +81,7 @@ fun Renderer.renderShadowScene(texturedGround: Boolean = false): ByteArray {
         caster.destroy()
         material.destroy()
         if (texturedGround) groundMaterial.destroy()
+        if (texturedCaster) casterMaterial.destroy()
         target.destroy()
     }
 }
@@ -223,12 +222,12 @@ private val SolidOrange = TextureAsset(
 private val SolidWhite = TextureAsset(data = ByteArray(2 * 2 * 4) { -1 }, width = 2, height = 2)
 
 /** Position/normal/colour/UV plane used by [renderTexturedPbrScene]. */
-private fun texturedPlane() = MeshGeometry(
+private fun texturedPlane(half: Float = GROUND_HALF, y: Float = 0f) = MeshGeometry(
     floatArrayOf(
-        -GROUND_HALF, 0f, -GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 0f,
-        GROUND_HALF, 0f, -GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 0f,
-        GROUND_HALF, 0f, GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 1f,
-        -GROUND_HALF, 0f, GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 1f,
+        -half, y, -half, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 0f,
+        half, y, -half, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 0f,
+        half, y, half, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 1f,
+        -half, y, half, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 1f,
     ),
     intArrayOf(0, 1, 2, 2, 3, 0),
     VertexFormat.PositionNormalColorUv,
@@ -239,6 +238,12 @@ fun ByteArray.luminanceAt(x: Int, y: Int): Int {
     val offset = (y * SCENE_SIZE + x) * 4
     return (0..2).maxOf { this[offset + it].toInt() and 0xFF }
 }
+
+private fun Renderer.texturedMaterial(texture: TextureAsset) =
+    createMaterial(texture = texture, uniformFloatCount = MaterialUniformLayouts.PbrTextured.total, pbrTextures = PbrTextureSet())
+
+/** A textured draw reads its material factors from these; an empty payload is a black surface. */
+private val WHITE_FACTORS = pbrMaterialFloats(0f, 1f, Color.White, Color.Transparent)
 
 private const val GROUND_HALF = 6f
 private const val CASTER_HALF = 1.5f

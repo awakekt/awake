@@ -291,6 +291,8 @@ internal class DepthPrePassFeature(
         buildList {
             add(depthOnlyPipeline)
             addAll(variantPipelines.values)
+            addAll(formatPipelines.values)
+            addAll(keyedVariantPipelines.values)
         }.distinct().forEach { it.destroy() }
         depthTarget.destroy()
     }

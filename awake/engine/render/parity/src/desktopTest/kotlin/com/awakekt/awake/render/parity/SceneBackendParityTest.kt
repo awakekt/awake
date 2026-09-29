@@ -191,6 +191,22 @@ class SceneBackendParityTest {
         }
     }
 
+    /** A textured caster throws the shadow an untextured one does, on both backends. */
+    @Test
+    fun aTexturedCasterCastsTheSameShadow() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val untextured = assertNotNull(renderer.renderShadowScene().shadowCentroid(), "$backend lit ground")
+            val textured = assertNotNull(
+                renderer.renderShadowScene(texturedCaster = true).also { write(backend, it, "textured-caster-scene") }
+                    .shadowCentroid(),
+                "$backend textured caster casts no shadow",
+            )
+            val drift = maxOf(kotlin.math.abs(untextured.first - textured.first), kotlin.math.abs(untextured.second - textured.second))
+            assertTrue(drift <= CENTROID_TOLERANCE, "$backend: textured caster's shadow at $textured, untextured at $untextured")
+        }
+    }
+
     @Test
     fun theShadowLandsInTheSamePlaceOnBothBackends() {
         val centroids = BACKEND_ORDER.associateWith { backend ->

@@ -73,6 +73,22 @@ object MaterialUniformLayouts {
     )
 
     /**
+     * What `shadow_depth` reads from any draw's block, `model` and `vertexAnimation` included.
+     * Every layout the shadow pass draws starts with these fields, in this order.
+     */
+    private val SHADOW_DEPTH_PREFIX = arrayOf(
+        UniformFields.Mvp,
+        UniformFields.LightDirection,
+        UniformFields.LightColor,
+        UniformFields.PointLightPositions,
+        UniformFields.PointLightColors,
+        UniformFields.CascadeViewProjections,
+        UniformFields.CascadeDepthScales,
+        UniformFields.Model,
+        UniformFields.VertexAnimation,
+    )
+
+    /**
      * Everything `lit_shadow.wgsl` declares = 176 floats.
      *
      * `awake:asset:shader-pack` re-exports this as `LitShadowUniformLayout` rather than
@@ -81,19 +97,9 @@ object MaterialUniformLayouts {
      * the WGSL by `ShaderUniformStructTest`. They agreed by hand, and only one of them was
      * tested.
      */
+    @Suppress("SpreadOperator") // Once, at class initialisation.
     val LitShadow = UniformLayout(
-        UniformFields.Mvp,
-        UniformFields.LightDirection,
-        UniformFields.LightColor,
-        UniformFields.PointLightPositions,
-        UniformFields.PointLightColors,
-        UniformFields.CascadeViewProjections,
-        UniformFields.CascadeDepthScales,
-        // Ahead of vertexAnimation so shadow_depth's prefix reaches it: that pass now builds its
-        // own clip position from model and the cascade it is rendering, rather than reading a
-        // per-draw matrix that could only ever describe one cascade.
-        UniformFields.Model,
-        UniformFields.VertexAnimation,
+        *SHADOW_DEPTH_PREFIX,
         UniformFields.CameraPosition,
         UniformFields.CameraForward,
         UniformFields.Material,
@@ -118,16 +124,12 @@ object MaterialUniformLayouts {
     )
 
     /**
-     * Full textured glTF PBR = 188 floats. The cascade fields come last so the masked depth
-     * shader's view of the block keeps its offsets.
+     * Full textured glTF PBR = 192 floats. Starts with [SHADOW_DEPTH_PREFIX], because the shadow
+     * pass draws textured meshes with the same depth shader as lit ones.
      */
+    @Suppress("SpreadOperator") // Once, at class initialisation.
     val PbrTextured = UniformLayout(
-        UniformFields.Mvp,
-        UniformFields.LightDirection,
-        UniformFields.LightColor,
-        UniformFields.PointLightPositions,
-        UniformFields.PointLightColors,
-        UniformFields.Model,
+        *SHADOW_DEPTH_PREFIX,
         UniformFields.CameraPosition,
         UniformFields.PbrFactors,
         UniformFields.BaseColorFactor,
@@ -136,8 +138,6 @@ object MaterialUniformLayouts {
         UniformFields.TextureScroll,
         UniformFields.FogColor,
         UniformFields.DebugView,
-        UniformFields.CascadeViewProjections,
-        UniformFields.CascadeDepthScales,
         UniformFields.CameraForward,
     )
 }

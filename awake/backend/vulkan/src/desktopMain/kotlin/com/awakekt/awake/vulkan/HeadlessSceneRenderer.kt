@@ -99,6 +99,21 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             cascadeCount = depthTarget.layers,
             framesInFlight = FRAMES_IN_FLIGHT,
         ),
+        // As VulkanEngine builds it: every other opaque scene format casts through the same shader.
+        formatPipelines = mapOf(
+            VertexFormat.PositionNormalColorUv to DepthOnlyPipeline(
+                graphicsDevice,
+                depthTarget.renderPass,
+                descriptorSetLayout,
+                runBlocking { spirvPair(PackShaderSets.ShadowDepth) },
+                VertexFormat.PositionNormalColorUv,
+                depthTarget.size,
+                vertexEntryPoint = "vertexMain",
+                fragmentEntryPoint = "fragmentMain",
+                cascadeCount = depthTarget.layers,
+                framesInFlight = FRAMES_IN_FLIGHT,
+            ),
+        ),
     )
     val linePipeline = LineRenderPipeline(
         graphicsDevice,
