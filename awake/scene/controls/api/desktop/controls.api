@@ -244,19 +244,6 @@ public final class com/awakekt/awake/scene/controls/input/KeybindingProfileKt {
 	public static final fun keybindingProfile (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;
 }
 
-public final class com/awakekt/awake/scene/controls/movement/JumpSystem : com/awakekt/awake/ecs/System {
-	public static final field Companion Lcom/awakekt/awake/scene/controls/movement/JumpSystem$Companion;
-	public static final field DEFAULT_GRAVITY F
-	public static final field DEFAULT_JUMP_VELOCITY F
-	public fun <init> ()V
-	public fun <init> (FF)V
-	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun update (Lcom/awakekt/awake/ecs/World;F)V
-}
-
-public final class com/awakekt/awake/scene/controls/movement/JumpSystem$Companion {
-}
-
 public final class com/awakekt/awake/scene/controls/movement/MatrixRelativeMovementSystem : com/awakekt/awake/ecs/System {
 	public static final field MIN_DIRECTION_LENGTH F
 	public fun <init> ()V
@@ -293,6 +280,10 @@ public final class com/awakekt/awake/scene/controls/movement/MovementControlBind
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/movement/MovementControlBindingKt {
+	public static final fun registerControls (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 }
 
 public final class com/awakekt/awake/scene/controls/movement/PlayerInputSystem : com/awakekt/awake/ecs/System {
