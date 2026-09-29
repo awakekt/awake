@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **`awake:ui:builder` is removed.** The visual UI layout builder (layout documents, drag-and-drop reflow, Kotlin code generation) had one consumer, Awake Studio, which retired it. Game UI is heading toward anchored scene entities instead.
+
 ## [0.1.0-alpha.14] - 2026-09-29
 
 ### Fixed
