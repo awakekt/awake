@@ -48,11 +48,12 @@ for sample in engine:engine-showcase ui:ui-showcase; do
 done
 
 for bundle_dir in "$site_dir/engine" "$site_dir/ui"; do
-  bundle_js="$(find "$bundle_dir" -maxdepth 1 -type f -name '*.js' ! -name '*.map' -print -quit)"
+  # Every script, not the first one found: awake-loader.js sits beside the bundle.
+  bundle_scripts=("$bundle_dir"/*.js)
   for wasm_file in "$bundle_dir"/*.wasm; do
     [[ -e "$wasm_file" ]] || continue
     wasm_name="$(basename "$wasm_file")"
-    if ! grep -Fq "$wasm_name" "$bundle_js"; then
+    if ! grep -Fq "$wasm_name" "${bundle_scripts[@]}"; then
       rm "$wasm_file"
     fi
   done
