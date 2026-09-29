@@ -32,11 +32,12 @@ abstract class ReleaseCutTask : DefaultTask() {
         requireNewTag(root, tag)
         val changelog = project.rootProject.file("CHANGELOG.md").toPath()
         require(changelog.toFile().isFile) { "CHANGELOG.md is missing" }
-        val content = changelog.toFile().readText()
-        require("## [Unreleased]" in content) { "CHANGELOG.md has no ## [Unreleased] section" }
-        val updated = content.replaceFirst(
-            "## [Unreleased]",
-            "## [Unreleased]\n\n## [$version] - ${LocalDate.now()}",
+        val fragments = readChangelogFragments(File(root, "changelog/unreleased"))
+        val updated = promoteUnreleased(
+            changelog.toFile().readText(),
+            version,
+            LocalDate.now().toString(),
+            fragments.mapValues { (_, files) -> files.map(File::readText) },
         )
 
         logger.lifecycle("${if (dryRun) "[DRY RUN] " else ""}Awake release: $version ($tag)")
@@ -46,6 +47,7 @@ abstract class ReleaseCutTask : DefaultTask() {
         }
         changelog.toFile().writeText(updated)
         runGit(root, "add", "CHANGELOG.md")
+        fragments.values.flatten().forEach { runGit(root, "rm", "--quiet", it.relativeTo(root).path) }
         runGit(root, "commit", "-m", "chore(release): cut $tag")
         runGit(root, "tag", "-a", tag, "-m", "Release $tag")
         logger.lifecycle("Created $tag. Push with: git push origin main $tag")

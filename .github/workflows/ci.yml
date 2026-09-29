@@ -42,6 +42,36 @@ jobs:
           base-sha: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           head-sha: ${{ github.sha }}
 
+  changelog:
+    name: Changelog
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # Entries are fragments under changelog/unreleased/ (see its README): every PR editing the
+      # same lines of CHANGELOG.md conflicted with every other open PR, and one merged after a
+      # release cut filed its entry under a release that did not ship it.
+      - name: Check changelog fragments
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          changed="$(git diff --name-only "$BASE_SHA"...HEAD)"
+          if [[ "$HEAD_REF" != release-cut/* ]] && grep -qx 'CHANGELOG.md' <<< "$changed"; then
+            echo "::error file=CHANGELOG.md::Only a release cut edits CHANGELOG.md. Add a fragment instead: changelog/unreleased/<section>/<branch-name>.md (see changelog/unreleased/README.md)."
+            exit 1
+          fi
+          if [[ "$TITLE" =~ ^(feat|fix)(\(.*\))?!?: ]] &&
+             ! grep -qE '^changelog/unreleased/(added|changed|deprecated|removed|fixed|security)/[^/]+\.md$' <<< "$changed"; then
+            echo "::error::A feat/fix PR needs a changelog fragment: changelog/unreleased/<added|changed|deprecated|removed|fixed|security>/<branch-name>.md"
+            exit 1
+          fi
+
   build:
     name: Build (JVM/Native)
     needs: platform-impact

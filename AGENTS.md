@@ -62,7 +62,7 @@ Before touching `Renderer.kt`, a render-contract type, or a backend renderer, ac
 
 **Pull Request & Release Invariants**:
 1. Every PR must be created with `--milestone "<milestone>"` (e.g. `gh pr create --milestone "v0.1.0-beta.1"`). Never create a PR without an assigned milestone.
-2. Every `feat:` and `fix:` PR must add a bullet entry to `CHANGELOG.md` under `## [Unreleased]`. CI enforces this.
+2. Every `feat:` and `fix:` PR must add a changelog fragment, `changelog/unreleased/<section>/<branch-name>.md` (section: `added`, `changed`, `deprecated`, `removed`, `fixed`, `security`), holding its bullet. Never edit `CHANGELOG.md` directly: `releaseCut` files fragments under the release. CI enforces both.
 3. When all issues/PRs for an active milestone are merged, cut the release via `./gradlew releaseCut -Prelease.channel=<channel>`, push the tag, and close the milestone.
 
 Use `feat/*`, `fix/*`, `refactor/*`, or `docs/*` for topic branches. For dependent layers,
