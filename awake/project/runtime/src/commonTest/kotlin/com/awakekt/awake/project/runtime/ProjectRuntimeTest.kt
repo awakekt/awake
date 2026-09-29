@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.io.AssetSource
@@ -76,6 +77,48 @@ class ProjectRuntimeTest {
     }
 
     @Test
+    fun theScenesTouchControlsSteerAndJump() = runTest {
+        val game = play(TOUCH_SCENE, touch = true)
+        game.frames(FRAMES)
+        val position = game.world.get<Transform>(game.world.named("Player"))!!.position
+        val start = position.copy()
+        fun centreOf(name: String): Pair<Float, Float> {
+            val tag = "canvas-element-${game.world.named(name).id}"
+            val node = assertNotNull(game.runtime.uiSemantics.findTag(tag), "no $name drawn")
+            return node.x + node.width / 2f to node.y + node.height / 2f
+        }
+        fun touch(down: Boolean, at: Pair<Float, Float>) {
+            game.input.setPointer(down = down, x = at.first, y = at.second)
+            game.input.updateSnapshot()
+            game.frames(1)
+        }
+
+        val (sx, sy) = centreOf("Stick")
+        touch(down = true, sx to sy)
+        repeat(FRAMES) { touch(down = true, sx to sy - (it * PULL_STEP).coerceAtMost(PULL)) }
+        touch(down = false, sx to sy - PULL)
+        val walked = position.copy()
+        val jump = centreOf("Jump")
+        touch(down = true, jump)
+        var peak = position.y
+        repeat(FRAMES / 2) {
+            touch(down = true, jump)
+            peak = maxOf(peak, position.y)
+        }
+        touch(down = false, jump)
+
+        assertTrue(walked.z < start.z - 1f, "pushing the stick up must walk forward; z ${start.z} -> ${walked.z}")
+        assertTrue(peak > walked.y + 0.5f, "holding jump must jump; peak $peak from ${walked.y}")
+    }
+
+    @Test
+    fun touchOnlyControlsStayHiddenOffTouchScreens() = runTest {
+        val game = play(TOUCH_SCENE)
+
+        assertNull(game.runtime.uiSemantics.findTag("canvas-element-${game.world.named("Stick").id}"))
+    }
+
+    @Test
     fun aSceneWithoutPhysicsMovesWithoutAPhysicsWorld() = runTest {
         val project = loadPlayableProject(files(MOVEMENT_ONLY_SCENE))
         assertNull(project.physics, "no bodies or characters, so no physics world")
@@ -108,9 +151,9 @@ class ProjectRuntimeTest {
         fun frames(count: Int) = repeat(count) { update() }
     }
 
-    private suspend fun play(scene: String): Game {
+    private suspend fun play(scene: String, touch: Boolean = false): Game {
         val project = loadPlayableProject(files(scene), ::createJoltPhysicsWorld)
-        val game = app { scene("play") { playProject(project) } }
+        val game = app { scene("play") { playProject(project, touchControls = touch) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
         return Game(runtime, game.requireService()) { game.update(DELTA, WIDTH, HEIGHT) }.also { it.frames(1) }
@@ -124,6 +167,9 @@ class ProjectRuntimeTest {
         runCatching { mapOf(MANIFEST_PATH to MANIFEST, "scenes/main.scene.json" to scene).getValue(path.value).encodeToByteArray() }
     }
 
+    private fun List<SemanticsNode>.findTag(tag: String): SemanticsNode? =
+        firstNotNullOfOrNull { if (it.testTag == tag) it else it.children.findTag(tag) }
+
     private fun World.named(name: String): Entity {
         var found: Entity? = null
         queryEach(Name::class) { entity, value -> if (value.value == name) found = entity }
@@ -136,6 +182,8 @@ class ProjectRuntimeTest {
         const val HEIGHT = 600f
         const val FRAMES = 60
         const val GROUND_TOLERANCE = 0.05f
+        const val PULL = 80f
+        const val PULL_STEP = 10f
         const val MANIFEST_PATH = "awake.project.json"
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
 
@@ -155,6 +203,16 @@ class ProjectRuntimeTest {
     { "component": "movement_control", "speed": 6.0 },
     { "component": "character_controller", "jumpSpeed": 5.0 }
   ] }
+] }
+"""
+
+        val TOUCH_SCENE = PHYSICS_SCENE.trimEnd().removeSuffix("] }").trimEnd() + """,
+  { "name": "Stick", "components": [ { "component": "canvas_element", "kind": "Joystick", "anchor": "BottomLeft",
+    "offsetX": 24.0, "offsetY": 24.0, "width": 120.0, "height": 120.0, "action": "move", "touchOnly": true,
+    "background": "#FFFFFF30", "color": "#FFFFFF80" } ] },
+  { "name": "Jump", "components": [ { "component": "canvas_element", "kind": "Button", "anchor": "BottomRight",
+    "offsetX": 32.0, "offsetY": 32.0, "width": 80.0, "height": 80.0, "action": "jump", "touchOnly": true,
+    "text": "Jump" } ] }
 ] }
 """
 

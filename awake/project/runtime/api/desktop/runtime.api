@@ -4,6 +4,16 @@ public final class com/awakekt/awake/project/runtime/BuiltInSceneAssetsKt {
 	public static synthetic fun builtInSceneAssets$default (Lcom/awakekt/awake/scene/authoring/SceneAssetsDsl;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/project/runtime/CanvasActionSystem : com/awakekt/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/project/runtime/CanvasActionSystemKt {
+	public static final field JUMP_ACTION Ljava/lang/String;
+	public static final field MOVE_ACTION Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/project/runtime/PlayableProject {
 	public final fun getManifest ()Lcom/awakekt/awake/project/AwakeProjectManifest;
 	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;
@@ -14,6 +24,7 @@ public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static final fun activatePrimaryCamera (Lcom/awakekt/awake/ecs/World;)V
 	public static final fun loadPlayableProject (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun loadPlayableProject$default (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public static final fun playProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/PlayableProject;)V
+	public static final fun playProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/PlayableProject;Z)V
+	public static synthetic fun playProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/PlayableProject;ZILjava/lang/Object;)V
 }
 
