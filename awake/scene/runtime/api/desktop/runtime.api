@@ -167,6 +167,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary {
 	public final fun isMeshRetained (Ljava/lang/String;)Z
 	public final fun materialHolderCount (Ljava/lang/String;)I
 	public final fun meshHolderCount (Ljava/lang/String;)I
+	public final fun meshName (Lcom/awakekt/awake/render/mesh/Mesh;)Ljava/lang/String;
 	public final fun releaseMaterial (Ljava/lang/String;)Z
 	public final fun releaseMesh (Ljava/lang/String;)Z
 	public final fun requireMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
