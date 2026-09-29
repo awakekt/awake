@@ -1765,3 +1765,11 @@ while Phase 2 is pending. The five exempt files per backend in `verifyBackendLay
 **known debt, not a precedent**. Do not add a new scene import to any exempt file and do not
 add a sixth file to the ledger without a plan entry.
 
+
+### D34 — Game UI is scene data; the design system is a style layer
+**DECIDED (2026-09-30).** Full record:
+[decisions/D34-game-ui-is-scene-data.md](../architecture/decisions/D34-game-ui-is-scene-data.md).
+
+Scene-carried game UI is `canvas_element` data that Studio edits and the project runtime loads
+without code; shadcn stays the editor's toolkit and a Kotlin game's `ui { }`. Game UI grows as
+layout, style, logic and binding layers, binding first, only as games need it.
