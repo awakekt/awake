@@ -42,6 +42,9 @@ class CameraRig : Poolable {
 
     var offsetPosition: Vec3f = Vec3f(0f, DEFAULT_EYE_HEIGHT, 0f)
 
+    /** Units per second a [CameraMode.FreeFly] camera moves. */
+    var flySpeed: Float = DEFAULT_FLY_SPEED
+
     override fun reset() {
         mode = CameraMode.FirstPerson
         needsReset = false
@@ -52,6 +55,7 @@ class CameraRig : Poolable {
         pitch = 0f
         yaw = 0f
         offsetPosition.set(0f, DEFAULT_EYE_HEIGHT, 0f)
+        flySpeed = DEFAULT_FLY_SPEED
     }
 
     private companion object {
@@ -59,6 +63,7 @@ class CameraRig : Poolable {
         const val DEFAULT_MIN_DISTANCE = 2f
         const val DEFAULT_MAX_DISTANCE = 20f
         const val DEFAULT_EYE_HEIGHT = 1.8f
+        const val DEFAULT_FLY_SPEED = 10f
     }
 }
 

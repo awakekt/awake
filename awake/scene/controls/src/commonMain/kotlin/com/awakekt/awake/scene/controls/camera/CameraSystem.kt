@@ -39,9 +39,11 @@ class CameraSystem(
         CameraGesturePolicy.Default,
     )
 
+    private enum class Drag { Orbit, Pan }
+
     private var lastPointerX = 0f
     private var lastPointerY = 0f
-    private var wasDragging = false
+    private var activeDrag: Drag? = null
 
     /** The point being orbited, when it is composed rather than taken straight from a rig. */
     private val scratchPivot = Vec3f(0f, 0f, 0f)
@@ -49,19 +51,21 @@ class CameraSystem(
     // Scratch vectors -- this runs every frame, so the pose math must not allocate.
     private val forward = Vec3f()
     private val desiredEye = Vec3f()
+    private val right = Vec3f()
+    private val up = Vec3f()
 
     override fun update(world: World, delta: Float) {
         val input = inputProvider()
 
         val bounds = viewportBounds()
         val inViewport = bounds?.contains(input.pointerX, input.pointerY) ?: true
-        val isDragActive = gesturePolicy.isOrbitDragging.isDragging(input)
-        val dragging = if (wasDragging) isDragActive else (isDragActive && inViewport)
-        val dx = if (dragging && wasDragging) input.pointerX - lastPointerX else 0f
-        val dy = if (dragging && wasDragging) input.pointerY - lastPointerY else 0f
+        val drag = currentDrag(input, inViewport)
+        val moved = drag != null && drag == activeDrag
+        val dx = if (moved) input.pointerX - lastPointerX else 0f
+        val dy = if (moved) input.pointerY - lastPointerY else 0f
         lastPointerX = input.pointerX
         lastPointerY = input.pointerY
-        wasDragging = dragging
+        activeDrag = drag
 
         world.queryEach(Camera::class, CameraRig::class) { entity, camera, config ->
             if (!world.has(entity, ActiveCamera::class)) return@queryEach
@@ -73,9 +77,26 @@ class CameraSystem(
                 config.needsReset = false
             }
 
-            applyCameraRigInput(config, input, dx, dy, inViewport)
+            if (drag == Drag.Pan) {
+                pan(config, camera, dx, dy)
+            } else {
+                applyCameraRigInput(config, input, dx, dy, inViewport)
+            }
+            if (config.mode == CameraMode.FreeFly && gesturePolicy.canFly.isDragging(input)) {
+                fly(config, camera, input, delta)
+            }
             updateCameraPose(config, camera, targetTransform, delta)
         }
+    }
+
+    /** The drag held this frame. A drag must start over the scene, but may leave it once started. */
+    private fun currentDrag(input: GameplayInput, inViewport: Boolean): Drag? {
+        val held = when {
+            gesturePolicy.isPanDragging.isDragging(input) -> Drag.Pan
+            gesturePolicy.isOrbitDragging.isDragging(input) -> Drag.Orbit
+            else -> null
+        }
+        return if (held == activeDrag || inViewport) held else null
     }
 
     private fun applyCameraRigInput(
@@ -95,10 +116,56 @@ class CameraSystem(
                 .coerceIn(-PITCH_LIMIT, PITCH_LIMIT)
         }
         if (config.mode.usesZoom && inViewport) {
-            val scroll = input.scrollDeltaY
-            config.distance = (config.distance - scroll * gesturePolicy.zoomSensitivity)
+            val step = gesturePolicy.zoomSensitivity + config.distance * gesturePolicy.zoomProportion
+            config.distance = (config.distance - input.scrollDeltaY * step)
                 .coerceIn(config.minDistance, config.maxDistance)
         }
+    }
+
+    /** Drags the scene with the pointer: moves the orbit point, or a free-fly eye, across the view. */
+    private fun pan(config: CameraRig, camera: Camera, dx: Float, dy: Float) {
+        val moving = when (config.mode) {
+            CameraMode.ThirdPerson, CameraMode.TopDown -> config.offsetPosition
+            CameraMode.FreeFly -> camera.lens.eye
+            CameraMode.FirstPerson, CameraMode.Cinematic -> return
+        }
+        viewAxes(camera)
+        val scale = gesturePolicy.panSensitivity * config.distance.coerceAtLeast(1f)
+        val shift = up.scale(dy * scale).add(right.scale(-dx * scale))
+        moving.add(shift)
+        // The third-person eye eases toward its pose; a pan carries it along instead.
+        if (moving !== camera.lens.eye) camera.lens.eye.add(shift)
+    }
+
+    /** Moves a free-fly eye along the view with [CameraGesturePolicy.flyKeys]. */
+    private fun fly(config: CameraRig, camera: Camera, input: GameplayInput, delta: Float) {
+        fun axis(positive: CameraFlyAction, negative: CameraFlyAction) =
+            (if (input.holds(positive)) 1f else 0f) - (if (input.holds(negative)) 1f else 0f)
+        val ahead = axis(CameraFlyAction.Forward, CameraFlyAction.Back)
+        val across = axis(CameraFlyAction.Right, CameraFlyAction.Left)
+        val rise = axis(CameraFlyAction.Up, CameraFlyAction.Down)
+        if (ahead == 0f && across == 0f && rise == 0f) return
+        forwardFrom(config.yaw, config.pitch, forward)
+        right.set(cos(config.yaw), 0f, sin(config.yaw))
+        desiredEye.set(forward.scale(ahead)).add(right.scale(across)).add(up.set(0f, rise, 0f)).normalize()
+        val speed = config.flySpeed * if (input.holds(CameraFlyAction.Fast)) FAST_FLY else 1f
+        camera.lens.eye.add(desiredEye.scale(speed * delta))
+    }
+
+    private fun GameplayInput.holds(action: CameraFlyAction): Boolean {
+        val binding = gesturePolicy.flyKeys.getBinding(action) ?: return false
+        return isDown(binding.primary) || binding.secondary?.let(::isDown) == true
+    }
+
+    /** Fills [right] and [up] from the lens, so every mode pans in the plane it shows. */
+    private fun viewAxes(camera: Camera) {
+        forward.set(camera.lens.center).sub(camera.lens.eye).normalize()
+        right.set(-forward.z, 0f, forward.x).normalize()
+        up.set(
+            right.y * forward.z - right.z * forward.y,
+            right.z * forward.x - right.x * forward.z,
+            right.x * forward.y - right.y * forward.x,
+        )
     }
 
     private fun resetCameraForMode(config: CameraRig, camera: Camera, target: Transform?) {
@@ -117,11 +184,8 @@ class CameraSystem(
                 }
             }
 
-            CameraMode.FreeFly -> {
-                config.pitch = 0f
-                config.yaw = 0f
-                config.distance = 0f
-            }
+            // Keeps the eye, yaw and pitch, so free-fly starts from the view it replaces.
+            CameraMode.FreeFly -> Unit
 
             CameraMode.Cinematic -> {
                 if (target != null) {
@@ -134,7 +198,9 @@ class CameraSystem(
             }
 
             CameraMode.TopDown -> {
-                config.distance = TOP_DOWN_DISTANCE
+                if (config.distance <= 0f) {
+                    config.distance = TOP_DOWN_DISTANCE
+                }
             }
         }
     }
@@ -212,5 +278,7 @@ class CameraSystem(
 
         // Exponential easing rate for the third-person eye pose.
         const val SMOOTHING = 10f
+
+        const val FAST_FLY = 4f
     }
 }
