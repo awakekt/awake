@@ -7,6 +7,10 @@ package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.canvas.CanvasAnchor
+import com.awakekt.awake.scene.canvas.CanvasElement
+import com.awakekt.awake.scene.canvas.CanvasElementKind
+import com.awakekt.awake.scene.canvas.SceneCanvasElement
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
@@ -249,12 +253,27 @@ class SceneLoaderTest {
                         SceneMeshRenderer(mesh = "m", material = "mat"),
                         ScenePbrMaterial(metallic = 1f, roughness = 0.2f),
                         SceneSpinControl(radians = 1.5f, speed = 2f),
+                        SceneCanvasElement(kind = CanvasElementKind.Bar, anchor = CanvasAnchor.BottomCenter, value = 0.5f),
                     ),
                 ),
             ),
         )
 
         assertEquals(document, SceneLoader.decode(SceneLoader.encode(document)))
+    }
+
+    /** A canvas element loads into the world as a CanvasElement and exports back unchanged. */
+    @Test
+    fun aCanvasElementRoundTripsThroughTheWorld() {
+        val authored = SceneCanvasElement(kind = CanvasElementKind.Text, anchor = CanvasAnchor.TopRight, text = "Score 0")
+        val document = SceneDocument(nodes = listOf(SceneNode(name = "score", components = listOf(authored))))
+        val world = World()
+
+        document.instantiate(world = world)
+
+        val loaded = mutableListOf<CanvasElement>().also { list -> world.family<CanvasElement>().forEach { _, e -> list += e } }
+        assertEquals("Score 0", loaded.single().text)
+        assertEquals(authored, SceneLoader.fromWorld(world, name = "x").nodes.single().components.filterIsInstance<SceneCanvasElement>().single())
     }
 
     /** A texture animation survives the file, reaches the ECS material, and exports back unchanged. */

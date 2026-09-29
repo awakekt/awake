@@ -81,7 +81,8 @@ add_library(awake-vulkan SHARED
         ../src/main/cpp/generated/com_awakekt_awake_vulkan_gen_VulkanDescriptors_jni.gen.cpp
         ../src/main/cpp/generated/com_awakekt_awake_vulkan_gen_VulkanImages_jni.gen.cpp
         ../src/main/cpp/VulkanImages_native.cpp
-        ../src/main/cpp/generated/VulkanWindow_jni.gen.cpp)
+        ../src/main/cpp/generated/VulkanWindow_jni.gen.cpp
+        ../src/main/cpp/VulkanWindow_native.cpp)
 
 target_include_directories(awake-vulkan PRIVATE
         ${JNI_INCLUDE_DIRS}
@@ -98,3 +99,12 @@ target_link_libraries(awake-vulkan
         vulkan_kotlin
         ${VULKAN_LINK_TARGET}
         ${GLFW_LIBRARY})
+
+# macOS: tell a trackpad from a wheel (NSEvent.hasPreciseScrollingDeltas), which GLFW does not
+# report -- see VulkanWindow_native_macos.mm.
+if(APPLE)
+    enable_language(OBJCXX)
+    target_sources(awake-vulkan PRIVATE ../src/main/cpp/VulkanWindow_native_macos.mm)
+    set_source_files_properties(../src/main/cpp/VulkanWindow_native_macos.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+    target_link_libraries(awake-vulkan "-framework AppKit")
+endif()

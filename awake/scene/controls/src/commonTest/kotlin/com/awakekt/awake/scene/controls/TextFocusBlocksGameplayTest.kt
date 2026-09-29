@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.ui.platform.blocksGameplayKeys
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.input.ScrollSource
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraInputSystem
@@ -227,6 +228,31 @@ class TextFocusBlocksGameplayTest {
         assertFalse(inputWithModal.wasPressed(Key.W), "modal open must suppress wasPressed(key)")
         assertTrue(inputWithModal.keysOwnedByUi, "modal open must own keys for UI")
         assertTrue(inputWithModal.isModalOpen, "modal open flag must be true")
+    }
+
+    @Test
+    fun sidewaysScrollIsGatedLikeVerticalScroll() {
+        val snapshot = InputSnapshot(
+            pointerX = 300f,
+            pointerY = 200f,
+            pointerDown = false,
+            scrollDeltaX = 1.5f,
+            scrollDeltaY = 2f,
+            keysDown = emptySet(),
+            keysPressed = emptySet(),
+            keysReleased = emptySet(),
+            typedText = "",
+            editActions = emptyList(),
+        )
+
+        assertEquals(1.5f, GameplayInput(snapshot, InputOwnership()).scrollDeltaX, "an unclaimed swipe reaches the world")
+        assertEquals(0f, GameplayInput(snapshot, InputOwnership(isScrollConsumed = true)).scrollDeltaX, "a scrollable under the pointer took it")
+        assertEquals(0f, GameplayInput(snapshot, InputOwnership(isModalOpen = true)).scrollDeltaX, "a modal layer took it")
+        assertEquals(
+            ScrollSource.Trackpad,
+            GameplayInput(snapshot.copy(scrollSource = ScrollSource.Trackpad), InputOwnership()).scrollSource,
+            "the platform's trackpad-or-wheel answer reaches the world",
+        )
     }
 
     private fun activeCamera(world: World): CameraRig {

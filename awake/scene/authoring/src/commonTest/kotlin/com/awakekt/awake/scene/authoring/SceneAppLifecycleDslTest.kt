@@ -22,6 +22,8 @@ import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.canvas.CanvasElement
+import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.bootstrap.dsl.appModule
 import com.awakekt.awake.engine.bootstrap.dsl.module
@@ -105,6 +107,34 @@ class SceneAppLifecycleDslTest {
 
         assertEquals(1, recordingRenderer.meshDestroyCount)
         assertEquals(1, recordingRenderer.materialDestroyCount)
+    }
+
+    @Test
+    fun sceneCanvasElementsDrawAndTakeTapsWithoutAUiBlock() = runTest {
+        val game = app { scene("canvas-proof") { entity("jump") } }
+        game.ready(RecordingRenderer())
+        val runtime = game.requireService<SceneAppLifecycleRuntime>()
+        val input = game.requireService<Input>()
+        val entity = runtime.findOrCreateEntity("jump")
+        val button = CanvasElement().apply {
+            kind = CanvasElementKind.Button
+            text = "Jump"
+            offsetX = 0f
+            offsetY = 0f
+            width = 100f
+            height = 40f
+        }
+        runtime.world.add(entity, button)
+
+        for (down in listOf(false, true, false)) {
+            input.setPointer(down = down, x = 50f, y = 20f)
+            input.updateSnapshot()
+            game.update(1f / 60f, 320f, 240f)
+        }
+
+        assertTrue(runtime.uiSemantics.any { it.hasTag("canvas-element-${entity.id}") })
+        assertTrue(button.consumePress())
+        game.dispose()
     }
 
     @Test
@@ -546,3 +576,6 @@ private class InterpolatingSystem : com.awakekt.awake.ecs.InterpolatedSystem {
         alphas.clear()
     }
 }
+
+private fun com.awakekt.awake.compose.ui.semantics.SemanticsNode.hasTag(tag: String): Boolean =
+    testTag == tag || children.any { it.hasTag(tag) }

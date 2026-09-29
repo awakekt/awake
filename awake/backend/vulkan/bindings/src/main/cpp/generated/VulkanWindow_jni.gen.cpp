@@ -5,16 +5,9 @@
 // desktop-native's CMake build, not android-native's.
 // Source: VulkanWindow.kt
 //
-// glfwSetScrollCallback/glfwConsumeScrollDeltaY (pinch-to-zoom, D-something scroll support):
-// the generator only knows how to marshal "call a GLFW getter, return its value" -- GLFW
-// scroll input is push/callback-based (glfwSetScrollCallback), which doesn't fit that shape.
-// The JNI entry-point *signatures* for both functions are still generator-produced (regular
-// per-function template); only their *bodies*, plus the file-scope static accumulator and
-// awake_glfwScrollCallback() below, are hand-written outside the generator's normal
-// "one GLFW call per function" assumption. Regenerating this file again will re-wipe both
-// bodies to TODO stubs (same as every other hand-filled body here) but will NOT remove the
-// hand-written static accumulator/callback function above the JNI exports, since those live
-// outside any generated function block.
+// glfwSetScrollCallback and the glfwConsumeScroll* functions are @JniNative (D11):
+// their wrappers below are the generator's own and delegate to VulkanWindow_native.cpp, which
+// owns the scroll accumulators and GLFW callback.
 
 #include <jni.h>
 #include <optional>
@@ -31,22 +24,11 @@
 #include "jni-utils.h"
 #include "exception_utils.h"
 
-// Hand-written (not part of the generator's per-function template -- GLFW scroll input is
-// callback-based, not a simple polled getter, so this doesn't fit the generator's normal
-// "call this GLFW getter, marshal its return value" shape; see VulkanWindow.kt's doc comment
-// on glfwSetScrollCallback/glfwConsumeScrollDeltaY). A single process-wide accumulator is
-// fine here for the same reason a single global GLFWwindow* would be: this codebase runs one
-// GLFW window per process (see this project's threading-model doc). Not thread-guarded --
-// the scroll callback fires synchronously inside glfwPollEvents(), and glfwConsumeScrollDeltaY
-// is polled from the same render thread right after, per this project's "one thread owns
-// every Vulkan/GLFW call" rule.
-static double g_scrollAccumulatorY = 0.0;
-
-static void awake_glfwScrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
-    (void)window;
-    (void)xoffset;
-    g_scrollAccumulatorY += yoffset;
-}
+// Native implementations are kept outside generated JNI code.
+extern "C" void awake_glfw_set_scroll_callback(JNIEnv* env, jlong window);
+extern "C" jdouble awake_glfw_consume_scroll_delta_y(JNIEnv* env, jlong window);
+extern "C" jdouble awake_glfw_consume_scroll_delta_x(JNIEnv* env, jlong window);
+extern "C" jint awake_glfw_consume_scroll_source(JNIEnv* env, jlong window);
 
 
 extern "C" JNIEXPORT jboolean JNICALL
@@ -381,7 +363,8 @@ Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwSetScrollCallback(
         return;
     }
 
-    glfwSetScrollCallback(reinterpret_cast<GLFWwindow*>(window_ptr), awake_glfwScrollCallback);
+    awake_glfw_set_scroll_callback(env, window);
+    return;
 }
 
 
@@ -399,9 +382,43 @@ Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwConsumeScrollDeltaY(
         return 0.0;
     }
 
-    double delta = g_scrollAccumulatorY;
-    g_scrollAccumulatorY = 0.0;
-    return static_cast<jdouble>(delta);
+    return awake_glfw_consume_scroll_delta_y(env, window);
+}
+
+
+extern "C" JNIEXPORT jdouble JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwConsumeScrollDeltaX(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window) {
+    // --- Marshalling ---
+    void* window_ptr = reinterpret_cast<void*>(window);
+
+    // --- Error handling ---
+    if (!window_ptr) {
+        throw_illegal_state(env, "glfwConsumeScrollDeltaX: window not initialized");
+        return 0.0;
+    }
+
+    return awake_glfw_consume_scroll_delta_x(env, window);
+}
+
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwConsumeScrollSource(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window) {
+    // --- Marshalling ---
+    void* window_ptr = reinterpret_cast<void*>(window);
+
+    // --- Error handling ---
+    if (!window_ptr) {
+        throw_illegal_state(env, "glfwConsumeScrollSource: window not initialized");
+        return 0;
+    }
+
+    return awake_glfw_consume_scroll_source(env, window);
 }
 
 
@@ -409,8 +426,8 @@ Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwConsumeScrollDeltaY(
 // "one GLFW call per function" template -- this lazily creates each standard cursor exactly
 // once (glfwCreateStandardCursor) and caches it here, keyed by GLFW's own shape constant, so a
 // real per-frame glfwSetCursorShape call never re-creates a cursor object. One process-wide
-// cache is fine for the same "one GLFW window per process" reason g_scrollAccumulatorY's own
-// comment gives. Never freed (glfwTerminate() tears down the whole GLFW context anyway, taking
+// cache is fine for the same "one GLFW window per process" reason VulkanWindow_native.cpp's
+// scroll accumulators give. Never freed (glfwTerminate() tears down the whole GLFW context anyway, taking
 // every outstanding GLFWcursor* with it).
 static std::unordered_map<int32_t, GLFWcursor*> g_cursorCache;
 

@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.gen
 
+import com.awakekt.awake.vulkan.JniNative
 import com.awakekt.awake.vulkan.VulkanNativeLoader
 
 actual object VulkanWindow {
@@ -29,8 +30,17 @@ actual object VulkanWindow {
     actual external fun glfwGetKey(window: Long, key: Int): Int
     actual external fun glfwGetMouseButton(window: Long, button: Int): Int
     actual external fun glfwGetCursorPos(window: Long): DoubleArray
+    @JniNative("awake_glfw_set_scroll_callback")
     actual external fun glfwSetScrollCallback(window: Long)
+
+    @JniNative("awake_glfw_consume_scroll_delta_y")
     actual external fun glfwConsumeScrollDeltaY(window: Long): Double
+
+    @JniNative("awake_glfw_consume_scroll_delta_x")
+    actual external fun glfwConsumeScrollDeltaX(window: Long): Double
+
+    @JniNative("awake_glfw_consume_scroll_source")
+    actual external fun glfwConsumeScrollSource(window: Long): Int
     actual external fun glfwSetCursorShape(window: Long, shape: Int)
     actual external fun glfwGetWindowAttrib(window: Long, attrib: Int): Int
 }

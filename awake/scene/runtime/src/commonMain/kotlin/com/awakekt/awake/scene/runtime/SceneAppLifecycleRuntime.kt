@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.scene.canvas.CanvasElement
+import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.compose.ui.platform.ComposeHost
@@ -217,7 +219,8 @@ class SceneAppLifecycleRuntime internal constructor(
             }
         }
 
-        val uiFrame = spec.ui?.let {
+        // A scene's own canvas elements need the UI frame even when the app declares no `ui { }`.
+        val uiFrame = (spec.ui ?: SceneCanvasOnly.takeIf { world.family<CanvasElement>().size > 0 })?.let {
             // The backend only knows the real display scale once its window exists, which is after
             // `uiHost` was constructed -- see ComposeHost.density's own doc comment for why this is
             // a live per-frame assignment rather than a constructor argument.
@@ -280,7 +283,10 @@ class SceneAppLifecycleRuntime internal constructor(
         viewportHeight: Float,
     ): SceneFrame {
         val content = spec.ui
-            ?: return SceneFrame(emptyList(), emptyList(), emptyList(), InputOwnership(), PointerCursor.Default, false)
+        val hasCanvas = world.family<CanvasElement>().size > 0
+        if (content == null && !hasCanvas) {
+            return SceneFrame(emptyList(), emptyList(), emptyList(), InputOwnership(), PointerCursor.Default, false)
+        }
         val frame = uiHost.frame(
             snapshot.toFrameInput(viewportWidth.roundToInt(), viewportHeight.roundToInt(), delta),
         ) {
@@ -291,7 +297,9 @@ class SceneAppLifecycleRuntime internal constructor(
                 LocalRenderer provides renderer,
                 LocalFrameStats provides frameStats(),
             ) {
-                content()
+                // Under the app's own UI, so a menu or pause screen covers the game's canvas.
+                if (hasCanvas) SceneCanvas(world)
+                if (content != null) content()
             }
         }
         return SceneFrame(
@@ -499,3 +507,6 @@ fun SceneAppLifecycleRuntime.defaultInfrastructureSystems(
         ),
         DebugVisualizationSystem(renderer, viewportProvider),
     )
+
+/** Stands in for `spec.ui` when only the scene's canvas elements need a UI frame. */
+private val SceneCanvasOnly: SceneContent = {}
