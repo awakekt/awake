@@ -54,6 +54,20 @@ class GraphicsEngineSurfaceTest {
         )
     }
 
+    @Test
+    fun aHostDensityReachesTheAppsFrames() {
+        val densities = mutableListOf<Float>()
+        val app = AppSpecBuilder().apply { render { densities += it.density } }.build().createLifecycle()
+        val engine = RecordingEngine(app, mutableListOf())
+        engine.create("surface")
+
+        engine.update(0f)
+        engine.setDensity(2.625f)
+        engine.update(0f)
+
+        assertEquals(listOf(1f, 2.625f), densities)
+    }
+
     private class RecordingEngine(
         app: com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle,
         private val events: MutableList<String>,

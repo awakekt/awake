@@ -46,6 +46,7 @@ abstract class GraphicsEngine(
         private set
     private lateinit var viewportSize: () -> Pair<Float, Float>
     private var density: () -> Float = { 1f }
+    private var hostDensity: Float? = null
 
     /** The current swapchain's width/height aspect ratio -- for a subclass computing a
      * [com.awakekt.awake.core.math.Frustum]'s corners to visualize via
@@ -88,7 +89,7 @@ abstract class GraphicsEngine(
                 viewportWidth = width,
                 viewportHeight = height,
                 input = input.updateSnapshot(),
-                density = density(),
+                density = hostDensity ?: density(),
             ),
         )
     }
@@ -120,6 +121,10 @@ abstract class GraphicsEngine(
         restoreBackendSurface(surface)
         surfaceReleased = false
         appLifecycle.resume()
+    }
+
+    final override fun setDensity(density: Float) {
+        hostDensity = density.takeIf { it > 0f }
     }
 
     final override fun dispose() {

@@ -70,6 +70,8 @@ class VulkanView(
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        // Read here, not once: a fold or a DeX move changes the density without a new view.
+        lifecycle.setDensity(resources.displayMetrics.density)
         lifecycle.resize(0, 0, width, height)
     }
 
