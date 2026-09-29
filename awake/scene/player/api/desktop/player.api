@@ -60,3 +60,15 @@ public final class com/awakekt/awake/scene/player/GltfMaterialSlot {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/player/PlayableProject {
+	public final fun getManifest ()Lcom/awakekt/awake/project/AwakeProjectManifest;
+	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;
+}
+
+public final class com/awakekt/awake/scene/player/ProjectPlayerKt {
+	public static final field PROJECT_MANIFEST Ljava/lang/String;
+	public static final fun loadPlayableProject (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun playProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/player/PlayableProject;)V
+	public static final fun preparePlayCamera (Lcom/awakekt/awake/ecs/World;)V
+}
+

@@ -19,6 +19,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:scene:authoring"))
+            api(project(":awake:project"))
             api(project(":awake:asset:gltf"))
             api(project(":awake:core:color"))
             api(project(":awake:core:geometry"))
@@ -31,6 +32,7 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+            implementation(project(":awake:engine:render:testing"))
         }
     }
 }
