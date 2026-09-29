@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.13] - 2026-09-29
+
 ### Added
 
 - **Free-fly moves, and middle-drag pans.** A `CameraMode.FreeFly` camera now flies with W/S/A/D along the view, Q/E down and up, and Shift four times faster, at `CameraRig.flySpeed` units a second (default 10). `CameraGesturePolicy.flyKeys` rebinds them, and `canFly` gates them: always for games, only while Right is held in `CameraGesturePolicy.Editor`, where W is a tool shortcut. `isPanDragging` was declared but never read; a pan drag now moves the orbit point (`CameraRig.offsetPosition`), or a free-fly eye, across the view by `panSensitivity` times the distance per pixel. The editor pans with Middle; the default policy no longer claims Shift + Left, so a game's follow camera stays on its target.
