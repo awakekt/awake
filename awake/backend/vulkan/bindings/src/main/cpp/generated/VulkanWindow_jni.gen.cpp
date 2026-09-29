@@ -5,7 +5,7 @@
 // desktop-native's CMake build, not android-native's.
 // Source: VulkanWindow.kt
 //
-// glfwSetScrollCallback/glfwConsumeScrollDeltaY/glfwConsumeScrollDeltaX are @JniNative (D11):
+// glfwSetScrollCallback and the glfwConsumeScroll* functions are @JniNative (D11):
 // their wrappers below are the generator's own and delegate to VulkanWindow_native.cpp, which
 // owns the scroll accumulators and GLFW callback.
 
@@ -28,6 +28,7 @@
 extern "C" void awake_glfw_set_scroll_callback(JNIEnv* env, jlong window);
 extern "C" jdouble awake_glfw_consume_scroll_delta_y(JNIEnv* env, jlong window);
 extern "C" jdouble awake_glfw_consume_scroll_delta_x(JNIEnv* env, jlong window);
+extern "C" jint awake_glfw_consume_scroll_source(JNIEnv* env, jlong window);
 
 
 extern "C" JNIEXPORT jboolean JNICALL
@@ -400,6 +401,24 @@ Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwConsumeScrollDeltaX(
     }
 
     return awake_glfw_consume_scroll_delta_x(env, window);
+}
+
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwConsumeScrollSource(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window) {
+    // --- Marshalling ---
+    void* window_ptr = reinterpret_cast<void*>(window);
+
+    // --- Error handling ---
+    if (!window_ptr) {
+        throw_illegal_state(env, "glfwConsumeScrollSource: window not initialized");
+        return 0;
+    }
+
+    return awake_glfw_consume_scroll_source(env, window);
 }
 
 

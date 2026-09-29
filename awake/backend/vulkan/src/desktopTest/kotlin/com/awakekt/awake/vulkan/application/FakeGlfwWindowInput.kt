@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.vulkan.application
 
+import com.awakekt.awake.core.input.ScrollSource
+
 private const val GLFW_MOUSE_BUTTON_RIGHT = 1
 
 /** Fake [GlfwWindowInput] for desktopTest -- lets a test set "these keys are down this frame"
@@ -23,6 +25,7 @@ class FakeGlfwWindowInput : GlfwWindowInput {
     var scaleY = 1f
     var pendingScrollDeltaY = 0.0
     var pendingScrollDeltaX = 0.0
+    var pendingScrollSource = ScrollSource.Unknown
 
     override fun isKeyDown(glfwKey: Int): Boolean = glfwKey in keysDown
     override fun isMouseButtonDown(glfwButton: Int): Boolean =
@@ -41,6 +44,12 @@ class FakeGlfwWindowInput : GlfwWindowInput {
     override fun consumeScrollDeltaX(): Double {
         val value = pendingScrollDeltaX
         pendingScrollDeltaX = 0.0
+        return value
+    }
+
+    override fun consumeScrollSource(): ScrollSource {
+        val value = pendingScrollSource
+        pendingScrollSource = ScrollSource.Unknown
         return value
     }
 }

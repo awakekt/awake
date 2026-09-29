@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.application
 
+import com.awakekt.awake.core.input.ScrollSource
 import com.awakekt.awake.vulkan.gen.VulkanWindow
 
 internal const val GLFW_PRESS = 1
@@ -28,6 +29,9 @@ interface GlfwWindowInput {
     fun consumeScrollDeltaY(): Double
     /** Sideways scroll since the last poll; 0 for a reader with no horizontal axis. */
     fun consumeScrollDeltaX(): Double = 0.0
+
+    /** What sent the scroll since the last poll; [ScrollSource.Unknown] where the platform cannot tell. */
+    fun consumeScrollSource(): ScrollSource = ScrollSource.Unknown
     fun isFocused(): Boolean = true
 }
 
@@ -38,20 +42,22 @@ private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
     override fun cursorY(): Double = VulkanWindow.glfwGetCursorPos(window)[1]
     override fun consumeScrollDeltaY(): Double = VulkanWindow.glfwConsumeScrollDeltaY(window)
     override fun consumeScrollDeltaX(): Double = VulkanWindow.glfwConsumeScrollDeltaX(window)
+    override fun consumeScrollSource(): ScrollSource =
+        ScrollSource.entries.getOrElse(VulkanWindow.glfwConsumeScrollSource(window)) { ScrollSource.Unknown }
     override fun isFocused(): Boolean = VulkanWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
 
-    override fun framebufferScaleX(): Float = framebufferScale().first
-    override fun framebufferScaleY(): Float = framebufferScale().second
+    override fun framebufferScaleX(): Float = framebufferScale(window).first
+    override fun framebufferScaleY(): Float = framebufferScale(window).second
+}
 
-    private fun framebufferScale(): Pair<Float, Float> {
-        val windowWidth = VulkanWindow.glfwGetWindowWidth(window)
-        val windowHeight = VulkanWindow.glfwGetWindowHeight(window)
-        val framebufferWidth = VulkanWindow.glfwGetFramebufferWidth(window)
-        val framebufferHeight = VulkanWindow.glfwGetFramebufferHeight(window)
-        val scaleX = if (windowWidth != 0) framebufferWidth.toFloat() / windowWidth else 1f
-        val scaleY = if (windowHeight != 0) framebufferHeight.toFloat() / windowHeight else 1f
-        return scaleX to scaleY
-    }
+private fun framebufferScale(window: Long): Pair<Float, Float> {
+    val windowWidth = VulkanWindow.glfwGetWindowWidth(window)
+    val windowHeight = VulkanWindow.glfwGetWindowHeight(window)
+    val framebufferWidth = VulkanWindow.glfwGetFramebufferWidth(window)
+    val framebufferHeight = VulkanWindow.glfwGetFramebufferHeight(window)
+    val scaleX = if (windowWidth != 0) framebufferWidth.toFloat() / windowWidth else 1f
+    val scaleY = if (windowHeight != 0) framebufferHeight.toFloat() / windowHeight else 1f
+    return scaleX to scaleY
 }
 
 fun glfwWindowInput(window: Long): GlfwWindowInput = RealGlfwWindowInput(window)

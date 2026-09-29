@@ -96,6 +96,12 @@ expect object VulkanWindow {
     @JniNative("awake_glfw_consume_scroll_delta_x")
     fun glfwConsumeScrollDeltaX(window: Long): Double
 
+    /** What sent the scroll since the last poll, reset each call: 0 unknown, 1 a wheel, 2 a trackpad
+     * (the ordinals of `com.awakekt.awake.core.input.ScrollSource`). Only macOS can tell, from
+     * `NSEvent.hasPreciseScrollingDeltas`; elsewhere this stays 0. */
+    @JniNative("awake_glfw_consume_scroll_source")
+    fun glfwConsumeScrollSource(window: Long): Int
+
     /** Sets [window]'s pointer cursor to one of GLFW's standard shapes (`GLFW_ARROW_CURSOR`,
      * `GLFW_HRESIZE_CURSOR`, ... -- see the constants alongside this call's own Kotlin call
      * site). Does NOT fit [glfwGetKey]'s single-GLFW-call-per-function shape: the native side

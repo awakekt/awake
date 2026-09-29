@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan.application
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
+import com.awakekt.awake.core.input.ScrollSource
 
 private const val GLFW_KEY_SPACE = 32
 private const val GLFW_KEY_ESCAPE = 256
@@ -88,4 +89,6 @@ internal fun pollGlfwInput(
     // two-finger swipe (or a tilt wheel).
     input.scrollDeltaX += reader.consumeScrollDeltaX().toFloat()
     input.scrollDeltaY += reader.consumeScrollDeltaY().toFloat()
+    // A frame polled more than once keeps what an earlier poll learned.
+    reader.consumeScrollSource().takeIf { it != ScrollSource.Unknown }?.let { input.scrollSource = it }
 }

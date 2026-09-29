@@ -2370,6 +2370,7 @@ public final class com/awakekt/awake/vulkan/gen/VulkanWindow {
 	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanWindow;
 	public final fun glfwConsumeScrollDeltaX (J)D
 	public final fun glfwConsumeScrollDeltaY (J)D
+	public final fun glfwConsumeScrollSource (J)I
 	public final fun glfwCreateWindow (IILjava/lang/String;)J
 	public final fun glfwCreateWindowSurface (JJ)J
 	public final fun glfwDestroyWindow (J)V

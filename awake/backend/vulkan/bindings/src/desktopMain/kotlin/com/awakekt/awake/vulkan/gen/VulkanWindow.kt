@@ -38,6 +38,9 @@ actual object VulkanWindow {
 
     @JniNative("awake_glfw_consume_scroll_delta_x")
     actual external fun glfwConsumeScrollDeltaX(window: Long): Double
+
+    @JniNative("awake_glfw_consume_scroll_source")
+    actual external fun glfwConsumeScrollSource(window: Long): Int
     actual external fun glfwSetCursorShape(window: Long, shape: Int)
     actual external fun glfwGetWindowAttrib(window: Long, attrib: Int): Int
 }

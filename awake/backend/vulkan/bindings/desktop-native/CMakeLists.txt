@@ -99,3 +99,12 @@ target_link_libraries(awake-vulkan
         vulkan_kotlin
         ${VULKAN_LINK_TARGET}
         ${GLFW_LIBRARY})
+
+# macOS: tell a trackpad from a wheel (NSEvent.hasPreciseScrollingDeltas), which GLFW does not
+# report -- see VulkanWindow_native_macos.mm.
+if(APPLE)
+    enable_language(OBJCXX)
+    target_sources(awake-vulkan PRIVATE ../src/main/cpp/VulkanWindow_native_macos.mm)
+    set_source_files_properties(../src/main/cpp/VulkanWindow_native_macos.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
+    target_link_libraries(awake-vulkan "-framework AppKit")
+endif()

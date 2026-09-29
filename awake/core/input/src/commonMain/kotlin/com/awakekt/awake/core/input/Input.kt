@@ -132,6 +132,24 @@ enum class TextEditAction {
  */
 enum class PointerButton { Primary, Secondary, Middle, Back, Forward }
 
+/**
+ * What sent a frame's scroll, where the platform can tell: a trackpad scrolls in fine, continuous
+ * deltas and is usually meant to pan, a wheel in whole notches and is usually meant to zoom.
+ *
+ * Only desktop macOS reports it today (`NSEvent.hasPreciseScrollingDeltas`); elsewhere a scroll is
+ * [Unknown] and a consumer that cares falls back to its own guess.
+ */
+enum class ScrollSource {
+    /** No scroll this frame, or a platform that cannot tell. */
+    Unknown,
+
+    /** A notched mouse wheel. */
+    Wheel,
+
+    /** A trackpad, or another touch surface such as a Magic Mouse. */
+    Trackpad,
+}
+
 data class InputSnapshot(
     val pointerX: Float,
     val pointerY: Float,
@@ -160,6 +178,8 @@ data class InputSnapshot(
     val buttonsPressed: Set<PointerButton> = emptySet(),
     /** Went up this frame (in the previous frame's [buttonsDown], absent now). */
     val buttonsReleased: Set<PointerButton> = emptySet(),
+    /** What sent [scrollDeltaX]/[scrollDeltaY], when the platform can tell. */
+    val scrollSource: ScrollSource = ScrollSource.Unknown,
 ) {
     fun isDown(button: PointerButton): Boolean = button in buttonsDown
 
@@ -195,6 +215,9 @@ class Input {
 
     var scrollDeltaX: Float = 0f
     var scrollDeltaY: Float = 0f
+
+    /** Set by a bridge that can tell a trackpad from a wheel; cleared each snapshot like the deltas. */
+    var scrollSource: ScrollSource = ScrollSource.Unknown
 
     // Accumulated (OR'd), not overwritten, so a down+up pair landing within one frame
     // interval -- a fast tap, a trackpad tap, any synthetic/automation click -- still
@@ -246,10 +269,12 @@ class Input {
             buttonsDown = heldButtons.toSet(),
             buttonsPressed = heldButtons - previousButtonsDown,
             buttonsReleased = previousButtonsDown - heldButtons,
+            scrollSource = scrollSource,
         )
         // Clear transient buffers
         scrollDeltaX = 0f
         scrollDeltaY = 0f
+        scrollSource = ScrollSource.Unknown
         typedText.clear()
         pendingEditActions.clear()
         pendingImeCommit = null
