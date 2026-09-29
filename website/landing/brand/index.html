@@ -1,0 +1,277 @@
+<!--
+  SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+
+  SPDX-License-Identifier: Apache-2.0
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brand guidelines · AwakeKt</title>
+  <meta name="description" content="The AwakeKt Ember Signal mark, name lockups, colours and usage rules, with downloads.">
+  <link rel="icon" href="awake-mark.svg" type="image/svg+xml">
+  <script>
+    document.documentElement.dataset.theme = localStorage.getItem("awake-theme") === "dark" ? "dark" : "light";
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --field-0: #10131A;
+      --field-1: #15151C;
+      --gold: #FFD166;
+      --text: #ECEAE6;
+      --text-muted: #A7A3AD;
+      --text-faint: #7E7A86;
+      --line: rgba(236, 234, 230, 0.09);
+      --line-strong: rgba(236, 234, 230, 0.16);
+      --surface: var(--field-1);
+      --bg: var(--field-0);
+      --accent-text: var(--gold);
+      --radius: 12px;
+      --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+      --sans: "IBM Plex Sans", system-ui, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    }
+    :root[data-theme="dark"] { color-scheme: dark; }
+    :root:not([data-theme="dark"]) {
+      --bg: #F6F6F7;
+      --surface: #FFFFFF;
+      --text: #16161C;
+      --text-muted: #4E4A55;
+      --text-faint: #66626D;
+      --line: rgba(22, 22, 28, 0.10);
+      --line-strong: rgba(22, 22, 28, 0.20);
+      --accent-text: #9A6500;
+      color-scheme: light;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 400 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+    code { font: 400 0.88em/1 var(--mono); }
+    :focus-visible { outline: 2px solid var(--accent-text); outline-offset: 3px; border-radius: 4px; }
+    .skip { position: absolute; left: 16px; top: -48px; padding: 8px 12px; background: #FFD166; color: #10131A; border-radius: 8px; z-index: 10; }
+    .skip:focus { top: 16px; }
+    .wrap { width: min(1120px, 100% - 48px); margin-inline: auto; }
+
+    .site-header { border-bottom: 1px solid var(--line); }
+    .site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 64px; }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 600; font-size: 16px; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; }
+    .brand .section { color: var(--text-faint); font-weight: 400; }
+    .nav { display: flex; align-items: center; gap: 24px; font-size: 15px; }
+    .nav a { color: var(--text-muted); text-decoration: none; transition: color 150ms ease; }
+    .theme-toggle { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--line-strong); border-radius: 8px; background: none; color: var(--text-muted); cursor: pointer; transition: transform 140ms var(--ease-out), color 150ms ease; }
+    .theme-toggle:active { transform: scale(0.97); }
+    .theme-toggle svg { width: 18px; height: 18px; }
+    .theme-toggle .icon-sun { display: none; }
+    :root:not([data-theme="dark"]) .theme-toggle .icon-sun { display: block; }
+    :root:not([data-theme="dark"]) .theme-toggle .icon-moon { display: none; }
+
+    .intro { padding-block: 72px 48px; }
+    h1 { margin: 0; font-size: clamp(34px, 4.2vw, 48px); line-height: 1.12; font-weight: 600; letter-spacing: -0.015em; }
+    .lede { margin: 16px 0 0; max-width: 38em; color: var(--text-muted); font-size: 18px; }
+    section { padding-block: 48px; border-top: 1px solid var(--line); }
+    h2 { margin: 0; font-size: 26px; line-height: 1.25; font-weight: 600; letter-spacing: -0.01em; }
+    .section-lede { margin: 8px 0 0; max-width: 40em; color: var(--text-muted); }
+
+    .mark-row { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 32px; align-items: center; margin-top: 24px; }
+    .mark-row img { width: 200px; height: 200px; border-radius: 44px; }
+    .downloads { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .download { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 8px; font: 500 14px/1 var(--sans); text-decoration: none; transition: border-color 150ms ease, transform 140ms var(--ease-out); }
+    .download:active { transform: scale(0.97); }
+
+    .lockups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+    .lockup { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+    .lockup-art { display: grid; place-items: center; height: 132px; padding: 24px; }
+    .lockup-art.on-dark { background: #10131A; }
+    .lockup-art.on-light { background: #F6F6F7; }
+    .lockup-art img { height: 48px; max-width: 100%; }
+    .lockup-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); font-size: 14px; color: var(--text-muted); }
+    .lockup-meta a { color: var(--accent-text); text-underline-offset: 3px; }
+
+    .swatches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+    .swatch { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--surface); }
+    .swatch-chip { height: 72px; }
+    .swatch-meta { padding: 10px 14px; font-size: 14px; }
+    .swatch-meta strong { display: block; font-weight: 500; }
+    .swatch-meta code { color: var(--text-faint); }
+
+    .rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+    .rule { padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .rule h3 { margin: 0; font-size: 16px; font-weight: 600; }
+    .rule ul { margin: 10px 0 0; padding-left: 1.1em; color: var(--text-muted); font-size: 15.5px; }
+    .rule li + li { margin-top: 6px; }
+    .rule.do h3 { color: #2E8B57; }
+    .rule.dont h3 { color: #D9482B; }
+
+    table { width: 100%; margin-top: 24px; border-collapse: collapse; font-size: 15.5px; }
+    th, td { padding: 12px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { font-weight: 600; }
+    td { color: var(--text-muted); }
+
+    .site-footer { border-top: 1px solid var(--line); padding-block: 32px; color: var(--text-faint); font-size: 14px; }
+    .site-footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; }
+    .site-footer nav { display: flex; gap: 24px; }
+    .site-footer a { color: var(--text-muted); text-decoration: none; transition: color 150ms ease; }
+
+    @media (hover: hover) and (pointer: fine) {
+      .nav a:hover, .site-footer a:hover, .theme-toggle:hover { color: var(--text); }
+      .download:hover { border-color: var(--text-faint); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .theme-toggle, .download { transition: border-color 150ms ease, color 150ms ease; }
+      .theme-toggle:active, .download:active { transform: none; }
+    }
+    @media (max-width: 800px) {
+      .mark-row { grid-template-columns: 1fr; }
+      .lockups, .rules { grid-template-columns: 1fr; }
+      .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      .nav a:not(.nav-home) { display: none; }
+      .brand .section { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="wrap">
+      <a class="brand" href="../">
+        <img src="awake-mark.svg" alt="" width="28" height="28">
+        <span>AwakeKt <span class="section">/ Brand</span></span>
+      </a>
+      <nav class="nav" aria-label="Primary">
+        <a class="nav-home" href="../">Engine</a>
+        <a href="https://studio.awakekt.com/">Studio</a>
+        <a href="https://github.com/awakekt/awake">GitHub</a>
+        <button class="theme-toggle" type="button" aria-label="Switch to dark theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/></svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <div class="intro">
+      <h1>Brand guidelines</h1>
+      <p class="lede">The Ember Signal mark and the AwakeKt names, with the files to use them. One mark covers AwakeKt Engine and AwakeKt Studio; the product name tells them apart.</p>
+    </div>
+
+    <section aria-labelledby="mark">
+      <h2 id="mark">The mark</h2>
+      <div class="mark-row">
+        <img src="awake-mark.svg" alt="The Ember Signal mark: an ember-to-gold geometric A around a small cube, on a dark field" width="200" height="200">
+        <div>
+          <p class="section-lede">A geometric A and cube in ember orange and warm gold, always on its dark field. Use it alone at icon sizes: favicons, launchers, the Dock and taskbar.</p>
+          <div class="downloads">
+            <a class="download" href="awake-mark.svg" download>SVG master</a>
+            <a class="download" href="awake-mark.png" download>PNG, 1024 px</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="lockups">
+      <h2 id="lockups">Name lockups</h2>
+      <p class="section-lede">The mark beside its name, for headers, slides and store listings. The mark keeps its dark field on every surface; only the name changes colour. Text is outlined, so the files look the same in any tool.</p>
+      <div class="lockups">
+        <div class="lockup"><div class="lockup-art on-dark"><img src="lockups/awakekt-on-dark.svg" alt="AwakeKt, for dark surfaces"></div><div class="lockup-meta">AwakeKt · dark surfaces <a href="lockups/awakekt-on-dark.svg" download>SVG</a></div></div>
+        <div class="lockup"><div class="lockup-art on-light"><img src="lockups/awakekt-on-light.svg" alt="AwakeKt, for light surfaces"></div><div class="lockup-meta">AwakeKt · light surfaces <a href="lockups/awakekt-on-light.svg" download>SVG</a></div></div>
+        <div class="lockup"><div class="lockup-art on-dark"><img src="lockups/awakekt-engine-on-dark.svg" alt="AwakeKt Engine, for dark surfaces"></div><div class="lockup-meta">AwakeKt Engine · dark surfaces <a href="lockups/awakekt-engine-on-dark.svg" download>SVG</a></div></div>
+        <div class="lockup"><div class="lockup-art on-light"><img src="lockups/awakekt-engine-on-light.svg" alt="AwakeKt Engine, for light surfaces"></div><div class="lockup-meta">AwakeKt Engine · light surfaces <a href="lockups/awakekt-engine-on-light.svg" download>SVG</a></div></div>
+        <div class="lockup"><div class="lockup-art on-dark"><img src="lockups/awakekt-studio-on-dark.svg" alt="AwakeKt Studio, for dark surfaces"></div><div class="lockup-meta">AwakeKt Studio · dark surfaces <a href="lockups/awakekt-studio-on-dark.svg" download>SVG</a></div></div>
+        <div class="lockup"><div class="lockup-art on-light"><img src="lockups/awakekt-studio-on-light.svg" alt="AwakeKt Studio, for light surfaces"></div><div class="lockup-meta">AwakeKt Studio · light surfaces <a href="lockups/awakekt-studio-on-light.svg" download>SVG</a></div></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="colours">
+      <h2 id="colours">Colours</h2>
+      <p class="section-lede">The mark's own colours. On light pages, gold text uses the darker <code>#9A6500</code> for contrast; the mark itself never changes.</p>
+      <div class="swatches">
+        <div class="swatch"><div class="swatch-chip" style="background: linear-gradient(135deg, #24202A, #15151C 56%, #10131A)"></div><div class="swatch-meta"><strong>Dark field</strong><code>#24202A → #10131A</code></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background: linear-gradient(135deg, #FF4D2E, #FF9F1C)"></div><div class="swatch-meta"><strong>Ember beam</strong><code>#FF4D2E → #FF9F1C</code></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background: linear-gradient(135deg, #FFF0B3, #FFD166)"></div><div class="swatch-meta"><strong>Gold beam</strong><code>#FFF0B3 → #FFD166</code></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background: #FF6B35"></div><div class="swatch-meta"><strong>Accent</strong><code>#FF6B35</code></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background: linear-gradient(135deg, #FFB84A, #FFE29A)"></div><div class="swatch-meta"><strong>Cube top</strong><code>#FFB84A → #FFE29A</code></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background: linear-gradient(90deg, #8A2E20 50%, #D9482B 50%)"></div><div class="swatch-meta"><strong>Cube sides</strong><code>#8A2E20 · #D9482B</code></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background: #9A6500"></div><div class="swatch-meta"><strong>Gold text on light</strong><code>#9A6500</code></div></div>
+        <div class="swatch"><div class="swatch-chip" style="background: #ECEAE6; box-shadow: inset 0 0 0 1px rgba(0,0,0,.06)"></div><div class="swatch-meta"><strong>Name on dark</strong><code>#ECEAE6</code></div></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="usage">
+      <h2 id="usage">Usage</h2>
+      <div class="rules">
+        <div class="rule do">
+          <h3>Do</h3>
+          <ul>
+            <li>Use the mark alone at icon sizes, and a lockup where there's room for a name.</li>
+            <li>Pick the lockup for the surface: <em>on-dark</em> for dark backgrounds, <em>on-light</em> for light ones.</li>
+            <li>Keep clear space around a lockup at least a quarter of the mark's height.</li>
+            <li>Keep lockups at least 20 px tall and the mark alone at least 16 px.</li>
+            <li>Write the names as <strong>AwakeKt</strong>, <strong>AwakeKt Engine</strong> and <strong>AwakeKt Studio</strong>.</li>
+          </ul>
+        </div>
+        <div class="rule dont">
+          <h3>Don't</h3>
+          <ul>
+            <li>Recolour the mark, for a product, a light theme or a campaign.</li>
+            <li>Remove the dark field or place the bare A on a light background.</li>
+            <li>Redraw the name in another typeface, stretch it, or add a slogan to the lockup.</li>
+            <li>Put a name inside an app icon or favicon.</li>
+            <li>Use the mark for a product or project that isn't AwakeKt.</li>
+          </ul>
+        </div>
+      </div>
+      <p class="section-lede" style="margin-top: 20px">You may use the names and the unmodified mark to identify AwakeKt, describe an integration, or link to the project, without implying endorsement. Using them as the identity of your own product, service, domain or social profile needs permission; see <a href="https://github.com/awakekt/awake/blob/main/TRADEMARKS.md">TRADEMARKS.md</a>.</p>
+    </section>
+
+    <section aria-labelledby="platforms">
+      <h2 id="platforms">App icons</h2>
+      <table>
+        <thead><tr><th>Platform</th><th>How the mark is used</th></tr></thead>
+        <tbody>
+          <tr><th>Android</th><td>Adaptive icon: the dark field as the background layer, the mark scaled to sit inside the 66 dp safe zone as the foreground, and a monochrome layer for themed icons.</td></tr>
+          <tr><th>iOS</th><td>The full-bleed 1024 px PNG; the system applies the corner mask.</td></tr>
+          <tr><th>Desktop</th><td>The 1024 px PNG for the Dock and taskbar. On macOS, the rounded-square icon grid with a transparent margin.</td></tr>
+          <tr><th>Web</th><td>The SVG master as the favicon.</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>The AwakeKt names and the Ember Signal mark are brand assets of AwakeKt.</span>
+      <nav aria-label="Footer">
+        <a href="../">Home</a>
+        <a href="https://github.com/awakekt/awake/blob/main/docs/reference/brand-system.md">Brand record</a>
+        <a href="https://github.com/awakekt/awake/blob/main/TRADEMARKS.md">Trademarks</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    const toggle = document.querySelector(".theme-toggle");
+    const syncToggleLabel = () => {
+      const light = document.documentElement.dataset.theme === "light";
+      toggle.setAttribute("aria-label", light ? "Switch to dark theme" : "Switch to light theme");
+    };
+    syncToggleLabel();
+    toggle.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+      document.documentElement.dataset.theme = next;
+      localStorage.setItem("awake-theme", next);
+      syncToggleLabel();
+    });
+  </script>
+</body>
+</html>

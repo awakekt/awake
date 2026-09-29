@@ -9,11 +9,14 @@
     android:height="108dp"
     android:viewportWidth="1024"
     android:viewportHeight="1024">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M505,208L505,339L346,618L266,765L194,690L415,275Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M266,765L346,618L402,674Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M505,208L598,275L818,690L747,765L664,618L505,339Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M609,674L664,618L747,765Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M505,522L594,575L505,630L418,575Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M418,575L505,630L505,726L418,671Z" />
-    <path android:fillColor="#FFFFFFFF" android:pathData="M594,575L505,630L505,726L594,671Z" />
+    <!-- 0.8 keeps the A's outer corners inside the 66dp safe zone that round launchers show. -->
+    <group android:scaleX="0.8" android:scaleY="0.8" android:pivotX="512" android:pivotY="512">
+        <path android:fillColor="#FFFFFFFF" android:pathData="M505,208L505,339L346,618L266,765L194,690L415,275Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M266,765L346,618L402,674Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M505,208L598,275L818,690L747,765L664,618L505,339Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M609,674L664,618L747,765Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M505,522L594,575L505,630L418,575Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M418,575L505,630L505,726L418,671Z" />
+        <path android:fillColor="#FFFFFFFF" android:pathData="M594,575L505,630L505,726L594,671Z" />
+    </group>
 </vector>
