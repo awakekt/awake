@@ -13,7 +13,7 @@ import kotlin.math.abs
 
 /** The fixed shadow-box constants both the real shadow pass (Vulkan's `RendererDraw3D
  * .lightViewProjection`) and the debug visualizer ([directionalShadowBox]) share -- one copy,
- * not two. ponytail: fixed shadow-box centered at the origin, not scene/camera-fit; upgrade
+ * not two. Known limit: fixed shadow-box centered at the origin, not scene/camera-fit; upgrade
  * path is a per-frame bounding-box (or camera-frustum) fit once a demo's content moves far
  * from origin. */
 const val SHADOW_LIGHT_DISTANCE = 15f

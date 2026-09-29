@@ -65,7 +65,7 @@ internal class TerrainShadowCasters(private val renderer: Renderer) {
 /**
  * This heightmap, or every n-th sample of it so neither side passes [MAX_CASTER_SAMPLES].
  *
- * ponytail: a plain stride, which drops up to n - 1 edge samples and lets a coarse caster sit
+ * Known limit: a plain stride, which drops up to n - 1 edge samples and lets a coarse caster sit
  * above the surface between its samples; clipmap-style LOD in the depth pass is the upgrade.
  */
 internal fun Heightmap.casterResolution(): Heightmap {

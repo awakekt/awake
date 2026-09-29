@@ -105,7 +105,7 @@ class ParticleSystem : System {
         // ParticleDynamics.dynamicSpawnRate's own doc comment.
         val spawnRate = emitter.dynamics.dynamicSpawnRate?.invoke() ?: emitter.spawnRate
         emitter.spawnAccumulator += spawnRate * delta
-        // ponytail: clamps the worst case to "refill the whole pool in one frame" rather than
+        // Known limit: clamps the worst case to "refill the whole pool in one frame" rather than
         // true unbounded growth -- a pool that stays completely full for a long stretch would
         // otherwise accumulate an ever-growing backlog that dumps as one mega-burst the moment
         // a slot frees up. Good enough for a first slice; a real rate-limited drain is the

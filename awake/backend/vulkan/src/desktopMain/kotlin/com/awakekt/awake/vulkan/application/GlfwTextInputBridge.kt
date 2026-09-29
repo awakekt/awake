@@ -60,7 +60,7 @@ private class KeyRepeatState {
     var nextRepeatAt = REPEAT_INITIAL_DELAY_SECONDS
 }
 
-// ponytail: module-level mutable state (one host process/window), matches the rest of this
+// Known limit: module-level mutable state (one host process/window), matches the rest of this
 // file's polling style -- promote to an instance if multi-window ever lands.
 private val repeatStates = HashMap<Int, KeyRepeatState>()
 

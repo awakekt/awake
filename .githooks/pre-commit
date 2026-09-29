@@ -31,6 +31,12 @@ if [ -f "$repo_root/tools/verify_doc_coordinates.py" ]; then
   fi
 fi
 
+# 1c. The "ponytail" limit tag is banned from comments; a known limit is written in plain words.
+if git -C "$repo_root" grep -nIE 'ponytai[l]:' -- ':!docs/tasks/archive' ':!CLAUDE.md' ':!AGENTS.md' ':!GEMINI.md' >&2; then
+  echo "pre-commit hook: the ponytail comment tag is banned; say the limit in plain words." >&2
+  exit 1
+fi
+
 # 2. Secret & Token Scanner (gitleaks)
 if command -v gitleaks >/dev/null 2>&1; then
   if ! gitleaks git --pre-commit --redact --staged --no-banner; then

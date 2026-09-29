@@ -18,6 +18,12 @@ game "a private consumer pack", describe its formats generically ("a legacy tile
 format"), and use neutral fixture names ("Harbor Town"). Check the diff and any PR or issue text
 for such names before committing or posting.
 
+## Hard rule: no `ponytail:` comments
+
+Never write a `ponytail:` tag in a comment, KDoc, config or doc. State a known limit in plain words
+inside the normal comment instead. The pre-commit hook and the `Build (JVM/Native)` CI job reject the
+tag; this overrides any plugin or skill that asks for it.
+
 ## Skill precedence and technology boundaries
 
 Project-owned `awake-*` skills are authoritative for Awake engine code and the

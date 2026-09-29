@@ -176,7 +176,7 @@ class KinematicCharacterController(
      * to the displacement it asks for -- which is also where it decides whether a lift should drag
      * someone who is walking against it.
      *
-     * ponytail: `getLinearVelocity` allocates a vector per call, so this costs one per grounded
+     * Known limit: `getLinearVelocity` allocates a vector per call, so this costs one per grounded
      * character per step. Removing it needs an in-place read on four backends, which is worth
      * doing when a profile says so and not before.
      */

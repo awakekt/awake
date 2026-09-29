@@ -20,7 +20,7 @@ import io.ygdrasil.webgpu.ArrayBuffer
  * `setInts` writes directly into a typed-array view over the target buffer in a single
  * per-element pass, skipping the intermediate boxed `JsArray` entirely.
  *
- * ponytail: still a per-element loop under the hood (Kotlin/Wasm-GC arrays have no linear
+ * Known limit: still a per-element loop under the hood (Kotlin/Wasm-GC arrays have no linear
  * memory to bulk-copy/view from), so this halves the work rather than eliminating it.
  * Upgrade path: a wgpu4k fix upstream, or a future Kotlin/Wasm bulk array-to-typed-array
  * interop intrinsic.

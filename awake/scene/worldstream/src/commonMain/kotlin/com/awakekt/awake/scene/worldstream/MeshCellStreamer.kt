@@ -60,7 +60,7 @@ class MeshCellStreamer(
     /**
      * Frames an unloaded mesh is kept alive before being destroyed.
      *
-     * ponytail: a fixed count rather than a fence, because the scene layer cannot see a backend's
+     * Known limit: a fixed count rather than a fence, because the scene layer cannot see a backend's
      * frames-in-flight. Three covers double and triple buffering; raise it, or replace it with a
      * real fence handed down from the backend, if a validation layer ever complains again.
      */

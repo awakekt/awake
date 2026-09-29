@@ -140,7 +140,7 @@ internal class GpuBufferPoolManager(
      * Pooled per [pipeline], not globally: each render pipeline owns its declared
      * `GPUBindGroupLayout`, and a bind group is only valid against the layout it was built from.
      *
-     * ponytail: one buffer + bind group per concurrent draw. A single buffer with
+     * Known limit: one buffer + bind group per concurrent draw. A single buffer with
      * `hasDynamicOffset` would need just one of each, but threading per-draw offsets through
      * the shared `CommandRecorder` port is a cross-backend change -- worth it only if draw
      * counts make the allocation count matter. */
