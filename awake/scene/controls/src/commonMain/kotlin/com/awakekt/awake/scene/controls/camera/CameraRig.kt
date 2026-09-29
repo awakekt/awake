@@ -8,6 +8,7 @@ package com.awakekt.awake.scene.controls.camera
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.Poolable
+import kotlinx.serialization.Serializable
 
 /**
  * Tag component to mark an entity as the active camera.
@@ -58,7 +59,7 @@ class CameraRig : Poolable {
         flySpeed = DEFAULT_FLY_SPEED
     }
 
-    private companion object {
+    companion object {
         const val DEFAULT_DISTANCE = 5f
         const val DEFAULT_MIN_DISTANCE = 2f
         const val DEFAULT_MAX_DISTANCE = 20f
@@ -70,6 +71,7 @@ class CameraRig : Poolable {
 /**
  * Modes defining how camera orientation and position respond to input and targets.
  */
+@Serializable
 enum class CameraMode(
     val usesYaw: Boolean,
     val usesPitch: Boolean,

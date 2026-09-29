@@ -103,6 +103,9 @@ class SceneAppLifecycleRuntime internal constructor(
     var uiSemantics: List<SemanticsNode> = emptyList()
         private set
 
+    /** Whether the scene's touch-only canvas controls are drawn, for a host on a touch screen. */
+    var showTouchControls: Boolean = false
+
     /** Last frame's draw commands, for a test that has to assert on what was painted. */
     var uiPrimitives: List<UiDrawPrimitive> = emptyList()
         private set
@@ -298,7 +301,7 @@ class SceneAppLifecycleRuntime internal constructor(
                 LocalFrameStats provides frameStats(),
             ) {
                 // Under the app's own UI, so a menu or pause screen covers the game's canvas.
-                if (hasCanvas) SceneCanvas(world)
+                if (hasCanvas) SceneCanvas(world, showTouchControls = showTouchControls)
                 if (content != null) content()
             }
         }

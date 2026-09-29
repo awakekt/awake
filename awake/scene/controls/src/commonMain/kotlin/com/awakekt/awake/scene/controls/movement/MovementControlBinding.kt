@@ -8,7 +8,9 @@ package com.awakekt.awake.scene.controls.movement
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.controls.camera.CameraRigBinding
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import kotlinx.serialization.SerialName
@@ -45,3 +47,7 @@ object MovementControlBinding : SceneComponentBinding<MovementControl, SceneMove
     override fun export(world: World, entity: Entity, component: MovementControl): SceneMovementControl =
         SceneMovementControl(speed = component.speed)
 }
+
+/** Registers the controls' scene components, `movement_control` and `camera_rig`, for loading and saving. */
+fun SceneComponentRegistry.registerControls(): SceneComponentRegistry =
+    register(MovementControlBinding).register(CameraRigBinding)

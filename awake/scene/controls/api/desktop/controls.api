@@ -137,6 +137,7 @@ public final class com/awakekt/awake/scene/controls/camera/CameraInputSystem$Com
 
 public final class com/awakekt/awake/scene/controls/camera/CameraMode : java/lang/Enum {
 	public static final field Cinematic Lcom/awakekt/awake/scene/controls/camera/CameraMode;
+	public static final field Companion Lcom/awakekt/awake/scene/controls/camera/CameraMode$Companion;
 	public static final field FirstPerson Lcom/awakekt/awake/scene/controls/camera/CameraMode;
 	public static final field FreeFly Lcom/awakekt/awake/scene/controls/camera/CameraMode;
 	public static final field ThirdPerson Lcom/awakekt/awake/scene/controls/camera/CameraMode;
@@ -150,7 +151,12 @@ public final class com/awakekt/awake/scene/controls/camera/CameraMode : java/lan
 	public static fun values ()[Lcom/awakekt/awake/scene/controls/camera/CameraMode;
 }
 
+public final class com/awakekt/awake/scene/controls/camera/CameraMode$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/controls/camera/CameraRig : com/awakekt/awake/ecs/Poolable {
+	public static final field Companion Lcom/awakekt/awake/scene/controls/camera/CameraRig$Companion;
 	public static final field DEFAULT_DISTANCE F
 	public static final field DEFAULT_EYE_HEIGHT F
 	public static final field DEFAULT_FLY_SPEED F
@@ -180,8 +186,26 @@ public final class com/awakekt/awake/scene/controls/camera/CameraRig : com/awake
 	public final fun setYaw (F)V
 }
 
+public final class com/awakekt/awake/scene/controls/camera/CameraRig$Companion {
+}
+
 public final class com/awakekt/awake/scene/controls/camera/CameraRigAimKt {
 	public static final fun aimAt (Lcom/awakekt/awake/scene/controls/camera/CameraRig;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;)V
+}
+
+public final class com/awakekt/awake/scene/controls/camera/CameraRigBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/controls/camera/CameraRigBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/controls/camera/SceneCameraRig;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/controls/camera/CameraRig;)Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/scene/controls/camera/CameraSystem : com/awakekt/awake/ecs/System {
@@ -201,6 +225,53 @@ public final class com/awakekt/awake/scene/controls/camera/CameraSystem : com/aw
 	public fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;)V
 	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/controls/camera/SceneCameraRig : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig$Companion;
+	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/scene/controls/camera/CameraMode;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun component9 ()F
+	public final fun copy (Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;F)Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;Lcom/awakekt/awake/scene/controls/camera/CameraMode;Ljava/lang/String;FFFFFLcom/awakekt/awake/scene/document/SceneVec3;FILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getDistance ()F
+	public final fun getFlySpeed ()F
+	public final fun getMaxDistance ()F
+	public final fun getMinDistance ()F
+	public final fun getMode ()Lcom/awakekt/awake/scene/controls/camera/CameraMode;
+	public final fun getOffset ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun getPitch ()F
+	public final fun getTarget ()Ljava/lang/String;
+	public final fun getYaw ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/controls/camera/SceneCameraRig$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/controls/camera/SceneCameraRig;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/camera/SceneCameraRig$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/scene/controls/input/KeyBinding {
@@ -244,21 +315,15 @@ public final class com/awakekt/awake/scene/controls/input/KeybindingProfileKt {
 	public static final fun keybindingProfile (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;
 }
 
-public final class com/awakekt/awake/scene/controls/movement/JumpSystem : com/awakekt/awake/ecs/System {
-	public static final field Companion Lcom/awakekt/awake/scene/controls/movement/JumpSystem$Companion;
-	public static final field DEFAULT_GRAVITY F
-	public static final field DEFAULT_JUMP_VELOCITY F
+public final class com/awakekt/awake/scene/controls/movement/CameraRelativeBasis {
+	public static final field MIN_DIRECTION_LENGTH F
 	public fun <init> ()V
-	public fun <init> (FF)V
-	public synthetic fun <init> (FFILkotlin/jvm/internal/DefaultConstructorMarker;)V
-	public fun update (Lcom/awakekt/awake/ecs/World;F)V
-}
-
-public final class com/awakekt/awake/scene/controls/movement/JumpSystem$Companion {
+	public final fun update (Lcom/awakekt/awake/ecs/World;)V
+	public final fun worldX (FF)F
+	public final fun worldZ (FF)F
 }
 
 public final class com/awakekt/awake/scene/controls/movement/MatrixRelativeMovementSystem : com/awakekt/awake/ecs/System {
-	public static final field MIN_DIRECTION_LENGTH F
 	public fun <init> ()V
 	public fun <init> (F)V
 	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -293,6 +358,10 @@ public final class com/awakekt/awake/scene/controls/movement/MovementControlBind
 	public fun getComponentClass ()Lkotlin/reflect/KClass;
 	public fun getSchemaClass ()Lkotlin/reflect/KClass;
 	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/controls/movement/MovementControlBindingKt {
+	public static final fun registerControls (Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;)Lcom/awakekt/awake/scene/binding/SceneComponentRegistry;
 }
 
 public final class com/awakekt/awake/scene/controls/movement/PlayerInputSystem : com/awakekt/awake/ecs/System {

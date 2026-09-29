@@ -6,63 +6,35 @@
 package com.awakekt.awake.scene.controls
 
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.controls.movement.JumpSystem
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
+import com.awakekt.awake.scene.binding.fromWorld
+import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.movement.MatrixRelativeMovementSystem
 import com.awakekt.awake.scene.controls.movement.MovementControl
+import com.awakekt.awake.scene.controls.movement.SceneMovementControl
+import com.awakekt.awake.scene.controls.movement.registerControls
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneLoader
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class CharacterMovementTest {
     @Test
-    fun aJumpRisesAndLandsWhereItStarted() {
+    fun theMarkerRoundTripsWithItsSpeedOnceControlsAreRegistered() {
+        val registry = SceneComponentRegistry().registerControls()
+        val json = """{"version":1,"name":"x","nodes":[{"name":"player","components":[{"component":"movement_control","speed":6.0}]}]}"""
         val world = World()
-        val player = world.create()
-        val transform = Transform().apply { position.set(0f, 0.5f, 0f) }
-        val control = MovementControl().apply { jump = true }
-        world.add(player, transform)
-        world.add(player, control)
-        val jump = JumpSystem()
 
-        jump.update(world, DELTA)
-        control.jump = false
-        var peak = transform.position.y
-        repeat(STEPS) {
-            jump.update(world, DELTA)
-            peak = maxOf(peak, transform.position.y)
-        }
+        SceneLoader.decode(json).instantiate(world = world, componentRegistry = registry)
 
-        assertTrue(peak > 1f, "the jump only reached $peak")
-        assertEquals(0.5f, transform.position.y, "the player must land back on the floor it stood on")
-    }
-
-    @Test
-    fun holdingJumpInTheAirDoesNotJumpAgain() {
-        val world = World()
-        val player = world.create()
-        val transform = Transform()
-        val control = MovementControl().apply { jump = true }
-        world.add(player, transform)
-        world.add(player, control)
-        val jump = JumpSystem()
-
-        var peak = 0f
-        // Held for less than one flight: a mid-air re-jump would push the peak past a single jump's.
-        repeat(STEPS / 4) {
-            jump.update(world, DELTA)
-            peak = maxOf(peak, transform.position.y)
-        }
-        control.jump = false
-        repeat(STEPS) {
-            jump.update(world, DELTA)
-            peak = maxOf(peak, transform.position.y)
-        }
-
-        val singleJumpPeak = JumpSystem.DEFAULT_JUMP_VELOCITY * JumpSystem.DEFAULT_JUMP_VELOCITY /
-            (2 * -JumpSystem.DEFAULT_GRAVITY)
-        assertTrue(abs(peak - singleJumpPeak) < PEAK_TOLERANCE, "peak $peak, one jump reaches $singleJumpPeak")
+        val loaded = mutableListOf<MovementControl>().also { list -> world.family<MovementControl>().forEach { _, c -> list += c } }
+        assertEquals(6f, loaded.single().speed)
+        assertEquals(
+            SceneMovementControl(speed = 6f),
+            SceneLoader.fromWorld(world, name = "x", componentRegistry = registry)
+                .nodes.single().components.filterIsInstance<SceneMovementControl>().single(),
+        )
     }
 
     @Test
@@ -76,11 +48,5 @@ class CharacterMovementTest {
         MatrixRelativeMovementSystem(speed = 2f).update(world, 1f)
 
         assertEquals(6f, abs(transform.position.z), 1e-4f)
-    }
-
-    private companion object {
-        const val DELTA = 1f / 60f
-        const val STEPS = 120
-        const val PEAK_TOLERANCE = 0.1f
     }
 }

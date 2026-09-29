@@ -78,7 +78,6 @@ public final class com/awakekt/awake/scene/runtime/DefaultSceneComponentResolver
 	public final fun getFogResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getLightResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getMeshRendererResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
-	public final fun getMovementControlResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getPbrMaterialResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getPrefabLinkResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentResolver;
 	public final fun getSkyboxResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
@@ -109,6 +108,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun getSceneManager ()Lcom/awakekt/awake/scene/runtime/SceneManager;
 	public final fun getSceneName ()Ljava/lang/String;
 	public final fun getSession ()Lcom/awakekt/awake/scene/runtime/session/SceneSession;
+	public final fun getShowTouchControls ()Z
 	public final fun getSpec ()Lcom/awakekt/awake/scene/runtime/SceneAppSpec;
 	public final fun getUiHost ()Lcom/awakekt/awake/compose/ui/platform/ComposeHost;
 	public final fun getUiOwnership ()Lcom/awakekt/awake/compose/ui/platform/InputOwnership;
@@ -132,6 +132,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public fun resume ()V
 	public final fun service (Lkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun setPerfStatsEnabled (Z)V
+	public final fun setShowTouchControls (Z)V
 	public final fun setUiOwnership (Lcom/awakekt/awake/compose/ui/platform/InputOwnership;)V
 	public final fun stageUi (Ljava/util/List;)V
 	public final fun system (Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;)Lcom/awakekt/awake/ecs/System;
@@ -168,6 +169,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetLibrary {
 	public final fun isMeshRetained (Ljava/lang/String;)Z
 	public final fun materialHolderCount (Ljava/lang/String;)I
 	public final fun meshHolderCount (Ljava/lang/String;)I
+	public final fun meshName (Lcom/awakekt/awake/render/mesh/Mesh;)Ljava/lang/String;
 	public final fun releaseMaterial (Ljava/lang/String;)Z
 	public final fun releaseMesh (Ljava/lang/String;)Z
 	public final fun requireMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
