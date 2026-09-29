@@ -60,6 +60,17 @@ class SceneCompilerTest {
     }
 
     @Test
+    fun aCameraWhoseNearPlaneIsPastTheShadowDistanceDrawsNoShadow() {
+        val world = World()
+        world.add(world.create(), Light(type = Light.Type.Directional, shadowDistance = 400f))
+        val camera = Camera(Lens(eye = Vec3f(0f, 0f, 5000f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 493f, far = 90_000f))
+
+        val light = SceneLightingCompiler(ClipSpace.WebGpu).sceneLight(world, camera, viewportAspect = 1f)
+
+        assertNull(light.cascades, "Nothing it can see is within the shadow distance, so there is no shadow pass.")
+    }
+
+    @Test
     fun lightingCompilerReadsSkyboxAndFogWithoutRendererState() {
         val world = World()
         val skyEntity = world.create()
