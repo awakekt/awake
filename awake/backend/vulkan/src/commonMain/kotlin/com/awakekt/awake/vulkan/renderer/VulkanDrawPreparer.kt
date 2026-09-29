@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.vulkan.renderer
 
+import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
@@ -29,19 +30,30 @@ internal class VulkanDrawPreparer(
      * for this resolver seam. */
     private val materialUsage = mutableMapOf<Material, Int>()
 
+    /** Instanced draws so far this batch: each gets the next instance buffer, so the pool grows
+     * with how many instanced draws a frame has rather than with where they sit in it. */
+    private var instancedRuns = 0
+
+    override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelinesByFormat
+
     override fun prepare(
         request: GpuDrawRequest,
         sourceIndex: Int,
         context: GpuDrawPreparationContext,
     ): GpuResolvedDraw? {
-        if (sourceIndex == 0) materialUsage.clear()
+        if (sourceIndex == 0) {
+            materialUsage.clear()
+            instancedRuns = 0
+            // Submitted offscreen work may still read the slots this batch is about to rewrite.
+            renderer.awaitSubmittedOffscreenCommandsFor(renderer.swapchainManager.currentFrame)
+        }
         val cascades = context.shadowCascadeData ?: context.shadowViewProjections
             .takeIf { it.isNotEmpty() }
             ?.let { GpuShadowCascadeData(it, FloatArray(it.size) { Float.MAX_VALUE }) }
         val prepared = renderer.prepareGpuDraw(
             cmd = request,
             frameIndex = renderer.swapchainManager.currentFrame,
-            instancedIndex = sourceIndex,
+            instancedIndex = if (request.instanceModels != null) instancedRuns++ else sourceIndex,
             isTransparent = request.transparent,
             materialUsage = materialUsage,
             viewProjection = context.viewProjection,

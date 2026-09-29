@@ -41,40 +41,23 @@ const val SCENE_SIZE: Int = 128
  * was extended to catch put it on the opposite side of the ground from the caster, which is a
  * correct-looking picture unless something compares the two backends.
  */
-fun Renderer.renderShadowScene(texturedGround: Boolean = false): ByteArray {
+fun Renderer.renderShadowScene(texturedGround: Boolean = false, texturedCaster: Boolean = false): ByteArray {
     val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
     val ground = createMesh(if (texturedGround) texturedPlane() else plane(GROUND_HALF, y = 0f))
-    val caster = createMesh(plane(CASTER_HALF, y = CASTER_Y, r = 1f, g = 0f, b = 0f))
+    val caster = createMesh(
+        if (texturedCaster) texturedPlane(CASTER_HALF, y = CASTER_Y) else plane(CASTER_HALF, y = CASTER_Y, r = 1f, g = 0f, b = 0f),
+    )
     val material = createMaterial(LitShadowUniformLayout)
-    val groundMaterial = if (texturedGround) {
-        createMaterial(
-            texture = SolidWhite,
-            uniformFloatCount = MaterialUniformLayouts.PbrTextured.total,
-            pbrTextures = PbrTextureSet(),
-        )
-    } else {
-        material
-    }
+    val groundMaterial = if (texturedGround) texturedMaterial(SolidWhite) else material
+    val casterMaterial = if (texturedCaster) texturedMaterial(SolidOrange) else material
     return try {
-        val lens = Lens(
-            eye = Vec3f(0f, EYE_Y, EYE_Z),
-            center = Vec3f(0f, 0f, 0f),
-            fovYRadians = 1f,
-            near = 0.1f,
-            far = 50f,
-        )
-        val light = SceneLight(direction = Vec3f(LIGHT_X, 1f, 0f), color = Vec3f(1f, 1f, 1f)).let {
-            it.copy(viewProjection = directionalShadowBox(it.direction, clipSpace).viewProjection)
-        }
         renderToTexture(
             target,
-            ScenePassCompiler.compile(
-                lens = lens,
-                drawCalls = listOf(RenderDrawCommand(ground, groundMaterial), RenderDrawCommand(caster, material)),
-                light = light,
-                clipSpace = clipSpace,
-                aspect = 1f,
-                drawPreparer = (this as? GpuDrawPreparationSource)?.gpuDrawPreparer,
+            compileShadowScene(
+                listOf(
+                    RenderDrawCommand(ground, groundMaterial),
+                    RenderDrawCommand(caster, casterMaterial, extraUniformFloats = if (texturedCaster) WHITE_FACTORS else FloatArray(0)),
+                ),
             ),
         )
         runBlocking { readPixels(target) }.data
@@ -83,9 +66,22 @@ fun Renderer.renderShadowScene(texturedGround: Boolean = false): ByteArray {
         caster.destroy()
         material.destroy()
         if (texturedGround) groundMaterial.destroy()
+        if (texturedCaster) casterMaterial.destroy()
         target.destroy()
     }
 }
+
+/** [drawCalls] seen from above and in front, lit by one shadow-casting sun. */
+internal fun Renderer.compileShadowScene(drawCalls: List<RenderDrawCommand>) = ScenePassCompiler.compile(
+    lens = Lens(eye = Vec3f(0f, EYE_Y, EYE_Z), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f),
+    drawCalls = drawCalls,
+    light = SceneLight(direction = Vec3f(LIGHT_X, 1f, 0f), color = Vec3f(1f, 1f, 1f)).let {
+        it.copy(viewProjection = directionalShadowBox(it.direction, clipSpace).viewProjection)
+    },
+    clipSpace = clipSpace,
+    aspect = 1f,
+    drawPreparer = (this as? GpuDrawPreparationSource)?.gpuDrawPreparer,
+)
 
 /**
  * A small textured glTF-style PBR draw through the shared packet path.
@@ -196,7 +192,7 @@ fun Renderer.renderBackCulledScene(cullBack: Boolean = true, viewFromAbove: Bool
 }
 
 /** A horizontal quad at [y], facing up. `VertexFormat.PositionNormalColor`: 9 floats per vertex. */
-private fun plane(half: Float, y: Float, r: Float = 1f, g: Float = 1f, b: Float = 1f) = MeshGeometry(
+internal fun plane(half: Float, y: Float, r: Float = 1f, g: Float = 1f, b: Float = 1f) = MeshGeometry(
     floatArrayOf(
         -half, y, -half, 0f, 1f, 0f, r, g, b,
         half, y, -half, 0f, 1f, 0f, r, g, b,
@@ -209,7 +205,7 @@ private fun plane(half: Float, y: Float, r: Float = 1f, g: Float = 1f, b: Float 
     VertexFormat.PositionNormalColor,
 )
 
-private val SolidOrange = TextureAsset(
+internal val SolidOrange = TextureAsset(
     data = byteArrayOf(
         220.toByte(), 80, 40, 255.toByte(),
         220.toByte(), 80, 40, 255.toByte(),
@@ -223,12 +219,12 @@ private val SolidOrange = TextureAsset(
 private val SolidWhite = TextureAsset(data = ByteArray(2 * 2 * 4) { -1 }, width = 2, height = 2)
 
 /** Position/normal/colour/UV plane used by [renderTexturedPbrScene]. */
-private fun texturedPlane() = MeshGeometry(
+internal fun texturedPlane(half: Float = GROUND_HALF, y: Float = 0f) = MeshGeometry(
     floatArrayOf(
-        -GROUND_HALF, 0f, -GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 0f,
-        GROUND_HALF, 0f, -GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 0f,
-        GROUND_HALF, 0f, GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 1f,
-        -GROUND_HALF, 0f, GROUND_HALF, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 1f,
+        -half, y, -half, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 0f,
+        half, y, -half, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 0f,
+        half, y, half, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 1f,
+        -half, y, half, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 1f,
     ),
     intArrayOf(0, 1, 2, 2, 3, 0),
     VertexFormat.PositionNormalColorUv,
@@ -240,9 +236,15 @@ fun ByteArray.luminanceAt(x: Int, y: Int): Int {
     return (0..2).maxOf { this[offset + it].toInt() and 0xFF }
 }
 
-private const val GROUND_HALF = 6f
+internal fun Renderer.texturedMaterial(texture: TextureAsset) =
+    createMaterial(texture = texture, uniformFloatCount = MaterialUniformLayouts.PbrTextured.total, pbrTextures = PbrTextureSet())
+
+/** A textured draw reads its material factors from these; an empty payload is a black surface. */
+internal val WHITE_FACTORS = pbrMaterialFloats(0f, 1f, Color.White, Color.Transparent)
+
+internal const val GROUND_HALF = 6f
 private const val CASTER_HALF = 1.5f
-private const val CASTER_Y = 2f
+internal const val CASTER_Y = 2f
 private const val EYE_Y = 6f
 private const val EYE_Z = 9f
 

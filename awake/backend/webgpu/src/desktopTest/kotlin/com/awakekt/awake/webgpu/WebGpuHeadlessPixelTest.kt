@@ -344,7 +344,7 @@ class WebGpuHeadlessPixelTest {
                 maxFramesInFlight = 1,
             )
             try {
-                renderer.bufferPools.instancedUniformResources(instancedPipeline.handle)
+                renderer.bufferPools.uniformSlotForDraw(instancedPipeline.handle, 0)
                 assertNull(uncapturedError, "WebGPU uncaptured error: $uncapturedError")
             } finally {
                 renderer.destroy()

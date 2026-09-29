@@ -7,8 +7,10 @@ package com.awakekt.awake.render.passes
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.BufferHandle
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
@@ -99,6 +101,44 @@ class ScenePassCompilerTest {
         assertEquals(listOf(visible), input.resolvedOpaqueDraws)
         assertTrue(input.prePasses.isNotEmpty())
         input.prePasses.forEach { pass -> assertEquals(listOf(visible, shadowOnly), pass.resolvedDraws) }
+    }
+
+    /** A shadow pass draws only the casters its map can see; a caster with no bounds casts into every pass. */
+    @Test
+    fun aShadowPassSkipsCastersBesideOrBeyondItsMap() {
+        val mesh = object : Mesh {
+            override val format = VertexFormat.PositionNormalColor
+            override val sizeBytes = 0L
+            override fun destroy() = Unit
+        }
+        val material = object : Material {
+            override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
+            override fun destroy() = Unit
+        }
+        val inside = Aabb(Vec3f(-0.5f, -0.5f, 0f), Vec3f(0.5f, 0.5f, 0.5f))
+        val beside = Aabb(Vec3f(5f, -0.5f, 0f), Vec3f(6f, 0.5f, 0.5f))
+        val beyond = Aabb(Vec3f(-0.5f, -0.5f, 2f), Vec3f(0.5f, 0.5f, 3f))
+        val drawsBySource = HashMap<Int, GpuResolvedDraw>()
+        val input = ScenePassCompiler.compile(
+            lens = Lens(eye = Vec3f(0f, 1f, 2f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 10f),
+            drawCalls = listOf(inside, beside, beyond, null).map { RenderDrawCommand(mesh, material, worldBounds = it) },
+            // Identity: the map spans x and y in [-1, 1] and ends at z = 1.
+            light = SceneLight(direction = Vec3f(0f, -1f, 0f), color = Vec3f(1f, 1f, 1f), viewProjection = Mat4().apply { identity() }),
+            clipSpace = ClipSpace.Vulkan,
+            aspect = 1f,
+            drawPreparer = GpuDrawPreparer { _, sourceIndex, _ ->
+                GpuResolvedDraw(
+                    pipeline = object : PipelineHandle {},
+                    materialBinding = object : MaterialBinding {},
+                    vertexBuffer = object : BufferHandle {},
+                    indexBuffer = null,
+                    elementCount = 3,
+                ).also { drawsBySource[sourceIndex] = it }
+            },
+        )
+
+        assertEquals(4, input.resolvedOpaqueDraws.size)
+        assertEquals(listOf(0, 3).map(drawsBySource::getValue), input.prePasses.single().resolvedDraws)
     }
 
     @Test

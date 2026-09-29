@@ -7,6 +7,7 @@ package com.awakekt.awake.asset.shaderpack
 
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
+import com.awakekt.awake.asset.shaderdsl.AslVertexBuilder
 import com.awakekt.awake.asset.shaderdsl.column
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
@@ -79,7 +80,7 @@ private fun instancedDepth(
         } else {
             vec4(position, 1f.lit)
         }
-        val model = instanceModelMatrix(if (skinned) 5 else 3)
+        val model = instanceModelMatrixAfter(format)
         val animated = animatedShadowPosition(shadow, local.xyz)
         returnPosition(cascade * model * vec4(animated, 1f.lit))
     }
@@ -89,6 +90,17 @@ private fun instancedDepth(
 /** Static instanced depth caster; the instance matrix starts after Position/Normal/Color. */
 val InstancedShadowDepthShader: AslShaderDefinition =
     instancedDepth("instanced_shadow_depth", VertexFormat.PositionNormalColor, skinned = false)
+
+/** Static instanced depth caster for textured meshes; reads the shadow-depth prefix textured blocks share. */
+val InstancedTexturedShadowDepthShader: AslShaderDefinition =
+    instancedDepth("instanced_textured_shadow_depth", VertexFormat.PositionNormalColorUv, skinned = false)
+
+/**
+ * This format's per-instance model matrix. Both backends put the instance attributes right after
+ * the format's last vertex attribute, so the shader reads them there.
+ */
+internal fun AslVertexBuilder.instanceModelMatrixAfter(format: VertexFormat): AslExpr =
+    instanceModelMatrix(format.attributes.maxOf { it.location } + 1)
 
 /** Skinned-instanced depth caster; the joint palette remains in its dedicated storage group. */
 val SkinnedInstancedShadowDepthShader: AslShaderDefinition =

@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.command
 
+import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.renderer.RenderViewport
@@ -71,6 +72,9 @@ fun interface GpuDrawPreparer {
         sourceIndex: Int,
         context: GpuDrawPreparationContext,
     ): GpuResolvedDraw?
+
+    /** Whether [prepare] can draw a request's copies of a [format] mesh as one instanced draw. */
+    fun canInstance(format: VertexFormat): Boolean = false
 }
 
 /** Composition capability exposed by a backend bootstrap to scene/render-pipeline code. */

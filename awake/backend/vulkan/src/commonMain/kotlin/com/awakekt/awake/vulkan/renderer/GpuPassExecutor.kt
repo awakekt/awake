@@ -47,64 +47,68 @@ internal class RendererGpuPassExecutor(
     }
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) {
-        with(renderer) {
-            val offscreen = target as OffscreenRenderTarget
-            val sceneRect = input.viewport?.clampedTo(offscreen.width.toFloat(), offscreen.height.toFloat())
-            check(input.resolvedPath) { "Vulkan requires a resolved GpuPassInput." }
-            val resolvedDraws = input.resolvedDraws
-            run {
-                val sorted = sortForRecording(resolvedDraws)
-                val depthDraws = prepareDepthDraws(input)
-                runOffscreenCommands { commandBuffer ->
-                    // The offscreen frame's own slots, past the last frame in flight, as its materials use.
-                    recordDepthPrePass(commandBuffer, commandBuffers.size, depthDraws, input.prePasses, input.environment.shadowsEnabled)
-                    recordSceneDepthPass(commandBuffer, commandBuffers.size, depthDraws, cameraDepthPass(input.viewProjection))
-                    offscreen.prepareForColorAttachment(commandBuffer)
-                    Vulkan.vkCmdBeginRenderPass(
-                        commandBuffer,
-                        VkRenderPassBeginInfo(
-                            renderPass = renderPipeline.renderPass,
-                            framebuffer = offscreen.framebuffer,
-                            renderArea = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height)),
-                            pClearValues = arrayOf(clearColorValue, Renderer.clearDepthValue),
-                        ),
-                        VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
-                    )
-                    Vulkan.vkCmdSetViewport(
-                        commandBuffer,
-                        0,
-                        arrayOf(sceneRect?.toVkViewport() ?: VkViewport(width = offscreen.width.toFloat(), height = offscreen.height.toFloat())),
-                    )
-                    Vulkan.vkCmdSetScissor(
-                        commandBuffer,
-                        0,
-                        arrayOf(sceneRect?.toVkScissor() ?: VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height))),
-                    )
-                    // The depth cascade pass uses set 1 for its pass-scoped matrix. Rebind the
-                    // scene-owned shadow map before any lit pipeline is selected; offscreen
-                    // recording has no Renderer.recordCommandBuffer helper to do this for it.
-                    bindDepthSets(commandBuffer)
-                    recordSharedPassFeatures(
-                        RenderPassSlot.Scene,
-                        VulkanFrameContext(
-                            renderer = this@with,
-                            commandBuffer = commandBuffer,
-                            frameIndex = commandBuffers.size,
-                            groupedDrawCalls = sorted.opaqueByPipeline,
-                            transparentDrawCalls = sorted.transparent,
-                            primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
-                            viewProjection = input.viewProjection,
-                            cameraEye = input.cameraEye,
-                            environment = input.environment,
-                            passInput = input,
-                        ),
-                    )
-                    Vulkan.vkCmdEndRenderPass(commandBuffer)
-                    recordPostPasses(commandBuffer, input.postPasses)
-                    offscreen.transitionToShaderReadOnly(commandBuffer)
-                }
-            }
-        }
+        renderer.runOffscreenCommands(renderer.recordToTexture(target, input))
+    }
+
+    override fun submitToTexture(target: RenderTarget, input: GpuPassInput) {
+        renderer.submitOffscreenCommands(renderer.recordToTexture(target, input))
+    }
+}
+
+/** The commands that render [input] into offscreen [target], for either offscreen runner. */
+private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput): (Long) -> Unit {
+    val offscreen = target as OffscreenRenderTarget
+    val sceneRect = input.viewport?.clampedTo(offscreen.width.toFloat(), offscreen.height.toFloat())
+    check(input.resolvedPath) { "Vulkan requires a resolved GpuPassInput." }
+    val sorted = sortForRecording(input.resolvedDraws)
+    val depthDraws = prepareDepthDraws(input)
+    return { commandBuffer ->
+        // The offscreen frame's own slots, past the last frame in flight, as its materials use.
+        recordDepthPrePass(commandBuffer, commandBuffers.size, depthDraws, input.prePasses, input.environment.shadowsEnabled)
+        recordSceneDepthPass(commandBuffer, commandBuffers.size, depthDraws, cameraDepthPass(input.viewProjection))
+        offscreen.prepareForColorAttachment(commandBuffer)
+        Vulkan.vkCmdBeginRenderPass(
+            commandBuffer,
+            VkRenderPassBeginInfo(
+                renderPass = renderPipeline.renderPass,
+                framebuffer = offscreen.framebuffer,
+                renderArea = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height)),
+                pClearValues = arrayOf(clearColorValue, Renderer.clearDepthValue),
+            ),
+            VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
+        )
+        Vulkan.vkCmdSetViewport(
+            commandBuffer,
+            0,
+            arrayOf(sceneRect?.toVkViewport() ?: VkViewport(width = offscreen.width.toFloat(), height = offscreen.height.toFloat())),
+        )
+        Vulkan.vkCmdSetScissor(
+            commandBuffer,
+            0,
+            arrayOf(sceneRect?.toVkScissor() ?: VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height))),
+        )
+        // The depth cascade pass uses set 1 for its pass-scoped matrix. Rebind the
+        // scene-owned shadow map before any lit pipeline is selected; offscreen
+        // recording has no Renderer.recordCommandBuffer helper to do this for it.
+        bindDepthSets(commandBuffer)
+        recordSharedPassFeatures(
+            RenderPassSlot.Scene,
+            VulkanFrameContext(
+                renderer = this,
+                commandBuffer = commandBuffer,
+                frameIndex = commandBuffers.size,
+                groupedDrawCalls = sorted.opaqueByPipeline,
+                transparentDrawCalls = sorted.transparent,
+                primaryPipeline = pipelineFor(renderPipeline.vertexFormat) ?: renderPipeline,
+                viewProjection = input.viewProjection,
+                cameraEye = input.cameraEye,
+                environment = input.environment,
+                passInput = input,
+            ),
+        )
+        Vulkan.vkCmdEndRenderPass(commandBuffer)
+        recordPostPasses(commandBuffer, input.postPasses)
+        offscreen.transitionToShaderReadOnly(commandBuffer)
     }
 }
 

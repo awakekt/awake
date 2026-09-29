@@ -83,7 +83,8 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  * upgrade path unchanged: MikkTSpace tangents at load time plus a tangent vertex slot.
  */
 @Suppress("LongMethod")
-private fun textured(clipSpace: ClipSpace): AslShaderDefinition = shader("textured") {
+private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShaderDefinition =
+    shader(if (instanced) "instanced_textured" else "textured") {
     val u = uniformBlock(
         "Uniforms",
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -134,12 +135,15 @@ private fun textured(clipSpace: ClipSpace): AslShaderDefinition = shader("textur
     vertex {
         val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
         val inPosition = ins.input(VertexSemantic.Position)
-        out.position set (mvp * vec4(inPosition, 1f.lit))
+        // Instanced, each copy's model comes from the instance buffer and `mvp` holds only the
+        // view-projection; otherwise `mvp` already includes this draw's model.
+        val drawModel = if (instanced) instanceModelMatrixAfter(VertexFormat.PositionNormalColorUv) else model
+        out.position set (mvp * if (instanced) drawModel * vec4(inPosition, 1f.lit) else vec4(inPosition, 1f.lit))
         color set ins.input(VertexSemantic.Color)
         // World-space normal (model matrix directly -- correct for the rigid/uniform scales
         // Transform can express), so shading stays put while the mesh spins.
-        normal set (model * vec4(ins.input(VertexSemantic.Normal), 0f.lit)).xyz
-        worldPos set (model * vec4(inPosition, 1f.lit)).xyz
+        normal set (drawModel * vec4(ins.input(VertexSemantic.Normal), 0f.lit)).xyz
+        worldPos set (drawModel * vec4(inPosition, 1f.lit)).xyz
         // Undo createBitmap's OpenGL bottom-up Y flip here rather than forking the decoder.
         val inUv = ins.input(VertexSemantic.Uv)
         uv set vec2(inUv.x, 1f.lit - inUv.y)
@@ -300,6 +304,9 @@ private fun textured(clipSpace: ClipSpace): AslShaderDefinition = shader("textur
 
 /** `textured` for [clipSpace]: the shadow lookup's V axis follows the backend, as in lit_shadow. */
 fun texturedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace)
+
+/** `textured` drawing many copies of one mesh, each placed by its own instance matrix. */
+fun instancedTexturedShader(clipSpace: ClipSpace): AslShaderDefinition = textured(clipSpace, instanced = true)
 
 /**
  * The UV to sample a textured material at, and its screen derivatives, after the material's

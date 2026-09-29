@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.command
 
+import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
@@ -40,6 +41,9 @@ data class GpuDrawRequest(
     /** Drawn into shadow maps only, never into the scene: a stand-in caster for something the
      * scene draws another way, such as GPU-displaced terrain. */
     val shadowsOnly: Boolean = false,
+    /** World-space bounds, when known, so a shadow pass can skip a caster it cannot see. Null
+     * casts into every shadow pass. */
+    val worldBounds: Aabb? = null,
 )
 
 private val EMPTY_UNIFORM_FLOATS = FloatArray(0)
