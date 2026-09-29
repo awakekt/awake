@@ -12,15 +12,20 @@ import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.requiresDestinationSampling
 import com.awakekt.awake.core.graphics2d.translatedBy
 import com.awakekt.awake.core.text.font.UiFont
+import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.RenderTarget
 
-/** Renderer-owned resources for the renderer-neutral graphics-layer records in [FrameOutput]. */
+/**
+ * Renderer-owned resources for the renderer-neutral texture slots in [FrameOutput]: graphics layers
+ * and drawn [ImageBitmap]s.
+ */
 class GraphicsLayerCompositor {
     private val slots = mutableMapOf<Int, Slot>()
     private var frameTargets: FrameTargets? = null
+    private val images = ImageTextures()
 
     fun composite(
         renderer: Renderer,
@@ -36,7 +41,7 @@ class GraphicsLayerCompositor {
             used += layer.id
             val slot = slotFor(renderer, layer)
             val childPrimitives = layer.primitives
-                .resolve(materials)
+                .resolve(renderer, materials)
                 .map { it.translatedBy(layer.effectInsetX.toFloat(), layer.effectInsetY.toFloat()) }
             renderer.drawUiToTexture(slot.target, childPrimitives, font)
             materials[layer.id] = if (layer.blurRadiusX > 0f || layer.blurRadiusY > 0f) {
@@ -53,7 +58,7 @@ class GraphicsLayerCompositor {
                 true
             }
         }
-        val resolved = primitives.resolve(materials)
+        val resolved = primitives.resolve(renderer, materials)
         if (resolved.none { it is UiDrawPrimitive.Texture && it.blendMode.requiresDestinationSampling }) {
             frameTargets?.destroy()
             frameTargets = null
@@ -87,15 +92,16 @@ class GraphicsLayerCompositor {
         slots.clear()
         frameTargets?.destroy()
         frameTargets = null
+        images.dispose()
     }
 
-    private fun List<UiDrawPrimitive>.resolve(materials: Map<Int, Material>): List<UiDrawPrimitive> =
+    private fun List<UiDrawPrimitive>.resolve(renderer: Renderer, materials: Map<Int, Material>): List<UiDrawPrimitive> =
         map { primitive ->
-            val placeholder = (primitive as? UiDrawPrimitive.Texture)?.material as? GraphicsLayerPlaceholder
-            if (primitive is UiDrawPrimitive.Texture && placeholder != null) {
-                primitive.copy(material = materials.getValue(placeholder.id))
-            } else {
-                primitive
+            if (primitive !is UiDrawPrimitive.Texture) return@map primitive
+            when (val slot = primitive.material) {
+                is GraphicsLayerPlaceholder -> primitive.copy(material = materials.getValue(slot.id))
+                is ImageBitmap -> primitive.copy(material = images.materialFor(renderer, slot))
+                else -> primitive
             }
         }
 

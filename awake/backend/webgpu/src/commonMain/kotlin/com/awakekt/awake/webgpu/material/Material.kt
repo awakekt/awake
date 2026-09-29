@@ -79,6 +79,10 @@ class Material(
     fun createResources(texture: Texture, pbr: List<Texture>) {
         this.texture = texture
         pbrTextures = pbr
+        // The UI pass samples materials through these, so an uploaded image draws as a UI texture
+        // the same way a render target does.
+        previewTextureView = texture.view
+        previewSampler = texture.sampler
         uniformBuffer = device.createBuffer(
             BufferDescriptor(
                 size = (uniformFloatCount * Float.SIZE_BYTES).toULong(),
