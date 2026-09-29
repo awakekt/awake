@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.compose.testing
 
+import com.awakekt.awake.compose.ui.graphics.ImageBitmap
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.graphics2d.containsPoint
@@ -75,6 +76,30 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                 px += 1
             }
             py += 1
+        }
+    }
+
+    /** [image] stretched over [x], [y], [w], [h], sampled at the nearest pixel, scaled by [alpha]. */
+    fun fillImage(x: Float, y: Float, w: Float, h: Float, image: ImageBitmap, alpha: Float) {
+        if (w <= 0f || h <= 0f) return
+        val x0 = max(x, clipX0).toInt().coerceIn(0, width)
+        val y0 = max(y, clipY0).toInt().coerceIn(0, height)
+        val x1 = min(x + w, clipX1).toInt().coerceIn(0, width)
+        val y1 = min(y + h, clipY1).toInt().coerceIn(0, height)
+        for (py in y0 until y1) {
+            val sy = (((py + 0.5f - y) / h) * image.height).toInt().coerceIn(0, image.height - 1)
+            for (px in x0 until x1) {
+                if (!passesPathClips(px + 0.5f, py + 0.5f)) continue
+                val sx = (((px + 0.5f - x) / w) * image.width).toInt().coerceIn(0, image.width - 1)
+                val rgba = image.pixel(sx, sy)
+                val color = Color(
+                    ((rgba ushr 24) and 0xFF) / 255f,
+                    ((rgba ushr 16) and 0xFF) / 255f,
+                    ((rgba ushr 8) and 0xFF) / 255f,
+                    (rgba and 0xFF) / 255f * alpha,
+                )
+                pixelMap.blend(px, py, color)
+            }
         }
     }
 
@@ -429,7 +454,10 @@ fun List<UiDrawPrimitive>.rasterizeToPixelMap(
                     primitive.w,
                     primitive.h,
                     primitive.transform,
-                ) { x, y, w, h -> fillRect(x, y, w, h, Color(0.5f, 0.5f, 0.5f, 1f)) }
+                ) { x, y, w, h ->
+                    val image = primitive.material as? ImageBitmap
+                    if (image != null) fillImage(x, y, w, h, image, primitive.alpha) else fillRect(x, y, w, h, Color(0.5f, 0.5f, 0.5f, 1f))
+                }
             }
 
             is UiDrawPrimitive.ShadowQuad -> {

@@ -28,6 +28,8 @@ kotlin {
             // Primitive layers only -- none carries a :awake:ui:ui-core dependency in commonMain,
             // so nothing here reaches the immediate-mode engine this module replaces.
             api(project(":awake:core:text"))
+            // Platform image decoders for decodeImageBitmap.
+            implementation(project(":awake:core:image"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

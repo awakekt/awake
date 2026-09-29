@@ -46,6 +46,16 @@ public final class com/awakekt/awake/compose/foundation/ClickableKt {
 	public static synthetic fun combinedClickable$default (Lcom/awakekt/awake/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 }
 
+public final class com/awakekt/awake/compose/foundation/ContentScale : java/lang/Enum {
+	public static final field Crop Lcom/awakekt/awake/compose/foundation/ContentScale;
+	public static final field FillBounds Lcom/awakekt/awake/compose/foundation/ContentScale;
+	public static final field Fit Lcom/awakekt/awake/compose/foundation/ContentScale;
+	public static final field Inside Lcom/awakekt/awake/compose/foundation/ContentScale;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/compose/foundation/ContentScale;
+	public static fun values ()[Lcom/awakekt/awake/compose/foundation/ContentScale;
+}
+
 public final class com/awakekt/awake/compose/foundation/FocusableKt {
 	public static final fun focusable (Lcom/awakekt/awake/compose/ui/Modifier;ZLcom/awakekt/awake/compose/foundation/interaction/InteractionSource;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun focusable$default (Lcom/awakekt/awake/compose/ui/Modifier;ZLcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
@@ -55,6 +65,11 @@ public final class com/awakekt/awake/compose/foundation/HoverableKt {
 	public static final fun hoverable (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZI)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static synthetic fun hoverable$default (Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;ZIILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/Modifier;
 	public static final fun rememberInteractionSource (Lcom/awakekt/awake/compose/runtime/Composer;)Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;
+}
+
+public final class com/awakekt/awake/compose/foundation/ImageKt {
+	public static final fun Image (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/ContentScale;)V
+	public static synthetic fun Image$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/graphics/ImageBitmap;Ljava/lang/String;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/compose/foundation/ContentScale;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/compose/foundation/Orientation : java/lang/Enum {
