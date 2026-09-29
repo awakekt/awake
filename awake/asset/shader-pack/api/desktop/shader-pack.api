@@ -13,6 +13,7 @@ public final class com/awakekt/awake/asset/shaderpack/AslDepthFogShaderKt {
 
 public final class com/awakekt/awake/asset/shaderpack/AslDepthVariantsKt {
 	public static final fun getInstancedShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
+	public static final fun getInstancedTexturedShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getParticleShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getSkinnedInstancedShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun getSkinnedShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
@@ -65,6 +66,7 @@ public final class com/awakekt/awake/asset/shaderpack/AslTerrainShaderKt {
 }
 
 public final class com/awakekt/awake/asset/shaderpack/AslTexturedShaderKt {
+	public static final fun instancedTexturedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 	public static final fun texturedShader (Lcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
@@ -144,6 +146,8 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getInfiniteGrid ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstanced ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getInstancedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getInstancedTextured ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
+	public final fun getInstancedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getLitShadow ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getMaskedTexturedShadowDepth ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 	public final fun getParticle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;

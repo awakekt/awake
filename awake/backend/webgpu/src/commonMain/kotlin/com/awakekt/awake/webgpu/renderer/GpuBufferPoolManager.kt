@@ -60,7 +60,6 @@ internal class GpuBufferPoolManager(
         mutableMapOf<Pair<GPURenderPipeline, BindingSemantic>, MaterialBinding>()
     private val uniformSlotPools = mutableMapOf<GPURenderPipeline, MutableList<UniformSlot>>()
 
-    private val instancedUniformResources = mutableMapOf<GPURenderPipeline, WebGpuUniformResources>()
     private val skinnedInstancedUniformResources = mutableMapOf<GPURenderPipeline, WebGpuUniformResources>()
 
     fun quadMeshForRun(index: Int): DynamicMesh = uiQuadMeshPool[index]
@@ -76,34 +75,6 @@ internal class GpuBufferPoolManager(
     fun skinnedInstanceBufferForRun(index: Int): SkinnedInstanceBuffer = skinnedInstanceBufferPool[index]
     fun alphaInstanceBufferForRun(index: Int): AlphaInstanceBuffer = alphaInstanceBufferPool[index]
     fun frameInstanceBufferForRun(index: Int): FrameInstanceBuffer = frameInstanceBufferPool[index]
-
-    fun instancedUniformResources(pipeline: WebGpuPipelineHandle): WebGpuUniformResources {
-        check(pipeline.hasBindingGroup(0)) {
-            "Instanced pipeline must declare group 0 before allocating its uniform resources."
-        }
-        return instancedUniformResources.getOrPut(pipeline.pipeline) {
-            val byteSize = maxOf(
-                pipeline.uniformByteSize(0, 0),
-                (MaterialUniformLayouts.LitShadow.total * Float.SIZE_BYTES).toLong(),
-            )
-            val device = graphicsDevice.wgpuContext.device
-            val buffer = device.createBuffer(
-                BufferDescriptor(
-                    size = byteSize.toULong(),
-                    usage = GPUBufferUsage.Uniform or GPUBufferUsage.CopyDst,
-                ),
-            )
-            val bindGroup = device.createBindGroup(
-                BindGroupDescriptor(
-                    layout = pipeline.pipeline.getBindGroupLayout(0u),
-                    entries = listOf(
-                        BindGroupEntry(binding = 0u, resource = BufferBinding(buffer = buffer)),
-                    ),
-                ),
-            )
-            WebGpuUniformResources(buffer, bindGroup, WebGpuBindGroupHandle(bindGroup))
-        }
-    }
 
     fun skinnedInstancedUniformResources(pipeline: WebGpuPipelineHandle): WebGpuUniformResources {
         check(pipeline.hasBindingGroup(0)) {
@@ -195,8 +166,6 @@ internal class GpuBufferPoolManager(
         uniformSlotPools.values.forEach { pool ->
             pool.forEach { it.buffer.close() }
         }
-        instancedUniformResources.values.forEach { it.buffer.close() }
-        instancedUniformResources.clear()
         skinnedInstancedUniformResources.values.forEach { it.buffer.close() }
         skinnedInstancedUniformResources.clear()
     }

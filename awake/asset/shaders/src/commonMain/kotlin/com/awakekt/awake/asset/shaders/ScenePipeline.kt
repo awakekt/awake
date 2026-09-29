@@ -41,6 +41,8 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
  * `MeshRenderer.cullMode`.
  * @property buildTransparent Also build the alpha-blended companion, opted into per draw via
  * `RenderDrawCommand.transparent`.
+ * @property depthShaders How an instanced pipeline's draws cast into the shadow map. Null leaves
+ * them to the plan's `depthPrePassVariants`, which cover only the primary format.
  */
 data class ScenePipeline(
     val key: PipelineKey,
@@ -53,6 +55,7 @@ data class ScenePipeline(
     val buildWireframe: Boolean = false,
     val buildBackCulled: Boolean = false,
     val buildTransparent: Boolean = false,
+    val depthShaders: ShaderSet? = null,
 )
 
 /**

@@ -26,12 +26,14 @@ object PackShaderSets {
 
     /** Depth companions whose vertex inputs differ from [ShadowDepth]. */
     val InstancedShadowDepth = aslShaderSet(InstancedShadowDepthShader)
+    val InstancedTexturedShadowDepth = aslShaderSet(InstancedTexturedShadowDepthShader)
     val SkinnedInstancedShadowDepth = aslShaderSet(SkinnedInstancedShadowDepthShader)
     val SkinnedShadowDepth = aslShaderSet(SkinnedShadowDepthShader)
     val ParticleShadowDepth = aslShaderSet(ParticleShadowDepthShader)
     val SceneDepth = aslShaderSet(SceneDepthShader)
     val MaskedTexturedShadowDepth = aslShaderSet(MaskedTexturedDepthShader)
     val Textured = aslShaderSet(::texturedShader)
+    val InstancedTextured = aslShaderSet(::instancedTexturedShader)
     val Instanced = aslShaderSet(::instancedLitShadowShader)
     val Skinned = aslShaderSet(SkinnedShader)
     val SkinnedTextured = aslShaderSet(SkinnedTexturedShader)

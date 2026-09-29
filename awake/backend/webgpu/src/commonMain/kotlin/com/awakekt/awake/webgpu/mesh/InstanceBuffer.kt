@@ -22,8 +22,10 @@ import io.ygdrasil.webgpu.GPUBufferUsage
  * thinner for the same reason this backend's `ui.DynamicMesh` is thinner than Vulkan's --
  * `queue.writeBuffer` is already safe to call every frame with no mapping ceremony.
  *
- * Fixed capacity, rewritten wholesale every frame -- unlike this module's `Mesh`, which sizes
- * itself to the exact array it was constructed with and never updates.
+ * Rewritten wholesale every frame -- unlike this module's `Mesh`, which sizes itself to the exact
+ * array it was constructed with and never updates. Grows to the largest set it has held, in powers
+ * of two, rather than starting at [maxInstances]: a frame of batched props has one of these per
+ * instanced draw, mostly small.
  */
 class InstanceBuffer(
     private val graphicsDevice: GraphicsDevice,
@@ -31,12 +33,8 @@ class InstanceBuffer(
      * truncating) with a message naming this knob. */
     private val maxInstances: Int = DEFAULT_MAX_INSTANCES,
 ) {
-    private val buffer: GPUBuffer = graphicsDevice.wgpuContext.device.createBuffer(
-        BufferDescriptor(
-            size = (maxInstances * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toULong(),
-            usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst,
-        ),
-    )
+    private var capacity = MIN_CAPACITY.coerceAtMost(maxInstances)
+    private var buffer: GPUBuffer = createBuffer(capacity)
 
     // Reused across frames so a steady instance count allocates nothing per frame.
 
@@ -49,13 +47,29 @@ class InstanceBuffer(
 
     fun update(models: List<Mat4>) {
         val floats = packer.pack(models, maxInstances) ?: return
+        if (models.size > capacity) {
+            while (capacity < models.size) capacity *= 2
+            capacity = capacity.coerceAtMost(maxInstances)
+            // Work already submitted keeps the old buffer alive until it finishes.
+            buffer.close()
+            buffer = createBuffer(capacity)
+            binding = WebGpuBufferHandle(buffer)
+        }
         graphicsDevice.wgpuContext.device.queue.writeBuffer(buffer, 0uL, fastArrayBufferOf(floats))
     }
 
     fun bufferRef(): GPUBuffer = buffer
 
-    /** This buffer as the shared render layer's opaque handle -- built once, not per draw. */
-    val binding: WebGpuBufferHandle by lazy { WebGpuBufferHandle(buffer) }
+    /** This buffer as the shared render layer's opaque handle -- built once per size, not per draw. */
+    var binding: WebGpuBufferHandle = WebGpuBufferHandle(buffer)
+        private set
+
+    private fun createBuffer(instances: Int): GPUBuffer = graphicsDevice.wgpuContext.device.createBuffer(
+        BufferDescriptor(
+            size = (instances * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toULong(),
+            usage = GPUBufferUsage.Vertex or GPUBufferUsage.CopyDst,
+        ),
+    )
 
     fun destroy() {
         buffer.close()
@@ -67,5 +81,7 @@ class InstanceBuffer(
 
         /** Same 4096 (256 KB) default as Vulkan's `InstanceBuffer` -- see its doc comment. */
         const val DEFAULT_MAX_INSTANCES = 4096
+
+        private const val MIN_CAPACITY = 16
     }
 }

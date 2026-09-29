@@ -11,6 +11,7 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes2d.UiRenderFeature
+import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
@@ -85,6 +86,18 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         fragmentEntryPoint = "fragmentMain",
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
     )
+    val instancedTexturedPipeline = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        sceneRenderPass,
+        descriptorSetLayout,
+        runBlocking { spirvPair(PackShaderSets.InstancedTextured) },
+        VertexFormat.PositionNormalColorUv,
+        vertexEntryPoint = "vertexMain",
+        fragmentEntryPoint = "fragmentMain",
+        extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
+        variant = PipelineVariant.Instanced,
+    )
     val depthPrePass = DepthPrePassFeature(
         depthTarget,
         DepthOnlyPipeline(
@@ -114,6 +127,21 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 framesInFlight = FRAMES_IN_FLIGHT,
             ),
         ),
+        instancedFormatPipelines = mapOf(
+            VertexFormat.PositionNormalColorUv to DepthOnlyPipeline(
+                graphicsDevice,
+                depthTarget.renderPass,
+                descriptorSetLayout,
+                runBlocking { spirvPair(PackShaderSets.InstancedTexturedShadowDepth) },
+                VertexFormat.PositionNormalColorUv,
+                depthTarget.size,
+                vertexEntryPoint = "vertexMain",
+                fragmentEntryPoint = "fragmentMain",
+                cascadeCount = depthTarget.layers,
+                framesInFlight = FRAMES_IN_FLIGHT,
+                variant = PipelineVariant.Instanced,
+            ),
+        ),
     )
     val linePipeline = LineRenderPipeline(
         graphicsDevice,
@@ -130,6 +158,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             primary = scenePipeline,
             primaryFormat = scenePipeline.vertexFormat,
             byFormat = mapOf(VertexFormat.PositionNormalColorUv to texturedPipeline),
+            instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
         ),
         renderFeatures = listOf(
@@ -149,6 +178,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             scenePipeline.destroy()
             backCulledScenePipeline.destroy()
             texturedPipeline.destroy()
+            instancedTexturedPipeline.destroy()
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, descriptorSetLayout.handle)
             transferContext.destroy()
             Vulkan.vkDestroyRenderPass(graphicsDevice.device, sceneRenderPass)
