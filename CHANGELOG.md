@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Android apps survive going to the background.** `VulkanView` disposed the whole engine when its surface was destroyed and built a new device when it came back, while the app kept resources made on the old device, so the first draw after returning failed. The surface is now released and replaced on the same device and renderer: `WindowLifecycle` gains `releaseSurface()`/`restoreSurface(surface)`, the app is paused in between, and the engine is disposed when the view detaches.
+- **A second Vulkan debug messenger no longer aborts the process.** The messenger's JNI accessor was copied on every use, and the copy freed the global references the singleton still held; recreating the device (an Android app returning from the background) then freed them again and ART aborted with a stale global reference. The accessor is now returned by reference and can't be copied.
+
 ## [0.1.0-alpha.12] - 2026-09-29
 
 ### Added
@@ -18,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **The Android Vulkan library is 16 KB page aligned.** `libawake-vulkan.so` (arm64-v8a and x86_64) linked with 4 KB LOAD segments, which Google Play rejects for apps targeting Android 15+. It now links with `-z max-page-size=16384`.
 - **Textured meshes keep their shade out of the sun.** The textured PBR shader lit a glTF base-colour texture's sRGB bytes as if they were linear and wrote the result unencoded, while targets take sRGB-encoded colour, as `lit_shadow` writes it. Lit faces came out about right, but a face lit by ambient alone lost almost all of it: mid-grey 128 came out as 10, near black, on Vulkan and in the browser. Base colour and emissive textures are now decoded to linear, and the output is encoded, as `lit_shadow` does; that face now comes out as 41.
+
+### Fixed
+
 
 ## [0.1.0-alpha.11] - 2026-09-29
 

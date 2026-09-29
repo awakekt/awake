@@ -11,7 +11,11 @@ public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awa
 	protected final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
 	public fun getWindowConfig ()Lcom/awakekt/awake/engine/platform/config/WindowConfig;
 	public final fun pause ()V
+	protected fun releaseBackendSurface ()V
+	public final fun releaseSurface ()V
 	public final fun resize (IIII)V
+	protected fun restoreBackendSurface (Ljava/lang/Object;)V
+	public final fun restoreSurface (Ljava/lang/Object;)V
 	public final fun resume ()V
 	public final fun update (F)V
 }
@@ -52,7 +56,9 @@ public abstract interface class com/awakekt/awake/engine/platform/WindowLifecycl
 	public abstract fun getInput ()Lcom/awakekt/awake/core/input/Input;
 	public fun getWindowConfig ()Lcom/awakekt/awake/engine/platform/config/WindowConfig;
 	public abstract fun pause ()V
+	public fun releaseSurface ()V
 	public abstract fun resize (IIII)V
+	public fun restoreSurface (Ljava/lang/Object;)V
 	public abstract fun resume ()V
 	public abstract fun update (F)V
 }
@@ -60,6 +66,8 @@ public abstract interface class com/awakekt/awake/engine/platform/WindowLifecycl
 public final class com/awakekt/awake/engine/platform/WindowLifecycle$DefaultImpls {
 	public static synthetic fun create$default (Lcom/awakekt/awake/engine/platform/WindowLifecycle;Ljava/lang/Object;ILjava/lang/Object;)V
 	public static fun getWindowConfig (Lcom/awakekt/awake/engine/platform/WindowLifecycle;)Lcom/awakekt/awake/engine/platform/config/WindowConfig;
+	public static fun releaseSurface (Lcom/awakekt/awake/engine/platform/WindowLifecycle;)V
+	public static fun restoreSurface (Lcom/awakekt/awake/engine/platform/WindowLifecycle;Ljava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/engine/platform/config/PresentMode : java/lang/Enum {

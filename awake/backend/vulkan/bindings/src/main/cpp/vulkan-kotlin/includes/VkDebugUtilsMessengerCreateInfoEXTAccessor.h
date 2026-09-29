@@ -61,15 +61,20 @@ private:
 
 public:
 
+    // One instance owns the global refs; a copy would free them in its destructor.
+    VkDebugUtilsMessengerCreateInfoEXTAccessor(const VkDebugUtilsMessengerCreateInfoEXTAccessor &) = delete;
+    VkDebugUtilsMessengerCreateInfoEXTAccessor &operator=(const VkDebugUtilsMessengerCreateInfoEXTAccessor &) = delete;
+
     static void init(JNIEnv *jniEnv, jobject obj) {
         if (sInstance) {
+            sInstance->env = jniEnv; // the creating thread's env may not be this thread's
             delete sInstance;
             sInstance = nullptr;
         }
         sInstance = new VkDebugUtilsMessengerCreateInfoEXTAccessor(jniEnv, obj);
     }
 
-    static VkDebugUtilsMessengerCreateInfoEXTAccessor getInstance() {
+    static VkDebugUtilsMessengerCreateInfoEXTAccessor &getInstance() {
         if (sInstance) {
             return *sInstance;
         }
