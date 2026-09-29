@@ -19,7 +19,6 @@ document. It is not repeated here.
 |---|---|
 | [`:awake:ui:material3`](material3/README.md) | Material 3 colour schemes, components and screen recipes such as `Scaffold` |
 | [`:awake:ui:shadcn`](shadcn/README.md) | [shadcn/ui](https://ui.shadcn.com/) themes, tokens, variants and `Shadcn*` recipes |
-| `:awake:ui:builder` | The visual UI layout builder: layout documents, drag-and-drop reflow and Kotlin code generation, drawn with shadcn |
 | `:awake:ui:benchmark` | JVM layout benchmarks (kotlinx-benchmark); not published |
 | `:awake:ui:font-atlas-generator` | Build tool that generates the embedded font-atlas sources in `:awake:core:text`; not published |
 

@@ -121,7 +121,6 @@ See [docs/reference/compose-engine/](../docs/reference/compose-engine/).
 | `ui:shadcn` | shadcn/ui themes, tokens, variants, and component recipes |
 | `ui:material3` | Material 3 components and theme contracts (not yet published) |
 | `ui:node-graph-canvas` | The editing surface for `node-graph` documents |
-| `ui:builder` | Visual UI builder: palette, canvas, drop targets, code generation |
 | `ui:benchmark` | UI frame benchmarks (not published) |
 | `ui:font-atlas-generator` | Generates the bundled font atlases (not published) |
 | `tailwind` | Tailwind-style tokens (`Tw`), OKLCH colors, layout helpers |
