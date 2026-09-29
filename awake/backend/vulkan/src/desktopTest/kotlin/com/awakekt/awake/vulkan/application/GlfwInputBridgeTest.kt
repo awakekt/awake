@@ -68,6 +68,22 @@ class GlfwInputBridgeTest {
     }
 
     @Test
+    fun sidewaysScrollReachesInputScrollDeltaX() {
+        val input = Input()
+        val reader = FakeGlfwWindowInput().apply {
+            pendingScrollDeltaX = 2.25
+            pendingScrollDeltaY = 0.5
+        }
+
+        pollGlfwInput(reader, input)
+        pollGlfwInput(reader, input)
+
+        assertEquals(2.25f, input.scrollDeltaX, "a trackpad's sideways swipe must reach Input.scrollDeltaX, once")
+        assertEquals(0.5f, input.scrollDeltaY)
+        assertEquals(2.25f, input.updateSnapshot().scrollDeltaX, "and the frame's snapshot")
+    }
+
+    @Test
     fun unmappedKeyIsIgnored() {
         val input = Input()
         val reader = FakeGlfwWindowInput().apply { keysDown += GLFW_KEY_SPACE }

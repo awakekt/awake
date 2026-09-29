@@ -42,6 +42,9 @@ class GameplayInput(
     /** Zero while a scrollable under the pointer took the wheel or a modal layer is open. */
     val scrollDeltaY: Float get() = if (claimed.isScrollConsumed || claimed.isModalOpen) 0f else snapshot.scrollDeltaY
 
+    /** Sideways scroll -- a trackpad's two-finger swipe, or a tilt wheel -- gated exactly like [scrollDeltaY]. */
+    val scrollDeltaX: Float get() = if (claimed.isScrollConsumed || claimed.isModalOpen) 0f else snapshot.scrollDeltaX
+
     /**
      * Whether [button] is held for the world, gated by the same capture and modal rules as [pointerDown].
      *

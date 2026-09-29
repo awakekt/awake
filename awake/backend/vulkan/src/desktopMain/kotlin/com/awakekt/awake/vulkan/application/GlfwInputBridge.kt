@@ -84,6 +84,8 @@ internal fun pollGlfwInput(
     input.setButton(PointerButton.Middle, reader.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE))
     input.setButton(PointerButton.Back, reader.isMouseButtonDown(GLFW_MOUSE_BUTTON_4))
     input.setButton(PointerButton.Forward, reader.isMouseButtonDown(GLFW_MOUSE_BUTTON_5))
-    // Accumulate the hardware delta until the runtime snapshots it.
+    // Accumulate the hardware deltas until the runtime snapshots them. Sideways is a trackpad's
+    // two-finger swipe (or a tilt wheel).
+    input.scrollDeltaX += reader.consumeScrollDeltaX().toFloat()
     input.scrollDeltaY += reader.consumeScrollDeltaY().toFloat()
 }

@@ -229,6 +229,26 @@ class TextFocusBlocksGameplayTest {
         assertTrue(inputWithModal.isModalOpen, "modal open flag must be true")
     }
 
+    @Test
+    fun sidewaysScrollIsGatedLikeVerticalScroll() {
+        val snapshot = InputSnapshot(
+            pointerX = 300f,
+            pointerY = 200f,
+            pointerDown = false,
+            scrollDeltaX = 1.5f,
+            scrollDeltaY = 2f,
+            keysDown = emptySet(),
+            keysPressed = emptySet(),
+            keysReleased = emptySet(),
+            typedText = "",
+            editActions = emptyList(),
+        )
+
+        assertEquals(1.5f, GameplayInput(snapshot, InputOwnership()).scrollDeltaX, "an unclaimed swipe reaches the world")
+        assertEquals(0f, GameplayInput(snapshot, InputOwnership(isScrollConsumed = true)).scrollDeltaX, "a scrollable under the pointer took it")
+        assertEquals(0f, GameplayInput(snapshot, InputOwnership(isModalOpen = true)).scrollDeltaX, "a modal layer took it")
+    }
+
     private fun activeCamera(world: World): CameraRig {
         val entity = world.create()
         world.add(

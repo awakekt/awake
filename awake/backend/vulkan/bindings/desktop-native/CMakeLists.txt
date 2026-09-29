@@ -81,7 +81,8 @@ add_library(awake-vulkan SHARED
         ../src/main/cpp/generated/com_awakekt_awake_vulkan_gen_VulkanDescriptors_jni.gen.cpp
         ../src/main/cpp/generated/com_awakekt_awake_vulkan_gen_VulkanImages_jni.gen.cpp
         ../src/main/cpp/VulkanImages_native.cpp
-        ../src/main/cpp/generated/VulkanWindow_jni.gen.cpp)
+        ../src/main/cpp/generated/VulkanWindow_jni.gen.cpp
+        ../src/main/cpp/VulkanWindow_native.cpp)
 
 target_include_directories(awake-vulkan PRIVATE
         ${JNI_INCLUDE_DIRS}

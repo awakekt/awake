@@ -22,6 +22,7 @@ class FakeGlfwWindowInput : GlfwWindowInput {
     var scaleX = 1f
     var scaleY = 1f
     var pendingScrollDeltaY = 0.0
+    var pendingScrollDeltaX = 0.0
 
     override fun isKeyDown(glfwKey: Int): Boolean = glfwKey in keysDown
     override fun isMouseButtonDown(glfwButton: Int): Boolean =
@@ -34,6 +35,12 @@ class FakeGlfwWindowInput : GlfwWindowInput {
     override fun consumeScrollDeltaY(): Double {
         val value = pendingScrollDeltaY
         pendingScrollDeltaY = 0.0
+        return value
+    }
+
+    override fun consumeScrollDeltaX(): Double {
+        val value = pendingScrollDeltaX
+        pendingScrollDeltaX = 0.0
         return value
     }
 }

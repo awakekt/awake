@@ -26,6 +26,8 @@ interface GlfwWindowInput {
     fun framebufferScaleX(): Float
     fun framebufferScaleY(): Float
     fun consumeScrollDeltaY(): Double
+    /** Sideways scroll since the last poll; 0 for a reader with no horizontal axis. */
+    fun consumeScrollDeltaX(): Double = 0.0
     fun isFocused(): Boolean = true
 }
 
@@ -35,6 +37,7 @@ private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
     override fun cursorX(): Double = VulkanWindow.glfwGetCursorPos(window)[0]
     override fun cursorY(): Double = VulkanWindow.glfwGetCursorPos(window)[1]
     override fun consumeScrollDeltaY(): Double = VulkanWindow.glfwConsumeScrollDeltaY(window)
+    override fun consumeScrollDeltaX(): Double = VulkanWindow.glfwConsumeScrollDeltaX(window)
     override fun isFocused(): Boolean = VulkanWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
 
     override fun framebufferScaleX(): Float = framebufferScale().first

@@ -18,6 +18,7 @@ public final class com/awakekt/awake/vulkan/application/GlfwTextInputBridgeKt {
 }
 
 public abstract interface class com/awakekt/awake/vulkan/application/GlfwWindowInput {
+	public fun consumeScrollDeltaX ()D
 	public abstract fun consumeScrollDeltaY ()D
 	public abstract fun cursorX ()D
 	public abstract fun cursorY ()D
@@ -29,6 +30,7 @@ public abstract interface class com/awakekt/awake/vulkan/application/GlfwWindowI
 }
 
 public final class com/awakekt/awake/vulkan/application/GlfwWindowInput$DefaultImpls {
+	public static fun consumeScrollDeltaX (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)D
 	public static fun isFocused (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)Z
 }
 
