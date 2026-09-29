@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.14] - 2026-09-29
+
 ### Fixed
 
 - **Android UI is sized for the screen.** The engine reported a density of 1 on Android, because a `Surface` carries no display metrics, so dp-sized UI drew at desktop pixel size: about 2.6× too small on a typical phone. `VulkanView` now passes `displayMetrics.density` through the new `WindowLifecycle.setDensity()`, and reads it again on every surface change, so folding or moving to DeX updates it.
