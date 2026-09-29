@@ -207,6 +207,36 @@ class SceneBackendParityTest {
         }
     }
 
+    /** Copies folded into one instanced draw render, and cast shadows, as separate draws do. */
+    @Test
+    fun repeatedPropsDrawnAsInstancesMatchSeparateDraws() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val (separate, separateDraws) = renderer.renderRepeatedPropsScene(shareMaterial = false)
+            val (instanced, instancedDraws) = renderer.renderRepeatedPropsScene(shareMaterial = true)
+            write(backend, separate, "repeated-props-separate")
+            write(backend, instanced, "repeated-props-instanced")
+
+            assertEquals(6, separateDraws, "$backend: the ground and five posts")
+            assertEquals(2, instancedDraws, "$backend did not fold the posts into one instanced draw")
+            val differing = separate.indices.count { kotlin.math.abs((separate[it].toInt() and 0xFF) - (instanced[it].toInt() and 0xFF)) > 2 }
+            assertEquals(0, differing, "$backend: instanced posts differ from separate ones in $differing channels")
+        }
+    }
+
+    /** A render submitted without waiting reads back as a waited one does, on both backends. */
+    @Test
+    fun aSubmittedRenderReadsBackAsAWaitedOneDoes() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val (waited, _) = renderer.renderRepeatedPropsScene(shareMaterial = true)
+            repeat(3) { pass ->
+                val (submitted, _) = renderer.renderRepeatedPropsScene(shareMaterial = true, submit = true)
+                assertTrue(waited.contentEquals(submitted), "$backend: submitted render $pass differs from the waited one")
+            }
+        }
+    }
+
     @Test
     fun theShadowLandsInTheSamePlaceOnBothBackends() {
         val centroids = BACKEND_ORDER.associateWith { backend ->

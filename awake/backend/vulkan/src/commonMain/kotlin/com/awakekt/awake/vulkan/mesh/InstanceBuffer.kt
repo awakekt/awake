@@ -23,11 +23,14 @@ import com.awakekt.awake.vulkan.pipeline.VulkanBufferBinding
  * buffer bound at binding 1, alongside the mesh's own per-vertex buffer at binding 0 (see
  * `RenderPipeline`'s `instanced` parameter, which declares the matching vertex input state).
  *
- * Same HOST_VISIBLE|HOST_COHERENT, fixed-capacity, rewritten-every-frame lifecycle as
+ * Same HOST_VISIBLE|HOST_COHERENT, rewritten-every-frame lifecycle as
  * [com.awakekt.awake.vulkan.ui.DynamicMesh] (whose `allocateHostVisibleBuffer` this
  * mirrors) rather than `Mesh`'s DEVICE_LOCAL one-time staging copy: the transform list changes
  * per frame, so there is nothing to upload once. Simpler than `DynamicMesh` though -- one
  * vertex buffer, no index buffer, no quad vertex layout.
+ *
+ * Each frame slot grows to the largest set it has held, in powers of two, rather than starting at
+ * [maxInstances]: a frame of batched props has one of these per instanced draw, mostly small.
  */
 class InstanceBuffer(
     private val graphicsDevice: GraphicsDevice,
@@ -42,17 +45,16 @@ class InstanceBuffer(
     private data class FrameResources(
         val buffer: BufferHandle,
         val memory: DeviceMemoryHandle,
+        val capacity: Int,
     ) {
         /** This slot's buffer as the port's opaque handle -- built once, not per draw. */
         val binding = VulkanBufferBinding(buffer.handle)
     }
 
-    private val frameResources: Array<FrameResources> = Array(framesInFlight) {
-        val (buffer, memory) = allocateHostVisibleBuffer(
-            (maxInstances * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong(),
-        )
-        FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory))
-    }
+    private val frameResources = arrayOfNulls<FrameResources>(framesInFlight)
+
+    /** Outgrown buffers. A frame still in flight may read one, so they are freed in [destroy]. */
+    private val retired = ArrayList<FrameResources>()
 
     // Reused across frames so a steady instance count allocates nothing per frame; reallocated
     // only when the count actually changes (writeBufferMemoryFloats writes the whole array, so
@@ -67,7 +69,7 @@ class InstanceBuffer(
 
     fun update(frameIndex: Int, models: List<Mat4>) {
         val floats = packer.pack(models, maxInstances) ?: return
-        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex).memory.handle, 0, floats)
+        VulkanBuffers.writeBufferMemoryFloats(device, resourcesFor(frameIndex, models.size).memory.handle, 0, floats)
     }
 
     /** This frame slot's buffer, for the shared opaque feature to bind at binding 1. */
@@ -83,17 +85,25 @@ class InstanceBuffer(
     }
 
     fun destroy() {
-        frameResources.forEach { frame ->
+        (frameResources.filterNotNull() + retired).forEach { frame ->
             VulkanBuffers.vkDestroyBuffer(device, frame.buffer.handle)
             VulkanBuffers.vkFreeMemory(device, frame.memory.handle)
         }
     }
 
-    private fun resourcesFor(frameIndex: Int): FrameResources {
+    /** [frameIndex]'s buffer, grown first if it holds fewer than [instances]. */
+    private fun resourcesFor(frameIndex: Int, instances: Int = 1): FrameResources {
         require(frameIndex in frameResources.indices) {
             "InstanceBuffer frame index $frameIndex is outside 0..${frameResources.lastIndex}."
         }
-        return frameResources[frameIndex]
+        val current = frameResources[frameIndex]
+        if (current != null && current.capacity >= instances) return current
+        current?.let(retired::add)
+        var capacity = MIN_CAPACITY
+        while (capacity < instances) capacity *= 2
+        capacity = capacity.coerceAtMost(maxInstances)
+        val (buffer, memory) = allocateHostVisibleBuffer((capacity * FLOATS_PER_INSTANCE * Float.SIZE_BYTES).toLong())
+        return FrameResources(BufferHandle(buffer), DeviceMemoryHandle(memory), capacity).also { frameResources[frameIndex] = it }
     }
 
     private fun allocateHostVisibleBuffer(byteSize: Long): Pair<Long, Long> {
@@ -128,5 +138,6 @@ class InstanceBuffer(
         const val DEFAULT_MAX_INSTANCES = 4096
 
         private const val INSTANCE_BINDING = 1
+        private const val MIN_CAPACITY = 16
     }
 }

@@ -237,6 +237,24 @@ open class WebGpuEngine(
                 depthOnlyPipeline = ordinary,
                 formatPipelines = formatPipelines,
                 keyedVariantPipelines = keyedPipelines,
+                // Each instanced scene pipeline past the primary format casts through its own depth shader.
+                instancedFormatPipelines = plan.scenePipelines
+                    .filter { it.key is PipelineKey.InstancedFormat }
+                    .mapNotNull { scenePipeline ->
+                        val shaders = scenePipeline.depthShaders ?: return@mapNotNull null
+                        scenePipeline.vertexFormat to com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
+                            graphicsDevice = graphicsDevice,
+                            shaderCode = shaders.wgsl(),
+                            vertexFormat = scenePipeline.vertexFormat,
+                            vertexEntryPoint = shaders.webGpu.entryPoint(ShaderProgramStage.VERTEX),
+                            fragmentEntryPoint = shaders.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                            cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                            variant = PipelineVariant.Instanced,
+                            bindingsByGroup = shaders.webGpu.bindingsByGroup,
+                            bindingsMetadataAvailable = shaders.webGpu.bindingsMetadataAvailable,
+                        )
+                    }
+                    .toMap(),
                 variantPipelines = buildMap {
                     instanced?.let { put(DepthCasterKind.Instanced, it) }
                     skinned?.let { put(DepthCasterKind.Skinned, it) }
@@ -287,9 +305,12 @@ open class WebGpuEngine(
             wireframeByFormat = byFormat(includePrimary = true) { it.wireframe },
             backCulledByFormat = byFormat(includePrimary = true) { it.backCulled },
             transparentByFormat = byFormat(includePrimary = true) { it.transparent },
-            instancedByFormat = builtPipelines[PipelineKey.Instanced]
-                ?.let { mapOf(vertexFormat to it.fill) }
-                .orEmpty(),
+            instancedByFormat = buildMap {
+                builtPipelines[PipelineKey.Instanced]?.let { put(vertexFormat, it.fill) }
+                builtPipelines.forEach { (key, built) ->
+                    if (key is PipelineKey.InstancedFormat) put(key.vertexFormat, built.fill)
+                }
+            },
             skinnedInstancedByFormat = builtPipelines[PipelineKey.SkinnedInstanced]
                 ?.let { mapOf(VertexFormat.PositionNormalColorSkin to it.fill) }
                 .orEmpty(),

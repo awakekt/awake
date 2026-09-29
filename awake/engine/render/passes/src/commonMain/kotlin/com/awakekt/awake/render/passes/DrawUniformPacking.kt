@@ -159,7 +159,24 @@ fun RenderDrawCommand.instancedUniformFloats(
     InstancedDrawKind.Plain,
     InstancedDrawKind.Skinned,
     -> {
-        if (shadowCascades != null || materialUniformFloatCount >= MaterialUniformLayouts.LitShadow.total) {
+        val plan = drawUniformPlan(mesh.format, materialUniformFloatCount, hasShadowCascades = shadowCascades != null)
+        if (kind == InstancedDrawKind.Plain && plan == DrawUniformPlan.TexturedPbr) {
+            // Each instance carries its own model, so the block's is identity and its mvp the view-projection.
+            texturedUniforms(
+                mvp = viewProjection,
+                model = Mat4(),
+                lightPayload = lightPayload,
+                extraUniformFloats = extraUniformFloats,
+                cameraEye = cameraEye,
+                fogColor = fogColor,
+                fogDensity = fogDensity,
+                alphaCutoff = alphaCutoff,
+                debugView = debugView,
+                cameraForward = cameraForward,
+                timeSeconds = timeSeconds,
+                shadowCascades = shadowCascades ?: GpuShadowCascadeData.UNSHADOWED,
+            )
+        } else if (shadowCascades != null || materialUniformFloatCount >= MaterialUniformLayouts.LitShadow.total) {
             gpuLitShadowUniforms(
                 transform = Mat4(),
                 extraUniformFloats = extraUniformFloats,

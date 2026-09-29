@@ -185,9 +185,12 @@ open class VulkanEngine(
         // Particles belong in particlePipelines, NOT here: `resolveInstanced` reads that map
         // for them, and folding them in under PositionUv left the field empty on this backend
         // while WebGPU populated it -- one shared field meaning two different things.
-        instancedByFormat = requestedPipelines[PipelineKey.Instanced]?.fill
-            ?.let { mapOf(vertexFormat to it) }
-            .orEmpty(),
+        instancedByFormat = buildMap {
+            requestedPipelines[PipelineKey.Instanced]?.fill?.let { put(vertexFormat, it) }
+            requestedPipelines.forEach { (key, requested) ->
+                if (key is PipelineKey.InstancedFormat) put(key.vertexFormat, requested.fill)
+            }
+        },
         particlePipelines = requestedPipelines[PipelineKey.Particle]?.fill
             ?.let { mapOf(VertexFormat.PositionUv to it) }
             .orEmpty(),
@@ -329,6 +332,26 @@ open class VulkanEngine(
                     )
                 }
             }
+            // Each instanced scene pipeline past the primary format casts through its own depth shader.
+            val instancedFormatPipelines = plan.scenePipelines
+                .filter { it.key is PipelineKey.InstancedFormat }
+                .mapNotNull { scenePipeline ->
+                    val shaders = scenePipeline.depthShaders ?: return@mapNotNull null
+                    scenePipeline.vertexFormat to DepthOnlyPipeline(
+                        graphicsDevice,
+                        map.renderPass,
+                        pipelineDescriptorSetLayout,
+                        loadShaderPair(shaders),
+                        scenePipeline.vertexFormat,
+                        map.size,
+                        shaders.vulkan.entryPoint(ShaderStage.VERTEX),
+                        shaders.vulkan.entryPoint(ShaderStage.FRAGMENT),
+                        cascadeCount = map.layers,
+                        framesInFlight = MAX_FRAMES_IN_FLIGHT,
+                        variant = PipelineVariant.Instanced,
+                    )
+                }
+                .toMap()
             DepthPrePassFeature(
                 map,
                 depthPipeline,
@@ -340,6 +363,7 @@ open class VulkanEngine(
                 },
                 formatPipelines,
                 keyedPipelines,
+                instancedFormatPipelines,
             )
         }
     }

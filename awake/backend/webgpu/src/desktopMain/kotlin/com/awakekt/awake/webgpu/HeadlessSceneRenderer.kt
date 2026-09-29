@@ -12,6 +12,7 @@ import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.PipelineTable
+import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
 import com.awakekt.awake.webgpu.device.GraphicsDevice
@@ -86,6 +87,19 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         bindingsByGroup = PackShaderSets.Textured.webGpu.bindingsByGroup,
         bindingsMetadataAvailable = PackShaderSets.Textured.webGpu.bindingsMetadataAvailable,
     )
+    val instancedTexturedPipeline = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        DescriptorSetLayoutHandle(0),
+        wgsl(PackShaderSets.InstancedTextured),
+        ByteArray(0),
+        VertexFormat.PositionNormalColorUv,
+        "vertexMain",
+        "fragmentMain",
+        variant = PipelineVariant.Instanced,
+        bindingsByGroup = PackShaderSets.InstancedTextured.webGpu.bindingsByGroup,
+        bindingsMetadataAvailable = PackShaderSets.InstancedTextured.webGpu.bindingsMetadataAvailable,
+    )
     val depthPrePass = DepthPrePassFeature(
         depthTarget = DepthTarget(graphicsDevice, layers = MAX_SHADOW_TARGET_LAYERS, arrayed = true, comparison = true),
         depthOnlyPipeline = DepthOnlyPipeline(
@@ -107,6 +121,17 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 bindingsMetadataAvailable = PackShaderSets.ShadowDepth.webGpu.bindingsMetadataAvailable,
             ),
         ),
+        instancedFormatPipelines = mapOf(
+            VertexFormat.PositionNormalColorUv to DepthOnlyPipeline(
+                graphicsDevice = graphicsDevice,
+                shaderCode = wgsl(PackShaderSets.InstancedTexturedShadowDepth),
+                vertexFormat = VertexFormat.PositionNormalColorUv,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                variant = PipelineVariant.Instanced,
+                bindingsByGroup = PackShaderSets.InstancedTexturedShadowDepth.webGpu.bindingsByGroup,
+                bindingsMetadataAvailable = PackShaderSets.InstancedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,
+            ),
+        ),
     )
     val linePipeline = LineRenderPipeline(graphicsDevice, swapchainManager, wgsl(EngineShaderSets.DebugLine))
     val renderer = WebGpuRenderer(
@@ -116,6 +141,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             primary = scenePipeline,
             primaryFormat = VertexFormat.PositionNormalColor,
             byFormat = mapOf(VertexFormat.PositionNormalColorUv to texturedPipeline),
+            instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
         ),
         lineRenderPipeline = linePipeline,
@@ -141,6 +167,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             scenePipeline.destroy()
             backCulledScenePipeline.destroy()
             texturedPipeline.destroy()
+            instancedTexturedPipeline.destroy()
             graphicsDevice.destroy()
         }
     }

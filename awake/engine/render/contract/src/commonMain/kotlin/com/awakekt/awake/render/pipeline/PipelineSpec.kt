@@ -22,6 +22,9 @@ sealed interface PipelineKey {
     data object Primary : PipelineKey
     data class Format(val vertexFormat: VertexFormat) : PipelineKey
     data object Instanced : PipelineKey
+
+    /** An instanced pipeline for [vertexFormat]; [Instanced] is the primary format's. */
+    data class InstancedFormat(val vertexFormat: VertexFormat) : PipelineKey
     data object SkinnedInstanced : PipelineKey
     data object Particle : PipelineKey
 

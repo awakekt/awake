@@ -264,6 +264,11 @@ class Renderer internal constructor(
     // renderToTexture()/readPixels() running every frame. Built lazily on first use.
     internal var offscreenCommandBuffer: Long = 0
     internal var offscreenFence: Long = 0
+
+    // submitOffscreenCommands's own pair, and the frame slot its outstanding work wrote.
+    internal var submittedOffscreenCommandBuffer: Long = 0
+    internal var submittedOffscreenFence: Long = 0
+    internal var submittedOffscreenFrame: Int = NO_SUBMITTED_OFFSCREEN_FRAME
     internal var framebuffers: List<Long> = emptyList()
     internal var commandBuffers: LongArray = LongArray(maxFramesInFlight)
 
@@ -348,6 +353,9 @@ class Renderer internal constructor(
 
     override fun renderToTexture(target: RenderTarget, input: GpuPassInput) =
         gpuPassExecutor.renderToTexture(target, input)
+
+    override fun submitToTexture(target: RenderTarget, input: GpuPassInput) =
+        gpuPassExecutor.submitToTexture(target, input)
 
     override suspend fun readPixels(target: RenderTarget): TextureAsset = performReadPixels(target)
 
@@ -474,6 +482,7 @@ class Renderer internal constructor(
     }
 
     override fun destroy() {
+        awaitSubmittedOffscreenCommands()
         uiRunCache.clear()
         // "Whoever holds the list destroys it": these were constructor-injected, but this class
         // is the only thing that knows the list's full membership.
@@ -503,6 +512,7 @@ class Renderer internal constructor(
         createdRenderTargets.toList().forEach { it.destroy() }
         createdRenderTargets.clear()
         if (offscreenFence != 0L) Vulkan.vkDestroyFence(device, offscreenFence)
+        if (submittedOffscreenFence != 0L) Vulkan.vkDestroyFence(device, submittedOffscreenFence)
         bufferPools.destroy()
         lineMesh.destroy()
         destroyDepthResources()

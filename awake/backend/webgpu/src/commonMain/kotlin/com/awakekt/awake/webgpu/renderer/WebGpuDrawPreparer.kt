@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.webgpu.renderer
 
+import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuDrawRequest
@@ -18,11 +19,18 @@ import com.awakekt.awake.render.pipeline.depthRenderKey
 internal class WebGpuDrawPreparer(
     private val renderer: Renderer,
 ) : GpuDrawPreparer {
+    /** Instanced draws so far this batch: each gets the next instance buffer, so the pool grows
+     * with how many instanced draws a frame has rather than with where they sit in it. */
+    private var instancedRuns = 0
+
+    override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelines
+
     override fun prepare(
         request: GpuDrawRequest,
         sourceIndex: Int,
         context: GpuDrawPreparationContext,
     ): GpuResolvedDraw? {
+        if (sourceIndex == 0) instancedRuns = 0
         val cascades = context.shadowCascadeData ?: context.shadowViewProjections
             .takeIf { it.isNotEmpty() }
             ?.let { GpuShadowCascadeData(it, FloatArray(it.size) { Float.MAX_VALUE }) }
@@ -33,7 +41,7 @@ internal class WebGpuDrawPreparer(
         val draw = renderer.prepareGpuDraw(
             cmd = request,
             singleIndex = sourceIndex,
-            instancedIndex = sourceIndex,
+            instancedIndex = if (request.instanceModels != null) instancedRuns++ else sourceIndex,
             isTransparent = request.transparent,
             primary = primary,
             viewProjection = context.viewProjection,

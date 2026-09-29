@@ -62,8 +62,9 @@ object ScenePassCompiler {
                 shadowViewProjections = shadowViewProjections,
                 shadowCascadeData = shadowCascadeData,
             )
-            val visible = ArrayList<Caster>(drawCalls.size)
-            drawCalls.forEachIndexed { index, request ->
+            val requests = batchInstances(drawCalls, preparer::canInstance)
+            val visible = ArrayList<Caster>(requests.size)
+            requests.forEachIndexed { index, request ->
                 val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed
                 val caster = Caster(draw, request.worldBounds)
                 if (!request.shadowsOnly) visible += caster else if (!draw.transparent) shadowOnly += caster

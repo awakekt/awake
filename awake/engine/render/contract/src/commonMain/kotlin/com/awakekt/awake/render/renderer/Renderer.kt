@@ -82,6 +82,14 @@ interface Renderer : GpuDevice {
     }
 
     /**
+     * [renderToTexture] without waiting for the GPU to finish. Work submitted after this, such as
+     * the frame that composites [target], still sees the result. For a texture drawn every frame:
+     * the caller keeps [target] and everything [input] uses alive, and reads it back only through
+     * [readPixels]. A backend that never waits renders here as in [renderToTexture].
+     */
+    fun submitToTexture(target: RenderTarget, input: GpuPassInput) = renderToTexture(target, input)
+
+    /**
      * Presents a frame containing no scene geometry.
      */
     fun presentWithoutScene() = draw(GpuPassInput.EMPTY)

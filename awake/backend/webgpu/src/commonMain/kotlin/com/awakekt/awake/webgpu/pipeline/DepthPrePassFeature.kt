@@ -33,17 +33,17 @@ class DepthPrePassFeature(
     private val variantPipelines: Map<DepthCasterKind, DepthOnlyPipeline> = emptyMap(),
     private val formatPipelines: Map<VertexFormat, DepthOnlyPipeline> = emptyMap(),
     private val keyedVariantPipelines: Map<DepthRenderKey, DepthOnlyPipeline> = emptyMap(),
-
+    private val instancedFormatPipelines: Map<VertexFormat, DepthOnlyPipeline> = emptyMap(),
 ) {
 
     /** This pass own pipeline, for a caller that has to build the prepared draws it takes. */
     val depthOnlyHandle get() = depthOnlyPipeline.handle
 
     internal fun pipelineFor(kind: DepthCasterKind, format: VertexFormat): DepthOnlyPipeline? {
-        val pipeline = if (kind == DepthCasterKind.Ordinary) {
-            formatPipelines[format] ?: depthOnlyPipeline
-        } else {
-            variantPipelines[kind]
+        val pipeline = when (kind) {
+            DepthCasterKind.Ordinary -> formatPipelines[format] ?: depthOnlyPipeline
+            DepthCasterKind.Instanced -> instancedFormatPipelines[format] ?: variantPipelines[kind]
+            else -> variantPipelines[kind]
         }
         return pipeline?.takeIf { it.vertexFormat == format }
     }
@@ -95,6 +95,8 @@ class DepthPrePassFeature(
             add(depthOnlyPipeline)
             addAll(variantPipelines.values)
             addAll(keyedVariantPipelines.values)
+            addAll(formatPipelines.values)
+            addAll(instancedFormatPipelines.values)
         }.distinct()
         val activeCount = minOf(viewProjections.size, depthTarget.layers)
         for (cascade in 0 until activeCount) {
@@ -119,6 +121,7 @@ class DepthPrePassFeature(
             addAll(variantPipelines.values)
             addAll(keyedVariantPipelines.values)
             addAll(formatPipelines.values)
+            addAll(instancedFormatPipelines.values)
         }.distinct()
         for (subPass in subPasses) {
             val layer = subPass.targetLayer
@@ -158,12 +161,15 @@ class DepthPrePassFeature(
             var drawIndex = 0
             while (drawIndex < draws.size) {
                 val prepared = draws[drawIndex]
+                // An instance buffer, not a count above one, makes a draw instanced: a lone copy
+                // still takes its model from the buffer.
+                val instanced = prepared.instanceVertexBuffer != null
                 val kind = when {
-                    prepared.instances > 1 && prepared.jointPaletteBinding != null ->
+                    instanced && prepared.jointPaletteBinding != null ->
                         DepthCasterKind.SkinnedInstanced
-                    prepared.instances > 1 && prepared.instanceColorBuffer != null ->
+                    instanced && prepared.instanceColorBuffer != null ->
                         DepthCasterKind.Particle
-                    prepared.instances > 1 -> DepthCasterKind.Instanced
+                    instanced -> DepthCasterKind.Instanced
                     prepared.vertexFormat == VertexFormat.PositionNormalColorSkin ->
                         DepthCasterKind.Skinned
                     else -> DepthCasterKind.Ordinary
@@ -224,6 +230,7 @@ class DepthPrePassFeature(
             add(depthOnlyPipeline)
             addAll(variantPipelines.values)
             addAll(formatPipelines.values)
+            addAll(instancedFormatPipelines.values)
             addAll(keyedVariantPipelines.values)
         }.distinct().forEach { it.destroy() }
         depthTarget.destroy()
