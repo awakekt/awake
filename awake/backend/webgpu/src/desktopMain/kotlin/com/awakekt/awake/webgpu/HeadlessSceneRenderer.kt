@@ -96,6 +96,17 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             bindingsByGroup = PackShaderSets.ShadowDepth.webGpu.bindingsByGroup,
             bindingsMetadataAvailable = PackShaderSets.ShadowDepth.webGpu.bindingsMetadataAvailable,
         ),
+        // As WebGpuEngine builds it: every other opaque scene format casts through the same shader.
+        formatPipelines = mapOf(
+            VertexFormat.PositionNormalColorUv to DepthOnlyPipeline(
+                graphicsDevice = graphicsDevice,
+                shaderCode = wgsl(PackShaderSets.ShadowDepth),
+                vertexFormat = VertexFormat.PositionNormalColorUv,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                bindingsByGroup = PackShaderSets.ShadowDepth.webGpu.bindingsByGroup,
+                bindingsMetadataAvailable = PackShaderSets.ShadowDepth.webGpu.bindingsMetadataAvailable,
+            ),
+        ),
     )
     val linePipeline = LineRenderPipeline(graphicsDevice, swapchainManager, wgsl(EngineShaderSets.DebugLine))
     val renderer = WebGpuRenderer(

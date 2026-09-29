@@ -192,7 +192,8 @@ fun texturedUniforms(
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTextured)
     .put(mvp.data, UniformFields.Mvp)
     .let(frame.light::writeTo)
-    .put(drawCall.model.data, UniformFields.Model)
+    .putCascades(GpuShadowCascadeData.UNSHADOWED)
+    .putStillModel(drawCall.model)
     .put(cameraPositionFloats(frame.cameraEye), UniformFields.CameraPosition)
     .put(
         pbrTexturedMaterialFloats(drawCall),
@@ -204,7 +205,7 @@ fun texturedUniforms(
     )
     .put(frame.fog, UniformFields.FogColor)
     .putDebugView(GpuDebugView.Off, frame.cameraForward)
-    .putCascades(GpuShadowCascadeData.UNSHADOWED, frame.cameraForward)
+    .putCameraForward(frame.cameraForward, GpuShadowCascadeData.UNSHADOWED)
     .build()
 
 /** Packs the unshadowed textured PBR block from the backend-neutral draw payload. The light
@@ -234,7 +235,8 @@ fun texturedUniforms(
         UniformFields.PointLightPositions,
         UniformFields.PointLightColors,
     )
-    .put(model.data, UniformFields.Model)
+    .putCascades(shadowCascades)
+    .putStillModel(model)
     .put(UniformFields.CameraPosition, cameraEye)
     .put(
         texturedMaterialPayload(extraUniformFloats, alphaCutoff, timeSeconds),
@@ -246,14 +248,22 @@ fun texturedUniforms(
     )
     .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
     .putDebugView(debugView, cameraForward)
-    .putCascades(shadowCascades, cameraForward)
+    .putCameraForward(cameraForward, shadowCascades)
     .build()
 
-/** The sun's cascades; `cameraForward.w` is their count, 0 when nothing casts. */
-private fun UniformWriter.putCascades(cascades: GpuShadowCascadeData, cameraForward: Vec3f): UniformWriter = this
+/** The sun's cascades. */
+private fun UniformWriter.putCascades(cascades: GpuShadowCascadeData): UniformWriter = this
     .put(cascades.matrixFloats(), UniformFields.CascadeViewProjections)
     .put(cascades.depthScaleFloats(), UniformFields.CascadeDepthScales)
-    .put(UniformFields.CameraForward, cameraForward, cascades.count.toFloat())
+
+/** [model] with no vertex animation: the textured shader draws the mesh still, so its shadow is still too. */
+private fun UniformWriter.putStillModel(model: Mat4): UniformWriter = this
+    .put(model.data, UniformFields.Model)
+    .put(UniformFields.VertexAnimation, Vec3f.ZERO, 0f)
+
+/** `cameraForward.w` is the cascade count, 0 when nothing casts. */
+private fun UniformWriter.putCameraForward(cameraForward: Vec3f, cascades: GpuShadowCascadeData): UniformWriter =
+    put(UniformFields.CameraForward, cameraForward, cascades.count.toFloat())
 
 /** Packs the ordinary untextured lit block. A draw with PBR factors uses [Lit]; a plain draw
  * uses [Primary]. The source payload may contain the textured superset, so only the four

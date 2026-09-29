@@ -141,8 +141,21 @@ class MaterialUniformsTest {
 
         // PbrTextured: MVP(16) + lightDir(4) + lightColor(4) + model(16) + camPos(4) + pbr(4) + baseColor(4) + emissive(4) + fog(4) + debugView(4) = 64 floats
         // 64 + 32: the PBR path gained MAX_POINT_LIGHTS slots in two vec4 arrays; + 8 for texture animation;
-        // + 84 for the sun's cascades (4 matrices, 4 depth scales, camera forward).
-        assertEquals(188, MaterialUniformLayouts.PbrTextured.total)
+        // + 84 for the sun's cascades (4 matrices, 4 depth scales, camera forward); + 4 for the
+        // vertex animation slot the shared shadow-depth prefix carries.
+        assertEquals(192, MaterialUniformLayouts.PbrTextured.total)
+    }
+
+    /** The shadow pass draws textured meshes with lit_shadow's depth shader, at lit_shadow's offsets. */
+    @Test
+    fun theTexturedBlockPlacesItsModelWhereTheShadowDepthShaderReadsIt() {
+        listOf(UniformFields.Model, UniformFields.VertexAnimation).forEach { field ->
+            assertEquals(
+                MaterialUniformLayouts.LitShadow.offsetOf(field),
+                MaterialUniformLayouts.PbrTextured.offsetOf(field),
+                "$field",
+            )
+        }
     }
 
     @Test
