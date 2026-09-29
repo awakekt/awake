@@ -14,7 +14,24 @@ public final class com/awakekt/awake/scene/player/PlayableProject {
 public final class com/awakekt/awake/scene/player/ProjectPlayerKt {
 	public static final field PROJECT_MANIFEST Ljava/lang/String;
 	public static final fun loadPlayableProject (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static final fun playProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/player/PlayableProject;)V
+	public static final fun playProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/player/PlayableProject;Z)V
+	public static synthetic fun playProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/player/PlayableProject;ZILjava/lang/Object;)V
 	public static final fun preparePlayCamera (Lcom/awakekt/awake/ecs/World;)V
+}
+
+public final class com/awakekt/awake/scene/player/TouchControlsKt {
+	public static final fun TouchControls (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/scene/player/TouchControlsState;Lcom/awakekt/awake/compose/ui/Modifier;)V
+	public static synthetic fun TouchControls$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/scene/player/TouchControlsState;Lcom/awakekt/awake/compose/ui/Modifier;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/scene/player/TouchControlsState {
+	public fun <init> ()V
+	public final fun getMoveX ()F
+	public final fun getMoveZ ()F
+}
+
+public final class com/awakekt/awake/scene/player/TouchMovementSystem : com/awakekt/awake/ecs/System {
+	public fun <init> (Lcom/awakekt/awake/scene/player/TouchControlsState;)V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 

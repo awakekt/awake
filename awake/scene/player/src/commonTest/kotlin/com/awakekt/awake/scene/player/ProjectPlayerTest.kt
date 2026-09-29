@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.player
 
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -82,6 +83,48 @@ class ProjectPlayerTest {
     }
 
     @Test
+    fun theTouchStickMovesThePlayerAndTheButtonJumps() = runTest {
+        val project = loadPlayableProject(files(ARENA_PROJECT))
+        val game = app { scene("play") { playProject(project, touchControls = true) } }
+        game.ready(TestRenderer())
+        val runtime = game.requireService<SceneAppLifecycleRuntime>()
+        val input = game.requireService<Input>()
+        game.update(DELTA, WIDTH, HEIGHT)
+        val position = runtime.world.get<Transform>(assertNotNull(runtime.world.entityNamed("Player")))!!.position
+        val start = position.copy()
+        fun frame(down: Boolean, x: Float, y: Float) {
+            input.setPointer(down = down, x = x, y = y)
+            input.updateSnapshot()
+            game.update(DELTA, WIDTH, HEIGHT)
+        }
+
+        val stick = assertNotNull(runtime.uiSemantics.findTag(STICK_TAG), "no touch stick drawn")
+        val cx = stick.x + stick.width / 2f
+        val cy = stick.y + stick.height / 2f
+        frame(down = true, cx, cy)
+        repeat(FRAMES) { frame(down = true, cx, cy - (it * PULL_STEP).coerceAtMost(STICK_PULL)) }
+        frame(down = false, cx, cy - STICK_PULL)
+        val afterStick = position.copy()
+        repeat(FRAMES / 2) { frame(down = false, cx, cy) }
+
+        assertTrue(afterStick.z < start.z - 1f, "pushing the stick up must walk forward; z ${start.z} -> ${afterStick.z}")
+        assertEquals(afterStick.z, position.z, 1e-4f, "releasing the stick must stop the player")
+
+        val jump = assertNotNull(runtime.uiSemantics.findTag(JUMP_TAG), "no jump button drawn")
+        val jx = jump.x + jump.width / 2f
+        val jy = jump.y + jump.height / 2f
+        val ground = position.y
+        frame(down = true, jx, jy)
+        frame(down = false, jx, jy)
+        var peak = position.y
+        repeat(FRAMES) {
+            frame(down = false, jx, jy)
+            peak = maxOf(peak, position.y)
+        }
+        assertTrue(peak > ground + 0.5f, "tapping jump must jump; peak $peak from $ground")
+    }
+
+    @Test
     fun aManifestWithoutItsEntrySceneIsRefused() = runTest {
         val error = assertFailsWith<IllegalArgumentException> {
             loadPlayableProject(files(mapOf("awake.project.json" to MANIFEST)))
@@ -93,6 +136,9 @@ class ProjectPlayerTest {
     private class TestRenderer : NoopRenderer(), GpuDrawPreparationSource {
         override val gpuDrawPreparer = GpuDrawPreparer { _, _, _ -> null }
     }
+
+    private fun List<SemanticsNode>.findTag(tag: String): SemanticsNode? =
+        firstNotNullOfOrNull { if (it.testTag == tag) it else it.children.findTag(tag) }
 
     private fun files(entries: Map<String, String>) = AssetSource { path ->
         entries[path.value]?.let { Result.success(it.encodeToByteArray()) }
@@ -110,6 +156,8 @@ class ProjectPlayerTest {
         const val WIDTH = 800f
         const val HEIGHT = 600f
         const val FRAMES = 30
+        const val STICK_PULL = 80
+        const val PULL_STEP = 10
 
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
 

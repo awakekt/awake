@@ -24,6 +24,7 @@ kotlin {
             api(project(":awake:core:geometry"))
             api(project(":awake:core:io"))
             implementation(project(":awake:asset:shader-pack"))
+            implementation(project(":awake:compose:foundation"))
             implementation(project(":awake:core:math"))
         }
         commonTest.dependencies {

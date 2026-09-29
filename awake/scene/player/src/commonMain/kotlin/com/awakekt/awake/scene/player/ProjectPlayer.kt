@@ -73,14 +73,21 @@ suspend fun loadPlayableProject(files: AssetSource): PlayableProject {
  * Plays [project] in this scene the way Awake Studio's Play does: its entry scene, the built-in
  * assets and its models, WASD or arrow keys to move the `movement_control` entity relative to the
  * camera, Space to jump, spinning and animated entities, and a third-person camera on the player.
+ *
+ * With [touchControls], an on-screen stick moves and a button jumps, for phones and tablets.
  */
-fun SceneAppDsl.playProject(project: PlayableProject) {
+fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = false) {
     scene(project.scene)
     assets {
         builtInSceneAssets()
         resolver(project.models)
     }
     playerInputSystem()
+    if (touchControls) {
+        val touch = TouchControlsState()
+        frameSystem("touch") { TouchMovementSystem(touch) }
+        ui { TouchControls(touch) }
+    }
     matrixRelativeMovementSystem()
     frameSystem("jump") { JumpSystem() }
     cameraSystem()
