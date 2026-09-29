@@ -44,6 +44,8 @@ internal class VulkanDrawPreparer(
         if (sourceIndex == 0) {
             materialUsage.clear()
             instancedRuns = 0
+            // Submitted offscreen work may still read the slots this batch is about to rewrite.
+            renderer.awaitSubmittedOffscreenCommandsFor(renderer.swapchainManager.currentFrame)
         }
         val cascades = context.shadowCascadeData ?: context.shadowViewProjections
             .takeIf { it.isNotEmpty() }

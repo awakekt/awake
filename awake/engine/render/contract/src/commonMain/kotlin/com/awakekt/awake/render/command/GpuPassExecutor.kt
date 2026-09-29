@@ -16,4 +16,7 @@ import com.awakekt.awake.render.texture.RenderTarget
 interface GpuPassExecutor {
     fun draw(input: GpuPassInput)
     fun renderToTexture(target: RenderTarget, input: GpuPassInput)
+
+    /** [renderToTexture] without waiting for the GPU; see `Renderer.submitToTexture`. */
+    fun submitToTexture(target: RenderTarget, input: GpuPassInput) = renderToTexture(target, input)
 }

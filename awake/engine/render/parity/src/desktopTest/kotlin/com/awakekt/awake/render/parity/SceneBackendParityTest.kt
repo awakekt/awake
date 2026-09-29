@@ -224,6 +224,19 @@ class SceneBackendParityTest {
         }
     }
 
+    /** A render submitted without waiting reads back as a waited one does, on both backends. */
+    @Test
+    fun aSubmittedRenderReadsBackAsAWaitedOneDoes() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val (waited, _) = renderer.renderRepeatedPropsScene(shareMaterial = true)
+            repeat(3) { pass ->
+                val (submitted, _) = renderer.renderRepeatedPropsScene(shareMaterial = true, submit = true)
+                assertTrue(waited.contentEquals(submitted), "$backend: submitted render $pass differs from the waited one")
+            }
+        }
+    }
+
     @Test
     fun theShadowLandsInTheSamePlaceOnBothBackends() {
         val centroids = BACKEND_ORDER.associateWith { backend ->

@@ -283,6 +283,11 @@ public final class com/awakekt/awake/render/command/GpuEnvironmentState$Companio
 public abstract interface class com/awakekt/awake/render/command/GpuPassExecutor {
 	public abstract fun draw (Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public abstract fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
+	public fun submitToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
+}
+
+public final class com/awakekt/awake/render/command/GpuPassExecutor$DefaultImpls {
+	public static fun submitToTexture (Lcom/awakekt/awake/render/command/GpuPassExecutor;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 }
 
 public final class com/awakekt/awake/render/command/GpuPassInput {
@@ -1224,6 +1229,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun renderToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public abstract fun setClearColor (Lcom/awakekt/awake/core/color/Color;)V
 	public abstract fun setWireframe (Z)V
+	public fun submitToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 }
 
 public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
@@ -1239,6 +1245,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static fun readFramebufferAttachment (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun readPresentedPixels (Lcom/awakekt/awake/render/renderer/Renderer;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static fun renderToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
+	public static fun submitToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/command/GpuPassInput;)V
 	public static fun waitIdle (Lcom/awakekt/awake/render/renderer/Renderer;)V
 }
 
