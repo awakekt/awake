@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.scene.canvas.CanvasElementBinding
 import com.awakekt.awake.scene.binding.PrefabLinkBinding
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
@@ -66,6 +67,7 @@ object DefaultSceneComponentResolvers {
         FogBinding,
         AmbientLightBinding,
         TerrainBinding,
+        CanvasElementBinding,
     )
 
     val all: List<SceneComponentResolver> = listOf(
@@ -78,6 +80,7 @@ object DefaultSceneComponentResolvers {
         FogBinding,
         AmbientLightBinding,
         TerrainBinding,
+        CanvasElementBinding,
         PrefabLinkBinding,
     )
 
