@@ -39,6 +39,7 @@ import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlin.math.PI
 
 /** Where a project keeps its manifest, relative to the project root. */
@@ -102,7 +103,7 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
     frameSystem("animation") { AnimationSystem() }
     onReady {
         preparePlayCamera(world)
-        startSkinnedAnimations(world, project.models)
+        startSkinnedAnimations(project.models)
     }
 }
 
@@ -131,14 +132,15 @@ fun preparePlayCamera(world: World) {
 }
 
 /** Gives every skinned glTF model an [Animator] playing its first clip, as Awake Studio's Play does. */
-private fun startSkinnedAnimations(world: World, models: GltfAssetResolver) {
+private fun SceneAppLifecycleRuntime.startSkinnedAnimations(models: GltfAssetResolver) {
+    val assets = requireAssetLibrary()
     world.queryEach(MeshRenderer::class) { entity, renderer ->
-        val scene = models.skinnedSceneOf(renderer.mesh) ?: return@queryEach
+        val scene = assets.meshName(renderer.mesh)?.let(models::getLoadedScene) ?: return@queryEach
         val skin = scene.firstSkinnedAsset()?.skin ?: return@queryEach
         if (world.has(entity, Animator::class)) return@queryEach
-        val library = scene.toAnimationLibrary()
-        val player = AnimationPlayer(library)
-        library.clips.keys.firstOrNull()?.let { player.play(it) }
+        val clips = scene.toAnimationLibrary()
+        val player = AnimationPlayer(clips)
+        clips.clips.keys.firstOrNull()?.let { player.play(it) }
         world.add(entity, Animator(player, skin))
         world.add(entity, SkinnedPose(player.update(0f).jointPalette(skin)))
     }
