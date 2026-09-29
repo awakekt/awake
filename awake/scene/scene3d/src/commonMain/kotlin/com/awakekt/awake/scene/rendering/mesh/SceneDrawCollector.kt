@@ -74,6 +74,7 @@ internal class SceneDrawCollector(
                     alphaMode = pbr?.alphaMode ?: com.awakekt.awake.render.pipeline.AlphaMode.Opaque,
                     alphaCutoff = pbr?.alphaCutoff ?: 0.5f,
                     transparent = meshRenderer.transparent,
+                    worldBounds = bounds?.worldBounds(transform.worldMatrix),
                 ),
             )
         }
@@ -134,6 +135,7 @@ internal class SceneDrawCollector(
                             model = transform.worldMatrix,
                             extraUniformFloats = extras,
                             timeSeconds = elapsedTimeSeconds,
+                            worldBounds = bounds?.worldBounds(transform.worldMatrix),
                         ),
                     )
                 }
@@ -174,6 +176,7 @@ internal class SceneDrawCollector(
                     mesh = level.mesh,
                     material = level.material,
                     model = transform.worldMatrix,
+                    worldBounds = bounds?.worldBounds(transform.worldMatrix),
                 ),
             )
         }
