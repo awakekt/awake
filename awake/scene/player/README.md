@@ -16,12 +16,11 @@ model the scene names. `playProject` then plays it:
 - WASD or the arrow keys move the entity with `movement_control` relative to the camera, and Space jumps
 - with `playProject(project, touchControls = true)`, a stick in the bottom-left moves and a button in
   the bottom-right jumps
-- `spinControl` entities turn
+- `spinControl` entities turn, and skinned glTF models play their first animation clip on a loop
 - the scene's primary camera (or its first, or a new one) renders, on a third-person rig that follows
   the player when there is one
 
-Not yet: moving and jumping at once on touch (input has one pointer), physics and AI behaviours in play, cubemap skies and layered terrain, and
-starting a skinned model's first animation clip automatically.
+Not yet: moving and jumping at once on touch (input has one pointer), physics and AI behaviours in play, cubemap skies and layered terrain.
 
 ## Built-in assets
 

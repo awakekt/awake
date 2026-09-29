@@ -1,0 +1,1 @@
+- **Skinned models animate in played projects.** `playProject` gives every skinned glTF model an `Animator` playing its first clip on a loop, as Awake Studio's Play does. `GltfAssetResolver.skinnedSceneOf(mesh)` returns the skinned scene behind a mesh it created.

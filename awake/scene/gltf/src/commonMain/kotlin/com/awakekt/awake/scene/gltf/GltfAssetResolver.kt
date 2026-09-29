@@ -47,11 +47,15 @@ class GltfAssetResolver(
     private val loadedStaticMeshes = mutableMapOf<String, MeshGeometry>()
     private val loadedMaterials = mutableMapOf<String, LoadedGltfMaterial>()
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
+    private val meshSources = mutableMapOf<Mesh, String>()
     private var assetSource: AssetSource = AssetSource { path ->
         runCatching { bundledResourceReader(path.value) }
     }
 
     fun getLoadedScene(path: String): LoadedSkinnedScene? = loadedScenes[path]
+
+    /** The skinned scene behind a mesh this resolver created, if it came from one. */
+    fun skinnedSceneOf(mesh: Mesh): LoadedSkinnedScene? = meshSources[mesh]?.let(loadedScenes::get)
 
     /** Supplies project-file access for JSON glTF sidecars. */
     fun setAssetSource(source: AssetSource) {
@@ -192,7 +196,7 @@ class GltfAssetResolver(
             "glTF asset '$name' has not been preloaded. Ensure the scene or plugin preloaded it.",
         )
         meshBoundsRegistrar(name, geometry)
-        return runtime.renderer.createMesh(geometry)
+        return runtime.renderer.createMesh(geometry).also { meshSources[it] = name }
     }
 
     override fun canResolveMaterial(name: String): Boolean =

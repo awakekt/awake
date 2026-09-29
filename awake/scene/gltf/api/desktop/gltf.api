@@ -16,6 +16,7 @@ public final class com/awakekt/awake/scene/gltf/GltfAssetResolver : com/awakekt/
 	public final fun preloadBytes (Ljava/lang/String;[B)V
 	public final fun preloadMaterials (Ljava/lang/String;[BLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public final fun setAssetSource (Lcom/awakekt/awake/core/io/AssetSource;)V
+	public final fun skinnedSceneOf (Lcom/awakekt/awake/render/mesh/Mesh;)Lcom/awakekt/awake/asset/gltf/LoadedSkinnedScene;
 }
 
 public final class com/awakekt/awake/scene/gltf/GltfMaterialParameters {

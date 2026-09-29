@@ -5,6 +5,12 @@
  */
 package com.awakekt.awake.scene.player
 
+import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
+import com.awakekt.awake.scene.rendering.animation.SkinnedPose
+import com.awakekt.awake.scene.rendering.animation.Animator
+import com.awakekt.awake.core.animation.AnimationPlayer
+import com.awakekt.awake.asset.gltf.toAnimationLibrary
+import com.awakekt.awake.asset.gltf.firstSkinnedAsset
 import com.awakekt.awake.core.io.AssetPath
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.math.Lens
@@ -94,7 +100,10 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
     frameSystem("spin-clock") { SpinClockSystem() }
     frameSystem("spin") { SpinSystem() }
     frameSystem("animation") { AnimationSystem() }
-    onReady { preparePlayCamera(world) }
+    onReady {
+        preparePlayCamera(world)
+        startSkinnedAnimations(world, project.models)
+    }
 }
 
 /**
@@ -119,6 +128,20 @@ fun preparePlayCamera(world: World) {
     rig.pitch = FOLLOW_PITCH
     rig.targetEntity = target
     rig.needsReset = false
+}
+
+/** Gives every skinned glTF model an [Animator] playing its first clip, as Awake Studio's Play does. */
+private fun startSkinnedAnimations(world: World, models: GltfAssetResolver) {
+    world.queryEach(MeshRenderer::class) { entity, renderer ->
+        val scene = models.skinnedSceneOf(renderer.mesh) ?: return@queryEach
+        val skin = scene.firstSkinnedAsset()?.skin ?: return@queryEach
+        if (world.has(entity, Animator::class)) return@queryEach
+        val library = scene.toAnimationLibrary()
+        val player = AnimationPlayer(library)
+        library.clips.keys.firstOrNull()?.let { player.play(it) }
+        world.add(entity, Animator(player, skin))
+        world.add(entity, SkinnedPose(player.update(0f).jointPalette(skin)))
+    }
 }
 
 /** Turns each [SpinControl] at its own speed; [SpinSystem] only applies the angle. */
