@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Apps can tell a trackpad from a mouse wheel on macOS.** `InputSnapshot.scrollSource` (and `GameplayInput.scrollSource`) says whether the frame's scroll came from a `Trackpad` or a `Wheel`, so a scene view can pan with two fingers and zoom with a wheel instead of guessing from the deltas. GLFW does not report it; a native AppKit event monitor reads `NSEvent.hasPreciseScrollingDeltas` beside GLFW's scroll callback. Other platforms report `Unknown`. `InputSnapshot` gains a trailing field, so code built against its constructor or `copy` must be recompiled. Ships with the next Vulkan release.
+
 ### Fixed
 
+- **Sideways scroll reaches the app on desktop.** GLFW's scroll callback kept only `yoffset`, so a trackpad's two-finger swipe left or right never arrived and `Input.scrollDeltaX` stayed 0 outside the browser. The callback now accumulates both axes and `pollGlfwInput` fills `scrollDeltaX`; `GameplayInput.scrollDeltaX` exposes it, gated like `scrollDeltaY`. The scroll functions move to `@JniNative` implementations in `VulkanWindow_native.cpp` (D11). Ships with the next Vulkan release.
 - **Scrolling goes the right way in the browser.** The WebGPU canvas host passed DOM wheel deltas through with the wrong sign: the DOM counts how far the page scrolls (positive down), GLFW how far the wheel turned (positive away from the user), and every scroll container reads GLFW's convention. A wheel turned toward the user scrolled lists up in the browser and down on desktop, and a scene camera zoomed the wrong way. Both axes are now negated to match desktop.
 
 ## [0.1.0-alpha.14] - 2026-09-29

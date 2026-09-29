@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.vulkan.gen
 
+import com.awakekt.awake.vulkan.JniNative
+
 /**
  * Phase 1b/1c: GLFW window + Vulkan surface creation for desktop, same jni-binding-
  * generator `.gen` package/pipeline as [VulkanBuffers]/[VulkanDescriptors]/[VulkanImages].
@@ -70,21 +72,35 @@ expect object VulkanWindow {
     fun glfwGetCursorPos(window: Long): DoubleArray
 
     /** Registers GLFW's scroll callback (`glfwSetScrollCallback`) for [window], which
-     * accumulates every `yoffset` tick (trackpad pinch on macOS surfaces through this exact
-     * callback, with different-feeling deltas than a mouse wheel but the same callback/API)
-     * into a native accumulator -- see [glfwConsumeScrollDeltaY]. Must be called once, after
+     * accumulates every `xoffset` and `yoffset` tick (a trackpad's two-finger swipe surfaces
+     * through this exact callback, with different-feeling deltas than a mouse wheel but the
+     * same callback/API) into native accumulators -- see [glfwConsumeScrollDeltaY] and
+     * [glfwConsumeScrollDeltaX]. Must be called once, after
      * [glfwCreateWindow] succeeds and before the first [glfwPollEvents] of the main loop; the
      * callback itself fires synchronously inside `glfwPollEvents()`, same thread, so no
      * further synchronization is needed once wired (see `docs/architecture.md`'s
      * threading-model rules). This does NOT fit [glfwGetKey]'s polled-getter pattern -- GLFW
      * scroll input is push/callback-based, not a simple state query. */
+    @JniNative("awake_glfw_set_scroll_callback")
     fun glfwSetScrollCallback(window: Long)
 
     /** Polled getter, same per-frame-poll contract as [glfwGetKey]/[glfwGetCursorPos]:
      * returns the native scroll accumulator [glfwSetScrollCallback] feeds and resets it to
      * `0.0`, so a caller polling this once per frame gets exactly the ticks that happened
      * since its last poll (no double-counting, no dropped ticks between polls). */
+    @JniNative("awake_glfw_consume_scroll_delta_y")
     fun glfwConsumeScrollDeltaY(window: Long): Double
+
+    /** The sideways counterpart of [glfwConsumeScrollDeltaY]: the accumulated `xoffset` since
+     * the last poll, reset to `0.0`. A mouse wheel rarely moves it; a trackpad swipe does. */
+    @JniNative("awake_glfw_consume_scroll_delta_x")
+    fun glfwConsumeScrollDeltaX(window: Long): Double
+
+    /** What sent the scroll since the last poll, reset each call: 0 unknown, 1 a wheel, 2 a trackpad
+     * (the ordinals of `com.awakekt.awake.core.input.ScrollSource`). Only macOS can tell, from
+     * `NSEvent.hasPreciseScrollingDeltas`; elsewhere this stays 0. */
+    @JniNative("awake_glfw_consume_scroll_source")
+    fun glfwConsumeScrollSource(window: Long): Int
 
     /** Sets [window]'s pointer cursor to one of GLFW's standard shapes (`GLFW_ARROW_CURSOR`,
      * `GLFW_HRESIZE_CURSOR`, ... -- see the constants alongside this call's own Kotlin call
