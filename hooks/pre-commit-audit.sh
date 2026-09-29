@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
 #
 # SPDX-License-Identifier: Apache-2.0
-# Pre-commit hook: profile-parity check, commit summary, and a CHANGELOG nudge.
+# Pre-commit hook: profile-parity check, commit summary, and a changelog-fragment nudge.
 # Wired via .githooks/pre-commit (core.hooksPath), alongside the existing
 # commit-msg and pre-push hooks in the same directory.
 
@@ -58,16 +58,16 @@ fi
 
 STAGED_KT="$(git diff --cached --name-only | grep -E '\.(kt|kts)$' || true)"
 
-# Nudge (not block) when a commit changes real, non-test Kotlin source but CHANGELOG.md
-# isn't staged alongside it. Skips test-source and generated files -- those don't usually
-# warrant a changelog entry, and false-positiving on every test-only commit would train
-# people to ignore the warning. CHANGELOG.md already exists and is actively maintained
-# (Keep a Changelog format, real [Unreleased] content) -- this just reminds, doesn't enforce.
+# Nudge (not block) when a commit changes real, non-test Kotlin source but stages no changelog
+# fragment. Skips test-source and generated files -- those don't usually warrant an entry, and
+# false-positiving on every test-only commit would train people to ignore the warning. CI
+# enforces fragments on feat/fix PRs; this just reminds earlier.
 NON_TEST_KT="$(echo "$STAGED_KT" | grep -vE '(Test|Tests)\.kts?$|/(commonTest|desktopTest|androidTest|iosTest|jvmTest|wasmJsTest)/|/build/|/generator/' || true)"
-if [[ -n "$NON_TEST_KT" ]] && ! echo "$STAGED_ALL" | grep -qx "CHANGELOG.md"; then
+if [[ -n "$NON_TEST_KT" ]] && ! echo "$STAGED_ALL" | grep -q '^changelog/unreleased/'; then
   echo ""
-  echo "Reminder: this commit touches non-test Kotlin source but not CHANGELOG.md."
-  echo "  If this is user-visible behavior, add an entry under [Unreleased]."
+  echo "Reminder: this commit touches non-test Kotlin source but adds no changelog fragment."
+  echo "  If this is user-visible behavior, add changelog/unreleased/<section>/<branch-name>.md"
+  echo "  (not CHANGELOG.md: see changelog/unreleased/README.md)."
 fi
 
 # The architecture audit used to run here and was removed 2026-08-22, because it could not
