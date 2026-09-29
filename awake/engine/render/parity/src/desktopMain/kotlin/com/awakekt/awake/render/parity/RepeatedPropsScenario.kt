@@ -17,8 +17,9 @@ import kotlinx.coroutines.runBlocking
  *
  * Sharing one material, the posts differ only in placement, so the compiler folds them into one
  * instanced draw; each with its own material they stay five draws. Both must render alike.
+ * [submit] renders through [Renderer.submitToTexture], which does not wait for the GPU.
  */
-fun Renderer.renderRepeatedPropsScene(shareMaterial: Boolean): Pair<ByteArray, Int> {
+fun Renderer.renderRepeatedPropsScene(shareMaterial: Boolean, submit: Boolean = false): Pair<ByteArray, Int> {
     val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
     val ground = createMesh(plane(GROUND_HALF, y = 0f))
     val post = createMesh(texturedPlane(POST_HALF, y = CASTER_Y))
@@ -30,7 +31,7 @@ fun Renderer.renderRepeatedPropsScene(shareMaterial: Boolean): Pair<ByteArray, I
             RenderDrawCommand(post, material, model = Mat4().translate(x, 0f, 0f), extraUniformFloats = WHITE_FACTORS)
         }
         val input = compileShadowScene(listOf(RenderDrawCommand(ground, groundMaterial)) + posts)
-        renderToTexture(target, input)
+        if (submit) submitToTexture(target, input) else renderToTexture(target, input)
         runBlocking { readPixels(target) }.data to input.resolvedOpaqueDraws.size
     } finally {
         ground.destroy()
