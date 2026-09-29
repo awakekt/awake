@@ -5,6 +5,7 @@
  */
 plugins {
     id("com.awakekt.awake.plugin.library")
+    alias(libs.plugins.kotlin.serialization)
     id("com.awakekt.awake.plugin.publish")
     id("com.awakekt.awake.plugin.dokka")
     id("com.awakekt.awake.plugin.detekt")
@@ -25,6 +26,9 @@ kotlin {
         commonMain.dependencies {
             implementation(project(":awake:core:math"))
             api(project(":awake:scene:scene-core"))
+            api(project(":awake:scene:document"))
+            api(project(":awake:scene:binding"))
+            implementation(libs.kotlinx.serialization.json)
             api(project(":awake:scene:world"))
             api(project(":awake:physics:api"))
             // Skeleton and AnimationPose, for RagdollSkeleton -- the seam that lets a ragdoll drive
@@ -43,6 +47,7 @@ kotlin {
             implementation(kotlin("test"))
             // PhysicsCellStreamer's load half suspends, matching the async streaming contract.
             implementation(libs.kotlinx.coroutines.test)
+            implementation(project(":awake:scene:runtime"))
             // Test-only, and the one place it is worth it: a ragdoll is bodies and constraints, so
             // whether it holds together is a question only a real solver answers. Here rather than
             // in a sample because commonTest runs it on all four backends, and three of them assert

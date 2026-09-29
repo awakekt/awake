@@ -153,6 +153,9 @@ class KinematicCharacterController(
     var isGrounded: Boolean = false
         private set
 
+    /** Whether the last [move] rose off the ground faster than the ground itself moves. */
+    private var leftGround = false
+
     /** The surface [isGrounded] refers to; meaningless when not grounded. */
     val groundNormal: Vec3f = Vec3f(0f, 1f, 0f)
 
@@ -337,8 +340,9 @@ class KinematicCharacterController(
                 iterations++
             }
         }
-        updateGroundState(ascending = motion.y > MIN_MOTION)
-        if (wasGrounded && !isGrounded) snapDownToGround()
+        val risingSpeed = if (deltaTime > 0f) motion.y / deltaTime else 0f
+        updateGroundState(ascending = motion.y > MIN_MOTION, risingSpeed = risingSpeed)
+        if (wasGrounded && !isGrounded && !leftGround) snapDownToGround()
         syncBody(deltaTime)
     }
 
@@ -429,8 +433,8 @@ class KinematicCharacterController(
      *
      * Only when it was grounded before the move and is not after: without this, every downhill
      * step is a frame of falling, which stutters the camera and breaks anything that asks whether
-     * the character is on the ground. A character that jumped was not grounded to begin with, so
-     * this cannot pull it back down.
+     * the character is on the ground. A move that rose off the ground faster than the ground moves
+     * is a jump, and is never pulled back down.
      */
     private fun snapDownToGround() {
         if (config.stepDownDistance <= 0f) return
@@ -502,16 +506,20 @@ class KinematicCharacterController(
      * the exception: a jump is still within the probe's reach for its first frames, and settling
      * onto ground it has not left yet would cancel it.
      */
-    private fun updateGroundState(ascending: Boolean) {
+    private fun updateGroundState(ascending: Boolean, risingSpeed: Float) {
         target.set(position)
         target.y -= config.groundProbeDistance
         val hit = world.shapeCast(activeShape, position, target, ignore = body)
-        val walkable = hit != null && hit.normal.y >= config.minWalkableNormalY
+        val velocity = hit?.let { world.getLinearVelocity(it.handle) }
+        // Rising faster than the ground is leaving it -- a jump, not a ride on a lift. The probe
+        // still reaches the floor for the first steps of a jump, and calling that grounded would
+        // let the next step snap the character back down.
+        leftGround = ascending && risingSpeed > (velocity?.y ?: 0f) + LEAVE_GROUND_SPEED
+        val walkable = hit != null && !leftGround && hit.normal.y >= config.minWalkableNormalY
         isGrounded = walkable
-        if (hit != null && walkable) {
+        if (hit != null && velocity != null && walkable) {
             groundNormal.set(hit.normal)
             groundBody = hit.handle
-            val velocity = world.getLinearVelocity(hit.handle)
             groundVelocity.set(velocity.x, velocity.y, velocity.z)
             if (!ascending) {
                 position.y -= config.groundProbeDistance * hit.fraction
@@ -536,5 +544,8 @@ class KinematicCharacterController(
          * value it would not use. A caller on a fixed step should pass its own.
          */
         const val DEFAULT_SYNC_DELTA = 1f / 60f
+
+        /** Rising this much faster than the ground, in m/s, counts as leaving it. */
+        const val LEAVE_GROUND_SPEED = 0.01f
     }
 }

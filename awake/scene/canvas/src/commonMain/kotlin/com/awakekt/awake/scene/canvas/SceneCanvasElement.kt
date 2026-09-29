@@ -27,6 +27,8 @@ data class SceneCanvasElement(
     val value: Float = 1f,
     val order: Int = 0,
     val visible: Boolean = true,
+    val action: String = "",
+    val touchOnly: Boolean = false,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (width < 0f || height < 0f) add(SceneValidationIssue(path, "canvas_element size must not be negative"))

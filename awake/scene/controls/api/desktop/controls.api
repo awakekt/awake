@@ -315,8 +315,15 @@ public final class com/awakekt/awake/scene/controls/input/KeybindingProfileKt {
 	public static final fun keybindingProfile (Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;
 }
 
-public final class com/awakekt/awake/scene/controls/movement/MatrixRelativeMovementSystem : com/awakekt/awake/ecs/System {
+public final class com/awakekt/awake/scene/controls/movement/CameraRelativeBasis {
 	public static final field MIN_DIRECTION_LENGTH F
+	public fun <init> ()V
+	public final fun update (Lcom/awakekt/awake/ecs/World;)V
+	public final fun worldX (FF)F
+	public final fun worldZ (FF)F
+}
+
+public final class com/awakekt/awake/scene/controls/movement/MatrixRelativeMovementSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun <init> (F)V
 	public synthetic fun <init> (FILkotlin/jvm/internal/DefaultConstructorMarker;)V
