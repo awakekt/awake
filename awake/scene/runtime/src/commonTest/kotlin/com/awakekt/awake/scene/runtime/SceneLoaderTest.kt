@@ -11,6 +11,8 @@ import com.awakekt.awake.scene.canvas.CanvasAnchor
 import com.awakekt.awake.scene.canvas.CanvasElement
 import com.awakekt.awake.scene.canvas.CanvasElementKind
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
+import com.awakekt.awake.scene.controls.movement.MovementControl
+import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.scene.binding.fromWorld
 import com.awakekt.awake.scene.binding.instantiate
@@ -274,6 +276,22 @@ class SceneLoaderTest {
         val loaded = mutableListOf<CanvasElement>().also { list -> world.family<CanvasElement>().forEach { _, e -> list += e } }
         assertEquals("Score 0", loaded.single().text)
         assertEquals(authored, SceneLoader.fromWorld(world, name = "x").nodes.single().components.filterIsInstance<SceneCanvasElement>().single())
+    }
+
+    /** The player marker a Studio template writes decodes, keeps its speed, and exports back. */
+    @Test
+    fun aMovementControlRoundTripsThroughTheFileAndTheWorld() {
+        val json = """{"version":1,"name":"x","nodes":[{"name":"player","components":[{"component":"movement_control","speed":6.0}]}]}"""
+        val world = World()
+
+        SceneLoader.decode(json).instantiate(world = world)
+
+        val loaded = mutableListOf<MovementControl>().also { list -> world.family<MovementControl>().forEach { _, c -> list += c } }
+        assertEquals(6f, loaded.single().speed)
+        assertEquals(
+            SceneMovementControl(speed = 6f),
+            SceneLoader.fromWorld(world, name = "x").nodes.single().components.filterIsInstance<SceneMovementControl>().single(),
+        )
     }
 
     /** A texture animation survives the file, reaches the ECS material, and exports back unchanged. */
