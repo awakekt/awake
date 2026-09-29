@@ -50,6 +50,8 @@ public class com/awakekt/awake/vulkan/application/VulkanEngine : com/awakekt/awa
 	public fun <init> (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/asset/shaders/RenderPlan;)V
 	protected fun createBackendResources (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun destroyBackend ()V
+	protected fun releaseBackendSurface ()V
+	protected fun restoreBackendSurface (Ljava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/vulkan/commands/TransferContext {
@@ -111,6 +113,7 @@ public final class com/awakekt/awake/vulkan/device/GraphicsDevice {
 	public final fun getPhysicalDevice ()J
 	public final fun getPresentQueue ()J
 	public final fun getSurface ()J
+	public final fun replaceSurface (Ljava/lang/Object;)V
 	public final fun setDebugUtilsMessenger (J)V
 	public final fun setDevice (J)V
 	public final fun setGraphicsQueue (J)V

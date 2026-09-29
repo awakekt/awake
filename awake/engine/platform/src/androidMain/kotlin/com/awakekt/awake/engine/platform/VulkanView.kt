@@ -20,6 +20,7 @@ import com.awakekt.awake.core.input.createAwakeInputConnection
 import com.awakekt.awake.core.input.syncAwakeKeyInput
 import com.awakekt.awake.core.input.syncAwakePointerInput
 
+@Suppress("TooManyFunctions") // One override per WindowLifecycle / SurfaceHolder callback.
 class VulkanView(
     context: Context,
     private val lifecycle: WindowLifecycle,
@@ -28,6 +29,9 @@ class VulkanView(
 
     @Volatile
     private var running = false
+
+    /** The engine outlives any one surface: backgrounding releases the surface, not the app. */
+    private var engineCreated = false
     private var renderThread: Thread? = null
 
     private val input: Input get() = lifecycle.input
@@ -47,7 +51,12 @@ class VulkanView(
         createAwakeInputConnection(outAttrs, input)
 
     override fun surfaceCreated(holder: SurfaceHolder) {
-        lifecycle.create(holder.surface)
+        if (engineCreated) {
+            lifecycle.restoreSurface(holder.surface)
+        } else {
+            lifecycle.create(holder.surface)
+            engineCreated = true
+        }
         running = true
         renderThread = Thread({
             val mode = lifecycle.windowConfig?.frameRateMode ?: FrameRateMode.Auto
@@ -69,7 +78,15 @@ class VulkanView(
         renderThread?.join()
         renderThread = null
         input.clearKeys()
-        lifecycle.dispose()
+        lifecycle.releaseSurface()
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        if (engineCreated) {
+            lifecycle.dispose()
+            engineCreated = false
+        }
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean = event.syncAwakePointerInput(input) || super.onTouchEvent(event)

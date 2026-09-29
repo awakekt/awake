@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
  * Backend-neutral render bootstrap shared by `VulkanEngine` (`awake-backend-vulkan`)
  * and `WebGpuEngine` (`awake-backend-webgpu`).
  */
+@Suppress("TooManyFunctions") // One override per WindowLifecycle / SurfaceHolder callback.
 abstract class GraphicsEngine(
     protected val appLifecycle: AwakeAppLifecycle,
 ) : WindowLifecycle {
@@ -37,6 +38,7 @@ abstract class GraphicsEngine(
      * `VulkanApplication`/`WebGpuApplication` used -- [update] is a no-op until
      * [createBackendResources] (and [AppLifecycle.ready]) finish. */
     private var isReady = false
+    private var surfaceReleased = false
 
     /** Populated by [createBackendResources] -- `protected` (not `private`) so each
      * backend's [destroyBackend] override can still reach it for teardown. */
@@ -103,6 +105,23 @@ abstract class GraphicsEngine(
         appLifecycle.resize(width.toFloat(), height.toFloat())
     }
 
+    /** Keeps the renderer and the app alive while the window has no surface: the app is paused
+     * and the backend drops only what was built on the surface. */
+    final override fun releaseSurface() {
+        if (!isReady || surfaceReleased) return
+        renderer.waitIdle()
+        appLifecycle.pause()
+        releaseBackendSurface()
+        surfaceReleased = true
+    }
+
+    final override fun restoreSurface(surface: Any) {
+        if (!surfaceReleased) return
+        restoreBackendSurface(surface)
+        surfaceReleased = false
+        appLifecycle.resume()
+    }
+
     final override fun dispose() {
         // Before game.dispose(), not just before destroyBackend(): a game frees its own
         // meshes/materials in dispose(), and the last frame's command buffers can still be
@@ -135,6 +154,17 @@ abstract class GraphicsEngine(
      * needs. Called once, off [create]'s calling thread only in the "hasn't suspended yet"
      * sense -- see [create]'s own doc comment. */
     protected abstract suspend fun createBackendResources(window: Any): BackendResources
+
+    /** Destroys what the backend built on the window surface (swapchain, surface) and nothing
+     * else. Only backends whose host can lose its surface (Android) override this pair. */
+    protected open fun releaseBackendSurface() {
+        throw UnsupportedOperationException("${this::class.simpleName} can't release its surface")
+    }
+
+    /** Rebuilds what [releaseBackendSurface] destroyed, against the new [window]. */
+    protected open fun restoreBackendSurface(window: Any) {
+        throw UnsupportedOperationException("${this::class.simpleName} can't restore its surface")
+    }
 
     /** Backend-specific GPU teardown -- reads [renderer] (this class's own protected field)
      * plus whatever backend-local pipeline objects the override's own

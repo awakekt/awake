@@ -61,6 +61,8 @@ import com.awakekt.awake.vulkan.pipeline.VulkanUiPass
 import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.pipeline.requireSpirV
 import com.awakekt.awake.vulkan.renderer.Renderer
+import com.awakekt.awake.vulkan.renderer.rebuildSwapchainResources
+import com.awakekt.awake.vulkan.renderer.releaseSwapchainResources
 import com.awakekt.awake.vulkan.surfaceFramebufferExtent
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
 import com.awakekt.awake.vulkan.texture.DepthTarget
@@ -91,6 +93,7 @@ open class VulkanEngine(
 
     private lateinit var graphicsDevice: GraphicsDevice
     private lateinit var swapchainManager: SwapchainManager
+    private lateinit var vulkanRenderer: Renderer
 
     /** Shared by every [RenderPipeline] this app builds (and by the debug-line/skybox
      * pipelines, which reuse the existing 3D pass) -- see [createSceneRenderPass]'s
@@ -611,6 +614,7 @@ open class VulkanEngine(
                 bindDepthPlaceholder(renderer)
             }
             createdRenderer = renderer
+            vulkanRenderer = renderer
             swapchainManager.createSyncObjects()
             syncObjectsCreated = true
 
@@ -638,6 +642,16 @@ open class VulkanEngine(
             }
             throw failure
         }
+    }
+
+    override fun releaseBackendSurface() {
+        vulkanRenderer.releaseSwapchainResources()
+        graphicsDevice.replaceSurface(null)
+    }
+
+    override fun restoreBackendSurface(window: Any) {
+        graphicsDevice.replaceSurface(window)
+        vulkanRenderer.rebuildSwapchainResources()
     }
 
     override fun destroyBackend() {

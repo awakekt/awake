@@ -196,24 +196,35 @@ internal fun Renderer.recreateSwapChain() {
     // it has no drawable. Keep the still-valid old swapchain until a later frame has an extent
     // the driver can actually create.
     if (!swapchainManager.hasDrawableExtent()) return
+    releaseSwapchainResources()
+    rebuildSwapchainResources()
+}
+
+/**
+ * Frees the swapchain and everything sized off it (depth image, main, present-transition and UI
+ * framebuffers). The device, pipelines and every app resource stay valid, so a window surface can
+ * be released and later replaced (an Android app going to the background) without tearing down
+ * the renderer.
+ */
+internal fun Renderer.releaseSwapchainResources() {
     // Nothing may still be reading/writing swapchain-derived resources (framebuffers,
-    // depth image, image views) while they're torn down and rebuilt below.
+    // depth image, image views) while they're torn down.
     VulkanBuffers.vkDeviceWaitIdle(device)
 
-    var index = 0
-    while (index < framebuffers.size) {
-        Vulkan.vkDestroyFramebuffer(device, framebuffers[index])
-        index += 1
-    }
+    framebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
     presentTransitionFramebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
     uiFramebuffers.forEach { Vulkan.vkDestroyFramebuffer(device, it) }
+    framebuffers = emptyList()
+    presentTransitionFramebuffers = emptyList()
+    uiFramebuffers = emptyList()
     destroyDepthResources()
-
+    // Also clears the handle: swapchainManager.create() chains from it, and it must not
+    // reference an already-destroyed swapchain.
     swapchainManager.destroy()
-    // oldSwapchain (read by swapchainManager.create() below) must not reference an
-    // already-destroyed handle -- VK_NULL_HANDLE is the well-defined "no chaining" case.
-    swapchainManager.swapChain = 0
+}
 
+/** Builds the swapchain and its sized resources against the device's current surface. */
+internal fun Renderer.rebuildSwapchainResources() {
     swapchainManager.create()
     createDepthResources()
     createFramebuffers()
