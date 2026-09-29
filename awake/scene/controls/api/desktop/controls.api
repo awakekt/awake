@@ -71,23 +71,44 @@ public abstract interface class com/awakekt/awake/scene/controls/camera/CameraDr
 	public abstract fun isDragging (Lcom/awakekt/awake/scene/controls/GameplayInput;)Z
 }
 
+public final class com/awakekt/awake/scene/controls/camera/CameraFlyAction : java/lang/Enum {
+	public static final field Back Lcom/awakekt/awake/scene/controls/camera/CameraFlyAction;
+	public static final field Down Lcom/awakekt/awake/scene/controls/camera/CameraFlyAction;
+	public static final field Fast Lcom/awakekt/awake/scene/controls/camera/CameraFlyAction;
+	public static final field Forward Lcom/awakekt/awake/scene/controls/camera/CameraFlyAction;
+	public static final field Left Lcom/awakekt/awake/scene/controls/camera/CameraFlyAction;
+	public static final field Right Lcom/awakekt/awake/scene/controls/camera/CameraFlyAction;
+	public static final field Up Lcom/awakekt/awake/scene/controls/camera/CameraFlyAction;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/controls/camera/CameraFlyAction;
+	public static fun values ()[Lcom/awakekt/awake/scene/controls/camera/CameraFlyAction;
+}
+
 public final class com/awakekt/awake/scene/controls/camera/CameraGesturePolicy {
 	public static final field Companion Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy$Companion;
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;FFZZ)V
-	public synthetic fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;FFZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;FFFFZZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;FFFFZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;
+	public final fun component10 ()Z
 	public final fun component2 ()Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;
-	public final fun component3 ()F
-	public final fun component4 ()F
-	public final fun component5 ()Z
-	public final fun component6 ()Z
-	public final fun copy (Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;FFZZ)Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;FFZZILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;
+	public final fun component3 ()Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;
+	public final fun component4 ()Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()Z
+	public final fun copy (Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;FFFFZZ)Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;FFFFZZILjava/lang/Object;)Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCanFly ()Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;
+	public final fun getFlyKeys ()Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;
 	public final fun getInvertPitch ()Z
 	public final fun getInvertYaw ()Z
 	public final fun getLookSensitivity ()F
+	public final fun getPanSensitivity ()F
+	public final fun getZoomProportion ()F
 	public final fun getZoomSensitivity ()F
 	public fun hashCode ()I
 	public final fun isOrbitDragging ()Lcom/awakekt/awake/scene/controls/camera/CameraDragPredicate;
@@ -96,6 +117,7 @@ public final class com/awakekt/awake/scene/controls/camera/CameraGesturePolicy {
 }
 
 public final class com/awakekt/awake/scene/controls/camera/CameraGesturePolicy$Companion {
+	public final fun defaultFlyKeys ()Lcom/awakekt/awake/scene/controls/input/KeybindingProfile;
 	public final fun getDefault ()Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;
 	public final fun getEditor ()Lcom/awakekt/awake/scene/controls/camera/CameraGesturePolicy;
 }
@@ -129,10 +151,12 @@ public final class com/awakekt/awake/scene/controls/camera/CameraMode : java/lan
 public final class com/awakekt/awake/scene/controls/camera/CameraRig : com/awakekt/awake/ecs/Poolable {
 	public static final field DEFAULT_DISTANCE F
 	public static final field DEFAULT_EYE_HEIGHT F
+	public static final field DEFAULT_FLY_SPEED F
 	public static final field DEFAULT_MAX_DISTANCE F
 	public static final field DEFAULT_MIN_DISTANCE F
 	public fun <init> ()V
 	public final fun getDistance ()F
+	public final fun getFlySpeed ()F
 	public final fun getMaxDistance ()F
 	public final fun getMinDistance ()F
 	public final fun getMode ()Lcom/awakekt/awake/scene/controls/camera/CameraMode;
@@ -143,6 +167,7 @@ public final class com/awakekt/awake/scene/controls/camera/CameraRig : com/awake
 	public final fun getYaw ()F
 	public fun reset ()V
 	public final fun setDistance (F)V
+	public final fun setFlySpeed (F)V
 	public final fun setMaxDistance (F)V
 	public final fun setMinDistance (F)V
 	public final fun setMode (Lcom/awakekt/awake/scene/controls/camera/CameraMode;)V
@@ -160,6 +185,7 @@ public final class com/awakekt/awake/scene/controls/camera/CameraRigAimKt {
 public final class com/awakekt/awake/scene/controls/camera/CameraSystem : com/awakekt/awake/ecs/System {
 	public static final field CINEMATIC_HEIGHT F
 	public static final field CINEMATIC_OFFSET F
+	public static final field FAST_FLY F
 	public static final field LOOK_SENSITIVITY F
 	public static final field PITCH_LIMIT F
 	public static final field SMOOTHING F

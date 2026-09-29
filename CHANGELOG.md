@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Free-fly moves, and middle-drag pans.** A `CameraMode.FreeFly` camera now flies with W/S/A/D along the view, Q/E down and up, and Shift four times faster, at `CameraRig.flySpeed` units a second (default 10). `CameraGesturePolicy.flyKeys` rebinds them, and `canFly` gates them: always for games, only while Right is held in `CameraGesturePolicy.Editor`, where W is a tool shortcut. `isPanDragging` was declared but never read; a pan drag now moves the orbit point (`CameraRig.offsetPosition`), or a free-fly eye, across the view by `panSensitivity` times the distance per pixel. The editor pans with Middle; the default policy no longer claims Shift + Left, so a game's follow camera stays on its target.
+- **Editor zoom keeps pace with distance.** `CameraGesturePolicy.zoomProportion` adds that share of the current distance to each scroll notch; the editor uses 0.1, so a far view no longer crawls in half a unit at a time.
+
+### Changed
+
+- **Switching camera modes keeps the view.** Free-fly starts from the eye, yaw and pitch it replaces instead of snapping level to -Z, and top-down keeps the rig's distance instead of jumping to 15.
+
 ### Fixed
 
 - **Android apps survive going to the background.** `VulkanView` disposed the whole engine when its surface was destroyed and built a new device when it came back, while the app kept resources made on the old device, so the first draw after returning failed. The surface is now released and replaced on the same device and renderer: `WindowLifecycle` gains `releaseSurface()`/`restoreSurface(surface)`, the app is paused in between, and the engine is disposed when the view detaches.
