@@ -7,6 +7,7 @@ package com.awakekt.awake.vulkan.application
 
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
+import com.awakekt.awake.core.input.ScrollSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -65,6 +66,37 @@ class GlfwInputBridgeTest {
         val reader = FakeGlfwWindowInput().apply { pendingScrollDeltaY = -3.5 }
         pollGlfwInput(reader, input)
         assertEquals(-3.5f, input.scrollDeltaY, "a scroll tick must reach Input.scrollDeltaY for the UI/camera layer to consume")
+    }
+
+    @Test
+    fun sidewaysScrollReachesInputScrollDeltaX() {
+        val input = Input()
+        val reader = FakeGlfwWindowInput().apply {
+            pendingScrollDeltaX = 2.25
+            pendingScrollDeltaY = 0.5
+        }
+
+        pollGlfwInput(reader, input)
+        pollGlfwInput(reader, input)
+
+        assertEquals(2.25f, input.scrollDeltaX, "a trackpad's sideways swipe must reach Input.scrollDeltaX, once")
+        assertEquals(0.5f, input.scrollDeltaY)
+        assertEquals(2.25f, input.updateSnapshot().scrollDeltaX, "and the frame's snapshot")
+    }
+
+    @Test
+    fun theScrollSourceReachesTheSnapshotForOneFrame() {
+        val input = Input()
+        val reader = FakeGlfwWindowInput().apply {
+            pendingScrollDeltaY = 0.3
+            pendingScrollSource = ScrollSource.Trackpad
+        }
+
+        pollGlfwInput(reader, input)
+        pollGlfwInput(reader, input)
+
+        assertEquals(ScrollSource.Trackpad, input.updateSnapshot().scrollSource, "a later poll that learned nothing keeps it")
+        assertEquals(ScrollSource.Unknown, input.updateSnapshot().scrollSource, "and it lasts one frame, like the deltas")
     }
 
     @Test

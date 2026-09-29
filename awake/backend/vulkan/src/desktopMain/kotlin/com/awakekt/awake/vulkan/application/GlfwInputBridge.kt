@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan.application
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
+import com.awakekt.awake.core.input.ScrollSource
 
 private const val GLFW_KEY_SPACE = 32
 private const val GLFW_KEY_ESCAPE = 256
@@ -84,6 +85,10 @@ internal fun pollGlfwInput(
     input.setButton(PointerButton.Middle, reader.isMouseButtonDown(GLFW_MOUSE_BUTTON_MIDDLE))
     input.setButton(PointerButton.Back, reader.isMouseButtonDown(GLFW_MOUSE_BUTTON_4))
     input.setButton(PointerButton.Forward, reader.isMouseButtonDown(GLFW_MOUSE_BUTTON_5))
-    // Accumulate the hardware delta until the runtime snapshots it.
+    // Accumulate the hardware deltas until the runtime snapshots them. Sideways is a trackpad's
+    // two-finger swipe (or a tilt wheel).
+    input.scrollDeltaX += reader.consumeScrollDeltaX().toFloat()
     input.scrollDeltaY += reader.consumeScrollDeltaY().toFloat()
+    // A frame polled more than once keeps what an earlier poll learned.
+    reader.consumeScrollSource().takeIf { it != ScrollSource.Unknown }?.let { input.scrollSource = it }
 }

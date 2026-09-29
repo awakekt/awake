@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.ui.platform.blocksGameplayKeys
 import com.awakekt.awake.core.input.InputSnapshot
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.input.PointerButton
+import com.awakekt.awake.core.input.ScrollSource
 
 /**
  * This frame's input with whatever the UI claimed already taken out.
@@ -41,6 +42,12 @@ class GameplayInput(
 
     /** Zero while a scrollable under the pointer took the wheel or a modal layer is open. */
     val scrollDeltaY: Float get() = if (claimed.isScrollConsumed || claimed.isModalOpen) 0f else snapshot.scrollDeltaY
+
+    /** Sideways scroll -- a trackpad's two-finger swipe, or a tilt wheel -- gated exactly like [scrollDeltaY]. */
+    val scrollDeltaX: Float get() = if (claimed.isScrollConsumed || claimed.isModalOpen) 0f else snapshot.scrollDeltaX
+
+    /** What sent this frame's scroll, when the platform can tell; see [ScrollSource]. */
+    val scrollSource: ScrollSource get() = snapshot.scrollSource
 
     /**
      * Whether [button] is held for the world, gated by the same capture and modal rules as [pointerDown].
