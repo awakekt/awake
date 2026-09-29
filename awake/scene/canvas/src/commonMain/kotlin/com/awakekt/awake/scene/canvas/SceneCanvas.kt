@@ -9,17 +9,23 @@ package com.awakekt.awake.scene.canvas
 
 import com.awakekt.awake.compose.foundation.background
 import com.awakekt.awake.compose.foundation.clickable
+import com.awakekt.awake.compose.foundation.gestures.draggable
 import com.awakekt.awake.compose.foundation.layout.Box
 import com.awakekt.awake.compose.foundation.layout.fillMaxHeight
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
+import com.awakekt.awake.compose.foundation.layout.offset
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.text.Text
 import com.awakekt.awake.compose.runtime.Composer
+import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.key
 import com.awakekt.awake.compose.ui.Alignment
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.draw.clip
+import com.awakekt.awake.compose.ui.graphics.CircleShape
+import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
@@ -31,11 +37,14 @@ import com.awakekt.awake.ecs.World
 /**
  * Draws [world]'s visible [CanvasElement]s over whatever is beneath, lowest [CanvasElement.order]
  * first. Each element is tagged `canvas-element-<entity id>` for tests and editor picking.
+ * [CanvasElement.touchOnly] elements are drawn only when [showTouchControls] is true.
  */
 context(_: Composer)
-fun SceneCanvas(world: World, modifier: Modifier = Modifier) {
+fun SceneCanvas(world: World, modifier: Modifier = Modifier, showTouchControls: Boolean = false) {
     val elements = ArrayList<Pair<Entity, CanvasElement>>()
-    world.family<CanvasElement>().forEach { entity, element -> if (element.visible) elements += entity to element }
+    world.family<CanvasElement>().forEach { entity, element ->
+        if (element.visible && (showTouchControls || !element.touchOnly)) elements += entity to element
+    }
     elements.sortBy { it.second.order }
     Box(modifier.fillMaxSize()) {
         for ((entity, element) in elements) {
@@ -65,11 +74,35 @@ private fun CanvasElementView(element: CanvasElement, modifier: Modifier) {
             Box(Modifier.fillMaxHeight().fillMaxWidth(element.value.coerceIn(0f, 1f)).background(fill))
         }
         CanvasElementKind.Button -> Box(
-            modifier.background(back).clickable { element.press() },
+            modifier.background(back).clickable(element.interactions) { element.press() },
             contentAlignment = Alignment.Center,
         ) { Text(element.text, style = textStyle) }
+        CanvasElementKind.Joystick -> JoystickView(element, modifier, back, fill)
     }
 }
+
+/** A round pad whose knob follows a drag, up to the pad's edge, and springs back on release. */
+context(_: Composer)
+private fun JoystickView(element: CanvasElement, modifier: Modifier, back: Color, knob: Color) {
+    val density = LocalDensity.current
+    val radius = minOf(element.width, element.height) / 2f * density
+    Box(
+        modifier.clip(CircleShape).background(back)
+            .draggable(
+                onDrag = { dx, dy -> element.dragStick(dx.toFloat(), dy.toFloat(), radius) },
+                onDragStopped = element::releaseStick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        val size = minOf(element.width, element.height) * KNOB_FRACTION
+        Box(
+            Modifier.offset((element.knobX / density).dp, (element.knobY / density).dp)
+                .size(size.dp).clip(CircleShape).background(knob),
+        )
+    }
+}
+
+private const val KNOB_FRACTION = 0.45f
 
 /**
  * Moves the element inward from its anchor with padding, not `offset`: `offset` only moves the

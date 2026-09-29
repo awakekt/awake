@@ -23,6 +23,7 @@ import com.awakekt.awake.scene.authoring.infrastructure.cameraSystem
 import com.awakekt.awake.scene.authoring.infrastructure.matrixRelativeMovementSystem
 import com.awakekt.awake.scene.authoring.infrastructure.playerInputSystem
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
+import com.awakekt.awake.scene.canvas.SceneCanvasElement
 import com.awakekt.awake.scene.character.CharacterControllerBinding
 import com.awakekt.awake.scene.character.CharacterControllerSystem
 import com.awakekt.awake.scene.character.SceneCharacterController
@@ -68,6 +69,8 @@ class PlayableProject internal constructor(
 ) {
     internal fun has(type: KClass<out SceneComponent>): Boolean =
         scene.nodes.any { it.has(type) }
+
+    internal fun hasCanvasActions(): Boolean = scene.nodes.any { it.hasCanvasAction() }
 }
 
 /**
@@ -115,9 +118,12 @@ suspend fun loadPlayableProject(
  * - `camera_rig`: the camera system
  * - `spinControl` and skinned glTF models: spinning and animation
  *
- * Every speed, distance and size comes from the scene; this adds no tuning of its own.
+ * - `canvas_element`s with an action: [CanvasActionSystem]
+ *
+ * With [touchControls], the scene's touch-only canvas controls are shown. Every speed, distance and
+ * size comes from the scene; this adds no tuning of its own.
  */
-fun SceneAppDsl.playProject(project: PlayableProject) {
+fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = false) {
     scene(project.scene)
     assets {
         builtInSceneAssets()
@@ -126,6 +132,7 @@ fun SceneAppDsl.playProject(project: PlayableProject) {
     val moves = project.has(SceneMovementControl::class)
     val characters = project.has(SceneCharacterController::class)
     if (moves) playerInputSystem()
+    if (moves && project.hasCanvasActions()) frameSystem("canvas-actions") { CanvasActionSystem() }
     project.physics?.let { physicsWorld ->
         fixedSystem("physics") { PhysicsSystem(physicsWorld) }
         if (characters) fixedSystem("character") { CharacterControllerSystem(physicsWorld) }
@@ -138,6 +145,7 @@ fun SceneAppDsl.playProject(project: PlayableProject) {
     }
     frameSystem("animation") { AnimationSystem() }
     onReady {
+        showTouchControls = touchControls
         activatePrimaryCamera(world)
         startSkinnedAnimations(project.models)
     }
@@ -190,6 +198,9 @@ private suspend fun AssetSource.readText(path: String): String =
 
 private fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
     components.any { type.isInstance(it) } || children.any { it.has(type) }
+
+private fun SceneNode.hasCanvasAction(): Boolean =
+    components.any { it is SceneCanvasElement && it.action.isNotEmpty() } || children.any { it.hasCanvasAction() }
 
 private fun SceneNode.meshNames(): List<String> =
     components.filterIsInstance<SceneMeshRenderer>().map { it.mesh } + children.flatMap { it.meshNames() }

@@ -20,7 +20,11 @@ physics backend.
 | `camera_rig` | `CameraSystem` |
 | `spinControl` | Spinning |
 | Skinned glTF model | Its first animation clip, on a loop |
+| `canvas_element` with an `action` | `CanvasActionSystem`: a `move` Joystick steers, a held `jump` Button jumps |
 
 One camera renders: the scene's primary camera, else its first, else a fallback looking at the
 origin. `builtInSceneAssets()` provides the neutral meshes `cube`, `sphere`, `ground` and `plane` and
 the `lit-shadow` material; anything else a scene draws is a project asset.
+
+`playProject(project, touchControls = true)` shows the scene's `touchOnly` canvas elements; a host on a
+touch screen passes it. The scene decides where the controls sit and how big they are.
