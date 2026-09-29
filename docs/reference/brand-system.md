@@ -34,6 +34,22 @@ The Engine Showcase owns the runtime copies that platform hosts consume:
 | [`AppIcon.appiconset`](../../samples/engine-showcase/iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/Contents.json) | iOS AppIcon size catalog |
 | [`index.html`](../../samples/engine-showcase/src/wasmJsMain/resources/index.html) | Web SVG favicon reference |
 
+### Name lockups
+
+The approved wordmark assets are the name lockups: the unmodified mark on its dark field, with its
+corners rounded to 22.5% of its size, beside the product name set in Roboto SemiBold (`AwakeKt`) and
+Regular (`Engine`, `Studio`), converted to outlines. `on-dark` names are `#ECEAE6`; `on-light` names
+are `#16161C`. The mark does not change between the two.
+
+| Asset | Purpose |
+| --- | --- |
+| [`website/landing/brand/lockups/`](../../website/landing/brand/lockups/) | `awakekt`, `awakekt-engine` and `awakekt-studio`, each `-on-dark` and `-on-light` |
+| [`brand_lockups.py`](../../tools/fonts-tooling/brand_lockups.py) | Regenerates the lockups from the SVG master and the shipped Roboto fonts |
+| [awakekt.com/brand](https://awakekt.com/brand/) | Public guidelines page with downloads |
+
+Keep clear space of at least a quarter of the mark's height around a lockup. Lockups stay at least
+20 px tall; the mark alone stays at least 16 px.
+
 The visual reference above is explanatory artwork. It is not a separate master and must stay in
 sync with the SVG master.
 
@@ -58,8 +74,9 @@ On a light surface, retain the icon's dark field. Text-only accents may use the 
 
 ## Name and type rules
 
-Use product names as ordinary interface text until an approved wordmark asset exists. A UI may use
-its own licensed type system; it must not present a text treatment as a new official wordmark. The
+Where the mark and a product name appear together as a logo, use a [name lockup](#name-lockups);
+do not set the name in another typeface or redraw it. Elsewhere, product names are ordinary interface
+text in the UI's own licensed type system, which must not be presented as a new official wordmark. The
 normal text separator is one space: `AwakeKt Studio` and `AwakeKt Engine`.
 
 - Use `AwakeKt Studio` for the commercial authoring application.
@@ -72,7 +89,7 @@ normal text separator is one space: `AwakeKt Studio` and `AwakeKt Engine`.
 
 | Context | Required treatment |
 | --- | --- |
-| Android | Adaptive foreground/background layers; use the existing monochrome vector for themed launchers. |
+| Android | Adaptive foreground/background layers; use the existing monochrome vector for themed launchers. Scale the foreground to 0.8 about its centre so the A's outer corners stay inside the 66 dp safe zone that round launchers show. |
 | iOS | Full-bleed 1024px source; allow the system to apply corner masking. |
 | Desktop | Use the 1024px PNG for taskbar/Dock identity; do not add text to the OS icon. |
 | Web | Use the SVG mark as the favicon; do not create a wordmark favicon. |
