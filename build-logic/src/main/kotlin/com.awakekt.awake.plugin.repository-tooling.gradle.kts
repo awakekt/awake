@@ -4,17 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import com.awakekt.awake.build.tasks.AwakeRepositoryVerificationTask
-import com.awakekt.awake.build.tasks.ReleaseCutTask
 import com.awakekt.awake.build.tasks.VerifyPublishedArtifactsTask
+
+plugins {
+    id("com.awakekt.awake.plugin.release-cut")
+}
 
 tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
     group = "verification"
     description = "Run Awake's repository, documentation, publication, and ownership gates."
-}
-
-tasks.register<ReleaseCutTask>("releaseCut") {
-    group = "release"
-    description = "Promote CHANGELOG Unreleased notes and create a Core release tag."
 }
 
 tasks.register<VerifyPublishedArtifactsTask>("verifyPublishedArtifacts") {
