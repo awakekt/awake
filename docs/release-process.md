@@ -181,9 +181,14 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 
 ## 4. Changelog Rules & Sample Inclusion Policy
 
-1. **Handwritten Prose under `[Unreleased]`**:
-    - As work lands, write clean, human-readable entries under `## [Unreleased]` in `CHANGELOG.md`.
-    - Group entries into `### Added`, `### Changed`, or `### Fixed`.
+1. **One fragment per change**:
+    - As work lands, each PR writes its clean, human-readable entry to its own file,
+      `changelog/unreleased/<section>/<branch-name>.md`, where `<section>` is `added`, `changed`,
+      `deprecated`, `removed`, `fixed` or `security` (see `changelog/unreleased/README.md`).
+    - Never edit `CHANGELOG.md` in a PR: every PR inserting at the same line under `## [Unreleased]`
+      conflicted with every other open one, and a PR merged after a cut filed its entry under a
+      release that did not ship it. CI rejects `CHANGELOG.md` edits outside `release-cut/*`
+      branches and asks every `feat:`/`fix:` PR for a fragment.
 
 2. **Inclusion of Sample & Tooling Updates**:
     - Updates to official sample applications (`samples:engine-showcase`, `samples:ui-showcase`,
@@ -204,11 +209,13 @@ To cut a release from the current `[Unreleased]` batch, run:
 
 This command automatically:
 
-1. Reads handwritten prose under `## [Unreleased]` in `CHANGELOG.md`.
-2. Promotes `## [Unreleased]` to `## [vX.Y.Z-channel.N] - YYYY-MM-DD`.
-3. Prepend a fresh empty `## [Unreleased]` section at the top.
-4. Commits `CHANGELOG.md` alone (`chore(release): cut vX.Y.Z-channel.N`).
-5. Creates an annotated Git tag `vX.Y.Z-channel.N`.
+1. Reads the fragments under `changelog/unreleased/`, plus any entries still handwritten under
+   `## [Unreleased]` in `CHANGELOG.md` (those come first in their section).
+2. Writes them as `## [vX.Y.Z-channel.N] - YYYY-MM-DD`, sections in Keep a Changelog order,
+   below a fresh empty `## [Unreleased]`.
+3. Deletes the fragments and commits them with `CHANGELOG.md` (`chore(release): cut vX.Y.Z-channel.N`).
+4. Creates an annotated Git tag `vX.Y.Z-channel.N`. A misnamed section directory fails the cut
+   rather than dropping its entries.
 
 ### From GitHub Actions
 
