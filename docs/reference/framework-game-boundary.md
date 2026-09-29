@@ -88,8 +88,8 @@ Awake ships mechanisms; games and templates decide how they feel.
 
 ## Agent Routing
 
-`awake-architecture-auditor` applies this guide before a new module, promotion from Studio, a sample, a template ors, or
-server/network/persistence proposal. Domain engineers implement only after the boundary decision.
+`awake-architecture-auditor` applies this guide before a new module, a promotion from Studio, a
+sample or a template, or a server/network/persistence proposal. Domain engineers implement only after the boundary decision.
 Create MMO-specific agents and skills in the MMORPG repository, where they can own product policy.
 
 ## Exception Record
