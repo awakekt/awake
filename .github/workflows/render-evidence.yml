@@ -52,12 +52,14 @@ jobs:
           fi
           echo "render=true" >> "$GITHUB_OUTPUT"
           icon_paths='^awake/(heroicons|ui/shadcn|core/graphics2d)/|^awake/compose/ui/src/commonMain/kotlin/com/awakekt/awake/compose/ui/graphics/vector/'
+          # graphics2d also draws every 2D and UI scene, so it counts toward both sets.
+          icon_only_paths='^awake/(heroicons|ui/shadcn)/|^awake/compose/ui/src/commonMain/kotlin/com/awakekt/awake/compose/ui/graphics/vector/'
           if grep -qE "$icon_paths" <<<"$product"; then
             echo "icons=true" >> "$GITHUB_OUTPUT"
           else
             echo "icons=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -vE "$icon_paths" <<<"$product" | grep -q .; then
+          if grep -vE "$icon_only_paths" <<<"$product" | grep -q .; then
             echo "scenes=true" >> "$GITHUB_OUTPUT"
           else
             echo "scenes=false" >> "$GITHUB_OUTPUT"
@@ -105,6 +107,7 @@ jobs:
           cp awake/ui/shadcn/build/reports/compose-preview/button-icons.png "$RUNNER_TEMP/after/ui-button-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/lucide-icons.png "$RUNNER_TEMP/after/ui-lucide-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/shadcn-icons.png "$RUNNER_TEMP/after/ui-shadcn-icons-cpu.png"
+          cp awake/ui/shadcn/build/reports/compose-preview/heroicons-outline.png "$RUNNER_TEMP/after/ui-heroicons-outline-cpu.png"
 
       - name: Setup Python for original SVG capture
         if: steps.scope.outputs.icons == 'true'
@@ -152,6 +155,7 @@ jobs:
           cp awake/ui/shadcn/build/reports/compose-preview/button-icons.png "$RUNNER_TEMP/before/ui-button-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/lucide-icons.png "$RUNNER_TEMP/before/ui-lucide-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/shadcn-icons.png "$RUNNER_TEMP/before/ui-shadcn-icons-cpu.png"
+          cp awake/ui/shadcn/build/reports/compose-preview/heroicons-outline.png "$RUNNER_TEMP/before/ui-heroicons-outline-cpu.png"
 
       - name: Publish images
         if: steps.scope.outputs.render == 'true'

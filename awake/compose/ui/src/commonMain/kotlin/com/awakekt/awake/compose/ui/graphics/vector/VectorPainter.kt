@@ -65,7 +65,7 @@ class VectorPainter internal constructor(private val image: ImageVector) {
                     // SVG coverage is centered on the stroke boundary. The generic stroke path
                     // preserves an opaque one-pixel core for thin borders, which fattens 16px icons.
                     val fringe = AA_FRINGE_PX.coerceAtMost(stroke.width.value / 2f)
-                    add(vectorPath.path.strokeToSvgFillPath(stroke).tessellateFillAa(tint, fringe, fringe / 2f))
+                    add(vectorPath.path.strokeToSvgFillPath(stroke).tessellateFillAa(tint, fringe))
                 }
             }
         }.merge()

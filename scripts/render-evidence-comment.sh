@@ -19,7 +19,7 @@ img() { # side name present
 }
 
 if [[ "$focus" == icons ]]; then
-  for name in ui-button-icons-cpu ui-lucide-icons-cpu ui-shadcn-icons-cpu; do
+  for name in ui-button-icons-cpu ui-lucide-icons-cpu ui-shadcn-icons-cpu ui-heroicons-outline-cpu; do
     [[ -f "$before/$name.png" && -f "$after/$name.png" ]] || {
       echo "Missing icon capture: $name" >&2
       exit 1
@@ -42,6 +42,10 @@ if [[ "$focus" == icons ]]; then
   echo "| shadcn before | shadcn after |"
   echo "| --- | --- |"
   echo "| $(img before ui-shadcn-icons-cpu 1) | $(img after ui-shadcn-icons-cpu 1) |"
+  echo
+  echo "| Heroicons outline before | Heroicons outline after |"
+  echo "| --- | --- |"
+  echo "| $(img before ui-heroicons-outline-cpu 1) | $(img after ui-heroicons-outline-cpu 1) |"
   echo
   width=220
   echo "| Icon buttons before | Icon buttons after |"
