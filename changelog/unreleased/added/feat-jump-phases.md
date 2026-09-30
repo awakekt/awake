@@ -1,0 +1,1 @@
+- **Jumps play in phases.** `locomotion_animation` gains `takeOff`, played once as the character leaves the ground, `fall`, looped while it comes down (`jump` now covers the rise), and `land`, played once as it touches down unless it is already walking away. All three are optional; a scene naming only `jump` plays it for the whole jump as before.

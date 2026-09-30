@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.animation
 
+import com.awakekt.awake.core.animation.AnimationPlayback
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
@@ -23,8 +24,10 @@ import kotlin.reflect.KClass
 /**
  * Which of a skinned model's clips plays for how the entity moves: [idle] standing, [walk] above
  * [walkAbove] units per second across the ground, [run] above [runAbove], and [jump] from when it
- * rises or falls faster than [airborneAbove] until it lands. Clip names are the model's own
- * animations; a clip left null, or one the model lacks, keeps whatever plays. Changes blend over
+ * rises or falls faster than [airborneAbove] until it lands. A jump can be split into phases:
+ * [takeOff] plays once as it leaves the ground, [jump] while it rises, [fall] while it comes down,
+ * and [land] once as it touches down unless it is already walking away. Clip names are the model's
+ * own animations; a clip left null, or one the model lacks, keeps whatever plays. Changes blend over
  * [crossFade] seconds.
  *
  * The speeds are measured from the entity's world position, so it animates however it is moved:
@@ -44,6 +47,9 @@ data class SceneLocomotionAnimation(
     val walk: String? = null,
     val run: String? = null,
     val jump: String? = null,
+    val takeOff: String? = null,
+    val fall: String? = null,
+    val land: String? = null,
     val walkAbove: Float = DEFAULT_WALK_ABOVE,
     val runAbove: Float = DEFAULT_RUN_ABOVE,
     val airborneAbove: Float = DEFAULT_AIRBORNE_ABOVE,
@@ -73,15 +79,29 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
     private var falling = false
     private var heldHeight = 0f
 
+    /** A take-off or landing clip playing once, and the seconds it has left. */
+    private var once: String? = null
+    private var onceLeft = 0f
+
     /** The clip it last chose, or null before it has moved or stood still. */
     var playing: String? = null
         internal set
+
+    /** Whether [playing] is a take-off or landing clip, played once rather than looped. */
+    internal val playingOnce: Boolean get() = once != null && once == playing
 
     /**
      * The clip for how it moved to world ([x], [y], [z]) over the last [delta] seconds, or null when
      * this frame tells nothing new: its first, or a pause between a fixed-rate mover's steps.
      */
-    internal fun clipFor(x: Float, y: Float, z: Float, delta: Float, ground: GroundContact? = null): String? {
+    internal fun clipFor(
+        x: Float,
+        y: Float,
+        z: Float,
+        delta: Float,
+        ground: GroundContact? = null,
+        durationOf: (String) -> Float? = { null },
+    ): String? {
         val elapsed = sinceMoved + delta
         val stayedPut = x == lastX && y == lastY && z == lastZ
         if (seen && stayedPut && elapsed < STILL_AFTER) {
@@ -97,17 +117,35 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
         lastZ = z
         sinceMoved = 0f
         seen = true
-        return if (first) null else choose(sqrt(dx * dx + dz * dz) / elapsed, vertical, elapsed, ground)
+        return if (first) null else choose(sqrt(dx * dx + dz * dz) / elapsed, vertical, elapsed, ground, durationOf)
     }
 
-    private fun choose(across: Float, vertical: Float, elapsed: Float, ground: GroundContact?): String? {
+    private fun choose(across: Float, vertical: Float, elapsed: Float, ground: GroundContact?, durationOf: (String) -> Float?): String? {
+        val wasAirborne = airborne
         if (ground != null) airborne = !ground.grounded else trackAirborne(vertical, clips.airborneAbove, elapsed)
-        return when {
-            airborne -> clips.jump
-            across > clips.runAbove -> clips.run
-            across > clips.walkAbove -> clips.walk
-            else -> clips.idle
+        when {
+            airborne && !wasAirborne -> playOnce(clips.takeOff, durationOf)
+            !airborne && wasAirborne -> playOnce(clips.land, durationOf)
+            else -> onceLeft -= elapsed
         }
+        // A landing gives way as soon as it walks off; a take-off plays out while it rises.
+        val walkingAway = !airborne && across > clips.walkAbove
+        if (onceLeft <= 0f || walkingAway) once = null
+        return once ?: loopFor(across, vertical)
+    }
+
+    private fun loopFor(across: Float, vertical: Float): String? = when {
+        airborne && vertical < 0f -> clips.fall ?: clips.jump
+        airborne -> clips.jump
+        across > clips.runAbove -> clips.run
+        across > clips.walkAbove -> clips.walk
+        else -> clips.idle
+    }
+
+    private fun playOnce(clip: String?, durationOf: (String) -> Float?) {
+        val duration = clip?.let(durationOf) ?: 0f
+        once = clip.takeIf { duration > 0f }
+        onceLeft = duration
     }
 
     /** Leaves the ground above [airborneAbove]; lands when a fall stops or its height holds. */
@@ -152,10 +190,12 @@ class LocomotionAnimationSystem : System {
         world.queryEach(Transform::class, LocomotionAnimation::class) { entity, transform, locomotion ->
             val animator = world.get<Animator>(entity) ?: return@queryEach
             val placed = transform.worldMatrix
-            val wanted = locomotion.clipFor(placed.m03, placed.m13, placed.m23, delta, world.groundContactOf(entity))
-            if (wanted != null && wanted != locomotion.playing && wanted in animator.player.clipEntries) {
-                animator.player.crossFadeTo(wanted, locomotion.clips.crossFade)
+            val clips = animator.player.clipEntries
+            val wanted = locomotion.clipFor(placed.m03, placed.m13, placed.m23, delta, world.groundContactOf(entity)) { clips[it]?.duration }
+            if (wanted != null && wanted != locomotion.playing && wanted in clips) {
                 locomotion.playing = wanted
+                val playback = if (locomotion.playingOnce) AnimationPlayback.Once else AnimationPlayback.Loop
+                animator.player.crossFadeTo(wanted, locomotion.clips.crossFade, playback)
             }
         }
     }
