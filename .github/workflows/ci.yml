@@ -59,9 +59,11 @@ jobs:
         env:
           TITLE: ${{ github.event.pull_request.title }}
           HEAD_REF: ${{ github.head_ref }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        # HEAD is the PR merged into the current base; its first parent is that base. The event's
+        # base.sha can be older, and diffing from it counts base commits since then (a release
+        # cut's CHANGELOG.md) as the PR's own.
         run: |
-          changed="$(git diff --name-only "$BASE_SHA"...HEAD)"
+          changed="$(git diff --name-only HEAD^1 HEAD)"
           if [[ "$HEAD_REF" != release-cut/* ]] && grep -qx 'CHANGELOG.md' <<< "$changed"; then
             echo "::error file=CHANGELOG.md::Only a release cut edits CHANGELOG.md. Add a fragment instead: changelog/unreleased/<section>/<branch-name>.md (see changelog/unreleased/README.md)."
             exit 1
