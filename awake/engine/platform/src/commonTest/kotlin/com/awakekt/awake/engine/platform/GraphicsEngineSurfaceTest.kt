@@ -55,6 +55,20 @@ class GraphicsEngineSurfaceTest {
     }
 
     @Test
+    fun aResizeReachesTheBackendOnlyWhileItHasASurface() {
+        val events = mutableListOf<String>()
+        val engine = RecordingEngine(AppSpecBuilder().build().createLifecycle(), events)
+
+        engine.resize(0, 0, 1, 1)
+        engine.create("surface")
+        engine.resize(0, 0, 2400, 1080)
+        engine.releaseSurface()
+        engine.resize(0, 0, 1080, 2400)
+
+        assertEquals(listOf("backend surface", "resize", "release"), events)
+    }
+
+    @Test
     fun aHostDensityReachesTheAppsFrames() {
         val densities = mutableListOf<Float>()
         val app = AppSpecBuilder().apply { render { densities += it.density } }.build().createLifecycle()
@@ -83,6 +97,10 @@ class GraphicsEngineSurfaceTest {
 
         override fun restoreBackendSurface(window: Any) {
             events += "restore $window"
+        }
+
+        override fun resizeBackend() {
+            events += "resize"
         }
 
         override fun destroyBackend() {

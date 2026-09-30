@@ -32,6 +32,10 @@ internal fun Renderer.acquireSwapchainImage(currentFrame: Int): Int? {
 
 /** The window path: acquire from the presentation engine, recovering from a stale swapchain. */
 private fun Renderer.acquirePresentedImage(currentFrame: Int): Int? {
+    if (swapchainManager.surfaceResized) {
+        swapchainManager.surfaceResized = false
+        if (swapchainManager.surfaceChangedSinceBuild) recreateSwapChain()
+    }
     // Reset only AFTER a successful acquire (not before) -- if acquire throws and this
     // frame bails out early (see the catch below), an already-reset-but-never-submitted
     // fence would stay unsignaled forever, hanging the NEXT draw() call's
@@ -51,7 +55,8 @@ private fun Renderer.acquirePresentedImage(currentFrame: Int): Int? {
             // stale before this frame's acquire even runs (not just after present, see
             // the catch around vkQueuePresentKHR below) -- recreate and skip this frame
             // entirely: there's no valid acquired image to record/submit/present against.
-            VkResult.VK_SUBOPTIMAL_KHR, VkResult.VK_ERROR_OUT_OF_DATE_KHR -> {
+            // Suboptimal is not thrown: the image was acquired, and the present reports it.
+            VkResult.VK_ERROR_OUT_OF_DATE_KHR -> {
                 recreateSwapChain()
                 return null
             }

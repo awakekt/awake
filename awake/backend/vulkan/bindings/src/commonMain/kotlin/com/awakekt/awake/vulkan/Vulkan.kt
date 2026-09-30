@@ -429,6 +429,7 @@ expect object Vulkan {
         @VkHandleRef("VkFence") fences: LongArray,
     )
 
+    /** The acquired image's index. A suboptimal swapchain still returns one; only errors throw. */
     fun vkAcquireNextImageKHR(
         @VkHandleRef("VkDevice") device: Long,
         @VkHandleRef("VkSwapchainKHR") swapchain: Long,

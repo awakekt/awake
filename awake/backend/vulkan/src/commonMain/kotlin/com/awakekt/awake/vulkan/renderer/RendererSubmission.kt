@@ -54,7 +54,8 @@ internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
         Vulkan.vkQueuePresentKHR(presentQueue, presentInfo)
     } catch (e: VkResultException) {
         when (e.result) {
-            VkResult.VK_SUBOPTIMAL_KHR, VkResult.VK_ERROR_OUT_OF_DATE_KHR -> recreateSwapChain()
+            VkResult.VK_SUBOPTIMAL_KHR -> if (swapchainManager.surfaceChangedSinceBuild) recreateSwapChain()
+            VkResult.VK_ERROR_OUT_OF_DATE_KHR -> recreateSwapChain()
             else -> throw e
         }
     }

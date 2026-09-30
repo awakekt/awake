@@ -55,6 +55,7 @@ public class com/awakekt/awake/vulkan/application/VulkanEngine : com/awakekt/awa
 	protected fun createBackendResources (Ljava/lang/Object;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	protected fun destroyBackend ()V
 	protected fun releaseBackendSurface ()V
+	protected fun resizeBackend ()V
 	protected fun restoreBackendSurface (Ljava/lang/Object;)V
 }
 
@@ -416,6 +417,8 @@ public final class com/awakekt/awake/vulkan/swapchain/SwapchainManager {
 	public final fun getMaxFramesInFlight ()I
 	public final fun getRenderFinishedSemaphores ()[J
 	public final fun getSelectedPresentMode ()Lcom/awakekt/awake/vulkan/enums/VkPresentModeKHR;
+	public final fun getSurfaceChangedSinceBuild ()Z
+	public final fun getSurfaceResized ()Z
 	public final fun getSwapChain ()J
 	public final fun hasDrawableExtent ()Z
 	public final fun isHeadlessPresentable ()Z
@@ -424,6 +427,7 @@ public final class com/awakekt/awake/vulkan/swapchain/SwapchainManager {
 	public final fun setImageFormat (Lcom/awakekt/awake/vulkan/enums/VkFormat;)V
 	public final fun setImageViews (Ljava/util/List;)V
 	public final fun setRenderFinishedSemaphores ([J)V
+	public final fun setSurfaceResized (Z)V
 	public final fun setSwapChain (J)V
 }
 

@@ -1524,7 +1524,8 @@ actual object Vulkan {
             fence.toCPointer<VkFence_T>(),
             imageIndexVar.ptr,
         )
-        throwOnVkFailure(result, "vkAcquireNextImageKHR")
+        // Suboptimal still acquired an image; the present that follows reports it again.
+        if (result != VkResult.VK_SUBOPTIMAL_KHR.value) throwOnVkFailure(result, "vkAcquireNextImageKHR")
         imageIndexVar.value.toInt()
     }
 

@@ -17,6 +17,7 @@ import com.awakekt.awake.vulkan.enums.VkImageUsageFlagBits
 import com.awakekt.awake.vulkan.enums.VkImageViewType
 import com.awakekt.awake.vulkan.enums.VkPresentModeKHR
 import com.awakekt.awake.vulkan.enums.VkSharingMode
+import com.awakekt.awake.vulkan.enums.VkSurfaceTransformFlagBitsKHR
 import com.awakekt.awake.vulkan.enums.flags.VkFenceCreateFlagBits
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -36,6 +37,7 @@ import com.awakekt.awake.vulkan.models.info.VkSemaphoreCreateInfo
 import com.awakekt.awake.vulkan.models.info.VkSwapchainCreateInfoKHR
 import com.awakekt.awake.vulkan.utils.findQueueFamilies
 import com.awakekt.awake.vulkan.utils.querySwapChainSupport
+import kotlin.concurrent.Volatile
 
 /**
  * Phase 2 (renderer abstraction): owns the swapchain (images, image views, format, extent),
@@ -90,12 +92,30 @@ class SwapchainManager(
     internal var imagesInFlight = LongArray(0)
     var currentFrame = 0
 
+    /** The surface's orientation and size when the swapchain was last built. */
+    private var builtTransform = VkSurfaceTransformFlagBitsKHR.VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+    private var builtSurfaceExtent = VkExtent2D()
+
+    /** Set by the host when the window resized. Not every driver reports a rotation as out of
+     * date (the Android emulator doesn't), so the next frame checks the surface itself. */
+    @Volatile
+    var surfaceResized = false
+
+    /**
+     * Whether a suboptimal present means the swapchain must be rebuilt. With the compositor
+     * rotating for us, a rotated Android surface reports suboptimal on every present; rebuilding
+     * each frame would only reproduce the same swapchain, so it happens only when the surface
+     * turned or resized since the last build.
+     */
+    val surfaceChangedSinceBuild: Boolean
+        get() = surfaceChanged(querySwapChainSupport(physicalDevice, surface).capabilities, builtTransform, builtSurfaceExtent)
+
     fun create() {
         val (capabilities, formats, presentModes) = querySwapChainSupport(physicalDevice, surface)
         val (format, colorSpace) = chooseSwapSurfaceFormat(formats)
         val presentMode = chooseSwapPresentMode(presentModes, presentPreference)
         selectedPresentMode = presentMode
-        val chosenExtent = chooseSwapExtent(capabilities)
+        val (preTransform, chosenExtent) = planSwapchainOrientation(capabilities, chooseSwapExtent(capabilities))
 
         val imageCount = chooseSwapchainImageCount(capabilities)
 
@@ -125,8 +145,6 @@ class SwapchainManager(
                 throw Exception("No valid usage flags found")
             }
 
-        val preTransform = capabilities.currentTransform
-
         val createInfo = VkSwapchainCreateInfoKHR(
             surface = surface,
             minImageCount = imageCount,
@@ -146,6 +164,8 @@ class SwapchainManager(
         imageFormat = format
         swapChain = Vulkan.vkCreateSwapchainKHR(device, createInfo)
         extent = chosenExtent
+        builtTransform = capabilities.currentTransform
+        builtSurfaceExtent = capabilities.currentExtent
         createImageViews()
         imagesInFlight = LongArray(imageViews.size)
         renderFinishedSemaphores = LongArray(imageViews.size) {
@@ -410,3 +430,34 @@ internal fun chooseSwapPresentMode(
 
 /** Two, like a double-buffered swapchain: enough for the frame loop's in-flight logic. */
 private const val HEADLESS_IMAGE_COUNT = 2
+
+/**
+ * The pre-transform and image size to build a swapchain with. Where the surface allows it the
+ * transform is identity, so the compositor rotates the frame, and on a quarter turn the images take
+ * the window's orientation rather than the display's natural one. Passing the current transform
+ * through instead told the compositor the frame was already rotated, which the engine never does.
+ */
+internal fun planSwapchainOrientation(
+    capabilities: VkSurfaceCapabilitiesKHR,
+    extent: VkExtent2D,
+): Pair<VkSurfaceTransformFlagBitsKHR, VkExtent2D> {
+    val identity = VkSurfaceTransformFlagBitsKHR.VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR
+    if (!(capabilities.supportedTransforms has identity)) return capabilities.currentTransform to extent
+    val quarterTurn = capabilities.currentTransform == VkSurfaceTransformFlagBitsKHR.VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
+        capabilities.currentTransform == VkSurfaceTransformFlagBitsKHR.VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR
+    val fixedExtent = capabilities.currentExtent.width != Int.MAX_VALUE
+    return identity to if (quarterTurn && fixedExtent) VkExtent2D(extent.height, extent.width) else extent
+}
+
+/**
+ * Whether the surface changed since a swapchain was built for [builtTransform] and
+ * [builtExtent]. A surface whose size follows the window (desktop) always counts as changed, since
+ * it reports a resize as suboptimal.
+ */
+internal fun surfaceChanged(
+    capabilities: VkSurfaceCapabilitiesKHR,
+    builtTransform: VkSurfaceTransformFlagBitsKHR,
+    builtExtent: VkExtent2D,
+): Boolean = capabilities.currentExtent.width == Int.MAX_VALUE ||
+    capabilities.currentTransform != builtTransform ||
+    capabilities.currentExtent != builtExtent
