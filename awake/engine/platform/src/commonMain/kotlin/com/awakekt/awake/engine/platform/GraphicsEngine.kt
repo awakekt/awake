@@ -103,6 +103,7 @@ abstract class GraphicsEngine(
     }
 
     final override fun resize(x: Int, y: Int, width: Int, height: Int) {
+        if (isReady && !surfaceReleased) resizeBackend()
         appLifecycle.resize(width.toFloat(), height.toFloat())
     }
 
@@ -170,6 +171,10 @@ abstract class GraphicsEngine(
     protected open fun restoreBackendSurface(window: Any) {
         throw UnsupportedOperationException("${this::class.simpleName} can't restore its surface")
     }
+
+    /** The window surface changed size or orientation. Called on the host's UI thread, which can
+     * run beside a frame, so a backend should only note the change for its next frame. */
+    protected open fun resizeBackend() = Unit
 
     /** Backend-specific GPU teardown -- reads [renderer] (this class's own protected field)
      * plus whatever backend-local pipeline objects the override's own

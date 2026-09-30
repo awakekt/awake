@@ -14,6 +14,7 @@ public abstract class com/awakekt/awake/engine/platform/GraphicsEngine : com/awa
 	protected fun releaseBackendSurface ()V
 	public final fun releaseSurface ()V
 	public final fun resize (IIII)V
+	protected fun resizeBackend ()V
 	protected fun restoreBackendSurface (Ljava/lang/Object;)V
 	public final fun restoreSurface (Ljava/lang/Object;)V
 	public final fun resume ()V

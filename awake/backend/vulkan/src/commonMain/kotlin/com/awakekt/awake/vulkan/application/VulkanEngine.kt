@@ -691,6 +691,10 @@ open class VulkanEngine(
         vulkanRenderer.rebuildSwapchainResources()
     }
 
+    override fun resizeBackend() {
+        swapchainManager.surfaceResized = true
+    }
+
     override fun destroyBackend() {
         // The GPU may still have the last frame's work in flight the instant the app's
         // window-close loop exits -- destroying framebuffers/image views/pipelines while

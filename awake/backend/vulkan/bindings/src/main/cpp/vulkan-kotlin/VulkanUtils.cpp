@@ -774,7 +774,9 @@ getPhysicalDeviceQueueFamilyProperties(JNIEnv *env, jlong arg0) {
         uint32_t handle;
         VkResult result = vkAcquireNextImageKHR(device, swapchainKHR, vkarg2, semaphore, fence,
                                                 &handle);
-        if (result != VK_SUCCESS) {
+        // VK_SUBOPTIMAL_KHR still acquired an image and will signal the semaphore; throwing would
+        // lose the index. The present that follows reports it again, and the renderer decides there.
+        if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             exception_utils::resultException(env, result,
                                              "There was a problem executing vkAcquireNextImageKHR");
         }
