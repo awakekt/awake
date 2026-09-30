@@ -81,6 +81,12 @@ jobs:
         if: steps.scope.outputs.render == 'true'
         run: ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/after"
 
+      - name: Capture icon preview on head
+        if: steps.scope.outputs.render == 'true'
+        run: |
+          ./gradlew :awake:ui:shadcn:desktopTest --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs'
+          cp awake/ui/shadcn/build/reports/compose-preview/button-icons.png "$RUNNER_TEMP/after/ui-button-icons-cpu.png"
+
       - name: Render base
         if: steps.scope.outputs.render == 'true'
         run: |
@@ -96,6 +102,13 @@ jobs:
           cp -R "$GITHUB_WORKSPACE/awake/asset/shader-compiler/rust-native/target" awake/asset/shader-compiler/rust-native/ || true
           ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/before" \
             || echo "::warning::The base failed to render; showing every image as new."
+
+      - name: Capture icon preview on base
+        if: steps.scope.outputs.render == 'true'
+        run: |
+          cd "$RUNNER_TEMP/base"
+          ./gradlew :awake:ui:shadcn:desktopTest --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs'
+          cp awake/ui/shadcn/build/reports/compose-preview/button-icons.png "$RUNNER_TEMP/before/ui-button-icons-cpu.png"
 
       - name: Publish images
         if: steps.scope.outputs.render == 'true'

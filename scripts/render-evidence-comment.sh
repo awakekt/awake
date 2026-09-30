@@ -32,7 +32,8 @@ total=$(( ${#changed[@]} + ${#unchanged[@]} ))
 echo "<!-- render-evidence -->"
 echo "## Render evidence"
 echo
-echo "Headless Vulkan (lavapipe) renders of the \`:awake:engine:render:parity\` scenarios at \`${sha:0:9}\`. **${#changed[@]} of $total changed.**"
+echo "Headless Vulkan (lavapipe) render scenarios and the shadcn icon-button CPU preview at \`${sha:0:9}\`. **${#changed[@]} of $total changed.**"
+echo "The \`ui-button-icons-cpu\` image is a CPU raster preview, not a GPU pixel-fidelity result."
 if ! ls "$before"/*.png >/dev/null 2>&1; then
   echo
   echo "_The base commit has no evidence capture, so every image is shown as new._"
@@ -60,4 +61,4 @@ if (( ${#unchanged[@]} )); then
   echo "</details>"
 fi
 echo
-echo "Regenerate locally with \`./gradlew :awake:engine:render:parity:captureRenderEvidence\`."
+echo "Regenerate the render scenarios with \`./gradlew :awake:engine:render:parity:captureRenderEvidence\` and the icon preview with \`./gradlew :awake:ui:shadcn:desktopTest --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs'\`."
