@@ -169,3 +169,79 @@
   font-weight: 600;
   letter-spacing: -0.01em;
 }
+
+/* Guide page template: badges under the title, then a row of figures. */
+.md-typeset .awake-lede {
+  margin-top: -0.4rem;
+  font-size: 1.05rem;
+  color: var(--md-default-fg-color--light);
+}
+
+.md-typeset .awake-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.8rem 0 1.2rem;
+}
+
+.md-typeset .awake-badge {
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 6px;
+  font: 400 0.68rem/1.6 var(--md-code-font-family);
+  color: var(--md-default-fg-color--light);
+}
+
+.md-typeset .awake-badge--ok {
+  color: #1f7a4a;
+  border-color: rgba(31, 122, 74, 0.35);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .awake-badge--ok {
+  color: #6fd39a;
+}
+
+.md-typeset .awake-figures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0 0.4rem;
+}
+
+.md-typeset .awake-figures figure {
+  /* Material sizes figures to their content; in the grid each fills its cell. */
+  width: auto;
+  max-width: none;
+  display: block;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 10px;
+}
+
+.md-typeset .awake-figures img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  image-rendering: pixelated;
+  background: var(--awake-field-deep);
+}
+
+.md-typeset .awake-figures figure > p {
+  margin: 0;
+}
+
+.md-typeset .awake-figures figcaption {
+  max-width: none;
+  text-align: left;
+  font-style: normal;
+  margin: 0;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.68rem;
+  color: var(--md-default-fg-color--light);
+}
+
+/* A property name reads as one token; never break it mid-word. */
+.md-typeset table td:first-child code {
+  white-space: nowrap;
+}

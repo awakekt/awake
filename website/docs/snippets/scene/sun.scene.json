@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "sun",
+      "components": [
+        {
+          "component": "light",
+          "type": "Directional",
+          "direction": { "x": 0.55, "y": 1.0, "z": 0.35 },
+          "color": { "x": 1.0, "y": 0.97, "z": 0.9 },
+          "intensity": 1.0,
+          "shadowDistance": 60.0
+        }
+      ]
+    }
+  ]
+}

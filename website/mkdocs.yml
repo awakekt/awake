@@ -11,8 +11,8 @@ plugins:
       canonical_version: latest
       version_selector: true
 extra:
-  awake_version: 0.1.0-alpha.7
-  awake_vulkan_version: 0.1.0
+  awake_version: 0.1.0-alpha.15
+  awake_vulkan_version: 0.1.6
   version:
     provider: mike
 theme:
@@ -65,6 +65,7 @@ nav:
       - Scene Runtime: engine/scene.md
       - Scene Authoring: scene/authoring.md
       - Scene Rendering: scene/rendering.md
+      - Lights and Shadows: scene/lights-and-shadows.md
       - Navigation: scene/navigation.md
       - AI: scene/ai.md
       - World Streaming: scene/world.md
@@ -89,6 +90,14 @@ nav:
   - Releases & Compatibility: releases.md
 markdown_extensions:
   - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -100,6 +109,9 @@ markdown_extensions:
         - ..
         - website/docs
       check_paths: true
+      # Included regions start at the column they have in their test; strip it so every sample
+      # starts flush left.
+      dedent_subsections: true
   - pymdownx.tabbed:
       alternate_style: true
   - pymdownx.emoji:

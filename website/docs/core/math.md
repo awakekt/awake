@@ -14,19 +14,15 @@ the receiver; `normalized()` returns a new vector and leaves the receiver unchan
 
 Use the mutating form in a frame loop when you already own a scratch vector:
 
-````markdown
 ```kotlin
 --8<-- "awake/core/math/src/commonTest/kotlin/com/awakekt/awake/core/math/Vec3MutabilityTest.kt:normalize-in-place"
 ```
-````
 
 Use the allocating form when preserving the original vector is useful:
 
-````markdown
 ```kotlin
 --8<-- "awake/core/math/src/commonTest/kotlin/com/awakekt/awake/core/math/Vec3MutabilityTest.kt:normalized-copy"
 ```
-````
 
 These examples are extracted from the compiled math tests. They are intentionally small: the
 tests verify the mutation contract, while this page explains when to choose each form.

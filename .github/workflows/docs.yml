@@ -58,17 +58,24 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "alias=$alias" >> "$GITHUB_OUTPUT"
+          # The Vulkan backend has its own release train; install snippets pair Core with the
+          # newest Vulkan release.
+          git fetch --quiet --tags origin
+          vulkan="$(git tag --list 'vulkan-v*' --sort=-v:refname | head -n 1)"
+          echo "vulkan=${vulkan#vulkan-v}" >> "$GITHUB_OUTPUT"
 
       - name: Build documentation
         working-directory: website
         env:
           AWAKE_DOCS_VERSION: ${{ steps.docs-version.outputs.version }}
+          AWAKE_DOCS_VULKAN_VERSION: ${{ steps.docs-version.outputs.vulkan }}
         run: mkdocs build --strict
 
       - name: Publish versioned documentation
         working-directory: website
         env:
           AWAKE_DOCS_VERSION: ${{ steps.docs-version.outputs.version }}
+          AWAKE_DOCS_VULKAN_VERSION: ${{ steps.docs-version.outputs.vulkan }}
           DOCS_VERSION: ${{ steps.docs-version.outputs.version }}
           DOCS_ALIAS: ${{ steps.docs-version.outputs.alias }}
         run: |

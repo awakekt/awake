@@ -1,0 +1,1 @@
+- **The scene DSL sets a sun's shadows.** `directionalLight(...)` and both `sun(...)` helpers take `shadowsEnabled` and `shadowDistance`, with the `Light` component's defaults, so a Kotlin scene can say everything a scene document can. The `direction` parameter is documented as the direction the light comes from, as `Light` has always used; it said the opposite before.

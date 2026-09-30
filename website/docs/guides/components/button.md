@@ -9,11 +9,9 @@ Add [`awake:ui:shadcn`](../../getting-started.md#ui) to `commonMain` before usin
 The example below is extracted from the compiled UI showcase, so the docs use the same API that
 the sample builds.
 
-````markdown
 ```kotlin
 --8<-- "samples/ui-showcase/src/commonMain/kotlin/com/awakekt/awake/sample/uishowcase/ui/pages/inputs/ButtonPage.kt:button-basic"
 ```
-````
 
 ![Awake Shadcn button variants rendered in the light theme](../../assets/ui/button-variants-light.png)
 
