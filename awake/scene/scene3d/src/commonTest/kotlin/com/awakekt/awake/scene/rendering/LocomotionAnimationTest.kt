@@ -71,6 +71,7 @@ class LocomotionAnimationTest {
         fun after(dx: Float, dy: Float): String? {
             transform.position.x += dx
             transform.position.y += dy
+            transform.computeLocalMatrix()
             system.update(world, STEP)
             return locomotion.playing
         }

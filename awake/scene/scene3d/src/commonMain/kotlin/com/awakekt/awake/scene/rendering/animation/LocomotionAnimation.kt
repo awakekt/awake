@@ -25,8 +25,9 @@ import kotlin.reflect.KClass
  * or falls faster than [airborneAbove]. Clip names are the model's own animations; a clip left
  * null, or one the model lacks, keeps whatever plays. Changes blend over [crossFade] seconds.
  *
- * The speeds are measured from the entity's own transform, so it animates however it is moved:
- * by a character controller, straight through the world, or by a script. Climbing a slope also
+ * The speeds are measured from the entity's world position, so it animates however it is moved:
+ * by a character controller, straight through the world, or by a script, and a model on a child
+ * node of the moving entity animates with it. Climbing a slope also
  * moves it upward, so [airborneAbove] must sit above the vertical speed its steepest walkable slope
  * gives at a run.
  */
@@ -90,12 +91,15 @@ class LocomotionAnimationSystem : System {
         if (delta <= 0f) return
         world.queryEach(Transform::class, LocomotionAnimation::class) { entity, transform, locomotion ->
             val animator = world.get<Animator>(entity) ?: return@queryEach
-            val position = transform.position
+            val placed = transform.worldMatrix
+            val x = placed.m03
+            val y = placed.m13
+            val z = placed.m23
             if (locomotion.seen) {
-                val dx = position.x - locomotion.lastX
-                val dz = position.z - locomotion.lastZ
+                val dx = x - locomotion.lastX
+                val dz = z - locomotion.lastZ
                 val across = sqrt(dx * dx + dz * dz) / delta
-                val vertical = abs(position.y - locomotion.lastY) / delta
+                val vertical = abs(y - locomotion.lastY) / delta
                 val clips = locomotion.clips
                 val wanted = when {
                     vertical > clips.airborneAbove -> clips.jump
@@ -108,9 +112,9 @@ class LocomotionAnimationSystem : System {
                     locomotion.playing = wanted
                 }
             }
-            locomotion.lastX = position.x
-            locomotion.lastY = position.y
-            locomotion.lastZ = position.z
+            locomotion.lastX = x
+            locomotion.lastY = y
+            locomotion.lastZ = z
             locomotion.seen = true
         }
     }
