@@ -94,6 +94,32 @@ public final class com/awakekt/awake/scene/rendering/animation/CharacterSlot {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/rendering/animation/LocomotionAnimation {
+	public fun <init> (Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;)V
+	public final fun getClips ()Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;
+	public final fun getPlaying ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/LocomotionAnimationBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/animation/LocomotionAnimationBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/animation/LocomotionAnimation;)Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/LocomotionAnimationSystem : com/awakekt/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
 public final class com/awakekt/awake/scene/rendering/animation/ModularCharacterComponent {
 	public fun <init> (Lcom/awakekt/awake/core/animation/Skin;Ljava/util/Map;ZLcom/awakekt/awake/core/animation/Skeleton;)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/animation/Skin;Ljava/util/Map;ZLcom/awakekt/awake/core/animation/Skeleton;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -125,6 +151,51 @@ public final class com/awakekt/awake/scene/rendering/animation/ModularCharacterC
 public final class com/awakekt/awake/scene/rendering/animation/ModularSkeletalSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation$Companion;
+	public fun <init> ()V
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFF)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()F
+	public final fun component6 ()F
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFF)Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;FFFFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAirborneAbove ()F
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getCrossFade ()F
+	public final fun getIdle ()Ljava/lang/String;
+	public final fun getJump ()Ljava/lang/String;
+	public final fun getRun ()Ljava/lang/String;
+	public final fun getRunAbove ()F
+	public final fun getWalk ()Ljava/lang/String;
+	public final fun getWalkAbove ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/scene/rendering/animation/SkinnedPose {

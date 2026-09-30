@@ -14,6 +14,7 @@ import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.controls.movement.MovementControl
 import com.awakekt.awake.scene.controls.movement.registerControls
 import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.core.motion.GroundContact
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.physics.PhysicsSystem
@@ -21,6 +22,7 @@ import com.awakekt.awake.scene.physics.registerPhysics
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class CharacterControllerTest {
@@ -56,17 +58,24 @@ class CharacterControllerTest {
         arena.run(STEPS)
         val ground = arena.position.y
 
+        assertTrue(arena.ground.grounded, "standing must be on the ground")
+
         arena.intent.jump = true
         arena.run(1)
         arena.intent.jump = false
+        assertFalse(arena.ground.grounded, "taking off must leave the ground")
         var peak = ground
+        var airborneSteps = 0
         repeat(STEPS) {
             arena.run(1)
             peak = maxOf(peak, arena.position.y)
+            if (!arena.ground.grounded) airborneSteps++
         }
 
         assertTrue(peak > ground + 0.8f, "a 5 m/s jump must rise about 1.3 m; peak ${peak - ground}")
         assertEquals(ground, arena.position.y, GROUND_TOLERANCE, "it must land back on the floor")
+        assertTrue(arena.ground.grounded, "landing must be back on the ground")
+        assertTrue(airborneSteps > STEPS / 4, "the whole flight is off the ground, even its top: $airborneSteps steps")
     }
 
     @Test
@@ -108,6 +117,7 @@ class CharacterControllerTest {
         val position get() = world.get<Transform>(player)!!.position
         val intent get() = world.get<MovementControl>(player)!!
         val character get() = world.get<CharacterController>(player)!!
+        val ground get() = world.get<GroundContact>(player)!!
 
         fun run(steps: Int) = repeat(steps) {
             physics.update(world, DELTA)

@@ -11,6 +11,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.controls.movement.CameraRelativeBasis
 import com.awakekt.awake.scene.controls.movement.MovementControl
+import com.awakekt.awake.scene.core.motion.GroundContact
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.physics.character.KinematicCharacterController
 
@@ -40,7 +41,7 @@ class CharacterControllerSystem(
             val intent = world.get<MovementControl>(entity)
             val moveX = intent?.moveX ?: 0f
             val moveZ = intent?.moveZ ?: 0f
-            val step = (intent?.speed ?: defaultSpeed) * delta
+            val step = (intent?.currentSpeed(defaultSpeed) ?: defaultSpeed) * delta
 
             // Just after take-off the ground probe still reaches the floor, so a rising character
             // is airborne whatever the probe says; otherwise the next step would cancel the jump.
@@ -57,6 +58,8 @@ class CharacterControllerSystem(
             )
             body.move(motion, delta)
             transform.position.set(body.position)
+            world.get<GroundContact>(entity)?.grounded = body.isGrounded && character.verticalVelocity <= 0f
+            intent?.turnToward(transform, basis.worldX(moveX, moveZ), basis.worldZ(moveX, moveZ), delta)
         }
     }
 
