@@ -17,6 +17,7 @@ import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.asset.shaders.ShaderStage as ShaderProgramStage
 import com.awakekt.awake.asset.shaders.ShaderStages
 import com.awakekt.awake.asset.shaders.buildContentFeature
+import com.awakekt.awake.asset.shaders.castsWithPrimaryDepthShader
 import com.awakekt.awake.asset.shaders.narrowedTo
 import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.asset.shaders.spec
@@ -186,7 +187,7 @@ open class WebGpuEngine(
             }
             val formatPipelines = buildMap {
                 plan.scenePipelines
-                    .filter { it.variant == PipelineVariant.Opaque && it.vertexFormat != vertexFormat }
+                    .filter { it.castsWithPrimaryDepthShader(vertexFormat) }
                     .forEach { scenePipeline ->
                         put(
                             scenePipeline.vertexFormat,

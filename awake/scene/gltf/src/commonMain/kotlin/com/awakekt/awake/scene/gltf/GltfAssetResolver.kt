@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.gltf
 
 import com.awakekt.awake.asset.gltf.GltfAlphaMode
+import com.awakekt.awake.asset.gltf.GltfMesh
 import com.awakekt.awake.asset.gltf.GltfParser
 import com.awakekt.awake.asset.gltf.LoadedPrimitive
 import com.awakekt.awake.asset.gltf.LoadedScene
@@ -37,6 +38,12 @@ import com.awakekt.awake.scene.runtime.SceneAssetResolver
  * Resolves ANY `.gltf` or `.glb` path dynamically on demand. Zero hardcoded model or character
  * identifiers. Caches loaded scenes so that entities referencing them can have their skeletons,
  * poses, and animation players bound automatically.
+ *
+ * A skinned `.gltf` draws as parts: `gltf-primitive:<path>#<i>` is its i-th node with both a mesh
+ * and a skin, in file order, and `gltf-material:<path>#<i>` that part's base colour texture. A
+ * textured part is drawn by a `PositionNormalColorUvSkin` pipeline, so the host's render plan must
+ * declare one; skinned parts cast no shadow. The model's own path still names its first skinned
+ * node, untextured.
  */
 @Suppress("TooManyFunctions") // One resolver: preload, query and resolve are one lifecycle.
 class GltfAssetResolver(
@@ -46,6 +53,7 @@ class GltfAssetResolver(
     private val loadedScenes = mutableMapOf<String, LoadedSkinnedScene>()
     private val loadedStaticMeshes = mutableMapOf<String, MeshGeometry>()
     private val loadedMaterials = mutableMapOf<String, LoadedGltfMaterial>()
+    private val skinnedPartTextures = mutableMapOf<String, TextureAsset>()
     private val loadedMaterialSlots = mutableMapOf<String, List<GltfMaterialSlot>>()
     private var assetSource: AssetSource = AssetSource { path ->
         runCatching { bundledResourceReader(path.value) }
@@ -136,6 +144,11 @@ class GltfAssetResolver(
      */
     suspend fun preloadMaterials(path: String, bytes: ByteArray) {
         if (path in loadedMaterialSlots) return
+        val skinned = loadedScenes[path] ?: parseSkinnedScene(path, bytes)?.also { loadedScenes[path] = it }
+        if (skinned != null && skinned.skinnedNodes.isNotEmpty()) preloadSkinnedParts(path, skinned) else preloadStaticSlots(path, bytes)
+    }
+
+    private suspend fun preloadStaticSlots(path: String, bytes: ByteArray) {
         val scene = parseStaticScene(path, bytes)
         val primitives = scene.meshes.flatMap { it.primitives }
         if (primitives.isEmpty()) return
@@ -155,6 +168,29 @@ class GltfAssetResolver(
         }
         loadedMaterialSlots[path] = slots
     }
+
+    private suspend fun preloadSkinnedParts(path: String, scene: LoadedSkinnedScene) {
+        loadedMaterialSlots[path] = scene.parts().mapIndexed { index, part ->
+            val key = "$path#$index"
+            part.baseColorImageBytes?.takeIf { part.isTextured }?.let { skinnedPartTextures[key] = decodeTexture(it) }
+            GltfMaterialSlot(
+                mesh = "$PRIMITIVE_MESH_PREFIX$key",
+                material = if (part.isTextured) "gltf-material:$key" else "skinned-material",
+                parameters = null,
+            )
+        }
+    }
+
+    /** The geometry [name] draws, or null when it names no skinned part. */
+    internal fun skinnedPartGeometry(name: String): MeshGeometry? = name.takeIf { it.startsWith(PRIMITIVE_MESH_PREFIX) }
+        ?.let { loadedScenes[modelPath(it)]?.parts()?.getOrNull(it.substringAfterLast('#').toIntOrNull() ?: -1) }
+        ?.let { part ->
+            if (part.isTextured) {
+                MeshGeometry(part.toInterleavedPositionNormalColorUvSkin(), part.indices, format = VertexFormat.PositionNormalColorUvSkin)
+            } else {
+                MeshGeometry(part.toInterleavedSkinned(), part.indices, format = VertexFormat.PositionNormalColorSkin)
+            }
+        }
 
     /** Returns the material key to persist in a placed scene descriptor. */
     fun materialName(path: String): String = if (path in loadedMaterials) {
@@ -180,7 +216,7 @@ class GltfAssetResolver(
     }
 
     override fun createMesh(runtime: SceneAppLifecycleRuntime, name: String): Mesh? {
-        val geometry = loadedScenes[name]
+        val geometry = skinnedPartGeometry(name) ?: loadedScenes[name]
             ?.firstSkinnedAsset()
             ?.let { skinnedAsset ->
                 MeshGeometry(
@@ -200,6 +236,8 @@ class GltfAssetResolver(
 
     override fun createMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material? = when {
         name == "skinned-material" -> runtime.renderer.createMaterial(SkinnedUniformLayout)
+        name.startsWith("gltf-material:") && name.removePrefix("gltf-material:") in skinnedPartTextures ->
+            runtime.renderer.createMaterial(SkinnedUniformLayout, texture = skinnedPartTextures.getValue(name.removePrefix("gltf-material:")))
         name.startsWith("gltf-material:") -> loadedMaterials[name.removePrefix("gltf-material:")]?.let { loaded ->
             runtime.renderer.createMaterial(TexturedUniformLayout, texture = loaded.texture, pbrTextures = loaded.pbrTextures)
         }
@@ -257,6 +295,19 @@ private suspend fun LoadedPrimitive.toLoadedMaterial(): LoadedGltfMaterial? {
 private suspend fun decodeTexture(bytes: ByteArray): TextureAsset {
     val bitmap = createBitmap(bytes)
     return TextureAsset(bitmap.toRgba8Bytes(), bitmap.width, bitmap.height)
+}
+
+/** Every node with both a mesh and a skin, in file order: the model's parts. */
+private fun LoadedSkinnedScene.parts(): List<GltfMesh> = skinnedNodes.map { meshes[it.meshIndex] }
+
+private val GltfMesh.isTextured: Boolean get() = uvs != null && baseColorImageBytes != null
+
+/** The skinned scene in a `.gltf` [bytes], or null for a `.glb` or a file this parser cannot skin. */
+private suspend fun GltfAssetResolver.parseSkinnedScene(path: String, bytes: ByteArray): LoadedSkinnedScene? {
+    if (bytes.isGlb()) return null
+    val json = bytes.decodeToString()
+    val external = GltfParser.loadExternalResources(json, AssetPath(path), AssetSource { assetPath -> readAsset(assetPath) }).getOrThrow()
+    return runCatching { GltfParser.parseSkinned(json, external) }.getOrNull()
 }
 
 private suspend fun GltfAssetResolver.parseStaticScene(path: String, bytes: ByteArray): LoadedScene =

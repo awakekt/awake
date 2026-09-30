@@ -87,6 +87,18 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         bindingsByGroup = PackShaderSets.Textured.webGpu.bindingsByGroup,
         bindingsMetadataAvailable = PackShaderSets.Textured.webGpu.bindingsMetadataAvailable,
     )
+    val skinnedTexturedPipeline = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        DescriptorSetLayoutHandle(0),
+        wgsl(PackShaderSets.SkinnedTextured),
+        ByteArray(0),
+        VertexFormat.PositionNormalColorUvSkin,
+        "vertexMain",
+        "fragmentMain",
+        bindingsByGroup = PackShaderSets.SkinnedTextured.webGpu.bindingsByGroup,
+        bindingsMetadataAvailable = PackShaderSets.SkinnedTextured.webGpu.bindingsMetadataAvailable,
+    )
     val instancedTexturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
@@ -140,7 +152,10 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         pipelines = PipelineTable(
             primary = scenePipeline,
             primaryFormat = VertexFormat.PositionNormalColor,
-            byFormat = mapOf(VertexFormat.PositionNormalColorUv to texturedPipeline),
+            byFormat = mapOf(
+                VertexFormat.PositionNormalColorUv to texturedPipeline,
+                VertexFormat.PositionNormalColorUvSkin to skinnedTexturedPipeline,
+            ),
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
         ),
@@ -167,6 +182,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             scenePipeline.destroy()
             backCulledScenePipeline.destroy()
             texturedPipeline.destroy()
+            skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
             graphicsDevice.destroy()
         }

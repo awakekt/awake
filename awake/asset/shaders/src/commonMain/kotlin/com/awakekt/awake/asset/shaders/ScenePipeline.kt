@@ -6,6 +6,7 @@
 package com.awakekt.awake.asset.shaders
 
 import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.core.geometry.VertexSemantic
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
@@ -57,6 +58,15 @@ data class ScenePipeline(
     val buildTransparent: Boolean = false,
     val depthShaders: ShaderSet? = null,
 )
+
+/**
+ * Whether the plan's depth shader, built for this pipeline's vertex format, draws its meshes into
+ * the shadow map: an opaque pipeline for a format other than [primaryFormat], without joints. That
+ * shader reads no joint palette, so a skinned mesh casts through its own depth variant or not at all.
+ */
+fun ScenePipeline.castsWithPrimaryDepthShader(primaryFormat: VertexFormat): Boolean =
+    variant == PipelineVariant.Opaque && vertexFormat != primaryFormat &&
+        vertexFormat.floatOffsetOf(VertexSemantic.JointIndices) < 0
 
 /**
  * These declarations as build requests, reading each one's [stages] half.

@@ -35,6 +35,7 @@ import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinSystem
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
@@ -163,18 +164,28 @@ fun activatePrimaryCamera(world: World) {
     if (!world.has(cameraEntity, ActiveCamera::class)) world.add(cameraEntity, ActiveCamera())
 }
 
-/** Gives every skinned glTF model an [Animator] playing its first clip on a loop. */
+/**
+ * Gives every skinned glTF model an [Animator] playing its first clip on a loop. A model drawn as
+ * parts (`gltf-primitive:<path>#<i>`) animates once: the parts' parent node holds the animator and
+ * each part draws its pose, skinned to the model's first skin.
+ */
 private fun SceneAppLifecycleRuntime.startSkinnedAnimations(models: GltfAssetResolver) {
     val assets = requireAssetLibrary()
-    world.queryEach(MeshRenderer::class) { entity, renderer ->
-        val scene = assets.meshName(renderer.mesh)?.let(models::getLoadedScene) ?: return@queryEach
-        val skin = scene.firstSkinnedAsset()?.skin ?: return@queryEach
-        if (world.has(entity, Animator::class)) return@queryEach
-        val clips = scene.toAnimationLibrary()
-        val player = AnimationPlayer(clips)
-        clips.clips.keys.firstOrNull()?.let { player.play(it) }
-        world.add(entity, Animator(player, skin))
-        world.add(entity, SkinnedPose(player.update(0f).jointPalette(skin)))
+    val drawn = mutableListOf<Pair<Entity, String>>()
+    world.queryEach(MeshRenderer::class) { entity, renderer -> assets.meshName(renderer.mesh)?.let { drawn += entity to it } }
+    for ((entity, mesh) in drawn) {
+        val path = models.modelPath(mesh)
+        val scene = models.getLoadedScene(path)
+        val skin = scene?.firstSkinnedAsset()?.skin ?: continue
+        val owner = if (mesh == path) entity else world.get<Transform>(entity)?.parent ?: entity
+        val pose = world.get<SkinnedPose>(owner) ?: run {
+            val clips = scene.toAnimationLibrary()
+            val player = AnimationPlayer(clips)
+            clips.clips.keys.firstOrNull()?.let { player.play(it) }
+            world.add(owner, Animator(player, skin))
+            SkinnedPose(player.update(0f).jointPalette(skin)).also { world.add(owner, it) }
+        }
+        if (owner != entity) world.add(entity, pose)
     }
 }
 

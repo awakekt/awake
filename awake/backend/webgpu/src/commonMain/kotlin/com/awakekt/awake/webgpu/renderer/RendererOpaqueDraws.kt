@@ -33,6 +33,7 @@ import com.awakekt.awake.webgpu.mesh.Mesh
 import com.awakekt.awake.webgpu.pipeline.WebGpuBindGroupHandle
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
 import com.awakekt.awake.webgpu.pipeline.hasBindingGroup
+import com.awakekt.awake.webgpu.pipeline.texturedMaterialBindings
 import com.awakekt.awake.webgpu.pipeline.uniformByteSize
 import io.ygdrasil.webgpu.GPUBuffer
 
@@ -148,7 +149,7 @@ internal fun Renderer.prepareGpuDraw(
                 material.bindGroupFor(
                     pipeline.pipeline,
                     slot.buffer,
-                    pipeline.materialBindings ?: com.awakekt.awake.render.pipeline.GroupBindings.StandardMaterial,
+                    pipeline.texturedMaterialBindings,
                 ),
             )
             else -> slot.binding ?: EmptyWebGpuMaterialBinding
@@ -262,7 +263,7 @@ private fun Renderer.prepareInstancedGpuDraw(
                     material.bindGroupFor(
                         pipeline.pipeline,
                         slot.buffer,
-                        pipeline.materialBindings ?: com.awakekt.awake.render.pipeline.GroupBindings.StandardMaterial,
+                        pipeline.texturedMaterialBindings,
                     ),
                 )
             } else {

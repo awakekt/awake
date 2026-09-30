@@ -187,6 +187,7 @@ public final class com/awakekt/awake/asset/shaders/ScenePipeline {
 }
 
 public final class com/awakekt/awake/asset/shaders/ScenePipelineKt {
+	public static final fun castsWithPrimaryDepthShader (Lcom/awakekt/awake/asset/shaders/ScenePipeline;Lcom/awakekt/awake/core/geometry/VertexFormat;)Z
 	public static final fun toRequests (Ljava/util/List;Lkotlin/jvm/functions/Function1;)Ljava/util/List;
 }
 

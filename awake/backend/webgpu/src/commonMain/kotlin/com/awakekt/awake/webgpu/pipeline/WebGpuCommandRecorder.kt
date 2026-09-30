@@ -77,6 +77,13 @@ class WebGpuPipelineHandle(
     val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
 ) : PipelineHandle
 
+/**
+ * What a textured material binds in group 0: the pipeline's declared material bindings, else its
+ * shader's own group 0, else the standard material set. A bind group must match the layout exactly.
+ */
+val WebGpuPipelineHandle.texturedMaterialBindings: GroupBindings
+    get() = materialBindings ?: bindingsByGroup[0] ?: GroupBindings.StandardMaterial
+
 /** Legacy pipelines omit metadata; retain their historical group-0 behavior until migrated. */
 fun WebGpuPipelineHandle.hasBindingGroup(group: Int): Boolean =
     if (bindingsByGroup.isEmpty()) group == 0 && hasGroupZeroBindings else group in bindingsByGroup
