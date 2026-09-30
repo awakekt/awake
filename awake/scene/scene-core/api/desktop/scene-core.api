@@ -108,6 +108,7 @@ public final class com/awakekt/awake/scene/core/transform/Transform : com/awakek
 	public final fun getRotation ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getScale ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getWorldMatrix ()Lcom/awakekt/awake/core/math/Mat4;
+	public final fun getWorldVersion ()I
 	public fun hashCode ()I
 	public final fun localMatrix ()Lcom/awakekt/awake/core/math/Mat4;
 	public fun reset ()V
@@ -127,6 +128,7 @@ public final class com/awakekt/awake/scene/core/transform/TransformExtensionsKt 
 public final class com/awakekt/awake/scene/core/transform/TransformSystem : com/awakekt/awake/ecs/System {
 	public static final field CAPACITY_GROWTH_FACTOR I
 	public static final field DEFAULT_CAPACITY I
+	public static final field TRS_FLOATS I
 	public fun <init> ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }

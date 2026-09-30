@@ -57,7 +57,7 @@ class SpatialIndexSystem : System {
             live.add(entity.id)
             // Cheap for a still entity, and the only place the transformed box is built for a
             // moved one -- RenderSystem3D reads the same cache a moment later.
-            grid.insert(entity.id, bounds.worldBounds(transform.worldMatrix))
+            grid.insert(entity.id, bounds.worldBounds(transform))
         }
         if (grid.size == live.size) return
         stale.clear()

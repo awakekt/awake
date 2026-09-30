@@ -7,6 +7,8 @@ package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 
@@ -24,6 +26,24 @@ data class MeshBounds(
 ) {
     private var cachedMatrix: FloatArray? = null
     private var cachedWorldBounds: Aabb? = null
+    private var cachedFor: Transform? = null
+    private var cachedVersion = 0
+
+    /**
+     * [localBounds] under [transform]'s world matrix, recomputed only when [TransformSystem] has
+     * rebuilt that matrix: one integer comparison for an entity that has not moved. A transform
+     * the system has never built falls back to comparing the matrix.
+     */
+    fun worldBounds(transform: Transform): Aabb {
+        val version = transform.worldVersion
+        val cached = cachedWorldBounds
+        val unchanged = cachedFor === transform && cachedVersion == version
+        if (version != 0 && unchanged && cached != null) return cached
+        return worldBounds(transform.worldMatrix).also {
+            cachedFor = transform
+            cachedVersion = version
+        }
+    }
 
     /**
      * [localBounds] in world space under [worldMatrix], recomputed only when that matrix changes.
