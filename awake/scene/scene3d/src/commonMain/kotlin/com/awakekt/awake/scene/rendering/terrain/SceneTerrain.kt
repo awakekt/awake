@@ -37,6 +37,8 @@ data class SceneTerrain(
     val tilingScale: Float = 16f,
     val isVisible: Boolean = true,
     val surface: SceneTerrainSurface? = null,
+    /** Whether the terrain is solid ground when physics runs: a static heightfield under it. */
+    val collider: Boolean = false,
 ) : SceneComponent {
     override val allowsMultiplePerNode: Boolean get() = false
 
@@ -49,6 +51,9 @@ data class SceneTerrain(
         if (!samples.all(Float::isFinite)) add(SceneValidationIssue(path, "terrain.samples must be finite"))
         if (listOf(scaleX, scaleY, scaleZ).any { !it.isFinite() || it <= 0f }) {
             add(SceneValidationIssue(path, "terrain scale must be finite and positive"))
+        }
+        if (collider && (width != depth || width < MIN_COLLIDER_SAMPLES)) {
+            add(SceneValidationIssue(path, "terrain.collider needs a square terrain of at least $MIN_COLLIDER_SAMPLES samples a side"))
         }
     }
 }
@@ -86,6 +91,7 @@ object TerrainBinding : SceneComponentBinding<TerrainComponent, SceneTerrain> {
                 ),
                 tilingScale = component.tilingScale,
                 isVisible = component.isVisible,
+                collider = component.collider,
             ),
         )
         component.surface?.let { world.add(entity, TerrainSurfaceReference(it.provider, it.version, it.payload)) }
@@ -106,6 +112,10 @@ object TerrainBinding : SceneComponentBinding<TerrainComponent, SceneTerrain> {
             surface = world.get<TerrainSurfaceReference>(entity)?.let {
                 SceneTerrainSurface(it.provider, it.version, it.payload)
             },
+            collider = component.collider,
         )
     }
 }
+
+/** A heightfield collider's smallest side: two of Jolt's two-sample blocks. */
+private const val MIN_COLLIDER_SAMPLES = 4

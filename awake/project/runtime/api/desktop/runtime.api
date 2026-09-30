@@ -28,3 +28,8 @@ public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static synthetic fun playProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/PlayableProject;ZILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/project/runtime/TerrainColliderSystem : com/awakekt/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
