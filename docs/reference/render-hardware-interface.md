@@ -127,8 +127,7 @@ costs an edit to both backends. Enforced by `verifyBackendLayering` on `check`.
 The facade itself is not exempt. It historically exposed scene state such as
 `Renderer.showEnvironment`, `horizonColor`, and `zenithColor`, which put sky vocabulary on the
 hardware interface. A horizon colour is not a
-capability -- it is uniform data owned by the skybox feature. Tracked in
-[2026-08-23-backend-content-split-plan.md](../tasks/2026-08-23-backend-content-split-plan.md).
+capability -- it is uniform data owned by the skybox feature.
 
 ## What already exists
 
@@ -378,8 +377,7 @@ exists is useful and stays legal. The rule is about compile-time dependencies, n
 | Resource creation (mesh, texture, material, render target) | per-backend | **not yet behind the facade** |
 
 The remaining work is to name the boundary, finish `renderer/` (the largest duplicated
-subsystem), and move resource creation behind it. See
-[the migration plan](../tasks/2026-08-23-rhi-gpudevice-plan.md).
+subsystem), and move resource creation behind it.
 
 ## Not `expect`/`actual`
 

@@ -112,7 +112,7 @@ jobs:
           sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers
 
       - name: No ponytail comment tags
-        run: "! git grep -nIE 'ponytai[l]:' -- ':!docs/tasks/archive' ':!CLAUDE.md' ':!AGENTS.md' ':!GEMINI.md'"
+        run: "! git grep -nIE 'ponytai[l]:' -- ':!CLAUDE.md' ':!AGENTS.md' ':!GEMINI.md'"
       - name: Detekt (all modules, baselined)
         run: ./gradlew detekt
 

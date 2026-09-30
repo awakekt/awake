@@ -662,4 +662,3 @@ These exist in Jetpack Compose but have **no Awake equivalent** today:
 - [`LayoutValues.kt`](../../awake/ui/ui-core/src/commonMain/kotlin/com/awakekt/awake/ui/api/layout/LayoutValues.kt) — UiAlignment, UiInsets
 - [`mirror-map.md`](mirror-map.md) — complete faithful/diverges status table
 - [`compose-animation-guidance.md`](compose-animation-guidance.md) — `animateFloat*`, `Easing`, `rememberTransition`, `animatedVisibility` how-to (separate doc, `awake:ui:animation` module)
-- [`2026-08-21-compose-layout-modifier-parity-plan.md`](../audits/2026-08-21-compose-layout-modifier-parity-plan.md) — Phase 1–3 implementation roadmap

@@ -6,8 +6,7 @@
 import com.awakekt.awake.build.extension.*
 import java.util.zip.ZipFile
 import org.gradle.jvm.tasks.Jar
-// Raw generated Vulkan API surface, split out of :awake:backend:vulkan (see
-// docs/tasks/2026-08-09-application-seam-and-module-naming-plan.md, Part 3): gen/ (JNI-backed
+// Raw generated Vulkan API surface, split out of :awake:backend:vulkan: gen/ (JNI-backed
 // vkCreate*/vkDestroy* calls), handles/, models/, enums/, plus the small hand-authored
 // vulkan/ root (Vulkan, VkArray, Version), utils/, and VulkanSurface's per-platform surface
 // creation. Zero Awake engine opinions -- GraphicsDevice/SwapchainManager/RenderPipeline and

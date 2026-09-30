@@ -28,7 +28,7 @@ widget. The consumers, in order, are:
 | 2 | Canvas widget | Phases 0 and 2 here, [#105](https://github.com/awakekt/awake/issues/105) |
 | 3 | Blueprint runtime: event graphs as data, interpreted by an ECS system, reloadable while running | [blueprint-runtime](2026-09-27-blueprint-runtime-plan.md) (active) |
 | 4 | Studio blueprint editor and live debugger | awake-pro, planned when step 3's runtime lands |
-| 5 | AI state trees on the same canvas: the hybrid runtime from the [behavior tree plan](archive/2026-08-30-behavior-tree-state-machine-plan.md) | Own plan, not yet written |
+| 5 | AI state trees on the same canvas: the hybrid behavior tree and state machine runtime | Own plan, not yet written |
 | 6 | Shader graph, preceded by shader hot reload and a per-material shader render plan | [shader-graph](2026-09-27-shader-graph-plan.md) |
 | Later | LLM authoring tools over the registry and validator | Studio Pro, planned when the LLM extension starts |
 

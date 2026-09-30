@@ -110,8 +110,7 @@ Compose capabilities only when a real screen is blocked.
 On `samples:ui-showcase`'s Checkout Form that is 7,696 trial passes and ~44.7 ms per frame, and it
 multiplies with nesting (`TrialMeasureScalingTest`: 3^depth → 2^depth). Every mitigation so far is a
 constant factor inside the same model — see the public [`awake-ui-performance`](https://github.com/awakekt/awake-agent-skills/tree/main/skills/awake-ui-performance) skill, which says so
-outright, and `docs/tasks/archive/2026-08-02-trial-measure-double-execution.md`, which named the fix
-and deferred it.
+outright.
 
 Compose's `Constraints` in → `Placeable` out is single-pass by construction. That property is the
 whole reason for this engine.
@@ -346,8 +345,7 @@ Nothing is blocked in the meantime: `:awake:compose:ui` already declares
   nothing about tokens or a theme. `ui-headless` is not ported: measured, its controls hold no
   state — `Checkbox` is 225 lines and 0 state markers — so it is rendering-without-theming, not
   Radix's behaviour-without-rendering, and `:foundation` already ships what it was standing in for.
-  Six real behaviours move; twelve re-export shims are pure deletion. Full plan:
-  [`2026-08-23-stage-3-plan.md`](../../tasks/2026-08-23-stage-3-plan.md). Read
+  Six real behaviours move; twelve re-export shims are pure deletion. Read
   `16-migration-deltas.md` before touching a screen.
 - **Stage 4** — prove the four numbers, then update skills and guidance. Not before.
 

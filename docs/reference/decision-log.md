@@ -20,7 +20,6 @@ smaller: singleton `EcsTag` storage now remains payload-free inside maintained f
 improves tag-family iteration by roughly 2.4× without a meaningful ordinary-family regression.
 Flecs 4.1 `DontFragment`, EnTT, Bevy's table/sparse choice, and Unity chunks were reviewed as
 architecture references; only same-JVM benchmark rows are treated as comparative performance.
-See `docs/tasks/archive/2026-08-21-ecs-family-tag-columns.md`.
 
 ### D2 — Compose-style scene API
 **Correction (2026-08-03):** this entry was left marked "OPEN — under discussion" after the
@@ -758,8 +757,7 @@ subprocess — had already proven simpler and more reliable to verify throughout
   this slice, since it's a pre-existing gap this session's UI system already had and is out
   of scope for a retirement/port task.
 - Docs updated: `README.md`'s "Running the Demo"/"Building a New Game" sections now describe
-  `sample-hello-cube` as the primary demo; `docs/mmorpg-roadmap.md`'s catalog-tool row now
-  points at `sample-hello-cube`. Historical decision-log entries referencing `awake-demo`
+  `sample-hello-cube` as the primary demo. Historical decision-log entries referencing `awake-demo`
   (D14/D16/D18/D19/etc.) are left unedited — accurate record of what was true when written.
 - **Verified**: all 5 `sample-hello-cube` targets compile clean after the port,
   `awake:scene:desktopTest` regression passes, `./gradlew projects` confirms `awake-demo` no
@@ -1495,13 +1493,10 @@ that a green check proves it is.
 blocker is two absent hardware primitives -- `PipelineSpec` cannot express a vertex-less pipeline
 or a standalone uniform block -- so every content feature hand-rolls them per backend. Adding an
 indirection layer before those primitives exist relocates the duplication instead of deleting it.
-Sequence and phases in
-[2026-08-23-backend-content-split-plan.md](../tasks/2026-08-23-backend-content-split-plan.md).
 
 ### D26 — Keep two hand-written backends; RHI is capability-tiered, not WebGPU-capped
 
-**DECIDED (2026-08-23).** Phase 0 of the
-[`GpuDevice` RHI plan](../tasks/2026-08-23-rhi-gpudevice-plan.md), which existed to settle
+**DECIDED (2026-08-23).** Phase 0 of the `GpuDevice` RHI work, which existed to settle
 "abstract two backends" versus "delete one".
 
 **Option C (drop the hand-written Vulkan backend, run wgpu4k on every target) is rejected --

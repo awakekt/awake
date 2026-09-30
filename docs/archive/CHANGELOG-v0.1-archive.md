@@ -263,8 +263,7 @@ For active releases and upcoming changes, see [CHANGELOG.md](../../CHANGELOG.md)
   producing an NPC that quietly stands still, and exporting a reference to an unnamed entity fails
   rather than dropping it. `SceneValidator` rejects a stopped behaviour and flee radii that cannot
   hysterese. The scene inspector edits the same three components live. Composing behaviours --
-  which one runs when -- is still not authorable and deliberately so; see
-  docs/tasks/2026-08-30-behavior-tree-state-machine-plan.md.
+  which one runs when -- is still not authorable and deliberately so.
 - **Navigation spans the streamed world, and searching it can leave the frame thread.**
   `StreamedNavGrid` holds one baked tile per `WorldCellCoord` and searches across the resident
   set, so a route crosses cell boundaries without knowing they exist and stops at the edge of what
@@ -326,8 +325,7 @@ For active releases and upcoming changes, see [CHANGELOG.md](../../CHANGELOG.md)
 - **`RouteFollower`**, the state every navmesh-walking behaviour shares. Chase, flee and patrol
   differ only in how they pick a goal; asking on an interval, adopting the answer and stepping along
   it is now written once. `ChaseBehavior` implements it, so `ChaseAiSystem` is 26 lines instead of
-  108. This is the `MoveTo` leaf
-  [the decision-runtime plan](docs/tasks/2026-08-30-behavior-tree-state-machine-plan.md) predicted,
+  108. This is the `MoveTo` leaf the decision-runtime plan predicted,
   reached from three real behaviours rather than designed up front.
 
 - **`EditorCommand`/`EditorHistory` — the editor's undo stack.** `apply()`/`revert()` take no
@@ -460,8 +458,7 @@ For active releases and upcoming changes, see [CHANGELOG.md](../../CHANGELOG.md)
   Ships `AslEvaluator`, a CPU fragment interpreter used as both test oracle and headless
   terminal preview (`:awake:asset:shader-dsl:previewShader` — ANSI half-blocks, no file, no
   GPU/UI dependency), plus two proof definitions: `TriangleShader` (regenerates
-  `triangle.wgsl` code-identically minus comments) and `CheckerShader` (new content). Plan:
-  `docs/tasks/2026-08-23-asl-procedural-shader-plan.md`.
+  `triangle.wgsl` code-identically minus comments) and `CheckerShader` (new content).
 - **`samples/studio`'s `triangle.wgsl` is generated from ASL.** `AslShaderDriftTest` keeps the
   committed file equal to what `TriangleShader` emits (re-record: `AWAKE_RECORD_SHADERS=1`);
   the synced Vulkan `.spv` stayed byte-identical, so the swap changed no rendered pixel.
@@ -681,20 +678,19 @@ For active releases and upcoming changes, see [CHANGELOG.md](../../CHANGELOG.md)
   uniform-cost grid, and returns plausible-looking non-optimal paths once cost varies with slope.
   Diagonals require both shared orthogonal neighbours to be open, so an agent cannot shave a wall
   corner. Ties break on node index rather than heap order, so a repeated query reproduces its path.
-  Waypoints carry world X and Z; Y is the caller's to resolve. Phase 2 of
-  [the navgrid plan](docs/tasks/2026-08-30-navgrid-navigation-plan.md); paths are not smoothed yet.
+  Waypoints carry world X and Z; Y is the caller's to resolve. Phase 2 of the navgrid plan; paths
+  are not smoothed yet.
 - **`NavGridTile` and `Heightmap.bakeNavGrid(cellSize, maxSlopeDegrees)`.** Derives walkability from
   terrain slope into a `LongArray` bitset — 32KB for a 512m cell at 1m navigation resolution, versus
   256KB as bytes. Navigation resolution is independent of the heightmap's own sample spacing.
   Walkability uses forward and backward differences rather than the central difference
   `toPositionNormalColorMesh` uses for normals: a central difference halves the apparent rise of a
-  one-cell step and would bake the lip of a drop as walkable. Phase 1 of
-  [the navgrid plan](docs/tasks/2026-08-30-navgrid-navigation-plan.md).
+  one-cell step and would bake the lip of a drop as walkable. Phase 1 of the navgrid plan.
 - **`Heightmap.heightAtWorld(worldX, worldZ)`.** Bilinearly samples terrain height at a world
   position, applying `scale.y` so the result is a world Y rather than the raw sample `heightAt`
   returns. `Float.NaN` outside the map — not a nullable `Float`, which would box on every call, and
-  a navigation bake calls this hundreds of thousands of times per world cell. First step of
-  [the navgrid plan](docs/tasks/2026-08-30-navgrid-navigation-plan.md)'s Phase 1.
+  a navigation bake calls this hundreds of thousands of times per world cell. First step of the
+  navgrid plan's Phase 1.
 
 - **`SceneComponentInspector`**, so a module the editor cannot depend on can still contribute
   inspector fields. `awake:editor:scene` matches its own components with a `when`, but cannot reach
@@ -743,9 +739,7 @@ For active releases and upcoming changes, see [CHANGELOG.md](../../CHANGELOG.md)
   directly: add a `ChaseBehavior` to the NPC entity instead of passing transforms. Two behaviour
   fixes come with it — the target's position is read through the world each tick rather than held
   as a reference, so a destroyed target is skipped instead of steered toward, and the repath timer
-  survives a pool `reset()`. See
-  [the behavior tree & state machine plan](docs/tasks/2026-08-30-behavior-tree-state-machine-plan.md)'s
-  Phase 0.
+  survives a pool `reset()`. Phase 0 of the behavior tree & state machine plan.
 - **Overlays fade instead of vanishing between two frames.** Every overlay here unmounted the
   instant its flag flipped, so there was nothing left to animate — the caller's `if (!visible) return`
   had already removed the subtree. `rememberOverlayAlpha` keeps it alive while the value falls and

@@ -29,9 +29,6 @@ This currently builds:
 The rollout tracker for module-by-module coverage lives in
 `docs/reference/tutorial-coverage.md`.
 
-The retired immediate-mode DSL map is preserved in
-`docs/archive/2026-08-28-retired-dsl-modules.md`; it is not current API guidance.
-
 The root game-shell cookbook lives in
 `docs/reference/game-dsl.md`.
 

@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # INVESTIGATION: re-runs the preview on change.
-# Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; visual tooling tests cover the helper itself.
+# Kinds are defined in tools/README.md. Only a GATE can fail a build; visual tooling tests cover
+# the helper itself.
 #
 # Near-real-time UI preview loop: Gradle --continuous regenerates the ui-showcase preview gallery
 # on source change, scoped to the narrow preview-writing test class rather than the module's whole

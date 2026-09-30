@@ -31,8 +31,7 @@ responsibilities should follow the transition below rather than accumulating the
 
 ## Session model
 
-The [scene-session simplification plan](../../docs/tasks/2026-08-25-scene-session-simplification-plan.md)
-defines the target:
+The target:
 
 ```text
 composed app root

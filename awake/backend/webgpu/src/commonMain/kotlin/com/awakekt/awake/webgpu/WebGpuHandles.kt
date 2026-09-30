@@ -6,12 +6,11 @@
 package com.awakekt.awake.webgpu
 
 /**
- * The `expect` renderer seam (GraphicsDevice/Mesh/RenderPipeline/etc., see
- * docs/archive/mvp-phase-log.md's Phase 2.5 section) types every handle as `Long`, mirroring Vulkan's
- * raw-integer-handle model -- but wgpu4k hands back real typed Kotlin objects (GPUDevice,
- * GPUBuffer, GPURenderPipeline, ...), not integers. This table assigns each such object an
- * incrementing Long id so the wasmJs actuals can satisfy the existing Long-typed contract
- * without changing it (a contract change would ripple back into commonMain and force
+ * The `expect` renderer seam (GraphicsDevice/Mesh/RenderPipeline/etc.) types every handle as
+ * `Long`, mirroring Vulkan's raw-integer-handle model -- but wgpu4k hands back real typed Kotlin
+ * objects (GPUDevice, GPUBuffer, GPURenderPipeline, ...), not integers. This table assigns each
+ * such object an incrementing Long id so the wasmJs actuals can satisfy the existing Long-typed
+ * contract without changing it (a contract change would ripple back into commonMain and force
  * re-verification across the 4 already-proven platforms, for zero benefit to them).
  * wasmJsMain-internal only -- invisible to commonMain and every other platform.
  */

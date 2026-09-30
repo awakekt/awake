@@ -27,7 +27,7 @@ import kotlin.test.assertTrue
  * icon is added, and silently -- the new glyph simply would not be covered.
  *
  * The encoder below is test-only on purpose. It is also the conversion tool for when `HeroIcons.kt`
- * actually moves to packed form (see `docs/tasks/2026-08-31-icon-codegen-plan.md`); until then
+ * actually moves to packed form; until then
  * nothing in `commonMain` needs to write this format, only read it.
  */
 class HeroIconsPackedRoundTripTest {

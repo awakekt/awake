@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # GENERATOR: writes the gitignored third_party/ checkout. Idempotent.
-# Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; visual tooling tests cover the helper itself.
+# Kinds are defined in tools/README.md. Only a GATE can fail a build; visual tooling tests cover
+# the helper itself.
 #
 # Pins a real, reproducible checkout of shadcn-ui/ui into third_party/shadcn-ui-ref/ (gitignored)
 # so shadcn parity/reference tooling (tools/shadcn/extract_shadcn_tokens.py, ShadcnParityScreenshotTest,

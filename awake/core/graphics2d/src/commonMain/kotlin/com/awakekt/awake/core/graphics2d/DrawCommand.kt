@@ -18,8 +18,7 @@ import kotlin.math.sin
  * [pivotX]/[pivotY] are in the same pixel-space coordinates as the carrying command's own
  * `x`/`y`. Applied in the vertex shader as `pivot + (position - pivot) * scale`, BEFORE the
  * screen-to-NDC transform (see `ui_quad.vert`/`.wgsl` and its 3 siblings) -- rotation is
- * explicitly out of scope for this first pass (see
- * docs/tasks/2026-08-02-graphicslayer-rotation-scale.md).
+ * explicitly out of scope for this first pass.
  */
 data class DrawTransform(
     val scaleX: Float,

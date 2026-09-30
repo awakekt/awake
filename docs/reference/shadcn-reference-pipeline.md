@@ -159,8 +159,7 @@ for the style presets -- and did not, for six of seven base colors, until this p
 were copied in by hand, not extracted from the pinned checkout, and **11 of the 26 have drifted** --
 `skeleton` uses `bg-muted` where upstream uses `bg-accent`, and `toggle` is missing a whole group of
 classes. Every screenshot-based parity number is measured against that. Tokens are machine-extracted
-and gated; components are neither. See
-[`docs/tasks/2026-08-23-vendor-the-reference-app-components.md`](../tasks/2026-08-23-vendor-the-reference-app-components.md).
+and gated; components are neither.
 
 **NOT verified, and not claimed to be:**
 

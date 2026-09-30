@@ -29,8 +29,7 @@ enum class PathStatus {
  * A request-and-poll component rather than a blocking call, because a path is not something an
  * entity can wait for inside one frame. That shape is also what the decision-runtime plan needs: a
  * `MoveTo` behaviour writes a request, stays in a running state while the status is [Pending], and
- * calls [cancel] if it is interrupted. See
- * docs/tasks/2026-08-30-behavior-tree-state-machine-plan.md.
+ * calls [cancel] if it is interrupted.
  *
  * [start] and [goal] are owned by this component. [requestPath] copies into them rather than
  * holding the caller's vectors, which are mutable and usually belong to a `Transform` that moves

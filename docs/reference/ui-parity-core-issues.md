@@ -62,8 +62,7 @@ An entry needs all of the following:
 `UI-CORE-001` (node-local shadow drawing) was resolved on 2026-08-25 by
 `DrawScope.drawShadow(...)` and Compose-shaped `Modifier.dropShadow(shape, shadow)`. The focused
 frame tests cover node placement, scale, alpha, chain order, rounded shapes, and the linear-gradient
-brush subset; Tabs now uses the pinned Tailwind `shadow-sm` values. The implementation plan retains
-the acceptance evidence in [the shadow plan](../tasks/2026-08-25-compose-node-local-shadow-plan.md).
+brush subset; Tabs now uses the pinned Tailwind `shadow-sm` values.
 
 ## Entry template
 

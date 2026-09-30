@@ -9,10 +9,9 @@ emission. Water, atmosphere, biomes, vegetation and placement move to a consumer
 
 ## Context
 
-Two copies of the RFC exist and have diverged: this repository's
-[RFC_OPEN_WORLD_ENGINE_SUBSYSTEMS.md](../RFC_OPEN_WORLD_ENGINE_SUBSYSTEMS.md) lists five
+Two copies of the open-world engine subsystems RFC had diverged: this repository's copy listed five
 subsystems; the private consumer pack's copy lists six, adding runtime WGSL/ASL shaders with
-uniform reflection. Both propose that all of them live in Awake core.
+uniform reflection. Both proposed that all of them live in Awake core.
 
 The boundary rule admits a capability into Awake on two grounds: two credible independent
 consumers, or a concrete framework-level limitation a consumer cannot solve through public

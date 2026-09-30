@@ -135,12 +135,11 @@ class RendererHeadlessUiGlyphBaselineTest {
     }
 
     /**
-     * Real GPU coverage for `graphicsLayer(scale(...))`'s scale-only transform (see
-     * docs/tasks/2026-08-02-graphicslayer-rotation-scale.md) -- proves `ui_glyph.vert`'s
-     * `pivot + (inPosition - pivot) * scale` vertex math actually moves rendered pixels on real
-     * Vulkan hardware/MoltenVK, not just in the CPU rasterizer (`UiRasterizerTest`'s
-     * `quadWithScaleTransformGrowsAroundItsPivot` covers the CPU path; this covers the GPU
-     * shader independently since the two are hand-written and can drift, per this repo's own
+     * Real GPU coverage for `graphicsLayer(scale(...))`'s scale-only transform -- proves
+     * `ui_glyph.vert`'s `pivot + (inPosition - pivot) * scale` vertex math actually moves rendered
+     * pixels on real Vulkan hardware/MoltenVK, not just in the CPU rasterizer (`UiRasterizerTest`'s
+     * `quadWithScaleTransformGrowsAroundItsPivot` covers the CPU path; this covers the GPU shader
+     * independently since the two are hand-written and can drift, per this repo's own
      * `ui_quad.vert`'s Y-flip precedent for backend-specific shader bugs).
      */
     @Test

@@ -79,6 +79,4 @@ Likewise this says nothing about whether every Stage 4 panel is wanted. It says 
 ## Related
 
 - [Module architecture](../reference/module-architecture.md) — why `editor:physics` is a module
-- [Scene editor audit](../audits/2026-08-30-scene-editor-production-readiness-audit.md) — gap #16
-  is the asset browser this record reframes
 - [`awake:editor:scene` README](../../awake/editor/scene/README.md) — the consumer-facing guide

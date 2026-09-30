@@ -16,8 +16,7 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
 /**
  * One pipeline an app needs, declared in backend-neutral terms.
  *
- * The app-facing half of the pipeline registry (see
- * `docs/tasks/2026-08-23-rhi-gpudevice-plan.md` phase 3). It holds a whole [ShaderSet] rather
+ * The app-facing half of the pipeline registry. It holds a whole [ShaderSet] rather
  * than resolved paths, so one declaration serves both backends and each engine picks its own
  * half when it builds the request.
  *

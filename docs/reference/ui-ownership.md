@@ -15,9 +15,8 @@ This document is the canonical source for Awake's current reusable UI boundaries
 | `:awake:compose:ui-testing` | Frame composition, semantics, rasterization, and UI verification helpers | Production UI behavior |
 | `:samples:*` | Showcase pages, debug shells, and sample-specific adapters | Reusable widgets and design-system policy |
 
-The former immediate-mode UI modules were retired. Their history is preserved in
-[`2026-08-28-immediate-mode-ui-ownership.md`](../archive/2026-08-28-immediate-mode-ui-ownership.md),
-but new code must not use those names or recreate that layering by default.
+The former immediate-mode UI modules were retired. New code must not use those names or recreate
+that layering by default.
 
 ## Placement Rules
 

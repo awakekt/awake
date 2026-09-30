@@ -58,8 +58,7 @@ and 864.026 ± 57.685 after.
 A follow-up that trusted the world signature to skip `ComponentStore`'s membership lookup was
 slower and noisier at both scales, so it was fully reverted. The broader single-fork library
 comparison also had wide Fleks/Artemis intervals; it is retained as raw evidence, not used to
-rewrite the full-matrix rankings above. Reproduction details and the closed follow-up are in the
-[cached type-ID churn report](tasks/archive/2026-08-21-ecs-cached-type-id-churn.md).
+rewrite the full-matrix rankings above.
 
 ### Final family-index experiment
 
@@ -69,8 +68,7 @@ candidate fused `Family2` sparse lookup/removal and bypassed growth checks only 
 already-indexed swap-moved entity. The matched 10k run measured 2,996.705 ± 160.040 ops/s for the
 baseline and 2,939.131 ± 160.710 ops/s for the candidate (-1.9%). The candidate was fully reverted.
 The profiling benchmark remains as a reproducible control. This micro-optimization lane is closed;
-the separately gated next feature is
-[adaptive bulk structural mutation](tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md), which
+the separately gated next feature is adaptive bulk structural mutation, which
 targets repeated work across large batches without changing storage shape.
 
 ## Family tag-column specialization (2026-08-21)
@@ -90,14 +88,11 @@ reference per entity; public array access remains available through lazy materia
 | Ordinary family iteration | 100k | 51,197.918 ± 434.602 | **51,496.869 ± 825.746** | +0.6% |
 
 The unchanged ordinary path remains inside the 5% regression gate. A 100k GC-profiler check
-observed no collection during tag-family iteration. Full methodology, correctness coverage,
-Kotlin guidance, and the broader design matrix are in
-[`docs/tasks/archive/2026-08-21-ecs-family-tag-columns.md`](tasks/archive/2026-08-21-ecs-family-tag-columns.md).
+observed no collection during tag-family iteration.
 
 ## Bulk-mutation batch size and density profile (2026-08-21)
 
-Phase 0 evidence freeze for the
-[adaptive bulk structural mutation plan](tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md).
+Phase 0 evidence freeze for adaptive bulk structural mutation.
 This is a deliberately reduced first pass: batch sizes 1, 100, 10k, and 100k, and family density
 1% and 100%.
 
@@ -246,9 +241,8 @@ Ops/sec, all rows.
 
 ## Forced-rebuild vs incremental family maintenance (2026-08-21)
 
-A de-risking spike run out of order, ahead of phases 1 and 2 of the
-[adaptive bulk structural mutation plan](tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md).
-That plan's stop condition — revert if forced rebuild never beats incremental maintenance at any
+A de-risking spike run out of order, ahead of the adaptive bulk structural mutation command
+buffer. Its stop condition — revert if forced rebuild never beats incremental maintenance at any
 realistic batch/density point — is testable as a benchmark-only control without building the
 command buffer first, so it was tested first.
 
@@ -408,8 +402,7 @@ an entire remove-all/add-all invocation.
 
 Decision: retain sparse component stores, singleton `EcsTag` storage, and maintained dense
 families. Do not add production archetype routing unless a new real workload beats these controls
-by the documented migration gate. Full implementation and methodology are in the
-[hybrid storage decision note](tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md).
+by the documented migration gate.
 
 ## Takeaway
 

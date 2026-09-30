@@ -209,8 +209,8 @@ measure. They cost an extra tree walk, and Compose does not tell you when you ha
 Count them — `UiLayoutStats.intrinsicQueries`, same zero-cost-when-disabled contract
 `UiMeasureTrialStats` already has. Refinement row 5.
 
-`TextMeasurePolicy` must answer intrinsics **without re-shaping**; reuse the cache from
-`docs/tasks/archive/2026-08-03-text-layout-measure-cache.md`.
+`TextMeasurePolicy` must answer intrinsics **without re-shaping**; reuse the text layout measure
+cache.
 
 ## Defaults
 

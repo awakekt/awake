@@ -42,8 +42,7 @@ directly.
 
 ## Planned direction
 
-The [scene-session simplification plan](../../../docs/tasks/2026-08-25-scene-session-simplification-plan.md)
-keeps Platform UI-free. `awake:engine:compose` owns the optional Compose host and root content,
+Platform stays UI-free. `awake:engine:compose` owns the optional Compose host and root content,
 while `SceneSession` becomes an installed feature rather than a second application host.
 
 ## Related modules

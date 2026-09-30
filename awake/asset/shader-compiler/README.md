@@ -2,8 +2,7 @@
 
 Runtime WGSL→SPIR-V for [Awake](../../../README.md): naga — the same translation library the
 build pipeline's `naga-cli` wraps — compiled as a native library and bridged into KMP. The
-on-device tier of the [ASL plan](../../../docs/tasks/2026-08-23-asl-procedural-shader-plan.md);
-build-time committed `.spv` stays the default for everything shipped.
+on-device tier of ASL; build-time committed `.spv` stays the default for everything shipped.
 
 ```kotlin
 val spirv: ByteArray = NagaShaderCompiler.wgslToSpirv(wgslText)   // all entry points

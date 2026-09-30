@@ -6,8 +6,7 @@
 
 // ASL, Awake's procedural shader authoring: Kotlin definitions that emit WGSL text, fed into
 // the existing naga pipeline (validateAwakeShaders/syncAwakeShaders) unchanged. Pure text
-// generation -- no render contract, no backend, no UI dependency. See
-// docs/tasks/2026-08-23-asl-procedural-shader-plan.md for scope and sequencing.
+// generation -- no render contract, no backend, no UI dependency.
 plugins {
     id("com.awakekt.awake.plugin.library")
     id("com.awakekt.awake.plugin.publish")

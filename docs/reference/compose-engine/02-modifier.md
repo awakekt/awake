@@ -163,6 +163,4 @@ owners:
 | The dispatcher | Gesture bookkeeping, exposed on the event as `isCaptureHolder` / `isInBounds` |
 
 The retained split is proven by `ModifierNodeLifecycleTest`: updates preserve identity, replacement
-detaches before attaching, and removing a subtree detaches every retained modifier node. The
-migration inventory and completion criteria live in
-`docs/tasks/2026-08-27-compose-modifier-node-lifecycle-plan.md`.
+detaches before attaching, and removing a subtree detaches every retained modifier node.

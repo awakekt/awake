@@ -24,11 +24,11 @@ import java.util.concurrent.TimeUnit
 /**
  * Frame cost of nested row/column layout on the compose engine, parameterised by nesting depth.
  *
- * The old `ui-core` version of this benchmark existed because trial-measure re-ran every row/column's
- * content lambda to pick its measurement branch, so cost compounded with depth (see
- * docs/tasks/2026-08-02-trial-measure-double-execution.md). The compose engine measures each child
- * exactly once -- no trial pass -- so this now measures plain recursive layout-tree cost instead, and
- * the depth parameter stays to show that curve is linear rather than the old exponential-ish one.
+ * The old `ui-core` version of this benchmark existed because trial-measure re-ran every
+ * row/column's content lambda to pick its measurement branch, so cost compounded with depth. The
+ * compose engine measures each child exactly once -- no trial pass -- so this now measures plain
+ * recursive layout-tree cost instead, and the depth parameter stays to show that curve is linear
+ * rather than the old exponential-ish one.
  *
  * Deliberately widget-free -- no theme, no text, no design system -- for the same reason the old
  * version was: a regression here cannot be blamed on a recipe, and a recipe regression cannot hide

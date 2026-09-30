@@ -43,11 +43,10 @@ import com.awakekt.awake.render.mesh.Mesh as RenderMesh
 /**
  * Real-Vulkan-headless proof that the 3D shadow map reaches the scene's fragment shader.
  *
- * The gate for phase 4 of docs/tasks/2026-08-23-backend-content-split-plan.md, which moves the
- * shadow map out of every material's descriptor set into its own group -- a change to `Material`,
- * so a mistake affects every draw, not only shadowed ones. Nothing covered this before: despite
- * the name, `RendererHeadlessShadowQuadTest` exercises `UiDrawPrimitive.ShadowQuad`, a 2D drop
- * shadow, and never builds a `DepthTarget`.
+ * The gate for the shadow map's own descriptor group, split out of every material's set -- a
+ * `Material` layout, so a mistake affects every draw, not only shadowed ones. Nothing covered this
+ * before: despite the name, `RendererHeadlessShadowQuadTest` exercises
+ * `UiDrawPrimitive.ShadowQuad`, a 2D drop shadow, and never builds a `DepthTarget`.
  *
  * Asserts CONTRAST across a band of pure ground rather than a shadow at a predicted location:
  * where the shadow lands depends on the light's projection, the depth bias and the PCF kernel,

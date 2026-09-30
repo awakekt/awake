@@ -8,8 +8,6 @@ package com.awakekt.awake.render.pipeline
 /**
  * Every pipeline this app has built, compiled once per distinct [PipelineSpec].
  *
- * See `docs/tasks/2026-08-23-rhi-gpudevice-plan.md` phase 3 for the full design.
- *
  * ## Why a registry rather than engine constructor parameters
  *
  * Both engines used to predict every pipeline at launch through seven optional shader-set

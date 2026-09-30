@@ -2,9 +2,6 @@
 
 How Awake's 44 modules are grouped, why, and how to decide where a new one goes.
 
-Supersedes `docs/tasks/archive/2026-08-17-awake-core-module-split-proposal.md`, which covered only
-`awake:core` and recommended an ordering that later measurement contradicted.
-
 Status of each decision is marked: **Done**, **Decided** (agreed, not yet built), or **Open**.
 
 ---

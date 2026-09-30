@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # INVESTIGATION: summarises component status.
-# Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; visual tooling tests cover the helper itself.
+# Kinds are defined in tools/README.md. Only a GATE can fail a build; visual tooling tests cover
+# the helper itself.
 """Generates docs/reference/ui-fidelity-status.md -- the UI fidelity status matrix.
 
 One table answering "how close is Awake's UI to its target, per area, and what
