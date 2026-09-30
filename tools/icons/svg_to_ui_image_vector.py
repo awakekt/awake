@@ -30,8 +30,8 @@ Engine limits enforced here:
   declares them on the <svg> root) and emitted as `path(stroke = DrawStroke(...))`.
   A <path> with BOTH a fill and a stroke is rejected -- one UiVectorPath draws
   one or the other, not both.
-- `transform` attributes and non-path shape elements are rejected; flatten
-  them to plain paths first (e.g. with picosvg).
+- `circle` and rounded `rect` elements are converted to paths without expanding
+  their strokes. Other shapes and `transform` attributes are rejected.
 """
 
 from __future__ import annotations
@@ -347,7 +347,7 @@ def parse_svg(path: str):
         raise SystemExit(f"error: viewBox with non-zero origin unsupported: {view_box}")
     viewport = (vb[2], vb[3])
 
-    unsupported_shapes = ("rect", "circle", "ellipse", "line", "polyline", "polygon")
+    unsupported_shapes = ("ellipse", "line", "polyline", "polygon")
     for el in root.iter():
         tag = el.tag.removeprefix(SVG_NS)
         if el.get("transform"):
@@ -371,25 +371,56 @@ def parse_svg(path: str):
             node = parents.get(node)
         return default
 
+    def shape_path(el, tag):
+        if tag == "path":
+            return el.get("d")
+        if tag == "circle":
+            x, y, radius = (float(el.get(key, "0")) for key in ("cx", "cy", "r"))
+            if radius <= 0:
+                raise SystemExit("error: circle radius must be positive")
+            return f"M{x + radius} {y} A{radius} {radius} 0 1 0 {x - radius} {y} A{radius} {radius} 0 1 0 {x + radius} {y} Z"
+        if tag == "rect":
+            x, y, width, height = (float(el.get(key, "0")) for key in ("x", "y", "width", "height"))
+            if width <= 0 or height <= 0:
+                raise SystemExit("error: rectangle dimensions must be positive")
+            rx = float(el.get("rx", el.get("ry", "0")))
+            ry = float(el.get("ry", el.get("rx", "0")))
+            if rx < 0 or ry < 0:
+                raise SystemExit("error: rectangle corner radius must be nonnegative")
+            rx, ry = min(rx, width / 2), min(ry, height / 2)
+            if rx == 0 or ry == 0:
+                return f"M{x} {y} H{x + width} V{y + height} H{x} Z"
+            return (
+                f"M{x + rx} {y} H{x + width - rx} A{rx} {ry} 0 0 1 {x + width} {y + ry} "
+                f"V{y + height - ry} A{rx} {ry} 0 0 1 {x + width - rx} {y + height} "
+                f"H{x + rx} A{rx} {ry} 0 0 1 {x} {y + height - ry} "
+                f"V{y + ry} A{rx} {ry} 0 0 1 {x + rx} {y} Z"
+            )
+        return None
+
     paths = []
-    for el in root.iter(f"{SVG_NS}path"):
+    for el in root.iter():
+        tag = el.tag.removeprefix(SVG_NS)
+        if tag not in ("path", "circle", "rect"):
+            continue
         has_stroke = (inherited(el, "stroke") or "none") != "none"
         has_fill = inherited(el, "fill") != "none"
         if has_stroke and has_fill:
             raise SystemExit(
-                "error: <path> has both a fill and a stroke -- UiVectorPath draws one or the "
+                f"error: <{tag}> has both a fill and a stroke -- UiVectorPath draws one or the "
                 "other, not both. Split the SVG into two <path> elements."
             )
+        d = shape_path(el, tag)
         if has_stroke:
             paths.append({
-                "d": el.get("d"),
+                "d": d,
                 "kind": "stroke",
                 "width": float(inherited(el, "stroke-width", "1")),
                 "cap": inherited(el, "stroke-linecap", "butt"),
                 "join": inherited(el, "stroke-linejoin", "miter"),
             })
         elif has_fill:
-            paths.append({"d": el.get("d"), "kind": "fill", "fill_rule": inherited(el, "fill-rule", "nonzero")})
+            paths.append({"d": d, "kind": "fill", "fill_rule": inherited(el, "fill-rule", "nonzero")})
     if not paths:
         raise SystemExit("error: no fillable or strokeable <path> elements found")
     return viewport, paths
@@ -578,13 +609,19 @@ def kdoc(lines, indent):
 def emit_file(manifest, svg_root, args):
     """The whole generated Kotlin file: header, imports, tier objects, every icon."""
     body = []
+    flat = manifest.get("flat", False)
+    if flat:
+        if len(manifest["tiers"]) != 1:
+            raise SystemExit("error: a flat icon manifest must have exactly one tier")
+        args.indent_level = 1
     for tier in manifest["tiers"]:
         directory = os.path.join(svg_root, tier["directory"])
         # Every icon in a tier takes the tier's native size -- `defaultWidth` is per-tier data, not
         # per-glyph, and the committed file had drifted to two values inside one tier.
         args.dp = tier["dp"]
-        body += kdoc(tier.get("kdoc"), "    ")
-        body.append(f"    object {tier['object']} : {manifest['interface']} {{")
+        if not flat:
+            body += kdoc(tier.get("kdoc"), "    ")
+            body.append(f"    object {tier['object']} : {manifest['interface']} {{")
         icons = sorted(f for f in os.listdir(directory) if f.endswith(".svg"))
         for index, filename in enumerate(icons):
             stem = filename[:-4]
@@ -592,7 +629,8 @@ def emit_file(manifest, svg_root, args):
             if index:
                 body.append("")
             body.append(emit_one(os.path.join(directory, filename), camel_case(stem), args, source))
-        body.append("    }")
+        if not flat:
+            body.append("    }")
         body.append("")
     text = "\n".join(body)
 
@@ -605,7 +643,7 @@ def emit_file(manifest, svg_root, args):
     head += [f"import {module}" for module in imports]
     head.append("")
     head += kdoc(manifest.get("fileKdoc"), "")
-    head.append(f"sealed interface {manifest['interface']} {{")
+    head.append(f"{'object' if flat else 'sealed interface'} {manifest['interface']} {{")
     return "\n".join(head + [text]).rstrip("\n") + "\n}\n"
 
 
@@ -705,6 +743,27 @@ def self_test():
         assert entry["kind"] == "stroke"
         assert entry["width"] == 1.5
         assert entry["cap"] == "round" and entry["join"] == "round"
+    finally:
+        os.unlink(temp)
+
+    # Primitive geometry keeps SVG stroke semantics instead of expanding its outline.
+    shapes = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
+        'stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="3"/>'
+        '<rect x="3" y="10" width="18" height="12" rx="2"/></svg>'
+    )
+    handle, temp = tempfile.mkstemp(suffix=".svg")
+    os.write(handle, shapes.encode())
+    os.close(handle)
+    try:
+        _, raw_paths = parse_svg(temp)
+        assert len(raw_paths) == 2 and all(path["kind"] == "stroke" for path in raw_paths)
+        circle = parse_path_d(raw_paths[0]["d"])
+        rect = parse_path_d(raw_paths[1]["d"])
+        assert circle[0] == ("M", (15.0, 13.0)) and circle[-1][0] == "Z"
+        assert sum(op == "C" for op, _ in circle) == 4
+        assert rect[0] == ("M", (5.0, 10.0)) and rect[-1][0] == "Z"
+        assert sum(op == "C" for op, _ in rect) == 4
     finally:
         os.unlink(temp)
 

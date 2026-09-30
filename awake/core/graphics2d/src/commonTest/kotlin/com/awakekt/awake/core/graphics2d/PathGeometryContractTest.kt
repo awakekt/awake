@@ -138,6 +138,41 @@ class PathGeometryContractTest {
         assertTrue(outline.containsPoint(7f, 14f), "the ascending check leg is outside the stroke outline")
     }
 
+    @Test
+    fun roundStrokeChevronHasASharpInsideJoin() {
+        val outline = drawPath {
+            moveTo(6f, 9f)
+            lineTo(12f, 15f)
+            lineTo(18f, 9f)
+        }.strokeToSvgFillPath(DrawStroke(width = 2f.dp, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        val points = outline.flattenContours().single().points
+
+        assertTrue(
+            points.any { abs(it.x - 12f) < 0.01f && abs(it.y - 13.586f) < 0.01f },
+            "the chevron's inside edges must meet at the SVG stroke intersection",
+        )
+    }
+
+    @Test
+    fun aStrokeWiderThanItsLoopLeavesNoHole() {
+        // An icon's dot: a 0.75-radius circle stroked 1.5 wide, as the Heroicons ellipsis draws it,
+        // wound both ways round.
+        for (sweep in listOf(180f, -180f)) {
+            val dot = drawPath {
+                moveTo(12.75f, 12f)
+                arcTo(11.25f, 11.25f, 12.75f, 12.75f, 0f, sweep)
+                arcTo(11.25f, 11.25f, 12.75f, 12.75f, sweep, sweep)
+                close()
+            }.strokeToFillPath(DrawStroke(width = 1.5f.dp, cap = StrokeCap.Round, join = StrokeJoin.Round))
+
+            // The inner offset of so small a loop is a knot of reversed slivers, and its edges'
+            // antialiasing fringe draws a hollow dot.
+            assertEquals(1, dot.flattenContours().size, "the dot kept an inner ring (sweep $sweep)")
+            assertTrue(dot.containsPoint(12f, 12f), "the dot's center is a hole (sweep $sweep)")
+            assertTrue(dot.containsPoint(13.4f, 12f), "the dot is not as wide as its stroke (sweep $sweep)")
+        }
+    }
+
     // --- anti-aliased fill --------------------------------------------------
 
     @Test

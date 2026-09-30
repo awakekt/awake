@@ -684,6 +684,7 @@ public final class com/awakekt/awake/core/graphics2d/PathPredicatesKt {
 
 public final class com/awakekt/awake/core/graphics2d/PathStrokeTessellationKt {
 	public static final fun strokeToFillPath (Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/graphics2d/DrawStroke;)Lcom/awakekt/awake/core/graphics2d/DrawPath;
+	public static final fun strokeToSvgFillPath (Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/graphics2d/DrawStroke;)Lcom/awakekt/awake/core/graphics2d/DrawPath;
 	public static final fun tessellateStroke (Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/graphics2d/DrawStroke;F)Lcom/awakekt/awake/core/graphics2d/TriangleMesh;
 	public static synthetic fun tessellateStroke$default (Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/graphics2d/DrawStroke;FILjava/lang/Object;)Lcom/awakekt/awake/core/graphics2d/TriangleMesh;
 	public static final fun tessellateStrokeAa (Lcom/awakekt/awake/core/graphics2d/DrawPath;Lcom/awakekt/awake/core/graphics2d/DrawStroke;Lcom/awakekt/awake/core/color/Color;FF)Lcom/awakekt/awake/core/graphics2d/ColoredTriangleMesh;

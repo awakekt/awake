@@ -1,0 +1,22 @@
+{
+  "package": "com.awakekt.awake.lucide.icon",
+  "interface": "LucideIcons",
+  "flat": true,
+  "source": {
+    "name": "Lucide",
+    "repository": "https://github.com/lucide-icons/lucide",
+    "version": "0.469.0",
+    "license": "ISC"
+  },
+  "fileKdoc": [
+    "Lucide vectors generated from the pinned source SVGs vendored beside this file.",
+    "Recipes select these through their own registry. Do not edit generated paths."
+  ],
+  "tiers": [
+    {
+      "directory": "icons",
+      "dp": 16,
+      "label": "0.469.0"
+    }
+  ]
+}
