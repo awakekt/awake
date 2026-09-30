@@ -59,8 +59,9 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "alias=$alias" >> "$GITHUB_OUTPUT"
           # The Vulkan backend has its own release train, and each release is cut on one Core
-          # release. Install snippets pair the newest Vulkan release with that Core release.
-          git fetch --quiet --tags origin
+          # release. Install snippets pair the newest Vulkan release with that Core release. The
+          # full-depth checkout already has every tag; fetching tags again fails on a tag push,
+          # because checkout rewrote the pushed tag to a bare commit and git won't clobber it.
           vulkan="$(git tag --list 'vulkan-v*' --sort=-v:refname | head -n 1)"
           vulkan_core="$(git describe --tags --abbrev=0 --match 'v[0-9]*' "${vulkan}^{commit}")"
           echo "vulkan=${vulkan#vulkan-v}" >> "$GITHUB_OUTPUT"
