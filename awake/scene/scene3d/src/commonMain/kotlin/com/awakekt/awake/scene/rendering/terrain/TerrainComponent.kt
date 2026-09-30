@@ -21,6 +21,7 @@ import com.awakekt.awake.asset.terrain.splat.TerrainSplatWeightMap
  * @property clipmapConfig Concentric LOD ring configuration for dynamic camera tracking.
  * @property isVisible Visibility toggle for terrain render passes.
  * @property revision Invalidation counter incremented when height samples or splat weights are modified.
+ * @property collider Whether the terrain is solid ground when physics runs; see `SceneTerrain.collider`.
  */
 data class TerrainComponent(
     var heightmap: Heightmap,
@@ -29,4 +30,5 @@ data class TerrainComponent(
     val clipmapConfig: TerrainClipmapConfig = TerrainClipmapConfig(),
     var isVisible: Boolean = true,
     var revision: Int = 0,
+    val collider: Boolean = false,
 )

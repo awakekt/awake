@@ -47,6 +47,7 @@ import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
+import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
@@ -101,7 +102,9 @@ suspend fun loadPlayableProject(
         .map(models::modelPath)
         .distinct()
         .forEach { models.preload(it) }
-    val needsPhysics = scene.nodes.any { it.has(ScenePhysicsBody::class) || it.has(SceneCharacterController::class) }
+    val needsPhysics = scene.nodes.any {
+        it.has(ScenePhysicsBody::class) || it.has(SceneCharacterController::class) || it.hasTerrainCollider()
+    }
     val physics = if (needsPhysics) {
         requireNotNull(physicsWorld) { "${manifest.entryScene} has physics bodies or characters; pass a physicsWorld factory" }()
     } else {
@@ -134,6 +137,7 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
     if (moves) playerInputSystem()
     if (moves && project.hasCanvasActions()) frameSystem("canvas-actions") { CanvasActionSystem() }
     project.physics?.let { physicsWorld ->
+        if (project.scene.nodes.any { it.hasTerrainCollider() }) fixedSystem("terrain-collider") { TerrainColliderSystem() }
         fixedSystem("physics") { PhysicsSystem(physicsWorld) }
         if (characters) fixedSystem("character") { CharacterControllerSystem(physicsWorld) }
     }
@@ -195,6 +199,9 @@ private val PROJECT_COMPONENTS = listOf(
 private suspend fun AssetSource.readText(path: String): String =
     read(AssetPath(path)).getOrElse { throw IllegalArgumentException("Can't read $path from the project", it) }
         .decodeToString()
+
+private fun SceneNode.hasTerrainCollider(): Boolean =
+    components.any { it is SceneTerrain && it.collider } || children.any { it.hasTerrainCollider() }
 
 private fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
     components.any { type.isInstance(it) } || children.any { it.has(type) }
