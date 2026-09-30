@@ -15,6 +15,7 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Quat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.core.motion.GroundContact
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimation
@@ -74,6 +75,19 @@ class LocomotionAnimationTest {
         }
     }
 
+    /** On a character controller, jump means off the ground: a steep climb is still a run. */
+    @Test
+    fun aGroundContactDecidesTheJump() {
+        val walker = Walker(CLIPS, ground = GroundContact(grounded = true))
+        walker.standStill()
+
+        assertEquals("run", walker.after(dx = 6f * STEP, dy = 5f * STEP), "a steep climb on the ground")
+        walker.ground!!.grounded = false
+        assertEquals("jump", walker.after(dx = 0f, dy = 0.001f), "off the ground, even hanging still")
+        walker.ground.grounded = true
+        assertEquals("stand", walker.standStill())
+    }
+
     @Test
     fun aClipTheModelLacksKeepsWhatPlays() {
         val walker = Walker(CLIPS.copy(run = "sprint"))
@@ -84,7 +98,7 @@ class LocomotionAnimationTest {
     }
 
     /** One skinned entity with stand, walk, run and jump clips, moved by hand. */
-    private class Walker(clips: SceneLocomotionAnimation) {
+    private class Walker(clips: SceneLocomotionAnimation, val ground: GroundContact? = null) {
         private val world = World()
         private val transform = Transform()
         private val locomotion = LocomotionAnimation(clips)
@@ -98,6 +112,13 @@ class LocomotionAnimationTest {
 
         init {
             val entity = world.create()
+            ground?.let {
+                // Kept by the node that moves, above the model's.
+                val mover = world.create()
+                world.add(mover, Transform())
+                world.add(mover, it)
+                transform.parent = mover
+            }
             world.add(entity, transform)
             world.add(entity, locomotion)
             world.add(entity, Animator(player, Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4()))))

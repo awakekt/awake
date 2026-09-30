@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.core.motion.GroundContact
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
@@ -29,10 +30,12 @@ import kotlin.reflect.KClass
  * The speeds are measured from the entity's world position, so it animates however it is moved:
  * by a character controller, straight through the world, or by a script, and a model on a child
  * node of the moving entity animates with it. A mover stepped at a fixed rate stays put between
- * its steps, so a frame without motion counts as a stop only after a tenth of a second. It lands
- * when its fall stops, or when it holds its height for a quarter second. Climbing a slope also
- * moves it upward, so [airborneAbove] must sit above the vertical speed its steepest walkable slope
- * gives at a run.
+ * its steps, so a frame without motion counts as a stop only after a tenth of a second.
+ *
+ * When the entity or a node above it has a [GroundContact], as a `character_controller` keeps,
+ * [jump] plays exactly while it is off the ground. Otherwise it lands when its fall stops, or when
+ * it holds its height for a quarter second, and since climbing a slope also moves it upward,
+ * [airborneAbove] must sit above the vertical speed its steepest walkable slope gives at a run.
  */
 @Serializable
 @SerialName("locomotion_animation")
@@ -78,7 +81,7 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
      * The clip for how it moved to world ([x], [y], [z]) over the last [delta] seconds, or null when
      * this frame tells nothing new: its first, or a pause between a fixed-rate mover's steps.
      */
-    internal fun clipFor(x: Float, y: Float, z: Float, delta: Float): String? {
+    internal fun clipFor(x: Float, y: Float, z: Float, delta: Float, ground: GroundContact? = null): String? {
         val elapsed = sinceMoved + delta
         val stayedPut = x == lastX && y == lastY && z == lastZ
         if (seen && stayedPut && elapsed < STILL_AFTER) {
@@ -94,11 +97,11 @@ class LocomotionAnimation(val clips: SceneLocomotionAnimation) {
         lastZ = z
         sinceMoved = 0f
         seen = true
-        return if (first) null else choose(sqrt(dx * dx + dz * dz) / elapsed, vertical, elapsed)
+        return if (first) null else choose(sqrt(dx * dx + dz * dz) / elapsed, vertical, elapsed, ground)
     }
 
-    private fun choose(across: Float, vertical: Float, elapsed: Float): String? {
-        trackAirborne(vertical, clips.airborneAbove, elapsed)
+    private fun choose(across: Float, vertical: Float, elapsed: Float, ground: GroundContact?): String? {
+        if (ground != null) airborne = !ground.grounded else trackAirborne(vertical, clips.airborneAbove, elapsed)
         return when {
             airborne -> clips.jump
             across > clips.runAbove -> clips.run
@@ -149,13 +152,23 @@ class LocomotionAnimationSystem : System {
         world.queryEach(Transform::class, LocomotionAnimation::class) { entity, transform, locomotion ->
             val animator = world.get<Animator>(entity) ?: return@queryEach
             val placed = transform.worldMatrix
-            val wanted = locomotion.clipFor(placed.m03, placed.m13, placed.m23, delta)
+            val wanted = locomotion.clipFor(placed.m03, placed.m13, placed.m23, delta, world.groundContactOf(entity))
             if (wanted != null && wanted != locomotion.playing && wanted in animator.player.clipEntries) {
                 animator.player.crossFadeTo(wanted, locomotion.clips.crossFade)
                 locomotion.playing = wanted
             }
         }
     }
+}
+
+/** The [GroundContact] on [entity] or the nearest node above it, or null when none has one. */
+private fun World.groundContactOf(entity: Entity): GroundContact? {
+    var node: Entity? = entity
+    while (node != null) {
+        get<GroundContact>(node)?.let { return it }
+        node = get<Transform>(node)?.parent
+    }
+    return null
 }
 
 private const val DEFAULT_WALK_ABOVE = 0.1f

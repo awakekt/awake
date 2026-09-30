@@ -11,6 +11,7 @@ import com.awakekt.awake.physics.CapsuleShape
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneResolutionContext
+import com.awakekt.awake.scene.core.motion.GroundContact
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.physics.character.CharacterConfig
@@ -78,6 +79,7 @@ object CharacterControllerBinding : SceneComponentBinding<CharacterController, S
             stepDownDistance = component.stepHeight,
         )
         world.add(entity, CharacterController(config, component.jumpSpeed, component.gravity))
+        world.add(entity, GroundContact())
     }
 
     override fun export(world: World, entity: Entity, component: CharacterController) = SceneCharacterController(

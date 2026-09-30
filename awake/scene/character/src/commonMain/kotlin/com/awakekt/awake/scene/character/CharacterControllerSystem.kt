@@ -11,6 +11,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.scene.controls.movement.CameraRelativeBasis
 import com.awakekt.awake.scene.controls.movement.MovementControl
+import com.awakekt.awake.scene.core.motion.GroundContact
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.physics.character.KinematicCharacterController
 
@@ -57,6 +58,7 @@ class CharacterControllerSystem(
             )
             body.move(motion, delta)
             transform.position.set(body.position)
+            world.get<GroundContact>(entity)?.grounded = body.isGrounded && character.verticalVelocity <= 0f
             intent?.turnToward(transform, basis.worldX(moveX, moveZ), basis.worldZ(moveX, moveZ), delta)
         }
     }
