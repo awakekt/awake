@@ -1,4 +1,5 @@
-site_name: Awake Engine
+site_name: AwakeKt Docs
+site_description: Guides and reference for AwakeKt Engine, the Kotlin Multiplatform engine for 2D and 3D apps.
 site_url: https://docs.awakekt.com/
 repo_url: https://github.com/awakekt/awake
 hooks:
@@ -16,26 +17,41 @@ extra:
     provider: mike
 theme:
   name: material
+  logo: assets/brand/awake-mark.svg
+  favicon: assets/brand/awake-mark.svg
+  font:
+    text: IBM Plex Sans
+    code: IBM Plex Mono
+  # Light first; the toggle and prefers-color-scheme pick dark. Colours come from
+  # stylesheets/awakekt.css.
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: custom
+      accent: custom
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
   features:
+    - navigation.tabs
     - navigation.sections
     - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
     - content.code.copy
     - content.tabs.link
+extra_css:
+  - stylesheets/awakekt.css
 nav:
   - Home: index.md
   - Get Started:

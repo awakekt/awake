@@ -1,0 +1,171 @@
+/*
+ * SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * AwakeKt brand for MkDocs Material: the Ember Signal palette (docs/reference/brand-system.md).
+ * The header keeps the mark's dark field in both schemes; text accents use gold on dark and the
+ * darker #9A6500 on light, which the brand record sets for contrast on white.
+ */
+
+:root {
+  --awake-field: #15151c;
+  --awake-field-deep: #10131a;
+  --awake-ember: #ff6b35;
+  --awake-gold: #ffd166;
+  --awake-gold-on-light: #9a6500;
+}
+
+/* Header and tabs match the page: light on light, the brand field on dark. */
+[data-md-color-scheme="default"][data-md-color-primary="custom"] {
+  --md-primary-fg-color: #f6f6f7;
+  --md-primary-fg-color--light: #ffffff;
+  --md-primary-fg-color--dark: #ededf0;
+  --md-primary-bg-color: #16161c;
+  --md-primary-bg-color--light: #4e4a55;
+}
+
+[data-md-color-scheme="slate"][data-md-color-primary="custom"] {
+  --md-primary-fg-color: var(--awake-field-deep);
+  --md-primary-fg-color--light: #24202a;
+  --md-primary-fg-color--dark: var(--awake-field-deep);
+  --md-primary-bg-color: #eceae6;
+  --md-primary-bg-color--light: #a7a3ad;
+}
+
+.md-header,
+.md-tabs {
+  background-color: color-mix(in srgb, var(--md-primary-fg-color) 90%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.md-header {
+  box-shadow: none;
+}
+
+.md-tabs {
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+[data-md-color-scheme="default"] .md-search__form {
+  background-color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(22, 22, 28, 0.18);
+}
+
+[data-md-color-accent="custom"] {
+  --md-accent-fg-color: var(--awake-ember);
+  --md-accent-fg-color--transparent: rgba(255, 107, 53, 0.1);
+  --md-accent-bg-color: #16161c;
+}
+
+/* Light content. */
+[data-md-color-scheme="default"] {
+  --md-default-bg-color: #f6f6f7;
+  --md-default-fg-color: #16161c;
+  --md-default-fg-color--light: #4e4a55;
+  --md-default-fg-color--lighter: #66626d;
+  --md-typeset-a-color: var(--awake-gold-on-light);
+  --md-code-bg-color: #ededf0;
+  --md-code-fg-color: #16161c;
+}
+
+/* Dark content on the brand field. */
+[data-md-color-scheme="slate"] {
+  --md-hue: 250;
+  --md-default-bg-color: var(--awake-field-deep);
+  --md-default-fg-color: #eceae6;
+  --md-default-fg-color--light: #a7a3ad;
+  --md-default-fg-color--lighter: #7e7a86;
+  --md-typeset-a-color: var(--awake-gold);
+  --md-code-bg-color: var(--awake-field);
+}
+
+/* Code blocks stay on the dark field in both schemes, as on awakekt.com. */
+.md-typeset pre > code {
+  --md-code-bg-color: var(--awake-field);
+  --md-code-fg-color: #eceae6;
+  --md-code-hl-keyword-color: #ff9f1c;
+  --md-code-hl-string-color: var(--awake-gold);
+  --md-code-hl-number-color: #ffe29a;
+  --md-code-hl-comment-color: #7e7a86;
+  --md-code-hl-function-color: #ffb84a;
+  --md-code-hl-name-color: #eceae6;
+  --md-code-hl-constant-color: #ffe29a;
+  --md-code-hl-special-color: var(--awake-ember);
+  --md-code-hl-punctuation-color: #a7a3ad;
+  --md-code-hl-operator-color: #a7a3ad;
+  --md-code-hl-variable-color: #eceae6;
+  --md-code-hl-generic-color: #a7a3ad;
+  border-radius: 10px;
+}
+
+.md-typeset .md-code__button,
+.md-typeset .md-clipboard {
+  color: #7e7a86;
+}
+
+/* The logo is the mark on its own tile. */
+.md-header__button.md-logo img {
+  height: 1.6rem;
+  border-radius: 6px;
+}
+
+/* Active tab and nav item get the ember underline and weight rather than a colour change. */
+.md-tabs__item--active .md-tabs__link {
+  box-shadow: inset 0 -2px 0 var(--awake-ember);
+}
+
+/* Side nav: the current page is a tinted pill. */
+.md-sidebar--primary .md-nav__link--active {
+  color: var(--md-default-fg-color);
+  font-weight: 500;
+  background: rgba(255, 107, 53, 0.1);
+  border-radius: 6px;
+  margin-left: -0.5rem;
+  padding: 0.2rem 0.5rem;
+}
+
+/* On this page: a rail with the current heading marked in ember. */
+.md-sidebar--secondary .md-nav__list {
+  border-left: 2px solid var(--md-default-fg-color--lightest);
+}
+
+.md-sidebar--secondary .md-nav__list .md-nav__list {
+  border-left: 0;
+}
+
+.md-sidebar--secondary .md-nav__link {
+  margin-left: -2px;
+  padding-left: 0.6rem;
+  border-left: 2px solid transparent;
+}
+
+.md-sidebar--secondary .md-nav__link--active {
+  border-left-color: var(--awake-ember);
+  color: var(--md-default-fg-color);
+}
+
+/* Tables and callouts as cards. */
+.md-typeset table:not([class]) {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.md-typeset .admonition,
+.md-typeset details {
+  border-width: 1px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.md-typeset h1 {
+  color: var(--md-default-fg-color);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.md-typeset h2 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
