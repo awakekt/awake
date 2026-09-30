@@ -182,6 +182,7 @@ open class VulkanEngine(
             .toMap(),
         wireframeByFormat = companionsByFormat { it.wireframe },
         transparentByFormat = companionsByFormat { it.transparent },
+        additiveByFormat = companionsByFormat { it.additive },
         backCulledByFormat = companionsByFormat { it.backCulled },
         // Particles belong in particlePipelines, NOT here: `resolveInstanced` reads that map
         // for them, and folding them in under PositionUv left the field empty on this backend

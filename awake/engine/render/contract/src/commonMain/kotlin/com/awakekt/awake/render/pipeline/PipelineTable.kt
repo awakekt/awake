@@ -27,6 +27,9 @@ class PipelineTable<P>(
      * draw falls back to its opaque pipeline rather than being dropped: it renders unblended,
      * which is wrong but visible, where dropping it looks like a missing mesh. */
     val transparentByFormat: Map<VertexFormat, P> = emptyMap(),
+    /** Additive companions -- the pipeline a transparent `RenderDrawCommand.additive` draw resolves
+     * to. Without one it falls back to [transparentByFormat]: blended, not added, but visible. */
+    val additiveByFormat: Map<VertexFormat, P> = emptyMap(),
     val instancedByFormat: Map<VertexFormat, P> = emptyMap(),
     val skinnedInstancedByFormat: Map<VertexFormat, P> = emptyMap(),
     val particlePipelines: Map<VertexFormat, P> = emptyMap(),
@@ -67,6 +70,7 @@ data class UiShaderSet<T>(
  * surface's blending matters more than its winding, and in practice the two never combine.
  * @param wireframe The renderer-wide debug override. Wins outright because it is something the
  * user asked for explicitly, and seeing a transparent surface's edges beats seeing it blended.
+ * @param additive Per-draw, from `RenderDrawCommand.additive`; only meaningful with [transparent].
  * @return The pipeline to bind, or null when this table has no entry for [format].
  */
 fun <P> PipelineTable<P>.resolve(
@@ -74,10 +78,12 @@ fun <P> PipelineTable<P>.resolve(
     cullMode: CullMode = CullMode.None,
     transparent: Boolean = false,
     wireframe: Boolean = false,
+    additive: Boolean = false,
 ): P? {
     val fill = if (format == primaryFormat) primary else byFormat[format]
     return when {
         wireframe -> wireframeByFormat[format] ?: fill
+        transparent && additive -> additiveByFormat[format] ?: transparentByFormat[format] ?: fill
         transparent -> transparentByFormat[format] ?: fill
         cullMode == CullMode.Back -> backCulledByFormat[format] ?: fill
         else -> fill

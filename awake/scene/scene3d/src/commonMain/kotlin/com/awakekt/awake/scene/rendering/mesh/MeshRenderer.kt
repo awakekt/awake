@@ -32,4 +32,7 @@ data class MeshRenderer(
     /** Skips this entity's draw call when off, without removing the component -- an editor's
      * visibility toggle flips this rather than adding/removing [MeshRenderer] itself. */
     val visible: Boolean = true,
+    /** With [transparent], adds its colour to what is behind it rather than covering it -- glows,
+     * fire and light shafts, which only brighten. See `RenderDrawCommand.additive`. */
+    val additive: Boolean = false,
 )

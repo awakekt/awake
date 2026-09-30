@@ -100,6 +100,21 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         fragmentEntryPoint = "fragmentMain",
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
     )
+    // The textured format's blended companions, as RenderPlan builds them.
+    fun texturedCompanion(variant: PipelineVariant) = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        sceneRenderPass,
+        descriptorSetLayout,
+        runBlocking { spirvPair(PackShaderSets.Textured) },
+        VertexFormat.PositionNormalColorUv,
+        vertexEntryPoint = "vertexMain",
+        fragmentEntryPoint = "fragmentMain",
+        extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
+        variant = variant,
+    )
+    val transparentTexturedPipeline = texturedCompanion(PipelineVariant.AlphaBlended)
+    val additiveTexturedPipeline = texturedCompanion(PipelineVariant.AdditiveBlended)
     val instancedTexturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
@@ -190,6 +205,8 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 VertexFormat.PositionNormalColorUvSkin to skinnedTexturedPipeline,
             ),
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
+            transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline),
+            additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
         ),
         renderFeatures = listOf(
@@ -211,6 +228,8 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             texturedPipeline.destroy()
             skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
+            transparentTexturedPipeline.destroy()
+            additiveTexturedPipeline.destroy()
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, descriptorSetLayout.handle)
             transferContext.destroy()
             Vulkan.vkDestroyRenderPass(graphicsDevice.device, sceneRenderPass)

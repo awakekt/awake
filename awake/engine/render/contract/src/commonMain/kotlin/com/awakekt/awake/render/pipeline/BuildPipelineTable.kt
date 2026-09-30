@@ -55,6 +55,11 @@ suspend fun <P> buildPipelineTable(
                     } else {
                         null
                     },
+                    additive = if (request.buildAdditive) {
+                        factory.create(request.key, spec.copy(variant = PipelineVariant.AdditiveBlended))
+                    } else {
+                        null
+                    },
                 ),
             )
         } catch (e: Exception) {

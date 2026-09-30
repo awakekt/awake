@@ -102,6 +102,22 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         bindingsByGroup = PackShaderSets.SkinnedTextured.webGpu.bindingsByGroup,
         bindingsMetadataAvailable = PackShaderSets.SkinnedTextured.webGpu.bindingsMetadataAvailable,
     )
+    // The textured format's blended companions, as RenderPlan builds them.
+    suspend fun texturedCompanion(variant: PipelineVariant) = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        DescriptorSetLayoutHandle(0),
+        wgsl(PackShaderSets.Textured),
+        ByteArray(0),
+        VertexFormat.PositionNormalColorUv,
+        "vertexMain",
+        "fragmentMain",
+        variant = variant,
+        bindingsByGroup = PackShaderSets.Textured.webGpu.bindingsByGroup,
+        bindingsMetadataAvailable = PackShaderSets.Textured.webGpu.bindingsMetadataAvailable,
+    )
+    val transparentTexturedPipeline = texturedCompanion(PipelineVariant.AlphaBlended)
+    val additiveTexturedPipeline = texturedCompanion(PipelineVariant.AdditiveBlended)
     val instancedTexturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
@@ -170,6 +186,8 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 VertexFormat.PositionNormalColorUvSkin to skinnedTexturedPipeline,
             ),
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
+            transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline),
+            additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
         ),
         lineRenderPipeline = linePipeline,
@@ -197,6 +215,8 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             texturedPipeline.destroy()
             skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
+            transparentTexturedPipeline.destroy()
+            additiveTexturedPipeline.destroy()
             graphicsDevice.destroy()
         }
     }

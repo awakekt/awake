@@ -309,6 +309,7 @@ open class WebGpuEngine(
             wireframeByFormat = byFormat(includePrimary = true) { it.wireframe },
             backCulledByFormat = byFormat(includePrimary = true) { it.backCulled },
             transparentByFormat = byFormat(includePrimary = true) { it.transparent },
+            additiveByFormat = byFormat(includePrimary = true) { it.additive },
             instancedByFormat = buildMap {
                 builtPipelines[PipelineKey.Instanced]?.let { put(vertexFormat, it.fill) }
                 builtPipelines.forEach { (key, built) ->

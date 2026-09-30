@@ -36,6 +36,10 @@ sealed interface PipelineVariant {
      * color and alpha) -- the same blend state each backend's UI texture pipeline already uses. */
     val blendEnabled: Boolean
 
+    /** Only meaningful alongside [blendEnabled]: colour adds to what is behind it (`SRC_ALPHA`/`ONE`)
+     * rather than covering it -- glows, fire and light shafts, which only ever brighten. */
+    val additive: Boolean get() = false
+
     /** `false` disables depth WRITE only (depth TEST stays on) -- for order-independent content
      * that shouldn't self-occlude (e.g. particles). */
     val depthWriteEnabled: Boolean
@@ -78,6 +82,17 @@ sealed interface PipelineVariant {
         override val instanceAlpha = false
         override val instanceFrame = false
         override val blendEnabled = true
+        override val depthWriteEnabled = false
+        override val depthTestEnabled = true
+    }
+
+    /** [AlphaBlended]'s additive twin: a glowing surface that brightens what is behind it. */
+    data object AdditiveBlended : PipelineVariant {
+        override val instanced = false
+        override val instanceAlpha = false
+        override val instanceFrame = false
+        override val blendEnabled = true
+        override val additive = true
         override val depthWriteEnabled = false
         override val depthTestEnabled = true
     }

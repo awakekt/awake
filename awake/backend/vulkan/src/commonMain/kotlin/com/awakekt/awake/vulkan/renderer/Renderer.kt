@@ -247,7 +247,8 @@ class Renderer internal constructor(
         format: VertexFormat,
         cullMode: CullMode = CullMode.None,
         transparent: Boolean = false,
-    ): RenderPipeline? = pipelines.resolve(format, cullMode, transparent, wireframe)
+        additive: Boolean = false,
+    ): RenderPipeline? = pipelines.resolve(format, cullMode, transparent, wireframe, additive)
 
     internal val device get() = graphicsDevice.device
     internal val physicalDevice get() = graphicsDevice.physicalDevice

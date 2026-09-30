@@ -160,7 +160,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
             depthSortKey = cmd.depthSortKey(cameraPosition),
         )
     }
-    val pipeline = pipelineFor(mesh.format, cmd.cullMode, isTransparent) ?: return null
+    val pipeline = pipelineFor(mesh.format, cmd.cullMode, isTransparent, cmd.additive) ?: return null
     val uniformSlotIndex = materialUsage.nextSlot(material)
     val uniformFloats = cmd.uniformFloats(
         materialUniformFloatCount = material.uniformFloatCount,

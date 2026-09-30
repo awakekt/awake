@@ -118,6 +118,8 @@ data class PipelineRequest(
     /** An alpha-blended, non-depth-writing companion for `RenderDrawCommand.transparent` draws. Same
      * scope again, since instanced and particle draws carry their own blend variants already. */
     val buildTransparent: Boolean = false,
+    /** An additive, non-depth-writing companion for `RenderDrawCommand.additive` draws. */
+    val buildAdditive: Boolean = false,
 )
 
 /**
@@ -129,6 +131,7 @@ data class PipelineSet<P>(
     val wireframe: P? = null,
     val backCulled: P? = null,
     val transparent: P? = null,
+    val additive: P? = null,
 ) {
     /**
      * Every pipeline in this set, for teardown.
@@ -138,7 +141,7 @@ data class PipelineSet<P>(
      * pipeline per vertex format on every backend at once. A companion added to this class from
      * now on joins this list automatically.
      */
-    val all: List<P> get() = listOfNotNull(fill, wireframe, backCulled, transparent)
+    val all: List<P> get() = listOfNotNull(fill, wireframe, backCulled, transparent, additive)
 }
 
 /**
