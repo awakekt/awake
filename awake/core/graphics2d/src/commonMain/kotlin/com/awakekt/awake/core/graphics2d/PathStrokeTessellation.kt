@@ -70,8 +70,15 @@ private fun DrawPath.strokeToFillPath(stroke: DrawStroke, svgInnerJoins: Boolean
         // picture here: a cap drawn on top of the join it coincides with is invisible.
         val loops = contour.points.size > 2 && unitDir(contour.points.last(), contour.points.first()) == null
         if (contour.closed || loops) {
-            emitRing(offsetClosedRing(contour.points, halfWidth, stroke.join))
-            emitRing(offsetClosedRing(contour.points, -halfWidth, stroke.join).asReversed())
+            val left = offsetClosedRing(contour.points, halfWidth, stroke.join)
+            val right = offsetClosedRing(contour.points, -halfWidth, stroke.join)
+            if (strokeFillsLoop(contour.points, halfWidth)) {
+                // Which side is outside depends on the loop's winding: keep the larger ring.
+                emitRing(if (abs(ringArea(left)) >= abs(ringArea(right))) left else right)
+            } else {
+                emitRing(left)
+                emitRing(right.asReversed())
+            }
         } else {
             emitRing(offsetOpenRing(contour.points, halfWidth, stroke, svgInnerJoins))
         }
@@ -206,6 +213,21 @@ private fun strokeJoinCorner(
 }
 
 private fun cross(a: DrawPoint, b: DrawPoint): Float = a.x * b.y - a.y * b.x
+
+/**
+ * Whether a stroke of [halfWidth] covers the loop's whole interior, so it has no hole. No interior
+ * point lies farther than half the bounds' narrow side from the edge. The inner offset of such a
+ * loop (an icon's dot) collapses into reversed slivers that cut a hole under NonZero. A loop that
+ * is narrow only along a diagonal still gets its inner ring.
+ */
+private fun strokeFillsLoop(points: List<DrawPoint>, halfWidth: Float): Boolean {
+    val width = points.maxOf { it.x } - points.minOf { it.x }
+    val height = points.maxOf { it.y } - points.minOf { it.y }
+    return minOf(width, height) <= halfWidth * 2f
+}
+
+private fun ringArea(ring: List<DrawPoint>): Float =
+    ring.indices.sumOf { i -> cross(ring[i], ring[(i + 1) % ring.size]).toDouble() }.toFloat() / 2f
 
 internal fun offsetClosedRing(rawPoints: List<DrawPoint>, distance: Float, join: StrokeJoin): List<DrawPoint> {
     val points = if (rawPoints.size >= 2 && unitDir(rawPoints.last(), rawPoints.first()) == null) {

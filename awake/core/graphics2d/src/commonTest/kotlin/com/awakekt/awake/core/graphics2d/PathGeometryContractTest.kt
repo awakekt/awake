@@ -153,6 +153,26 @@ class PathGeometryContractTest {
         )
     }
 
+    @Test
+    fun aStrokeWiderThanItsLoopLeavesNoHole() {
+        // An icon's dot: a 0.75-radius circle stroked 1.5 wide, as the Heroicons ellipsis draws it,
+        // wound both ways round.
+        for (sweep in listOf(180f, -180f)) {
+            val dot = drawPath {
+                moveTo(12.75f, 12f)
+                arcTo(11.25f, 11.25f, 12.75f, 12.75f, 0f, sweep)
+                arcTo(11.25f, 11.25f, 12.75f, 12.75f, sweep, sweep)
+                close()
+            }.strokeToFillPath(DrawStroke(width = 1.5f.dp, cap = StrokeCap.Round, join = StrokeJoin.Round))
+
+            // The inner offset of so small a loop is a knot of reversed slivers, and its edges'
+            // antialiasing fringe draws a hollow dot.
+            assertEquals(1, dot.flattenContours().size, "the dot kept an inner ring (sweep $sweep)")
+            assertTrue(dot.containsPoint(12f, 12f), "the dot's center is a hole (sweep $sweep)")
+            assertTrue(dot.containsPoint(13.4f, 12f), "the dot is not as wide as its stroke (sweep $sweep)")
+        }
+    }
+
     // --- anti-aliased fill --------------------------------------------------
 
     @Test
