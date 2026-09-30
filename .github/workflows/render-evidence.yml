@@ -75,6 +75,10 @@ jobs:
         with:
           cache-provider: basic
 
+      - name: Prepare capture directories
+        if: steps.scope.outputs.render == 'true'
+        run: mkdir -p "$RUNNER_TEMP/before" "$RUNNER_TEMP/after"
+
       - uses: ./.github/actions/cache-naga
         if: steps.scope.outputs.scenes == 'true'
         with:
@@ -118,7 +122,6 @@ jobs:
       - name: Checkout base
         if: steps.scope.outputs.render == 'true'
         run: |
-          mkdir -p "$RUNNER_TEMP/before"
           git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
 
       - name: Render base
