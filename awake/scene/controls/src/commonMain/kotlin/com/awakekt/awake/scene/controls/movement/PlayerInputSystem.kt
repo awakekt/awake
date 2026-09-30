@@ -31,6 +31,7 @@ class PlayerInputSystem(
                 control.moveX = 0f
                 control.moveZ = 0f
                 control.jump = false
+                control.run = false
             }
             return
         }
@@ -50,10 +51,12 @@ class PlayerInputSystem(
         }
 
         val jump = input.isDown(Key.Space)
+        val run = input.isDown(Key.Shift)
         world.queryEach(MovementControl::class) { _, control ->
             control.moveX = moveX
             control.moveZ = moveZ
             control.jump = jump
+            control.run = run
         }
     }
 }

@@ -40,7 +40,7 @@ class CharacterControllerSystem(
             val intent = world.get<MovementControl>(entity)
             val moveX = intent?.moveX ?: 0f
             val moveZ = intent?.moveZ ?: 0f
-            val step = (intent?.speed ?: defaultSpeed) * delta
+            val step = (intent?.currentSpeed(defaultSpeed) ?: defaultSpeed) * delta
 
             // Just after take-off the ground probe still reaches the floor, so a rising character
             // is airborne whatever the probe says; otherwise the next step would cancel the jump.
@@ -57,6 +57,7 @@ class CharacterControllerSystem(
             )
             body.move(motion, delta)
             transform.position.set(body.position)
+            intent?.turnToward(transform, basis.worldX(moveX, moveZ), basis.worldZ(moveX, moveZ), delta)
         }
     }
 

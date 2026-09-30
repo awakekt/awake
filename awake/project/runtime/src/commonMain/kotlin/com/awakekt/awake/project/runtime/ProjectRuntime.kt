@@ -46,6 +46,8 @@ import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.Animator
+import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
+import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
@@ -143,6 +145,7 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
         frameSystem("spin-clock") { SpinClockSystem() }
         frameSystem("spin") { SpinSystem() }
     }
+    if (project.has(SceneLocomotionAnimation::class)) frameSystem("locomotion") { LocomotionAnimationSystem() }
     frameSystem("animation") { AnimationSystem() }
     onReady {
         showTouchControls = touchControls
