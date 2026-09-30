@@ -6,7 +6,7 @@
 > 2. Read this sitemap table to find the exact document you need.
 > 3. Only open the specific single file relevant to your current task.
 
-**Last Self-Healed**: `2026-10-01` | **Total Tracked Docs**: `94`
+**Last Self-Healed**: `2026-10-01` | **Total Tracked Docs**: `93`
 
 | Category | Document | Status | 1-Line Summary |
 | :--- | :--- | :--- | :--- |
@@ -31,7 +31,6 @@
 | **Active Task** | [`Blueprint runtime plan`](tasks/2026-09-27-blueprint-runtime-plan.md) | `Active` | Date: 2026-09-27 |
 | **Active Task** | [`Node graph plan`](tasks/2026-09-27-node-graph-plan.md) | `Active` | Date: 2026-09-27 |
 | **Active Task** | [`Shader graph plan`](tasks/2026-09-27-shader-graph-plan.md) | `Active` | Date: 2026-09-27 |
-| **Active Task** | [`Shader hot reload plan`](tasks/2026-09-27-shader-hot-reload-plan.md) | `Active` | Date: 2026-09-27 |
 | **Active Task** | [`Terrain surface layers plan`](tasks/2026-09-27-terrain-surface-layers-plan.md) | `Active` | Date: 2026-09-27 |
 | **Active Task** | [`Awake Editor Plan — rebuild, do not port`](tasks/editor/01-compose-editor-plan-todo.md) | `Active` | Drafted 2026-08-22. Revised 2026-08-25. Status: Stages 0 and 1 foundations complete; |
 | **Active Task** | [``Vec3f` / `Vec3d` / `Vec3i` — precision variants`](tasks/math/01-vector-precision-variants-todo.md) | `Active` | Drafted 2026-08-22. Status: todo. Gated on a real consumer per variant; see Triggers. |

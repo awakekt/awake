@@ -116,8 +116,14 @@ try {
 - **Chaining.** `new` is what the next call replaces.
 - **Bindings.** A replacement must declare the same bindings as the shader it replaces, because the
   pipeline keeps its layout. Changing bindings needs a new pipeline.
-- **Limits.** Depth-only and debug-line pipelines are not replaced, and vertex inputs are not
-  checked. See the [shader-hot-reload plan](../../../docs/tasks/2026-09-27-shader-hot-reload-plan.md).
+- **Limits.** Depth-only and debug-line pipelines are not replaced; the depth pre-pass keeps its
+  own shader. Vertex inputs are not checked, so reading an input the vertex format lacks is a
+  caller error that validation reports. Pipelines are per vertex format, so replacing the lit
+  shader changes every mesh of that format. Kotlin-authored shaders still need a restart.
+- **Vulkan only for now.** WebGPU ([#214](https://github.com/awakekt/awake/issues/214)), UI
+  pipelines ([#217](https://github.com/awakekt/awake/issues/217)), off-thread compiles
+  ([#215](https://github.com/awakekt/awake/issues/215)) and a compile cache
+  ([#216](https://github.com/awakekt/awake/issues/216)) are open.
 
 The engine showcase shows it: press L to toggle a brighter-ambient `lit_shadow`, and K to try a
 broken variant, which is refused and logged.
