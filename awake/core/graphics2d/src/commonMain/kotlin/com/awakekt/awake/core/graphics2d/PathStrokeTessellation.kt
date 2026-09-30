@@ -33,9 +33,10 @@ fun DrawPath.tessellateStrokeAa(
     val physicalWidth = stroke.width.value * density
     val scaledStroke = stroke.copy(width = physicalWidth.dp)
     val fringe = fringePx.coerceAtLeast(0f).coerceAtMost(physicalWidth / 2f)
-    // A stroke already has a finite interior. Keep that core opaque and place the fringe outside
-    // it so a one-pixel border does not lose all of its solid coverage.
-    return strokeToFillPath(scaledStroke).tessellateFillAa(color, fringePx = fringe, insetPx = 0f)
+    // Keep one physical pixel of opaque stroke before moving any fringe inside its boundary.
+    // Wider strokes can center their edge coverage; an outside-only fringe visibly fattens icons.
+    val inset = ((physicalWidth - 1f) / 2f).coerceIn(0f, fringe / 2f)
+    return strokeToFillPath(scaledStroke).tessellateFillAa(color, fringePx = fringe, insetPx = inset)
 }
 
 /**

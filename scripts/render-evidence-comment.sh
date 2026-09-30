@@ -32,7 +32,7 @@ total=$(( ${#changed[@]} + ${#unchanged[@]} ))
 echo "<!-- render-evidence -->"
 echo "## Render evidence"
 echo
-echo "Headless Vulkan (lavapipe) render scenarios and shadcn/Lucide CPU icon previews at \`${sha:0:9}\`. **${#changed[@]} of $total changed.**"
+echo "Headless Vulkan (lavapipe) render scenarios, shadcn/Lucide CPU icon previews, and a Chromium render of the pinned original SVGs at \`${sha:0:9}\`. **${#changed[@]} of $total changed.**"
 echo "The \`ui-*-cpu\` images are CPU raster previews, not GPU pixel-fidelity results."
 if ! ls "$before"/*.png >/dev/null 2>&1; then
   echo
@@ -61,4 +61,4 @@ if (( ${#unchanged[@]} )); then
   echo "</details>"
 fi
 echo
-echo "Regenerate the render scenarios with \`./gradlew :awake:engine:render:parity:captureRenderEvidence\` and the icon previews with \`./gradlew :awake:ui:shadcn:desktopTest --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs' --tests '*LucideShadcnSpritesheetPreviewTest*'\`."
+echo "Regenerate the render scenarios with \`./gradlew :awake:engine:render:parity:captureRenderEvidence\`, the icon previews with \`./gradlew :awake:ui:shadcn:desktopTest --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs' --tests '*LucideShadcnSpritesheetPreviewTest*'\`, and the browser reference with \`python3 tools/icons/capture_lucide_spritesheet_reference.py --out original-svg-browser.png\`."

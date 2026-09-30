@@ -91,6 +91,20 @@ jobs:
           cp awake/ui/shadcn/build/reports/compose-preview/lucide-icons.png "$RUNNER_TEMP/after/ui-lucide-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/shadcn-icons.png "$RUNNER_TEMP/after/ui-shadcn-icons-cpu.png"
 
+      - name: Setup Python for original SVG capture
+        if: steps.scope.outputs.render == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Capture pinned original SVGs in Chromium
+        if: steps.scope.outputs.render == 'true'
+        run: |
+          python -m pip install 'playwright==1.62.0'
+          python -m playwright install --with-deps chromium
+          python tools/icons/capture_lucide_spritesheet_reference.py \
+            --out "$RUNNER_TEMP/after/ui-original-svg-browser.png"
+
       - name: Render base
         if: steps.scope.outputs.render == 'true'
         run: |

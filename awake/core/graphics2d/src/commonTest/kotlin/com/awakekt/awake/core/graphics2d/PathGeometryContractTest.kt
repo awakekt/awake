@@ -191,6 +191,22 @@ class PathGeometryContractTest {
         assertEquals(1.5f, opaqueLeft, 0.01f, "a thin stroke was incorrectly shrunk before AA")
     }
 
+    @Test
+    fun aWideStrokeCentersItsAaFringeOnTheSourceBoundary() {
+        val mesh = drawPath {
+            moveTo(8f, 2f)
+            lineTo(28f, 2f)
+            lineTo(28f, 20f)
+            lineTo(8f, 20f)
+            close()
+        }.tessellateStrokeAa(DrawStroke(width = 3f.dp), Color.White)
+
+        val opaqueLeft = mesh.vertices.filter { it.color.a > 0.99f }.minOf { it.position.x }
+        val transparentLeft = mesh.vertices.filter { it.color.a < 0.01f }.minOf { it.position.x }
+        assertTrue(opaqueLeft > 6.75f, "opaque stroke reaches past its AA core: $opaqueLeft")
+        assertTrue(transparentLeft < 6.1f, "stroke AA fringe did not extend past its boundary: $transparentLeft")
+    }
+
     // --- clipping -----------------------------------------------------------
 
     @Test
