@@ -1,1 +1,0 @@
-- Generate shadcn Lucide icons from pinned SVGs, correct round stroke inner joins, and center vector stroke antialiasing to keep icon edges close to the source at small and large sizes.

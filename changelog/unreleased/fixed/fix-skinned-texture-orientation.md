@@ -1,1 +1,0 @@
-- **Textured skinned parts sample their texture the right way up.** `PackShaderSets.SkinnedTextured` passed UVs straight through, while every other textured shader undoes `createBitmap`'s bottom-up decode by flipping V, so a character's textures landed upside down on its parts.
