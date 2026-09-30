@@ -13,6 +13,7 @@ import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.asset.shaders.ShaderStage
 import com.awakekt.awake.asset.shaders.buildContentFeature
+import com.awakekt.awake.asset.shaders.castsWithPrimaryDepthShader
 import com.awakekt.awake.asset.shaders.entryPoint
 import com.awakekt.awake.asset.shaders.spec
 import com.awakekt.awake.asset.shaders.uiShaderSet
@@ -288,7 +289,7 @@ open class VulkanEngine(
             }
             val formatPipelines = buildMap {
                 plan.scenePipelines
-                    .filter { it.variant == PipelineVariant.Opaque && it.vertexFormat != vertexFormat }
+                    .filter { it.castsWithPrimaryDepthShader(vertexFormat) }
                     .forEach { scenePipeline ->
                         put(
                             scenePipeline.vertexFormat,

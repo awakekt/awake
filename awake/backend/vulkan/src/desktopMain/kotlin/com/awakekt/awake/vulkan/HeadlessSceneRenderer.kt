@@ -86,6 +86,17 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         fragmentEntryPoint = "fragmentMain",
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
     )
+    val skinnedTexturedPipeline = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        sceneRenderPass,
+        descriptorSetLayout,
+        runBlocking { spirvPair(PackShaderSets.SkinnedTextured) },
+        VertexFormat.PositionNormalColorUvSkin,
+        vertexEntryPoint = "vertexMain",
+        fragmentEntryPoint = "fragmentMain",
+        extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
+    )
     val instancedTexturedPipeline = RenderPipeline(
         graphicsDevice,
         swapchainManager,
@@ -157,7 +168,10 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         pipelines = PipelineTable(
             primary = scenePipeline,
             primaryFormat = scenePipeline.vertexFormat,
-            byFormat = mapOf(VertexFormat.PositionNormalColorUv to texturedPipeline),
+            byFormat = mapOf(
+                VertexFormat.PositionNormalColorUv to texturedPipeline,
+                VertexFormat.PositionNormalColorUvSkin to skinnedTexturedPipeline,
+            ),
             instancedByFormat = mapOf(VertexFormat.PositionNormalColorUv to instancedTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
         ),
@@ -178,6 +192,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             scenePipeline.destroy()
             backCulledScenePipeline.destroy()
             texturedPipeline.destroy()
+            skinnedTexturedPipeline.destroy()
             instancedTexturedPipeline.destroy()
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, descriptorSetLayout.handle)
             transferContext.destroy()

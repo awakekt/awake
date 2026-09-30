@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.gltf
 
+import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.io.AssetSource
 import kotlinx.coroutines.test.runTest
 import kotlin.io.encoding.Base64
@@ -13,6 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalEncodingApi::class)
@@ -98,6 +100,77 @@ class GltfAssetResolverTextureTest {
 
         assertEquals("gltf-material:$path", resolver.materialName(path))
         assertNotNull(resolver.materialParameters(path))
+    }
+
+    /** A skinned model's parts: the textured one draws its texture, skinned; the other stays untextured. */
+    @Test
+    fun aSkinnedModelsPartsDrawTheirOwnTextures() = runTest {
+        val path = "assets/characters/walker.gltf"
+        val resolver = GltfAssetResolver()
+
+        resolver.preload(path, skinnedPartsJson().encodeToByteArray())
+
+        assertEquals(
+            listOf(
+                GltfMaterialSlot("gltf-primitive:$path#0", "gltf-material:$path#0", null),
+                GltfMaterialSlot("gltf-primitive:$path#1", "skinned-material", null),
+            ),
+            resolver.materialSlots(path),
+        )
+        assertEquals(VertexFormat.PositionNormalColorUvSkin, resolver.skinnedPartGeometry("gltf-primitive:$path#0")?.format)
+        assertEquals(VertexFormat.PositionNormalColorSkin, resolver.skinnedPartGeometry("gltf-primitive:$path#1")?.format)
+        assertNull(resolver.skinnedPartGeometry("gltf-primitive:$path#2"))
+    }
+
+    /** One triangle skinned to one joint, drawn by two part nodes: the first textured, the second not. */
+    private fun skinnedPartsJson(): String {
+        val bytes = triangleBufferBytes()
+        val image = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+        val skinning = ByteArray(12) + floatBytes(1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f, 0f, 0f) +
+            floatBytes(0f, 0f, 1f, 0f, 0f, 1f) + floatBytes(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        val buffer = bytes + ByteArray(2) + skinning
+        val base = bytes.size + 2
+        return """
+            {
+              "buffers": [{"uri":"data:application/octet-stream;base64,${Base64.encode(buffer)}","byteLength":${buffer.size}}],
+              "bufferViews": [
+                {"buffer":0,"byteOffset":0,"byteLength":36},
+                {"buffer":0,"byteOffset":36,"byteLength":6},
+                {"buffer":0,"byteOffset":$base,"byteLength":12},
+                {"buffer":0,"byteOffset":${base + 12},"byteLength":48},
+                {"buffer":0,"byteOffset":${base + 60},"byteLength":24},
+                {"buffer":0,"byteOffset":${base + 84},"byteLength":64}
+              ],
+              "accessors": [
+                {"bufferView":0,"componentType":5126,"count":3,"type":"VEC3"},
+                {"bufferView":1,"componentType":5123,"count":3,"type":"SCALAR"},
+                {"bufferView":2,"componentType":5121,"count":3,"type":"VEC4"},
+                {"bufferView":3,"componentType":5126,"count":3,"type":"VEC4"},
+                {"bufferView":4,"componentType":5126,"count":3,"type":"VEC2"},
+                {"bufferView":5,"componentType":5126,"count":1,"type":"MAT4"}
+              ],
+              "materials": [{"pbrMetallicRoughness":{"baseColorTexture":{"index":0}}}],
+              "textures": [{"source":0}],
+              "images": [{"uri":"data:image/png;base64,$image"}],
+              "meshes": [
+                {"primitives":[{"attributes":{"POSITION":0,"JOINTS_0":2,"WEIGHTS_0":3,"TEXCOORD_0":4},"indices":1,"material":0}]},
+                {"primitives":[{"attributes":{"POSITION":0,"JOINTS_0":2,"WEIGHTS_0":3},"indices":1}]}
+              ],
+              "nodes": [{"name":"Root"}, {"mesh":0,"skin":0}, {"mesh":1,"skin":0}],
+              "skins": [{"inverseBindMatrices":5,"joints":[0]}],
+              "scenes": [{"nodes":[0,1,2]}],
+              "scene": 0
+            }
+        """.trimIndent()
+    }
+
+    private fun floatBytes(vararg values: Float): ByteArray {
+        val bytes = ByteArray(values.size * 4)
+        values.forEachIndexed { index, value ->
+            val bits = value.toRawBits()
+            for (byte in 0 until 4) bytes[index * 4 + byte] = (bits ushr (byte * 8)).toByte()
+        }
+        return bytes
     }
 
     private fun texturedTriangleJson(

@@ -57,6 +57,27 @@ class SceneBackendParityTest {
     }
 
     /**
+     * A textured skinned mesh draws its texture where its joint puts it: the identity joint shows
+     * the orange plane, a zero joint collapses it, so neither the texture nor the palette is ignored.
+     */
+    @Test
+    fun aTexturedSkinnedMeshShowsItsTextureOnBothBackends() {
+        val identity = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            fun orange(pixels: ByteArray) = pixels.indices.step(4).count { index ->
+                (pixels[index].toInt() and 0xFF).let { red -> red > TEXTURED_RED_THRESHOLD && red > 2 * (pixels[index + 2].toInt() and 0xFF) }
+            }
+
+            val shown = orange(renderer.renderTexturedSkinnedScene(identity))
+            val collapsed = orange(renderer.renderTexturedSkinnedScene(FloatArray(identity.size)))
+
+            assertTrue(shown >= MIN_TEXTURED_PIXELS, "$backend: the textured skinned plane drew $shown orange pixels")
+            assertEquals(0, collapsed, "$backend: a zero joint must collapse the plane")
+        }
+    }
+
+    /**
      * A texture is sRGB: lit only by ambient, mid-grey 128 comes out as encode(decode(128) x 0.08),
      * about 41, not the 10 that lighting the raw bytes and writing them unencoded gives.
      */
