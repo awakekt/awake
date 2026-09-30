@@ -1,1 +1,0 @@
-- **The 0.1.0 public API is frozen.** From this beta until `0.1.0`, a change to a published API deprecates the old form before removing it. Android multi-touch, display density and audio (#155, #156) and AI in the project player (#213) move to 0.2.0, since each changes a public API. Everything else in this milestone shipped in `0.1.0-alpha.18`.
