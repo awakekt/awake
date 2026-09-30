@@ -11,8 +11,10 @@ plugins:
       canonical_version: latest
       version_selector: true
 extra:
-  awake_version: 0.1.0-alpha.15
+  awake_version: 0.1.0-alpha.16
   awake_vulkan_version: 0.1.6
+  # The Core release awake_vulkan_version was cut on; install snippets use this pair.
+  awake_vulkan_core_version: 0.1.0-alpha.14
   version:
     provider: mike
 theme:
@@ -54,40 +56,55 @@ extra_css:
   - stylesheets/awakekt.css
 nav:
   - Home: index.md
-  - Get Started:
-      - Installation: getting-started.md
-  - Core:
-      - Core Runtime: engine/core.md
-      - Math: core/math.md
-      - Entity Component System: engine/ecs.md
-      - Application Lifecycle: engine/bootstrap.md
-  - Scene:
-      - Scene Runtime: engine/scene.md
-      - Scene Authoring: scene/authoring.md
-      - Scene Rendering: scene/rendering.md
-      - Lights and Shadows: scene/lights-and-shadows.md
-      - Navigation: scene/navigation.md
-      - AI: scene/ai.md
-      - World Streaming: scene/world.md
-  - Rendering & Backends:
-      - Render Hardware Interface: rendering/rhi.md
-      - Vulkan: rendering/vulkan.md
-      - WebGPU: rendering/webgpu.md
-      - Shaders & Pipelines: rendering/shaders.md
-      - Shader DSL: asset/shader-dsl.md
-      - Shader Compiler: rendering/shader-compiler.md
-  - Physics:
-      - Physics API: physics/api.md
-      - Jolt Backend: physics/jolt.md
-  - UI:
-      - UI Runtime: ui/index.md
-      - Compose Runtime: ui/compose.md
-      - Shadcn: ui/shadcn.md
-      - Theming: guides/theming.md
-      - Button: guides/components/button.md
-  - Assets:
-      - Terrain: asset/terrain.md
-  - Releases & Compatibility: releases.md
+  - Get started:
+      - Installation: get-started/installation.md
+      - Your first window: get-started/first-window.md
+      - Your first scene: get-started/first-scene.md
+      - Load a scene document: get-started/load-a-scene-document.md
+      - Run in the browser: get-started/run-in-the-browser.md
+  - Guides:
+      - Scene and ECS:
+          - Scene documents: guides/scene-documents.md
+          - Scene DSL: guides/scene-dsl.md
+          - ECS: guides/ecs.md
+          - App lifecycle: guides/app-lifecycle.md
+          - Cameras and controls: guides/cameras-and-controls.md
+          - Input: guides/input.md
+          - Math: guides/math.md
+      - Rendering:
+          - Lights and shadows: guides/lights-and-shadows.md
+          - Sky and fog: guides/sky-and-fog.md
+          - Meshes and materials: guides/meshes-and-materials.md
+          - glTF models: guides/gltf.md
+          - Animation: guides/animation.md
+          - Particles: guides/particles.md
+          - Render plans and shaders: guides/shaders.md
+          - Shader compilation: guides/shader-compilation.md
+          - Vulkan backend: guides/vulkan.md
+          - WebGPU backend: guides/webgpu.md
+      - World and gameplay:
+          - Physics: guides/physics.md
+          - Jolt backend: guides/physics-jolt.md
+          - Character controller: guides/character-controller.md
+          - Navigation: guides/navigation.md
+          - AI: guides/ai.md
+          - Terrain: guides/terrain.md
+          - Large worlds: guides/large-worlds.md
+          - Audio: guides/audio.md
+      - UI:
+          - Game UI: guides/game-ui.md
+          - UI with AwakeKt Compose: guides/ui.md
+          - shadcn components: guides/shadcn.md
+  - Reference:
+      - Scene document schema: reference/scene-document-schema.md
+      - Scene document components: reference/scene-document-components.md
+      - Component map: reference/component-map.md
+      - Modules: reference/modules.md
+      - Render hardware interface: reference/rhi.md
+      - Releases and compatibility: reference/releases.md
+      - Glossary: reference/glossary.md
+      - Components:
+          - Button: reference/components/button.md
 markdown_extensions:
   - attr_list
   - md_in_html

@@ -54,6 +54,12 @@ kotlin {
             // where desktop's release build runs on quietly.
             implementation(project(":awake:backend:jolt"))
         }
+        named("desktopTest") {
+            dependencies {
+                // The docs samples show the scene DSL beside the scene document.
+                implementation(project(":awake:scene:authoring"))
+            }
+        }
     }
 }
 

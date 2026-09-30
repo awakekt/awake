@@ -245,3 +245,16 @@
 .md-typeset table td:first-child code {
   white-space: nowrap;
 }
+
+/* The primary colour is the header's neutral, so buttons take the ember accent instead. */
+.md-typeset .md-button--primary {
+  background-color: var(--awake-ember);
+  border-color: var(--awake-ember);
+  color: #16161c;
+}
+.md-typeset .md-button--primary:hover,
+.md-typeset .md-button--primary:focus {
+  background-color: #ff8455;
+  border-color: #ff8455;
+  color: #16161c;
+}
