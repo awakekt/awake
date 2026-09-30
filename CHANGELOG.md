@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Scenes carry the player marker, and the player can jump.** `movement_control` is now a Core scene component (`SceneMovementControl`, loaded by `DefaultSceneComponentResolvers`), so games load scenes that Awake Studio authored with a controllable character. Its `speed` becomes `MovementControl.speed`, which `MatrixRelativeMovementSystem` uses in place of its own speed. `PlayerInputSystem` sets `MovementControl.jump` from Space, and the new `JumpSystem` jumps and lands the entity back at the height it started from, for flat floors.
+- **Scenes carry the player marker.** `movement_control` is now a Core scene component (`SceneMovementControl`), loaded after `registerControls()`, so games load scenes that Awake Studio authored with a controllable character. Its `speed` becomes `MovementControl.speed`, which `MatrixRelativeMovementSystem` uses in place of its own speed, and `PlayerInputSystem` sets `MovementControl.jump` from Space for a `character_controller` to act on.
 - **Game UI in scenes.** New `awake:scene:canvas`: `CanvasElement` (saved as `canvas_element`) puts text, panels, bars and buttons on screen, pinned to one of nine anchors with an inward offset, and `SceneCanvas(world)` draws them. `SceneAppLifecycleRuntime` draws a scene's canvas over the game, and under the app's own `ui { }`, even when the app declares no UI. A button's `consumePress()` reports taps. It works like Unity's in-scene Canvas or Godot's `Control` nodes.
 
 ### Removed
