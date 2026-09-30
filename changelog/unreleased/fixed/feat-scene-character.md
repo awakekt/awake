@@ -1,1 +1,0 @@
-- **A kinematic character's jump is no longer cancelled on take-off.** For the first steps of a jump `KinematicCharacterController`'s ground probe still reached the floor, so it reported the character grounded and the next move snapped it back down. A move that rises faster than the ground under it now leaves the ground; a character riding a rising platform stays grounded.
