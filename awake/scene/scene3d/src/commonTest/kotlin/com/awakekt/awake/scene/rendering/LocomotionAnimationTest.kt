@@ -5,9 +5,12 @@
  */
 package com.awakekt.awake.scene.rendering
 
+import com.awakekt.awake.core.animation.AnimationChannel
 import com.awakekt.awake.core.animation.AnimationClip
 import com.awakekt.awake.core.animation.AnimationLibrary
 import com.awakekt.awake.core.animation.AnimationPlayer
+import com.awakekt.awake.core.animation.AnimationProperty
+import com.awakekt.awake.core.animation.AnimationSampler
 import com.awakekt.awake.core.animation.Bone
 import com.awakekt.awake.core.animation.Skeleton
 import com.awakekt.awake.core.animation.Skin
@@ -23,6 +26,7 @@ import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class LocomotionAnimationTest {
 
@@ -88,6 +92,30 @@ class LocomotionAnimationTest {
         assertEquals("stand", walker.standStill())
     }
 
+    /** Take-off once, rise, fall, then land once before standing; walking off cuts the landing short. */
+    @Test
+    fun aJumpPlaysItsPhases() {
+        val walker = Walker(PHASES, ground = GroundContact(grounded = true))
+        walker.standStill()
+
+        walker.ground!!.grounded = false
+        assertEquals("takeoff", walker.after(dx = 0f, dy = 5f * STEP))
+        assertTrue(walker.playsOnce, "a take-off plays once")
+        repeat(TAKE_OFF_FRAMES) { walker.after(dx = 0f, dy = 5f * STEP) }
+        assertEquals("rise", walker.after(dx = 0f, dy = 5f * STEP))
+        assertEquals("fall", walker.after(dx = 0f, dy = -5f * STEP))
+
+        walker.ground.grounded = true
+        assertEquals("land", walker.after(dx = 0f, dy = -0.001f))
+        assertEquals("stand", walker.standStill(), "the landing plays out, then it stands")
+
+        walker.ground.grounded = false
+        walker.after(dx = 0f, dy = 5f * STEP)
+        walker.ground.grounded = true
+        assertEquals("land", walker.after(dx = 0f, dy = -0.001f))
+        assertEquals("walk", walker.after(dx = 2f * STEP, dy = 0f), "walking off cuts the landing short")
+    }
+
     @Test
     fun aClipTheModelLacksKeepsWhatPlays() {
         val walker = Walker(CLIPS.copy(run = "sprint"))
@@ -106,7 +134,7 @@ class LocomotionAnimationTest {
         val player = AnimationPlayer(
             AnimationLibrary(
                 skeleton = Skeleton(bones = listOf(Bone(Vec3f.ZERO, Quat(), Vec3f(1f, 1f, 1f), null, emptyList())), roots = listOf(0)),
-                clips = listOf("stand", "walk", "run", "jump").associateWith { AnimationClip(name = it, channels = emptyList()) },
+                clips = CLIP_SECONDS.mapValues { (name, seconds) -> timedClip(name, seconds) },
             ),
         )
 
@@ -134,6 +162,8 @@ class LocomotionAnimationTest {
             return locomotion.playing
         }
 
+        val playsOnce: Boolean get() = locomotion.playingOnce
+
         /** Stays put long enough to count as standing, and returns the clip chosen. */
         fun standStill(): String? {
             repeat(STILL_FRAMES) { after(dx = 0f, dy = 0f) }
@@ -142,6 +172,23 @@ class LocomotionAnimationTest {
     }
 
     private companion object {
+        /** A clip lasting [seconds], keyed on bone 0 at its start and end. */
+        fun timedClip(name: String, seconds: Float) = AnimationClip(
+            name = name,
+            channels = listOf(
+                AnimationChannel(0, AnimationProperty.Translation, AnimationSampler(floatArrayOf(0f, seconds), FloatArray(6), 3)),
+            ),
+        )
+
+        val CLIP_SECONDS = mapOf(
+            "stand" to 1f, "walk" to 1f, "run" to 1f, "jump" to 1f,
+            "takeoff" to 0.25f, "rise" to 0.3f, "fall" to 0.4f, "land" to 0.4f,
+        )
+        val PHASES = SceneLocomotionAnimation(
+            idle = "stand", walk = "walk", run = "run", jump = "rise",
+            takeOff = "takeoff", fall = "fall", land = "land", walkAbove = 0.5f,
+        )
+        const val TAKE_OFF_FRAMES = 16
         const val STEP = 1f / 60f
         const val STILL_FRAMES = 30
         const val LANDING_FRAMES = 20
