@@ -45,7 +45,7 @@ Use "RHI" for the idea. Use `GpuDevice` for the type.
 
 **Vulkan is the primary backend. WebGPU exists because browsers cannot run Vulkan.** It is a
 compatibility target, not a co-equal one. Effort, feature depth and performance work go to
-Vulkan first; WebGPU is expected to lag, and already does — it has no shadow pass at all.
+Vulkan first; WebGPU is expected to lag.
 
 This asymmetry is what the capability tiers below exist to express. Without them, the
 compatibility backend would cap the primary one, which is backwards.

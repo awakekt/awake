@@ -59,7 +59,20 @@ kotlin {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
         }
+        // The kits that register scene components, so SceneComponentReferenceDocsTest sees them all.
+        desktopTest.dependencies {
+            implementation(project(":awake:scene:character"))
+            implementation(project(":awake:scene:blueprint"))
+            implementation(project(":awake:ai:behavior"))
+        }
     }
+}
+
+// SceneComponentReferenceDocsTest reads this page, so an edit to it must rerun the test.
+tasks.named<Test>("desktopTest") {
+    inputs.file(rootProject.file("website/docs/reference/scene-document-components.md"))
+        .withPropertyName("sceneComponentReference")
+        .withPathSensitivity(PathSensitivity.NONE)
 }
 
 awakeTestResources {

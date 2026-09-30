@@ -32,6 +32,12 @@ kotlin {
             implementation(project(":awake:scene:runtime"))
             implementation(project(":awake:asset:terrain"))
         }
+        named("desktopTest") {
+            dependencies {
+                // The docs samples show the scene DSL beside the scene document.
+                implementation(project(":awake:scene:authoring"))
+            }
+        }
     }
 }
 

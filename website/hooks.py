@@ -17,7 +17,11 @@ def on_page_markdown(markdown, page, config, files):
 
     version = os.environ.get("AWAKE_DOCS_VERSION") or config.extra["awake_version"]
     vulkan_version = os.environ.get("AWAKE_DOCS_VULKAN_VERSION") or config.extra["awake_vulkan_version"]
+    vulkan_core_version = (
+        os.environ.get("AWAKE_DOCS_VULKAN_CORE_VERSION") or config.extra["awake_vulkan_core_version"]
+    )
     return (
         markdown.replace("{{ awake_version }}", version)
         .replace("{{ awake_vulkan_version }}", vulkan_version)
+        .replace("{{ awake_vulkan_core_version }}", vulkan_core_version)
     )

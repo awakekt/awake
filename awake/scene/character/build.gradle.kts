@@ -30,6 +30,12 @@ kotlin {
             implementation(project(":awake:scene:runtime"))
             implementation(project(":awake:backend:jolt"))
         }
+        named("desktopTest") {
+            dependencies {
+                // The docs samples show the scene DSL beside the scene document.
+                implementation(project(":awake:scene:authoring"))
+            }
+        }
     }
 }
 
