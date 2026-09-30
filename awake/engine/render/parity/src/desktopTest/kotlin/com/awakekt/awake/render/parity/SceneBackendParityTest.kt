@@ -276,6 +276,25 @@ class SceneBackendParityTest {
         }
     }
 
+    /** An additive quad brightens the ground under it; an alpha-blended one covers it. */
+    @Test
+    fun anAdditiveQuadAddsToTheGroundInsteadOfCoveringIt() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val ground = renderer.renderGlowScene(GlowBlend.None)
+            val covered = renderer.renderGlowScene(GlowBlend.Alpha).also { write(backend, it, "glow-alpha") }
+            val added = renderer.renderGlowScene(GlowBlend.Additive).also { write(backend, it, "glow-additive") }
+
+            // Under the quad: where the alpha-blended red replaced the ground's green.
+            val quad = (0 until SCENE_SIZE * SCENE_SIZE).filter { ground.channel(it, GREEN) - covered.channel(it, GREEN) > COVERED_GREEN }
+            assertTrue(quad.size > MIN_QUAD_PIXELS, "$backend: the red quad covered only ${quad.size} px")
+            val keptGreen = quad.count { added.channel(it, GREEN) >= ground.channel(it, GREEN) - CHANNEL_TOLERANCE }
+            val addedRed = quad.count { added.channel(it, RED) > ground.channel(it, RED) }
+            assertTrue(keptGreen == quad.size, "$backend: additive kept the ground's green in $keptGreen of ${quad.size} px")
+            assertTrue(addedRed == quad.size, "$backend: additive raised red in $addedRed of ${quad.size} px")
+        }
+    }
+
     @Test
     fun theShadowLandsInTheSamePlaceOnBothBackends() {
         val centroids = BACKEND_ORDER.associateWith { backend ->
@@ -322,6 +341,8 @@ class SceneBackendParityTest {
     private fun ByteArray.pixelsBrightenedIn(other: ByteArray): Int = (GROUND_TOP..GROUND_BOTTOM).sumOf { y ->
         (0 until SCENE_SIZE).count { x -> other.luminanceAt(x, y) - luminanceAt(x, y) > CARD_TO_GROUND }
     }
+
+    private fun ByteArray.channel(pixel: Int, channel: Int): Int = this[pixel * 4 + channel].toInt() and 0xFF
 
     private fun ByteArray.shadowCentroid(below: (lit: Int) -> Int = { it - SHADOW_MARGIN }): Pair<Int, Int>? {
         val ground = (GROUND_TOP..GROUND_BOTTOM).flatMap { y ->
@@ -401,6 +422,11 @@ class SceneBackendParityTest {
         const val SHADOW_MARGIN = 10
         const val CARD_TO_GROUND = 60
         const val MIN_CLEAR_HALF_PIXELS = 20
+        const val RED = 0
+        const val GREEN = 1
+        const val COVERED_GREEN = 40
+        const val MIN_QUAD_PIXELS = 50
+        const val CHANNEL_TOLERANCE = 2
 
         /** Antialiasing and PBR rounding move a centroid by a pixel; a mirrored lookup moves it
          * across the ground. */

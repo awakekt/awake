@@ -74,6 +74,7 @@ internal class SceneDrawCollector(
                     alphaMode = pbr?.alphaMode ?: com.awakekt.awake.render.pipeline.AlphaMode.Opaque,
                     alphaCutoff = pbr?.alphaCutoff ?: 0.5f,
                     transparent = meshRenderer.transparent,
+                    additive = meshRenderer.additive,
                     worldBounds = bounds?.worldBounds(transform.worldMatrix),
                 ),
             )

@@ -315,7 +315,8 @@ class RenderPipeline(
                                 BlendState(
                                     color = BlendComponent(
                                         srcFactor = GPUBlendFactor.SrcAlpha,
-                                        dstFactor = GPUBlendFactor.OneMinusSrcAlpha,
+                                        // Additive colour adds to what is there; alpha blends as usual.
+                                        dstFactor = if (variant.additive) GPUBlendFactor.One else GPUBlendFactor.OneMinusSrcAlpha,
                                     ),
                                     alpha = BlendComponent(
                                         srcFactor = GPUBlendFactor.SrcAlpha,

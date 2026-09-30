@@ -44,6 +44,9 @@ data class GpuDrawRequest(
     /** World-space bounds, when known, so a shadow pass can skip a caster it cannot see. Null
      * casts into every shadow pass. */
     val worldBounds: Aabb? = null,
+    /** With [transparent], adds its colour to what is behind it rather than covering it: glows,
+     * fire, light shafts. */
+    val additive: Boolean = false,
 )
 
 private val EMPTY_UNIFORM_FLOATS = FloatArray(0)

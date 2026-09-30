@@ -116,6 +116,7 @@ data class RenderPlan(
                 buildWireframe = true,
                 buildBackCulled = true,
                 buildTransparent = true,
+                buildAdditive = true,
             ),
         )
         addAll(scenePipelines.toRequests { it.stagesFor(backend) })

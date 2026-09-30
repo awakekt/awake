@@ -121,6 +121,7 @@ internal fun Renderer.prepareGpuDraw(
         cullMode = cmd.cullMode,
         transparent = isTransparent,
         wireframe = primary.wireframe,
+        additive = cmd.additive,
     )?.handle ?: primary.pipeline
     val slot = bufferPools.uniformSlotForDraw(pipeline, singleIndex)
     val uniformFloats = cmd.uniformFloats(

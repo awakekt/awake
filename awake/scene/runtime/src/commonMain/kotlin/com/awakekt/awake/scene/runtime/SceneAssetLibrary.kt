@@ -202,6 +202,7 @@ class SceneAssetLibrary(
             material = requireMaterial(runtime, key.material),
             cullMode = request.meshRenderer.cullMode.toCullMode(),
             transparent = request.meshRenderer.transparent,
+            additive = request.meshRenderer.additive,
         )
     }
 

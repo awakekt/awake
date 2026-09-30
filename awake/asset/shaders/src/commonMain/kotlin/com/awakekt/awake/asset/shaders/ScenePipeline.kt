@@ -44,6 +44,8 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
  * `RenderDrawCommand.transparent`.
  * @property depthShaders How an instanced pipeline's draws cast into the shadow map. Null leaves
  * them to the plan's `depthPrePassVariants`, which cover only the primary format.
+ * @property buildAdditive Also build the additive companion, for transparent draws that set
+ * `RenderDrawCommand.additive`.
  */
 data class ScenePipeline(
     val key: PipelineKey,
@@ -57,6 +59,7 @@ data class ScenePipeline(
     val buildBackCulled: Boolean = false,
     val buildTransparent: Boolean = false,
     val depthShaders: ShaderSet? = null,
+    val buildAdditive: Boolean = false,
 )
 
 /**
@@ -93,5 +96,6 @@ fun List<ScenePipeline>.toRequests(stages: (ShaderSet) -> ShaderStages): List<Pi
             buildWireframe = declared.buildWireframe,
             buildBackCulled = declared.buildBackCulled,
             buildTransparent = declared.buildTransparent,
+            buildAdditive = declared.buildAdditive,
         )
     }
