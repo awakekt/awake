@@ -26,7 +26,7 @@ import kotlin.math.sqrt
  * stick out sideways from the limbs they stand for, or orient them along the limbs and the skinned
  * mesh shears the moment the ragdoll is applied.
  *
- * ponytail: this is deliberately not Jolt's `RotatedTranslatedShape`, which is the other way to
+ * Known limit: this is deliberately not Jolt's `RotatedTranslatedShape`, which is the other way to
  * express it. That shape is absent from JoltC, and its natural substitute -- a compound shape with
  * one child -- Jolt rejects outright ("Compound needs at least 2 sub shapes"). A quaternion per
  * limb costs nothing and needs no backend to grow.

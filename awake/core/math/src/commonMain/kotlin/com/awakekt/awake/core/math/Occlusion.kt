@@ -8,7 +8,7 @@ package com.awakekt.awake.core.math
 import kotlin.math.max
 import kotlin.math.min
 
-// ponytail: single-occluder full-containment only -- a candidate is culled only when ONE
+// Known limit: single-occluder full-containment only -- a candidate is culled only when ONE
 // occluder's screen rect fully covers it, never a union of several partial occluders. A grid-
 // based coverage buffer would catch that case too, at the cost of a resolution constant, a
 // per-frame clear, and cell rasterization. Upgrade path if a real scene needs multi-occluder
@@ -75,7 +75,7 @@ private fun Aabb.nearestDistanceTo(point: com.awakekt.awake.core.math.Vec3f): Fl
 
 /** True when [candidate]'s rect sits entirely inside [occluder]'s rect AND [occluder] is nearer
  * to the eye -- the only case a single flat occluder can safely hide a candidate behind it (see
- * this file's own `ponytail:` note for what a partial/multi-occluder case needs instead). */
+ * the known-limit note at the top of this file for what a partial/multi-occluder case needs instead). */
 fun isOccludedBy(candidate: ScreenBounds, occluder: ScreenBounds): Boolean =
     candidate.nearestDistance > occluder.nearestDistance &&
         candidate.minX >= occluder.minX &&

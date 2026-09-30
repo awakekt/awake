@@ -14,7 +14,7 @@ which `./gradlew :samples:ui-showcase:desktopTest --tests "*UiShowcasePreviewDoc
 directory and injects a tiny poll script into HTML responses so the open tab reloads
 itself once the mtime of any file in the directory changes.
 
-ponytail: polls every second and hashes directory mtimes -- fine for a single-directory
+Known limit: polls every second and hashes directory mtimes -- fine for a single-directory
 dev gallery with a handful of files; swap for a real filesystem-event watch (watchdog) if
 this ever needs to scale beyond one report directory.
 

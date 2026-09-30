@@ -1155,14 +1155,14 @@ class JoltPhysicsWorld private constructor(
     }
 
     /**
-     * ponytail: one wasm/JS crossing per height sample. Kotlin/Wasm-GC arrays have no linear
+     * Known limit: one wasm/JS crossing per height sample. Kotlin/Wasm-GC arrays have no linear
      * memory to bulk-copy from, so a per-element pass is the only way across (the same ceiling
      * `:awake:backend:webgpu`'s own `fastArrayBufferOf` documents). Fine at a body's one-time
      * cost; if streamed terrain ever makes it a frame cost, the upgrade is a bulk
      * array-to-typed-array interop intrinsic, not a different shape here.
      */
     /**
-     * ponytail: vertices and indices cross one element at a time, the same ceiling the heightfield
+     * Known limit: vertices and indices cross one element at a time, the same ceiling the heightfield
      * samples hit -- Kotlin/Wasm-GC arrays have no linear memory to bulk-copy from. Fine at a
      * body's one-time cost; if streamed level geometry ever makes it a frame cost, the fix is a
      * bulk interop intrinsic rather than a different shape here.

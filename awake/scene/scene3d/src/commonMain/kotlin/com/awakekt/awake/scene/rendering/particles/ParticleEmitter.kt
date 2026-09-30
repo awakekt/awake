@@ -84,7 +84,7 @@ internal class Particle : Poolable {
  *
  * [turbulence] adds a smooth flow-field offset to velocity every frame, scaled by this strength
  * and sampled at [turbulenceFrequency] -- see [com.awakekt.awake.scene.rendering
- * .systems.turbulenceOffset]. `0f` (default) is a no-op. ponytail: a cheap sine-based flow
+ * .systems.turbulenceOffset]. `0f` (default) is a no-op. Known limit: a cheap sine-based flow
  * field, not true Perlin/simplex/curl noise.
  */
 data class ParticleMotion(

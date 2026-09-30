@@ -36,7 +36,7 @@ private const val HALF = 0.5f
  * expensive half in practice and it is pure arithmetic over arrays, which is exactly what belongs
  * off-thread.
  *
- * ponytail: Jolt's own shape build still happens on the frame thread, inside `createBody`. Jolt
+ * Known limit: Jolt's own shape build still happens on the frame thread, inside `createBody`. Jolt
  * can cook a shape on any thread, but `PhysicsWorld` has no separate cook step to call -- adding
  * one means a new method on four backends, and it is worth doing only once a profile says the
  * cook rather than the sample generation is what costs.

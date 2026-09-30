@@ -26,7 +26,7 @@ apiValidation {
         // contract negotiates an EditorPluginApiVersion that means nothing if the surface it
         // versions is untracked. See D32. Every remaining entry here is a sample or a build tool.
         "tailwind-generator", "testing",
-        // ponytail: `webgpu` is published but unvalidated, because its `jvmToolchain(25)` (needed
+        // Known limit: `webgpu` is published but unvalidated, because its `jvmToolchain(25)` (needed
         // for the FFM API) emits class-file major 69 and binary-compatibility-validator 0.17.0
         // bundles an ASM that cannot read it -- `desktopApiBuild` dies with "Unsupported class
         // file major version 69" before comparing anything. This is the whole `verify` job, so
