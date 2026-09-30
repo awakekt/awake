@@ -10,10 +10,11 @@ import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.graphics.drawscope.DrawScope
 import com.awakekt.awake.compose.ui.graphics.drawscope.drawRetainedMesh
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.AA_FRINGE_PX
 import com.awakekt.awake.core.graphics2d.ColoredTriangleMesh
 import com.awakekt.awake.core.graphics2d.merge
+import com.awakekt.awake.core.graphics2d.strokeToSvgFillPath
 import com.awakekt.awake.core.graphics2d.tessellateFillAa
-import com.awakekt.awake.core.graphics2d.tessellateStrokeAa
 import com.awakekt.awake.core.math2d.Rectangle
 
 /**
@@ -60,7 +61,12 @@ class VectorPainter internal constructor(private val image: ImageVector) {
                 if (vectorPath.fill != null || vectorPath.stroke == null) {
                     add(vectorPath.path.tessellateFillAa(vectorPath.fill ?: tint))
                 }
-                vectorPath.stroke?.let { add(vectorPath.path.tessellateStrokeAa(it, tint)) }
+                vectorPath.stroke?.let { stroke ->
+                    // SVG coverage is centered on the stroke boundary. The generic stroke path
+                    // preserves an opaque one-pixel core for thin borders, which fattens 16px icons.
+                    val fringe = AA_FRINGE_PX.coerceAtMost(stroke.width.value / 2f)
+                    add(vectorPath.path.strokeToSvgFillPath(stroke).tessellateFillAa(tint, fringe, fringe / 2f))
+                }
             }
         }.merge()
         this.slot = slot

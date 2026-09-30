@@ -138,6 +138,21 @@ class PathGeometryContractTest {
         assertTrue(outline.containsPoint(7f, 14f), "the ascending check leg is outside the stroke outline")
     }
 
+    @Test
+    fun roundStrokeChevronHasASharpInsideJoin() {
+        val outline = drawPath {
+            moveTo(6f, 9f)
+            lineTo(12f, 15f)
+            lineTo(18f, 9f)
+        }.strokeToSvgFillPath(DrawStroke(width = 2f.dp, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        val points = outline.flattenContours().single().points
+
+        assertTrue(
+            points.any { abs(it.x - 12f) < 0.01f && abs(it.y - 13.586f) < 0.01f },
+            "the chevron's inside edges must meet at the SVG stroke intersection",
+        )
+    }
+
     // --- anti-aliased fill --------------------------------------------------
 
     @Test
@@ -189,22 +204,6 @@ class PathGeometryContractTest {
         )
         val opaqueLeft = mesh.vertices.filter { it.color.a > 0.99f }.minOf { it.position.x }
         assertEquals(1.5f, opaqueLeft, 0.01f, "a thin stroke was incorrectly shrunk before AA")
-    }
-
-    @Test
-    fun aWideStrokeCentersItsAaFringeOnTheSourceBoundary() {
-        val mesh = drawPath {
-            moveTo(8f, 2f)
-            lineTo(28f, 2f)
-            lineTo(28f, 20f)
-            lineTo(8f, 20f)
-            close()
-        }.tessellateStrokeAa(DrawStroke(width = 3f.dp), Color.White)
-
-        val opaqueLeft = mesh.vertices.filter { it.color.a > 0.99f }.minOf { it.position.x }
-        val transparentLeft = mesh.vertices.filter { it.color.a < 0.01f }.minOf { it.position.x }
-        assertTrue(opaqueLeft > 6.75f, "opaque stroke reaches past its AA core: $opaqueLeft")
-        assertTrue(transparentLeft < 6.1f, "stroke AA fringe did not extend past its boundary: $transparentLeft")
     }
 
     // --- clipping -----------------------------------------------------------

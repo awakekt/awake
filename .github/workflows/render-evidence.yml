@@ -51,12 +51,13 @@ jobs:
             exit 0
           fi
           echo "render=true" >> "$GITHUB_OUTPUT"
-          if grep -qE '^awake/(heroicons|ui/shadcn|core/graphics2d)/' <<<"$product"; then
+          icon_paths='^awake/(heroicons|ui/shadcn|core/graphics2d)/|^awake/compose/ui/src/commonMain/kotlin/com/awakekt/awake/compose/ui/graphics/vector/'
+          if grep -qE "$icon_paths" <<<"$product"; then
             echo "icons=true" >> "$GITHUB_OUTPUT"
           else
             echo "icons=false" >> "$GITHUB_OUTPUT"
           fi
-          if grep -vE '^awake/(heroicons|ui/shadcn|core/graphics2d)/' <<<"$product" | grep -q .; then
+          if grep -vE "$icon_paths" <<<"$product" | grep -q .; then
             echo "scenes=true" >> "$GITHUB_OUTPUT"
           else
             echo "scenes=false" >> "$GITHUB_OUTPUT"

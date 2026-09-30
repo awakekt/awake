@@ -33,17 +33,21 @@ fun DrawPath.tessellateStrokeAa(
     val physicalWidth = stroke.width.value * density
     val scaledStroke = stroke.copy(width = physicalWidth.dp)
     val fringe = fringePx.coerceAtLeast(0f).coerceAtMost(physicalWidth / 2f)
-    // Keep one physical pixel of opaque stroke before moving any fringe inside its boundary.
-    // Wider strokes can center their edge coverage; an outside-only fringe visibly fattens icons.
-    val inset = ((physicalWidth - 1f) / 2f).coerceIn(0f, fringe / 2f)
-    return strokeToFillPath(scaledStroke).tessellateFillAa(color, fringePx = fringe, insetPx = inset)
+    // A stroke already has a finite interior. Keep that core opaque and place the fringe outside
+    // it so a one-pixel border does not lose all of its solid coverage.
+    return strokeToFillPath(scaledStroke).tessellateFillAa(color, fringePx = fringe, insetPx = 0f)
 }
 
 /**
  * Converts a stroked centerline into an equivalent FILLED outline, so a stroke can be rendered
  * through [tessellateFill]/[tessellateFillAa].
  */
-fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath {
+fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath = strokeToFillPath(stroke, svgInnerJoins = false)
+
+/** Produces SVG round-join geometry, including the sharp intersection on the inside of a turn. */
+fun DrawPath.strokeToSvgFillPath(stroke: DrawStroke): DrawPath = strokeToFillPath(stroke, svgInnerJoins = true)
+
+private fun DrawPath.strokeToFillPath(stroke: DrawStroke, svgInnerJoins: Boolean): DrawPath {
     val contours = flattenContours(curveSteps = 16, arcStepDegrees = STROKE_ARC_STEP_DEGREES)
     val halfWidth = stroke.width.value / 2f
     if (contours.isEmpty() || halfWidth <= 0f) return DrawPath(fillRule = FillRule.NonZero, commands = emptyList())
@@ -69,7 +73,7 @@ fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath {
             emitRing(offsetClosedRing(contour.points, halfWidth, stroke.join))
             emitRing(offsetClosedRing(contour.points, -halfWidth, stroke.join).asReversed())
         } else {
-            emitRing(offsetOpenRing(contour.points, halfWidth, stroke))
+            emitRing(offsetOpenRing(contour.points, halfWidth, stroke, svgInnerJoins))
         }
     }
     return DrawPath(fillRule = FillRule.NonZero, commands = commands)
@@ -127,10 +131,23 @@ internal fun ringCorner(round: Boolean, center: DrawPoint, halfWidth: Float, fro
     }
 }
 
-internal fun offsetOpenRing(points: List<DrawPoint>, halfWidth: Float, stroke: DrawStroke): List<DrawPoint> {
-    if (points.size < 2) return emptyList()
-    val dirs = ArrayList<DrawPoint>(points.size - 1)
-    for (i in 0 until points.size - 1) dirs += unitDir(points[i], points[i + 1]) ?: return emptyList()
+private fun innerRoundJoin(center: DrawPoint, halfWidth: Float, fromDir: DrawPoint, toDir: DrawPoint): List<DrawPoint> {
+    val from = offsetVector(fromDir, halfWidth)
+    val to = offsetVector(toDir, halfWidth)
+    val denominator = cross(fromDir, toDir)
+    val bevel = ringCorner(false, center, halfWidth, fromDir, toDir)
+    if (abs(denominator) < 1e-4f) return bevel
+    val between = DrawPoint(to.x - from.x, to.y - from.y)
+    val alongFrom = cross(between, toDir) / denominator
+    val intersection = DrawPoint(center.x + from.x + fromDir.x * alongFrom, center.y + from.y + fromDir.y * alongFrom)
+    return if (hypot(intersection.x - center.x, intersection.y - center.y) > halfWidth * 4f) bevel else listOf(intersection)
+}
+
+internal fun offsetOpenRing(points: List<DrawPoint>, halfWidth: Float, stroke: DrawStroke): List<DrawPoint> =
+    offsetOpenRing(points, halfWidth, stroke, svgInnerJoins = false)
+
+private fun offsetOpenRing(points: List<DrawPoint>, halfWidth: Float, stroke: DrawStroke, svgInnerJoins: Boolean): List<DrawPoint> {
+    val dirs = segmentDirections(points) ?: return emptyList()
 
     var pts = points
     if (stroke.cap == StrokeCap.Square) {
@@ -149,17 +166,43 @@ internal fun offsetOpenRing(points: List<DrawPoint>, halfWidth: Float, stroke: D
         // Lucide checks and chevrons. The reverse side below walks the opposite direction, so it
         // applies the same test with its already-reversed directions.
         val turn = cross(dirs[i - 1], dirs[i])
-        ring += ringCorner(round && turn < 0f, pts[i], halfWidth, dirs[i - 1], dirs[i])
+        ring += strokeJoinCorner(cornerMode(svgInnerJoins, round, turn), pts[i], halfWidth, dirs[i - 1], dirs[i])
     }
     ring += capSweep(roundCap, pts.last(), halfWidth, dirs.last())
     for (i in dirs.size - 2 downTo 0) {
         val from = DrawPoint(-dirs[i + 1].x, -dirs[i + 1].y)
         val to = DrawPoint(-dirs[i].x, -dirs[i].y)
         val turn = cross(from, to)
-        ring += ringCorner(round && turn < 0f, pts[i + 1], halfWidth, from, to)
+        ring += strokeJoinCorner(cornerMode(svgInnerJoins, round, turn), pts[i + 1], halfWidth, from, to)
     }
     ring += capSweep(roundCap, pts.first(), halfWidth, DrawPoint(-dirs.first().x, -dirs.first().y))
     return ring
+}
+
+private fun segmentDirections(points: List<DrawPoint>): List<DrawPoint>? {
+    if (points.size < 2) return null
+    val dirs = (0 until points.size - 1).mapNotNull { i -> unitDir(points[i], points[i + 1]) }
+    return dirs.takeIf { it.size == points.size - 1 }
+}
+
+private enum class StrokeCornerMode { RoundOutside, MiterInside, Bevel }
+
+private fun cornerMode(svgInnerJoins: Boolean, round: Boolean, turn: Float): StrokeCornerMode = when {
+    round && turn < 0f -> StrokeCornerMode.RoundOutside
+    svgInnerJoins && round && turn > 0f -> StrokeCornerMode.MiterInside
+    else -> StrokeCornerMode.Bevel
+}
+
+private fun strokeJoinCorner(
+    mode: StrokeCornerMode,
+    center: DrawPoint,
+    halfWidth: Float,
+    fromDir: DrawPoint,
+    toDir: DrawPoint,
+): List<DrawPoint> = when (mode) {
+    StrokeCornerMode.RoundOutside -> ringCorner(true, center, halfWidth, fromDir, toDir)
+    StrokeCornerMode.MiterInside -> innerRoundJoin(center, halfWidth, fromDir, toDir)
+    StrokeCornerMode.Bevel -> ringCorner(false, center, halfWidth, fromDir, toDir)
 }
 
 private fun cross(a: DrawPoint, b: DrawPoint): Float = a.x * b.y - a.y * b.x
