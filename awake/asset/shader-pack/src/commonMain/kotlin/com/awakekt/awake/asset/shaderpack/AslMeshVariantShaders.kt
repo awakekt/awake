@@ -25,6 +25,7 @@ import com.awakekt.awake.asset.shaderdsl.storageArrayOfArrays
 import com.awakekt.awake.asset.shaderdsl.texture2d
 import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.times
+import com.awakekt.awake.asset.shaderdsl.vec2
 import com.awakekt.awake.asset.shaderdsl.vec3
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.w
@@ -164,8 +165,9 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         out.position set (camera * position)
         normal set outNormal.xyz
         color set ins.input(VertexSemantic.Color)
+        // Undo createBitmap's OpenGL bottom-up Y flip, as the textured shader does.
         val inUv = ins.input(VertexSemantic.Uv)
-        uv set inUv
+        uv set vec2(inUv.x, 1f.lit - inUv.y)
     }
 
     val lightVector = const("LIGHT_DIRECTION", vec3(0.4f.lit, 0.8f.lit, 0.4f.lit))

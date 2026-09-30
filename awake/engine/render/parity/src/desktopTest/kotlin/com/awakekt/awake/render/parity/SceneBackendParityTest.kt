@@ -77,6 +77,31 @@ class SceneBackendParityTest {
         }
     }
 
+    /** A skinned part's texture lands the same way up as a prop's: its top row at the same edge. */
+    @Test
+    fun aTexturedSkinnedMeshHoldsItsTextureTheWayUpAPropDoes() {
+        val identity = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val prop = renderer.renderTexturedPbrScene(texture = RED_OVER_BLUE)
+            val skinned = renderer.renderTexturedSkinnedScene(identity, texture = RED_OVER_BLUE)
+
+            assertEquals(prop.redIsAboveBlue(), skinned.redIsAboveBlue(), "$backend: the skinned texture is flipped against the prop's")
+        }
+    }
+
+    /** Whether the red-dominant pixels sit above (a smaller mean row than) the blue-dominant ones. */
+    private fun ByteArray.redIsAboveBlue(): Boolean {
+        fun meanRow(dominant: Int, other: Int): Double = (0 until SCENE_SIZE * SCENE_SIZE)
+            .filter { channel(it, dominant) > 2 * channel(it, other) + TEXTURED_RED_THRESHOLD }
+            .map { it / SCENE_SIZE }
+            .average()
+        val red = meanRow(RED, BLUE)
+        val blue = meanRow(BLUE, RED)
+        assertTrue(!red.isNaN() && !blue.isNaN(), "both halves of the texture must show")
+        return red < blue
+    }
+
     /**
      * A texture is sRGB: lit only by ambient, mid-grey 128 comes out as encode(decode(128) x 0.08),
      * about 41, not the 10 that lighting the raw bytes and writing them unencoded gives.
@@ -424,6 +449,17 @@ class SceneBackendParityTest {
         const val MIN_CLEAR_HALF_PIXELS = 20
         const val RED = 0
         const val GREEN = 1
+        const val BLUE = 2
+
+        /** Top row red, bottom row blue. */
+        val RED_OVER_BLUE = com.awakekt.awake.render.texture.TextureAsset(
+            data = byteArrayOf(
+                -1, 0, 0, -1, -1, 0, 0, -1,
+                0, 0, -1, -1, 0, 0, -1, -1,
+            ),
+            width = 2,
+            height = 2,
+        )
         const val COVERED_GREEN = 40
         const val MIN_QUAD_PIXELS = 50
         const val CHANNEL_TOLERANCE = 2
