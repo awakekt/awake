@@ -298,6 +298,9 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
         }
         val shaded = vec4(applyFog(linearToSrgb(litColor), worldPos), baseColorSample.a * baseColorFactor.a)
         val surface = DebugSurface(n, worldPos, linearToSrgb(albedo), shadow = shadowFactor, shadowCascade = cascades.shadowCascade(worldPos))
+        // A masked material's cut-out, last: after it no derivative may follow. An opaque material's
+        // cutoff is 0, so its texture alpha is ignored.
+        discardIf(baseColorSample.a * baseColorFactor.a lt pbrFactors.z)
         colorOutput(debugViewColor(debugView, cameraPosition, surface, shaded))
     }
 }

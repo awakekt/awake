@@ -10,6 +10,7 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
@@ -175,7 +176,9 @@ class DepthPrePassFeature(
                     else -> DepthCasterKind.Ordinary
                 }
                 val format = prepared.vertexFormat
-                val pipeline = if (format == null) null else pipelineFor(kind, format)
+                // Keyed by coverage too: a masked caster draws through its cut-out shader, or not at all.
+                val alphaMode = prepared.depthRenderKey?.alphaMode ?: AlphaMode.Opaque
+                val pipeline = if (format == null) null else pipelineFor(DepthRenderKey(kind, alphaMode), format)
                 val vBuffer = prepared.vertexBuffer
                 val depthMaterial = prepared.depthMaterialBinding
                 val instanceBuffer = prepared.instanceVertexBuffer

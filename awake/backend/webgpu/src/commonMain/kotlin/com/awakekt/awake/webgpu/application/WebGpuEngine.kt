@@ -206,7 +206,9 @@ open class WebGpuEngine(
             }
             val keyedPipelines = buildMap {
                 plan.depthPrePassKeyedVariants.forEach { (key, variant) ->
-                    if (key.kind != DepthCasterKind.Ordinary ||
+                    // Masked textured casters, one at a time or instanced; the rest have no keyed shader yet.
+                    val instanced = key.kind == DepthCasterKind.Instanced
+                    if (key.kind != DepthCasterKind.Ordinary && !instanced ||
                         key.alphaMode != com.awakekt.awake.render.pipeline.AlphaMode.Masked
                     ) {
                         return@forEach
@@ -221,6 +223,7 @@ open class WebGpuEngine(
                             vertexEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.VERTEX),
                             fragmentEntryPoint = variant.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
                             cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                            variant = if (instanced) PipelineVariant.Instanced else PipelineVariant.Opaque,
                             bindingsByGroup = variant.webGpu.bindingsByGroup,
                             bindingsMetadataAvailable = variant.webGpu.bindingsMetadataAvailable,
                         ),

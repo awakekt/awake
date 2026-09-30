@@ -11,6 +11,7 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.GpuDebugView
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
@@ -107,7 +108,14 @@ internal fun pbrMaterialFloats(values: FloatArray): FloatArray = pbrMaterialPayl
  * @return Exactly [PBR_TEXTURED_MATERIAL_FLOATS] floats.
  */
 fun pbrTexturedMaterialFloats(drawCall: RenderDrawCommand): FloatArray =
-    texturedMaterialPayload(drawCall.extraUniformFloats, drawCall.alphaCutoff, drawCall.timeSeconds)
+    texturedMaterialPayload(drawCall.extraUniformFloats, drawCall.coverageCutoff, drawCall.timeSeconds)
+
+/**
+ * The alpha textured shaders discard below: the draw's cutoff when its material is masked, and 0
+ * otherwise, so an opaque material's texture alpha, which often means nothing, cuts nothing.
+ */
+val RenderDrawCommand.coverageCutoff: Float
+    get() = if (alphaMode == AlphaMode.Masked) alphaCutoff else 0f
 
 /**
  * The textured material block for [values], stamped with the draw's [alphaCutoff] and
@@ -221,7 +229,7 @@ fun texturedUniforms(
     cameraEye: Vec3f,
     fogColor: Color,
     fogDensity: Float,
-    alphaCutoff: Float = 0.5f,
+    alphaCutoff: Float = 0f,
     debugView: GpuDebugView = GpuDebugView.Off,
     cameraForward: Vec3f = Vec3f(0f, 0f, -1f),
     timeSeconds: Float = 0f,

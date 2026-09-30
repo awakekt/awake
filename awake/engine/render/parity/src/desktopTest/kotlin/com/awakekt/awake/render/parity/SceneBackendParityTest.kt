@@ -258,6 +258,24 @@ class SceneBackendParityTest {
         }
     }
 
+    /** A masked caster's clear texels neither draw nor cast; opaque, the same card draws and casts whole. */
+    @Test
+    fun aMaskedCasterCutsOutItsClearTexels() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val opaque = renderer.renderHalfClearCasterScene(masked = false).also { write(backend, it, "half-clear-opaque") }
+            val masked = renderer.renderHalfClearCasterScene(masked = true).also { write(backend, it, "half-clear-masked") }
+
+            val card = opaque.shadowedGroundPixels()
+            val cutOut = masked.shadowedGroundPixels()
+            assertTrue(card > 0 && cutOut in card / 4..card * 3 / 4, "$backend: masked shadow $cutOut px, the whole card's $card px")
+            // Where the clear half was, masked shows the lit ground: far brighter than the dark card,
+            // and brighter by more than the shadow it also no longer casts.
+            val clearHalf = opaque.pixelsBrightenedIn(masked)
+            assertTrue(clearHalf > MIN_CLEAR_HALF_PIXELS, "$backend: masking showed the ground through $clearHalf card pixels")
+        }
+    }
+
     @Test
     fun theShadowLandsInTheSamePlaceOnBothBackends() {
         val centroids = BACKEND_ORDER.associateWith { backend ->
@@ -292,6 +310,19 @@ class SceneBackendParityTest {
      * the same 581 pixels either way; only the numbers written into them differ.
      */
     /** [below] maps the ground's lit level to the level a shadowed pixel falls below. */
+    /** The ground's shadowed pixels, measured as [shadowCentroid] finds them. */
+    private fun ByteArray.shadowedGroundPixels(): Int {
+        val ground = (GROUND_TOP..GROUND_BOTTOM).flatMap { y -> (0 until SCENE_SIZE).map { x -> x to y } }
+            .filter { (x, y) -> luminanceAt(x, y) > 0 && isGreyAt(x, y) }
+        val lit = ground.groupingBy { (x, y) -> luminanceAt(x, y) }.eachCount().maxByOrNull { it.value }?.key ?: return 0
+        return ground.count { (x, y) -> luminanceAt(x, y) < lit - SHADOW_MARGIN }
+    }
+
+    /** Ground-row pixels [other] shows much brighter than this does. */
+    private fun ByteArray.pixelsBrightenedIn(other: ByteArray): Int = (GROUND_TOP..GROUND_BOTTOM).sumOf { y ->
+        (0 until SCENE_SIZE).count { x -> other.luminanceAt(x, y) - luminanceAt(x, y) > CARD_TO_GROUND }
+    }
+
     private fun ByteArray.shadowCentroid(below: (lit: Int) -> Int = { it - SHADOW_MARGIN }): Pair<Int, Int>? {
         val ground = (GROUND_TOP..GROUND_BOTTOM).flatMap { y ->
             (0 until SCENE_SIZE).map { x -> x to y }
@@ -368,6 +399,8 @@ class SceneBackendParityTest {
 
         /** How far below the lit level a pixel must fall to count as shadowed. */
         const val SHADOW_MARGIN = 10
+        const val CARD_TO_GROUND = 60
+        const val MIN_CLEAR_HALF_PIXELS = 20
 
         /** Antialiasing and PBR rounding move a centroid by a pixel; a mirrored lookup moves it
          * across the ground. */

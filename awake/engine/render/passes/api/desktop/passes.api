@@ -407,6 +407,7 @@ public final class com/awakekt/awake/render/passes/uniforms/PbrUniformsKt {
 	public static final field DEFAULT_METALLIC_FACTOR F
 	public static final field DEFAULT_ROUGHNESS F
 	public static final field DEFAULT_ROUGHNESS_FACTOR F
+	public static final fun getCoverageCutoff (Lcom/awakekt/awake/render/command/GpuDrawRequest;)F
 	public static final fun getDEFAULT_BASE_COLOR_FACTOR ()Lcom/awakekt/awake/core/color/Color;
 	public static final fun getDEFAULT_EMISSIVE_FACTOR ()Lcom/awakekt/awake/core/color/Color;
 	public static final fun litShadowUniforms (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/command/GpuShadowCascadeData;Lcom/awakekt/awake/render/passes/uniforms/SceneFrameUniforms;)[F

@@ -14,6 +14,7 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
+import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.renderer.UniformFields
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -109,15 +110,18 @@ class MaterialUniformsTest {
     }
 
     @Test
-    fun texturedMaterialFloatsReserveCutoffForMaskedDepth() {
+    fun texturedMaterialFloatsCarryTheCutoffOnlyWhenMasked() {
         val drawCall = RenderDrawCommand(
             mesh = FakeMesh(),
             material = FakeMaterial(),
             alphaCutoff = 0.37f,
+            alphaMode = AlphaMode.Masked,
             extraUniformFloats = FloatArray(12) { it.toFloat() },
         )
 
         assertEquals(0.37f, pbrTexturedMaterialFloats(drawCall)[2])
+        // Opaque: the shaders discard below 0, which is nothing, whatever the texture's alpha.
+        assertEquals(0f, pbrTexturedMaterialFloats(drawCall.copy(alphaMode = AlphaMode.Opaque))[2])
     }
 
     @Test

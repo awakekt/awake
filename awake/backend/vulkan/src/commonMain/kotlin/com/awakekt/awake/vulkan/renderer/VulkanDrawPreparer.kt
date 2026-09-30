@@ -65,10 +65,12 @@ internal class VulkanDrawPreparer(
             fogDensity = context.environment.fogDensity,
             debugView = context.environment.debugView,
         ) ?: return null
-        val resolved = prepared.toGpuResolvedDraw()
         val format = prepared.vertexFormat
         val depthFeature = renderer.depthPrePassFeature ?: renderer.sceneDepthPassFeature
         val depthKey = request.depthRenderKey()
+        // Keyed even when it casts nothing, so the depth pass leaves a masked draw out rather than
+        // drawing its whole card.
+        val resolved = prepared.toGpuResolvedDraw().copy(depthRenderKey = depthKey)
         val depthPipeline = depthFeature?.pipelineFor(depthKey, format) ?: return resolved
         val sourceMaterial = request.material as? com.awakekt.awake.vulkan.material.Material
             ?: return resolved
