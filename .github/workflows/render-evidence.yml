@@ -1,9 +1,8 @@
 name: Render Evidence
 
-# Screenshot evidence for every pull request that can change what the engine draws. Renders the
-# :awake:engine:render:parity scenarios on headless Vulkan (lavapipe) for the base and the head,
-# publishes both sets to the render-evidence branch, and keeps one PR comment with a before/after
-# table. A PR that touches nothing rendering-related passes without rendering.
+# Screenshot evidence for pull requests that can change what the engine draws. Capture the relevant
+# UI icons or headless Vulkan scenarios on the base and head, publish both to render-evidence, and
+# keep one focused PR comment. A PR that touches nothing rendering-related skips capture.
 
 on:
   pull_request:
@@ -45,11 +44,22 @@ jobs:
             echo "render=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
           changed="$(git diff --name-only "$BASE_SHA...$HEAD_SHA")"
-          if grep -E '^(awake|samples|build-logic)/' <<<"$changed" | grep -qvE '\.md$'; then
-            echo "render=true" >> "$GITHUB_OUTPUT"
-          else
+          product="$(grep -E '^(awake|samples|build-logic)/' <<<"$changed" | grep -vE '\.md$' || true)"
+          if [[ -z "$product" ]]; then
             echo "::notice::No engine, sample or build-logic changes; nothing to render."
             echo "render=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "render=true" >> "$GITHUB_OUTPUT"
+          if grep -qE '^awake/(heroicons|ui/shadcn|core/graphics2d)/' <<<"$product"; then
+            echo "icons=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "icons=false" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -vE '^awake/(heroicons|ui/shadcn|core/graphics2d)/' <<<"$product" | grep -q .; then
+            echo "scenes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "scenes=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Setup JDK
@@ -66,23 +76,23 @@ jobs:
           cache-provider: basic
 
       - uses: ./.github/actions/cache-naga
-        if: steps.scope.outputs.render == 'true'
+        if: steps.scope.outputs.scenes == 'true'
         with:
           variant: desktop
           target-path: awake/asset/shader-compiler/rust-native/target
 
       - name: Install Vulkan (lavapipe) and GLFW
-        if: steps.scope.outputs.render == 'true'
+        if: steps.scope.outputs.scenes == 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y libvulkan-dev libglfw3-dev mesa-vulkan-drivers
 
       - name: Render head
-        if: steps.scope.outputs.render == 'true'
+        if: steps.scope.outputs.scenes == 'true'
         run: ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/after"
 
       - name: Capture icon previews on head
-        if: steps.scope.outputs.render == 'true'
+        if: steps.scope.outputs.icons == 'true'
         run: |
           ./gradlew :awake:ui:shadcn:desktopTest \
             --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs' \
@@ -92,24 +102,28 @@ jobs:
           cp awake/ui/shadcn/build/reports/compose-preview/shadcn-icons.png "$RUNNER_TEMP/after/ui-shadcn-icons-cpu.png"
 
       - name: Setup Python for original SVG capture
-        if: steps.scope.outputs.render == 'true'
+        if: steps.scope.outputs.icons == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
       - name: Capture pinned original SVGs in Chromium
-        if: steps.scope.outputs.render == 'true'
+        if: steps.scope.outputs.icons == 'true'
         run: |
           python -m pip install 'playwright==1.62.0'
           python -m playwright install --with-deps chromium
           python tools/icons/capture_lucide_spritesheet_reference.py \
             --out "$RUNNER_TEMP/after/ui-original-svg-browser.png"
 
-      - name: Render base
+      - name: Checkout base
         if: steps.scope.outputs.render == 'true'
         run: |
           mkdir -p "$RUNNER_TEMP/before"
           git worktree add --detach "$RUNNER_TEMP/base" "$BASE_SHA"
+
+      - name: Render base
+        if: steps.scope.outputs.scenes == 'true'
+        run: |
           cd "$RUNNER_TEMP/base"
           if [[ ! -f awake/engine/render/parity/src/desktopMain/kotlin/com/awakekt/awake/render/parity/RenderEvidence.kt ]]; then
             echo "::notice::The base has no evidence capture; showing every image as new."
@@ -122,7 +136,7 @@ jobs:
             || echo "::warning::The base failed to render; showing every image as new."
 
       - name: Capture icon previews on base
-        if: steps.scope.outputs.render == 'true'
+        if: steps.scope.outputs.icons == 'true'
         run: |
           cd "$RUNNER_TEMP/base"
           # Run the exact same capture harness on both commits, including bases that predate it.
@@ -167,9 +181,10 @@ jobs:
         if: steps.scope.outputs.render == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          EVIDENCE_FOCUS: ${{ steps.scope.outputs.scenes == 'false' && 'icons' || 'all' }}
         run: |
           prefix="https://raw.githubusercontent.com/${{ github.repository }}/render-evidence/pr-$PR/$HEAD_SHA"
-          scripts/render-evidence-comment.sh "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$prefix" "$HEAD_SHA" > "$RUNNER_TEMP/comment.md"
+          scripts/render-evidence-comment.sh "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$prefix" "$HEAD_SHA" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
           existing="$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
             --jq '[.[] | select(.body | startswith("<!-- render-evidence -->")) | .id] | first // empty')"
           if [[ -n "$existing" ]]; then
