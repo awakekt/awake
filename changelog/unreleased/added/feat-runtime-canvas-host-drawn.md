@@ -1,1 +1,0 @@
-- **A host can draw the scene canvas itself.** `SceneAppLifecycleRuntime.drawsSceneCanvas` (on by default) lets an editor or any host that shows the game in part of its window turn off the runtime's full-window scene canvas and draw `SceneCanvas` in its own game view.
