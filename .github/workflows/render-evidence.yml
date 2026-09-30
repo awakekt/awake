@@ -81,11 +81,15 @@ jobs:
         if: steps.scope.outputs.render == 'true'
         run: ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/after"
 
-      - name: Capture icon preview on head
+      - name: Capture icon previews on head
         if: steps.scope.outputs.render == 'true'
         run: |
-          ./gradlew :awake:ui:shadcn:desktopTest --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs'
+          ./gradlew :awake:ui:shadcn:desktopTest \
+            --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs' \
+            --tests '*LucideShadcnSpritesheetPreviewTest*'
           cp awake/ui/shadcn/build/reports/compose-preview/button-icons.png "$RUNNER_TEMP/after/ui-button-icons-cpu.png"
+          cp awake/ui/shadcn/build/reports/compose-preview/lucide-icons.png "$RUNNER_TEMP/after/ui-lucide-icons-cpu.png"
+          cp awake/ui/shadcn/build/reports/compose-preview/shadcn-icons.png "$RUNNER_TEMP/after/ui-shadcn-icons-cpu.png"
 
       - name: Render base
         if: steps.scope.outputs.render == 'true'
@@ -103,12 +107,19 @@ jobs:
           ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir="$RUNNER_TEMP/before" \
             || echo "::warning::The base failed to render; showing every image as new."
 
-      - name: Capture icon preview on base
+      - name: Capture icon previews on base
         if: steps.scope.outputs.render == 'true'
         run: |
           cd "$RUNNER_TEMP/base"
-          ./gradlew :awake:ui:shadcn:desktopTest --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs'
+          # Run the exact same capture harness on both commits, including bases that predate it.
+          cp "$GITHUB_WORKSPACE/awake/ui/shadcn/src/desktopTest/kotlin/com/awakekt/awake/ui/shadcn/LucideShadcnSpritesheetPreviewTest.kt" \
+            awake/ui/shadcn/src/desktopTest/kotlin/com/awakekt/awake/ui/shadcn/
+          ./gradlew :awake:ui:shadcn:desktopTest \
+            --tests '*ShadcnComposeRenderPreview.buttonIconsRenderThePinnedLucideGlyphs' \
+            --tests '*LucideShadcnSpritesheetPreviewTest*'
           cp awake/ui/shadcn/build/reports/compose-preview/button-icons.png "$RUNNER_TEMP/before/ui-button-icons-cpu.png"
+          cp awake/ui/shadcn/build/reports/compose-preview/lucide-icons.png "$RUNNER_TEMP/before/ui-lucide-icons-cpu.png"
+          cp awake/ui/shadcn/build/reports/compose-preview/shadcn-icons.png "$RUNNER_TEMP/before/ui-shadcn-icons-cpu.png"
 
       - name: Publish images
         if: steps.scope.outputs.render == 'true'
