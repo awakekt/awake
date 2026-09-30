@@ -118,51 +118,61 @@ val SceneDepthShader: AslShaderDefinition = shader("scene_depth") {
 }
 
 /**
- * Alpha-tested depth companion for textured ordinary meshes. The material ABI intentionally
- * matches [MaterialUniformLayouts.PbrTextured]: `pbrFactors.z` carries the draw's alpha cutoff,
- * while the remaining sampled bindings are declared so the backend can reuse the material's
- * standard bind group. No color is written; fragments below the cutoff are discarded before
- * depth test/write.
+ * Alpha-tested shadow caster for textured meshes: placed like [ShadowDepthShader], by the cascade
+ * being rendered and the draw's model, and discarding texels below the cutoff `pbrFactors.z` so a
+ * cut-out leaf casts a leaf's shadow rather than its card's. Reads the textured block
+ * ([MaterialUniformLayouts.PbrTextured][com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts.PbrTextured])
+ * and declares the standard material bindings so the backend reuses the material's own bind group.
+ * [instanced] takes each copy's model from the instance buffer instead.
  */
-val MaskedTexturedDepthShader: AslShaderDefinition = shader("shadow_depth_masked_textured") {
-    val u = uniformBlock(
-        "Uniforms",
-        group = BindingLayout.Standard.slot(BindingSemantic.Material),
-        binding = 0,
-    )
-    val handles = u.fieldsFrom(com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts.PbrTextured)
-    val mvp = handles.value("mvp")
-    val model = handles.value("model")
-    val pbrFactors = handles.value("pbrFactors")
-    val baseColorFactor = handles.value("baseColorFactor")
-    val baseColorTexture by texture2d(
-        group = BindingLayout.Standard.slot(BindingSemantic.Material),
-        binding = 1,
-    )
-    val baseColorSampler by sampler(
-        group = BindingLayout.Standard.slot(BindingSemantic.Material),
-        binding = 2,
-    )
-    // Keep the standard PBR bind-group shape compatible with Material.bindGroupFor().
-    texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 5)
-    texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 6)
-    texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 7)
-    texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 8)
+private fun maskedTexturedDepth(instanced: Boolean): AslShaderDefinition =
+    shader(if (instanced) "instanced_shadow_depth_masked_textured" else "shadow_depth_masked_textured") {
+        val u = uniformBlock(
+            "Uniforms",
+            group = BindingLayout.Standard.slot(BindingSemantic.Material),
+            binding = 0,
+        )
+        val handles = u.fieldsFrom(com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts.PbrTextured)
+        val model = handles.value("model")
+        val pbrFactors = handles.value("pbrFactors")
+        val baseColorFactor = handles.value("baseColorFactor")
+        val pass = uniformBlock("Cascade", group = SHADOW_CASCADE_PASS_GROUP, binding = 0)
+        val cascadeViewProjection = pass.fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
+        val baseColorTexture by texture2d(
+            group = BindingLayout.Standard.slot(BindingSemantic.Material),
+            binding = 1,
+        )
+        val baseColorSampler by sampler(
+            group = BindingLayout.Standard.slot(BindingSemantic.Material),
+            binding = 2,
+        )
+        // Keep the standard PBR bind-group shape compatible with Material.bindGroupFor().
+        texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 5)
+        texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 6)
+        texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 7)
+        texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 8)
 
-    val out = varyings("VertexOutput")
-    val uv by out.varying(GpuDataShape.Vec2, location = 0)
-    vertex {
-        val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
-        val position = ins.input(VertexSemantic.Position)
-        out.position set (mvp * vec4(position, 1f.lit))
-        uv set vec2(ins.input(VertexSemantic.Uv).x, 1f.lit - ins.input(VertexSemantic.Uv).y)
+        val out = varyings("VertexOutput")
+        val uv by out.varying(GpuDataShape.Vec2, location = 0)
+        vertex {
+            val ins = inputsFrom(VertexFormat.PositionNormalColorUv)
+            val position = ins.input(VertexSemantic.Position)
+            val drawModel = if (instanced) instanceModelMatrixAfter(VertexFormat.PositionNormalColorUv) else model
+            out.position set (cascadeViewProjection * drawModel * vec4(position, 1f.lit))
+            uv set vec2(ins.input(VertexSemantic.Uv).x, 1f.lit - ins.input(VertexSemantic.Uv).y)
+        }
+        fragment {
+            val sampled = let("baseColorSample", textureSample(baseColorTexture, baseColorSampler, uv))
+            val alpha = let("alpha", sampled.a * baseColorFactor.a)
+            discardIf(alpha lt pbrFactors.z)
+        }
     }
-    fragment {
-        val sampled = let("baseColorSample", textureSample(baseColorTexture, baseColorSampler, uv))
-        val alpha = let("alpha", sampled.a * baseColorFactor.a)
-        discardIf(alpha lt pbrFactors.z)
-    }
-}
+
+/** Masked shadow caster for ordinary textured meshes. */
+val MaskedTexturedDepthShader: AslShaderDefinition = maskedTexturedDepth(instanced = false)
+
+/** Masked shadow caster for instanced textured meshes. */
+val InstancedMaskedTexturedDepthShader: AslShaderDefinition = maskedTexturedDepth(instanced = true)
 
 /** PBR + shadow-mapped variant of the triangle shader, live on BOTH backends. The map is
  * declared `texture_depth_2d` (not `texture_2d<f32>`): WebGPU's auto layout derives a

@@ -243,7 +243,7 @@ internal fun Renderer.texturedMaterial(texture: TextureAsset) =
 internal val WHITE_FACTORS = pbrMaterialFloats(0f, 1f, Color.White, Color.Transparent)
 
 internal const val GROUND_HALF = 6f
-private const val CASTER_HALF = 1.5f
+internal const val CASTER_HALF = 1.5f
 internal const val CASTER_Y = 2f
 private const val EYE_Y = 6f
 private const val EYE_Z = 9f

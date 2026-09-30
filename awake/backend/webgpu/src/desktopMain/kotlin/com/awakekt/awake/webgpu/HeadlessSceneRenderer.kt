@@ -11,6 +11,9 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
 import com.awakekt.awake.render.passes2d.UiRenderFeature
+import com.awakekt.awake.render.pipeline.AlphaMode
+import com.awakekt.awake.render.pipeline.DepthCasterKind
+import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.pipeline.PipelineTable
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.testing.HeadlessRenderSession
@@ -119,6 +122,16 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 cascadeCount = MAX_SHADOW_TARGET_LAYERS,
                 bindingsByGroup = PackShaderSets.ShadowDepth.webGpu.bindingsByGroup,
                 bindingsMetadataAvailable = PackShaderSets.ShadowDepth.webGpu.bindingsMetadataAvailable,
+            ),
+        ),
+        keyedVariantPipelines = mapOf(
+            DepthRenderKey(DepthCasterKind.Ordinary, AlphaMode.Masked) to DepthOnlyPipeline(
+                graphicsDevice = graphicsDevice,
+                shaderCode = wgsl(PackShaderSets.MaskedTexturedShadowDepth),
+                vertexFormat = VertexFormat.PositionNormalColorUv,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                bindingsByGroup = PackShaderSets.MaskedTexturedShadowDepth.webGpu.bindingsByGroup,
+                bindingsMetadataAvailable = PackShaderSets.MaskedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,
             ),
         ),
         instancedFormatPipelines = mapOf(

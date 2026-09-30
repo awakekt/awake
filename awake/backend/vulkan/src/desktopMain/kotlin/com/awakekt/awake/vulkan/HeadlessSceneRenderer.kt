@@ -11,6 +11,9 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes2d.UiRenderFeature
+import com.awakekt.awake.render.pipeline.AlphaMode
+import com.awakekt.awake.render.pipeline.DepthCasterKind
+import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.testing.HeadlessRenderSession
 import com.awakekt.awake.vulkan.commands.TransferContext
@@ -119,6 +122,20 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 depthTarget.renderPass,
                 descriptorSetLayout,
                 runBlocking { spirvPair(PackShaderSets.ShadowDepth) },
+                VertexFormat.PositionNormalColorUv,
+                depthTarget.size,
+                vertexEntryPoint = "vertexMain",
+                fragmentEntryPoint = "fragmentMain",
+                cascadeCount = depthTarget.layers,
+                framesInFlight = FRAMES_IN_FLIGHT,
+            ),
+        ),
+        keyedVariantPipelines = mapOf(
+            DepthRenderKey(DepthCasterKind.Ordinary, AlphaMode.Masked) to DepthOnlyPipeline(
+                graphicsDevice,
+                depthTarget.renderPass,
+                descriptorSetLayout,
+                runBlocking { spirvPair(PackShaderSets.MaskedTexturedShadowDepth) },
                 VertexFormat.PositionNormalColorUv,
                 depthTarget.size,
                 vertexEntryPoint = "vertexMain",

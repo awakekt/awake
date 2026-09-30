@@ -309,7 +309,9 @@ open class VulkanEngine(
             }
             val keyedPipelines = buildMap {
                 plan.depthPrePassKeyedVariants.forEach { (key, variant) ->
-                    if (key.kind != DepthCasterKind.Ordinary ||
+                    // Masked textured casters, one at a time or instanced; the rest have no keyed shader yet.
+                    val instanced = key.kind == DepthCasterKind.Instanced
+                    if (key.kind != DepthCasterKind.Ordinary && !instanced ||
                         key.alphaMode != com.awakekt.awake.render.pipeline.AlphaMode.Masked
                     ) {
                         return@forEach
@@ -328,6 +330,7 @@ open class VulkanEngine(
                             variant.vulkan.entryPoint(ShaderStage.FRAGMENT),
                             cascadeCount = map.layers,
                             framesInFlight = MAX_FRAMES_IN_FLIGHT,
+                            variant = if (instanced) PipelineVariant.Instanced else PipelineVariant.Opaque,
                         ),
                     )
                 }

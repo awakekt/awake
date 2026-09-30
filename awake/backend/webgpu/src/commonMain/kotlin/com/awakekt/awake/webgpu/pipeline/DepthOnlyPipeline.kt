@@ -59,7 +59,7 @@ class DepthOnlyPipeline(
     private val variant: PipelineVariant = PipelineVariant.Opaque,
     val frontFace: FrontFace = FrontFace.CounterClockwise,
     /** ABI declared by the selected depth shader, carried from the shared shader set. */
-    bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
+    private val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
     /** Whether [bindingsByGroup] is authoritative, including an explicitly empty layout. */
     bindingsMetadataAvailable: Boolean = false,
 ) {
@@ -126,7 +126,10 @@ class DepthOnlyPipeline(
         uniformBuffer: GPUBuffer,
     ): MaterialBinding? {
         if (!handle.hasBindingGroup(0)) return null
-        return WebGpuBindGroupHandle(material.bindGroupFor(pipeline, uniformBuffer))
+        // This shader's own group 0, which may use fewer of the material's textures than a scene
+        // pipeline declares; a group with more entries than its layout is invalid.
+        val declared = bindingsByGroup[0] ?: GroupBindings.StandardMaterial
+        return WebGpuBindGroupHandle(material.bindGroupFor(pipeline, uniformBuffer, declared))
     }
 
     fun paletteBinding(buffer: GPUBuffer): MaterialBinding? {

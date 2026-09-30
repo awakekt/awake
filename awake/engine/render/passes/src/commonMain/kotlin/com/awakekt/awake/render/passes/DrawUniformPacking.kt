@@ -16,6 +16,7 @@ import com.awakekt.awake.render.passes.uniforms.InstancedUniformLayout
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
+import com.awakekt.awake.render.passes.uniforms.coverageCutoff
 import com.awakekt.awake.render.passes.uniforms.directionalLightFloats
 import com.awakekt.awake.render.passes.uniforms.drawUniformPlan
 import com.awakekt.awake.render.passes.uniforms.gpuLitShadowUniforms
@@ -101,6 +102,7 @@ fun RenderDrawCommand.uniformFloats(
             cameraEye = cameraEye,
             fogColor = fogColor,
             fogDensity = fogDensity,
+            alphaCutoff = coverageCutoff,
             debugView = debugView,
             cameraForward = cameraForward,
             timeSeconds = timeSeconds,
@@ -170,7 +172,7 @@ fun RenderDrawCommand.instancedUniformFloats(
                 cameraEye = cameraEye,
                 fogColor = fogColor,
                 fogDensity = fogDensity,
-                alphaCutoff = alphaCutoff,
+                alphaCutoff = coverageCutoff,
                 debugView = debugView,
                 cameraForward = cameraForward,
                 timeSeconds = timeSeconds,

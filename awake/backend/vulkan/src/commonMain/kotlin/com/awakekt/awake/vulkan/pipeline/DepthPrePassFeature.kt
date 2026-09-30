@@ -13,6 +13,7 @@ import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.DepthCasterKind
+import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkSubpassContents
@@ -222,7 +223,9 @@ internal class DepthPrePassFeature(
                     DepthCasterKind.Skinned
                 else -> DepthCasterKind.Ordinary
             }
-            val pipeline = prepared.vertexFormat?.let { pipelineFor(kind, it) }
+            // Keyed by coverage too: a masked caster draws through its cut-out shader, or not at all.
+            val alphaMode = prepared.depthRenderKey?.alphaMode ?: AlphaMode.Opaque
+            val pipeline = prepared.vertexFormat?.let { pipelineFor(DepthRenderKey(kind, alphaMode), it) }
             val vertexBuffer = prepared.vertexBuffer as? VulkanBufferBinding
             val indexBuffer = prepared.indexBuffer as? VulkanBufferBinding
             val depthMaterial = prepared.depthMaterialBinding ?: prepared.materialBinding
