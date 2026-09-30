@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://docs.awakekt.com/latest/getting-started/">
+        <link rel="canonical" href="https://docs.awakekt.com/latest/ui/">
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../physics/jolt/">
       
       
-        <link rel="next" href="../engine/core/">
+        <link rel="next" href="compose/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Installation - Awake Engine</title>
+        <title>UI Runtime - Awake Engine</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installation" class="md-skip">
+        <a href="#ui-design-systems" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Installation
+              UI Runtime
             
           </span>
         </div>
@@ -286,10 +286,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -304,11 +302,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
@@ -329,7 +327,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -344,37 +342,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Installation
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -390,131 +361,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#add-the-desktop-runtime" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Add the desktop runtime
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-an-application" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Create an application
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#add-feature-modules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Add feature modules
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Add feature modules">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#core-math-and-ecs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Core Math and ECS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scene-authoring" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scene authoring
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#graphics-backends" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Graphics backends
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#physics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Physics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ui" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UI
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#terrain-assets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Terrain assets
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1315,6 +1161,8 @@
       
   
   
+    
+  
   
   
     
@@ -1341,15 +1189,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../ui/" class="md-nav__link ">
+            <a href="./" class="md-nav__link md-nav__link--active">
               
   
   
@@ -1367,13 +1215,13 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_7" id="__nav_7_label" tabindex="">
+              <label class="md-nav__link md-nav__link--active" for="__nav_7" id="__nav_7_label" tabindex="">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
@@ -1393,7 +1241,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ui/compose/" class="md-nav__link">
+      <a href="compose/" class="md-nav__link">
         
   
   
@@ -1421,7 +1269,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ui/shadcn/" class="md-nav__link">
+      <a href="shadcn/" class="md-nav__link">
         
   
   
@@ -1650,107 +1498,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#add-the-desktop-runtime" class="md-nav__link">
+  <a href="#compose-foundation-and-shadcn" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Add the desktop runtime
+        Compose Foundation and Shadcn
       
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-an-application" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Create an application
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#add-feature-modules" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Add feature modules
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Add feature modules">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#core-math-and-ecs" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Core Math and ECS
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#scene-authoring" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Scene authoring
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#graphics-backends" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Graphics backends
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#physics" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Physics
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#ui" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        UI
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#terrain-assets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Terrain assets
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1774,99 +1528,17 @@
   
 
 
-<h1 id="installation">Installation</h1>
-<p>Awake is published to Maven Central. Core modules share one version; the Vulkan backend has its own
-release train, built against a specific Core release. The versions shown here follow the selected
-documentation version.</p>
-<h2 id="add-the-desktop-runtime">Add the desktop runtime</h2>
-<p>Add the version and base artifacts to <code>gradle/libs.versions.toml</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="k">[versions]</span>
-<span class="n">awake</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.0-alpha.16"</span>
-<span class="n">awake-vulkan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"0.1.0"</span>
-
-<span class="k">[libraries]</span>
-<span class="n">awake-bootstrap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.engine"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"bootstrap"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-<span class="n">awake-shaders</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.asset"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"shaders"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-<span class="n">awake-vulkan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.backend"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"vulkan"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake-vulkan"</span><span class="w"> </span><span class="p">}</span>
-</code></pre></div>
-<p>Add dependencies to the source sets that use them:</p>
-<div class="highlight"><pre><span></span><code><span class="n">kotlin</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n">jvm</span><span class="p">(</span><span class="s">"desktop"</span><span class="p">)</span>
-<span class="w">    </span><span class="n">sourceSets</span><span class="w"> </span><span class="p">{</span>
-<span class="w">        </span><span class="n">commonMain</span><span class="p">.</span><span class="na">dependencies</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="n">implementation</span><span class="p">(</span><span class="n">libs</span><span class="p">.</span><span class="na">awake</span><span class="p">.</span><span class="na">bootstrap</span><span class="p">)</span>
-<span class="w">            </span><span class="n">implementation</span><span class="p">(</span><span class="n">libs</span><span class="p">.</span><span class="na">awake</span><span class="p">.</span><span class="na">shaders</span><span class="p">)</span>
-<span class="w">        </span><span class="p">}</span>
-<span class="w">        </span><span class="n">named</span><span class="p">(</span><span class="s">"desktopMain"</span><span class="p">).</span><span class="na">dependencies</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="n">implementation</span><span class="p">(</span><span class="n">libs</span><span class="p">.</span><span class="na">awake</span><span class="p">.</span><span class="na">vulkan</span><span class="p">)</span>
-<span class="w">        </span><span class="p">}</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="p">}</span>
-</code></pre></div>
-<h2 id="create-an-application">Create an application</h2>
-<p>Define the lifecycle in shared code. This window configuration is extracted from the compiled
-bootstrap tests:</p>
-<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nn">com.awakekt.awake.engine.bootstrap.dsl.app</span>
-
-<span class="w">        </span><span class="kd">val</span><span class="w"> </span><span class="nv">game</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="p">{</span>
-<span class="w">            </span><span class="n">window</span><span class="w"> </span><span class="p">{</span>
-<span class="w">                </span><span class="n">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Hello Cube"</span>
-<span class="w">                </span><span class="n">size</span><span class="p">(</span><span class="m">1600</span><span class="p">,</span><span class="w"> </span><span class="m">900</span><span class="p">)</span>
-<span class="w">                </span><span class="n">backend</span><span class="p">.</span><span class="na">vulkan</span><span class="p">()</span>
-<span class="w">                </span><span class="n">frameRateMode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FrameRateMode</span><span class="p">.</span><span class="na">Capped</span><span class="p">(</span><span class="m">120</span><span class="p">)</span>
-<span class="w">            </span><span class="p">}</span>
-<span class="w">        </span><span class="p">}</span>
-</code></pre></div>
-<p>On desktop, pass the lifecycle and a render plan to <code>runVulkanDesktopGame</code> from <code>desktopMain</code>.
-For the complete compiled application entry point, see the
-<a href="https://github.com/awakekt/awake/blob/main/samples/engine-showcase/src/desktopMain/kotlin/com/awakekt/awake/showcase/app/Main.kt">Engine Showcase</a>.</p>
-<h2 id="add-feature-modules">Add feature modules</h2>
-<p>Add the relevant alias to the <code>[libraries]</code> section above and use it from the indicated source set.
-Gradle resolves each module's published transitive dependencies.</p>
-<h3 id="core-math-and-ecs">Core Math and ECS</h3>
-<div class="highlight"><pre><span></span><code><span class="n">awake-math</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.core"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"math"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-<span class="n">awake-ecs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"ecs"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-</code></pre></div>
-<p>Use <code>libs.awake.math</code> and/or <code>libs.awake.ecs</code> in <code>commonMain</code>.</p>
-<h3 id="scene-authoring">Scene authoring</h3>
-<div class="highlight"><pre><span></span><code><span class="n">awake-scene-authoring</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.scene"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"authoring"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-<span class="n">awake-scene-3d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.scene"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"scene3d"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-<span class="n">awake-navigation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"navigation"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-<span class="n">awake-ai</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"ai"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-<span class="n">awake-scene-world</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.scene"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"world"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-</code></pre></div>
-<p>Use <code>libs.awake.scene.authoring</code> in <code>commonMain</code>. This artifact brings its public scene API
-dependencies. Add the <code>scene3d</code>, <code>navigation</code>, <code>ai</code>, or <code>scene.world</code> alias only when you use that
-capability directly.</p>
-<h3 id="graphics-backends">Graphics backends</h3>
-<p>The desktop Vulkan artifact is included in the base setup.</p>
-<p>The WebGPU backend for WasmJs is not in Maven Central releases yet: it builds on a wgpu4k snapshot,
-so it is published only as a snapshot. Add the snapshot repository, a snapshot version, and use
-<code>libs.awake.webgpu</code> in <code>wasmJsMain</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// settings.gradle.kts, dependencyResolutionManagement.repositories</span>
-<span class="n">maven</span><span class="p">(</span><span class="s">"https://central.sonatype.com/repository/maven-snapshots/"</span><span class="p">)</span>
-</code></pre></div>
-<div class="highlight"><pre><span></span><code><span class="n">awake-webgpu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.backend"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"webgpu"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"&lt;snapshot version&gt;"</span><span class="w"> </span><span class="p">}</span>
-</code></pre></div>
-<p>For shader authoring, add <code>libs.awake.asset.shader.dsl</code> using this alias:</p>
-<div class="highlight"><pre><span></span><code><span class="n">awake-asset-shader-dsl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.asset"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"shader-dsl"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-</code></pre></div>
-<h3 id="physics">Physics</h3>
-<div class="highlight"><pre><span></span><code><span class="n">awake-physics-api</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.physics"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"api"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-<span class="n">awake-jolt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.backend"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"jolt"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-</code></pre></div>
-<p>Use <code>libs.awake.physics.api</code> in shared code and <code>libs.awake.jolt</code> only on supported native targets.</p>
-<h3 id="ui">UI</h3>
-<div class="highlight"><pre><span></span><code><span class="n">awake-compose-foundation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.compose"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"foundation"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-<span class="n">awake-ui-shadcn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.ui"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"shadcn"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-</code></pre></div>
-<p>Use <code>libs.awake.compose.foundation</code> and <code>libs.awake.ui.shadcn</code> in <code>commonMain</code>. Shadcn depends on
-the foundation APIs. See <a href="../releases/">Releases and compatibility</a> for target availability and
-the exact published module set.</p>
-<h3 id="terrain-assets">Terrain assets</h3>
-<div class="highlight"><pre><span></span><code><span class="n">awake-terrain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">group</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"com.awakekt.awake.asset"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"terrain"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">.</span><span class="n">ref</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="s2">"awake"</span><span class="w"> </span><span class="p">}</span>
-</code></pre></div>
-<p>Use <code>libs.awake.terrain</code> in the source set that creates terrain data.</p>
+<h1 id="ui-design-systems">UI design systems</h1>
+<p>Awake’s UI modules provide retained HUDs, overlays, and tool interfaces for engine applications.
+The neutral UI runtime supplies layout, drawing, input, and modifier behavior; component modules
+add visual policy on top.</p>
+<h2 id="compose-foundation-and-shadcn">Compose Foundation and Shadcn</h2>
+<p>Compose Foundation provides neutral layout, drawing, input, and modifier behavior. The published
+Shadcn module adds themes, tokens, and component recipes on top. Keep application-specific visual
+policy in the theme layer so it remains replaceable.</p>
+<p>Add <a href="../getting-started/#ui">Compose Foundation and the component family you need</a> to your
+application. The <a href="../guides/components/button/">Button reference</a> shows a compiled Shadcn usage
+example and a reviewed render.</p>
 
 
 
