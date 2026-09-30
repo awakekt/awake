@@ -106,6 +106,13 @@ class SceneAppLifecycleRuntime internal constructor(
     /** Whether the scene's touch-only canvas controls are drawn, for a host on a touch screen. */
     var showTouchControls: Boolean = false
 
+    /**
+     * Whether this runtime draws the scene's canvas over its whole UI. A host that shows the game in
+     * part of its window, such as an editor's game view, turns this off and draws `SceneCanvas`
+     * there itself.
+     */
+    var drawsSceneCanvas: Boolean = true
+
     /** Last frame's draw commands, for a test that has to assert on what was painted. */
     var uiPrimitives: List<UiDrawPrimitive> = emptyList()
         private set
@@ -286,7 +293,7 @@ class SceneAppLifecycleRuntime internal constructor(
         viewportHeight: Float,
     ): SceneFrame {
         val content = spec.ui
-        val hasCanvas = world.family<CanvasElement>().size > 0
+        val hasCanvas = drawsSceneCanvas && world.family<CanvasElement>().size > 0
         if (content == null && !hasCanvas) {
             return SceneFrame(emptyList(), emptyList(), emptyList(), InputOwnership(), PointerCursor.Default, false)
         }
