@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.18] - 2026-09-30
+
+### Added
+
+- **Jumps play in phases.** `locomotion_animation` gains `takeOff`, played once as the character leaves the ground, `fall`, looped while it comes down (`jump` now covers the rise), and `land`, played once as it touches down unless it is already walking away. All three are optional; a scene naming only `jump` plays it for the whole jump as before.
+
+### Fixed
+
+- **Android Vulkan apps follow a rotation.** The swapchain was built once for the starting orientation, so turning the device left the picture turned or stretched. It now asks the surface for an unrotated image (identity pre-transform, extent swapped on a quarter turn) and is rebuilt when the host reports a resize or the surface changes size or orientation. A suboptimal acquire no longer throws, and a suboptimal present rebuilds only when the surface actually changed. `GraphicsEngine.resizeBackend()` lets a backend react to a resize.
+- Generate shadcn Lucide icons from pinned SVGs, correct round stroke inner joins, and center vector stroke antialiasing to keep icon edges close to the source at small and large sizes.
+- **Textured skinned parts sample their texture the right way up.** `PackShaderSets.SkinnedTextured` passed UVs straight through, while every other textured shader undoes `createBitmap`'s bottom-up decode by flipping V, so a character's textures landed upside down on its parts.
+
 ## [0.1.0-alpha.17] - 2026-09-30
 
 ### Added
