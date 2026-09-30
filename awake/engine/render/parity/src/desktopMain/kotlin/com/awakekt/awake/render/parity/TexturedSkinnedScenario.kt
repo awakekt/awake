@@ -17,16 +17,17 @@ import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.renderer.SkinnedUniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
+import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.runBlocking
 
 /**
  * A textured plane skinned to one joint, drawn with [palette] as that joint's matrix: the identity
  * shows the texture where the plane lies, a zero matrix collapses it to nothing.
  */
-fun Renderer.renderTexturedSkinnedScene(palette: FloatArray): ByteArray {
+fun Renderer.renderTexturedSkinnedScene(palette: FloatArray, texture: TextureAsset = SolidOrange): ByteArray {
     val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
     val mesh = createMesh(skinnedTexturedPlane())
-    val material = createMaterial(SkinnedUniformLayout, texture = SolidOrange)
+    val material = createMaterial(SkinnedUniformLayout, texture = texture)
     return try {
         val lens = Lens(eye = Vec3f(0f, EYE_Y, EYE_Z), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 50f)
         renderToTexture(
