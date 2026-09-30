@@ -2,6 +2,11 @@
   {
     "version": "0.1.0-alpha.18",
     "title": "0.1.0-alpha.18",
+    "aliases": []
+  },
+  {
+    "version": "0.1.0-alpha.17",
+    "title": "0.1.0-alpha.17",
     "aliases": [
       "latest"
     ]
