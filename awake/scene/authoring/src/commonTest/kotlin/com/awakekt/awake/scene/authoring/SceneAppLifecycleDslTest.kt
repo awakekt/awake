@@ -138,6 +138,21 @@ class SceneAppLifecycleDslTest {
     }
 
     @Test
+    fun aHostThatDrawsTheCanvasItselfGetsNoCanvasFromTheRuntime() = runTest {
+        val game = app { scene("canvas-host") { entity("score") } }
+        game.ready(RecordingRenderer())
+        val runtime = game.requireService<SceneAppLifecycleRuntime>()
+        val entity = runtime.findOrCreateEntity("score")
+        runtime.world.add(entity, CanvasElement().apply { kind = CanvasElementKind.Text; text = "Score 0" })
+        runtime.drawsSceneCanvas = false
+
+        game.update(1f / 60f, 320f, 240f)
+
+        assertTrue(runtime.uiSemantics.none { it.hasTag("canvas-element-${entity.id}") })
+        game.dispose()
+    }
+
+    @Test
     fun runtimeCanFindOrCreateNamedEntity() = runTest {
         val game = app {
             scene("named-entity-proof") {

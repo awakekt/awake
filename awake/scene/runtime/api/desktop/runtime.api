@@ -101,6 +101,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public final fun findTransform (Ljava/lang/String;)Lcom/awakekt/awake/scene/core/transform/Transform;
 	public final fun getAverageFrameTimeMs ()F
 	public final fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
+	public final fun getDrawsSceneCanvas ()Z
 	public final fun getFont ()Lcom/awakekt/awake/core/text/font/UiFont;
 	public final fun getFps ()F
 	public final fun getPerfStatsEnabled ()Z
@@ -131,6 +132,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public fun resize (FF)V
 	public fun resume ()V
 	public final fun service (Lkotlin/reflect/KClass;)Ljava/lang/Object;
+	public final fun setDrawsSceneCanvas (Z)V
 	public final fun setPerfStatsEnabled (Z)V
 	public final fun setShowTouchControls (Z)V
 	public final fun setUiOwnership (Lcom/awakekt/awake/compose/ui/platform/InputOwnership;)V
