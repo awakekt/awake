@@ -107,7 +107,9 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           # wrangler-action runs this without a shell, so $RUNNER_TEMP would stay literal.
-          command: pages deploy "${{ runner.temp }}/awake-docs-site" --project-name=awake-docs
+          # --branch=main: a tag push checks out a detached HEAD, and without it wrangler files the
+          # deploy as a preview, so production never got the new version.
+          command: pages deploy "${{ runner.temp }}/awake-docs-site" --project-name=awake-docs --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
       # Idempotent. Creating the DNS record needs Zone:Read and DNS:Edit on awakekt.com; without
