@@ -19,6 +19,7 @@ attaches any ECS component, so "—" in the scene DSL column means there is no d
 | `Skybox` | `scene:scene3d` | `skybox` | `skybox(...)`, `skyboxEntity(...)` | [Sky and fog](../guides/sky-and-fog.md) |
 | `MeshRenderer` | `scene:scene3d` | `mesh_renderer` | `meshRenderer(...)`, `mesh(...)`, `meshEntity(...)` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | `PbrMaterial` | `scene:scene3d` | `pbr_material` | — | [Meshes and materials](../guides/meshes-and-materials.md) |
+| `LocomotionAnimation` | `scene:scene3d` | `locomotion_animation` | — | [Animation](../guides/animation.md) |
 | `TerrainComponent` | `scene:scene3d` | `terrain` | — | [Terrain](../guides/terrain.md) |
 | `SpinControl` | `scene:scene-core` | `spin_control` | — | [Scene documents](../guides/scene-documents.md) |
 | `StaticTransform` | `scene:scene-core` | `static_transform` | — | [Scene documents](../guides/scene-documents.md) |
