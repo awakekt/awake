@@ -9,6 +9,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.scene.binding.renderableRequests
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAppSpec
 import com.awakekt.awake.scene.runtime.SceneAssetLibrary
@@ -28,7 +29,9 @@ class SceneSession internal constructor(
     lateinit var world: World
         private set
 
-    val sceneManager: SceneManager by lazy { SceneManager(world) }
+    val sceneManager: SceneManager by lazy {
+        SceneManager(world, onUnload = { scene -> assetLibrary?.let { library -> scene.renderableRequests.forEach(library::releaseRenderable) } })
+    }
 
     private val schedule = SceneSchedule(spec)
     private var assetLibrary: SceneAssetLibrary? = null

@@ -31,6 +31,8 @@ class SceneManager @JvmOverloads constructor(
      * every load, so built-in bindings are present however early this one was created.
      */
     private val componentRegistry: SceneComponentRegistry? = null,
+    /** Runs for a scene just before its entities are destroyed, e.g. to free the assets it drew. */
+    private val onUnload: (Scene) -> Unit = {},
 ) {
     init {
         DefaultSceneComponentResolvers.install()
@@ -43,7 +45,7 @@ class SceneManager @JvmOverloads constructor(
      * One call, not a manual teardown-then-load pair -- there is no window where a caller can
      * forget the teardown half. */
     fun switchTo(document: SceneDocument): Scene {
-        current?.destroy()
+        unloadCurrent()
         val scene = SceneLoader.instantiate(document, world, loadRegistry())
         current = scene
         return scene
@@ -56,7 +58,13 @@ class SceneManager @JvmOverloads constructor(
 
     /** Tears down the current scene without loading a replacement -- e.g. app shutdown. */
     fun close() {
-        current?.destroy()
+        unloadCurrent()
         current = null
+    }
+
+    private fun unloadCurrent() {
+        val scene = current ?: return
+        onUnload(scene)
+        scene.destroy()
     }
 }
