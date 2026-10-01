@@ -107,7 +107,19 @@ val SkinnedInstancedShadowDepthShader: AslShaderDefinition =
     instancedDepth("skinned_instanced_shadow_depth", VertexFormat.PositionNormalColorSkin, skinned = true)
 
 /** Non-instanced skinned depth caster; its palette is part of the material uniform block. */
-val SkinnedShadowDepthShader: AslShaderDefinition = shader("skinned_shadow_depth") {
+val SkinnedShadowDepthShader: AslShaderDefinition =
+    skinnedDepth("skinned_shadow_depth", VertexFormat.PositionNormalColorSkin)
+
+/** [SkinnedShadowDepthShader] for textured skinned meshes, whose UVs shift the joint attributes. */
+val SkinnedTexturedShadowDepthShader: AslShaderDefinition =
+    skinnedDepth("skinned_textured_shadow_depth", VertexFormat.PositionNormalColorUvSkin)
+
+/**
+ * A skinned mesh of [format] cast into the shadow map: posed by its joint palette, placed by its
+ * model matrix, then projected by the cascade. The material block's `mvp` is the camera's, so the
+ * shadow pass cannot use it.
+ */
+private fun skinnedDepth(name: String, format: VertexFormat): AslShaderDefinition = shader(name) {
     val u = uniformBlock(
         "Uniforms",
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -115,21 +127,21 @@ val SkinnedShadowDepthShader: AslShaderDefinition = shader("skinned_shadow_depth
     )
     val handles = u.fieldsFrom(SkinnedUniformLayout)
     val palette = handles.array("jointPalette")
-    val mvp = handles.value("mvp")
+    val model = handles.value("model")
     val cascade = uniformBlock(
         "Cascade",
         group = SHADOW_CASCADE_PASS_GROUP,
         binding = 0,
     ).fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
     vertex {
-        val ins = inputsFrom(VertexFormat.PositionNormalColorSkin)
+        val ins = inputsFrom(format)
         val joints = ins.input(VertexSemantic.JointIndices)
         val weights = ins.input(VertexSemantic.JointWeights)
         fun joint(slot: AslExpr): AslExpr = palette[slot]
         val skin = weights.x * joint(joints.x) + weights.y * joint(joints.y) +
             weights.z * joint(joints.z) + weights.w * joint(joints.w)
         val position = skin * vec4(ins.input(VertexSemantic.Position), 1f.lit)
-        returnPosition(cascade * mvp * position)
+        returnPosition(cascade * (model * position))
     }
     fragment { }
 }

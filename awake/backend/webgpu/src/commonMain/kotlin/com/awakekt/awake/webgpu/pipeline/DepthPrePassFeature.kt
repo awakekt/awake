@@ -44,6 +44,8 @@ class DepthPrePassFeature(
         val pipeline = when (kind) {
             DepthCasterKind.Ordinary -> formatPipelines[format] ?: depthOnlyPipeline
             DepthCasterKind.Instanced -> instancedFormatPipelines[format] ?: variantPipelines[kind]
+            // A skinned pipeline's own depth shader first; the plan's variant covers the plain format.
+            DepthCasterKind.Skinned -> formatPipelines[format] ?: variantPipelines[kind]
             else -> variantPipelines[kind]
         }
         return pipeline?.takeIf { it.vertexFormat == format }
@@ -171,8 +173,7 @@ class DepthPrePassFeature(
                     instanced && prepared.instanceColorBuffer != null ->
                         DepthCasterKind.Particle
                     instanced -> DepthCasterKind.Instanced
-                    prepared.vertexFormat == VertexFormat.PositionNormalColorSkin ->
-                        DepthCasterKind.Skinned
+                    prepared.vertexFormat?.isSkinned == true -> DepthCasterKind.Skinned
                     else -> DepthCasterKind.Ordinary
                 }
                 val format = prepared.vertexFormat

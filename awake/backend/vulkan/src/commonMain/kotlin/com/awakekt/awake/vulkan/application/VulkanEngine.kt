@@ -14,6 +14,7 @@ import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.asset.shaders.ShaderStage
 import com.awakekt.awake.asset.shaders.buildContentFeature
 import com.awakekt.awake.asset.shaders.castsWithPrimaryDepthShader
+import com.awakekt.awake.asset.shaders.skinnedDepthShaders
 import com.awakekt.awake.asset.shaders.entryPoint
 import com.awakekt.awake.asset.shaders.spec
 import com.awakekt.awake.asset.shaders.uiShaderSet
@@ -308,6 +309,25 @@ open class VulkanEngine(
                             ),
                         )
                     }
+                // A skinned pipeline casts through its own depth shader, which reads its joint palette.
+                plan.scenePipelines.forEach { scenePipeline ->
+                    val shaders = scenePipeline.skinnedDepthShaders() ?: return@forEach
+                    put(
+                        scenePipeline.vertexFormat,
+                        DepthOnlyPipeline(
+                            graphicsDevice,
+                            map.renderPass,
+                            pipelineDescriptorSetLayout,
+                            loadShaderPair(shaders),
+                            scenePipeline.vertexFormat,
+                            map.size,
+                            shaders.vulkan.entryPoint(ShaderStage.VERTEX),
+                            shaders.vulkan.entryPoint(ShaderStage.FRAGMENT),
+                            cascadeCount = map.layers,
+                            framesInFlight = MAX_FRAMES_IN_FLIGHT,
+                        ),
+                    )
+                }
             }
             val keyedPipelines = buildMap {
                 plan.depthPrePassKeyedVariants.forEach { (key, variant) ->

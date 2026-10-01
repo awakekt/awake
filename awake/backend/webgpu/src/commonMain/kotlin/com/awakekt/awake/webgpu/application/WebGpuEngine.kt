@@ -18,6 +18,7 @@ import com.awakekt.awake.asset.shaders.ShaderStage as ShaderProgramStage
 import com.awakekt.awake.asset.shaders.ShaderStages
 import com.awakekt.awake.asset.shaders.buildContentFeature
 import com.awakekt.awake.asset.shaders.castsWithPrimaryDepthShader
+import com.awakekt.awake.asset.shaders.skinnedDepthShaders
 import com.awakekt.awake.asset.shaders.narrowedTo
 import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.asset.shaders.spec
@@ -203,6 +204,23 @@ open class WebGpuEngine(
                             ),
                         )
                     }
+                // A skinned pipeline casts through its own depth shader, which reads its joint palette.
+                plan.scenePipelines.forEach { scenePipeline ->
+                    val shaders = scenePipeline.skinnedDepthShaders() ?: return@forEach
+                    put(
+                        scenePipeline.vertexFormat,
+                        com.awakekt.awake.webgpu.pipeline.DepthOnlyPipeline(
+                            graphicsDevice = graphicsDevice,
+                            shaderCode = shaders.wgsl(),
+                            vertexFormat = scenePipeline.vertexFormat,
+                            vertexEntryPoint = shaders.webGpu.entryPoint(ShaderProgramStage.VERTEX),
+                            fragmentEntryPoint = shaders.webGpu.entryPoint(ShaderProgramStage.FRAGMENT),
+                            cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                            bindingsByGroup = shaders.webGpu.bindingsByGroup,
+                            bindingsMetadataAvailable = shaders.webGpu.bindingsMetadataAvailable,
+                        ),
+                    )
+                }
             }
             val keyedPipelines = buildMap {
                 plan.depthPrePassKeyedVariants.forEach { (key, variant) ->

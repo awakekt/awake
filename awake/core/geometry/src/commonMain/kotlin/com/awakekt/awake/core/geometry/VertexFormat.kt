@@ -39,6 +39,9 @@ data class VertexFormat(val attributes: List<VertexAttribute>) {
             ?.let { it.offsetBytes / Float.SIZE_BYTES }
             ?: -1
 
+    /** Whether a vertex carries joint indices: a mesh in this format is posed by a joint palette. */
+    val isSkinned: Boolean get() = floatOffsetOf(VertexSemantic.JointIndices) >= 0
+
     companion object {
         /**
          * No vertex buffer at all -- the vertex shader generates its own positions from
