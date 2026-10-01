@@ -120,6 +120,9 @@ comments:
       - '**/awake/physics/api/**'
       - '**/awake/scene/physics/**'
       - '**/awake/physics/ragdoll/**'
+      - '**/awake/asset/mesh-optimizer/**'
+      - '**/awake/asset/shader-compiler/**'
+      - '**/awake/project/src/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true
