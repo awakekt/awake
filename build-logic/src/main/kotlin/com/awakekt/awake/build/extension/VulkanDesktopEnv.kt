@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package com.awakekt.awake.build.extension
+import org.gradle.api.Project
 import java.io.File
 
 /**
@@ -30,10 +31,12 @@ object VulkanDesktopEnv {
      * task then fails at Vulkan init with the loader's own message, which names the fix
      * better than a missing-file error here would.
      *
-     * Every host also gets `AWAKE_VULKAN_VALIDATION=1`: the engine enables the Khronos validation
-     * layer only on request, so shipped apps never do, and build runs and tests always do. */
-    fun environment(): Map<String, String> {
-        if (!HostOs.isMac) return mapOf(VALIDATION_ENV to "1")
+     * Every host also gets `AWAKE_VULKAN_VALIDATION`, on unless [validation] is false: the engine
+     * enables the Khronos validation layer only on request, so shipped apps never do, and build
+     * runs and tests do by default. */
+    fun environment(validation: Boolean = true): Map<String, String> {
+        val validationValue = if (validation) "1" else "0"
+        if (!HostOs.isMac) return mapOf(VALIDATION_ENV to validationValue)
         val icd = homebrewCellars.asSequence()
             .map { File("$it/molten-vk") }
             .filter { it.isDirectory }
@@ -41,9 +44,19 @@ object VulkanDesktopEnv {
             .map { File(it, "etc/vulkan/icd.d/MoltenVK_icd.json") }
             .firstOrNull { it.isFile }
         return buildMap {
-            put(VALIDATION_ENV, "1")
+            put(VALIDATION_ENV, validationValue)
             if (icd != null) put("VK_ICD_FILENAMES", icd.absolutePath)
             put("DYLD_FALLBACK_LIBRARY_PATH", DYLD_FALLBACK)
         }
     }
+
+    /**
+     * [environment] for an application run task. `-Pawake.vulkan.validation=false` turns the
+     * validation layer off: it checks every Vulkan call, which costs a large scene about a tenth
+     * of its frame, so a run that measures frame time needs it off.
+     */
+    fun runEnvironment(project: Project): Map<String, String> =
+        environment(validation = project.findProperty(VALIDATION_PROPERTY)?.toString() != "false")
+
+    private const val VALIDATION_PROPERTY = "awake.vulkan.validation"
 }
