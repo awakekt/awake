@@ -1,1 +1,0 @@
-- **Asset converters can be unregistered.** `AssetConverterRegistry.unregister(converter)` removes a converter from every extension it handled, and a converter it had replaced converts that extension again, so an editor can unload a plugin's converters without losing the ones it overrode.

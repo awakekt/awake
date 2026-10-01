@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.1] - 2026-10-01
+
+### Added
+
+- **Asset converters can be unregistered.** `AssetConverterRegistry.unregister(converter)` removes a converter from every extension it handled, and a converter it had replaced converts that extension again, so an editor can unload a plugin's converters without losing the ones it overrode.
+- **Run an app without Vulkan validation.** `-Pawake.vulkan.validation=false` keeps the Khronos validation layer off for a Gradle `run` task, which otherwise turns it on. The layer checks every Vulkan call, which costs a large scene about a tenth of its frame, so measure frame time with it off. Tests still validate.
+- **Static props cost almost nothing per frame.** A `static_transform` component (`StaticTransform`) marks a node that never moves. `TransformSystem` builds its world matrix once and then skips it without reading its values. On a region of about 8,000 placed props, comparing every prop each frame took about 16% of a Play frame. An editor that moves static nodes builds `TransformSystem(skipsStatic = false)`.
+- **KDoc public API completeness audit and Detekt enforcement.** Performed a comprehensive public API KDoc audit across all 77 repository modules, identifying documentation coverage tiers and gaps. Enabled Detekt's public documentation rules (`UndocumentedPublicClass`, `UndocumentedPublicFunction`, `UndocumentedPublicProperty`) scoped to verified modules, and completed 100% public KDocs for `:awake:core:color`, `:awake:core:image`, and `:awake:engine:bootstrap`.
+- **Complete KDoc documentation and Detekt enforcement for core foundation and utilities.** Documented 100% of public declarations across `:awake:core:logging`, `:awake:core:host`, `:awake:core:input`, and `:awake:core:math2d`. Expanded Detekt's scoped public KDoc rules (`UndocumentedPublicClass`, `UndocumentedPublicFunction`, `UndocumentedPublicProperty`) to enforce documentation completeness on all four modules.
+- **Complete KDoc documentation and Detekt enforcement for core foundation modules.** Documented 100% of public declarations across `:awake:core:state`, `:awake:scene:binding`, `:awake:core:config`, `:awake:core:di`, `:awake:scene:character`, and `:awake:scene:scene-core`. Expanded Detekt's scoped public KDoc rules (`UndocumentedPublicClass`, `UndocumentedPublicFunction`, `UndocumentedPublicProperty`) to strictly enforce completeness on these modules.
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for scene extensions and Compose integration modules (`:awake:compose:di`, `:awake:compose:state`, `:awake:scene:audio`, `:awake:scene:canvas`, `:awake:scene:blueprint`, `:awake:ui:material3`, `:awake:engine:compose`).
+
+### Changed
+
+- **A material is packed for the GPU once, not every frame.** `PbrMaterial.packedFloats()` keeps the uniform floats until a field changes, and the draw collector uses it. A region of about 8,000 props packed and allocated each masked prop's material every frame, about a tenth of a Play frame.
+- **Cheaper UI frames on Vulkan.** An unchanged UI run is not uploaded again: the retained staging cache hands back the same arrays, and Vulkan now skips writing them, as WebGPU already did. The shared 2D loop also stops rebinding a pipeline or setting a scissor rect that the previous run left in place. Binding a UI mesh no longer allocates.
+
+### Fixed
+
+- **A scene that unloads frees the meshes and materials it drew.** `SceneAssetLibrary` cached every asset by name and nothing released it, so after a scene switch the next scene got the previous one's mesh whenever a name repeated, for example two projects shipping different files at the same model path. `SceneManager` now runs an unload hook before destroying a scene's entities, and the session releases each renderer that `resolve` built through the new `SceneAssetLibrary.releaseRenderable`. A mesh or material that fails to build no longer keeps a hold.
+
 ## [0.1.0-beta.1] - 2026-10-01
 
 ### Changed

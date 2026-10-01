@@ -1,1 +1,0 @@
-- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for scene extensions and Compose integration modules (`:awake:compose:di`, `:awake:compose:state`, `:awake:scene:audio`, `:awake:scene:canvas`, `:awake:scene:blueprint`, `:awake:ui:material3`, `:awake:engine:compose`).

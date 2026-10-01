@@ -1,1 +1,0 @@
-- **A material is packed for the GPU once, not every frame.** `PbrMaterial.packedFloats()` keeps the uniform floats until a field changes, and the draw collector uses it. A region of about 8,000 props packed and allocated each masked prop's material every frame, about a tenth of a Play frame.
