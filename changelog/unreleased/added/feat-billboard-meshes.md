@@ -1,0 +1,1 @@
+- **Billboard meshes.** `mesh_renderer` takes `billboard: true` (`MeshRenderer.billboard`): the mesh keeps its entity's position and scale but turns to face the camera every frame, local +Z toward the eye. Glows, flares and other effects authored as flat quads stay facing the viewer. A billboard is not culled, because its bounds turn with the camera.

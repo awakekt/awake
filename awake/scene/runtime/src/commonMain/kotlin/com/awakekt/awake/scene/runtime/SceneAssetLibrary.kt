@@ -216,6 +216,7 @@ class SceneAssetLibrary(
             cullMode = request.meshRenderer.cullMode.toCullMode(),
             transparent = request.meshRenderer.transparent,
             additive = request.meshRenderer.additive,
+            billboard = request.meshRenderer.billboard,
         )
     }
 

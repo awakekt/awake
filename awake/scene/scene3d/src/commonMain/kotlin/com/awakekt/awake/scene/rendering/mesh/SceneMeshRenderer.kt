@@ -22,6 +22,8 @@ import kotlinx.serialization.json.JsonNames
  *   depth-tested but not depth-written, sorted back to front. See [MeshRenderer.transparent].
  * @property additive With [transparent], adds its colour to what is behind it: glows, fire,
  *   light shafts. See [MeshRenderer.additive].
+ * @property billboard Turns the mesh to face the camera every frame, keeping its position and
+ *   scale: a glow or flare authored as a flat quad. See [MeshRenderer.billboard].
  */
 @Serializable
 @SerialName("mesh_renderer")
@@ -33,6 +35,7 @@ data class SceneMeshRenderer(
     val cullMode: CullMode = CullMode.None,
     val transparent: Boolean = false,
     val additive: Boolean = false,
+    val billboard: Boolean = false,
 ) : SceneComponent {
     /** GPU face culling mode enumeration. */
     enum class CullMode {
