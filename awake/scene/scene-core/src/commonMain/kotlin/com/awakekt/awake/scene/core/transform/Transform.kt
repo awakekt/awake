@@ -18,6 +18,16 @@ data class Transform(
     var worldMatrix: Mat4 = Mat4(),
 ) : Poolable {
     /**
+     * How many times [TransformSystem] has rebuilt [worldMatrix]. Unchanged means the matrix is too,
+     * so a consumer can key a cache on it.
+     */
+    var worldVersion: Int = 0
+        internal set
+
+    /** Set by [reset], so a pooled transform is rebuilt even when its values match its last use. */
+    internal var rebuildRequested: Boolean = true
+
+    /**
      * Computes the local transform matrix into [target] with zero allocations.
      *
      * @param target The target [Mat4] matrix to write the computed local transformation into.
@@ -53,5 +63,6 @@ data class Transform(
         scale.z = 1f
         parent = null
         worldMatrix.identity()
+        rebuildRequested = true
     }
 }

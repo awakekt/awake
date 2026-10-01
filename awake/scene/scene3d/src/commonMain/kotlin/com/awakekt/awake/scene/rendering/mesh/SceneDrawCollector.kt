@@ -26,12 +26,16 @@ internal class SceneDrawCollector(
         elapsedTimeSeconds: Float,
     ): ArrayList<RenderDrawCommand> {
         val drawCalls = ArrayList<RenderDrawCommand>()
+        // Resolved once: looking a type up by class is a hash lookup, paid per entity otherwise.
+        val boundsType = world.typeId(MeshBounds::class)
+        val poseType = world.typeId(SkinnedPose::class)
+        val pbrType = world.typeId(PbrMaterial::class)
         world.family<Transform, MeshRenderer>().forEach { entity, transform, meshRenderer ->
             if (!meshRenderer.visible) return@forEach
             // Culling first, before this entity's uniforms are gathered: the PBR branch below
             // allocates, and paying that for something about to be discarded is the one ordering
             // this loop can get wrong for free.
-            val bounds = world.get<MeshBounds>(entity)
+            val bounds = world.get<MeshBounds>(entity, boundsType)
             if (bounds != null &&
                 !cullingCompiler.passesCulling(
                     entity.id,
@@ -46,8 +50,8 @@ internal class SceneDrawCollector(
             // .pipelinesByFormat) -- extraUniformFloats only matters for a format whose
             // shader reads it (a skinned mesh's joint palette); every other format ignores
             // an empty array the same way it always has.
-            val pose = world.get<SkinnedPose>(entity)
-            val pbr = world.get<PbrMaterial>(entity)
+            val pose = world.get<SkinnedPose>(entity, poseType)
+            val pbr = world.get<PbrMaterial>(entity, pbrType)
             val extras = when {
                 pose != null -> pose.jointPalette
                 // One shared layout serves both the primary and textured pipelines. Which
@@ -75,7 +79,7 @@ internal class SceneDrawCollector(
                     alphaCutoff = pbr?.alphaCutoff ?: 0.5f,
                     transparent = meshRenderer.transparent,
                     additive = meshRenderer.additive,
-                    worldBounds = bounds?.worldBounds(transform.worldMatrix),
+                    worldBounds = bounds?.worldBounds(transform),
                 ),
             )
         }
@@ -136,7 +140,7 @@ internal class SceneDrawCollector(
                             model = transform.worldMatrix,
                             extraUniformFloats = extras,
                             timeSeconds = elapsedTimeSeconds,
-                            worldBounds = bounds?.worldBounds(transform.worldMatrix),
+                            worldBounds = bounds?.worldBounds(transform),
                         ),
                     )
                 }
@@ -177,7 +181,7 @@ internal class SceneDrawCollector(
                     mesh = level.mesh,
                     material = level.material,
                     model = transform.worldMatrix,
-                    worldBounds = bounds?.worldBounds(transform.worldMatrix),
+                    worldBounds = bounds?.worldBounds(transform),
                 ),
             )
         }

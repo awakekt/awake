@@ -86,7 +86,7 @@ internal class SceneCullingCompiler(
         val inFrustum = if (culling.visible != null) {
             entityId in culling.visible
         } else {
-            culling.planes?.intersects(bounds.worldBounds(transform.worldMatrix)) != false
+            culling.planes?.intersects(bounds.worldBounds(transform)) != false
         }
         if (!inFrustum) {
             lastFrustumCulledCount++
@@ -95,7 +95,7 @@ internal class SceneCullingCompiler(
         val occluded = culling.occlusionViewProjection != null &&
             isOccluded(
                 culling.camera.lens,
-                bounds.worldBounds(transform.worldMatrix),
+                bounds.worldBounds(transform),
                 culling.occlusionViewProjection,
                 clipSpace,
             )

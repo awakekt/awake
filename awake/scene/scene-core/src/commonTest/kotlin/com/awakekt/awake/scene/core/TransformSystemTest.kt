@@ -109,4 +109,48 @@ class TransformSystemTest {
         assertEquals(1f, childTransform.worldMatrix.m03)
         assertEquals(2f, childTransform.worldMatrix.m13)
     }
+
+    /** A static prop keeps its matrix; moving a parent rebuilds its child; nothing moves, nothing rebuilds. */
+    @Test
+    fun onlyWhatMovedIsRebuilt() {
+        val world = World()
+        val system = TransformSystem()
+        val parentEntity = world.create()
+        val parent = Transform(position = Vec3f(1f, 0f, 0f))
+        world.add(parentEntity, parent)
+        val child = Transform(position = Vec3f(0f, 2f, 0f), parent = parentEntity)
+        world.add(world.create(), child)
+        val prop = Transform(position = Vec3f(5f, 0f, 0f))
+        world.add(world.create(), prop)
+        system.update(world, 0f)
+        val built = listOf(parent, child, prop).map { it.worldVersion }
+
+        system.update(world, 0f)
+        assertEquals(built, listOf(parent, child, prop).map { it.worldVersion }, "nothing moved, nothing is rebuilt")
+
+        parent.position.x = 3f
+        system.update(world, 0f)
+        assertEquals(built[0] + 1, parent.worldVersion)
+        assertEquals(built[1] + 1, child.worldVersion, "a moved parent rebuilds its child")
+        assertEquals(built[2], prop.worldVersion, "the static prop keeps its matrix")
+        assertEquals(3f, child.worldMatrix.data[12])
+        assertEquals(2f, child.worldMatrix.data[13])
+    }
+
+    /** A pooled transform reused with the same values as its last life is still rebuilt from identity. */
+    @Test
+    fun aResetTransformIsRebuiltEvenWithItsOldValues() {
+        val world = World()
+        val system = TransformSystem()
+        val transform = Transform(position = Vec3f(0f, 0f, 0f))
+        world.add(world.create(), transform)
+        system.update(world, 0f)
+        transform.worldMatrix.data[12] = 9f
+
+        transform.reset()
+        transform.worldMatrix.data[12] = 9f
+        system.update(world, 0f)
+
+        assertEquals(0f, transform.worldMatrix.data[12])
+    }
 }
