@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-beta.1] - 2026-10-01
+
+### Changed
+
+- **The 0.1.0 public API is frozen.** From this beta until `0.1.0`, a change to a published API deprecates the old form before removing it. Android multi-touch, display density and audio (#155, #156) and AI in the project player (#213) move to 0.2.0, since each changes a public API. Everything else in this milestone shipped in `0.1.0-alpha.18`.
+
 ## [0.1.0-alpha.18] - 2026-09-30
 
 ### Added
