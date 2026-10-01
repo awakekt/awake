@@ -25,8 +25,14 @@ import com.awakekt.awake.ecs.World
  * equals `frameStamp`, which one increment per [update] invalidates for every entity at once.
  * Reparenting by mutating `Transform.parent` directly is still seen, because the parent is part of
  * what is compared.
+ *
+ * An entity marked [StaticTransform] is built once and then skipped without reading its values, so
+ * it is not even compared. It is built again only for a different or reset [Transform].
+ *
+ * @param skipsStatic Whether [StaticTransform] entities are skipped once built. An editor that moves
+ * them passes false, and every entity is compared each frame.
  */
-class TransformSystem : System {
+class TransformSystem(private val skipsStatic: Boolean = true) : System {
     private var visitedStamp = IntArray(0)
     private var visitingStamp = IntArray(0)
     private var frameStamp = 0
@@ -42,10 +48,26 @@ class TransformSystem : System {
     override fun update(world: World, delta: Float) {
         frameStamp += 1
         val transformType = world.typeId(Transform::class)
-        world.queryEach<Transform> { entity, transform ->
-            propagate(world, transformType, entity, transform)
+        // The world keeps each family up to date and returns the same one each time; this one also
+        // holds its transforms, so walking it looks nothing up.
+        val statics = world.family<Transform, StaticTransform>()
+        if (!skipsStatic || statics.size == 0) {
+            world.queryEach<Transform> { entity, transform ->
+                propagate(world, transformType, entity, transform)
+            }
+            return
+        }
+        statics.forEach { entity, transform, _ ->
+            if (!isBuilt(entity.id, transform)) propagate(world, transformType, entity, transform)
+        }
+        world.family { all(Transform::class).exclude(StaticTransform::class) }.forEach { entity ->
+            world.get<Transform>(entity, transformType)?.let { propagate(world, transformType, entity, it) }
         }
     }
+
+    /** Whether [transform] is the one [id]'s matrix was last built from, and has not been reset since. */
+    private fun isBuilt(id: Int, transform: Transform): Boolean =
+        id < builtTransform.size && builtTransform[id] === transform && !transform.rebuildRequested
 
     private fun propagate(world: World, transformType: ComponentTypeId, entity: Entity, transform: Transform) {
         val id = entity.id

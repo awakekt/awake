@@ -13,6 +13,7 @@ import com.awakekt.awake.scene.binding.SceneComponentResolver
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinControlBinding
+import com.awakekt.awake.scene.core.transform.StaticTransformBinding
 import com.awakekt.awake.scene.rendering.AmbientLight
 import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 import com.awakekt.awake.scene.rendering.Fog
@@ -63,6 +64,7 @@ object DefaultSceneComponentResolvers {
         LightBinding,
         MaterialBinding,
         SpinControlBinding,
+        StaticTransformBinding,
         MeshRendererBinding,
         SkyboxBinding,
         FogBinding,
@@ -77,6 +79,7 @@ object DefaultSceneComponentResolvers {
         LightBinding,
         MaterialBinding,
         SpinControlBinding,
+        StaticTransformBinding,
         MeshRendererBinding,
         SkyboxBinding,
         FogBinding,

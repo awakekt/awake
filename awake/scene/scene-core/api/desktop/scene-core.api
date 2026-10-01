@@ -59,6 +59,16 @@ public final class com/awakekt/awake/scene/core/transform/SceneSpinControl$Compa
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 
+public final class com/awakekt/awake/scene/core/transform/SceneStaticTransform : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/core/transform/SceneStaticTransform;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public fun hashCode ()I
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
 public final class com/awakekt/awake/scene/core/transform/SpinControl : com/awakekt/awake/ecs/Poolable {
 	public fun <init> ()V
 	public final fun getRadians ()F
@@ -88,6 +98,28 @@ public final class com/awakekt/awake/scene/core/transform/SpinControlBinding : c
 public final class com/awakekt/awake/scene/core/transform/SpinSystem : com/awakekt/awake/ecs/System {
 	public fun <init> ()V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
+public final class com/awakekt/awake/scene/core/transform/StaticTransform : com/awakekt/awake/ecs/EcsTag {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/core/transform/StaticTransform;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/scene/core/transform/StaticTransformBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/core/transform/StaticTransformBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/core/transform/SceneStaticTransform;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/core/transform/StaticTransform;)Lcom/awakekt/awake/scene/core/transform/SceneStaticTransform;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/core/transform/SceneStaticTransform;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
 }
 
 public final class com/awakekt/awake/scene/core/transform/Transform : com/awakekt/awake/ecs/Poolable {
@@ -130,6 +162,8 @@ public final class com/awakekt/awake/scene/core/transform/TransformSystem : com/
 	public static final field DEFAULT_CAPACITY I
 	public static final field TRS_FLOATS I
 	public fun <init> ()V
+	public fun <init> (Z)V
+	public synthetic fun <init> (ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
