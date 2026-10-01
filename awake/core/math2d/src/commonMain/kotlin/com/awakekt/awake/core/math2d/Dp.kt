@@ -36,6 +36,9 @@ value class Dp(val value: Float) : Comparable<Dp> {
 
     override fun toString(): String = if (isSpecified) "${value}dp" else "Dp.Unspecified"
 
+    /**
+     * Sentinel values and factory constants for [Dp].
+     */
     companion object {
         /**
          * "No value", so an optional [Dp] parameter needs no boxing.
