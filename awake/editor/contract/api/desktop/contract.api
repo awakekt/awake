@@ -20,6 +20,7 @@ public final class com/awakekt/awake/editor/core/asset/AssetConverterRegistry {
 	public final fun getConverters ()Ljava/util/List;
 	public final fun register (Lcom/awakekt/awake/editor/core/asset/AssetConverter;)V
 	public final fun registerAll (Ljava/lang/Iterable;)V
+	public final fun unregister (Lcom/awakekt/awake/editor/core/asset/AssetConverter;)V
 }
 
 public final class com/awakekt/awake/editor/core/asset/GltfConversionResult {
