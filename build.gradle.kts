@@ -110,7 +110,7 @@ val renderUniformSources = files(
     exclude("**/src/test/**", "**/src/commonTest/**", "**/src/desktopTest/**", "**/build/**")
 }
 val verifyRenderUniforms = tasks.register("verifyRenderUniforms") {
-    group = "verification"
+    group = "awake verification"
     description = "Reject hand-authored render uniform offsets and array concatenation."
     inputs.files(renderUniformSources)
     doLast {
@@ -164,7 +164,7 @@ val renderContractSources = files("awake/engine/render/contract/src/commonMain")
     include("**/*.kt")
 }
 val verifyRenderContractBoundary = tasks.register("verifyRenderContractBoundary") {
-    group = "verification"
+    group = "awake verification"
     description = "Reject scene and render-pipeline implementation dependencies in the HAL contract."
     inputs.files(renderContractSources)
     doLast {
@@ -236,7 +236,7 @@ val clipSpaceSources = files(
     )
 }
 val verifyClipSpaceUsage = tasks.register("verifyClipSpaceUsage") {
-    group = "verification"
+    group = "awake verification"
     description = "Reject optional ClipSpace parameters in render and viewport math."
     inputs.files(clipSpaceSources)
     doLast {
@@ -267,7 +267,7 @@ val capabilityCommonSources = fileTree(rootDir) {
     exclude("**/build/**")
 }
 val verifyCapabilityBoundaries = tasks.register("verifyCapabilityBoundaries") {
-    group = "verification"
+    group = "awake verification"
     description = "Reject duplicated platform readers and platform leakage from Core common code."
     inputs.files(capabilityCommonSources)
     doLast {
@@ -524,7 +524,7 @@ gradle.projectsEvaluated {
 }
 
 tasks.register("developerDocs") {
-    group = "documentation"
+    group = "awake reports"
     description = "Build developer-facing API references and tutorial artifacts."
 
     // Dokka targets are derived, not listed. The hand-written list named eight projects that had

@@ -12,7 +12,7 @@ plugins {
 val shadersDir = layout.projectDirectory.dir("src/commonMain/shaders")
 
 val syncAwakeShaders = tasks.register<SyncWgslShaderPipelineTask>("syncAwakeShaders") {
-    group = "build setup"
+    group = "awake codegen"
     description = "Sync canonical WGSL shaders into each backend's resource tree."
     if (shadersDir.asFile.isDirectory) {
         sourceDirectory.set(shadersDir)
@@ -22,7 +22,7 @@ val syncAwakeShaders = tasks.register<SyncWgslShaderPipelineTask>("syncAwakeShad
 }
 
 val validateAwakeShaders = tasks.register<ValidateWgslShadersTask>("validateAwakeShaders") {
-    group = "verification"
+    group = "awake verification"
     description = "Validate canonical WGSL shaders with naga-cli."
     if (shadersDir.asFile.isDirectory) {
         sourceDirectory.set(shadersDir)
@@ -39,7 +39,7 @@ syncAwakeShaders.configure {
 }
 
 tasks.register("generateAwakeShaders") {
-    group = "build setup"
+    group = "awake codegen"
     description = "Generate synced backend shader artifacts from canonical WGSL."
     dependsOn(syncAwakeShaders)
 }

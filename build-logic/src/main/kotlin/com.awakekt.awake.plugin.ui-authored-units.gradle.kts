@@ -6,7 +6,7 @@
 import com.awakekt.awake.build.extension.*
 import com.awakekt.awake.build.tasks.*
 val verifyUiAuthoredUnits = tasks.register<VerifyUiAuthoredUnitsTask>("verifyUiAuthoredUnits") {
-    group = "verification"
+    group = "awake verification"
     description = "Reject numeric `.px` literals in authored shared/sample UI source."
     modulePath.set(project.path)
     sourceFiles.from(
@@ -23,7 +23,7 @@ tasks.named("check").configure {
 
 if (project.path == ":awake:ui:shadcn") {
     val verifyUiTestLifecycle = tasks.register<VerifyUiTestLifecycleTask>("verifyUiTestLifecycle") {
-        group = "verification"
+        group = "awake verification"
         description = "Reject manual UI frame setup in ordinary component test fixtures."
         modulePath.set(project.path)
         sourceFiles.from(

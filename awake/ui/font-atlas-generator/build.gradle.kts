@@ -27,7 +27,7 @@ dependencies {
 // Main.kt convention) -- register an explicit task so regeneration is reproducible from any cwd.
 // Run via `./gradlew :awake:ui:font-atlas-generator:generateFontAtlas` and commit the diff.
 tasks.register<JavaExec>("generateFontAtlas") {
-    group = "generation"
+    group = "awake codegen"
     description = "Regenerate RobotoRegularUiFontData.kt from the Roboto TTF's own outline " +
         "geometry -- run this and commit the diff after any font or atlas metric change."
     dependsOn("classes")

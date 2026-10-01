@@ -30,7 +30,7 @@ tasks.matching { it.name == "desktopTest" }.configureEach {
 }
 
 tasks.register<UiPreviewReportTask>("uiPreviewReport") {
-    group = "documentation"
+    group = "awake reports"
     description = "Generate an HTML gallery for this module's AwakeUiPreviewWriter-recorded previews."
     reportTitle.convention("${project.name} UI Previews")
     previewsDir.set(layout.buildDirectory.dir("ui-previews"))

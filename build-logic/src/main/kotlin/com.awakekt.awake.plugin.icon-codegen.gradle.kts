@@ -12,7 +12,7 @@ plugins {
 val generatedRoot = layout.buildDirectory.dir("generated/imagevector")
 
 val generateImageVectors = tasks.register<GenerateImageVectorsTask>("generateImageVectors") {
-    group = "build setup"
+    group = "awake codegen"
     description = "Generate ImageVector sources from the vendored SVGs."
     sourceDirectory.set(layout.projectDirectory.dir("src/commonMain/svg/heroicons"))
     outputDirectory.set(generatedRoot)

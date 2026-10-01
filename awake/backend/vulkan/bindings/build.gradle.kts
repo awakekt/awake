@@ -176,7 +176,7 @@ val desktopJar = tasks.named<Jar>("desktopJar")
 // to load it, and then it fails at run time with "not found for platform". The published jar
 // carried only the host's library for its whole life because nothing ever looked.
 tasks.register("verifyDesktopNatives") {
-    group = "verification"
+    group = "awake native"
     description = "Fail if the final desktop jar is missing a native library for a supported platform."
     dependsOn(desktopJar)
     doLast {
@@ -223,7 +223,7 @@ tasks.register("verifyDesktopNatives") {
 // GlfwManualVerify.kt's doc comment for the macOS main-thread reason). Run via
 // `./gradlew :awake:backend:vulkan:bindings:verifyGlfwMain` after buildDesktopNative.
 tasks.register<JavaExec>("verifyGlfwMain") {
-    group = "native"
+    group = "awake native"
     description = "Manually verify GLFW window + Vulkan surface creation on the real OS main " +
             "thread (see GlfwManualVerify.kt) -- run after buildDesktopNative."
     dependsOn("compileTestKotlinDesktop")

@@ -75,7 +75,7 @@ tasks.named<Test>("desktopTest") {
 // of its own description, and the third read a module path deleted with designsystem-compat.
 
 tasks.register("auditUiShadcnComponentNaming") {
-    group = "verification"
+    group = "awake verification"
     description =
         "Verifies design-system component files use Shadcn naming and matching family packages."
     val componentsRoot = layout.projectDirectory.dir(
@@ -119,7 +119,7 @@ tasks.register("auditUiShadcnComponentNaming") {
 }
 
 tasks.register("auditUiShadcnRecipeDuplicates") {
-    group = "verification"
+    group = "awake verification"
     description =
         "Rejects the same-receiver Shadcn recipe declared in more than one file."
     val componentsRoot = layout.projectDirectory.dir(
@@ -153,7 +153,7 @@ tasks.register("auditUiShadcnRecipeDuplicates") {
 }
 
 tasks.register("auditUiShadcnComponentCoverage") {
-    group = "verification"
+    group = "awake verification"
     description = "Verifies every public design-system recipe is backed by a behaviour layer."
     val componentsRoot = layout.projectDirectory.dir(
         "src/commonMain/kotlin/com/awakekt/awake/ui/shadcn/components",
