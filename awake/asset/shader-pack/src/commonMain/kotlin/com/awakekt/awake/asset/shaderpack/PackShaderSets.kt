@@ -29,6 +29,7 @@ object PackShaderSets {
     val InstancedTexturedShadowDepth = aslShaderSet(InstancedTexturedShadowDepthShader)
     val SkinnedInstancedShadowDepth = aslShaderSet(SkinnedInstancedShadowDepthShader)
     val SkinnedShadowDepth = aslShaderSet(SkinnedShadowDepthShader)
+    val SkinnedTexturedShadowDepth = aslShaderSet(SkinnedTexturedShadowDepthShader)
     val ParticleShadowDepth = aslShaderSet(ParticleShadowDepthShader)
     val SceneDepth = aslShaderSet(SceneDepthShader)
     val MaskedTexturedShadowDepth = aslShaderSet(MaskedTexturedDepthShader)

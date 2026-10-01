@@ -92,6 +92,7 @@ fun RenderDrawCommand.uniformFloats(
         DrawUniformPlan.Skinned -> UniformWriter(SkinnedUniformLayout)
             .put(mvp.data, UniformFields.Mvp)
             .putPadded(SkinnedFields.JointPalette, extraUniformFloats)
+            .put(model.data, UniformFields.Model)
             .build()
 
         DrawUniformPlan.TexturedPbr -> texturedUniforms(

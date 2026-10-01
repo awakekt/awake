@@ -19,6 +19,7 @@ import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -250,6 +251,26 @@ class SceneBackendParityTest {
             )
             val drift = maxOf(kotlin.math.abs(untextured.first - textured.first), kotlin.math.abs(untextured.second - textured.second))
             assertTrue(drift <= CENTROID_TOLERANCE, "$backend: textured caster's shadow at $textured, untextured at $untextured")
+        }
+    }
+
+    /**
+     * A textured skinned caster throws its shadow where a static one does, posed by its own joint
+     * palette and placed by its model matrix. A zero joint collapses it, and it casts nothing.
+     */
+    @Test
+    fun aTexturedSkinnedCasterCastsItsShadow() {
+        val identity = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val static = assertNotNull(renderer.renderShadowScene(texturedCaster = true).shadowCentroid(), "$backend static caster")
+            val skinned = assertNotNull(
+                renderer.renderSkinnedShadowScene(identity).also { write(backend, it, "skinned-caster-scene") }.shadowCentroid(),
+                "$backend skinned caster casts no shadow",
+            )
+            val drift = maxOf(kotlin.math.abs(static.first - skinned.first), kotlin.math.abs(static.second - skinned.second))
+            assertTrue(drift <= CENTROID_TOLERANCE, "$backend: skinned caster's shadow at $skinned, static at $static")
+            assertNull(renderer.renderSkinnedShadowScene(FloatArray(identity.size)).shadowCentroid(), "$backend: a zero joint casts nothing")
         }
     }
 

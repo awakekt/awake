@@ -26,8 +26,7 @@ fun RenderDrawCommand.instancedDrawKind(): InstancedDrawKind? =
 /** Shared source-packet identity used to select the matching depth caster on both backends. */
 fun RenderDrawCommand.depthRenderKey(): DepthRenderKey = DepthRenderKey(
     kind = when {
-        instanceModels.isNullOrEmpty() && mesh.format == VertexFormat.PositionNormalColorSkin ->
-            DepthCasterKind.Skinned
+        instanceModels.isNullOrEmpty() && mesh.format.isSkinned -> DepthCasterKind.Skinned
         !instanceModels.isNullOrEmpty() && instanceJointPalettes != null ->
             DepthCasterKind.SkinnedInstanced
         !instanceModels.isNullOrEmpty() && mesh.format == VertexFormat.PositionUv ->

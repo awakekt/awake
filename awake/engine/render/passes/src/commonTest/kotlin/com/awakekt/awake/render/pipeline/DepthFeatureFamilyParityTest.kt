@@ -74,6 +74,12 @@ class DepthFeatureFamilyParityTest {
         assertEquals(AlphaMode.Opaque, key.alphaMode)
     }
 
+    /** A textured skinned part is skinned too: its UVs shift the joints, they do not remove them. */
+    @Test
+    fun texturedSkinnedCasterClassification() {
+        assertEquals(DepthCasterKind.Skinned, draw(VertexFormat.PositionNormalColorUvSkin).depthRenderKey().kind)
+    }
+
     @Test
     fun skinnedInstancedCasterClassification() {
         val skinnedInstanced = draw(

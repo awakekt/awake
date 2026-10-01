@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.parity
 
+import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
@@ -51,15 +52,45 @@ fun Renderer.renderTexturedSkinnedScene(palette: FloatArray, texture: TextureAss
 }
 
 /**
+ * [renderShadowScene] with a textured skinned caster posed by [palette]: the identity casts the
+ * same shadow as the static caster, a zero matrix collapses it and casts none.
+ */
+fun Renderer.renderSkinnedShadowScene(palette: FloatArray): ByteArray {
+    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+    val ground = createMesh(plane(GROUND_HALF, y = 0f))
+    val caster = createMesh(skinnedTexturedPlane(CASTER_HALF, y = CASTER_Y))
+    val groundMaterial = createMaterial(LitShadowUniformLayout)
+    val casterMaterial = createMaterial(SkinnedUniformLayout, texture = SolidOrange)
+    return try {
+        renderToTexture(
+            target,
+            compileShadowScene(
+                listOf(
+                    RenderDrawCommand(ground, groundMaterial),
+                    RenderDrawCommand(caster, casterMaterial, extraUniformFloats = palette),
+                ),
+            ),
+        )
+        runBlocking { readPixels(target) }.data
+    } finally {
+        ground.destroy()
+        caster.destroy()
+        groundMaterial.destroy()
+        casterMaterial.destroy()
+        target.destroy()
+    }
+}
+
+/**
  * [texturedPlane] with every vertex bound wholly to joint 0. A joint index is read back as a raw
  * `uint32`, and joint 0's bit pattern is the float 0.
  */
-internal fun skinnedTexturedPlane(half: Float = GROUND_HALF) = MeshGeometry(
+internal fun skinnedTexturedPlane(half: Float = GROUND_HALF, y: Float = 0f) = MeshGeometry(
     floatArrayOf(
-        -half, 0f, -half, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 0f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f,
-        half, 0f, -half, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 0f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f,
-        half, 0f, half, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f,
-        -half, 0f, half, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f,
+        -half, y, -half, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 0f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f,
+        half, y, -half, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 0f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f,
+        half, y, half, 0f, 1f, 0f, 1f, 1f, 1f, 1f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f,
+        -half, y, half, 0f, 1f, 0f, 1f, 1f, 1f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f,
     ),
     intArrayOf(0, 1, 2, 2, 3, 0),
     VertexFormat.PositionNormalColorUvSkin,

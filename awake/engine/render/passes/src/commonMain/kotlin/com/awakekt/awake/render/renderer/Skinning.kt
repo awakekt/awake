@@ -15,8 +15,9 @@ package com.awakekt.awake.render.renderer
  */
 const val MAX_JOINTS = 64
 
-/** `skinned.wgsl`'s uniform block -- MVP plus the joint palette, the canonical declaration
- * its ASL definition derives the WGSL struct from. The palette rides in the uniform block
+/** `skinned.wgsl`'s uniform block -- MVP, the joint palette and the model matrix, the canonical
+ * declaration its ASL definition derives the WGSL struct from. The model matrix is for the shadow
+ * pass, which places the posed mesh in the world and then projects it from the light. The palette rides in the uniform block
  * (not a storage buffer) because one skin is drawn per call on this path; the instanced
  * variant moves it to a per-instance storage buffer instead. */
 object SkinnedFields {
@@ -27,4 +28,4 @@ object SkinnedFields {
     )
 }
 
-val SkinnedUniformLayout = UniformLayout(UniformFields.Mvp, SkinnedFields.JointPalette)
+val SkinnedUniformLayout = UniformLayout(UniformFields.Mvp, SkinnedFields.JointPalette, UniformFields.Model)

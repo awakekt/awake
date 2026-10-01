@@ -155,6 +155,19 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 cascadeCount = depthTarget.layers,
                 framesInFlight = FRAMES_IN_FLIGHT,
             ),
+            // As VulkanEngine builds a skinned pipeline that names its depth shader.
+            VertexFormat.PositionNormalColorUvSkin to DepthOnlyPipeline(
+                graphicsDevice,
+                depthTarget.renderPass,
+                descriptorSetLayout,
+                runBlocking { spirvPair(PackShaderSets.SkinnedTexturedShadowDepth) },
+                VertexFormat.PositionNormalColorUvSkin,
+                depthTarget.size,
+                vertexEntryPoint = "vertexMain",
+                fragmentEntryPoint = "fragmentMain",
+                cascadeCount = depthTarget.layers,
+                framesInFlight = FRAMES_IN_FLIGHT,
+            ),
         ),
         keyedVariantPipelines = mapOf(
             DepthRenderKey(DepthCasterKind.Ordinary, AlphaMode.Masked) to DepthOnlyPipeline(

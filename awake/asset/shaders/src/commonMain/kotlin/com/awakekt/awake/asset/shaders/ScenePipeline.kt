@@ -6,7 +6,6 @@
 package com.awakekt.awake.asset.shaders
 
 import com.awakekt.awake.core.geometry.VertexFormat
-import com.awakekt.awake.core.geometry.VertexSemantic
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineKey
@@ -41,8 +40,8 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
  * `MeshRenderer.cullMode`.
  * @property buildTransparent Also build the alpha-blended companion, opted into per draw via
  * `RenderDrawCommand.transparent`.
- * @property depthShaders How an instanced pipeline's draws cast into the shadow map. Null leaves
- * them to the plan's `depthPrePassVariants`, which cover only the primary format.
+ * @property depthShaders How an instanced or skinned pipeline's draws cast into the shadow map.
+ * Null leaves them to the plan's `depthPrePassVariants`, which cover only the primary format.
  * @property buildAdditive Also build the additive companion, for transparent draws that set
  * `RenderDrawCommand.additive`.
  */
@@ -67,8 +66,14 @@ data class ScenePipeline(
  * shader reads no joint palette, so a skinned mesh casts through its own depth variant or not at all.
  */
 fun ScenePipeline.castsWithPrimaryDepthShader(primaryFormat: VertexFormat): Boolean =
-    variant == PipelineVariant.Opaque && vertexFormat != primaryFormat &&
-        vertexFormat.floatOffsetOf(VertexSemantic.JointIndices) < 0
+    variant == PipelineVariant.Opaque && vertexFormat != primaryFormat && !vertexFormat.isSkinned
+
+/**
+ * The depth shader this pipeline's skinned meshes cast through, or null when it draws no skinned
+ * meshes or names none. A skinned caster needs its own shader, one that reads its joint palette.
+ */
+fun ScenePipeline.skinnedDepthShaders(): ShaderSet? =
+    depthShaders?.takeIf { variant == PipelineVariant.Opaque && vertexFormat.isSkinned }
 
 /**
  * These declarations as build requests, reading each one's [stages] half.
