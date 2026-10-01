@@ -195,7 +195,13 @@ jobs:
           scripts/render-evidence-comment.sh "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$prefix" "$HEAD_SHA" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
           existing="$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
             --jq '[.[] | select(.body | startswith("<!-- render-evidence -->")) | .id] | first // empty')"
-          if [[ -n "$existing" ]]; then
+          if [[ ! -s "$RUNNER_TEMP/comment.md" ]]; then
+            # No render changed. Drop an earlier comment that a later push made stale.
+            echo "::notice::No render changed; no evidence comment."
+            if [[ -n "$existing" ]]; then
+              gh api --method DELETE "repos/${{ github.repository }}/issues/comments/$existing"
+            fi
+          elif [[ -n "$existing" ]]; then
             gh api --method PATCH "repos/${{ github.repository }}/issues/comments/$existing" -F body=@"$RUNNER_TEMP/comment.md" >/dev/null
           else
             gh pr comment "$PR" --body-file "$RUNNER_TEMP/comment.md"

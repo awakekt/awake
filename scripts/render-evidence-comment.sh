@@ -7,6 +7,8 @@
 #
 # Usage: scripts/render-evidence-comment.sh <before-dir> <after-dir> <image-url-prefix> <head-sha> [icons|all]
 #
+# With `all`, prints nothing when every image is byte-identical to the base.
+#
 # Both captures come from the same PNG encoder, so identical pixels give identical bytes and a byte
 # comparison is a pixel comparison. <image-url-prefix> is where before/ and after/ were published.
 set -euo pipefail
@@ -58,7 +60,9 @@ fi
 
 [[ "$focus" == all ]] || { echo "Unknown evidence focus: $focus" >&2; exit 1; }
 
-names="$( (ls "$before" "$after" 2>/dev/null || true) | grep '\.png$' | sed 's/\.png$//' | sort -u)"
+# The Chromium sheet is a reference captured on the head only, so it has no before to compare.
+names="$( (ls "$before" "$after" 2>/dev/null || true) | grep '\.png$' | sed 's/\.png$//' \
+  | grep -vx 'ui-original-svg-browser' | sort -u)"
 changed=() unchanged=()
 for name in $names; do
   if [[ -f "$before/$name.png" && -f "$after/$name.png" ]] && cmp -s "$before/$name.png" "$after/$name.png"; then
@@ -68,11 +72,13 @@ for name in $names; do
   fi
 done
 total=$(( ${#changed[@]} + ${#unchanged[@]} ))
+# Nothing moved: print nothing, so the workflow posts no comment.
+(( ${#changed[@]} )) || exit 0
 
 echo "<!-- render-evidence -->"
 echo "## Render evidence"
 echo
-echo "Headless Vulkan (lavapipe) render scenarios, shadcn/Lucide CPU icon previews, and a Chromium render of the pinned original SVGs at \`${sha:0:9}\`. **${#changed[@]} of $total changed.**"
+echo "Headless Vulkan (lavapipe) render scenarios and shadcn/Lucide CPU icon previews at \`${sha:0:9}\`. **${#changed[@]} of $total changed.**"
 echo "The \`ui-*-cpu\` images are CPU raster previews, not GPU pixel-fidelity results."
 if ! ls "$before"/*.png >/dev/null 2>&1; then
   echo
