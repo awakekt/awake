@@ -1,1 +1,0 @@
-- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for asset tooling and project modules (`:awake:asset:mesh-optimizer`, `:awake:asset:shader-compiler`, `:awake:project`).

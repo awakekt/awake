@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.2] - 2026-10-02
+
+### Added
+
+- **Billboard meshes.** `mesh_renderer` takes `billboard: true` (`MeshRenderer.billboard`): the mesh keeps its entity's position and scale but turns to face the camera every frame, local +Z toward the eye. Glows, flares and other effects authored as flat quads stay facing the viewer. A billboard is not culled, because its bounds turn with the camera.
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for animation and audio core modules (`:awake:core:animation`, `:awake:core:audio`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for asset tooling and project modules (`:awake:asset:mesh-optimizer`, `:awake:asset:shader-compiler`, `:awake:project`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for physics subsystem modules (`:awake:physics:api`, `:awake:scene:physics`, `:awake:physics:ragdoll`).
+
+### Fixed
+
+- **Skinned meshes cast shadows.** A textured skinned mesh was never classified as skinned, so no shadow pipeline matched it and the shadow pass skipped it. Untextured ones cast only where the plan declared a skinned depth variant, and that shader projected the camera's matrix into the shadow map. A skinned scene pipeline now names its caster with `depthShaders` (`PackShaderSets.SkinnedTexturedShadowDepth` or `SkinnedShadowDepth`). Any format with joints casts as skinned, and the skinned uniform block carries the model matrix the shadow shader places the posed mesh with. `VertexFormat.isSkinned` reports whether a format has joints.
+
 ## [0.1.0-rc.1] - 2026-10-01
 
 ### Added
