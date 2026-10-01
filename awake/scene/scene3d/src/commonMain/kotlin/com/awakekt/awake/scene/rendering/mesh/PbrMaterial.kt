@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
+import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 
@@ -33,4 +34,21 @@ data class PbrMaterial(
     var alphaCutoff: Float = 0.5f,
     /** How the texture moves; read by the textured shader only. */
     var textureAnimation: TextureAnimation = TextureAnimation.None,
-)
+) {
+    private var packed: FloatArray? = null
+    private var packedFrom: PbrMaterial? = null
+
+    /**
+     * This material's uniform floats, packed again only after a field changed. A scene of
+     * thousands of materials would otherwise pack and allocate each one every frame. The array is
+     * shared between frames, so a caller must not write to it.
+     */
+    fun packedFloats(): FloatArray {
+        val cached = packed
+        if (cached != null && packedFrom == this) return cached
+        return pbrMaterialFloats(metallic, roughness, baseColorFactor, emissiveFactor, textureAnimation).also {
+            packed = it
+            packedFrom = copy()
+        }
+    }
+}

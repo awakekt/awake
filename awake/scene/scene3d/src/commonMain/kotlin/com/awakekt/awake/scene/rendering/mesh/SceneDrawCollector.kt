@@ -8,7 +8,6 @@ package com.awakekt.awake.scene.rendering.mesh
 import com.awakekt.awake.core.math.Vec3
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.RenderDrawCommand
-import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.ModularCharacterComponent
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
@@ -56,13 +55,7 @@ internal class SceneDrawCollector(
                 pose != null -> pose.jointPalette
                 // One shared layout serves both the primary and textured pipelines. Which
                 // pipeline reads it is a backend concern, not this system's.
-                pbr != null -> pbrMaterialFloats(
-                    metallic = pbr.metallic,
-                    roughness = pbr.roughness,
-                    baseColorFactor = pbr.baseColorFactor,
-                    emissiveFactor = pbr.emissiveFactor,
-                    textureAnimation = pbr.textureAnimation,
-                )
+                pbr != null -> pbr.packedFloats()
 
                 else -> EMPTY_DRAW_EXTRAS
             }
