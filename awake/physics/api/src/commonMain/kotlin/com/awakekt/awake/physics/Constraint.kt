@@ -11,10 +11,12 @@ import kotlin.math.PI
 import kotlin.math.abs
 
 /**
- * A live constraint, returned by [PhysicsWorld.createConstraint].
+ * Opaque handle identifying an active constraint in a [PhysicsWorld].
  *
  * Dies with either body it joins: [PhysicsWorld.destroyBody] takes its constraints with it, so a
  * handle held past that point refers to nothing and must not be used.
+ *
+ * @property id Underlying 64-bit unique identifier for the constraint.
  */
 @JvmInline
 value class ConstraintHandle(val id: Long)
@@ -33,7 +35,10 @@ value class ConstraintHandle(val id: Long)
  * pose.
  */
 sealed interface Constraint {
+    /** The first connected rigid body handle. */
     val bodyA: BodyHandle
+
+    /** The second connected rigid body handle. */
     val bodyB: BodyHandle
 }
 
@@ -51,6 +56,7 @@ data class HingeConstraint(
     val point: Vec3f,
     /** The world-space axis they turn around; a door's is vertical. */
     val axis: Vec3f,
+    /** Angular rotation limits in radians around [axis], or `null` for unlimited 360-degree rotation. */
     val limits: ClosedFloatingPointRange<Float>? = null,
 ) : Constraint {
     init {
@@ -76,7 +82,9 @@ data class DistanceConstraint(
     val pointA: Vec3f,
     /** The world-space attachment point on [bodyB]. */
     val pointB: Vec3f,
+    /** Minimum permitted distance between [pointA] and [pointB] in meters. */
     val minDistance: Float = 0f,
+    /** Maximum permitted distance between [pointA] and [pointB] in meters. */
     val maxDistance: Float,
 ) : Constraint {
     init {
@@ -140,6 +148,8 @@ data class BallSocketConstraint(
      * Derived here rather than in each backend because the choice is not arbitrary: it is where a
      * twist of zero points, so two backends picking differently would measure [twistLimit] from two
      * different places and the same joint would behave differently per platform.
+     *
+     * @return Perpendicular unit reference vector.
      */
     fun swingReferenceAxis(): Vec3f {
         val axis = twistAxis.normalized()
@@ -155,6 +165,9 @@ data class BallSocketConstraint(
         return axis.cross(fallback).normalized()
     }
 
+    /**
+     * Presets and default constants for ball-and-socket constraints.
+     */
     companion object {
         /** A swing of half a turn in every direction, which is no limit at all. */
         const val FREE_SWING: Float = PI.toFloat()

@@ -36,6 +36,9 @@ data class Buoyancy(
         }
     }
 
+    /**
+     * Common fluid buoyancy presets.
+     */
     companion object {
         /** Floats and settles: the one to start from. */
         val Water = Buoyancy()

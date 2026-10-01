@@ -17,7 +17,13 @@ import com.awakekt.awake.physics.MotionType
 import com.awakekt.awake.physics.PhysicsShape
 import com.awakekt.awake.physics.PhysicsWorld
 
-/** One limb: a shape and where it starts. */
+/**
+ * One limb rigid body specification: a collision shape and initial world-space placement.
+ *
+ * @property shape The collision geometry representing this limb.
+ * @property position Initial world-space position of the limb center.
+ * @property rotation Initial world-space orientation of the limb as a quaternion.
+ */
 data class RagdollLimb(
     val shape: PhysicsShape,
     val position: Vec3f,
@@ -31,25 +37,22 @@ data class RagdollLimb(
  * engine starts with. An axis makes it a hinge, which is what a knee or an elbow actually is: they
  * bend one way, and a ball joint at a knee gives the backwards-folding leg that reads as broken
  * rather than as limp.
+ *
+ * @property parent Index into the limb list.
+ * @property child Index into the limb list.
+ * @property anchor Where the two limbs are pinned, in world space at build time.
+ * @property hingeAxis World-space axis of rotation for hinge joints, or `null` for a ball-and-socket joint.
+ * @property limits Radians about [hingeAxis]; ignored by a ball joint.
+ * @property swingLimit How far a ball joint bends away from the limb it holds, in radians; ignored by a hinge.
+ * @property twistLimit How far a ball joint rotates about the limb it holds, in radians; `null` twists freely.
  */
 data class RagdollJoint(
-    /** Index into the limb list. */
     val parent: Int,
-    /** Index into the limb list. */
     val child: Int,
-    /** Where the two limbs are pinned, in world space at build time. */
     val anchor: Vec3f,
     val hingeAxis: Vec3f? = null,
-    /** Radians about [hingeAxis]; ignored by a ball joint. */
     val limits: ClosedFloatingPointRange<Float>? = null,
-    /**
-     * How far a ball joint bends away from the limb it holds, in radians; ignored by a hinge.
-     *
-     * This is what stops a shoulder folding flat against the back. The default is no limit at all,
-     * which is the cheap ragdoll -- limp, and able to reach poses a body cannot.
-     */
     val swingLimit: Float = BallSocketConstraint.FREE_SWING,
-    /** How far a ball joint rotates about the limb it holds, in radians; `null` twists freely. */
     val twistLimit: ClosedFloatingPointRange<Float>? = null,
 )
 
@@ -68,6 +71,11 @@ data class RagdollJoint(
  *
  * **Whoever builds one owns [dispose].** Nothing else destroys the bodies, and a ragdoll dropped
  * without it leaves a pile of limbs simulating where the character died.
+ *
+ * @param world Physics world simulating this ragdoll.
+ * @param limbs Limb definitions describing physical bodies.
+ * @param joints Joint constraints linking limbs.
+ * @param layer Collision layer assigned to ragdoll bodies.
  */
 class Ragdoll(
     private val world: PhysicsWorld,
@@ -122,6 +130,8 @@ class Ragdoll(
      *
      * Every limb, every call, including ones that have settled -- a settled limb reports the pose
      * it came to rest in.
+     *
+     * @param action Callback invoked with each limb's index, current position scratch, and rotation scratch.
      */
     fun forEachLimb(action: (index: Int, position: Vec3f, rotation: Quat) -> Unit) {
         world.forEachBodyTransform { handle, position, rotation ->

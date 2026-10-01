@@ -30,15 +30,18 @@ import kotlin.math.sqrt
  * express it. That shape is absent from JoltC, and its natural substitute -- a compound shape with
  * one child -- Jolt rejects outright ("Compound needs at least 2 sub shapes"). A quaternion per
  * limb costs nothing and needs no backend to grow.
+ *
+ * @property limbs The physics limb collision definitions comprising the rig.
+ * @property joints The joint constraints connecting limbs in the rig hierarchy.
+ * @property boneForLimb Which bone each limb drives, for [RagdollSkeleton].
+ * @property boneOffsetPosition Where the bone sits in its limb's frame, per limb.
+ * @property boneOffsetRotation How the bone is turned in its limb's frame, per limb.
  */
 class RagdollRig(
     val limbs: List<RagdollLimb>,
     val joints: List<RagdollJoint>,
-    /** Which bone each limb drives, for [RagdollSkeleton]. */
     val boneForLimb: IntArray,
-    /** Where the bone sits in its limb's frame, per limb. */
     val boneOffsetPosition: List<Vec3f>,
-    /** How the bone is turned in its limb's frame, per limb. */
     val boneOffsetRotation: List<Quat>,
 )
 
@@ -56,11 +59,19 @@ class RagdollRig(
  * Everything is produced in the skeleton's own space. A caller placing the character somewhere adds
  * its transform when creating the [Ragdoll] and passes the same one to [RagdollSkeleton.apply];
  * measuring the offsets here in model space is what keeps those two independent.
+ *
+ * @param skeleton The character skeleton defining bind pose transforms.
+ * @param bones The indices of bones to equip with physics limbs, in creation order.
+ * @param radius Radius of the limb capsule colliders.
+ * @param tipLength Default length used for terminal bones with no driven children.
+ * @param swingLimit Swing cone half-angle limit for joints in radians.
+ * @param twistLimit Angular twist limit range for joints in radians.
+ * @param origin World-space placement origin for the constructed rig.
+ * @return The constructed [RagdollRig] tailored to the skeleton.
  */
 @Suppress("LongParameterList")
 fun ragdollFromSkeleton(
     skeleton: Skeleton,
-    /** The bones to give a limb to, in the order the limbs will be created. */
     bones: IntArray,
     radius: Float = DEFAULT_LIMB_RADIUS,
     tipLength: Float = DEFAULT_TIP_LENGTH,

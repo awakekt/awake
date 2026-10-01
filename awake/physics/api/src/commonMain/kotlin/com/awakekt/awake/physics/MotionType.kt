@@ -5,8 +5,19 @@
  */
 package com.awakekt.awake.physics
 
-/** Mirrors Jolt Physics' `EMotionType` (STATIC never moves, KINEMATIC is driven by
- * explicit position/velocity sets rather than forces, DYNAMIC is simulated) -- kept as its
- * own backend-neutral enum rather than re-exporting a jolt-jni type, since this module has
- * zero jolt-jni (or any native binding) dependency at all. */
-enum class MotionType { STATIC, KINEMATIC, DYNAMIC }
+/**
+ * Motion type for rigid bodies defining simulation behavior.
+ *
+ * Mirrors Jolt Physics' `EMotionType` -- kept as its own backend-neutral enum rather than
+ * re-exporting a native type, since this module has zero native binding dependencies.
+ */
+enum class MotionType {
+    /** Static body that never moves and has infinite mass (e.g. terrain, static structures). */
+    STATIC,
+
+    /** Kinematic body driven by explicit velocity or position updates rather than forces (e.g. elevators, moving platforms). */
+    KINEMATIC,
+
+    /** Fully simulated dynamic rigid body affected by forces, impulses, gravity, and collisions. */
+    DYNAMIC,
+}

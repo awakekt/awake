@@ -19,6 +19,11 @@ import com.awakekt.awake.core.math.Vec3f
  * vector. A fraction rather than a distance because that is what a caller advancing a character
  * actually multiplies by, and it stays meaningful for a zero-length sweep where a distance
  * would not.
+ *
+ * @property handle The body that was struck by the swept shape.
+ * @property point World-space position where contact occurred.
+ * @property normal Surface normal pointing away from the struck body at [point].
+ * @property fraction Normalized distance along the sweep vector in range `[0, 1]`.
  */
 data class ShapeCastHit(
     val handle: BodyHandle,

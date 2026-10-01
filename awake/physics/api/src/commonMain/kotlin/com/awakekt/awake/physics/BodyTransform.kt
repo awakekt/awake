@@ -16,5 +16,9 @@ import com.awakekt.awake.core.math.Vec3f
  * four backends and gave a tumbling body gimbal lock in a value nothing had asked to be
  * Euler. `Transform` still stores Euler and still converts -- but once, at the ECS boundary,
  * where the engine's convention genuinely changes.
+ *
+ * @property handle The body handle associated with this pose.
+ * @property position World-space location of the body's center.
+ * @property rotation Orientation of the body as a unit quaternion.
  */
 data class BodyTransform(val handle: BodyHandle, val position: Vec3f, val rotation: Quat)
