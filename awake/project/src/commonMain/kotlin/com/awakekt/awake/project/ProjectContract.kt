@@ -9,7 +9,16 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-/** A plugin declared by an Awake project manifest. */
+/**
+ * A plugin declared by an Awake project manifest.
+ *
+ * @property id Unique reverse-domain identifier of the plugin.
+ * @property path Relative file path to the plugin bundle or archive.
+ * @property version Semantic version string of the plugin.
+ * @property sha256 Expected SHA-256 checksum of the plugin archive.
+ * @property entrypointClass Fully qualified class name of the plugin entrypoint.
+ * @property required Whether engine initialization requires this plugin to be present.
+ */
 @Serializable
 data class AwakeProjectPluginReference(
     val id: String,
@@ -20,7 +29,20 @@ data class AwakeProjectPluginReference(
     val required: Boolean = false,
 )
 
-/** The canonical project manifest shared by tools and runtimes. */
+/**
+ * The canonical project manifest shared by tools and runtimes.
+ *
+ * @property schema Optional JSON schema URI.
+ * @property formatVersion Format specification version (must be 1).
+ * @property id Reverse-domain identifier of the project.
+ * @property name Human-readable display name of the project.
+ * @property version Semantic version string of the project.
+ * @property minEngineVersion Minimum engine version required to open this project; omitted means no declared minimum.
+ * @property entryScene Project-relative path to the initial scene document.
+ * @property author Author or organization name.
+ * @property assetRoots Project-relative directory paths scanned for project assets.
+ * @property plugins List of declared plugin references.
+ */
 @Serializable
 data class AwakeProjectManifest(
     @SerialName("\$schema")
@@ -29,7 +51,6 @@ data class AwakeProjectManifest(
     val id: String,
     val name: String,
     val version: String,
-    /** Minimum engine version required to open this project; omitted means no declared minimum. */
     val minEngineVersion: String? = null,
     val entryScene: String,
     val author: String = "",
@@ -37,14 +58,25 @@ data class AwakeProjectManifest(
     val plugins: List<AwakeProjectPluginReference> = emptyList(),
 )
 
-/** A content pin in the canonical asset lock file. */
+/**
+ * A content pin in the canonical asset lock file.
+ *
+ * @property sha256 Hex-encoded SHA-256 digest of the asset content.
+ * @property sizeBytes Size of the asset in bytes, or `null` if unmeasured.
+ */
 @Serializable
 data class AwakeAssetLockEntry(
     val sha256: String,
     val sizeBytes: Long? = null,
 )
 
-/** The canonical asset lock file shared by tools and runtimes. */
+/**
+ * The canonical asset lock file shared by tools and runtimes.
+ *
+ * @property schema Optional JSON schema URI.
+ * @property formatVersion Format specification version (must be 1).
+ * @property assets Map of project-relative asset paths to their pinned hash and size records.
+ */
 @Serializable
 data class AwakeAssetsLock(
     @SerialName("\$schema")
@@ -65,18 +97,23 @@ object AwakeProjectValidator {
         ignoreUnknownKeys = false
     }
 
+    /** Encodes [manifest] into a JSON string. */
     fun encodeManifest(manifest: AwakeProjectManifest): String =
         json.encodeToString(AwakeProjectManifest.serializer(), manifest)
 
+    /** Decodes [value] JSON string into an [AwakeProjectManifest]. */
     fun decodeManifest(value: String): AwakeProjectManifest =
         json.decodeFromString(AwakeProjectManifest.serializer(), value)
 
+    /** Encodes [lock] into a JSON string. */
     fun encodeAssetsLock(lock: AwakeAssetsLock): String =
         json.encodeToString(AwakeAssetsLock.serializer(), lock)
 
+    /** Decodes [value] JSON string into an [AwakeAssetsLock]. */
     fun decodeAssetsLock(value: String): AwakeAssetsLock =
         json.decodeFromString(AwakeAssetsLock.serializer(), value)
 
+    /** Checks whether [manifest] is compatible with [currentEngineVersion]. */
     fun isCompatible(manifest: AwakeProjectManifest, currentEngineVersion: String): Boolean =
         manifest.minEngineVersion?.let { parseSemVer(currentEngineVersion) >= parseSemVer(it) } ?: true
 
@@ -137,12 +174,15 @@ object AwakeProjectValidator {
         }
     }
 
+    /** Validates [manifest] and returns human-readable diagnostic error messages. */
     fun manifestIssues(manifest: AwakeProjectManifest): List<String> =
         projectManifestIssueDetails(manifest).map { it.message }
 
+    /** Validates [lock] and returns human-readable diagnostic error messages. */
     fun assetsLockIssues(lock: AwakeAssetsLock): List<String> =
         projectAssetsLockIssueDetails(lock).map { it.message }
 
+    /** Returns `true` if [path] is safe and does not escape the project directory. */
     fun isSafeProjectPath(path: String): Boolean {
         if (path.isBlank()) return false
         val hasInvalidPrefix = '\\' in path || path.startsWith('/') || path.matches(projectDrivePathPattern)

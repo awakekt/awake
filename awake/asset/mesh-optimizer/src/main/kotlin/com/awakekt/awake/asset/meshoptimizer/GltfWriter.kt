@@ -36,6 +36,13 @@ private const val POSITION_COMPONENTS = 3
 object GltfWriter {
     private val json = Json { prettyPrint = false }
 
+    /**
+     * Serializes a single-primitive position-and-index mesh into a JSON glTF document with an embedded base64 buffer.
+     *
+     * @param positions Flattened `(x, y, z)` vertex position coordinates.
+     * @param indices Triangle index array referencing the vertex positions.
+     * @return The serialized glTF document JSON string.
+     */
     fun writePositionOnlyMesh(positions: FloatArray, indices: IntArray): String {
         val vertexCount = positions.size / POSITION_COMPONENTS
         val positionBytes = vertexCount * POSITION_COMPONENTS * BYTES_PER_FLOAT
