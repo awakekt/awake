@@ -34,7 +34,8 @@ internal class SceneDrawCollector(
             // Culling first, before this entity's uniforms are gathered: the PBR branch below
             // allocates, and paying that for something about to be discarded is the one ordering
             // this loop can get wrong for free.
-            val bounds = world.get<MeshBounds>(entity, boundsType)
+            // A billboard turns with the camera, so its authored bounds do not describe it.
+            val bounds = world.get<MeshBounds>(entity, boundsType)?.takeUnless { meshRenderer.billboard }
             if (bounds != null &&
                 !cullingCompiler.passesCulling(
                     entity.id,
@@ -63,7 +64,11 @@ internal class SceneDrawCollector(
                 RenderDrawCommand(
                     mesh = meshRenderer.mesh,
                     material = meshRenderer.material,
-                    model = transform.worldMatrix,
+                    model = if (meshRenderer.billboard) {
+                        billboardMatrix(transform.worldMatrix, culling.camera.lens)
+                    } else {
+                        transform.worldMatrix
+                    },
                     extraUniformFloats = extras,
                     vertexAnimation = meshRenderer.vertexAnimation,
                     timeSeconds = elapsedTimeSeconds,

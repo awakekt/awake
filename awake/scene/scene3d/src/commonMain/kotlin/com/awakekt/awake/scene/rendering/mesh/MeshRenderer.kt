@@ -35,4 +35,10 @@ data class MeshRenderer(
     /** With [transparent], adds its colour to what is behind it rather than covering it -- glows,
      * fire and light shafts, which only brighten. See `RenderDrawCommand.additive`. */
     val additive: Boolean = false,
+    /**
+     * Faces the camera: drawn at this entity's position and scale, turned so its local +Z points
+     * back at the eye. Its own rotation is ignored. A billboard is never culled, because its
+     * bounds turn with the camera.
+     */
+    val billboard: Boolean = false,
 )
