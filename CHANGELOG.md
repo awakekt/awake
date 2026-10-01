@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **The 0.1.0 public API is frozen.** From this beta until `0.1.0`, a change to a published API deprecates the old form before removing it. Android multi-touch, display density and audio (#155, #156) and AI in the project player (#213) move to 0.2.0, since each changes a public API. Everything else in this milestone shipped in `0.1.0-alpha.18`.
+- **Static scenes cost less per frame.** `TransformSystem` rebuilds a world matrix only when the entity's position, rotation, scale, parent or parent's matrix changed, instead of every entity every frame; a region of thousands of static props now rebuilds none. `Transform.worldVersion` counts the rebuilds, and `MeshBounds.worldBounds(transform)` caches world bounds on it, so culling a prop that has not moved is one integer comparison. The draw collector resolves its component types once per frame.
 
 ## [0.1.0-alpha.18] - 2026-09-30
 
