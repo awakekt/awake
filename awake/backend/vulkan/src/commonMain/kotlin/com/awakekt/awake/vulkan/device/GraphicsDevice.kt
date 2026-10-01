@@ -291,7 +291,7 @@ internal const val VALIDATION_LAYER = "VK_LAYER_KHRONOS_validation"
  *
  * Off unless asked: validation is developer tooling, and a shipped app must not change behavior,
  * or fail to start, because the user's machine has the Vulkan SDK installed. The Gradle `run` task
- * and desktop tests turn it on.
+ * and desktop tests turn it on; `-Pawake.vulkan.validation=false` leaves a `run` task's off.
  */
 internal fun validationRequested(env: EnvSource = defaultPlatformEnvSource()): Boolean =
     env.get(VALIDATION_PROPERTY)?.trim()?.lowercase() in setOf("1", "true", "yes", "on")

@@ -1,0 +1,1 @@
+- **Run an app without Vulkan validation.** `-Pawake.vulkan.validation=false` keeps the Khronos validation layer off for a Gradle `run` task, which otherwise turns it on. The layer checks every Vulkan call, which costs a large scene about a tenth of its frame, so measure frame time with it off. Tests still validate.

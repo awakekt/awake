@@ -45,7 +45,7 @@ class AwakeDesktopAppSpec(private val project: Project) {
                 project.layout.buildDirectory.dir("processedResources/desktop/main"),
                 project.desktopRuntimeDependencyConfiguration(),
             )
-            environment(VulkanDesktopEnv.environment())
+            environment(VulkanDesktopEnv.runEnvironment(project))
             if (HostOs.isMac) {
                 jvmArgs("-XstartOnFirstThread")
             }
