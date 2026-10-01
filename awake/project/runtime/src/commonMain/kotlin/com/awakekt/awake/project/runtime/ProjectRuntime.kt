@@ -64,9 +64,6 @@ const val PROJECT_MANIFEST = "awake.project.json"
 /**
  * A project read from its files, ready to [playProject]: its manifest, entry scene, loaded models,
  * and a physics world when the scene has bodies or characters.
- *
- * @property manifest Parsed project manifest describing project metadata, dependencies, and settings.
- * @property scene Root scene document loaded from the project's entry scene path.
  */
 class PlayableProject internal constructor(
     val manifest: AwakeProjectManifest,
