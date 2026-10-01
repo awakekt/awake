@@ -60,6 +60,21 @@ The shared Core train is derived dynamically from Git tags using `git describe` 
 > **SNAPSHOT Behavior:** Any local or CI commit after a tag automatically appends `-SNAPSHOT` (e.g.,
 `0.1.0-alpha.2-SNAPSHOT`), ensuring unreleased local builds never collide with published releases.
 
+### After `0.1.0`: minor and patch releases
+
+The pre-release ladder above is for the first version only. From `0.1.0` on, Core follows plain
+semantic versioning:
+
+| Change since the last release | Cut | Example |
+|:------------------------------|:----|:--------|
+| Fixes only, no API change | `./gradlew releaseCut -Prelease.channel=stable -Prelease.bump=patch` | `0.1.0` → `0.1.1` |
+| New features, or an API change | `./gradlew releaseCut -Prelease.channel=stable -Prelease.bump=minor` | `0.1.1` → `0.2.0` |
+
+Before `1.0`, a minor release may break the public API, but only after the old form has shipped
+deprecated in an earlier minor. `alpha`, `beta` and `rc` tags are then optional previews of the
+next minor (`0.2.0-beta.1`), not a release counter. A milestone names the version it ships in
+(`v0.2.0`), and the release that closes it is the minor.
+
 ### Independent Vulkan family
 
 The Vulkan renderer, raw bindings, and Android JNI bridge are one release family of three published
