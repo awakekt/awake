@@ -21,78 +21,138 @@ package com.awakekt.awake.core.input
  * will never receive.
  */
 enum class Key {
+    /** An unmapped or unrecognized hardware key. */
     Unknown,
 
     // Gameplay movement and debug — the original set.
+    /** The 'W' key, typically used for forward movement. */
     W,
+    /** The 'A' key, typically used for left strafe movement. */
     A,
+    /** The 'S' key, typically used for backward movement. */
     S,
+    /** The 'D' key, typically used for right strafe movement. */
     D,
+    /** The Spacebar key. */
     Space,
+    /** The Escape key. */
     Escape,
+    /** Function key F1. */
     F1,
+    /** Function key F2. */
     F2,
+    /** Function key F3. */
     F3,
+    /** Function key F4. */
     F4,
+    /** Function key F5. */
     F5,
 
     // Modifiers. Entries rather than a separate flag set, because [InputSnapshot.keysDown] already
     // models "held" exactly right -- a second representation would be a second thing to keep in
     // sync. Left and right map to the same entry: nothing in this engine distinguishes them, and
     // splitting them would double every host's table for a difference no caller reads.
+    /** The Control modifier key (left or right). */
     Ctrl,
+    /** The Shift modifier key (left or right). */
     Shift,
+    /** The Alt modifier key (left or right). */
     Alt,
+    /** The Meta modifier key (Command on macOS, Windows key on Windows). */
     Meta,
 
     // Navigation and activation — what a focus ring, a menu and a dialog need.
+    /** The Tab navigation key. */
     Tab,
+    /** The Enter or Return key. */
     Enter,
+    /** The Backspace key. */
     Backspace,
+    /** The forward Delete key. */
     Delete,
+    /** The Up Arrow navigation key. */
     ArrowUp,
+    /** The Down Arrow navigation key. */
     ArrowDown,
+    /** The Left Arrow navigation key. */
     ArrowLeft,
+    /** The Right Arrow navigation key. */
     ArrowRight,
+    /** The Home navigation key. */
     Home,
+    /** The End navigation key. */
     End,
+    /** The Page Up navigation key. */
     PageUp,
+    /** The Page Down navigation key. */
     PageDown,
 
     // The rest of the letters. A shortcut needs the key's identity: `typedText` reporting that "s"
     // was produced is not the same as knowing S went down while Ctrl was held.
+    /** The letter key 'B'. */
     B,
+    /** The letter key 'C'. */
     C,
+    /** The letter key 'E'. */
     E,
+    /** The letter key 'F'. */
     F,
+    /** The letter key 'G'. */
     G,
+    /** The letter key 'H'. */
     H,
+    /** The letter key 'I'. */
     I,
+    /** The letter key 'J'. */
     J,
+    /** The letter key 'K'. */
     K,
+    /** The letter key 'L'. */
     L,
+    /** The letter key 'M'. */
     M,
+    /** The letter key 'N'. */
     N,
+    /** The letter key 'O'. */
     O,
+    /** The letter key 'P'. */
     P,
+    /** The letter key 'Q'. */
     Q,
+    /** The letter key 'R'. */
     R,
+    /** The letter key 'T'. */
     T,
+    /** The letter key 'U'. */
     U,
+    /** The letter key 'V'. */
     V,
+    /** The letter key 'X'. */
     X,
+    /** The letter key 'Y'. */
     Y,
+    /** The letter key 'Z'. */
     Z,
 
+    /** The digit key '0'. */
     Digit0,
+    /** The digit key '1'. */
     Digit1,
+    /** The digit key '2'. */
     Digit2,
+    /** The digit key '3'. */
     Digit3,
+    /** The digit key '4'. */
     Digit4,
+    /** The digit key '5'. */
     Digit5,
+    /** The digit key '6'. */
     Digit6,
+    /** The digit key '7'. */
     Digit7,
+    /** The digit key '8'. */
     Digit8,
+    /** The digit key '9'. */
     Digit9,
 }
 

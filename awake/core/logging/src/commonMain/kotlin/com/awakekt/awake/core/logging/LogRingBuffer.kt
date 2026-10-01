@@ -94,6 +94,9 @@ class LogRingBuffer(val capacity: Int = DEFAULT_CAPACITY) : LogSink {
         droppedCount = 0
     }
 
+    /**
+     * Default configuration values for [LogRingBuffer].
+     */
     companion object {
         /** Enough to cover a startup sequence and a few seconds of frames without being a leak. */
         const val DEFAULT_CAPACITY = 2048
