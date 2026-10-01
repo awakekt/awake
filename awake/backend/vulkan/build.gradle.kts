@@ -143,7 +143,7 @@ tasks.named<Test>("desktopTest") {
 // can open or send without broken relative links) -- a lightweight stand-in for a real
 // test-reporting tool (Allure, etc) until there are enough visual tests to justify one.
 tasks.register("pixelBaselineReport") {
-    group = "verification"
+    group = "awake reports"
     description =
         "Generate an HTML gallery of actual-vs-baseline PNGs for any failed pixel-baseline test."
     val failuresDir = layout.buildDirectory.dir("test-failures")

@@ -31,7 +31,7 @@ dependencies {
 // naturally passed the same way. Run via
 // `./gradlew :awake:asset:mesh-optimizer:decimate --args="in.gltf out.gltf 0.5"`.
 tasks.register<JavaExec>("decimate") {
-    group = "generation"
+    group = "awake tools"
     description = "Simplify a .gltf mesh's triangle count -- args: <input.gltf> <output.gltf> <targetRatio>"
     dependsOn("classes")
     workingDir = projectDir

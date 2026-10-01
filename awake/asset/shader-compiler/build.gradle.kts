@@ -33,7 +33,7 @@ fun registerCargoTask(
     vararg cargoArgs: String,
     configureOutputs: org.gradle.api.tasks.TaskOutputs.() -> Unit,
 ) = tasks.register<Exec>(name) {
-    group = "generation"
+    group = "awake native"
     this.description = description
     workingDir = rustDir.asFile
     // PATH must carry ~/.cargo/bin for rustup's toolchain shims (and cargo-ndk).

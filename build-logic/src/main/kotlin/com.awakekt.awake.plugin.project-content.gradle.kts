@@ -19,7 +19,7 @@ projectContent.indexRootPath.convention("/project")
 projectContent.indexBaseUrl.convention("files")
 
 val validateProject = tasks.register<ValidateProjectTask>("validateProject") {
-    group = "verification"
+    group = "awake verification"
     description = "Validate the Awake project manifest, scenes, assets, and plugins."
     manifestFile.set(projectContent.manifestFile)
     assetRoots.set(projectContent.assetRoots)
@@ -27,21 +27,21 @@ val validateProject = tasks.register<ValidateProjectTask>("validateProject") {
 }
 
 val verifyAssetsLock = tasks.register<VerifyAssetsLockTask>("verifyAssetsLock") {
-    group = "verification"
+    group = "awake verification"
     description = "Verify every tracked asset against assets.lock.json."
     assetsLockFile.set(projectContent.assetsLockFile)
     assetRoots.set(projectContent.assetRoots)
 }
 
 tasks.register<GenerateAssetsLockTask>("generateAssetsLock") {
-    group = "build setup"
+    group = "awake codegen"
     description = "Generate the canonical assets.lock.json."
     outputFile.set(projectContent.assetsLockFile)
     assetRoots.set(projectContent.assetRoots)
 }
 
 val generateProjectIndex = tasks.register<GenerateProjectIndexTask>("generateProjectIndex") {
-    group = "distribution"
+    group = "awake codegen"
     description = "Generate the metadata-only browser project index."
     outputFile.set(projectContent.indexOutputFile)
     indexRoots.set(projectContent.indexRoots)
@@ -50,7 +50,7 @@ val generateProjectIndex = tasks.register<GenerateProjectIndexTask>("generatePro
 }
 
 val checkProjectContent = tasks.register("checkProjectContent") {
-    group = "verification"
+    group = "awake verification"
     description = "Validate project content, verify its asset lock, and generate its index."
     dependsOn(validateProject, verifyAssetsLock, generateProjectIndex)
 }

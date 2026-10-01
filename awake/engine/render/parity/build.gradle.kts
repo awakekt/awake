@@ -100,7 +100,7 @@ tasks.named<Test>("desktopTest") {
 // Renders every parity scenario to PNGs on headless Vulkan, for the PR evidence workflow:
 //   ./gradlew :awake:engine:render:parity:captureRenderEvidence -Pevidence.dir=<dir>
 tasks.register<JavaExec>("captureRenderEvidence") {
-    group = "verification"
+    group = "awake reports"
     description = "Render the parity scenarios to PNGs (headless Vulkan)."
     val desktopMain = kotlin.targets.getByName("desktop").compilations.getByName("main")
     dependsOn(desktopMain.compileAllTaskName, ":awake:backend:vulkan:bindings:buildDesktopNative")

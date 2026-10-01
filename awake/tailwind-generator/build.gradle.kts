@@ -27,7 +27,7 @@ dependencies {
 // reproducible from any cwd. Run via
 // `./gradlew :awake:tailwind-generator:generateTailwindScale` and commit the diff.
 tasks.register<JavaExec>("generateTailwindScale") {
-    group = "generation"
+    group = "awake codegen"
     description = "Regenerate Tw.kt from the vendored Tailwind spacing scale -- run this and " +
         "commit the diff if the vendored scale changes."
     dependsOn("classes")

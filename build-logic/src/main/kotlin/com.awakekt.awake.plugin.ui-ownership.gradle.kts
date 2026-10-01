@@ -42,7 +42,7 @@ val forbiddenUiSourcePatterns = when (project.path) {
 }
 
 val verifyUiOwnership = tasks.register<VerifyUiOwnershipTask>("verifyUiOwnership") {
-    group = "verification"
+    group = "awake verification"
     description = "Reject helper-shaped or runtime-bound API drift in reusable UI modules."
     modulePath.set(project.path)
     sourceFiles.from(

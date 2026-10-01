@@ -8,7 +8,7 @@ import com.awakekt.awake.build.tasks.*
 // Applied to the shader CONTRACT module only. See VerifyRenderExtensibilityTask's own doc
 // comment for what drifting back would cost.
 val verifyRenderExtensibility = tasks.register<VerifyRenderExtensibilityTask>("verifyRenderExtensibility") {
-    group = "verification"
+    group = "awake verification"
     description = "Reject authored shader content in the backend-neutral shader contract module."
     modulePath.set(project.path)
     contentModulePath.set(":awake:asset:shader-pack")

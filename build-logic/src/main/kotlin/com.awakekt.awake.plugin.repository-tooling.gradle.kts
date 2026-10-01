@@ -11,11 +11,11 @@ plugins {
 }
 
 tasks.register<AwakeRepositoryVerificationTask>("awakeVerify") {
-    group = "verification"
+    group = "awake verification"
     description = "Run Awake's repository, documentation, publication, and ownership gates."
 }
 
 tasks.register<VerifyPublishedArtifactsTask>("verifyPublishedArtifacts") {
-    group = "verification"
+    group = "awake release"
     description = "Verify Maven-local POM metadata and published native JAR contents."
 }

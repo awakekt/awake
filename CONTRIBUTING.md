@@ -37,6 +37,36 @@ Run the smallest relevant verification first, then the broader checks when pract
 For rendering, native, or platform-specific work, run the matching module task and state which
 targets were verified in the pull request. A desktop-only result is not evidence for iOS or WebGPU.
 
+## Gradle tasks
+
+Every AwakeKt task belongs to one group, so Gradle lists them with their descriptions:
+
+```bash
+./gradlew tasks --group "awake release"
+```
+
+| Group | What is in it |
+| --- | --- |
+| `awake release` | `releaseCut` and the publication checks. |
+| `awake verification` | `awakeVerify` and the boundary checks that `check` runs. |
+| `awake codegen` | Shader, icon, asset-lock and project-index generators. |
+| `awake native` | Native library builds and their checks (naga, Vulkan JNI, GLFW). |
+| `awake reports` | `captureRenderEvidence`, the pixel-baseline and UI preview reports, `developerDocs`. |
+| `awake tools` | One-off utilities such as `decimate` and `previewShader`. |
+
+The ones you run most:
+
+| Task | When |
+| --- | --- |
+| `./gradlew check` | Before a pull request. |
+| `./gradlew detekt` | Lint only; the pre-push hook runs it. |
+| `./gradlew desktopApiDump` | After changing public API, so the pre-push `desktopApiCheck` passes. |
+| `./gradlew :awake:engine:render:parity:captureRenderEvidence` | Render screenshots for a PR that changes rendering. |
+| `./gradlew releaseCut -Prelease.channel=<channel>` | Cut a release; see [the release process](docs/release-process.md). |
+
+CI runs on GitHub-hosted runners only. AwakeKt Studio, which has its own repository, can switch
+to a self-hosted runner; that is documented in its `CONTRIBUTING.md`.
+
 ## Branches and commits
 
 Start from the latest `origin/main` and use a short-lived topic branch:

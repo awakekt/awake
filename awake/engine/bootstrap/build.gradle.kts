@@ -56,7 +56,7 @@ tasks.named<Test>("desktopTest") {
 }
 
 tasks.register("gameDslTutorialDocsReport") {
-    group = "documentation"
+    group = "awake reports"
     description = "Generate an HTML tutorial guide for the game DSL proof examples."
     val manifestFile = layout.buildDirectory.file("game-dsl-tutorials/tutorials.tsv")
     val reportFile = layout.buildDirectory.file("reports/game-dsl-tutorials/index.html")
@@ -150,7 +150,7 @@ tasks.named<Test>("desktopTest") {
 }
 
 tasks.register("uiDslTutorialDocsReport") {
-    group = "documentation"
+    group = "awake reports"
     description = "Generate an HTML tutorial guide for the UI facade DSL snapshots."
     val snapshotsDir = layout.buildDirectory.dir("ui-dsl-snapshots")
     val manifestFile = layout.buildDirectory.file("ui-dsl-snapshots/tutorials.tsv")

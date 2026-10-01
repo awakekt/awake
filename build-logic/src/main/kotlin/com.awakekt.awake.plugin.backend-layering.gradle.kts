@@ -116,7 +116,7 @@ val exemptBackendFiles = emptyList<String>()
 val contentExemptBackendFiles = emptyList<String>()
 
 val verifyBackendLayering = tasks.register<VerifyBackendLayeringTask>("verifyBackendLayering") {
-    group = "verification"
+    group = "awake verification"
     description = "Reject scene vocabulary and content concepts (skybox, shadow, ...) inside a GPU backend."
     modulePath.set(project.path)
     sourceFiles.from(

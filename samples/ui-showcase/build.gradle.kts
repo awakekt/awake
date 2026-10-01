@@ -164,7 +164,7 @@ tasks.withType<Test>().configureEach {
 }
 
 tasks.register("validateUiShowcasePlatforms") {
-    group = "verification"
+    group = "awake verification"
     description = "Build and test the UI showcase sample across desktop, iOS simulator, and web."
     dependsOn(
         "desktopTest",

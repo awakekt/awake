@@ -47,7 +47,7 @@ mavenPublishing {
 // tree per pixel and prints ANSI true-color half-blocks. No window, no image file. Run via
 // `./gradlew :awake:asset:shader-dsl:previewShader` (optional -Pargs="<width> <height> --wgsl").
 tasks.register<JavaExec>("previewShader") {
-    group = "generation"
+    group = "awake tools"
     description = "Render the sample checker shader to the terminal via CPU evaluation"
     dependsOn("desktopMainClasses")
     mainClass.set("com.awakekt.awake.asset.shaderdsl.preview.PreviewKt")

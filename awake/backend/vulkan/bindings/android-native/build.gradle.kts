@@ -86,7 +86,7 @@ val jniScript = jniScriptsDir.file("jni-binding-generator.py")
 val jniPackageFilter = "com.awakekt.awake.vulkan.gen"
 
 tasks.register<Exec>("generateJniBindings") {
-    group = "jni"
+    group = "awake native"
     description = "Generate JNI marshalling C++ from Kotlin external functions (jni-binding-generator). " +
         "Run manually after changing a .gen package signature; annotated native implementations stay in *_native.cpp."
 
@@ -104,7 +104,7 @@ tasks.register<Exec>("generateJniBindings") {
 }
 
 tasks.register<Exec>("checkJniBindings") {
-    group = "jni"
+    group = "awake native"
     description = "Fail if committed generated JNI bindings are stale relative to the Kotlin source " +
         "(run generateJniBindings, then verify any unannotated native bodies)"
 

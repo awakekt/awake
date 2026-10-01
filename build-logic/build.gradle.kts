@@ -90,7 +90,7 @@ afterEvaluate {
 }
 
 val verifyAwakePluginPublications = tasks.register("verifyAwakePluginPublications") {
-    group = "verification"
+    group = "awake release"
     description = "Checks that only Awake's supported Gradle plugin markers are published."
     doLast {
         val publishing = project.extensions.getByType<org.gradle.api.publish.PublishingExtension>()

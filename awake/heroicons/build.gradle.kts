@@ -15,7 +15,7 @@ plugins {
 }
 
 val generateLucideImageVectors = tasks.register<GenerateImageVectorsTask>("generateLucideImageVectors") {
-    group = "build setup"
+    group = "awake codegen"
     description = "Generate source-faithful Lucide ImageVector icons."
     sourceDirectory.set(layout.projectDirectory.dir("src/commonMain/svg/lucide"))
     outputDirectory.set(layout.buildDirectory.dir("generated/lucideImageVector"))
