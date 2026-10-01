@@ -16,7 +16,11 @@ object WavDecoder {
 
     /**
      * Decodes standard PCM WAV [bytes] into an [AudioClip].
-     * Returns null if [bytes] is not a valid PCM WAVE buffer.
+     *
+     * @param id Unique identifier for the decoded audio clip.
+     * @param name Human-readable name for the audio clip.
+     * @param bytes Raw WAV format byte array.
+     * @return Decoded 16-bit PCM [AudioClip], or null if [bytes] is not a valid PCM WAVE buffer.
      */
     fun decode(id: String, name: String, bytes: ByteArray): AudioClip? {
         if (bytes.size < 44) return null

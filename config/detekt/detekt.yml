@@ -123,6 +123,8 @@ comments:
       - '**/awake/asset/mesh-optimizer/**'
       - '**/awake/asset/shader-compiler/**'
       - '**/awake/project/src/**'
+      - '**/awake/core/animation/**'
+      - '**/awake/core/audio/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

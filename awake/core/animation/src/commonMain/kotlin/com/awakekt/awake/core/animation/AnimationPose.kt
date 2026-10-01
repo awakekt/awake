@@ -18,15 +18,19 @@ import com.awakekt.awake.core.math.Vec3f
  * (`SkinnedAnimationPlayer`, one shared TRS buffer per loaded scene), nothing stops a caller from
  * holding several `AnimationPose`s over the same [Skeleton] at once (independently-timed crowd
  * instances, or the outgoing/current pair [AnimationCrossfade] needs for blending).
+ *
+ * @param skeleton Target skeleton hierarchy defining bone indices and bind poses.
  */
 class AnimationPose(private val skeleton: Skeleton) {
     private val translation = Array(skeleton.bones.size) { skeleton.bones[it].translation }
     private val rotation = Array(skeleton.bones.size) { skeleton.bones[it].rotation }
     private val scale = Array(skeleton.bones.size) { skeleton.bones[it].scale }
 
-    /** Restores every channel to the skeleton's authored bind pose. Whole-clip playback calls
+    /**
+     * Restores every channel to the skeleton's authored bind pose. Whole-clip playback calls
      * this before sampling so a component the next clip does not animate cannot leak from the
-     * preceding clip. Layered animation deliberately does not call this method. */
+     * preceding clip. Layered animation deliberately does not call this method.
+     */
     fun resetToBindPose() {
         for (i in translation.indices) {
             val bone = skeleton.bones[i]
@@ -36,27 +40,48 @@ class AnimationPose(private val skeleton: Skeleton) {
         }
     }
 
-    /** This bone's current local translation -- whatever the last [sample], [blend] or
-     * [setBoneTransform] left there, or its bind pose if nothing has written to it yet. */
+    /**
+     * Returns this bone's current local translation -- whatever the last [sample], [blend] or
+     * [setBoneTransform] left there, or its bind pose if nothing has written to it yet.
+     *
+     * @param bone Index of the bone within the skeleton.
+     * @return Local translation vector for the specified bone.
+     */
     fun boneTranslation(bone: Int): Vec3f = translation[bone]
 
-    /** This bone's current local rotation; see [boneTranslation]. */
+    /**
+     * Returns this bone's current local rotation; see [boneTranslation].
+     *
+     * @param bone Index of the bone within the skeleton.
+     * @return Local rotation quaternion for the specified bone.
+     */
     fun boneRotation(bone: Int): Quat = rotation[bone]
 
-    /** Overwrites one bone's local translation and rotation, leaving its scale alone.
+    /**
+     * Overwrites one bone's local translation and rotation, leaving its scale alone.
      *
      * The seam for a pose driven by something other than a clip -- a ragdoll, an IK solver, a
      * procedural head-turn. Scale is untouched because none of those produce one: a rigid body has
      * no scale to report, and overwriting it with 1 would discard whatever the mesh was authored
-     * with. */
+     * with.
+     *
+     * @param bone Index of the target bone.
+     * @param translation New local translation vector.
+     * @param rotation New local rotation quaternion.
+     */
     fun setBoneTransform(bone: Int, translation: Vec3f, rotation: Quat) {
         this.translation[bone] = translation
         this.rotation[bone] = rotation
     }
 
-    /** Samples [clip] at [timeSeconds] into this pose's working TRS arrays -- a bone with no
+    /**
+     * Samples [clip] at [timeSeconds] into this pose's working TRS arrays -- a bone with no
      * channel targeting it keeps whatever TRS it already had (its authored bind pose, until/
-     * unless a previous [sample] call overwrote it). */
+     * unless a previous [sample] call overwrote it).
+     *
+     * @param clip Animation clip containing channels to sample.
+     * @param timeSeconds Playback timestamp in seconds within the clip.
+     */
     fun sample(clip: AnimationClip, timeSeconds: Float) {
         clip.channels.forEach { channel ->
             val value = sampleChannel(channel.sampler, timeSeconds)
@@ -110,9 +135,13 @@ class AnimationPose(private val skeleton: Skeleton) {
         }
     }
 
-    /** Overwrites this pose's working TRS arrays with [other]'s -- used to reset a scratch pose
+    /**
+     * Overwrites this pose's working TRS arrays with [other]'s -- used to reset a scratch pose
      * to a frozen base before blending it toward a live one each frame, so repeated blending
-     * doesn't compound (see [AnimationCrossfade]). */
+     * doesn't compound (see [AnimationCrossfade]).
+     *
+     * @param other Source pose whose local transforms will be copied into this pose.
+     */
     fun copyFrom(other: AnimationPose) {
         for (i in translation.indices) {
             translation[i] = other.translation[i]
@@ -121,12 +150,17 @@ class AnimationPose(private val skeleton: Skeleton) {
         }
     }
 
-    /** Mutates this pose in place to become the interpolation of (this, [other]) at [weight] --
+    /**
+     * Mutates this pose in place to become the interpolation of (this, [other]) at [weight] --
      * `0` leaves this pose unchanged, `1` adopts [other]'s pose exactly. Per-bone: translation/
      * scale lerp componentwise, rotation nlerps (never a naive per-component lerp, which would
      * visibly cut corners on a large rotation instead of sweeping through it). Both poses must
      * share the same [Skeleton] -- this is the caller's responsibility, same as every other
-     * method here that assumes bone-index alignment. */
+     * method here that assumes bone-index alignment.
+     *
+     * @param other Target pose to interpolate toward.
+     * @param weight Blend factor between 0.0 (keep this pose) and 1.0 (adopt target pose).
+     */
     fun blend(other: AnimationPose, weight: Float) {
         for (i in translation.indices) {
             translation[i] = translation[i].lerp(other.translation[i], weight)
@@ -135,10 +169,15 @@ class AnimationPose(private val skeleton: Skeleton) {
         }
     }
 
-    /** Every joint's current global transform (walking [skeleton]'s bone hierarchy from its own
+    /**
+     * Every joint's current global transform (walking [skeleton]'s bone hierarchy from its own
      * roots, multiplying local transforms along the way) times that joint's own inverse-bind
      * matrix, flattened into `16 * skin.joints.size` floats -- one 4x4 column-major matrix per
-     * joint, the layout a skinned material's `jointPalette` uniform array expects. */
+     * joint, the layout a skinned material's `jointPalette` uniform array expects.
+     *
+     * @param skin Mesh skin binding providing joint bone indices and inverse bind matrices.
+     * @return Flattened array of column-major joint matrices for GPU vertex skinning.
+     */
     fun jointPalette(skin: Skin): FloatArray {
         val globalTransforms = arrayOfNulls<Mat4>(skeleton.bones.size)
 
