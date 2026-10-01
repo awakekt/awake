@@ -381,6 +381,11 @@ interface PhysicsWorld {
      */
     fun setContactReporting(handle: BodyHandle, enabled: Boolean)
 
+    /**
+     * Drains all queued contact events accumulated during physics simulation steps, invoking [action] on each.
+     *
+     * @param action Callback invoked with each buffered [ContactEvent].
+     */
     fun drainContacts(action: (ContactEvent) -> Unit)
 
     /**

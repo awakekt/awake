@@ -24,5 +24,9 @@ enum class ContactPhase {
  * a callback that carries none of them, so they would be present half the time and absent the other
  * half -- and the verbs this exists for (pickups, checkpoints, damage volumes) need the pair and
  * nothing else. A hit reaction that wants an impact point can add them.
+ *
+ * @property a The first colliding body handle (unordered).
+ * @property b The second colliding body handle (unordered).
+ * @property phase Whether contact began or ended.
  */
 data class ContactEvent(val a: BodyHandle, val b: BodyHandle, val phase: ContactPhase)

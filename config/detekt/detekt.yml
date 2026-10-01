@@ -117,6 +117,9 @@ comments:
       - '**/awake/scene/blueprint/**'
       - '**/awake/ui/material3/**'
       - '**/awake/engine/compose/**'
+      - '**/awake/physics/api/**'
+      - '**/awake/scene/physics/**'
+      - '**/awake/physics/ragdoll/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

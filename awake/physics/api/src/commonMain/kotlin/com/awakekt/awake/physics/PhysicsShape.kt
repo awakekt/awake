@@ -15,11 +15,21 @@ import com.awakekt.awake.core.math.Vec3f
  * that exists. */
 sealed interface PhysicsShape
 
-/** [halfExtents] matches Jolt Physics' own `BoxShape` convention (half the box's total
- * width/height/depth along each axis), not a full-extent size. */
+/**
+ * Box collision shape defined by half-extents.
+ *
+ * [halfExtents] matches Jolt Physics' own `BoxShape` convention (half the box's total
+ * width/height/depth along each axis), not a full-extent size.
+ *
+ * @property halfExtents Half-extent dimensions along each coordinate axis in meters.
+ */
 data class BoxShape(val halfExtents: Vec3f) : PhysicsShape
 
-/** The cheapest shape to collide and the only one with no orientation to get wrong. */
+/**
+ * The cheapest shape to collide and the only one with no orientation to get wrong.
+ *
+ * @property radius The radius of the sphere in meters.
+ */
 data class SphereShape(val radius: Float) : PhysicsShape
 
 /**
@@ -30,6 +40,9 @@ data class SphereShape(val radius: Float) : PhysicsShape
  *
  * The character shape. A capsule slides over steps and ledges where a box catches on them,
  * which is why every engine's character controller is built on one.
+ *
+ * @property halfHeight Half of the cylindrical body's height (excluding end caps).
+ * @property radius Radius of the cylinder and the hemisphere caps.
  */
 data class CapsuleShape(val halfHeight: Float, val radius: Float) : PhysicsShape {
     init {
@@ -56,6 +69,11 @@ data class CapsuleShape(val halfHeight: Float, val radius: Float) : PhysicsShape
  *
  * Pass [GridOrigin.Corner] for a field built from a corner-anchored heightmap -- the collider has
  * to sit where its mesh sits, so this must match the map it came from.
+ *
+ * @property heights Row-major elevation samples defining the surface heights.
+ * @property sampleCount Number of samples along each axis of the square grid.
+ * @property scale World-space scaling factor applied along each coordinate axis.
+ * @property origin Positioning anchor mode for the heightfield grid relative to body position.
  */
 data class HeightFieldShape(
     val heights: FloatArray,
@@ -81,14 +99,26 @@ data class HeightFieldShape(
         require(heights.all(Float::isFinite)) { "heights must contain only finite values" }
     }
 
-    /** Height sample at [x], [z], using the documented row-major layout. */
+    /**
+     * Height sample at [x], [z], using the documented row-major layout.
+     *
+     * @param x The sample index along the X axis.
+     * @param z The sample index along the Z axis.
+     * @return The local height value at ([x], [z]).
+     */
     fun heightAt(x: Int, z: Int): Float {
         require(x in 0 until sampleCount) { "x is outside the heightfield: $x" }
         require(z in 0 until sampleCount) { "z is outside the heightfield: $z" }
         return heights[z * sampleCount + x]
     }
 
-    /** Jolt heightfields cannot be dynamic or kinematic bodies. */
+    /**
+     * Asserts that [motionType] is supported by heightfield shapes, throwing [PhysicsCapabilityException] if not.
+     *
+     * Jolt heightfields cannot be dynamic or kinematic bodies.
+     *
+     * @param motionType The requested body motion type.
+     */
     fun requireSupportedMotionType(motionType: MotionType) {
         if (motionType != MotionType.STATIC) {
             throw PhysicsCapabilityException("HeightFieldShape supports STATIC motion only, not $motionType")
@@ -121,6 +151,9 @@ data class HeightFieldShape(
  * Neither array is copied, for the same reason [HeightFieldShape]'s is not: a level-sized collider
  * must not silently make a second level-sized allocation. Do not mutate either after handing it to
  * a [PhysicsWorld].
+ *
+ * @property vertices Flat array of vertex coordinates (x, y, z triplets).
+ * @property indices Flat array of triangle index triplets referencing [vertices].
  */
 data class MeshShape(
     val vertices: FloatArray,
@@ -144,7 +177,13 @@ data class MeshShape(
     /** How many triangles this mesh collides as. */
     val triangleCount: Int get() = indices.size / INDICES_PER_TRIANGLE
 
-    /** Jolt cannot simulate a surface with no inside. */
+    /**
+     * Asserts that [motionType] is supported by triangle mesh shapes, throwing [PhysicsCapabilityException] if not.
+     *
+     * Jolt cannot simulate a surface with no inside.
+     *
+     * @param motionType The requested body motion type.
+     */
     fun requireSupportedMotionType(motionType: MotionType) {
         if (motionType != MotionType.STATIC) {
             throw PhysicsCapabilityException(
@@ -170,6 +209,8 @@ data class MeshShape(
  *
  * [points] is `x, y, z` per point, and Jolt builds the hull; interior points are simply ignored,
  * so passing a mesh's vertices is a legitimate way to get a hull of it.
+ *
+ * @property points Flat array of point coordinates (x, y, z triplets) forming the hull envelope.
  */
 data class ConvexHullShape(val points: FloatArray) : PhysicsShape {
     init {

@@ -14,5 +14,9 @@ import com.awakekt.awake.core.math.Vec3f
  * compare two hits without knowing where either ray started. There is no normal here, unlike
  * [ShapeCastHit]: a ray is used to ask *what* is there, and anything that needs to slide along the
  * surface it found wants a shape cast instead.
+ *
+ * @property handle The physics body that was struck by the ray.
+ * @property point World-space position where the ray intersection occurred.
+ * @property distance Distance from the ray origin to [point] in world units.
  */
 data class RaycastHit(val handle: BodyHandle, val point: Vec3f, val distance: Float)

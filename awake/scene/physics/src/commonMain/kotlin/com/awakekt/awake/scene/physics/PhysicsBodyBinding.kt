@@ -29,16 +29,30 @@ import kotlin.reflect.KClass
 @Serializable
 sealed interface SceneCollisionShape
 
-/** A box; [halfExtents] is half its size along each axis. */
+/**
+ * A box collision shape; [halfExtents] is half its size along each axis.
+ *
+ * @property halfExtents Half-extent dimensions along each coordinate axis in meters.
+ */
 @Serializable
 @SerialName("box")
 data class SceneBoxShape(val halfExtents: SceneVec3 = SceneVec3(HALF, HALF, HALF)) : SceneCollisionShape
 
+/**
+ * A spherical collision shape defined by [radius].
+ *
+ * @property radius Radius of the sphere in meters.
+ */
 @Serializable
 @SerialName("sphere")
 data class SceneSphereShape(val radius: Float = HALF) : SceneCollisionShape
 
-/** An upright capsule: a cylinder of `2 * halfHeight` capped by hemispheres of [radius]. */
+/**
+ * An upright capsule collision shape: a cylinder of `2 * halfHeight` capped by hemispheres of [radius].
+ *
+ * @property halfHeight Half-height of the cylindrical body in meters.
+ * @property radius Radius of the cylinder and hemispherical caps in meters.
+ */
 @Serializable
 @SerialName("capsule")
 data class SceneCapsuleShape(val halfHeight: Float = HALF, val radius: Float = HALF) : SceneCollisionShape
@@ -46,6 +60,11 @@ data class SceneCapsuleShape(val halfHeight: Float = HALF, val radius: Float = H
 /**
  * A collider or rigid body, as authored in a scene. [layer] is a collision-layer index; null takes
  * the default for [motion]. A [sensor] detects what passes through it instead of blocking it.
+ *
+ * @property shape Collision geometry for this body.
+ * @property motion Motion type controlling whether the body is static, kinematic, or dynamic.
+ * @property layer Collision layer index, or `null` for the layer default matching [motion].
+ * @property sensor Whether this body functions as a trigger sensor rather than a solid collider.
  */
 @Serializable
 @SerialName("physics_body")

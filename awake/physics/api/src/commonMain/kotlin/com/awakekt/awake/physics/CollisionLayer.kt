@@ -13,6 +13,8 @@ import kotlin.jvm.JvmInline
  * An index rather than an enum: what the groups *mean* -- player, enemy, water, trigger -- is the
  * game's, and an enum here would be the engine authoring world policy. The engine only needs to
  * know that two layers differ and whether they collide.
+ *
+ * @property index Unique integer index identifying the layer within a [CollisionLayers] set.
  */
 @JvmInline
 value class CollisionLayer(val index: Int) {
@@ -31,13 +33,14 @@ value class CollisionLayer(val index: Int) {
  * acceleration structure for things that move, and putting static world geometry in it costs a
  * rebuild every time anything else moves -- so a layer says once whether its bodies can move,
  * instead of every body saying so and the two disagreeing.
+ *
+ * @property count How many layers this world has. Layer indices run from zero to one below it.
+ * @property movingLayers The layers whose bodies can move; see the note above on why the broadphase cares.
+ * @param collides Consulted once per pair at construction, then never again -- the answer is a table.
  */
 class CollisionLayers(
-    /** How many layers this world has. Layer indices run from zero to one below it. */
     val count: Int,
-    /** The layers whose bodies can move; see the note above on why the broadphase cares. */
     val movingLayers: Set<CollisionLayer>,
-    /** Consulted once per pair at construction, then never again -- the answer is a table. */
     collides: (CollisionLayer, CollisionLayer) -> Boolean,
 ) {
     init {
@@ -69,14 +72,28 @@ class CollisionLayers(
         }
     }
 
-    /** Whether bodies in these two layers collide. Symmetric, and checked to be at construction. */
+    /**
+     * Whether bodies in these two layers collide. Symmetric, and checked to be at construction.
+     *
+     * @param a The first collision layer to test.
+     * @param b The second collision layer to test.
+     * @return `true` if bodies on layer [a] collide with bodies on layer [b].
+     */
     fun collides(a: CollisionLayer, b: CollisionLayer): Boolean = collides(a.index, b.index)
 
     private fun collides(a: Int, b: Int): Boolean = (matrix[a] and (1 shl b)) != 0
 
-    /** Whether this layer's bodies can move, which decides the broadphase tree they live in. */
+    /**
+     * Whether this layer's bodies can move, which decides the broadphase tree they live in.
+     *
+     * @param layer The collision layer to inspect.
+     * @return `true` if bodies on this layer are allowed to move.
+     */
     fun isMoving(layer: CollisionLayer): Boolean = layer in movingLayers
 
+    /**
+     * Standard collision layer definitions and limits.
+     */
     companion object {
         /**
          * Jolt's object layers are 16-bit, and a mask per layer is held in an `Int` here, so 32 is
