@@ -8,8 +8,20 @@ package com.awakekt.awake.core.image
 import java.io.ByteArrayInputStream
 import javax.imageio.ImageIO
 
+/**
+ * Platform actual decoding encoded image [bytes] on Desktop JVM via [decodeBitmap].
+ *
+ * @param bytes The raw encoded image byte array.
+ * @return A decoded [Bitmap] instance.
+ */
 actual suspend fun createBitmap(bytes: ByteArray): Bitmap = decodeBitmap(bytes)
 
+/**
+ * Synchronously decodes encoded image [bytes] on Desktop JVM into a [Bitmap].
+ *
+ * @param bytes The raw encoded image byte array.
+ * @return A decoded [Bitmap] instance with inverted Y-coordinates for texture mapping.
+ */
 fun decodeBitmap(bytes: ByteArray): Bitmap {
     val bufferedImage = ImageIO.read(ByteArrayInputStream(bytes))
     val width = bufferedImage.width

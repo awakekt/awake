@@ -22,6 +22,14 @@ import platform.Foundation.NSData
 import platform.Foundation.create
 import platform.UIKit.UIImage
 
+/**
+ * Apple platform implementation of [Bitmap] wrapping CoreGraphics decoded pixel buffers.
+ *
+ * @property width The horizontal pixel resolution.
+ * @property height The vertical pixel resolution.
+ * @property channel The number of color channels (4 for ARGB).
+ * @property pixels Packed pixel data as an array of 32-bit integers.
+ */
 class AppleBitmap(
     override val width: Int,
     override val height: Int,
@@ -29,6 +37,12 @@ class AppleBitmap(
     override val pixels: IntArray,
 ) : Bitmap
 
+/**
+ * Platform actual decoding encoded image [bytes] on Apple platforms via [NSData] and [UIImage].
+ *
+ * @param bytes The raw encoded image byte array.
+ * @return A decoded [Bitmap] instance with Y-axis flipped for texture orientation.
+ */
 actual suspend fun createBitmap(bytes: ByteArray): Bitmap {
     val nsData =
         memScoped {
@@ -37,11 +51,25 @@ actual suspend fun createBitmap(bytes: ByteArray): Bitmap {
     return createBitmap(nsData, true)
 }
 
+/**
+ * Decodes raw [NSData] into a [Bitmap] instance with optional Y-axis coordinate flipping.
+ *
+ * @param nsData The raw image data payload.
+ * @param flipY Whether to flip the Y axis for texture coordinate alignment.
+ * @return A decoded [Bitmap] instance.
+ */
 fun createBitmap(nsData: NSData, flipY: Boolean): Bitmap {
     val image = checkNotNull(UIImage.imageWithData(nsData)) { "Invalid bitmap data" }
     return createBitmap(image, flipY)
 }
 
+/**
+ * Converts a [UIImage] into a [Bitmap] instance with optional Y-axis coordinate flipping.
+ *
+ * @param image The UIKit image instance to convert.
+ * @param flipY Whether to flip the Y axis for texture coordinate alignment.
+ * @return A decoded [Bitmap] instance.
+ */
 fun createBitmap(image: UIImage, flipY: Boolean): Bitmap {
     val cgImage = image.CGImage
     val width = CGImageGetWidth(cgImage).toInt()

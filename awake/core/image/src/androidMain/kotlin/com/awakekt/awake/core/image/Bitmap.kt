@@ -11,6 +11,14 @@ import android.graphics.Matrix
 typealias NativeBitmap = android.graphics.Bitmap
 typealias NativeBitmapConfig = android.graphics.Bitmap.Config
 
+/**
+ * Android platform implementation of [Bitmap] wrapping decoded pixel buffers.
+ *
+ * @property width The horizontal pixel resolution.
+ * @property height The vertical pixel resolution.
+ * @property channel The number of color channels (4 for ARGB).
+ * @property pixels Packed pixel data as an array of 32-bit integers.
+ */
 class AndroidBitmap(
     override val width: Int,
     override val height: Int,
@@ -18,6 +26,12 @@ class AndroidBitmap(
     override val pixels: IntArray,
 ) : Bitmap
 
+/**
+ * Platform actual decoding encoded image [bytes] on Android via [BitmapFactory].
+ *
+ * @param bytes The raw encoded image byte array.
+ * @return A decoded [Bitmap] instance with Y-axis flipped for texture orientation.
+ */
 actual suspend fun createBitmap(bytes: ByteArray): Bitmap {
     val matrix = Matrix()
     val bitmap =

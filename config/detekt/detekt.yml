@@ -94,7 +94,12 @@ comments:
     matchDeclarationsOrder: true
     allowParamOnConstructorProperties: false
   UndocumentedPublicClass:
-    active: false
+    active: true
+    includes: &documentedModulesIncludes
+      - '**/awake/core/color/**'
+      - '**/awake/core/image/**'
+      - '**/awake/engine/bootstrap/**'
+      - '**/awake/heroicons/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true
@@ -102,11 +107,13 @@ comments:
     searchInInnerInterface: true
     searchInProtectedClass: false
   UndocumentedPublicFunction:
-    active: false
+    active: true
+    includes: *documentedModulesIncludes
     excludes: *testSourceSetExcludes
     searchProtectedFunction: false
   UndocumentedPublicProperty:
-    active: false
+    active: true
+    includes: *documentedModulesIncludes
     excludes: *testSourceSetExcludes
     searchProtectedProperty: false
 
