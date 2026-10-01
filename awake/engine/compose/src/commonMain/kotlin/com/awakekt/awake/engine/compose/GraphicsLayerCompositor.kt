@@ -27,6 +27,17 @@ class GraphicsLayerCompositor {
     private var frameTargets: FrameTargets? = null
     private val images = ImageTextures()
 
+    /**
+     * Composites offscreen graphics layers and blends destination-sampled primitives into resolved draw primitives.
+     *
+     * @param renderer The renderer used to allocate render targets and draw UI primitives to textures.
+     * @param primitives The top-level UI draw primitives to composite.
+     * @param layers The active graphics layer frames rendered during the current frame.
+     * @param font The active font used for text rendering within composited textures.
+     * @param viewportWidth The width of the viewport in pixels.
+     * @param viewportHeight The height of the viewport in pixels.
+     * @return The list of resolved UI draw primitives ready for final presentation.
+     */
     fun composite(
         renderer: Renderer,
         primitives: List<UiDrawPrimitive>,

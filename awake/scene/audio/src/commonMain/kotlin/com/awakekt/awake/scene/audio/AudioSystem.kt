@@ -19,11 +19,19 @@ import kotlin.math.sqrt
  *
  * Scans entities for [AudioSource] components, computes 3D spatial attenuation and panning
  * relative to the active [AudioListener] entity, and updates playback.
+ *
+ * @param audioPlayer The underlying player used to trigger and manage audio playback.
  */
 class AudioSystem(
     private val audioPlayer: AudioPlayer,
 ) : System {
 
+    /**
+     * Updates spatial audio emitters and listeners across the simulation world.
+     *
+     * @param world The ECS simulation world.
+     * @param delta Time elapsed in seconds since the previous update frame.
+     */
     override fun update(world: World, delta: Float) {
         val listenerEntity = world.query(AudioListener::class, Transform::class).firstOrNull()
         val listenerPos = listenerEntity?.let { world.get<Transform>(it)?.position } ?: Vec3f.ZERO

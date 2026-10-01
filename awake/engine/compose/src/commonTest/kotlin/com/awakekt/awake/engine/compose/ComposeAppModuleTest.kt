@@ -45,6 +45,10 @@ private class RecordingRenderer : NoopRenderer() {
     var uiDraws = 0
     var presents = 0
 
+    override fun presentWithoutScene() {
+        presents += 1
+    }
+
     override fun drawUi(
         primitives: List<com.awakekt.awake.core.graphics2d.UiDrawPrimitive>,
         font: UiFont?,

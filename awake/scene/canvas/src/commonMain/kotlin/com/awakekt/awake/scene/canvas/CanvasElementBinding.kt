@@ -24,6 +24,11 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
     override fun export(world: World, entity: Entity, component: CanvasElement): SceneCanvasElement =
         component.toSceneComponent()
 
+    /**
+     * Converts this schema document representation to a runtime ECS [CanvasElement] component.
+     *
+     * @return The hydrated runtime [CanvasElement].
+     */
     fun SceneCanvasElement.toComponent(): CanvasElement = CanvasElement().also {
         it.kind = kind
         it.anchor = anchor
@@ -42,6 +47,11 @@ object CanvasElementBinding : SceneComponentBinding<CanvasElement, SceneCanvasEl
         it.touchOnly = touchOnly
     }
 
+    /**
+     * Serializes this runtime ECS [CanvasElement] component to a scene document [SceneCanvasElement].
+     *
+     * @return The serializable [SceneCanvasElement] representation.
+     */
     fun CanvasElement.toSceneComponent(): SceneCanvasElement = SceneCanvasElement(
         kind = kind,
         anchor = anchor,

@@ -29,18 +29,25 @@ import com.awakekt.awake.scene.rendering.animation.Animator
  * A node with a `target` input acts on the blueprint's own entity when nothing is wired to it.
  */
 object SceneNodes {
-    /** Every scene node, bound to [scene]. */
+    /**
+     * Every scene node, bound to [scene].
+     *
+     * @param scene The blueprint scene execution bridge.
+     * @return List of all instantiated scene blueprint nodes.
+     */
     fun all(scene: BlueprintScene): List<BlueprintNode> =
         listOf(OnSensorEnter, OnSensorExit, Self, FindByName(scene), Destroy(scene), PlayAnimation(scene))
 
     /** Fired on a sensor's entity when a body starts touching it; `other` is the body's entity. */
     object OnSensorEnter : EventNode {
+        /** Event type identifier for sensor contact entry. */
         const val TYPE = "event.sensor.enter"
         override val spec = sensorEvent(TYPE, "On Sensor Enter")
     }
 
     /** Fired on a sensor's entity when a body stops touching it; `other` is the body's entity. */
     object OnSensorExit : EventNode {
+        /** Event type identifier for sensor contact exit. */
         const val TYPE = "event.sensor.exit"
         override val spec = sensorEvent(TYPE, "On Sensor Exit")
     }
@@ -57,7 +64,11 @@ object SceneNodes {
         override fun evaluate(ctx: BlueprintContext) = ctx.setEntity(ENTITY_OUT, ctx.owner)
     }
 
-    /** The live entity with a `Name`, or no entity. */
+    /**
+     * The live entity with a `Name`, or no entity.
+     *
+     * @param scene The blueprint scene execution bridge.
+     */
     class FindByName(private val scene: BlueprintScene) : PureNode {
         override val spec = NodeSpec(
             type = "entity.find-by-name",
@@ -74,7 +85,11 @@ object SceneNodes {
         }
     }
 
-    /** Destroys the target and its physics body. */
+    /**
+     * Destroys the target and its physics body.
+     *
+     * @param scene The blueprint scene execution bridge.
+     */
     class Destroy(private val scene: BlueprintScene) : ActionNode {
         private val then = Step.Continue(THEN)
         override val spec = NodeSpec(
@@ -92,7 +107,11 @@ object SceneNodes {
         }
     }
 
-    /** Plays a clip on the target's `Animator`. A missing animator or clip is skipped. */
+    /**
+     * Plays a clip on the target's `Animator`. A missing animator or clip is skipped.
+     *
+     * @param scene The blueprint scene execution bridge.
+     */
     class PlayAnimation(private val scene: BlueprintScene) : ActionNode {
         private val then = Step.Continue(THEN)
         override val spec = NodeSpec(

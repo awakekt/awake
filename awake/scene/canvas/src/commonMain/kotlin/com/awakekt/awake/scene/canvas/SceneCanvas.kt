@@ -34,12 +34,16 @@ import com.awakekt.awake.core.text.theme.TextStyle
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 
+context(_: Composer)
 /**
  * Draws [world]'s visible [CanvasElement]s over whatever is beneath, lowest [CanvasElement.order]
  * first. Each element is tagged `canvas-element-<entity id>` for tests and editor picking.
  * [CanvasElement.touchOnly] elements are drawn only when [showTouchControls] is true.
+ *
+ * @param world The ECS world containing canvas entities to render.
+ * @param modifier Layout modifier applied to the overlay container.
+ * @param showTouchControls Whether touch-only elements should be displayed.
  */
-context(_: Composer)
 fun SceneCanvas(world: World, modifier: Modifier = Modifier, showTouchControls: Boolean = false) {
     val elements = ArrayList<Pair<Entity, CanvasElement>>()
     world.family<CanvasElement>().forEach { entity, element ->

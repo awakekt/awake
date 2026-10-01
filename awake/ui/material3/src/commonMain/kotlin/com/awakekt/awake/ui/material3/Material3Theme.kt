@@ -15,7 +15,16 @@ import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.provides
 import com.awakekt.awake.core.color.Color
 
-/** The Material 3 color roles used by the initial Material component surface. */
+/**
+ * The Material 3 color roles used by the initial Material component surface.
+ *
+ * @property primary The primary brand accent color.
+ * @property onPrimary Color for content atop [primary] surfaces.
+ * @property background Page and screen background color.
+ * @property onBackground Color for content atop [background] surfaces.
+ * @property surface Container and card surface color.
+ * @property onSurface Color for text and icons atop [surface] containers.
+ */
 data class Material3ColorScheme(
     val primary: Color,
     val onPrimary: Color,
@@ -35,15 +44,23 @@ val LightMaterial3ColorScheme = Material3ColorScheme(
     onSurface = Color.fromHex(0x1C1B1F),
 )
 
+/**
+ * CompositionLocal providing the ambient [Material3ColorScheme] to the current UI subtree.
+ */
 val LocalMaterial3ColorScheme: CompositionLocal<Material3ColorScheme> =
     compositionLocalOf { LightMaterial3ColorScheme }
 
-/** The nearest [Material3ColorScheme], defaulting to [LightMaterial3ColorScheme]. */
 context(_: Composer)
+/** The nearest [Material3ColorScheme], defaulting to [LightMaterial3ColorScheme]. */
 val material3ColorScheme: Material3ColorScheme get() = LocalMaterial3ColorScheme.current
 
-/** Provides [colorScheme] to Material 3 components in [content]. */
 context(_: Composer)
+/**
+ * Provides [colorScheme] to Material 3 components in [content].
+ *
+ * @param colorScheme The active Material 3 color palette to bind into ambient scope.
+ * @param content The composable content subtree inheriting this theme.
+ */
 fun provideMaterial3Theme(
     colorScheme: Material3ColorScheme = LightMaterial3ColorScheme,
     content: context(Composer) () -> Unit,
