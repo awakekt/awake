@@ -48,17 +48,17 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
     override fun update(world: World, delta: Float) {
         frameStamp += 1
         val transformType = world.typeId(Transform::class)
-        // The world keeps each family up to date and returns the same one for the same spec.
-        val statics = world.family { all(Transform::class, StaticTransform::class) }
+        // The world keeps each family up to date and returns the same one each time; this one also
+        // holds its transforms, so walking it looks nothing up.
+        val statics = world.family<Transform, StaticTransform>()
         if (!skipsStatic || statics.size == 0) {
             world.queryEach<Transform> { entity, transform ->
                 propagate(world, transformType, entity, transform)
             }
             return
         }
-        statics.forEach { entity ->
-            val transform = world.get<Transform>(entity, transformType)
-            if (transform != null && !isBuilt(entity.id, transform)) propagate(world, transformType, entity, transform)
+        statics.forEach { entity, transform, _ ->
+            if (!isBuilt(entity.id, transform)) propagate(world, transformType, entity, transform)
         }
         world.family { all(Transform::class).exclude(StaticTransform::class) }.forEach { entity ->
             world.get<Transform>(entity, transformType)?.let { propagate(world, transformType, entity, it) }
