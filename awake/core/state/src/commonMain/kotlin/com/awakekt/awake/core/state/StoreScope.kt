@@ -26,6 +26,8 @@ interface StoreScope : AutoCloseable {
 
 /**
  * Default implementation of [StoreScope] backed by a [SupervisorJob].
+ *
+ * @param dispatcher Coroutine dispatcher used for store background execution.
  */
 class DefaultStoreScope(
     dispatcher: CoroutineDispatcher = Dispatchers.Default,

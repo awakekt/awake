@@ -12,6 +12,10 @@ import com.awakekt.awake.ecs.World
 /**
  * Updates or creates a [Transform] component on [entity] in a single safe call.
  *
+ * @param entity The target entity receiving the transform update.
+ * @param position Optional new local position vector.
+ * @param rotation Optional new local Euler rotation vector in radians.
+ * @param scale Optional new local scale vector.
  * @return The updated or created [Transform] instance.
  */
 fun World.setTransform(

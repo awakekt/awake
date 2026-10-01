@@ -22,9 +22,17 @@ import kotlin.reflect.KClass
 
 /**
  * A character that walks and falls through physics instead of through walls, as authored in a scene.
+ *
  * Its body is an upright capsule of [radius] around a cylinder of `2 * halfHeight`. It climbs steps
  * up to [stepHeight] and walks up slopes to [slopeLimit] radians. It jumps at [jumpSpeed] units per
  * second, and a [jumpSpeed] of 0 means it can't jump. [gravity] is its downward acceleration.
+ *
+ * @property radius The radius of the character's upright capsule shape.
+ * @property halfHeight Half the height of the cylindrical section of the capsule.
+ * @property stepHeight Maximum vertical height the character can climb as a step.
+ * @property slopeLimit Maximum slope angle in radians the character can walk up.
+ * @property jumpSpeed Upward impulse speed applied when jumping.
+ * @property gravity Downward gravitational acceleration acting on the character.
  */
 @Serializable
 @SerialName("character_controller")
@@ -48,6 +56,10 @@ data class SceneCharacterController(
 /**
  * The live character. [CharacterControllerSystem] builds its [KinematicCharacterController] on the
  * first update, once a physics world exists.
+ *
+ * @property config Character kinematic configuration including collision shape and slope limits.
+ * @property jumpSpeed Upward impulse velocity applied during jumps.
+ * @property gravity Downward gravitational acceleration acting on this character.
  */
 class CharacterController(
     val config: CharacterConfig,
@@ -61,6 +73,7 @@ class CharacterController(
     val isGrounded: Boolean get() = controller?.isGrounded ?: false
 }
 
+/** Bi-directional binding connecting [CharacterController] with its serializable [SceneCharacterController] schema. */
 object CharacterControllerBinding : SceneComponentBinding<CharacterController, SceneCharacterController> {
     override val componentClass: KClass<CharacterController> = CharacterController::class
     override val schemaClass: KClass<SceneCharacterController> = SceneCharacterController::class
@@ -92,7 +105,11 @@ object CharacterControllerBinding : SceneComponentBinding<CharacterController, S
     )
 }
 
-/** Registers `character_controller` for loading and saving. */
+/**
+ * Registers `character_controller` for loading and saving.
+ *
+ * @return This registry instance for chaining.
+ */
 fun SceneComponentRegistry.registerCharacter(): SceneComponentRegistry = register(CharacterControllerBinding)
 
 private const val DEFAULT_RADIUS = 0.5f

@@ -20,6 +20,8 @@ import com.awakekt.awake.ecs.World
  *
  * Names are unique within one scene document. When loaded scenes share a name, the first entity the
  * [Name] family yields wins.
+ *
+ * @param world The active ECS world queried for named entities.
  */
 class EntityNames(private val world: World) {
     private val byName = HashMap<String, Entity>()
@@ -28,7 +30,12 @@ class EntityNames(private val world: World) {
     internal var rebuilds = 0
         private set
 
-    /** The live entity named [name], or `null`. */
+    /**
+     * The live entity named [name], or `null`.
+     *
+     * @param name The target entity name to look up.
+     * @return The matching live [Entity], or `null` if not found.
+     */
     fun find(name: String): Entity? {
         val cached = byName[name]
         if (cached != null && isNamed(cached, name)) return cached

@@ -5,4 +5,9 @@
  */
 package com.awakekt.awake.core.config
 
+/**
+ * Returns the default cascading [EnvSource] tailored for the active runtime platform.
+ *
+ * @return An [EnvSource] loading system environment variables, local files, or platform stores.
+ */
 actual fun defaultPlatformEnvSource(): EnvSource = MapEnvSource(emptyMap())

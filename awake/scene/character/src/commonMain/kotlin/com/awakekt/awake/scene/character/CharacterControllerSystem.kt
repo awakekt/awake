@@ -24,6 +24,9 @@ import com.awakekt.awake.scene.physics.character.KinematicCharacterController
  * Register it in the fixed phase, after `PhysicsSystem`, so it collides with bodies that step
  * built, and falls the same on every frame rate. Don't also run `MatrixRelativeMovementSystem`
  * on these entities: it moves them straight through walls.
+ *
+ * @param physicsWorld The physics simulation world in which the character controller operates.
+ * @param defaultSpeed Default horizontal locomotion speed in units per second when intent does not specify one.
  */
 class CharacterControllerSystem(
     private val physicsWorld: PhysicsWorld,
