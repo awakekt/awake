@@ -121,10 +121,7 @@ abstract class AwakeRepositoryVerificationTask : DefaultTask() {
         val failures = mutableListOf<String>()
         trackedFiles().filter { it.fileName.toString().endsWith(".md") }.forEach { path ->
             val relative = relative(path)
-            if (relative.startsWith("docs/audits/") || relative.startsWith("docs/handoffs/") ||
-                relative.startsWith("docs/tasks/archive/") || relative.startsWith("docs/archive/") ||
-                relative.startsWith("docs/release-notes-")
-            ) return@forEach
+            if (relative.startsWith("docs/audits/")) return@forEach
             pattern.findAll(Files.readString(path)).forEach { match ->
                 val coordinate = "com.awakekt.awake:${match.groupValues[1]}"
                 val version = match.groupValues[2]

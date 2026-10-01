@@ -49,7 +49,7 @@ TARGET_IMPORT = re.compile(r"^import io\.github\.awakelab\.awake\.compose\.", re
 # because the adoption plan folds them into their variants rather than porting them one for one.
 DECLARATION = re.compile(r"^(?:internal |public )?fun (?:[\w.<>]+\.)?(shadcn\w+)\s*\(", re.M)
 
-# `Ui`-prefixed types are the names 2026-08-22-ui-prefix-rename-plan.md retires, and its rule is
+# `Ui`-prefixed types are the names the Ui-prefix rename retires, and its rule is
 # opportunistic: rename what a file owns as it is touched, never introduce a new one. A ported file
 # still naming them has taken the legacy alias where a canonical name exists, so it is worth seeing
 # next to the port status rather than found in a sweep later.
@@ -135,7 +135,7 @@ def render(reports: list[FileReport]) -> str:
         lines.append(
             f"Ui* names still used by ported files: {', '.join(sorted(stragglers))}"
         )
-        lines.append("Ported code takes the canonical name -- see 2026-08-22-ui-prefix-rename-plan.md.")
+        lines.append("Ported code takes the canonical name.")
     if files_left:
         lines.append("")
         lines.append("A file counts as ported when it no longer imports ui-core or ui-headless.")

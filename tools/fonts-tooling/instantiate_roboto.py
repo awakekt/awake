@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # GENERATOR: writes font binaries into awake/ui/text resources.
-# Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; visual tooling tests cover the helper itself.
+# Kinds are defined in tools/README.md. Only a GATE can fail a build; visual tooling tests cover
+# the helper itself.
 """Instantiates the static Roboto faces Awake ships from the variable source.
 
 google/fonts ships Roboto as a single variable font (ofl/roboto/Roboto[wdth,wght].ttf), so the

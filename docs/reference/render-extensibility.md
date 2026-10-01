@@ -88,8 +88,7 @@ name.
 
 **The declaration rule is met.** `contentExemptBackendFiles` is empty as of `21e820127`; no
 backend file declares skybox, shadow, particle, fog, terrain, water, decal, billboard or
-occlusion. It ran 14 -> 0 across
-[2026-08-23-backend-content-split-plan.md](../tasks/2026-08-23-backend-content-split-plan.md).
+occlusion. It ran 14 -> 0 across the backend content split.
 
 **Do not read that as "the backends carry no content."** `verifyBackendLayering` matches the
 vocabulary against *declared names* only -- `class`/`interface`/`object`/`fun` plus a name.

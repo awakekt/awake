@@ -5,9 +5,7 @@ player character, and the order to close it in.
 
 Scope: `:awake:physics:api`, `:awake:backend:jolt`, `:awake:scene:physics`, and the seams
 where they meet world streaming and character movement. Rendering-side character work
-(modular skeletal meshes, terrain LOD) is covered separately in
-[RFC_OPEN_WORLD_ENGINE_SUBSYSTEMS.md](../RFC_OPEN_WORLD_ENGINE_SUBSYSTEMS.md); this plan
-does not repeat it.
+(modular skeletal meshes, terrain LOD) is out of scope for this plan.
 
 ## Current state
 

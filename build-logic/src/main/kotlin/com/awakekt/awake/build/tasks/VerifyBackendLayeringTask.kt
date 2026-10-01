@@ -68,9 +68,8 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
      * tracked-debt ledger, not an opt-out. This includes imports, qualified references and
      * aliases, so an alias cannot hide a scene dependency from the gate.
      *
-     * Shrink this list, never grow it. It reaches empty when the draw-preparation phase of
-     * `docs/tasks/2026-08-23-rhi-gpudevice-plan.md` lands, which is that phase's completion
-     * test.
+     * Shrink this list, never grow it. Empty is the completion test for the RHI draw-preparation
+     * work.
      */
     @get:Input
     abstract val exemptFiles: ListProperty<String>
@@ -79,8 +78,7 @@ abstract class VerifyBackendLayeringTask : DefaultTask() {
      * Path suffixes still allowed to declare [forbiddenContentVocabulary] -- the same kind of
      * tracked-debt ledger as [exemptFiles], for the same reason: the rule arrived after the code.
      *
-     * Shrink it, never grow it. Empty is the completion test for phase 4b of
-     * `docs/tasks/2026-08-23-rhi-gpudevice-plan.md`.
+     * Shrink it, never grow it. Empty is its completion test.
      */
     @get:Input
     abstract val contentExemptFiles: ListProperty<String>

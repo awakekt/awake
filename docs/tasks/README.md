@@ -1,8 +1,7 @@
 # Open items
 
-What is actually outstanding, in one place. `docs/tasks/` holds fifteen plan documents, each with
-its own `Status:` line, and reading all fifteen to find out what is left is the problem this file
-solves.
+What is actually outstanding, in one place. `docs/tasks/` holds plan documents, each with its own
+`Status:` line, and reading all of them to find out what is left is the problem this file solves.
 
 **Rule for this file:** a row here restates a status that lives in the plan itself. When a plan's
 status changes, change it there first — this index follows, it does not lead. An item with no plan
@@ -15,45 +14,10 @@ Last reconciled against the tree: **2026-08-28**.
 | Plan | Status |
 |---|---|
 | [render-architecture-finalization](2026-09-09-render-architecture-finalization-plan.md) | **draft** — audited at `36fe7c2f0`; phases assigned to Astra 6 (architecture/integration) and Gemini 3.8 Flash (bounded follow-ups). Start with A0 flicker recovery; runtime work not started. |
-| [vendor-the-reference-app-components](2026-08-23-vendor-the-reference-app-components.md) | **done** — generator + re-vendor landed; see what it exposed |
-| [ui-tooling-formalization](2026-08-23-ui-tooling-formalization-plan.md) | **done** — five gates, all generators gated or documented as ungateable |
-| [shadcn-palette-from-table](2026-08-23-shadcn-palette-from-table-plan.md) | **done** — all five steps plus the three formalisation gaps |
-| [shadcn-parity-handoff](2026-08-25-shadcn-parity-handoff.md) | **active handoff** — current commits, evidence, resume procedure, and immediate queue for the parity owner |
-| [stage-3](2026-08-23-stage-3-plan.md) | **planned, not started** — shadcn straight onto `:compose:foundation`; three layers become two. **Nothing blocked**: both prerequisites closed 2026-08-23 |
-| [font-belongs-in-core-graphics](2026-08-23-font-belongs-in-core-graphics.md) | **planned** — `DrawCommand.Glyph` carries atlas UVs from `core:graphics2d` while the atlas lives two modules up |
-| [shadcn-compose-adoption](2026-08-23-shadcn-compose-adoption.md) | analysis — feeds Stage 3 step 3; four patterns to take, two not to |
-| [compose-node-local-shadow](2026-08-25-compose-node-local-shadow-plan.md) | **implemented** — node-local `drawShadow`, Compose-shaped `dropShadow`, and the linear-gradient brush subset; intentionally narrower than `graphicsLayer` |
-| [compose-stage-2-invalidation](2026-08-25-compose-stage-2-invalidation-plan.md) | **in progress** — explicit retained skip scopes and UI-local state-read invalidation landed; select and measure one Studio consumer |
-| [does-a-headless-tier-earn-itself-back](2026-08-23-does-a-headless-tier-earn-itself-back.md) | **open question** — answered by evidence gathered during Stage 3, not before |
-| [rhi-gpudevice](2026-08-23-rhi-gpudevice-plan.md) | **in progress** — phases 0-4 done, 4b closed by the content split; phase 5 and the import-ledger phase remain |
-| [what-nothing-checks](2026-08-24-what-nothing-checks-plan.md) | **in progress** — CI gates done; open: triage the 767-finding audit before wiring it, and the unenforced per-frame allocation rule |
-| [heightfield-physics-shape](2026-08-24-heightfield-physics-shape-plan.md) | **in progress** — common collision contract and verified jolt-jni mapping; iOS/wasmJs capability gaps are explicit; terrain rendering out of scope |
-| [terrain-rendering](2026-08-24-terrain-rendering-plan.md) | **in progress** — shared asset and single-grid Studio sample landed; local surface queries, then tiled patches reusing existing MeshBounds/LodGroup before crack-safe terrain LOD and optional collision lifecycle |
 | [terrain-surface-layers](2026-09-27-terrain-surface-layers-plan.md) | **proposed** — unbounded layer palette with a fixed-cost top-4 control map; Core gains a terrain surface seam and scene binding (amends D28); three open decisions block implementation |
 | [node-graph](2026-09-27-node-graph-plan.md) | **active** — `:awake:node-graph` model and node registry plus a `:awake:ui:node-graph-canvas` canvas (nothing in `:awake:compose`) for Studio (coders + non-coders, LLM later); consumers in order: blueprints, AI state trees, shader graphs. Model, registry and canvas are done |
 | [blueprint-runtime](2026-09-27-blueprint-runtime-plan.md) | **active** — event-graph game logic as data, run by one ECS system and reloaded live from Studio; seven design decisions made (execution + data wires, compiled program + per-entity slots, latent actions, live reload, plain-class nodes, trace, Logic/Presentation effect); prerequisites and the `:awake:blueprint` runtime are done, `:awake:scene:blueprint` is #123 |
-| [shader-hot-reload](2026-09-27-shader-hot-reload-plan.md) | **done** — replace a running shader with runtime-built ASL (emitWgsl → naga → in-place Vulkan pipeline swap behind the `ShaderReplacement` capability), with a headless gate, a showcase key-press sample and the ASL dev-loop docs; limits (WebGPU, depth-only pipelines, vertex-input checks) are open follow-ups |
 | [shader-graph](2026-09-27-shader-graph-plan.md) | **proposed** — graph → ASL → WGSL with terrain and mesh targets; pack shaders are targets, pack functions and ASL builtins are nodes; waits on node-graph phases 1–2, shader hot reload and a per-material shader render plan |
-| [animation-player](2026-08-24-animation-player-plan.md) | **in progress** — player, glTF adapter, scene bridge, and CesiumMan wiring landed; Studio visual/performance verification remains |
-| [render-plan-and-app-seam](2026-08-24-render-plan-and-app-seam-plan.md) | **done** — RenderPlan, backend capabilities, shared UI shader list; `:awake:engine:app` deleted, and the per-target entry point turned out to be irreducible |
-| [ui-render-pipeline-contract](2026-08-28-ui-render-pipeline-contract-plan.md) | **implemented** — common font sampling and pipeline descriptors, shared UI preparation, and descriptor-driven Vulkan/WebGPU UI pipelines; resource manager and frame-loop work remain separate |
-| [backend-content-split](2026-08-23-backend-content-split-plan.md) | **done** — every phase; exemption list 14 → 0. But empty means "no content in a declared name": RendererDraw3D still builds a shadow box and the check cannot see it |
-| [ui-prefix-rename](2026-08-22-ui-prefix-rename-plan.md) | planned, not started — blast radius measured; **gated on `:awake:compose` finishing** (`UiDensity` collides with compose's `Density`) |
-| [split-uipath](2026-08-22-split-uipath-plan.md) | planned, not started |
-| [retire-global-density](2026-08-22-retire-global-density-plan.md) | planned, not started |
-| [pathfilltessellation-cleanup](2026-08-22-pathfilltessellation-cleanup-plan.md) | planned, not started |
-| [ecs-adaptive-bulk-mutation](2026-08-21-ecs-adaptive-bulk-mutation-plan.md) | narrowed — no implementation authorized by the document |
-| [architecture-governance-standardization](2026-08-20-architecture-governance-standardization-plan.md) | draft — no rename authorized |
-| [template-repository](2026-08-20-template-repository-plan.md) | draft |
-| [modifier-layout-compose-parity](2026-08-21-modifier-layout-compose-parity-plan.md) | no status line |
-| [render-3d-bugfixes-and-shader-module-split](2026-08-21-render-3d-bugfixes-and-shader-module-split-plan.md) | no status line |
-| [shadcn-parity-tool](2026-08-21-shadcn-parity-tool-plan.md) | no status line |
-| [ui-tooling-simplification](2026-08-16-ui-tooling-simplification.md) | superseded in practice by the formalization plan; retirement criteria still live there |
-| [navgrid-navigation](2026-08-30-navgrid-navigation-plan.md) | **draft, not started** — heightmap-derived walkability grid + A* in `commonMain`, replacing the `recast4j` backend that left with `samples:scene3d-playground`. Gate is met: terrain clipmap draw is complete |
-| [behavior-tree-state-machine](2026-08-30-behavior-tree-state-machine-plan.md) | **draft** — research + sequencing; one hybrid runtime instead of separate BT and FSM frameworks, LLM confined to authoring time and an off-frame director. Phase 0 (make `ChaseAiSystem` query-driven) is the only part not gated behind terrain/streaming |
-
-Three plans carry no `Status:` line at all, so nothing states whether they are live. That is its
-own small item — see below.
 
 ## Loose items
 
@@ -82,8 +46,7 @@ Two conclusions this item reached are worth keeping, because both were re-derive
 ### Three shadcn parity failures, found by fixing the reference
 
 Discovered when the re-vendor corrected components that had drifted from upstream. **None may be
-re-baselined** — the reference is now the correct one. Full framing in
-[vendor-the-reference-app-components](2026-08-23-vendor-the-reference-app-components.md).
+re-baselined** — the reference is now the correct one.
 
 | Failure | Evidence | Shape of the fix |
 |---|---|---|
@@ -164,10 +127,9 @@ confirming each survives, rather than asserting it.
   text path is also uncovered by any test. Text renders through the embedded bitmap font, which is
   the standing decision until quality demands otherwise. Recorded because unused code is
   indistinguishable from dead code without this line — it was deleted once on that reading.
-- ~~**`:awake:core:text` belongs in `:compose:ui`**~~ — superseded by
-  [font-belongs-in-core-graphics](2026-08-23-font-belongs-in-core-graphics.md), which splits it
-  correctly: the *atlas* goes down to `core:graphics2d` beside the `Glyph` that carries its UVs,
-  and only `TextStyle`/`FontWeight` go up to `:compose:ui`. Original note, for the record:
+- ~~**`:awake:core:text` belongs in `:compose:ui`**~~ — superseded by a correct split: the *atlas*
+  goes down to `core:graphics2d` beside the `Glyph` that carries its UVs, and only
+  `TextStyle`/`FontWeight` go up to `:compose:ui`. Original note, for the record:
   `androidx.compose.ui.text.TextStyle` and `...text.font.FontWeight` are compose-ui's. 11 files
   (9 font, 1 scope, 1 theme), consumers are `ui-core`, `ui-headless` and `:compose:ui`, and its
   `commonMain` depends only on `core:math2d`/`core:color` — so no cycle, unlike before. Deliberately
@@ -184,9 +146,6 @@ confirming each survives, rather than asserting it.
 
 ### Housekeeping
 
-- **Three plans have no `Status:` line** (`modifier-layout-compose-parity`,
-  `render-3d-bugfixes-and-shader-module-split`, `shadcn-parity-tool`), so nothing says whether they
-  are live, superseded or done. Adding one to each is cheap and makes this index honest.
 - **`AGENTS.md`/`GEMINI.md` drift from `CLAUDE.md`.** Pre-existing; the skills repository owns
   bundle synchronization, while Awake verifies only its pinned consumer lock.
 - **`ronjunevaldoz/kmp-agent-skills#6`** — docs-hygiene consumer-project gap, open.

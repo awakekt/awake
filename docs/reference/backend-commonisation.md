@@ -36,8 +36,7 @@ remaining commonisation work is the source-resource preparation seam and feature
 not moving driver API wrappers into `render:passes`. The per-package table is generated from the
 current tree with the tracked-source line count command above; rerun it after a large refactor. The content-feature provider
 list still adds a per-backend `*ContentFeature` and `SkyboxContentFeature`; those files remain
-ledger entries for phase 3 of
-[the content-split plan](../tasks/2026-08-23-backend-content-split-plan.md) deletes. A pass that
+ledger entries. A pass that
 moves the number the wrong way is worth recording, not hiding.
 
 ## Read the percentage carefully

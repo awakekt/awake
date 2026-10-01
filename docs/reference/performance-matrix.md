@@ -34,14 +34,13 @@ Focused cached-type-ID mutation decision (3 forks, 5 warmups, 5 measurements):
 | Maintained-family churn | 10k | 2,358.154 | **2,475.613** | +5.0% |
 | Maintained-family churn | 100k | 105.174 | **111.574** | +6.1% |
 
-At 100k, normalized family-churn allocation dropped about 90%. See the
-[cached type-ID churn report](../tasks/archive/2026-08-21-ecs-cached-type-id-churn.md).
+At 100k, normalized family-churn allocation dropped about 90%.
 
 The follow-up no-family/`Family1`/`Family2` decomposition found CPU/index maintenance rather than
 GC as the remaining cost. A fused `Family2` sparse-update candidate measured -1.9% with overlapping
 confidence intervals and was reverted. The next gated lane is
-[adaptive bulk structural mutation](../tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md), which
-aims to avoid repeated work across large batches instead of adding another micro-cache.
+adaptive bulk structural mutation, which aims to avoid repeated work across large batches instead
+of adding another micro-cache.
 
 Focused Kotlin 2.4.10 tag-family decision run (3 forks, 5 warmups, 5 measurements,
 1 second each, Temurin JDK 17.0.19):
@@ -53,10 +52,6 @@ Focused Kotlin 2.4.10 tag-family decision run (3 forks, 5 warmups, 5 measurement
 | Tag-family churn | 10k | 3,158.275 | **3,209.308** | +1.6% |
 | Tag-family churn | 100k | 284.483 | **304.939** | +7.2% |
 
-See the [family tag-column report](../tasks/archive/2026-08-21-ecs-family-tag-columns.md) for
-confidence errors, normal-component controls, GC results, and the Flecs/Fleks/EnTT/Bevy/Unity
-architecture matrix.
-
 Pure-archetype decision control (same Kotlin/JDK and 3x5x5 methodology):
 
 | Workload | Scale | Current Awake | Hybrid control | Pure archetype | Leader |
@@ -66,8 +61,7 @@ Pure-archetype decision control (same Kotlin/JDK and 3x5x5 methodology):
 | 256-signature required/excluded query | 100k | **440,046.129** | 27,879.333 | 205,277.897 | Awake |
 
 The pure control performs real table migration; the hybrid raw control keeps dynamic tags
-outside its stable table. Production remains sparse-set based. See the
-[storage-shape decision](../tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md).
+outside its stable table. Production remains sparse-set based.
 
 ---
 

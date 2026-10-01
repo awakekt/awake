@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # INVESTIGATION: crops by semantic node and diffs. Never records a baseline.
-# Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; visual tooling tests cover the helper itself.
+# Kinds are defined in tools/README.md. Only a GATE can fail a build; visual tooling tests cover
+# the helper itself.
 """Crop an Awake preview by semantic node and compare it with a shadcn case PNG.
 
 The local shadcn reference app already emits component-hugging screenshots through

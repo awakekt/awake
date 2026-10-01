@@ -64,8 +64,7 @@ real application behavior, not as a default wrapper.
 
 ## Planned direction
 
-The [scene-session simplification plan](../../../docs/tasks/2026-08-25-scene-session-simplification-plan.md)
-will make an optional Compose app module and `SceneSession` install through this composition root.
+An optional Compose app module and `SceneSession` will install through this composition root.
 Platform remains UI-free. Once consumers migrate, duplicate module-to-root convenience paths are
 deprecation candidates; no new construction path should be added meanwhile.
 

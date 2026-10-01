@@ -31,8 +31,7 @@ import com.awakekt.awake.scene.core.transform.Transform
  * the same frame; running after answers it in the next. Neither is wrong, because a chaser keeps
  * steering along its previous route while a new one is outstanding.
  *
- * Chase only, not chase-*and*-avoid; dodge/avoid behaviour is a follow-up. See
- * docs/tasks/2026-08-30-behavior-tree-state-machine-plan.md for where composable behaviours go.
+ * Chase only, not chase-*and*-avoid; dodge/avoid behaviour is a follow-up.
  */
 class ChaseAiSystem : System {
 

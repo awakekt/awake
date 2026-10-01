@@ -7,7 +7,6 @@ a Compose-style scene API, a retained Compose-shaped UI stack, and a desktop edi
 ## Read This With
 
 - [docs/mvp-plan.md](mvp-plan.md) for the active roadmap
-- [docs/tasks.md](tasks.md) for current work lanes
 - [docs/reference/ui-ownership.md](reference/ui-ownership.md)
   for reusable UI boundaries
 - [docs/reference/api-layering.md](reference/api-layering.md)

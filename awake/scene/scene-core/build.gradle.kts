@@ -23,9 +23,8 @@ kotlin {
             api(project(":awake:ecs"))
             api(project(":awake:scene:document"))
             api(project(":awake:scene:binding"))
-            // WorldPartitionSystem schedules cell loads off the frame thread; see
-            // docs/tasks/2026-08-29-async-cell-streaming-plan.md. The only dependency this
-            // otherwise-lean module carries beyond math and the ECS.
+            // WorldPartitionSystem schedules cell loads off the frame thread. The only dependency
+            // this otherwise-lean module carries beyond math and the ECS.
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
         }

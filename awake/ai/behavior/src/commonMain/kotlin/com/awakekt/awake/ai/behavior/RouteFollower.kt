@@ -20,8 +20,7 @@ import kotlin.math.sqrt
  * replacement is outstanding, an unreachable answer clearing rather than stranding).
  *
  * This is the `MoveTo` leaf the decision-runtime plan predicted, arrived at from three concrete
- * behaviours rather than designed up front. See
- * docs/tasks/2026-08-30-behavior-tree-state-machine-plan.md.
+ * behaviours rather than designed up front.
  */
 interface RouteFollower {
     // Tuning values, and `var` because tuning is what they are for: the inspector edits them on

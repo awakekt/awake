@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # GATE: exit 1 means the committed token table is stale.
-# Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; visual tooling tests cover the helper itself.
+# Kinds are defined in tools/README.md. Only a GATE can fail a build; visual tooling tests cover
+# the helper itself.
 #
 # Two checks the shadcn reference pipeline needs and did not have. See
 # docs/reference/shadcn-reference-pipeline.md.

@@ -39,9 +39,9 @@ import kotlin.test.assertTrue
  * [VertexFormat.None] (no vertex buffer), `PipelineSpec.uniforms` (a uniform block the pipeline
  * owns rather than a material's), and [PipelineVariant.Background] (depth test and write off).
  *
- * The gate for phase 3 of docs/tasks/2026-08-23-backend-content-split-plan.md, which rebuilds the
- * skybox on exactly these. That conversion's failure mode is silent -- a misbound descriptor slot
- * compiles clean and draws nothing -- so this asserts pixels, not a successful build.
+ * The gate for the skybox, which is built on exactly these. The failure mode is silent -- a
+ * misbound descriptor slot compiles clean and draws nothing -- so this asserts pixels, not a
+ * successful build.
  *
  * Not skybox.wgsl: a GPU backend must not carry content even as a test fixture
  * (docs/reference/render-extensibility.md). `background_probe.wgsl` exercises the same mechanism

@@ -62,9 +62,8 @@ What carries over from Studio is behaviour, not source:
 
 ## Extension and session boundary
 
-The [framework/plugin plan](../2026-08-24-framework-boundary-and-plugin-ecosystem-plan.md) is the
-canonical definition of provider contracts, persistence, installation, permissions, and removal.
-This plan must not create a second registry model.
+Provider contracts, persistence, installation, permissions, and removal are defined once; this
+plan must not create a second registry model.
 
 `awake:editor` consumes these KMP-safe provider kinds:
 

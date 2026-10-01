@@ -26,12 +26,11 @@ import org.openjdk.jmh.annotations.Warmup
 import java.util.concurrent.TimeUnit
 
 /**
- * Batch-size and family-density profiling for the adaptive bulk structural mutation plan
- * (`docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md`, phase 0).
+ * Batch-size and family-density profiling for adaptive bulk structural mutation.
  *
  * Every method here is the `immediate` control: `World.add`/`World.remove` applied one mutation at
  * a time. Forced-incremental, forced-rebuild, and adaptive controls ship with the code they
- * measure (plan phases 1-3); there is nothing to select between yet.
+ * measure; there is nothing to select between yet.
  *
  * `FamilyMaintenanceProfilingBenchmarks` stays the sequential remove-all/add-all anchor at 10k and
  * 100k. This class adds the axes that one lacks: batch sizes below the world size, family density,

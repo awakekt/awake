@@ -25,10 +25,10 @@ import java.util.concurrent.TimeUnit
 /**
  * Head-to-head incremental vs forced-rebuild family maintenance, as a benchmark-only control.
  *
- * Tests the stop condition in `docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md` -- revert
- * if forced rebuild never beats incremental maintenance -- before phases 1 and 2 build a command
- * buffer. Both arms drive the same [ControlFamilyRegistry] over a `World` that maintains no family
- * of its own, so the only difference between them is when family maintenance happens.
+ * Tests the adaptive bulk mutation stop condition -- revert if forced rebuild never beats
+ * incremental maintenance -- before anything builds a command buffer. Both arms drive the same
+ * [ControlFamilyRegistry] over a `World` that maintains no family of its own, so the only
+ * difference between them is when family maintenance happens.
  *
  * Run alongside `BulkMutationProfilingBenchmarks.immediateMixedInterleaved`, which supplies the
  * store-only floor (arity 0) and the production incremental anchor (arity 1 and 2) in the same

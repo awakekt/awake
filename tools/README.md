@@ -103,7 +103,7 @@ Ordered as the pipeline runs: `fetch → extract → vendor → verify → captu
 | `extract_shadcn_tokens.py` | GENERATOR | After a fetch | Don't read `apps/v4/app/globals.css` — that is the docs site's own theme and it has genuinely diverged from the registry. `apps/v4/registry/themes.ts` is what ships. Checking the wrong file produces a false drift alarm |
 | `vendor_reference_components.py` | GENERATOR | After a fetch, before capturing | Don't hand-edit anything under `reference-app/src/ui/`. That folder was hand-copied once and 11 of 26 files had drifted from upstream, so every parity number taken against them was measured against the wrong component |
 | `verify_shadcn_reference.sh` | GATE | Before trusting any token number | Don't treat a pass as "we match shadcn". It proves the *table* matches the pin, not that Awake matches the table |
-| `capture_shadcn_local.py` | INVESTIGATION | After vendoring, or when adding a case | Don't recapture to make a failing test pass. A recapture that moves numbers must be reviewed as "what was the reference wrong about" — see the kbd/toggle entry in `docs/tasks/2026-08-23-vendor-the-reference-app-components.md` |
+| `capture_shadcn_local.py` | INVESTIGATION | After vendoring, or when adding a case | Don't recapture to make a failing test pass. A recapture that moves numbers must be reviewed as "what was the reference wrong about" |
 | `compare_parity.py` | INVESTIGATION | Diagnosing a specific visual difference | Don't cite its mismatch % as a fidelity score. It is only as good as the crop alignment; a `poor` crop row means the framing differs too much to conclude anything |
 | `port_progress.py` | INVESTIGATION | Checking how far Stage 3's port has got | Don't make it a gate. Mid-port it is red on purpose, and a gate that is red for weeks is one people stop reading — then it is still unread on the day it matters |
 
@@ -141,9 +141,6 @@ Live preview serving is optional convenience tooling. It is never a verification
 
 Read `docs/reference/ui-validation.md` for the required proof for a UI change, and
 `docs/reference/glossary/ui-testing.md` for plain-English test terms.
-
-The staged cleanup and retirement criteria live in
-[`docs/tasks/2026-08-16-ui-tooling-simplification.md`](../docs/tasks/2026-08-16-ui-tooling-simplification.md).
 
 ## Normal component workflow
 

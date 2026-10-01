@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # GENERATOR: one-shot: one SVG in, one Kotlin val out. No repo-wide re-run, so no staleness gate is possible.
-# Kinds are defined in docs/tasks/2026-08-23-ui-tooling-formalization-plan.md. Only a GATE can fail
-# a build; visual tooling tests cover the helper itself.
+# Kinds are defined in tools/README.md. Only a GATE can fail a build; visual tooling tests cover
+# the helper itself.
 """SVG -> Awake ImageVector Kotlin codegen.
 
 Parses an SVG file's <path> elements and emits a `val <name>: ImageVector =

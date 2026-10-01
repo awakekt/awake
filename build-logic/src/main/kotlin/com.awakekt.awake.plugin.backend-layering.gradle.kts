@@ -99,8 +99,7 @@ val exemptBackendFiles = emptyList<String>()
 
 /**
  * Files still declaring [backendContentVocabulary], tracked as debt. **Empty since 2026-08-24**
- * -- it ran 14 -> 0 across phases 1-4 of
- * `docs/tasks/2026-08-23-backend-content-split-plan.md`. Never grow it without a plan entry.
+ * -- it ran 14 -> 0 across the backend content split. Never grow it without a plan entry.
  *
  * Empty does NOT mean the backends carry no content, and nobody should read it that way. This
  * check only matches [DECLARATION] -- `class`/`interface`/`object`/`fun` followed by a name --

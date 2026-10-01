@@ -1,8 +1,8 @@
 # Awake Engine — MVP Plan
 
-The live roadmap. Completed work is summarised here in one line per phase and recorded in full
-in [archive/mvp-phase-log.md](archive/mvp-phase-log.md); decisions and their rationale live in
-[reference/decision-log.md](reference/decision-log.md). Keep this file about what is *next*.
+The live roadmap. Completed work is summarised here in one line per phase; decisions and their
+rationale live in [reference/decision-log.md](reference/decision-log.md). Keep this file about what
+is *next*.
 
 ## Vision
 
@@ -54,8 +54,7 @@ through a shared direct `ByteBuffer` / pinned memory is a later optimisation, no
 
 - Ktlint is still deferred — legacy code predates the formatting rules, so enabling it means a
   standalone `ktlintFormat` sweep.
-- Adaptive bulk structural mutation in the ECS — see
-  [tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md](tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md).
+- Adaptive bulk structural mutation in the ECS.
 - Extract `awake:core:math` — see
   [reference/module-architecture.md](reference/module-architecture.md).
 - WebGPU wireframe support is stored but never read, so the flag is inert on that backend.
@@ -74,5 +73,3 @@ through a shared direct `ByteBuffer` / pinned memory is a later optimisation, no
 
 - [architecture.md](architecture.md) — module map and dependency rules
 - [reference/decision-log.md](reference/decision-log.md) — D1–D25, why things are the way they are
-- [archive/mvp-phase-log.md](archive/mvp-phase-log.md) — the full per-phase execution record
-- [mmorpg-roadmap.md](mmorpg-roadmap.md) — post-MVP direction

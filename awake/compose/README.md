@@ -137,4 +137,3 @@ For deep-dive architectural decisions, lifecycle rules, and parity ledgers, refe
 - [Compose Architecture Index](../../docs/reference/compose-engine/README.md)
 - [Compose Parity Ledger](../../docs/reference/compose-engine/15-compose-parity.md)
 - [Modifier Parity Specification](../../docs/reference/compose-engine/17-modifier-parity.md)
-- [Next Stages Roadmap & Register](../../docs/tasks/2026-08-27-compose-next-stages-plan.md)

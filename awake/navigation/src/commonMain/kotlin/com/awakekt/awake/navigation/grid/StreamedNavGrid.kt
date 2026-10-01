@@ -18,9 +18,8 @@ import kotlin.concurrent.Volatile
  * A search crosses tile boundaries without knowing they exist — the field it reads is addressed in
  * whole-world samples — and stops at the edge of the resident set, because an unbaked sample reads
  * as blocked. That last part is a real limitation, not an oversight: a route into a cell nobody
- * has loaded cannot be verified, and the plan's answer is a coarse cell-level graph rather than
- * optimistically walking into unloaded terrain. See
- * docs/tasks/2026-08-30-navgrid-navigation-plan.md.
+ * has loaded cannot be verified, and the planned answer is a coarse cell-level graph rather than
+ * optimistically walking into unloaded terrain.
  *
  * **[samplesPerCell] must divide the streaming config's `cellSize` exactly**, which is what
  * [worldCellSize] is for: a tile that is not a whole number of samples leaves a seam where a path

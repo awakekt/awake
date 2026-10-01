@@ -15,8 +15,7 @@ import com.awakekt.awake.ecs.Entity
  *
  * There is no production batch API: `:awake:ecs` cannot defer family maintenance, and its family
  * caches are `internal`. Replicating them here lets both the incremental and the forced-rebuild
- * strategy run against the same cache, so a head-to-head difference is the strategy alone. Decision
- * context is in `docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md`.
+ * strategy run against the same cache, so a head-to-head difference is the strategy alone.
  */
 internal abstract class ControlFamily {
     /** Number of live dense entries. */

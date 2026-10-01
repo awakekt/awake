@@ -2,7 +2,7 @@
 
 Date: 2026-09-27
 Status: **proposed** — step 6 of the [node-graph sequence](2026-09-27-node-graph-plan.md). It
-waits on node-graph phases 1–2, on [shader-hot-reload](2026-09-27-shader-hot-reload-plan.md), and
+waits on node-graph phases 1–2, on shader hot reload (done on Vulkan; WebGPU is #214), and
 on a per-material shader render plan that is not yet written.
 
 ## Goal
@@ -82,7 +82,7 @@ See the "Shaders" section of the [node-graph plan](2026-09-27-node-graph-plan.md
     values swaps the colours.
   - Gate: graph meshes cast the same shadows as default meshes.
 - **S5 — Studio shader graph editor.** Palette, inspector, per-node thumbnails, and a live
-  preview through [shader-hot-reload](2026-09-27-shader-hot-reload-plan.md).
+  preview through shader hot reload (`ShaderReplacement`).
   - Gate: editing a node updates the terrain and mesh previews on desktop and on the web.
 
 ## Limits and follow-ups

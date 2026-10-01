@@ -48,10 +48,8 @@ private const val GLB_CHUNK_TYPE_BIN = 0x004E4942
 private val GltfJson = Json { ignoreUnknownKeys = true }
 
 /**
- * Minimal glTF 2.0 mesh importer -- JSON structure + embedded (base64 data-URI) buffers
- * only. Deliberately narrow scope for this MVP phase (per docs/archive/mvp-phase-log.md's Phase 4
- * checklist: "cube can be hardcoded, but the first real model needs this. Full glTF
- * (skinning, animation) is post-MVP"):
+ * Minimal glTF 2.0 mesh importer -- JSON structure + embedded (base64 data-URI) buffers.
+ * Its scope is deliberately narrow:
  * - **External `.bin`/image files** are supported via the `externalResources` parameter --
  *   a `uri -> bytes` map the caller pre-fetches (e.g. with `readResourceBytes`, which is
  *   `suspend`, so this parser stays synchronous). Use [externalUris] to find out which URIs

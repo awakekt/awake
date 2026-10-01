@@ -256,14 +256,10 @@ a `Map`/`Set` keyed by `Entity`, to avoid boxing the value class on every frame)
 ## What this ECS deliberately doesn't do
 
 - No archetype/table storage — sparse-set per component type plus maintained dense family
-  caches instead. The measured decision lives in
-  [
-  `docs/tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md`](../../docs/tasks/archive/2026-08-18-ecs-hybrid-archetype-sparse-set.md).
+  caches instead.
 - No bulk/batch structural mutation API — `add`/`remove` apply immediately. A benchmarked
   deferred-rebuild prototype only beat the immediate path when a batch touched roughly the
-  entire world at once, which is not a workload this engine runs. See
-  [
-  `docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md`](../../docs/tasks/2026-08-21-ecs-adaptive-bulk-mutation-plan.md).
+  entire world at once, which is not a workload this engine runs.
 - No built-in scheduler, job system, or parallelism — single-threaded by design.
 - No serialization at this layer — component types are plain data classes; use whatever
   serialization approach fits your game (`awake-scene`'s scene runtime uses
