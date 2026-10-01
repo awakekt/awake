@@ -1,1 +1,0 @@
-- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for physics subsystem modules (`:awake:physics:api`, `:awake:scene:physics`, `:awake:physics:ragdoll`).

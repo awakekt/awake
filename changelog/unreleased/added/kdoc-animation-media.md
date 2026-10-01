@@ -1,1 +1,0 @@
-- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for animation and audio core modules (`:awake:core:animation`, `:awake:core:audio`).
