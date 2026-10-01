@@ -40,4 +40,38 @@ class AssetConverterRegistryTest {
         assertEquals("test.o3d", result.name)
         assertTrue(byteArrayOf(1, 2, 3).contentEquals(result.glbBytes))
     }
+
+    @Test
+    fun unregisteringAConverterRestoresTheOneItReplaced() {
+        val registry = AssetConverterRegistry()
+        val builtIn = converter("fbx")
+        val plugin = converter("fbx", "o3d")
+        registry.register(builtIn)
+        registry.register(plugin)
+        assertEquals(plugin, registry.findConverter("fbx"), "the newest converter wins")
+
+        registry.unregister(plugin)
+
+        assertEquals(builtIn, registry.findConverter("fbx"), "the overridden converter comes back")
+        assertFalse(registry.canConvert("o3d"), "an extension only the plugin handled is gone")
+        assertEquals(listOf(builtIn), registry.converters)
+    }
+
+    @Test
+    fun registeringAConverterAgainDoesNotStackIt() {
+        val registry = AssetConverterRegistry()
+        val plugin = converter("fbx")
+        registry.register(plugin)
+        registry.register(plugin)
+
+        registry.unregister(plugin)
+
+        assertFalse(registry.canConvert("fbx"))
+    }
+
+    private fun converter(vararg extensions: String) = object : AssetConverter {
+        override val supportedExtensions = extensions.toSet()
+        override fun convertToGltf(fileName: String, sourceBytes: ByteArray) =
+            GltfConversionResult(glbBytes = byteArrayOf(), name = fileName)
+    }
 }
