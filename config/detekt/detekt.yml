@@ -110,6 +110,13 @@ comments:
       - '**/awake/core/host/**'
       - '**/awake/core/input/**'
       - '**/awake/core/math2d/**'
+      - '**/awake/compose/di/**'
+      - '**/awake/compose/state/**'
+      - '**/awake/scene/audio/**'
+      - '**/awake/scene/canvas/**'
+      - '**/awake/scene/blueprint/**'
+      - '**/awake/ui/material3/**'
+      - '**/awake/engine/compose/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

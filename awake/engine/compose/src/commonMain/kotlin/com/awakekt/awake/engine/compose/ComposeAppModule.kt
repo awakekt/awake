@@ -19,6 +19,7 @@ import com.awakekt.awake.engine.platform.dsl.AppSpecBuilder
 import com.awakekt.awake.engine.platform.lifecycle.AppFrame
 import com.awakekt.awake.render.renderer.Renderer
 
+/** Composable function signature for top-level application UI content. */
 typealias ComposeAppContent = context(Composer)
 () -> Unit
 
@@ -27,6 +28,11 @@ typealias ComposeAppContent = context(Composer)
  *
  * Install this module before a scene module when its output must be staged before that scene's
  * render pass. Set [presentWithoutScene] to false when another module presents the frame.
+ *
+ * @param content The root composable UI content hierarchy.
+ * @param font The default font to use for UI text rendering.
+ * @param presentWithoutScene Whether the runtime should present the rendered frame when no scene runs.
+ * @return The configured [AppModule] ready for installation.
  */
 fun composeAppModule(
     content: ComposeAppContent,
@@ -34,24 +40,32 @@ fun composeAppModule(
     presentWithoutScene: Boolean = true,
 ): AppModule = ComposeAppModule(content, font, presentWithoutScene)
 
+/**
+ * Runtime state holder managing the Compose UI host, input dispatch, and frame rendering.
+ */
 class ComposeAppRuntime internal constructor(
     private val content: ComposeAppContent,
     private val font: UiFont,
     private val input: Input,
     private val presentWithoutScene: Boolean,
 ) {
+    /** The core retained Compose UI host instance. */
     val host = ComposeHost()
     private val graphicsLayers = GraphicsLayerCompositor()
 
+    /** The active hardware renderer used for drawing UI primitives. */
     lateinit var renderer: Renderer
         private set
 
+    /** Cached output from the most recently completed UI frame, or `null` before the first frame. */
     var lastFrame: FrameOutput? = null
         private set
 
+    /** Input ownership flags indicating which pointer and keyboard interactions were consumed by the UI. */
     var inputOwnership: InputOwnership = InputOwnership()
         private set
 
+    /** Active pointer cursor style requested by the topmost hovered UI element. */
     var cursor: PointerCursor = PointerCursor.Default
         private set
 

@@ -31,13 +31,14 @@ import com.awakekt.awake.scene.physics.PhysicsSystem
  * 3. On Sensor Enter and On Sensor Exit fire on sensors from the step's contacts.
  *
  * A graph compiles once per path. A step in which nothing happens allocates nothing.
+ *
+ * @param graphs Loads the graph at a [BlueprintComponent.graph] path; called once per path.
+ * @param physics Where sensor contacts come from and bodies are freed on destroy; `null` without physics.
+ * @param runPresentation `false` on a server, to skip presentation nodes.
  */
 class BlueprintSystem(
-    /** Loads the graph at a [BlueprintComponent.graph] path; called once per path. */
     private val graphs: (path: String) -> NodeGraph,
-    /** Where sensor contacts come from and bodies are freed on destroy; `null` without physics. */
     private val physics: PhysicsSystem? = null,
-    /** `false` on a server, to skip presentation nodes. */
     runPresentation: Boolean = true,
 ) : System {
     /** Pass this to game nodes that act on the scene. */
@@ -54,6 +55,12 @@ class BlueprintSystem(
     private var sensorOther = NoEntity
     private val sensorPayload = EventPayload { it.setEntity(SceneNodes.OTHER, sensorOther) }
 
+    /**
+     * Executes one fixed simulation frame of all active entity blueprints.
+     *
+     * @param world The ECS simulation world.
+     * @param delta Elapsed time in seconds since the previous simulation step.
+     */
     override fun update(world: World, delta: Float) {
         if (scene.bind(world)) family = world.family(BlueprintComponent::class)
         // Collected first: a chain may create or destroy entities, which a live query must not see.
@@ -72,6 +79,8 @@ class BlueprintSystem(
      * Recompiles [path] from [graph] and swaps it into every running instance of it. Variables whose
      * name and type still exist keep their values, waits are cancelled, and On Start does not fire again.
      *
+     * @param path The graph asset path being reloaded.
+     * @param graph The updated node graph definition.
      * @throws com.awakekt.awake.nodegraph.InvalidNodeGraphException before anything changes, when
      * [graph] is not a valid blueprint.
      */

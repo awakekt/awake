@@ -23,7 +23,11 @@ class BlueprintScene internal constructor(private val physics: PhysicsSystem?) {
     lateinit var names: EntityNames
         private set
 
-    /** Destroys [entity], freeing its physics body first so the body cannot outlive it. */
+    /**
+     * Destroys [entity], freeing its physics body first so the body cannot outlive it.
+     *
+     * @param entity The entity to destroy.
+     */
     fun destroy(entity: Entity) {
         physics?.destroyBody(world, entity)
         world.destroy(entity)

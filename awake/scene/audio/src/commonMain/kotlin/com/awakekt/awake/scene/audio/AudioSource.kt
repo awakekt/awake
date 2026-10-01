@@ -26,10 +26,24 @@ data class AudioSource(
     var autoPlay: Boolean = true,
     var loop: Boolean = false,
 ) {
+    /**
+     * Active playing sound handle returned by the audio playback engine, or `null` if not playing.
+     */
     var playingHandle: SoundHandle? = null
+
+    /**
+     * True if this audio source is actively playing sound.
+     */
     val isPlaying: Boolean get() = playingHandle?.isPlaying == true
+
+    /**
+     * Tracks whether auto-playback has been initiated for this sound source.
+     */
     var hasAutoPlayed: Boolean = false
 
+    /**
+     * Stops playback of this audio source and releases the active sound handle.
+     */
     fun stop() {
         playingHandle?.stop()
         playingHandle = null

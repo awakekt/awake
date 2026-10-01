@@ -22,49 +22,70 @@ import com.awakekt.awake.core.di.resolve
  */
 val LocalContainer: CompositionLocal<Container?> = compositionLocalOf { null }
 
+context(composer: Composer)
 /**
  * Obtains the current [Container] provided via [LocalContainer], throwing [IllegalStateException]
  * if no container is currently ambient.
+ *
+ * @return The ambient [Container] instance.
  */
-context(composer: Composer)
 fun currentContainer(): Container =
     LocalContainer.current ?: error(
         "No Container provided in CompositionLocal. " +
             "Provide one using CompositionLocalProvider(LocalContainer provides container) or ProvideContainer(container).",
     )
 
+context(composer: Composer)
 /**
  * Resolves a dependency of type [T] from the ambient [LocalContainer].
+ *
+ * @param T The type of the dependency to resolve.
+ * @param qualifier Optional identifier distinguishing bindings of type [T].
+ * @return The resolved instance of [T].
  */
-context(composer: Composer)
 inline fun <reified T : Any> resolve(qualifier: String? = null): T =
     currentContainer().resolve(qualifier)
 
+context(composer: Composer)
 /**
  * Resolves a dependency of type [T] from the ambient [LocalContainer], or null if unbound or no container is provided.
+ *
+ * @param T The type of the dependency to resolve.
+ * @param qualifier Optional identifier distinguishing bindings of type [T].
+ * @return The resolved instance of [T], or null if unbound or no container is available.
  */
-context(composer: Composer)
 inline fun <reified T : Any> resolveOrNull(qualifier: String? = null): T? =
     LocalContainer.current?.getOrNull(qualifier)
 
+context(composer: Composer)
 /**
  * Resolves and remembers a dependency of type [T] from the ambient [LocalContainer].
+ *
+ * @param T The type of the dependency to resolve.
+ * @param qualifier Optional identifier distinguishing bindings of type [T].
+ * @return The resolved and remembered instance of [T].
  */
-context(composer: Composer)
 inline fun <reified T : Any> rememberResolve(qualifier: String? = null): T =
     remember(qualifier) { currentContainer().resolve(qualifier) }
 
+context(composer: Composer)
 /**
  * Resolves and remembers a dependency of type [T] from the ambient [LocalContainer], or null if unbound or no container is provided.
+ *
+ * @param T The type of the dependency to resolve.
+ * @param qualifier Optional identifier distinguishing bindings of type [T].
+ * @return The resolved and remembered instance of [T], or null if unbound or no container is available.
  */
-context(composer: Composer)
 inline fun <reified T : Any> rememberResolveOrNull(qualifier: String? = null): T? =
     remember(qualifier) { LocalContainer.current?.getOrNull(qualifier) }
 
+context(composer: Composer)
 /**
  * Convenience wrapper providing [container] to [content].
+ *
+ * @param container The ambient [Container] instance to provide.
+ * @param content Composable block executed within the provided container scope.
  */
-context(composer: Composer)
 fun ProvideContainer(
     container: Container,
     content: context(Composer) () -> Unit,

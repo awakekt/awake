@@ -17,7 +17,14 @@ import com.awakekt.awake.compose.ui.unit.Constraints
 import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 
-/** Insets occupied by [Scaffold]'s measured bars. Apply them to content that must avoid the bars. */
+/**
+ * Insets occupied by [Scaffold]'s measured bars. Apply them to content that must avoid the bars.
+ *
+ * @property start Start margin inset in dp.
+ * @property top Top margin inset in dp.
+ * @property end End margin inset in dp.
+ * @property bottom Bottom margin inset in dp.
+ */
 data class ScaffoldPaddingValues(
     val start: Dp = 0.dp,
     val top: Dp = 0.dp,
@@ -29,14 +36,20 @@ private enum class ScaffoldSlot { TopBar, BottomBar, Content, FloatingActionButt
 
 private val FloatingActionButtonInset = 16.dp
 
+context(composer: Composer)
 /**
  * Material 3's screen layout with independently measured top and bottom bars.
  *
  * Content is intentionally placed behind the bars, matching Material's `Scaffold`; use the
  * [ScaffoldPaddingValues] supplied to [content] for scroll or other body content that must avoid
  * them. The first version has no window-inset or snackbar support yet.
+ *
+ * @param modifier Layout modifier applied to the root container.
+ * @param topBar Composable slot for the top app bar.
+ * @param bottomBar Composable slot for the bottom navigation or action bar.
+ * @param floatingActionButton Composable slot for the primary floating action button.
+ * @param content Primary content body receiving calculated bar insets.
  */
-context(composer: Composer)
 fun Scaffold(
     modifier: Modifier = Modifier,
     topBar: context(Composer) () -> Unit = {},
