@@ -24,6 +24,7 @@ registers it.
 | [`flee`](#flee) | `FleeBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`fog`](#fog) | `Fog` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
 | [`light`](#light) | `Light` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
+| [`locomotion_animation`](#locomotion_animation) | `LocomotionAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Animation](../guides/animation.md) |
 | [`mesh_renderer`](#mesh_renderer) | `MeshRenderer` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`movement_control`](#movement_control) | `MovementControl` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Character controller](../guides/character-controller.md) |
 | [`patrol`](#patrol) | `PatrolBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
@@ -40,7 +41,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `light`, `mesh_renderer`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `light`, `locomotion_animation`, `mesh_renderer`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -196,6 +197,30 @@ A directional or point light. `SceneLight`.
 | `shadowsEnabled` | boolean | `true` | Whether a directional light casts shadows. |
 | `shadowDistance` | number | `100` | How far from the camera shadows reach. Finite and above 0. |
 | `ambient` | number | none | This light's ambient share. Above 0 and at most 1. |
+
+## `locomotion_animation`
+
+Plays a skinned model's clip for how its entity moves: idle, walking, running and jumping. `SceneLocomotionAnimation`.
+
+Speeds are measured from the entity's world position, so it animates however the entity is moved,
+and a model on a child node animates with it. Clip names are the model's own animations; a clip
+left out, or one the model lacks, keeps whatever already plays. With a `character_controller` on the
+entity or above it, the jump clips follow its ground contact. Otherwise a jump ends when the fall
+stops, so `airborneAbove` must exceed the vertical speed of running up the steepest walkable slope.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `idle` | string | none | Clip while standing. |
+| `walk` | string | none | Clip above `walkAbove` units per second across the ground. |
+| `run` | string | none | Clip above `runAbove`. |
+| `jump` | string | none | Clip while off the ground, or while rising when the phases below are set. |
+| `takeOff` | string | none | Clip played once as it leaves the ground. |
+| `fall` | string | none | Clip while coming down. |
+| `land` | string | none | Clip played once as it touches down, unless it is already walking away. |
+| `walkAbove` | number | `0.1` | Ground speed that starts the walk. |
+| `runAbove` | number | `4` | Ground speed that starts the run; at least `walkAbove`. |
+| `airborneAbove` | number | `2` | Vertical speed that counts as a jump without a `character_controller`; greater than 0. |
+| `crossFade` | number | `0.15` | Seconds each clip change blends over. |
 
 ## `mesh_renderer`
 
