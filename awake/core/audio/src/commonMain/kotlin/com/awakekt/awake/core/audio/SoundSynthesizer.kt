@@ -9,20 +9,43 @@ import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.random.Random
 
+/**
+ * Basic waveform generator types for sound synthesis.
+ */
 enum class Waveform {
+    /** Pure sinusoidal oscillation. */
     SINE,
+    /** Square wave alternating between positive and negative extrema. */
     SQUARE,
+    /** Linear rising and falling triangular wave. */
     TRIANGLE,
+    /** Linear ramp waveform with rich harmonics. */
     SAWTOOTH,
+    /** Uniform pseudo-random noise. */
     NOISE,
 }
 
+/**
+ * Attack-Decay-Sustain-Release (ADSR) volume envelope.
+ *
+ * @property attack Duration of the attack phase in seconds.
+ * @property decay Duration of the decay phase in seconds.
+ * @property sustain Sustained amplitude level between 0 and 1.
+ * @property release Duration of the release phase in seconds.
+ */
 data class AdsrEnvelope(
     val attack: Float = 0.05f,
     val decay: Float = 0.15f,
     val sustain: Float = 0.0f,
     val release: Float = 0.0f,
 ) {
+    /**
+     * Calculates the normalized envelope amplitude at the given elapsed time.
+     *
+     * @param timeSeconds Elapsed time in seconds.
+     * @param totalDuration Total sound duration in seconds.
+     * @return Normalized amplitude scaling factor between 0.0 and 1.0.
+     */
     fun amplitudeAt(timeSeconds: Float, totalDuration: Float): Float {
         if (timeSeconds < 0f || timeSeconds > totalDuration) return 0f
         if (timeSeconds < attack && attack > 0f) {
@@ -48,15 +71,26 @@ data class AdsrEnvelope(
 
 /**
  * Specification builder for programmatic procedural audio synthesis.
+ *
+ * @property id Unique identifier for the synthesized audio clip.
+ * @property name Human-readable name for the audio clip.
  */
 class SoundSpecBuilder(val id: String, val name: String) {
+    /** Duration of the generated sound in seconds. */
     var duration: Float = 0.2f
+    /** Sampling rate in samples per second (Hz). */
     var sampleRate: Int = 44100
+    /** Base waveform type to synthesize. */
     var waveform: Waveform = Waveform.SINE
+    /** Starting oscillation frequency in Hz. */
     var startFrequencyHz: Float = 440f
+    /** Target ending frequency in Hz for pitch sweeps, or null for constant frequency. */
     var endFrequencyHz: Float? = null
+    /** ADSR amplitude envelope to apply. */
     var envelope: AdsrEnvelope = AdsrEnvelope()
+    /** Low-pass filtering factor between 0.0 (unfiltered) and 1.0 (heavily filtered). */
     var lowPassFilter: Float = 0f
+    /** Output volume multiplier between 0.0 and 1.0. */
     var volume: Float = 0.85f
 }
 
@@ -71,6 +105,11 @@ object SoundSynthesizer {
 
     /**
      * Builds a custom [AudioClip] using the procedural synthesis DSL.
+     *
+     * @param id Unique identifier for the audio clip.
+     * @param name Human-readable clip name.
+     * @param block Configuration block initializing sound parameters.
+     * @return Synthesized 16-bit PCM [AudioClip].
      */
     fun build(id: String, name: String, block: SoundSpecBuilder.() -> Unit): AudioClip {
         val spec = SoundSpecBuilder(id, name).apply(block)
@@ -129,6 +168,13 @@ object SoundSynthesizer {
 
     /**
      * Synthesizes a pure continuous tone of a specified frequency.
+     *
+     * @param id Unique identifier for the audio clip.
+     * @param name Human-readable clip name.
+     * @param frequencyHz Oscillation frequency in Hz.
+     * @param durationSeconds Total sound duration in seconds.
+     * @param waveform Waveform shape to synthesize.
+     * @return Synthesized tone [AudioClip].
      */
     fun tone(id: String, name: String, frequencyHz: Float, durationSeconds: Float, waveform: Waveform = Waveform.SINE): AudioClip = build(id, name) {
         duration = durationSeconds
@@ -139,6 +185,12 @@ object SoundSynthesizer {
 
     /**
      * Synthesizes shaped procedural noise.
+     *
+     * @param id Unique identifier for the audio clip.
+     * @param name Human-readable clip name.
+     * @param durationSeconds Total sound duration in seconds.
+     * @param smoothing Low-pass smoothing factor applied to raw noise samples.
+     * @return Synthesized noise [AudioClip].
      */
     fun noise(id: String, name: String, durationSeconds: Float, smoothing: Float = 0.5f): AudioClip = build(id, name) {
         duration = durationSeconds
@@ -149,6 +201,12 @@ object SoundSynthesizer {
 
     /**
      * Synthesizes a sequential arpeggio of note frequencies.
+     *
+     * @param id Unique identifier for the audio clip.
+     * @param name Human-readable clip name.
+     * @param notesHz Frequencies in Hz for each sequential note.
+     * @param noteDurationSeconds Duration in seconds for each note in the sequence.
+     * @return Synthesized arpeggio [AudioClip].
      */
     fun arpeggio(id: String, name: String, notesHz: List<Float>, noteDurationSeconds: Float = 0.15f): AudioClip {
         val totalDuration = noteDurationSeconds * notesHz.size

@@ -5,7 +5,12 @@
  */
 package com.awakekt.awake.core.animation
 
-/** Immutable skeletal-animation data shared by every instance of one animated asset. */
+/**
+ * Immutable skeletal-animation data shared by every instance of one animated asset.
+ *
+ * @property skeleton The shared bone hierarchy defining bone structure and bind poses.
+ * @property clips Map of clip identifiers to their corresponding [AnimationClip] data.
+ */
 class AnimationLibrary(
     val skeleton: Skeleton,
     val clips: Map<String, AnimationClip>,
@@ -21,12 +26,24 @@ class AnimationLibrary(
     }
 }
 
-enum class AnimationPlayback { Loop, Once }
+/**
+ * Playback repetition mode for animation clips.
+ */
+enum class AnimationPlayback {
+    /** Repeats the animation continuously from the beginning upon reaching its duration. */
+    Loop,
 
-/** Per-instance playback state over one immutable [AnimationLibrary].
+    /** Plays the animation once and stops at the final frame. */
+    Once,
+}
+
+/**
+ * Per-instance playback state over one immutable [AnimationLibrary].
  *
  * The player is deliberately format-neutral: glTF, an offline FBX cooker, or an editor can
  * construct the same [AnimationLibrary] without exposing source-format types to playback code.
+ *
+ * @param library Animation library providing the shared skeleton and animation clips.
  */
 class AnimationPlayer(
     private val library: AnimationLibrary,
@@ -44,45 +61,67 @@ class AnimationPlayer(
     private var elapsedSeconds = 0f
     private var playback = AnimationPlayback.Loop
 
+    /** Playback rate multiplier where 1.0 represents standard real-time playback. */
     var speed: Float = 1f
         set(value) {
             require(value >= 0f) { "Animation speed must be non-negative." }
             field = value
         }
 
+    /** The identifier of the currently active animation clip, or `null` if no clip is selected. */
     var activeClipId: String? = null
         private set
 
+    /** Whether the animation player is currently advancing playback time. */
     var isPlaying: Boolean = false
         private set
 
+    /** Whether single-shot playback has completed its duration. */
     val isFinished: Boolean
         get() = !isPlaying && activeClipId != null && playback == AnimationPlayback.Once
 
+    /** Current playback position in seconds within the active clip. */
     val time: Float get() = elapsedSeconds
 
+    /** The currently active [AnimationClip], or `null` if no clip is selected. */
     val currentClip: AnimationClip? get() = activeClipId?.let { library.clips[it] }
 
+    /** List of all animation clips available in the underlying library. */
     val clips: List<AnimationClip> get() = library.clips.values.toList()
 
+    /** Map of clip names to animation clips available in the underlying library. */
     val clipEntries: Map<String, AnimationClip> get() = library.clips
 
+    /** Pauses animation playback while maintaining the current playback position. */
     fun pause() {
         isPlaying = false
     }
 
+    /** Resumes animation playback from the current position if a clip is active. */
     fun resume() {
         if (activeClipId != null) {
             isPlaying = true
         }
     }
 
+    /**
+     * Seeks playback to a specific timestamp within the currently active clip.
+     *
+     * @param timeSeconds Target playback position in seconds, clamped between 0 and clip duration.
+     */
     fun seek(timeSeconds: Float) {
         val clipId = activeClipId ?: return
         val clip = clip(clipId)
         elapsedSeconds = timeSeconds.coerceIn(0f, clip.duration)
     }
 
+    /**
+     * Starts playback of the animation clip identified by [clipId].
+     *
+     * @param clipId Identifier of the animation clip to play.
+     * @param playback Playback repetition mode (looping or single-shot).
+     * @param restart If `false` and [clipId] is already active, continues playback without restarting.
+     */
     fun play(
         clipId: String,
         playback: AnimationPlayback = AnimationPlayback.Loop,
@@ -98,6 +137,13 @@ class AnimationPlayer(
         isPlaying = true
     }
 
+    /**
+     * Crossfades from the current pose to a target animation clip over [durationSeconds].
+     *
+     * @param clipId Identifier of the target animation clip to fade into.
+     * @param durationSeconds Transition duration in seconds over which the blend occurs.
+     * @param playback Playback repetition mode for the incoming clip.
+     */
     fun crossFadeTo(
         clipId: String,
         durationSeconds: Float,
@@ -124,8 +170,13 @@ class AnimationPlayer(
         isPlaying = true
     }
 
-    /** Advances once and returns a reusable pose owned by this player. The caller must consume
-     * it before its next [update] call. */
+    /**
+     * Advances once and returns a reusable pose owned by this player.
+     * The caller must consume it before its next [update] call.
+     *
+     * @param deltaSeconds Elapsed time step in seconds.
+     * @return Current sampled and blended [AnimationPose].
+     */
     fun update(deltaSeconds: Float): AnimationPose {
         require(deltaSeconds >= 0f) { "Animation delta must be non-negative." }
         val clipId = activeClipId ?: return currentPose

@@ -11,6 +11,8 @@ package com.awakekt.awake.core.animation
  * [play]'s own doc comment for what happens if it's called again mid-blend). This is the
  * gameplay-facing "play this instead" API; [AnimationPose.blend] is the underlying per-bone math
  * this composes.
+ *
+ * @param skeleton Target bone hierarchy driving animated poses.
  */
 class AnimationCrossfade(private val skeleton: Skeleton) {
     private var currentClip: AnimationClip? = null
@@ -27,11 +29,16 @@ class AnimationCrossfade(private val skeleton: Skeleton) {
     private var blendElapsed = 0f
     private var blendDuration = 0f
 
-    /** Starts playing [clip] from time 0, crossfading from whatever's currently playing over
+    /**
+     * Starts playing [clip] from time 0, crossfading from whatever's currently playing over
      * [blendSeconds]. A no-op if [clip] is already the current clip. Calling this again while an
      * earlier transition is still blending immediately snaps the current on-screen blended pose
      * as the new outgoing base and starts a fresh transition to [clip] -- transitions never
-     * queue or stack. */
+     * queue or stack.
+     *
+     * @param clip Animation clip to crossfade into.
+     * @param blendSeconds Duration of the blend transition in seconds.
+     */
     fun play(clip: AnimationClip, blendSeconds: Float = DEFAULT_BLEND_SECONDS) {
         if (clip === currentClip) return
         val activeClip = currentClip
@@ -55,9 +62,15 @@ class AnimationCrossfade(private val skeleton: Skeleton) {
         blendDuration = blendSeconds
     }
 
-    /** Advances all in-flight clocks by [delta] and returns this frame's joint palette against
+    /**
+     * Advances all in-flight clocks by [delta] and returns this frame's joint palette against
      * [skin] -- blended with the frozen outgoing pose while a transition is in flight (weight
-     * ramps `0..1` over [blendDuration]), otherwise just the current clip's own pose. */
+     * ramps `0..1` over [blendDuration]), otherwise just the current clip's own pose.
+     *
+     * @param delta Elapsed frame delta time in seconds.
+     * @param skin Mesh skin binding defining joint bone indices and inverse bind matrices.
+     * @return Flattened array of column-major joint matrices for GPU skinning.
+     */
     fun advance(delta: Float, skin: Skin): FloatArray {
         val clip = currentClip ?: return currentPose.jointPalette(skin)
         currentTime += delta

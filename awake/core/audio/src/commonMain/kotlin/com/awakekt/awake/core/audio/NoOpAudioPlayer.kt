@@ -7,6 +7,8 @@ package com.awakekt.awake.core.audio
 
 /**
  * Headless fallback audio player for unit tests and platforms without native audio drivers.
+ *
+ * @param defaultPlayingState Default playback state reported by emitted sound handles.
  */
 open class NoOpAudioPlayer(
     private val defaultPlayingState: Boolean = true,
@@ -31,6 +33,8 @@ open class NoOpAudioPlayer(
 
 /**
  * Headless sound handle for testing.
+ *
+ * @property isPlaying Initial playback state of this handle.
  */
 open class NoOpSoundHandle(
     override var isPlaying: Boolean = true,

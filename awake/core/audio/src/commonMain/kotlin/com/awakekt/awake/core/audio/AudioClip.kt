@@ -9,6 +9,13 @@ package com.awakekt.awake.core.audio
  * In-memory audio clip containing linear uncompressed PCM audio bytes.
  *
  * 100% Kotlin Multiplatform (pure bytes and sample metadata).
+ *
+ * @property id Unique string identifier of this audio clip.
+ * @property name Human-readable name or resource path of the clip.
+ * @property pcmBytes Raw uncompressed PCM audio data buffer.
+ * @property sampleRate Playback sample rate in hertz (e.g. 44100 or 48000).
+ * @property channels Number of interleaved audio channels (e.g. 1 for mono, 2 for stereo).
+ * @property bitsPerSample Bit depth per audio sample (typically 16).
  */
 data class AudioClip(
     val id: String,
@@ -18,6 +25,7 @@ data class AudioClip(
     val channels: Int = 2,
     val bitsPerSample: Int = 16,
 ) {
+    /** Total playback duration of the audio clip in seconds, computed from sample count and rate. */
     val durationSeconds: Float
         get() {
             val bytesPerSample = (bitsPerSample / 8) * channels
