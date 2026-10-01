@@ -67,7 +67,13 @@ class DynamicMesh(
         var maxVertices: Int,
         var maxIndices: Int,
         var drawIndexCount: Int = 0,
-    )
+        /** The arrays last written here. Staged runs are never mutated, so the same arrays are the same contents. */
+        var writtenVertices: FloatArray? = null,
+        var writtenIndices: IntArray? = null,
+    ) {
+        /** What `vkCmdBindVertexBuffers` takes, kept so binding allocates nothing. */
+        var vertexBinding = longArrayOf(vertexBuffer.handle)
+    }
 
     private val frameResources: Array<FrameResources>
     private var activeFrameIndex: Int = 0
@@ -123,8 +129,12 @@ class DynamicMesh(
         activeFrameIndex = frameIndex
         frame.drawIndexCount = indices.size
         if (indices.isEmpty()) return
+        // A UI that did not change hands back the same staged arrays, already in this slot.
+        if (vertices === frame.writtenVertices && indices === frame.writtenIndices) return
         VulkanBuffers.writeBufferMemoryFloats(device, frame.vertexBufferMemory.handle, 0, vertices)
         VulkanBuffers.writeBufferMemoryBytes(device, frame.indexBufferMemory.handle, 0, indices.toByteArrayLE())
+        frame.writtenVertices = vertices
+        frame.writtenIndices = indices
     }
 
     /**
@@ -167,18 +177,16 @@ class DynamicMesh(
         frame.maxVertices = grownVertices
         frame.maxIndices = grownIndices
         frame.drawIndexCount = 0
+        frame.vertexBinding = longArrayOf(vBuffer)
+        frame.writtenVertices = null
+        frame.writtenIndices = null
     }
 
     fun bind(commandBuffer: Long) = bind(activeFrameIndex, commandBuffer)
 
     fun bind(frameIndex: Int, commandBuffer: Long) {
         val frame = resourcesFor(frameIndex)
-        VulkanBuffers.vkCmdBindVertexBuffers(
-            commandBuffer,
-            0,
-            longArrayOf(frame.vertexBuffer.handle),
-            longArrayOf(0L),
-        )
+        VulkanBuffers.vkCmdBindVertexBuffers(commandBuffer, 0, frame.vertexBinding, ZERO_OFFSET)
         VulkanBuffers.vkCmdBindIndexBuffer(
             commandBuffer,
             frame.indexBuffer.handle,
@@ -229,6 +237,9 @@ class DynamicMesh(
     }
 
     companion object {
+        /** Every vertex buffer here binds at offset 0; shared so binding allocates nothing. */
+        private val ZERO_OFFSET = longArrayOf(0L)
+
         /** Default (colored-quad) layout: pos (vec2) + color (vec4) + transform (vec4:
          * scale.xy + pivot.xy, see `UiPrimitiveTransform`) -- see `ui_quad.vert`. */
         const val FLOATS_PER_VERTEX = com.awakekt.awake.core.geometry.VertexFormats2D.FLOATS_PER_VERTEX

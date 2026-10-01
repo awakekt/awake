@@ -1,0 +1,1 @@
+- **Cheaper UI frames on Vulkan.** An unchanged UI run is not uploaded again: the retained staging cache hands back the same arrays, and Vulkan now skips writing them, as WebGPU already did. The shared 2D loop also stops rebinding a pipeline or setting a scissor rect that the previous run left in place. Binding a UI mesh no longer allocates.
