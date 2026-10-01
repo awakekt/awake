@@ -5,14 +5,14 @@
  */
 package com.awakekt.awake.core.image
 
-/** [Bitmap.pixels]' packed ARGB ints (`0xAARRGGBB` -- the convention every [createBitmap]
- * actual already produces) widened into tightly-packed RGBA8 bytes: the layout
- * `com.awakekt.awake.render.texture.TextureAsset` (render-api) and Vulkan's
- * `VK_FORMAT_R8G8B8A8_UNORM` texture upload both expect. Every [createBitmap] actual already
- * flips Y (OpenGL's bottom-up UV convention, this bitmap utility's original consumer) -- a
- * Vulkan/WebGPU caller doesn't undo that here; it flips V once in its own texture-sampling
- * shader instead (see `textured.wgsl`), rather than touching three platform actuals written
- * for a different backend's convention. */
+/**
+ * Converts this [Bitmap]'s packed ARGB integer pixels into a tightly packed RGBA8 byte array.
+ *
+ * Widens packed ARGB ints (`0xAARRGGBB` produced by [createBitmap]) into tightly-packed RGBA8 bytes
+ * required by texture upload pipelines such as Vulkan's `VK_FORMAT_R8G8B8A8_UNORM`.
+ *
+ * @return A [ByteArray] containing tightly packed RGBA8 pixel bytes.
+ */
 fun Bitmap.toRgba8Bytes(): ByteArray {
     val bytes = ByteArray(pixels.size * RGBA_BYTES_PER_PIXEL)
     var offset = 0

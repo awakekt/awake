@@ -25,6 +25,12 @@ import kotlin.js.toJsArray
 // -- no PNG/JPEG sniffing needed) + an offscreen canvas to read pixels back via getImageData().
 // The literals below are the RGBA8888 layout getImageData() returns and the ARGB layout
 // Bitmap exposes -- channel offsets and byte shifts, not tunable values.
+/**
+ * Platform actual decoding encoded image [bytes] in browser via `createImageBitmap` and Canvas 2D.
+ *
+ * @param bytes The raw encoded image byte array.
+ * @return A decoded [Bitmap] instance with Y-axis flipped for texture orientation.
+ */
 @Suppress("MagicNumber")
 actual suspend fun createBitmap(bytes: ByteArray): Bitmap {
     val blobParts = arrayOf<JsAny?>(bytes.toInt8Array()).toJsArray()
