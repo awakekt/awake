@@ -52,6 +52,11 @@ interface SceneComponentBinding<C : Any, S : SceneComponent> : SceneComponentRes
     /**
      * Attaches [component] (already typed as [S]) onto [entity] in [world].
      * Zero manual casting needed by implementers.
+     *
+     * @param world The target active ECS world.
+     * @param entity The target entity to attach the component to.
+     * @param component The deserialized document component.
+     * @param context Resolution context for recording deferred links or requests.
      */
     fun attachTyped(
         world: World,
@@ -60,10 +65,23 @@ interface SceneComponentBinding<C : Any, S : SceneComponent> : SceneComponentRes
         context: SceneResolutionContext,
     )
 
-    /** Exports live ECS [component] into a serializable [SceneComponent] [S]. */
+    /**
+     * Exports live ECS [component] into a serializable [SceneComponent] [S].
+     *
+     * @param world The active ECS world containing [entity].
+     * @param entity The entity holding the component.
+     * @param component The live ECS component instance.
+     * @return A serializable [SceneComponent] representing the live state, or null if omitted.
+     */
     fun export(world: World, entity: Entity, component: C): S?
 
-    /** Exports [entity]'s component of type [C] from [world] if present. */
+    /**
+     * Exports [entity]'s component of type [C] from [world] if present.
+     *
+     * @param world The active ECS world containing [entity].
+     * @param entity The entity to export the component from.
+     * @return A serializable [SceneComponent] representing the live component, or null if absent.
+     */
     fun exportFrom(world: World, entity: Entity): S? {
         val component = world.get(entity, componentClass) ?: return null
         return export(world, entity, component)

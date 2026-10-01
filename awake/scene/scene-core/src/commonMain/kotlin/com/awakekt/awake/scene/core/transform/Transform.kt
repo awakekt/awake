@@ -10,6 +10,15 @@ import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.Poolable
 
+/**
+ * Core 3D transformation component defining position, Euler rotation, scale, and hierarchy.
+ *
+ * @property position Local position vector.
+ * @property rotation Local Euler rotation angles in radians.
+ * @property scale Local scaling factor vector.
+ * @property parent Optional parent [Entity] in the scene hierarchy.
+ * @property worldMatrix Computed world transformation matrix cached by [TransformSystem].
+ */
 data class Transform(
     var position: Vec3f = Vec3f(0f, 0f, 0f),
     var rotation: Vec3f = Vec3f(0f, 0f, 0f),

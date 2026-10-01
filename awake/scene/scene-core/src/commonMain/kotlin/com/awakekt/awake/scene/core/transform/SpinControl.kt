@@ -15,7 +15,10 @@ import com.awakekt.awake.ecs.Poolable
  * directly every frame it wants a new angle; [SpinSystem] only composes the matrix.
  */
 class SpinControl : Poolable {
+    /** Current rotation angle in radians around the Y axis. */
     var radians: Float = 0f
+
+    /** Rotation speed multiplier applied when automatically spinning. */
     var speed: Float = 1f
 
     override fun reset() {

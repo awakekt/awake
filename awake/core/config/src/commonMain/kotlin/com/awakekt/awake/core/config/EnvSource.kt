@@ -11,6 +11,9 @@ package com.awakekt.awake.core.config
 interface EnvSource {
     /**
      * Retrieves the string configuration value associated with [key], or null if absent.
+     *
+     * @param key The configuration property key.
+     * @return The configured string value, or null if absent.
      */
     fun get(key: String): String?
 }
@@ -18,6 +21,8 @@ interface EnvSource {
 /**
  * In-memory [EnvSource] backed by a simple key-value map.
  * Ideal for unit tests, fixture setup, and explicit overrides.
+ *
+ * @param values Map of string key-value configuration entries.
  */
 class MapEnvSource(
     private val values: Map<String, String> = emptyMap(),
@@ -27,10 +32,17 @@ class MapEnvSource(
 
 /**
  * Cascading [EnvSource] that queries an ordered list of sources until a match is found.
+ *
+ * @param sources List of [EnvSource] instances queried in order.
  */
 class CompositeEnvSource(
     private val sources: List<EnvSource>,
 ) : EnvSource {
+    /**
+     * Constructs a cascading source from one or more [sources].
+     *
+     * @param sources Variable number of [EnvSource] instances queried in order.
+     */
     constructor(vararg sources: EnvSource) : this(sources.toList())
 
     override fun get(key: String): String? {
@@ -54,6 +66,9 @@ object DotEnvParser {
      * - `#` and `//` line comments
      * - Single (`'`) and double (`"`) quoted values with trimmed quotation marks
      * - Blank and whitespace lines
+     *
+     * @param content Raw text from a `.env` or `.properties` file.
+     * @return Map of parsed key-value configuration pairs.
      */
     fun parse(content: String): Map<String, String> {
         val result = mutableMapOf<String, String>()

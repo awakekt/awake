@@ -8,5 +8,7 @@ package com.awakekt.awake.scene.core.motion
 /**
  * Whether an entity stands on something, kept by whatever moves it (a character controller) for
  * whatever reacts to it, such as an animation that plays a jump while it is off the ground.
+ *
+ * @property grounded `true` if the entity currently maintains physical contact with the ground.
  */
 class GroundContact(var grounded: Boolean = true)

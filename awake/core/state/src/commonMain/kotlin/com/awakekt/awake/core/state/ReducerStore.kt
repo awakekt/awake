@@ -23,6 +23,10 @@ import kotlinx.coroutines.launch
 fun interface Reducer<S, in I, out E> {
     /**
      * Given the current [state] and incoming [intent], returns the new state and an optional [E] effect.
+     *
+     * @param state The current state snapshot.
+     * @param intent The incoming action or intent to process.
+     * @return A pair containing the updated state and an optional side effect.
      */
     fun reduce(state: S, intent: I): Pair<S, E?>
 }
@@ -50,6 +54,8 @@ fun interface Reducer<S, in I, out E> {
 interface ReducerStore<S, in I, out E> : Store<S> {
     /**
      * Dispatches an [intent] to mutate state via the pure [Reducer].
+     *
+     * @param intent The user action or event to dispatch.
      */
     fun dispatch(intent: I)
 
@@ -69,6 +75,13 @@ interface ReducerStore<S, in I, out E> : Store<S> {
 
 /**
  * Production implementation of [ReducerStore].
+ *
+ * @param S The state type.
+ * @param I The intent/action type.
+ * @param E The one-shot effect type.
+ * @param initialState The initial state value.
+ * @param reducer The state transition function.
+ * @param scope Coroutine scope governing state flow updates and effect emissions.
  */
 open class DefaultReducerStore<S, in I, out E>(
     initialState: S,
@@ -116,6 +129,14 @@ open class DefaultReducerStore<S, in I, out E>(
 
 /**
  * Factory creating a [ReducerStore] with the given [initialState] and [reducer].
+ *
+ * @param S The state type.
+ * @param I The intent type.
+ * @param E The effect type.
+ * @param initialState The initial state value.
+ * @param scope Coroutine scope governing background flow emissions.
+ * @param reducer The pure state transition reducer.
+ * @return An initialized [ReducerStore] instance.
  */
 fun <S, I, E> reducerStore(
     initialState: S,
@@ -125,6 +146,14 @@ fun <S, I, E> reducerStore(
 
 /**
  * Factory creating a [ReducerStore] using a lambda reducer.
+ *
+ * @param S The state type.
+ * @param I The intent type.
+ * @param E The effect type.
+ * @param initialState The initial state value.
+ * @param scope Coroutine scope governing background flow emissions.
+ * @param reducer Lambda taking state and intent, returning the updated state and optional effect.
+ * @return An initialized [ReducerStore] instance.
  */
 fun <S, I, E> reducerStore(
     initialState: S,

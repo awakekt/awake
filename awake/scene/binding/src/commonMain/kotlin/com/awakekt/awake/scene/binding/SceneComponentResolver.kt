@@ -19,19 +19,40 @@ interface SceneResolutionContext {
     /** Target active ECS [World]. */
     val world: World
 
-    /** Defers a node-to-node entity link resolution callback until all scene nodes are created. */
+    /**
+     * Defers a node-to-node entity link resolution callback until all scene nodes are created.
+     *
+     * @param targetNodeName The name of the target node to resolve.
+     * @param onResolved Callback invoked with the resolved entity once created.
+     */
     fun deferNodeLink(targetNodeName: String, onResolved: (target: Entity) -> Unit)
 
-    /** Records an arbitrary capability request (e.g. mesh rendering) during scene instantiation. */
+    /**
+     * Records an arbitrary capability request (e.g. mesh rendering) during scene instantiation.
+     *
+     * @param request The capability request payload.
+     */
     fun recordRequest(request: Any)
 }
 
 /** Resolver contract attaching serializable [SceneComponent]s onto ECS [Entity] instances. */
 interface SceneComponentResolver {
-    /** Returns true if this resolver handles [component]. */
+    /**
+     * Returns true if this resolver handles [component].
+     *
+     * @param component The candidate [SceneComponent].
+     * @return `true` if this resolver can process [component], `false` otherwise.
+     */
     fun canResolve(component: SceneComponent): Boolean
 
-    /** Attaches [component] onto [entity] in [world]. */
+    /**
+     * Attaches [component] onto [entity] in [world].
+     *
+     * @param world The target active ECS world.
+     * @param entity The target entity to attach the component to.
+     * @param component The document component to attach.
+     * @param context Resolution context for recording deferred links or requests.
+     */
     fun attach(world: World, entity: Entity, component: SceneComponent, context: SceneResolutionContext)
 }
 
@@ -62,7 +83,11 @@ class SceneComponentRegistry(
         private val globalResolvers = ArrayList<SceneComponentResolver>()
         private val globalBindings = ArrayList<SceneComponentBinding<*, *>>()
 
-        /** Registers a global [resolver] active across all registry instances. */
+        /**
+         * Registers a global [resolver] active across all registry instances.
+         *
+         * @param resolver The component resolver to register globally.
+         */
         fun registerGlobal(resolver: SceneComponentResolver) {
             if (resolver !in globalResolvers) {
                 globalResolvers += resolver
@@ -73,7 +98,11 @@ class SceneComponentRegistry(
             }
         }
 
-        /** Registers a global bi-directional [binding] active across all registry instances. */
+        /**
+         * Registers a global bi-directional [binding] active across all registry instances.
+         *
+         * @param binding The component binding to register globally.
+         */
         fun registerGlobal(binding: SceneComponentBinding<*, *>) {
             if (binding !in globalBindings) {
                 globalBindings += binding
@@ -104,7 +133,12 @@ class SceneComponentRegistry(
     /** Read-only view of registered resolvers. */
     val resolvers: List<SceneComponentResolver> get() = registeredResolvers
 
-    /** Registers a component [resolver]. */
+    /**
+     * Registers a component [resolver].
+     *
+     * @param resolver The resolver to register with this registry instance.
+     * @return This registry instance for chaining.
+     */
     fun register(resolver: SceneComponentResolver): SceneComponentRegistry {
         if (resolver !in registeredResolvers) {
             registeredResolvers += resolver
@@ -116,7 +150,12 @@ class SceneComponentRegistry(
         return this
     }
 
-    /** Registers a bi-directional component [binding]. */
+    /**
+     * Registers a bi-directional component [binding].
+     *
+     * @param binding The component binding to register with this registry instance.
+     * @return This registry instance for chaining.
+     */
     fun register(binding: SceneComponentBinding<*, *>): SceneComponentRegistry {
         if (binding !in registeredBindings) {
             registeredBindings += binding
@@ -128,7 +167,13 @@ class SceneComponentRegistry(
         return this
     }
 
-    /** Exports all registered components on [entity] in [world] into a list of [SceneComponent]s. */
+    /**
+     * Exports all registered components on [entity] in [world] into a list of [SceneComponent]s.
+     *
+     * @param world The active ECS world containing [entity].
+     * @param entity The entity whose components should be exported.
+     * @return A list of serialized [SceneComponent] instances.
+     */
     fun exportComponents(world: World, entity: Entity): List<SceneComponent> = buildList {
         val seenClasses = HashSet<KClass<*>>()
         for (binding in registeredBindings) {
@@ -138,7 +183,15 @@ class SceneComponentRegistry(
         }
     }
 
-    /** Resolves and attaches [component] onto [entity] in [world]. */
+    /**
+     * Resolves and attaches [component] onto [entity] in [world].
+     *
+     * @param world The target active ECS world.
+     * @param entity The entity receiving the component.
+     * @param component The document component to resolve and attach.
+     * @param context Resolution context for deferring node links or recording requests.
+     * @return `true` if a matching resolver attached the component, `false` otherwise.
+     */
     fun resolve(
         world: World,
         entity: Entity,

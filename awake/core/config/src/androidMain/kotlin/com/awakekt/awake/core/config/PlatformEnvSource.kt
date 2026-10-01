@@ -15,4 +15,9 @@ internal class AndroidSystemEnvSource : EnvSource {
     }
 }
 
+/**
+ * Returns the default cascading [EnvSource] tailored for the active runtime platform.
+ *
+ * @return An [EnvSource] loading system environment variables, local files, or platform stores.
+ */
 actual fun defaultPlatformEnvSource(): EnvSource = AndroidSystemEnvSource()

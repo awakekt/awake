@@ -32,11 +32,21 @@ object SpinControlBinding : SceneComponentBinding<SpinControl, SceneSpinControl>
     override fun export(world: World, entity: Entity, component: SpinControl): SceneSpinControl =
         component.toSceneComponent()
 
+    /**
+     * Converts this [SceneSpinControl] schema representation to a live [SpinControl] component.
+     *
+     * @return An initialized [SpinControl] component instance.
+     */
     fun SceneSpinControl.toComponent(): SpinControl = SpinControl().also {
         it.radians = radians
         it.speed = speed
     }
 
+    /**
+     * Converts this live [SpinControl] component to its serializable [SceneSpinControl] representation.
+     *
+     * @return A serializable [SceneSpinControl] schema instance.
+     */
     fun SpinControl.toSceneComponent(): SceneSpinControl = SceneSpinControl(
         radians = radians,
         speed = speed,

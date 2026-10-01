@@ -37,11 +37,20 @@ interface Store<S> : StoreScope {
     /** Current snapshot value of the state. */
     val value: S get() = state.value
 
-    /** Atomically updates the state by applying [transform]. */
+    /**
+     * Atomically updates the state by applying [transform].
+     *
+     * @param transform State reducer producing the new state value from the current state.
+     */
     fun update(transform: (S) -> S)
 
     /**
      * Derives a distinct, read-only [StateFlow] representing a sub-projection of [state].
+     *
+     * @param T The projected sub-state type.
+     * @param scope The coroutine scope in which the derived state flow is shared.
+     * @param selector Transformation function extracting sub-state [T] from [S].
+     * @return A hot [StateFlow] emitting updated [T] values whenever the projection changes.
      */
     fun <T> select(
         scope: CoroutineScope = coroutineScope,
@@ -51,6 +60,10 @@ interface Store<S> : StoreScope {
 
 /**
  * Default implementation of a reactive [Store].
+ *
+ * @param S The type of state managed by this store.
+ * @param initialState The initial value of the state.
+ * @property coroutineScope The active coroutine scope bound to this store.
  */
 open class MutableStore<S>(
     initialState: S,
@@ -82,6 +95,11 @@ open class MutableStore<S>(
 
 /**
  * Factory function creating a lightweight [Store] initialized with [initialState].
+ *
+ * @param S The state type.
+ * @param initialState The initial value for the store.
+ * @param scope Coroutine scope governing state sharing and background jobs.
+ * @return A newly instantiated [Store] managing [initialState].
  */
 fun <S> store(
     initialState: S,
