@@ -20,6 +20,8 @@ package com.awakekt.awake.core.logging
  * the point of a ring is that a steady state allocates nothing at all.
  *
  * Single-writer, like [Log] -- see its note on why that is a checked assumption rather than a hope.
+ *
+ * @property capacity Maximum number of log records retained in the ring buffer.
  */
 class LogRingBuffer(val capacity: Int = DEFAULT_CAPACITY) : LogSink {
     init {
@@ -38,6 +40,7 @@ class LogRingBuffer(val capacity: Int = DEFAULT_CAPACITY) : LogSink {
     var droppedCount: Long = 0
         private set
 
+    /** The number of log records currently held in the ring buffer. */
     val size: Int get() = filled
 
     /** How many of the retained records are at [level] or worse -- the console's badge counts. */

@@ -7,9 +7,17 @@ package com.awakekt.awake.core.math2d
 
 import kotlin.math.roundToInt
 
-/** Immutable measured bounds shared by every public UI layer. */
+/**
+ * Immutable measured bounds shared by every public UI layer.
+ *
+ * @property x Horizontal coordinate of the top-left corner.
+ * @property y Vertical coordinate of the top-left corner.
+ * @property width Total horizontal width of the rectangle.
+ * @property height Total vertical height of the rectangle.
+ */
 data class Rectangle(val x: Float, val y: Float, val width: Float, val height: Float)
 
+/** Alias for [Rectangle] representing measured or placed bounding boxes. */
 typealias Bounds = Rectangle
 
 /** Clamps this rect to the region it shares with [other] -- zero-size if they do not overlap. */

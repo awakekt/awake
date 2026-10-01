@@ -100,26 +100,34 @@ enum class Key {
  * Discrete text-editing commands.
  */
 enum class TextEditAction {
+    /** Deletes the character before the cursor. */
     Backspace,
+
+    /** Deletes the character after the cursor. */
     Delete,
+
+    /** Inserts a newline or commits the text field. */
     Enter,
+
+    /** Moves the cursor one character to the left. */
     ArrowLeft,
+
+    /** Moves the cursor one character to the right. */
     ArrowRight,
+
+    /** Moves the cursor one line up. */
     ArrowUp,
+
+    /** Moves the cursor one line down. */
     ArrowDown,
+
+    /** Moves the cursor to the beginning of the line. */
     Home,
+
+    /** Moves the cursor to the end of the line. */
     End,
 }
 
-/**
- * Immutable capture of the hardware state for a single frame.
- *
- * [keysDown] is level-triggered (held), [keysPressed]/[keysReleased] are the edges against the
- * previous frame. The edges live here, computed once in [Input.updateSnapshot], because every
- * consumer that hand-rolled its own `lastKeysDown` diff had to remember to refresh that copy
- * even on the frames it early-returned -- forget it once and a keypress made over a UI widget
- * replays as "just pressed" the moment the UI lets go.
- */
 /**
  * Which pointer button an event or held state belongs to.
  *
@@ -130,7 +138,22 @@ enum class TextEditAction {
  * [Primary] and [Secondary] keep their dedicated snapshot fields for compatibility -- every
  * existing bridge and consumer reads those -- and are also members of the sets.
  */
-enum class PointerButton { Primary, Secondary, Middle, Back, Forward }
+enum class PointerButton {
+    /** Primary pointer button (typically left mouse button or primary touch). */
+    Primary,
+
+    /** Secondary pointer button (typically right mouse button). */
+    Secondary,
+
+    /** Middle mouse button or wheel click. */
+    Middle,
+
+    /** Auxiliary back button on extended mice. */
+    Back,
+
+    /** Auxiliary forward button on extended mice. */
+    Forward,
+}
 
 /**
  * What sent a frame's scroll, where the platform can tell: a trackpad scrolls in fine, continuous
@@ -150,6 +173,35 @@ enum class ScrollSource {
     Trackpad,
 }
 
+/**
+ * Immutable capture of the hardware state for a single frame.
+ *
+ * [keysDown] is level-triggered (held), [keysPressed]/[keysReleased] are the edges against the
+ * previous frame. The edges live here, computed once in [Input.updateSnapshot], because every
+ * consumer that hand-rolled its own `lastKeysDown` diff had to remember to refresh that copy
+ * even on the frames it early-returned -- forget it once and a keypress made over a UI widget
+ * replays as "just pressed" the moment the UI lets go.
+ *
+ * @property pointerX Current horizontal coordinate of the primary pointer in screen pixels.
+ * @property pointerY Current vertical coordinate of the primary pointer in screen pixels.
+ * @property pointerDown True if the primary pointer is currently pressed down.
+ * @property scrollDeltaX Horizontal scroll delta accumulated during this frame.
+ * @property scrollDeltaY Vertical scroll delta accumulated during this frame.
+ * @property keysDown Set of all physical keys currently held down.
+ * @property keysPressed Set of physical keys pressed down during this frame.
+ * @property keysReleased Set of physical keys released during this frame.
+ * @property typedText Unicode text characters typed during this frame.
+ * @property editActions High-level text navigation and editing actions triggered during this frame.
+ * @property secondaryPointerDown True if the secondary pointer (e.g. right mouse button) is currently pressed down.
+ * @property pointerPressed True if a primary pointer press edge occurred during this frame.
+ * @property pointerReleased True if a primary pointer release edge occurred during this frame.
+ * @property imeComposition Active uncommitted IME pre-edit composition text, or `null` if none.
+ * @property imeCommit Finalized text string committed by an IME during this frame, or `null` if none.
+ * @property buttonsDown Set of all pointer buttons currently held down.
+ * @property buttonsPressed Set of pointer buttons pressed down during this frame.
+ * @property buttonsReleased Set of pointer buttons released during this frame.
+ * @property scrollSource Hardware source driving scroll deltas for this frame.
+ */
 data class InputSnapshot(
     val pointerX: Float,
     val pointerY: Float,
@@ -181,14 +233,19 @@ data class InputSnapshot(
     /** What sent [scrollDeltaX]/[scrollDeltaY], when the platform can tell. */
     val scrollSource: ScrollSource = ScrollSource.Unknown,
 ) {
+    /** True if the specified pointer [button] is currently held down. */
     fun isDown(button: PointerButton): Boolean = button in buttonsDown
 
+    /** True if the specified pointer [button] was pressed down during this frame. */
     fun wasPressed(button: PointerButton): Boolean = button in buttonsPressed
 
+    /** True if the specified pointer [button] was released during this frame. */
     fun wasReleased(button: PointerButton): Boolean = button in buttonsReleased
 
+    /** True if the specified [k] key is currently held down. */
     fun isDown(k: Key): Boolean = k in keysDown
 
+    /** True if the specified [k] key was pressed down during this frame. */
     fun wasPressed(k: Key): Boolean = k in keysPressed
 }
 
@@ -204,16 +261,22 @@ class Input {
     private var imeComposition: ImeComposition? = null
     private var pendingImeCommit: String? = null
 
+    /** True if the primary pointer is currently pressed down. */
     var pointerDown: Boolean = false
         private set
 
+    /** Current horizontal coordinate of the primary pointer in pixels. */
     var pointerX: Float = 0f
         private set
 
+    /** Current vertical coordinate of the primary pointer in pixels. */
     var pointerY: Float = 0f
         private set
 
+    /** Horizontal scroll delta accumulated since the last snapshot. */
     var scrollDeltaX: Float = 0f
+
+    /** Vertical scroll delta accumulated since the last snapshot. */
     var scrollDeltaY: Float = 0f
 
     /** Set by a bridge that can tell a trackpad from a wheel; cleared each snapshot like the deltas. */
@@ -286,8 +349,10 @@ class Input {
     /** Legacy support or internal use. Prefer [updateSnapshot]. */
     fun snapshot(): InputSnapshot = updateSnapshot()
 
+    /** Checks whether the specified [key] is currently held down. */
     fun isKeyDown(key: Key): Boolean = keysDown.contains(key)
 
+    /** Appends typed character [text] to the current frame accumulator. */
     fun pushTypedText(text: String) {
         typedText.append(text)
     }
@@ -303,24 +368,29 @@ class Input {
         pendingImeCommit = text
     }
 
+    /** Appends a text [action] command to the current frame accumulator. */
     fun pushEditAction(action: TextEditAction) {
         pendingEditActions.add(action)
     }
 
+    /** Updates the held state of the specified physical [key]. */
     fun setKeyDown(key: Key, down: Boolean) {
         if (down) keysDown.add(key) else keysDown.remove(key)
     }
 
     private val heldButtons = mutableSetOf<PointerButton>()
 
+    /** True if the secondary pointer (right mouse button) is currently pressed down. */
     var secondaryPointerDown: Boolean = false
         private set
 
+    /** Updates the pressed state of the secondary pointer. */
     fun setSecondaryPointer(down: Boolean) {
         secondaryPointerDown = down
         setButton(PointerButton.Secondary, down)
     }
 
+    /** Updates the pressed state and pixel position ([x], [y]) of the primary pointer. */
     fun setPointer(down: Boolean, x: Float, y: Float) {
         if (down && !pointerDown) pendingPointerPressed = true
         if (!down && pointerDown) pendingPointerReleased = true
@@ -341,6 +411,7 @@ class Input {
         if (down) heldButtons.add(button) else heldButtons.remove(button)
     }
 
+    /** Clears all held physical keys from the accumulator. */
     fun clearKeys() {
         keysDown.clear()
     }

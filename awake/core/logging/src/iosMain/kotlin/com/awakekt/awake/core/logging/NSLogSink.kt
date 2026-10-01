@@ -17,12 +17,14 @@ import platform.Foundation.NSLog
  *
  * The iOS console visibility is critical for troubleshooting blank screen issues and
  * verifying that exception handling code is executing at all.
+ *
+ * @property minimumLevel Records below this are dropped by the sink, independent of [Log.minimumLevel].
  */
 class NSLogSink(
-    /** Records below this are dropped by the sink, independent of [Log.minimumLevel]. */
     var minimumLevel: LogLevel = LogLevel.Debug,
 ) : LogSink {
 
+    /** Emits a log record to iOS `NSLog` if its level meets or exceeds [minimumLevel]. */
     override fun emit(record: LogRecord) {
         if (record.level < minimumLevel) return
         NSLog(format(record))

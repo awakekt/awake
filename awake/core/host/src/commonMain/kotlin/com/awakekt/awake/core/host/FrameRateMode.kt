@@ -17,6 +17,8 @@ sealed interface FrameRateMode {
 
     /**
      * Hard frame rate cap (e.g. 30, 60, 120 FPS). Frame loop sleeps out the remaining budget per frame.
+     *
+     * @property targetFps Target frames per second cap, must be positive.
      */
     data class Capped(val targetFps: Int) : FrameRateMode {
         init {

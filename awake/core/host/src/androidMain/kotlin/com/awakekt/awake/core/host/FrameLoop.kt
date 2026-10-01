@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.core.host
 
+/**
+ * Android implementation of [FrameLoop] using `System.nanoTime()` and thread sleeping.
+ */
 object AndroidFrameLoop : FrameLoop {
     private var previousFrameTime = System.nanoTime()
 

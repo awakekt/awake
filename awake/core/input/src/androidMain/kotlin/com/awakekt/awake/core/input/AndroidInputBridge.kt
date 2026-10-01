@@ -7,6 +7,12 @@ package com.awakekt.awake.core.input
 
 import android.view.MotionEvent
 
+/**
+ * Synchronizes an Android pointer [MotionEvent] into the Awake [input] accumulator.
+ *
+ * @param input Target Awake [Input] accumulator receiving pointer states and coordinates.
+ * @return True if the event was processed by the bridge, false otherwise.
+ */
 fun MotionEvent.syncAwakePointerInput(input: Input): Boolean {
     // Only a real mouse reports a button state -- finger touches always leave it 0, so this is
     // a no-op for touch. Long-press is deliberately NOT mapped to a secondary click here: that

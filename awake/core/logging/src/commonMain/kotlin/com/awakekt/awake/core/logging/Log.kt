@@ -6,7 +6,22 @@
 package com.awakekt.awake.core.logging
 
 /** Ordered so a sink can filter with a single comparison. */
-enum class LogLevel { Trace, Debug, Info, Warn, Error }
+enum class LogLevel {
+    /** Fine-grained diagnostic information for tracing execution paths. */
+    Trace,
+
+    /** Diagnostic information helpful for debugging development builds. */
+    Debug,
+
+    /** General operational messages tracking normal engine lifecycle events. */
+    Info,
+
+    /** Indications of potential issues or unexpected states that do not stop execution. */
+    Warn,
+
+    /** Serious runtime failures or unrecoverable subsystem conditions. */
+    Error,
+}
 
 /**
  * One thing worth saying, and when.
@@ -17,6 +32,12 @@ enum class LogLevel { Trace, Debug, Info, Warn, Error }
  *
  * A class rather than a data class -- these are produced in bulk and never compared or copied, so
  * `equals`/`hashCode`/`copy` would be generated for nobody.
+ *
+ * @property level The severity level associated with this record.
+ * @property tag Subsystem or category identifier tagging the log source.
+ * @property message The primary diagnostic text message.
+ * @property frame The engine frame index when this record was generated.
+ * @property cause Optional throwable describing the underlying failure or exception.
  */
 class LogRecord(
     val level: LogLevel,
@@ -29,6 +50,11 @@ class LogRecord(
 /** Somewhere a record goes. Implementations must not throw: a logger that can fail is a logger
  *  every caller has to guard, and none of them will. */
 fun interface LogSink {
+    /**
+     * Emits a single [record] to this sink destination.
+     *
+     * @param record The log entry to process.
+     */
     fun emit(record: LogRecord)
 }
 
@@ -55,12 +81,23 @@ object Log {
     var frame: Long = 0
         private set
 
+    /** True when at least one [LogSink] is installed and listening for records. */
     val hasSinks: Boolean get() = sinks.isNotEmpty()
 
+    /**
+     * Registers an active [sink] to receive emitted log records.
+     *
+     * @param sink The logging destination to register.
+     */
     fun install(sink: LogSink) {
         sinks = sinks + sink
     }
 
+    /**
+     * Unregisters an existing [sink] so it no longer receives log records.
+     *
+     * @param sink The logging destination to unregister.
+     */
     fun remove(sink: LogSink) {
         sinks = sinks - sink
     }
@@ -72,6 +109,7 @@ object Log {
         minimumLevel = LogLevel.Info
     }
 
+    /** Increments the global [frame] counter tracked by log records. */
     fun advanceFrame() {
         frame++
     }
@@ -98,6 +136,8 @@ object Log {
  * micro-optimisation here: a log line inside a per-frame path that allocates unconditionally is one
  * the next person profiling deletes, and a logging facility nobody can afford to call in the frame
  * loop is not one that covers the frame loop.
+ *
+ * @property tag Subsystem or category identifier tagging the log source.
  */
 class Logger(
     // `internal` rather than `private`: the inline helpers below read it, and an inline
@@ -106,25 +146,34 @@ class Logger(
     @PublishedApi internal val tag: String,
 ) {
 
+    /** Logs a [message] evaluated lazily if [LogLevel.Trace] is enabled. */
     inline fun trace(message: () -> String) {
         if (Log.isEnabled(LogLevel.Trace)) Log.emit(LogLevel.Trace, tag, message())
     }
 
+    /** Logs a [message] evaluated lazily if [LogLevel.Debug] is enabled. */
     inline fun debug(message: () -> String) {
         if (Log.isEnabled(LogLevel.Debug)) Log.emit(LogLevel.Debug, tag, message())
     }
 
+    /** Logs a [message] evaluated lazily if [LogLevel.Info] is enabled. */
     inline fun info(message: () -> String) {
         if (Log.isEnabled(LogLevel.Info)) Log.emit(LogLevel.Info, tag, message())
     }
 
+    /** Logs a [message] evaluated lazily if [LogLevel.Warn] is enabled. */
     inline fun warn(message: () -> String) {
         if (Log.isEnabled(LogLevel.Warn)) Log.emit(LogLevel.Warn, tag, message())
     }
 
     /**
+     * Logs an error [message] and optional [cause] evaluated lazily if [LogLevel.Error] is enabled.
+     *
      * [cause] is a parameter rather than something folded into the message, because a sink that
      * reports a stack trace needs the throwable and cannot recover it from text.
+     *
+     * @param cause Optional exception or error associated with the log record.
+     * @param message Producer of the message string.
      */
     inline fun error(cause: Throwable? = null, message: () -> String) {
         if (Log.isEnabled(LogLevel.Error)) Log.emit(LogLevel.Error, tag, message(), cause)

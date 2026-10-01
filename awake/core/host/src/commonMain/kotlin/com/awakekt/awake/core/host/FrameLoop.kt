@@ -11,6 +11,9 @@ const val TARGET_FPS = 60
 /** Maximum frame delta allowed in a single tick (250 ms / 4 FPS) to prevent massive time jumps after tab suspension or pauses. */
 const val MAX_FRAME_DELTA_SECONDS: Double = 0.25
 
+/**
+ * Core interface driving per-frame tick updates and rate limiting across platform hosts.
+ */
 interface FrameLoop {
     /** Runs exactly one frame -- measures the delta since the previous call, invokes
      * [onUpdate], then sleeps out the remainder of the frame budget if configured by [mode].

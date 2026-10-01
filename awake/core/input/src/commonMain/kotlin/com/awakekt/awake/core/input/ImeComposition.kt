@@ -5,7 +5,13 @@
  */
 package com.awakekt.awake.core.input
 
-/** Uncommitted platform IME text; selection is relative to [text]. */
+/**
+ * Uncommitted platform IME text; selection is relative to [text].
+ *
+ * @property text The uncommitted pre-edit string currently being composed.
+ * @property selectionStart The zero-based start index of the active selection within [text].
+ * @property selectionEnd The zero-based end index of the active selection within [text].
+ */
 data class ImeComposition(
     val text: String,
     val selectionStart: Int = text.length,
