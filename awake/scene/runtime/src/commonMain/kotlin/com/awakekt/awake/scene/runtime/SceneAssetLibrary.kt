@@ -71,18 +71,18 @@ class SceneAssetLibrary(
     /** Released meshes kept for reuse, eldest first -- `LinkedHashMap` iteration order IS the
      * eviction order, so re-inserting on release is what makes this least-recently-released. */
     private val retainedMeshes = linkedMapOf<String, Mesh>()
+
+    // How many times [resolve] took holds for each request, so [releaseRenderable] gives back exactly those.
+    private val resolvedRequests = mutableMapOf<SceneRenderableRequest, Int>()
     private var retainedBytes = 0L
 
     /** Builds [name] on first use and takes a reference to it; see [releaseMesh]. */
     fun requireMesh(runtime: SceneAppLifecycleRuntime, name: String): Mesh {
-        meshHolders[name] = (meshHolders[name] ?: 0) + 1
         // Revived before building: a retained mesh is the whole point of retaining it.
-        retainedMeshes.remove(name)?.let { revived ->
+        val mesh = retainedMeshes.remove(name)?.also { revived ->
             retainedBytes -= revived.sizeBytes
             meshes[name] = revived
-            return revived
-        }
-        return meshes.getOrPut(name) {
+        } ?: meshes.getOrPut(name) {
             val factory = meshFactories[name]
             if (factory != null) return@getOrPut runtime.factory()
             for (resolver in dynamicResolvers) {
@@ -93,6 +93,9 @@ class SceneAssetLibrary(
             }
             error("No scene mesh named '$name' is registered or could be resolved by installed plugins.")
         }
+        // Counted once it exists, so a mesh that failed to build holds nothing to release.
+        meshHolders[name] = (meshHolders[name] ?: 0) + 1
+        return mesh
     }
 
     /** The name a live [mesh] was built under, or null when this library didn't build it. */
@@ -100,8 +103,7 @@ class SceneAssetLibrary(
 
     /** Builds [name] on first use and takes a reference to it; see [releaseMaterial]. */
     fun requireMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material {
-        materialHolders[name] = (materialHolders[name] ?: 0) + 1
-        return materials.getOrPut(name) {
+        val material = materials.getOrPut(name) {
             val factory = materialFactories[name]
             if (factory != null) return@getOrPut runtime.factory()
             for (resolver in dynamicResolvers) {
@@ -112,6 +114,8 @@ class SceneAssetLibrary(
             }
             error("No scene material named '$name' is registered or could be resolved by installed plugins.")
         }
+        materialHolders[name] = (materialHolders[name] ?: 0) + 1
+        return material
     }
 
     /**
@@ -197,13 +201,34 @@ class SceneAssetLibrary(
         if (customRenderer != null) {
             return runtime.customRenderer()
         }
+        val mesh = requireMesh(runtime, key.mesh)
+        var material: Material? = null
+        try {
+            material = requireMaterial(runtime, key.material)
+        } finally {
+            // A material that fails to build leaves nothing holding the mesh it was paired with.
+            if (material == null) releaseMesh(key.mesh)
+        }
+        resolvedRequests[request] = (resolvedRequests[request] ?: 0) + 1
         return MeshRenderer(
-            mesh = requireMesh(runtime, key.mesh),
-            material = requireMaterial(runtime, key.material),
+            mesh = mesh,
+            material = checkNotNull(material),
             cullMode = request.meshRenderer.cullMode.toCullMode(),
             transparent = request.meshRenderer.transparent,
             additive = request.meshRenderer.additive,
         )
+    }
+
+    /**
+     * Gives back the mesh and material holds [resolve] took for [request], so a scene that unloads
+     * frees what it drew. A request [resolve] never built, or built through a custom renderer
+     * factory, holds nothing and is ignored.
+     */
+    fun releaseRenderable(request: SceneRenderableRequest) {
+        val count = resolvedRequests[request] ?: return
+        if (count > 1) resolvedRequests[request] = count - 1 else resolvedRequests.remove(request)
+        releaseMesh(request.meshRenderer.mesh)
+        releaseMaterial(request.meshRenderer.material)
     }
 
     private fun SceneMeshRenderer.CullMode.toCullMode(): CullMode = when (this) {
@@ -229,5 +254,6 @@ class SceneAssetLibrary(
         materials.clear()
         meshHolders.clear()
         materialHolders.clear()
+        resolvedRequests.clear()
     }
 }
