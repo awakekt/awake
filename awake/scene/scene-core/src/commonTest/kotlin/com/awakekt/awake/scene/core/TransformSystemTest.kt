@@ -7,6 +7,7 @@ package com.awakekt.awake.scene.core
 
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.core.transform.StaticTransform
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.core.transform.TransformSystem
 import kotlin.test.Test
@@ -152,5 +153,62 @@ class TransformSystemTest {
         system.update(world, 0f)
 
         assertEquals(0f, transform.worldMatrix.data[12])
+    }
+
+    /** A static entity is placed under its static parent once, and then its values are not read. */
+    @Test
+    fun aStaticTransformIsBuiltOnceThenLeftAlone() {
+        val world = World()
+        val system = TransformSystem()
+        val groupEntity = world.create()
+        world.add(groupEntity, Transform(position = Vec3f(10f, 0f, 0f)))
+        world.add(groupEntity, StaticTransform)
+        val prop = Transform(position = Vec3f(1f, 0f, 0f), parent = groupEntity)
+        world.add(world.create().also { world.add(it, StaticTransform) }, prop)
+        val player = Transform()
+        world.add(world.create(), player)
+        system.update(world, 0f)
+        assertEquals(11f, prop.worldMatrix.data[12], "built under its parent")
+
+        prop.position.x = 5f
+        player.position.x = 2f
+        system.update(world, 0f)
+
+        assertEquals(11f, prop.worldMatrix.data[12], "a static entity keeps its first matrix")
+        assertEquals(2f, player.worldMatrix.data[12], "the rest still move")
+    }
+
+    /** A different or reset transform is a new placement, so a static entity is built again. */
+    @Test
+    fun aStaticEntityIsRebuiltForANewOrResetTransform() {
+        val world = World()
+        val system = TransformSystem()
+        val entity = world.create()
+        world.add(entity, StaticTransform)
+        world.add(entity, Transform(position = Vec3f(1f, 0f, 0f)))
+        system.update(world, 0f)
+
+        val replaced = Transform(position = Vec3f(4f, 0f, 0f))
+        world.add(entity, replaced)
+        system.update(world, 0f)
+        assertEquals(4f, replaced.worldMatrix.data[12])
+
+        replaced.reset()
+        system.update(world, 0f)
+        assertEquals(0f, replaced.worldMatrix.data[12])
+    }
+
+    @Test
+    fun anEditorsSystemMovesStaticEntities() {
+        val world = World()
+        val system = TransformSystem(skipsStatic = false)
+        val prop = Transform(position = Vec3f(1f, 0f, 0f))
+        world.add(world.create().also { world.add(it, StaticTransform) }, prop)
+        system.update(world, 0f)
+
+        prop.position.x = 5f
+        system.update(world, 0f)
+
+        assertEquals(5f, prop.worldMatrix.data[12])
     }
 }

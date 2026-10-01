@@ -32,6 +32,7 @@ registers it.
 | [`prefab_link`](#prefab_link) | — | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
 | [`skybox`](#skybox) | `Skybox` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
 | [`spin_control`](#spin_control) | `SpinControl` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
+| [`static_transform`](#static_transform) | `StaticTransform` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`terrain`](#terrain) | `TerrainComponent` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Terrain](../guides/terrain.md) |
 
 ## Registration
@@ -39,7 +40,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `light`, `mesh_renderer`, `pbr_material`, `skybox`, `spin_control`, `terrain`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `light`, `mesh_renderer`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -312,6 +313,18 @@ Rotates the entity around Y. `SceneSpinControl`.
 | --- | --- | --- | --- |
 | `radians` | number | `0` | Starting angle in radians. |
 | `speed` | number | `1` | Rotation speed multiplier. |
+
+## `static_transform`
+
+Marks a node that never moves, such as a placed prop. `SceneStaticTransform`, no fields.
+
+`TransformSystem` builds the node's world matrix once and then skips it, so a level of thousands of
+props costs almost nothing per frame. The node's parent must not move either: a static node does not
+follow a parent that moves. An editor that moves static nodes uses `TransformSystem(skipsStatic = false)`.
+
+```json
+{ "component": "static_transform" }
+```
 
 ## `terrain`
 
