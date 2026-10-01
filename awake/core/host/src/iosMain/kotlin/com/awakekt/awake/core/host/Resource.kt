@@ -13,6 +13,12 @@ import platform.Foundation.NSData
 import platform.Foundation.dataWithContentsOfFile
 import platform.posix.memcpy
 
+/**
+ * Reads a bundled resource from iOS application bundle resources at [path] as raw bytes.
+ *
+ * @param path The relative resource path to read.
+ * @return The raw byte contents of the resource.
+ */
 @OptIn(ExperimentalForeignApi::class)
 actual suspend fun readResourceBytes(path: String): ByteArray {
     val fullPath = NSBundle.mainBundle.resourcePath?.plus("/$path")
