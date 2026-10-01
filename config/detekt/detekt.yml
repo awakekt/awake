@@ -106,6 +106,10 @@ comments:
       - '**/awake/core/di/**'
       - '**/awake/scene/character/**'
       - '**/awake/scene/scene-core/**'
+      - '**/awake/core/logging/**'
+      - '**/awake/core/host/**'
+      - '**/awake/core/input/**'
+      - '**/awake/core/math2d/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

@@ -17,9 +17,18 @@ package com.awakekt.awake.core.input
  * `ui-core` for a five-value enum with no dependencies of its own.
  */
 enum class PointerCursor {
+    /** Standard platform default arrow cursor. */
     Default,
+
+    /** Horizontal resize cursor indicating horizontal boundary adjustment. */
     ResizeHorizontal,
+
+    /** Vertical resize cursor indicating vertical boundary adjustment. */
     ResizeVertical,
+
+    /** Pointing hand cursor typically used for interactive links and buttons. */
     Pointer,
+
+    /** I-beam cursor indicating selectable or editable text. */
     Text,
 }

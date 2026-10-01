@@ -15,8 +15,12 @@ import org.khronos.webgl.get
 import org.w3c.fetch.Response
 
 // Resources are served at the same relative path by webpack, so plain fetch() works.
-// wasmJs's `await()` infers its return type from call-site context, not the Promise's own
-// type argument, so both awaits below need an explicit type or inference fails.
+/**
+ * Reads a bundled resource from the host web server at [path] via the browser fetch API as raw bytes.
+ *
+ * @param path The relative resource path to read.
+ * @return The raw byte contents of the resource.
+ */
 actual suspend fun readResourceBytes(path: String): ByteArray {
     val response: Response = window.fetch(path).await()
     if (!response.ok) {

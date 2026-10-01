@@ -13,14 +13,22 @@ package com.awakekt.awake.core.math2d
  * pass produces a [Size2D]; only placement turns it into a [Rectangle].
  *
  * Float, not Int: this is post-density pixels, and rounding belongs at the rasterizer, not here.
+ *
+ * @property width Measured horizontal extent in pixels.
+ * @property height Measured vertical extent in pixels.
  */
 data class Size2D(val width: Float, val height: Float) {
+    /** True if either extent is zero or negative. */
     val isEmpty: Boolean get() = width <= 0f || height <= 0f
 
     /** Both extents scaled by [factor] -- density conversion, or a uniform inset ratio. */
     operator fun times(factor: Float): Size2D = Size2D(width * factor, height * factor)
 
+    /**
+     * Factory constants for [Size2D].
+     */
     companion object {
+        /** A zero-dimensional extent with width and height of 0. */
         val Zero = Size2D(0f, 0f)
     }
 }

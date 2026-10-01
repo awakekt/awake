@@ -25,6 +25,9 @@ package com.awakekt.awake.core.host
  * to blend from yet. [render]'s `alpha` parameter is provided for a future render system
  * that wants it; today's [com.awakekt.awake.scene.systems.RenderSystem3D] ignores
  * it and just draws whatever [FixedUpdate] last wrote.
+ *
+ * @param fixedDelta Duration in seconds of each fixed simulation step.
+ * @param maxStepsPerFrame Maximum number of fixed steps executed in a single frame to prevent spiral-of-death.
  */
 class FixedTimestepLoop(
     private val fixedDelta: Float = DEFAULT_FIXED_DELTA,
@@ -33,10 +36,12 @@ class FixedTimestepLoop(
     private var accumulator = 0f
 
     /**
-     * @param frameDelta the real, measured elapsed time since the last call (from
+     * Advances the accumulator by [frameDelta], running [fixedUpdate] steps and concluding with [render].
+     *
+     * @param frameDelta The real, measured elapsed time since the last call (from
      *   [FrameLoop.tick]'s `deltaTime`, cast to `Float`).
-     * @param fixedUpdate called zero or more times, always with exactly [fixedDelta].
-     * @param render called exactly once, with `alpha` in `[0, 1)`: how far the accumulator
+     * @param fixedUpdate Called zero or more times, always with exactly [fixedDelta].
+     * @param render Called exactly once, with `alpha` in `[0, 1)`: how far the accumulator
      *   is into the *next* fixed step that hasn't run yet.
      */
     fun advance(frameDelta: Float, fixedUpdate: FixedUpdate, render: Render) {
@@ -62,5 +67,8 @@ class FixedTimestepLoop(
     }
 }
 
+/** Callback invoked for each fixed simulation step with the step duration in seconds. */
 typealias FixedUpdate = (fixedDelta: Float) -> Unit
+
+/** Callback invoked once per frame to render the scene with interpolation factor `alpha`. */
 typealias Render = (alpha: Float) -> Unit

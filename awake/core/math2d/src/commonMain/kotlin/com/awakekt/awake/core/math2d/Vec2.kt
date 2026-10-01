@@ -12,20 +12,35 @@ import kotlin.math.sqrt
  *
  * Follows the same naming contract [Vec3] documents: bare verbs mutate and return `this`,
  * operators and `-ed` forms allocate, products and queries are pure.
+ *
+ * @property x Horizontal coordinate component.
+ * @property y Vertical coordinate component.
  */
 data class Vec2(var x: Float, var y: Float) {
+    /**
+     * Constructs a [Vec2] from integer [x] and [y] coordinates.
+     *
+     * @param x Horizontal coordinate component.
+     * @param y Vertical coordinate component.
+     */
     constructor(x: Int, y: Int) : this(x.toFloat(), y.toFloat())
 
+    /** Adds [other] to this vector, returning a new [Vec2]. */
     operator fun plus(other: Vec2): Vec2 = Vec2(x + other.x, y + other.y)
 
+    /** Subtracts [other] from this vector, returning a new [Vec2]. */
     operator fun minus(other: Vec2): Vec2 = Vec2(x - other.x, y - other.y)
 
+    /** Multiplies this vector by [scalar], returning a new [Vec2]. */
     operator fun times(scalar: Float): Vec2 = Vec2(x * scalar, y * scalar)
 
+    /** Computes the dot product between this vector and [other]. */
     fun dot(other: Vec2): Float = x * other.x + y * other.y
 
+    /** Computes the Euclidean length of this vector. */
     fun length(): Float = sqrt(x * x + y * y)
 
+    /** Computes the Euclidean distance from this point to [other]. */
     fun distanceTo(other: Vec2): Float {
         val dx = x - other.x
         val dy = y - other.y

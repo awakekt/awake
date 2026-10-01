@@ -14,5 +14,8 @@ package com.awakekt.awake.core.host
  * is inherently async (`fetch()`) -- see docs/reference/decision-log.md's web-demo entry.
  * The desktop/Android/iOS actuals are synchronous I/O under the hood and need no behavior
  * change, just the `suspend` keyword.
+ *
+ * @param path The relative resource path to read.
+ * @return The raw byte contents of the resource.
  */
 expect suspend fun readResourceBytes(path: String): ByteArray

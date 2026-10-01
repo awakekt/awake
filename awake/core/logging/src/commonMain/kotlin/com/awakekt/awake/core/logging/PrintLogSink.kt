@@ -17,12 +17,16 @@ package com.awakekt.awake.core.logging
  *
  * A [cause] is printed after its record rather than folded into the line: a stack trace is many
  * lines and putting it inline makes the record unreadable in a column of them.
+ *
+ * @property minimumLevel Records below this are dropped by the sink, independent of [Log.minimumLevel].
  */
 class PrintLogSink(
-    /** Records below this are dropped by the sink, independent of [Log.minimumLevel]. */
     var minimumLevel: LogLevel = LogLevel.Trace,
 ) : LogSink {
 
+    /**
+     * Emits [record] to standard output if its level meets or exceeds [minimumLevel].
+     */
     override fun emit(record: LogRecord) {
         if (record.level < minimumLevel) return
         println(format(record))

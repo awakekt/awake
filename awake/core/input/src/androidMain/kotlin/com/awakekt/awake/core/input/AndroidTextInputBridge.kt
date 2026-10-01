@@ -13,10 +13,15 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputMethodManager
 
-/** [InputConnection] fed to the IME by `VulkanView` (awake:engine:platform)
+/**
+ * [InputConnection] fed to the IME by `VulkanView` (awake:engine:platform)
  * .onCreateInputConnection -- a `SurfaceView` has no text field of its own for the IME to edit,
  * so this forwards committed text/deletes straight into [input] instead of maintaining an
- * `Editable`. */
+ * `Editable`.
+ *
+ * @param targetView Target view owning this input connection.
+ * @param input Target Awake [Input] accumulator receiving text events.
+ */
 class AwakeInputConnection(targetView: View, private val input: Input) : BaseInputConnection(targetView, false) {
 
     override fun commitText(text: CharSequence, newCursorPosition: Int): Boolean {
@@ -40,17 +45,30 @@ class AwakeInputConnection(targetView: View, private val input: Input) : BaseInp
     }
 }
 
+/**
+ * Creates an [InputConnection] configuring [outAttrs] and forwarding IME actions into [input].
+ *
+ * @param outAttrs Attributes describing the editor configuration.
+ * @param input Target Awake [Input] accumulator receiving text events.
+ * @return An [InputConnection] bound to this view and the input accumulator.
+ */
 fun View.createAwakeInputConnection(outAttrs: EditorInfo, input: Input): InputConnection {
     outAttrs.inputType = android.text.InputType.TYPE_CLASS_TEXT
     outAttrs.imeOptions = EditorInfo.IME_ACTION_DONE
     return AwakeInputConnection(this, input)
 }
 
-/** Polls [Input.textInputFocused] once per frame and shows/hides the soft keyboard on its
- * rising/falling edge. */
+/**
+ * Polls [Input.textInputFocused] once per frame and shows/hides the soft keyboard on its
+ * rising/falling edge.
+ *
+ * @param view The hosting Android [View].
+ * @param input The [Input] instance whose focus state is monitored.
+ */
 class AndroidSoftKeyboardBridge(private val view: View, private val input: Input) {
     private var wasFocused = false
 
+    /** Synchronizes soft keyboard visibility based on current text input focus state. */
     fun syncSoftKeyboardVisibility() {
         val focused = input.textInputFocused
         if (focused == wasFocused) return

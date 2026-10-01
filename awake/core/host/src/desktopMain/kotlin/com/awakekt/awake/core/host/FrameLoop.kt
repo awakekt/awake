@@ -5,6 +5,9 @@
  */
 package com.awakekt.awake.core.host
 
+/**
+ * Desktop implementation of [FrameLoop] supporting window focus detection and background throttling.
+ */
 object DesktopFrameLoop : FrameLoop {
     /**
      * Whether the host window currently has input focus.
