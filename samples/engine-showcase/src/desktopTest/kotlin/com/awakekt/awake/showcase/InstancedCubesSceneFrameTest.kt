@@ -5,16 +5,12 @@
  */
 package com.awakekt.awake.showcase
 
-import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.engine.platform.HeadlessSurface
-import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.capture.PixelMap
-import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
-import com.awakekt.awake.vulkan.application.VulkanEngine
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.test.Test
@@ -93,13 +89,6 @@ class InstancedCubesSceneFrameTest {
             val offset = pixel * RGBA_CHANNELS
             before[offset] != after[offset] || before[offset + 1] != after[offset + 1] || before[offset + 2] != after[offset + 2]
         }
-
-    private class HeadlessPlanEngine(
-        lifecycle: AwakeAppLifecycle,
-        plan: RenderPlan,
-    ) : VulkanEngine(lifecycle, plan) {
-        suspend fun boot(surface: HeadlessSurface): Renderer = createBackendResources(surface).renderer
-    }
 
     private companion object {
         const val SHOWCASE_ID = "instanced-cubes"

@@ -6,7 +6,6 @@
 package com.awakekt.awake.showcase
 
 import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
-import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.core.geometry.generate.generate
 import com.awakekt.awake.engine.bootstrap.dsl.appSpec
 import com.awakekt.awake.engine.platform.HeadlessSurface
@@ -19,7 +18,6 @@ import com.awakekt.awake.scene.rendering.debug.debugSettings
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
-import com.awakekt.awake.vulkan.application.VulkanEngine
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -59,7 +57,7 @@ class ShadowModeFrameTest {
     @Test
     @Ignore("Fails: the three modes darken almost the same amount. See the KDoc for the numbers.")
     fun eachShadowModeRendersADifferentFrame() = runBlocking {
-        val engine = ModeEngine(headlessLifecycle(), EngineShowcaseRenderPlan)
+        val engine = HeadlessPlanEngine(headlessLifecycle(), EngineShowcaseRenderPlan)
         val renderer = engine.boot(HeadlessSurface(WIDTH, HEIGHT))
         try {
             val none = renderer.shadowedGroundPixels(shadows = false, cascaded = false)
@@ -120,10 +118,6 @@ class ShadowModeFrameTest {
             size(WIDTH, HEIGHT)
         }
     }.createLifecycle()
-
-    private class ModeEngine(lifecycle: AwakeAppLifecycle, plan: RenderPlan) : VulkanEngine(lifecycle, plan) {
-        suspend fun boot(surface: HeadlessSurface): Renderer = createBackendResources(surface).renderer
-    }
 
     private companion object {
         const val WIDTH = 320

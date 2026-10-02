@@ -29,6 +29,12 @@ class AwakeDesktopAppSpec(private val project: Project) {
     /** Task description text. */
     var description: String = "Run the desktop application."
 
+    /**
+     * Gradle properties passed to the app as same-named system properties when set, so
+     * `-Pawake.showcase=nav-chase` reaches `System.getProperty("awake.showcase")`.
+     */
+    var forwardedProperties: Set<String> = emptySet()
+
     internal fun configure() {
         if (mainClass.isBlank()) return
         val bindingsProj = project.findProject(":awake:backend:vulkan:bindings")
@@ -48,6 +54,9 @@ class AwakeDesktopAppSpec(private val project: Project) {
             environment(VulkanDesktopEnv.runEnvironment(project))
             if (HostOs.isMac) {
                 jvmArgs("-XstartOnFirstThread")
+            }
+            forwardedProperties.forEach { name ->
+                project.providers.gradleProperty(name).orNull?.let { systemProperty(name, it) }
             }
         }
     }

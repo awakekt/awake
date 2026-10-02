@@ -28,8 +28,6 @@ import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.render.capture.FramebufferAttachment
-import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
-import com.awakekt.awake.scene.runtime.LocalFrameStats
 import com.awakekt.awake.showcase.EngineShowcase
 import com.awakekt.awake.showcase.ShowcaseDebugOption
 import com.awakekt.awake.showcase.ShowcaseDebugToggles
@@ -44,8 +42,8 @@ import com.awakekt.awake.ui.shadcn.components.ShadcnText
 import com.awakekt.awake.ui.shadcn.components.ShadcnTextVariant
 import kotlin.math.roundToInt
 
-private val CARD_WIDTH: Dp = 244.dp
-private val CARD_INSET: Dp = 12.dp
+internal val CARD_WIDTH: Dp = 244.dp
+internal val CARD_INSET: Dp = 12.dp
 private val ROW_GAP: Dp = 6.dp
 private val FIELD_WIDTH: Dp = 220.dp
 private val PREVIEW_WIDTH: Dp = 220.dp
@@ -76,6 +74,8 @@ internal object ShowcaseDebugTags {
     const val FOG_ENABLED = "showcase-debug-fog-enabled"
     const val FOG_DENSITY = "showcase-debug-fog-density"
     const val FOG_RESET = "showcase-debug-fog-reset"
+    const val STRESS_COUNT = "showcase-debug-stress-count"
+    const val STRESS_MOVING = "showcase-debug-stress-moving"
 }
 
 /**
@@ -202,6 +202,7 @@ internal fun ShowcaseDebugCard(
                     onChange = toggle.onChange,
                 )
             }
+            showcase.controls?.let { controls -> controls() }
         } else if (state.selectedTab == "environment") {
             Toggle(
                 label = "Enable Fog",
@@ -340,33 +341,10 @@ private fun FramebufferAttachment.shortLabel(): String = when (this) {
     FramebufferAttachment.Normal -> "Normal"
 }
 
-context(_: Composer)
-internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
-    val frameStats = LocalFrameStats.current
-    val phases = frameStats.phases
-    Column(
-        modifier = modifier.width(CARD_WIDTH).background(ShowcaseTheme.palette.card).padding(CARD_INSET),
-    ) {
-        ShadcnText("FPS: ${frameStats.fps.oneDecimal()}  Frame: ${frameStats.frameTimeMs.oneDecimal()}ms", variant = ShadcnTextVariant.Small)
-        if (phases.isMeasured) {
-            ShadcnText("UI: ${phases.uiBuildMs.oneDecimal()}ms  Wait: ${phases.uiWaitMs.oneDecimal()}ms", variant = ShadcnTextVariant.Small)
-            ShadcnText("Stage: ${phases.uiStageMs.oneDecimal()}ms  Sim: ${phases.simRenderMs.oneDecimal()}ms", variant = ShadcnTextVariant.Small)
-        } else {
-            ShadcnText("Press F2 for phase timings", variant = ShadcnTextVariant.Small)
-        }
-        ShadcnText("Memory: unavailable on this target", variant = ShadcnTextVariant.Small)
-        ShadcnText("Surface aspect: ${RenderDiagnostics.surfaceAspect.oneDecimal()}", variant = ShadcnTextVariant.Small)
-        ShadcnText("Draws: ${RenderDiagnostics.submittedDrawCalls}  Instances: ${RenderDiagnostics.submittedInstances}", variant = ShadcnTextVariant.Small)
-        ShadcnText("Unresolved: ${RenderDiagnostics.unresolvedDrawCalls}", variant = ShadcnTextVariant.Small)
-        ShadcnText("Frustum culled: ${RenderDiagnostics.frustumCulled}", variant = ShadcnTextVariant.Small)
-        ShadcnText("Occluded: ${RenderDiagnostics.occluded}", variant = ShadcnTextVariant.Small)
-    }
-}
-
-private fun Float.oneDecimal(): String = ((this * 10f).roundToInt() / 10f).toString()
+internal fun Float.oneDecimal(): String = ((this * 10f).roundToInt() / 10f).toString()
 
 context(_: Composer)
-private fun Toggle(label: String, tag: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+internal fun Toggle(label: String, tag: String, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier.padding(top = ROW_GAP),
         verticalAlignment = Alignment.CenterVertically,

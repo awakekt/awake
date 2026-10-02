@@ -46,9 +46,11 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser {
+            // Fixed dev-server ports, distinct from the other samples -- see the port table in
+            // docs/reference/developer-docs.md.
             commonWebpackConfig {
                 val port =
-                    if (mode == org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode.PRODUCTION) 8089 else 8088
+                    if (mode == org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig.Mode.PRODUCTION) 8089 else 8081
                 devServer = devServer?.copy(port = port)
             }
         }
@@ -135,6 +137,12 @@ awake {
     desktopApp {
         mainClass = "com.awakekt.awake.showcase.app.MainKt"
         description = "Run the Awake engine showcase; pass -Pawake.showcase=<id> for a focused demo."
+        forwardedProperties = setOf(
+            "awake.showcase",
+            "awake.showcase.vsync",
+            "awake.showcase.perfLog",
+            "awake.showcase.entities",
+        )
     }
 
     test {

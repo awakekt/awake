@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "name": "ecs-stress",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 0.0, "y": 70.0, "z": 120.0 },
+          "center": { "x": 0.0, "y": 0.0, "z": 0.0 },
+          "fovYDegrees": 45.0,
+          "near": 0.5,
+          "far": 1000.0,
+          "primary": true
+        }
+      ]
+    },
+    {
+      "name": "sun",
+      "components": [
+        {
+          "component": "light",
+          "type": "Directional",
+          "direction": { "x": 0.4, "y": 1.0, "z": 0.3 },
+          "color": { "x": 1.0, "y": 0.97, "z": 0.92 },
+          "intensity": 3.0
+        }
+      ]
+    },
+    {
+      "name": "ground",
+      "transform": { "scale": { "x": 50.0, "y": 1.0, "z": 50.0 } },
+      "components": [
+        { "component": "meshRenderer", "mesh": "ground", "material": "lit-shadow", "cullMode": "Back" },
+        { "component": "pbrMaterial", "metallic": 0.0, "roughness": 0.95 }
+      ]
+    }
+  ]
+}

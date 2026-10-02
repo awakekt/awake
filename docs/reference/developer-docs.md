@@ -158,11 +158,12 @@ more than one is run at once). `.claude/launch.json`'s `port` field must match t
 | 8081 | `samples/engine-showcase` dev                                                       | `:samples:engine-showcase:wasmJsBrowserDevelopmentRun` |
 | 8082 | `samples/ui-showcase` dev                                                           | `:samples:ui-showcase:wasmJsBrowserDevelopmentRun`     |
 | 8083 | `samples/ui-showcase` prod preview                                                  | `:samples:ui-showcase:wasmJsBrowserProductionRun`      |
-| 8084 | `samples/starter-game` dev                                                          | `:samples:starter-game:wasmJsBrowserDevelopmentRun`    |
-| 8085 | `samples/engine-showcase` prod preview                                              | `:samples:engine-showcase:wasmJsBrowserProductionRun`  |
-| 8086 | `apps/studio` dev                                                                   | `:app:studio:wasmJsBrowserDevelopmentRun`              |
-| 8087 | `apps/studio` prod preview                                                          | `:app:studio:wasmJsBrowserProductionRun`               |
+| 8084 | `samples/compose-showcase` dev                                                      | `:samples:compose-showcase:wasmJsBrowserDevelopmentRun` |
+| 8085 | `samples/compose-showcase` prod preview                                             | `:samples:compose-showcase:wasmJsBrowserProductionRun` |
+| 8086 | Awake Studio dev (separate repository; reserved so both can run at once)            | `:app:studio:wasmJsBrowserDevelopmentRun`              |
+| 8087 | Awake Studio prod preview (separate repository)                                     | `:app:studio:wasmJsBrowserProductionRun`               |
 | 8088 | `samples/net-demo` dev (browser client; needs the desktop server on 9540)           | `:samples:net-demo:wasmJsBrowserDevelopmentRun`        |
+| 8089 | `samples/engine-showcase` prod preview                                              | `:samples:engine-showcase:wasmJsBrowserProductionRun`  |
 | 8090 | `tools/shadcn/ui_preview_watch.sh` / `ui_preview_server.py` | live-reload static file server                         |
 
 Convention: when adding a new dev-server tool (a new sample's wasmJs target, a new preview

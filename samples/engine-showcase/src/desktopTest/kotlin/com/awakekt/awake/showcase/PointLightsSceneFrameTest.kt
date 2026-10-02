@@ -10,7 +10,6 @@ import com.awakekt.awake.render.capture.PixelMap
 import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
-import com.awakekt.awake.vulkan.application.VulkanEngine
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.test.Test
@@ -53,13 +52,6 @@ class PointLightsSceneFrameTest {
                     before[offset + 2] != after[offset + 2]
             }
         }
-
-    private class HeadlessPlanEngine(
-        lifecycle: com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle,
-        plan: com.awakekt.awake.asset.shaders.RenderPlan,
-    ) : VulkanEngine(lifecycle, plan) {
-        suspend fun boot(surface: HeadlessSurface) = createBackendResources(surface).renderer
-    }
 
     private companion object {
         const val WIDTH = 960
