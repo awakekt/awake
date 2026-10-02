@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.4] - 2026-10-02
+
+### Added
+
+- **Re-read a changed glTF model.** `GltfAssetResolver.forget(path)` drops the geometry, skinned scene, materials and part textures parsed from one model file, so the next `preload` reads it again. An editor reloading a scene from disk calls it for each model that changed; meshes and materials already created stay until released.
+
 ## [0.1.0-rc.3] - 2026-10-02
 
 ### Added
