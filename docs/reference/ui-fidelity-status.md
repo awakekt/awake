@@ -16,7 +16,7 @@ count), not from a written claim, so a row cannot report done for unwired work.
 | Antialiasing | done | fringe centred via polygon offset | `UiPathFillTessellationTest` | MSAA is off on every UI pipeline; AA is geometric only. |
 | Curve flattening | done | tolerance-driven | `UiPathFillTessellationTest` | — |
 | Stroke rendering | partial | joins read | none | Blocks any outline icon tier; corners would leave open notches. |
-| Icons | partial | 0 cubic segments, generated from SVG | `tools/icons/svg_to_ui_image_vector.py --self-test` | Fill-only: no outline tier until stroke joins exist. |
+| Icons | partial | 0 cubic segments, generated from SVG | `./gradlew -p build-logic test --tests '*SvgImageVectorCodegenTest*'` | Fill-only: no outline tier until stroke joins exist. |
 | Text metrics | done | advances pen-relative | `PackedUiFontAdvanceTest` | Baked raster atlas, size-quantised; no subpixel positioning. |
 | Colour tokens | done | exact match, both modes | `ShadcnReferenceTokenExpandedTest` | Only the Vega preset on the Neutral base is checked. |
 | Radius and spacing | done | theme-driven | `Shadcn*FidelityTest` | Seven non-default presets have no parity coverage. |

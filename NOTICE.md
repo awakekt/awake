@@ -40,4 +40,13 @@ This project includes third-party software components and compiled binaries unde
 * **Copyright**: Copyright (c) Tailwind Labs, Inc.
 * **License**: MIT License (https://opensource.org/licenses/MIT)
 * **Version**: v2.2.0
-* **Location**: `awake/heroicons/src/commonMain/svg/heroicons/` (license retained verbatim there)
+* **Location**: `samples/ui-showcase/src/commonMain/svg/heroicons/` and the `awake/ui/shadcn` test fixtures in `src/commonTest/svg/heroicons/` (license retained verbatim in each)
+
+---
+
+### Lucide
+* **Description**: SVG icon set, vendored as codegen input and compiled into Kotlin vector data shipped by `awake/ui/shadcn`.
+* **Copyright**: Copyright (c) Lucide Contributors 2022; portions Copyright (c) Cole Bemis 2013-2022 (Feather, MIT)
+* **License**: ISC License (https://opensource.org/licenses/ISC)
+* **Version**: 0.469.0
+* **Location**: `awake/ui/shadcn/src/commonMain/svg/lucide/` (license retained verbatim there)

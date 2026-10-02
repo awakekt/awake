@@ -128,7 +128,6 @@ See [docs/reference/compose-engine/](../docs/reference/compose-engine/).
 | `ui:font-atlas-generator` | Generates the bundled font atlases (not published) |
 | `tailwind` | Tailwind-style tokens (`Tw`), OKLCH colors, layout helpers |
 | `tailwind-generator` | Generates the `tailwind` tokens (not published) |
-| `heroicons` | Generated icon vectors |
 
 ## asset — content pipelines
 

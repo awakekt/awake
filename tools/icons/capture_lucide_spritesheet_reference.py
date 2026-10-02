@@ -12,7 +12,7 @@ import html
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-ICONS = ROOT / "awake/heroicons/src/commonMain/svg/lucide/icons"
+ICONS = ROOT / "awake/ui/shadcn/src/commonMain/svg/lucide/icons"
 WIDTH = 320
 HEADER_HEIGHT = 48
 ROW_HEIGHT = 48

@@ -51,9 +51,9 @@ jobs:
             exit 0
           fi
           echo "render=true" >> "$GITHUB_OUTPUT"
-          icon_paths='^awake/(heroicons|ui/shadcn|core/graphics2d)/|^awake/compose/ui/src/commonMain/kotlin/com/awakekt/awake/compose/ui/graphics/vector/'
+          icon_paths='^awake/(ui/shadcn|core/graphics2d)/|^build-logic/src/main/kotlin/com/awakekt/awake/build/icons/|^awake/compose/ui/src/commonMain/kotlin/com/awakekt/awake/compose/ui/graphics/vector/'
           # graphics2d also draws every 2D and UI scene, so it counts toward both sets.
-          icon_only_paths='^awake/(heroicons|ui/shadcn)/|^awake/compose/ui/src/commonMain/kotlin/com/awakekt/awake/compose/ui/graphics/vector/'
+          icon_only_paths='^awake/ui/shadcn/|^build-logic/src/main/kotlin/com/awakekt/awake/build/icons/|^awake/compose/ui/src/commonMain/kotlin/com/awakekt/awake/compose/ui/graphics/vector/'
           if grep -qE "$icon_paths" <<<"$product"; then
             echo "icons=true" >> "$GITHUB_OUTPUT"
           else

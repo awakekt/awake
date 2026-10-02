@@ -18,8 +18,7 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.vector.ImageVector
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.text.font.UiFonts
-import com.awakekt.awake.heroicons.icon.HeroIcons
-import com.awakekt.awake.lucide.icon.LucideIcons
+import com.awakekt.awake.ui.shadcn.components.LucideIcons
 import com.awakekt.awake.ui.shadcn.components.ShadcnIcon
 import com.awakekt.awake.ui.shadcn.components.ShadcnIcons
 import com.awakekt.awake.ui.shadcn.components.ShadcnText
@@ -31,8 +30,8 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 /**
- * A visual inventory of every public Lucide glyph, every shadcn default icon, and the stroked
- * Heroicons outline set, which shares the same vector stroke path.
+ * A visual inventory of every vendored Lucide glyph, every shadcn default icon, and the test
+ * Heroicons outline glyphs, which share the same vector stroke path.
  */
 class LucideShadcnSpritesheetPreviewTest {
     private val theme = ShadcnThemeValues(ShadcnTheme)

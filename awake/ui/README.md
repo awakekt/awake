@@ -24,7 +24,6 @@ document. It is not repeated here.
 
 Related modules outside this directory:
 - `:awake:tailwind` and `:awake:tailwind-generator`: Tailwind design tokens and their generator.
-- `:awake:heroicons`: the Heroicons set.
 
 The immediate-mode UI modules (`ui-core`, `graphics`, `headless`, `testing`, `animation`) were
 retired. For UI test helpers, use `:awake:compose:ui-testing`.

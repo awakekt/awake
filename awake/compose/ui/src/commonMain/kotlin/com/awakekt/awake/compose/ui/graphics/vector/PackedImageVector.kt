@@ -16,8 +16,8 @@ import com.awakekt.awake.core.math2d.dp
  * An [ImageVector] decoded from one packed string instead of a builder block.
  *
  * A generated icon set is mostly `lineTo(…)`/`cubicTo(…)` statements -- 78 Heroicons come to 3,082
- * lines of Kotlin. The same geometry as text is 47,331 characters against 111,937 of builder calls
- * (`HeroIconsPackedRoundTripTest`), and it reads as one constant rather than forty calls per glyph.
+ * lines of Kotlin. The same geometry as text is 47,331 characters against 111,937 of builder calls,
+ * and it reads as one constant rather than forty calls per glyph.
  *
  * This is *not* an SVG parser and deliberately cannot become one: no XML, no `<rect>`/`<circle>`,
  * no transforms, no arcs, no relative commands. Codegen already resolved all of that -- arcs into
@@ -34,9 +34,8 @@ import com.awakekt.awake.core.math2d.dp
  * Caps are `b`/`r`/`s` (butt, round, square) and joins `m`/`r`/`b` (miter, round, bevel), so a
  * 1.5-wide round-capped round-joined outline is `s1.5rr:`.
  *
- * Emitted by `tools/icons/svg_to_ui_image_vector.py --packed`; the
- * builder form it replaces is still the readable one, and both must produce an equal [ImageVector]
- * (`PackedImageVectorParityTest`).
+ * Nothing emits it today: the `icon-codegen` plugin writes the builder form, the readable one. Both
+ * forms must produce an equal [ImageVector] (`PackedImageVectorParityTest`).
  */
 fun packedImageVector(data: String): ImageVector {
     val sections = data.split('|')

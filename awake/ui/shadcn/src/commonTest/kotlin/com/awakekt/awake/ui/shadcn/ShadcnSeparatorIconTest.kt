@@ -14,7 +14,6 @@ import com.awakekt.awake.compose.ui.unit.Dp
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.DrawCommand
-import com.awakekt.awake.heroicons.icon.HeroIcons
 import com.awakekt.awake.ui.shadcn.components.ShadcnIcon
 import com.awakekt.awake.ui.shadcn.components.ShadcnSeparator
 import com.awakekt.awake.ui.shadcn.components.ShadcnSeparatorOrientation

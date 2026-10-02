@@ -1,0 +1,23 @@
+{
+  "package": "com.awakekt.awake.ui.shadcn.components",
+  "interface": "LucideIcons",
+  "visibility": "internal",
+  "flat": true,
+  "source": {
+    "name": "Lucide",
+    "repository": "https://github.com/lucide-icons/lucide",
+    "version": "0.469.0",
+    "license": "ISC"
+  },
+  "fileKdoc": [
+    "Lucide glyphs the shadcn recipes draw, generated from the SVGs in `src/commonMain/svg/lucide`.",
+    "Read them through [ShadcnIcons], which apps may repoint. Do not edit generated paths."
+  ],
+  "tiers": [
+    {
+      "directory": "icons",
+      "dp": 16,
+      "label": "0.469.0"
+    }
+  ]
+}

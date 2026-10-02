@@ -3,41 +3,28 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-import com.awakekt.awake.build.extension.*
-import com.awakekt.awake.build.tasks.*
-plugins {
-    base
+import com.awakekt.awake.build.tasks.GenerateImageVectorsTask
+import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+
+// Every Kotlin source set with an `svg/` directory gets its icon packs generated into it:
+// `src/commonMain/svg/<pack>/manifest.json` feeds commonMain, `src/commonTest/svg/...` feeds tests.
+plugins.withId("org.jetbrains.kotlin.multiplatform") {
+    extensions.configure<KotlinMultiplatformExtension> {
+        sourceSets.configureEach {
+            val sourceSetName = name
+            val svgRoot = layout.projectDirectory.dir("src/$sourceSetName/svg")
+            if (!svgRoot.asFile.isDirectory) return@configureEach
+            val generate = tasks.register<GenerateImageVectorsTask>(
+                "generate${sourceSetName.replaceFirstChar(Char::uppercaseChar)}ImageVectors",
+            ) {
+                group = "awake codegen"
+                description = "Generate ImageVector sources from src/$sourceSetName/svg."
+                sourceDirectory.set(svgRoot)
+                outputDirectory.set(layout.buildDirectory.dir("generated/imagevector/$sourceSetName"))
+            }
+            // The TASK, not the directory: a bare directory compiles fine and never runs the generator,
+            // so a clean checkout would build the module with no icons at all.
+            kotlin.srcDir(generate)
+        }
+    }
 }
-
-val generatedRoot = layout.buildDirectory.dir("generated/imagevector")
-
-val generateImageVectors = tasks.register<GenerateImageVectorsTask>("generateImageVectors") {
-    group = "awake codegen"
-    description = "Generate ImageVector sources from the vendored SVGs."
-    sourceDirectory.set(layout.projectDirectory.dir("src/commonMain/svg/heroicons"))
-    outputDirectory.set(generatedRoot)
-    generatorScript.set(
-        rootProject.layout.projectDirectory.file(
-            "tools/icons/svg_to_ui_image_vector.py",
-        ),
-    )
-    // Python is already a build requirement nowhere else, so name the escape hatches up front
-    // rather than after the first CI host without `python3` on PATH.
-    pythonExecutable.convention(
-        providers.gradleProperty("awake.icons.python")
-            .orElse(providers.environmentVariable("AWAKE_PYTHON"))
-            .orElse("python3"),
-    )
-}
-
-// The TASK, not the directory. Registering the directory alone compiles fine and silently never
-// runs the generator -- Gradle has nothing linking that path to the task that fills it, so on a
-// clean checkout the module compiles zero sources and every consumer fails to resolve `HeroIcons`.
-// Passing the task provider carries its declared output, which is what infers the dependency.
-extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension>("kotlin") {
-    sourceSets.named("commonMain") { kotlin.srcDir(generateImageVectors) }
-}
-
-// Nothing excludes the generated tree from detekt or spotless here, because neither reaches it:
-// both are already scoped to `src/**` (see their conventions) and this writes to `build/generated`.
-// That is the second reason for writing there rather than into `src/`.

@@ -6,7 +6,6 @@
 package com.awakekt.awake.ui.shadcn.components
 
 import com.awakekt.awake.compose.ui.graphics.vector.ImageVector
-import com.awakekt.awake.lucide.icon.LucideIcons
 
 /** Source-faithful shadcn glyph defaults. Apps may replace these pointers to skin the recipes. */
 object ShadcnIcons {
