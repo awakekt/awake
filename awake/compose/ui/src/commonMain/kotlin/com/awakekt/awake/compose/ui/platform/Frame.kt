@@ -10,6 +10,7 @@ import com.awakekt.awake.compose.ui.input.key.KeyEvent
 import com.awakekt.awake.compose.ui.input.pointer.PointerModifiers
 import com.awakekt.awake.compose.ui.semantics.SemanticsNode
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
+import com.awakekt.awake.core.input.ClipboardCommand
 import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.core.input.TextEditAction
@@ -61,6 +62,8 @@ data class FrameInput(
      */
     val keyEvents: List<KeyEvent> = emptyList(),
     val deltaSeconds: Float = 1f / 60f,
+    /** Copy and cut requests for the focused field, answered in [PlatformEffects.clipboardText]. */
+    val clipboardCommands: List<ClipboardCommand> = emptyList(),
 ) {
     companion object {
         /** No pointer on screen -- a touch device between taps, or a window without focus. */
@@ -107,6 +110,18 @@ data class PlatformEffects(
      * the same conclusion and carries the same field.
      */
     val cursor: PointerCursor = PointerCursor.Default,
+    /**
+     * The focused field is a password field. Only meaningful with [requestKeyboard]: a platform that
+     * can, tells its IME (Android's `TYPE_TEXT_VARIATION_PASSWORD`), so the keyboard neither learns
+     * nor suggests what is typed.
+     */
+    val passwordKeyboard: Boolean = false,
+    /**
+     * Text this frame's [FrameInput.clipboardCommands] produced, for the platform to put on the
+     * system clipboard; `null` when there is nothing to write -- no command, nothing selected, or
+     * a password field that refused.
+     */
+    val clipboardText: String? = null,
 )
 
 /**

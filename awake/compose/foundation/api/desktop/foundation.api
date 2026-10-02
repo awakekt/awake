@@ -703,8 +703,9 @@ public final class com/awakekt/awake/compose/foundation/style/StyleableKt {
 }
 
 public final class com/awakekt/awake/compose/foundation/text/BasicTextFieldKt {
-	public static final fun BasicTextField (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Ljava/lang/String;Lcom/awakekt/awake/core/color/Color;ZLkotlin/jvm/functions/Function0;)V
-	public static synthetic fun BasicTextField$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Ljava/lang/String;Lcom/awakekt/awake/core/color/Color;ZLkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+	public static final fun BasicTextField (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Ljava/lang/String;Lcom/awakekt/awake/core/color/Color;ZLkotlin/jvm/functions/Function0;Ljava/lang/Character;Z)V
+	public static synthetic fun BasicTextField$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Lcom/awakekt/awake/compose/ui/Modifier;Lcom/awakekt/awake/core/text/theme/TextStyle;Lcom/awakekt/awake/compose/foundation/interaction/InteractionSource;Ljava/lang/String;Lcom/awakekt/awake/core/color/Color;ZLkotlin/jvm/functions/Function0;Ljava/lang/Character;ZILjava/lang/Object;)V
+	public static final fun getPasswordMask ()C
 }
 
 public final class com/awakekt/awake/compose/foundation/text/TextFieldState {

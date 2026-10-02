@@ -94,6 +94,32 @@ public final class com/awakekt/awake/scene/rendering/animation/CharacterSlot {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/scene/rendering/animation/KeyframeAnimation {
+	public fun <init> (Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation;)V
+	public final fun getTime ()F
+	public final fun getTracks ()Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation;
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/KeyframeAnimationBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/animation/KeyframeAnimationBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/rendering/animation/KeyframeAnimation;)Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/KeyframeAnimationSystem : com/awakekt/awake/ecs/System {
+	public fun <init> ()V
+	public fun update (Lcom/awakekt/awake/ecs/World;F)V
+}
+
 public final class com/awakekt/awake/scene/rendering/animation/LocomotionAnimation {
 	public fun <init> (Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;)V
 	public final fun getClips ()Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation;
@@ -153,6 +179,73 @@ public final class com/awakekt/awake/scene/rendering/animation/ModularSkeletalSy
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 
+public final class com/awakekt/awake/scene/rendering/animation/SceneFloatKey {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/animation/SceneFloatKey$Companion;
+	public fun <init> (FF)V
+	public final fun component1 ()F
+	public final fun component2 ()F
+	public final fun copy (FF)Lcom/awakekt/awake/scene/rendering/animation/SceneFloatKey;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/animation/SceneFloatKey;FFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/animation/SceneFloatKey;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTime ()F
+	public final fun getValue ()F
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/animation/SceneFloatKey$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/animation/SceneFloatKey$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/animation/SceneFloatKey;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/animation/SceneFloatKey;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/SceneFloatKey$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation$Companion;
+	public fun <init> (FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)V
+	public synthetic fun <init> (FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()F
+	public final fun component2 ()Ljava/util/List;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/util/List;
+	public final fun component5 ()Ljava/util/List;
+	public final fun copy (FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getAlpha ()Ljava/util/List;
+	public final fun getDuration ()F
+	public final fun getPosition ()Ljava/util/List;
+	public final fun getRotation ()Ljava/util/List;
+	public final fun getScale ()Ljava/util/List;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/SceneKeyframeAnimation$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
 public final class com/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation$Companion;
 	public fun <init> ()V
@@ -201,6 +294,35 @@ public final synthetic class com/awakekt/awake/scene/rendering/animation/SceneLo
 }
 
 public final class com/awakekt/awake/scene/rendering/animation/SceneLocomotionAnimation$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/SceneVec3Key {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/animation/SceneVec3Key$Companion;
+	public fun <init> (FLcom/awakekt/awake/scene/document/SceneVec3;)V
+	public final fun component1 ()F
+	public final fun component2 ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public final fun copy (FLcom/awakekt/awake/scene/document/SceneVec3;)Lcom/awakekt/awake/scene/rendering/animation/SceneVec3Key;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/animation/SceneVec3Key;FLcom/awakekt/awake/scene/document/SceneVec3;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/animation/SceneVec3Key;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTime ()F
+	public final fun getValue ()Lcom/awakekt/awake/scene/document/SceneVec3;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final synthetic class com/awakekt/awake/scene/rendering/animation/SceneVec3Key$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/scene/rendering/animation/SceneVec3Key$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/scene/rendering/animation/SceneVec3Key;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/scene/rendering/animation/SceneVec3Key;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/animation/SceneVec3Key$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 

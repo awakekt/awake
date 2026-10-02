@@ -9,9 +9,9 @@
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
 </div>
 
-Skeletons, skins and clips come from glTF files; see [glTF models](gltf.md). Animation components are
-written in Kotlin: a scene document has no animation component, and the scene DSL has no animation
-function.
+Skeletons, skins and clips come from glTF files; see [glTF models](gltf.md). Skeletal playback is
+written in Kotlin, and the scene DSL has no animation function. A scene document can move a node
+along keyframes with `keyframe_animation`.
 
 ## Animate a skinned model from a scene document
 
@@ -24,6 +24,30 @@ A scene document places a skinned model like any other mesh, with the material `
 When a project is played with `playProject` (as AwakeKt Studio's player does), every skinned glTF
 model gets an animator that loops its first clip. Nothing else is needed. In your own app, add the
 animator yourself, as below.
+
+## Move a node along keyframes
+
+`keyframe_animation` loops a node's position, rotation, scale and material alpha through keys, with
+no skeleton. This one rises 2 units over a second while fading out, then starts over:
+
+```json title="Scene document"
+{
+  "component": "keyframe_animation",
+  "duration": 1.0,
+  "position": [
+    {"time": 0.0, "value": {"x": 0, "y": 0, "z": 0}},
+    {"time": 1.0, "value": {"x": 0, "y": 2, "z": 0}}
+  ],
+  "alpha": [
+    {"time": 0.0, "value": 1.0},
+    {"time": 1.0, "value": 0.0}
+  ]
+}
+```
+
+`playProject` runs `KeyframeAnimationSystem` when the scene has one. In your own app, add
+`frameSystem("keyframes") { KeyframeAnimationSystem() }`. The fields are in the
+[component reference](../reference/scene-document-components.md#keyframe_animation).
 
 ## Play a clip
 

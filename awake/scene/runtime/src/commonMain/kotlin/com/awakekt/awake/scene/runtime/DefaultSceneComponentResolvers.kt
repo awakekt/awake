@@ -19,6 +19,7 @@ import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 import com.awakekt.awake.scene.rendering.Fog
 import com.awakekt.awake.scene.rendering.Light
 import com.awakekt.awake.scene.rendering.Skybox
+import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationBinding
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationBinding
 import com.awakekt.awake.scene.rendering.particles.ParticleEmitterBinding
 import com.awakekt.awake.scene.rendering.camera.CameraBinding
@@ -73,6 +74,7 @@ object DefaultSceneComponentResolvers {
         TerrainBinding,
         CanvasElementBinding,
         LocomotionAnimationBinding,
+        KeyframeAnimationBinding,
         ParticleEmitterBinding,
     )
 
@@ -89,6 +91,7 @@ object DefaultSceneComponentResolvers {
         TerrainBinding,
         CanvasElementBinding,
         LocomotionAnimationBinding,
+        KeyframeAnimationBinding,
         ParticleEmitterBinding,
         PrefabLinkBinding,
     )

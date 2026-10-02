@@ -105,7 +105,7 @@ own.
 ## Components from other modules
 
 `DefaultSceneComponentResolvers.install()` registers the ids Core knows about: `camera`, `light`,
-`ambient_light`, `fog`, `skybox`, `mesh_renderer`, `pbr_material`, `spin_control`, `particle_emitter`, `terrain`,
+`ambient_light`, `fog`, `skybox`, `mesh_renderer`, `pbr_material`, `spin_control`, `keyframe_animation`, `particle_emitter`, `terrain`,
 `canvas_element` and `prefab_link`. `custom` always decodes. Other ids belong to the module that
 owns the component, and must be registered before a document that uses them is decoded:
 

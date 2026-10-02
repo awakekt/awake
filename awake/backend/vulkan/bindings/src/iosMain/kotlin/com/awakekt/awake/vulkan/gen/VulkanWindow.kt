@@ -73,6 +73,14 @@ actual object VulkanWindow {
         TODO("Not applicable on iOS -- see VulkanWindow.kt's doc comment.")
     }
 
+    actual fun glfwGetClipboardString(window: Long): String? {
+        TODO("Not applicable on iOS -- see VulkanWindow.kt's doc comment.")
+    }
+
+    actual fun glfwSetClipboardString(window: Long, text: String) {
+        TODO("Not applicable on iOS -- see VulkanWindow.kt's doc comment.")
+    }
+
     actual fun glfwGetCursorPos(window: Long): DoubleArray {
         TODO("Not applicable on iOS -- see VulkanWindow.kt's doc comment.")
     }

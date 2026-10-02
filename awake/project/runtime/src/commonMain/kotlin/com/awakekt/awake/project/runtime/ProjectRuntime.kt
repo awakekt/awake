@@ -48,7 +48,9 @@ import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.Animator
+import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
+import com.awakekt.awake.scene.rendering.animation.SceneKeyframeAnimation
 import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
@@ -129,6 +131,7 @@ suspend fun loadPlayableProject(
  * - `physics_body` and `character_controller`: the physics step and the character controller
  * - `camera_rig`: the camera system
  * - `spinControl` and skinned glTF models: spinning and animation
+ * - `keyframe_animation`: its looping tracks
  * - `particle_emitter`: its emitters, with the sprites [loadPlayableProject] read
  *
  * - `canvas_element`s with an action: [CanvasActionSystem]
@@ -158,6 +161,7 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
         frameSystem("spin") { SpinSystem() }
     }
     if (project.has(SceneLocomotionAnimation::class)) frameSystem("locomotion") { LocomotionAnimationSystem() }
+    if (project.has(SceneKeyframeAnimation::class)) frameSystem("keyframes") { KeyframeAnimationSystem() }
     if (project.has(SceneParticleEmitter::class)) {
         var content: ParticleContentSystem? = null
         frameSystem("particle-content") { ParticleContentSystem(renderer, project.particleSprites).also { content = it } }

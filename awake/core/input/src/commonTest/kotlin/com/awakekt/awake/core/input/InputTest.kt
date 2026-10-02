@@ -144,3 +144,25 @@ class InputTest {
         assertEquals(null, input.updateSnapshot().imeCommit, "a commit was replayed on a later frame")
     }
 }
+
+class InputClipboardTest {
+
+    @Test
+    fun clipboardCommandsLastExactlyOneSnapshot() {
+        val input = Input()
+        input.pushClipboardCommand(ClipboardCommand.Copy)
+        input.pushClipboardCommand(ClipboardCommand.Cut)
+
+        assertEquals(listOf(ClipboardCommand.Copy, ClipboardCommand.Cut), input.updateSnapshot().clipboardCommands)
+        assertEquals(emptyList(), input.updateSnapshot().clipboardCommands)
+    }
+
+    @Test
+    fun aClipboardWriteIsTakenOnce() {
+        val input = Input()
+        input.clipboardWrite = "copied"
+
+        assertEquals("copied", input.takeClipboardWrite())
+        assertEquals(null, input.takeClipboardWrite())
+    }
+}

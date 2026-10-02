@@ -5,11 +5,20 @@
  */
 package com.awakekt.awake.vulkan.application
 
+import com.awakekt.awake.core.input.ClipboardCommand
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.TextEditAction
 
 private const val GLFW_KEY_LEFT_SHIFT = 340
 private const val GLFW_KEY_RIGHT_SHIFT = 344
+private const val GLFW_KEY_LEFT_CONTROL = 341
+private const val GLFW_KEY_RIGHT_CONTROL = 345
+private const val GLFW_KEY_LEFT_SUPER = 343
+private const val GLFW_KEY_RIGHT_SUPER = 347
+private const val GLFW_KEY_A = 65
+private const val GLFW_KEY_C = 67
+private const val GLFW_KEY_V = 86
+private const val GLFW_KEY_X = 88
 private const val GLFW_KEY_SPACE = 32
 private const val GLFW_KEY_ENTER = 257
 private const val GLFW_KEY_RIGHT = 262
@@ -81,20 +90,53 @@ internal fun resetGlfwTextInputRepeatStateForTest() {
 fun pollGlfwTextInput(window: Long, input: Input, deltaSeconds: Double = 1.0 / 60.0): Unit =
     pollGlfwTextInput(glfwWindowInput(window), input, deltaSeconds)
 
+/** Cmd on macOS, Ctrl everywhere else: the modifier the platform's own copy and paste use. */
+private val ShortcutUsesSuper: Boolean = System.getProperty("os.name").orEmpty().startsWith("Mac")
+
 /** Testable core: takes the [GlfwWindowInput] seam instead of a raw window handle, so a
  * desktopTest can fake key-hold state across frames and assert the resulting
- * [Input.pushTypedText]/[Input.pushEditAction] calls, including shift and hold-to-repeat. */
-internal fun pollGlfwTextInput(reader: GlfwWindowInput, input: Input, deltaSeconds: Double = 1.0 / 60.0) {
+ * [Input.pushTypedText]/[Input.pushEditAction] calls, including shift and hold-to-repeat.
+ *
+ * Also the clipboard: Ctrl+C/X/V/A (Cmd on macOS) become copy and cut requests, the clipboard's
+ * text typed in, and select-all, and the UI's answer to last frame's copy or cut is written out.
+ * A letter pressed with Ctrl or Cmd held is a shortcut, never typed text. */
+internal fun pollGlfwTextInput(
+    reader: GlfwWindowInput,
+    input: Input,
+    deltaSeconds: Double = 1.0 / 60.0,
+    shortcutUsesSuper: Boolean = ShortcutUsesSuper,
+) {
+    input.takeClipboardWrite()?.let { reader.clipboardText = it }
+
     val shiftDown = reader.isKeyDown(GLFW_KEY_LEFT_SHIFT) || reader.isKeyDown(GLFW_KEY_RIGHT_SHIFT)
+    val ctrlDown = reader.isKeyDown(GLFW_KEY_LEFT_CONTROL) || reader.isKeyDown(GLFW_KEY_RIGHT_CONTROL)
+    val superDown = reader.isKeyDown(GLFW_KEY_LEFT_SUPER) || reader.isKeyDown(GLFW_KEY_RIGHT_SUPER)
+    val shortcutDown = if (shortcutUsesSuper) superDown else ctrlDown
 
     PrintableKeys.forEach { (glfwKey, char) ->
         pollKey(reader, glfwKey, deltaSeconds) {
-            val shifted = if (shiftDown && char.isLetter()) char.uppercaseChar() else char
-            input.pushTypedText(shifted.toString())
+            when {
+                shortcutDown -> fireShortcut(glfwKey, reader, input)
+                // Ctrl or Cmd with a letter belongs to the app's own shortcuts, not the text.
+                ctrlDown || superDown -> Unit
+                else -> {
+                    val shifted = if (shiftDown && char.isLetter()) char.uppercaseChar() else char
+                    input.pushTypedText(shifted.toString())
+                }
+            }
         }
     }
     EditKeys.forEach { (glfwKey, action) ->
         pollKey(reader, glfwKey, deltaSeconds) { input.pushEditAction(action) }
+    }
+}
+
+private fun fireShortcut(glfwKey: Int, reader: GlfwWindowInput, input: Input) {
+    when (glfwKey) {
+        GLFW_KEY_C -> input.pushClipboardCommand(ClipboardCommand.Copy)
+        GLFW_KEY_X -> input.pushClipboardCommand(ClipboardCommand.Cut)
+        GLFW_KEY_V -> reader.clipboardText?.takeIf { it.isNotEmpty() }?.let(input::pushTypedText)
+        GLFW_KEY_A -> input.pushEditAction(TextEditAction.SelectAll)
     }
 }
 

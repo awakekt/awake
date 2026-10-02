@@ -16,9 +16,11 @@ import com.awakekt.awake.core.host.AndroidFrameLoop
 import com.awakekt.awake.core.host.FrameRateMode
 import com.awakekt.awake.core.input.AndroidSoftKeyboardBridge
 import com.awakekt.awake.core.input.Input
+import com.awakekt.awake.core.input.awakeClipboardText
 import com.awakekt.awake.core.input.createAwakeInputConnection
 import com.awakekt.awake.core.input.syncAwakeKeyInput
 import com.awakekt.awake.core.input.syncAwakePointerInput
+import com.awakekt.awake.core.input.syncAwakeTextShortcut
 
 @Suppress("TooManyFunctions") // One override per WindowLifecycle / SurfaceHolder callback.
 class VulkanView(
@@ -63,7 +65,10 @@ class VulkanView(
             while (running) {
                 AndroidFrameLoop.tick(mode) { deltaTime ->
                     lifecycle.update(deltaTime.toFloat())
-                    post { softKeyboardBridge.syncSoftKeyboardVisibility() }
+                    post {
+                        softKeyboardBridge.syncSoftKeyboardVisibility()
+                        softKeyboardBridge.syncClipboard()
+                    }
                 }
             }
         }, "VulkanView-Render").apply { start() }
@@ -93,7 +98,10 @@ class VulkanView(
 
     override fun onTouchEvent(event: MotionEvent): Boolean = event.syncAwakePointerInput(input) || super.onTouchEvent(event)
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean = event.syncAwakeKeyInput(down = true, input) || super.onKeyDown(keyCode, event)
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean =
+        event.syncAwakeTextShortcut(input) { context.awakeClipboardText() } ||
+            event.syncAwakeKeyInput(down = true, input) ||
+            super.onKeyDown(keyCode, event)
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean = event.syncAwakeKeyInput(down = false, input) || super.onKeyUp(keyCode, event)
 
