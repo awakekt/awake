@@ -29,12 +29,17 @@ enum class PatrolStyle {
  * The stops are authored positions, not something navigation discovers, so an unreachable one is a
  * content bug rather than a runtime condition — [PatrolAiSystem] skips it and moves on so a single
  * bad stop cannot deadlock the beat.
+ *
+ * @param stops Positions to visit in order. Owned: the list is copied, not aliased.
+ * @property style Navigation style (Loop, PingPong, Once).
+ * @property dwellSeconds Seconds to hold at each stop before moving on.
+ * @property speed Movement speed in units per second.
+ * @property repathInterval Interval in seconds between recalculating paths.
+ * @property waypointRadius Proximity threshold to advance to the next waypoint.
  */
 class PatrolBehavior(
-    /** Positions to visit in order. Owned: the list is copied, not aliased. */
     stops: List<Vec3f> = emptyList(),
     var style: PatrolStyle = PatrolStyle.Loop,
-    /** Seconds to hold at each stop before moving on. */
     var dwellSeconds: Float = DEFAULT_DWELL_SECONDS,
     override var speed: Float = DEFAULT_SPEED,
     override var repathInterval: Float = DEFAULT_REPATH_INTERVAL,
@@ -90,10 +95,20 @@ class PatrolBehavior(
         finished = false
     }
 
+    /**
+     * Default constants and tuning parameters for patrol behaviors.
+     */
     companion object {
+        /** Default dwell time in seconds at each patrol stop. */
         const val DEFAULT_DWELL_SECONDS = 1f
+
+        /** Default patrol walking speed in units per second. */
         const val DEFAULT_SPEED = 1.8f
+
+        /** Default interval in seconds between recalculating paths. */
         const val DEFAULT_REPATH_INTERVAL = 1f
+
+        /** Default distance threshold to consider a waypoint reached. */
         const val DEFAULT_WAYPOINT_RADIUS = 0.3f
     }
 }

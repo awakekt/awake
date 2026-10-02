@@ -15,6 +15,9 @@ import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.SceneVec3
 import kotlin.reflect.KClass
 
+/**
+ * Scene component binding for [PatrolBehavior] and [ScenePatrol].
+ */
 object PatrolBinding : SceneComponentBinding<PatrolBehavior, ScenePatrol> {
     override val componentClass: KClass<PatrolBehavior> = PatrolBehavior::class
     override val schemaClass: KClass<ScenePatrol> = ScenePatrol::class
@@ -32,6 +35,11 @@ object PatrolBinding : SceneComponentBinding<PatrolBehavior, ScenePatrol> {
     override fun export(world: World, entity: Entity, component: PatrolBehavior): ScenePatrol =
         component.toSceneComponent()
 
+    /**
+     * Converts a [ScenePatrol] descriptor to a runtime [PatrolBehavior] component.
+     *
+     * @return Runtime [PatrolBehavior] instance.
+     */
     fun ScenePatrol.toComponent(): PatrolBehavior = PatrolBehavior(
         stops = stops.map { Vec3f(it.x, it.y, it.z) },
         style = when (style) {
@@ -45,6 +53,11 @@ object PatrolBinding : SceneComponentBinding<PatrolBehavior, ScenePatrol> {
         waypointRadius = waypointRadius,
     )
 
+    /**
+     * Converts a runtime [PatrolBehavior] component to a serializable [ScenePatrol] descriptor.
+     *
+     * @return Serializable [ScenePatrol] instance.
+     */
     fun PatrolBehavior.toSceneComponent(): ScenePatrol = ScenePatrol(
         stops = stops.map { SceneVec3(it.x, it.y, it.z) },
         style = when (style) {

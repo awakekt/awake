@@ -13,6 +13,9 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
 
+/**
+ * Scene component binding for [ChaseBehavior] and [SceneChase].
+ */
 object ChaseBinding : SceneComponentBinding<ChaseBehavior, SceneChase> {
     override val componentClass: KClass<ChaseBehavior> = ChaseBehavior::class
     override val schemaClass: KClass<SceneChase> = SceneChase::class
@@ -36,12 +39,24 @@ object ChaseBinding : SceneComponentBinding<ChaseBehavior, SceneChase> {
     override fun export(world: World, entity: Entity, component: ChaseBehavior): SceneChase =
         component.toSceneComponent(world, entity)
 
+    /**
+     * Converts a [SceneChase] descriptor to a runtime [ChaseBehavior] component.
+     *
+     * @return Runtime [ChaseBehavior] instance.
+     */
     fun SceneChase.toComponent(): ChaseBehavior = ChaseBehavior(
         speed = speed,
         repathInterval = repathInterval,
         waypointRadius = waypointRadius,
     )
 
+    /**
+     * Converts a runtime [ChaseBehavior] component to a serializable [SceneChase] descriptor.
+     *
+     * @param world Active ECS world used to resolve target entity names.
+     * @param entity Entity owning this chase component.
+     * @return Serializable [SceneChase] instance.
+     */
     fun ChaseBehavior.toSceneComponent(world: World, entity: Entity): SceneChase = SceneChase(
         target = world.referenceName(entity, target, "ChaseBehavior.target"),
         speed = speed,

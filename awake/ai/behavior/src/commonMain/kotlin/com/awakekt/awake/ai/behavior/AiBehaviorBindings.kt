@@ -18,17 +18,27 @@ import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
 import com.awakekt.awake.scene.core.Name
 
+/**
+ * Scene component binding definitions for AI behaviors.
+ */
 object AiBehaviorBindings {
+    /** Resolver binding [PatrolBehavior] to [ScenePatrol]. */
     val PatrolResolver: SceneComponentBinding<PatrolBehavior, ScenePatrol> = PatrolBinding
+
+    /** Resolver binding [ChaseBehavior] to [SceneChase]. */
     val ChaseResolver: SceneComponentBinding<ChaseBehavior, SceneChase> = ChaseBinding
+
+    /** Resolver binding [FleeBehavior] to [SceneFlee]. */
     val FleeResolver: SceneComponentBinding<FleeBehavior, SceneFlee> = FleeBinding
 
+    /** All scene component bindings provided by the AI behavior module. */
     val bindings: List<SceneComponentBinding<*, *>> = listOf(
         PatrolBinding,
         ChaseBinding,
         FleeBinding,
     )
 
+    /** All resolvers provided by the AI behavior module for registration. */
     val all: List<SceneComponentResolver> = listOf(
         PatrolBinding,
         ChaseBinding,
@@ -36,6 +46,11 @@ object AiBehaviorBindings {
     )
 }
 
+/**
+ * Registers all AI behavior scene bindings into this [SceneComponentRegistry].
+ *
+ * @return This registry instance with AI behaviors registered.
+ */
 fun SceneComponentRegistry.registerAiBehaviors(): SceneComponentRegistry {
     AiBehaviorBindings.all.forEach { register(it) }
     return this

@@ -15,13 +15,25 @@ import com.awakekt.awake.ai.AiContext
 open class AiState(
     val name: String,
 ) {
-    /** Called when this state becomes active. */
+    /**
+     * Called when this state becomes active.
+     *
+     * @param context Execution context for the current entity tick.
+     */
     open fun onEnter(context: AiContext) {}
 
-    /** Called on every tick while this state remains active. */
+    /**
+     * Called on every tick while this state remains active.
+     *
+     * @param context Execution context for the current entity tick.
+     */
     open fun onUpdate(context: AiContext) {}
 
-    /** Called immediately before transitioning out of this state. */
+    /**
+     * Called immediately before transitioning out of this state.
+     *
+     * @param context Execution context for the current entity tick.
+     */
     open fun onExit(context: AiContext) {}
 }
 

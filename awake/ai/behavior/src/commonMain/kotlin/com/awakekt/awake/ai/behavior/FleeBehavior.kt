@@ -19,15 +19,19 @@ import com.awakekt.awake.ecs.Poolable
  * Two radii rather than one: a single threshold makes an entity hovering at exactly that distance
  * start and stop every frame. The gap between them is the hysteresis that stops the twitch — the
  * same reason `WorldPartitionConfig` separates its loading and unloading radii.
+ *
+ * @property threat Entity to run from. A null threat, or one destroyed, leaves the entity standing still.
+ * @property panicRadius Start fleeing when the threat is closer than this.
+ * @property safeRadius Stop fleeing once the threat is further than this. Must exceed [panicRadius].
+ * @property fleeDistance How far ahead to aim when picking somewhere to run to.
+ * @property speed Movement speed in units per second.
+ * @property repathInterval Interval in seconds between recalculating the escape path.
+ * @property waypointRadius Proximity threshold to advance to the next waypoint.
  */
 class FleeBehavior(
-    /** Entity to run from. A null threat, or one destroyed, leaves the entity standing still. */
     var threat: Entity? = null,
-    /** Start fleeing when the threat is closer than this. */
     var panicRadius: Float = DEFAULT_PANIC_RADIUS,
-    /** Stop fleeing once the threat is further than this. Must exceed [panicRadius]. */
     var safeRadius: Float = DEFAULT_SAFE_RADIUS,
-    /** How far ahead to aim when picking somewhere to run to. */
     var fleeDistance: Float = DEFAULT_FLEE_DISTANCE,
     override var speed: Float = DEFAULT_SPEED,
     override var repathInterval: Float = DEFAULT_REPATH_INTERVAL,
@@ -65,12 +69,26 @@ class FleeBehavior(
         escapeAttempt = 0
     }
 
+    /**
+     * Default constants and tuning parameters for flee behaviors.
+     */
     companion object {
+        /** Default proximity threshold below which fleeing is triggered. */
         const val DEFAULT_PANIC_RADIUS = 6f
+
+        /** Default distance threshold beyond which the entity stops fleeing. */
         const val DEFAULT_SAFE_RADIUS = 12f
+
+        /** Default distance ahead to aim when picking an escape destination. */
         const val DEFAULT_FLEE_DISTANCE = 10f
+
+        /** Default fleeing speed in units per second. */
         const val DEFAULT_SPEED = 3.5f
+
+        /** Default interval in seconds between recalculating escape routes. */
         const val DEFAULT_REPATH_INTERVAL = 0.4f
+
+        /** Default distance threshold to consider a waypoint reached. */
         const val DEFAULT_WAYPOINT_RADIUS = 0.3f
 
         /** How far each retry fans off the direct escape line, in radians. */

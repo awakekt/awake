@@ -40,6 +40,8 @@ class BehaviorTreeBuilder {
 
     /**
      * Appends a [SequenceNode] executing its children sequentially.
+     *
+     * @param init Configuration builder initializing sequence child nodes.
      */
     fun sequence(init: BehaviorTreeBuilder.() -> Unit) {
         val builder = BehaviorTreeBuilder().apply(init)
@@ -48,6 +50,8 @@ class BehaviorTreeBuilder {
 
     /**
      * Appends a [SelectorNode] evaluating its children as fallback alternatives.
+     *
+     * @param init Configuration builder initializing selector child nodes.
      */
     fun selector(init: BehaviorTreeBuilder.() -> Unit) {
         val builder = BehaviorTreeBuilder().apply(init)
@@ -56,6 +60,9 @@ class BehaviorTreeBuilder {
 
     /**
      * Appends a [ParallelNode] executing all children concurrently according to [policy].
+     *
+     * @param policy Policy governing success or failure requirements.
+     * @param init Configuration builder initializing parallel child nodes.
      */
     fun parallel(policy: ParallelPolicy = ParallelPolicy.REQUIRE_ALL, init: BehaviorTreeBuilder.() -> Unit) {
         val builder = BehaviorTreeBuilder().apply(init)
@@ -64,6 +71,8 @@ class BehaviorTreeBuilder {
 
     /**
      * Appends an [InverterNode] inverting the result of its enclosed child.
+     *
+     * @param init Configuration builder initializing the child node to invert.
      */
     fun inverter(init: BehaviorTreeBuilder.() -> Unit) {
         val builder = BehaviorTreeBuilder().apply(init)
@@ -73,6 +82,9 @@ class BehaviorTreeBuilder {
 
     /**
      * Appends a [RepeaterNode] repeating its enclosed child up to [count] iterations (-1 for infinite).
+     *
+     * @param count Target repetition count, or -1 for infinite repetition.
+     * @param init Configuration builder initializing the child node to repeat.
      */
     fun repeater(count: Int = -1, init: BehaviorTreeBuilder.() -> Unit) {
         val builder = BehaviorTreeBuilder().apply(init)
@@ -82,6 +94,9 @@ class BehaviorTreeBuilder {
 
     /**
      * Appends a [CooldownNode] ensuring at least [seconds] elapse between successful executions.
+     *
+     * @param seconds Minimum seconds between executions.
+     * @param init Configuration builder initializing the child node with cooldown.
      */
     fun cooldown(seconds: Float, init: BehaviorTreeBuilder.() -> Unit) {
         val builder = BehaviorTreeBuilder().apply(init)
@@ -91,6 +106,9 @@ class BehaviorTreeBuilder {
 
     /**
      * Appends a [TimeoutNode] limiting continuous execution to at most [seconds].
+     *
+     * @param seconds Maximum permitted execution time in seconds.
+     * @param init Configuration builder initializing the child node with timeout.
      */
     fun timeout(seconds: Float, init: BehaviorTreeBuilder.() -> Unit) {
         val builder = BehaviorTreeBuilder().apply(init)
@@ -100,6 +118,8 @@ class BehaviorTreeBuilder {
 
     /**
      * Appends a [ConditionNode] evaluating [predicate].
+     *
+     * @param predicate Predicate function returning true on success, false on failure.
      */
     fun condition(predicate: (AiContext) -> Boolean) {
         children.add(ConditionNode(predicate))
@@ -107,6 +127,8 @@ class BehaviorTreeBuilder {
 
     /**
      * Appends an [ActionNode] executing [action].
+     *
+     * @param action Action function returning execution status.
      */
     fun action(action: (AiContext) -> BehaviorStatus) {
         children.add(ActionNode(action))
@@ -114,6 +136,8 @@ class BehaviorTreeBuilder {
 
     /**
      * Directly appends an existing [BehaviorNode].
+     *
+     * @param node Preconstructed behavior node to append.
      */
     fun node(node: BehaviorNode) {
         children.add(node)
@@ -121,11 +145,15 @@ class BehaviorTreeBuilder {
 
     /**
      * Returns the list of accumulated child nodes.
+     *
+     * @return List of accumulated [BehaviorNode] instances.
      */
     fun buildChildren(): List<BehaviorNode> = children.toList()
 
     /**
      * Constructs the root node from this builder.
+     *
+     * @return Compiled root [BehaviorNode].
      */
     fun buildRoot(): BehaviorNode =
         when (children.size) {

@@ -13,6 +13,9 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import kotlin.reflect.KClass
 
+/**
+ * Scene component binding for [FleeBehavior] and [SceneFlee].
+ */
 object FleeBinding : SceneComponentBinding<FleeBehavior, SceneFlee> {
     override val componentClass: KClass<FleeBehavior> = FleeBehavior::class
     override val schemaClass: KClass<SceneFlee> = SceneFlee::class
@@ -36,6 +39,11 @@ object FleeBinding : SceneComponentBinding<FleeBehavior, SceneFlee> {
     override fun export(world: World, entity: Entity, component: FleeBehavior): SceneFlee =
         component.toSceneComponent(world, entity)
 
+    /**
+     * Converts a [SceneFlee] descriptor to a runtime [FleeBehavior] component.
+     *
+     * @return Runtime [FleeBehavior] instance.
+     */
     fun SceneFlee.toComponent(): FleeBehavior = FleeBehavior(
         panicRadius = panicRadius,
         safeRadius = safeRadius,
@@ -45,6 +53,13 @@ object FleeBinding : SceneComponentBinding<FleeBehavior, SceneFlee> {
         waypointRadius = waypointRadius,
     )
 
+    /**
+     * Converts a runtime [FleeBehavior] component to a serializable [SceneFlee] descriptor.
+     *
+     * @param world Active ECS world used to resolve threat entity names.
+     * @param entity Entity owning this flee component.
+     * @return Serializable [SceneFlee] instance.
+     */
     fun FleeBehavior.toSceneComponent(world: World, entity: Entity): SceneFlee = SceneFlee(
         threat = world.referenceName(entity, threat, "FleeBehavior.threat"),
         panicRadius = panicRadius,

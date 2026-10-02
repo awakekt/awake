@@ -21,9 +21,13 @@ import com.awakekt.awake.ecs.Poolable
  *
  * Not a `data class`: [path], [waypointIndex] and [timeSinceRepath] are runtime state, and a
  * generated `equals` covering only the constructor arguments would be quietly wrong.
+ *
+ * @property target Entity to pursue. A null target, or one that has been destroyed, is skipped.
+ * @property speed Movement speed in units per second.
+ * @property repathInterval Interval in seconds between recalculating the path.
+ * @property waypointRadius Proximity threshold to advance to the next waypoint.
  */
 class ChaseBehavior(
-    /** Entity to pursue. A null target, or one that has been destroyed, is skipped. */
     var target: Entity? = null,
     override var speed: Float = DEFAULT_SPEED,
     override var repathInterval: Float = DEFAULT_REPATH_INTERVAL,
@@ -44,9 +48,17 @@ class ChaseBehavior(
         timeSinceRepath = Float.MAX_VALUE
     }
 
+    /**
+     * Default constants and tuning parameters for chase behaviors.
+     */
     companion object {
+        /** Default pursuit speed in units per second. */
         const val DEFAULT_SPEED = 2.5f
+
+        /** Default interval in seconds between recalculating path requests. */
         const val DEFAULT_REPATH_INTERVAL = 0.5f
+
+        /** Default proximity distance threshold to consider a waypoint reached. */
         const val DEFAULT_WAYPOINT_RADIUS = 0.3f
     }
 }
