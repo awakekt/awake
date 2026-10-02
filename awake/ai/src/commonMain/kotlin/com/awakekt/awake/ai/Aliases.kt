@@ -52,6 +52,9 @@ typealias TimeoutNode = com.awakekt.awake.ai.btree.TimeoutNode
  *     }
  * )
  * ```
+ *
+ * @param init Configuration builder initializing behavior tree nodes.
+ * @return Compiled root [BehaviorNode].
  */
 fun behaviorTree(init: BehaviorTreeBuilder.() -> Unit): BehaviorNode = btreeBehaviorTree(init)
 

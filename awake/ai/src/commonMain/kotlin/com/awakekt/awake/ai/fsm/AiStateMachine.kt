@@ -31,6 +31,8 @@ class AiStateMachine(
 
     /**
      * Updates the active state and evaluates outgoing transitions with [context].
+     *
+     * @param context Execution context for the current evaluation tick.
      */
     fun update(context: AiContext) {
         if (!hasEntered) {
@@ -56,6 +58,9 @@ class AiStateMachine(
 
     /**
      * Forces an immediate transition to [targetName].
+     *
+     * @param targetName Target state identifier.
+     * @param context Execution context for lifecycle callbacks.
      */
     fun transitionTo(targetName: String, context: AiContext) {
         val nextState = states[targetName] ?: error("State '$targetName' not found in state machine")
@@ -67,6 +72,9 @@ class AiStateMachine(
 
     /**
      * Resets this state machine back to [initialStateName].
+     *
+     * @param initialStateName State identifier to reset into.
+     * @param context Execution context for lifecycle callbacks.
      */
     fun reset(initialStateName: String, context: AiContext) {
         if (hasEntered) {

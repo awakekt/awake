@@ -1,0 +1,1 @@
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for AI core and behavior modules (`:awake:ai`, `:awake:ai:behavior`).

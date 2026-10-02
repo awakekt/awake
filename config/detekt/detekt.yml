@@ -125,6 +125,7 @@ comments:
       - '**/awake/project/src/**'
       - '**/awake/core/animation/**'
       - '**/awake/core/audio/**'
+      - '**/awake/ai/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

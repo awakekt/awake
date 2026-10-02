@@ -33,14 +33,20 @@ data class ScenePatrol(
     val waypointRadius: Float = PatrolBehavior.DEFAULT_WAYPOINT_RADIUS,
 ) : SceneComponent {
 
+    /**
+     * Patrol route completion style.
+     */
     @Serializable
     enum class Style {
+        /** Wraps back to the first stop upon completion. */
         @SerialName("loop")
         Loop,
 
+        /** Reverses route direction at endpoints. */
         @SerialName("pingPong")
         PingPong,
 
+        /** Stops permanently once the final stop is reached. */
         @SerialName("once")
         Once,
     }

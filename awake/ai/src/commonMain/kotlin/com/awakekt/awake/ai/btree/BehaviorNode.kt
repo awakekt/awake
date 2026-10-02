@@ -13,6 +13,9 @@ import com.awakekt.awake.ai.AiContext
 interface BehaviorNode {
     /**
      * Ticks this node with the provided [context] and returns its [BehaviorStatus].
+     *
+     * @param context Execution context for the current entity tick.
+     * @return [BehaviorStatus] representing node execution outcome.
      */
     fun tick(context: AiContext): BehaviorStatus
 
