@@ -85,136 +85,14 @@ data class ProceduralTerrainRule(
 }
 
 /**
- * Procedural material configuration containing rules and industry-standard biome presets.
+ * The rules that decide which splat layer covers each terrain sample. Core ships no biome presets:
+ * a project or template authors its own rule set as data.
  *
- * @property rules Biome rules dictating the distribution of terrain layers.
+ * @property rules Rules dictating the distribution of terrain layers.
  */
 data class ProceduralTerrainMaterialConfig(
     val rules: List<ProceduralTerrainRule>,
-) {
-    companion object {
-        /**
-         * Alpine mountain preset:
-         * - Layer 0 (Grass): Valleys and gentle slopes (<= 50m, <= 30 deg).
-         * - Layer 1 (Dirt/Forest): Mid elevations (30m..120m, <= 45 deg).
-         * - Layer 2 (Rock/Cliff): Steep cliff faces across all elevations (35..90 deg).
-         * - Layer 3 (Snow): High mountain peaks (>= 100m, <= 50 deg).
-         */
-        val MountainAlpine = ProceduralTerrainMaterialConfig(
-            rules = listOf(
-                ProceduralTerrainRule(
-                    layerIndex = 0,
-                    maxAltitude = 50f,
-                    altitudeBlend = 15f,
-                    maxSlopeDegrees = 30f,
-                    slopeBlendDegrees = 10f,
-                ),
-                ProceduralTerrainRule(
-                    layerIndex = 1,
-                    minAltitude = 30f,
-                    maxAltitude = 120f,
-                    altitudeBlend = 20f,
-                    maxSlopeDegrees = 45f,
-                    slopeBlendDegrees = 10f,
-                ),
-                ProceduralTerrainRule(
-                    layerIndex = 2,
-                    minSlopeDegrees = 35f,
-                    maxSlopeDegrees = 90f,
-                    slopeBlendDegrees = 10f,
-                ),
-                ProceduralTerrainRule(
-                    layerIndex = 3,
-                    minAltitude = 100f,
-                    altitudeBlend = 25f,
-                    maxSlopeDegrees = 50f,
-                    slopeBlendDegrees = 10f,
-                ),
-            ),
-        )
-
-        /**
-         * Rolling hills preset:
-         * - Layer 0 (Lush Grass): Low valleys.
-         * - Layer 1 (Dry Grass): Hill crests and rolling meadows.
-         * - Layer 2 (Soil/Gravel): Steeper hill embankments.
-         * - Layer 3 (Bedrock Outcrops): Exposed crest rocks.
-         */
-        val RollingHills = ProceduralTerrainMaterialConfig(
-            rules = listOf(
-                ProceduralTerrainRule(
-                    layerIndex = 0,
-                    maxAltitude = 60f,
-                    altitudeBlend = 20f,
-                    maxSlopeDegrees = 25f,
-                    slopeBlendDegrees = 8f,
-                ),
-                ProceduralTerrainRule(
-                    layerIndex = 1,
-                    minAltitude = 40f,
-                    maxAltitude = 150f,
-                    altitudeBlend = 20f,
-                    maxSlopeDegrees = 35f,
-                    slopeBlendDegrees = 10f,
-                ),
-                ProceduralTerrainRule(
-                    layerIndex = 2,
-                    minSlopeDegrees = 25f,
-                    maxSlopeDegrees = 90f,
-                    slopeBlendDegrees = 10f,
-                ),
-                ProceduralTerrainRule(
-                    layerIndex = 3,
-                    minAltitude = 110f,
-                    altitudeBlend = 20f,
-                    minSlopeDegrees = 30f,
-                    maxSlopeDegrees = 90f,
-                    slopeBlendDegrees = 10f,
-                ),
-            ),
-        )
-
-        /**
-         * Desert canyon preset:
-         * - Layer 0 (Fine Dune Sand): Canyon floors and gentle washes.
-         * - Layer 1 (Hardpacked Earth): Plateau slopes.
-         * - Layer 2 (Red Sandstone Cliffs): Sheer canyon walls.
-         * - Layer 3 (Mesa Capstone): High flat tablelands.
-         */
-        val DesertCanyon = ProceduralTerrainMaterialConfig(
-            rules = listOf(
-                ProceduralTerrainRule(
-                    layerIndex = 0,
-                    maxAltitude = 45f,
-                    altitudeBlend = 15f,
-                    maxSlopeDegrees = 20f,
-                    slopeBlendDegrees = 5f,
-                ),
-                ProceduralTerrainRule(
-                    layerIndex = 1,
-                    minAltitude = 30f,
-                    maxAltitude = 110f,
-                    altitudeBlend = 15f,
-                    maxSlopeDegrees = 35f,
-                    slopeBlendDegrees = 10f,
-                ),
-                ProceduralTerrainRule(
-                    layerIndex = 2,
-                    minSlopeDegrees = 30f,
-                    maxSlopeDegrees = 90f,
-                    slopeBlendDegrees = 8f,
-                ),
-                ProceduralTerrainRule(
-                    layerIndex = 3,
-                    minAltitude = 90f,
-                    altitudeBlend = 15f,
-                    maxSlopeDegrees = 25f,
-                    slopeBlendDegrees = 5f,
-                ),
-            ),
-        )
-    }
-}
+)
 
 /**
  * Generator that calculates surface slope and altitude gradients from height samples, evaluating

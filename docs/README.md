@@ -18,7 +18,6 @@
 | **Architecture** | [`D29: Physics — When Awake Would Write Its Own Engine`](architecture/decisions/D29-physics-own-engine-exit-criteria.md) | `Stable` | Awake builds on Jolt ([D5](../reference/decision-log.md)) and does **not** hold "write our own |
 | **Architecture** | [`D30: Math — Which Numeric Primitive Variants Earn a Type`](architecture/decisions/D30-math-numeric-primitive-variants.md) | `Stable` | `:awake:core:math` does **not** carry a variant of every vector/quaternion/matrix type for |
 | **Architecture** | [`D31: Net — What the Transport Module Owns, and What Stays in the Game`](architecture/decisions/D31-net-api-extraction.md) | `Stable` | `:awake:net:api` exists and carries exactly two things: the **transport port** and the |
-| **Architecture** | [`D32 — The editor is a library, not Studio's UI (2026-08-31)`](architecture/decisions/D32-editor-is-a-library.md) | `Stable` | **Status: Accepted.** `awake:editor` and its adapters are a published library whose consumers are |
 | **Architecture** | [`D32: scene and render domain modules`](architecture/decisions/D32-scene-and-render-domain-modules.md) | `Stable` | Status: accepted |
 | **Architecture** | [`D33: render feature plugin boundary`](architecture/decisions/D33-render-feature-plugin-boundary.md) | `Stable` | Status: accepted |
 | **Architecture** | [`D34: game UI is scene data; the design system is a style layer`](architecture/decisions/D34-game-ui-is-scene-data.md) | `Stable` | Status: accepted (2026-09-30) |

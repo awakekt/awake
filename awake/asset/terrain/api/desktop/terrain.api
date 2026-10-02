@@ -165,7 +165,6 @@ public final class com/awakekt/awake/asset/terrain/clipmap/TerrainClipmapTracker
 }
 
 public final class com/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig {
-	public static final field Companion Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig$Companion;
 	public fun <init> (Ljava/util/List;)V
 	public final fun component1 ()Ljava/util/List;
 	public final fun copy (Ljava/util/List;)Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;
@@ -174,12 +173,6 @@ public final class com/awakekt/awake/asset/terrain/splat/ProceduralTerrainMateri
 	public final fun getRules ()Ljava/util/List;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
-}
-
-public final class com/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig$Companion {
-	public final fun getDesertCanyon ()Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;
-	public final fun getMountainAlpine ()Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;
-	public final fun getRollingHills ()Lcom/awakekt/awake/asset/terrain/splat/ProceduralTerrainMaterialConfig;
 }
 
 public final class com/awakekt/awake/asset/terrain/splat/ProceduralTerrainRule {

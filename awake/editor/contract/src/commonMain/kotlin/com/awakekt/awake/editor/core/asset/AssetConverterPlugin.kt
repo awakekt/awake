@@ -9,7 +9,7 @@ import com.awakekt.awake.editor.core.plugin.EditorPlugin
 import com.awakekt.awake.editor.core.plugin.EditorProvider
 
 /**
- * An [EditorPlugin] that contributes one or more [AssetConverter] implementations to Awake Studio.
+ * An [EditorPlugin] that contributes one or more [AssetConverter] implementations to an editor host.
  */
 interface AssetConverterPlugin : EditorPlugin {
     val converters: List<AssetConverter>
