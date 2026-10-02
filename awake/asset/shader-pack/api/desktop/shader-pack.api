@@ -20,10 +20,6 @@ public final class com/awakekt/awake/asset/shaderpack/AslDepthVariantsKt {
 	public static final fun getSkinnedTexturedShadowDepthShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
 
-public final class com/awakekt/awake/asset/shaderpack/AslDisplayTransformKt {
-	public static final fun sceneDisplayTransform (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;)Lcom/awakekt/awake/asset/shaderpack/SceneDisplayTransform;
-}
-
 public final class com/awakekt/awake/asset/shaderpack/AslInfiniteGridShaderKt {
 	public static final fun getInfiniteGridShader ()Lcom/awakekt/awake/asset/shaderdsl/AslShaderDefinition;
 }
@@ -177,6 +173,10 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransform {
 	public final fun display (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun encoded (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransformKt {
+	public static final fun sceneDisplayTransform (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;)Lcom/awakekt/awake/asset/shaderpack/SceneDisplayTransform;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/ShadowMapViewContentFeatureKt {
