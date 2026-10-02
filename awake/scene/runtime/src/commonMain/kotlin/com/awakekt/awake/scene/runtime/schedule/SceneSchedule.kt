@@ -44,11 +44,17 @@ class SceneSchedule internal constructor(
     private var gameNanos = 0L
     private var renderNanos = 0L
 
-    /** Fixed and frame systems, interpolation included, in the last timed [advance]. */
-    internal val gameMs: Float get() = gameNanos / NANOS_PER_MS
+    /**
+     * Fixed and frame systems, interpolation included, in the last *completed* [advance]. A system
+     * reading this mid-advance, such as a frame-time logger, sees the previous frame whole rather
+     * than this one half-counted.
+     */
+    internal var gameMs: Float = 0f
+        private set
 
     /** Infrastructure systems -- transforms, scene extraction, recording and present -- likewise. */
-    internal val renderMs: Float get() = renderNanos / NANOS_PER_MS
+    internal var renderMs: Float = 0f
+        private set
 
     internal fun initialize(runtime: SceneAppLifecycleRuntime) {
         infrastructureSystems = spec.infrastructureSystemsFactory(runtime)
@@ -91,6 +97,8 @@ class SceneSchedule internal constructor(
                 runFrame(world, delta)
             },
         )
+        gameMs = gameNanos / NANOS_PER_MS
+        renderMs = renderNanos / NANOS_PER_MS
     }
 
     // Safe: SceneSystemHandle<T> is the key used when the system was registered via
