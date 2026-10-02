@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "hill",
+      "components": [
+        {
+          "component": "terrain",
+          "width": 4,
+          "depth": 4,
+          "scaleX": 2.0,
+          "scaleY": 1.0,
+          "scaleZ": 2.0,
+          "samples": [
+            0.0, 0.0, 0.0, 0.0,
+            0.0, 1.5, 1.0, 0.0,
+            0.0, 1.0, 0.5, 0.0,
+            0.0, 0.0, 0.0, 0.0
+          ],
+          "tilingScale": 16.0
+        }
+      ]
+    }
+  ]
+}
