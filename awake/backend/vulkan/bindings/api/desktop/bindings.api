@@ -2375,6 +2375,7 @@ public final class com/awakekt/awake/vulkan/gen/VulkanWindow {
 	public final fun glfwCreateWindowSurface (JJ)J
 	public final fun glfwDestroyWindow (J)V
 	public final fun glfwFocusWindow (J)V
+	public final fun glfwGetClipboardString (J)Ljava/lang/String;
 	public final fun glfwGetCursorPos (J)[D
 	public final fun glfwGetFramebufferHeight (J)I
 	public final fun glfwGetFramebufferWidth (J)I
@@ -2386,6 +2387,7 @@ public final class com/awakekt/awake/vulkan/gen/VulkanWindow {
 	public final fun glfwGetWindowWidth (J)I
 	public final fun glfwInit ()Z
 	public final fun glfwPollEvents ()V
+	public final fun glfwSetClipboardString (JLjava/lang/String;)V
 	public final fun glfwSetCursorShape (JI)V
 	public final fun glfwSetScrollCallback (J)V
 	public final fun glfwTerminate ()V

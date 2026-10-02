@@ -29,6 +29,12 @@ actual object VulkanWindow {
     actual external fun glfwGetRequiredInstanceExtensions(): Array<String>
     actual external fun glfwGetKey(window: Long, key: Int): Int
     actual external fun glfwGetMouseButton(window: Long, button: Int): Int
+
+    @JniNative("awake_glfw_get_clipboard_string")
+    actual external fun glfwGetClipboardString(window: Long): String?
+
+    @JniNative("awake_glfw_set_clipboard_string")
+    actual external fun glfwSetClipboardString(window: Long, text: String)
     actual external fun glfwGetCursorPos(window: Long): DoubleArray
     @JniNative("awake_glfw_set_scroll_callback")
     actual external fun glfwSetScrollCallback(window: Long)

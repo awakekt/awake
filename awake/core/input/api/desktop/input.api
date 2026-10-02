@@ -1,3 +1,11 @@
+public final class com/awakekt/awake/core/input/ClipboardCommand : java/lang/Enum {
+	public static final field Copy Lcom/awakekt/awake/core/input/ClipboardCommand;
+	public static final field Cut Lcom/awakekt/awake/core/input/ClipboardCommand;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/ClipboardCommand;
+	public static fun values ()[Lcom/awakekt/awake/core/input/ClipboardCommand;
+}
+
 public final class com/awakekt/awake/core/input/ImeComposition {
 	public fun <init> (Ljava/lang/String;II)V
 	public synthetic fun <init> (Ljava/lang/String;IIILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -18,6 +26,7 @@ public final class com/awakekt/awake/core/input/Input {
 	public fun <init> ()V
 	public final fun clearKeys ()V
 	public final fun commitImeText (Ljava/lang/String;)V
+	public final fun getClipboardWrite ()Ljava/lang/String;
 	public final fun getCurrentSnapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
 	public final fun getPointerDown ()Z
 	public final fun getPointerX ()F
@@ -29,9 +38,11 @@ public final class com/awakekt/awake/core/input/Input {
 	public final fun getTextInputFocused ()Z
 	public final fun getTextInputPassword ()Z
 	public final fun isKeyDown (Lcom/awakekt/awake/core/input/Key;)Z
+	public final fun pushClipboardCommand (Lcom/awakekt/awake/core/input/ClipboardCommand;)V
 	public final fun pushEditAction (Lcom/awakekt/awake/core/input/TextEditAction;)V
 	public final fun pushTypedText (Ljava/lang/String;)V
 	public final fun setButton (Lcom/awakekt/awake/core/input/PointerButton;Z)V
+	public final fun setClipboardWrite (Ljava/lang/String;)V
 	public final fun setImeComposition (Lcom/awakekt/awake/core/input/ImeComposition;)V
 	public final fun setKeyDown (Lcom/awakekt/awake/core/input/Key;Z)V
 	public final fun setPointer (ZFF)V
@@ -42,12 +53,13 @@ public final class com/awakekt/awake/core/input/Input {
 	public final fun setTextInputFocused (Z)V
 	public final fun setTextInputPassword (Z)V
 	public final fun snapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
+	public final fun takeClipboardWrite ()Ljava/lang/String;
 	public final fun updateSnapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
 }
 
 public final class com/awakekt/awake/core/input/InputSnapshot {
-	public fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;)V
-	public synthetic fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;)V
+	public synthetic fun <init> (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component10 ()Ljava/util/List;
 	public final fun component11 ()Z
@@ -60,6 +72,7 @@ public final class com/awakekt/awake/core/input/InputSnapshot {
 	public final fun component18 ()Ljava/util/Set;
 	public final fun component19 ()Lcom/awakekt/awake/core/input/ScrollSource;
 	public final fun component2 ()F
+	public final fun component20 ()Ljava/util/List;
 	public final fun component3 ()Z
 	public final fun component4 ()F
 	public final fun component5 ()F
@@ -67,12 +80,13 @@ public final class com/awakekt/awake/core/input/InputSnapshot {
 	public final fun component7 ()Ljava/util/Set;
 	public final fun component8 ()Ljava/util/Set;
 	public final fun component9 ()Ljava/lang/String;
-	public final fun copy (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;)Lcom/awakekt/awake/core/input/InputSnapshot;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputSnapshot;FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputSnapshot;
+	public final fun copy (FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;)Lcom/awakekt/awake/core/input/InputSnapshot;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/core/input/InputSnapshot;FFZFFLjava/util/Set;Ljava/util/Set;Ljava/util/Set;Ljava/lang/String;Ljava/util/List;ZZZLcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/Set;Ljava/util/Set;Ljava/util/Set;Lcom/awakekt/awake/core/input/ScrollSource;Ljava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/core/input/InputSnapshot;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getButtonsDown ()Ljava/util/Set;
 	public final fun getButtonsPressed ()Ljava/util/Set;
 	public final fun getButtonsReleased ()Ljava/util/Set;
+	public final fun getClipboardCommands ()Ljava/util/List;
 	public final fun getEditActions ()Ljava/util/List;
 	public final fun getImeCommit ()Ljava/lang/String;
 	public final fun getImeComposition ()Lcom/awakekt/awake/core/input/ImeComposition;
@@ -205,6 +219,7 @@ public final class com/awakekt/awake/core/input/TextEditAction : java/lang/Enum 
 	public static final field End Lcom/awakekt/awake/core/input/TextEditAction;
 	public static final field Enter Lcom/awakekt/awake/core/input/TextEditAction;
 	public static final field Home Lcom/awakekt/awake/core/input/TextEditAction;
+	public static final field SelectAll Lcom/awakekt/awake/core/input/TextEditAction;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/core/input/TextEditAction;
 	public static fun values ()[Lcom/awakekt/awake/core/input/TextEditAction;

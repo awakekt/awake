@@ -27,6 +27,7 @@ import com.awakekt.awake.compose.ui.node.activeEscapeDismissLayer
 import com.awakekt.awake.compose.ui.node.activeModalLayer
 import com.awakekt.awake.compose.ui.semantics.SemanticsTreeBuilder
 import com.awakekt.awake.compose.ui.unit.Constraints
+import com.awakekt.awake.core.input.ClipboardCommand
 import com.awakekt.awake.core.input.Key
 import kotlin.time.TimeSource
 
@@ -126,6 +127,7 @@ class ComposeHost(
         val focusedTextInputs = focusOwner.focused?.textInputs.orEmpty()
         val textFocused = focusedTextInputs.isNotEmpty()
         val passwordFocused = focusedTextInputs.any { it.isPassword }
+        val clipboardText = answerClipboardCommands(input.clipboardCommands)
 
         val paint = painter.paintOutput(root)
         return FrameOutput(
@@ -145,6 +147,7 @@ class ComposeHost(
                 requestKeyboard = textFocused,
                 cursor = dispatcher.hoveredCursor,
                 passwordKeyboard = passwordFocused,
+                clipboardText = clipboardText,
             ),
         )
     }
@@ -159,6 +162,19 @@ class ComposeHost(
      */
     fun copyFocusedSelection(): String? = focusOwner.focused?.textInputs.orEmpty().firstNotNullOfOrNull {
         it.copySelection()
+    }
+
+    /** The last of [commands] that produced text wins, as a second Ctrl+C overwrites the first. */
+    private fun answerClipboardCommands(commands: List<ClipboardCommand>): String? {
+        var answer: String? = null
+        for (i in commands.indices) {
+            val text = when (commands[i]) {
+                ClipboardCommand.Copy -> copyFocusedSelection()
+                ClipboardCommand.Cut -> cutFocusedSelection()
+            }
+            if (text != null) answer = text
+        }
+        return answer
     }
 
     /** Like [copyFocusedSelection], and removes the returned text from the field. */

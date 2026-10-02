@@ -68,6 +68,12 @@ expect object VulkanWindow {
     /** Same polling contract as [glfwGetKey], for a GLFW mouse button code. */
     fun glfwGetMouseButton(window: Long, button: Int): Int
 
+    /** The system clipboard's text, or `null` when it is empty or holds something that is not text. */
+    fun glfwGetClipboardString(window: Long): String?
+
+    /** Puts [text] on the system clipboard, replacing whatever was there. */
+    fun glfwSetClipboardString(window: Long, text: String)
+
     /** Cursor position in screen coordinates as `[x, y]`. */
     fun glfwGetCursorPos(window: Long): DoubleArray
 

@@ -25,15 +25,19 @@ public abstract interface class com/awakekt/awake/vulkan/application/GlfwWindowI
 	public abstract fun cursorY ()D
 	public abstract fun framebufferScaleX ()F
 	public abstract fun framebufferScaleY ()F
+	public fun getClipboardText ()Ljava/lang/String;
 	public fun isFocused ()Z
 	public abstract fun isKeyDown (I)Z
 	public abstract fun isMouseButtonDown (I)Z
+	public fun setClipboardText (Ljava/lang/String;)V
 }
 
 public final class com/awakekt/awake/vulkan/application/GlfwWindowInput$DefaultImpls {
 	public static fun consumeScrollDeltaX (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)D
 	public static fun consumeScrollSource (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)Lcom/awakekt/awake/core/input/ScrollSource;
+	public static fun getClipboardText (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)Ljava/lang/String;
 	public static fun isFocused (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)Z
+	public static fun setClipboardText (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;Ljava/lang/String;)V
 }
 
 public final class com/awakekt/awake/vulkan/application/GlfwWindowInputKt {

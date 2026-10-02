@@ -5,9 +5,10 @@
 // desktop-native's CMake build, not android-native's.
 // Source: VulkanWindow.kt
 //
-// glfwSetScrollCallback and the glfwConsumeScroll* functions are @JniNative (D11):
-// their wrappers below are the generator's own and delegate to VulkanWindow_native.cpp, which
-// owns the scroll accumulators and GLFW callback.
+// glfwSetScrollCallback, the glfwConsumeScroll* functions and the clipboard pair are
+// @JniNative (D11): their wrappers below are the generator's own and delegate to
+// VulkanWindow_native.cpp, which owns the scroll accumulators, the GLFW callback and the
+// clipboard's UTF-16 <-> UTF-8 conversion.
 
 #include <jni.h>
 #include <optional>
@@ -29,6 +30,8 @@ extern "C" void awake_glfw_set_scroll_callback(JNIEnv* env, jlong window);
 extern "C" jdouble awake_glfw_consume_scroll_delta_y(JNIEnv* env, jlong window);
 extern "C" jdouble awake_glfw_consume_scroll_delta_x(JNIEnv* env, jlong window);
 extern "C" jint awake_glfw_consume_scroll_source(JNIEnv* env, jlong window);
+extern "C" jstring awake_glfw_get_clipboard_string(JNIEnv* env, jlong window);
+extern "C" void awake_glfw_set_clipboard_string(JNIEnv* env, jlong window, jstring text);
 
 
 extern "C" JNIEXPORT jboolean JNICALL
@@ -323,6 +326,50 @@ Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetMouseButton(
     }
 
     return static_cast<jint>(glfwGetMouseButton(reinterpret_cast<GLFWwindow*>(window_ptr), button_val));
+}
+
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwGetClipboardString(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window) {
+    // --- Marshalling ---
+    void* window_ptr = reinterpret_cast<void*>(window);
+
+    // --- Error handling ---
+    if (!window_ptr) {
+        throw_illegal_state(env, "glfwGetClipboardString: window not initialized");
+        return nullptr;
+    }
+
+    return awake_glfw_get_clipboard_string(env, window);
+}
+
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_awakekt_awake_vulkan_gen_VulkanWindow_glfwSetClipboardString(
+        JNIEnv* env,
+        jclass clazz,
+        jlong window,
+        jstring text) {
+    // --- Marshalling ---
+    void* window_ptr = reinterpret_cast<void*>(window);
+    std::string text_val = jstring2string(env, text);
+    if (env->ExceptionCheck()) return;
+
+    // --- Error handling ---
+    if (!window_ptr) {
+        throw_illegal_state(env, "glfwSetClipboardString: window not initialized");
+        return;
+    }
+    if (text_val.empty()) {
+        throw_illegal_argument(env, "glfwSetClipboardString: text is required");
+        return;
+    }
+
+    awake_glfw_set_clipboard_string(env, window, text);
+    return;
 }
 
 

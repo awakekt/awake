@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.core.input
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.text.InputType
 import android.view.KeyEvent
@@ -23,7 +25,8 @@ import android.view.inputmethod.InputMethodManager
  * @param targetView Target view owning this input connection.
  * @param input Target Awake [Input] accumulator receiving text events.
  */
-class AwakeInputConnection(targetView: View, private val input: Input) : BaseInputConnection(targetView, false) {
+class AwakeInputConnection(private val targetView: View, private val input: Input) :
+    BaseInputConnection(targetView, false) {
 
     override fun commitText(text: CharSequence, newCursorPosition: Int): Boolean {
         input.pushTypedText(text.toString())
@@ -44,7 +47,51 @@ class AwakeInputConnection(targetView: View, private val input: Input) : BaseInp
         }
         return super.sendKeyEvent(event)
     }
+
+    /**
+     * The keyboard's own Select all, Copy, Cut and Paste buttons. Copy and cut are requests the UI
+     * answers ([AndroidSoftKeyboardBridge.syncClipboard] writes the answer); paste types the
+     * clipboard's text.
+     */
+    override fun performContextMenuAction(id: Int): Boolean {
+        when (id) {
+            android.R.id.selectAll -> input.pushEditAction(TextEditAction.SelectAll)
+            android.R.id.copy -> input.pushClipboardCommand(ClipboardCommand.Copy)
+            android.R.id.cut -> input.pushClipboardCommand(ClipboardCommand.Cut)
+            android.R.id.paste, android.R.id.pasteAsPlainText ->
+                targetView.context.awakeClipboardText()?.takeIf { it.isNotEmpty() }?.let(input::pushTypedText)
+            else -> return super.performContextMenuAction(id)
+        }
+        return true
+    }
 }
+
+/** The primary clip as text, or `null` when the clipboard is empty. */
+fun Context.awakeClipboardText(): String? {
+    val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clip = clipboard.primaryClip?.takeIf { it.itemCount > 0 } ?: return null
+    return clip.getItemAt(0).coerceToText(this)?.toString()
+}
+
+/**
+ * Ctrl+A, Ctrl+C, Ctrl+X and Ctrl+V from a hardware keyboard while a text field has focus: the
+ * same select-all, copy and cut requests and paste the keyboard's own buttons send. Returns true
+ * when the event was one of them, so the caller does not also treat the letter as gameplay.
+ */
+fun KeyEvent.syncAwakeTextShortcut(input: Input, clipboardText: () -> String?): Boolean {
+    val handled = isCtrlPressed && input.textInputFocused && keyCode in TextShortcutKeys
+    if (handled) {
+        when (keyCode) {
+            KeyEvent.KEYCODE_A -> input.pushEditAction(TextEditAction.SelectAll)
+            KeyEvent.KEYCODE_C -> input.pushClipboardCommand(ClipboardCommand.Copy)
+            KeyEvent.KEYCODE_X -> input.pushClipboardCommand(ClipboardCommand.Cut)
+            KeyEvent.KEYCODE_V -> clipboardText()?.takeIf { it.isNotEmpty() }?.let(input::pushTypedText)
+        }
+    }
+    return handled
+}
+
+private val TextShortcutKeys = setOf(KeyEvent.KEYCODE_A, KeyEvent.KEYCODE_C, KeyEvent.KEYCODE_X, KeyEvent.KEYCODE_V)
 
 /**
  * Creates an [InputConnection] configuring [outAttrs] and forwarding IME actions into [input].
@@ -86,6 +133,13 @@ class AndroidSoftKeyboardBridge(private val view: View, private val input: Input
 
     // What the live connection told the IME. The view's first connection is a plain one.
     private var connectedAsPassword = false
+
+    /** Puts the UI's answer to a copy or cut on the system clipboard. Call on the main thread. */
+    fun syncClipboard() {
+        val text = input.takeClipboardWrite()?.takeIf { it.isNotEmpty() } ?: return
+        val clipboard = view.context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        clipboard.setPrimaryClip(ClipData.newPlainText("Awake", text))
+    }
 
     /** Synchronizes soft keyboard visibility based on current text input focus state. */
     fun syncSoftKeyboardVisibility() {

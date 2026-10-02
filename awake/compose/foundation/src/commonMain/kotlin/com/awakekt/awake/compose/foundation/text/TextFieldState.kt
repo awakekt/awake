@@ -153,6 +153,7 @@ class TextFieldState(text: String = "", cursor: Int = text.length) {
             TextEditAction.Enter -> Unit
             TextEditAction.ArrowUp -> moveVertical(-1)
             TextEditAction.ArrowDown -> moveVertical(1)
+            TextEditAction.SelectAll -> selectAll()
         }
     }
 

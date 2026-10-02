@@ -98,6 +98,7 @@ class ComposeAppRuntime internal constructor(
 
         input.textInputFocused = output.effects.requestKeyboard
         input.textInputPassword = output.effects.passwordKeyboard
+        output.effects.clipboardText?.let { input.clipboardWrite = it }
         inputOwnership = output.ownership
         cursor = output.effects.cursor
         lastFrame = output
