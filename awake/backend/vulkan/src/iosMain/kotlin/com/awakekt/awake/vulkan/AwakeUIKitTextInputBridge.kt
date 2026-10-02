@@ -8,6 +8,7 @@ package com.awakekt.awake.vulkan
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.TextEditAction
 import platform.UIKit.UIView
+import platform.UIKit.reloadInputViews
 
 /**
  * Wires [VulkanMetalView]'s `UIKeyInput` conformance (declared on the view itself, see its
@@ -57,6 +58,7 @@ fun awakeSecureTextEntry(input: Input): Boolean = input.textInputFocused && inpu
  */
 fun UIView.syncAwakeSecureTextEntry(wasSecure: Boolean, input: Input): Boolean {
     val isSecure = awakeSecureTextEntry(input)
+    // A UIResponder category method, so Kotlin/Native sees an imported extension, not a member.
     if (isSecure != wasSecure) reloadInputViews()
     return isSecure
 }
