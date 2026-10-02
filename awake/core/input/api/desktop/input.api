@@ -27,6 +27,7 @@ public final class com/awakekt/awake/core/input/Input {
 	public final fun getScrollSource ()Lcom/awakekt/awake/core/input/ScrollSource;
 	public final fun getSecondaryPointerDown ()Z
 	public final fun getTextInputFocused ()Z
+	public final fun getTextInputPassword ()Z
 	public final fun isKeyDown (Lcom/awakekt/awake/core/input/Key;)Z
 	public final fun pushEditAction (Lcom/awakekt/awake/core/input/TextEditAction;)V
 	public final fun pushTypedText (Ljava/lang/String;)V
@@ -39,6 +40,7 @@ public final class com/awakekt/awake/core/input/Input {
 	public final fun setScrollSource (Lcom/awakekt/awake/core/input/ScrollSource;)V
 	public final fun setSecondaryPointer (Z)V
 	public final fun setTextInputFocused (Z)V
+	public final fun setTextInputPassword (Z)V
 	public final fun snapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
 	public final fun updateSnapshot ()Lcom/awakekt/awake/core/input/InputSnapshot;
 }

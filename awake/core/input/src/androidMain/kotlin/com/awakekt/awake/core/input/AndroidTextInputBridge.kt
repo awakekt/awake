@@ -6,6 +6,7 @@
 package com.awakekt.awake.core.input
 
 import android.content.Context
+import android.text.InputType
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.BaseInputConnection
@@ -48,19 +49,34 @@ class AwakeInputConnection(targetView: View, private val input: Input) : BaseInp
 /**
  * Creates an [InputConnection] configuring [outAttrs] and forwarding IME actions into [input].
  *
+ * While [Input.textInputPassword] is set the editor is declared a password field, so the keyboard
+ * neither learns the text nor offers suggestions for it -- what `android:inputType="textPassword"`
+ * gives a real `EditText`.
+ *
  * @param outAttrs Attributes describing the editor configuration.
  * @param input Target Awake [Input] accumulator receiving text events.
  * @return An [InputConnection] bound to this view and the input accumulator.
  */
 fun View.createAwakeInputConnection(outAttrs: EditorInfo, input: Input): InputConnection {
-    outAttrs.inputType = android.text.InputType.TYPE_CLASS_TEXT
+    outAttrs.inputType = awakeInputType(password = input.textInputPassword)
     outAttrs.imeOptions = EditorInfo.IME_ACTION_DONE
     return AwakeInputConnection(this, input)
+}
+
+/** The `EditorInfo.inputType` for a plain or a password field. */
+internal fun awakeInputType(password: Boolean): Int = if (password) {
+    InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+} else {
+    InputType.TYPE_CLASS_TEXT
 }
 
 /**
  * Polls [Input.textInputFocused] once per frame and shows/hides the soft keyboard on its
  * rising/falling edge.
+ *
+ * Also watches [Input.textInputPassword]: the IME reads `inputType` only when it (re)connects, so
+ * focus moving from a plain field to a password field without the keyboard closing would otherwise
+ * keep suggesting and learning the password. A change restarts the input connection.
  *
  * @param view The hosting Android [View].
  * @param input The [Input] instance whose focus state is monitored.
@@ -68,17 +84,28 @@ fun View.createAwakeInputConnection(outAttrs: EditorInfo, input: Input): InputCo
 class AndroidSoftKeyboardBridge(private val view: View, private val input: Input) {
     private var wasFocused = false
 
+    // What the live connection told the IME. The view's first connection is a plain one.
+    private var connectedAsPassword = false
+
     /** Synchronizes soft keyboard visibility based on current text input focus state. */
     fun syncSoftKeyboardVisibility() {
         val focused = input.textInputFocused
-        if (focused == wasFocused) return
-        wasFocused = focused
+        val password = focused && input.textInputPassword
+        if (focused == wasFocused && (!focused || password == connectedAsPassword)) return
         val imm = view.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        if (focused) {
-            view.requestFocus()
-            imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
-        } else {
-            imm.hideSoftInputFromWindow(view.windowToken, 0)
+        if (focused && password != connectedAsPassword) {
+            // Reconnects, which is what makes the IME read the new inputType.
+            imm.restartInput(view)
+            connectedAsPassword = password
+        }
+        if (focused != wasFocused) {
+            wasFocused = focused
+            if (focused) {
+                view.requestFocus()
+                imm.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+            } else {
+                imm.hideSoftInputFromWindow(view.windowToken, 0)
+            }
         }
     }
 }

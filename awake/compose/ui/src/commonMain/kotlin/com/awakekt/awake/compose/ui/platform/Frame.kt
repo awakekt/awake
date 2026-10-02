@@ -107,6 +107,12 @@ data class PlatformEffects(
      * the same conclusion and carries the same field.
      */
     val cursor: PointerCursor = PointerCursor.Default,
+    /**
+     * The focused field is a password field. Only meaningful with [requestKeyboard]: a platform that
+     * can, tells its IME (Android's `TYPE_TEXT_VARIATION_PASSWORD`), so the keyboard neither learns
+     * nor suggests what is typed.
+     */
+    val passwordKeyboard: Boolean = false,
 )
 
 /**

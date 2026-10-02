@@ -49,6 +49,19 @@ private const val CARET_BLINK_PERIOD_SECONDS = 1f
  * Focusable, so Tab reaches it and a click puts the caret where it landed. While it holds focus the
  * frame reports `isTextInputFocused`, which is how gameplay knows W/A/S/D is being typed rather
  * than walking the player -- the bug `ui-core` shipped by gating on pointer capture alone.
+ *
+ * A non-null [mask] makes it a password field, the shape of Compose's `PasswordVisualTransformation`
+ * and of `<input type=password>`. [state] keeps the real text; only what is drawn changes, one
+ * [mask] per character, IME pre-edit included. One-for-one keeps every index the same in both
+ * strings, so the caret, the selection and a click's hit-test land on the masked glyphs with no
+ * offset mapping. Characters are UTF-16 units, the unit [TextFieldState] edits in, so a character
+ * outside the Basic Multilingual Plane draws two masks. A masked field is single-line, since a
+ * line break would be a visible mask the user cannot tell from any other. While it holds focus the
+ * frame asks the platform for a password keyboard (`PlatformEffects.passwordKeyboard`), and a
+ * copy or cut through `ComposeHost` returns nothing.
+ *
+ * The bundled UI font covers printable ASCII only, so `'*'` draws as itself and `'•'` draws that
+ * font's fallback glyph until a font with the bullet is supplied through `LocalFont`.
  */
 context(_: Composer)
 fun BasicTextField(
@@ -60,7 +73,10 @@ fun BasicTextField(
     placeholderColor: Color? = null,
     singleLine: Boolean = false,
     onClick: (() -> Unit)? = null,
+    mask: Char? = null,
 ) {
+    // A newline in a password could only draw as one more mask, so the field never breaks lines.
+    val oneLine = singleLine || mask != null
     val resolved = LocalTextStyle.current then style
     val font = LocalFont.current
     val source = interactionSource ?: remember { InteractionSource() }
@@ -73,12 +89,18 @@ fun BasicTextField(
     //
     // Read through a lambda, not captured: the string this resolves to must be this frame's, and
     // composition is a phase too early for that. See TextMeasurePolicy.text.
+    //
+    // The mask is applied here, to the same string the caret, selection and hit-test geometry are
+    // read from, so all of them see the masked glyphs.
     val displayedText = {
-        state.displayedText
-            .let { if (singleLine) it.replace('\n', ' ') else it }
-            .ifEmpty { placeholder ?: " " }
+        val shown = state.displayedText
+        when {
+            mask != null -> maskedText(shown, mask)
+            singleLine -> shown.replace('\n', ' ')
+            else -> shown
+        }.ifEmpty { placeholder ?: " " }
     }
-    val policy = TextMeasurePolicy(displayedText, resolved, font, singleLine = singleLine)
+    val policy = TextMeasurePolicy(displayedText, resolved, font, singleLine = oneLine)
     // Likewise a lambda: whether the field is showing its placeholder is a per-frame answer.
     val color = {
         if (state.text.isEmpty() && placeholder != null) {
@@ -92,19 +114,19 @@ fun BasicTextField(
         nodeType = TextFieldNodeType,
         modifier = modifier
             .focusable(interactionSource = source)
-            .then(TextFieldInputElement(state, singleLine, policy, density, horizontalOffset, onClick))
+            .then(TextFieldInputElement(state, oneLine, mask, policy, density, horizontalOffset, onClick))
             .clickable { }
             .drawBehind {
                 clipped {
                     val paintColor = color()
                     val run = policy.runFor(density, 1f)
-                    val textOffsetY = if (singleLine) {
+                    val textOffsetY = if (oneLine) {
                         ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f)
                     } else {
                         0f
                     }
                     val caret = TextRunOf(state, policy, density).position()
-                    val textOffsetX = if (singleLine) {
+                    val textOffsetX = if (oneLine) {
                         val maxOffset = (run.offsetAt(policy.text.length) - width).coerceAtLeast(0f)
                         horizontalOffset.maxValue = maxOffset.roundToInt()
                         val visibleStart = horizontalOffset.value.toFloat()
@@ -130,7 +152,7 @@ fun BasicTextField(
                     if (source.isFocused && isCaretVisible(clock.totalSeconds)) {
                         drawRect(
                             x = caret.x + textOffsetX,
-                            y = if (singleLine) textOffsetY else caret.y,
+                            y = if (oneLine) textOffsetY else caret.y,
                             width = CARET_WIDTH,
                             height = run.lineHeightPx,
                             color = paintColor,
@@ -140,6 +162,14 @@ fun BasicTextField(
             },
         measurePolicy = policy,
     )
+}
+
+/** One [mask] per character of [text], so every index into one is the same index into the other. */
+internal fun maskedText(text: String, mask: Char): String {
+    if (text.isEmpty()) return text
+    val chars = CharArray(text.length)
+    chars.fill(mask)
+    return chars.concatToString()
 }
 
 private fun isCaretVisible(totalSeconds: Float): Boolean =
@@ -168,6 +198,7 @@ private data class CaretPosition(val x: Float, val y: Float)
 private class TextFieldInputElement(
     private val state: TextFieldState,
     private val singleLine: Boolean,
+    private val mask: Char?,
     private val policy: TextMeasurePolicy,
     private val density: Float,
     private val horizontalOffset: ScrollState,
@@ -178,6 +209,7 @@ private class TextFieldInputElement(
     override fun update(node: TextFieldInputNode) {
         node.state = state
         node.singleLine = singleLine
+        node.mask = mask
         node.policy = policy
         node.density = density
         node.horizontalOffset = horizontalOffset
@@ -191,10 +223,19 @@ private class TextFieldInputNode :
     PointerInputNode {
     lateinit var state: TextFieldState
     var singleLine: Boolean = false
+    var mask: Char? = null
     lateinit var policy: TextMeasurePolicy
     var density: Float = 0f
     lateinit var horizontalOffset: ScrollState
     var onClick: (() -> Unit)? = null
+
+    override val isPassword: Boolean get() = mask != null
+
+    // A masked field never hands its text to the clipboard, the way a browser treats a password
+    // input: copy yields nothing and cut neither yields nor removes anything.
+    override fun copySelection(): String? = if (mask == null && state.hasSelection) state.selectedText else null
+
+    override fun cutSelection(): String? = copySelection()?.also { state.apply(TextEditAction.Delete) }
 
     override fun onTextTyped(text: String) = state.insert(if (singleLine) text.replace('\n', ' ') else text)
 

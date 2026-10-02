@@ -352,6 +352,15 @@ class Input {
     /** Set by the UI pass to signal focus to platform bridges (e.g. soft keyboard). */
     var textInputFocused: Boolean = false
 
+    /**
+     * Set by the UI pass when the focused field masks its text, so a platform bridge can tell the
+     * IME it is editing a password and the keyboard neither learns nor suggests what is typed.
+     *
+     * Meaningful only while [textInputFocused] is true. A bridge whose platform has no such hint
+     * ignores it; the field still masks what it draws either way.
+     */
+    var textInputPassword: Boolean = false
+
     /** The stable hardware state for the current frame. Updated via [updateSnapshot]. */
     var currentSnapshot: InputSnapshot = InputSnapshot(
         pointerX = -1f,
