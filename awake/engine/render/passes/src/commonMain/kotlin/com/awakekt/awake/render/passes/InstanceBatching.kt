@@ -19,14 +19,15 @@ import kotlin.math.min
  *
  * A scene of repeated props issues one draw per copy, and each costs a uniform upload, a
  * descriptor bind and a draw call per pass; drawn as instances the whole set costs one of each.
- * Only opaque, unculled, non-instanced draws fold: an instanced pipeline has no back-culled or
- * blended companion, and a draw that is already instanced carries its own per-instance data. A
+ * Only opaque, non-instanced draws fold, and back-culled ones only where the backend built a
+ * back-culled instanced pipeline: there is no blended one, and a draw that is already instanced
+ * carries its own per-instance data. A
  * draw with no partner is left as it is. The rest keep their order; groups follow them. An
  * already-instanced draw carrying more copies than one draw's buffer holds is split.
  */
 internal fun batchInstances(
     drawCalls: List<RenderDrawCommand>,
-    canInstance: (VertexFormat) -> Boolean,
+    canInstance: (VertexFormat, CullMode) -> Boolean,
 ): List<RenderDrawCommand> {
     val groups = LinkedHashMap<InstanceKey, MutableList<RenderDrawCommand>>()
     val kept = ArrayList<RenderDrawCommand>(drawCalls.size)
@@ -84,12 +85,11 @@ private fun MutableList<RenderDrawCommand>.addSplitToCapacity(draw: RenderDrawCo
     }
 }
 
-private fun RenderDrawCommand.foldsIntoInstances(canInstance: (VertexFormat) -> Boolean): Boolean =
+private fun RenderDrawCommand.foldsIntoInstances(canInstance: (VertexFormat, CullMode) -> Boolean): Boolean =
     instanceModels == null &&
         instanceJointPalettes == null &&
         !transparent &&
-        cullMode == CullMode.None &&
-        canInstance(mesh.format)
+        canInstance(mesh.format, cullMode)
 
 private fun instancedDraw(members: List<RenderDrawCommand>): RenderDrawCommand =
     members[0].copy(
@@ -130,7 +130,8 @@ private fun RenderDrawCommand.instancesWith(other: RenderDrawCommand): Boolean =
         timeSeconds == other.timeSeconds &&
         alphaMode == other.alphaMode &&
         alphaCutoff == other.alphaCutoff &&
-        shadowsOnly == other.shadowsOnly
+        shadowsOnly == other.shadowsOnly &&
+        cullMode == other.cullMode
 
 /** A map key for [instancesWith]: draws with equal keys render identically but for placement. */
 private class InstanceKey(private val draw: RenderDrawCommand) {

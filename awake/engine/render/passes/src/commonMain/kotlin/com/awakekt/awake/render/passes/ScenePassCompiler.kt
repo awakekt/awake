@@ -62,7 +62,7 @@ object ScenePassCompiler {
                 shadowViewProjections = shadowViewProjections,
                 shadowCascadeData = shadowCascadeData,
             )
-            val requests = batchInstances(drawCalls, preparer::canInstance)
+            val requests = batchInstances(drawCalls) { format, cullMode -> preparer.canInstance(format, cullMode) }
             val visible = ArrayList<Caster>(requests.size)
             requests.forEachIndexed { index, request ->
                 val draw = preparer.prepare(request, index, context) ?: return@forEachIndexed

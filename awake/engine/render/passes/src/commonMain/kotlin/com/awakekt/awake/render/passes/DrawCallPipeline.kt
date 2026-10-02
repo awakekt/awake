@@ -10,6 +10,7 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.squaredDistanceFrom
 import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
 
@@ -48,13 +49,29 @@ fun resolveInstancedDrawKind(
     else -> InstancedDrawKind.Plain
 }
 
-/** The pipeline an instanced draw of [kind] resolves to; [additive] picks a particle's additive twin when built. */
-fun <P> PipelineTable<P>.resolveInstanced(format: VertexFormat, kind: InstancedDrawKind, additive: Boolean = false): P? =
+/**
+ * The pipeline an instanced draw of [kind] resolves to; [additive] picks a particle's additive twin
+ * when built, and a plain draw with [cullMode] `Back` its back-culled twin.
+ */
+fun <P> PipelineTable<P>.resolveInstanced(
+    format: VertexFormat,
+    kind: InstancedDrawKind,
+    additive: Boolean = false,
+    cullMode: CullMode = CullMode.None,
+): P? =
     when (kind) {
         InstancedDrawKind.Skinned -> skinnedInstancedByFormat[format]
         InstancedDrawKind.Particle -> additiveParticlePipelines[format]?.takeIf { additive } ?: particlePipelines[format]
-        InstancedDrawKind.Plain -> instancedByFormat[format]
+        InstancedDrawKind.Plain ->
+            instancedBackCulledByFormat[format]?.takeIf { cullMode == CullMode.Back } ?: instancedByFormat[format]
     }
+
+/** Whether this table can draw instanced copies of a [format] mesh with [cullMode], as [resolveInstanced] would. */
+fun <P> PipelineTable<P>.canInstance(format: VertexFormat, cullMode: CullMode): Boolean = when (cullMode) {
+    CullMode.None -> format in instancedByFormat
+    CullMode.Back -> format in instancedBackCulledByFormat
+    CullMode.Front -> false
+}
 
 /** Calculates the squared distance from this draw's model transform to the camera eye. */
 fun RenderDrawCommand.depthSortKey(cameraEye: Vec3f): Float =
