@@ -47,6 +47,27 @@ class GltfAssetResolverTextureTest {
         assertEquals("gltf-material:$path#1", slots[1].material)
     }
 
+    /** A model changed on disk: forgetting it drops what was parsed, so preloading reads the new file. */
+    @Test
+    fun aForgottenModelIsReadAgainAndOthersStay() = runTest {
+        val path = "assets/models/house#2.gltf"
+        val other = "assets/models/house.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.preload(path, texturedTriangleJson(primitiveCount = 2).encodeToByteArray())
+        resolver.preload(other, texturedTriangleJson().encodeToByteArray())
+
+        resolver.preload(path, texturedTriangleJson().encodeToByteArray())
+        assertEquals(2, resolver.materialSlots(path).size, "a loaded model is kept until it is forgotten")
+
+        resolver.forget(path)
+        assertEquals(emptyList(), resolver.materialSlots(path))
+        assertEquals("gltf-material:$other", resolver.materialName(other), "another model stays loaded")
+
+        resolver.preload(path, texturedTriangleJson().encodeToByteArray())
+        assertEquals(1, resolver.materialSlots(path).size, "the new file is parsed")
+        assertEquals("gltf-material:$path", resolver.materialName(path))
+    }
+
     @Test
     fun aSavedPrimitiveMeshResolvesToItsModelFile() {
         val resolver = GltfAssetResolver()

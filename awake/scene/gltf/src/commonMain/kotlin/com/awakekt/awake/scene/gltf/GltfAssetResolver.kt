@@ -125,6 +125,20 @@ class GltfAssetResolver(
     }
 
     /**
+     * Forgets everything parsed from the model file at [path] -- its geometry, skinned scene,
+     * materials and part textures -- so the next [preload] reads the file again. An editor calls
+     * this when the file changed on disk. Meshes and materials already created from it are not
+     * touched; they stay until their holders release them.
+     */
+    fun forget(path: String) {
+        loadedScenes.remove(path)
+        loadedMaterialSlots.remove(path)
+        loadedStaticMeshes.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
+        loadedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
+        skinnedPartTextures.keys.removeAll { it.startsWith("$path#") }
+    }
+
+    /**
      * Synchronous fallback for the existing editor placement seam. New file-backed callers use
      * [preload] so JSON sidecars are resolved first; picker callers that cannot suspend still get
      * the embedded/data-URI behavior rather than an API that returns nullable bytes.
