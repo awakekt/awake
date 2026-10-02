@@ -71,7 +71,7 @@ internal class SceneParticleCompiler {
         visible.clear()
         emitter.particles.forEach { particle ->
             if (!particle.alive) return@forEach
-            if (!frustumPlanes.containsSphere(particle.position, particle.scale)) return@forEach
+            if (!frustumPlanes.containsSphere(particle.position, particle.currentScale(emitter))) return@forEach
             visible += particle
         }
         // Back-to-front (farthest first): alpha-blended particles don't write depth, so draw
@@ -93,7 +93,7 @@ internal class SceneParticleCompiler {
                 particle.position.x,
                 particle.position.y,
                 particle.position.z,
-                particle.scale,
+                particle.currentScale(emitter),
             )
             // ParticleVisual.stretchWithVelocity: column 1 (m01/m11/m21) is otherwise dead --
             // particle.wgsl only ever reads column 0 (width) and column 3 (center), never
@@ -150,6 +150,7 @@ internal class SceneParticleCompiler {
                     instanceColors = instanceColors,
                     instanceFrames = instanceFrames,
                     extraUniformFloats = uniformFloats,
+                    additive = emitter.visual.additive,
                 ),
             )
         }

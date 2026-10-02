@@ -13,6 +13,7 @@ import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
+import com.awakekt.awake.scene.rendering.particles.ParticleVisual
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -55,6 +56,12 @@ class SceneParticleCompilerTest {
 
         assertEquals(1, draws.size)
         assertEquals(1, draws.single().instanceModels?.size)
+        assertEquals(false, draws.single().additive)
+
+        emitter.visual = ParticleVisual(additive = true)
+        draws.clear()
+        SceneParticleCompiler().appendWorldDrawCalls(draws, world, Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 100f)))
+        assertEquals(true, draws.single().additive, "an additive emitter's draw adds")
     }
 
     private fun fakeMesh(): Mesh = object : Mesh {

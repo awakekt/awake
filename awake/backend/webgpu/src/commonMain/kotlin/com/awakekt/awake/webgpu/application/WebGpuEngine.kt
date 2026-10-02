@@ -340,6 +340,9 @@ open class WebGpuEngine(
             particlePipelines = builtPipelines[PipelineKey.Particle]
                 ?.let { mapOf(VertexFormat.PositionUv to it.fill) }
                 .orEmpty(),
+            additiveParticlePipelines = builtPipelines[PipelineKey.Particle]?.additive
+                ?.let { mapOf(VertexFormat.PositionUv to it) }
+                .orEmpty(),
         )
         // Which four is uiShaderSet's call, not this backend's -- all that differs here is that
         // WebGPU compiles one WGSL module per shader where Vulkan takes a SPIR-V pair.

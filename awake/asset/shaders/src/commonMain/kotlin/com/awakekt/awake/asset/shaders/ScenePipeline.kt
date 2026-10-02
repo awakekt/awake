@@ -43,7 +43,8 @@ import com.awakekt.awake.render.pipeline.PipelineVariant
  * @property depthShaders How an instanced or skinned pipeline's draws cast into the shadow map.
  * Null leaves them to the plan's `depthPrePassVariants`, which cover only the primary format.
  * @property buildAdditive Also build the additive companion, for transparent draws that set
- * `RenderDrawCommand.additive`.
+ * `RenderDrawCommand.additive`. On a particle pipeline it is the additive particle twin, for
+ * emitters whose `ParticleVisual.additive` is set.
  */
 data class ScenePipeline(
     val key: PipelineKey,

@@ -33,6 +33,9 @@ class PipelineTable<P>(
     val instancedByFormat: Map<VertexFormat, P> = emptyMap(),
     val skinnedInstancedByFormat: Map<VertexFormat, P> = emptyMap(),
     val particlePipelines: Map<VertexFormat, P> = emptyMap(),
+    /** The particle pipelines' additive twins, for `RenderDrawCommand.additive` particle draws.
+     * Without one an additive particle draw falls back to [particlePipelines]: blended, not added. */
+    val additiveParticlePipelines: Map<VertexFormat, P> = emptyMap(),
 )
 
 /**
