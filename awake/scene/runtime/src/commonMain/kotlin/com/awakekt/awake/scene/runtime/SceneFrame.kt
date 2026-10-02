@@ -22,4 +22,6 @@ internal data class SceneFrame(
     val ownership: InputOwnership,
     val cursor: PointerCursor,
     val requestKeyboard: Boolean,
+    val passwordKeyboard: Boolean = false,
+    val clipboardText: String? = null,
 )

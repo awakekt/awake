@@ -27,6 +27,7 @@ import com.awakekt.awake.compose.ui.node.activeEscapeDismissLayer
 import com.awakekt.awake.compose.ui.node.activeModalLayer
 import com.awakekt.awake.compose.ui.semantics.SemanticsTreeBuilder
 import com.awakekt.awake.compose.ui.unit.Constraints
+import com.awakekt.awake.core.input.ClipboardCommand
 import com.awakekt.awake.core.input.Key
 import kotlin.time.TimeSource
 
@@ -123,7 +124,10 @@ class ComposeHost(
         // After layout, so a field that only just appeared can still take this frame's typing.
         dispatchText(input)
         dispatchKeys(input)
-        val textFocused = focusOwner.focused?.textInputs?.isNotEmpty() == true
+        val focusedTextInputs = focusOwner.focused?.textInputs.orEmpty()
+        val textFocused = focusedTextInputs.isNotEmpty()
+        val passwordFocused = focusedTextInputs.any { it.isPassword }
+        val clipboardText = answerClipboardCommands(input.clipboardCommands)
 
         val paint = painter.paintOutput(root)
         return FrameOutput(
@@ -139,8 +143,43 @@ class ComposeHost(
             ),
             // The platform raises a soft keyboard while a field holds focus; on desktop nothing
             // acts on it, which is why it is a request rather than a call.
-            effects = PlatformEffects(requestKeyboard = textFocused, cursor = dispatcher.hoveredCursor),
+            effects = PlatformEffects(
+                requestKeyboard = textFocused,
+                cursor = dispatcher.hoveredCursor,
+                passwordKeyboard = passwordFocused,
+                clipboardText = clipboardText,
+            ),
         )
+    }
+
+    /**
+     * What a copy command (Ctrl/Cmd+C, a context menu) should place on the clipboard: the focused
+     * field's selection, or `null` when nothing is focused, nothing is selected, or the field
+     * refuses -- a password field always does.
+     *
+     * A clipboard adapter reads from here rather than from a `TextFieldState`: the state holds the
+     * real text and cannot know that the field drawing it is masked.
+     */
+    fun copyFocusedSelection(): String? = focusOwner.focused?.textInputs.orEmpty().firstNotNullOfOrNull {
+        it.copySelection()
+    }
+
+    /** The last of [commands] that produced text wins, as a second Ctrl+C overwrites the first. */
+    private fun answerClipboardCommands(commands: List<ClipboardCommand>): String? {
+        var answer: String? = null
+        for (i in commands.indices) {
+            val text = when (commands[i]) {
+                ClipboardCommand.Copy -> copyFocusedSelection()
+                ClipboardCommand.Cut -> cutFocusedSelection()
+            }
+            if (text != null) answer = text
+        }
+        return answer
+    }
+
+    /** Like [copyFocusedSelection], and removes the returned text from the field. */
+    fun cutFocusedSelection(): String? = focusOwner.focused?.textInputs.orEmpty().firstNotNullOfOrNull {
+        it.cutSelection()
     }
 
     private fun compose(content: context(Composer) () -> Unit, input: FrameInput): Composer =

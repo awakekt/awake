@@ -1130,6 +1130,9 @@ public abstract interface class com/awakekt/awake/compose/ui/node/SemanticsModif
 }
 
 public abstract interface class com/awakekt/awake/compose/ui/node/TextInputNode {
+	public fun copySelection ()Ljava/lang/String;
+	public fun cutSelection ()Ljava/lang/String;
+	public fun isPassword ()Z
 	public abstract fun onEditAction (Lcom/awakekt/awake/core/input/TextEditAction;)V
 	public fun onImeCommit (Ljava/lang/String;)V
 	public fun onImeComposition (Lcom/awakekt/awake/core/input/ImeComposition;)V
@@ -1137,6 +1140,9 @@ public abstract interface class com/awakekt/awake/compose/ui/node/TextInputNode 
 }
 
 public final class com/awakekt/awake/compose/ui/node/TextInputNode$DefaultImpls {
+	public static fun copySelection (Lcom/awakekt/awake/compose/ui/node/TextInputNode;)Ljava/lang/String;
+	public static fun cutSelection (Lcom/awakekt/awake/compose/ui/node/TextInputNode;)Ljava/lang/String;
+	public static fun isPassword (Lcom/awakekt/awake/compose/ui/node/TextInputNode;)Z
 	public static fun onImeCommit (Lcom/awakekt/awake/compose/ui/node/TextInputNode;Ljava/lang/String;)V
 	public static fun onImeComposition (Lcom/awakekt/awake/compose/ui/node/TextInputNode;Lcom/awakekt/awake/core/input/ImeComposition;)V
 }
@@ -1158,6 +1164,8 @@ public final class com/awakekt/awake/compose/ui/platform/ComposeHost {
 	public fun <init> ()V
 	public fun <init> (FFLcom/awakekt/awake/compose/ui/unit/LayoutDirection;)V
 	public synthetic fun <init> (FFLcom/awakekt/awake/compose/ui/unit/LayoutDirection;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun copyFocusedSelection ()Ljava/lang/String;
+	public final fun cutFocusedSelection ()Ljava/lang/String;
 	public final fun frame (Lcom/awakekt/awake/compose/ui/platform/FrameInput;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/platform/FrameOutput;
 	public final fun getCompositionStats ()Lcom/awakekt/awake/compose/ui/platform/ComposeFrameStats;
 	public final fun getDensity ()F
@@ -1197,8 +1205,8 @@ public final class com/awakekt/awake/compose/ui/platform/FrameClockKt {
 public final class com/awakekt/awake/compose/ui/platform/FrameInput {
 	public static final field Companion Lcom/awakekt/awake/compose/ui/platform/FrameInput$Companion;
 	public static final field UNKNOWN_POINTER I
-	public fun <init> (IIIIZZZZLjava/util/List;Lcom/awakekt/awake/compose/ui/input/pointer/PointerModifiers;FLjava/lang/String;Lcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/List;Ljava/util/List;F)V
-	public synthetic fun <init> (IIIIZZZZLjava/util/List;Lcom/awakekt/awake/compose/ui/input/pointer/PointerModifiers;FLjava/lang/String;Lcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/List;Ljava/util/List;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (IIIIZZZZLjava/util/List;Lcom/awakekt/awake/compose/ui/input/pointer/PointerModifiers;FLjava/lang/String;Lcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/List;Ljava/util/List;FLjava/util/List;)V
+	public synthetic fun <init> (IIIIZZZZLjava/util/List;Lcom/awakekt/awake/compose/ui/input/pointer/PointerModifiers;FLjava/lang/String;Lcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/List;Ljava/util/List;FLjava/util/List;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()I
 	public final fun component10 ()Lcom/awakekt/awake/compose/ui/input/pointer/PointerModifiers;
 	public final fun component11 ()F
@@ -1208,6 +1216,7 @@ public final class com/awakekt/awake/compose/ui/platform/FrameInput {
 	public final fun component15 ()Ljava/util/List;
 	public final fun component16 ()Ljava/util/List;
 	public final fun component17 ()F
+	public final fun component18 ()Ljava/util/List;
 	public final fun component2 ()I
 	public final fun component3 ()I
 	public final fun component4 ()I
@@ -1216,9 +1225,10 @@ public final class com/awakekt/awake/compose/ui/platform/FrameInput {
 	public final fun component7 ()Z
 	public final fun component8 ()Z
 	public final fun component9 ()Ljava/util/List;
-	public final fun copy (IIIIZZZZLjava/util/List;Lcom/awakekt/awake/compose/ui/input/pointer/PointerModifiers;FLjava/lang/String;Lcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/List;Ljava/util/List;F)Lcom/awakekt/awake/compose/ui/platform/FrameInput;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/platform/FrameInput;IIIIZZZZLjava/util/List;Lcom/awakekt/awake/compose/ui/input/pointer/PointerModifiers;FLjava/lang/String;Lcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/List;Ljava/util/List;FILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/platform/FrameInput;
+	public final fun copy (IIIIZZZZLjava/util/List;Lcom/awakekt/awake/compose/ui/input/pointer/PointerModifiers;FLjava/lang/String;Lcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/List;Ljava/util/List;FLjava/util/List;)Lcom/awakekt/awake/compose/ui/platform/FrameInput;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/platform/FrameInput;IIIIZZZZLjava/util/List;Lcom/awakekt/awake/compose/ui/input/pointer/PointerModifiers;FLjava/lang/String;Lcom/awakekt/awake/core/input/ImeComposition;Ljava/lang/String;Ljava/util/List;Ljava/util/List;FLjava/util/List;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/platform/FrameInput;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClipboardCommands ()Ljava/util/List;
 	public final fun getDeltaSeconds ()F
 	public final fun getEditActions ()Ljava/util/List;
 	public final fun getImeCommit ()Ljava/lang/String;
@@ -1297,14 +1307,18 @@ public final class com/awakekt/awake/compose/ui/platform/InputSnapshotAdapterKt 
 
 public final class com/awakekt/awake/compose/ui/platform/PlatformEffects {
 	public fun <init> ()V
-	public fun <init> (ZLcom/awakekt/awake/core/input/PointerCursor;)V
-	public synthetic fun <init> (ZLcom/awakekt/awake/core/input/PointerCursor;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;)V
+	public synthetic fun <init> (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Z
 	public final fun component2 ()Lcom/awakekt/awake/core/input/PointerCursor;
-	public final fun copy (ZLcom/awakekt/awake/core/input/PointerCursor;)Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;ZLcom/awakekt/awake/core/input/PointerCursor;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;
+	public final fun component3 ()Z
+	public final fun component4 ()Ljava/lang/String;
+	public final fun copy (ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;)Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;ZLcom/awakekt/awake/core/input/PointerCursor;ZLjava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/compose/ui/platform/PlatformEffects;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getClipboardText ()Ljava/lang/String;
 	public final fun getCursor ()Lcom/awakekt/awake/core/input/PointerCursor;
+	public final fun getPasswordKeyboard ()Z
 	public final fun getRequestKeyboard ()Z
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -1380,6 +1394,7 @@ public final class com/awakekt/awake/compose/ui/semantics/SemanticsProperties {
 	public final fun getDisabled ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
 	public final fun getIndeterminate ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
 	public final fun getLabel ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
+	public final fun getPassword ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
 	public final fun getRole ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
 	public final fun getSelectableGroup ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
 	public final fun getSelected ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;

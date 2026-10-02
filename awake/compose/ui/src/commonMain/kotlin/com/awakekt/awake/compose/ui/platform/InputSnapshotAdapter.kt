@@ -44,6 +44,7 @@ fun InputSnapshot.toFrameInput(
     editActions = editActions,
     keyEvents = keyEvents(),
     deltaSeconds = deltaSeconds,
+    clipboardCommands = clipboardCommands,
 )
 
 /**

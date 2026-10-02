@@ -1,0 +1,1 @@
+- **Ctrl and Cmd shortcuts no longer type their letter on desktop.** The GLFW text bridge ignored modifiers, so Ctrl+S or Ctrl+C in a focused text field also inserted "s" or "c". A letter pressed with Ctrl or Cmd held is now a shortcut only.

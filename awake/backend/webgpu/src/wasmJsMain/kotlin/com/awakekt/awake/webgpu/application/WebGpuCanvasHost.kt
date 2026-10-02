@@ -57,7 +57,9 @@ fun launchWebGpuGame(
 
     bindWindowPointerInput(input)
     bindWindowKeyboardInput(input)
-    bindWindowTextInput(input)
+    // Typing, IME, the password hint and the clipboard all go through a hidden <input>; the
+    // window-wide keydown path (bindWindowTextInput) would type every character twice beside it.
+    val textInput = DomTextInputBridge(input)
 
     val initialSize = currentCanvasSize()
     syncCanvasSize(canvas, initialSize.first, initialSize.second)
@@ -111,6 +113,8 @@ fun launchWebGpuGame(
                 lastFrameTime = time
                 try {
                     resolvedApplication.update(deltaSeconds)
+                    // After the UI pass, so this frame's text focus and clipboard answer reach the page.
+                    textInput.sync()
                 } catch (error: Throwable) {
                     // Animation-frame exceptions do not reach the startup coroutine's catch. Stop
                     // scheduling after the first failure and keep the cause visible instead of
@@ -264,21 +268,6 @@ fun bindWindowKeyboardInput(
     }
 }
 
-/** `KeyboardEvent.key` -> [TextEditAction] for the same discrete edit set
- * [GlfwTextInputBridge]/[AwakeUIKitTextInputBridge] push on desktop/iOS. */
-private val DomEditKeys: Map<String, com.awakekt.awake.core.input.TextEditAction> =
-    mapOf(
-        "Backspace" to com.awakekt.awake.core.input.TextEditAction.Backspace,
-        "Delete" to com.awakekt.awake.core.input.TextEditAction.Delete,
-        "Enter" to com.awakekt.awake.core.input.TextEditAction.Enter,
-        "ArrowLeft" to com.awakekt.awake.core.input.TextEditAction.ArrowLeft,
-        "ArrowRight" to com.awakekt.awake.core.input.TextEditAction.ArrowRight,
-        "ArrowUp" to com.awakekt.awake.core.input.TextEditAction.ArrowUp,
-        "ArrowDown" to com.awakekt.awake.core.input.TextEditAction.ArrowDown,
-        "Home" to com.awakekt.awake.core.input.TextEditAction.Home,
-        "End" to com.awakekt.awake.core.input.TextEditAction.End,
-    )
-
 /** Feeds Awake's shared text-input API ([Input.pushTypedText]/[Input.pushEditAction]) from DOM
  * `keydown` -- the wasmJs sibling of [GlfwTextInputBridge]'s polling loop, but far simpler:
  * `KeyboardEvent.key` already resolves the printable character (Unicode/shift/layout-aware,
@@ -291,7 +280,10 @@ private val DomEditKeys: Map<String, com.awakekt.awake.core.input.TextEditAction
  * always-polling shape. A keystroke that lands with no focused text field to consume it is
  * silently dropped the next [Input.updateSnapshot] clears the buffer, same as desktop.
  * `ctrlKey`/`metaKey`/`altKey` are excluded from the printable-character path so this doesn't
- * intercept browser/OS shortcuts (Cmd+R, Ctrl+C, ...). */
+ * intercept browser/OS shortcuts (Cmd+R, Ctrl+C, ...).
+ *
+ * [launchWebGpuGame] uses [DomTextInputBridge] instead, which adds IME, mobile keyboards, the
+ * password hint and the clipboard; this stays for a host that wants keydown-only text. */
 fun bindWindowTextInput(input: Input) {
     window.addEventListener("keydown") { event ->
         val keyboardEvent = event as KeyboardEvent

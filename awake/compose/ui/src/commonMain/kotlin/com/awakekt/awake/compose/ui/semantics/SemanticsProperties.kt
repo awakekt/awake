@@ -35,6 +35,14 @@ object SemanticsProperties {
     val Disabled = SemanticsPropertyKey<Boolean>("Disabled")
 
     /**
+     * The node edits a password, Compose's `SemanticsProperties.Password`.
+     *
+     * An accessibility service must not read its text aloud and announces it as a password field
+     * instead. Published by a masked `BasicTextField`.
+     */
+    val Password = SemanticsPropertyKey<Boolean>("Password")
+
+    /**
      * Marks a container whose children are mutually exclusive options.
      *
      * A marker on the group, not a role: the group is not itself a radio button, and giving it one

@@ -183,6 +183,13 @@ interface PointerCursorNode {
 }
 
 interface TextInputNode {
+    /**
+     * Whether this node edits a password: it masks what it draws, and the platform should tell the
+     * IME so the keyboard neither learns nor suggests the text. Reported through
+     * `PlatformEffects.passwordKeyboard` while the node holds focus.
+     */
+    val isPassword: Boolean get() = false
+
     fun onTextTyped(text: String)
 
     fun onEditAction(action: TextEditAction)
@@ -190,6 +197,17 @@ interface TextInputNode {
     fun onImeComposition(composition: ImeComposition) = Unit
 
     fun onImeCommit(text: String) = onTextTyped(text)
+
+    /**
+     * The text a copy command should place on the clipboard, or `null` for nothing.
+     *
+     * The single path every clipboard adapter must take, so a field can refuse: a password field
+     * answers `null`, as a browser does for `<input type=password>`.
+     */
+    fun copySelection(): String? = null
+
+    /** Like [copySelection], and removes what it returns from the field. `null` leaves the text alone. */
+    fun cutSelection(): String? = null
 }
 
 /**

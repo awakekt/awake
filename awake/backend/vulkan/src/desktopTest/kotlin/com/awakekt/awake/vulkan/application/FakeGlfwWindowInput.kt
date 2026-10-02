@@ -14,6 +14,9 @@ private const val GLFW_MOUSE_BUTTON_RIGHT = 1
  * live GLFW window. */
 class FakeGlfwWindowInput : GlfwWindowInput {
     val keysDown = mutableSetOf<Int>()
+
+    /** What the fake system clipboard holds. */
+    override var clipboardText: String? = null
     var mouseDown = false
 
     /** GLFW button 1 (right). Separate from [mouseDown] so a test can assert the two map to

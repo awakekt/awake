@@ -186,6 +186,25 @@ enum class TextEditAction {
 
     /** Moves the cursor to the end of the line. */
     End,
+
+    /** Selects the whole text: Ctrl+A, or Cmd+A on Apple platforms. */
+    SelectAll,
+}
+
+/**
+ * A clipboard command that needs the focused field's answer.
+ *
+ * Copy and cut are requests: a platform cannot know the selection, and a password field refuses
+ * both, so the UI answers through [Input.clipboardWrite] and the platform writes what comes back.
+ * Paste has no entry: the platform reads its own clipboard and delivers the text through
+ * [Input.pushTypedText], where it follows the same focus and single-line rules as typing.
+ */
+enum class ClipboardCommand {
+    /** Puts the focused field's selection on the clipboard. */
+    Copy,
+
+    /** Puts the focused field's selection on the clipboard and removes it from the field. */
+    Cut,
 }
 
 /**
@@ -261,6 +280,7 @@ enum class ScrollSource {
  * @property buttonsPressed Set of pointer buttons pressed down during this frame.
  * @property buttonsReleased Set of pointer buttons released during this frame.
  * @property scrollSource Hardware source driving scroll deltas for this frame.
+ * @property clipboardCommands Copy and cut requests made during this frame, in order.
  */
 data class InputSnapshot(
     val pointerX: Float,
@@ -292,6 +312,7 @@ data class InputSnapshot(
     val buttonsReleased: Set<PointerButton> = emptySet(),
     /** What sent [scrollDeltaX]/[scrollDeltaY], when the platform can tell. */
     val scrollSource: ScrollSource = ScrollSource.Unknown,
+    val clipboardCommands: List<ClipboardCommand> = emptyList(),
 ) {
     /** True if the specified pointer [button] is currently held down. */
     fun isDown(button: PointerButton): Boolean = button in buttonsDown
@@ -318,6 +339,7 @@ class Input {
     private val keysDown = mutableSetOf<Key>()
     private val typedText = StringBuilder()
     private val pendingEditActions = mutableListOf<TextEditAction>()
+    private val pendingClipboardCommands = mutableListOf<ClipboardCommand>()
     private var imeComposition: ImeComposition? = null
     private var pendingImeCommit: String? = null
 
@@ -351,6 +373,24 @@ class Input {
 
     /** Set by the UI pass to signal focus to platform bridges (e.g. soft keyboard). */
     var textInputFocused: Boolean = false
+
+    /**
+     * Set by the UI pass when the focused field masks its text, so a platform bridge can tell the
+     * IME it is editing a password and the keyboard neither learns nor suggests what is typed.
+     *
+     * Meaningful only while [textInputFocused] is true. A bridge whose platform has no such hint
+     * ignores it; the field still masks what it draws either way.
+     */
+    var textInputPassword: Boolean = false
+
+    /**
+     * Text the UI answered a [ClipboardCommand] with, waiting for the platform bridge to put it on
+     * the system clipboard. Set by the UI pass; a bridge takes it with [takeClipboardWrite].
+     */
+    var clipboardWrite: String? = null
+
+    /** Returns the pending [clipboardWrite] and clears it, so each answer is written once. */
+    fun takeClipboardWrite(): String? = clipboardWrite.also { clipboardWrite = null }
 
     /** The stable hardware state for the current frame. Updated via [updateSnapshot]. */
     var currentSnapshot: InputSnapshot = InputSnapshot(
@@ -393,6 +433,8 @@ class Input {
             buttonsPressed = heldButtons - previousButtonsDown,
             buttonsReleased = previousButtonsDown - heldButtons,
             scrollSource = scrollSource,
+            // The shared empty list on the frames without one, which is nearly all of them.
+            clipboardCommands = pendingClipboardCommands.takeIf { it.isNotEmpty() }?.toList() ?: emptyList(),
         )
         // Clear transient buffers
         scrollDeltaX = 0f
@@ -400,6 +442,7 @@ class Input {
         scrollSource = ScrollSource.Unknown
         typedText.clear()
         pendingEditActions.clear()
+        pendingClipboardCommands.clear()
         pendingImeCommit = null
         pendingPointerPressed = false
         pendingPointerReleased = false
@@ -431,6 +474,11 @@ class Input {
     /** Appends a text [action] command to the current frame accumulator. */
     fun pushEditAction(action: TextEditAction) {
         pendingEditActions.add(action)
+    }
+
+    /** Appends a clipboard [command] for the focused field to answer this frame. */
+    fun pushClipboardCommand(command: ClipboardCommand) {
+        pendingClipboardCommands.add(command)
     }
 
     /** Updates the held state of the specified physical [key]. */

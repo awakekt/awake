@@ -260,6 +260,8 @@ class SceneAppLifecycleRuntime internal constructor(
 
         if (uiFrame != null) {
             input.textInputFocused = uiFrame.requestKeyboard
+            input.textInputPassword = uiFrame.passwordKeyboard
+            uiFrame.clipboardText?.let { input.clipboardWrite = it }
             cursor = uiFrame.cursor
             uiOwnership = uiFrame.ownership
             uiSemantics = uiFrame.semantics
@@ -319,6 +321,8 @@ class SceneAppLifecycleRuntime internal constructor(
             frame.ownership,
             frame.effects.cursor,
             frame.effects.requestKeyboard,
+            frame.effects.passwordKeyboard,
+            frame.effects.clipboardText,
         )
     }
 

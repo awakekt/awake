@@ -33,6 +33,14 @@ interface GlfwWindowInput {
     /** What sent the scroll since the last poll; [ScrollSource.Unknown] where the platform cannot tell. */
     fun consumeScrollSource(): ScrollSource = ScrollSource.Unknown
     fun isFocused(): Boolean = true
+
+    /**
+     * The system clipboard's text, or `null` when it holds none. Setting it replaces the
+     * clipboard; setting `null` leaves it alone.
+     */
+    var clipboardText: String?
+        get() = null
+        set(@Suppress("UNUSED_PARAMETER") value) = Unit
 }
 
 private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
@@ -45,6 +53,12 @@ private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
     override fun consumeScrollSource(): ScrollSource =
         ScrollSource.entries.getOrElse(VulkanWindow.glfwConsumeScrollSource(window)) { ScrollSource.Unknown }
     override fun isFocused(): Boolean = VulkanWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
+    override var clipboardText: String?
+        get() = VulkanWindow.glfwGetClipboardString(window)
+        set(value) {
+            // The JNI wrapper rejects an empty string, and the UI never answers with one.
+            if (!value.isNullOrEmpty()) VulkanWindow.glfwSetClipboardString(window, value)
+        }
 
     override fun framebufferScaleX(): Float = framebufferScale(window).first
     override fun framebufferScaleY(): Float = framebufferScale(window).second
