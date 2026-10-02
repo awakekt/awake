@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.5] - 2026-10-02
+
+### Added
+
+- `assertMatchesBaseline` also takes a list of draw primitives, so a screen captured by driving a whole app through a capturing renderer can be compared against a committed baseline.
+
 ## [0.1.0-rc.4] - 2026-10-02
 
 ### Added
