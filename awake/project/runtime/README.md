@@ -19,6 +19,7 @@ physics backend.
 | `physics_body`, `character_controller` | `PhysicsSystem` and `CharacterControllerSystem` on the fixed step |
 | `camera_rig` | `CameraSystem` |
 | `spinControl` | Spinning |
+| `particle_emitter` | `ParticleContentSystem` and `ParticleSystem`, with the sprites `loadPlayableProject` read |
 | Skinned glTF model | Its first animation clip, on a loop |
 | `canvas_element` with an `action` | `CanvasActionSystem`: a `move` Joystick steers, a held `jump` Button jumps |
 

@@ -27,6 +27,7 @@ registers it.
 | [`locomotion_animation`](#locomotion_animation) | `LocomotionAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Animation](../guides/animation.md) |
 | [`mesh_renderer`](#mesh_renderer) | `MeshRenderer` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`movement_control`](#movement_control) | `MovementControl` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Character controller](../guides/character-controller.md) |
+| [`particle_emitter`](#particle_emitter) | `ParticleEmitterSource` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Particles](../guides/particles.md) |
 | [`patrol`](#patrol) | `PatrolBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`pbr_material`](#pbr_material) | `PbrMaterial` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`physics_body`](#physics_body) | `PhysicsBody` | `com.awakekt.awake.scene:physics` | `registerPhysics()` | [Physics](../guides/physics.md) |
@@ -41,7 +42,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `light`, `locomotion_animation`, `mesh_renderer`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -242,6 +243,35 @@ Moves the entity from player input. `SceneMovementControl`.
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `speed` | number | none | Units per second. None uses the movement system's speed. Above 0 when set. |
+
+## `particle_emitter`
+
+Spawns camera-facing sprites at its node's world position and follows the node. `SceneParticleEmitter`.
+
+Sizes, speeds and `spawnRadius` are world units; the node's rotation and scale do not apply. Each
+particle fades from `startAlpha` to 0 over its `lifetime`, while its tint moves from `color` to
+`endColor` and its size from `scale` to `endScale`. `playProject` runs it; see
+[Particles](../guides/particles.md).
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `texture` | string | required | Project image the particles show. |
+| `maxParticles` | number | `64` | Pool size; spawning pauses while every slot is live. Above 0. |
+| `spawnRate` | number | `10` | Particles per second. |
+| `lifetime` | number | `1` | Seconds each particle lives. Above 0. |
+| `startAlpha` | number | `1` | Opacity at birth, 0 to 1. |
+| `scale` | number | `0.2` | Size at birth. Above 0. |
+| `endScale` | number | none | Size at death. None keeps `scale`. |
+| `velocity` | vector | `{x: 0, y: 1, z: 0}` | Starting velocity. |
+| `velocityJitter` | number | `0` | Random per-axis variation added to `velocity`. |
+| `coneHalfAngleDegrees` | number | none | Spreads the direction within this angle of `velocity`, keeping its speed. |
+| `spawnRadius` | number | `0` | Spawns on a horizontal ring of this radius. |
+| `radialSpeed` | number | `0` | Adds this speed horizontally away from the node, through the spawn point. |
+| `color` | color | white | Tint at birth. |
+| `endColor` | color | `color` | Tint at death. |
+| `frameCount` | number | `1` | Treats the texture as a horizontal strip of this many frames. |
+| `frameRate` | number | `8` | Frames per second of that strip. |
+| `additive` | boolean | `false` | Adds to what is behind, for glows. Needs the particle pipeline built with `buildAdditive`. |
 
 ## `patrol`
 

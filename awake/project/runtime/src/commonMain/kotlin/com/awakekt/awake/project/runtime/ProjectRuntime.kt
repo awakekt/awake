@@ -18,6 +18,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
 import com.awakekt.awake.project.AwakeProjectValidator
+import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.authoring.infrastructure.cameraSystem
 import com.awakekt.awake.scene.authoring.infrastructure.matrixRelativeMovementSystem
@@ -50,9 +51,13 @@ import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
-import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
+import com.awakekt.awake.scene.rendering.particles.ParticleContentSystem
+import com.awakekt.awake.scene.rendering.particles.ParticleSystem
+import com.awakekt.awake.scene.rendering.particles.SceneParticleEmitter
+import com.awakekt.awake.scene.rendering.particles.loadParticleSprites
+import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlin.math.PI
@@ -70,6 +75,7 @@ class PlayableProject internal constructor(
     val scene: SceneDocument,
     internal val models: GltfAssetResolver,
     internal val physics: PhysicsWorld?,
+    internal val particleSprites: Map<String, TextureAsset> = emptyMap(),
 ) {
     internal fun has(type: KClass<out SceneComponent>): Boolean =
         scene.nodes.any { it.has(type) }
@@ -113,7 +119,7 @@ suspend fun loadPlayableProject(
     } else {
         null
     }
-    return PlayableProject(manifest, scene, models, physics)
+    return PlayableProject(manifest, scene, models, physics, loadParticleSprites(scene, files))
 }
 
 /**
@@ -123,6 +129,7 @@ suspend fun loadPlayableProject(
  * - `physics_body` and `character_controller`: the physics step and the character controller
  * - `camera_rig`: the camera system
  * - `spinControl` and skinned glTF models: spinning and animation
+ * - `particle_emitter`: its emitters, with the sprites [loadPlayableProject] read
  *
  * - `canvas_element`s with an action: [CanvasActionSystem]
  *
@@ -151,6 +158,12 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
         frameSystem("spin") { SpinSystem() }
     }
     if (project.has(SceneLocomotionAnimation::class)) frameSystem("locomotion") { LocomotionAnimationSystem() }
+    if (project.has(SceneParticleEmitter::class)) {
+        var content: ParticleContentSystem? = null
+        frameSystem("particle-content") { ParticleContentSystem(renderer, project.particleSprites).also { content = it } }
+        frameSystem("particles") { ParticleSystem() }
+        onDispose { content?.release() }
+    }
     frameSystem("animation") { AnimationSystem() }
     onReady {
         showTouchControls = touchControls
