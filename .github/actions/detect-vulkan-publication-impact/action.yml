@@ -40,7 +40,8 @@ runs:
         fi
 
         changed_paths=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")
-        if grep -Eq '^awake/backend/vulkan/' <<< "$changed_paths"; then
+        # Markdown, API dumps and comment-only edits inside the family do not count; see the script.
+        if [[ "$(scripts/vulkan-publication-impact.sh "$BASE_SHA" "$HEAD_SHA")" == true ]]; then
           echo 'vulkan_publish=true' >> "$GITHUB_OUTPUT"
         elif [[ -z "$(git tag --list 'vulkan-v*' | head -n 1)" ]] && \
           grep -Eq '^(build\.gradle\.kts|build-logic/|\.github/workflows/build-and-publish\.yml|\.github/actions/detect-platform-impact/action\.yml|\.github/actions/detect-vulkan-publication-impact/action\.yml)$' <<< "$changed_paths"; then

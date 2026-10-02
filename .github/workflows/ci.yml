@@ -74,6 +74,16 @@ jobs:
             exit 1
           fi
 
+  release-scripts:
+    name: Release scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Vulkan publication detector
+        run: scripts/vulkan-publication-impact.test.sh
+
   build:
     name: Build (JVM/Native)
     needs: platform-impact
