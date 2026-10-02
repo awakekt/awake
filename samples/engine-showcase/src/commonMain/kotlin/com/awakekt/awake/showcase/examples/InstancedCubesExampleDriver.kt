@@ -20,9 +20,8 @@ private const val CUBE_Y = 0.5f
  * .SceneComponent] yet -- the instanced-cubes example's scene document authors an empty,
  * named placeholder node instead (`instanced-cubes`, no components), same "author a named
  * node, attach the state a scene document can't express in `onActivated`" shape
- * [SkinnedExampleDriver.attachPose] already uses for its joint palette. Reuses the existing
- * `"cube"`/`"lit-shadow"` named assets (same mesh/material [samples.studio.StudioModule]
- * already registers for the rotating-cube example) -- one GPU draw call for the whole grid. */
+ * [SkinnedExampleDriver.attachPose] already uses for its joint palette. Reuses the module's
+ * `"cube"`/`"lit-shadow"` named assets -- one GPU draw call for the whole grid. */
 internal object InstancedCubesExampleDriver {
     fun attach(instance: Scene, runtime: SceneAppLifecycleRuntime) {
         val node = instance.roots.find { it.name == "instanced-cubes" } ?: return

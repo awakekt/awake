@@ -132,7 +132,7 @@ The opt-in-content-versus-capability rule that shapes those nullable constructor
 
 Everything above is about the engine. Applications built on it are ordinary KMP apps:
 
-- `samples:studio` already uses an MVI Contract/Store.
+- `samples/ui-showcase` already uses an MVI Contract/Store (`UiShowcaseCounterStore`).
 - Feature-module layering (`:model` / `:api` / `:domain` / `:data` / `:presenter` / `:ui`) is
   the right shape for a game or tool with real domain logic. It is the wrong shape for
   `awake:core` — there is no domain layer in a `Mat4`.

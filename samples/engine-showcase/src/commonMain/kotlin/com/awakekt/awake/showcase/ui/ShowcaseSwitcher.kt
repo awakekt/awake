@@ -40,7 +40,7 @@ internal object ShowcaseSwitcherTags {
  *
  * A list and nothing else. Diagnostics live in [ShowcaseDebugCard] on the other edge, because a
  * checkbox sitting among the entries reads as another entry. Anything more than these two cards —
- * docks, panels, an inspector — is what `samples:studio` is for, and it carries the editor modules
+ * docks, panels, an inspector — is what Awake Studio is for, and it carries the editor modules
  * to pay for them.
  *
  * A click only *requests* the switch; see [ShowcaseSelection] for why the scene is not torn down

@@ -22,14 +22,20 @@ import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.particles.ParticleSystem
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
 import com.awakekt.awake.showcase.examples.CharacterExampleDriver
+import com.awakekt.awake.showcase.examples.EcsStressExampleDriver
 import com.awakekt.awake.showcase.examples.ShowcasePhysics
+import com.awakekt.awake.showcase.examples.SwarmMotionSystem
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
 import com.awakekt.awake.showcase.render.RenderSystem2D
 import com.awakekt.awake.showcase.ui.ShowcaseOverlay
 
 /** The independent engine-demo host. [initialShowcaseId] is injectable for focused smoke tests. */
-internal fun engineShowcaseModule(initialShowcaseId: String = DEFAULT_SHOWCASE_ID): AppModule {
+internal fun engineShowcaseModule(
+    initialShowcaseId: String = DEFAULT_SHOWCASE_ID,
+    options: ShowcaseLaunchOptions = ShowcaseLaunchOptions(),
+): AppModule {
     require(EngineShowcases.any { it.id == initialShowcaseId }) { "Unknown showcase '$initialShowcaseId'." }
+    EcsStressExampleDriver.preset(options.stressEntities)
     val loader = EngineShowcaseLoader()
     val selection = ShowcaseSelection(initialShowcaseId)
     val renderSystem2D = RenderSystem2D()
@@ -74,6 +80,8 @@ internal fun engineShowcaseModule(initialShowcaseId: String = DEFAULT_SHOWCASE_I
             // After cameraSystem, so it corrects the eye the rig just computed.
             frameSystem("cameraCollision") { CharacterExampleDriver.cameraCollisionSystem() }
             frameSystem("animation") { AnimationSystem() }
+            // Iterates an empty family unless the ECS stress showcase has spawned its entities.
+            frameSystem("swarm") { SwarmMotionSystem() }
             frameSystem("particles") { ParticleSystem() }
             // Fixed, not frame: physics is the one system here that integrates, so it is the one
             // that must not see a variable delta.
@@ -89,10 +97,14 @@ internal fun engineShowcaseModule(initialShowcaseId: String = DEFAULT_SHOWCASE_I
             }
             // Fills MovementControl from the keyboard; the character driver reads it.
             playerInputSystem()
+            if (options.perfLog) frameSystem("perf-log") { ShowcasePerfLog(this) { selection.current } }
             infrastructureSystems {
                 defaultInfrastructureSystems() + ShowcaseFramebufferCaptureSystem(this, framebufferDebugger)
             }
             onReady {
+                // A perf log reads the phase split, so it times it from the first frame. Without
+                // one, F2 turns it on, or the ECS stress showcase does when it opens.
+                if (options.perfLog) perfStatsEnabled = true
                 // Before the first activate: the terrain showcase attaches its bodies on
                 // activation and needs a world to attach them to.
                 ShowcasePhysics.world = createJoltPhysicsWorld()

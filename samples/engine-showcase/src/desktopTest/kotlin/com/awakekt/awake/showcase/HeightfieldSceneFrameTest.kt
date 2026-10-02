@@ -6,7 +6,6 @@
 package com.awakekt.awake.showcase
 
 import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
-import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.core.geometry.generate.generate
 import com.awakekt.awake.ecs.update
 import com.awakekt.awake.engine.bootstrap.dsl.appSpec
@@ -15,7 +14,6 @@ import com.awakekt.awake.engine.platform.dsl.requireService
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
 import com.awakekt.awake.render.capture.PixelMap
 import com.awakekt.awake.render.pipeline.CullMode
-import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.testing.writePng
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.core.Name
@@ -31,7 +29,6 @@ import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.app.engineShowcaseApp
 import com.awakekt.awake.showcase.examples.TerrainPhysicsExampleDriver
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
-import com.awakekt.awake.vulkan.application.VulkanEngine
 import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.test.Test
@@ -286,13 +283,6 @@ class HeightfieldSceneFrameTest {
             size(960, 540)
         }
     }.createLifecycle()
-
-    private class HeadlessPlanEngine(
-        lifecycle: AwakeAppLifecycle,
-        plan: RenderPlan,
-    ) : VulkanEngine(lifecycle, plan) {
-        suspend fun boot(surface: HeadlessSurface): Renderer = createBackendResources(surface).renderer
-    }
 
     private companion object {
         const val WIDTH = 960

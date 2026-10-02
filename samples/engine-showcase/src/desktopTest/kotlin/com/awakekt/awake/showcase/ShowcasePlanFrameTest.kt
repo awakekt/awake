@@ -6,7 +6,6 @@
 package com.awakekt.awake.showcase
 
 import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
-import com.awakekt.awake.asset.shaders.RenderPlan
 import com.awakekt.awake.core.geometry.generate.generate
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
@@ -32,7 +31,6 @@ import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.runtime.attachRenderableComponents
 import com.awakekt.awake.showcase.app.EngineShowcaseRenderPlan
 import com.awakekt.awake.showcase.terrain.TerrainExampleAsset
-import com.awakekt.awake.vulkan.application.VulkanEngine
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -233,12 +231,6 @@ class ShowcasePlanFrameTest {
     }.createLifecycle()
 
     /** Exposes the protected half of the engine's own bootstrap, and nothing else. */
-    private class HeadlessPlanEngine(
-        lifecycle: AwakeAppLifecycle,
-        plan: RenderPlan,
-    ) : VulkanEngine(lifecycle, plan) {
-        suspend fun boot(surface: HeadlessSurface): Renderer = createBackendResources(surface).renderer
-    }
 
     private companion object {
         const val WIDTH = 320
