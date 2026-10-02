@@ -156,6 +156,8 @@ public final class com/awakekt/awake/compose/testing/UiSnapshotWriterKt {
 
 public final class com/awakekt/awake/compose/testing/VisualBaselineKt {
 	public static final fun assertMatchesBaseline (Lcom/awakekt/awake/compose/testing/ComposeComponentFrame;Ljava/lang/String;IILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;)V
+	public static final fun assertMatchesBaseline (Ljava/util/List;Ljava/lang/String;IILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public static synthetic fun assertMatchesBaseline$default (Lcom/awakekt/awake/compose/testing/ComposeComponentFrame;Ljava/lang/String;IILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
+	public static synthetic fun assertMatchesBaseline$default (Ljava/util/List;Ljava/lang/String;IILcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 }
 

@@ -6,6 +6,7 @@
 package com.awakekt.awake.compose.testing
 
 import com.awakekt.awake.core.color.Color
+import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.render.testing.comparePixels
 import java.awt.image.BufferedImage
@@ -43,8 +44,20 @@ fun ComposeComponentFrame.assertMatchesBaseline(
     height: Int = root.height.coerceAtLeast(1),
     background: Color = OpaqueBackground,
     font: UiFont? = null,
+) = primitives.assertMatchesBaseline(name, width, height, background, font)
+
+/**
+ * The same exact comparison for primitives captured some other way, such as a whole app driven
+ * through a capturing renderer, where there is no [ComposeComponentFrame] to hand.
+ */
+fun List<UiDrawPrimitive>.assertMatchesBaseline(
+    name: String,
+    width: Int,
+    height: Int,
+    background: Color = OpaqueBackground,
+    font: UiFont? = null,
 ) {
-    val actual = primitives.rasterizeToPixelMap(width, height, background, font)
+    val actual = rasterizeToPixelMap(width, height, background, font)
     val baselineFile = File("$BASELINE_ROOT/$name.png")
 
     if (System.getProperty(RECORD_PROPERTY) != null) {

@@ -1,0 +1,1 @@
+- `assertMatchesBaseline` also takes a list of draw primitives, so a screen captured by driving a whole app through a capturing renderer can be compared against a committed baseline.
