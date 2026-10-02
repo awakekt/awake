@@ -150,6 +150,11 @@ jobs:
       - name: Jolt desktop physics tests
         run: ./gradlew :awake:backend:jolt:desktopTest :awake:scene:physics:desktopTest
 
+      # Scene document loading, export and the component reference page. The reference test fails
+      # when a registered component or field has no row; it drifted while nothing ran it.
+      - name: Scene runtime tests
+        run: ./gradlew :awake:scene:runtime:desktopTest
+
       - name: Every wasmJs source set compiles
         run: ./gradlew compileKotlinWasmJs compileTestKotlinWasmJs
 
