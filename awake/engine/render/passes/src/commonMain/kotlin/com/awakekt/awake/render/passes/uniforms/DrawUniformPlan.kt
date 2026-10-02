@@ -33,7 +33,7 @@ fun drawUniformPlan(
         DrawUniformPlan.TexturedPbr
 
     materialUniformFloatCount >= MaterialUniformLayouts.LitShadow.total &&
-        format in setOf(VertexFormat.PositionNormalColor, VertexFormat.PositionNormalColorUv) ->
+        format in LIT_SHADOW_FORMATS ->
         DrawUniformPlan.LitShadow
 
     format == VertexFormat.PositionNormalColorSkin ||
@@ -42,3 +42,6 @@ fun drawUniformPlan(
 
     else -> DrawUniformPlan.Lit
 }
+
+/** Built once: this check runs per draw per frame. */
+private val LIT_SHADOW_FORMATS = setOf(VertexFormat.PositionNormalColor, VertexFormat.PositionNormalColorUv)

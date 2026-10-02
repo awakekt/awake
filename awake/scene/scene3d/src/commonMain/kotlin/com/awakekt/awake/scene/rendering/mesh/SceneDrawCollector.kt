@@ -19,12 +19,21 @@ import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 internal class SceneDrawCollector(
     private val cullingCompiler: SceneCullingCompiler,
 ) {
+    /**
+     * Reused every frame, so they keep the capacity the scene grew them to: a fresh list grew
+     * by copying, sixteen times over for 50,000 entities. Valid until the next collect; the
+     * planner copies them out straight away.
+     */
+    private val beforeParticles = ArrayList<RenderDrawCommand>()
+    private val afterParticles = ArrayList<RenderDrawCommand>()
+
     fun collectBeforeParticles(
         world: World,
         culling: FrameCulling,
         elapsedTimeSeconds: Float,
-    ): ArrayList<RenderDrawCommand> {
-        val drawCalls = ArrayList<RenderDrawCommand>()
+    ): List<RenderDrawCommand> {
+        val drawCalls = beforeParticles
+        drawCalls.clear()
         // Resolved once: looking a type up by class is a hash lookup, paid per entity otherwise.
         val boundsType = world.typeId(MeshBounds::class)
         val poseType = world.typeId(SkinnedPose::class)
@@ -146,8 +155,9 @@ internal class SceneDrawCollector(
         return drawCalls
     }
 
-    fun collectAfterParticles(world: World, culling: FrameCulling, camera: Camera): ArrayList<RenderDrawCommand> {
-        val drawCalls = ArrayList<RenderDrawCommand>()
+    fun collectAfterParticles(world: World, culling: FrameCulling, camera: Camera): List<RenderDrawCommand> {
+        val drawCalls = afterParticles
+        drawCalls.clear()
         // LodGroup picks ONE level's mesh/material by distance to the camera eye -- see that
         // component's own doc comment for why an entity carries this instead of MeshRenderer,
         // not both. LOD selects detail, it doesn't cull -- MeshBounds/frustum culling still

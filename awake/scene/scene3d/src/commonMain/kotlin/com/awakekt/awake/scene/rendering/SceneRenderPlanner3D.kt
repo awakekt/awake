@@ -7,7 +7,11 @@ package com.awakekt.awake.scene.rendering
 
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.core.geometry.VertexFormat
+import com.awakekt.awake.render.command.GpuDrawPreparationContext
 import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.command.GpuDrawRequest
+import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.renderer.RenderViewport
@@ -28,9 +32,11 @@ internal class SceneRenderPlanner3D(
     features: List<RenderFeature3D> = emptyList(),
     private val terrainCasters: TerrainShadowCasters? = null,
 ) {
-    private val drawPreparer: GpuDrawPreparer = requireNotNull(drawPreparer) {
-        "SceneRenderPlanner3D requires a GpuDrawPreparer from the render-pipeline bootstrap"
-    }
+    private val drawPreparer = RejectionCountingPreparer(
+        requireNotNull(drawPreparer) {
+            "SceneRenderPlanner3D requires a GpuDrawPreparer from the render-pipeline bootstrap"
+        },
+    )
     private val geometryFeature = SceneGeometryFeature3D(rendererClipSpace)
     private val featureCollector = SceneFeatureCollector3D(rendererClipSpace, features)
     private val drawCalls = ArrayList<RenderDrawCommand>()
@@ -50,6 +56,7 @@ internal class SceneRenderPlanner3D(
         terrainCasters?.collect(world, drawCalls)
         drawCalls += contributions.authoredDraws
 
+        drawPreparer.rejected = 0
         val passInput = ScenePassCompiler.compile(
             lens = camera.lens,
             drawCalls = drawCalls,
@@ -66,6 +73,7 @@ internal class SceneRenderPlanner3D(
             submittedInstances = drawCalls.sumOf { it.instanceModels?.size ?: 1 },
             frustumCulled = geometryFeature.lastFrustumCulledCount,
             occluded = geometryFeature.lastOccludedCount,
+            unresolved = drawPreparer.rejected,
         )
     }
 
@@ -75,5 +83,26 @@ internal class SceneRenderPlanner3D(
         val submittedInstances: Int,
         val frustumCulled: Int,
         val occluded: Int,
+        /** Draws the backend's preparer rejected, counted after instancing folded them. */
+        val unresolved: Int,
     )
+}
+
+/**
+ * Counts the requests [delegate] rejects.
+ *
+ * Counted here because the requests it sees are the ones instancing produced. Comparing the
+ * extracted draws with the resolved ones instead reported every entity folded into a batch as
+ * unresolved.
+ */
+private class RejectionCountingPreparer(private val delegate: GpuDrawPreparer) : GpuDrawPreparer {
+    var rejected = 0
+
+    override fun prepare(
+        request: GpuDrawRequest,
+        sourceIndex: Int,
+        context: GpuDrawPreparationContext,
+    ): GpuResolvedDraw? = delegate.prepare(request, sourceIndex, context).also { if (it == null) rejected += 1 }
+
+    override fun canInstance(format: VertexFormat): Boolean = delegate.canInstance(format)
 }

@@ -122,8 +122,7 @@ class RenderSystem3D(
         RenderDiagnostics.occluded = plannedFrame.occluded
         RenderDiagnostics.submittedDrawCalls = plannedFrame.submittedDrawCalls
         RenderDiagnostics.submittedInstances = plannedFrame.submittedInstances
-        RenderDiagnostics.unresolvedDrawCalls =
-            (plannedFrame.submittedDrawCalls - plannedFrame.passInput.resolvedDraws.size).coerceAtLeast(0)
+        RenderDiagnostics.unresolvedDrawCalls = plannedFrame.unresolved
         renderer.draw(plannedFrame.passInput)
     }
 

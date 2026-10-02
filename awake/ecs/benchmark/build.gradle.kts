@@ -38,6 +38,8 @@ dependencies {
     implementation(project(":awake:core:math"))
     implementation(project(":awake:ecs"))
     implementation(project(":awake:scene:scene-core"))
+    // MeshRenderer, the render component the transform + mesh query benchmarks iterate.
+    implementation(project(":awake:scene:scene3d"))
     implementation(project(":awake:backend:vulkan"))
     implementation(libs.fleks)
     implementation(libs.artemis.odb)

@@ -9,6 +9,7 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.CullMode
@@ -75,6 +76,45 @@ class InstanceBatchingTest {
 
         assertEquals(Aabb(Vec3f(0f, 0f, 0f), Vec3f(11f, 1f, 1f)), batchInstances(bounded) { true }.single().worldBounds)
         assertNull(batchInstances(bounded + bounded[0].copy(worldBounds = null)) { true }.single().worldBounds)
+    }
+
+    @Test
+    fun anAuthoredInstanceListLargerThanOneDrawHoldsIsSplitWithItsPerInstanceData() {
+        val count = MAX_BATCHED_INSTANCES + 10
+        val models = List(count) { at(it.toFloat()) }
+        val colors = List(count) { Vec4(it.toFloat(), 0f, 0f, 1f) }
+
+        val split = batchInstances(listOf(RenderDrawCommand(mesh, material, instanceModels = models, instanceColors = colors))) { true }
+
+        assertEquals(listOf(MAX_BATCHED_INSTANCES, 10), split.map { it.instanceModels!!.size })
+        assertEquals(models.drop(MAX_BATCHED_INSTANCES), split[1].instanceModels)
+        assertEquals(colors.drop(MAX_BATCHED_INSTANCES), split[1].instanceColors, "per-instance data stays index-aligned")
+    }
+
+    @Test
+    fun aSkinnedInstanceListSplitsAtThePaletteBufferSize() {
+        val count = MAX_SKINNED_BATCHED_INSTANCES * 2 + 1
+        val draw = RenderDrawCommand(
+            mesh,
+            material,
+            instanceModels = List(count) { at(it.toFloat()) },
+            instanceJointPalettes = List(count) { floatArrayOf(it.toFloat()) },
+        )
+
+        val sizes = batchInstances(listOf(draw)) { true }.map { it.instanceJointPalettes!!.size }
+
+        assertEquals(listOf(MAX_SKINNED_BATCHED_INSTANCES, MAX_SKINNED_BATCHED_INSTANCES, 1), sizes)
+    }
+
+    @Test
+    fun interleavedCopiesStillFoldByWhatTheyDraw() {
+        val other = material()
+        val draws = List(6) { RenderDrawCommand(mesh, if (it % 2 == 0) material else other, model = at(it.toFloat())) }
+
+        val batched = batchInstances(draws) { true }
+
+        assertEquals(2, batched.size)
+        assertEquals(listOf(draws[0].model, draws[2].model, draws[4].model), batched.single { it.material === material }.instanceModels)
     }
 
     private fun at(x: Float) = Mat4().translate(x, 0f, 0f)
