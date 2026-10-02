@@ -193,6 +193,13 @@ jobs:
         run: |
           prefix="https://raw.githubusercontent.com/${{ github.repository }}/render-evidence/pr-$PR/$HEAD_SHA"
           scripts/render-evidence-comment.sh "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$prefix" "$HEAD_SHA" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
+          scripts/baseline-diff-comment.sh "$BASE_SHA" "$HEAD_SHA" "${{ github.repository }}" > "$RUNNER_TEMP/baselines.md"
+          if [[ -s "$RUNNER_TEMP/baselines.md" ]]; then
+            if [[ ! -s "$RUNNER_TEMP/comment.md" ]]; then
+              printf '<!-- render-evidence -->\n## Render evidence\n' > "$RUNNER_TEMP/comment.md"
+            fi
+            { echo; cat "$RUNNER_TEMP/baselines.md"; } >> "$RUNNER_TEMP/comment.md"
+          fi
           existing="$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
             --jq '[.[] | select(.body | startswith("<!-- render-evidence -->")) | .id] | first // empty')"
           if [[ ! -s "$RUNNER_TEMP/comment.md" ]]; then
