@@ -33,7 +33,7 @@ class SceneSession internal constructor(
         SceneManager(world, onUnload = { scene -> assetLibrary?.let { library -> scene.renderableRequests.forEach(library::releaseRenderable) } })
     }
 
-    private val schedule = SceneSchedule(spec)
+    internal val schedule = SceneSchedule(spec)
     private var assetLibrary: SceneAssetLibrary? = null
 
     internal fun initialize() {

@@ -15,6 +15,7 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.pipeline.ShadowCascadePassBinding
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.webgpu.texture.DepthTarget
 import io.ygdrasil.webgpu.GPUCommandEncoder
 import io.ygdrasil.webgpu.GPULoadOp
@@ -36,6 +37,8 @@ class DepthPrePassFeature(
     private val keyedVariantPipelines: Map<DepthRenderKey, DepthOnlyPipeline> = emptyMap(),
     private val instancedFormatPipelines: Map<VertexFormat, DepthOnlyPipeline> = emptyMap(),
 ) {
+    /** The owning `Renderer`'s counter, set when it takes this feature: a pass is built first. */
+    internal var stats: RenderStatsCounter? = null
 
     /** This pass own pipeline, for a caller that has to build the prepared draws it takes. */
     val depthOnlyHandle get() = depthOnlyPipeline.handle
@@ -158,7 +161,7 @@ class DepthPrePassFeature(
                 ),
             ),
         ) {
-            val recorder = WebGpuCommandRecorder(this)
+            val recorder = WebGpuCommandRecorder(this, stats)
             recorder.setScissor(0, 0, depthTarget.size, depthTarget.size)
             var boundPipeline: DepthOnlyPipeline? = null
             var drawIndex = 0

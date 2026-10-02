@@ -63,7 +63,11 @@ class LineRenderPipeline(graphicsDevice: GraphicsDevice, swapchainManager: Swapc
 
     /** [pipeline]/[bindGroup] as the shared render layer's opaque handles -- built once. */
     val handle: WebGpuPipelineHandle by lazy {
-        WebGpuPipelineHandle(pipeline, bindingsByGroup = mapOf(0 to GroupBindings.UniformOnlyMaterial))
+        WebGpuPipelineHandle(
+            pipeline,
+            bindingsByGroup = mapOf(0 to GroupBindings.UniformOnlyMaterial),
+            drawsTriangles = false,
+        )
     }
     val bindGroupHandle: WebGpuBindGroupHandle by lazy { WebGpuBindGroupHandle(bindGroup) }
 

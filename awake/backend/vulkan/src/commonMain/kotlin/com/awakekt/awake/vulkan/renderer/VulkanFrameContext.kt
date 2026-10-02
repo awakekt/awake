@@ -38,6 +38,7 @@ internal class VulkanFrameContext(
     override val passInput: GpuPassInput? = null,
 ) : VulkanRenderFrameContext {
     override val lineMesh get() = renderer.lineMesh
+    override val stats get() = renderer.statsCounter
     override val uiRuns get() = renderer.uiRuns
     override val surfaceWidth get() = renderer.swapchainManager.extent.width
     override val surfaceHeight get() = renderer.swapchainManager.extent.height

@@ -126,11 +126,15 @@ public final class com/awakekt/awake/engine/platform/core/AppSpec {
 }
 
 public final class com/awakekt/awake/engine/platform/core/FrameStats {
+	public static final field MAX_PERCENTILE F
+	public static final field MS_PER_SECOND F
 	public fun <init> ()V
 	public fun <init> (FI)V
 	public synthetic fun <init> (FIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getAverageFrameTimeMs ()F
 	public final fun getFps ()F
 	public final fun getFrameTimeMs ()F
+	public final fun getMaxFrameTimeMs ()F
 	public final fun getP50FrameTimeMs ()F
 	public final fun getP95FrameTimeMs ()F
 	public final fun getP99FrameTimeMs ()F

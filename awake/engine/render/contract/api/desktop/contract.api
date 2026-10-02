@@ -458,10 +458,12 @@ public abstract interface class com/awakekt/awake/render/command/MaterialBinding
 
 public abstract interface class com/awakekt/awake/render/command/PipelineHandle {
 	public fun getBindingLayout ()Lcom/awakekt/awake/render/pipeline/BindingLayout;
+	public fun getDrawsTriangles ()Z
 }
 
 public final class com/awakekt/awake/render/command/PipelineHandle$DefaultImpls {
 	public static fun getBindingLayout (Lcom/awakekt/awake/render/command/PipelineHandle;)Lcom/awakekt/awake/render/pipeline/BindingLayout;
+	public static fun getDrawsTriangles (Lcom/awakekt/awake/render/command/PipelineHandle;)Z
 }
 
 public abstract interface class com/awakekt/awake/render/command/PreparedDraw {
@@ -1238,6 +1240,34 @@ public final class com/awakekt/awake/render/renderer/LineSegment {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/render/renderer/RenderFrameStats {
+	public fun <init> (IIJLjava/lang/Float;)V
+	public synthetic fun <init> (IIJLjava/lang/Float;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()I
+	public final fun component2 ()I
+	public final fun component3 ()J
+	public final fun component4 ()Ljava/lang/Float;
+	public final fun copy (IIJLjava/lang/Float;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/render/renderer/RenderFrameStats;IIJLjava/lang/Float;ILjava/lang/Object;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getDrawCalls ()I
+	public final fun getGpuTimeMs ()Ljava/lang/Float;
+	public final fun getInstances ()I
+	public final fun getTriangles ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/render/renderer/RenderStatsCounter {
+	public static final field TRIANGLE_VERTICES I
+	public fun <init> ()V
+	public final fun getLatest ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public final fun publish (Ljava/lang/Float;)V
+	public static synthetic fun publish$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;Ljava/lang/Float;ILjava/lang/Object;)V
+	public final fun recordDraw (IIZ)V
+	public static synthetic fun recordDraw$default (Lcom/awakekt/awake/render/renderer/RenderStatsCounter;IIZILjava/lang/Object;)V
+}
+
 public final class com/awakekt/awake/render/renderer/RenderViewport {
 	public fun <init> (FFFF)V
 	public final fun clampedTo (FF)Lcom/awakekt/awake/render/renderer/RenderViewport;
@@ -1267,6 +1297,7 @@ public abstract interface class com/awakekt/awake/render/renderer/Renderer : com
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public abstract fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
+	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getSurfaceAspect ()F
 	public abstract fun getWireframe ()Z
 	public fun presentWithoutScene ()V
@@ -1287,6 +1318,7 @@ public final class com/awakekt/awake/render/renderer/Renderer$DefaultImpls {
 	public static synthetic fun drawUi$default (Lcom/awakekt/awake/render/renderer/Renderer;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
 	public static fun drawUiToTexture (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public static synthetic fun drawUiToTexture$default (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;ILjava/lang/Object;)V
+	public static fun getFrameStats (Lcom/awakekt/awake/render/renderer/Renderer;)Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public static fun getSurfaceAspect (Lcom/awakekt/awake/render/renderer/Renderer;)F
 	public static fun presentWithoutScene (Lcom/awakekt/awake/render/renderer/Renderer;)V
 	public static fun readFramebufferAttachment (Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/render/texture/RenderTarget;Lcom/awakekt/awake/render/capture/FramebufferAttachment;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

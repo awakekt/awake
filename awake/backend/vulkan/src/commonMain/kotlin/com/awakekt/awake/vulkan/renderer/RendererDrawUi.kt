@@ -93,20 +93,20 @@ fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrim
                 is DrawRun.QuadRun -> {
                     quadPipeline.bind(commandBuffer)
                     run.mesh.bind(frameIndex, commandBuffer)
-                    run.mesh.draw(frameIndex, commandBuffer)
+                    run.mesh.draw(frameIndex, commandBuffer, statsCounter)
                 }
                 is DrawRun.RoundedQuadRun -> {
                     offscreenRoundedQuadRenderPipeline?.let { pipeline ->
                         pipeline.bind(commandBuffer)
                         run.mesh.bind(frameIndex, commandBuffer)
-                        run.mesh.draw(frameIndex, commandBuffer)
+                        run.mesh.draw(frameIndex, commandBuffer, statsCounter)
                     }
                 }
                 is DrawRun.GlyphRun -> {
                     offscreenGlyphRenderPipeline?.let { pipeline ->
                         pipeline.bind(commandBuffer)
                         run.mesh.bind(frameIndex, commandBuffer)
-                        run.mesh.draw(frameIndex, commandBuffer)
+                        run.mesh.draw(frameIndex, commandBuffer, statsCounter)
                     }
                 }
                 is DrawRun.ClipRun -> {
@@ -134,7 +134,7 @@ fun Renderer.renderUiToTexture(target: RenderTarget, primitives: List<UiDrawPrim
                         )
                         mesh.update(frameIndex, primitive.vertices, primitive.indices)
                         mesh.bind(frameIndex, commandBuffer)
-                        mesh.draw(frameIndex, commandBuffer)
+                        mesh.draw(frameIndex, commandBuffer, statsCounter)
                     }
                 }
             }
@@ -191,6 +191,7 @@ internal fun Renderer.performCompositeUiTargets(
             mode = mode,
         )
         Vulkan.vkCmdDraw(commandBuffer, 3, 1, 0, 0)
+        statsCounter.recordDraw(3)
         Vulkan.vkCmdEndRenderPass(commandBuffer)
         outputTarget.transitionToShaderReadOnly(commandBuffer)
     }
@@ -237,7 +238,7 @@ fun Renderer.renderUiGlyphsToTexture(target: RenderTarget, glyphs: List<UiDrawPr
         glyphPipeline.bind(commandBuffer)
         glyphRunMeshes.forEach { mesh ->
             mesh.bind(frameIndex, commandBuffer)
-            mesh.draw(frameIndex, commandBuffer)
+            mesh.draw(frameIndex, commandBuffer, statsCounter)
         }
         Vulkan.vkCmdEndRenderPass(commandBuffer)
         offscreen.transitionToShaderReadOnly(commandBuffer)

@@ -13,6 +13,7 @@ import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAppSpec
 import com.awakekt.awake.scene.runtime.SceneSystemHandle
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
+import kotlin.time.TimeSource
 
 /**
  * Owns one scene's ECS execution order.
@@ -38,6 +39,17 @@ class SceneSchedule internal constructor(
     private val frameSystems = mutableListOf<System>()
     private lateinit var infrastructureSystems: List<System>
 
+    /** Whether [advance] splits its time into [gameMs] and [renderMs]. Off, it reads no clock. */
+    internal var timed = false
+    private var gameNanos = 0L
+    private var renderNanos = 0L
+
+    /** Fixed and frame systems, interpolation included, in the last timed [advance]. */
+    internal val gameMs: Float get() = gameNanos / NANOS_PER_MS
+
+    /** Infrastructure systems -- transforms, scene extraction, recording and present -- likewise. */
+    internal val renderMs: Float get() = renderNanos / NANOS_PER_MS
+
     internal fun initialize(runtime: SceneAppLifecycleRuntime) {
         infrastructureSystems = spec.infrastructureSystemsFactory(runtime)
         spec.systems.forEach { registration ->
@@ -62,16 +74,20 @@ class SceneSchedule internal constructor(
         delta: Float,
         fixedUpdate: (Float) -> Unit,
     ) {
+        gameNanos = 0L
+        renderNanos = 0L
         fixedTimestepLoop.advance(
             frameDelta = delta,
             fixedUpdate = { step ->
-                fixedSystems.forEach { it.update(world, step) }
-                fixedUpdate(step)
+                gameNanos += timed {
+                    fixedSystems.forEach { it.update(world, step) }
+                    fixedUpdate(step)
+                }
             },
             render = { alpha ->
                 // Before the frame systems, because they are what reads a Transform to draw it:
                 // interpolating after them would show the blend one frame late.
-                interpolatedSystems.forEach { it.interpolate(world, alpha) }
+                gameNanos += timed { interpolatedSystems.forEach { it.interpolate(world, alpha) } }
                 runFrame(world, delta)
             },
         )
@@ -96,7 +112,22 @@ class SceneSchedule internal constructor(
     }
 
     private fun runFrame(world: World, delta: Float) {
-        frameSystems.forEach { it.update(world, delta) }
-        infrastructureSystems.forEach { it.update(world, delta) }
+        gameNanos += timed { frameSystems.forEach { it.update(world, delta) } }
+        renderNanos += timed { infrastructureSystems.forEach { it.update(world, delta) } }
+    }
+
+    /** Nanoseconds [block] took while [timed], else 0 without reading the clock. */
+    private inline fun timed(block: () -> Unit): Long {
+        if (!timed) {
+            block()
+            return 0L
+        }
+        val start = TimeSource.Monotonic.markNow()
+        block()
+        return start.elapsedNow().inWholeNanoseconds
+    }
+
+    private companion object {
+        const val NANOS_PER_MS = 1_000_000f
     }
 }

@@ -35,6 +35,14 @@ interface Renderer : GpuDevice {
     val surfaceAspect: Float
         get() = 16f / 9f
 
+    /**
+     * Draws, instances and triangles of the last submitted frame, plus GPU time where the device
+     * can measure it. Null for a renderer that does not count, so "not counted" never reads as
+     * "drew nothing".
+     */
+    val frameStats: RenderFrameStats?
+        get() = null
+
     /** RGBA (each `0f..1f`) color the 3D render pass clears to before every frame's
      * [draw] call -- defaults to opaque black on every backend, so any app that never sets
      * this sees exactly what it always did. A game with real 3D content whose camera can see

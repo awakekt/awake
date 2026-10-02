@@ -8,6 +8,7 @@ package com.awakekt.awake.webgpu.pipeline
 import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes2d.UiRun
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.webgpu.debug.LineMesh
 import com.awakekt.awake.webgpu.ui.DynamicMesh
 import com.awakekt.awake.webgpu.ui.UiRenderPipeline
@@ -26,6 +27,9 @@ internal interface WebGpuRenderFrameContext : RenderFrameContext {
     /** This pass's encoder. [recorder] wraps it for anything the shared port already covers;
      * the UI features need it directly for bind groups the port does not model. */
     val encoder: GPURenderPassEncoder
+
+    /** The renderer's draw counter, for draws recorded outside [recorder]. */
+    val stats: RenderStatsCounter
 
     /** Staged before the frame by `drawDebugLines`/`drawUi` respectively -- consumed here. */
     val lineMesh: LineMesh

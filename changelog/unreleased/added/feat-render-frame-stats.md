@@ -1,0 +1,1 @@
+- Renderers report what each frame recorded through `Renderer.frameStats` (draw calls, instances, triangles, and a slot for GPU time), and scene frame stats add the p99 and worst frame time plus a game/render split of the frame.

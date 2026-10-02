@@ -40,6 +40,8 @@ import com.awakekt.awake.render.pipeline.GpuCapabilityKind
 import com.awakekt.awake.render.pipeline.ShaderReplacement
 import com.awakekt.awake.render.pipeline.resolve
 import com.awakekt.awake.render.renderer.LineSegment
+import com.awakekt.awake.render.renderer.RenderFrameStats
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
@@ -166,6 +168,12 @@ class Renderer internal constructor(
         else -> null
     }
 
+    /** Counts every draw this renderer records; published once per submitted frame. */
+    internal val statsCounter = RenderStatsCounter()
+
+    override val frameStats: RenderFrameStats?
+        get() = statsCounter.latest
+
     override val surfaceAspect: Float
         get() = swapchainManager.extent.let { extent ->
             if (extent.height > 0) extent.width.toFloat() / extent.height.toFloat() else 16f / 9f
@@ -174,7 +182,7 @@ class Renderer internal constructor(
     /** This backend's half of the shared draw-recording port -- retargeted at whichever command
      * buffer is being recorded (see [VulkanCommandRecorder.commandBuffer]) rather than rebuilt,
      * so a frame allocates no recorder at all. */
-    internal val commandRecorder = VulkanCommandRecorder()
+    internal val commandRecorder = VulkanCommandRecorder(statsCounter)
 
     /** Stateless; held here so the offscreen [renderToTexture] path reaches the same per-draw
      * recording loop the scene pass does (through `OpaqueRenderFeature`) without either side
@@ -326,6 +334,8 @@ class Renderer internal constructor(
     internal val lineMesh = LineMesh(graphicsDevice, MAX_DEBUG_LINES, maxFramesInFlight)
 
     init {
+        depthPrePass?.stats = statsCounter
+        sceneDepthPass?.stats = statsCounter
         commandRecorder.engineDescriptorSets = buildMap {
             depthTarget?.binding()?.descriptorSetHandle?.let { put(BindingSemantic.ShadowDepth, it) }
             sceneDepthTarget?.binding()?.descriptorSetHandle

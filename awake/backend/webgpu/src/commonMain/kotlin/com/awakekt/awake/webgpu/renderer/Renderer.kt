@@ -29,6 +29,8 @@ import com.awakekt.awake.render.passes.debug.DebugLineLayout
 import com.awakekt.awake.render.passes2d.RetainedDrawRunCache
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.renderer.LineSegment
+import com.awakekt.awake.render.renderer.RenderFrameStats
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.render.renderer.Renderer as RenderRenderer
 import com.awakekt.awake.render.renderer.UiTargetCompositeMode
 import com.awakekt.awake.render.texture.PbrTextureSet
@@ -137,6 +139,17 @@ class Renderer internal constructor(
         checkNotNull(contentFeatureHost) {
             "This renderer was built without an engine, so it cannot attach content features."
         }.attachContentFeature(source)
+
+    /** Counts every draw this renderer records; published once per submitted frame. */
+    internal val statsCounter = RenderStatsCounter()
+
+    init {
+        depthPrePass?.stats = statsCounter
+        sceneDepthPass?.stats = statsCounter
+    }
+
+    override val frameStats: RenderFrameStats?
+        get() = statsCounter.latest
 
     override val surfaceAspect: Float
         get() = graphicsDevice.wgpuContext.renderingContext.let { context ->

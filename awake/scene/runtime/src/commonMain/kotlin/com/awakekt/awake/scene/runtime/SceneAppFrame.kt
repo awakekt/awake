@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.render.renderer.RenderFrameStats
 import kotlin.math.roundToInt
 
 /** Same shape as [com.awakekt.awake.engine.application.GameFrameStats] -- see that
@@ -17,6 +18,15 @@ data class SceneFrameStats(
     val textCacheMisses: Int,
     /** Phase attribution, zero unless [SceneAppLifecycleRuntime.perfStatsEnabled]. */
     val phases: ScenePhaseStats = ScenePhaseStats(),
+    /**
+     * The 99th-percentile frame time over the last few seconds. An average hides a stall that
+     * a player feels; this and [maxFrameTimeMs] show it.
+     */
+    val p99FrameTimeMs: Float = 0f,
+    /** The slowest frame over the same window. */
+    val maxFrameTimeMs: Float = 0f,
+    /** Draws, triangles and GPU time of the renderer's last frame; null when it does not count. */
+    val render: RenderFrameStats? = null,
 ) {
     val textCacheTotal: Int get() = textCacheHits + textCacheMisses
     val textCacheHitRatePercent: Int get() = if (textCacheTotal > 0) (textCacheHits * 100 / textCacheTotal) else 0
@@ -46,6 +56,13 @@ data class ScenePhaseStats(
     /** Share of [uiBuildMs] spent inside trial-measure passes specifically. */
     val trialMs: Float = 0f,
     val trialPasses: Int = 0,
+    /** The [simRenderMs] share spent in fixed and frame systems: gameplay, physics, animation. */
+    val gameMs: Float = 0f,
+    /**
+     * The [simRenderMs] share spent in infrastructure systems: transform propagation, scene
+     * extraction, command recording and present. A present that waits for vsync counts here.
+     */
+    val renderMs: Float = 0f,
 ) {
     /**
      * Whether these numbers came from a frame that was actually timed.
@@ -68,6 +85,9 @@ fun SceneAppLifecycleRuntime.frameStats(): SceneFrameStats {
         textCacheHits = 0,
         textCacheMisses = 0,
         phases = phases,
+        p99FrameTimeMs = frameSpread.p99FrameTimeMs.roundToTenth(),
+        maxFrameTimeMs = frameSpread.maxFrameTimeMs.roundToTenth(),
+        render = rendererFrameStats,
     )
 }
 

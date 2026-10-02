@@ -11,6 +11,7 @@ import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.GroupBindings
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.webgpu.mesh.meshIndexFormat
 import io.ygdrasil.webgpu.GPUBindGroup
 import io.ygdrasil.webgpu.GPUBuffer
@@ -26,7 +27,11 @@ import com.awakekt.awake.render.command.BufferHandle as RenderBufferHandle
  * Constructed per pass rather than reused like Vulkan's: a `GPURenderPassEncoder` only exists
  * inside its own `beginRenderPass { }` block, so there is nothing to retarget between passes.
  */
-internal class WebGpuCommandRecorder(private val encoder: GPURenderPassEncoder) : CommandRecorder {
+internal class WebGpuCommandRecorder(
+    private val encoder: GPURenderPassEncoder,
+    /** Where every draw recorded here is counted; the owning `Renderer`'s. */
+    private val stats: RenderStatsCounter?,
+) : CommandRecorder {
 
     private var bindingLayout: BindingLayout = BindingLayout.Standard
     private var currentPipeline: WebGpuPipelineHandle? = null
@@ -60,10 +65,12 @@ internal class WebGpuCommandRecorder(private val encoder: GPURenderPassEncoder) 
 
     override fun draw(vertexCount: Int, instanceCount: Int) {
         encoder.draw(vertexCount.toUInt(), instanceCount.toUInt())
+        stats?.recordDraw(vertexCount, instanceCount, currentPipeline?.drawsTriangles ?: true)
     }
 
     override fun drawIndexed(indexCount: Int, instanceCount: Int) {
         encoder.drawIndexed(indexCount.toUInt(), instanceCount.toUInt())
+        stats?.recordDraw(indexCount, instanceCount, currentPipeline?.drawsTriangles ?: true)
     }
 }
 
@@ -75,6 +82,7 @@ class WebGpuPipelineHandle(
     val materialBindings: GroupBindings? = null,
     val hasGroupZeroBindings: Boolean = true,
     val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
+    override val drawsTriangles: Boolean = true,
 ) : PipelineHandle
 
 /**

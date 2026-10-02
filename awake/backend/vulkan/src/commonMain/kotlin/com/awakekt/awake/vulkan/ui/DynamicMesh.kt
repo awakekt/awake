@@ -6,6 +6,7 @@
 package com.awakekt.awake.vulkan.ui
 
 import com.awakekt.awake.core.geometry.toByteArrayLE
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.enums.flags.VkMemoryPropertyFlagBits
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -197,10 +198,11 @@ class DynamicMesh(
 
     fun draw(commandBuffer: Long) = draw(activeFrameIndex, commandBuffer)
 
-    fun draw(frameIndex: Int, commandBuffer: Long) {
+    fun draw(frameIndex: Int, commandBuffer: Long, stats: RenderStatsCounter? = null) {
         val frame = resourcesFor(frameIndex)
         if (frame.drawIndexCount == 0) return
         VulkanBuffers.vkCmdDrawIndexed(commandBuffer, frame.drawIndexCount, 1, 0, 0, 0)
+        stats?.recordDraw(frame.drawIndexCount)
     }
 
     fun destroy() {
