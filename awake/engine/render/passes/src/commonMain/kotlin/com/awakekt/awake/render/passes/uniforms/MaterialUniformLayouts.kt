@@ -89,7 +89,7 @@ object MaterialUniformLayouts {
     )
 
     /**
-     * Everything `lit_shadow.wgsl` declares = 176 floats.
+     * Everything `lit_shadow.wgsl` declares = 180 floats.
      *
      * `awake:asset:shader-pack` re-exports this as `LitShadowUniformLayout` rather than
      * declaring its own. It used to declare one, so the struct had two Kotlin descriptions --
@@ -105,6 +105,7 @@ object MaterialUniformLayouts {
         UniformFields.Material,
         UniformFields.FogColor,
         UniformFields.DebugView,
+        UniformFields.Exposure,
     )
 
     /** Everything `textured.wgsl` reads after its MVP -- see [LitShadow]: 44 floats. */
@@ -124,7 +125,7 @@ object MaterialUniformLayouts {
     )
 
     /**
-     * Full textured glTF PBR = 192 floats. Starts with [SHADOW_DEPTH_PREFIX], because the shadow
+     * Full textured glTF PBR = 196 floats. Starts with [SHADOW_DEPTH_PREFIX], because the shadow
      * pass draws textured meshes with the same depth shader as lit ones.
      */
     @Suppress("SpreadOperator") // Once, at class initialisation.
@@ -139,6 +140,7 @@ object MaterialUniformLayouts {
         UniformFields.FogColor,
         UniformFields.DebugView,
         UniformFields.CameraForward,
+        UniformFields.Exposure,
     )
 }
 

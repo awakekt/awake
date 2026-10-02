@@ -57,6 +57,7 @@ internal fun builtinCall(function: String, args: List<FloatArray>): FloatArray =
     }
     "dot" -> floatArrayOf(args[0].zip(args[1]) { a, b -> a * b }.sum())
     "max" -> zip2(args[0], args[1]) { a, b -> maxOf(a, b) }
+    "min" -> zip2(args[0], args[1]) { a, b -> minOf(a, b) }
     "floor" -> FloatArray(args[0].size) { mathFloor(args[0][it]) }
     "fract" -> FloatArray(args[0].size) { args[0][it] - mathFloor(args[0][it]) }
     "mix" -> {

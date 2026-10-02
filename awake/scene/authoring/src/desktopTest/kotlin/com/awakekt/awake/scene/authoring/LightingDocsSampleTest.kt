@@ -15,6 +15,7 @@ import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.rendering.light.Light
+import com.awakekt.awake.scene.rendering.tonemapping.ToneMapping
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import java.io.File
 import kotlin.test.Test
@@ -91,6 +92,22 @@ class LightingDocsSampleTest {
         assertEquals(0.35f, fromDsl.ambient)
     }
 
+    @Test
+    fun theSceneDocumentAndTheSceneDslSetTheSameExposure() {
+        val world = World()
+        // --8<-- [start:exposure-dsl]
+        world.scene {
+            entity("environment") {
+                with(ToneMapping(exposure = 1.5f))
+            }
+        }
+        // --8<-- [end:exposure-dsl]
+        val fromDsl = world.toneMappings().single()
+
+        assertEquals(load("exposure.scene.json").toneMappings().single(), fromDsl)
+        assertEquals(1.5f, fromDsl.exposure)
+    }
+
     private fun load(snippet: String): World {
         DefaultSceneComponentResolvers.install()
         val document = SceneLoader.decode(File(DOCS_SNIPPETS, "rendering/$snippet").readText())
@@ -98,6 +115,8 @@ class LightingDocsSampleTest {
     }
 
     private fun World.lights(): List<Light> = query(Light::class).mapNotNull { get<Light>(it) }
+
+    private fun World.toneMappings(): List<ToneMapping> = query(ToneMapping::class).mapNotNull { get<ToneMapping>(it) }
 
     private fun World.lightPosition(): Vec3f {
         val position = get<Transform>(query(Light::class).single())!!.position

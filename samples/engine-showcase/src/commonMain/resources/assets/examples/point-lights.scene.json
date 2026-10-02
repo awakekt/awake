@@ -53,21 +53,21 @@
       "transform": { "position": { "x": -3.0, "y": 1.6, "z": 1.6 } },
       "components": [
         { "component": "light", "type": "Point", "color": { "x": 1.0, "y": 0.2, "z": 0.15 },
-          "intensity": 6.0, "range": 6.0 }
+          "intensity": 2.0, "range": 6.0 }
       ]
     },
     { "name": "green-light",
       "transform": { "position": { "x": 0.0, "y": 2.2, "z": 2.0 } },
       "components": [
         { "component": "light", "type": "Point", "color": { "x": 0.2, "y": 1.0, "z": 0.3 },
-          "intensity": 6.0, "range": 6.0 }
+          "intensity": 2.0, "range": 6.0 }
       ]
     },
     { "name": "blue-light",
       "transform": { "position": { "x": 3.0, "y": 1.6, "z": 1.6 } },
       "components": [
         { "component": "light", "type": "Point", "color": { "x": 0.2, "y": 0.35, "z": 1.0 },
-          "intensity": 6.0, "range": 6.0 }
+          "intensity": 2.0, "range": 6.0 }
       ]
     }
   ]

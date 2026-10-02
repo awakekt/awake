@@ -37,13 +37,14 @@ registers it.
 | [`spin_control`](#spin_control) | `SpinControl` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`static_transform`](#static_transform) | `StaticTransform` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`terrain`](#terrain) | `TerrainComponent` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Terrain](../guides/terrain.md) |
+| [`tone_mapping`](#tone_mapping) | `ToneMapping` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
 
 ## Registration
 
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `particle_emitter`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`, `tone_mapping`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -437,6 +438,14 @@ A heightmap terrain. At most one per node. `SceneTerrain`.
 | `provider` | string | required | Id of the surface provider. |
 | `version` | integer | `1` | Version of the provider's payload. |
 | `payload` | any JSON | `{}` | The provider's data. Kept unchanged when no provider is installed. |
+
+## `tone_mapping`
+
+How bright the lit scene is shown. At most one per node; the first found applies. `SceneToneMapping`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `exposure` | number | `1` | Multiplies the lit scene before tone mapping. 2 is one stop brighter. Finite and above 0. |
 
 ## See also
 

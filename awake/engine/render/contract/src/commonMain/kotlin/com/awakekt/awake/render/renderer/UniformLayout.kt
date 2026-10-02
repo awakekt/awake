@@ -192,6 +192,9 @@ object UniformFields {
      */
     val DebugView = UniformField("debugView", GpuDataShape.Vec4)
 
+    /** `x` = the scale a lit shader applies to its radiance before tone mapping; `yzw` unused. */
+    val Exposure = UniformField("exposure", GpuDataShape.Vec4)
+
     /** Default material ABI used by [GpuDevice] when a caller has not selected a richer layout. */
     val DefaultMaterial = UniformLayout(
         Mvp,

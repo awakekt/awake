@@ -104,6 +104,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
     debugView: GpuDebugView = GpuDebugView.Off,
+    exposure: Float = 1f,
 ): PreparedDrawCall? {
     val mesh = cmd.mesh as Mesh
     val material = cmd.material as Material
@@ -126,6 +127,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
             fogColor = fogColor,
             fogDensity = fogDensity,
             debugView = debugView,
+            exposure = exposure,
             materialUniformFloatCount = material.uniformFloatCount,
         )
         val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
@@ -172,6 +174,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
         fogColor = fogColor,
         fogDensity = fogDensity,
         debugView = debugView,
+        exposure = exposure,
     )
     val binding = material.updateUniformBuffer(frameIndex, uniformSlotIndex, uniformFloats)
     return PreparedDrawCall(

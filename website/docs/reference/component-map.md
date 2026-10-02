@@ -17,6 +17,7 @@ attaches any ECS component, so "—" in the scene DSL column means there is no d
 | `AmbientLight` | `scene:scene3d` | `ambient_light` | `ambientLight(...)`, `ambientLightEntity(...)` | [Lights and shadows](../guides/lights-and-shadows.md) |
 | `Fog` | `scene:scene3d` | `fog` | `fog(...)`, `fogEntity(...)` | [Sky and fog](../guides/sky-and-fog.md) |
 | `Skybox` | `scene:scene3d` | `skybox` | `skybox(...)`, `skyboxEntity(...)` | [Sky and fog](../guides/sky-and-fog.md) |
+| `ToneMapping` | `scene:scene3d` | `tone_mapping` | — | [Lights and shadows](../guides/lights-and-shadows.md) |
 | `MeshRenderer` | `scene:scene3d` | `mesh_renderer` | `meshRenderer(...)`, `mesh(...)`, `meshEntity(...)` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | `PbrMaterial` | `scene:scene3d` | `pbr_material` | — | [Meshes and materials](../guides/meshes-and-materials.md) |
 | `LocomotionAnimation` | `scene:scene3d` | `locomotion_animation` | — | [Animation](../guides/animation.md) |
