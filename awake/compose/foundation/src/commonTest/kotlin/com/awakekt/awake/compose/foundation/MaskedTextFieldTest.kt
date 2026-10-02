@@ -15,9 +15,12 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.platform.ComposeHost
 import com.awakekt.awake.compose.ui.platform.FrameInput
 import com.awakekt.awake.compose.ui.platform.FrameOutput
+import com.awakekt.awake.compose.ui.semantics.SemanticsNode
+import com.awakekt.awake.compose.ui.semantics.SemanticsProperties
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.input.ImeComposition
+import com.awakekt.awake.core.input.TextEditAction
 import com.awakekt.awake.core.math2d.sp
 import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.theme.TextStyle
@@ -43,7 +46,7 @@ private val MASKED = maskedText(SECRET, MASK)
  */
 class MaskedTextFieldTest {
 
-    private class Field(val state: TextFieldState, mask: Char?) {
+    private class Field(val state: TextFieldState, mask: Char?, revealLastTyped: Boolean = false) {
         val host = ComposeHost()
         val content: context(Composer)
         () -> Unit = {
@@ -53,6 +56,7 @@ class MaskedTextFieldTest {
                 style = TextStyle(lineHeight = 20f.sp),
                 singleLine = true,
                 mask = mask,
+                revealLastTyped = revealLastTyped,
             )
         }
 
@@ -72,6 +76,21 @@ class MaskedTextFieldTest {
     }
 
     private fun masked(text: String = SECRET, cursor: Int = text.length) = Field(TextFieldState(text, cursor), MASK)
+
+    // Focusing clicks, which moves the caret; typing in these tests appends, so put it back.
+    private fun revealing(text: String) = Field(TextFieldState(text), MASK, revealLastTyped = true).apply {
+        focus()
+        state.moveCursorTo(text.length)
+    }
+
+    private fun Field.type(text: String) = frame(FrameInput(200, 40, 5, 5, typedText = text))
+
+    private fun Field.idleFor(seconds: Float): FrameOutput {
+        var output = frame()
+        // The host clamps one frame's step to FrameClock.MAX_DELTA_SECONDS, so walk there.
+        repeat((seconds / 0.1f).toInt()) { output = frame(FrameInput(200, 40, 5, 5, deltaSeconds = 0.1f)) }
+        return output
+    }
 
     private fun oracle(text: String = MASKED, cursor: Int = text.length) = Field(TextFieldState(text, cursor), null)
 
@@ -162,6 +181,68 @@ class MaskedTextFieldTest {
 
         assertEquals(plain.state.cursor, field.state.cursor)
         assertNotEquals(real.state.cursor, field.state.cursor, "the click was hit-tested against the real text")
+    }
+
+    @Test
+    fun aTypedCharacterIsShownInClearUntilItsRevealEnds() {
+        val field = revealing("WW")
+
+        val justTyped = field.type("W").glyphs()
+
+        assertEquals(oracle(maskedText("WW", MASK) + "W").frame().glyphs(), justTyped)
+        assertEquals(oracle(maskedText("WWW", MASK)).frame().glyphs(), field.idleFor(1.6f).glyphs())
+    }
+
+    @Test
+    fun theRevealStaysWhileItsTimeLasts() {
+        val field = revealing("WW")
+        field.type("W")
+
+        assertEquals(oracle(maskedText("WW", MASK) + "W").frame().glyphs(), field.idleFor(1.2f).glyphs())
+    }
+
+    @Test
+    fun anyLaterEditHidesTheRevealAtOnce() {
+        val field = revealing("WWW")
+        field.type("W")
+
+        val afterBackspace = field.frame(FrameInput(200, 40, 5, 5, editActions = listOf(TextEditAction.Backspace)))
+
+        assertEquals("WWW", field.state.text)
+        assertEquals(oracle(maskedText("WWW", MASK)).frame().glyphs(), afterBackspace.glyphs())
+    }
+
+    @Test
+    fun aPasteOfSeveralCharactersIsNeverRevealed() {
+        val field = revealing("")
+
+        val pasted = field.type("WWW").glyphs()
+
+        assertEquals(oracle(maskedText("WWW", MASK)).frame().glyphs(), pasted)
+    }
+
+    @Test
+    fun withoutRevealLastTypedATypedCharacterIsMaskedAtOnce() {
+        val field = masked("WW").apply {
+            focus()
+            state.moveCursorTo(2)
+        }
+
+        val typed = field.type("W").glyphs()
+
+        assertEquals(oracle(maskedText("WWW", MASK)).frame().glyphs(), typed)
+    }
+
+    @Test
+    fun aMaskedFieldIsAPasswordToAccessibility() {
+        fun flatten(nodes: List<SemanticsNode>): List<SemanticsNode> =
+            nodes.flatMap { listOf(it) + flatten(it.children) }
+
+        fun FrameOutput.passwordNodes(): List<SemanticsNode> =
+            flatten(semantics).filter { it.config[SemanticsProperties.Password] == true }
+
+        assertEquals(1, masked().frame().passwordNodes().size)
+        assertTrue(oracle().frame().passwordNodes().isEmpty(), "a plain field was announced as a password")
     }
 
     @Test

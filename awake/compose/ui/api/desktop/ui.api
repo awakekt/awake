@@ -1390,6 +1390,7 @@ public final class com/awakekt/awake/compose/ui/semantics/SemanticsProperties {
 	public final fun getDisabled ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
 	public final fun getIndeterminate ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
 	public final fun getLabel ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
+	public final fun getPassword ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
 	public final fun getRole ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
 	public final fun getSelectableGroup ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;
 	public final fun getSelected ()Lcom/awakekt/awake/compose/ui/semantics/SemanticsPropertyKey;

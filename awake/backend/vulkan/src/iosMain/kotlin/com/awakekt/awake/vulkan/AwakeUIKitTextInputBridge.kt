@@ -40,3 +40,23 @@ fun UIView.syncAwakeTextInputFocus(wasFocused: Boolean, input: Input): Boolean {
     }
     return isFocused
 }
+
+/**
+ * Whether the keyboard should treat what is typed as a password: what the view's
+ * `isSecureTextEntry` answers, so iOS neither learns, suggests nor autocorrects it.
+ */
+fun awakeSecureTextEntry(input: Input): Boolean = input.textInputFocused && input.textInputPassword
+
+/**
+ * Reloads the keyboard when [awakeSecureTextEntry] changes.
+ *
+ * UIKit reads text input traits when a responder becomes first responder, so focus moving between
+ * a plain field and a password field with the keyboard up would otherwise keep the old traits.
+ * Reloading a view that is not first responder does nothing, so the edge alone gates it.
+ * [wasSecure] is the caller's previous-value slot, as [syncAwakeTextInputFocus]'s is.
+ */
+fun UIView.syncAwakeSecureTextEntry(wasSecure: Boolean, input: Input): Boolean {
+    val isSecure = awakeSecureTextEntry(input)
+    if (isSecure != wasSecure) reloadInputViews()
+    return isSecure
+}

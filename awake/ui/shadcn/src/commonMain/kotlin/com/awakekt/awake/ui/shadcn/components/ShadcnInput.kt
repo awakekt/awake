@@ -47,6 +47,8 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  * character of [state]'s text, asks the platform for a password keyboard, and refuses copy and cut.
  * Pass `PasswordMask` (`com.awakekt.awake.compose.foundation.text`, a bullet) unless a design
  * calls for another character; see `BasicTextField` for which characters the bundled font can draw.
+ * @param revealLastTyped With [mask], shows each typed character in clear for 1.5 seconds, as
+ * Android and iOS do on a touch keyboard. Off by default, as in a desktop browser.
  *
  * Keywords: input, textfield, text input, single line input, search field, form input, password input.
  */
@@ -59,6 +61,7 @@ fun ShadcnInput(
     focusRingMode: ShadcnFocusRingMode = ShadcnFocusRingMode.DrawWithContent,
     onClick: (() -> Unit)? = null,
     mask: Char? = null,
+    revealLastTyped: Boolean = false,
 ) {
     val theme = shadcnTheme
     val interaction = remember { InteractionSource() }
@@ -85,5 +88,6 @@ fun ShadcnInput(
         singleLine = true,
         onClick = onClick,
         mask = mask,
+        revealLastTyped = revealLastTyped,
     )
 }

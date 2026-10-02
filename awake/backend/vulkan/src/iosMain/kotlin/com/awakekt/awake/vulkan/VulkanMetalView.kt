@@ -55,6 +55,7 @@ class VulkanMetalView(
     private var previousTimestamp: CFTimeInterval = 0.0
     private var created = false
     private var textInputWasFocused = false
+    private var textInputWasSecure = false
 
     init {
         contentScaleFactor = UIScreen.mainScreen.scale
@@ -105,6 +106,7 @@ class VulkanMetalView(
             }
             previousTimestamp = currentTimestamp
             textInputWasFocused = syncAwakeTextInputFocus(textInputWasFocused, input)
+            textInputWasSecure = syncAwakeSecureTextEntry(textInputWasSecure, input)
             onUpdate(deltaTime)
         } catch (t: Throwable) {
             logger.error(t) { "Error in VulkanMetalView tick render step: ${t.message}" }
@@ -114,6 +116,9 @@ class VulkanMetalView(
     override fun canBecomeFirstResponder(): Boolean = true
 
     override fun hasText(): Boolean = true
+
+    // UITextInputTraits, inherited through UIKeyInput: a masked field gets the secure keyboard.
+    override fun isSecureTextEntry(): Boolean = awakeSecureTextEntry(input)
 
     override fun insertText(text: String) = syncAwakeTextInsert(text, input)
 

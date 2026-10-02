@@ -706,8 +706,8 @@ public final class com/awakekt/awake/ui/shadcn/components/ShadcnInputGroupKt {
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnInputKt {
-	public static final fun ShadcnInput (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/lang/String;Lcom/awakekt/awake/ui/shadcn/components/ShadcnFocusRingMode;Lkotlin/jvm/functions/Function0;Ljava/lang/Character;)V
-	public static synthetic fun ShadcnInput$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/lang/String;Lcom/awakekt/awake/ui/shadcn/components/ShadcnFocusRingMode;Lkotlin/jvm/functions/Function0;Ljava/lang/Character;ILjava/lang/Object;)V
+	public static final fun ShadcnInput (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/lang/String;Lcom/awakekt/awake/ui/shadcn/components/ShadcnFocusRingMode;Lkotlin/jvm/functions/Function0;Ljava/lang/Character;Z)V
+	public static synthetic fun ShadcnInput$default (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/foundation/text/TextFieldState;Lcom/awakekt/awake/compose/ui/Modifier;ZLjava/lang/String;Lcom/awakekt/awake/ui/shadcn/components/ShadcnFocusRingMode;Lkotlin/jvm/functions/Function0;Ljava/lang/Character;ZILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/ui/shadcn/components/ShadcnInputOtpKt {
