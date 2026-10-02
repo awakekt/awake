@@ -30,10 +30,21 @@ import kotlin.math.min
 
 private const val FONT_PACKAGE = "com.awakekt.awake.core.text.font"
 
-/** Printable ASCII, space through tilde -- the range this atlas packs. */
+/** Printable ASCII, space through tilde. */
 private const val ASCII_FIRST = 32
 private const val ASCII_LAST = 126
 private val ASCII_GLYPHS: List<Char> = (ASCII_FIRST..ASCII_LAST).map { it.toChar() }
+
+/**
+ * Glyphs packed after ASCII, appended so every ASCII glyph keeps its cell and atlas offset.
+ *
+ * U+2022 BULLET is what a password field masks with (`PasswordMask`). It fills the last free
+ * cell of the 16-column grid, so the atlas did not grow. The next glyph added starts a new row.
+ */
+private val EXTRA_GLYPHS: List<Char> = listOf('\u2022')
+
+/** Every glyph this atlas packs, in cell order. */
+private val ATLAS_GLYPHS: List<Char> = ASCII_GLYPHS + EXTRA_GLYPHS
 
 private const val OUT_DIR = "../../core/text/src/commonMain/kotlin"
 
@@ -159,7 +170,7 @@ private fun generateAtlas(fontFile: File): AtlasResult {
     val measureFont = baseFont.deriveFont(LOGICAL_CELL.toFloat())
     val ascentEm = measureFont.getLineMetrics("Hg", frc).ascent
 
-    val glyphMetrics = ASCII_GLYPHS.associateWith { char -> measureGlyph(measureFont, frc, ascentEm, char) }
+    val glyphMetrics = ATLAS_GLYPHS.associateWith { char -> measureGlyph(measureFont, frc, ascentEm, char) }
 
     // Rasterization is a separate, oversampled pass -- only the atlas bitmap and the UV sample
     // rect (for texture lookup) come from it. Antialiasing headroom here can never leak into a
@@ -169,12 +180,12 @@ private fun generateAtlas(fontFile: File): AtlasResult {
     val renderLineMetrics = renderFont.getLineMetrics("Hg", frc)
     val ascentPxRender = renderLineMetrics.ascent
     val cellHeightPx = ceil((ascentPxRender + renderLineMetrics.descent).toDouble()).toInt() + PADDING * 2
-    val maxAdvancePxRender = ASCII_GLYPHS.filter { it != ' ' }.maxOf { char ->
+    val maxAdvancePxRender = ATLAS_GLYPHS.filter { it != ' ' }.maxOf { char ->
         renderFont.createGlyphVector(frc, char.toString()).getGlyphMetrics(0).advanceX
     }
     val cellWidthPx = ceil(maxAdvancePxRender.toDouble()).toInt() + PADDING * 2
 
-    val rows = ceil(ASCII_GLYPHS.size / COLUMNS.toDouble()).toInt()
+    val rows = ceil(ATLAS_GLYPHS.size / COLUMNS.toDouble()).toInt()
     val atlasWidth = cellWidthPx * COLUMNS
     val atlasHeight = cellHeightPx * rows
 
@@ -185,7 +196,7 @@ private fun generateAtlas(fontFile: File): AtlasResult {
     val inkMetricsEm = mutableListOf<Float>()
     val advancesEm = mutableListOf<Float>()
 
-    ASCII_GLYPHS.forEachIndexed { index, char ->
+    ATLAS_GLYPHS.forEachIndexed { index, char ->
         val col = index % COLUMNS
         val row = index / COLUMNS
         val cellX = col * cellWidthPx
@@ -235,7 +246,7 @@ private fun generateAtlas(fontFile: File): AtlasResult {
         lineHeightEm = (ascentPxRender + renderLineMetrics.descent) / OVERSAMPLE / LOGICAL_CELL,
         atlasWidth = atlasWidth,
         atlasHeight = atlasHeight,
-        glyphOrder = ASCII_GLYPHS.joinToString(""),
+        glyphOrder = ATLAS_GLYPHS.joinToString(""),
         uvBoundsPx = uvBoundsPx.toIntArray(),
         quadMetricsEm = quadMetricsEm.toFloatArray(),
         inkMetricsEm = inkMetricsEm.toFloatArray(),

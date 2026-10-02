@@ -42,13 +42,13 @@ private const val CARET_BLINK_PERIOD_SECONDS = 1f
 
 /**
  * The mask a password field should pass to `BasicTextField(mask = ...)`, so every field in an app
- * hides its text the same way.
+ * hides its text the same way: U+2022 BULLET, what browsers and Compose draw.
  *
- * `'*'` rather than the `'•'` browsers and Compose draw, because the bundled UI font covers
- * printable ASCII only and draws `'•'` as its fallback glyph. It becomes `'•'` once that font has
- * the bullet; `MaskedTextFieldTest` fails if it is switched before then.
+ * The bundled UI font packs it beside printable ASCII for exactly this. A font supplied through
+ * `LocalFont` without it draws its fallback glyph instead; `MaskedTextFieldTest` guards the bundled
+ * font.
  */
-val PasswordMask: Char = '*'
+val PasswordMask: Char = '\u2022'
 
 /**
  * An editable single line of text, with no decoration of its own.
@@ -71,8 +71,7 @@ val PasswordMask: Char = '*'
  * copy or cut through `ComposeHost` returns nothing.
  *
  * Pass [PasswordMask] unless a design calls for another character. The bundled UI font covers
- * printable ASCII only, so `'•'` draws that font's fallback glyph until a font with the bullet is
- * supplied through `LocalFont`.
+ * printable ASCII and the bullet; any other mask character draws that font's fallback glyph.
  */
 context(_: Composer)
 fun BasicTextField(
