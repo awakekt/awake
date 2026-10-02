@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.6] - 2026-10-03
+
+### Added
+
+- Renderers report what each frame recorded through `Renderer.frameStats` (draw calls, instances, triangles, and a slot for GPU time), and scene frame stats add the p99 and worst frame time plus a game/render split of the frame.
+
+### Fixed
+
+- **A Core release no longer re-uploads the Vulkan family.** `-Pawake.publishFamily=core` was registered on the root project's publish tasks only, so it filtered nothing, and a Core release uploaded the Vulkan modules too. That went unnoticed while the Vulkan version was a snapshot. `v0.1.0-rc.4` was the first Core release after a Vulkan tag with no Vulkan changes since, so it re-uploaded `vulkan` 0.1.11, which Central already had, and Central rejected the whole release. The filter now applies to every project's publish tasks.
+
 ## [0.1.0-rc.5] - 2026-10-02
 
 ### Added
