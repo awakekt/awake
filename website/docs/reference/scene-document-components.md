@@ -269,6 +269,8 @@ Moves the entity from player input. `SceneMovementControl`.
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
 | `speed` | number | none | Units per second. None uses the movement system's speed. Above 0 when set. |
+| `runSpeed` | number | none | Units per second while Shift is held. None keeps `speed`. Above 0 when set. |
+| `turnSpeed` | number | `0` | Radians per second it turns to face where it moves; 0 leaves its facing alone. Not negative. |
 
 ## `particle_emitter`
 
@@ -424,6 +426,7 @@ A heightmap terrain. At most one per node. `SceneTerrain`.
 | `tilingScale` | number | `16` | Texture tiling across the terrain. |
 | `isVisible` | boolean | `true` | Whether the terrain is drawn. |
 | `surface` | [terrain surface](#terrain-surface) | none | Surface model, read by a terrain surface provider. |
+| `collider` | boolean | `false` | Whether the terrain is solid ground when physics runs, as a static heightfield. Needs a square terrain of at least 4 samples a side. |
 
 ### Terrain surface
 

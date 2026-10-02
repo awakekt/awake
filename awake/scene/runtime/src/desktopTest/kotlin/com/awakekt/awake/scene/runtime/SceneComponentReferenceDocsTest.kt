@@ -41,14 +41,16 @@ class SceneComponentReferenceDocsTest {
             .findAll(page).map { it.groupValues[1] }.toSet()
 
         assertEquals(registered.keys.sorted(), rows.sorted(), "component ids on the reference page")
-        for ((id, descriptor) in registered) {
+        val missing = registered.flatMap { (id, descriptor) ->
             val section = page.substringAfter("## `$id`\n", missingDelimiterValue = "")
                 .substringBefore("\n## ")
-            assertTrue(section.isNotEmpty(), "no `## \\`$id\\`` section")
-            for (field in descriptor.elementNames) {
-                assertTrue("| `$field` |" in section, "`$id` field `$field` has no row")
+            if (section.isEmpty()) {
+                listOf("no `## \\`$id\\`` section")
+            } else {
+                descriptor.elementNames.filter { "| `$it` |" !in section }.map { "`$id` field `$it` has no row" }
             }
         }
+        assertTrue(missing.isEmpty(), missing.joinToString("\n"))
     }
 
     /** Every component id the engine's registries install, with its serialized shape. */
