@@ -15,6 +15,7 @@ import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.DepthRenderKey
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkSubpassContents
 import com.awakekt.awake.vulkan.enums.flags.VkAccessFlagBits
@@ -58,6 +59,9 @@ internal class DepthPrePassFeature(
     private val keyedVariantPipelines: Map<DepthRenderKey, DepthOnlyPipeline> = emptyMap(),
     private val instancedFormatPipelines: Map<VertexFormat, DepthOnlyPipeline> = emptyMap(),
 ) {
+    /** The owning `Renderer`'s counter, set when it takes this feature: a pass is built first. */
+    internal var stats: RenderStatsCounter? = null
+
     internal fun pipelineFor(kind: DepthCasterKind, format: VertexFormat): DepthOnlyPipeline? {
         val pipeline = when (kind) {
             DepthCasterKind.Ordinary -> formatPipelines[format] ?: depthOnlyPipeline
@@ -280,6 +284,7 @@ internal class DepthPrePassFeature(
                 } else {
                     Vulkan.vkCmdDraw(commandBuffer, prepared.elementCount, prepared.instances, 0, 0)
                 }
+                stats?.recordDraw(prepared.elementCount, prepared.instances)
             }
             drawIndex += 1
         }

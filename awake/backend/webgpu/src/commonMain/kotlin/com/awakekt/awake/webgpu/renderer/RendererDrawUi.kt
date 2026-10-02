@@ -78,6 +78,7 @@ internal fun Renderer.performDrawUiToTexture(target: RenderTarget, primitives: L
                 glyph = uiGlyphRenderPipeline,
                 textures = uiTextureRenderPipelines,
                 textureMeshForPrimitive = ::textureMeshForPrimitive,
+                stats = statsCounter,
             ),
         )
         end()
@@ -131,6 +132,7 @@ internal fun Renderer.performCompositeUiTargets(
         setPipeline(pipeline.pipeline)
         setBindGroup(0u, pipeline.bindGroupFor(sourceTarget, destinationTarget))
         draw(3u)
+        statsCounter.recordDraw(3)
         end()
     }
     device.queue.submit(listOf(encoder.finish()))

@@ -15,6 +15,7 @@ import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes2d.UiRun
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.webgpu.debug.LineMesh
 import com.awakekt.awake.webgpu.pipeline.WebGpuCommandRecorder
 import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineHandle
@@ -48,7 +49,9 @@ internal class WebGpuFrameContext(
      * per-frame-in-flight. */
     override val frameIndex: Int get() = 0
 
-    override val recorder: CommandRecorder = WebGpuCommandRecorder(encoder)
+    override val stats: RenderStatsCounter get() = renderer.statsCounter
+
+    override val recorder: CommandRecorder = WebGpuCommandRecorder(encoder, renderer.statsCounter)
 
     /**
      * Built against [pipeline]'s own group-2 layout, and cached there -- a bind group belongs to

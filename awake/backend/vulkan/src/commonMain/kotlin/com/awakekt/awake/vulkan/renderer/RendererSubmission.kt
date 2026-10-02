@@ -14,6 +14,7 @@ import com.awakekt.awake.vulkan.utils.VkResultException
 
 /** Submits the recorded frame and presents it, including swapchain recovery. */
 internal fun Renderer.submitAndPresent(currentFrame: Int, imageIndex: Int) {
+    statsCounter.publish()
     // Headless: nothing signalled an image-available semaphore, because nothing acquired an
     // image -- so waiting on one would hang here rather than fail. Submit bare and return; the
     // fence this frame already owns is what a reader waits on.

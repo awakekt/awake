@@ -100,6 +100,7 @@ internal class RendererGpuPassExecutor(
                 input.cameraEye,
             )
             device.queue.submit(listOf(encoder.finish()))
+            statsCounter.publish()
         }
     }
 

@@ -91,6 +91,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAppFrameKt {
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : com/awakekt/awake/engine/platform/lifecycle/AppLifecycle {
+	public static final field FRAME_SPREAD_HISTORY_SIZE I
 	public static final field FRAME_TIME_HISTORY_SIZE I
 	public static final field NANOS_PER_MS F
 	public final fun collectDrawCalls ()Ljava/util/List;
@@ -196,20 +197,26 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetResolver$DefaultImp
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneFrameStats {
-	public fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;)V
-	public synthetic fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;)V
+	public synthetic fun <init> (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()I
 	public final fun component4 ()I
 	public final fun component5 ()I
 	public final fun component6 ()Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
-	public final fun copy (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/runtime/SceneFrameStats;FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun component9 ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
+	public final fun copy (FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/runtime/SceneFrameStats;FFIIILcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFLcom/awakekt/awake/render/renderer/RenderFrameStats;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneFrameStats;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getFps ()F
 	public final fun getFrameTimeMs ()F
+	public final fun getMaxFrameTimeMs ()F
+	public final fun getP99FrameTimeMs ()F
 	public final fun getPhases ()Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
+	public final fun getRender ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public final fun getTextCacheHitRatePercent ()I
 	public final fun getTextCacheHits ()I
 	public final fun getTextCacheMisses ()I
@@ -237,17 +244,21 @@ public final class com/awakekt/awake/scene/runtime/SceneManager {
 
 public final class com/awakekt/awake/scene/runtime/ScenePhaseStats {
 	public fun <init> ()V
-	public fun <init> (FFFFFI)V
-	public synthetic fun <init> (FFFFFIILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (FFFFFIFF)V
+	public synthetic fun <init> (FFFFFIFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()F
 	public final fun component2 ()F
 	public final fun component3 ()F
 	public final fun component4 ()F
 	public final fun component5 ()F
 	public final fun component6 ()I
-	public final fun copy (FFFFFI)Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFFFFIILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
+	public final fun component7 ()F
+	public final fun component8 ()F
+	public final fun copy (FFFFFIFF)Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;FFFFFIFFILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/ScenePhaseStats;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getGameMs ()F
+	public final fun getRenderMs ()F
 	public final fun getSimRenderMs ()F
 	public final fun getTrialMs ()F
 	public final fun getTrialPasses ()I
@@ -407,6 +418,7 @@ public final class com/awakekt/awake/scene/runtime/project/StandaloneProjectConf
 }
 
 public final class com/awakekt/awake/scene/runtime/schedule/SceneSchedule {
+	public static final field NANOS_PER_MS F
 }
 
 public final class com/awakekt/awake/scene/runtime/session/SceneDocumentEditSession {

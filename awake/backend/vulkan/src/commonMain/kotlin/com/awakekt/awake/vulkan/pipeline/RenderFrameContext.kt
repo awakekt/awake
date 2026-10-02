@@ -10,6 +10,7 @@ import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes2d.UiRun
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.vulkan.debug.LineMesh
 import com.awakekt.awake.vulkan.ui.DynamicMesh
 import com.awakekt.awake.vulkan.ui.UiRenderPipeline
@@ -26,6 +27,9 @@ import com.awakekt.awake.vulkan.ui.UiRenderPipeline
  */
 internal interface VulkanRenderFrameContext : RenderFrameContext {
     val commandBuffer: Long
+
+    /** The renderer's draw counter, for draws recorded outside [recorder]. */
+    val stats: RenderStatsCounter
 
     override val groupedDrawCalls: Map<out PipelineHandle, List<PreparedDraw>>
     override val primaryPipeline: RenderPipeline

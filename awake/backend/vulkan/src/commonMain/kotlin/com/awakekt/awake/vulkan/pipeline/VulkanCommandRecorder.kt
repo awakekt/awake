@@ -10,6 +10,7 @@ import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.enums.VkPipelineBindPoint
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
@@ -28,7 +29,10 @@ import com.awakekt.awake.render.command.BufferHandle as RenderBufferHandle
  * the same reason `Renderer`'s other per-frame scratch state is: a `Renderer` records from one
  * thread.
  */
-internal class VulkanCommandRecorder : CommandRecorder {
+internal class VulkanCommandRecorder(
+    /** Where every draw recorded through this port is counted; the owning `Renderer`'s. */
+    val stats: RenderStatsCounter,
+) : CommandRecorder {
     var commandBuffer: Long = 0
 
     /**
@@ -46,6 +50,7 @@ internal class VulkanCommandRecorder : CommandRecorder {
      * one and this is tracked here instead. */
     private var boundPipelineLayout: Long = 0
     private var bindingLayout: BindingLayout = BindingLayout.Standard
+    private var drawsTriangles: Boolean = true
 
     override fun bindPipeline(pipeline: PipelineHandle) {
         val vulkanPipeline = pipeline as VulkanPipelineHandle
@@ -56,6 +61,7 @@ internal class VulkanCommandRecorder : CommandRecorder {
         )
         boundPipelineLayout = vulkanPipeline.pipelineLayoutHandle
         bindingLayout = vulkanPipeline.bindingLayout
+        drawsTriangles = vulkanPipeline.drawsTriangles
         engineDescriptorSets.forEach { (semantic, handle) ->
             if (handle != 0L && semantic in vulkanPipeline.engineBoundSemantics) {
                 VulkanDescriptors.vkCmdBindDescriptorSet(
@@ -110,10 +116,12 @@ internal class VulkanCommandRecorder : CommandRecorder {
 
     override fun draw(vertexCount: Int, instanceCount: Int) {
         Vulkan.vkCmdDraw(commandBuffer, vertexCount, instanceCount, 0, 0)
+        stats.recordDraw(vertexCount, instanceCount, drawsTriangles)
     }
 
     override fun drawIndexed(indexCount: Int, instanceCount: Int) {
         VulkanBuffers.vkCmdDrawIndexed(commandBuffer, indexCount, instanceCount, 0, 0, 0)
+        stats.recordDraw(indexCount, instanceCount, drawsTriangles)
     }
 
     private companion object {

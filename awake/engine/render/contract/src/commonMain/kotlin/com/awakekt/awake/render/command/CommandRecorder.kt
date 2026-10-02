@@ -60,6 +60,9 @@ interface MaterialBinding
 /** Opaque, backend-defined pipeline reference -- see [MaterialBinding] for the same reasoning. */
 interface PipelineHandle {
     val bindingLayout: BindingLayout get() = BindingLayout.Standard
+
+    /** False for a line or point pipeline, whose draws add no triangles to a frame's count. */
+    val drawsTriangles: Boolean get() = true
 }
 
 /**

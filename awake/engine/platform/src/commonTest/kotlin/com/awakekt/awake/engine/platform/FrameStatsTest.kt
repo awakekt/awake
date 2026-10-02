@@ -64,5 +64,18 @@ class FrameStatsTest {
         // Window size 4: oldest frame (10ms) rolls off once a 5th frame lands.
         stats.update(0.025f)
         assertEquals(20f, stats.percentileFrameTimeMs(0f)) // min of {20,30,100,25}
+        assertEquals(100f, stats.maxFrameTimeMs)
+        assertEquals(43.75f, stats.averageFrameTimeMs, 0.001f)
+    }
+
+    @Test
+    fun maxForgetsASpikeOnceItLeavesTheWindow() {
+        val stats = FrameStats(percentileWindowSize = 2)
+        stats.update(0.100f)
+        stats.update(0.010f)
+        assertEquals(100f, stats.maxFrameTimeMs, 0.001f)
+
+        stats.update(0.010f)
+        assertEquals(10f, stats.maxFrameTimeMs, 0.001f)
     }
 }

@@ -9,6 +9,7 @@ import com.awakekt.awake.core.graphics2d.TextureCompositeMode
 import com.awakekt.awake.render.passes2d.TexturedPrimitiveRun
 import com.awakekt.awake.render.passes2d.UiPipelineKind
 import com.awakekt.awake.render.passes2d.UiRunRecorder
+import com.awakekt.awake.render.renderer.RenderStatsCounter
 import com.awakekt.awake.webgpu.material.Material
 import com.awakekt.awake.webgpu.ui.DynamicMesh
 import com.awakekt.awake.webgpu.ui.UiRenderPipeline
@@ -23,6 +24,7 @@ import io.ygdrasil.webgpu.GPURenderPassEncoder
  * scheduled rather than interleaved with encoding, so a run's later primitive writing a shared
  * mesh would land before an earlier, already-encoded draw reads it.
  */
+@Suppress("LongParameterList")
 internal class WebGpuUiRunRecorder(
     private val encoder: GPURenderPassEncoder,
     private val quad: UiRenderPipeline,
@@ -30,6 +32,7 @@ internal class WebGpuUiRunRecorder(
     private val glyph: UiRenderPipeline?,
     private val textures: Map<TextureCompositeMode, UiRenderPipeline>,
     private val textureMeshForPrimitive: (Int) -> DynamicMesh,
+    private val stats: RenderStatsCounter,
 ) : UiRunRecorder<DynamicMesh> {
 
     override fun bindPipeline(kind: UiPipelineKind): Boolean {
@@ -56,6 +59,7 @@ internal class WebGpuUiRunRecorder(
         encoder.setVertexBuffer(0u, mesh.vertexBufferRef())
         encoder.setIndexBuffer(mesh.indexBufferRef(), DynamicMesh.indexFormat)
         encoder.drawIndexed(mesh.drawIndexCount.toUInt())
+        stats.recordDraw(mesh.drawIndexCount)
     }
 
     override fun setScissor(x: Int, y: Int, width: Int, height: Int) {

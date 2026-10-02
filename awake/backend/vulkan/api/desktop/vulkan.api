@@ -102,6 +102,7 @@ public final class com/awakekt/awake/vulkan/debug/LineRenderPipeline : com/awake
 	public final fun bind (JI)V
 	public final fun destroy ()V
 	public fun getBindingLayout ()Lcom/awakekt/awake/render/pipeline/BindingLayout;
+	public fun getDrawsTriangles ()Z
 	public fun getEngineBoundSemantics ()Ljava/util/Set;
 	public fun getPipelineHandle ()J
 	public fun getPipelineLayoutHandle ()J
@@ -271,6 +272,7 @@ public final class com/awakekt/awake/vulkan/pipeline/DepthOnlyPipeline : com/awa
 	public final fun cascadeBinding (II)J
 	public final fun destroy ()V
 	public fun getBindingLayout ()Lcom/awakekt/awake/render/pipeline/BindingLayout;
+	public fun getDrawsTriangles ()Z
 	public fun getEngineBoundSemantics ()Ljava/util/Set;
 	public final fun getFrontFace ()Lcom/awakekt/awake/render/pipeline/FrontFace;
 	public final fun getHasCascadeBlock ()Z
@@ -287,6 +289,7 @@ public final class com/awakekt/awake/vulkan/pipeline/RenderPipeline : com/awakek
 	public final fun bind (J)V
 	public final fun destroy ()V
 	public fun getBindingLayout ()Lcom/awakekt/awake/render/pipeline/BindingLayout;
+	public fun getDrawsTriangles ()Z
 	public fun getEngineBoundSemantics ()Ljava/util/Set;
 	public final fun getFrontFace ()Lcom/awakekt/awake/render/pipeline/FrontFace;
 	public final fun getGraphicsPipeline ()[J
@@ -344,6 +347,7 @@ public abstract interface class com/awakekt/awake/vulkan/pipeline/VulkanPipeline
 
 public final class com/awakekt/awake/vulkan/pipeline/VulkanPipelineHandle$DefaultImpls {
 	public static fun getBindingLayout (Lcom/awakekt/awake/vulkan/pipeline/VulkanPipelineHandle;)Lcom/awakekt/awake/render/pipeline/BindingLayout;
+	public static fun getDrawsTriangles (Lcom/awakekt/awake/vulkan/pipeline/VulkanPipelineHandle;)Z
 }
 
 public final class com/awakekt/awake/vulkan/pipeline/VulkanShaderResolver : com/awakekt/awake/asset/shaders/RuntimeShaderResolver {
@@ -367,6 +371,7 @@ public final class com/awakekt/awake/vulkan/renderer/Renderer : com/awakekt/awak
 	public fun drawUiToTexture (Lcom/awakekt/awake/render/texture/RenderTarget;Ljava/util/List;Lcom/awakekt/awake/core/text/font/UiFont;)V
 	public fun getClearColor ()Lcom/awakekt/awake/core/color/Color;
 	public fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
+	public fun getFrameStats ()Lcom/awakekt/awake/render/renderer/RenderFrameStats;
 	public fun getGpuDrawPreparer ()Lcom/awakekt/awake/render/command/GpuDrawPreparer;
 	public fun getSurfaceAspect ()F
 	public fun getWireframe ()Z
@@ -506,8 +511,9 @@ public final class com/awakekt/awake/vulkan/ui/DynamicMesh {
 	public final fun bind (IJ)V
 	public final fun bind (J)V
 	public final fun destroy ()V
-	public final fun draw (IJ)V
+	public final fun draw (IJLcom/awakekt/awake/render/renderer/RenderStatsCounter;)V
 	public final fun draw (J)V
+	public static synthetic fun draw$default (Lcom/awakekt/awake/vulkan/ui/DynamicMesh;IJLcom/awakekt/awake/render/renderer/RenderStatsCounter;ILjava/lang/Object;)V
 	public final fun getDrawIndexCount ()I
 	public final fun getGrowthCount ()I
 	public final fun update (I[F[I)V

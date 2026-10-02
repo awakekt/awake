@@ -90,7 +90,7 @@ private class VulkanUiRunRecorder(
 
     override fun drawMesh(mesh: DynamicMesh) {
         mesh.bind(context.frameIndex, context.commandBuffer)
-        mesh.draw(context.frameIndex, context.commandBuffer)
+        mesh.draw(context.frameIndex, context.commandBuffer, context.stats)
     }
 
     override fun setScissor(x: Int, y: Int, width: Int, height: Int) =
@@ -109,6 +109,6 @@ private class VulkanUiRunRecorder(
         )
         mesh.update(context.frameIndex, primitive.vertices, primitive.indices)
         mesh.bind(context.frameIndex, context.commandBuffer)
-        mesh.draw(context.frameIndex, context.commandBuffer)
+        mesh.draw(context.frameIndex, context.commandBuffer, context.stats)
     }
 }

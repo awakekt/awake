@@ -5,6 +5,8 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.engine.platform.core.FrameStats
+import com.awakekt.awake.render.renderer.RenderFrameStats
 import com.awakekt.awake.scene.canvas.CanvasElement
 import com.awakekt.awake.scene.canvas.SceneCanvas
 import com.awakekt.awake.compose.runtime.CompositionLocalProvider
@@ -131,13 +133,20 @@ class SceneAppLifecycleRuntime internal constructor(
         stagedUiPrimitives += primitives
     }
 
-    /** Rolling window backing [averageFrameTimeMs]/[fps] -- see `SceneAppFrame.kt`'s
+    /** Short rolling window backing [averageFrameTimeMs]/[fps] -- see `SceneAppFrame.kt`'s
      * `frameStats()`, which reads these. */
-    private val frameTimesMs = ArrayDeque<Float>()
+    private val recentFrames = FrameStats(percentileWindowSize = FRAME_TIME_HISTORY_SIZE)
+
+    /** A few seconds of frames, long enough that one stall stays visible in its p99 and max. */
+    internal val frameSpread = FrameStats(percentileWindowSize = FRAME_SPREAD_HISTORY_SIZE)
+
+    /** The renderer's last frame, or null before [ready] hands this runtime one. */
+    internal val rendererFrameStats: RenderFrameStats?
+        get() = if (::renderer.isInitialized) renderer.frameStats else null
 
     private fun recordFrameTime(deltaSeconds: Float) {
-        frameTimesMs.addLast(deltaSeconds * 1000f)
-        while (frameTimesMs.size > FRAME_TIME_HISTORY_SIZE) frameTimesMs.removeFirst()
+        recentFrames.update(deltaSeconds)
+        frameSpread.update(deltaSeconds)
     }
 
     /**
@@ -159,7 +168,8 @@ class SceneAppLifecycleRuntime internal constructor(
      * displayed next to a live one reads as live. */
     fun phaseStats(): ScenePhaseStats =
         if (perfStatsEnabled) {
-            ScenePhaseStats(uiBuildMs, uiWaitMs, uiStageMs, simRenderMs)
+            val schedule = session.schedule
+            ScenePhaseStats(uiBuildMs, uiWaitMs, uiStageMs, simRenderMs, gameMs = schedule.gameMs, renderMs = schedule.renderMs)
         } else {
             ScenePhaseStats()
         }
@@ -175,7 +185,7 @@ class SceneAppLifecycleRuntime internal constructor(
     }
 
     val averageFrameTimeMs: Float
-        get() = if (frameTimesMs.isEmpty()) 0f else frameTimesMs.sum() / frameTimesMs.size
+        get() = recentFrames.averageFrameTimeMs
 
     val fps: Float
         get() = averageFrameTimeMs.takeIf { it > 0f }?.let { 1000f / it } ?: 0f
@@ -223,6 +233,7 @@ class SceneAppLifecycleRuntime internal constructor(
 
         // 1. Simulation & infrastructure pump. Rendering systems stage the scene and any
         // backend-neutral 2D overlay before the runtime composites the frame below.
+        session.schedule.timed = perfStatsEnabled
         timePhase({ simRenderMs = it }) {
             session.advance(delta) { step ->
                 spec.updateBlock(this, step, snapshot)
@@ -491,6 +502,7 @@ class SceneAppLifecycleRuntime internal constructor(
 
     private companion object {
         const val FRAME_TIME_HISTORY_SIZE = 30
+        const val FRAME_SPREAD_HISTORY_SIZE = 240
         const val NANOS_PER_MS = 1_000_000f
     }
 }

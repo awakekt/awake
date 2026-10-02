@@ -68,6 +68,8 @@ class LineRenderPipeline(
     private val graphicsDevice = graphicsDevice
     private val device get() = graphicsDevice.device
 
+    override val drawsTriangles: Boolean get() = false
+
     private var pipelineLayout: Long = 0
     private var pipelineCache: Long = 0
     private var graphicsPipeline: LongArray = longArrayOf()
