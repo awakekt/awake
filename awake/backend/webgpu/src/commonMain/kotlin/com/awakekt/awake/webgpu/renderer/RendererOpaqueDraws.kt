@@ -194,7 +194,7 @@ private fun Renderer.prepareInstancedGpuDraw(
 ): WebGpuPreparedDraw? {
     if (instanceModels.isEmpty()) return null
     val kind = cmd.instancedDrawKind() ?: return null
-    val pipeline = pipelines.resolveInstanced(mesh.format, kind)?.handle ?: return null
+    val pipeline = pipelines.resolveInstanced(mesh.format, kind, cmd.additive)?.handle ?: return null
     val instanceBuffer = instanceBufferForRun(instanceIndex).also { it.update(instanceModels) }
     val materialBinding: MaterialBinding
     val jointPaletteBinding: MaterialBinding?

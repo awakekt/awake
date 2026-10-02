@@ -109,6 +109,17 @@ sealed interface PipelineVariant {
         override val depthTestEnabled = true
     }
 
+    /** [AlphaBlendedParticle]'s additive twin: sparks and glowing dust that brighten what is behind them. */
+    data object AdditiveBlendedParticle : PipelineVariant {
+        override val instanced = true
+        override val instanceAlpha = true
+        override val instanceFrame = true
+        override val blendEnabled = true
+        override val additive = true
+        override val depthWriteEnabled = false
+        override val depthTestEnabled = true
+    }
+
     /**
      * A background drawn before all geometry: depth test and write both off, no blend, not
      * instanced. See `skybox.wgsl`.

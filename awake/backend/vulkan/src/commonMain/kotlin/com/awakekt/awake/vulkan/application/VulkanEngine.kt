@@ -197,6 +197,9 @@ open class VulkanEngine(
         particlePipelines = requestedPipelines[PipelineKey.Particle]?.fill
             ?.let { mapOf(VertexFormat.PositionUv to it) }
             .orEmpty(),
+        additiveParticlePipelines = requestedPipelines[PipelineKey.Particle]?.additive
+            ?.let { mapOf(VertexFormat.PositionUv to it) }
+            .orEmpty(),
         skinnedInstancedByFormat = requestedPipelines[PipelineKey.SkinnedInstanced]?.fill
             ?.let { mapOf(VertexFormat.PositionNormalColorSkin to it) }
             .orEmpty(),

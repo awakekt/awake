@@ -1224,8 +1224,8 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleLifecycle
 
 public final class com/awakekt/awake/scene/rendering/particles/ParticleMotion {
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLjava/lang/Float;FZFF)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLjava/lang/Float;FZFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLjava/lang/Float;FZFFF)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;FLjava/lang/Float;FZFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component2 ()F
 	public final fun component3 ()Ljava/lang/Float;
@@ -1233,12 +1233,14 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleMotion {
 	public final fun component5 ()Z
 	public final fun component6 ()F
 	public final fun component7 ()F
-	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;FLjava/lang/Float;FZFF)Lcom/awakekt/awake/scene/rendering/particles/ParticleMotion;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/ParticleMotion;Lcom/awakekt/awake/core/math/Vec3f;FLjava/lang/Float;FZFFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/ParticleMotion;
+	public final fun component8 ()F
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;FLjava/lang/Float;FZFFF)Lcom/awakekt/awake/scene/rendering/particles/ParticleMotion;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/ParticleMotion;Lcom/awakekt/awake/core/math/Vec3f;FLjava/lang/Float;FZFFFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/ParticleMotion;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBaseVelocity ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getConeHalfAngleDegrees ()Ljava/lang/Float;
 	public final fun getConvergeToOrigin ()Z
+	public final fun getRadialSpeed ()F
 	public final fun getSpawnRadius ()F
 	public final fun getTurbulence ()F
 	public final fun getTurbulenceFrequency ()F
@@ -1254,18 +1256,22 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleSystem : 
 
 public final class com/awakekt/awake/scene/rendering/particles/ParticleVisual {
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZF)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;Z)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component3 ()I
 	public final fun component4 ()F
 	public final fun component5 ()Z
 	public final fun component6 ()F
-	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZF)Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;
+	public final fun component7 ()Ljava/lang/Float;
+	public final fun component8 ()Z
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;Z)Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;
 	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAdditive ()Z
 	public final fun getEndColor ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getEndScale ()Ljava/lang/Float;
 	public final fun getFrameCount ()I
 	public final fun getFrameRate ()F
 	public final fun getStartColor ()Lcom/awakekt/awake/core/math/Vec3f;

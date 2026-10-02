@@ -17,6 +17,7 @@ import com.awakekt.awake.scene.rendering.mesh.LodGroup
 import com.awakekt.awake.scene.rendering.particles.BOUNCE_STOP_VELOCITY
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 private const val DEGREES_TO_RADIANS = kotlin.math.PI.toFloat() / 180f
@@ -81,7 +82,8 @@ class ParticleSystem : System {
     }
 
     /** Re-anchors [ParticleEmitter.origin] to [ParticleEmitter.dynamics]' `followEntity`'s
-     * current [Transform] position, if set -- the lightweight "sub-emitter" trailing-effect
+     * world position, if set: a root node's own position, a child node's from its world matrix
+     * as of the last transform pass -- the lightweight "sub-emitter" trailing-effect
      * path (see [com.awakekt.awake.scene.rendering.particles.ParticleDynamics]'s
      * own doc comment). A no-op when the followed entity has no [Transform] (already destroyed,
      * or was never one) -- the emitter just keeps spawning from wherever [origin] last was,
@@ -89,7 +91,12 @@ class ParticleSystem : System {
     private fun followOrigin(world: World, emitter: ParticleEmitter) {
         val target = emitter.dynamics.followEntity ?: return
         val transform = world.get<Transform>(target) ?: return
-        emitter.origin.set(transform.position)
+        if (transform.parent == null) {
+            emitter.origin.set(transform.position)
+        } else {
+            val placed = transform.worldMatrix
+            emitter.origin.set(placed.m03, placed.m13, placed.m23)
+        }
     }
 
     private fun isSpent(emitter: ParticleEmitter): Boolean {
@@ -158,14 +165,33 @@ class ParticleSystem : System {
         }
         val coneHalfAngleDegrees = motion.coneHalfAngleDegrees
         val speed = motion.baseVelocity.length3()
-        if (coneHalfAngleDegrees != null && speed > 0f) {
-            return coneDirection(motion.baseVelocity.normalized(), coneHalfAngleDegrees) * speed
+        val velocity = if (coneHalfAngleDegrees != null && speed > 0f) {
+            coneDirection(motion.baseVelocity.normalized(), coneHalfAngleDegrees) * speed
+        } else {
+            Vec3f(
+                motion.baseVelocity.x + jitter(motion.velocityJitter),
+                motion.baseVelocity.y + jitter(motion.velocityJitter),
+                motion.baseVelocity.z + jitter(motion.velocityJitter),
+            )
         }
-        return Vec3f(
-            motion.baseVelocity.x + jitter(motion.velocityJitter),
-            motion.baseVelocity.y + jitter(motion.velocityJitter),
-            motion.baseVelocity.z + jitter(motion.velocityJitter),
-        )
+        return if (motion.radialSpeed == 0f) velocity else velocity.pushedOutward(emitter.origin, spawnPosition, motion.radialSpeed)
+    }
+
+    /** Adds [speed] horizontally away from [origin] through [spawnPosition], or in a random
+     * horizontal direction when the two share a vertical line. See [ParticleMotion.radialSpeed]. */
+    private fun Vec3f.pushedOutward(origin: Vec3f, spawnPosition: Vec3f, speed: Float): Vec3f {
+        var awayX = spawnPosition.x - origin.x
+        var awayZ = spawnPosition.z - origin.z
+        val away = sqrt(awayX * awayX + awayZ * awayZ)
+        if (away > 0f) {
+            awayX /= away
+            awayZ /= away
+        } else {
+            val angle = Random.nextFloat() * FULL_TURN_RADIANS
+            awayX = cos(angle)
+            awayZ = sin(angle)
+        }
+        return set(x + awayX * speed, y, z + awayZ * speed)
     }
 
     /** A random unit vector within [halfAngleDegrees] of [axis] -- builds an orthonormal
@@ -260,6 +286,13 @@ class ParticleSystem : System {
  * .instanceColors]; not stored on [Particle] itself since it's fully derived from [Particle
  * .age]/`lifetime`/`startAlpha`, not independent state. */
 internal fun Particle.currentAlpha(): Float = startAlpha * (1f - (age / lifetime).coerceIn(0f, 1f))
+
+/** This particle's current size: the emitter's `scale` at spawn, moving linearly to
+ * [ParticleVisual.endScale] at death when that is set. */
+internal fun Particle.currentScale(emitter: ParticleEmitter): Float {
+    val endScale = emitter.visual.endScale ?: return scale
+    return scale + (endScale - scale) * (age / lifetime).coerceIn(0f, 1f)
+}
 
 /** This particle's current sprite-strip frame index, `0 until` [ParticleVisual.frameCount] --
  * this particle's own [Particle.age]-derived frame advance offset by its own [Particle

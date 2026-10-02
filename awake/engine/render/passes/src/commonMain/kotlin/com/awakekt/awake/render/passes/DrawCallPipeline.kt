@@ -48,10 +48,11 @@ fun resolveInstancedDrawKind(
     else -> InstancedDrawKind.Plain
 }
 
-fun <P> PipelineTable<P>.resolveInstanced(format: VertexFormat, kind: InstancedDrawKind): P? =
+/** The pipeline an instanced draw of [kind] resolves to; [additive] picks a particle's additive twin when built. */
+fun <P> PipelineTable<P>.resolveInstanced(format: VertexFormat, kind: InstancedDrawKind, additive: Boolean = false): P? =
     when (kind) {
         InstancedDrawKind.Skinned -> skinnedInstancedByFormat[format]
-        InstancedDrawKind.Particle -> particlePipelines[format]
+        InstancedDrawKind.Particle -> additiveParticlePipelines[format]?.takeIf { additive } ?: particlePipelines[format]
         InstancedDrawKind.Plain -> instancedByFormat[format]
     }
 

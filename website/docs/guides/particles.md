@@ -40,6 +40,7 @@ fading to dark red.
 
 The render plan also needs a particle pipeline:
 `ScenePipeline(PipelineKey.Particle, PackShaderSets.Particle, VertexFormat.PositionUv, variant = PipelineVariant.AlphaBlendedParticle, materialBindings = GroupBindings.ParticleMaterial)`.
+Add `buildAdditive = true` to it for emitters with `ParticleVisual.additive`.
 The plan on [Render plans and shaders](shaders.md) has one.
 
 ## Properties
@@ -74,6 +75,7 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `convergeToOrigin` | `false` | Aims each particle back at `origin`, at `baseVelocity`'s speed. |
 | `turbulence` | `0` | Strength of a smooth flow-field wobble. |
 | `turbulenceFrequency` | `1` | How tight that wobble is. |
+| `radialSpeed` | `0` | Adds this speed horizontally away from `origin`, through the spawn point on the `spawnRadius` ring (any direction when the radius is 0). Ignored with `convergeToOrigin`. |
 
 `ParticleVisual`:
 
@@ -85,6 +87,8 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `frameRate` | `8` | Frames per second; each particle starts on a random frame. |
 | `stretchWithVelocity` | `false` | Stretches the quad along its screen motion, for streaks. |
 | `stretchFactor` | `0.05` | World units of stretch per unit of speed. |
+| `endScale` | none | Quad size at death, reached linearly from `scale`. None keeps `scale`. |
+| `additive` | `false` | Adds each particle's colour to what is behind it, for glows and sparks. Needs the particle pipeline built with `buildAdditive = true`; without it the particles blend. |
 
 `ParticleGround`: `groundY` (a flat floor), `groundHeightProvider` (a `(x, z) -> height` function,
 used first when set), `colliders` (world-space `Aabb` boxes), `restitution` (0 stops a particle on
@@ -93,7 +97,8 @@ contact; above 0 bounces) and `friction` (1 keeps horizontal speed on a bounce).
 `ParticleLifecycle`: `burstCount` stops spawning after that many particles and destroys the entity
 once they have all died; `onParticleDeath(world, position)` runs for each particle that dies of age.
 
-`ParticleDynamics`: `followEntity` moves `origin` to that entity's transform every frame;
+`ParticleDynamics`: `followEntity` moves `origin` to that entity's world position every frame (a
+child node's from its world matrix as of the last transform pass);
 `dynamicSpawnRate` replaces `spawnRate` with its result every frame.
 
 For a one-shot burst, `spawnParticleBurst(world, mesh, material, position, count, spawnRate,

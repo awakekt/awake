@@ -55,8 +55,9 @@ suspend fun <P> buildPipelineTable(
                     } else {
                         null
                     },
+                    // A particle pipeline keeps its instance bindings: its twin is the instanced one.
                     additive = if (request.buildAdditive) {
-                        factory.create(request.key, spec.copy(variant = PipelineVariant.AdditiveBlended))
+                        factory.create(request.key, spec.copy(variant = additiveTwin(spec.variant)))
                     } else {
                         null
                     },
@@ -67,3 +68,6 @@ suspend fun <P> buildPipelineTable(
         }
     }
 }
+
+private fun additiveTwin(variant: PipelineVariant): PipelineVariant =
+    if (variant == PipelineVariant.AlphaBlendedParticle) PipelineVariant.AdditiveBlendedParticle else PipelineVariant.AdditiveBlended

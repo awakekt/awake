@@ -21,6 +21,7 @@ import com.awakekt.awake.scene.rendering.particles.ParticleSystem
 import com.awakekt.awake.scene.rendering.particles.ParticleVisual
 import com.awakekt.awake.scene.rendering.particles.currentAlpha
 import com.awakekt.awake.scene.rendering.particles.currentColor
+import com.awakekt.awake.scene.rendering.particles.currentScale
 import com.awakekt.awake.scene.rendering.particles.spawnParticleBurst
 import kotlin.math.abs
 import kotlin.test.Test
@@ -301,6 +302,71 @@ class ParticleSystemTest {
             particle.alive,
             "a settled particle keeps aging/fading, it doesn't die on landing",
         )
+    }
+
+    @Test
+    fun radialSpeedBlowsParticlesOutwardFromTheSpawnRing() {
+        val world = World()
+        val entity = world.create()
+        world.add(
+            entity,
+            ParticleEmitter(
+                mesh = fakeMesh(), material = fakeMaterial(), origin = Vec3f(2f, 0f, 2f),
+                maxParticles = 8, spawnRate = 480f, lifetime = 1f, startAlpha = 1f, scale = 1f,
+                motion = ParticleMotion(baseVelocity = Vec3f(0f, 0.5f, 0f), spawnRadius = 1f, radialSpeed = 3f),
+            ),
+        )
+
+        ParticleSystem().update(world, 1f / 60f)
+
+        val live = requireNotNull(world.get<ParticleEmitter>(entity)).particles.filter { it.alive }
+        assertEquals(8, live.size)
+        live.forEach { particle ->
+            // Spawned one unit out on the ring, then moved 1/60 s at its velocity.
+            val step = 1f / 60f
+            val outX = particle.position.x - particle.velocity.x * step - 2f
+            val outZ = particle.position.z - particle.velocity.z * step - 2f
+            assertEquals(1f, outX * outX + outZ * outZ, 1e-3f, "spawned on the unit ring")
+            assertEquals(3f * outX, particle.velocity.x, 1e-3f, "3 units a second along the way out")
+            assertEquals(3f * outZ, particle.velocity.z, 1e-3f, "3 units a second along the way out")
+            assertEquals(0.5f, particle.velocity.y, "the base velocity still applies")
+        }
+    }
+
+    @Test
+    fun endScaleGrowsAParticleOverItsLife() {
+        val grows = emitter().also { it.visual = ParticleVisual(endScale = 0.5f) }
+        val particle = grows.particles[0].apply {
+            alive = true
+            lifetime = 2f
+            scale = 0.1f
+            age = 1f
+        }
+
+        assertEquals(0.3f, particle.currentScale(grows), 1e-6f)
+        assertEquals(0.1f, particle.currentScale(emitter().also { it.particles[0].scale = 0.1f }), "no endScale keeps the scale")
+    }
+
+    @Test
+    fun followingAChildNodeUsesItsWorldPosition() {
+        val world = World()
+        val parent = world.create()
+        val child = world.create()
+        world.add(parent, Transform(position = Vec3f(10f, 0f, 0f)))
+        world.add(child, Transform(position = Vec3f(1f, 2f, 3f), parent = parent).apply { worldMatrix.m03 = 11f; worldMatrix.m13 = 2f; worldMatrix.m23 = 3f })
+        val emitterEntity = world.create()
+        world.add(
+            emitterEntity,
+            ParticleEmitter(
+                mesh = fakeMesh(), material = fakeMaterial(), origin = Vec3f(0f, 0f, 0f),
+                maxParticles = 1, spawnRate = 0f, lifetime = 1f, startAlpha = 1f, scale = 1f,
+                dynamics = ParticleDynamics(followEntity = child),
+            ),
+        )
+
+        ParticleSystem().update(world, 0.016f)
+
+        assertEquals(Vec3f(11f, 2f, 3f), requireNotNull(world.get<ParticleEmitter>(emitterEntity)).origin)
     }
 
     @Test

@@ -31,6 +31,7 @@ class InstancedDrawKindTest {
     private object PlainPipeline
     private object SkinnedPipeline
     private object ParticlePipeline
+    private object AdditiveParticlePipeline
 
     private class FakeMesh(override val format: VertexFormat) : Mesh {
         override val sizeBytes: Long = 0
@@ -142,6 +143,27 @@ class InstancedDrawKindTest {
         assertEquals(
             PlainPipeline,
             table.resolveInstanced(VertexFormat.PositionNormalColor, InstancedDrawKind.Plain),
+        )
+    }
+
+    /** An additive particle draw takes the additive twin, and the blended pipeline when none was built. */
+    @Test
+    fun anAdditiveParticleResolvesToItsTwinWhenOneWasBuilt() {
+        val withTwin = PipelineTable(
+            primary = PlainPipeline,
+            primaryFormat = VertexFormat.PositionColorUv,
+            particlePipelines = mapOf(VertexFormat.PositionUv to ParticlePipeline),
+            additiveParticlePipelines = mapOf(VertexFormat.PositionUv to AdditiveParticlePipeline),
+        )
+
+        assertEquals(
+            AdditiveParticlePipeline,
+            withTwin.resolveInstanced(VertexFormat.PositionUv, InstancedDrawKind.Particle, additive = true),
+        )
+        assertEquals(ParticlePipeline, withTwin.resolveInstanced(VertexFormat.PositionUv, InstancedDrawKind.Particle))
+        assertEquals(
+            ParticlePipeline,
+            table.resolveInstanced(VertexFormat.PositionUv, InstancedDrawKind.Particle, additive = true),
         )
     }
 

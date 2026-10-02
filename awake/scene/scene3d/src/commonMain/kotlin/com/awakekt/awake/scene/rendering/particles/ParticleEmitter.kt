@@ -82,6 +82,10 @@ internal class Particle : Poolable {
  *    cone/fan burst. [velocityJitter] is ignored in this mode.
  * 3. Otherwise: [baseVelocity] plus independent per-axis [velocityJitter] -- a soft cloud.
  *
+ * [radialSpeed] then adds that speed horizontally away from `origin`, through the spawn point on
+ * the [spawnRadius] ring, or in a random horizontal direction when [spawnRadius] is `0f`: a ring of
+ * dust blown outward. It is ignored with [convergeToOrigin].
+ *
  * [turbulence] adds a smooth flow-field offset to velocity every frame, scaled by this strength
  * and sampled at [turbulenceFrequency] -- see [com.awakekt.awake.scene.rendering
  * .systems.turbulenceOffset]. `0f` (default) is a no-op. Known limit: a cheap sine-based flow
@@ -95,6 +99,7 @@ data class ParticleMotion(
     val convergeToOrigin: Boolean = false,
     val turbulence: Float = 0f,
     val turbulenceFrequency: Float = 1f,
+    val radialSpeed: Float = 0f,
 )
 
 /** How a particle looks over its life. [startColor]/[endColor] linearly interpolate per
@@ -112,7 +117,12 @@ data class ParticleMotion(
  * where the stretch vector is packed for why this needed no new GPU buffer). [stretchFactor] is
  * world-units of elongation per unit of speed -- `0f` (the effective value whenever a particle
  * is momentarily stationary) draws the exact same plain quad this flag's `false` default always
- * has. */
+ * has.
+ *
+ * [endScale] is a particle's size at death, grown or shrunk linearly from the emitter's `scale`
+ * over its life; `null` (default) keeps `scale`. [additive] adds each particle's colour to what is
+ * behind it instead of blending over it, for glows and sparks; it needs the plan's particle
+ * pipeline built with `buildAdditive`, and draws blended without it. */
 data class ParticleVisual(
     val startColor: Vec3f = Vec3f(1f, 1f, 1f),
     val endColor: Vec3f = startColor,
@@ -120,6 +130,8 @@ data class ParticleVisual(
     val frameRate: Float = 8f,
     val stretchWithVelocity: Boolean = false,
     val stretchFactor: Float = 0.05f,
+    val endScale: Float? = null,
+    val additive: Boolean = false,
 )
 
 /** How (and whether) a particle interacts with the ground. Resolution priority: [groundY]/
@@ -168,8 +180,9 @@ data class ParticleLifecycle(
 )
 
 /** Live, per-frame-reactive knobs. [followEntity], when set, re-anchors
- * [ParticleEmitter.origin] to that entity's [com.awakekt.awake.scene.core
- * .components.Transform] position every frame -- a lightweight "sub-emitter" for a trailing
+ * [ParticleEmitter.origin] to that entity's world position every frame: a root entity's own
+ * [com.awakekt.awake.scene.core.components.Transform] position, or a child node's world matrix as
+ * of the last transform pass -- a lightweight "sub-emitter" for a trailing
  * effect (smoke behind a moving fireball) without a real parent/child emitter tree. `var`
  * because gameplay code re-targets it (e.g. handing an emitter off between two casters).
  * [dynamicSpawnRate], when set, is called once per [com.awakekt.awake.scene
