@@ -23,6 +23,7 @@ registers it.
 | [`custom`](#custom) | — | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
 | [`flee`](#flee) | `FleeBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`fog`](#fog) | `Fog` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
+| [`keyframe_animation`](#keyframe_animation) | `KeyframeAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Animation](../guides/animation.md) |
 | [`light`](#light) | `Light` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
 | [`locomotion_animation`](#locomotion_animation) | `LocomotionAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Animation](../guides/animation.md) |
 | [`mesh_renderer`](#mesh_renderer) | `MeshRenderer` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
@@ -41,7 +42,7 @@ registers it.
 | Call | Module | Registers |
 | --- | --- | --- |
 | Built in | `com.awakekt.awake.scene:document` | `custom`, `prefab_link` |
-| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `light`, `locomotion_animation`, `mesh_renderer`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
+| `DefaultSceneComponentResolvers.install()` | `com.awakekt.awake.scene:runtime` | `ambient_light`, `camera`, `canvas_element`, `fog`, `keyframe_animation`, `light`, `locomotion_animation`, `mesh_renderer`, `pbr_material`, `skybox`, `spin_control`, `static_transform`, `terrain`. `SceneManager` and `SceneAppLifecycleRuntime` call it for you. |
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
@@ -182,6 +183,31 @@ Distance fog. `SceneFog`.
 | `colorR` | number | none | Legacy red channel. When `colorR`, `colorG` and `colorB` are all set, they replace `color`. |
 | `colorG` | number | none | Legacy green channel. |
 | `colorB` | number | none | Legacy blue channel. |
+
+## `keyframe_animation`
+
+Loops keyframe tracks on its node: position, rotation, scale and material alpha. `SceneKeyframeAnimation`.
+
+Keys sit at seconds into the loop and are interpolated linearly. Before a track's first key it holds
+that key's value, after its last key it holds that one, and every track starts over when the loop
+does. An empty track leaves its value as authored. Rotation keys are Euler radians, like the node's
+own, interpolated per axis: keys at `0` and `6.2832` make a full turn. Alpha replaces the base colour
+alpha of the node's own `pbr_material`, which shows on a textured `mesh_renderer` drawn `transparent`.
+Leave `static_transform` off an animated node and the nodes under it.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `duration` | number | required | Seconds in the loop. Greater than 0. |
+| `position` | list of vector keys | `[]` | Local position over the loop. |
+| `rotation` | list of vector keys | `[]` | Local rotation over the loop, Euler radians. |
+| `scale` | list of vector keys | `[]` | Local scale over the loop. |
+| `alpha` | list of number keys | `[]` | The material's base colour alpha over the loop. |
+
+### Key
+
+Each key is `{"time": 0.5, "value": ...}`: `time` in seconds from the start of the loop, between `0`
+and `duration`, and in order within its track; `value` a vector for position, rotation and scale, a
+number for alpha.
 
 ## `light`
 
