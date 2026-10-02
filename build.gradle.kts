@@ -479,12 +479,18 @@ allprojects {
 
 // Keep the root Vanniktech bulk task usable while selecting one release family at a time. The
 // default (no property) still builds/publishes every configured module for local verification.
-tasks.withType<org.gradle.api.publish.maven.tasks.AbstractPublishToMaven>().configureEach {
-    onlyIf("publishes the requested Awake release family") {
-        when (publishFamily) {
-            "core" -> project.path !in vulkanFamilyProjects
-            "vulkan" -> project.path in vulkanFamilyProjects
-            else -> true
+// Every project's publish tasks, not the root's alone: registered on the root, this filtered
+// nothing, and a Core release uploaded the Vulkan family too. That passed while the Vulkan
+// version was a snapshot, and failed Central's validation the first time it was an
+// already-published release (v0.1.0-rc.4 against vulkan 0.1.11).
+allprojects {
+    tasks.withType<org.gradle.api.publish.maven.tasks.AbstractPublishToMaven>().configureEach {
+        onlyIf("publishes the requested Awake release family") {
+            when (publishFamily) {
+                "core" -> project.path !in vulkanFamilyProjects
+                "vulkan" -> project.path in vulkanFamilyProjects
+                else -> true
+            }
         }
     }
 }
