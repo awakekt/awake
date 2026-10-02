@@ -9,8 +9,35 @@
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
 </div>
 
-Particles are written in Kotlin. A scene document has no particle component, and AwakeKt Studio has
-no particle editor, so there are no Scene document or Studio tabs on this page.
+A scene document places an emitter with `particle_emitter`; the Kotlin API below has every option.
+AwakeKt Studio has no particle editor yet.
+
+## Place an emitter from a scene document
+
+```json title="Scene document"
+{
+  "component": "particle_emitter",
+  "texture": "assets/fx/dust.png",
+  "maxParticles": 120,
+  "spawnRate": 200,
+  "lifetime": 0.33,
+  "startAlpha": 0.4,
+  "scale": 0.1,
+  "endScale": 0.5,
+  "velocity": {"x": 0, "y": 0, "z": 0},
+  "spawnRadius": 0.3,
+  "radialSpeed": 3,
+  "additive": true
+}
+```
+
+The emitter spawns at its node's world position and follows the node; the node's rotation and scale
+do not apply. `playProject` reads every emitter's `texture` while it loads the project and runs the
+particle systems when the scene has an emitter. In your own app, read the sprites with
+`loadParticleSprites(document, assets)` and add
+`frameSystem("particle-content") { ParticleContentSystem(renderer, sprites) }` next to
+`ParticleSystem`; call its `release()` when the scene goes. The fields are in the
+[component reference](../reference/scene-document-components.md#particle_emitter).
 
 ## Register the quad and the material
 

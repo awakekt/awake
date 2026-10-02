@@ -21,6 +21,7 @@ import com.awakekt.awake.scene.rendering.Light
 import com.awakekt.awake.scene.rendering.Skybox
 import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationBinding
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationBinding
+import com.awakekt.awake.scene.rendering.particles.ParticleEmitterBinding
 import com.awakekt.awake.scene.rendering.camera.CameraBinding
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.fog.FogBinding
@@ -74,6 +75,7 @@ object DefaultSceneComponentResolvers {
         CanvasElementBinding,
         LocomotionAnimationBinding,
         KeyframeAnimationBinding,
+        ParticleEmitterBinding,
     )
 
     val all: List<SceneComponentResolver> = listOf(
@@ -90,6 +92,7 @@ object DefaultSceneComponentResolvers {
         CanvasElementBinding,
         LocomotionAnimationBinding,
         KeyframeAnimationBinding,
+        ParticleEmitterBinding,
         PrefabLinkBinding,
     )
 
