@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.core.math
 
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -56,28 +57,33 @@ data class Aabb(
      * on the transformed box, so it grows under repeated rotation -- rebuild from the source
      * geometry rather than chaining this.
      */
+    /**
+     * The box enclosing this one's eight corners under [matrix]'s affine part.
+     *
+     * Through the centre and half-extents rather than the corners: the centre moves like a point
+     * and each new half-extent is the absolute matrix row against the old ones, which bounds every
+     * corner at once. It runs once per moving entity per frame for culling, so it allocates
+     * nothing but the result and does a third of the corner walk's arithmetic.
+     */
     fun transformed(matrix: Mat4): Aabb {
-        var minX = Float.MAX_VALUE
-        var minY = Float.MAX_VALUE
-        var minZ = Float.MAX_VALUE
-        var maxX = -Float.MAX_VALUE
-        var maxY = -Float.MAX_VALUE
-        var maxZ = -Float.MAX_VALUE
-        for (corner in corners()) {
-            val transformed = matrix.transformPosition(Vec4(corner.x, corner.y, corner.z, 1f))
-            minX = min(minX, transformed.x)
-            minY = min(minY, transformed.y)
-            minZ = min(minZ, transformed.z)
-            maxX = max(maxX, transformed.x)
-            maxY = max(maxY, transformed.y)
-            maxZ = max(maxZ, transformed.z)
-        }
-        return Aabb(Vec3f(minX, minY, minZ), Vec3f(maxX, maxY, maxZ))
+        val cx = (min.x + max.x) * HALF
+        val cy = (min.y + max.y) * HALF
+        val cz = (min.z + max.z) * HALF
+        val ex = (max.x - min.x) * HALF
+        val ey = (max.y - min.y) * HALF
+        val ez = (max.z - min.z) * HALF
+        val centerX = matrix.m00 * cx + matrix.m01 * cy + matrix.m02 * cz + matrix.m03
+        val centerY = matrix.m10 * cx + matrix.m11 * cy + matrix.m12 * cz + matrix.m13
+        val centerZ = matrix.m20 * cx + matrix.m21 * cy + matrix.m22 * cz + matrix.m23
+        val extentX = abs(matrix.m00) * ex + abs(matrix.m01) * ey + abs(matrix.m02) * ez
+        val extentY = abs(matrix.m10) * ex + abs(matrix.m11) * ey + abs(matrix.m12) * ez
+        val extentZ = abs(matrix.m20) * ex + abs(matrix.m21) * ey + abs(matrix.m22) * ez
+        return Aabb(
+            Vec3f(centerX - extentX, centerY - extentY, centerZ - extentZ),
+            Vec3f(centerX + extentX, centerY + extentY, centerZ + extentZ),
+        )
     }
 
-    /** This box's 8 corners, one bit per axis (every min/max combination) -- same order
-     * [EDGES] indexes into, for a debug-line renderer turning a box into a wireframe the same
-     * way [Frustum.EDGES] already does for a frustum. */
     fun corners(): List<com.awakekt.awake.core.math.Vec3f> =
         List(CORNER_COUNT) { corner ->
             Vec3f(

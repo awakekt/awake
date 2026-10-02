@@ -86,7 +86,7 @@ internal class SceneCullingCompiler(
         val inFrustum = if (culling.visible != null) {
             entityId in culling.visible
         } else {
-            culling.planes?.intersects(bounds.worldBounds(transform)) != false
+            culling.planes?.let { planes -> bounds.intersects(transform, planes) } != false
         }
         if (!inFrustum) {
             lastFrustumCulledCount++

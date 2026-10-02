@@ -892,6 +892,7 @@ public final class com/awakekt/awake/scene/rendering/mesh/MaterialBinding : com/
 }
 
 public final class com/awakekt/awake/scene/rendering/mesh/MeshBounds {
+	public static final field HALF F
 	public fun <init> (Lcom/awakekt/awake/core/math/Aabb;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Aabb;
 	public final fun copy (Lcom/awakekt/awake/core/math/Aabb;)Lcom/awakekt/awake/scene/rendering/mesh/MeshBounds;
@@ -899,6 +900,7 @@ public final class com/awakekt/awake/scene/rendering/mesh/MeshBounds {
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getLocalBounds ()Lcom/awakekt/awake/core/math/Aabb;
 	public fun hashCode ()I
+	public final fun intersects (Lcom/awakekt/awake/scene/core/transform/Transform;Ljava/util/List;)Z
 	public fun toString ()Ljava/lang/String;
 	public final fun worldBounds (Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Aabb;
 	public final fun worldBounds (Lcom/awakekt/awake/scene/core/transform/Transform;)Lcom/awakekt/awake/core/math/Aabb;

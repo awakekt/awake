@@ -243,10 +243,12 @@ class World {
     /**
      * Iterates every entity carrying the specified [type].
      *
-     * Uses a maintained family cache for zero-allocation iteration.
+     * Uses a maintained family cache for zero-allocation iteration. Inline so [block] is too:
+     * called through a function object, every [Entity] value would be boxed to pass it, one
+     * allocation per entity per frame.
      */
-    fun <A : Any> queryEach(type: KClass<A>, block: (Entity, A) -> Unit) {
-        familyRegistry.familyCache(type).forEach(block)
+    inline fun <A : Any> queryEach(type: KClass<A>, block: (Entity, A) -> Unit) {
+        family(type).forEach(block)
     }
 
     /**
@@ -254,7 +256,7 @@ class World {
      *
      * Uses a maintained family cache for zero-allocation iteration.
      */
-    inline fun <reified A : Any> queryEach(noinline block: (Entity, A) -> Unit) {
+    inline fun <reified A : Any> queryEach(block: (Entity, A) -> Unit) {
         queryEach(A::class, block)
     }
 
@@ -275,14 +277,15 @@ class World {
     /**
      * Iterates every entity carrying both [typeA] and [typeB].
      *
-     * Uses a maintained family cache for zero-allocation iteration.
+     * Uses a maintained family cache for zero-allocation iteration, inline for the reason the
+     * one-type overload is.
      */
-    fun <A : Any, B : Any> queryEach(
+    inline fun <A : Any, B : Any> queryEach(
         typeA: KClass<A>,
         typeB: KClass<B>,
         block: (Entity, A, B) -> Unit,
     ) {
-        familyRegistry.familyCache(typeA, typeB).forEach(block)
+        family(typeA, typeB).forEach(block)
     }
 
     /**
@@ -290,7 +293,7 @@ class World {
      *
      * Uses a maintained family cache for zero-allocation iteration.
      */
-    inline fun <reified A : Any, reified B : Any> queryEach(noinline block: (Entity, A, B) -> Unit) {
+    inline fun <reified A : Any, reified B : Any> queryEach(block: (Entity, A, B) -> Unit) {
         queryEach(A::class, B::class, block)
     }
 

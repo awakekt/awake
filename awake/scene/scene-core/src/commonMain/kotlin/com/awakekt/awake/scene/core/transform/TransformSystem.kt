@@ -118,9 +118,12 @@ class TransformSystem(private val skipsStatic: Boolean = true) : System {
         builtTrs[at + 6] = transform.scale.x
         builtTrs[at + 7] = transform.scale.y
         builtTrs[at + 8] = transform.scale.z
-        builtTransform[id] = transform
-        builtMatrix[id] = transform.worldMatrix
-        builtParent[id] = parent
+        // Stored only when they changed. A moving entity is rebuilt every frame with the same
+        // transform, matrix and parent, and an unchanged reference store still pays the garbage
+        // collector's write barrier: at tens of thousands of entities that was most of this method.
+        if (builtTransform[id] !== transform) builtTransform[id] = transform
+        if (builtMatrix[id] !== transform.worldMatrix) builtMatrix[id] = transform.worldMatrix
+        if (builtParent[id] !== parent) builtParent[id] = parent
         builtParentVersion[id] = parent?.worldVersion ?: 0
         transform.rebuildRequested = false
         transform.worldVersion++

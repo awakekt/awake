@@ -44,6 +44,10 @@ internal class VulkanDrawPreparer(
         if (sourceIndex == 0) {
             materialUsage.clear()
             instancedRuns = 0
+            // The GPU may still be reading this frame slot's uniforms from two frames ago. The UI
+            // phase usually waited for it already, but a frame with no UI never did, and preparing
+            // runs before acquiring the image, which is the next wait. Free when already waited.
+            renderer.waitForCurrentFrameResourceSlot()
             // Submitted offscreen work may still read the slots this batch is about to rewrite.
             renderer.awaitSubmittedOffscreenCommandsFor(renderer.swapchainManager.currentFrame)
         }

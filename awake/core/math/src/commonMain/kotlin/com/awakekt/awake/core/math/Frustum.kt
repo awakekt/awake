@@ -70,10 +70,7 @@ object Frustum {
  * (drawing something invisible costs a frame's work; skipping something visible is a bug), and
  * it is what every "cheap AABB vs frustum" test does.
  */
-fun Frustum.intersects(camera: Lens, aspect: Float, box: Aabb): Boolean {
-    val planes = Frustum.planes(camera, aspect)
-    return planes.none { plane -> box.isFullyBehind(plane) }
-}
+fun Frustum.intersects(camera: Lens, aspect: Float, box: Aabb): Boolean = Frustum.planes(camera, aspect).intersects(box)
 
 /** The 6 world-space frustum planes (bottom/top/left/right/near/far, normals pointing INTO the
  * frustum) for [camera]/[aspect] -- shared by [intersects] (box test) and
@@ -118,14 +115,27 @@ fun List<Plane>.containsSphere(
  * column and then per entity, as `SpatialGrid.queryFrustum` does -- would otherwise rebuild six
  * planes each time and spend more on the frustum than on the geometry.
  */
-fun List<Plane>.intersects(box: Aabb): Boolean = none { plane -> box.isFullyBehind(plane) }
+fun List<Plane>.intersects(box: Aabb): Boolean =
+    intersects(box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z)
 
-/** The box is outside when its most-positive corner along the plane normal still sits behind it. */
-private fun Aabb.isFullyBehind(plane: Plane): Boolean {
-    val positiveX = if (plane.normal.x >= 0f) max.x else min.x
-    val positiveY = if (plane.normal.y >= 0f) max.y else min.y
-    val positiveZ = if (plane.normal.z >= 0f) max.z else min.z
-    return plane.signedDistanceTo(Vec3f(positiveX, positiveY, positiveZ)) < 0f
+/**
+ * [intersects] for a box given as its corners' coordinates, for a caller that keeps a box as
+ * floats rather than allocating an [Aabb] per entity per frame to ask.
+ */
+@Suppress("LongParameterList")
+fun List<Plane>.intersects(minX: Float, minY: Float, minZ: Float, maxX: Float, maxY: Float, maxZ: Float): Boolean {
+    // Indexed, and the corner kept in locals: this runs per entity per frame, and an iterator or
+    // a corner vector per plane is garbage at exactly that rate.
+    for (index in indices) {
+        val plane = this[index]
+        val normal = plane.normal
+        // The box is outside when its most-positive corner along the normal still sits behind.
+        val positiveX = if (normal.x >= 0f) maxX else minX
+        val positiveY = if (normal.y >= 0f) maxY else minY
+        val positiveZ = if (normal.z >= 0f) maxZ else minZ
+        if (normal.x * positiveX + normal.y * positiveY + normal.z * positiveZ + plane.distance < 0f) return false
+    }
+    return true
 }
 
 /** `null` for three collinear points, which describe no plane. */

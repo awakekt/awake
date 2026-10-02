@@ -185,6 +185,7 @@ public final class com/awakekt/awake/core/math/Frustum {
 public final class com/awakekt/awake/core/math/FrustumKt {
 	public static final fun containsSphere (Ljava/util/List;Lcom/awakekt/awake/core/math/Vec3f;F)Z
 	public static final fun intersects (Lcom/awakekt/awake/core/math/Frustum;Lcom/awakekt/awake/core/math/Lens;FLcom/awakekt/awake/core/math/Aabb;)Z
+	public static final fun intersects (Ljava/util/List;FFFFFF)Z
 	public static final fun intersects (Ljava/util/List;Lcom/awakekt/awake/core/math/Aabb;)Z
 	public static final fun planes (Lcom/awakekt/awake/core/math/Frustum;Lcom/awakekt/awake/core/math/Lens;F)Ljava/util/List;
 }
