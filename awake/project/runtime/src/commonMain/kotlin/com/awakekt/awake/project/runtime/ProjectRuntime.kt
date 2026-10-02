@@ -13,7 +13,6 @@ import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
-import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.project.AwakeProjectManifest
@@ -33,9 +32,6 @@ import com.awakekt.awake.scene.controls.camera.CameraRigBinding
 import com.awakekt.awake.scene.controls.camera.SceneCameraRig
 import com.awakekt.awake.scene.controls.movement.MovementControlBinding
 import com.awakekt.awake.scene.controls.movement.SceneMovementControl
-import com.awakekt.awake.scene.core.transform.SceneSpinControl
-import com.awakekt.awake.scene.core.transform.SpinControl
-import com.awakekt.awake.scene.core.transform.SpinSystem
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
@@ -48,16 +44,9 @@ import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.Animator
-import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationSystem
-import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
-import com.awakekt.awake.scene.rendering.animation.SceneKeyframeAnimation
-import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
-import com.awakekt.awake.scene.rendering.particles.ParticleContentSystem
-import com.awakekt.awake.scene.rendering.particles.ParticleSystem
-import com.awakekt.awake.scene.rendering.particles.SceneParticleEmitter
 import com.awakekt.awake.scene.rendering.particles.loadParticleSprites
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
@@ -156,18 +145,7 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
     }
     if (moves && !characters) matrixRelativeMovementSystem()
     if (project.has(SceneCameraRig::class)) cameraSystem()
-    if (project.has(SceneSpinControl::class)) {
-        frameSystem("spin-clock") { SpinClockSystem() }
-        frameSystem("spin") { SpinSystem() }
-    }
-    if (project.has(SceneLocomotionAnimation::class)) frameSystem("locomotion") { LocomotionAnimationSystem() }
-    if (project.has(SceneKeyframeAnimation::class)) frameSystem("keyframes") { KeyframeAnimationSystem() }
-    if (project.has(SceneParticleEmitter::class)) {
-        var content: ParticleContentSystem? = null
-        frameSystem("particle-content") { ParticleContentSystem(renderer, project.particleSprites).also { content = it } }
-        frameSystem("particles") { ParticleSystem() }
-        onDispose { content?.release() }
-    }
+    motionSystems(project)
     frameSystem("animation") { AnimationSystem() }
     onReady {
         showTouchControls = touchControls
@@ -210,13 +188,6 @@ private fun SceneAppLifecycleRuntime.startSkinnedAnimations(models: GltfAssetRes
             SkinnedPose(player.update(0f).jointPalette(skin)).also { world.add(owner, it) }
         }
         if (owner != entity) world.add(entity, pose)
-    }
-}
-
-/** Turns each [SpinControl] at its own speed; [SpinSystem] only applies the angle. */
-private class SpinClockSystem : System {
-    override fun update(world: World, delta: Float) {
-        world.queryEach(SpinControl::class) { _, spin -> spin.radians += spin.speed * delta }
     }
 }
 
