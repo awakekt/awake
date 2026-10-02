@@ -41,6 +41,16 @@ private const val CARET_WIDTH = 1f
 private const val CARET_BLINK_PERIOD_SECONDS = 1f
 
 /**
+ * The mask a password field should pass to `BasicTextField(mask = ...)`, so every field in an app
+ * hides its text the same way.
+ *
+ * `'*'` rather than the `'•'` browsers and Compose draw, because the bundled UI font covers
+ * printable ASCII only and draws `'•'` as its fallback glyph. It becomes `'•'` once that font has
+ * the bullet; `MaskedTextFieldTest` fails if it is switched before then.
+ */
+val PasswordMask: Char = '*'
+
+/**
  * An editable single line of text, with no decoration of its own.
  *
  * "Basic" in Compose's sense: no background, no border, no placeholder. Those are a design system's
@@ -60,8 +70,9 @@ private const val CARET_BLINK_PERIOD_SECONDS = 1f
  * frame asks the platform for a password keyboard (`PlatformEffects.passwordKeyboard`), and a
  * copy or cut through `ComposeHost` returns nothing.
  *
- * The bundled UI font covers printable ASCII only, so `'*'` draws as itself and `'•'` draws that
- * font's fallback glyph until a font with the bullet is supplied through `LocalFont`.
+ * Pass [PasswordMask] unless a design calls for another character. The bundled UI font covers
+ * printable ASCII only, so `'•'` draws that font's fallback glyph until a font with the bullet is
+ * supplied through `LocalFont`.
  */
 context(_: Composer)
 fun BasicTextField(

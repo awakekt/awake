@@ -34,7 +34,7 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  * **Example Usage**:
  * ```kotlin
  * ShadcnInput(state = usernameState, placeholder = "m@example.com")
- * ShadcnInput(state = passwordState, placeholder = "Password", mask = '*')
+ * ShadcnInput(state = passwordState, placeholder = "Password", mask = PasswordMask)
  * ```
  *
  * @param state State holder [TextFieldState] managing input text and selection.
@@ -45,7 +45,8 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  * @param onClick Optional click handler.
  * @param mask When set, a password input (`<input type="password">`): draws one [mask] per
  * character of [state]'s text, asks the platform for a password keyboard, and refuses copy and cut.
- * See `BasicTextField` for which characters the bundled font can draw.
+ * Pass `PasswordMask` (`com.awakekt.awake.compose.foundation.text`) unless a design calls for
+ * another character; see `BasicTextField` for which characters the bundled font can draw.
  *
  * Keywords: input, textfield, text input, single line input, search field, form input, password input.
  */

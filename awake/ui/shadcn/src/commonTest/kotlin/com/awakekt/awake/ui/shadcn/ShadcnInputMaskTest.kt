@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.ui.shadcn
 
+import com.awakekt.awake.compose.foundation.text.PasswordMask
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.ui.platform.ComposeHost
@@ -44,15 +45,15 @@ class ShadcnInputMaskTest {
 
     @Test
     fun aMaskedInputDrawsTheMaskInsteadOfTheText() {
-        val masked = Input(TextFieldState("hunter2"), mask = '*').frame().glyphs()
+        val masked = Input(TextFieldState("hunter2"), mask = PasswordMask).frame().glyphs()
 
-        assertEquals(Input(TextFieldState("*******"), mask = null).frame().glyphs(), masked)
+        assertEquals(Input(TextFieldState(PasswordMask.toString().repeat(7)), mask = null).frame().glyphs(), masked)
         assertNotEquals(Input(TextFieldState("hunter2"), mask = null).frame().glyphs(), masked)
     }
 
     @Test
     fun aMaskedInputIsAPasswordFieldToThePlatformAndTheClipboard() {
-        val input = Input(TextFieldState("hunter2"), mask = '*')
+        val input = Input(TextFieldState("hunter2"), mask = PasswordMask)
         input.focus()
         input.state.selectAll()
 

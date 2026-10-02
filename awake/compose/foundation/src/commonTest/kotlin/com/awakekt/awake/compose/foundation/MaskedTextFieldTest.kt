@@ -7,6 +7,7 @@ package com.awakekt.awake.compose.foundation
 
 import com.awakekt.awake.compose.foundation.layout.size
 import com.awakekt.awake.compose.foundation.text.BasicTextField
+import com.awakekt.awake.compose.foundation.text.PasswordMask
 import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.foundation.text.maskedText
 import com.awakekt.awake.compose.runtime.Composer
@@ -18,6 +19,7 @@ import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.graphics2d.DrawCommand
 import com.awakekt.awake.core.input.ImeComposition
 import com.awakekt.awake.core.math2d.sp
+import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.core.text.theme.TextStyle
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -78,6 +80,15 @@ class MaskedTextFieldTest {
     private fun FrameOutput.caret() = primitives.filterIsInstance<DrawCommand.Quad>().first { it.w == 1f }
 
     private fun FrameOutput.selection() = primitives.filterIsInstance<DrawCommand.Quad>().filter { it.w > 1f }
+
+    @Test
+    fun theDefaultMaskIsAGlyphTheBundledFontCanDraw() {
+        // A mask the atlas lacks draws its fallback glyph, which reads as "????" in every field.
+        val font = UiFonts.default()
+        val fallback = font.uvFor('\uFFFF')
+
+        assertNotEquals(fallback, font.uvFor(PasswordMask), "PasswordMask draws the font's fallback glyph")
+    }
 
     @Test
     fun maskedTextIsOneMaskPerCharacter() {
