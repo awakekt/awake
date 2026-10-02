@@ -68,6 +68,11 @@ public final class com/awakekt/awake/core/host/FrameRateMode$Unlimited : com/awa
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/core/host/NativeLibrary {
+	public static final field INSTANCE Lcom/awakekt/awake/core/host/NativeLibrary;
+	public final fun load (Ljava/lang/String;Ljava/lang/Class;)V
+}
+
 public final class com/awakekt/awake/core/host/ResourceKt {
 	public static final fun readResourceBytes (Ljava/lang/String;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }

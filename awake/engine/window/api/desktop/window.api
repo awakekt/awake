@@ -1,0 +1,70 @@
+public final class com/awakekt/awake/engine/window/DesktopWindowKt {
+	public static final fun runDesktopWindow (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
+	public static synthetic fun runDesktopWindow$default (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/engine/window/GlfwInputBridgeKt {
+	public static final fun getDefaultGlfwGameplayKeys ()Ljava/util/Map;
+	public static final fun pollGlfwInput (JLcom/awakekt/awake/core/input/Input;Ljava/util/Map;)V
+	public static synthetic fun pollGlfwInput$default (JLcom/awakekt/awake/core/input/Input;Ljava/util/Map;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/engine/window/GlfwTextInputBridgeKt {
+	public static final fun pollGlfwTextInput (JLcom/awakekt/awake/core/input/Input;D)V
+	public static synthetic fun pollGlfwTextInput$default (JLcom/awakekt/awake/core/input/Input;DILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/engine/window/GlfwWindow {
+	public static final field INSTANCE Lcom/awakekt/awake/engine/window/GlfwWindow;
+	public final fun glfwConsumeScrollDeltaX (J)D
+	public final fun glfwConsumeScrollDeltaY (J)D
+	public final fun glfwConsumeScrollSource (J)I
+	public final fun glfwCreateWindow (IILjava/lang/String;)J
+	public final fun glfwDestroyWindow (J)V
+	public final fun glfwFocusWindow (J)V
+	public final fun glfwGetClipboardString (J)Ljava/lang/String;
+	public final fun glfwGetCursorPos (J)[D
+	public final fun glfwGetFramebufferHeight (J)I
+	public final fun glfwGetFramebufferWidth (J)I
+	public final fun glfwGetKey (JI)I
+	public final fun glfwGetMouseButton (JI)I
+	public final fun glfwGetWindowAttrib (JI)I
+	public final fun glfwGetWindowHeight (J)I
+	public final fun glfwGetWindowWidth (J)I
+	public final fun glfwInit ()Z
+	public final fun glfwPollEvents ()V
+	public final fun glfwSetClipboardString (JLjava/lang/String;)V
+	public final fun glfwSetCursorShape (JI)V
+	public final fun glfwSetScrollCallback (J)V
+	public final fun glfwTerminate ()V
+	public final fun glfwWindowHint (II)V
+	public final fun glfwWindowShouldClose (J)Z
+}
+
+public abstract interface class com/awakekt/awake/engine/window/GlfwWindowInput {
+	public fun consumeScrollDeltaX ()D
+	public abstract fun consumeScrollDeltaY ()D
+	public fun consumeScrollSource ()Lcom/awakekt/awake/core/input/ScrollSource;
+	public abstract fun cursorX ()D
+	public abstract fun cursorY ()D
+	public abstract fun framebufferScaleX ()F
+	public abstract fun framebufferScaleY ()F
+	public fun getClipboardText ()Ljava/lang/String;
+	public fun isFocused ()Z
+	public abstract fun isKeyDown (I)Z
+	public abstract fun isMouseButtonDown (I)Z
+	public fun setClipboardText (Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/engine/window/GlfwWindowInput$DefaultImpls {
+	public static fun consumeScrollDeltaX (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)D
+	public static fun consumeScrollSource (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Lcom/awakekt/awake/core/input/ScrollSource;
+	public static fun getClipboardText (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Ljava/lang/String;
+	public static fun isFocused (Lcom/awakekt/awake/engine/window/GlfwWindowInput;)Z
+	public static fun setClipboardText (Lcom/awakekt/awake/engine/window/GlfwWindowInput;Ljava/lang/String;)V
+}
+
+public final class com/awakekt/awake/engine/window/GlfwWindowInputKt {
+	public static final fun glfwWindowInput (J)Lcom/awakekt/awake/engine/window/GlfwWindowInput;
+}
+

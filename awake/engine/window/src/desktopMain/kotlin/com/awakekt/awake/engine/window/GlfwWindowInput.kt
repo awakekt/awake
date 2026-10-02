@@ -3,17 +3,17 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.vulkan.application
+package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.ScrollSource
-import com.awakekt.awake.vulkan.gen.VulkanWindow
+import com.awakekt.awake.engine.window.GlfwWindow
 
 internal const val GLFW_PRESS = 1
 internal const val GLFW_FOCUSED = 0x00020001
 
 /**
  * Seam between [pollGlfwInput]/[pollGlfwTextInput]'s translation logic and the real GLFW
- * native bindings ([VulkanWindow]) -- exists so a desktopTest can fake "this key is down this
+ * native bindings ([GlfwWindow]) -- exists so a desktopTest can fake "this key is down this
  * frame" and assert the right [com.awakekt.awake.core.input.Input] calls fire,
  * without a live window. A real GLFW window (and therefore OS-level focus behavior) still
  * can't be faked this way -- this only covers the keycode/repeat/shift translation, not
@@ -44,20 +44,20 @@ interface GlfwWindowInput {
 }
 
 private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
-    override fun isKeyDown(glfwKey: Int): Boolean = VulkanWindow.glfwGetKey(window, glfwKey) == GLFW_PRESS
-    override fun isMouseButtonDown(glfwButton: Int): Boolean = VulkanWindow.glfwGetMouseButton(window, glfwButton) == GLFW_PRESS
-    override fun cursorX(): Double = VulkanWindow.glfwGetCursorPos(window)[0]
-    override fun cursorY(): Double = VulkanWindow.glfwGetCursorPos(window)[1]
-    override fun consumeScrollDeltaY(): Double = VulkanWindow.glfwConsumeScrollDeltaY(window)
-    override fun consumeScrollDeltaX(): Double = VulkanWindow.glfwConsumeScrollDeltaX(window)
+    override fun isKeyDown(glfwKey: Int): Boolean = GlfwWindow.glfwGetKey(window, glfwKey) == GLFW_PRESS
+    override fun isMouseButtonDown(glfwButton: Int): Boolean = GlfwWindow.glfwGetMouseButton(window, glfwButton) == GLFW_PRESS
+    override fun cursorX(): Double = GlfwWindow.glfwGetCursorPos(window)[0]
+    override fun cursorY(): Double = GlfwWindow.glfwGetCursorPos(window)[1]
+    override fun consumeScrollDeltaY(): Double = GlfwWindow.glfwConsumeScrollDeltaY(window)
+    override fun consumeScrollDeltaX(): Double = GlfwWindow.glfwConsumeScrollDeltaX(window)
     override fun consumeScrollSource(): ScrollSource =
-        ScrollSource.entries.getOrElse(VulkanWindow.glfwConsumeScrollSource(window)) { ScrollSource.Unknown }
-    override fun isFocused(): Boolean = VulkanWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
+        ScrollSource.entries.getOrElse(GlfwWindow.glfwConsumeScrollSource(window)) { ScrollSource.Unknown }
+    override fun isFocused(): Boolean = GlfwWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
     override var clipboardText: String?
-        get() = VulkanWindow.glfwGetClipboardString(window)
+        get() = GlfwWindow.glfwGetClipboardString(window)
         set(value) {
             // The JNI wrapper rejects an empty string, and the UI never answers with one.
-            if (!value.isNullOrEmpty()) VulkanWindow.glfwSetClipboardString(window, value)
+            if (!value.isNullOrEmpty()) GlfwWindow.glfwSetClipboardString(window, value)
         }
 
     override fun framebufferScaleX(): Float = framebufferScale(window).first
@@ -65,10 +65,10 @@ private class RealGlfwWindowInput(private val window: Long) : GlfwWindowInput {
 }
 
 private fun framebufferScale(window: Long): Pair<Float, Float> {
-    val windowWidth = VulkanWindow.glfwGetWindowWidth(window)
-    val windowHeight = VulkanWindow.glfwGetWindowHeight(window)
-    val framebufferWidth = VulkanWindow.glfwGetFramebufferWidth(window)
-    val framebufferHeight = VulkanWindow.glfwGetFramebufferHeight(window)
+    val windowWidth = GlfwWindow.glfwGetWindowWidth(window)
+    val windowHeight = GlfwWindow.glfwGetWindowHeight(window)
+    val framebufferWidth = GlfwWindow.glfwGetFramebufferWidth(window)
+    val framebufferHeight = GlfwWindow.glfwGetFramebufferHeight(window)
     val scaleX = if (windowWidth != 0) framebufferWidth.toFloat() / windowWidth else 1f
     val scaleY = if (windowHeight != 0) framebufferHeight.toFloat() / windowHeight else 1f
     return scaleX to scaleY
