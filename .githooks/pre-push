@@ -140,5 +140,5 @@ if [[ "$touches_engine" != "1" ]]; then
   exit 0
 fi
 
-echo "Cost and appearance ratchets: running :awake:ui:shadcn:desktopTest" >&2
-./gradlew :awake:ui:shadcn:desktopTest
+echo "Cost and appearance ratchets: running :awake:ui:shadcn:desktopTest :awake:ui:node-graph-canvas:desktopTest" >&2
+./gradlew :awake:ui:shadcn:desktopTest :awake:ui:node-graph-canvas:desktopTest
