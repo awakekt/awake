@@ -26,6 +26,7 @@ fun main(args: Array<String>) {
         writePng(out, "scene-shadow-textured-ground", SCENE_SIZE, renderer.renderShadowScene(texturedGround = true))
         writePng(out, "scene-textured-pbr", SCENE_SIZE, renderer.renderTexturedPbrScene())
         writePng(out, "scene-back-culled", SCENE_SIZE, renderer.renderBackCulledScene())
+        writePng(out, "scene-facing-sprite-side", SCENE_SIZE, renderer.renderFacingSpriteFromTheSide())
         STUDIO_YAWS.withIndex().filter { it.index % EVIDENCE_YAW_STEP == 0 }.forEach { (index, yaw) ->
             writePng(out, "scene-studio-cube-yaw$index", SCENE_SIZE, renderer.renderStudioCubeScene(yaw))
         }
