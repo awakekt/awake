@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.vulkan
+package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.logging.Logger
@@ -27,8 +27,15 @@ import platform.UIKit.UIScreen
 import platform.UIKit.UIView
 import platform.UIKit.UIWindow
 
+/**
+ * The iOS window: a `UIView` backed by a [CAMetalLayer], driven by `CADisplayLink`, that feeds
+ * touches and typed text into [input]. A backend creates its surface from the layer [onCreate]
+ * receives; nothing here knows about a GPU API.
+ */
 @OptIn(ExperimentalForeignApi::class)
-class VulkanMetalView(
+// UIKit overrides and one callback per lifecycle event; neither splits usefully.
+@Suppress("LongParameterList", "TooManyFunctions")
+class AwakeMetalView(
     frame: CValue<CGRect>,
     private val input: Input,
     private val onCreate: (metalLayer: CAMetalLayer) -> Unit,
@@ -39,7 +46,7 @@ class VulkanMetalView(
 ) : UIView(frame),
     UIKeyInputProtocol {
 
-    private val logger = Logger("VulkanMetalView")
+    private val logger = Logger("AwakeMetalView")
 
     val metalLayer = CAMetalLayer().apply {
         val dev = MTLCreateSystemDefaultDevice()
@@ -87,7 +94,7 @@ class VulkanMetalView(
             try {
                 onCreate(metalLayer)
             } catch (t: Throwable) {
-                logger.error(t) { "Failed to execute onCreate for VulkanMetalView: ${t.message}" }
+                logger.error(t) { "Failed to execute onCreate for AwakeMetalView: ${t.message}" }
             }
         } else {
             onResize(width.toInt(), height.toInt())
@@ -109,7 +116,7 @@ class VulkanMetalView(
             textInputWasSecure = syncAwakeSecureTextEntry(textInputWasSecure, input)
             onUpdate(deltaTime)
         } catch (t: Throwable) {
-            logger.error(t) { "Error in VulkanMetalView tick render step: ${t.message}" }
+            logger.error(t) { "Error in AwakeMetalView tick render step: ${t.message}" }
         }
     }
 

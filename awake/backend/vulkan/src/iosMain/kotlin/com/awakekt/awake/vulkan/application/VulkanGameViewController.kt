@@ -7,7 +7,7 @@
 
 package com.awakekt.awake.vulkan.application
 
-import com.awakekt.awake.vulkan.VulkanMetalView
+import com.awakekt.awake.engine.window.AwakeMetalView
 import platform.UIKit.UIScreen
 import platform.UIKit.UIViewController
 
@@ -18,7 +18,7 @@ fun makeVulkanGameViewController(
     application: VulkanEngine,
 ): UIViewController {
     val controller = UIViewController()
-    controller.view = VulkanMetalView(
+    controller.view = AwakeMetalView(
         frame = UIScreen.mainScreen.bounds,
         input = application.input,
         onCreate = { metalLayer -> application.create(metalLayer) },

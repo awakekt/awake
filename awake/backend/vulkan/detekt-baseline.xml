@@ -36,7 +36,6 @@
     <ID>LongParameterList:UiAnimationFrameCapture.kt$HeadlessUiRendererFixture$( private val graphicsDevice: GraphicsDevice, private val swapchainManager: SwapchainManager, private val pipelineLayoutMaterial: Material, private val sceneRenderPass: Long, private val renderPipeline: RenderPipeline, private val lineRenderPipeline: LineRenderPipeline, private val transferContext: TransferContext, val renderer: Renderer, )</ID>
     <ID>LongParameterList:UiRenderPipeline.kt$UiRenderPipeline$( commandBuffer: Long, frameIndex: Int, sourceSampler: Long, sourceImageView: Long, destinationSampler: Long, destinationImageView: Long, mode: UiTargetCompositeMode, )</ID>
     <ID>LongParameterList:VulkanFrameContext.kt$VulkanFrameContext$( private val renderer: Renderer, override val commandBuffer: Long, override val frameIndex: Int, override val groupedDrawCalls: Map&lt;out PipelineHandle, List&lt;PreparedDraw>>, override val transparentDrawCalls: List&lt;PreparedDraw> = emptyList(), override val primaryPipeline: RenderPipeline, override val viewProjection: Mat4, override val cameraEye: Vec3f, override val environmentState: GpuEnvironmentState = GpuEnvironmentState.Default, )</ID>
-    <ID>LongParameterList:VulkanMetalView.kt$VulkanMetalView$( frame: CValue&lt;CGRect>, private val input: Input, private val onCreate: (metalLayer: CAMetalLayer) -> Unit, private val onUpdate: (deltaSeconds: Float) -> Unit, private val onResize: (width: Int, height: Int) -> Unit, private val onPause: () -> Unit, private val onResume: () -> Unit, )</ID>
     <ID>LoopWithTooManyJumpStatements:RendererHeadlessCascadedShadowTest.kt$RendererHeadlessCascadedShadowTest$for</ID>
     <ID>MatchingDeclarationName:GpuPassExecutor.kt$RendererGpuPassExecutor : GpuPassExecutor</ID>
     <ID>NestedBlockDepth:DepthPrePassFeature.kt$DepthPrePassFeature$private fun recordCascade( commandBuffer: Long, frameIndex: Int, drawCalls: List&lt;PreparedDraw>, castFormat: VertexFormat, cascade: Int, )</ID>
@@ -60,7 +59,6 @@
     <ID>TooManyFunctions:RendererUiPipelines.kt$com.awakekt.awake.vulkan.renderer.RendererUiPipelines.kt</ID>
     <ID>TooManyFunctions:UiRenderPipeline.kt$UiRenderPipeline</ID>
     <ID>TooManyFunctions:VulkanEngine.kt$VulkanEngine : GraphicsEngine</ID>
-    <ID>TooManyFunctions:VulkanMetalView.kt$VulkanMetalView : UIViewUIKeyInputProtocol</ID>
     <ID>UnusedParameter:DepthPrePassFeature.kt$DepthPrePassFeature$castFormat: VertexFormat</ID>
     <ID>UnusedParameter:Renderer.kt$Renderer$drawCalls: List&lt;PreparedDraw></ID>
     <ID>UnusedPrivateProperty:GraphicsDevice.kt$GraphicsDevice$val hasGeometry = features.geometryShader</ID>

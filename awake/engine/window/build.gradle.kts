@@ -23,6 +23,9 @@ kotlin {
             api(project(":awake:engine:platform"))
             api(project(":awake:core:input"))
         }
+        iosMain.dependencies {
+            implementation(project(":awake:core:logging"))
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
         }

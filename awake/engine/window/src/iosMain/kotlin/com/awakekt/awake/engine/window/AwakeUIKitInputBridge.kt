@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.vulkan
+package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.Input
 import kotlinx.cinterop.ExperimentalForeignApi

@@ -8,6 +8,8 @@ creates its own surface from the window handle it is given.
 
 - Desktop: the GLFW window (`GlfwWindow`, in `libawake-window`), its frame loop
   (`runDesktopWindow`), keyboard, pointer, scroll, text input, clipboard and cursor.
+- iOS: `AwakeMetalView`, a `UIView` on a `CAMetalLayer` with a `CADisplayLink` loop, touch and
+  text input.
 
 ## Does not own
 
