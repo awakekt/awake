@@ -36,6 +36,9 @@ class PipelineTable<P>(
     /** The particle pipelines' additive twins, for `RenderDrawCommand.additive` particle draws.
      * Without one an additive particle draw falls back to [particlePipelines]: blended, not added. */
     val additiveParticlePipelines: Map<VertexFormat, P> = emptyMap(),
+    /** Back-face-culled twins of [instancedByFormat], for instanced copies of a `CullMode.Back`
+     * mesh. A format with none cannot instance back-culled draws. */
+    val instancedBackCulledByFormat: Map<VertexFormat, P> = emptyMap(),
 )
 
 /**

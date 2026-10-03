@@ -12,7 +12,9 @@ import com.awakekt.awake.render.command.GpuDrawRequest
 import com.awakekt.awake.render.command.GpuResolvedDraw
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.toGpuResolvedDraw
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
+import com.awakekt.awake.render.pipeline.canInstance
 import com.awakekt.awake.render.pipeline.depthRenderKey
 
 /** Prepares one generic draw through WebGPU's existing resource preparation code. */
@@ -24,6 +26,8 @@ internal class WebGpuDrawPreparer(
     private var instancedRuns = 0
 
     override fun canInstance(format: VertexFormat): Boolean = format in renderer.instancedPipelines
+
+    override fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = renderer.pipelines.canInstance(format, cullMode)
 
     override fun prepare(
         request: GpuDrawRequest,

@@ -1,0 +1,1 @@
+- Game and render phase times read during a frame, by a frame-time logger or any system, report the last completed frame instead of the current one half-counted; the engine showcase `PERF` line printed `game=0.0 render=0.0` because of it.

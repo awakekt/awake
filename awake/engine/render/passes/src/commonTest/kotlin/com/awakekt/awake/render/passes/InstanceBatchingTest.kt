@@ -26,7 +26,7 @@ class InstanceBatchingTest {
     fun copiesOfOneMeshAndMaterialBecomeOneInstancedDraw() {
         val draws = (0 until 3).map { RenderDrawCommand(mesh, material, model = at(it.toFloat()), extraUniformFloats = floatArrayOf(1f)) }
 
-        val batched = batchInstances(draws) { true }
+        val batched = batchInstances(draws) { _, _ -> true }
 
         val draw = batched.single()
         assertEquals(draws.map { it.model }, draw.instanceModels)
@@ -47,24 +47,45 @@ class InstanceBatchingTest {
             base.copy(shadowsOnly = true),
         )
 
-        val batched = batchInstances(draws) { true }
+        val batched = batchInstances(draws) { _, _ -> true }
 
         assertEquals(6, batched.size)
         assertEquals(2, batched.single { it.instanceModels != null }.instanceModels!!.size)
     }
 
     @Test
+    fun backCulledCopiesFoldOnlyWhereTheBackendCanInstanceThemBackCulled() {
+        val draws = List(3) { RenderDrawCommand(mesh, material, model = at(it.toFloat()), cullMode = CullMode.Back) }
+
+        val folded = batchInstances(draws) { _, _ -> true }
+        val apart = batchInstances(draws) { _, cullMode -> cullMode == CullMode.None }
+
+        assertEquals(CullMode.Back, folded.single().cullMode, "the batch keeps the copies' culling")
+        assertEquals(draws, apart)
+    }
+
+    @Test
+    fun copiesThatCullDifferentlyStayInSeparateBatches() {
+        val draws = List(4) { RenderDrawCommand(mesh, material, model = at(it.toFloat()), cullMode = if (it < 2) CullMode.None else CullMode.Back) }
+
+        val batched = batchInstances(draws) { _, _ -> true }
+
+        assertEquals(listOf(CullMode.None, CullMode.Back), batched.map { it.cullMode })
+        assertEquals(listOf(2, 2), batched.map { it.instanceModels!!.size })
+    }
+
+    @Test
     fun aFormatTheBackendCannotInstanceIsLeftAlone() {
         val draws = List(4) { RenderDrawCommand(mesh, material, model = at(it.toFloat())) }
 
-        assertEquals(draws, batchInstances(draws) { it != VertexFormat.PositionNormalColorUv })
+        assertEquals(draws, batchInstances(draws) { format, _ -> format != VertexFormat.PositionNormalColorUv })
     }
 
     @Test
     fun aGroupLargerThanOneDrawHoldsIsSplit() {
         val draws = List(MAX_BATCHED_INSTANCES + 1) { RenderDrawCommand(mesh, material, model = at(it.toFloat())) }
 
-        val sizes = batchInstances(draws) { true }.map { it.instanceModels?.size ?: 1 }
+        val sizes = batchInstances(draws) { _, _ -> true }.map { it.instanceModels?.size ?: 1 }
 
         assertEquals(listOf(MAX_BATCHED_INSTANCES, 1), sizes)
     }
@@ -74,8 +95,8 @@ class InstanceBatchingTest {
         val box = { x: Float -> Aabb(Vec3f(x, 0f, 0f), Vec3f(x + 1f, 1f, 1f)) }
         val bounded = List(2) { RenderDrawCommand(mesh, material, model = at(it.toFloat()), worldBounds = box(it * 10f)) }
 
-        assertEquals(Aabb(Vec3f(0f, 0f, 0f), Vec3f(11f, 1f, 1f)), batchInstances(bounded) { true }.single().worldBounds)
-        assertNull(batchInstances(bounded + bounded[0].copy(worldBounds = null)) { true }.single().worldBounds)
+        assertEquals(Aabb(Vec3f(0f, 0f, 0f), Vec3f(11f, 1f, 1f)), batchInstances(bounded) { _, _ -> true }.single().worldBounds)
+        assertNull(batchInstances(bounded + bounded[0].copy(worldBounds = null)) { _, _ -> true }.single().worldBounds)
     }
 
     @Test
@@ -84,7 +105,7 @@ class InstanceBatchingTest {
         val models = List(count) { at(it.toFloat()) }
         val colors = List(count) { Vec4(it.toFloat(), 0f, 0f, 1f) }
 
-        val split = batchInstances(listOf(RenderDrawCommand(mesh, material, instanceModels = models, instanceColors = colors))) { true }
+        val split = batchInstances(listOf(RenderDrawCommand(mesh, material, instanceModels = models, instanceColors = colors))) { _, _ -> true }
 
         assertEquals(listOf(MAX_BATCHED_INSTANCES, 10), split.map { it.instanceModels!!.size })
         assertEquals(models.drop(MAX_BATCHED_INSTANCES), split[1].instanceModels)
@@ -101,7 +122,7 @@ class InstanceBatchingTest {
             instanceJointPalettes = List(count) { floatArrayOf(it.toFloat()) },
         )
 
-        val sizes = batchInstances(listOf(draw)) { true }.map { it.instanceJointPalettes!!.size }
+        val sizes = batchInstances(listOf(draw)) { _, _ -> true }.map { it.instanceJointPalettes!!.size }
 
         assertEquals(listOf(MAX_SKINNED_BATCHED_INSTANCES, MAX_SKINNED_BATCHED_INSTANCES, 1), sizes)
     }
@@ -111,7 +132,7 @@ class InstanceBatchingTest {
         val other = material()
         val draws = List(6) { RenderDrawCommand(mesh, if (it % 2 == 0) material else other, model = at(it.toFloat())) }
 
-        val batched = batchInstances(draws) { true }
+        val batched = batchInstances(draws) { _, _ -> true }
 
         assertEquals(2, batched.size)
         assertEquals(listOf(draws[0].model, draws[2].model, draws[4].model), batched.single { it.material === material }.instanceModels)

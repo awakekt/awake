@@ -111,7 +111,7 @@ internal fun VulkanRenderer.prepareGpuDraw(
     if (instanceModels != null) {
         if (instanceModels.isEmpty()) return null
         val kind = cmd.instancedDrawKind() ?: return null
-        val instancedPipeline = pipelines.resolveInstanced(mesh.format, kind, cmd.additive) ?: return null
+        val instancedPipeline = pipelines.resolveInstanced(mesh.format, kind, cmd.additive, cmd.cullMode) ?: return null
         val instanceBuffer = instanceBufferForRun(instancedIndex).also {
             it.update(frameIndex, instanceModels)
         }

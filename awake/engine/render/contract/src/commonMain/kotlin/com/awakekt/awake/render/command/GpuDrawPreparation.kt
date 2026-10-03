@@ -8,6 +8,7 @@ package com.awakekt.awake.render.command
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.renderer.RenderViewport
 
 /** Per-frame, scene-free inputs used to lower [GpuDrawRequest] into a resolved draw. */
@@ -75,6 +76,9 @@ fun interface GpuDrawPreparer {
 
     /** Whether [prepare] can draw a request's copies of a [format] mesh as one instanced draw. */
     fun canInstance(format: VertexFormat): Boolean = false
+
+    /** [canInstance] for copies drawn with [cullMode]; only unculled copies unless a backend says more. */
+    fun canInstance(format: VertexFormat, cullMode: CullMode): Boolean = cullMode == CullMode.None && canInstance(format)
 }
 
 /** Composition capability exposed by a backend bootstrap to scene/render-pipeline code. */
