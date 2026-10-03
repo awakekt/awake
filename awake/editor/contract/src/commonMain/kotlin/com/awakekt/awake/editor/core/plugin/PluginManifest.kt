@@ -27,7 +27,7 @@ data class PluginDependency(
 }
 
 /**
- * Serialized manifest schema for Studio Marketplace and project `.awakeplugin` packages (`plugin.json`).
+ * Serialized manifest schema for plugin marketplaces and project `.awakeplugin` packages (`plugin.json`).
  *
  * @property id Unique reversed-domain plugin ID (e.g. "awake.terrain" or "com.acme.dialogue").
  * @property name Human-readable display name.
@@ -42,8 +42,8 @@ data class PluginDependency(
  * @property supportedPlatforms List of supported platform identifiers (e.g. "desktop", "android", "ios", "wasmJs").
  * @property targetJvmVersion Optional target JVM bytecode major version.
  * @property dependencies List of other plugin dependencies required by this plugin.
- * @property isPro Whether this plugin requires an active Awake Pro commercial license.
- * @property requiredLicense Specific optional entitlement identifier required by this plugin.
+ * @property requiredLicense Entitlement a host must hold before activating this plugin, or null when it
+ *   is free. The contract names no product; each host maps the identifier to its own tiers.
  * @property category Primary discovery category.
  * @property tags List of search/discovery tag keywords.
  * @property documentationUrl Optional URL link to documentation.
@@ -61,7 +61,6 @@ data class PluginManifest(
     val supportedPlatforms: List<String> = emptyList(),
     val targetJvmVersion: Int? = null,
     val dependencies: List<PluginDependency> = emptyList(),
-    val isPro: Boolean = false,
     val requiredLicense: String? = null,
     val category: String = "Tools",
     val tags: List<String> = emptyList(),

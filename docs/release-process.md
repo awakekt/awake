@@ -159,10 +159,7 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 
 ### **Milestone 4: [v0.1.0-beta.1](https://github.com/awakekt/awake/milestone/4)** — *Studio IDE Maturity & Prefabs System* *(IN PROGRESS)*
 
-- **Subsystem: Editor IDE (`app:studio`)**
-    - `[ ]` Undo/Redo command stack (`UndoManager`).
-    - `[ ]` Scene Prefabs instantiation (`.prefab.json`).
-    - `[ ]` Asset drag-and-drop cooking & scale/rotate gizmos.
+- Studio IDE work moved to the Studio repository; Core tracks engine releases only.
 
 ---
 
@@ -207,7 +204,8 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 
 2. **Inclusion of Sample & Tooling Updates**:
     - Updates to official sample applications (`samples:engine-showcase`, `samples:ui-showcase`,
-      `samples:compose-showcase`) and Studio IDE (`app:studio`) **belong** in `CHANGELOG.md`.
+      `samples:compose-showcase`) **belong** in `CHANGELOG.md`. Studio changes go in the Studio
+      repository's changelog.
     - Omit internal chores (`chore:`), unit test tweaks (`test:`), and private code cleanups.
 
 ---

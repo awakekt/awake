@@ -10,9 +10,6 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.Poolable
 
 /**
- * **Starter behavior** — engine-provided example. Copy and adapt for game-specific chase logic
- * rather than inheriting; the engine does not guarantee backwards compatibility on this class.
- *
  * Makes an entity pursue [target] along a navmesh path.
  *
  * Carries this chaser's own route state through [RouteFollower], which is what lets a single

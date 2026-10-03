@@ -22,9 +22,7 @@ apiValidation {
     ignoredProjects += setOf(
         "ui-showcase", "engine-showcase", "server",
         "benchmark", "generator", "android-native", "font-atlas-generator",
-        // `editor` is deliberately absent: it is a library, not an application, and its plugin
-        // contract negotiates an EditorPluginApiVersion that means nothing if the surface it
-        // versions is untracked. See D32. Every remaining entry here is a sample or a build tool.
+        // Every entry here is a sample or a build tool, except the two explained below.
         "tailwind-generator", "testing",
         // Known limit: `webgpu` is published but unvalidated, because its `jvmToolchain(25)` (needed
         // for the FFM API) emits class-file major 69 and binary-compatibility-validator 0.17.0

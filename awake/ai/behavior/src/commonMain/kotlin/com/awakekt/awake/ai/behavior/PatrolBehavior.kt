@@ -21,9 +21,6 @@ enum class PatrolStyle {
 }
 
 /**
- * **Starter behavior** — engine-provided example. Copy and adapt for game-specific patrol logic
- * rather than inheriting; the engine does not guarantee backwards compatibility on this class.
- *
  * Walks an entity between fixed [stops] over a navmesh.
  *
  * The stops are authored positions, not something navigation discovers, so an unreachable one is a
