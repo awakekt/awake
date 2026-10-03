@@ -188,6 +188,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EVIDENCE_FOCUS: ${{ steps.scope.outputs.scenes == 'false' && 'icons' || 'all' }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           prefix="https://raw.githubusercontent.com/${{ github.repository }}/render-evidence/pr-$PR/$HEAD_SHA"
           scripts/render-evidence-comment.sh "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$prefix" "$HEAD_SHA" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
@@ -200,6 +201,15 @@ jobs:
           fi
           existing="$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
             --jq '[.[] | select(.body | startswith("<!-- render-evidence -->")) | .id] | first // empty')"
+          if [[ ! -s "$RUNNER_TEMP/comment.md" && "$PR_TITLE" =~ ^fix(\(.*\))?!?: ]]; then
+            # A fix that moves no captured pixel was most likely never captured; say so rather
+            # than let silence read as "no visible change".
+            {
+              echo '<!-- render-evidence -->'
+              echo '## Render evidence'
+              echo 'No captured scenario changed. If this fix changes what the engine draws, add a scenario to `RenderEvidence.kt` (or a baseline) that shows the bug on the base and not on the head. If it cannot be captured headless, say why in the PR body.'
+            } > "$RUNNER_TEMP/comment.md"
+          fi
           if [[ ! -s "$RUNNER_TEMP/comment.md" ]]; then
             # No render changed. Drop an earlier comment that a later push made stale.
             echo "::notice::No render changed; no evidence comment."
