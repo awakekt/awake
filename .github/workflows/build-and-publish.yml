@@ -320,7 +320,15 @@ jobs:
           fi
 
       - name: Build the template against it
-        run: tools/check_template_consumer.sh consumer/awake-template "$RUNNER_TEMP/consumer"
+        run: |
+          # A Core-only build put no Vulkan in Maven Local, and the derived Vulkan version is a
+          # snapshot once Vulkan has changed since its last tag. Test against the last Vulkan
+          # release instead: it's what a consumer gets until the next vulkan-v* tag.
+          if [[ "${{ steps.versions.outputs.vulkan_publish }}" != 'true' ]]; then
+            TEMPLATE_VULKAN_VERSION="$(git describe --tags --match 'vulkan-v*' --abbrev=0)"
+            export TEMPLATE_VULKAN_VERSION="${TEMPLATE_VULKAN_VERSION#vulkan-v}"
+          fi
+          tools/check_template_consumer.sh consumer/awake-template "$RUNNER_TEMP/consumer"
 
   # `main` builds. Resolvable only by a consumer who adds the snapshot repository, and replaced by
   # the next push, so this path stays deliberately light.
