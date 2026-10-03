@@ -7,6 +7,7 @@ package com.awakekt.awake.ui.shadcn
 
 import com.awakekt.awake.compose.foundation.layout.Column
 import com.awakekt.awake.compose.foundation.layout.fillMaxSize
+import com.awakekt.awake.compose.foundation.text.TextFieldState
 import com.awakekt.awake.compose.foundation.layout.fillMaxWidth
 import com.awakekt.awake.compose.foundation.layout.padding
 import com.awakekt.awake.compose.runtime.Composer
@@ -21,6 +22,7 @@ import com.awakekt.awake.core.text.font.UiFonts
 import com.awakekt.awake.ui.shadcn.components.ShadcnAlertDialog
 import com.awakekt.awake.ui.shadcn.components.ShadcnButton
 import com.awakekt.awake.ui.shadcn.components.ShadcnDropdownMenu
+import com.awakekt.awake.ui.shadcn.components.ShadcnInput
 import com.awakekt.awake.ui.shadcn.components.ShadcnInputOtp
 import com.awakekt.awake.ui.shadcn.components.ShadcnMenuItem
 import com.awakekt.awake.ui.shadcn.components.ShadcnPopover
@@ -70,6 +72,15 @@ class ShadcnVisualBaselineTest {
     @Test
     fun inputOtp() = baseline("input-otp", 320, 64) {
         ShadcnInputOtp(value = "123", modifier = Modifier.fillMaxWidth().padding(all = 12.dp))
+    }
+
+    /** An unfocused input whose value is wider than it, caret at the end: the start stays in view. */
+    @Test
+    fun inputOverflowingValue() {
+        val state = TextFieldState("Position 12.75, 4.5, -310.25")
+        baseline("input-overflowing-value", 160, 64) {
+            ShadcnInput(state, modifier = Modifier.padding(all = 12.dp))
+        }
     }
 
     /** `withHandle`, the state the grip only appears in. */
