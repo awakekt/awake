@@ -10,9 +10,6 @@ import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.Poolable
 
 /**
- * **Starter behavior** — engine-provided example. Copy and adapt for game-specific flee logic
- * rather than inheriting; the engine does not guarantee backwards compatibility on this class.
- *
  * Makes an entity run away from [threat] once it comes within [panicRadius], and stop once it is
  * further away than [safeRadius].
  *

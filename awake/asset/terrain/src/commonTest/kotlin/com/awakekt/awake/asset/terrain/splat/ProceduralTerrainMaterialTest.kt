@@ -9,6 +9,40 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
+/** Low ground, mid ground, steep slopes and high ground, one layer each. */
+private val fourLayerRules = ProceduralTerrainMaterialConfig(
+    rules = listOf(
+        ProceduralTerrainRule(
+            layerIndex = 0,
+            maxAltitude = 50f,
+            altitudeBlend = 15f,
+            maxSlopeDegrees = 30f,
+            slopeBlendDegrees = 10f,
+        ),
+        ProceduralTerrainRule(
+            layerIndex = 1,
+            minAltitude = 30f,
+            maxAltitude = 120f,
+            altitudeBlend = 20f,
+            maxSlopeDegrees = 45f,
+            slopeBlendDegrees = 10f,
+        ),
+        ProceduralTerrainRule(
+            layerIndex = 2,
+            minSlopeDegrees = 35f,
+            maxSlopeDegrees = 90f,
+            slopeBlendDegrees = 10f,
+        ),
+        ProceduralTerrainRule(
+            layerIndex = 3,
+            minAltitude = 100f,
+            altitudeBlend = 25f,
+            maxSlopeDegrees = 50f,
+            slopeBlendDegrees = 10f,
+        ),
+    ),
+)
+
 class ProceduralTerrainMaterialTest {
 
     @Test
@@ -24,7 +58,7 @@ class ProceduralTerrainMaterialTest {
             height = height,
             horizontalScale = 1f,
             verticalScale = 1f,
-            config = ProceduralTerrainMaterialConfig.MountainAlpine,
+            config = fourLayerRules,
         )
 
         assertEquals(width, splatMap.width)
@@ -52,7 +86,7 @@ class ProceduralTerrainMaterialTest {
             height = height,
             horizontalScale = 1f,
             verticalScale = 1f,
-            config = ProceduralTerrainMaterialConfig.MountainAlpine,
+            config = fourLayerRules,
         )
 
         val weights = splatMap.sampleWeights(0.5f, 0.5f)
@@ -76,7 +110,7 @@ class ProceduralTerrainMaterialTest {
             height = height,
             horizontalScale = 1f,
             verticalScale = 1f,
-            config = ProceduralTerrainMaterialConfig.MountainAlpine,
+            config = fourLayerRules,
         )
 
         // Center pixel (where slope is well defined)
@@ -102,7 +136,7 @@ class ProceduralTerrainMaterialTest {
             height = height,
             horizontalScale = 2f,
             verticalScale = 1f,
-            config = ProceduralTerrainMaterialConfig.MountainAlpine,
+            config = fourLayerRules,
         )
 
         val raw = splatMap.rgbaBytes
@@ -120,21 +154,5 @@ class ProceduralTerrainMaterialTest {
                 "Splat weight at pixel $i ($r, $g, $b, $a) must sum to 255 exactly.",
             )
         }
-    }
-
-    @Test
-    fun presetBiomeConfigurationsAreWellFormed() {
-        val alpine = ProceduralTerrainMaterialConfig.MountainAlpine
-        assertEquals(4, alpine.rules.size)
-        assertTrue(alpine.rules.any { it.layerIndex == 0 })
-        assertTrue(alpine.rules.any { it.layerIndex == 1 })
-        assertTrue(alpine.rules.any { it.layerIndex == 2 })
-        assertTrue(alpine.rules.any { it.layerIndex == 3 })
-
-        val hills = ProceduralTerrainMaterialConfig.RollingHills
-        assertEquals(4, hills.rules.size)
-
-        val desert = ProceduralTerrainMaterialConfig.DesertCanyon
-        assertEquals(4, desert.rules.size)
     }
 }

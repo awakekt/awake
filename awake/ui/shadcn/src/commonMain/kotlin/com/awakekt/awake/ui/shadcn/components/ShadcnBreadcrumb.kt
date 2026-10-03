@@ -22,7 +22,7 @@ import com.awakekt.awake.ui.shadcn.theme.shadcnTheme
  *
  * The separator is a chevron in upstream; a slash is used here because a chevron would need the icon
  * registry threaded through, and the shape of the trail is what this component is for. Swapping it
- * for `HeroIcons.chevronRight` is a one-line change now that `shadcnIcon` exists.
+ * for `ShadcnIcons.chevronRight` is a one-line change now that `shadcnIcon` exists.
  */
 context(_: Composer)
 fun ShadcnBreadcrumb(

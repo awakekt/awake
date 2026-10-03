@@ -13,6 +13,7 @@ plugins {
     id("com.awakekt.awake.plugin.ui-ownership")
     id("com.awakekt.awake.plugin.ui-authored-units")
     id("com.awakekt.awake.plugin.test-resources")
+    id("com.awakekt.awake.plugin.icon-codegen")
 }
 
 kotlin {
@@ -28,7 +29,6 @@ kotlin {
             implementation(project(":awake:core:color"))
             implementation(project(":awake:core:input"))
             api(project(":awake:tailwind"))
-            api(project(":awake:heroicons"))
             api(project(":awake:compose:foundation"))
         }
         commonTest.dependencies {

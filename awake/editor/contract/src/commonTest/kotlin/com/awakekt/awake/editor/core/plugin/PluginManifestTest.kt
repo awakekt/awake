@@ -29,7 +29,6 @@ class PluginManifestTest {
                 PluginDependency(id = "com.awakekt.plugin.core", version = "1.0.0"),
                 PluginDependency(id = "com.awakekt.plugin.extra", optional = true),
             ),
-            isPro = true,
             requiredLicense = "worldstream",
             category = "World",
             tags = listOf("terrain", "brush"),
@@ -44,6 +43,13 @@ class PluginManifestTest {
         assertEquals("com.awakekt.plugin.core", parsed.dependencies[0].id)
         assertFalse(parsed.dependencies[0].optional)
         assertTrue(parsed.dependencies[1].optional)
+    }
+
+    @Test
+    fun ignoresTheRetiredIsProFlag() {
+        val parsed = PluginManifest.fromJson("""{"id": "a", "name": "A", "version": "1.0.0", "isPro": true}""")
+
+        assertEquals(null, parsed.requiredLicense)
     }
 
     @Test

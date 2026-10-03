@@ -8,7 +8,6 @@ package com.awakekt.awake.ui.shadcn
 import com.awakekt.awake.compose.testing.composeFrame
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.graphics2d.DrawCommand
-import com.awakekt.awake.heroicons.icon.HeroIcons
 import com.awakekt.awake.ui.shadcn.components.ShadcnButton
 import com.awakekt.awake.ui.shadcn.components.ShadcnButtonSizeVariant
 import com.awakekt.awake.ui.shadcn.components.ShadcnButtonVariant

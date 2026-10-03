@@ -135,7 +135,6 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | `com.awakekt.awake.compose:di` | `awake-compose-di` | Dependency injection bridge for AwakeKt Compose. |
 | `com.awakekt.awake.compose:ui-testing` | `awake-compose-ui-testing` | Test helpers for AwakeKt Compose: semantics queries and a headless rasterizer. |
 | `com.awakekt.awake:tailwind` | `awake-tailwind` | Tailwind-style design tokens and modifiers for Compose Foundation. |
-| `com.awakekt.awake:heroicons` | `awake-heroicons` | Heroicons (and a set of Lucide icons) as vector icons. |
 | `com.awakekt.awake.ui:shadcn` | `awake-ui-shadcn` | shadcn components: themes, tokens, variants and component recipes. |
 | `com.awakekt.awake.ui:node-graph-canvas` | `awake-ui-node-graph-canvas` | Pan-and-zoom node graph editing surface. |
 

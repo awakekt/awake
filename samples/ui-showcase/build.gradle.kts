@@ -17,6 +17,7 @@ plugins {
     id("com.awakekt.awake.plugin.spotless")
     id("com.awakekt.awake.plugin.ui-authored-units")
     id("com.awakekt.awake.plugin.ui-preview-report")
+    id("com.awakekt.awake.plugin.icon-codegen")
     id("com.awakekt.awake.plugin.ui-ownership")
 }
 

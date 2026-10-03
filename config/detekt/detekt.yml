@@ -99,7 +99,6 @@ comments:
       - '**/awake/core/color/**'
       - '**/awake/core/image/**'
       - '**/awake/engine/bootstrap/**'
-      - '**/awake/heroicons/**'
       - '**/awake/core/state/**'
       - '**/awake/scene/binding/**'
       - '**/awake/core/config/**'

@@ -12,7 +12,6 @@
 > | *What is this script, and can it fail a build?* | [`tools/README.md`](README.md) — catalogue |
 <!-- /ui-tooling-map -->
 
-
 This folder contains the implementation details behind Awake's UI workflow. Start with the
 single front door instead of choosing scripts yourself:
 
@@ -37,7 +36,7 @@ tools/
                          compare, its JSON configs, and reference-app/ (the React app the
                          parity screenshots come from)
   fonts-tooling/         font instancing and reference capture, plus samples/
-  icons/                 heroicons capture and its manifest
+  icons/                 Chromium capture of the vendored Lucide SVGs
   jni-binding-generator/ unrelated to UI; own owners
 ```
 
@@ -84,7 +83,7 @@ Every generator that can be gated now is:
 | `:awake:tailwind-generator` | Gradle generator task and generated-source review |
 | `:awake:ui:font-atlas-generator` | Gradle generator task and generated-source review |
 | `instantiate_roboto.py` | **none, deliberately.** Its output is a TTF and re-running rewrites `head.modified` plus checksums — nine bytes, every glyph identical. A gate that always fails is worse than no gate; gating it needs a normalised compare that ignores the volatile tables. |
-| `svg_to_ui_image_vector.py` | **not possible.** One-shot: one SVG in, one Kotlin val out, destination chosen by the caller, with no recorded mapping of which SVG produced which icon. There is nothing to re-run, so nothing to diff. A gate needs a manifest that does not exist. |
+| `com.awakekt.awake.plugin.icon-codegen` | **not needed.** Its Kotlin goes to `build/generated` and is rebuilt from the vendored SVGs on every build, so nothing committed can go stale. |
 
 The repository gate set is declared by the Gradle repository-tooling plugin. Add a Gradle task when
 a new product invariant needs to be enforced; do not add a standalone Python verifier.
@@ -120,8 +119,6 @@ Ordered as the pipeline runs: `fetch → extract → vendor → verify → captu
 
 | Tool | Kind | Run it when | Don't |
 |---|---|---|---|
-| `svg_to_ui_image_vector.py` | GENERATOR | Adding or regenerating an icon | Don't hand-transcribe path data, and don't derive one glyph by rotating another's coordinates. That is how the icon set ended up with every corner arc flattened to line segments. Run `--self-test` after editing the converter |
-| `capture_heroicons_reference.py` | INVESTIGATION | After adding an icon | Don't forget the `heroicons_manifest.json` row — the script and `IconFidelityTest` both read it, keyed by (name, tier) because Heroicons ships different path data per tier for the same name |
 | `instantiate_roboto.py` | GENERATOR | Changing the shipped font instance | Don't expect a byte-identical re-run; see the gate table below |
 | `capture_font_reference.py` | INVESTIGATION | Investigating glyph baseline drift | Don't compare Awake against Awake. The whole point is Chromium as an external control — it is what proved real Roboto puts every glyph on one baseline while our atlas splits round and flat glyphs by a pixel |
 
@@ -182,19 +179,14 @@ the code or the tests, repair the generator before relying on the report.
 
 ## Asset generation
 
-Both of these generate committed Kotlin source. Never hand-edit their output, and never
+These generate Kotlin source. Never hand-edit their output, and never
 hand-author the data they produce — that is how the icon set ended up with every corner arc
 flattened to line segments, and how the font atlas ended up with mismatched glyph metrics.
 
 | Script | Generates | Notes |
 |---|---|---|
-| `svg_to_ui_image_vector.py` | `UiImageVector` glyph data (e.g. `HeroIcons.kt`) | Preserves curves as real cubic Beziers, converts SVG arcs exactly, keeps nested `evenodd` subpaths as holes. Rejects what the engine cannot render (strokes, transforms, crossing subpaths). Run `--self-test` after editing. |
+| `com.awakekt.awake.plugin.icon-codegen` (Gradle plugin, Kotlin/JVM in `build-logic`) | An `ImageVector` object per icon pack, from `src/<sourceSet>/svg/<pack>/manifest.json` and the SVGs beside it, into `build/generated` | Preserves curves as real cubic Beziers, converts SVG arcs exactly, keeps nested `evenodd` subpaths as holes. Rejects what the engine cannot render (transforms, unsupported shapes, a path that both fills and strokes, crossing subpaths). Each icon is a lazy `val`. `./gradlew -p build-logic test --tests '*SvgImageVectorCodegenTest*'` after editing. |
 | `:awake:ui:font-atlas-generator` (`generateFontAtlas` task, Kotlin/JVM, not a `tools/*.py` script) | `RobotoRegularUiFontData.kt` (packed glyph atlas + metrics) | Reads glyph metrics from the TTF's own outline geometry (`Font.createGlyphVector`) and rasterizes a separate antialiased atlas bitmap via `Graphics2D`. Glyph offsets and advances must stay in the same coordinate space — mixing cell-relative offsets with pen-relative advances produces uneven letter spacing. Replaced the former `generate_ui_font_atlas.py`, which derived metrics from the antialiased raster ink bbox and quantized them to 1/64 em. |
-
-```bash
-python3 tools/icons/svg_to_ui_image_vector.py icon.svg --name chevronDown --dp 16 --source "Heroicons chevron-down (20/solid)"
-python3 tools/icons/svg_to_ui_image_vector.py --self-test
-```
 
 ## Font fidelity
 
@@ -314,34 +306,6 @@ The current Kotlin preview registry contains fixed, committed fixtures. The CLI 
 variant, style, base color, or accent that does not have a matching fixture rather than silently
 rendering a different state. Add the reference-app case, Awake preview entry, and parity-manifest
 row together before expanding the command's supported combinations.
-
-## Icon fidelity
-
-Proves each shipped `HeroIcons` `UiImageVector` renders the same shape as the official
-Heroicons SVG it was generated from automatically.
-
-| Script | Purpose |
-|---|---|
-| `capture_heroicons_reference.py` | Downloads each icon's official SVG and rasterizes it to a fixed 128x128 reference PNG (white fill on black, playwright/chromium) under `docs/reference/icon-previews/`. |
-| `heroicons_manifest.json` | The (name, tier, Kotlin symbol) list both this script and `IconFidelityTest` read -- one source of truth, keyed by (name, tier) since Heroicons ships different path data per tier for the same name (e.g. `square-3-stack-3d` in both 20/solid and 24/solid). |
-
-```bash
-python3 tools/icons/capture_heroicons_reference.py                    # re-capture every reference
-python3 tools/icons/capture_heroicons_reference.py --only chevron-down,camera
-./gradlew :awake:ui:headless:desktopTest --tests "*IconFidelityTest*"
-```
-
-`IconFidelityTest` (`awake/ui/headless/src/desktopTest/`) renders each icon through
-the real CPU rasterizer at the same 128x128 size and compares coverage-mask IoU against the
-reference (threshold and measured correct-vs-corrupted separation are documented on
-`passThreshold` in the test). It writes a reference/ours/diff PNG per icon to
-`build/reports/icon-fidelity/` and a `metrics.tsv` — always regenerate references after adding
-or regenerating an icon in `HeroIcons.kt`, and add the new entry to `heroicons_manifest.json`.
-
-Catches gross shape errors (wrong path data, a rotated/mirrored derivation, a flattened curve).
-Does not catch sub-pixel drift -- both pipelines' antialiasing differs enough that IoU alone
-can't distinguish a 1px edge nudge from noise; that is a known ceiling, not a gap this guard
-silently papers over.
 
 ## Optional live preview
 

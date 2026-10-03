@@ -6,7 +6,7 @@
 package com.awakekt.awake.editor.core.asset
 
 /**
- * Registry managing active file format converters in Awake Studio.
+ * Registry managing active file format converters in an editor host.
  */
 class AssetConverterRegistry {
     // Every converter registered for an extension, oldest first; the newest one converts.
@@ -51,7 +51,7 @@ class AssetConverterRegistry {
     fun findConverter(extension: String): AssetConverter? = convertersByExt[cleanExtension(extension)]?.lastOrNull()
 
     /**
-     * Checks whether Awake Studio can convert files with [extension].
+     * Checks whether a registered converter accepts files with [extension].
      */
     fun canConvert(extension: String): Boolean = findConverter(extension) != null
 

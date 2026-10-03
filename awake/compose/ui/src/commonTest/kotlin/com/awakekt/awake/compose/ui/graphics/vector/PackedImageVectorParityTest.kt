@@ -17,8 +17,8 @@ import kotlin.test.assertFailsWith
 /**
  * [packedImageVector] decodes to exactly what the builder form of the same icon builds.
  *
- * Both halves of every pair below are generated output -- `svg_to_ui_image_vector.py` run over one
- * fixture SVG with and without `--packed`. That is the whole contract: the packed string is a
+ * Both halves of every pair below are generated output -- one fixture SVG emitted as builder calls
+ * and as a packed string. That is the whole contract: the packed string is a
  * transport for the builder calls, so a decoder that drifts from the emitter is the only way an
  * icon can silently change shape, and this is where that shows up.
  *

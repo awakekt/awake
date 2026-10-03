@@ -20,7 +20,6 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.graphics2d.UiDrawPrimitive
-import com.awakekt.awake.heroicons.icon.HeroIcons
 import com.awakekt.awake.ui.shadcn.components.ShadcnButton
 import com.awakekt.awake.ui.shadcn.components.ShadcnButtonSizeVariant
 import com.awakekt.awake.ui.shadcn.components.ShadcnButtonVariant

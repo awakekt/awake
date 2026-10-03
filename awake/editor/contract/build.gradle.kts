@@ -34,6 +34,6 @@ kotlin {
 mavenPublishing {
     pom {
         name.set("Awake Editor Contract")
-        description.set("Public extension point and plugin contracts for Awake Studio")
+        description.set("Public extension point and plugin contracts for Awake editor hosts")
     }
 }
