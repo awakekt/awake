@@ -43,6 +43,7 @@ public final class com/awakekt/awake/scene/rendering/RenderSystem3D : com/awakek
 	public final fun getLastFramePlanned ()Z
 	public final fun getLastFrustumCulledCount ()I
 	public final fun getLastOccludedCount ()I
+	public final fun planCapture (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/scene/rendering/camera/Camera;F)Lcom/awakekt/awake/render/command/GpuPassInput;
 	public fun update (Lcom/awakekt/awake/ecs/World;F)V
 }
 

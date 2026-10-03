@@ -10,6 +10,7 @@ import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.rendering.camera.Camera
@@ -84,6 +85,13 @@ class RenderSystem3D(
     /** Whether the previous frame triggered a full scene plan or reused a clean frame. */
     var lastFramePlanned: Boolean = false
         private set
+
+    /**
+     * [world] as [camera] sees it at [aspect], extracted exactly as [update] extracts the frame it
+     * draws, for an offscreen capture such as `Renderer.renderToTexture`. Nothing is submitted.
+     */
+    fun planCapture(world: World, camera: Camera, aspect: Float): GpuPassInput =
+        planner.plan(world, camera, elapsedTimeSeconds, aspect, viewport = null).passInput
 
     override fun update(world: World, delta: Float) {
         elapsedTimeSeconds += delta.coerceAtLeast(0f)

@@ -35,10 +35,9 @@ import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
-import com.awakekt.awake.render.passes.RenderDrawCommand
-import com.awakekt.awake.render.passes.ScenePassCompiler
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
@@ -48,9 +47,6 @@ import com.awakekt.awake.scene.core.transform.TransformSystem
 import com.awakekt.awake.scene.rendering.Camera
 import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.rendering.debug.DebugVisualizationSystem
-import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
-import com.awakekt.awake.scene.rendering.mesh.InstancedSkinnedMeshRenderer
-import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import kotlin.math.roundToInt
 import kotlin.time.TimeSource
@@ -350,19 +346,11 @@ class SceneAppLifecycleRuntime internal constructor(
 
     fun requireMaterial(name: String): Material = session.requireMaterial(this, name)
 
+    /** The scene as [camera] sees it, drawn offscreen at [width] by [height] the way the frame draws it. */
     suspend fun readback(camera: Lens, width: Int, height: Int): TextureAsset {
         val target = renderer.createRenderTarget(width, height)
         return try {
-            renderer.renderToTexture(
-                target,
-                ScenePassCompiler.compile(
-                    lens = camera,
-                    drawCalls = collectDrawCalls(),
-                    clipSpace = renderer.clipSpace,
-                    aspect = width.toFloat() / height.toFloat(),
-                    drawPreparer = gpuDrawPreparer,
-                ),
-            )
+            renderer.renderToTexture(target, planCapture(Camera(camera), width, height))
             renderer.readPixels(target)
         } finally {
             target.destroy()
@@ -399,66 +387,20 @@ class SceneAppLifecycleRuntime internal constructor(
         )
         val target = renderer.createRenderTarget(width, height)
         return try {
-            renderer.renderToTexture(
-                target,
-                ScenePassCompiler.compile(
-                    lens = camera.lens,
-                    drawCalls = collectDrawCalls(),
-                    clipSpace = renderer.clipSpace,
-                    aspect = width.toFloat() / height.toFloat(),
-                    drawPreparer = gpuDrawPreparer,
-                ),
-            )
+            renderer.renderToTexture(target, planCapture(camera, width, height))
             renderer.readFramebufferAttachment(target, attachment)
         } finally {
             target.destroy()
         }
     }
 
-    /** Every drawable entity, generic across ordinary/instanced/skinned-instanced content --
-     * mirrors [RenderSystem3D.update]'s own draw-call assembly (minus its LOD/culling/frustum
-     * concerns, not needed for an offscreen preview pass). Originally only queried plain
-     * [MeshRenderer] entities, which left [InstancedMeshRenderer]/[InstancedSkinnedMeshRenderer]
-     * content (instanced-cubes, instanced-skinned) invisible to any caller of this function
-     * (the camera preview / orientation gizmo's offscreen passes) even though the real
-     * viewport renders them fine via [RenderSystem3D]. */
-    fun collectDrawCalls(): List<RenderDrawCommand> {
-        val family = world.family<Transform, MeshRenderer>()
-        val transforms = family.componentsA()
-        val renderers = family.componentsB()
-        return buildList(family.size) {
-            var index = 0
-            while (index < family.size) {
-                add(
-                    RenderDrawCommand(
-                        mesh = renderers[index].mesh,
-                        material = renderers[index].material,
-                        model = transforms[index].worldMatrix,
-                    ),
-                )
-                index += 1
-            }
-            world.family<InstancedMeshRenderer>().forEach { _, instanced ->
-                add(
-                    RenderDrawCommand(
-                        mesh = instanced.mesh,
-                        material = instanced.material,
-                        instanceModels = instanced.transforms,
-                    ),
-                )
-            }
-            world.family<InstancedSkinnedMeshRenderer>().forEach { _, instanced ->
-                add(
-                    RenderDrawCommand(
-                        mesh = instanced.mesh,
-                        material = instanced.material,
-                        instanceModels = instanced.instances.map { it.transform },
-                        instanceJointPalettes = instanced.instances.map { it.jointPalette },
-                    ),
-                )
-            }
-        }
-    }
+    /** Extracted by the scene's own [RenderSystem3D], so a capture draws what the frame draws. */
+    private fun planCapture(camera: Camera, width: Int, height: Int): GpuPassInput =
+        (session.schedule.renderSystem ?: captureRenderSystem)
+            .planCapture(world, camera, width.toFloat() / height.toFloat())
+
+    /** Plans captures for a scene whose infrastructure has no [RenderSystem3D] of its own. */
+    private val captureRenderSystem by lazy { RenderSystem3D(renderer, gpuDrawPreparer) }
 
     fun <T : Any> service(type: kotlin.reflect.KClass<T>): T? = services.service(type)
 
