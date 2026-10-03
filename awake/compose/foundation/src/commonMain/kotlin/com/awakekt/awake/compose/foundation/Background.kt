@@ -52,12 +52,11 @@ fun Modifier.background(color: Color, cornerRadius: Dp): Modifier =
  * therefore inset by half the stroke width, putting the opaque band flush against the node's edge
  * and no further.
  *
- * **The anti-aliased edge does extend past it**, by `min(AA_FRINGE_PX, strokeWidth / 2)` -- half a
- * pixel for a 1dp border, one for anything wider. That rim is transparent at its outer edge and is
- * simply what an anti-aliased boundary is; `tessellateStrokeAa` places the whole fringe outside the
- * solid core deliberately, so a one-pixel border keeps a fully opaque pixel instead of dissolving
- * into its own coverage. A caller that needs a hard guarantee of nothing painted outside the node
- * wants a clip, not a narrower border.
+ * **The anti-aliased edge does extend past it**, by half of `min(AA_FRINGE_PX, strokeWidth / 2)` --
+ * a quarter pixel for a 1dp border, half a pixel for anything wider. The fringe is centred on the
+ * band's edge, as SVG coverage is, and is transparent at its outer edge; that is simply what an
+ * anti-aliased boundary is. A caller that needs a hard guarantee of nothing painted outside the
+ * node wants a clip, not a narrower border.
  */
 fun Modifier.border(
     width: Dp,
@@ -161,8 +160,8 @@ private class BorderNode :
         // Centred on a box inset by half the stroke width, so the ring's solid band lands inside
         // this node's bounds -- the same "inside, not centred on the edge" contract the old
         // edge-strip draw had, but as one continuous stroked outline instead of four independent
-        // rects that could never represent a shared corner arc. Its anti-aliased rim sits outside
-        // that band; see the doc on Modifier.border.
+        // rects that could never represent a shared corner arc. Its anti-aliased fringe straddles
+        // the band's edge; see the doc on Modifier.border.
         val inset = stroke / 2f
         val bounds = Rectangle(
             inset,

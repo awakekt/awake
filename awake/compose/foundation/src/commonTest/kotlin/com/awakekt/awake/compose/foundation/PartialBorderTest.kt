@@ -39,10 +39,11 @@ class PartialBorderTest {
         val mesh = output.primitives.filterIsInstance<UiDrawPrimitive.Mesh>().single().placedMesh()
         assertEquals(listOf(red), mesh.vertices.map { it.color }.filter { it.a > 0f }.distinct())
         // A 2px stroke on a 40x40 box: centreline inset by half its width to (1, 1, 38, 38), then
-        // grown by that same half width to the ring's outer edge and again by the anti-aliased
-        // fringe, which is min(AA_FRINGE_PX, stroke / 2) = 1. Asserting the box is asserting the
-        // stroke width, which a tessellated mesh no longer carries as a field.
-        assertEquals(Rectangle(-1f, -1f, 42f, 42f), mesh.bounds())
+        // grown by that same half width to the ring's outer edge and again by the outer half of
+        // the anti-aliased fringe, which is min(AA_FRINGE_PX, stroke / 2) = 1 centred on that edge.
+        // Asserting the box is asserting the stroke width, which a tessellated mesh no longer
+        // carries as a field.
+        assertEquals(Rectangle(-0.5f, -0.5f, 41f, 41f), mesh.bounds())
     }
 
     @Test

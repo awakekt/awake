@@ -36,7 +36,7 @@ tools/
                          compare, its JSON configs, and reference-app/ (the React app the
                          parity screenshots come from)
   fonts-tooling/         font instancing and reference capture, plus samples/
-  icons/                 Chromium capture of the vendored Lucide SVGs
+  icons/                 Chromium capture of the vendored Lucide SVGs, and the sheet comparison
   jni-binding-generator/ unrelated to UI; own owners
 ```
 
@@ -119,6 +119,7 @@ Ordered as the pipeline runs: `fetch → extract → vendor → verify → captu
 
 | Tool | Kind | Run it when | Don't |
 |---|---|---|---|
+| `compare_icon_sheets.py` | INVESTIGATION | Checking how Awake's Lucide sheet differs from Chromium's, using the two images render evidence publishes | Don't read the ink ratio alone. A symmetric glyph whose halves differ (one chevron arm heavier than the other) is a per-edge fringe defect even when total ink looks right |
 | `instantiate_roboto.py` | GENERATOR | Changing the shipped font instance | Don't expect a byte-identical re-run; see the gate table below |
 | `capture_font_reference.py` | INVESTIGATION | Investigating glyph baseline drift | Don't compare Awake against Awake. The whole point is Chromium as an external control — it is what proved real Roboto puts every glyph on one baseline while our atlas splits round and flat glyphs by a pixel |
 

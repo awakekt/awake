@@ -217,9 +217,9 @@ class StyleBoxModelTest {
         // The border is one continuous stroked outline, inset by half its own width so it
         // paints fully inside the box.
         val ring = primitives.filterIsInstance<UiDrawPrimitive.Mesh>().single().placedMesh()
-        // Centreline (0.5, 0.5, 39, 39) grown by half the 1px stroke and then by the fringe,
-        // min(AA_FRINGE_PX, stroke / 2) = 0.5.
-        assertEquals(Rectangle(-0.5f, -0.5f, 41f, 41f), ring.bounds())
+        // Centreline (0.5, 0.5, 39, 39) grown by half the 1px stroke and then by the outer half
+        // of the fringe, min(AA_FRINGE_PX, stroke / 2) = 0.5 centred on the edge.
+        assertEquals(Rectangle(-0.25f, -0.25f, 40.5f, 40.5f), ring.bounds())
 
         // A real corner arc, not a square one: a naive right-angle outline never places a
         // vertex inside the 7x7 corner square a rounded corner has to cut through.

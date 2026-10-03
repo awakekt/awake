@@ -9,6 +9,7 @@ import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math2d.Rectangle
 import com.awakekt.awake.core.math2d.dp
 import kotlin.math.abs
+import kotlin.math.hypot
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -222,8 +223,12 @@ class PathGeometryContractTest {
             mesh.vertices.any { it.color.a < 0.01f },
             "a one-pixel border lost its anti-aliased fringe",
         )
+        // The fringe is centred on the outline at x = 1.5, so the stroke is half covered exactly
+        // there and neither shrunk nor grown before anti-aliasing.
         val opaqueLeft = mesh.vertices.filter { it.color.a > 0.99f }.minOf { it.position.x }
-        assertEquals(1.5f, opaqueLeft, 0.01f, "a thin stroke was incorrectly shrunk before AA")
+        val clearLeft = mesh.vertices.filter { it.color.a < 0.01f }.minOf { it.position.x }
+        assertEquals(1.5f, (opaqueLeft + clearLeft) / 2f, 0.01f, "the half-covered edge moved off the outline")
+        assertEquals(0.5f, opaqueLeft - clearLeft, 0.01f, "the fringe is not min(AA_FRINGE_PX, width / 2)")
     }
 
     // --- clipping -----------------------------------------------------------
@@ -304,8 +309,118 @@ class PathGeometryContractTest {
 
         val meshMinX = path.tessellateStrokeAa(stroke, Color(1f, 1f, 1f, 1f)).vertices.minOf { it.position.x }
 
-        // fringe = min(AA_FRINGE_PX, strokeWidth / 2) = 0.5 here, placed outside the opaque core.
-        assertEquals(outlineMinX - 0.5f, meshMinX, 0.001f)
+        // fringe = min(AA_FRINGE_PX, strokeWidth / 2) = 0.5 here, centred on the outline: half of it
+        // reaches outside.
+        assertEquals(outlineMinX - 0.25f, meshMinX, 0.001f)
+    }
+
+    @Test
+    fun aStrokeOutlinesFringeStraddlesEveryVertexByHalfAPixel() {
+        // Lucide's chevron-down at 32 px, outlined the way VectorPainter outlines it. A centred
+        // 1 px fringe moves each vertex 0.5 px in and 0.5 px out, up to 0.707 at the mitred inner
+        // corner. Two bugs broke that, and this measured both: insetting a convex corner was capped
+        // at half its adjacent edge, 0.07 px on a round cap's 0.14 px segments, so the fringe sat
+        // outside the stroke and made it 7-24% heavier than Chromium's; and the outline closes on a
+        // point a float epsilon from its first, whose sliver edge set the first vertex to 1.31 px
+        // in and 0 px out, so the chevron's first arm drew lighter than its second.
+        val s = 4f / 3f
+        val path = DrawPath.build {
+            moveTo(6f * s, 9f * s)
+            lineTo(12f * s, 15f * s)
+            lineTo(18f * s, 9f * s)
+        }
+        val ring = path.strokeToSvgFillPath(DrawStroke(width = (2f * s).dp, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            .flattenContours().single().points
+
+        for ((label, distance) in listOf("inset" to -0.5f, "outset" to 0.5f)) {
+            val moved = offsetPolygon(ring, distance).mapIndexed { i, p -> hypot(p.x - ring[i].x, p.y - ring[i].y) }
+            assertTrue(
+                moved.all { it in 0.45f..0.75f },
+                "$label moved vertices by ${moved.withIndex().filter { it.value !in 0.45f..0.75f }.take(3)}",
+            )
+        }
+    }
+
+    @Test
+    fun everySolidCoreIsEmittedBeforeAnyFringe() {
+        // Two sides of a partial border, the shape InputOtp's slots draw: separate groups meeting at
+        // a corner. Emitted group by group, the first side's fringe reached a corner pixel the
+        // second side's core also covers, and a mesh paints each pixel once -- the input-otp
+        // baseline lost 10 border pixels that way.
+        val sides = DrawPath.build {
+            moveTo(0.5f, 0.5f)
+            lineTo(35.5f, 0.5f)
+            moveTo(35.5f, 0.5f)
+            lineTo(35.5f, 35.5f)
+        }
+        val mesh = sides.tessellateStrokeAa(DrawStroke(width = 1f.dp), Color(1f, 1f, 1f, 1f))
+        val fringe = mesh.indices.toList().chunked(3).map { triangle -> triangle.any { mesh.vertices[it].color.a < 1f } }
+
+        assertTrue(fringe.any { it } && fringe.any { !it }, "expected both core and fringe triangles")
+        assertEquals(fringe.sorted(), fringe, "a fringe triangle came before a core triangle")
+    }
+
+    @Test
+    fun aHolesFringeFadesIntoTheHole() {
+        // The hole's rings were offset with the outer ring's signs, so its transparent edge sat
+        // 0.5 px into the solid band, under the core, and the core reached 0.5 px into the hole:
+        // every hole -- an even-odd icon's, a stroked ring's inner edge -- drew hard and too small.
+        val frame = DrawPath.build(fillRule = FillRule.EvenOdd) {
+            moveTo(0f, 0f)
+            lineTo(20f, 0f)
+            lineTo(20f, 20f)
+            lineTo(0f, 20f)
+            close()
+            moveTo(5f, 5f)
+            lineTo(15f, 5f)
+            lineTo(15f, 15f)
+            lineTo(5f, 15f)
+            close()
+        }
+        val transparent = frame.tessellateFillAa(Color(1f, 1f, 1f, 1f)).vertices
+            .filter { it.color.a == 0f }
+            .map { it.position }
+
+        assertTrue(transparent.isNotEmpty(), "no fringe")
+        assertTrue(
+            transparent.all { p ->
+                val outside = p.x < 0f || p.x > 20f || p.y < 0f || p.y > 20f
+                val inHole = p.x > 5f && p.x < 15f && p.y > 5f && p.y < 15f
+                outside || inHole
+            },
+            "a transparent fringe vertex sits in the solid band: ${transparent.filter { it.x in 0f..20f && it.y in 0f..20f }.take(4)}",
+        )
+    }
+
+    @Test
+    fun aStrokedLoopsInnerEdgeNeverDoublesBack() {
+        // offsetClosedRing put a round-join arc on both sides of every vertex. On the inside of a
+        // turn the arc runs backwards, so a flattened circle's inner edge was 96 tiny loops, and
+        // the fringe built on it landed under the core: the ring's inner edge drew unantialiased.
+        val circle = DrawPath.build {
+            for (i in 0 until 96) {
+                val angle = 2.0 * kotlin.math.PI * i / 96
+                val x = 20f + 4f * kotlin.math.cos(angle).toFloat()
+                val y = 20f + 4f * kotlin.math.sin(angle).toFloat()
+                if (i == 0) moveTo(x, y) else lineTo(x, y)
+            }
+            close()
+        }
+        val rings = circle.strokeToSvgFillPath(DrawStroke(width = (8f / 3f).dp, join = StrokeJoin.Round))
+            .flattenContours()
+            .map { it.points }
+        val inner = rings.minBy { ring -> ring.sumOf { hypot(it.x - 20f, it.y - 20f).toDouble() } / ring.size }
+        val steps = inner.indices.map { i ->
+            val a = inner[i]
+            val b = inner[(i + 1) % inner.size]
+            val delta = kotlin.math.atan2(b.y - 20f, b.x - 20f) - kotlin.math.atan2(a.y - 20f, a.x - 20f)
+            ((delta + 3 * kotlin.math.PI) % (2 * kotlin.math.PI) - kotlin.math.PI).toFloat()
+        }.filter { abs(it) > 1e-6f }
+
+        assertTrue(
+            steps.all { it > 0f } || steps.all { it < 0f },
+            "the inner ring turns back ${steps.count { it > 0f }} times one way, ${steps.count { it < 0f }} the other",
+        )
     }
 
     @Test
