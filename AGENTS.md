@@ -5,9 +5,9 @@ Welcome to **Awake Engine**. This repository is the core Kotlin Multiplatform 3D
 ## Three-Layer Architecture Boundary
 
 Awake enforces strict boundaries across three distinct architectural layers:
-1. **Layer 1: Awake Core Engine (`awaken`)** (Apache 2.0): Runtime engine libraries (`:awake:scene`, `:awake:physics`, `:awake:render`, `:awake:ui:shadcn`, `:awake:project`, etc.).
-2. **Layer 2: Awake Core Editor (`awaken:awake:editor:contract`)** (Apache 2.0): Public, vendor-neutral editor contracts, provider extension points, and project plugin metadata published under `com.awakekt:awake-editor-contract`.
-3. **Layer 3: Awake Studio Pro (`awake-pro`)** (Commercial): Desktop authoring application (`:app:studio`), visual inspectors, collaborative workflows, and the secure runtime loader (`StudioPluginPipeline`).
+1. **Layer 1: Awake Core Engine (`awakekt/awake`)** (Apache 2.0): Runtime engine libraries (`:awake:scene`, `:awake:physics`, `:awake:render`, `:awake:ui:shadcn`, `:awake:project`, etc.).
+2. **Layer 2: Awake Core Editor (`:awake:editor:contract` in `awakekt/awake`)** (Apache 2.0): Public, vendor-neutral editor contracts, provider extension points, and project plugin metadata published under `com.awakekt:awake-editor-contract`.
+3. **Layer 3: Awake Studio Pro (`awakekt/awake-studio`)** (Commercial): Desktop authoring application (`:app:studio`), visual inspectors, collaborative workflows, and the secure runtime loader (`StudioPluginPipeline`).
 
 ## No third-party game brands
 
@@ -52,10 +52,13 @@ git clone https://github.com/awakekt/awake-agent-skills .agents/vendor/awake-age
 python3 .agents/vendor/awake-agent-skills-bootstrap/scripts/install_consumer.py --project .
 ```
 
-`.agents/skills.lock.toml` pins the public Apache-2.0 `awake-*` bundle and unmodified `kmp-*`
-vendor dependencies by tag, commit, and archive digest. Never edit deployed copies. Studio Pro
-repositories may add a private `maintained-studio` source using `studio-*` names; public Awake
-must not consume that overlay.
+`.agents/skills.lock.toml` pins, by tag, commit and archive digest: the Core maintainer bundle
+[awake-agent-skills](https://github.com/awakekt/awake-agent-skills), the game-authoring bundle
+[awake-game-agent-skills](https://github.com/awakekt/awake-game-agent-skills) (both Apache-2.0,
+`awake-*`), and unmodified `kmp-*` vendor skills. Never edit deployed copies. Studio repositories
+add a private `maintained-studio` source using `studio-*` names; public Awake must not consume
+that overlay. The awake-agent-skills README maps every Awake repository and which bundles each
+pins; new or changed skills follow its `docs/skill-authoring.md`.
 
 Keeping them current is automatic once the repository hooks are on
 (`git config core.hooksPath .githooks`): `hooks/sync-agent-skills.sh` reinstalls when a pull or branch

@@ -11,7 +11,7 @@ import com.awakekt.awake.core.image.toRgba8Bytes
 /**
  * Pure synchronous codec for decoding, creating, and normalizing [TerrainSplatWeightMap] data.
  *
- * Adheres to `skills/awake-codec-and-asset-source`: contains no file I/O or platform state.
+ * A pure codec (see the `awake-platform-capability-design` skill): contains no file I/O or platform state.
  */
 object SplatWeightMapCodec {
 

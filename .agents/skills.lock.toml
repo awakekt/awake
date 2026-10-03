@@ -6,24 +6,18 @@ version = 1
 id = "awake-core"
 kind = "maintained-core"
 source = "https://github.com/awakekt/awake-agent-skills.git"
-tag = "v0.1.8"
-commit = "64adcb5fc3a6684253d01d0e0f2d44c61d1461e1"
-archive_sha256 = "969ac7a98a6b638fbf49b716dfa1a401234839a5615e46e4aff56eb0261b26b0"
+tag = "v0.2.0"
+commit = "d446ed320b50d16d2e6f319fc0739eee0333ba85"
+archive_sha256 = "32b0a896efe366855017ad7f0d6267255137373b659b055dc957874898946d12"
 license = "Apache-2.0"
 skill_root = "skills"
 skills_target = ".agents/skills"
 skills = [
-  "awake", "awake-app-composition", "awake-capability-extraction", "awake-codec-and-asset-source",
-  "awake-compose-authoring", "awake-copyright-provenance", "awake-core-editor", "awake-core-math",
-  "awake-conformance-contract-testing", "awake-ecs-authoring", "awake-ecs-scene-runtime",
-  "awake-fbx-asset-cooking", "awake-framework-boundary",
+  "awake", "awake-copyright-provenance", "awake-core-editor", "awake-framework-boundary",
   "awake-milestone-workflow", "awake-physics-jolt", "awake-platform-capability-design",
-  "awake-render-debug-views", "awake-render-headless-verification",
-  "awake-render-pipeline", "awake-render-vulkan", "awake-render-webgpu", "awake-shadcn-parity-workflow",
-  "awake-shadcn-recipe-authoring", "awake-shadcn-recipe-consuming", "awake-shadcn-to-compose",
-  "awake-state-management", "awake-tailwind-to-compose", "awake-terrain-authoring", "awake-ui-authoring",
-  "awake-ui-css-modifier", "awake-ui-design-audit", "awake-ui-icons", "awake-ui-layout-guidance",
-  "awake-ui-performance", "awake-ui-verification", "awake-web-to-compose",
+  "awake-render-headless-verification", "awake-render-pipeline", "awake-render-vulkan",
+  "awake-render-webgpu", "awake-shadcn-parity-workflow", "awake-shadcn-recipe-authoring",
+  "awake-ui-authoring", "awake-ui-icons", "awake-ui-performance", "awake-ui-verification",
 ]
 command_root = "skills/awake/commands"
 commands_target = ".agents/commands"
@@ -34,6 +28,24 @@ agents = [
   "awake-architecture-auditor.md", "awake-docs-maintainer.md", "awake-engine-core-engineer.md",
   "awake-game-runtime-engineer.md", "awake-platform-release-engineer.md",
   "awake-render-backend-engineer.md", "awake-ui-engineer.md",
+]
+
+[[source]]
+id = "awake-game"
+kind = "maintained-core"
+source = "https://github.com/awakekt/awake-game-agent-skills.git"
+tag = "v0.1.0"
+commit = "5ceb9db03c02fedfaa38d5db93f005098672f04f"
+archive_sha256 = "05c88d993c47a9fda287ddd4487205fa0a1dc814a91eb60cc16d4747851131aa"
+license = "Apache-2.0"
+skill_root = "skills"
+skills_target = ".agents/skills"
+skills = [
+  "awake-app-composition", "awake-compose-authoring", "awake-core-math", "awake-ecs-authoring",
+  "awake-ecs-scene-runtime", "awake-editor-plugin-authoring", "awake-fbx-asset-cooking",
+  "awake-render-debug-views", "awake-shadcn-recipe-consuming", "awake-state-management",
+  "awake-terrain-authoring", "awake-ui-design-audit", "awake-ui-layout-guidance",
+  "awake-web-to-compose",
 ]
 
 [[source]]

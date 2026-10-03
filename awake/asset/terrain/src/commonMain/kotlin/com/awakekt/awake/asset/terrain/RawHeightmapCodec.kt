@@ -26,7 +26,7 @@ enum class RawHeightmapFormat(val bytesPerSample: Int) {
 /**
  * Pure, synchronous codec for decoding and encoding raw elevation byte buffers into [Heightmap].
  *
- * Adheres to `skills/awake-codec-and-asset-source`: contains no file I/O, network calls, or DI
+ * A pure codec (see the `awake-platform-capability-design` skill): contains no file I/O, network calls, or DI
  * state. Resolving external asset bytes belongs to the caller's asset source.
  */
 object RawHeightmapCodec {
