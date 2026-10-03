@@ -41,8 +41,12 @@ const val SCENE_SIZE: Int = 128
  * was extended to catch put it on the opposite side of the ground from the caster, which is a
  * correct-looking picture unless something compares the two backends.
  */
-fun Renderer.renderShadowScene(texturedGround: Boolean = false, texturedCaster: Boolean = false): ByteArray {
-    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+fun Renderer.renderShadowScene(
+    texturedGround: Boolean = false,
+    texturedCaster: Boolean = false,
+    size: Int = SCENE_SIZE,
+): ByteArray {
+    val target = createRenderTarget(size, size)
     val ground = createMesh(if (texturedGround) texturedPlane() else plane(GROUND_HALF, y = 0f))
     val caster = createMesh(
         if (texturedCaster) texturedPlane(CASTER_HALF, y = CASTER_Y) else plane(CASTER_HALF, y = CASTER_Y, r = 1f, g = 0f, b = 0f),
@@ -98,8 +102,9 @@ fun Renderer.renderTexturedPbrScene(
     timeSeconds: Float = 0f,
     sunDirection: Vec3f = Vec3f(0f, 1f, 0f),
     ambient: Float? = null,
+    size: Int = SCENE_SIZE,
 ): ByteArray {
-    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+    val target = createRenderTarget(size, size)
     val mesh = createMesh(texturedPlane())
     val material = createMaterial(
         texture = texture,
@@ -152,8 +157,12 @@ fun Renderer.renderTexturedPbrScene(
  * Verifies that front-facing surfaces (viewed from above) are drawn on both backends, while
  * back-facing surfaces (viewed from below) are culled.
  */
-fun Renderer.renderBackCulledScene(cullBack: Boolean = true, viewFromAbove: Boolean = true): ByteArray {
-    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+fun Renderer.renderBackCulledScene(
+    cullBack: Boolean = true,
+    viewFromAbove: Boolean = true,
+    size: Int = SCENE_SIZE,
+): ByteArray {
+    val target = createRenderTarget(size, size)
     val mesh = createMesh(generate { plane(size = GROUND_HALF * 2f, colored = false) })
     val material = createMaterial(uniformFloatCount = MaterialUniformLayouts.LitShadow.total)
     return try {
@@ -267,8 +276,8 @@ private const val LIGHT_X = 2f
  * part that matters: the cascades are fitted to twice the depth [renderShadowScene] uses, and a
  * `size = 1` cube then covers very few texels of whichever slice contains it.
  */
-fun Renderer.renderStudioCubeScene(yawRadians: Float): ByteArray {
-    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+fun Renderer.renderStudioCubeScene(yawRadians: Float, size: Int = SCENE_SIZE): ByteArray {
+    val target = createRenderTarget(size, size)
     val ground = createMesh(generate { plane(size = GROUND_SIZE, colored = false) })
     // Uncoloured, unlike the studio's own cube: [selfShadowedPixels] reads luminance, and a
     // per-face vertex colour moves that on its own -- a hue step across a face boundary then
