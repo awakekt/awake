@@ -32,7 +32,17 @@ your code imports or otherwise uses them.
 - A `-SNAPSHOT` is a mutable integration build, not a stable release. Release verification rejects
   snapshot dependencies and never guesses a stable replacement by deleting the suffix.
 
-In Awake Pro, `awake.useLocalCore=true` is a development-only composite-build option. Repository
-publishing and consumer verification must resolve published Core and Vulkan coordinates from Maven,
-without local project substitution. See the [Awake Pro publishing guide](https://github.com/awakekt/awake-pro/blob/main/docs/library-publishing.md)
+To build a consumer against an unreleased checkout, publish it to the local Maven repository under a
+version no release uses, and point the consumer at it:
+
+```bash
+./gradlew publishToMavenLocal -Pawake.version=0.1.0-local
+./gradlew -p build-logic publishToMavenLocal -Pawake.version=0.1.0-local
+```
+
+The second command publishes the Gradle plugins (`com.awakekt.awake.plugin.*`) that consumers apply.
+
+Awake Studio and the games resolve Awake from Maven Central, or from `mavenLocal()` when built with
+the same `-Pawake.version`. Neither includes a Core checkout as a source build. Repository publishing
+and consumer verification resolve published Core and Vulkan coordinates from Maven Central. See the [Awake Pro publishing guide](https://github.com/awakekt/awake-pro/blob/main/docs/library-publishing.md)
 for private Pro packages and credentials.
