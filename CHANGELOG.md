@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.8] - 2026-10-03
+
+### Added
+
+- **Editor plugins can draw their own panels.** `PanelProvider` in `:awake:editor:contract` adds one `context(_: Composer) fun content()` to a provider whose kind is `BottomPanel`, `Sidebar` or `InspectorPanel`, so a plugin ships UI against the Apache contract alone instead of linking a particular editor's UI library. The host labels the tab with the provider's display name; `ProviderRegistry` rejects a panel provider in any other slot.
+- **Particles can lie flat.** `particle_emitter` takes `facing: "Flat"` (and `ParticleVisual` takes `facing = ParticleFacing.Flat`) to lay each particle in the plane perpendicular to the emitter node's up axis instead of turning it to the camera, for ground glows, ripples and magic circles that spread on the floor. Particles keep their position, size, colour and fade, the node's rotation tilts the plane, and `Camera`, the default, leaves existing scenes unchanged. On WebGPU, particle draws that share a sprite no longer share one uniform block, so each keeps its own frame count and facing.
+- **Publish a checkout to the local Maven repository under a version no release uses.** `./gradlew publishToMavenLocal -Pawake.version=0.1.0-local` (and `-p build-logic` for the Gradle plugins) gives every module and the Vulkan family that one version, so a consumer such as Awake Studio can build against unreleased Core from `mavenLocal()` without including Core's source build. `awake.version` cannot be combined with `awake.publishFamily`.
+- **Prefab links load.** A node with `prefab_link { path }` places a prefab file there: `SceneDocument.withPrefabs` puts the prefab's root under the node, reading each file once however many nodes link it, and prefabs may link others. `loadPlayableProject` runs it. The live `PrefabLink` component exports back as the link, so a saved world does not copy the prefab in. `ScenePrefab` files now decode their components. The unused `prefabGuid`, `isRoot`, `SceneNode.prefabGuid` and `SceneNode.overrides` are removed.
+- **A material tints skinned meshes.** A skinned entity's `PbrMaterial` base colour and emissive factors now reach its draw, so a greyscale part such as hair or dyed armour takes a per-character colour instead of drawing its raw texture. The skinned shaders multiply the texture and vertex colour by the base colour (its alpha included) and add the emissive, as the static textured shader does; a skinned draw with no material stays untinted. `skinnedMaterialFloats` packs a palette with factors for callers that build draws themselves. Instanced skinned draws are not tinted yet.
+
+### Changed
+
+- **`awake:engine:window` hosts the iOS view.** The UIKit view, its display link, and its touch and text input moved out of the Vulkan family into Core, so an iOS input change releases with Core. `makeVulkanGameViewController` keeps its signature. Breaking: `VulkanMetalView` is now `com.awakekt.awake.engine.window.AwakeMetalView`, and the `syncAwake*` UIKit bridges moved to the same package.
+
+### Fixed
+
+- **`awake:engine:window` publishes for every target.** It had desktop sources only, so its iOS targets compiled no library and publishing the release failed. The module now has common code as well.
+- **`publishToMavenLocal -Pawake.version=<v>` publishes every target.** The Android, desktop and iOS publications ran only with `-PisMainHost=true`, so a local publish carried wasm alone and a desktop consumer could not resolve it. A local version now implies it.
+
 ## [0.1.0-rc.7] - 2026-10-03
 
 ### Added
