@@ -127,6 +127,18 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         extraDescriptorSetLayouts = listOf(DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
         variant = PipelineVariant.Instanced,
     )
+    // The sprite pipeline RenderPlan builds for PipelineKey.Particle.
+    val spritePipeline = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        sceneRenderPass,
+        descriptorSetLayout,
+        runBlocking { spirvPair(PackShaderSets.Particle) },
+        VertexFormat.PositionUv,
+        vertexEntryPoint = "vertexMain",
+        fragmentEntryPoint = "fragmentMain",
+        variant = PipelineVariant.AlphaBlendedParticle,
+    )
     val depthPrePass = DepthPrePassFeature(
         depthTarget,
         DepthOnlyPipeline(
@@ -221,6 +233,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline),
             additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
+            particlePipelines = mapOf(VertexFormat.PositionUv to spritePipeline),
         ),
         renderFeatures = listOf(
             OpaqueRenderFeature(VulkanLinePass(linePipeline)),
@@ -243,6 +256,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             instancedTexturedPipeline.destroy()
             transparentTexturedPipeline.destroy()
             additiveTexturedPipeline.destroy()
+            spritePipeline.destroy()
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, descriptorSetLayout.handle)
             transferContext.destroy()
             Vulkan.vkDestroyRenderPass(graphicsDevice.device, sceneRenderPass)

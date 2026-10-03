@@ -15,11 +15,16 @@ import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.document.SceneDocument
+import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.rendering.particles.ParticleContentSystem
 import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
 import com.awakekt.awake.scene.rendering.particles.ParticleEmitterBinding
 import com.awakekt.awake.scene.rendering.particles.ParticleEmitterSource
+import com.awakekt.awake.scene.rendering.particles.ParticleFacing
 import com.awakekt.awake.scene.rendering.particles.SceneParticleEmitter
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,6 +32,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 class SceneParticleEmitterTest {
+    init {
+        SceneComponentRegistry.registerGlobal(ParticleEmitterBinding)
+    }
+
     private val sprite = TextureAsset(ByteArray(4) { -1 }, width = 1, height = 1)
     private val dust = SceneParticleEmitter(texture = "dust.png", endScale = 0.5f, radialSpeed = 3f, additive = true)
 
@@ -43,6 +52,25 @@ class SceneParticleEmitterTest {
         assertEquals(0.5f, emitter.visual.endScale)
         assertEquals(true, emitter.visual.additive)
         assertEquals(3f, emitter.motion.radialSpeed)
+    }
+
+    /** `facing` survives the scene document both ways and reaches the live emitter; left out, it is `Camera`. */
+    @Test
+    fun facingRoundTripsThroughTheDocumentAndReachesTheLiveEmitter() {
+        fun decode(component: String) = SceneLoader.decode("""{"version": 1, "nodes": [{"components": [$component]}]}""")
+            .nodes.single().components.single() as SceneParticleEmitter
+        val glow = decode("""{"component": "particle_emitter", "texture": "glow.png", "facing": "Flat"}""")
+        val reencoded = SceneLoader.decode(SceneLoader.encode(SceneDocument(nodes = listOf(SceneNode("glow", components = listOf(glow))))))
+        val world = World()
+        val node = world.node(glow)
+
+        ParticleContentSystem(CountingRenderer(), mapOf("glow.png" to sprite)).update(world, 0f)
+
+        assertEquals(ParticleFacing.Flat, glow.facing)
+        assertEquals(glow, reencoded.nodes.single().components.single())
+        assertEquals(ParticleFacing.Flat, world.get<ParticleEmitter>(node)!!.visual.facing)
+        assertEquals(glow, ParticleEmitterBinding.export(world, node, world.get<ParticleEmitterSource>(node)!!))
+        assertEquals(ParticleFacing.Camera, decode("""{"component": "particle_emitter", "texture": "dust.png"}""").facing)
     }
 
     @Test

@@ -37,12 +37,13 @@ import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
 
 /**
- * Camera-facing sprites spawned at the node's world position: a [ParticleEmitter] authored as data.
+ * Sprites spawned at the node's world position: a [ParticleEmitter] authored as data.
  * [texture] is a project image file. Sizes, speeds and [spawnRadius] are world units; the node's
- * rotation and scale do not apply. Each particle fades from [startAlpha] to 0 over [lifetime]
+ * scale does not apply. Each particle fades from [startAlpha] to 0 over [lifetime]
  * seconds while its tint moves from [color] to [endColor] and its size from [scale] to [endScale].
  * [additive] glows add to what is behind them, which needs the plan's particle pipeline built with
- * `buildAdditive`.
+ * `buildAdditive`. [facing] turns each sprite to the camera, or with [ParticleFacing.Flat] lays it in
+ * the plane perpendicular to the node's up axis, the only use of the node's rotation.
  */
 @Serializable
 @SerialName("particle_emitter")
@@ -64,6 +65,7 @@ data class SceneParticleEmitter(
     val frameCount: Int = 1,
     val frameRate: Float = 8f,
     val additive: Boolean = false,
+    val facing: ParticleFacing = ParticleFacing.Camera,
 ) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         fun require(ok: Boolean, message: String) {
@@ -190,6 +192,7 @@ class ParticleContentSystem(
                 frameRate = authored.frameRate,
                 endScale = authored.endScale,
                 additive = authored.additive,
+                facing = authored.facing,
             ),
             dynamics = ParticleDynamics(followEntity = entity),
         )
@@ -202,7 +205,7 @@ private fun SceneColor.toVec3f() = Vec3f(r, g, b)
 
 private val log = Logger("scene-particles")
 
-/** A unit quad in the XY plane, position and UV, as the particle shader draws it facing the camera. */
+/** A unit quad in the XY plane, position and UV; the particle shader lays it along each draw's quad axes. */
 private val QUAD = MeshGeometry(
     floatArrayOf(
         -0.5f, -0.5f, 0f, 0f, 1f,
