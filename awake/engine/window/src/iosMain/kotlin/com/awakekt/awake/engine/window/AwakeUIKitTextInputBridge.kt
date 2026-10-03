@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.vulkan
+package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.TextEditAction
@@ -11,10 +11,8 @@ import platform.UIKit.UIView
 import platform.UIKit.reloadInputViews
 
 /**
- * Wires [VulkanMetalView]'s `UIKeyInput` conformance (declared on the view itself, see its
- * class doc) to [Input] -- `UIKeyInput` rather than the full `UITextInput` protocol
- * deliberately: no selection ranges/marked text/autocomplete UI needed for a v1 that only
- * needs typed text + Backspace + Enter (see the task that added this file).
+ * Wires [AwakeMetalView]'s `UIKeyInput` conformance to [Input]. `UIKeyInput` rather than
+ * `UITextInput`: typed text, Backspace and Enter need no selection, marked text or autocomplete.
  */
 fun UIView.syncAwakeTextInsert(text: String, input: Input) {
     if (text == "\n") {
@@ -31,7 +29,7 @@ fun UIView.syncAwakeTextDeleteBackward(input: Input) {
 /**
  * Polls [Input.textInputFocused] and calls `becomeFirstResponder`/`resignFirstResponder` on
  * the rising/falling edge only -- [wasFocused] is the caller's own previous-value slot (see
- * [VulkanMetalView]) so repeated calls while focus state is unchanged don't spam UIKit with
+ * [AwakeMetalView]) so repeated calls while focus state is unchanged don't spam UIKit with
  * redundant first-responder churn every frame.
  */
 fun UIView.syncAwakeTextInputFocus(wasFocused: Boolean, input: Input): Boolean {

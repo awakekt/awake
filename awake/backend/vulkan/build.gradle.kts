@@ -87,6 +87,10 @@ kotlin {
             // The desktop window, its input and its frame loop; this backend only draws into it.
             implementation(project(":awake:engine:window"))
         }
+        iosMain.dependencies {
+            // The UIKit view, its display link and touch/text input; this backend draws into its layer.
+            implementation(project(":awake:engine:window"))
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(project(":awake:engine:compose"))
