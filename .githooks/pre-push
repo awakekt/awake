@@ -12,49 +12,79 @@ if [[ "${AWAKE_SKIP_DETEKT_HOOK:-}" == "1" || "${SKIP_DETEKT_HOOK:-}" == "1" ]];
 fi
 
 zero_oid="0000000000000000000000000000000000000000"
-should_run=0
 
-quality_paths=(
-  ":(glob)**/*.kt"
-  ":(glob)**/*.kts"
-  "build-logic/**"
-  "config/detekt/**"
-  "gradle/libs.versions.toml"
-  ".github/workflows/**"
-  # A dump edited by hand rather than regenerated is the one API drift a `.kt` change does not
-  # imply, and it is the kind that looks deliberate in review.
-  ":(glob)**/api/**/*.api"
-)
-
+# What the push adds to the remote: files changed by commits reachable from the pushed refs and from
+# no remote-tracking ref, both sides of a move included. A tag or branch on a commit the remote
+# already has adds nothing, so a release tag on a merged commit checks nothing; CI checked it.
+changed_files=""
 while read -r local_ref local_oid remote_ref remote_oid; do
-  if [[ -z "${local_ref:-}" ]]; then
+  if [[ -z "${local_ref:-}" || "$local_oid" == "$zero_oid" ]]; then
     continue
   fi
-
-  if [[ "$local_oid" == "$zero_oid" ]]; then
-    continue
-  fi
-
-  if [[ "$remote_oid" == "$zero_oid" ]]; then
-    should_run=1
-    break
-  fi
-
-  if git diff --name-only "$remote_oid..$local_oid" -- "${quality_paths[@]}" | grep -q .; then
-    should_run=1
-    break
-  fi
+  changed_files+="$(git log --format= --name-only --no-renames "$local_oid" --not --remotes)"$'\n'
 done
 
-if [[ "$should_run" != "1" ]]; then
+# Scope the Gradle checks to the modules those files belong to. A change to the build itself can
+# move any module, so it checks them all, as CI does on every push.
+full_run=0
+modules=()
+add_module() {
+  local module
+  for module in "${modules[@]:-}"; do
+    [[ "$module" == "$1" ]] && return
+  done
+  modules+=("$1")
+}
+while read -r file; do
+  case "$file" in
+    "") continue ;;
+    build-logic/* | config/detekt/* | gradle/libs.versions.toml | settings.gradle.kts | build.gradle.kts | gradle.properties)
+      full_run=1 ;;
+    *.kt | *.kts | */api/*.api | */api/*/*.api)
+      # The nearest directory that is an included project owns the file; one outside every
+      # project (a standalone tool) is not part of this build.
+      dir="$(dirname "$file")"
+      while [[ "$dir" != "." ]]; do
+        if [[ -f "$dir/build.gradle.kts" ]] && grep -qF "include(\":${dir//\//:}\")" settings.gradle.kts; then
+          add_module "$dir"
+          break
+        fi
+        dir="$(dirname "$dir")"
+      done ;;
+  esac
+done <<< "$changed_files"
+
+if [[ "$full_run" != "1" && ${#modules[@]} -eq 0 ]]; then
   echo "Pre-push hooks: no Kotlin/build quality changes detected; skipping." >&2
   exit 0
 fi
 
-if [[ "$run_detekt" == "1" ]]; then
-  echo "Detekt pre-push hook: running ./gradlew detekt" >&2
+detekt_tasks=(detekt)
+api_tasks=(desktopApiCheck)
+touches_engine=1
+if [[ "$full_run" != "1" ]]; then
+  detekt_tasks=()
+  api_tasks=()
+  touches_engine=0
+  for dir in "${modules[@]}"; do
+    project=":${dir//\//:}"
+    if grep -q "plugin.detekt" "$dir/build.gradle.kts"; then
+      detekt_tasks+=("$project:detekt")
+    fi
+    if [[ -d "$dir/api/desktop" ]]; then
+      api_tasks+=("$project:desktopApiCheck")
+    fi
+    if [[ "$dir" == awake/* ]]; then
+      touches_engine=1
+    fi
+  done
+  echo "Pre-push hooks: checking ${modules[*]}" >&2
+fi
+
+if [[ "$run_detekt" == "1" && ${#detekt_tasks[@]} -gt 0 ]]; then
+  echo "Detekt pre-push hook: running ./gradlew ${detekt_tasks[*]}" >&2
   echo "Set AWAKE_SKIP_DETEKT_HOOK=1 only for an explicit, reviewed emergency bypass." >&2
-  ./gradlew detekt
+  ./gradlew "${detekt_tasks[@]}"
 fi
 
 # 2. Public API surface
@@ -75,9 +105,9 @@ fi
 # in an emergency should not also stop checking whether they changed the published surface.
 if [[ "${AWAKE_SKIP_API_HOOK:-}" == "1" ]]; then
   echo "Skipping the API surface check because AWAKE_SKIP_API_HOOK is set." >&2
-else
-  echo "API pre-push hook: running ./gradlew desktopApiCheck" >&2
-  if ! ./gradlew desktopApiCheck --continue; then
+elif [[ ${#api_tasks[@]} -gt 0 ]]; then
+  echo "API pre-push hook: running ./gradlew ${api_tasks[*]}" >&2
+  if ! ./gradlew "${api_tasks[@]}" --continue; then
     echo >&2
     echo "The committed API dumps no longer match the code. Regenerate and commit them:" >&2
     echo "  ./gradlew desktopApiDump" >&2
@@ -103,6 +133,10 @@ fi
 # sub-second greps, and making every commit pay a test run would just get the hook disabled.
 if [[ "${AWAKE_SKIP_PERF_HOOK:-}" == "1" ]]; then
   echo "Skipping cost/appearance ratchets because AWAKE_SKIP_PERF_HOOK is set." >&2
+  exit 0
+fi
+# Only an engine change moves them; a sample or tool change cannot.
+if [[ "$touches_engine" != "1" ]]; then
   exit 0
 fi
 

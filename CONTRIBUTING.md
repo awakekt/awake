@@ -59,7 +59,7 @@ The ones you run most:
 | Task | When |
 | --- | --- |
 | `./gradlew check` | Before a pull request. |
-| `./gradlew detekt` | Lint only; the pre-push hook runs it. |
+| `./gradlew detekt` | Lint only; the pre-push hook runs it on the modules a push changes. |
 | `./gradlew desktopApiDump` | After changing public API, so the pre-push `desktopApiCheck` passes. |
 | `./gradlew :awake:engine:render:parity:captureRenderEvidence` | Render screenshots for a PR that changes rendering. |
 | `./gradlew releaseCut -Prelease.channel=<channel>` | Cut a release; see [the release process](docs/release-process.md). |
