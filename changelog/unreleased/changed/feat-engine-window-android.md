@@ -1,0 +1,1 @@
+- **`awake:engine:window` hosts the Android view.** The `SurfaceView`, its render thread, and its touch, key and IME input moved out of `awake:engine:platform` into the window module. Breaking: `com.awakekt.awake.engine.platform.VulkanView` is now `com.awakekt.awake.engine.window.AwakeSurfaceView`, with the same constructor; it never used Vulkan, so the name now says what it is.

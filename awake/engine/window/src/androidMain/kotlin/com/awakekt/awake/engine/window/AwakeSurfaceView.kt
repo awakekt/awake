@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.engine.platform
+package com.awakekt.awake.engine.window
 
 import android.content.Context
 import android.view.KeyEvent
@@ -21,9 +21,15 @@ import com.awakekt.awake.core.input.createAwakeInputConnection
 import com.awakekt.awake.core.input.syncAwakeKeyInput
 import com.awakekt.awake.core.input.syncAwakePointerInput
 import com.awakekt.awake.core.input.syncAwakeTextShortcut
+import com.awakekt.awake.engine.platform.WindowLifecycle
 
+/**
+ * The Android window: a [SurfaceView] whose render thread drives [lifecycle] and whose touch, key
+ * and IME events feed its input. The backend creates its swapchain from the `Surface` it receives;
+ * nothing here knows about a GPU API.
+ */
 @Suppress("TooManyFunctions") // One override per WindowLifecycle / SurfaceHolder callback.
-class VulkanView(
+class AwakeSurfaceView(
     context: Context,
     private val lifecycle: WindowLifecycle,
 ) : SurfaceView(context),
@@ -71,7 +77,7 @@ class VulkanView(
                     }
                 }
             }
-        }, "VulkanView-Render").apply { start() }
+        }, "AwakeSurfaceView-Render").apply { start() }
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {

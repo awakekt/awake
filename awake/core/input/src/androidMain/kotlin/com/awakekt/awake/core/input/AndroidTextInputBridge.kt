@@ -17,7 +17,7 @@ import android.view.inputmethod.InputConnection
 import android.view.inputmethod.InputMethodManager
 
 /**
- * [InputConnection] fed to the IME by `VulkanView` (awake:engine:platform)
+ * [InputConnection] fed to the IME by `AwakeSurfaceView` (awake:engine:window)
  * .onCreateInputConnection -- a `SurfaceView` has no text field of its own for the IME to edit,
  * so this forwards committed text/deletes straight into [input] instead of maintaining an
  * `Editable`.
