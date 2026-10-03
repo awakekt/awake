@@ -420,9 +420,9 @@ public final class com/awakekt/awake/render/passes/uniforms/PbrUniformsKt {
 	public static final fun pbrTexturedMaterialFloats (Lcom/awakekt/awake/render/command/GpuDrawRequest;)[F
 	public static final fun skinnedMaterialFloats ([FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;[F)[F
 	public static synthetic fun skinnedMaterialFloats$default ([FLcom/awakekt/awake/core/color/Color;Lcom/awakekt/awake/core/color/Color;[FILjava/lang/Object;)[F
-	public static final fun texturedUniforms (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;[F[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;FFLcom/awakekt/awake/render/command/GpuDebugView;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/render/command/GpuShadowCascadeData;F)[F
+	public static final fun texturedUniforms (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;[F[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;FFLcom/awakekt/awake/render/command/GpuDebugView;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/render/command/GpuShadowCascadeData;FZ)[F
 	public static final fun texturedUniforms (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/render/passes/uniforms/SceneFrameUniforms;)[F
-	public static synthetic fun texturedUniforms$default (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;[F[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;FFLcom/awakekt/awake/render/command/GpuDebugView;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/render/command/GpuShadowCascadeData;FILjava/lang/Object;)[F
+	public static synthetic fun texturedUniforms$default (Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/Mat4;[F[FLcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;FFLcom/awakekt/awake/render/command/GpuDebugView;Lcom/awakekt/awake/core/math/Vec3f;FLcom/awakekt/awake/render/command/GpuShadowCascadeData;FZILjava/lang/Object;)[F
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/PointLight {
