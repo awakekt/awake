@@ -23,7 +23,6 @@ field-text
 form
 hover-card
 icon
-input
 input-group
 item
 kbd
