@@ -221,9 +221,10 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
     val applyFog = fn("applyFog", returns = AslType.Data(GpuDataShape.Vec3)) {
         val baseColor by param(GpuDataShape.Vec3)
         val pos by param(GpuDataShape.Vec3)
+        val fogTarget by param(GpuDataShape.Vec3)
         val dist = let("dist", length(cameraPosition.xyz - pos))
         val fogAmount = let("fogAmount", 1f.lit - exp(-fogColor.a * dist))
-        returnValue(mix(baseColor, fogColor.rgb, saturate(fogAmount)))
+        returnValue(mix(baseColor, fogTarget, saturate(fogAmount)))
     }
 
     fragment {
@@ -287,7 +288,16 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
             val pRadiance = let("pRadiance", pointLightColors[i].xyz * pi * pNdotL * attenuation)
             assign(litColor, litColor + (pDiffuse + pSpecular) * pRadiance)
         }
-        val shaded = vec4(applyFog(displayTransform.display(litColor, exposure.x), worldPos), baseColorSample.a * baseColorFactor.a)
+        // An additive draw is light added to what is behind it, not a lit surface: it adds only its
+        // own colour, and fades out in fog because the fog is already behind it. Lit, a black
+        // texel would still add the sun's specular reflection, and fogged, the fog colour.
+        val additive = pbrFactors.w gt 0.5f.lit
+        val emitted = select(litColor, albedo + emissive, additive)
+        val fogTarget = select(fogColor.rgb, vec3(0f.lit), additive)
+        val shaded = vec4(
+            applyFog(displayTransform.display(emitted, exposure.x), worldPos, fogTarget),
+            baseColorSample.a * baseColorFactor.a,
+        )
         val surface = DebugSurface(n, worldPos, displayTransform.encoded(albedo), shadow = shadowFactor, shadowCascade = cascades.shadowCascade(worldPos))
         // A masked material's cut-out, last: after it no derivative may follow. An opaque material's
         // cutoff is 0, so its texture alpha is ignored.

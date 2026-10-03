@@ -261,7 +261,7 @@ Draws a mesh with a material. Names are looked up in the scene's asset library. 
 | `material` | string | required | Name of a registered or resolvable material. Must not be blank. |
 | `cullMode` | `None` · `Back` · `Front` | `None` | Face culling. Also read as `cull_mode`. |
 | `transparent` | boolean | `false` | Draw in the transparent pass, blended and sorted back to front. |
-| `additive` | boolean | `false` | With `transparent`, add its colour to what is behind it: glows and fire. |
+| `additive` | boolean | `false` | With `transparent`, add its colour to what is behind it: glows and fire. A textured mesh draws unlit then, adding only its base and emissive colour, so black texels add nothing. |
 | `billboard` | boolean | `false` | Face the camera every frame, keeping the entity's position and scale. The mesh's +Z turns toward the eye. A billboard is not culled. |
 
 ## `movement_control`

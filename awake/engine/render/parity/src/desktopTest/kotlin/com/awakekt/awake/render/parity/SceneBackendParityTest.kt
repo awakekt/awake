@@ -362,6 +362,33 @@ class SceneBackendParityTest {
     }
 
     /**
+     * An additive effect sprite adds its glow and nothing else: where its texture is black the
+     * ground shows as it does without it, though the sun glints off it, and in fog too. A white
+     * sprite shows the same quad does draw.
+     */
+    @Test
+    fun anAdditiveSpriteAddsNothingWhereItsTextureIsBlackOnBothBackends() {
+        val failures = BACKEND_ORDER.flatMap { backend ->
+            val renderer = session(backend).renderer
+            listOf(0f, FOG_DENSITY).flatMap { fog ->
+                val ground = renderer.renderEffectSpriteScene(null, fog)
+                val glowing = renderer.renderEffectSpriteScene(SolidWhite, fog)
+                val black = renderer.renderEffectSpriteScene(SolidBlack, fog).also { write(backend, it, "effect-sprite-black-fog$fog") }
+                val pixels = 0 until SCENE_SIZE * SCENE_SIZE
+
+                val glow = pixels.count { pixel -> (0..2).any { glowing.channel(pixel, it) > ground.channel(pixel, it) } }
+                val added = pixels.map { pixel -> (0..2).maxOf { black.channel(pixel, it) - ground.channel(pixel, it) } }
+                val brightened = added.count { it > CHANNEL_TOLERANCE }
+                listOfNotNull(
+                    "$backend, fog $fog: the white sprite added to only $glow px".takeIf { glow <= MIN_QUAD_PIXELS },
+                    "$backend, fog $fog: the black sprite brightened $brightened px, by up to ${added.max()}".takeIf { brightened > 0 },
+                )
+            }
+        }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
+    }
+
+    /**
      * A flat sprite lies in the ground plane: seen from above it covers pixels, seen edge-on none.
      * The camera-facing sprite drawn beside it from the same material shows from both views, so
      * each draw keeps its own quad axes rather than sharing the last draw's.

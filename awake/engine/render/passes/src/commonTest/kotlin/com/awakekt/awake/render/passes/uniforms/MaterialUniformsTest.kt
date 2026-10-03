@@ -125,6 +125,16 @@ class MaterialUniformsTest {
     }
 
     @Test
+    fun texturedMaterialFloatsMarkOnlyATransparentAdditiveDraw() {
+        val drawCall = RenderDrawCommand(mesh = FakeMesh(), material = FakeMaterial(), transparent = true, additive = true)
+
+        assertEquals(1f, pbrTexturedMaterialFloats(drawCall)[3])
+        // Additive counts only on a transparent draw; an opaque one covers what is behind it.
+        assertEquals(0f, pbrTexturedMaterialFloats(drawCall.copy(transparent = false))[3])
+        assertEquals(0f, pbrTexturedMaterialFloats(drawCall.copy(additive = false))[3])
+    }
+
+    @Test
     fun testFogUniformFloats() {
         val fog = fogUniformFloats(Color(r = 0.5f, g = 0.6f, b = 0.7f), 0.05f)
         assertEquals(4, fog.size)

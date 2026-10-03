@@ -121,17 +121,18 @@ private fun UniformWriter.putTextureAnimation(animation: TextureAnimation): Unif
 internal fun pbrMaterialFloats(values: FloatArray): FloatArray = pbrMaterialPayload(values)
 
 /**
- * Packs `[metallic, roughness, alphaCutoff, pad] + baseColorFactor.rgba + emissiveFactor.rgba` and
- * the texture animation for the textured glTF PBR path.
+ * Packs `[metallic, roughness, alphaCutoff, additive] + baseColorFactor.rgba + emissiveFactor.rgba`
+ * and the texture animation for the textured glTF PBR path.
  *
  * @param drawCall Supplies the factors through `extraUniformFloats`, or nothing for the defaults.
  * The third float in the metallic/roughness vec4 is the draw's alpha cutoff, which masked depth
- * shaders read; the draw's time goes in the texture scroll's `z`, which the animation reads.
+ * shaders read, and the fourth is 1 for a draw blended additively, which the textured shader then
+ * leaves unlit; the draw's time goes in the texture scroll's `z`, which the animation reads.
  *
  * @return Exactly [PBR_TEXTURED_MATERIAL_FLOATS] floats.
  */
 fun pbrTexturedMaterialFloats(drawCall: RenderDrawCommand): FloatArray =
-    texturedMaterialPayload(drawCall.extraUniformFloats, drawCall.coverageCutoff, drawCall.timeSeconds)
+    texturedMaterialPayload(drawCall.extraUniformFloats, drawCall.coverageCutoff, drawCall.blendsAdditively, drawCall.timeSeconds)
 
 /**
  * The alpha textured shaders discard below: the draw's cutoff when its material is masked, and 0
@@ -140,12 +141,16 @@ fun pbrTexturedMaterialFloats(drawCall: RenderDrawCommand): FloatArray =
 val RenderDrawCommand.coverageCutoff: Float
     get() = if (alphaMode == AlphaMode.Masked) alphaCutoff else 0f
 
+/** Whether the draw adds its colour to what is behind it: [RenderDrawCommand.additive] only counts on a transparent draw. */
+internal val RenderDrawCommand.blendsAdditively: Boolean
+    get() = transparent && additive
+
 /**
- * The textured material block for [values], stamped with the draw's [alphaCutoff] and
- * [timeSeconds]. A payload of only the three factor fields (from before texture animation) keeps
- * its factors and plays no animation.
+ * The textured material block for [values], stamped with the draw's [alphaCutoff], whether it blends
+ * [additive]ly, and [timeSeconds]. A payload of only the three factor fields (from before texture
+ * animation) keeps its factors and plays no animation.
  */
-private fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, timeSeconds: Float): FloatArray {
+private fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, additive: Boolean, timeSeconds: Float): FloatArray {
     val layout = MaterialUniformLayouts.PbrTexturedMaterial
     val output = when {
         values.size >= layout.total -> values.copyOf(layout.total)
@@ -163,7 +168,7 @@ private fun texturedMaterialPayload(values: FloatArray, alphaCutoff: Float, time
             .build()
     }
     val factors = layout.readVec4(output, UniformFields.PbrFactors)
-    layout.writeVec4(output, UniformFields.PbrFactors, factors.x, factors.y, alphaCutoff, factors.w)
+    layout.writeVec4(output, UniformFields.PbrFactors, factors.x, factors.y, alphaCutoff, if (additive) 1f else 0f)
     val scroll = layout.readVec4(output, UniformFields.TextureScroll)
     layout.writeVec4(output, UniformFields.TextureScroll, scroll.x, scroll.y, timeSeconds, scroll.w)
     return output
@@ -245,7 +250,8 @@ fun texturedUniforms(
 /** Packs the unshadowed textured PBR block from the backend-neutral draw payload. The light
  * payload is the frame block produced by [sceneLightUniforms]: directional lanes followed by
  * point-light position and colour slots. Keeping this here prevents Vulkan and WebGPU from
- * independently assembling a shorter, invalid prefix of the textured layout. */
+ * independently assembling a shorter, invalid prefix of the textured layout. [additive] marks a
+ * draw blended additively, which the shader leaves unlit. */
 @Suppress("LongParameterList") // One argument per draw input the block holds; DrawUniformPacking names each.
 fun texturedUniforms(
     mvp: Mat4,
@@ -261,6 +267,7 @@ fun texturedUniforms(
     timeSeconds: Float = 0f,
     shadowCascades: GpuShadowCascadeData = GpuShadowCascadeData.UNSHADOWED,
     exposure: Float = 1f,
+    additive: Boolean = false,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTextured)
     .put(mvp.data, UniformFields.Mvp)
     .put(
@@ -274,7 +281,7 @@ fun texturedUniforms(
     .putStillModel(model)
     .put(UniformFields.CameraPosition, cameraEye)
     .put(
-        texturedMaterialPayload(extraUniformFloats, alphaCutoff, timeSeconds),
+        texturedMaterialPayload(extraUniformFloats, alphaCutoff, additive, timeSeconds),
         UniformFields.PbrFactors,
         UniformFields.BaseColorFactor,
         UniformFields.EmissiveFactor,

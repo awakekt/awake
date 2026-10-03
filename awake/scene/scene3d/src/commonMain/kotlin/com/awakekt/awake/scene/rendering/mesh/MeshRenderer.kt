@@ -33,7 +33,8 @@ data class MeshRenderer(
      * visibility toggle flips this rather than adding/removing [MeshRenderer] itself. */
     val visible: Boolean = true,
     /** With [transparent], adds its colour to what is behind it rather than covering it -- glows,
-     * fire and light shafts, which only brighten. See `RenderDrawCommand.additive`. */
+     * fire and light shafts, which only brighten. A textured mesh then draws unlit, adding its base
+     * and emissive colour only, so its black texels add nothing. See `RenderDrawCommand.additive`. */
     val additive: Boolean = false,
     /**
      * Faces the camera: drawn at this entity's position and scale, turned so its local +Z points

@@ -16,6 +16,7 @@ import com.awakekt.awake.render.passes.uniforms.InstancedUniformLayout
 import com.awakekt.awake.render.passes.uniforms.MaterialUniformLayouts
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
+import com.awakekt.awake.render.passes.uniforms.blendsAdditively
 import com.awakekt.awake.render.passes.uniforms.coverageCutoff
 import com.awakekt.awake.render.passes.uniforms.directionalLightFloats
 import com.awakekt.awake.render.passes.uniforms.drawUniformPlan
@@ -110,6 +111,7 @@ fun RenderDrawCommand.uniformFloats(
             timeSeconds = timeSeconds,
             shadowCascades = shadowCascades ?: GpuShadowCascadeData.UNSHADOWED,
             exposure = exposure,
+            additive = blendsAdditively,
         )
 
         DrawUniformPlan.Lit -> litUniforms(
@@ -182,6 +184,7 @@ fun RenderDrawCommand.instancedUniformFloats(
                 timeSeconds = timeSeconds,
                 shadowCascades = shadowCascades ?: GpuShadowCascadeData.UNSHADOWED,
                 exposure = exposure,
+                additive = blendsAdditively,
             )
         } else if (shadowCascades != null || materialUniformFloatCount >= MaterialUniformLayouts.LitShadow.total) {
             gpuLitShadowUniforms(
