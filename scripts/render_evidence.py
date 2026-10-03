@@ -148,13 +148,13 @@ def scene_section(summary: dict, prefix: str, sha: str) -> list[str]:
     same = [s for s in scenes if s["status"] == "same"]
     if not moved and not resized:
         return []
-    out = [
-        f"### Render scenes ({len(moved)} of {len(scenes)} changed)",
-        "",
-        f"Headless Vulkan (lavapipe) at `{sha[:9]}`. The diff shows the head in grey with changed pixels in red, "
-        "scaled to the largest change, so even a one-level shift is visible.",
-        "",
-    ]
+    out = [f"### Render scenes ({len(moved)} of {len(scenes)} changed)", ""]
+    if moved:
+        out += [
+            f"Headless Vulkan (lavapipe) at `{sha[:9]}`. The diff shows the head in grey with changed pixels in red, "
+            "scaled to the largest change, so even a one-level shift is visible.",
+            "",
+        ]
     if not summary["base_captured"]:
         out += ["_The base has no evidence capture, so every scene is new._", ""]
     for s in moved:
