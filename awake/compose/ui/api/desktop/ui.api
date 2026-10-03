@@ -575,10 +575,6 @@ public final class com/awakekt/awake/compose/ui/graphics/vector/ImageVectorKt {
 	public static final fun imageVector-dk_neVA (FFFFLkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
 }
 
-public final class com/awakekt/awake/compose/ui/graphics/vector/PackedImageVectorKt {
-	public static final fun packedImageVector (Ljava/lang/String;)Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
-}
-
 public abstract interface class com/awakekt/awake/compose/ui/graphics/vector/VectorGraphic {
 }
 

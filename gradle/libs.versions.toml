@@ -7,7 +7,6 @@ dokka = "2.0.0"
 fleks = "2.14"
 artemis-odb = "2.3.0"
 ashley = "1.7.3"
-lwjgl = "3.3.6"
 kotlinx-benchmark = "0.4.17"
 kover = "0.9.8"
 kotlinx-serialization = "1.11.0"
@@ -82,11 +81,6 @@ kotlinx-browser = { module = "org.jetbrains.kotlinx:kotlinx-browser", version.re
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 spotless-gradle-plugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }
-lwjgl-bom = { module = "org.lwjgl:lwjgl-bom", version.ref = "lwjgl" }
-lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
-lwjgl-glfw = { module = "org.lwjgl:lwjgl-glfw", version.ref = "lwjgl" }
-lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
-lwjgl-stb = { module = "org.lwjgl:lwjgl-stb", version.ref = "lwjgl" }
 # JVM library (platform-independent Java classes) -- desktop build only, this machine is
 # macOS ARM64. jolt-jni's desktop JVM library is released under 8 interchangeable artifact
 # IDs (one per native platform); MacOSX_ARM64 is the one whose matching native classifier
