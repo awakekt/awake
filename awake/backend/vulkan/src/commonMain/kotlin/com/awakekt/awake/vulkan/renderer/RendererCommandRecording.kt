@@ -138,6 +138,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
             flags = VkCommandBufferUsageFlagBits.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT.value,
         ),
     )
+    gpuFrameTimer?.begin(commandBuffer, frameIndex)
     recordDepthPrePass(commandBuffer, frameIndex, depthDraws, prePasses, environment.shadowsEnabled)
     recordSceneDepthPass(commandBuffer, frameIndex, depthDraws, cameraDepthPass(viewProjection))
     Vulkan.vkCmdBeginRenderPass(
@@ -207,6 +208,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
         )
         Vulkan.vkCmdEndRenderPass(commandBuffer)
     }
+    gpuFrameTimer?.end(commandBuffer, frameIndex)
     Vulkan.vkEndCommandBuffer(commandBuffer)
 }
 

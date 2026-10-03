@@ -50,8 +50,10 @@ import com.awakekt.awake.scene.runtime.LocalFrameStats
 import com.awakekt.awake.scene.runtime.LocalRenderer
 import com.awakekt.awake.scene.runtime.LocalWorld
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
+import com.awakekt.awake.scene.runtime.ScenePhaseStats
 import com.awakekt.awake.scene.runtime.session.SceneSession
 import com.awakekt.awake.scene.runtime.ui.sceneComposeAppModule
+import kotlin.time.TimeSource
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -372,6 +374,42 @@ class SceneAppLifecycleDslTest {
     }
 
     @Test
+    fun phaseTimesReadMidFrameAreTheLastCompletedFrame() = runTest {
+        var seen = ScenePhaseStats()
+        val game = app {
+            scene("phases") {
+                frameSystem("busy") { BusySystem() }
+                frameSystem("reader") {
+                    val runtime = this
+                    object : System {
+                        override fun update(world: World, delta: Float) {
+                            seen = runtime.phaseStats()
+                        }
+                    }
+                }
+                infrastructureSystems { listOf(BusySystem()) }
+            }
+        }
+        game.ready(RecordingRenderer())
+        game.requireService<SceneAppLifecycleRuntime>().perfStatsEnabled = true
+
+        repeat(2) { game.update(1f / 60f, 320f, 240f) }
+
+        // The reader runs before the infrastructure systems: a frame counted as it goes would show
+        // it no render time, and no game time either.
+        assertTrue(seen.gameMs > 0f, "game time of the previous frame, got ${seen.gameMs}")
+        assertTrue(seen.renderMs > 0f, "render time of the previous frame, got ${seen.renderMs}")
+    }
+
+    /** Spends a measurable millisecond, so a phase that ran it cannot read as zero. */
+    private class BusySystem : System {
+        override fun update(world: World, delta: Float) {
+            val start = TimeSource.Monotonic.markNow()
+            while (start.elapsedNow().inWholeMicroseconds < BUSY_MICROS) Unit
+        }
+    }
+
+    @Test
     fun appLevelComposeHostBlocksGameplayPointerCaptureOnInteract() = runTest {
         val renderer = RecordingRenderer()
         var clicked = false
@@ -594,3 +632,5 @@ private class InterpolatingSystem : com.awakekt.awake.ecs.InterpolatedSystem {
 
 private fun com.awakekt.awake.compose.ui.semantics.SemanticsNode.hasTag(tag: String): Boolean =
     testTag == tag || children.any { it.hasTag(tag) }
+
+private const val BUSY_MICROS = 1_000L

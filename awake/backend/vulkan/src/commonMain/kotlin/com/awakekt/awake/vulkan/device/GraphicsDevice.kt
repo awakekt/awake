@@ -46,6 +46,15 @@ class GraphicsDevice {
     var graphicsQueue: Long = 0
     var presentQueue: Long = 0
 
+    /**
+     * Nanoseconds per GPU timestamp tick on the graphics queue, and how many bits of a timestamp
+     * are valid there. Zero valid bits means the queue cannot time its work.
+     */
+    internal var timestampPeriodNs: Float = 0f
+        private set
+    internal var timestampValidBits: Int = 0
+        private set
+
     /** Whether the logical device loaded `VK_KHR_swapchain`, which headless devices do only if offered. */
     internal var swapchainExtensionEnabled = false
         private set
@@ -202,6 +211,10 @@ class GraphicsDevice {
     }
 
     private fun createLogicalDevice(indices: QueueFamilyIndices) {
+        val graphicsFamily = indices.graphicsFamily!!
+        timestampPeriodNs = Vulkan.vkGetPhysicalDeviceProperties(physicalDevice).limits.timestampPeriod
+        timestampValidBits = Vulkan.vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice)
+            .getOrNull(graphicsFamily)?.timestampValidBits?.toInt() ?: 0
         // to avoid duplicate queue family index use set
         val uniqueQueueFamilies = setOf(
             indices.graphicsFamily!!,

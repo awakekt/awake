@@ -582,11 +582,12 @@ public final class com/awakekt/awake/render/passes/uniforms/TextureAnimation$Com
 
 public final class com/awakekt/awake/render/pipeline/DrawCallPipelineKt {
 	public static final fun batchKey (Lcom/awakekt/awake/render/command/GpuDrawRequest;)I
+	public static final fun canInstance (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
 	public static final fun depthRenderKey (Lcom/awakekt/awake/render/command/GpuDrawRequest;)Lcom/awakekt/awake/render/pipeline/DepthRenderKey;
 	public static final fun depthSortKey (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/core/math/Vec3f;)F
 	public static final fun instancedDrawKind (Lcom/awakekt/awake/render/command/GpuDrawRequest;)Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;
-	public static final fun resolveInstanced (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;Z)Ljava/lang/Object;
-	public static synthetic fun resolveInstanced$default (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;ZILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun resolveInstanced (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;ZLcom/awakekt/awake/render/pipeline/CullMode;)Ljava/lang/Object;
+	public static synthetic fun resolveInstanced$default (Lcom/awakekt/awake/render/pipeline/PipelineTable;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;ZLcom/awakekt/awake/render/pipeline/CullMode;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun resolveInstancedDrawKind (Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/List;Ljava/util/List;)Lcom/awakekt/awake/render/pipeline/InstancedDrawKind;
 }
 

@@ -171,6 +171,9 @@ class Renderer internal constructor(
     /** Counts every draw this renderer records; published once per submitted frame. */
     internal val statsCounter = RenderStatsCounter()
 
+    /** Null when the device's graphics queue cannot write timestamps. */
+    internal val gpuFrameTimer = GpuFrameTimer.createOrNull(graphicsDevice, maxFramesInFlight)
+
     override val frameStats: RenderFrameStats?
         get() = statsCounter.latest
 
@@ -526,6 +529,7 @@ class Renderer internal constructor(
         if (submittedOffscreenFence != 0L) Vulkan.vkDestroyFence(device, submittedOffscreenFence)
         bufferPools.destroy()
         lineMesh.destroy()
+        gpuFrameTimer?.destroy()
         destroyDepthResources()
     }
 

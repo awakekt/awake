@@ -23,8 +23,8 @@ import com.awakekt.awake.ui.shadcn.components.ShadcnTextVariant
  * What the last frames cost, split the way a frame is spent.
  *
  * Average FPS on its own hides the stalls a player feels, so p99 and the worst frame of the last
- * few seconds sit beside it. Game, Render, UI and Wait are where the CPU went (F2 turns them
- * off); draws, triangles and GPU are what the backend recorded and, where it can, timed.
+ * few seconds sit beside it. Game, Render, UI, Wait and GPU are where the frame's time went, shown
+ * while phase timing is on (F2); draws and triangles are what the backend recorded.
  */
 context(_: Composer)
 internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
@@ -39,6 +39,8 @@ internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
         if (phases.isMeasured) {
             ShadcnText("Game: ${phases.gameMs.oneDecimal()}ms  Render: ${phases.renderMs.oneDecimal()}ms", variant = ShadcnTextVariant.Small)
             ShadcnText("UI: ${(phases.uiBuildMs + phases.uiStageMs).oneDecimal()}ms  Wait: ${phases.uiWaitMs.oneDecimal()}ms", variant = ShadcnTextVariant.Small)
+            // With the other timings: a reading that changes every frame stays off until asked for.
+            ShadcnText("GPU: ${render?.gpuTimeMs?.let { "${it.oneDecimal()}ms" } ?: "not timed"}", variant = ShadcnTextVariant.Small)
         } else {
             ShadcnText("Press F2 for phase timings", variant = ShadcnTextVariant.Small)
         }
@@ -47,7 +49,6 @@ internal fun ShowcaseStatsCard(modifier: Modifier = Modifier) {
         ShadcnText("Visible: ${RenderDiagnostics.submittedInstances.toLong().compact()} renderables", variant = ShadcnTextVariant.Small)
         if (render != null) {
             ShadcnText("Recorded: ${render.drawCalls} draws, ${render.triangles.compact()} tris", variant = ShadcnTextVariant.Small)
-            ShadcnText("GPU: ${render.gpuTimeMs?.let { "${it.oneDecimal()}ms" } ?: "not timed"}", variant = ShadcnTextVariant.Small)
         }
         ShadcnText("Culled: ${RenderDiagnostics.frustumCulled}  Occluded: ${RenderDiagnostics.occluded}", variant = ShadcnTextVariant.Small)
         ShadcnText("Unresolved: ${RenderDiagnostics.unresolvedDrawCalls}", variant = ShadcnTextVariant.Small)

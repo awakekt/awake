@@ -99,8 +99,14 @@ fun List<ScenePipeline>.toRequests(stages: (ShaderSet) -> ShaderStages): List<Pi
                 bindingsMetadataAvailable = selectedStages.bindingsMetadataAvailable,
             ),
             buildWireframe = declared.buildWireframe,
-            buildBackCulled = declared.buildBackCulled,
+            // A plain instanced pipeline always gets its back-culled twin: copies of a
+            // back-culled mesh fold into instances like any other, and without the twin they
+            // could not, which kept every back-culled prop at one draw per entity.
+            buildBackCulled = declared.buildBackCulled || declared.key.isPlainInstanced,
             buildTransparent = declared.buildTransparent,
             buildAdditive = declared.buildAdditive,
         )
     }
+
+private val PipelineKey.isPlainInstanced: Boolean
+    get() = this == PipelineKey.Instanced || this is PipelineKey.InstancedFormat

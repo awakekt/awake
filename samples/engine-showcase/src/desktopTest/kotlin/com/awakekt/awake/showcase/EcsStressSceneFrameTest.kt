@@ -47,7 +47,8 @@ class EcsStressSceneFrameTest {
             println(
                 "ecs-stress headless: entities=$ENTITIES visible=$visible culled=${RenderDiagnostics.frustumCulled} " +
                     "p50=${times.p50FrameTimeMs}ms p99=${times.p99FrameTimeMs}ms max=${times.maxFrameTimeMs}ms " +
-                    "recorded draws=${recorded.drawCalls} instances=${recorded.instances} tris=${recorded.triangles}",
+                    "recorded draws=${recorded.drawCalls} instances=${recorded.instances} tris=${recorded.triangles} " +
+                    "gpu=${recorded.gpuTimeMs ?: "not timed"}",
             )
 
             val accounted = RenderDiagnostics.submittedInstances + RenderDiagnostics.frustumCulled + RenderDiagnostics.occluded

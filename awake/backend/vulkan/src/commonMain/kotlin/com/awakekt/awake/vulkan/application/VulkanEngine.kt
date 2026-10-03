@@ -203,6 +203,12 @@ open class VulkanEngine(
         skinnedInstancedByFormat = requestedPipelines[PipelineKey.SkinnedInstanced]?.fill
             ?.let { mapOf(VertexFormat.PositionNormalColorSkin to it) }
             .orEmpty(),
+        instancedBackCulledByFormat = buildMap {
+            requestedPipelines[PipelineKey.Instanced]?.backCulled?.let { put(vertexFormat, it) }
+            requestedPipelines.forEach { (key, requested) ->
+                if (key is PipelineKey.InstancedFormat) requested.backCulled?.let { put(key.vertexFormat, it) }
+            }
+        },
     )
 
     /**

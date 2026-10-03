@@ -70,8 +70,8 @@ The stats card in the bottom-right corner reads:
 | Recorded | Every draw the backend issued, shadow cascades and UI included, and its triangles |
 | GPU | GPU time of the frame, where the backend can time it |
 
-The Game/Render/UI/Wait split is off until F2 turns it on; the stress showcase and the perf log
-turn it on themselves.
+The Game/Render/UI/Wait split and GPU time are off until F2 turns them on; the stress showcase and
+the perf log turn them on themselves.
 
 To reproduce a frame-rate drop without Studio, open the stress showcase with vsync off, so the frame
 rate shows headroom past the display, and log a summary line every 240 frames:

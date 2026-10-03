@@ -2365,6 +2365,15 @@ public final class com/awakekt/awake/vulkan/gen/VulkanImages {
 	public static synthetic fun vkTransitionImageLayout$default (Lcom/awakekt/awake/vulkan/gen/VulkanImages;JJIIIIILjava/lang/Object;)V
 }
 
+public final class com/awakekt/awake/vulkan/gen/VulkanQueries {
+	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanQueries;
+	public final fun timestampTicksBetween (JJII)J
+	public final fun vkCmdResetQueryPool (JJII)V
+	public final fun vkCmdWriteTimestamp (JIJI)V
+	public final fun vkCreateTimestampQueryPool (JI)J
+	public final fun vkDestroyQueryPool (JJ)V
+}
+
 public final class com/awakekt/awake/vulkan/gen/VulkanWindow {
 	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanWindow;
 	public final fun glfwCreateWindowSurface (JJ)J

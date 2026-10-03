@@ -201,11 +201,13 @@ public abstract interface class com/awakekt/awake/render/command/GpuDrawPreparat
 
 public abstract interface class com/awakekt/awake/render/command/GpuDrawPreparer {
 	public fun canInstance (Lcom/awakekt/awake/core/geometry/VertexFormat;)Z
+	public fun canInstance (Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
 	public abstract fun prepare (Lcom/awakekt/awake/render/command/GpuDrawRequest;ILcom/awakekt/awake/render/command/GpuDrawPreparationContext;)Lcom/awakekt/awake/render/command/GpuResolvedDraw;
 }
 
 public final class com/awakekt/awake/render/command/GpuDrawPreparer$DefaultImpls {
 	public static fun canInstance (Lcom/awakekt/awake/render/command/GpuDrawPreparer;Lcom/awakekt/awake/core/geometry/VertexFormat;)Z
+	public static fun canInstance (Lcom/awakekt/awake/render/command/GpuDrawPreparer;Lcom/awakekt/awake/core/geometry/VertexFormat;Lcom/awakekt/awake/render/pipeline/CullMode;)Z
 }
 
 public final class com/awakekt/awake/render/command/GpuDrawRequest {
@@ -899,12 +901,13 @@ public final class com/awakekt/awake/render/pipeline/PipelineSpec {
 }
 
 public final class com/awakekt/awake/render/pipeline/PipelineTable {
-	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;)V
-	public synthetic fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;)V
+	public synthetic fun <init> (Ljava/lang/Object;Lcom/awakekt/awake/core/geometry/VertexFormat;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAdditiveByFormat ()Ljava/util/Map;
 	public final fun getAdditiveParticlePipelines ()Ljava/util/Map;
 	public final fun getBackCulledByFormat ()Ljava/util/Map;
 	public final fun getByFormat ()Ljava/util/Map;
+	public final fun getInstancedBackCulledByFormat ()Ljava/util/Map;
 	public final fun getInstancedByFormat ()Ljava/util/Map;
 	public final fun getParticlePipelines ()Ljava/util/Map;
 	public final fun getPrimary ()Ljava/lang/Object;
