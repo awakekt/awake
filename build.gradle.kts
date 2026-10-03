@@ -364,6 +364,14 @@ val gitDerivedVulkanVersion: String = run {
 }
 
 val publishFamily = providers.gradleProperty("awake.publishFamily").orNull
+
+// `publishToMavenLocal -Pawake.version=0.1.0-local` publishes this checkout for a consumer (Studio, a
+// game) to build against before a release reaches Maven Central. Every family takes the one version,
+// which no release uses, so a local build cannot stand in for a published one.
+val localVersion = providers.gradleProperty("awake.version").orNull
+require(localVersion == null || publishFamily == null) {
+    "awake.version is for local builds; a release takes its version from the tags, not awake.publishFamily with it."
+}
 require(publishFamily == null || publishFamily in setOf("core", "vulkan")) {
     "awake.publishFamily must be either 'core' or 'vulkan', not '$publishFamily'."
 }
@@ -457,6 +465,7 @@ allprojects {
             ?.let { append('.').append(it) }
     }
     version = when {
+        localVersion != null -> localVersion
         path in vulkanFamilyProjects -> gitDerivedVulkanVersion
         publishFamily == "vulkan" -> pinnedCoreVersion!!
         else -> gitDerivedVersion

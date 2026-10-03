@@ -35,4 +35,6 @@ val gitDerivedVersion = run {
     }
 }
 
-extra["gitDerivedVersion"] = gitDerivedVersion
+// A checkout published for a consumer to build against (`-Pawake.version=0.1.0-local`, see
+// docs/reference/releasing.md) takes that version instead.
+extra["gitDerivedVersion"] = providers.gradleProperty("awake.version").orNull ?: gitDerivedVersion
