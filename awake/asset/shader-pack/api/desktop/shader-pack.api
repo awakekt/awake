@@ -174,11 +174,13 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 
 public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransform {
 	public final fun display (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun displayReferred (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun encoded (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransformKt {
-	public static final fun sceneDisplayTransform (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;)Lcom/awakekt/awake/asset/shaderpack/SceneDisplayTransform;
+	public static final fun sceneDisplayTransform (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;Z)Lcom/awakekt/awake/asset/shaderpack/SceneDisplayTransform;
+	public static synthetic fun sceneDisplayTransform$default (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;ZILjava/lang/Object;)Lcom/awakekt/awake/asset/shaderpack/SceneDisplayTransform;
 }
 
 public final class com/awakekt/awake/asset/shaderpack/ShadowMapViewContentFeatureKt {
@@ -254,6 +256,7 @@ public final class com/awakekt/awake/asset/shaderpack/SkyboxUniformsKt {
 public final class com/awakekt/awake/asset/shaderpack/TerrainClipmapOutputs {
 	public final fun getCascades ()Lcom/awakekt/awake/asset/shaderpack/CascadeShadowInputs;
 	public final fun getDebugView ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getExposure ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getSunDirection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getTerrainParams ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getTerrainSampling ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;

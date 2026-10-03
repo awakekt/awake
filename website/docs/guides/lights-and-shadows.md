@@ -97,8 +97,8 @@ The sun's `ambient` is how much of a surface's own colour shows where no direct 
 
 ## Set the exposure
 
-Every lit shader shows its colour through one tone curve, Khronos PBR Neutral, on both backends.
-Colours below its shoulder show as authored, and highlights roll off toward white without changing
+Every lit shader shows its colour through one tone curve, Khronos PBR Neutral, on both backends:
+static and skinned meshes, instanced meshes and terrain alike. Colours below its shoulder show as authored, and highlights roll off toward white without changing
 hue. A `tone_mapping` component's `exposure` multiplies the lit scene before that curve. At the
 default 1, a white surface facing a light of intensity 1 shows near white; 2 is one stop brighter.
 

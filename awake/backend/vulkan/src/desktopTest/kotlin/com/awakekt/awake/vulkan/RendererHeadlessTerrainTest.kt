@@ -22,6 +22,7 @@ import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.RenderFeature
 import com.awakekt.awake.render.passes.RenderFrameContext
 import com.awakekt.awake.render.passes.RenderPassSlot
+import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.vulkan.commands.TransferContext
@@ -110,6 +111,37 @@ class RendererHeadlessTerrainTest {
 
     /** Non-clear pixels in one rendered frame of the selected terrain, and the distinct
      * greys among them. */
+    /** Exposure scales the terrain's light before the shared tone curve, as it does a lit mesh's. */
+    @Test
+    fun exposureBrightensTheTerrainAsItDoesLitMeshes() {
+        val normal = meanRed(exposure = 1f)
+        val doubled = meanRed(exposure = 2f)
+
+        assertTrue(doubled > normal * MIN_EXPOSURE_GAIN, "exposure 2 drew a mean red of $doubled against $normal at exposure 1")
+    }
+
+    private fun meanRed(exposure: Float): Float {
+        val renderer = sharedRenderer()
+        selectedFeature = flatFeature
+        val target = renderer.createRenderTarget(TARGET_SIZE, TARGET_SIZE)
+        try {
+            renderer.renderSceneToTexture(
+                target,
+                Lens(eye = Vec3f(0f, EYE_HEIGHT, EYE_DISTANCE), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 500f),
+                emptyList(),
+                environment = EnvironmentUniforms(exposure = exposure),
+            )
+            val pixels = runBlocking { renderer.readPixels(target) }.data
+            val reds = (pixels.indices step BYTES_PER_PIXEL)
+                .filter { (pixels[it].toInt() and 0xFF) + (pixels[it + 1].toInt() and 0xFF) + (pixels[it + 2].toInt() and 0xFF) > CLEAR_TOLERANCE }
+                .map { pixels[it].toInt() and 0xFF }
+            assertTrue(reds.isNotEmpty(), "the terrain drew nothing at exposure $exposure")
+            return reds.average().toFloat()
+        } finally {
+            target.destroy()
+        }
+    }
+
     private fun renderTerrain(raised: Boolean): Rendered {
         val renderer = sharedRenderer()
         selectedFeature = if (raised) raisedFeature else flatFeature
@@ -159,6 +191,9 @@ class RendererHeadlessTerrainTest {
         const val EYE_HEIGHT = 6f
         const val EYE_DISTANCE = 18f
         const val HEIGHT_SCALE = 8f
+
+        /** Doubling exposure brightens a mid grey by about 2^(1/2.2) before the curve's shoulder. */
+        const val MIN_EXPOSURE_GAIN = 1.15f
 
         /** Coverage must shift by at least this fraction of the flat baseline. */
         const val MIN_COVERAGE_SHIFT = 10

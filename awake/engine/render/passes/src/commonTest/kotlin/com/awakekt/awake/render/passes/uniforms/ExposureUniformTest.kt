@@ -12,6 +12,7 @@ import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.instancedUniformFloats
 import com.awakekt.awake.render.passes.uniformFloats
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
+import com.awakekt.awake.render.renderer.SkinnedUniformLayout
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformLayout
 import kotlin.test.Test
@@ -52,6 +53,11 @@ class ExposureUniformTest {
         assertEquals(2.5f, pbrTextured.readVec4(single(textured, pbrTextured), UniformFields.Exposure).x)
         assertEquals(2.5f, litShadow.readVec4(instanced(lit, litShadow), UniformFields.Exposure).x)
         assertEquals(2.5f, pbrTextured.readVec4(instanced(textured, pbrTextured), UniformFields.Exposure).x)
+
+        // The display-referred blocks too: skinned, and instanced without the lit_shadow block.
+        val skinned = draw(VertexFormat.PositionNormalColorSkin)
+        assertEquals(2.5f, SkinnedUniformLayout.readVec4(single(skinned, SkinnedUniformLayout), UniformFields.Exposure).x)
+        assertEquals(2.5f, InstancedUniformLayout.readVec4(instanced(lit, InstancedUniformLayout), UniformFields.Exposure).x)
     }
 
     @Test

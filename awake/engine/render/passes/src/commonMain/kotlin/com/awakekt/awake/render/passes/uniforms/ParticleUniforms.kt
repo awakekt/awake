@@ -33,4 +33,5 @@ val InstancedUniformLayout = UniformLayout(
     UniformFields.Mvp,
     UniformFields.LightDirection,
     UniformFields.LightColor,
+    UniformFields.Exposure,
 )

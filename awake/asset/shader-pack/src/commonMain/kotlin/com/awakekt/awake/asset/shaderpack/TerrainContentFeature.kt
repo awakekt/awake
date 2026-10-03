@@ -245,6 +245,7 @@ class TerrainRenderFeature(
                 put(UniformFields.CameraForward, 0f, 0f, -1f, 0f)
             }
             putDebugView(context.environment.debugView, forward ?: NO_FORWARD)
+            put(UniformFields.Exposure, context.environment.exposure, 0f, 0f, 0f)
         }
         val recorder: CommandRecorder = context.recorder
         recorder.bindPipeline(pipeline)
