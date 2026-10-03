@@ -1,1 +1,0 @@
-- Vulkan renderers report GPU frame time in `Renderer.frameStats.gpuTimeMs`, measured with timestamp queries around each frame's command buffer. The engine showcase stats card and `PERF` log show it. Devices whose graphics queue writes no timestamps, and WebGPU, keep reporting none.

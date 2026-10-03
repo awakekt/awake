@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.7] - 2026-10-03
+
+### Added
+
+- The engine showcase has an `ecs-stress` demonstration: up to 100,000 moving entities, each an ordinary ECS entity with Transform and MeshRenderer components, drawn in a few instanced calls. Its stats card shows p99 and worst frame time, game/render/UI split, recorded draws and triangles, and `-Pawake.showcase.perfLog=true` prints a `PERF` summary line, so a frame-rate drop can be reproduced without Studio.
+- **`awake:engine:window` opens the desktop window.** The GLFW window, its keyboard, pointer, scroll, text input, clipboard and cursor moved out of the Vulkan family into this Core module, with its own native library (`libawake-window`) and a backend-neutral loop, `runDesktopWindow`. An input or text-field change now releases with Core instead of forcing a Vulkan release. `runVulkanDesktopGame` keeps its signatures. Breaking: `VulkanWindow` keeps only surface creation, the instance-extension list and the size queries, and `destroySurfaceWindow` is gone (the window host destroys its window); the `Glfw*` input bridges now live in `com.awakekt.awake.engine.window`.
+- Renderers report what each frame recorded through `Renderer.frameStats` (draw calls, instances, triangles, and a slot for GPU time), and scene frame stats add the p99 and worst frame time plus a game/render split of the frame.
+- Vulkan renderers report GPU frame time in `Renderer.frameStats.gpuTimeMs`, measured with timestamp queries around each frame's command buffer. The engine showcase stats card and `PERF` log show it. Devices whose graphics queue writes no timestamps, and WebGPU, keep reporting none.
+- **Any module can generate its own icons from SVG.** The `com.awakekt.awake.plugin.icon-codegen` Gradle plugin is now published. Put a `manifest.json` and the SVGs it names under `src/<sourceSet>/svg/<pack>/` and the build generates one `ImageVector` object for that source set, with each icon a lazy `val` built on first use. The generator is Kotlin in build-logic, so Python is no longer a build requirement. Its output is byte-identical to the old script's.
+
+### Changed
+
+- **Lit surfaces keep their colour instead of washing out to grey.** Every lit shader (`lit_shadow`, `textured` and their instanced and skinned variants, on Vulkan and WebGPU) shows its colour through one shared transform: an exposure, Khronos PBR Neutral, then the gamma encode. This replaces per-channel Reinhard, which compressed bright channels more than dim ones and turned an amber cube khaki. `lit_shadow` now treats light colour as reflectance, as `textured` already did, so a light of intensity 1 lights a white face to near white instead of mid-grey. Scenes that raised intensities to make up for this need about a third of the old value. The engine showcase's point lights go from 6 to 2 and its ECS stress sun from 3 to 1. A new `tone_mapping` scene component sets `exposure` (default 1), and the curve deepens surfaces only the ambient reaches.
+- Draws on Vulkan cost less CPU and fewer driver objects: the lit-shadow uniform block packs the frame's lights, cascades, camera and fog once per frame and copies them into each draw instead of re-packing them per draw, and a material's per-draw uniform buffers come out of 32-slot memory and descriptor-pool blocks instead of one allocation each, which kept scenes of a few thousand distinct draws under the device allocation limit.
+- Copies of a back-face-culled mesh (`MeshRenderer.cullMode = Back`) are auto-instanced like unculled ones: every plain instanced scene pipeline now builds its back-culled twin, and batching folds back-culled copies wherever the backend has one. Before, each back-culled prop was its own draw.
+- Scenes with many moving entities cost about 40% less CPU per frame and collect garbage about 94% less often (50,000 moving entities, measured with `ecs-stress`): world bounds are computed without allocating a corner list, culling a moving entity builds no box, `World.queryEach` no longer boxes each `Entity`, extraction reuses its lists, `TransformSystem` skips reference stores that change nothing, and instance batching groups consecutive copies without a key per draw.
+- **Texture animation is its own scene component, `texture_animation`, instead of a field of `pbr_material`.** A PBR material now holds only glTF's metallic-roughness values; the frame sheet and UV scroll sit beside it as `SceneTextureAnimation`, live as the entity's `TextureAnimation`, and play with glTF's default factors on an entity that has no material. A scene that set `pbr_material.textureAnimation` loads with a still texture: move the object to a `texture_animation` component on the same node. `PbrMaterial.textureAnimation` is gone; `PbrMaterial.packedFloats` takes the animation.
+
+### Removed
+
+- **Core names no product and ships no biome presets.** `PluginManifest.isPro` is gone: a plugin's entitlement is `requiredLicense`, which each editor host maps to its own tiers, and manifests that still carry `"isPro"` parse unchanged. `ProceduralTerrainMaterialConfig.MountainAlpine`, `RollingHills` and `DesertCanyon` are removed; a project authors its own `ProceduralTerrainRule` set as data. `ChaseBehavior`, `FleeBehavior` and `PatrolBehavior` are now supported API rather than copy-and-adapt starters.
+- **The `heroicons` artifact is gone.** Copy the SVGs you draw from the Heroicons `v2.2.0` release into your own module and apply `com.awakekt.awake.plugin.icon-codegen`; `HeroIcons.Solid20Mini.x` and the other tiers keep their names if your manifest declares the same tier objects. `com.awakekt.awake.ui:shadcn` now carries its eight Lucide glyphs internally, so read them through `ShadcnIcons`. `tools/icons/svg_to_ui_image_vector.py` is removed along with its `--packed`, `--batch`, `--svgo` and `--expand-strokes` modes.
+
+### Fixed
+
+- `./gradlew :samples:engine-showcase:run -Pawake.showcase=<id>` opens the requested demonstration again; the run task had stopped forwarding the property. The engine showcase web dev server no longer shares port 8088 with the net demo.
+- Game and render phase times read during a frame, by a frame-time logger or any system, report the last completed frame instead of the current one half-counted; the engine showcase `PERF` line printed `game=0.0 render=0.0` because of it.
+- An `InstancedMeshRenderer` (or any authored instance list) with more copies than one draw holds is split into several draws instead of throwing; skinned instance lists split at the palette buffer size. The frame stats no longer report every auto-instanced entity as an unresolved draw. Vulkan draw preparation waits for the frame slot before rewriting its uniforms, which an app without UI never did.
+
 ## [0.1.0-rc.6] - 2026-10-03
 
 ### Added
