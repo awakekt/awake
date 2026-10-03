@@ -30,11 +30,16 @@ fun InputSnapshot.toFrameInput(
 ): FrameInput = FrameInput(
     viewportWidth = viewportWidth,
     viewportHeight = viewportHeight,
-    pointerX = pointerX.toInt(),
-    pointerY = pointerY.toInt(),
-    pointerDown = pointerDown,
-    pointerPressed = pointerPressed,
-    pointerReleased = pointerReleased,
+    // A finger reaches the UI once, as its own pointer below. The primary pointer it also drives
+    // is for engine code that reads only that, and would otherwise press the UI a second time.
+    pointerX = if (pointerFromTouch) FrameInput.UNKNOWN_POINTER else pointerX.toInt(),
+    pointerY = if (pointerFromTouch) FrameInput.UNKNOWN_POINTER else pointerY.toInt(),
+    pointerDown = pointerDown && !pointerFromTouch,
+    pointerPressed = pointerPressed && !pointerFromTouch,
+    pointerReleased = pointerReleased && !pointerFromTouch,
+    // Pointer id 0 is the mouse's, so fingers start at 1. No list at all on the frames without a
+    // finger, which on a desktop is all of them.
+    pointers = if (touches.isEmpty()) emptyList() else touches.map { PointerFrame(it.id + 1, it.x.toInt(), it.y.toInt(), it.down, it.pressed, it.released) },
     secondaryPointerPressed = PointerButton.Secondary in buttonsPressed,
     pointerModifiers = pointerModifiers(),
     scrollDeltaY = scrollDeltaY,
