@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.math.pow
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -415,6 +416,29 @@ class SceneBackendParityTest {
             assertTrue(edgeOn.redPixels(flatHalf) <= MAX_EDGE_ON_PIXELS, "$backend: edge-on the flat sprite drew ${edgeOn.redPixels(flatHalf)} px")
             assertTrue(above.redPixels(facingHalf) >= MIN_SPRITE_PIXELS, "$backend: from above the camera-facing sprite drew ${above.redPixels(facingHalf)} px")
             assertTrue(edgeOn.redPixels(facingHalf) >= MIN_SPRITE_PIXELS, "$backend: edge-on the camera-facing sprite drew ${edgeOn.redPixels(facingHalf)} px")
+        }
+    }
+
+    /**
+     * Seen from the side, a camera-facing sprite is as tall as it is wide and keeps its texture's left
+     * on the left. Its size used to read as a stretch along world up: twice as tall, and mirrored.
+     */
+    @Test
+    fun aCameraFacingSpriteSeenFromTheSideKeepsItsShapeOnBothBackends() {
+        BACKEND_ORDER.forEach { backend ->
+            val pixels = session(backend).renderer.renderFacingSpriteFromTheSide().also { write(backend, it, "facing-sprite-side") }
+            fun isRed(x: Int, y: Int) = pixels.channel(y * SCENE_SIZE + x, RED) > TEXTURED_RED_THRESHOLD + 2 * pixels.channel(y * SCENE_SIZE + x, BLUE)
+            fun isBlue(x: Int, y: Int) = pixels.channel(y * SCENE_SIZE + x, BLUE) > TEXTURED_RED_THRESHOLD + 2 * pixels.channel(y * SCENE_SIZE + x, RED)
+            val drawn = (0 until SCENE_SIZE).flatMap { y -> (0 until SCENE_SIZE).map { x -> x to y } }
+                .filter { (x, y) -> isRed(x, y) || isBlue(x, y) }
+            assertTrue(drawn.isNotEmpty(), "$backend drew no sprite -- see $REPORT_DIR")
+            val width = drawn.maxOf { it.first } - drawn.minOf { it.first } + 1
+            val height = drawn.maxOf { it.second } - drawn.minOf { it.second } + 1
+            val redX = drawn.filter { (x, y) -> isRed(x, y) }.map { it.first }.average()
+            val blueX = drawn.filter { (x, y) -> isBlue(x, y) }.map { it.first }.average()
+
+            assertTrue(abs(width - height) <= maxOf(width, height) / 10, "$backend: the sprite is $width x $height px, not square")
+            assertTrue(redX < blueX, "$backend: the texture's left (red, x=$redX) must stay left of its right (blue, x=$blueX)")
         }
     }
 

@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.parity
 
+import com.awakekt.awake.render.passes.uniforms.setParticleInstance
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
@@ -49,7 +50,7 @@ fun Renderer.renderSpriteScene(view: SpriteView): ByteArray {
         fun sprite(x: Float, quadRight: Vec3f, quadUp: Vec3f) = RenderDrawCommand(
             mesh = quad,
             material = material,
-            instanceModels = listOf(Mat4().setTranslationScale(x, 0f, 0f, SPRITE_SIZE)),
+            instanceModels = listOf(Mat4().setParticleInstance(x, 0f, 0f, SPRITE_SIZE)),
             instanceColors = listOf(Vec4(1f, 1f, 1f, 1f)),
             instanceFrames = listOf(0f),
             // cameraRight, cameraUp, frameInfo: ParticleExtraUniformLayout.
@@ -81,6 +82,52 @@ fun Renderer.renderSpriteScene(view: SpriteView): ByteArray {
         target.destroy()
     }
 }
+
+/**
+ * One camera-facing particle sprite at the origin, seen from the side ([SpriteView.EdgeOn]), so world
+ * up lies on screen. Its texture is red on the left half and blue on the right, so the picture shows
+ * both the quad's proportions and which way round it is.
+ */
+fun Renderer.renderFacingSpriteFromTheSide(): ByteArray {
+    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+    val quad = createMesh(SpriteQuad)
+    val material = createMaterial(ParticleUniformLayout, texture = RedLeftBlueRight)
+    return try {
+        val view = SpriteView.EdgeOn
+        val lens = Lens(eye = view.eye, center = Vec3f(0f, 0f, 0f), up = view.up, fovYRadians = 1f, near = 0.1f, far = 50f)
+        val forward = (lens.center - lens.eye).normalized()
+        val right = forward.cross(lens.up).normalized()
+        val up = right.cross(forward)
+        val sprite = RenderDrawCommand(
+            mesh = quad,
+            material = material,
+            instanceModels = listOf(Mat4().setParticleInstance(0f, 0f, 0f, SPRITE_SIZE)),
+            instanceColors = listOf(Vec4(1f, 1f, 1f, 1f)),
+            instanceFrames = listOf(0f),
+            extraUniformFloats = floatArrayOf(right.x, right.y, right.z, 0f, up.x, up.y, up.z, 0f, 1f, 0f, 0f, 0f),
+        )
+        renderToTexture(
+            target,
+            ScenePassCompiler.compile(
+                lens = lens,
+                drawCalls = listOf(sprite),
+                light = SceneLight(direction = Vec3f(0f, 1f, 0f), color = Vec3f(1f, 1f, 1f)),
+                environment = EnvironmentUniforms.Default.copy(shadowsEnabled = false),
+                clipSpace = clipSpace,
+                aspect = 1f,
+                drawPreparer = (this as? GpuDrawPreparationSource)?.gpuDrawPreparer,
+            ),
+        )
+        runBlocking { readPixels(target) }.data
+    } finally {
+        quad.destroy()
+        material.destroy()
+        target.destroy()
+    }
+}
+
+/** Two texels: red on the left, blue on the right. */
+private val RedLeftBlueRight = TextureAsset(data = byteArrayOf(-1, 0, 0, -1, 0, 0, -1, -1), width = 2, height = 1)
 
 private const val FLAT_SPRITE_X = -1f
 private const val FACING_SPRITE_X = 1f

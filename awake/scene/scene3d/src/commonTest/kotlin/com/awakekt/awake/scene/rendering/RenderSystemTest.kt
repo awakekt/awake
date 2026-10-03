@@ -770,11 +770,9 @@ class RenderSystemTest {
         RenderSystem3D(renderer).update(world, 1f / 60f)
 
         val model = requireNotNull(renderer.lastDrawCalls[0].instanceModels)[0]
-        assertEquals(
-            0f,
-            model.m01,
-            "no stretch must leave column 1 at its plain off-diagonal zero, byte-for-byte the old formula",
-        )
+        // The shader reads all of column 1 as a stretch; the size on its diagonal would stretch and
+        // mirror the quad whenever world up is on screen.
+        assertEquals(listOf(0f, 0f, 0f), listOf(model.m01, model.m11, model.m21), "no stretch leaves column 1 zero")
     }
 
     private fun burstEmitterAt(position: Vec3f): ParticleEmitter {
