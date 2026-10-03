@@ -1,0 +1,2 @@
+- **`awake:engine:window` publishes for every target.** It had desktop sources only, so its iOS targets compiled no library and publishing the release failed. The module now has common code as well.
+- **`publishToMavenLocal -Pawake.version=<v>` publishes every target.** The Android, desktop and iOS publications ran only with `-PisMainHost=true`, so a local publish carried wasm alone and a desktop consumer could not resolve it. A local version now implies it.

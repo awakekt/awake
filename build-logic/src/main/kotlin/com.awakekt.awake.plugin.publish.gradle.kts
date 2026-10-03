@@ -30,7 +30,9 @@ extensions.configure<PublishingExtension>("publishing") {
             tasks.withType<AbstractPublishToMaven>()
                 .matching { it.publication == targetPublication }
                 .configureEach {
-                    onlyIf { findProperty("isMainHost") == "true" }
+                    // CI publishes these from one host. A local publish (`-Pawake.version`, see
+                    // docs/reference/releasing.md) is one host by definition, so it takes them all.
+                    onlyIf { findProperty("isMainHost") == "true" || findProperty("awake.version") != null }
                 }
         }
     }
