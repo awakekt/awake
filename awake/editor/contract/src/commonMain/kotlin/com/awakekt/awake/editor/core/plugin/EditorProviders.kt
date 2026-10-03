@@ -29,7 +29,7 @@ enum class EditorProviderKind {
     /** A panel in the bottom tray. Implement [PanelProvider] to draw it. */
     BottomPanel,
 
-    /** A toolbar action or control contributed by a plugin. */
+    /** A toolbar control. Implement [ToolbarProvider] to draw it. */
     Toolbar,
 
     /** A panel in the left sidebar, beside the hierarchy. Implement [PanelProvider] to draw it. */
@@ -38,13 +38,13 @@ enum class EditorProviderKind {
     /** A panel in the right inspector, beside the entity inspector. Implement [PanelProvider] to draw it. */
     InspectorPanel,
 
-    /** A keybinding or shortcut mapping contributed by a plugin. */
+    /** Keyboard actions. Implement [KeybindingProvider]. */
     Keybinding,
 
-    /** A primary central workspace canvas (e.g. 3D Scene Viewport, UI Builder, Visual Scripting). */
+    /** A central workspace canvas, such as a node graph. Implement [WorkspaceProvider] to draw it. */
     Workspace,
 
-    /** An insertable entity archetype or template contributed by a plugin. */
+    /** An insertable entity template. Implement [EntityTemplateProvider]. */
     EntityTemplate,
 
     /** ECS simulation systems contributed to the active scene loop by an EditorPlugin. */
@@ -53,7 +53,7 @@ enum class EditorProviderKind {
     /** Interactive tools (e.g. terrain brush, foliage scatter, vertex painter) that receive viewport hover/drag. */
     ViewportTool,
 
-    /** Floating quick-tool cards rendered over the 3D viewport canvas. */
+    /** A floating card over the viewport. Implement [FloatingCardProvider] to draw it. */
     FloatingCard,
 }
 
@@ -135,6 +135,8 @@ interface BuildProvider : EditorProvider {
  * with [ProviderMetadata.displayName], and calls [content] inside it on every frame it is visible.
  */
 interface PanelProvider : EditorProvider {
+    override val codec: ProviderCodec get() = NoProviderConfiguration
+
     /** Draws the panel body. */
     context(_: Composer)
     fun content()

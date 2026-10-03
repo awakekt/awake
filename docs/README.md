@@ -21,6 +21,7 @@
 | **Architecture** | [`D32: scene and render domain modules`](architecture/decisions/D32-scene-and-render-domain-modules.md) | `Stable` | Status: accepted |
 | **Architecture** | [`D33: render feature plugin boundary`](architecture/decisions/D33-render-feature-plugin-boundary.md) | `Stable` | Status: accepted |
 | **Architecture** | [`D34: game UI is scene data; the design system is a style layer`](architecture/decisions/D34-game-ui-is-scene-data.md) | `Stable` | Status: accepted (2026-09-30) |
+| **Architecture** | [`D35: the editor boundary between Core and Studio`](architecture/decisions/D35-editor-boundary.md) | `Stable` | Status: accepted (2026-10-03) |
 | **Audits** | [`Parity shadow baselines: re-record audit (2026-09-27)`](audits/2026-09-27-parity-shadow-baselines.md) | `Active` | `SceneShadowBaselineTest` (`:awake:engine:render:parity`) failed on `main`. The failures were Vulkan yaw 0 and 1, and We... |
 | **Active Task** | [`Implementation Plan: HAL vs Render Graph — Decoupling `render:contract``](tasks/2026-09-09-hal-vs-render-graph-phase-1-plan.md) | `Active` | `render:contract` is Awake Engine's **Hardware Abstraction Layer (HAL)**. Over time, it accumulated |
 | **Active Task** | [`Render architecture finalization`](tasks/2026-09-09-render-architecture-finalization-plan.md) | `Active` | Status: **Active — implementation roadmap with A0/A1 complete and A2–A6 in progress.** |
