@@ -32,22 +32,24 @@ fun DrawPath.tessellateStrokeAa(
     if (stroke.width.value <= 0f || density <= 0f) return ColoredTriangleMesh(emptyList(), IntArray(0))
     val physicalWidth = stroke.width.value * density
     val scaledStroke = stroke.copy(width = physicalWidth.dp)
+    // Centred on the outline, as SVG coverage is. Capping the fringe at half the width keeps an
+    // opaque core of at least half the stroke, and on an edge that lies on a pixel boundary centred
+    // and outside fringes light exactly the same pixels. Off the grid -- every curve -- a fringe
+    // placed wholly outside added half a pixel per edge: a 1 px rounded corner drew 35% heavier.
     val fringe = fringePx.coerceAtLeast(0f).coerceAtMost(physicalWidth / 2f)
-    // A stroke already has a finite interior. Keep that core opaque and place the fringe outside
-    // it so a one-pixel border does not lose all of its solid coverage.
-    return strokeToFillPath(scaledStroke).tessellateFillAa(color, fringePx = fringe, insetPx = 0f)
+    return strokeToFillPath(scaledStroke).tessellateFillAa(color, fringePx = fringe, insetPx = fringe / 2f)
 }
 
 /**
  * Converts a stroked centerline into an equivalent FILLED outline, so a stroke can be rendered
  * through [tessellateFill]/[tessellateFillAa].
+ *
+ * The outline never crosses itself: the inside of every turn takes the point where the two offset
+ * edges meet, whatever the join, and only the outside gets the join's shape. A bevel or arc on the
+ * inside folds back into a small loop -- one per vertex of a flattened curve -- and the
+ * anti-aliased fringe built on such a ring smears across the stroke.
  */
-fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath = strokeToFillPath(stroke, svgInnerJoins = false)
-
-/** Produces SVG round-join geometry, including the sharp intersection on the inside of a turn. */
-fun DrawPath.strokeToSvgFillPath(stroke: DrawStroke): DrawPath = strokeToFillPath(stroke, svgInnerJoins = true)
-
-private fun DrawPath.strokeToFillPath(stroke: DrawStroke, svgInnerJoins: Boolean): DrawPath {
+fun DrawPath.strokeToFillPath(stroke: DrawStroke): DrawPath {
     val contours = flattenContours(curveSteps = 16, arcStepDegrees = STROKE_ARC_STEP_DEGREES)
     val halfWidth = stroke.width.value / 2f
     if (contours.isEmpty() || halfWidth <= 0f) return DrawPath(fillRule = FillRule.NonZero, commands = emptyList())
@@ -80,11 +82,14 @@ private fun DrawPath.strokeToFillPath(stroke: DrawStroke, svgInnerJoins: Boolean
                 emitRing(right.asReversed())
             }
         } else {
-            emitRing(offsetOpenRing(contour.points, halfWidth, stroke, svgInnerJoins))
+            emitRing(offsetOpenRing(contour.points, halfWidth, stroke))
         }
     }
     return DrawPath(fillRule = FillRule.NonZero, commands = commands)
 }
+
+/** The SVG stroke outline -- the same one [strokeToFillPath] produces for every stroke. */
+fun DrawPath.strokeToSvgFillPath(stroke: DrawStroke): DrawPath = strokeToFillPath(stroke)
 
 internal fun unitDir(a: DrawPoint, b: DrawPoint): DrawPoint? {
     val dx = b.x - a.x
@@ -138,7 +143,7 @@ internal fun ringCorner(round: Boolean, center: DrawPoint, halfWidth: Float, fro
     }
 }
 
-private fun innerRoundJoin(center: DrawPoint, halfWidth: Float, fromDir: DrawPoint, toDir: DrawPoint): List<DrawPoint> {
+private fun innerJoin(center: DrawPoint, halfWidth: Float, fromDir: DrawPoint, toDir: DrawPoint): List<DrawPoint> {
     val from = offsetVector(fromDir, halfWidth)
     val to = offsetVector(toDir, halfWidth)
     val denominator = cross(fromDir, toDir)
@@ -150,10 +155,7 @@ private fun innerRoundJoin(center: DrawPoint, halfWidth: Float, fromDir: DrawPoi
     return if (hypot(intersection.x - center.x, intersection.y - center.y) > halfWidth * 4f) bevel else listOf(intersection)
 }
 
-internal fun offsetOpenRing(points: List<DrawPoint>, halfWidth: Float, stroke: DrawStroke): List<DrawPoint> =
-    offsetOpenRing(points, halfWidth, stroke, svgInnerJoins = false)
-
-private fun offsetOpenRing(points: List<DrawPoint>, halfWidth: Float, stroke: DrawStroke, svgInnerJoins: Boolean): List<DrawPoint> {
+internal fun offsetOpenRing(points: List<DrawPoint>, halfWidth: Float, stroke: DrawStroke): List<DrawPoint> {
     val dirs = segmentDirections(points) ?: return emptyList()
 
     var pts = points
@@ -168,19 +170,19 @@ private fun offsetOpenRing(points: List<DrawPoint>, halfWidth: Float, stroke: Dr
     val ring = ArrayList<DrawPoint>()
     ring += DrawPoint(pts.first().x + offsetVector(dirs.first(), halfWidth).x, pts.first().y + offsetVector(dirs.first(), halfWidth).y)
     for (i in 1 until dirs.size) {
-        // A round SVG join belongs only on the outside of a turn. Rounding the inside edge as
-        // well creates a second semicircle at every connected point -- the visible "bead" on
-        // Lucide checks and chevrons. The reverse side below walks the opposite direction, so it
-        // applies the same test with its already-reversed directions.
+        // A round join belongs only on the outside of a turn. Rounding the inside edge as well
+        // creates a second semicircle at every connected point -- the visible "bead" on Lucide
+        // checks and chevrons. The reverse side below walks the opposite direction, so it applies
+        // the same test with its already-reversed directions.
         val turn = cross(dirs[i - 1], dirs[i])
-        ring += strokeJoinCorner(cornerMode(svgInnerJoins, round, turn), pts[i], halfWidth, dirs[i - 1], dirs[i])
+        ring += strokeJoinCorner(cornerMode(round, turn), pts[i], halfWidth, dirs[i - 1], dirs[i])
     }
     ring += capSweep(roundCap, pts.last(), halfWidth, dirs.last())
     for (i in dirs.size - 2 downTo 0) {
         val from = DrawPoint(-dirs[i + 1].x, -dirs[i + 1].y)
         val to = DrawPoint(-dirs[i].x, -dirs[i].y)
         val turn = cross(from, to)
-        ring += strokeJoinCorner(cornerMode(svgInnerJoins, round, turn), pts[i + 1], halfWidth, from, to)
+        ring += strokeJoinCorner(cornerMode(round, turn), pts[i + 1], halfWidth, from, to)
     }
     ring += capSweep(roundCap, pts.first(), halfWidth, DrawPoint(-dirs.first().x, -dirs.first().y))
     return ring
@@ -194,9 +196,9 @@ private fun segmentDirections(points: List<DrawPoint>): List<DrawPoint>? {
 
 private enum class StrokeCornerMode { RoundOutside, MiterInside, Bevel }
 
-private fun cornerMode(svgInnerJoins: Boolean, round: Boolean, turn: Float): StrokeCornerMode = when {
+private fun cornerMode(round: Boolean, turn: Float): StrokeCornerMode = when {
+    turn > 0f -> StrokeCornerMode.MiterInside
     round && turn < 0f -> StrokeCornerMode.RoundOutside
-    svgInnerJoins && round && turn > 0f -> StrokeCornerMode.MiterInside
     else -> StrokeCornerMode.Bevel
 }
 
@@ -208,7 +210,7 @@ private fun strokeJoinCorner(
     toDir: DrawPoint,
 ): List<DrawPoint> = when (mode) {
     StrokeCornerMode.RoundOutside -> ringCorner(true, center, halfWidth, fromDir, toDir)
-    StrokeCornerMode.MiterInside -> innerRoundJoin(center, halfWidth, fromDir, toDir)
+    StrokeCornerMode.MiterInside -> innerJoin(center, halfWidth, fromDir, toDir)
     StrokeCornerMode.Bevel -> ringCorner(false, center, halfWidth, fromDir, toDir)
 }
 
@@ -241,9 +243,20 @@ internal fun offsetClosedRing(rawPoints: List<DrawPoint>, distance: Float, join:
     val round = join == StrokeJoin.Round
     val ring = ArrayList<DrawPoint>()
     for (i in 0 until n) {
-        val fromDir = dirs[(i - 1 + n) % n]
-        val toDir = dirs[i]
-        ring += ringCorner(round, points[i], abs(distance), scaleDir(fromDir, distance), scaleDir(toDir, distance))
+        val fromDir = scaleDir(dirs[(i - 1 + n) % n], distance)
+        val toDir = scaleDir(dirs[i], distance)
+        // As on an open path, the join's shape belongs on the outside of a turn only. An arc or
+        // bevel on the inside folds back into a tiny loop -- one per vertex of a flattened circle,
+        // a bow-tie at each corner of a square -- and the fringe built on that ring lands under
+        // the solid core or past the stroke's far edge. Flipping both directions for the negative
+        // side keeps their cross product but swaps which side the turn is towards.
+        val turn = cross(fromDir, toDir)
+        val inside = if (distance >= 0f) turn > 0f else turn < 0f
+        ring += if (inside) {
+            innerJoin(points[i], abs(distance), fromDir, toDir)
+        } else {
+            ringCorner(round, points[i], abs(distance), fromDir, toDir)
+        }
     }
     return ring
 }

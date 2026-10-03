@@ -203,6 +203,11 @@ fun DrawPath.tessellateFillAa(
 
     val vertices = ArrayList<ColoredVertex>()
     val indices = ArrayList<Int>()
+    // Every group's solid core goes in before any group's fringe. A fringe that reaches over a
+    // neighbouring group's core -- one side of a partial border meeting the next -- would otherwise
+    // reach a pixel first and leave a hole, since a mesh paints each pixel once.
+    val fringeVertices = ArrayList<ColoredVertex>()
+    val fringeIndices = ArrayList<Int>()
     val transparent = color.withAlpha(0f)
     val inset = insetPx.coerceIn(0f, fringePx)
     val outset = fringePx - inset
@@ -210,8 +215,10 @@ fun DrawPath.tessellateFillAa(
     resolveFillGroups(contours, fillRule).forEach { group ->
         val insetOuter = offsetPolygon(group.outer, -inset)
         val outsetOuter = offsetPolygon(group.outer, outset)
-        val insetHoles = group.holes.map { offsetPolygon(it, -inset) }
-        val outsetHoles = group.holes.map { offsetPolygon(it, outset) }
+        // offsetPolygon moves a ring away from its own interior for a positive distance, and a
+        // hole's interior is the empty side: shrinking the shape grows its holes.
+        val insetHoles = group.holes.map { offsetPolygon(it, inset) }
+        val outsetHoles = group.holes.map { offsetPolygon(it, -outset) }
 
         appendGroupFill(FillGroup(insetOuter, insetHoles), onTriangulated = { meshPoints, meshIndices ->
             val base = vertices.size
@@ -237,77 +244,69 @@ fun DrawPath.tessellateFillAa(
             }
         })
 
-        appendBoundaryFringe(insetOuter, outsetOuter, color, transparent, vertices, indices)
+        appendBoundaryFringe(insetOuter, outsetOuter, color, transparent, fringeVertices, fringeIndices)
         for (i in group.holes.indices) {
-            appendBoundaryFringe(insetHoles[i], outsetHoles[i], color, transparent, vertices, indices)
+            appendBoundaryFringe(insetHoles[i], outsetHoles[i], color, transparent, fringeVertices, fringeIndices)
         }
     }
+    val fringeBase = vertices.size
+    vertices += fringeVertices
+    fringeIndices.forEach { indices += fringeBase + it }
     return ColoredTriangleMesh(vertices, indices.toIntArray())
 }
 
 const val MAX_MITER_SCALE = 4f
-private const val MITER_EPSILON = 1e-4f
+internal const val MITER_EPSILON = 1e-4f
 
 fun offsetPolygon(polygon: List<DrawPoint>, distance: Float): List<DrawPoint> {
     val n = polygon.size
     if (n < 3) return polygon
     val outwardSign = if (polygonSignedArea(polygon) >= 0f) 1f else -1f
-
-    fun edgeNormal(a: DrawPoint, b: DrawPoint): Pair<Float, Float> {
-        val dx = b.x - a.x
-        val dy = b.y - a.y
-        val length = hypot(dx, dy)
-        if (length <= 0f) return 0f to 0f
-        return (dy / length * outwardSign) to (-dx / length * outwardSign)
+    // A ring can repeat a point -- a stroke outline closes on a start cap whose last point lands a
+    // float epsilon from the first. That sliver edge has a normal in a random direction, which
+    // corrupted the fringe along the whole edge it touched. Measure every corner against the
+    // nearest distinct neighbour instead; repeated points then offset to the same place.
+    fun nearestDistinct(i: Int, step: Int): Int {
+        var j = (i + step + n) % n
+        while (j != i && hypot(polygon[j].x - polygon[i].x, polygon[j].y - polygon[i].y) <= DEGENERATE_EDGE_PX) {
+            j = (j + step + n) % n
+        }
+        return j
+    }
+    val prevOf = IntArray(n) { nearestDistinct(it, step = -1) }
+    val nextOf = IntArray(n) { nearestDistinct(it, step = 1) }
+    val foldTan = FloatArray(n) { i ->
+        foldTangent(polygon[prevOf[i]], polygon[i], polygon[nextOf[i]], distance, outwardSign)
     }
 
     return polygon.indices.map { i ->
-        val prev = polygon[(i - 1 + n) % n]
+        val prev = polygon[prevOf[i]]
         val curr = polygon[i]
-        val next = polygon[(i + 1) % n]
-        val (prevNx, prevNy) = edgeNormal(prev, curr)
-        val (nextNx, nextNy) = edgeNormal(curr, next)
-
-        val sumX = prevNx + nextNx
-        val sumY = prevNy + nextNy
-        val sumLength = hypot(sumX, sumY)
-        val (unitX, unitY, scale) = if (sumLength > 1e-4f) {
-            val ux = sumX / sumLength
-            val uy = sumY / sumLength
-            val cosHalfAngle = prevNx * ux + prevNy * uy
-            // A reversing or degenerate join has no stable miter direction. Use a bevel-sized
-            // offset instead of allowing 1 / cosHalfAngle to poison the fringe mesh with NaN.
-            val miterScale = if (cosHalfAngle > MITER_EPSILON) {
-                (1f / cosHalfAngle).coerceAtMost(MAX_MITER_SCALE)
-            } else {
-                1f
-            }
-            Triple(ux, uy, miterScale)
+        val next = polygon[nextOf[i]]
+        val (unitX, unitY, scale) = miterDirection(
+            edgeNormal(prev, curr, outwardSign),
+            edgeNormal(curr, next, outwardSign),
+        )
+        // Only a corner that folds inward under this offset is limited, and only by how far its
+        // edges can slide before they invert. Half the adjacent edge length, the previous limit,
+        // depends on how finely a curve was flattened: a 0.5 px inset on a round cap cut into
+        // 0.14 px segments came out at 0.07 px, so the fringe sat outside every curved stroke and
+        // made it heavier.
+        val foldLimit = if (foldTan[i] == 0f) {
+            Float.MAX_VALUE
         } else {
-            Triple(prevNx, prevNy, 1f)
-        }
-
-        // Growing a convex corner outward cannot fold the ring back on itself, however short its
-        // edges are; only the shrinking direction can, and at a reflex corner "shrinking" is
-        // outward. Clamping both directions by adjacent edge length made the offset a function of
-        // how finely the contour happened to be flattened -- an anti-aliased fringe on a rounded
-        // shape came out at half the arc-segment length (0.003 px where 0.5 was asked for), so
-        // every curve shipped effectively unantialiased.
-        val crossZ = (curr.x - prev.x) * (next.y - curr.y) - (curr.y - prev.y) * (next.x - curr.x)
-        val convex = crossZ * outwardSign > 0f
-        val requested = distance * scale
-        val offset = if ((distance >= 0f) == convex) {
-            requested
-        } else {
-            val maxStep = 0.5f * min(
-                hypot(curr.x - prev.x, curr.y - prev.y),
-                hypot(next.x - curr.x, next.y - curr.y),
+            min(
+                hypot(curr.x - prev.x, curr.y - prev.y) / (foldTan[prevOf[i]] + foldTan[i]),
+                hypot(next.x - curr.x, next.y - curr.y) / (foldTan[i] + foldTan[nextOf[i]]),
             )
-            requested.coerceIn(-maxStep, maxStep)
         }
+        val offset = distance.coerceIn(-foldLimit, foldLimit) * scale
         DrawPoint(curr.x + unitX * offset, curr.y + unitY * offset)
     }
 }
+
+/** Points closer than this are one point to [offsetPolygon]: far below a pixel, far above float noise. */
+private const val DEGENERATE_EDGE_PX = 1e-3f
 
 fun appendBoundaryFringe(
     innerRing: List<DrawPoint>,

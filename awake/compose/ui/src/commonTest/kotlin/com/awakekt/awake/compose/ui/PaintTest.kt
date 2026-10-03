@@ -423,17 +423,17 @@ class PaintTest {
         // box rather than overflowing the space the parent measured.
         //
         // The box below is that centreline grown by half the stroke width to the ring's outer edge
-        // and again by the anti-aliased fringe -- min(AA_FRINGE_PX, stroke / 2) = 1 here. That
-        // fringe does extend one pixel beyond the node, which is what an anti-aliased edge is; it
-        // is transparent at its outer rim. Asserting this box also pins the stroke width, which a
-        // tessellated mesh no longer carries as a field.
-        assertEquals(Rectangle(-1f, -1f, 22f, 22f), bounds)
+        // (the node's edge), plus half the anti-aliased fringe, which is centred on that edge --
+        // min(AA_FRINGE_PX, stroke / 2) = 1 here, so half a pixel past the node, transparent at
+        // its outer rim. Asserting this box also pins the stroke width, which a tessellated mesh
+        // no longer carries as a field.
+        assertEquals(Rectangle(-0.5f, -0.5f, 21f, 21f), bounds)
 
-        // The half of that claim a caller actually depends on: everything the border *paints* is
-        // inside the node. Only the fringe's outer rim, which is fully transparent, is not.
+        // The half of that claim a caller actually depends on: the border's opaque core is inside
+        // the node, half a fringe in from its edge, so the half-covered line falls on the edge.
         val ring = primitives.filterIsInstance<UiDrawPrimitive.Mesh>().single().placedMesh()
-        val painted = ColoredTriangleMesh(ring.vertices.filter { it.color.a > 0f }, ring.indices)
-        assertEquals(Rectangle(0f, 0f, 20f, 20f), painted.bounds())
+        val opaque = ColoredTriangleMesh(ring.vertices.filter { it.color.a >= 1f }, ring.indices)
+        assertEquals(Rectangle(0.5f, 0.5f, 19f, 19f), opaque.bounds())
     }
 
     @Test
@@ -444,7 +444,7 @@ class PaintTest {
 
         // One ring for the whole perimeter, per-corner radii and all -- same inset and fringe as
         // the square case above.
-        assertEquals(Rectangle(-1f, -1f, 22f, 22f), bounds)
+        assertEquals(Rectangle(-0.5f, -0.5f, 21f, 21f), bounds)
     }
 
     @Test
