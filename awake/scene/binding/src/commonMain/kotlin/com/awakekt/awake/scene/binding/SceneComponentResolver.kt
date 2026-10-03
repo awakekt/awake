@@ -215,16 +215,26 @@ class SceneComponentRegistry(
     }
 }
 
-/** Built-in resolver for [ScenePrefabLink] components. */
-object PrefabLinkBinding : SceneComponentResolver {
-    override fun canResolve(component: SceneComponent): Boolean = component is ScenePrefabLink
+/**
+ * A node that places a prefab: [path] names the prefab file. The prefab's entities hang under this
+ * one; exporting the world writes this link and leaves them out.
+ */
+data class PrefabLink(val path: String)
 
-    override fun attach(
+/** Built-in binding for [ScenePrefabLink]: the entity's [PrefabLink], exported back as the link. */
+object PrefabLinkBinding : SceneComponentBinding<PrefabLink, ScenePrefabLink> {
+    override val componentClass: KClass<PrefabLink> = PrefabLink::class
+    override val schemaClass: KClass<ScenePrefabLink> = ScenePrefabLink::class
+
+    override fun attachTyped(
         world: World,
         entity: Entity,
-        component: SceneComponent,
+        component: ScenePrefabLink,
         context: SceneResolutionContext,
     ) {
-        // Handled during prefab instantiation or ignored in plain scene hierarchy.
+        world.add(entity, PrefabLink(component.path))
     }
+
+    override fun export(world: World, entity: Entity, component: PrefabLink): ScenePrefabLink =
+        ScenePrefabLink(component.path)
 }

@@ -5,30 +5,22 @@
  */
 package com.awakekt.awake.scene.document
 
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonNames
 
 /**
- * Serializable link component referencing an external prefab asset.
+ * Places a prefab at this node. [SceneDocument.withPrefabs] puts the prefab file's root under the
+ * node, so the node's transform places it and the node's own components add to it. The node holds no
+ * children of its own.
  *
- * @property prefabGuid Prefab asset unique identifier GUID.
- * @property isRoot Whether this node acts as the root of the prefab hierarchy.
+ * @property path The prefab file (a [ScenePrefab] as JSON), relative to the project root.
  */
 @Serializable
 @SerialName("prefab_link")
-data class ScenePrefabLink(
-    @OptIn(ExperimentalSerializationApi::class)
-    @JsonNames("prefab_guid", "prefabGuid")
-    val prefabGuid: String,
-    @OptIn(ExperimentalSerializationApi::class)
-    @JsonNames("is_root", "isRoot")
-    val isRoot: Boolean = true,
-) : SceneComponent {
+data class ScenePrefabLink(val path: String) : SceneComponent {
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
-        if (prefabGuid.isBlank()) {
-            add(SceneValidationIssue(path, "prefabLink.prefabGuid must not be blank"))
+        if (this@ScenePrefabLink.path.isBlank()) {
+            add(SceneValidationIssue(path, "prefab_link.path must not be blank"))
         }
     }
 }

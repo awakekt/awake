@@ -14,8 +14,6 @@ import kotlinx.serialization.Serializable
  * @property transform Local 3D transform spatial orientation.
  * @property components Attached serializable components.
  * @property children Nested child nodes in the hierarchy.
- * @property prefabGuid Associated prefab GUID if instantiated from a prefab.
- * @property overrides Property overrides applied over the linked prefab.
  */
 @Serializable
 data class SceneNode(
@@ -23,18 +21,4 @@ data class SceneNode(
     val transform: SceneTransform = SceneTransform(),
     val components: List<SceneComponent> = emptyList(),
     val children: List<SceneNode> = emptyList(),
-    val prefabGuid: String? = null,
-    val overrides: List<ScenePropertyOverride> = emptyList(),
-)
-
-/**
- * Property override key-value pair for prefab instances.
- *
- * @property targetPath Property path identifier (e.g. `components[0].color`).
- * @property value Serialized string value to override.
- */
-@Serializable
-data class ScenePropertyOverride(
-    val targetPath: String,
-    val value: String,
 )

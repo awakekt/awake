@@ -32,7 +32,7 @@ registers it.
 | [`patrol`](#patrol) | `PatrolBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`pbr_material`](#pbr_material) | `PbrMaterial` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`physics_body`](#physics_body) | `PhysicsBody` | `com.awakekt.awake.scene:physics` | `registerPhysics()` | [Physics](../guides/physics.md) |
-| [`prefab_link`](#prefab_link) | — | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
+| [`prefab_link`](#prefab_link) | `PrefabLink` | `com.awakekt.awake.scene:document` | Built in | [Scene documents](../guides/scene-documents.md) |
 | [`skybox`](#skybox) | `Skybox` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Sky and fog](../guides/sky-and-fog.md) |
 | [`spin_control`](#spin_control) | `SpinControl` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`static_transform`](#static_transform) | `StaticTransform` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
@@ -352,12 +352,14 @@ The value of `shape`, named by its `type` key.
 
 ## `prefab_link`
 
-Marks a node as an instance of a prefab. The scene runtime attaches nothing for it. `ScenePrefabLink`.
+Places a prefab file at this node. `SceneDocument.withPrefabs` (which `loadPlayableProject` runs)
+puts the prefab's root under the node, so the node's transform places it and its own components add
+to it. The node holds no children of its own. Exporting the world writes the link, not the prefab's
+nodes. A prefab file is a `ScenePrefab` as JSON: `guid`, optional `name`, and a `root` node. `ScenePrefabLink`.
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
-| `prefabGuid` | string | required | GUID of the prefab. Must not be blank. Also read as `prefab_guid`. |
-| `isRoot` | boolean | `true` | Whether this node is the prefab's root. Also read as `is_root`. |
+| `path` | string | required | The prefab file, relative to the project root. Must not be blank. |
 
 ## `skybox`
 

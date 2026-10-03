@@ -43,7 +43,7 @@ class SceneSerializationTest {
                     name = "Chest",
                     components = listOf(
                         TestItemComponent(itemId = "sword_01", count = 2),
-                        ScenePrefabLink(prefabGuid = "guid-chest-99", isRoot = true),
+                        ScenePrefabLink(path = "prefabs/chest.prefab.json"),
                     ),
                 ),
             ),
@@ -62,8 +62,7 @@ class SceneSerializationTest {
         assertEquals(2, item.count)
 
         val link = components[1] as ScenePrefabLink
-        assertEquals("guid-chest-99", link.prefabGuid)
-        assertEquals(true, link.isRoot)
+        assertEquals("prefabs/chest.prefab.json", link.path)
     }
 
     @Test
@@ -77,8 +76,7 @@ class SceneSerializationTest {
                   "components": [
                     {
                       "component": "prefabLink",
-                      "prefabGuid": "guid-1234",
-                      "isRoot": true
+                      "path": "prefabs/props.prefab.json"
                     }
                   ]
                 }
@@ -88,7 +86,6 @@ class SceneSerializationTest {
 
         val doc = SceneLoader.decode(legacyJson)
         val link = doc.nodes.single().components.single() as ScenePrefabLink
-        assertEquals("guid-1234", link.prefabGuid)
-        assertEquals(true, link.isRoot)
+        assertEquals("prefabs/props.prefab.json", link.path)
     }
 }
