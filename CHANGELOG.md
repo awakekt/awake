@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.9] - 2026-10-03
+
+### Added
+
+- **Editor plugins can add toolbar controls, workspaces, floating cards, keybindings and entity templates through the Apache contract.** `:awake:editor:contract` gains `ToolbarProvider`, `WorkspaceProvider`, `FloatingCardProvider` (with the host's `FloatingCardDeck`), `KeybindingProvider` (`Keybinding`, `KeyChord`, `ActionId`) and `EntityTemplateProvider` (`EntityTemplate`, which configures a new entity's scene components). Each fixes its own kind, and simple providers need no codec: `NoProviderConfiguration` is the default, `PanelProvider` included. The contract now also depends on `:awake:compose:ui` and `:awake:ecs`.
+
 ## [0.1.0-rc.8] - 2026-10-03
 
 ### Added
