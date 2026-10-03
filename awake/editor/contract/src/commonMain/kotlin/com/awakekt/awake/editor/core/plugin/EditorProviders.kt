@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.editor.core.plugin
 
+import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.core.di.Container
 import com.awakekt.awake.core.di.Module
 import com.awakekt.awake.core.di.container
@@ -25,16 +26,16 @@ enum class EditorProviderKind {
     Animation,
     Build,
 
-    /** A tab or panel in the bottom panel tray. See `EditorBottomPanelContribution` in the shell package. */
+    /** A panel in the bottom tray. Implement [PanelProvider] to draw it. */
     BottomPanel,
 
     /** A toolbar action or control contributed by a plugin. */
     Toolbar,
 
-    /** A tab or panel in the left sidebar (e.g. alongside Hierarchy). */
+    /** A panel in the left sidebar, beside the hierarchy. Implement [PanelProvider] to draw it. */
     Sidebar,
 
-    /** A tab or panel in the right inspector panel (e.g. alongside Inspector). */
+    /** A panel in the right inspector, beside the entity inspector. Implement [PanelProvider] to draw it. */
     InspectorPanel,
 
     /** A keybinding or shortcut mapping contributed by a plugin. */
@@ -128,6 +129,27 @@ interface BuildProvider : EditorProvider {
 }
 
 /**
+ * A provider that draws its own panel, so a plugin can ship UI against this contract alone.
+ *
+ * Its [kind] picks the host slot and must be one of [PANEL_KINDS]. The host owns the tab, labels it
+ * with [ProviderMetadata.displayName], and calls [content] inside it on every frame it is visible.
+ */
+interface PanelProvider : EditorProvider {
+    /** Draws the panel body. */
+    context(_: Composer)
+    fun content()
+
+    companion object {
+        /** The slots a [PanelProvider] may fill. */
+        val PANEL_KINDS: Set<EditorProviderKind> = setOf(
+            EditorProviderKind.BottomPanel,
+            EditorProviderKind.Sidebar,
+            EditorProviderKind.InspectorPanel,
+        )
+    }
+}
+
+/**
  * Ordered registry for the public editor provider kinds.
  *
  * IDs are global across kinds: an ambiguous provider ID would make persisted extension data
@@ -166,6 +188,11 @@ class ProviderRegistry {
             .firstOrNull { it in byId }
         require(registeredId == null) {
             "A provider is already registered for '${registeredId?.value}'."
+        }
+        val misplacedPanel = providers.firstOrNull { it is PanelProvider && it.kind !in PanelProvider.PANEL_KINDS }
+        require(misplacedPanel == null) {
+            "Panel provider '${misplacedPanel?.metadata?.id?.value}' has kind ${misplacedPanel?.kind}, " +
+                "which is not a panel slot."
         }
         providers.forEach { provider ->
             byId[provider.metadata.id] = provider

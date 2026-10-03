@@ -126,6 +126,19 @@ public final class com/awakekt/awake/editor/core/plugin/EnvironmentProvider$Defa
 	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/EnvironmentProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 }
 
+public abstract interface class com/awakekt/awake/editor/core/plugin/PanelProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
+	public static final field Companion Lcom/awakekt/awake/editor/core/plugin/PanelProvider$Companion;
+	public abstract fun content (Lcom/awakekt/awake/compose/runtime/Composer;)V
+}
+
+public final class com/awakekt/awake/editor/core/plugin/PanelProvider$Companion {
+	public final fun getPANEL_KINDS ()Ljava/util/Set;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/PanelProvider$DefaultImpls {
+	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/PanelProvider;)V
+}
+
 public final class com/awakekt/awake/editor/core/plugin/PluginApi {
 	public static final field INSTANCE Lcom/awakekt/awake/editor/core/plugin/PluginApi;
 	public final fun getCurrentVersion-dFssPug ()I
