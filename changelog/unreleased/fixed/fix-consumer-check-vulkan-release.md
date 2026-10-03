@@ -1,0 +1,1 @@
+- **A Core release no longer fails its consumer check when Vulkan has unreleased changes.** The template now builds against the last Vulkan release, which is what a consumer gets, instead of a Vulkan snapshot the Core-only publish never built.
