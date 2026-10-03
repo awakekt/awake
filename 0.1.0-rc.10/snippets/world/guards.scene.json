@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "player",
+      "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }
+    },
+    {
+      "name": "guard",
+      "transform": { "position": { "x": -4.0, "y": 0.0, "z": -4.0 } },
+      "components": [
+        {
+          "component": "patrol",
+          "stops": [
+            { "x": -4.0, "y": 0.0, "z": -4.0 },
+            { "x": 4.0, "y": 0.0, "z": -4.0 },
+            { "x": 4.0, "y": 0.0, "z": 4.0 }
+          ],
+          "style": "pingPong",
+          "dwellSeconds": 2.0,
+          "speed": 1.5
+        }
+      ]
+    },
+    {
+      "name": "hound",
+      "transform": { "position": { "x": 6.0, "y": 0.0, "z": 0.0 } },
+      "components": [
+        { "component": "chase", "target": "player", "speed": 3.0 }
+      ]
+    },
+    {
+      "name": "deer",
+      "transform": { "position": { "x": 0.0, "y": 0.0, "z": 3.0 } },
+      "components": [
+        { "component": "flee", "threat": "player", "panicRadius": 5.0, "safeRadius": 10.0 }
+      ]
+    }
+  ]
+}
