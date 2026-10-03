@@ -43,6 +43,20 @@ public final class com/awakekt/awake/editor/core/asset/GltfConversionResult {
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/editor/core/plugin/ActionId {
+	public static final synthetic fun box-impl (Ljava/lang/String;)Lcom/awakekt/awake/editor/core/plugin/ActionId;
+	public static fun constructor-impl (Ljava/lang/String;)Ljava/lang/String;
+	public fun equals (Ljava/lang/Object;)Z
+	public static fun equals-impl (Ljava/lang/String;Ljava/lang/Object;)Z
+	public static final fun equals-impl0 (Ljava/lang/String;Ljava/lang/String;)Z
+	public final fun getValue ()Ljava/lang/String;
+	public fun hashCode ()I
+	public static fun hashCode-impl (Ljava/lang/String;)I
+	public fun toString ()Ljava/lang/String;
+	public static fun toString-impl (Ljava/lang/String;)Ljava/lang/String;
+	public final synthetic fun unbox-impl ()Ljava/lang/String;
+}
+
 public abstract interface class com/awakekt/awake/editor/core/plugin/AnimationProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
 	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 }
@@ -117,6 +131,38 @@ public final class com/awakekt/awake/editor/core/plugin/EditorProviderKind : jav
 	public static fun values ()[Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 }
 
+public final class com/awakekt/awake/editor/core/plugin/EntityTemplate {
+	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/lang/String;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Lkotlin/jvm/functions/Function2;
+	public final fun copy (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;)Lcom/awakekt/awake/editor/core/plugin/EntityTemplate;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/editor/core/plugin/EntityTemplate;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Lcom/awakekt/awake/editor/core/plugin/EntityTemplate;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getConfigure ()Lkotlin/jvm/functions/Function2;
+	public final fun getDefaultName ()Ljava/lang/String;
+	public final fun getDisplayName ()Ljava/lang/String;
+	public final fun getId ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/editor/core/plugin/EntityTemplateProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
+	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+	public abstract fun getTemplate ()Lcom/awakekt/awake/editor/core/plugin/EntityTemplate;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/EntityTemplateProvider$DefaultImpls {
+	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/EntityTemplateProvider;)V
+	public static fun getCodec (Lcom/awakekt/awake/editor/core/plugin/EntityTemplateProvider;)Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/EntityTemplateProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
 public abstract interface class com/awakekt/awake/editor/core/plugin/EnvironmentProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
 	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 }
@@ -126,9 +172,91 @@ public final class com/awakekt/awake/editor/core/plugin/EnvironmentProvider$Defa
 	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/EnvironmentProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 }
 
+public abstract interface class com/awakekt/awake/editor/core/plugin/FloatingCardDeck {
+	public abstract fun close-u8XhGz0 (Ljava/lang/String;)V
+	public abstract fun isOpen-u8XhGz0 (Ljava/lang/String;)Z
+	public abstract fun open-b2uW8G4 (Ljava/lang/String;Ljava/lang/Object;)V
+	public static synthetic fun open-b2uW8G4$default (Lcom/awakekt/awake/editor/core/plugin/FloatingCardDeck;Ljava/lang/String;Ljava/lang/Object;ILjava/lang/Object;)V
+}
+
+public final class com/awakekt/awake/editor/core/plugin/FloatingCardDeck$DefaultImpls {
+	public static synthetic fun open-b2uW8G4$default (Lcom/awakekt/awake/editor/core/plugin/FloatingCardDeck;Ljava/lang/String;Ljava/lang/Object;ILjava/lang/Object;)V
+}
+
+public abstract interface class com/awakekt/awake/editor/core/plugin/FloatingCardProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
+	public abstract fun content (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/editor/core/plugin/FloatingCardDeck;Ljava/lang/Object;)V
+	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public fun getIcon ()Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/FloatingCardProvider$DefaultImpls {
+	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/FloatingCardProvider;)V
+	public static fun getCodec (Lcom/awakekt/awake/editor/core/plugin/FloatingCardProvider;)Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public static fun getIcon (Lcom/awakekt/awake/editor/core/plugin/FloatingCardProvider;)Lcom/awakekt/awake/compose/ui/graphics/vector/ImageVector;
+	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/FloatingCardProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/KeyChord {
+	public fun <init> (Lcom/awakekt/awake/core/input/Key;ZZZ)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/input/Key;ZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/input/Key;
+	public final fun component2 ()Z
+	public final fun component3 ()Z
+	public final fun component4 ()Z
+	public final fun copy (Lcom/awakekt/awake/core/input/Key;ZZZ)Lcom/awakekt/awake/editor/core/plugin/KeyChord;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/editor/core/plugin/KeyChord;Lcom/awakekt/awake/core/input/Key;ZZZILjava/lang/Object;)Lcom/awakekt/awake/editor/core/plugin/KeyChord;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlt ()Z
+	public final fun getCtrl ()Z
+	public final fun getKey ()Lcom/awakekt/awake/core/input/Key;
+	public final fun getShift ()Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/Keybinding {
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1-Lvj5OxE ()Ljava/lang/String;
+	public final fun component2 ()Ljava/lang/String;
+	public final fun component3 ()Ljava/util/List;
+	public final fun component4 ()Ljava/lang/String;
+	public final fun component5 ()Lkotlin/jvm/functions/Function0;
+	public final fun copy-gOJ8TJg (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)Lcom/awakekt/awake/editor/core/plugin/Keybinding;
+	public static synthetic fun copy-gOJ8TJg$default (Lcom/awakekt/awake/editor/core/plugin/Keybinding;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Lcom/awakekt/awake/editor/core/plugin/Keybinding;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCategory ()Ljava/lang/String;
+	public final fun getDefaultChords ()Ljava/util/List;
+	public final fun getDisplayName ()Ljava/lang/String;
+	public final fun getExecute ()Lkotlin/jvm/functions/Function0;
+	public final fun getId-Lvj5OxE ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class com/awakekt/awake/editor/core/plugin/KeybindingProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
+	public abstract fun getBindings ()Ljava/util/List;
+	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/KeybindingProvider$DefaultImpls {
+	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/KeybindingProvider;)V
+	public static fun getCodec (Lcom/awakekt/awake/editor/core/plugin/KeybindingProvider;)Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/KeybindingProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/NoProviderConfiguration : com/awakekt/awake/editor/core/plugin/ProviderCodec {
+	public static final field INSTANCE Lcom/awakekt/awake/editor/core/plugin/NoProviderConfiguration;
+	public fun getCurrentVersion ()I
+	public fun validate (Lcom/awakekt/awake/editor/core/plugin/ProviderConfiguration;)Ljava/util/List;
+}
+
 public abstract interface class com/awakekt/awake/editor/core/plugin/PanelProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
 	public static final field Companion Lcom/awakekt/awake/editor/core/plugin/PanelProvider$Companion;
 	public abstract fun content (Lcom/awakekt/awake/compose/runtime/Composer;)V
+	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
 }
 
 public final class com/awakekt/awake/editor/core/plugin/PanelProvider$Companion {
@@ -137,6 +265,7 @@ public final class com/awakekt/awake/editor/core/plugin/PanelProvider$Companion 
 
 public final class com/awakekt/awake/editor/core/plugin/PanelProvider$DefaultImpls {
 	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/PanelProvider;)V
+	public static fun getCodec (Lcom/awakekt/awake/editor/core/plugin/PanelProvider;)Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
 }
 
 public final class com/awakekt/awake/editor/core/plugin/PluginApi {
@@ -356,6 +485,18 @@ public final class com/awakekt/awake/editor/core/plugin/ProviderRegistry {
 	public final fun validate-b2uW8G4 (Ljava/lang/String;Lcom/awakekt/awake/editor/core/plugin/ProviderConfiguration;)Ljava/util/List;
 }
 
+public abstract interface class com/awakekt/awake/editor/core/plugin/ToolbarProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
+	public abstract fun content (Lcom/awakekt/awake/compose/runtime/Composer;)V
+	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/ToolbarProvider$DefaultImpls {
+	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/ToolbarProvider;)V
+	public static fun getCodec (Lcom/awakekt/awake/editor/core/plugin/ToolbarProvider;)Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/ToolbarProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
 public final class com/awakekt/awake/editor/core/plugin/ValidationMessage {
 	public fun <init> (Lcom/awakekt/awake/editor/core/plugin/ValidationSeverity;Ljava/lang/String;)V
 	public final fun component1 ()Lcom/awakekt/awake/editor/core/plugin/ValidationSeverity;
@@ -375,5 +516,17 @@ public final class com/awakekt/awake/editor/core/plugin/ValidationSeverity : jav
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/editor/core/plugin/ValidationSeverity;
 	public static fun values ()[Lcom/awakekt/awake/editor/core/plugin/ValidationSeverity;
+}
+
+public abstract interface class com/awakekt/awake/editor/core/plugin/WorkspaceProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
+	public abstract fun content (Lcom/awakekt/awake/compose/runtime/Composer;Lcom/awakekt/awake/compose/ui/Modifier;)V
+	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/WorkspaceProvider$DefaultImpls {
+	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/WorkspaceProvider;)V
+	public static fun getCodec (Lcom/awakekt/awake/editor/core/plugin/WorkspaceProvider;)Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/WorkspaceProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 }
 

@@ -24,6 +24,8 @@ kotlin {
             api(project(":awake:core:state"))
             api(project(":awake:core:di"))
             api(project(":awake:compose:runtime"))
+            api(project(":awake:compose:ui"))
+            api(project(":awake:ecs"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
