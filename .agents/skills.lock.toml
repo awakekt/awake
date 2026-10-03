@@ -6,9 +6,9 @@ version = 1
 id = "awake-core"
 kind = "maintained-core"
 source = "https://github.com/awakekt/awake-agent-skills.git"
-tag = "v0.1.6"
-commit = "460781299c086895a4cbd8f371a05620a5a42c90"
-archive_sha256 = "b1fac43c177ccc651cd66b0386f7c275a957a6767d4079261dc2b27e8330b87a"
+tag = "v0.1.7"
+commit = "c3abbed30968a7817301b3cba6603f97bae2d5aa"
+archive_sha256 = "17f6e9b76a16afdcf8eefddd674a9635c6e4c989f07dd7a9387ab78d1b1ed5d7"
 license = "Apache-2.0"
 skill_root = "skills"
 skills_target = ".agents/skills"
@@ -28,6 +28,13 @@ skills = [
 command_root = "skills/awake/commands"
 commands_target = ".agents/commands"
 commands = ["compare-ui-component-crops.md", "review-ui-snapshots.md", "verify-ui-parity.md"]
+agent_root = "skills/awake/agents"
+agents_target = ".agents/agents"
+agents = [
+  "awake-architecture-auditor.md", "awake-docs-maintainer.md", "awake-engine-core-engineer.md",
+  "awake-game-runtime-engineer.md", "awake-platform-release-engineer.md",
+  "awake-render-backend-engineer.md", "awake-ui-engineer.md",
+]
 
 [[source]]
 id = "kmp-agent-skills"
