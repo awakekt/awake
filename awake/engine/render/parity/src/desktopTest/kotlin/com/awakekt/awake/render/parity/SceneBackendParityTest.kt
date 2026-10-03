@@ -324,22 +324,31 @@ class SceneBackendParityTest {
         }
     }
 
-    /** A masked caster's clear texels neither draw nor cast; opaque, the same card draws and casts whole. */
+    /**
+     * A masked caster's clear texels neither draw nor cast, static or skinned; opaque, the same card
+     * draws and casts whole.
+     */
     @Test
     fun aMaskedCasterCutsOutItsClearTexels() {
-        BACKEND_ORDER.forEach { backend ->
+        val failures = BACKEND_ORDER.flatMap { backend ->
             val renderer = session(backend).renderer
-            val opaque = renderer.renderHalfClearCasterScene(masked = false).also { write(backend, it, "half-clear-opaque") }
-            val masked = renderer.renderHalfClearCasterScene(masked = true).also { write(backend, it, "half-clear-masked") }
+            listOf(false, true).flatMap { skinned ->
+                val caster = if (skinned) "skinned" else "static"
+                val opaque = renderer.renderHalfClearCasterScene(masked = false, skinned).also { write(backend, it, "half-clear-opaque-$caster") }
+                val masked = renderer.renderHalfClearCasterScene(masked = true, skinned).also { write(backend, it, "half-clear-masked-$caster") }
 
-            val card = opaque.shadowedGroundPixels()
-            val cutOut = masked.shadowedGroundPixels()
-            assertTrue(card > 0 && cutOut in card / 4..card * 3 / 4, "$backend: masked shadow $cutOut px, the whole card's $card px")
-            // Where the clear half was, masked shows the lit ground: far brighter than the dark card,
-            // and brighter by more than the shadow it also no longer casts.
-            val clearHalf = opaque.pixelsBrightenedIn(masked)
-            assertTrue(clearHalf > MIN_CLEAR_HALF_PIXELS, "$backend: masking showed the ground through $clearHalf card pixels")
+                val card = opaque.shadowedGroundPixels()
+                val cutOut = masked.shadowedGroundPixels()
+                // Where the opaque card drew its clear half black, masked shows the lit ground. Black
+                // only: a caster that lost its whole shadow also brightens the ground it shadowed.
+                val clearHalf = opaque.blackPixelsLitIn(masked)
+                listOfNotNull(
+                    "$backend $caster: masked shadow $cutOut px, the whole card's $card px".takeIf { card == 0 || cutOut !in card / 4..card * 3 / 4 },
+                    "$backend $caster: masking showed the ground through $clearHalf card pixels".takeIf { clearHalf <= MIN_CLEAR_HALF_PIXELS },
+                )
+            }
         }
+        assertTrue(failures.isEmpty(), failures.joinToString("\n"))
     }
 
     /** An additive quad brightens the ground under it; an alpha-blended one covers it. */
@@ -432,9 +441,9 @@ class SceneBackendParityTest {
         return ground.count { (x, y) -> luminanceAt(x, y) < lit - SHADOW_MARGIN }
     }
 
-    /** Ground-row pixels [other] shows much brighter than this does. */
-    private fun ByteArray.pixelsBrightenedIn(other: ByteArray): Int = (GROUND_TOP..GROUND_BOTTOM).sumOf { y ->
-        (0 until SCENE_SIZE).count { x -> other.luminanceAt(x, y) - luminanceAt(x, y) > CARD_TO_GROUND }
+    /** Pixels black here, a card's clear half drawn whole, that [other] shows as lit ground. */
+    private fun ByteArray.blackPixelsLitIn(other: ByteArray): Int = (0 until SCENE_SIZE).sumOf { y ->
+        (0 until SCENE_SIZE).count { x -> luminanceAt(x, y) <= BLACK_LEVEL && other.luminanceAt(x, y) - luminanceAt(x, y) > CARD_TO_GROUND }
     }
 
     private fun ByteArray.channel(pixel: Int, channel: Int): Int = this[pixel * 4 + channel].toInt() and 0xFF
@@ -516,6 +525,9 @@ class SceneBackendParityTest {
         /** How far below the lit level a pixel must fall to count as shadowed. */
         const val SHADOW_MARGIN = 10
         const val CARD_TO_GROUND = 60
+
+        /** A card's black clear half: it reads up to 22 through WebGPU's sRGB target, the shadowed ground 59 and up. */
+        const val BLACK_LEVEL = 30
         const val MIN_CLEAR_HALF_PIXELS = 20
         const val RED = 0
         const val GREEN = 1

@@ -14,6 +14,7 @@ import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.instanceModelMatrix
 import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.lt
 import com.awakekt.awake.asset.shaderdsl.max
 import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.normalize
@@ -140,6 +141,7 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
     val uniformPalette = handles.array("jointPalette")
     val tint = handles.value("baseColorFactor")
     val glow = handles.value("emissiveFactor")
+    val pbrFactors = handles.value("pbrFactors")
 
     val baseColorTexture by texture2d(
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -189,7 +191,10 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         val texColor = let("texColor", textureSample(baseColorTexture, baseColorSampler, uv))
         // The material's factors tint it as glTF's do; untinted they are white and black.
         val lit = texColor.rgb * color * tint.xyz * shade + glow.xyz
-        colorOutput(vec4(lit, texColor.a * tint.w))
+        val alpha = let("alpha", texColor.a * tint.w)
+        // A masked material's cut-out, as the textured shader's; an opaque one's cutoff is 0.
+        discardIf(alpha lt pbrFactors.z)
+        colorOutput(vec4(lit, alpha))
     }
 }
 

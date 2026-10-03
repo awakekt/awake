@@ -11,6 +11,7 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniformFloats
+import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.renderer.SkinnedFields
 import com.awakekt.awake.render.renderer.SkinnedMaterialLayout
 import com.awakekt.awake.render.renderer.SkinnedUniformLayout
@@ -37,6 +38,13 @@ class SkinnedMaterialUniformsTest {
         assertContentEquals(plain.palette(), tinted.palette(), "the tint leaves the pose alone")
     }
 
+    /** A masked skinned draw's cutoff reaches its block, where its shaders cut out below it; an opaque one cuts nothing. */
+    @Test
+    fun aMaskedSkinnedDrawCarriesItsAlphaCutoff() {
+        assertEquals(0.4f, block(identity, AlphaMode.Masked).vec4(UniformFields.PbrFactors)[2])
+        assertEquals(0f, block(identity).vec4(UniformFields.PbrFactors)[2])
+    }
+
     /** The payload is rewritten in place every frame, so a shorter palette must not leave old joints behind. */
     @Test
     fun aReusedPayloadClearsJointsAShorterPaletteNoLongerHas() {
@@ -49,7 +57,7 @@ class SkinnedMaterialUniformsTest {
         assertContentEquals(FloatArray(16), again.copyOfRange(16, 32))
     }
 
-    private fun block(extras: FloatArray): FloatArray = RenderDrawCommand(
+    private fun block(extras: FloatArray, alphaMode: AlphaMode = AlphaMode.Opaque): FloatArray = RenderDrawCommand(
         mesh = object : com.awakekt.awake.render.mesh.Mesh {
             override val format = VertexFormat.PositionNormalColorUvSkin
             override val sizeBytes: Long = 0
@@ -60,6 +68,8 @@ class SkinnedMaterialUniformsTest {
             override fun destroy() = Unit
         },
         extraUniformFloats = extras,
+        alphaMode = alphaMode,
+        alphaCutoff = 0.4f,
     ).uniformFloats(
         materialUniformFloatCount = SkinnedUniformLayout.total,
         viewProjection = Mat4(),

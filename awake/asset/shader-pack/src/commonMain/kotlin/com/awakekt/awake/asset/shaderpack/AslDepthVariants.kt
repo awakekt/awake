@@ -5,19 +5,28 @@
  */
 package com.awakekt.awake.asset.shaderpack
 
+import com.awakekt.awake.asset.shaderdsl.AslArrayHandle
 import com.awakekt.awake.asset.shaderdsl.AslExpr
 import com.awakekt.awake.asset.shaderdsl.AslShaderDefinition
 import com.awakekt.awake.asset.shaderdsl.AslVertexBuilder
+import com.awakekt.awake.asset.shaderdsl.AslVertexInputHandles
+import com.awakekt.awake.asset.shaderdsl.a
 import com.awakekt.awake.asset.shaderdsl.column
 import com.awakekt.awake.asset.shaderdsl.fieldsFrom
 import com.awakekt.awake.asset.shaderdsl.inputsFrom
 import com.awakekt.awake.asset.shaderdsl.instanceModelMatrix
 import com.awakekt.awake.asset.shaderdsl.length
 import com.awakekt.awake.asset.shaderdsl.lit
+import com.awakekt.awake.asset.shaderdsl.lt
+import com.awakekt.awake.asset.shaderdsl.minus
 import com.awakekt.awake.asset.shaderdsl.plus
+import com.awakekt.awake.asset.shaderdsl.sampler
 import com.awakekt.awake.asset.shaderdsl.shader
 import com.awakekt.awake.asset.shaderdsl.storageArrayOfArrays
+import com.awakekt.awake.asset.shaderdsl.texture2d
+import com.awakekt.awake.asset.shaderdsl.textureSample
 import com.awakekt.awake.asset.shaderdsl.times
+import com.awakekt.awake.asset.shaderdsl.vec2
 import com.awakekt.awake.asset.shaderdsl.vec4
 import com.awakekt.awake.asset.shaderdsl.w
 import com.awakekt.awake.asset.shaderdsl.x
@@ -115,6 +124,39 @@ val SkinnedTexturedShadowDepthShader: AslShaderDefinition =
     skinnedDepth("skinned_textured_shadow_depth", VertexFormat.PositionNormalColorUvSkin)
 
 /**
+ * [SkinnedTexturedShadowDepthShader] for a masked material: discards texels whose base-colour alpha
+ * falls below the cutoff `pbrFactors.z`, so cut-out hair or cloth casts its cut-out shape, as
+ * [MaskedTexturedDepthShader] does for a static mesh.
+ */
+val SkinnedMaskedTexturedDepthShader: AslShaderDefinition = shader("skinned_textured_shadow_depth_masked") {
+    val handles = uniformBlock(
+        "Uniforms",
+        group = BindingLayout.Standard.slot(BindingSemantic.Material),
+        binding = 0,
+    ).fieldsFrom(SkinnedUniformLayout)
+    val cascade = uniformBlock(
+        "Cascade",
+        group = SHADOW_CASCADE_PASS_GROUP,
+        binding = 0,
+    ).fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
+    val baseColorTexture by texture2d(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 1)
+    val baseColorSampler by sampler(group = BindingLayout.Standard.slot(BindingSemantic.Material), binding = 2)
+    val out = varyings("VertexOutput")
+    val uv by out.varying(GpuDataShape.Vec2, location = 0)
+    vertex {
+        val ins = inputsFrom(VertexFormat.PositionNormalColorUvSkin)
+        out.position set (cascade * (handles.value("model") * skinnedPosition(ins, handles.array("jointPalette"))))
+        // The visible pass's flip of the decoder's bottom-up V, so both read the same texel.
+        val inUv = ins.input(VertexSemantic.Uv)
+        uv set vec2(inUv.x, 1f.lit - inUv.y)
+    }
+    fragment {
+        val alpha = let("alpha", textureSample(baseColorTexture, baseColorSampler, uv).a * handles.value("baseColorFactor").a)
+        discardIf(alpha lt handles.value("pbrFactors").z)
+    }
+}
+
+/**
  * A skinned mesh of [format] cast into the shadow map: posed by its joint palette, placed by its
  * model matrix, then projected by the cascade. The material block's `mvp` is the camera's, so the
  * shadow pass cannot use it.
@@ -134,16 +176,19 @@ private fun skinnedDepth(name: String, format: VertexFormat): AslShaderDefinitio
         binding = 0,
     ).fieldsFrom(CascadePassUniformLayout).value("cascadeViewProjection")
     vertex {
-        val ins = inputsFrom(format)
-        val joints = ins.input(VertexSemantic.JointIndices)
-        val weights = ins.input(VertexSemantic.JointWeights)
-        fun joint(slot: AslExpr): AslExpr = palette[slot]
-        val skin = weights.x * joint(joints.x) + weights.y * joint(joints.y) +
-            weights.z * joint(joints.z) + weights.w * joint(joints.w)
-        val position = skin * vec4(ins.input(VertexSemantic.Position), 1f.lit)
-        returnPosition(cascade * (model * position))
+        returnPosition(cascade * (model * skinnedPosition(inputsFrom(format), palette)))
     }
     fragment { }
+}
+
+/** The vertex's position posed by [palette]: its four weighted joint matrices applied. */
+private fun skinnedPosition(ins: AslVertexInputHandles, palette: AslArrayHandle): AslExpr {
+    val joints = ins.input(VertexSemantic.JointIndices)
+    val weights = ins.input(VertexSemantic.JointWeights)
+    fun joint(slot: AslExpr): AslExpr = palette[slot]
+    val skin = weights.x * joint(joints.x) + weights.y * joint(joints.y) +
+        weights.z * joint(joints.z) + weights.w * joint(joints.w)
+    return skin * vec4(ins.input(VertexSemantic.Position), 1f.lit)
 }
 
 /** Billboard-particle depth caster. Color and atlas-frame streams are intentionally unused. */

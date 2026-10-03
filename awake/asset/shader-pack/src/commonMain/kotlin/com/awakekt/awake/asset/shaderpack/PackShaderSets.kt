@@ -34,6 +34,10 @@ object PackShaderSets {
     val SceneDepth = aslShaderSet(SceneDepthShader)
     val MaskedTexturedShadowDepth = aslShaderSet(MaskedTexturedDepthShader)
     val InstancedMaskedTexturedShadowDepth = aslShaderSet(InstancedMaskedTexturedDepthShader)
+
+    /** A masked textured skinned mesh's caster: map `DepthRenderKey(Skinned, Masked)` to it. */
+    val SkinnedMaskedTexturedShadowDepth = aslShaderSet(SkinnedMaskedTexturedDepthShader)
+
     val Textured = aslShaderSet(::texturedShader)
     val InstancedTextured = aslShaderSet(::instancedTexturedShader)
     val Instanced = aslShaderSet(::instancedLitShadowShader)

@@ -5,11 +5,14 @@
  */
 package com.awakekt.awake.asset.shaders
 
+import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.ContentFeature
+import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRequest
+import com.awakekt.awake.render.pipeline.PipelineVariant
 
 /** Which backend is resolving a [RenderPlan]. The only thing a backend adds to one. */
 enum class RenderBackend {
@@ -126,6 +129,19 @@ data class RenderPlan(
             },
         )
     }
+}
+
+/**
+ * The vertex format and pipeline variant a backend builds the [RenderPlan.depthPrePassKeyedVariants]
+ * entry for this key with, or null for a key no keyed caster serves. Those are the masked textured
+ * casters: drawn one at a time, instanced, or skinned.
+ */
+fun DepthRenderKey.keyedCasterLayout(): Pair<VertexFormat, PipelineVariant>? = when {
+    alphaMode != AlphaMode.Masked -> null
+    kind == DepthCasterKind.Ordinary -> VertexFormat.PositionNormalColorUv to PipelineVariant.Opaque
+    kind == DepthCasterKind.Instanced -> VertexFormat.PositionNormalColorUv to PipelineVariant.Instanced
+    kind == DepthCasterKind.Skinned -> VertexFormat.PositionNormalColorUvSkin to PipelineVariant.Opaque
+    else -> null
 }
 
 /**

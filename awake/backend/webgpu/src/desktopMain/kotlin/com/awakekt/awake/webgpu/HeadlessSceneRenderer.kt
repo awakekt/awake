@@ -186,6 +186,14 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
                 bindingsByGroup = PackShaderSets.MaskedTexturedShadowDepth.webGpu.bindingsByGroup,
                 bindingsMetadataAvailable = PackShaderSets.MaskedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,
             ),
+            DepthRenderKey(DepthCasterKind.Skinned, AlphaMode.Masked) to DepthOnlyPipeline(
+                graphicsDevice = graphicsDevice,
+                shaderCode = wgsl(PackShaderSets.SkinnedMaskedTexturedShadowDepth),
+                vertexFormat = VertexFormat.PositionNormalColorUvSkin,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                bindingsByGroup = PackShaderSets.SkinnedMaskedTexturedShadowDepth.webGpu.bindingsByGroup,
+                bindingsMetadataAvailable = PackShaderSets.SkinnedMaskedTexturedShadowDepth.webGpu.bindingsMetadataAvailable,
+            ),
         ),
         instancedFormatPipelines = mapOf(
             VertexFormat.PositionNormalColorUv to DepthOnlyPipeline(

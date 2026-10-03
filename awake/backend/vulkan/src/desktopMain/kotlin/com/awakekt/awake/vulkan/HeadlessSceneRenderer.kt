@@ -194,6 +194,18 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
                 cascadeCount = depthTarget.layers,
                 framesInFlight = FRAMES_IN_FLIGHT,
             ),
+            DepthRenderKey(DepthCasterKind.Skinned, AlphaMode.Masked) to DepthOnlyPipeline(
+                graphicsDevice,
+                depthTarget.renderPass,
+                descriptorSetLayout,
+                runBlocking { spirvPair(PackShaderSets.SkinnedMaskedTexturedShadowDepth) },
+                VertexFormat.PositionNormalColorUvSkin,
+                depthTarget.size,
+                vertexEntryPoint = "vertexMain",
+                fragmentEntryPoint = "fragmentMain",
+                cascadeCount = depthTarget.layers,
+                framesInFlight = FRAMES_IN_FLIGHT,
+            ),
         ),
         instancedFormatPipelines = mapOf(
             VertexFormat.PositionNormalColorUv to DepthOnlyPipeline(

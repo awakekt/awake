@@ -111,6 +111,7 @@ public final class com/awakekt/awake/asset/shaders/RenderPlan {
 }
 
 public final class com/awakekt/awake/asset/shaders/RenderPlanKt {
+	public static final fun keyedCasterLayout (Lcom/awakekt/awake/render/pipeline/DepthRenderKey;)Lkotlin/Pair;
 	public static final fun narrowedTo (Lcom/awakekt/awake/asset/shaders/RenderPlan;Lcom/awakekt/awake/asset/shaders/RenderCapabilities;Lkotlin/jvm/functions/Function1;)Lcom/awakekt/awake/asset/shaders/RenderPlan;
 	public static synthetic fun narrowedTo$default (Lcom/awakekt/awake/asset/shaders/RenderPlan;Lcom/awakekt/awake/asset/shaders/RenderCapabilities;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/awakekt/awake/asset/shaders/RenderPlan;
 	public static final fun stagesFor (Lcom/awakekt/awake/asset/shaders/ShaderSet;Lcom/awakekt/awake/asset/shaders/RenderBackend;)Lcom/awakekt/awake/asset/shaders/ShaderStages;
