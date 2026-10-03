@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.particles
 
+import com.awakekt.awake.render.passes.uniforms.setParticleInstance
 import com.awakekt.awake.core.math.Frustum
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Plane
@@ -102,26 +103,18 @@ internal class SceneParticleCompiler {
             // Pooled and mutated in place -- see ParticleEmitter.modelPool's own doc comment.
             while (emitter.modelPool.size <= index) emitter.modelPool += Mat4()
             while (emitter.colorPool.size <= index) emitter.colorPool += Vec4()
-            val model = emitter.modelPool[index].setTranslationScale(
+            // ParticleVisual.stretchWithVelocity stretches along the motion; otherwise the stretch is
+            // zero, which the shader draws as the plain quad.
+            val stretch = if (emitter.visual.stretchWithVelocity) emitter.visual.stretchFactor else 0f
+            val model = emitter.modelPool[index].setParticleInstance(
                 particle.position.x,
                 particle.position.y,
                 particle.position.z,
                 particle.currentScale(emitter),
+                particle.velocity.x * stretch,
+                particle.velocity.y * stretch,
+                particle.velocity.z * stretch,
             )
-            // ParticleVisual.stretchWithVelocity: column 1 (m01/m11/m21) is otherwise dead --
-            // particle.wgsl only ever reads column 0 (width) and column 3 (center), never
-            // column 1's own diagonal scale value `.scale()` happens to leave there -- so a
-            // world-space stretch vector rides there for free instead of needing a whole new
-            // per-instance GPU buffer/binding just for this one optional capability.
-            if (emitter.visual.stretchWithVelocity) {
-                val speed = particle.velocity.length3()
-                if (speed > 0f) {
-                    val stretch = particle.velocity * emitter.visual.stretchFactor
-                    model.m01 = stretch.x
-                    model.m11 = stretch.y
-                    model.m21 = stretch.z
-                }
-            }
             instanceModels += model
             // Per-PARTICLE color+alpha (each ages independently, so a burst's
             // later-spawned particles sit at an earlier point in the emitter's
