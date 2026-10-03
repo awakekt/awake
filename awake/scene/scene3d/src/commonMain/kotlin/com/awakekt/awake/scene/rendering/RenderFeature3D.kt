@@ -55,7 +55,7 @@ internal class SceneParticleFeature3D(
 ) : RenderFeature3D {
     override fun collect(world: World, context: RenderFeatureContext3D): RenderContribution {
         val draws = ArrayList<RenderDrawCommand>()
-        compiler.appendWorldDrawCalls(draws, world, context.camera)
+        compiler.appendWorldDrawCalls(draws, world, context.camera, context.viewportAspect)
         return RenderContribution(draws = draws)
     }
 }
