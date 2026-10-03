@@ -15,12 +15,14 @@ package com.awakekt.awake.render.renderer
  */
 const val MAX_JOINTS = 64
 
-/** `skinned.wgsl`'s uniform block -- MVP, the joint palette, the model matrix and the material's
- * base colour and emissive factors, the canonical declaration its ASL definition derives the WGSL
- * struct from. The model matrix is for the shadow pass, which places the posed mesh in the world and
- * then projects it from the light. The factors tint the mesh as a static material's do. The palette rides in the uniform block
- * (not a storage buffer) because one skin is drawn per call on this path; the instanced
- * variant moves it to a per-instance storage buffer instead. */
+/** `skinned.wgsl`'s uniform block -- MVP, the joint palette, the model matrix, the material's
+ * base colour and emissive factors and the PBR factors, the canonical declaration its ASL definition
+ * derives the WGSL struct from. The model matrix is for the shadow pass, which places the posed mesh
+ * in the world and then projects it from the light. The colour factors tint the mesh as a static
+ * material's do; of the PBR factors only `z`, the alpha cutoff, is read, where the textured block
+ * carries it too. The palette rides in the uniform block (not a storage buffer) because one skin is
+ * drawn per call on this path; the instanced variant moves it to a per-instance storage buffer
+ * instead. */
 object SkinnedFields {
     val JointPalette = UniformField(
         "jointPalette",
@@ -35,6 +37,7 @@ val SkinnedUniformLayout = UniformLayout(
     UniformFields.Model,
     UniformFields.BaseColorFactor,
     UniformFields.EmissiveFactor,
+    UniformFields.PbrFactors,
 )
 
 /**

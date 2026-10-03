@@ -95,7 +95,7 @@ fun RenderDrawCommand.uniformFloats(
             exposure = exposure,
         )
 
-        DrawUniformPlan.Skinned -> skinnedUniforms(mvp, model, extraUniformFloats)
+        DrawUniformPlan.Skinned -> skinnedUniforms(mvp, model, extraUniformFloats, coverageCutoff)
 
         DrawUniformPlan.TexturedPbr -> texturedUniforms(
             mvp = mvp,
@@ -217,9 +217,10 @@ fun RenderDrawCommand.instancedUniformFloats(
 
 /**
  * A skinned draw's block: its palette, tinted by its material's factors when [extras] carries them
- * as [SkinnedMaterialLayout], untinted (glTF's default factors) when it is a palette alone.
+ * as [SkinnedMaterialLayout], untinted (glTF's default factors) when it is a palette alone, and the
+ * [alphaCutoff] a masked one is cut out below.
  */
-private fun skinnedUniforms(mvp: Mat4, model: Mat4, extras: FloatArray): FloatArray {
+private fun skinnedUniforms(mvp: Mat4, model: Mat4, extras: FloatArray, alphaCutoff: Float): FloatArray {
     val writer = UniformWriter(SkinnedUniformLayout).put(mvp.data, UniformFields.Mvp)
     return if (extras.size == SkinnedMaterialLayout.total) {
         writer
@@ -233,5 +234,5 @@ private fun skinnedUniforms(mvp: Mat4, model: Mat4, extras: FloatArray): FloatAr
             .put(model.data, UniformFields.Model)
             .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
             .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
-    }.build()
+    }.put(UniformFields.PbrFactors, 0f, 0f, alphaCutoff, 0f).build()
 }

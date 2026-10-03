@@ -36,7 +36,7 @@ pipeline is not drawn.
 | `depthPrePassShaderSet` | `ShaderSet?` | none | Renders shadow maps. With none, nothing casts a shadow. |
 | `sceneDepthShaderSet` | `ShaderSet?` | none | Renders camera depth for passes that read it, such as depth fog. |
 | `depthPrePassVariants` | `Map<DepthCasterKind, ShaderSet>` | empty | Shadow shaders for instanced, skinned and particle casters. |
-| `depthPrePassKeyedVariants` | `Map<DepthRenderKey, ShaderSet>` | empty | Shadow shaders by caster kind and alpha mode, such as masked textures. |
+| `depthPrePassKeyedVariants` | `Map<DepthRenderKey, ShaderSet>` | empty | Shadow shaders by caster kind and alpha mode. A masked caster casts only through one, so map `DepthRenderKey(kind, AlphaMode.Masked)` to `PackShaderSets.MaskedTexturedShadowDepth` (`Ordinary`), `InstancedMaskedTexturedShadowDepth` (`Instanced`) or `SkinnedMaskedTexturedShadowDepth` (`Skinned`). |
 | `sceneDepthVariants` | `Map<DepthCasterKind, ShaderSet>` | empty | Camera-depth shaders by caster kind. |
 
 `ScenePipeline`:
