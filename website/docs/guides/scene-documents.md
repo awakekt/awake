@@ -161,8 +161,12 @@ request, and the app's `assets { }` turns each request into a `MeshRenderer`.
 
 !!! tip "Unknown data is kept, not applied"
     A `custom` component keeps its `type` and `payload` in the document, but no ECS component is added
-    for it unless you register a resolver. Prefab fields (`prefabGuid`, `overrides`, `prefab_link`)
-    are kept in the document the same way; the loader does not expand prefabs.
+    for it unless you register a resolver.
+
+!!! tip "Prefabs"
+    A node with `prefab_link { path }` places a prefab file there. Run `withPrefabs` on the decoded
+    document before `instantiate`; `loadPlayableProject` does. Each file is read once, however many
+    nodes link it, and a saved world keeps the link instead of a copy.
 
 ## Debugging
 

@@ -27,12 +27,9 @@ data class ScenePrefab(
 
     /** Companion static factory methods for prefabs. */
     companion object {
-        /** Default JSON serializer for prefab assets. */
-        val PrefabJson: Json = Json {
-            prettyPrint = true
-            ignoreUnknownKeys = true
-            encodeDefaults = true
-        }
+        /** Prefab JSON: the scene format's, with every registered component, pretty-printed. */
+        val PrefabJson: Json
+            get() = Json(SceneSerializers.createJson()) { prettyPrint = true }
 
         /** Deserializes a [ScenePrefab] from JSON string [jsonText]. */
         fun fromJson(

@@ -31,7 +31,7 @@ class SceneValidationTest {
                     name = "nodeA",
                     components = listOf(
                         TestUniqueComponent(id = ""),
-                        ScenePrefabLink(prefabGuid = ""),
+                        ScenePrefabLink(path = ""),
                     ),
                 ),
                 SceneNode(
@@ -45,7 +45,7 @@ class SceneValidationTest {
 
         assertTrue(issues.any { "duplicate node name" in it.message })
         assertTrue(issues.any { "testUnique.id must not be blank" in it.message })
-        assertTrue(issues.any { "prefabLink.prefabGuid must not be blank" in it.message })
+        assertTrue(issues.any { "prefab_link.path must not be blank" in it.message })
         assertTrue(issues.any { "custom.type must not be blank" in it.message })
     }
 
@@ -74,7 +74,7 @@ class SceneValidationTest {
             nodes = listOf(
                 SceneNode(
                     name = "bad-node",
-                    components = listOf(ScenePrefabLink(prefabGuid = "")),
+                    components = listOf(ScenePrefabLink(path = "")),
                 ),
             ),
         )

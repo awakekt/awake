@@ -37,6 +37,7 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode
+import com.awakekt.awake.scene.document.withPrefabs
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.physics.PhysicsBodyBinding
 import com.awakekt.awake.scene.physics.PhysicsSystem
@@ -94,7 +95,7 @@ suspend fun loadPlayableProject(
 
     DefaultSceneComponentResolvers.install()
     PROJECT_COMPONENTS.forEach(SceneComponentRegistry::registerGlobal)
-    val scene = SceneLoader.decode(files.readText(manifest.entryScene))
+    val scene = SceneLoader.decode(files.readText(manifest.entryScene)).withPrefabs { files.readText(it) }
 
     val models = GltfAssetResolver().apply { setAssetSource(files) }
     scene.nodes.flatMap { it.meshNames() }

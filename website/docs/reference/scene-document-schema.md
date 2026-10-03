@@ -25,8 +25,6 @@ For what each component holds, see [Scene document components](scene-document-co
 | `transform` | [transform](#transform) | identity | Local transform, relative to the parent node. Becomes the entity's `Transform`. |
 | `components` | array of [component](#component) | `[]` | Components attached to the entity. |
 | `children` | array of node | `[]` | Child nodes. Their `Transform` is parented to this node. |
-| `prefabGuid` | string | none | GUID of the prefab this node came from. Kept in the document; the scene runtime does not read it. |
-| `overrides` | array of [override](#prefab-override) | `[]` | Property overrides over the linked prefab. Kept in the document; the scene runtime does not read them. |
 
 ## Transform
 
@@ -58,15 +56,6 @@ One entry of a node's `components` array.
 | `payload` | any JSON | required | The extension's data. |
 
 A record whose extension is not installed loads with a warning and keeps its data.
-
-## Prefab override
-
-`ScenePropertyOverride`.
-
-| Key | Type | Default | What it holds |
-| --- | --- | --- | --- |
-| `targetPath` | string | required | Property path, for example `components[0].color`. |
-| `value` | string | required | Serialized value. |
 
 ## Value types
 
@@ -130,8 +119,6 @@ Some fields also accept a second spelling:
 | Component | Field | Also accepted |
 | --- | --- | --- |
 | `mesh_renderer` | `cullMode` | `cull_mode` |
-| `prefab_link` | `prefabGuid` | `prefab_guid` |
-| `prefab_link` | `isRoot` | `is_root` |
 
 ## Validation
 

@@ -18,7 +18,8 @@ import com.awakekt.awake.scene.document.SceneTransform
 import com.awakekt.awake.scene.document.SceneVec3
 
 /**
- * Exports a live active ECS [world] into a serializable [SceneDocument].
+ * Exports a live active ECS [world] into a serializable [SceneDocument]. An entity with a
+ * [PrefabLink] exports as its link: the prefab's entities under it are not written.
  *
  * @param world Active ECS world containing live scene entities.
  * @param name Optional scene title to set on the exported document.
@@ -49,6 +50,10 @@ fun SceneLoader.fromWorld(
 
     val visiting = mutableSetOf<Entity>()
     val exported = mutableSetOf<Entity>()
+    fun skip(entity: Entity) {
+        exported += entity
+        childrenByParent[entity].orEmpty().forEach(::skip)
+    }
     fun exportNode(entity: Entity): SceneNode {
         check(visiting.add(entity)) { "Cannot export World: Transform parent links contain a cycle at $entity." }
         val transform = checkNotNull(transforms[entity])
@@ -56,7 +61,12 @@ fun SceneLoader.fromWorld(
             name = world.get<Name>(entity)?.value,
             transform = transform.toSceneTransform(),
             components = world.sceneComponents(entity, componentRegistry, extraComponents),
-            children = childrenByParent[entity].orEmpty().map(::exportNode),
+            children = if (world.get<PrefabLink>(entity) != null) {
+                childrenByParent[entity].orEmpty().forEach(::skip)
+                emptyList()
+            } else {
+                childrenByParent[entity].orEmpty().map(::exportNode)
+            },
         )
         visiting.remove(entity)
         exported += entity

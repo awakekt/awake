@@ -132,6 +132,18 @@ class ProjectRuntimeTest {
         assertTrue(position.z < -1f, "W must walk the player; z = ${position.z}")
     }
 
+    /** A project loads with its prefabs in place, so its systems see what they hold. */
+    @Test
+    fun aLinkedPrefabIsInTheLoadedScene() = runTest {
+        val scene = """{ "version": 1, "nodes": [ { "name": "Camp", "components": [ { "component": "prefab_link", "path": "prefabs/fire.prefab.json" } ] } ] }"""
+        val prefab = """{ "guid": "fire", "root": { "name": "Fire" } }"""
+        val sources = mapOf(MANIFEST_PATH to MANIFEST, "scenes/main.scene.json" to scene, "prefabs/fire.prefab.json" to prefab)
+
+        val project = loadPlayableProject(AssetSource { path -> runCatching { sources.getValue(path.value).encodeToByteArray() } })
+
+        assertEquals(listOf("Fire"), project.scene.nodes.single().children.map { it.name })
+    }
+
     @Test
     fun aPhysicsSceneWithoutABackendIsRefused() = runTest {
         val error = assertFailsWith<IllegalArgumentException> { loadPlayableProject(files(PHYSICS_SCENE)) }
