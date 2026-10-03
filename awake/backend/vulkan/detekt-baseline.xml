@@ -63,7 +63,6 @@
     <ID>TooManyFunctions:VulkanMetalView.kt$VulkanMetalView : UIViewUIKeyInputProtocol</ID>
     <ID>UnusedParameter:DepthPrePassFeature.kt$DepthPrePassFeature$castFormat: VertexFormat</ID>
     <ID>UnusedParameter:Renderer.kt$Renderer$drawCalls: List&lt;PreparedDraw></ID>
-    <ID>UnusedPrivateProperty:GlfwTextInputBridgeTest.kt$private const val REPEAT_INTERVAL_SECONDS = 0.05</ID>
     <ID>UnusedPrivateProperty:GraphicsDevice.kt$GraphicsDevice$val hasGeometry = features.geometryShader</ID>
   </CurrentIssues>
 </SmellBaseline>

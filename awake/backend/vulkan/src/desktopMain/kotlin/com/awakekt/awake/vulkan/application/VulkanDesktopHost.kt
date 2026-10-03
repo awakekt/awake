@@ -6,15 +6,12 @@
 package com.awakekt.awake.vulkan.application
 
 import com.awakekt.awake.asset.shaders.RenderPlan
-import com.awakekt.awake.core.host.DesktopFrameLoop
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.PointerCursor
 import com.awakekt.awake.engine.platform.dsl.AppWindowBackend
 import com.awakekt.awake.engine.platform.lifecycle.AwakeAppLifecycle
-import com.awakekt.awake.vulkan.gen.VulkanWindow
-
-private const val GLFW_CLIENT_API = 0x00022001
-private const val GLFW_NO_API = 0
+import com.awakekt.awake.engine.window.pollGlfwInput
+import com.awakekt.awake.engine.window.runDesktopWindow
 
 /**
  * Runs a Vulkan desktop app using Awake's standard engine bootstrap.
@@ -47,11 +44,10 @@ fun runVulkanDesktopGame(
 }
 
 /**
- * Reusable desktop GLFW host for a Vulkan-backed [AwakeAppLifecycle].
+ * Runs [AwakeAppLifecycle] in a desktop window from `awake:engine:window`, drawn by the given
+ * [VulkanEngine].
  *
- * Consumers still own authored concerns such as input polling, debug channels, and which
- * [VulkanEngine] instance to run. This helper only centralizes the window +
- * frame-loop boilerplate every Vulkan desktop sample would otherwise copy.
+ * Consumers still own input polling, debug channels, and which [VulkanEngine] instance to run.
  */
 fun runVulkanDesktopGame(
     game: AwakeAppLifecycle,
@@ -89,34 +85,14 @@ fun runVulkanDesktopGame(
     ) {
         "Desktop Vulkan host requires a Vulkan or DEFAULT backend, found ${game.windowConfig.backend}."
     }
-    check(VulkanWindow.glfwInit()) { "glfwInit failed" }
-    VulkanWindow.glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API)
-    val window = VulkanWindow.glfwCreateWindow(
-        game.windowConfig.width,
-        game.windowConfig.height,
-        game.windowConfig.title,
+    runDesktopWindow(
+        game = game,
+        onCreate = application::create,
+        onFrame = application::update,
+        onDispose = application::dispose,
+        pollInput = pollInput,
+        beforeFrame = beforeFrame,
+        afterLoop = afterLoop,
+        cursor = cursor,
     )
-    check(window != 0L) { "glfwCreateWindow returned null" }
-    VulkanWindow.glfwFocusWindow(window)
-    VulkanWindow.glfwSetScrollCallback(window)
-
-    try {
-        application.create(window)
-        while (!VulkanWindow.glfwWindowShouldClose(window)) {
-            VulkanWindow.glfwPollEvents()
-            val isFocused = VulkanWindow.glfwGetWindowAttrib(window, GLFW_FOCUSED) != 0
-            DesktopFrameLoop.isWindowFocused = isFocused
-            pollInput(window, game.input)
-            pollGlfwTextInput(window, game.input)
-            beforeFrame()
-            val effectiveMode = game.windowConfig.effectiveFrameRateMode(isFocused)
-            DesktopFrameLoop.tick(effectiveMode) { deltaTime ->
-                application.update(deltaTime.toFloat())
-            }
-            cursor?.let { applyUiCursor(window, it()) }
-        }
-    } finally {
-        afterLoop()
-        application.dispose()
-    }
 }

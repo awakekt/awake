@@ -28,10 +28,3 @@ expect fun surfaceFramebufferExtent(window: Any): VkExtent2D?
  * rather than either extent alone.
  */
 expect fun windowLogicalExtent(window: Any): VkExtent2D?
-
-/**
- * Tears down whatever platform-native window resources [window] represents, if any.
- * A no-op on Android, which owns its own `Surface`/window lifecycle; on desktop this
- * destroys the GLFW window and terminates GLFW.
- */
-expect fun destroySurfaceWindow(window: Any)

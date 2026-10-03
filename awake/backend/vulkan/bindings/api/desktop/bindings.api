@@ -179,7 +179,6 @@ public final class com/awakekt/awake/vulkan/VulkanExtension$Companion {
 
 public final class com/awakekt/awake/vulkan/VulkanSurfaceKt {
 	public static final fun createSurface (JLjava/lang/Object;)J
-	public static final fun destroySurfaceWindow (Ljava/lang/Object;)V
 	public static final fun surfaceFramebufferExtent (Ljava/lang/Object;)Lcom/awakekt/awake/vulkan/models/VkExtent2D;
 	public static final fun windowLogicalExtent (Ljava/lang/Object;)Lcom/awakekt/awake/vulkan/models/VkExtent2D;
 }
@@ -2368,31 +2367,12 @@ public final class com/awakekt/awake/vulkan/gen/VulkanImages {
 
 public final class com/awakekt/awake/vulkan/gen/VulkanWindow {
 	public static final field INSTANCE Lcom/awakekt/awake/vulkan/gen/VulkanWindow;
-	public final fun glfwConsumeScrollDeltaX (J)D
-	public final fun glfwConsumeScrollDeltaY (J)D
-	public final fun glfwConsumeScrollSource (J)I
-	public final fun glfwCreateWindow (IILjava/lang/String;)J
 	public final fun glfwCreateWindowSurface (JJ)J
-	public final fun glfwDestroyWindow (J)V
-	public final fun glfwFocusWindow (J)V
-	public final fun glfwGetClipboardString (J)Ljava/lang/String;
-	public final fun glfwGetCursorPos (J)[D
 	public final fun glfwGetFramebufferHeight (J)I
 	public final fun glfwGetFramebufferWidth (J)I
-	public final fun glfwGetKey (JI)I
-	public final fun glfwGetMouseButton (JI)I
 	public final fun glfwGetRequiredInstanceExtensions ()[Ljava/lang/String;
-	public final fun glfwGetWindowAttrib (JI)I
 	public final fun glfwGetWindowHeight (J)I
 	public final fun glfwGetWindowWidth (J)I
-	public final fun glfwInit ()Z
-	public final fun glfwPollEvents ()V
-	public final fun glfwSetClipboardString (JLjava/lang/String;)V
-	public final fun glfwSetCursorShape (JI)V
-	public final fun glfwSetScrollCallback (J)V
-	public final fun glfwTerminate ()V
-	public final fun glfwWindowHint (II)V
-	public final fun glfwWindowShouldClose (J)Z
 }
 
 public final class com/awakekt/awake/vulkan/handles/BufferHandle {

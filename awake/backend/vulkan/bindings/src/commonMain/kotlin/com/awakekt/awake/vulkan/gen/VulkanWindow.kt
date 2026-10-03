@@ -5,121 +5,29 @@
  */
 package com.awakekt.awake.vulkan.gen
 
-import com.awakekt.awake.vulkan.JniNative
-
 /**
- * Phase 1b/1c: GLFW window + Vulkan surface creation for desktop, same jni-binding-
- * generator `.gen` package/pipeline as [VulkanBuffers]/[VulkanDescriptors]/[VulkanImages].
- * Desktop-only for now (`androidMain`/`iosMain` actuals are TODO stubs) -- Android and iOS
- * get their window handle from the platform (`Surface`/`CAMetalLayer`) instead of owning a
- * window themselves, so this object's `glfwCreateWindow`/`glfwPollEvents`/etc. are
- * meaningless there. A real cross-platform windowing abstraction is a separate, larger
- * task than this MVP needs yet (the demo app itself decides whether it owns a GLFW window
- * or receives a platform surface).
+ * The Vulkan side of a desktop GLFW window: its surface, the instance extensions that surface
+ * needs, and the sizes a swapchain is built from.
+ *
+ * The window itself, its input and its lifetime belong to `awake:engine:window`, which hands this
+ * backend the window handle. Desktop only: Android and iOS create their surface from a platform
+ * `Surface` or `CAMetalLayer` (see `VulkanSurface.kt`), so the other actuals are stubs.
  */
 expect object VulkanWindow {
-    /** Must be called once before any other `glfw*` function. Returns `false` on failure. */
-    fun glfwInit(): Boolean
-    fun glfwTerminate()
-
-    /** `clientApi` uses GLFW's own `GLFW_NO_API` (0x0) -- required before creating a
-     * window meant for Vulkan rather than an OpenGL context. */
-    fun glfwWindowHint(hint: Int, value: Int)
-
-    fun glfwCreateWindow(width: Int, height: Int, title: String): Long
-    fun glfwDestroyWindow(window: Long)
-
-    /** Brings [window] to the front and gives it OS input focus (`glfwFocusWindow`). Needed
-     * on top of default focus-on-show behavior for a bare JVM process with no macOS app
-     * bundle/`NSApplication` activation, which can leave the window frontmost but not the
-     * OS-focused one -- keyboard/scroll input silently fails to reach it in that state even
-     * though mouse clicks still route correctly (mouse events go to whatever window is under
-     * the cursor regardless of app-level focus). */
-    fun glfwFocusWindow(window: Long)
-    fun glfwWindowShouldClose(window: Long): Boolean
-    fun glfwPollEvents()
     fun glfwGetFramebufferWidth(window: Long): Int
     fun glfwGetFramebufferHeight(window: Long): Int
 
-    /** Window size in screen/logical coordinates (`glfwGetWindowSize`) -- NOT the same as
-     * [glfwGetFramebufferWidth]/[glfwGetFramebufferHeight] on a Retina/HiDPI display, where
-     * the framebuffer is a device-pixel-ratio multiple of this. Needed to scale raw
-     * `glfwGetCursorPos` screen coordinates (also logical points) up to the framebuffer-pixel
-     * space the engine's window-space pointer coordinates (`Input.pointerX`/`pointerY`) and
-     * `UiContext.hitTest` are defined in. */
+    /** Size in logical points; the framebuffer is a device-pixel multiple of it on HiDPI. */
     fun glfwGetWindowWidth(window: Long): Int
     fun glfwGetWindowHeight(window: Long): Int
 
-    /** Real `VkSurfaceKHR` handle for the given GLFW window on the given `VkInstance` --
-     * the desktop equivalent of `Vulkan.vkCreateAndroidSurfaceKHR`. */
+    /** A `VkSurfaceKHR` for [window] on [instance]; the desktop counterpart of `vkCreateAndroidSurfaceKHR`. */
     fun glfwCreateWindowSurface(instance: Long, window: Long): Long
 
-    /** Instance extensions the platform's Vulkan surface support requires (e.g.
-     * `VK_KHR_surface` + `VK_EXT_metal_surface` on macOS/MoltenVK) -- must be passed into
-     * `VkInstanceCreateInfo.ppEnabledExtensionNames` *before* calling
-     * [glfwCreateWindowSurface], or it fails with `VK_ERROR_INITIALIZATION_FAILED`. */
-    fun glfwGetRequiredInstanceExtensions(): Array<String>
-
-    /** `GLFW_PRESS` (1) if `key` is currently held on `window`, `GLFW_RELEASE` (0) otherwise.
-     * Polled once per frame rather than callback-based, since `glfwPollEvents()` already runs
-     * on the single render thread every frame. */
-    fun glfwGetKey(window: Long, key: Int): Int
-
-    /** Same polling contract as [glfwGetKey], for a GLFW mouse button code. */
-    fun glfwGetMouseButton(window: Long, button: Int): Int
-
-    /** The system clipboard's text, or `null` when it is empty or holds something that is not text. */
-    fun glfwGetClipboardString(window: Long): String?
-
-    /** Puts [text] on the system clipboard, replacing whatever was there. */
-    fun glfwSetClipboardString(window: Long, text: String)
-
-    /** Cursor position in screen coordinates as `[x, y]`. */
-    fun glfwGetCursorPos(window: Long): DoubleArray
-
-    /** Registers GLFW's scroll callback (`glfwSetScrollCallback`) for [window], which
-     * accumulates every `xoffset` and `yoffset` tick (a trackpad's two-finger swipe surfaces
-     * through this exact callback, with different-feeling deltas than a mouse wheel but the
-     * same callback/API) into native accumulators -- see [glfwConsumeScrollDeltaY] and
-     * [glfwConsumeScrollDeltaX]. Must be called once, after
-     * [glfwCreateWindow] succeeds and before the first [glfwPollEvents] of the main loop; the
-     * callback itself fires synchronously inside `glfwPollEvents()`, same thread, so no
-     * further synchronization is needed once wired (see `docs/architecture.md`'s
-     * threading-model rules). This does NOT fit [glfwGetKey]'s polled-getter pattern -- GLFW
-     * scroll input is push/callback-based, not a simple state query. */
-    @JniNative("awake_glfw_set_scroll_callback")
-    fun glfwSetScrollCallback(window: Long)
-
-    /** Polled getter, same per-frame-poll contract as [glfwGetKey]/[glfwGetCursorPos]:
-     * returns the native scroll accumulator [glfwSetScrollCallback] feeds and resets it to
-     * `0.0`, so a caller polling this once per frame gets exactly the ticks that happened
-     * since its last poll (no double-counting, no dropped ticks between polls). */
-    @JniNative("awake_glfw_consume_scroll_delta_y")
-    fun glfwConsumeScrollDeltaY(window: Long): Double
-
-    /** The sideways counterpart of [glfwConsumeScrollDeltaY]: the accumulated `xoffset` since
-     * the last poll, reset to `0.0`. A mouse wheel rarely moves it; a trackpad swipe does. */
-    @JniNative("awake_glfw_consume_scroll_delta_x")
-    fun glfwConsumeScrollDeltaX(window: Long): Double
-
-    /** What sent the scroll since the last poll, reset each call: 0 unknown, 1 a wheel, 2 a trackpad
-     * (the ordinals of `com.awakekt.awake.core.input.ScrollSource`). Only macOS can tell, from
-     * `NSEvent.hasPreciseScrollingDeltas`; elsewhere this stays 0. */
-    @JniNative("awake_glfw_consume_scroll_source")
-    fun glfwConsumeScrollSource(window: Long): Int
-
-    /** Sets [window]'s pointer cursor to one of GLFW's standard shapes (`GLFW_ARROW_CURSOR`,
-     * `GLFW_HRESIZE_CURSOR`, ... -- see the constants alongside this call's own Kotlin call
-     * site). Does NOT fit [glfwGetKey]'s single-GLFW-call-per-function shape: the native side
-     * lazily creates each `GLFWcursor*` via `glfwCreateStandardCursor` once and caches it in a
-     * file-scope map keyed by [shape] (same "cached standard cursors" contract as this
-     * project's `UiCursor` -- see `ResizablePanelGroup.kt`'s `handle()`), then applies it via
-     * `glfwSetCursor`, so a real per-frame call never re-creates a cursor object. */
-    fun glfwSetCursorShape(window: Long, shape: Int)
-
     /**
-     * Returns the value of the specified window attribute (`glfwGetWindowAttrib`), such as
-     * `GLFW_FOCUSED` (0x00020001).
+     * Instance extensions a window surface needs (`VK_KHR_surface` plus the platform's own). Pass
+     * them to `VkInstanceCreateInfo` before [glfwCreateWindowSurface], or it fails with
+     * `VK_ERROR_INITIALIZATION_FAILED`.
      */
-    fun glfwGetWindowAttrib(window: Long, attrib: Int): Int
+    fun glfwGetRequiredInstanceExtensions(): Array<String>
 }

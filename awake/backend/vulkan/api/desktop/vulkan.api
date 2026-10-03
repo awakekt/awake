@@ -6,44 +6,6 @@ public final class com/awakekt/awake/vulkan/HeadlessUiRendererKt {
 	public static final fun vulkanHeadlessUi (II)Lcom/awakekt/awake/render/testing/HeadlessRenderSession;
 }
 
-public final class com/awakekt/awake/vulkan/application/GlfwInputBridgeKt {
-	public static final fun getDefaultGlfwGameplayKeys ()Ljava/util/Map;
-	public static final fun pollGlfwInput (JLcom/awakekt/awake/core/input/Input;Ljava/util/Map;)V
-	public static synthetic fun pollGlfwInput$default (JLcom/awakekt/awake/core/input/Input;Ljava/util/Map;ILjava/lang/Object;)V
-}
-
-public final class com/awakekt/awake/vulkan/application/GlfwTextInputBridgeKt {
-	public static final fun pollGlfwTextInput (JLcom/awakekt/awake/core/input/Input;D)V
-	public static synthetic fun pollGlfwTextInput$default (JLcom/awakekt/awake/core/input/Input;DILjava/lang/Object;)V
-}
-
-public abstract interface class com/awakekt/awake/vulkan/application/GlfwWindowInput {
-	public fun consumeScrollDeltaX ()D
-	public abstract fun consumeScrollDeltaY ()D
-	public fun consumeScrollSource ()Lcom/awakekt/awake/core/input/ScrollSource;
-	public abstract fun cursorX ()D
-	public abstract fun cursorY ()D
-	public abstract fun framebufferScaleX ()F
-	public abstract fun framebufferScaleY ()F
-	public fun getClipboardText ()Ljava/lang/String;
-	public fun isFocused ()Z
-	public abstract fun isKeyDown (I)Z
-	public abstract fun isMouseButtonDown (I)Z
-	public fun setClipboardText (Ljava/lang/String;)V
-}
-
-public final class com/awakekt/awake/vulkan/application/GlfwWindowInput$DefaultImpls {
-	public static fun consumeScrollDeltaX (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)D
-	public static fun consumeScrollSource (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)Lcom/awakekt/awake/core/input/ScrollSource;
-	public static fun getClipboardText (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)Ljava/lang/String;
-	public static fun isFocused (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;)Z
-	public static fun setClipboardText (Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;Ljava/lang/String;)V
-}
-
-public final class com/awakekt/awake/vulkan/application/GlfwWindowInputKt {
-	public static final fun glfwWindowInput (J)Lcom/awakekt/awake/vulkan/application/GlfwWindowInput;
-}
-
 public final class com/awakekt/awake/vulkan/application/VulkanDesktopHostKt {
 	public static final fun runVulkanDesktopGame (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/asset/shaders/RenderPlan;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
 	public static final fun runVulkanDesktopGame (Lcom/awakekt/awake/engine/platform/lifecycle/AwakeAppLifecycle;Lcom/awakekt/awake/vulkan/application/VulkanEngine;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V

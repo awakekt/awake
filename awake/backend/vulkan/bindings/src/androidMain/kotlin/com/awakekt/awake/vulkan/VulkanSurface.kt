@@ -18,7 +18,3 @@ actual fun surfaceFramebufferExtent(window: Any): VkExtent2D? = null
 // Android's DisplayMetrics.density is a separate follow-up, out of this fix's scope -- null
 // keeps density at its unscaled default, the same behavior Android already had.
 actual fun windowLogicalExtent(window: Any): VkExtent2D? = null
-
-actual fun destroySurfaceWindow(window: Any) {
-    // Android owns its own Surface/window lifecycle -- nothing to tear down here.
-}

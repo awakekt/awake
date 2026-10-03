@@ -56,9 +56,3 @@ actual fun windowLogicalExtent(window: Any): VkExtent2D? {
         VkExtent2D(width = size.width.toInt(), height = size.height.toInt())
     }
 }
-
-actual fun destroySurfaceWindow(window: Any) {
-    // The CAMetalLayer/UIView's lifecycle is owned by UIKit (VulkanMetalView), same as
-    // Android's own Surface -- nothing to tear down here beyond the VkSurfaceKHR itself,
-    // which the caller destroys separately via vkDestroySurfaceKHR.
-}

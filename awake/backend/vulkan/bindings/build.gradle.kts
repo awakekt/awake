@@ -96,6 +96,11 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
+        named("desktopTest").dependencies {
+            // GlfwManualVerify opens its window through awake:engine:window. Test-only, so the
+            // bindings themselves still depend on nothing in Core.
+            implementation(project(":awake:engine:window"))
+        }
         androidMain.dependencies {
             // CMake/NDK build + bundled validation layers (AGP 9 KMP plugin has no
             // externalNativeBuild support, so a plain library owns it).
@@ -231,7 +236,12 @@ tasks.register<JavaExec>("verifyGlfwMain") {
         layout.buildDirectory.dir("classes/kotlin/desktop/test"),
         kotlin.jvm("desktop").compilations.getByName("test").runtimeDependencyFiles
     )
-    jvmArgs(startOnFirstThread + "-Djava.library.path=${desktopNativeLibDir.get().asFile.absolutePath}")
+    dependsOn(":awake:engine:window:buildDesktopNative")
+    val windowLibDir = project(":awake:engine:window").layout.buildDirectory.dir("desktop-native-libs")
+    val libraryPath = listOf(desktopNativeLibDir, windowLibDir).joinToString(File.pathSeparator) {
+        it.get().asFile.absolutePath
+    }
+    jvmArgs(startOnFirstThread + "-Djava.library.path=$libraryPath")
     environment(desktopVulkanEnv)
 }
 

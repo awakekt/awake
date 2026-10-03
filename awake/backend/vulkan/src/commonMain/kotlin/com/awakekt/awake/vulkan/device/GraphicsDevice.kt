@@ -11,7 +11,6 @@ import com.awakekt.awake.vulkan.Version
 import com.awakekt.awake.vulkan.Version.Companion.vkVersion
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.createSurface
-import com.awakekt.awake.vulkan.destroySurfaceWindow
 import com.awakekt.awake.vulkan.enums.VkPhysicalDeviceType
 import com.awakekt.awake.vulkan.enums.VkResult
 import com.awakekt.awake.vulkan.enums.flags.VkDebugUtilsMessageSeverityFlagBitsEXT
@@ -51,7 +50,6 @@ class GraphicsDevice {
     internal var swapchainExtensionEnabled = false
         private set
 
-    private var nativeWindow: Any? = null
     private var failOnValidationError = false
     private val validationErrors = mutableListOf<String>()
 
@@ -60,7 +58,6 @@ class GraphicsDevice {
     fun create(window: Any) {
         createInstance()
         setupDebugMessenger()
-        nativeWindow = window
         surface = createSurface(instance, window)
         pickPhysicalDevice()
         val indices = findQueueFamilies(physicalDevice, surface)
@@ -78,7 +75,6 @@ class GraphicsDevice {
     fun replaceSurface(window: Any?) {
         if (surface != 0L) Vulkan.vkDestroySurfaceKHR(instance, surface)
         surface = 0L
-        nativeWindow = window
         if (window != null) surface = createSurface(instance, window)
     }
 
@@ -267,7 +263,6 @@ class GraphicsDevice {
         if (device != 0L) Vulkan.vkDestroyDevice(device)
         if (debugUtilsMessenger != 0L) Vulkan.vkDestroyDebugUtilsMessengerEXT(instance, debugUtilsMessenger)
         if (instance != 0L) Vulkan.vkDestroyInstance(instance)
-        nativeWindow?.let { destroySurfaceWindow(it) }
         if (failOnValidationError && validationErrors.isNotEmpty()) {
             error(
                 "Vulkan validation errors were reported:\n" +
