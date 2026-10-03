@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.vulkan.gen
 
-import com.awakekt.awake.vulkan.JniNative
 import com.awakekt.awake.vulkan.VulkanNativeLoader
 
 actual object VulkanWindow {
@@ -13,40 +12,10 @@ actual object VulkanWindow {
         VulkanNativeLoader.load()
     }
 
-    actual external fun glfwInit(): Boolean
-    actual external fun glfwTerminate()
-    actual external fun glfwWindowHint(hint: Int, value: Int)
-    actual external fun glfwCreateWindow(width: Int, height: Int, title: String): Long
-    actual external fun glfwDestroyWindow(window: Long)
-    actual external fun glfwFocusWindow(window: Long)
-    actual external fun glfwWindowShouldClose(window: Long): Boolean
-    actual external fun glfwPollEvents()
     actual external fun glfwGetFramebufferWidth(window: Long): Int
     actual external fun glfwGetFramebufferHeight(window: Long): Int
     actual external fun glfwGetWindowWidth(window: Long): Int
     actual external fun glfwGetWindowHeight(window: Long): Int
     actual external fun glfwCreateWindowSurface(instance: Long, window: Long): Long
     actual external fun glfwGetRequiredInstanceExtensions(): Array<String>
-    actual external fun glfwGetKey(window: Long, key: Int): Int
-    actual external fun glfwGetMouseButton(window: Long, button: Int): Int
-
-    @JniNative("awake_glfw_get_clipboard_string")
-    actual external fun glfwGetClipboardString(window: Long): String?
-
-    @JniNative("awake_glfw_set_clipboard_string")
-    actual external fun glfwSetClipboardString(window: Long, text: String)
-    actual external fun glfwGetCursorPos(window: Long): DoubleArray
-    @JniNative("awake_glfw_set_scroll_callback")
-    actual external fun glfwSetScrollCallback(window: Long)
-
-    @JniNative("awake_glfw_consume_scroll_delta_y")
-    actual external fun glfwConsumeScrollDeltaY(window: Long): Double
-
-    @JniNative("awake_glfw_consume_scroll_delta_x")
-    actual external fun glfwConsumeScrollDeltaX(window: Long): Double
-
-    @JniNative("awake_glfw_consume_scroll_source")
-    actual external fun glfwConsumeScrollSource(window: Long): Int
-    actual external fun glfwSetCursorShape(window: Long, shape: Int)
-    actual external fun glfwGetWindowAttrib(window: Long, attrib: Int): Int
 }

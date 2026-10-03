@@ -274,7 +274,7 @@ private fun litShadow(
     val epsilon = const("EPSILON", 0.0001f)
     val dielectricF0 = const("DIELECTRIC_F0", 0.04f)
     val minRoughness = const("MIN_ROUGHNESS", 0.05f)
-    val invGamma = const("INV_GAMMA", 1.0f / 2.2f)
+    val displayTransform = sceneDisplayTransform()
     val cascades = cascadeShadowSampling(
         CascadeShadowInputs(u.cascadeViewProjections, u.cascadeDepthScales, u.cameraPosition!!, u.cameraForward!!),
         shadowMap,
@@ -416,12 +416,6 @@ private fun litShadow(
         )
     }
 
-    // Gamma 2.2, not exact sRGB -- matches the rest of the pipeline's colour (im)precision.
-    val linearToSrgb = fn("linearToSrgb", returns = AslType.Data(GpuDataShape.Vec3)) {
-        val linear by param(GpuDataShape.Vec3)
-        returnValue(pow(max(linear, vec3(0f.lit)), vec3(invGamma)))
-    }
-
     // Exponential distance fog; density 0 leaves the colour untouched.
     val applyFog = fn("applyFog", returns = AslType.Data(GpuDataShape.Vec3)) {
         val baseColor by param(GpuDataShape.Vec3)
@@ -456,8 +450,10 @@ private fun litShadow(
         )
         val diffuse = let("diffuse", (vec3(1f.lit) - fresnel) * (1f.lit - metallic) * color / pi)
         val shadowFactor = let("shadowFactor", cascades.sampleShadow(worldPos, n, nDotL))
+        // Light colour is authored as reflectance, as in `textured`: pay back the BRDF's 1/PI so
+        // a light of intensity 1 lights a white face to white.
         val direct =
-            variable("direct", (diffuse + specular) * u.lightColor.xyz * nDotL * shadowFactor)
+            variable("direct", (diffuse + specular) * u.lightColor.xyz * pi * nDotL * shadowFactor)
         // Point lights: the colour slot selects the light's six-face layer base; zero keeps the
         // fast unshadowed path for lights without authored shadow support.
         // Slot count is MAX_POINT_LIGHTS itself -- the same constant that sizes the layout's
@@ -508,22 +504,20 @@ private fun litShadow(
             }
             assign(
                 direct,
-                direct + (pDiffuse + pSpecular) * u.pointLightColors[i].xyz * pNdotL * attenuation * pointShadow,
+                direct + (pDiffuse + pSpecular) * u.pointLightColors[i].xyz * pi * pNdotL * attenuation * pointShadow,
             )
         }
         // The scene's ambient when it sets one (lightColor.w above 0), this shader's otherwise.
         val ambientColor = let("ambient", color * select(ambient, u.lightColor.w, u.lightColor.w gt 0f.lit))
-        // Reinhard: the specular lobe blows past 1.0 at low roughness.
-        val mapped = let("mapped", (ambientColor + direct) / (ambientColor + direct + vec3(1f.lit)))
         val surface = DebugSurface(
             normal = n,
             worldPosition = worldPos,
-            albedo = linearToSrgb(color),
+            albedo = displayTransform.encoded(color),
             shadow = shadowFactor,
             shadowCascade = cascades.shadowCascade(worldPos),
         )
         // Encode before writing -- the swapchain is _UNORM and nothing downstream encodes.
-        val shaded = vec4(applyFog(linearToSrgb(mapped), worldPos), 1f.lit)
+        val shaded = vec4(applyFog(displayTransform.display(ambientColor + direct, u.exposure!!.x), worldPos), 1f.lit)
         colorOutput(debugViewColor(u.debugView!!, u.cameraPosition, surface, shaded))
     }
 }

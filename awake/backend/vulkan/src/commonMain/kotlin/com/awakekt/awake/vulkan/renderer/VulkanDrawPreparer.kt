@@ -72,6 +72,7 @@ internal class VulkanDrawPreparer(
             fogColor = context.environment.fogColor,
             fogDensity = context.environment.fogDensity,
             debugView = context.environment.debugView,
+            exposure = context.environment.exposure,
         ) ?: return null
         val format = prepared.vertexFormat
         val depthFeature = renderer.depthPrePassFeature ?: renderer.sceneDepthPassFeature

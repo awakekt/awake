@@ -83,6 +83,10 @@ kotlin {
             // PackShaderSets.Triangle, the scene pipeline the headless UI fixture builds.
             implementation(project(":awake:asset:shader-pack"))
         }
+        named("desktopMain").dependencies {
+            // The desktop window, its input and its frame loop; this backend only draws into it.
+            implementation(project(":awake:engine:window"))
+        }
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(project(":awake:engine:compose"))

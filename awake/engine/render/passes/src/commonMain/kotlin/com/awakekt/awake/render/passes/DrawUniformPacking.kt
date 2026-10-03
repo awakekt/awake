@@ -65,6 +65,7 @@ fun RenderDrawCommand.uniformFloats(
     fogDensity: Float = 0f,
     cameraForward: Vec3f,
     debugView: GpuDebugView = GpuDebugView.Off,
+    exposure: Float = 1f,
 ): FloatArray {
     val mvp = model * viewProjection
     return when (
@@ -87,6 +88,7 @@ fun RenderDrawCommand.uniformFloats(
             fogColor = fogColor,
             fogDensity = fogDensity,
             debugView = debugView,
+            exposure = exposure,
         )
 
         DrawUniformPlan.Skinned -> UniformWriter(SkinnedUniformLayout)
@@ -108,6 +110,7 @@ fun RenderDrawCommand.uniformFloats(
             cameraForward = cameraForward,
             timeSeconds = timeSeconds,
             shadowCascades = shadowCascades ?: GpuShadowCascadeData.UNSHADOWED,
+            exposure = exposure,
         )
 
         DrawUniformPlan.Lit -> litUniforms(
@@ -153,6 +156,7 @@ fun RenderDrawCommand.instancedUniformFloats(
     materialUniformFloatCount: Int = 0,
     cameraForward: Vec3f,
     debugView: GpuDebugView = GpuDebugView.Off,
+    exposure: Float = 1f,
 ): FloatArray = when (kind) {
     InstancedDrawKind.Particle -> UniformWriter(ParticleUniformLayout)
         .put(viewProjection.data, UniformFields.Mvp)
@@ -178,6 +182,7 @@ fun RenderDrawCommand.instancedUniformFloats(
                 cameraForward = cameraForward,
                 timeSeconds = timeSeconds,
                 shadowCascades = shadowCascades ?: GpuShadowCascadeData.UNSHADOWED,
+                exposure = exposure,
             )
         } else if (shadowCascades != null || materialUniformFloatCount >= MaterialUniformLayouts.LitShadow.total) {
             gpuLitShadowUniforms(
@@ -193,6 +198,7 @@ fun RenderDrawCommand.instancedUniformFloats(
                 fogColor = fogColor,
                 fogDensity = fogDensity,
                 debugView = debugView,
+                exposure = exposure,
             )
         } else {
             UniformWriter(InstancedUniformLayout)

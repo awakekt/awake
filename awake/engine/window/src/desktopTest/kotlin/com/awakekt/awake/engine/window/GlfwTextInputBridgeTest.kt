@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package com.awakekt.awake.vulkan.application
+package com.awakekt.awake.engine.window
 
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.TextEditAction
@@ -18,10 +18,9 @@ private const val GLFW_KEY_BACKSPACE = 259
 private const val GLFW_KEY_DOWN = 264
 private const val GLFW_KEY_UP = 265
 
-// Must match GlfwTextInputBridge.kt's private REPEAT_INITIAL_DELAY_SECONDS/REPEAT_INTERVAL_SECONDS --
-// there's no seam to read those from a test, so this asserts the observable cadence, not the constants.
+// Must match GlfwTextInputBridge.kt's private REPEAT_INITIAL_DELAY_SECONDS -- there's no seam to
+// read it from a test, so this asserts the observable cadence, not the constant.
 private const val REPEAT_INITIAL_DELAY_SECONDS = 0.5
-private const val REPEAT_INTERVAL_SECONDS = 0.05
 
 /** [Input] is a per-session instance now (no longer a global object) -- each test
  * constructs its own and reads it back via [Input.updateSnapshot], which drains the typed

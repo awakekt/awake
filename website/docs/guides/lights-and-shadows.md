@@ -95,6 +95,32 @@ The sun's `ambient` is how much of a surface's own colour shows where no direct 
 
     Studio has no field for the sun's `ambient`. Set it in the scene document.
 
+## Set the exposure
+
+Every lit shader shows its colour through one tone curve, Khronos PBR Neutral, on both backends.
+Colours below its shoulder show as authored, and highlights roll off toward white without changing
+hue. A `tone_mapping` component's `exposure` multiplies the lit scene before that curve. At the
+default 1, a white surface facing a light of intensity 1 shows near white; 2 is one stop brighter.
+
+=== "Scene document"
+
+    ```json title="exposure.scene.json"
+    --8<-- "website/docs/snippets/rendering/exposure.scene.json"
+    ```
+
+=== "Scene DSL"
+
+    ```kotlin title="Kotlin"
+    --8<-- "awake/scene/authoring/src/desktopTest/kotlin/com/awakekt/awake/scene/authoring/LightingDocsSampleTest.kt:exposure-dsl"
+    ```
+
+=== "Studio"
+
+    Studio has no field for exposure. Set it in the scene document.
+
+The curve also deepens the darkest tones, so a surface that only the ambient reaches reads dark.
+Raise the sun's `ambient` to lift those areas.
+
 !!! warning "The `ambient_light` component does not light anything yet"
     A scene document can hold an `ambient_light` component (`intensity`, `color`), the scene DSL has
     `ambientLight()`, and Studio's **Ambient Light** slider edits it. It loads and saves, but no
@@ -109,7 +135,7 @@ The sun's `ambient` is how much of a surface's own colour shows where no direct 
 | `type` | `Directional` · `Point` | `Point` in a scene document, `Directional` on the ECS `Light` | `Directional` is a sun; `Point` is a lamp with a `range`. |
 | `direction` | vector | `(0.4, 0.8, 0.4)` | Directional only. The direction the light comes *from*, so `y > 0` is a sun overhead. |
 | `color` | RGB | white | Light color, multiplied by `intensity`. |
-| `intensity` | number | `1.0` | Brightness multiplier. |
+| `intensity` | number | `1.0` | Brightness multiplier. At 1, a white surface facing the light shows near white at the default exposure. |
 | `range` | number | `10` | Point only. The distance at which the light reaches zero. |
 | `shadowsEnabled` | boolean | `true` | Whether this light casts shadows. |
 | `shadowDistance` | number | `100` | Directional only. How far from the camera shadows reach, in world units. Must be above 0. |
@@ -129,6 +155,12 @@ Scene DSL functions:
 
 `directionalLight()` has no `ambient` parameter and `pointLight()` has no `shadowsEnabled`
 parameter. Attach a `Light` with `with(Light(...))` to set them, as the ambient sample does.
+
+`tone_mapping`:
+
+| Property | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `exposure` | number | `1` | Multiplies the lit scene before tone mapping. Finite and above 0. |
 
 ## How it works
 

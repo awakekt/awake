@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+import com.awakekt.awake.engine.window.GlfwWindow
 import com.awakekt.awake.vulkan.Vulkan
 import com.awakekt.awake.vulkan.gen.VulkanWindow
 import com.awakekt.awake.vulkan.models.info.VkApplicationInfo
@@ -10,16 +11,18 @@ import com.awakekt.awake.vulkan.models.info.VkInstanceCreateInfo
 
 /**
  * Manual verification for GLFW window + Vulkan surface creation on desktop -- run via
- * `./gradlew :awake-backend-vulkan:verifyGlfwMain`. Deliberately NOT a `desktopTest` JUnit test:
+ * `./gradlew :awake:backend:vulkan:bindings:verifyGlfwMain`. The window comes from
+ * `libawake-window` and the surface from `libawake-vulkan`; both link the same GLFW, so a passing
+ * run also proves the two libraries share its state. Deliberately NOT a `desktopTest` JUnit test:
  * on macOS, Cocoa requires window creation on the process's real OS main thread, which a
  * Gradle test worker doesn't run on (`glfwCreateWindow` crashed with SIGTRAP from a test
  * process, confirmed empirically) -- `verifyGlfwMain`'s `JavaExec` does run on the real
  * main thread. Same manual-diagnostic-task convention as `checkJniBindings`.
  */
 fun main() {
-    check(VulkanWindow.glfwInit()) { "glfwInit failed" }
-    VulkanWindow.glfwWindowHint(0x00022001, 0) // GLFW_CLIENT_API, GLFW_NO_API
-    val window = VulkanWindow.glfwCreateWindow(64, 64, "Awake Desktop Verify")
+    check(GlfwWindow.glfwInit()) { "glfwInit failed" }
+    GlfwWindow.glfwWindowHint(0x00022001, 0) // GLFW_CLIENT_API, GLFW_NO_API
+    val window = GlfwWindow.glfwCreateWindow(64, 64, "Awake Desktop Verify")
     check(window != 0L) { "glfwCreateWindow returned null" }
     val w = VulkanWindow.glfwGetFramebufferWidth(window)
     val h = VulkanWindow.glfwGetFramebufferHeight(window)
@@ -49,7 +52,7 @@ fun main() {
 
     Vulkan.vkDestroySurfaceKHR(instance, surface)
     Vulkan.vkDestroyInstance(instance)
-    VulkanWindow.glfwDestroyWindow(window)
-    VulkanWindow.glfwTerminate()
+    GlfwWindow.glfwDestroyWindow(window)
+    GlfwWindow.glfwTerminate()
     println("AWAKE_VERIFY: all cleanup completed without throwing")
 }

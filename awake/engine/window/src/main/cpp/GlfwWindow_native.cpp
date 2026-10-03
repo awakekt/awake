@@ -3,13 +3,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-// Desktop-only, like VulkanWindow_jni.gen.cpp: only desktop-native's CMake build compiles it.
+// Desktop-only, like GlfwWindow_jni.cpp: only desktop-native's CMake build compiles it.
 //
 // GLFW scroll input is push/callback-based, so these accumulate every callback tick until the
 // render thread polls them. One process-wide pair is fine for the same reason a single global
 // GLFWwindow* would be: this codebase runs one GLFW window per process. Not thread-guarded --
 // the callback fires synchronously inside glfwPollEvents(), and the consume calls poll from the
-// same render thread right after, per this project's "one thread owns every Vulkan/GLFW call"
+// same render thread right after, per this project's "one thread owns every GLFW call"
 // rule.
 #include <jni.h>
 #include <GLFW/glfw3.h>
@@ -18,7 +18,7 @@
 #include <string>
 
 #if defined(__APPLE__)
-// VulkanWindow_native_macos.mm: GLFW does not say whether a scroll came from a trackpad.
+// GlfwWindow_native_macos.mm: GLFW does not say whether a scroll came from a trackpad.
 extern "C" void awake_macos_watch_scroll_precision(void);
 extern "C" int awake_macos_last_scroll_precise(void);
 #endif
@@ -44,7 +44,7 @@ static void awake_glfwScrollCallback(GLFWwindow* window, double xoffset, double 
 #endif
 }
 
-extern "C" void awake_glfw_set_scroll_callback(JNIEnv* env, jlong window) {
+extern "C" void awake_window_set_scroll_callback(JNIEnv* env, jlong window) {
     (void)env;
 #if defined(__APPLE__)
     awake_macos_watch_scroll_precision();
@@ -52,7 +52,7 @@ extern "C" void awake_glfw_set_scroll_callback(JNIEnv* env, jlong window) {
     glfwSetScrollCallback(reinterpret_cast<GLFWwindow*>(window), awake_glfwScrollCallback);
 }
 
-extern "C" jdouble awake_glfw_consume_scroll_delta_y(JNIEnv* env, jlong window) {
+extern "C" jdouble awake_window_consume_scroll_delta_y(JNIEnv* env, jlong window) {
     (void)env;
     (void)window;
     double delta = g_scrollAccumulatorY;
@@ -60,7 +60,7 @@ extern "C" jdouble awake_glfw_consume_scroll_delta_y(JNIEnv* env, jlong window) 
     return static_cast<jdouble>(delta);
 }
 
-extern "C" jdouble awake_glfw_consume_scroll_delta_x(JNIEnv* env, jlong window) {
+extern "C" jdouble awake_window_consume_scroll_delta_x(JNIEnv* env, jlong window) {
     (void)env;
     (void)window;
     double delta = g_scrollAccumulatorX;
@@ -68,7 +68,7 @@ extern "C" jdouble awake_glfw_consume_scroll_delta_x(JNIEnv* env, jlong window) 
     return static_cast<jdouble>(delta);
 }
 
-extern "C" jint awake_glfw_consume_scroll_source(JNIEnv* env, jlong window) {
+extern "C" jint awake_window_consume_scroll_source(JNIEnv* env, jlong window) {
     (void)env;
     (void)window;
     int source = g_scrollSource;
@@ -155,7 +155,7 @@ static std::string awake_utf16_to_utf8(const char16_t* in, size_t length) {
     return out;
 }
 
-extern "C" jstring awake_glfw_get_clipboard_string(JNIEnv* env, jlong window) {
+extern "C" jstring awake_window_get_clipboard_string(JNIEnv* env, jlong window) {
     // NULL, with a GLFW_FORMAT_UNAVAILABLE error, when the clipboard is empty or not text.
     const char* text = glfwGetClipboardString(reinterpret_cast<GLFWwindow*>(window));
     if (text == nullptr) return nullptr;
@@ -163,7 +163,7 @@ extern "C" jstring awake_glfw_get_clipboard_string(JNIEnv* env, jlong window) {
     return env->NewString(reinterpret_cast<const jchar*>(utf16.data()), static_cast<jsize>(utf16.size()));
 }
 
-extern "C" void awake_glfw_set_clipboard_string(JNIEnv* env, jlong window, jstring text) {
+extern "C" void awake_window_set_clipboard_string(JNIEnv* env, jlong window, jstring text) {
     const jsize length = env->GetStringLength(text);
     const jchar* chars = env->GetStringChars(text, nullptr);
     if (chars == nullptr) return; // OutOfMemoryError is already pending.

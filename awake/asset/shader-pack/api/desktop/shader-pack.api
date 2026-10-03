@@ -170,6 +170,15 @@ public final class com/awakekt/awake/asset/shaderpack/PackShaderSets {
 	public final fun getTriangle ()Lcom/awakekt/awake/asset/shaders/ShaderSet;
 }
 
+public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransform {
+	public final fun display (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun encoded (Lcom/awakekt/awake/asset/shaderdsl/AslExpr;)Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+}
+
+public final class com/awakekt/awake/asset/shaderpack/SceneDisplayTransformKt {
+	public static final fun sceneDisplayTransform (Lcom/awakekt/awake/asset/shaderdsl/AslShaderBuilder;)Lcom/awakekt/awake/asset/shaderpack/SceneDisplayTransform;
+}
+
 public final class com/awakekt/awake/asset/shaderpack/ShadowMapViewContentFeatureKt {
 	public static final fun getShadowMapViewLayer ()Lcom/awakekt/awake/render/renderer/UniformField;
 	public static final fun getShadowMapViewUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
@@ -190,6 +199,7 @@ public final class com/awakekt/awake/asset/shaderpack/ShadowUniforms {
 	public final fun getCascadeDepthScales ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
 	public final fun getCascadeViewProjections ()Lcom/awakekt/awake/asset/shaderdsl/AslArrayHandle;
 	public final fun getDebugView ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
+	public final fun getExposure ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getFogColor ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getLightColor ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;
 	public final fun getLightDirection ()Lcom/awakekt/awake/asset/shaderdsl/AslExpr;

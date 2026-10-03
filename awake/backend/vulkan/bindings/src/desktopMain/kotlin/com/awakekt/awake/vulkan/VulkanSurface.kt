@@ -26,9 +26,3 @@ actual fun windowLogicalExtent(window: Any): VkExtent2D? {
         height = VulkanWindow.glfwGetWindowHeight(handle),
     )
 }
-
-actual fun destroySurfaceWindow(window: Any) {
-    val handle = window as Long
-    VulkanWindow.glfwDestroyWindow(handle)
-    VulkanWindow.glfwTerminate()
-}

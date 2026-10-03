@@ -19,18 +19,19 @@ class UniformLayoutsTest {
     // edit is the mismatch the test exists to catch.
 
     @Test
-    fun texturedUniformLayoutTotalIsOneHundredNinetyTwo() {
+    fun texturedUniformLayoutTotalIsOneHundredNinetySix() {
         // 104, then the sun's cascades: four matrices (+64), their depth scales (+16) and camera
-        // forward (+4), then the shadow-depth prefix's vertex animation slot (+4).
-        assertEquals(192, TexturedUniformLayout.total)
+        // forward (+4), then the shadow-depth prefix's vertex animation slot (+4) and exposure (+4).
+        assertEquals(196, TexturedUniformLayout.total)
     }
 
     @Test
     fun litShadowUniformLayoutTotalIncludesEveryCascade() {
         // 104 before cascades, when one lightMvp covered the whole shadow. The block now carries
         // MAX_SHADOW_CASCADES world-to-light matrices (+48), depth scale/split data (+16), and a
-        // camera-forward vector for split-aligned blending (+4), then the debug view (+4).
-        assertEquals(176, LitShadowUniformLayout.total)
+        // camera-forward vector for split-aligned blending (+4), then the debug view (+4) and
+        // exposure (+4).
+        assertEquals(180, LitShadowUniformLayout.total)
     }
 
     @Test

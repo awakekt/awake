@@ -59,8 +59,8 @@ else()
     set(VULKAN_LINK_TARGET Vulkan::Vulkan)
 endif()
 
-# GLFW (`brew install glfw`) provides windowing + Vulkan surface creation
-# (VulkanWindow_jni.gen.cpp / glfwCreateWindowSurface) for the desktop demo.
+# GLFW (`brew install glfw`) for surface creation on a window that awake:engine:window opens
+# (VulkanWindow_jni.gen.cpp / glfwCreateWindowSurface). Both libraries link the same GLFW.
 find_library(GLFW_LIBRARY NAMES glfw glfw3 PATHS /opt/homebrew/opt/glfw/lib /usr/local/opt/glfw/lib)
 find_path(GLFW_INCLUDE_DIR GLFW/glfw3.h PATHS /opt/homebrew/opt/glfw/include /usr/local/opt/glfw/include)
 if(NOT GLFW_LIBRARY OR NOT GLFW_INCLUDE_DIR)
@@ -83,8 +83,7 @@ add_library(awake-vulkan SHARED
         ../src/main/cpp/VulkanImages_native.cpp
         ../src/main/cpp/generated/com_awakekt_awake_vulkan_gen_VulkanQueries_jni.gen.cpp
         ../src/main/cpp/VulkanQueries_native.cpp
-        ../src/main/cpp/generated/VulkanWindow_jni.gen.cpp
-        ../src/main/cpp/VulkanWindow_native.cpp)
+        ../src/main/cpp/generated/VulkanWindow_jni.gen.cpp)
 
 target_include_directories(awake-vulkan PRIVATE
         ${JNI_INCLUDE_DIRS}
@@ -101,12 +100,3 @@ target_link_libraries(awake-vulkan
         vulkan_kotlin
         ${VULKAN_LINK_TARGET}
         ${GLFW_LIBRARY})
-
-# macOS: tell a trackpad from a wheel (NSEvent.hasPreciseScrollingDeltas), which GLFW does not
-# report -- see VulkanWindow_native_macos.mm.
-if(APPLE)
-    enable_language(OBJCXX)
-    target_sources(awake-vulkan PRIVATE ../src/main/cpp/VulkanWindow_native_macos.mm)
-    set_source_files_properties(../src/main/cpp/VulkanWindow_native_macos.mm PROPERTIES COMPILE_OPTIONS "-fobjc-arc")
-    target_link_libraries(awake-vulkan "-framework AppKit")
-endif()

@@ -64,9 +64,11 @@ fun Project.usePrebuiltVulkanNatives(): Boolean =
  */
 fun JavaExec.wireVulkanDesktopNatives(bindingsProject: Project?) {
     if (bindingsProject == null || project.usePrebuiltVulkanNatives()) return
-    dependsOn("${bindingsProject.path}:buildDesktopNative")
-    val libDir = bindingsProject.layout.buildDirectory.dir("desktop-native-libs")
-    jvmArgs("-Djava.library.path=${libDir.get().asFile.absolutePath}")
+    // The window an app runs in comes from awake:engine:window's own library, built the same way.
+    val nativeProjects = listOfNotNull(bindingsProject, project.findProject(":awake:engine:window"))
+    nativeProjects.forEach { dependsOn("${it.path}:buildDesktopNative") }
+    val libDirs = nativeProjects.map { it.layout.buildDirectory.dir("desktop-native-libs").get().asFile.absolutePath }
+    jvmArgs("-Djava.library.path=${libDirs.joinToString(java.io.File.pathSeparator)}")
 }
 
 /**

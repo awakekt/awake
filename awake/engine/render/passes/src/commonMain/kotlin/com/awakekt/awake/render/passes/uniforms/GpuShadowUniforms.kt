@@ -60,8 +60,10 @@ fun gpuLitShadowUniforms(
     fogDensity: Float = 0f,
     cameraForward: Vec3f,
     debugView: GpuDebugView = GpuDebugView.Off,
+    exposure: Float = 1f,
 ): FloatArray {
-    val out = LitShadowFrameFields.shared(lightPayload, cascades, cameraEye, fogColor, fogDensity, cameraForward, debugView)
+    val out = LitShadowFrameFields
+        .shared(lightPayload, cascades, cameraEye, fogColor, fogDensity, cameraForward, debugView, exposure)
         .copyOf()
     mvp.data.copyInto(out, MVP_AT)
     transform.data.copyInto(out, MODEL_AT)
@@ -88,6 +90,7 @@ internal fun packLitShadowBlock(
     fogDensity: Float,
     cameraForward: Vec3f,
     debugView: GpuDebugView,
+    exposure: Float,
 ): FloatArray {
     val lightLayout = MaterialUniformLayouts.SceneLight
     val light = lightPayload.copyOf(lightLayout.total)
@@ -119,6 +122,7 @@ internal fun packLitShadowBlock(
         .put(material, UniformFields.Material)
         .put(fogUniformFloats(fogColor, fogDensity), UniformFields.FogColor)
         .putDebugView(debugView, cameraForward)
+        .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
         .build()
 }
 
@@ -137,6 +141,7 @@ private object LitShadowFrameFields {
     private var fogColor: Color? = null
     private var fogDensity = 0f
     private var debugView: GpuDebugView? = null
+    private var exposure = 0f
     private var block = FloatArray(0)
     private val identity = Mat4()
     private val stillAnimation = Vec3f(0f, 0f, 0f)
@@ -150,15 +155,17 @@ private object LitShadowFrameFields {
         fogDensity: Float,
         cameraForward: Vec3f,
         debugView: GpuDebugView,
+        exposure: Float,
     ): FloatArray {
         if (light === lightPayload && this.cascades === cascades && eye == cameraEye && forward == cameraForward &&
-            this.fogColor == fogColor && this.fogDensity == fogDensity && this.debugView == debugView
+            this.fogColor == fogColor && this.fogDensity == fogDensity && this.debugView == debugView &&
+            this.exposure == exposure
         ) {
             return block
         }
         block = packLitShadowBlock(
             identity, EMPTY_EXTRAS, stillAnimation, 0f, identity,
-            lightPayload, cascades, cameraEye, fogColor, fogDensity, cameraForward, debugView,
+            lightPayload, cascades, cameraEye, fogColor, fogDensity, cameraForward, debugView, exposure,
         )
         light = lightPayload
         this.cascades = cascades
@@ -167,6 +174,7 @@ private object LitShadowFrameFields {
         this.fogColor = fogColor
         this.fogDensity = fogDensity
         this.debugView = debugView
+        this.exposure = exposure
         return block
     }
 }

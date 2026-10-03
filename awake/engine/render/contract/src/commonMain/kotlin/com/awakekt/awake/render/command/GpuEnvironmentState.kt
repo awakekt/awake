@@ -23,6 +23,8 @@ data class GpuEnvironmentState(
     val shadowsEnabled: Boolean = true,
     /** A diagnostic that replaces the scene shaders' lit output; [GpuDebugView.Off] renders normally. */
     val debugView: GpuDebugView = GpuDebugView.Off,
+    /** What the lit shaders multiply their radiance by before tone mapping. */
+    val exposure: Float = 1f,
 ) {
     companion object {
         val Default = GpuEnvironmentState()

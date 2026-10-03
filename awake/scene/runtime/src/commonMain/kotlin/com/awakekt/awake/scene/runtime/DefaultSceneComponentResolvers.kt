@@ -40,6 +40,9 @@ import com.awakekt.awake.scene.rendering.sky.SkyboxBinding
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.rendering.terrain.TerrainBinding
 import com.awakekt.awake.scene.rendering.terrain.TerrainComponent
+import com.awakekt.awake.scene.rendering.tonemapping.SceneToneMapping
+import com.awakekt.awake.scene.rendering.tonemapping.ToneMapping
+import com.awakekt.awake.scene.rendering.tonemapping.ToneMappingBinding
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers.install
 
 /**
@@ -57,6 +60,7 @@ object DefaultSceneComponentResolvers {
     val MeshRendererResolver: SceneComponentBinding<*, SceneMeshRenderer> = MeshRendererBinding
     val SkyboxResolver: SceneComponentBinding<Skybox, SceneSkybox> = SkyboxBinding
     val FogResolver: SceneComponentBinding<Fog, SceneFog> = FogBinding
+    val ToneMappingResolver: SceneComponentBinding<ToneMapping, SceneToneMapping> = ToneMappingBinding
     val AmbientLightResolver: SceneComponentBinding<AmbientLight, SceneAmbientLight> = AmbientLightBinding
     val TerrainResolver: SceneComponentBinding<TerrainComponent, SceneTerrain> = TerrainBinding
     val PrefabLinkResolver: SceneComponentResolver = PrefabLinkBinding
@@ -70,6 +74,7 @@ object DefaultSceneComponentResolvers {
         MeshRendererBinding,
         SkyboxBinding,
         FogBinding,
+        ToneMappingBinding,
         AmbientLightBinding,
         TerrainBinding,
         CanvasElementBinding,
@@ -87,6 +92,7 @@ object DefaultSceneComponentResolvers {
         MeshRendererBinding,
         SkyboxBinding,
         FogBinding,
+        ToneMappingBinding,
         AmbientLightBinding,
         TerrainBinding,
         CanvasElementBinding,

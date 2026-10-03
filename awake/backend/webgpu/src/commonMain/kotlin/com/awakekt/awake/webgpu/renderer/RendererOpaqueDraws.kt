@@ -94,6 +94,7 @@ internal fun Renderer.prepareGpuDraw(
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
     debugView: GpuDebugView = GpuDebugView.Off,
+    exposure: Float = 1f,
 ): WebGpuPreparedDraw? {
     val mesh = cmd.mesh as Mesh
     val material = cmd.material as Material
@@ -113,6 +114,7 @@ internal fun Renderer.prepareGpuDraw(
             fogColor = fogColor,
             fogDensity = fogDensity,
             debugView = debugView,
+            exposure = exposure,
             isTransparent = isTransparent,
         )
     }
@@ -134,6 +136,7 @@ internal fun Renderer.prepareGpuDraw(
         fogColor = fogColor,
         fogDensity = fogDensity,
         debugView = debugView,
+        exposure = exposure,
     )
     slot?.let {
         graphicsDevice.wgpuContext.device.queue.writeBuffer(
@@ -190,6 +193,7 @@ private fun Renderer.prepareInstancedGpuDraw(
     fogColor: Color = Color.Black,
     fogDensity: Float = 0f,
     debugView: GpuDebugView = GpuDebugView.Off,
+    exposure: Float = 1f,
     isTransparent: Boolean,
 ): WebGpuPreparedDraw? {
     if (instanceModels.isEmpty()) return null
@@ -216,6 +220,7 @@ private fun Renderer.prepareInstancedGpuDraw(
         fogColor = fogColor,
         fogDensity = fogDensity,
         debugView = debugView,
+        exposure = exposure,
         materialUniformFloatCount = maxOf(
             material.uniformFloatCount,
             (pipeline.uniformByteSize(0, 0) / Float.SIZE_BYTES).toInt(),

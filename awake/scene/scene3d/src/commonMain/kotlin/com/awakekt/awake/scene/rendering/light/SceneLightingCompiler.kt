@@ -27,6 +27,7 @@ import com.awakekt.awake.scene.rendering.debug.WorldDebugSettings
 import com.awakekt.awake.scene.rendering.debug.debugSettingsOrNull
 import com.awakekt.awake.scene.rendering.fog.Fog
 import com.awakekt.awake.scene.rendering.sky.Skybox
+import com.awakekt.awake.scene.rendering.tonemapping.ToneMapping
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -223,8 +224,13 @@ internal class SceneLightingCompiler(
             fogDensity = fogDensity,
             fogColor = fogColor,
             shadowsEnabled = shadows,
+            exposure = exposure(world),
         ).withDebugView(debug)
     }
+
+    private fun exposure(world: World): Float =
+        (world.singleOrNull<ToneMapping>() ?: world.firstOrNull<ToneMapping>())?.exposure
+            ?: EnvironmentUniforms.Default.exposure
 
     private fun EnvironmentUniforms.withDebugView(debug: WorldDebugSettings?): EnvironmentUniforms =
         if (debug == null) this else copy(debugView = debug.renderDebugView, debugLayer = debug.renderDebugLayer)

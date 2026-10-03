@@ -31,10 +31,11 @@ class LitShadowFrameFieldsTest {
                 val extras = floatArrayOf(draw * 0.1f, 0.5f)
                 val animation = Vec3f(draw.toFloat(), 0f, 1f)
                 val fog = Color(0.1f * frame, 0.2f, 0.3f, 1f)
+                val exposure = 1f + frame
                 assertContentEquals(
                     packLitShadowBlock(
                         model, extras, animation, frame.toFloat(), mvp,
-                        light, cascades, eye, fog, 0.01f * frame, forward, GpuDebugView.Off,
+                        light, cascades, eye, fog, 0.01f * frame, forward, GpuDebugView.Off, exposure,
                     ),
                     gpuLitShadowUniforms(
                         transform = model,
@@ -48,6 +49,7 @@ class LitShadowFrameFieldsTest {
                         fogColor = fog,
                         fogDensity = 0.01f * frame,
                         cameraForward = forward,
+                        exposure = exposure,
                     ),
                     "frame $frame draw $draw",
                 )
