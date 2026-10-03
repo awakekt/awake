@@ -6,7 +6,9 @@ installation, or cloud persistence.
 
 Platform adapters provide the same rooted semantics on every shipped target:
 
-- Desktop uses `java.nio.file`, temporary-file atomic publication, and native watch events.
+- Desktop uses `java.nio.file`, temporary-file atomic publication, and native watch events. A
+  recursive watch also covers directories created after it starts; when the OS drops events for a
+  directory, that directory is reported as modified so the listener can rescan it.
 - Android uses app/document storage, temporary-file publication, and a deterministic polling watch.
 - iOS uses `NSFileManager`, temporary-file publication, and ordered adapter-local watch events.
 - Wasm uses the transactional in-memory engine with a `localStorage`-backed virtual filesystem when

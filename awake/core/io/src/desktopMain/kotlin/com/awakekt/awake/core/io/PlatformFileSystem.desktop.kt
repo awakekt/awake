@@ -7,11 +7,17 @@
 
 package com.awakekt.awake.core.io
 
-import java.nio.file.FileSystems
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
+import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
+import java.nio.file.StandardWatchEventKinds.ENTRY_DELETE
+import java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
+import java.nio.file.StandardWatchEventKinds.OVERFLOW
+import java.nio.file.WatchEvent
+import java.nio.file.WatchKey
 import kotlin.concurrent.thread
 
 actual fun createPlatformFileSystem(root: String?): FileSystem =
@@ -45,15 +51,7 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         val stream = if (recursive) Files.walk(directory) else Files.list(directory)
         stream.use { paths ->
             paths.filter { it != directory }
-                .map { child ->
-                    val relative = root.relativize(child).toString().replace('\\', '/')
-                    FileEntry(
-                        FilePath.of(relative),
-                        if (Files.isDirectory(child)) FileKind.Directory else FileKind.File,
-                        Files.size(child).takeIf { Files.isRegularFile(child) },
-                        Files.getLastModifiedTime(child).toMillis(),
-                    )
-                }
+                .map { entry(it) }
                 .sorted(Comparator.comparing { it.path.value })
                 .toList()
         }
@@ -61,13 +59,7 @@ private class NioFileSystem(private val root: Path) : FileSystem {
 
     override suspend fun stat(path: FilePath): Result<FileEntry?> = runCatching {
         val target = resolve(path)
-        if (!Files.exists(target)) return@runCatching null
-        FileEntry(
-            path,
-            if (Files.isDirectory(target)) FileKind.Directory else FileKind.File,
-            Files.size(target).takeIf { Files.isRegularFile(target) },
-            Files.getLastModifiedTime(target).toMillis(),
-        )
+        if (Files.exists(target)) entry(target) else null
     }
 
     override suspend fun createDirectories(path: FilePath): Result<Unit> = runCatching {
@@ -123,45 +115,105 @@ private class NioFileSystem(private val root: Path) : FileSystem {
         }
     }
 
-    override fun watch(path: FilePath, recursive: Boolean, listener: (FileChangeBatch) -> Unit): FileWatch {
-        val watchService = FileSystems.getDefault().newWatchService()
-        val directory = resolve(path)
-        runCatching {
-            directory.register(
-                watchService,
-                java.nio.file.StandardWatchEventKinds.ENTRY_CREATE,
-                java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY,
-                java.nio.file.StandardWatchEventKinds.ENTRY_DELETE,
-            )
-        }
-        val worker = thread(isDaemon = true, name = "awake-file-watch") {
-            while (!Thread.currentThread().isInterrupted) {
-                val key = runCatching { watchService.take() }.getOrNull() ?: break
-                val changes = key.pollEvents().mapNotNull { event ->
-                    val name = event.context() as? Path ?: return@mapNotNull null
-                    val child = FilePath.of(listOf(path.value, name.toString()).filter { it.isNotEmpty() }.joinToString("/"))
-                    FileChange.Modified(FileEntry(child, FileKind.File))
-                }
-                if (changes.isNotEmpty()) listener(FileChangeBatch(changes))
-                if (!key.reset()) break
-            }
-        }
-        return FileWatch {
-            worker.interrupt()
-            watchService.close()
-        }
-    }
+    override fun watch(path: FilePath, recursive: Boolean, listener: (FileChangeBatch) -> Unit): FileWatch =
+        NioWatch(resolve(path), recursive, listener)
 
     private fun resolve(path: FilePath): Path = root.resolve(path.value).normalize().also {
         require(it.startsWith(root)) { "Path escaped filesystem root: $path" }
     }
 
+    private fun filePath(target: Path): FilePath =
+        root.relativize(target).toString().replace('\\', '/').let { if (it.isEmpty()) FilePath.Root else FilePath.of(it) }
+
+    private fun entry(target: Path): FileEntry = FileEntry(
+        filePath(target),
+        if (Files.isDirectory(target)) FileKind.Directory else FileKind.File,
+        Files.size(target).takeIf { Files.isRegularFile(target) },
+        Files.getLastModifiedTime(target).toMillis(),
+    )
+
     private fun snapshotFiles(): Map<FilePath, ByteArray> =
         Files.walk(root).use { paths ->
-            paths.filter(Files::isRegularFile).toList().associate { path ->
-                FilePath.of(root.relativize(path).toString().replace('\\', '/')) to Files.readAllBytes(path)
+            paths.filter(Files::isRegularFile).toList().associate { path -> filePath(path) to Files.readAllBytes(path) }
+        }
+
+    /**
+     * One [watch]: a JVM `WatchService` key per watched directory, drained on a daemon thread. When
+     * [recursive], every directory below the start is registered, including ones created later. If the
+     * service drops events for a directory (`OVERFLOW`), that directory is reported as
+     * [FileChange.Modified] so the listener can rescan it.
+     */
+    private inner class NioWatch(
+        start: Path,
+        private val recursive: Boolean,
+        private val listener: (FileChangeBatch) -> Unit,
+    ) : FileWatch {
+        private val service = start.fileSystem.newWatchService()
+
+        /** Filled before [worker] starts, then touched only by it. */
+        private val directories = HashMap<WatchKey, Path>()
+        private val worker: Thread
+
+        init {
+            register(start)
+            worker = thread(isDaemon = true, name = "awake-file-watch") { drain() }
+        }
+
+        override fun close() {
+            worker.interrupt()
+            service.close()
+            if (Thread.currentThread() != worker) worker.join()
+        }
+
+        private fun drain() {
+            while (true) {
+                val key = runCatching { service.take() }.getOrNull() ?: return
+                val directory = directories[key] ?: continue
+                val changes = key.pollEvents().flatMap { changes(directory, it) }
+                if (!key.reset()) directories.remove(key)
+                if (changes.isNotEmpty()) listener(FileChangeBatch(changes))
             }
         }
+
+        private fun changes(directory: Path, event: WatchEvent<*>): List<FileChange> {
+            if (event.kind() == OVERFLOW) {
+                // The dropped events may include new subdirectories.
+                register(directory)
+                return listOfNotNull(entryOrNull(directory)?.let(FileChange::Modified))
+            }
+            val child = directory.resolve(event.context() as Path)
+            return when (event.kind()) {
+                ENTRY_CREATE -> {
+                    // Entries made in a new directory before it was registered raise no event of their own.
+                    val inside = if (recursive && isDirectory(child)) register(child) else emptyList()
+                    (listOf(child) + inside).mapNotNull(::entryOrNull).map(FileChange::Created)
+                }
+                ENTRY_MODIFY -> listOfNotNull(entryOrNull(child)?.let(FileChange::Modified))
+                ENTRY_DELETE -> listOf(FileChange.Deleted(filePath(child)))
+                else -> emptyList()
+            }
+        }
+
+        /** Registers [directory], and every directory below it when recursive; returns the paths below it. */
+        private fun register(directory: Path): List<Path> {
+            val below = if (recursive) {
+                runCatching { Files.walk(directory).use { it.skip(1).toList() } }.getOrDefault(emptyList())
+            } else {
+                emptyList()
+            }
+            (listOf(directory) + below.filter(::isDirectory)).forEach {
+                // A directory deleted before it is registered is simply not watched.
+                runCatching { directories[it.register(service, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE)] = it }
+            }
+            return below
+        }
+
+        /** Null when [target] was removed before it could be read. */
+        private fun entryOrNull(target: Path): FileEntry? = runCatching { entry(target) }.getOrNull()
+
+        /** Links are not followed, matching `Files.walk`, so a watch never leaves its tree. */
+        private fun isDirectory(target: Path): Boolean = Files.isDirectory(target, LinkOption.NOFOLLOW_LINKS)
+    }
 
     private suspend fun reconcile(before: Map<FilePath, ByteArray>, after: Map<FilePath, ByteArray>) {
         before.keys.filter { it !in after }.sortedByDescending { it.value.length }.forEach { delete(it, false).getOrThrow() }
