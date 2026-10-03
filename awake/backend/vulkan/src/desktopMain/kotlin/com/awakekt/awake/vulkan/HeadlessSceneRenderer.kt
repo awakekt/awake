@@ -153,6 +153,22 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             cascadeCount = depthTarget.layers,
             framesInFlight = FRAMES_IN_FLIGHT,
         ),
+        // As VulkanEngine builds it when a render plan opts particles into shadows.
+        variantPipelines = mapOf(
+            DepthCasterKind.Particle to DepthOnlyPipeline(
+                graphicsDevice,
+                depthTarget.renderPass,
+                descriptorSetLayout,
+                runBlocking { spirvPair(PackShaderSets.ParticleShadowDepth) },
+                VertexFormat.PositionUv,
+                depthTarget.size,
+                vertexEntryPoint = "vertexMain",
+                fragmentEntryPoint = "fragmentMain",
+                cascadeCount = depthTarget.layers,
+                framesInFlight = FRAMES_IN_FLIGHT,
+                variant = PipelineVariant.AlphaBlendedParticle,
+            ),
+        ),
         // As VulkanEngine builds it: every other opaque scene format casts through the same shader.
         formatPipelines = mapOf(
             VertexFormat.PositionNormalColorUv to DepthOnlyPipeline(
