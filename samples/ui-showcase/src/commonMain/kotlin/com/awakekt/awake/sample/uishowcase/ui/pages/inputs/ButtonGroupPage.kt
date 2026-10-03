@@ -14,7 +14,7 @@ import com.awakekt.awake.compose.foundation.layout.width
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.unit.dp
-import com.awakekt.awake.heroicons.icon.HeroIcons
+import com.awakekt.awake.sample.uishowcase.icon.HeroIcons
 import com.awakekt.awake.sample.uishowcase.ui.ShowcaseCategory
 import com.awakekt.awake.sample.uishowcase.ui.ShowcasePage
 import com.awakekt.awake.ui.shadcn.components.ShadcnButtonGroup

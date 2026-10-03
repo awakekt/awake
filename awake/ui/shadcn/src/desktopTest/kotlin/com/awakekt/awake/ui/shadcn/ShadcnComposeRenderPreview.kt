@@ -28,7 +28,6 @@ import com.awakekt.awake.compose.ui.semantics.testTag
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.text.font.UiFonts
-import com.awakekt.awake.heroicons.icon.HeroIcons
 import com.awakekt.awake.ui.shadcn.components.ShadcnAlert
 import com.awakekt.awake.ui.shadcn.components.ShadcnAlertVariant
 import com.awakekt.awake.ui.shadcn.components.ShadcnAvatar

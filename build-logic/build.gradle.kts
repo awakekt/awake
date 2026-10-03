@@ -18,6 +18,7 @@ val publicPluginIds = setOf(
     "com.awakekt.awake.plugin.library",
     "com.awakekt.awake.plugin.project-content",
     "com.awakekt.awake.plugin.shader-pipeline",
+    "com.awakekt.awake.plugin.icon-codegen",
     "com.awakekt.awake.plugin.dokka",
     "com.awakekt.awake.plugin.detekt",
     "com.awakekt.awake.plugin.spotless",

@@ -124,7 +124,7 @@ def build_rows() -> list[tuple[str, str, str, str, str]]:
     rows.append((
         "Icons", DONE if cubics and not hand_written else PARTIAL,
         f"{cubics} cubic segments, generated from SVG",
-        "`tools/icons/svg_to_ui_image_vector.py --self-test`",
+        "`./gradlew -p build-logic test --tests '*SvgImageVectorCodegenTest*'`",
         "Fill-only: no outline tier until stroke joins exist.",
     ))
 

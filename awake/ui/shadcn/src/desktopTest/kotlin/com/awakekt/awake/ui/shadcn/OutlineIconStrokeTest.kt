@@ -9,7 +9,6 @@ import com.awakekt.awake.compose.testing.composeFrame
 import com.awakekt.awake.compose.testing.rasterize
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.color.Color
-import com.awakekt.awake.heroicons.icon.HeroIcons
 import com.awakekt.awake.ui.shadcn.components.ShadcnIcon
 import com.awakekt.awake.ui.shadcn.theme.provideShadcnTheme
 import kotlin.test.Test

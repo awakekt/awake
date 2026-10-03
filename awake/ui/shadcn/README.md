@@ -27,7 +27,6 @@ shadcn/
 awake:ui:shadcn
   └── awake:compose:foundation
   └── awake:tailwind
-  └── awake:heroicons
 ```
 
 ## Adding A Component
