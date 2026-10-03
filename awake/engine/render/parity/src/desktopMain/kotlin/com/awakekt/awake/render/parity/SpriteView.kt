@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.parity
 
+import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Lens
@@ -82,6 +83,38 @@ fun Renderer.renderSpriteScene(view: SpriteView): ByteArray {
     }
 }
 
+/**
+ * The shadow scene's ground and sun ([compileShadowScene]), with a red particle sprite lying flat at
+ * the caster's height when [withSprite], so its shadow falls on the ground beside it.
+ */
+fun Renderer.renderParticleShadowScene(withSprite: Boolean): ByteArray {
+    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+    val ground = createMesh(plane(GROUND_HALF, y = 0f))
+    val groundMaterial = createMaterial(LitShadowUniformLayout)
+    val quad = createMesh(SpriteQuad)
+    val spriteMaterial = createMaterial(ParticleUniformLayout, texture = RedSprite)
+    return try {
+        val sprite = RenderDrawCommand(
+            mesh = quad,
+            material = spriteMaterial,
+            instanceModels = listOf(Mat4().setTranslationScale(0f, CASTER_Y, 0f, SHADOW_SPRITE_SIZE)),
+            instanceColors = listOf(Vec4(1f, 1f, 1f, 1f)),
+            instanceFrames = listOf(0f),
+            // Lying flat: the ground's +X and -Z as its quad axes (ParticleExtraUniformLayout).
+            extraUniformFloats = floatArrayOf(1f, 0f, 0f, 0f, 0f, 0f, -1f, 0f, 1f, 0f, 0f, 0f),
+        )
+        renderToTexture(target, compileShadowScene(listOfNotNull(RenderDrawCommand(ground, groundMaterial), sprite.takeIf { withSprite })))
+        runBlocking { readPixels(target) }.data
+    } finally {
+        ground.destroy()
+        groundMaterial.destroy()
+        quad.destroy()
+        spriteMaterial.destroy()
+        target.destroy()
+    }
+}
+
+private const val SHADOW_SPRITE_SIZE = 2f
 private const val FLAT_SPRITE_X = -1f
 private const val FACING_SPRITE_X = 1f
 private const val SPRITE_SIZE = 1f

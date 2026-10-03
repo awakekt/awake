@@ -309,10 +309,10 @@ private fun Renderer.prepareInstancedGpuDraw(
             ?.let {
                 bufferPools.sceneDepthBindingFor(pipeline, it)
             },
+        // The depth pass binds this for the draw's shadow, so a particle reports its own slot too.
         uniformBuffer = when (kind) {
-            InstancedDrawKind.Plain -> drawSlot?.buffer
+            InstancedDrawKind.Plain, InstancedDrawKind.Particle -> drawSlot?.buffer
             InstancedDrawKind.Skinned -> skinnedUniformResources?.buffer
-            InstancedDrawKind.Particle -> null
         },
         instanceColorBuffer = particleColors,
         instanceFrameBuffer = particleFrames,
