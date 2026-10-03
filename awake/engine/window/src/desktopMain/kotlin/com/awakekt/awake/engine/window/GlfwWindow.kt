@@ -18,7 +18,7 @@ import com.awakekt.awake.core.host.NativeLibrary
 @Suppress("TooManyFunctions")
 object GlfwWindow {
     init {
-        NativeLibrary.load("awake-window", GlfwWindow::class.java)
+        NativeLibrary.load(WINDOW_LIBRARY, GlfwWindow::class.java)
     }
 
     /** Must be called once before any other function here. Returns `false` on failure. */
