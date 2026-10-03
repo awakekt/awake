@@ -10,6 +10,7 @@ creates its own surface from the window handle it is given.
   (`runDesktopWindow`), keyboard, pointer, scroll, text input, clipboard and cursor.
 - iOS: `AwakeMetalView`, a `UIView` on a `CAMetalLayer` with a `CADisplayLink` loop, touch and
   text input.
+- Android: `AwakeSurfaceView`, a `SurfaceView` with its render thread, touch, key and IME input.
 
 ## Does not own
 

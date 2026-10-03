@@ -95,7 +95,7 @@ A mode the surface does not offer falls back to FIFO. At startup the engine prin
 | --- | --- |
 | Desktop (JVM) | `runVulkanDesktopGame`, a GLFW window. The Vulkan calls go through AwakeKt's own JNI library, `awake-vulkan`, loaded from `java.library.path` or extracted from the jar into `~/.awake/natives/`. |
 | macOS | The desktop host on MoltenVK. Run the JVM with `-XstartOnFirstThread`. |
-| Android | `VulkanView`, a `SurfaceView` in `awake:engine:platform`. |
+| Android | `AwakeSurfaceView`, a `SurfaceView` in `awake:engine:window`. |
 | iOS | `makeVulkanGameViewController(application: VulkanEngine)`, a `UIViewController` on MoltenVK. |
 
 The backend does not run in a browser; use the [WebGPU backend](webgpu.md) there.
