@@ -104,8 +104,8 @@ class SceneBackendParityTest {
     }
 
     /**
-     * A texture is sRGB: lit only by ambient, mid-grey 128 comes out as encode(decode(128) x 0.08),
-     * about 41, not the 10 that lighting the raw bytes and writing them unencoded gives.
+     * A texture is sRGB: lit only by ambient, mid-grey 128 comes out as
+     * encode(neutral(decode(128) x 0.08)), about 15, not the 32 that lighting the raw bytes gives.
      */
     @Test
     fun anAmbientLitTextureKeepsItsShadeOnBothBackends() {
@@ -120,7 +120,7 @@ class SceneBackendParityTest {
         }
     }
 
-    /** A scene's ambient replaces the shader's: at 0.5, mid-grey 128 comes out as encode(decode(128) x 0.5), about 93. */
+    /** A scene's ambient replaces the shader's: at 0.5, mid-grey 128 comes out as encode(neutral(decode(128) x 0.5)), about 76. */
     @Test
     fun aSceneAmbientSetsTheTexturedShadeOnBothBackends() {
         BACKEND_ORDER.forEach { backend ->
@@ -492,12 +492,12 @@ class SceneBackendParityTest {
         const val MID_GREY = 128
         const val GREY_SPREAD = 16
 
-        /** 255 x ((128 / 255)^2.2 x 0.08)^(1 / 2.2). */
-        const val AMBIENT_SHADE = 41
+        /** 255 x neutral((128 / 255)^2.2 x 0.08)^(1 / 2.2), where neutral is Khronos PBR Neutral. */
+        const val AMBIENT_SHADE = 15
         const val SHADE_TOLERANCE = 6
 
-        /** 255 x ((128 / 255)^2.2 x 0.5)^(1 / 2.2). */
-        const val HALF_AMBIENT_SHADE = 93
+        /** 255 x neutral((128 / 255)^2.2 x 0.5)^(1 / 2.2). */
+        const val HALF_AMBIENT_SHADE = 76
 
         /** Red, green, blue, yellow: frames 0 to 3 of [FRAME_SHEET]. */
         val FRAME_COLOURS = listOf(

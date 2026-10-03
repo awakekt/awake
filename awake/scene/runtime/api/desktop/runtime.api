@@ -83,6 +83,7 @@ public final class com/awakekt/awake/scene/runtime/DefaultSceneComponentResolver
 	public final fun getSkyboxResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getSpinControlResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getTerrainResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getToneMappingResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun install ()V
 }
 

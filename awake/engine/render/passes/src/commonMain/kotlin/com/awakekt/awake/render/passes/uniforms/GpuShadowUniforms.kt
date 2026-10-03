@@ -54,6 +54,7 @@ fun gpuLitShadowUniforms(
     fogDensity: Float = 0f,
     cameraForward: Vec3f,
     debugView: GpuDebugView = GpuDebugView.Off,
+    exposure: Float = 1f,
 ): FloatArray {
     val lightLayout = MaterialUniformLayouts.SceneLight
     val light = lightPayload.copyOf(lightLayout.total)
@@ -85,5 +86,6 @@ fun gpuLitShadowUniforms(
         .put(material, UniformFields.Material)
         .put(fogUniformFloats(fogColor, fogDensity), UniformFields.FogColor)
         .putDebugView(debugView, cameraForward)
+        .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
         .build()
 }

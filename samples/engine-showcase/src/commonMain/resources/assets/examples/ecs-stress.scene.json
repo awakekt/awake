@@ -24,7 +24,7 @@
           "type": "Directional",
           "direction": { "x": 0.4, "y": 1.0, "z": 0.3 },
           "color": { "x": 1.0, "y": 0.97, "z": 0.92 },
-          "intensity": 3.0
+          "intensity": 1.0
         }
       ]
     },

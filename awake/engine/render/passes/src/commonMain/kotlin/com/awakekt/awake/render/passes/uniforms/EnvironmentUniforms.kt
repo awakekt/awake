@@ -26,7 +26,16 @@ data class EnvironmentUniforms(
     val debugView: RenderDebugView = RenderDebugView.Off,
     /** The shadow-map layer [RenderDebugView.ShadowMap] shows. */
     val debugLayer: Int = 0,
+    /**
+     * What the lit shaders multiply their radiance by before tone mapping. At 1 a white surface
+     * facing a light of intensity 1 shows near white; 2 is one stop brighter.
+     */
+    val exposure: Float = 1f,
 ) {
+    init {
+        require(exposure > 0f && exposure.isFinite()) { "exposure must be finite and above 0; was $exposure." }
+    }
+
     companion object {
         val Default = EnvironmentUniforms()
     }
@@ -50,5 +59,6 @@ data class EnvironmentUniforms(
         } else {
             GpuDebugView(debugView.code, viewDepthRange, debugLayer)
         },
+        exposure = exposure,
     )
 }

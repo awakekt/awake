@@ -164,8 +164,8 @@ data class GroupBindings(val entries: List<ResourceBinding>) {
                     binding = 0,
                     kind = ResourceKind.UniformBuffer,
                     stages = setOf(ShaderStage.Vertex, ShaderStage.Fragment),
-                    // `MaterialUniformLayouts.PbrTextured`, 192 floats; `TexturedShaderBindingsTest` holds the two equal.
-                    minBindingSize = 768L,
+                    // `MaterialUniformLayouts.PbrTextured`, 196 floats; `TexturedShaderBindingsTest` holds the two equal.
+                    minBindingSize = 784L,
                 ),
                 ResourceBinding(1, ResourceKind.SampledTexture, setOf(ShaderStage.Fragment)),
                 ResourceBinding(2, ResourceKind.Sampler, setOf(ShaderStage.Fragment)),

@@ -118,9 +118,9 @@ class WebGpuShadowBindingTest {
         // The slot the pool hands a shadowed draw must hold the whole block; a short buffer is
         // exactly how the old Primary-sized pool would have failed at write time.
         assertEquals(
-            176,
+            180,
             MaterialUniformLayouts.LitShadow.total,
-            "lit_shadow's Uniforms is 176 floats -- the pool sizes every primary slot for it",
+            "lit_shadow's Uniforms is 180 floats -- the pool sizes every primary slot for it",
         )
 
         depthOnly.destroy()

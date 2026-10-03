@@ -159,7 +159,8 @@ private fun pbrMaterialPayload(values: FloatArray): FloatArray {
 }
 
 /**
- * The scene state every draw in a frame shares: lighting, where the eye is, and the fog.
+ * The scene state every draw in a frame shares: lighting, where the eye is, the fog and the
+ * exposure.
  *
  * Grouped because they always travel together and never vary per draw -- the uniform writers
  * below took them as three flat parameters, and each new shared field made every writer's
@@ -171,6 +172,7 @@ class SceneFrameUniforms(
     val cameraEye: Vec3f,
     val fog: FloatArray,
     val cameraForward: Vec3f,
+    val exposure: Float = 1f,
 ) {
     /** Retains the original constructor for callers without explicit camera-forward metadata. */
     constructor(light: SceneLightUniforms, cameraEye: Vec3f, fog: FloatArray) :
@@ -214,6 +216,7 @@ fun texturedUniforms(
     .put(frame.fog, UniformFields.FogColor)
     .putDebugView(GpuDebugView.Off, frame.cameraForward)
     .putCameraForward(frame.cameraForward, GpuShadowCascadeData.UNSHADOWED)
+    .put(UniformFields.Exposure, frame.exposure, 0f, 0f, 0f)
     .build()
 
 /** Packs the unshadowed textured PBR block from the backend-neutral draw payload. The light
@@ -234,6 +237,7 @@ fun texturedUniforms(
     cameraForward: Vec3f = Vec3f(0f, 0f, -1f),
     timeSeconds: Float = 0f,
     shadowCascades: GpuShadowCascadeData = GpuShadowCascadeData.UNSHADOWED,
+    exposure: Float = 1f,
 ): FloatArray = UniformWriter(MaterialUniformLayouts.PbrTextured)
     .put(mvp.data, UniformFields.Mvp)
     .put(
@@ -257,6 +261,7 @@ fun texturedUniforms(
     .put(UniformFields.FogColor, fogColor.r, fogColor.g, fogColor.b, fogDensity)
     .putDebugView(debugView, cameraForward)
     .putCameraForward(cameraForward, shadowCascades)
+    .put(UniformFields.Exposure, exposure, 0f, 0f, 0f)
     .build()
 
 /** The sun's cascades. */
@@ -335,4 +340,5 @@ fun litShadowUniforms(
     .put(pbrMaterialFloats(drawCall), UniformFields.Material)
     .put(frame.fog, UniformFields.FogColor)
     .putDebugView(GpuDebugView.Off, frame.cameraForward)
+    .put(UniformFields.Exposure, frame.exposure, 0f, 0f, 0f)
     .build()

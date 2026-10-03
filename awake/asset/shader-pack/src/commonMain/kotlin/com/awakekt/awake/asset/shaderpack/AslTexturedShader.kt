@@ -105,6 +105,7 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
     val textureScroll = handles.value("textureScroll")
     val fogColor = handles.value("fogColor")
     val debugView = handles.value("debugView")
+    val exposure = handles.value("exposure")
     val cascadeInputs = CascadeShadowInputs(
         handles.array("cascadeViewProjections"),
         handles.array("cascadeDepthScales"),
@@ -155,7 +156,7 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
     val dielectricF0 = const("DIELECTRIC_F0", 0.04f)
     val minRoughness = const("MIN_ROUGHNESS", 0.05f)
     val gamma = const("GAMMA", 2.2f)
-    val invGamma = const("INV_GAMMA", 1.0f / 2.2f)
+    val displayTransform = sceneDisplayTransform()
 
     // glTF stores base colour and emissive as sRGB; lighting needs them linear.
     val srgbToLinear = fn("srgbToLinear", returns = AslType.Data(GpuDataShape.Vec3)) {
@@ -163,11 +164,6 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
         returnValue(pow(max(encoded, vec3(0f.lit)), vec3(gamma)))
     }
 
-    // Targets are UNORM and take sRGB-encoded colour, as lit_shadow writes it.
-    val linearToSrgb = fn("linearToSrgb", returns = AslType.Data(GpuDataShape.Vec3)) {
-        val linear by param(GpuDataShape.Vec3)
-        returnValue(pow(max(linear, vec3(0f.lit)), vec3(invGamma)))
-    }
     val cascades = cascadeShadowSampling(cascadeInputs, shadowMap, shadowMapSampler, clipSpace, epsilon)
 
     val distributionGgx = fn("distributionGgx") {
@@ -263,14 +259,10 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
         val shadowFactor = let("shadowFactor", cascades.sampleShadow(worldPos, n, nDotL))
         // lightColor is authored as reflectance, not radiance -- pay back the BRDF's 1/PI.
         val radiance = let("radiance", lightColor.xyz * pi * nDotL * shadowFactor)
-        val specularOut = let("specularOut", specular * radiance)
         // The scene's ambient when it sets one (lightColor.w above 0), this shader's otherwise.
         val ambientShare = let("ambientShare", select(ambientStrength, lightColor.w, lightColor.w gt 0f.lit))
         val ambient = let("ambient", albedo * ambientShare * occlusion)
-        val litColor = variable(
-            "lit",
-            ambient + diffuse * radiance + specularOut / (specularOut + vec3(1f.lit)) + emissive,
-        )
+        val litColor = variable("lit", ambient + (diffuse + specular) * radiance + emissive)
         // Point lights: unrolled over fixed slots; a disabled slot is one compare.
         loopU32("i", 0u.lit, MAX_POINT_LIGHTS.toUInt().lit) { i ->
             val slot = let("slot", pointLightPositions[i])
@@ -293,11 +285,10 @@ private fun textured(clipSpace: ClipSpace, instanced: Boolean = false): AslShade
             )
             val pDiffuse = let("pDiffuse", (vec3(1f.lit) - pFresnel) * (1f.lit - metallic) * albedo / pi)
             val pRadiance = let("pRadiance", pointLightColors[i].xyz * pi * pNdotL * attenuation)
-            val pSpecularOut = let("pSpecularOut", pSpecular * pRadiance)
-            assign(litColor, litColor + pDiffuse * pRadiance + pSpecularOut / (pSpecularOut + vec3(1f.lit)))
+            assign(litColor, litColor + (pDiffuse + pSpecular) * pRadiance)
         }
-        val shaded = vec4(applyFog(linearToSrgb(litColor), worldPos), baseColorSample.a * baseColorFactor.a)
-        val surface = DebugSurface(n, worldPos, linearToSrgb(albedo), shadow = shadowFactor, shadowCascade = cascades.shadowCascade(worldPos))
+        val shaded = vec4(applyFog(displayTransform.display(litColor, exposure.x), worldPos), baseColorSample.a * baseColorFactor.a)
+        val surface = DebugSurface(n, worldPos, displayTransform.encoded(albedo), shadow = shadowFactor, shadowCascade = cascades.shadowCascade(worldPos))
         // A masked material's cut-out, last: after it no derivative may follow. An opaque material's
         // cutoff is 0, so its texture alpha is ignored.
         discardIf(baseColorSample.a * baseColorFactor.a lt pbrFactors.z)

@@ -24,6 +24,7 @@ import com.awakekt.awake.scene.rendering.mesh.InstancedMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.LodGroup
 import com.awakekt.awake.scene.rendering.mesh.LodLevel
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
+import com.awakekt.awake.scene.rendering.tonemapping.ToneMapping
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -114,6 +115,15 @@ class SceneCompilerTest {
         assertEquals(RenderDebugView.ShadowMap, environment.debugView)
         assertEquals(2, environment.debugLayer)
         assertEquals(RenderDebugView.Off, SceneLightingCompiler(ClipSpace.WebGpu).environmentUniforms(World()).debugView)
+    }
+
+    @Test
+    fun lightingCompilerReadsTheExposureFromToneMapping() {
+        val world = World()
+        world.add(world.create(), ToneMapping(exposure = 1.5f))
+
+        assertEquals(1.5f, SceneLightingCompiler(ClipSpace.WebGpu).environmentUniforms(world).exposure)
+        assertEquals(1f, SceneLightingCompiler(ClipSpace.WebGpu).environmentUniforms(World()).exposure)
     }
 
     @Test
