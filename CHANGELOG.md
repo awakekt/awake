@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.11] - 2026-10-04
+
+### Fixed
+
+- **A Core release no longer fails its consumer check when Vulkan has unreleased changes.** The template now builds against the last Vulkan release, which is what a consumer gets, instead of a Vulkan snapshot the Core-only publish never built.
+- **An unfocused single-line text field shows the start of its value.** It kept scrolling to its caret, which sits at the end, so a field narrower than its value cut the first characters off (an inspector showed `12.75` as `2.75`). It follows the caret again once focused.
+
 ## [0.1.0-rc.10] - 2026-10-03
 
 ### Added
