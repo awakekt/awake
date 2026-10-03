@@ -281,6 +281,8 @@ enum class ScrollSource {
  * @property buttonsReleased Set of pointer buttons released during this frame.
  * @property scrollSource Hardware source driving scroll deltas for this frame.
  * @property clipboardCommands Copy and cut requests made during this frame, in order.
+ * @property touches Every finger on a touch screen this frame, including one that lifted during it.
+ * @property pointerFromTouch True while the primary pointer follows a finger rather than a mouse.
  */
 data class InputSnapshot(
     val pointerX: Float,
@@ -313,6 +315,8 @@ data class InputSnapshot(
     /** What sent [scrollDeltaX]/[scrollDeltaY], when the platform can tell. */
     val scrollSource: ScrollSource = ScrollSource.Unknown,
     val clipboardCommands: List<ClipboardCommand> = emptyList(),
+    val touches: List<TouchPoint> = emptyList(),
+    val pointerFromTouch: Boolean = false,
 ) {
     /** True if the specified pointer [button] is currently held down. */
     fun isDown(button: PointerButton): Boolean = button in buttonsDown
@@ -435,7 +439,12 @@ class Input {
             scrollSource = scrollSource,
             // The shared empty list on the frames without one, which is nearly all of them.
             clipboardCommands = pendingClipboardCommands.takeIf { it.isNotEmpty() }?.toList() ?: emptyList(),
+            touches = if (fingers.isEmpty()) emptyList() else fingers.values.map(Finger::snapshot),
+            pointerFromTouch = pointerFromTouch,
         )
+        // A lifted finger shows in exactly one snapshot, released; the rest start the next frame clean.
+        fingers.values.removeAll { !it.down }
+        fingers.values.forEach { it.pressed = false }
         // Clear transient buffers
         scrollDeltaX = 0f
         scrollDeltaY = 0f
@@ -500,6 +509,49 @@ class Input {
 
     /** Updates the pressed state and pixel position ([x], [y]) of the primary pointer. */
     fun setPointer(down: Boolean, x: Float, y: Float) {
+        pointerFromTouch = false
+        movePointer(down, x, y)
+    }
+
+    private val fingers = LinkedHashMap<Long, Finger>()
+    private var primaryFinger: Long? = null
+    private var pointerFromTouch = false
+
+    /**
+     * Moves, puts down or lifts the finger [id] at pixel position ([x], [y]). A platform reports
+     * every finger it tracks, each under an id that stays the same while that finger is down.
+     *
+     * A finger that touches down while the primary pointer is free also drives it until that finger
+     * lifts, so code that reads only [pointerDown]/[pointerX]/[pointerY] keeps working on a touch
+     * screen. A finger already down never takes it over: the pointer would jump between them.
+     */
+    fun setTouch(id: Long, x: Float, y: Float, down: Boolean) {
+        val finger = fingers.getOrPut(id) { Finger(id) }
+        val touchedDown = down && !finger.down
+        if (touchedDown) finger.pressed = true
+        if (!down && finger.down) finger.released = true
+        finger.x = x
+        finger.y = y
+        finger.down = down
+        if (touchedDown && primaryFinger == null && !pointerDown) primaryFinger = id
+        if (primaryFinger == id) {
+            pointerFromTouch = true
+            movePointer(down, x, y)
+            if (!down) primaryFinger = null
+        }
+    }
+
+    private class Finger(val id: Long) {
+        var x = 0f
+        var y = 0f
+        var down = false
+        var pressed = false
+        var released = false
+
+        fun snapshot() = TouchPoint(id, x, y, down, pressed, released)
+    }
+
+    private fun movePointer(down: Boolean, x: Float, y: Float) {
         if (down && !pointerDown) pendingPointerPressed = true
         if (!down && pointerDown) pendingPointerReleased = true
         pointerDown = down
@@ -524,3 +576,22 @@ class Input {
         keysDown.clear()
     }
 }
+
+/**
+ * One finger on a touch screen, as of a frame's [InputSnapshot].
+ *
+ * @property id Stays the same while the finger is down; a later touch may reuse a lifted finger's id.
+ * @property x Horizontal position in screen pixels.
+ * @property y Vertical position in screen pixels.
+ * @property down True while the finger touches the screen.
+ * @property pressed It touched down during this frame.
+ * @property released It lifted during this frame; this is the last snapshot it appears in.
+ */
+data class TouchPoint(
+    val id: Long,
+    val x: Float,
+    val y: Float,
+    val down: Boolean,
+    val pressed: Boolean = false,
+    val released: Boolean = false,
+)

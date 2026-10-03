@@ -13,7 +13,9 @@ import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
 import com.awakekt.awake.compose.ui.node.PointerInputNode
 
 /**
- * Reports a secondary (right) button press, with coordinates local to this node.
+ * Reports a secondary (right) button press, or a long press with a finger, with coordinates local
+ * to this node. A touch screen has no second button, so holding a finger is how it asks for a
+ * context menu; a held mouse button is not, since a mouse has the real button.
  *
  * Local, not root, for the same reason every other pointer handler here gets local coordinates: a
  * handler that had to subtract its own inset would break the moment its padding changed. A caller
@@ -43,10 +45,14 @@ private class SecondaryPressNode :
 
     override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
         if (pass != PointerEventPass.Main) return
-        if (event.type != PointerEventType.SecondaryPress) return
+        val fingerHeld = event.type == PointerEventType.LongPress && event.pointerId != MOUSE_POINTER
+        if (event.type != PointerEventType.SecondaryPress && !fingerHeld) return
         onPress(event.x, event.y)
         event.consume()
     }
 
     override fun toString(): String = "onSecondaryPress()"
 }
+
+/** `FrameInput` reserves pointer id 0 for the mouse; fingers have their own ids. */
+private const val MOUSE_POINTER = 0L

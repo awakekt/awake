@@ -11,6 +11,7 @@ import com.awakekt.awake.compose.ui.node.LayoutNode
 import com.awakekt.awake.compose.ui.node.activeDismissableLayer
 import com.awakekt.awake.compose.ui.node.activeModalLayer
 import com.awakekt.awake.core.input.PointerCursor
+import kotlin.math.abs
 
 /**
  * Routes pointer events through the placed tree.
@@ -29,6 +30,9 @@ class PointerInputDispatcher(
     private val captures = mutableMapOf<Long, LayoutNode>()
     private val heldSeconds = mutableMapOf<Long, Float>()
     private val longPressTriggered = mutableSetOf<Long>()
+
+    // Where each captured press went down, in root pixels, so a press that moved off is a drag.
+    private val pressOrigins = mutableMapOf<Long, Long>()
 
     /**
      * True while a node holds the pointer, which is what "the UI owns this input" means.
@@ -135,6 +139,7 @@ class PointerInputDispatcher(
             captures.remove(event.pointerId)
             heldSeconds.remove(event.pointerId)
             longPressTriggered.remove(event.pointerId)
+            pressOrigins.remove(event.pointerId)
             hitTest(path, hitRoot, x, y)
         }
         // Before the empty-path return: a pointer leaving everything must still un-hover what it left.
@@ -146,6 +151,9 @@ class PointerInputDispatcher(
         deliver(event, x, y, PointerEventPass.Final, rootFirst = true)
 
         updateCapture(event)
+        if (event.type == PointerEventType.Press && event.pointerId in captures) {
+            pressOrigins[event.pointerId] = packPosition(x, y)
+        }
         updateFocus(root, event)
         return event.isConsumed
     }
@@ -153,11 +161,23 @@ class PointerInputDispatcher(
     /** Advances a captured press and dispatches one long-press event after [LONG_PRESS_SECONDS]. */
     fun advanceTime(root: LayoutNode, x: Int, y: Int, deltaSeconds: Float, pointerId: Long = 0L) {
         if (pointerId !in captures || pointerId in longPressTriggered) return
+        // A press that moved off where it went down is a drag, and a held drag is not a long
+        // press: a finger dragging a list row must not open the row's context menu.
+        val origin = pressOrigins[pointerId]
+        if (origin != null && (abs(x - unpackX(origin)) > LONG_PRESS_SLOP_PX || abs(y - unpackY(origin)) > LONG_PRESS_SLOP_PX)) {
+            longPressTriggered += pointerId
+            return
+        }
         val held = (heldSeconds[pointerId] ?: 0f) + deltaSeconds.coerceAtLeast(0f)
         heldSeconds[pointerId] = held
         if (held >= LONG_PRESS_SECONDS) {
             longPressTriggered += pointerId
-            dispatch(root, PointerEvent(PointerEventType.LongPress, pointerId = pointerId), x, y)
+            // A long press something acted on, such as opening a context menu, ends the press: the
+            // node that captured it must not also take the release as a click.
+            if (dispatch(root, PointerEvent(PointerEventType.LongPress, pointerId = pointerId), x, y)) {
+                captures.remove(pointerId)
+                heldSeconds.remove(pointerId)
+            }
         }
     }
 
@@ -271,6 +291,7 @@ class PointerInputDispatcher(
                 captures.remove(event.pointerId)
                 heldSeconds.remove(event.pointerId)
                 longPressTriggered.remove(event.pointerId)
+                pressOrigins.remove(event.pointerId)
             }
             else -> Unit
         }
@@ -440,3 +461,12 @@ private fun LayoutNode.isAttachedTo(root: LayoutNode): Boolean {
  */
 private fun IntArray.holds(x: Int, y: Int, margin: Int = 0): Boolean =
     x >= -margin && y >= -margin && x < this[2] + margin && y < this[3] + margin
+
+// About Android's 8 dp touch slop on a phone; the dispatcher works in pixels and has no density.
+private const val LONG_PRESS_SLOP_PX = 24
+
+private fun packPosition(x: Int, y: Int): Long = (x.toLong() shl 32) or (y.toLong() and 0xFFFFFFFFL)
+
+private fun unpackX(packed: Long): Int = (packed shr 32).toInt()
+
+private fun unpackY(packed: Long): Int = packed.toInt()
