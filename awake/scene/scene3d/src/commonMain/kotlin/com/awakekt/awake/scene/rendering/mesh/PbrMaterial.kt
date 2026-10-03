@@ -24,8 +24,8 @@ import com.awakekt.awake.scene.rendering.animation.SkinnedPose
  *
  * A [TextureAnimation] on the same entity moves the textured pipeline's textures.
  *
- * Mutually exclusive with [SkinnedPose]: both feed the same `RenderDrawCommand.extraUniformFloats`, but
- * they apply to different vertex formats, so no entity carries both. */
+ * On a skinned mesh (an entity with a [SkinnedPose]) [baseColorFactor] and [emissiveFactor] tint it
+ * the same way; metallic, roughness and texture animation are not read there. */
 data class PbrMaterial(
     var metallic: Float = 0f,
     var roughness: Float = 0.5f,

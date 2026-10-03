@@ -55,6 +55,8 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
         val lightDirection = if (instanced) handles.value("lightDirection") else null
         val lightColor = if (instanced) handles.value("lightColor") else null
         val uniformPalette = if (skinned && !instanced) handles.array("jointPalette") else null
+        val tint = if (skinned && !instanced) handles.value("baseColorFactor") else null
+        val glow = if (skinned && !instanced) handles.value("emissiveFactor") else null
         val storagePalettes = if (skinned && instanced) {
             storageArrayOfArrays(
                 structName = "JointPalette",
@@ -119,7 +121,11 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
             val shade = let("shade", ambient + (1f.lit - ambient) * diffuse)
             val lit = if (lightColor != null) color * shade * lightColor.xyz else color * shade
-            colorOutput(vec4(lit, 1f.lit))
+            if (tint != null && glow != null) {
+                colorOutput(vec4(lit * tint.xyz + glow.xyz, tint.w))
+            } else {
+                colorOutput(vec4(lit, 1f.lit))
+            }
         }
     }
 
@@ -132,6 +138,8 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
     val handles = u.fieldsFrom(SkinnedUniformLayout)
     val camera = handles.value("mvp")
     val uniformPalette = handles.array("jointPalette")
+    val tint = handles.value("baseColorFactor")
+    val glow = handles.value("emissiveFactor")
 
     val baseColorTexture by texture2d(
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -179,8 +187,9 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
         val shade = let("shade", ambient + (1f.lit - ambient) * diffuse)
         val texColor = let("texColor", textureSample(baseColorTexture, baseColorSampler, uv))
-        val lit = texColor.rgb * color * shade
-        colorOutput(vec4(lit, texColor.a))
+        // The material's factors tint it as glTF's do; untinted they are white and black.
+        val lit = texColor.rgb * color * tint.xyz * shade + glow.xyz
+        colorOutput(vec4(lit, texColor.a * tint.w))
     }
 }
 

@@ -216,7 +216,7 @@ internal val SolidOrange = TextureAsset(
     height = 2,
 )
 
-private val SolidWhite = TextureAsset(data = ByteArray(2 * 2 * 4) { -1 }, width = 2, height = 2)
+internal val SolidWhite = TextureAsset(data = ByteArray(2 * 2 * 4) { -1 }, width = 2, height = 2)
 
 /** Position/normal/colour/UV plane used by [renderTexturedPbrScene]. */
 internal fun texturedPlane(half: Float = GROUND_HALF, y: Float = 0f) = MeshGeometry(

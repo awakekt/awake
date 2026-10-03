@@ -23,7 +23,10 @@ import com.awakekt.awake.render.passes.uniforms.gpuLitShadowUniforms
 import com.awakekt.awake.render.passes.uniforms.litUniforms
 import com.awakekt.awake.render.passes.uniforms.texturedUniforms
 import com.awakekt.awake.render.pipeline.InstancedDrawKind
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_BASE_COLOR_FACTOR
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_EMISSIVE_FACTOR
 import com.awakekt.awake.render.renderer.SkinnedFields
+import com.awakekt.awake.render.renderer.SkinnedMaterialLayout
 import com.awakekt.awake.render.renderer.SkinnedUniformLayout
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
@@ -91,11 +94,7 @@ fun RenderDrawCommand.uniformFloats(
             exposure = exposure,
         )
 
-        DrawUniformPlan.Skinned -> UniformWriter(SkinnedUniformLayout)
-            .put(mvp.data, UniformFields.Mvp)
-            .putPadded(SkinnedFields.JointPalette, extraUniformFloats)
-            .put(model.data, UniformFields.Model)
-            .build()
+        DrawUniformPlan.Skinned -> skinnedUniforms(mvp, model, extraUniformFloats)
 
         DrawUniformPlan.TexturedPbr -> texturedUniforms(
             mvp = mvp,
@@ -211,4 +210,25 @@ fun RenderDrawCommand.instancedUniformFloats(
                 .build()
         }
     }
+}
+
+/**
+ * A skinned draw's block: its palette, tinted by its material's factors when [extras] carries them
+ * as [SkinnedMaterialLayout], untinted (glTF's default factors) when it is a palette alone.
+ */
+private fun skinnedUniforms(mvp: Mat4, model: Mat4, extras: FloatArray): FloatArray {
+    val writer = UniformWriter(SkinnedUniformLayout).put(mvp.data, UniformFields.Mvp)
+    return if (extras.size == SkinnedMaterialLayout.total) {
+        writer
+            .put(extras, 0, SkinnedFields.JointPalette)
+            .put(model.data, UniformFields.Model)
+            .put(extras, SkinnedMaterialLayout.offsetOf(UniformFields.BaseColorFactor), UniformFields.BaseColorFactor)
+            .put(extras, SkinnedMaterialLayout.offsetOf(UniformFields.EmissiveFactor), UniformFields.EmissiveFactor)
+    } else {
+        writer
+            .putPadded(SkinnedFields.JointPalette, extras)
+            .put(model.data, UniformFields.Model)
+            .put(UniformFields.BaseColorFactor, DEFAULT_BASE_COLOR_FACTOR)
+            .put(UniformFields.EmissiveFactor, DEFAULT_EMISSIVE_FACTOR)
+    }.build()
 }

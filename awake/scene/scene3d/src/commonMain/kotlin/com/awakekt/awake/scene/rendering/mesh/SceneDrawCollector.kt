@@ -14,6 +14,8 @@ import com.awakekt.awake.render.passes.uniforms.DEFAULT_METALLIC_FACTOR
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_ROUGHNESS_FACTOR
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
+import com.awakekt.awake.render.passes.uniforms.skinnedMaterialFloats
+import com.awakekt.awake.render.renderer.SkinnedMaterialLayout
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.ModularCharacterComponent
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
@@ -73,7 +75,7 @@ internal class SceneDrawCollector(
             val pbr = world.get<PbrMaterial>(entity, pbrType)
             val animation = world.get<TextureAnimation>(entity, animationType)
             val extras = when {
-                pose != null -> pose.jointPalette
+                pose != null -> pbr?.let(pose::tintedBy) ?: pose.jointPalette
                 // One shared layout serves both the primary and textured pipelines. Which
                 // pipeline reads it is a backend concern, not this system's.
                 pbr != null -> pbr.packedFloats(animation ?: TextureAnimation.None)
@@ -156,7 +158,7 @@ internal class SceneDrawCollector(
                 }
 
                 val pose = world.get<SkinnedPose>(entity)
-                val extras = pose?.jointPalette ?: EMPTY_DRAW_EXTRAS
+                val extras = pose?.let { world.get<PbrMaterial>(entity)?.let(it::tintedBy) ?: it.jointPalette } ?: EMPTY_DRAW_EXTRAS
 
                 for (slot in modularCharacter.slots.values) {
                     if (!slot.isVisible) continue
@@ -219,3 +221,11 @@ internal class SceneDrawCollector(
 }
 
 private val EMPTY_DRAW_EXTRAS = FloatArray(0)
+
+/** The pose's palette tinted by [material]'s factors, in one array the pose keeps and rewrites each frame. */
+private fun SkinnedPose.tintedBy(material: PbrMaterial): FloatArray = skinnedMaterialFloats(
+    jointPalette,
+    material.baseColorFactor,
+    material.emissiveFactor,
+    into = tintedPalette ?: FloatArray(SkinnedMaterialLayout.total).also { tintedPalette = it },
+)

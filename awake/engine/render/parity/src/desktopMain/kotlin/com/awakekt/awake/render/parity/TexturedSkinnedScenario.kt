@@ -23,7 +23,8 @@ import kotlinx.coroutines.runBlocking
 
 /**
  * A textured plane skinned to one joint, drawn with [palette] as that joint's matrix: the identity
- * shows the texture where the plane lies, a zero matrix collapses it to nothing.
+ * shows the texture where the plane lies, a zero matrix collapses it to nothing. [palette] may also be
+ * one tinted by `skinnedMaterialFloats`.
  */
 fun Renderer.renderTexturedSkinnedScene(palette: FloatArray, texture: TextureAsset = SolidOrange): ByteArray {
     val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
