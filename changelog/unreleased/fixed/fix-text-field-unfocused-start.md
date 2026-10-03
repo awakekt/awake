@@ -1,0 +1,1 @@
+- **An unfocused single-line text field shows the start of its value.** It kept scrolling to its caret, which sits at the end, so a field narrower than its value cut the first characters off (an inspector showed `12.75` as `2.75`). It follows the caret again once focused.

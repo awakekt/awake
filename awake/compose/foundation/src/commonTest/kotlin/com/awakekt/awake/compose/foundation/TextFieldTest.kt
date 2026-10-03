@@ -285,6 +285,37 @@ class TextFieldThroughFrameTest {
     }
 
     @Test
+    fun anUnfocusedSingleLineFieldShowsTheStartOfTextTooWideForIt() {
+        // Glyphs outside the field are clipped away, so the leftmost one drawn says what is in view:
+        // the distinct first letter, or one of the zeros after it.
+        val state = TextFieldState("A" + "0".repeat(39))
+        state.moveCursorTo(state.text.length)
+        val host = ComposeHost()
+        val content: context(Composer)
+        () -> Unit = { BasicTextField(state, Modifier.size(100.dp, 20.dp), singleLine = true) }
+        fun leftmost() = host.frame(idle, content).primitives.filterIsInstance<DrawCommand.Glyph>().minBy { it.x }
+
+        val start = leftmost()
+        val zero = TextFieldState("0").let { zeroState ->
+            ComposeHost().frame(idle) { BasicTextField(zeroState, Modifier.size(100.dp, 20.dp), singleLine = true) }
+                .primitives.filterIsInstance<DrawCommand.Glyph>().single()
+        }
+        assertTrue(start.u0 != zero.u0, "an unfocused field scrolled its first letter out of view")
+
+        // Focused with the caret at the end, the same field follows the caret. Without this the
+        // assertion above would also pass for a field that never scrolls.
+        host.frame(FrameInput(200, 200, 5, 5, pointerDown = true), content)
+        host.frame(idle, content)
+        state.moveCursorTo(state.text.length)
+        assertEquals(zero.u0, leftmost().u0, "a focused field stopped following its caret")
+
+        // Losing focus brings the start back.
+        host.frame(FrameInput(200, 200, 150, 150, pointerDown = true), content)
+        host.frame(idle, content)
+        assertEquals(start.u0, leftmost().u0, "a field that lost focus kept its caret scroll")
+    }
+
+    @Test
     fun caretIsOnlyPaintedWhileTheFieldIsFocusedAndInItsVisibleBlinkPhase() {
         val state = TextFieldState()
         val (host, content) = hostWith(state)

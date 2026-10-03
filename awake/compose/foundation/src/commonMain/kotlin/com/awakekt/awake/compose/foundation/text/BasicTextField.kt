@@ -149,7 +149,8 @@ fun BasicTextField(
                     val run = policy.runFor(density, 1f)
                     val textOffsetY = if (oneLine) ((height - run.lineHeightPx) / 2f).coerceAtLeast(0f) else 0f
                     val caret = TextRunOf(state, policy, density).position()
-                    val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, run, policy, width) else 0f
+                    val focused = source.isFocused
+                    val textOffsetX = if (oneLine) horizontalOffset.followCaret(caret.x, focused, run, policy, width) else 0f
                     run.forEachSelectionSegment(state.displayedSelectionStart, state.displayedSelectionEnd) { x, y, width, height ->
                         drawRect(
                             x = x + textOffsetX,
@@ -160,7 +161,7 @@ fun BasicTextField(
                         )
                     }
                     run.paint(this, paintColor, offsetX = textOffsetX, offsetY = textOffsetY)
-                    if (source.isFocused && isCaretVisible(clock.totalSeconds)) {
+                    if (focused && isCaretVisible(clock.totalSeconds)) {
                         drawRect(
                             x = caret.x + textOffsetX,
                             y = if (oneLine) textOffsetY else caret.y,
@@ -177,14 +178,22 @@ fun BasicTextField(
 
 /**
  * Scrolls a single-line field so the caret stays inside [width], and returns the x offset to draw
- * [run] at.
+ * [run] at. Unfocused, it shows the start of the text instead: the caret sits at the end after an
+ * edit, so following it would cut the first characters off while nobody is editing.
  */
-private fun ScrollState.followCaret(caretX: Float, run: TextRun, policy: TextMeasurePolicy, width: Int): Float {
+private fun ScrollState.followCaret(
+    caretX: Float,
+    focused: Boolean,
+    run: TextRun,
+    policy: TextMeasurePolicy,
+    width: Int,
+): Float {
     maxValue = (run.offsetAt(policy.text.length) - width).coerceAtLeast(0f).roundToInt()
+    val targetX = if (focused) caretX else 0f
     val visibleStart = value.toFloat()
     when {
-        caretX < visibleStart -> scrollTo(caretX.roundToInt())
-        caretX > visibleStart + width -> scrollTo((caretX - width).roundToInt())
+        targetX < visibleStart -> scrollTo(targetX.roundToInt())
+        targetX > visibleStart + width -> scrollTo((targetX - width).roundToInt())
     }
     return -value.toFloat()
 }
