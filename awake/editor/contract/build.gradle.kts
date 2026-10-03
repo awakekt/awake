@@ -23,6 +23,7 @@ kotlin {
             api(project(":awake:core:input"))
             api(project(":awake:core:state"))
             api(project(":awake:core:di"))
+            api(project(":awake:compose:runtime"))
             implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
