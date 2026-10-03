@@ -187,6 +187,7 @@ public abstract interface class com/awakekt/awake/scene/runtime/SceneAssetResolv
 	public fun canResolveMesh (Ljava/lang/String;)Z
 	public fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public fun createMesh (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
+	public fun materialDefaults (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneAssetResolver$DefaultImpls {
@@ -194,6 +195,7 @@ public final class com/awakekt/awake/scene/runtime/SceneAssetResolver$DefaultImp
 	public static fun canResolveMesh (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Z
 	public static fun createMaterial (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/material/Material;
 	public static fun createMesh (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;Ljava/lang/String;)Lcom/awakekt/awake/render/mesh/Mesh;
+	public static fun materialDefaults (Lcom/awakekt/awake/scene/runtime/SceneAssetResolver;Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/mesh/PbrMaterial;
 }
 
 public final class com/awakekt/awake/scene/runtime/SceneFrameStats {

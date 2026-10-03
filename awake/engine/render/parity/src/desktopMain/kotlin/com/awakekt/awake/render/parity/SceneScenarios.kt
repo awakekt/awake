@@ -98,6 +98,8 @@ fun Renderer.renderTexturedPbrScene(
     timeSeconds: Float = 0f,
     sunDirection: Vec3f = Vec3f(0f, 1f, 0f),
     ambient: Float? = null,
+    metallic: Float = 0.1f,
+    roughness: Float = 0.45f,
 ): ByteArray {
     val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
     val mesh = createMesh(texturedPlane())
@@ -118,8 +120,8 @@ fun Renderer.renderTexturedPbrScene(
             mesh = mesh,
             material = material,
             extraUniformFloats = pbrMaterialFloats(
-                metallic = 0.1f,
-                roughness = 0.45f,
+                metallic = metallic,
+                roughness = roughness,
                 baseColorFactor = Color.White,
                 emissiveFactor = Color.Transparent,
                 textureAnimation = textureAnimation,

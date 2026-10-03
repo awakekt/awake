@@ -42,4 +42,9 @@ data class MeshRenderer(
      * bounds turn with the camera.
      */
     val billboard: Boolean = false,
+    /**
+     * The factors [material] was authored with (an imported glTF material's), drawn when the entity
+     * has no [PbrMaterial] of its own. Comes from the asset, so it is not saved with the scene.
+     */
+    val defaultMaterial: PbrMaterial? = null,
 )

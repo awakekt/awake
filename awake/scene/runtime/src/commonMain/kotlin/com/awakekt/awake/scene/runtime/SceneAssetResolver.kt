@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 
@@ -18,4 +19,10 @@ interface SceneAssetResolver {
 
     fun canResolveMaterial(name: String): Boolean = false
     fun createMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material? = null
+
+    /**
+     * The factors material [name] was authored with (a glTF file's metallic, roughness, colours and
+     * alpha mode), drawn for an entity that has no [PbrMaterial] of its own; null when it has none.
+     */
+    fun materialDefaults(name: String): PbrMaterial? = null
 }
