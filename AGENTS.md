@@ -6,7 +6,7 @@ Welcome to **Awake Engine**. This repository is the core Kotlin Multiplatform 3D
 
 Awake enforces strict boundaries across three distinct architectural layers:
 1. **Layer 1: Awake Core Engine (`awakekt/awake`)** (Apache 2.0): Runtime engine libraries (`:awake:scene`, `:awake:physics`, `:awake:render`, `:awake:ui:shadcn`, `:awake:project`, etc.).
-2. **Layer 2: Awake Core Editor (`:awake:editor:contract` in `awakekt/awake`)** (Apache 2.0): Public, vendor-neutral editor contracts, provider extension points, and project plugin metadata published under `com.awakekt:awake-editor-contract`.
+2. **Layer 2: Awake Core Editor (`:awake:editor:contract` in `awakekt/awake`)** (Apache 2.0): Public, vendor-neutral editor contracts, provider extension points, and project plugin metadata published under `com.awakekt.awake.editor:contract`.
 3. **Layer 3: Awake Studio Pro (`awakekt/awake-studio`)** (Commercial): Desktop authoring application (`:app:studio`), visual inspectors, collaborative workflows, and the secure runtime loader (`StudioPluginPipeline`).
 
 ## No third-party game brands
