@@ -8,6 +8,12 @@ package com.awakekt.awake.scene.rendering.mesh
 import com.awakekt.awake.core.math.Vec3
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_BASE_COLOR_FACTOR
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_EMISSIVE_FACTOR
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_METALLIC_FACTOR
+import com.awakekt.awake.render.passes.uniforms.DEFAULT_ROUGHNESS_FACTOR
+import com.awakekt.awake.render.passes.uniforms.TextureAnimation
+import com.awakekt.awake.render.passes.uniforms.pbrMaterialFloats
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.ModularCharacterComponent
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
@@ -27,6 +33,9 @@ internal class SceneDrawCollector(
     private val beforeParticles = ArrayList<RenderDrawCommand>()
     private val afterParticles = ArrayList<RenderDrawCommand>()
 
+    /** An animated texture on an entity with no [PbrMaterial]: glTF's default factors, packed once per animation. */
+    private val defaultFactorsByAnimation = HashMap<TextureAnimation, FloatArray>()
+
     fun collectBeforeParticles(
         world: World,
         culling: FrameCulling,
@@ -38,6 +47,7 @@ internal class SceneDrawCollector(
         val boundsType = world.typeId(MeshBounds::class)
         val poseType = world.typeId(SkinnedPose::class)
         val pbrType = world.typeId(PbrMaterial::class)
+        val animationType = world.typeId(TextureAnimation::class)
         world.family<Transform, MeshRenderer>().forEach { entity, transform, meshRenderer ->
             if (!meshRenderer.visible) return@forEach
             // Culling first, before this entity's uniforms are gathered: the PBR branch below
@@ -61,11 +71,21 @@ internal class SceneDrawCollector(
             // an empty array the same way it always has.
             val pose = world.get<SkinnedPose>(entity, poseType)
             val pbr = world.get<PbrMaterial>(entity, pbrType)
+            val animation = world.get<TextureAnimation>(entity, animationType)
             val extras = when {
                 pose != null -> pose.jointPalette
                 // One shared layout serves both the primary and textured pipelines. Which
                 // pipeline reads it is a backend concern, not this system's.
-                pbr != null -> pbr.packedFloats()
+                pbr != null -> pbr.packedFloats(animation ?: TextureAnimation.None)
+                animation != null -> defaultFactorsByAnimation.getOrPut(animation) {
+                    pbrMaterialFloats(
+                        DEFAULT_METALLIC_FACTOR,
+                        DEFAULT_ROUGHNESS_FACTOR,
+                        DEFAULT_BASE_COLOR_FACTOR,
+                        DEFAULT_EMISSIVE_FACTOR,
+                        animation,
+                    )
+                }
 
                 else -> EMPTY_DRAW_EXTRAS
             }

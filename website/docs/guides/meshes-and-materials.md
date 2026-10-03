@@ -120,11 +120,11 @@ document.
 | `emissiveFactor` | color | transparent | Multiplies the emissive texture. Textured pipeline only. |
 | `alphaMode` | `Opaque` · `Masked` | `Opaque` | `Masked` discards pixels whose alpha is below `alphaCutoff`. |
 | `alphaCutoff` | number, 0 to 1 | `0.5` | The `Masked` threshold. |
-| `textureAnimation` | object or none | none | A frame sheet and UV scroll for a textured material. |
 
-`textureAnimation`: `columns` and `rows` (default 1) describe the frame sheet, read left to right,
-then top to bottom. `frameCount` (0 means every cell) and `framesPerSecond` (0 holds the first frame)
-play it. `scrollU` and `scrollV` scroll the UVs, in UV units per second.
+`texture_animation`, a component of its own beside the material, plays the texture as a frame sheet
+and scrolls it. `columns` and `rows` (default 1) describe the sheet, read left to right, then top to
+bottom. `frameCount` (0 means every cell) and `framesPerSecond` (0 holds the first frame) play it.
+`scrollU` and `scrollV` scroll the UVs, in UV units per second.
 
 Kotlin-only components:
 

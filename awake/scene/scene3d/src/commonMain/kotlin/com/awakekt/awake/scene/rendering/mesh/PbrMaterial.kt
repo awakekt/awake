@@ -22,6 +22,8 @@ import com.awakekt.awake.scene.rendering.animation.SkinnedPose
  * are read only by the textured pipeline, same glTF-factor role -- the primary pipeline has no
  * base-color/emissive texture to multiply them into.
  *
+ * A [TextureAnimation] on the same entity moves the textured pipeline's textures.
+ *
  * Mutually exclusive with [SkinnedPose]: both feed the same `RenderDrawCommand.extraUniformFloats`, but
  * they apply to different vertex formats, so no entity carries both. */
 data class PbrMaterial(
@@ -32,23 +34,23 @@ data class PbrMaterial(
     var emissiveFactor: Color = Color.Transparent,
     var alphaMode: AlphaMode = AlphaMode.Opaque,
     var alphaCutoff: Float = 0.5f,
-    /** How the texture moves; read by the textured shader only. */
-    var textureAnimation: TextureAnimation = TextureAnimation.None,
 ) {
     private var packed: FloatArray? = null
     private var packedFrom: PbrMaterial? = null
+    private var packedAnimation: TextureAnimation? = null
 
     /**
-     * This material's uniform floats, packed again only after a field changed. A scene of
+     * This material's uniform floats with [textureAnimation], packed again only after either changed. A scene of
      * thousands of materials would otherwise pack and allocate each one every frame. The array is
      * shared between frames, so a caller must not write to it.
      */
-    fun packedFloats(): FloatArray {
+    fun packedFloats(textureAnimation: TextureAnimation = TextureAnimation.None): FloatArray {
         val cached = packed
-        if (cached != null && packedFrom == this) return cached
+        if (cached != null && packedFrom == this && packedAnimation == textureAnimation) return cached
         return pbrMaterialFloats(metallic, roughness, baseColorFactor, emissiveFactor, textureAnimation).also {
             packed = it
             packedFrom = copy()
+            packedAnimation = textureAnimation
         }
     }
 }

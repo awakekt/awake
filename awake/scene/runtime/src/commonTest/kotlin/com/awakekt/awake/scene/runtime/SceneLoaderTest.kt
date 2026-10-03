@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.runtime
 
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.scene.canvas.CanvasAnchor
 import com.awakekt.awake.scene.canvas.CanvasElement
@@ -31,7 +32,6 @@ import com.awakekt.awake.scene.rendering.Camera as SceneCameraComponent
 import com.awakekt.awake.scene.rendering.camera.SceneCamera
 import com.awakekt.awake.scene.rendering.light.Light
 import com.awakekt.awake.scene.rendering.light.SceneLight
-import com.awakekt.awake.scene.rendering.mesh.MaterialBinding
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.ScenePbrMaterial
@@ -276,30 +276,36 @@ class SceneLoaderTest {
         assertEquals(authored, SceneLoader.fromWorld(world, name = "x").nodes.single().components.filterIsInstance<SceneCanvasElement>().single())
     }
 
-    /** A texture animation survives the file, reaches the ECS material, and exports back unchanged. */
+    /** A texture animation survives the file as its own component, reaches the world, and exports back unchanged. */
     @Test
     fun aTextureAnimationRoundTripsThroughTheFileAndTheWorld() {
-        val authored = ScenePbrMaterial(
-            roughness = 0.3f,
-            textureAnimation = SceneTextureAnimation(columns = 8, rows = 7, frameCount = 54, framesPerSecond = 12f, scrollU = 0.05f),
+        val animation = SceneTextureAnimation(columns = 8, rows = 7, frameCount = 54, framesPerSecond = 12f, scrollU = 0.05f)
+        val material = ScenePbrMaterial(roughness = 0.3f)
+        val document = SceneDocument(
+            nodes = listOf(
+                SceneNode(name = "water", components = listOf(material, animation)),
+                SceneNode(name = "still", components = listOf(material)),
+            ),
         )
-        val document = SceneDocument(nodes = listOf(SceneNode(name = "water", components = listOf(authored))))
+        val world = World()
 
-        val decoded = SceneLoader.decode(SceneLoader.encode(document)).nodes.single().components.single() as ScenePbrMaterial
-        assertEquals(authored, decoded)
+        SceneLoader.decode(SceneLoader.encode(document)).instantiate(world = world)
 
-        val live = with(MaterialBinding) { decoded.toComponent() }
-        assertEquals(TextureAnimation(8, 7, 54, 12f, 0.05f, 0f), live.textureAnimation)
-        assertEquals(authored, with(MaterialBinding) { live.toSceneComponent() })
-        // A still material exports no animation at all, rather than a 1 x 1 sheet.
-        assertNull(with(MaterialBinding) { PbrMaterial().toSceneComponent() }.textureAnimation)
+        var water: Entity? = null
+        world.family<Name>().forEach { entity, name -> if (name.value == "water") water = entity }
+        val waterEntity = assertNotNull(water)
+        assertEquals(TextureAnimation(8, 7, 54, 12f, 0.05f, 0f), world.get<TextureAnimation>(waterEntity))
+        assertEquals(0.3f, world.get<PbrMaterial>(waterEntity)!!.roughness)
+        val exported = SceneLoader.fromWorld(world, name = "x").nodes.associate { it.name to it.components }
+        assertEquals(animation, exported.getValue("water").filterIsInstance<SceneTextureAnimation>().single())
+        assertTrue(exported.getValue("still").none { it is SceneTextureAnimation }, "a still material exports no animation")
     }
 
     @Test
     fun aFrameSheetThatCannotHoldItsFramesIsInvalid() {
-        val issues = ScenePbrMaterial(textureAnimation = SceneTextureAnimation(columns = 2, rows = 2, frameCount = 5)).validate("node")
+        val issues = SceneTextureAnimation(columns = 2, rows = 2, frameCount = 5).validate("node")
 
-        assertEquals(listOf("node.textureAnimation"), issues.map { it.path })
+        assertEquals(listOf("node"), issues.map { it.path })
     }
 
     @Test

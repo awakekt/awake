@@ -37,6 +37,7 @@ registers it.
 | [`spin_control`](#spin_control) | `SpinControl` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`static_transform`](#static_transform) | `StaticTransform` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`terrain`](#terrain) | `TerrainComponent` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Terrain](../guides/terrain.md) |
+| [`texture_animation`](#texture_animation) | `TextureAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`tone_mapping`](#tone_mapping) | `ToneMapping` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
 
 ## Registration
@@ -327,20 +328,6 @@ Physically based material values for the entity's mesh. `ScenePbrMaterial`.
 | `emissiveFactor` | color | `{r: 0, g: 0, b: 0, a: 0}` | Emitted light. |
 | `alphaMode` | `Opaque` · `Masked` | `Opaque` | `Masked` discards fragments below `alphaCutoff`. |
 | `alphaCutoff` | number | `0.5` | Alpha threshold for `Masked`, 0 to 1. |
-| `textureAnimation` | [texture animation](#texture-animation) | none | Frame-sheet and UV-scroll animation. |
-
-### Texture animation
-
-`SceneTextureAnimation`, the value of `textureAnimation`.
-
-| Field | Type | Default | What it does |
-| --- | --- | --- | --- |
-| `columns` | integer | `1` | Frame-sheet columns. At least 1. |
-| `rows` | integer | `1` | Frame-sheet rows. At least 1. |
-| `frameCount` | integer | `0` | Frames played from the first. `0` plays every cell. |
-| `framesPerSecond` | number | `0` | Playback rate. `0` holds the first frame. |
-| `scrollU` | number | `0` | UV units per second along U. |
-| `scrollV` | number | `0` | UV units per second along V, toward the bottom of the image. |
 
 ## `physics_body`
 
@@ -438,6 +425,21 @@ A heightmap terrain. At most one per node. `SceneTerrain`.
 | `provider` | string | required | Id of the surface provider. |
 | `version` | integer | `1` | Version of the provider's payload. |
 | `payload` | any JSON | `{}` | The provider's data. Kept unchanged when no provider is installed. |
+
+## `texture_animation`
+
+Plays the entity's texture as a frame sheet and scrolls it. The textured shader applies it to every
+texture of the entity's material; with no `pbr_material` it plays with glTF's default factors.
+`SceneTextureAnimation`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `columns` | integer | `1` | Frame-sheet columns. At least 1. |
+| `rows` | integer | `1` | Frame-sheet rows. At least 1. |
+| `frameCount` | integer | `0` | Frames played from the first. `0` plays every cell. |
+| `framesPerSecond` | number | `0` | Playback rate. `0` holds the first frame. |
+| `scrollU` | number | `0` | UV units per second along U. |
+| `scrollV` | number | `0` | UV units per second along V, toward the bottom of the image. |
 
 ## `tone_mapping`
 

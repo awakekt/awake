@@ -11,7 +11,6 @@ import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.document.toColor
 import com.awakekt.awake.scene.document.toSceneColor
-import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import kotlin.reflect.KClass
 
 object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
@@ -38,9 +37,6 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
         emissiveFactor = emissiveFactor.toColor(),
         alphaMode = alphaMode,
         alphaCutoff = alphaCutoff,
-        textureAnimation = textureAnimation?.let {
-            TextureAnimation(it.columns, it.rows, it.frames, it.framesPerSecond, it.scrollU, it.scrollV)
-        } ?: TextureAnimation.None,
     )
 
     fun PbrMaterial.toSceneComponent(): ScenePbrMaterial = ScenePbrMaterial(
@@ -50,8 +46,5 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
         emissiveFactor = emissiveFactor.toSceneColor(),
         alphaMode = alphaMode,
         alphaCutoff = alphaCutoff,
-        textureAnimation = textureAnimation.takeUnless { it == TextureAnimation.None }?.let {
-            SceneTextureAnimation(it.columns, it.rows, it.frameCount, it.framesPerSecond, it.scrollU, it.scrollV)
-        },
     )
 }
