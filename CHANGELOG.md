@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.10] - 2026-10-03
+
+### Added
+
+- **Multi-touch on Android.** Every finger reaches `Input.touches` and the UI as its own pointer, so two-finger gestures such as `Modifier.transformable`'s pinch and pan work on a phone. The first finger still drives the primary pointer for code that reads only that. Holding a finger opens a context menu, the way right-click does with a mouse, and a press that moved past touch slop is a drag, not a long press.
+
+### Changed
+
+- **`awake:engine:window` hosts the Android view.** The `SurfaceView`, its render thread, and its touch, key and IME input moved out of `awake:engine:platform` into the window module. Breaking: `com.awakekt.awake.engine.platform.VulkanView` is now `com.awakekt.awake.engine.window.AwakeSurfaceView`, with the same constructor; it never used Vulkan, so the name now says what it is.
+
+### Fixed
+
+- **Additive textured quads add nothing where their texture is black.** A transparent, additive textured mesh was lit like a surface, so a glow sprite with a black base colour still added the sun's specular reflection, and in fog the fog colour, over its whole square. An additive textured draw now shades unlit: it adds its base and emissive colour only, and fades out in fog instead of turning toward the fog colour.
+- **Desktop `FileSystem.watch` honours `recursive` and reports the right kind of change.** It watched only the top directory and reported every event as a modified file. A recursive watch now covers every subdirectory, including ones created later, and creates, edits and deletes arrive as `Created`, `Modified` and `Deleted`, with directories marked as directories.
+- **Alpha-masked skinned meshes cast their cut-out shadow and draw cut out.** A skinned mesh with a `Masked` material, such as hair cards, cast no shadow at all and drew its whole card, because the skinned material block never carried the alpha cutoff and no skinned depth shader could discard. The block now carries the draw's cutoff, the textured skinned shader discards below it, and `PackShaderSets.SkinnedMaskedTexturedShadowDepth` casts the cut-out shape; map `DepthRenderKey(DepthCasterKind.Skinned, AlphaMode.Masked)` to it in a `RenderPlan`.
+- **Particles near the side edges of a wide view stay on screen.** Particle culling used a fixed 16:9 frustum, so in a wider viewport particles near the left and right edges vanished while still visible, and a narrow or portrait view drew particles it could not show. Particles are now culled with the aspect of the viewport or render target they are drawn into, the one the camera projection uses.
+- **A scene readback shows what the window shows.** `SceneAppLifecycleRuntime.readback` and `readbackAttachment` drew a simplified copy of the scene. It had no particles, no `PbrMaterial` colours, alpha mode or texture animation, and no poses for skinned meshes. Transparent, additive and camera-facing meshes drew opaque and unturned, LOD groups and modular characters were missing, hidden meshes were drawn, and the scene's light, shadows and environment were replaced by the defaults. Captures are now planned by the scene's own `RenderSystem3D`, the same extraction the frame uses, through the new `RenderSystem3D.planCapture`. `SceneAppLifecycleRuntime.collectDrawCalls()`, which built the simplified list, is removed.
+- **Curved strokes, icons and holes are drawn at their true weight and shape.** Four defects in the anti-aliased outline compounded. Shrinking a corner was capped at half its adjacent edge, which on a curve's sub-pixel segments put the fringe almost entirely outside the shape. A stroke outline closes on a point a float epsilon from its first, and that sliver edge skewed the fringe along the first edge it touched. A hole's fringe was built facing the wrong way, so every hole drew hard and too small. And the inside of every stroke turn folded back into a small loop, which hid the inner edge's fringe. Strokes from `tessellateStrokeAa`, which includes `Modifier.border`, now centre their fringe on the outline as icons already did: identical pixels on a pixel-aligned edge, but a 1 px rounded border no longer draws 35% heavier at its corners, and the anti-aliased rim reaches half the fringe past the node rather than all of it. Against Chromium rendering the same SVGs, Lucide icons went from 7-24% too much ink at 16 px and overlap (IoU) as low as 0.35 to 96-101% ink and an overlap of at least 0.97. The spinner's arc now carries exactly its geometric ink, where it drew 31% heavy. `tools/icons/compare_icon_sheets.py` measures an icon sheet against the Chromium capture.
+
 ## [0.1.0-rc.9] - 2026-10-03
 
 ### Added
