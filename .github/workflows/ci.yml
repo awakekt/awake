@@ -84,6 +84,15 @@ jobs:
       - name: Vulkan publication detector
         run: scripts/vulkan-publication-impact.test.sh
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Render evidence comment
+        run: |
+          python -m pip install --quiet 'pillow==12.3.0'
+          python scripts/render_evidence_test.py
+
   build:
     name: Build (JVM/Native)
     needs: platform-impact
