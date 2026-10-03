@@ -18,6 +18,13 @@ on:
       - 'v*'
       - 'vulkan-v*'
 
+# One run per ref. On `main` a newer push cancels the snapshot run it supersedes: only the latest
+# snapshot is worth publishing, and an hour-long run per push otherwise queues for hours. A tag
+# has its own ref, so a release never waits behind snapshots and is never cancelled.
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+
 permissions:
   contents: write
 
