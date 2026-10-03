@@ -46,7 +46,17 @@ internal class SceneRenderPlanner3D(
 
     fun plan(world: World, camera: Camera, elapsedTimeSeconds: Float): PlannedFrame {
         val viewport = rendererViewport()
-        val aspect = viewport?.aspect ?: rendererAspect()
+        return plan(world, camera, elapsedTimeSeconds, viewport?.aspect ?: rendererAspect(), viewport)
+    }
+
+    /** Plans [camera]'s view at [aspect], into [viewport] when it fills only part of the target. */
+    fun plan(
+        world: World,
+        camera: Camera,
+        elapsedTimeSeconds: Float,
+        aspect: Float,
+        viewport: RenderViewport?,
+    ): PlannedFrame {
         drawCalls.clear()
         val geometryFrame = geometryFeature.begin(world, camera, elapsedTimeSeconds)
         drawCalls += geometryFrame.beforeParticles

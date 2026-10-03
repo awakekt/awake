@@ -9,6 +9,7 @@ import com.awakekt.awake.core.host.FixedTimestepLoop
 import com.awakekt.awake.ecs.InterpolatedSystem
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.scene.rendering.RenderSystem3D
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAppSpec
 import com.awakekt.awake.scene.runtime.SceneSystemHandle
@@ -110,6 +111,14 @@ class SceneSchedule internal constructor(
     internal fun system(name: String): System =
         registeredSystems.entries.firstOrNull { it.key.name == name }?.value
             ?: error("System $name not found")
+
+    /** The infrastructure's scene renderer, or null before [initialize] or when it has none. */
+    internal val renderSystem: RenderSystem3D?
+        get() = if (::infrastructureSystems.isInitialized) {
+            infrastructureSystems.firstNotNullOfOrNull { it as? RenderSystem3D }
+        } else {
+            null
+        }
 
     internal fun dispose() {
         registeredSystems.clear()

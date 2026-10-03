@@ -58,6 +58,8 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+            // SceneReadbackTest records what reaches a GPU-free renderer.
+            implementation(project(":awake:engine:render:testing"))
         }
         // The kits that register scene components, so SceneComponentReferenceDocsTest sees them all.
         desktopTest.dependencies {

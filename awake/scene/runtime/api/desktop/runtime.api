@@ -95,7 +95,6 @@ public final class com/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime : co
 	public static final field FRAME_SPREAD_HISTORY_SIZE I
 	public static final field FRAME_TIME_HISTORY_SIZE I
 	public static final field NANOS_PER_MS F
-	public final fun collectDrawCalls ()Ljava/util/List;
 	public fun dispose ()V
 	public final fun findCamera (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/camera/Camera;
 	public final fun findEntity-XHcgaUg (Ljava/lang/String;)Lcom/awakekt/awake/ecs/Entity;
