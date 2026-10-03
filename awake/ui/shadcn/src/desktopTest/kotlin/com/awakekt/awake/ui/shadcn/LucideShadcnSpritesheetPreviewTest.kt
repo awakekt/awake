@@ -18,7 +18,6 @@ import com.awakekt.awake.compose.ui.Modifier
 import com.awakekt.awake.compose.ui.graphics.vector.ImageVector
 import com.awakekt.awake.compose.ui.unit.dp
 import com.awakekt.awake.core.text.font.UiFonts
-import com.awakekt.awake.ui.shadcn.components.LucideIcons
 import com.awakekt.awake.ui.shadcn.components.ShadcnIcon
 import com.awakekt.awake.ui.shadcn.components.ShadcnIcons
 import com.awakekt.awake.ui.shadcn.components.ShadcnText
@@ -29,18 +28,27 @@ import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
-/**
- * A visual inventory of every vendored Lucide glyph, every shadcn default icon, and the test
- * Heroicons outline glyphs, which share the same vector stroke path.
- */
+/** A visual inventory of every vendored Lucide glyph and every shadcn default icon. */
 class LucideShadcnSpritesheetPreviewTest {
     private val theme = ShadcnThemeValues(ShadcnTheme)
 
     @Test
     fun captureLucideAndShadcnSpritesheets() {
-        capture("lucide-icons", LucideIcons)
+        capture(
+            "lucide-icons",
+            iconSet("com.awakekt.awake.ui.shadcn.components.LucideIcons", "com.awakekt.awake.lucide.icon.LucideIcons"),
+        )
         capture("shadcn-icons", ShadcnIcons)
-        capture("heroicons-outline", HeroIcons.Outline24)
+    }
+
+    /**
+     * The icon object under whichever name its commit uses. Render evidence runs this same file on a
+     * PR's base, which may keep the set somewhere else, so it is looked up rather than imported.
+     */
+    private fun iconSet(vararg classNames: String): Any {
+        val type = classNames.firstNotNullOfOrNull { runCatching { Class.forName(it) }.getOrNull() }
+            ?: error("none of ${classNames.toList()} is on the test classpath")
+        return type.getField("INSTANCE").get(null)
     }
 
     private fun capture(name: String, icons: Any) {

@@ -107,7 +107,6 @@ jobs:
           cp awake/ui/shadcn/build/reports/compose-preview/button-icons.png "$RUNNER_TEMP/after/ui-button-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/lucide-icons.png "$RUNNER_TEMP/after/ui-lucide-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/shadcn-icons.png "$RUNNER_TEMP/after/ui-shadcn-icons-cpu.png"
-          cp awake/ui/shadcn/build/reports/compose-preview/heroicons-outline.png "$RUNNER_TEMP/after/ui-heroicons-outline-cpu.png"
 
       - name: Setup Python for original SVG capture
         if: steps.scope.outputs.icons == 'true'
@@ -155,7 +154,6 @@ jobs:
           cp awake/ui/shadcn/build/reports/compose-preview/button-icons.png "$RUNNER_TEMP/before/ui-button-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/lucide-icons.png "$RUNNER_TEMP/before/ui-lucide-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/shadcn-icons.png "$RUNNER_TEMP/before/ui-shadcn-icons-cpu.png"
-          cp awake/ui/shadcn/build/reports/compose-preview/heroicons-outline.png "$RUNNER_TEMP/before/ui-heroicons-outline-cpu.png"
 
       - name: Publish images
         if: steps.scope.outputs.render == 'true'
