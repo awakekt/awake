@@ -16,10 +16,15 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraFields
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
+import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
+import kotlin.math.sqrt
 
 /** Converts live particle trees into backend-neutral instanced draw packets. */
 internal class SceneParticleCompiler {
+    /** The current emitter entity's quad axes for [ParticleFacing.Flat], laid out like the camera basis. */
+    private val planeBasis = FloatArray(PLANE_BASIS_FLOATS)
+
     /**
      * Appends every particle emitter in [world] for [camera]. The coordinator delegates the
      * complete particle policy here so it does not know about emitter traversal, billboard basis,
@@ -42,7 +47,8 @@ internal class SceneParticleCompiler {
             0f,
         )
         val frustumPlanes = Frustum.planes(camera.lens, DEFAULT_PARTICLE_ASPECT)
-        family.forEach { _, emitter ->
+        family.forEach { entity, emitter ->
+            writePlaneBasis(world.get<Transform>(entity)?.worldMatrix)
             appendDrawCalls(destination, emitter, cameraBasis, frustumPlanes, camera.lens.eye)
         }
     }
@@ -52,7 +58,8 @@ internal class SceneParticleCompiler {
      * their own, so they're not reachable via `world.family<ParticleEmitter>()` and must be
      * walked here explicitly, same recursion shape [ParticleSystem.simulate] already uses to
      * advance them. [cameraBasis] is shared across the whole tree (computed once per frame by the
-     * caller), not recomputed per emitter. */
+     * caller), not recomputed per emitter; a [ParticleFacing.Flat] emitter draws along [planeBasis],
+     * its entity's plane, which the caller writes first. */
     fun appendDrawCalls(
         destination: MutableList<RenderDrawCommand>,
         emitter: ParticleEmitter,
@@ -126,11 +133,12 @@ internal class SceneParticleCompiler {
             instanceFrames += particle.currentFrame(emitter)
         }
         if (instanceModels.isNotEmpty()) {
-            // Camera basis (shared, every emitter this frame) + this emitter's frame count --
-            // see ParticleVisual.frameCount's own doc comment. frameInfo.y is unused/reserved
+            // The quad axes (the camera's, or the emitter's plane when flat) + this emitter's frame
+            // count -- see ParticleVisual.frameCount's own doc comment. frameInfo.y is unused/reserved
             // now that frame cycling is per-particle (instanceFrames), not emitter-wide.
             val uniformFloats = emitter.uniformFloatsBuffer
-            cameraBasis.copyInto(
+            val basis = if (emitter.visual.facing == ParticleFacing.Flat) planeBasis else cameraBasis
+            basis.copyInto(
                 uniformFloats,
                 destinationOffset = ParticleExtraUniformLayout.offsetOf(ParticleExtraFields.CameraRight),
             )
@@ -164,6 +172,23 @@ internal class SceneParticleCompiler {
             )
         }
     }
+
+    /** [placed]'s +X as the quad's right and its -Z as the quad's up, so a flat quad faces its +Y;
+     * the world's axes without one. */
+    private fun writePlaneBasis(placed: Mat4?) {
+        planeBasis.writeAxis(0, placed?.m00 ?: 1f, placed?.m10 ?: 0f, placed?.m20 ?: 0f)
+        planeBasis.writeAxis(PLANE_UP_OFFSET, -(placed?.m02 ?: 0f), -(placed?.m12 ?: 0f), -(placed?.m22 ?: 1f))
+    }
+
+    private fun FloatArray.writeAxis(offset: Int, x: Float, y: Float, z: Float) {
+        val length = sqrt(x * x + y * y + z * z).takeIf { it > 0f } ?: 1f
+        this[offset] = x / length
+        this[offset + 1] = y / length
+        this[offset + 2] = z / length
+        this[offset + 3] = 0f
+    }
 }
 
 private const val DEFAULT_PARTICLE_ASPECT = 16f / 9f
+private const val PLANE_UP_OFFSET = 4
+private const val PLANE_BASIS_FLOATS = 8

@@ -1226,6 +1226,14 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleEmitterSo
 	public final fun getAuthored ()Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
 }
 
+public final class com/awakekt/awake/scene/rendering/particles/ParticleFacing : java/lang/Enum {
+	public static final field Camera Lcom/awakekt/awake/scene/rendering/particles/ParticleFacing;
+	public static final field Flat Lcom/awakekt/awake/scene/rendering/particles/ParticleFacing;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/particles/ParticleFacing;
+	public static fun values ()[Lcom/awakekt/awake/scene/rendering/particles/ParticleFacing;
+}
+
 public final class com/awakekt/awake/scene/rendering/particles/ParticleGround {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/Float;Lkotlin/jvm/functions/Function2;Ljava/util/List;FF)V
@@ -1296,8 +1304,8 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleSystem : 
 
 public final class com/awakekt/awake/scene/rendering/particles/ParticleVisual {
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;Z)V
-	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun component3 ()I
@@ -1306,12 +1314,14 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleVisual {
 	public final fun component6 ()F
 	public final fun component7 ()Ljava/lang/Float;
 	public final fun component8 ()Z
-	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;Z)Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;
+	public final fun component9 ()Lcom/awakekt/awake/scene/rendering/particles/ParticleFacing;
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;)Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;IFZFLjava/lang/Float;ZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/ParticleVisual;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAdditive ()Z
 	public final fun getEndColor ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getEndScale ()Ljava/lang/Float;
+	public final fun getFacing ()Lcom/awakekt/awake/scene/rendering/particles/ParticleFacing;
 	public final fun getFrameCount ()I
 	public final fun getFrameRate ()F
 	public final fun getStartColor ()Lcom/awakekt/awake/core/math/Vec3f;
@@ -1323,8 +1333,8 @@ public final class com/awakekt/awake/scene/rendering/particles/ParticleVisual {
 
 public final class com/awakekt/awake/scene/rendering/particles/SceneParticleEmitter : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter$Companion;
-	public fun <init> (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZ)V
-	public synthetic fun <init> (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;)V
+	public synthetic fun <init> (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Ljava/lang/String;
 	public final fun component10 ()Ljava/lang/Float;
 	public final fun component11 ()F
@@ -1334,6 +1344,7 @@ public final class com/awakekt/awake/scene/rendering/particles/SceneParticleEmit
 	public final fun component15 ()I
 	public final fun component16 ()F
 	public final fun component17 ()Z
+	public final fun component18 ()Lcom/awakekt/awake/scene/rendering/particles/ParticleFacing;
 	public final fun component2 ()I
 	public final fun component3 ()F
 	public final fun component4 ()F
@@ -1342,8 +1353,8 @@ public final class com/awakekt/awake/scene/rendering/particles/SceneParticleEmit
 	public final fun component7 ()Ljava/lang/Float;
 	public final fun component8 ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun component9 ()F
-	public final fun copy (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZ)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
+	public final fun copy (Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;Ljava/lang/String;IFFFFLjava/lang/Float;Lcom/awakekt/awake/scene/document/SceneVec3;FLjava/lang/Float;FFLcom/awakekt/awake/scene/document/SceneColor;Lcom/awakekt/awake/scene/document/SceneColor;IFZLcom/awakekt/awake/scene/rendering/particles/ParticleFacing;ILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/particles/SceneParticleEmitter;
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getAdditive ()Z
 	public fun getAllowsMultiplePerNode ()Z
@@ -1351,6 +1362,7 @@ public final class com/awakekt/awake/scene/rendering/particles/SceneParticleEmit
 	public final fun getConeHalfAngleDegrees ()Ljava/lang/Float;
 	public final fun getEndColor ()Lcom/awakekt/awake/scene/document/SceneColor;
 	public final fun getEndScale ()Ljava/lang/Float;
+	public final fun getFacing ()Lcom/awakekt/awake/scene/rendering/particles/ParticleFacing;
 	public final fun getFrameCount ()I
 	public final fun getFrameRate ()F
 	public final fun getLifetime ()F

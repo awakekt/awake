@@ -276,9 +276,11 @@ Moves the entity from player input. `SceneMovementControl`.
 
 ## `particle_emitter`
 
-Spawns camera-facing sprites at its node's world position and follows the node. `SceneParticleEmitter`.
+Spawns sprites at its node's world position, turned to the camera or lying flat, and follows the
+node. `SceneParticleEmitter`.
 
-Sizes, speeds and `spawnRadius` are world units; the node's rotation and scale do not apply. Each
+Sizes, speeds and `spawnRadius` are world units; the node's scale does not apply, and its rotation
+only tilts a `Flat` emitter's plane. Each
 particle fades from `startAlpha` to 0 over its `lifetime`, while its tint moves from `color` to
 `endColor` and its size from `scale` to `endScale`. `playProject` runs it; see
 [Particles](../guides/particles.md).
@@ -302,6 +304,7 @@ particle fades from `startAlpha` to 0 over its `lifetime`, while its tint moves 
 | `frameCount` | number | `1` | Treats the texture as a horizontal strip of this many frames. |
 | `frameRate` | number | `8` | Frames per second of that strip. |
 | `additive` | boolean | `false` | Adds to what is behind, for glows. Needs the particle pipeline built with `buildAdditive`. |
+| `facing` | `Camera` · `Flat` | `Camera` | `Camera` turns each sprite to the camera. `Flat` lays it in the plane perpendicular to the node's up axis, on the ground for an upright node, its texture's top toward the node's -Z: ground glows, ripples, magic circles. |
 
 ## `patrol`
 

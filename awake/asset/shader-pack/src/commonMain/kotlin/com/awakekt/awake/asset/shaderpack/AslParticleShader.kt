@@ -58,8 +58,9 @@ private fun particle(): AslShaderDefinition = shader("particle") {
     )
     val handles = u.fieldsFrom(ParticleUniformLayout)
     val camera = handles.value("mvp")
-    // World-space camera basis, CPU-computed once per frame -- not derivable from the
-    // view-projection without an inverse, and every instance needs the same pair.
+    // World-space quad axes, CPU-computed per draw: the camera's right/up for a billboard, or the
+    // emitter's plane for a flat emitter. Not derivable from the view-projection without an inverse,
+    // and every instance of a draw needs the same pair.
     val cameraRight = handles.value("cameraRight")
     val cameraUp = handles.value("cameraUp")
     // x = the sprite atlas's frame count; frame CHOICE is per-particle via inFrame.

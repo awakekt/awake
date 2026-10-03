@@ -122,7 +122,8 @@ data class ParticleMotion(
  * [endScale] is a particle's size at death, grown or shrunk linearly from the emitter's `scale`
  * over its life; `null` (default) keeps `scale`. [additive] adds each particle's colour to what is
  * behind it instead of blending over it, for glows and sparks; it needs the plan's particle
- * pipeline built with `buildAdditive`, and draws blended without it. */
+ * pipeline built with `buildAdditive`, and draws blended without it. [facing] turns each quad to the
+ * camera (the default) or lays it flat; see [ParticleFacing]. */
 data class ParticleVisual(
     val startColor: Vec3f = Vec3f(1f, 1f, 1f),
     val endColor: Vec3f = startColor,
@@ -132,7 +133,22 @@ data class ParticleVisual(
     val stretchFactor: Float = 0.05f,
     val endScale: Float? = null,
     val additive: Boolean = false,
+    val facing: ParticleFacing = ParticleFacing.Camera,
 )
+
+/** Which way a [ParticleEmitter]'s quads face. */
+enum class ParticleFacing {
+    /** Each quad turns to face the camera: sparks, smoke, dust. */
+    Camera,
+
+    /**
+     * Each quad lies in the plane perpendicular to the emitter entity's up axis, its texture's top
+     * toward the entity's -Z: on the ground for an upright emitter, for ground glows, ripples and
+     * magic circles. An emitter entity without a `Transform` lays its quads on the world's ground
+     * plane. [ParticleVisual.stretchWithVelocity] stretches along the motion within that plane.
+     */
+    Flat,
+}
 
 /** How (and whether) a particle interacts with the ground. Resolution priority: [groundY]/
  * [groundHeightProvider]/[colliders] all clamp a falling particle's Y the same way --
@@ -196,7 +212,7 @@ data class ParticleDynamics(
 )
 
 /**
- * A fixed-capacity pool of camera-facing billboard particles, spawned/advanced by
+ * A fixed-capacity pool of camera-facing or flat ([ParticleVisual.facing]) particles, spawned/advanced by
  * [com.awakekt.awake.scene.rendering.particles.ParticleSystem] and drawn via GPU
  * instancing by [com.awakekt.awake.scene.rendering.RenderSystem3D] --
  * mirrors [InstancedMeshRenderer]'s own "N copies of one mesh/material in one draw call" shape,

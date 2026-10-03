@@ -361,6 +361,35 @@ class SceneBackendParityTest {
         }
     }
 
+    /**
+     * A flat sprite lies in the ground plane: seen from above it covers pixels, seen edge-on none.
+     * The camera-facing sprite drawn beside it from the same material shows from both views, so
+     * each draw keeps its own quad axes rather than sharing the last draw's.
+     */
+    @Test
+    fun aFlatSpriteLiesInItsPlaneBesideACameraFacingOneOnBothBackends() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val above = renderer.renderSpriteScene(SpriteView.Above).also { write(backend, it, "sprites-above") }
+            val edgeOn = renderer.renderSpriteScene(SpriteView.EdgeOn).also { write(backend, it, "sprites-edge-on") }
+            val flatHalf = 0 until SCENE_SIZE / 2
+            val facingHalf = SCENE_SIZE / 2 until SCENE_SIZE
+
+            assertTrue(above.redPixels(flatHalf) >= MIN_SPRITE_PIXELS, "$backend: from above the flat sprite drew ${above.redPixels(flatHalf)} px")
+            assertTrue(edgeOn.redPixels(flatHalf) <= MAX_EDGE_ON_PIXELS, "$backend: edge-on the flat sprite drew ${edgeOn.redPixels(flatHalf)} px")
+            assertTrue(above.redPixels(facingHalf) >= MIN_SPRITE_PIXELS, "$backend: from above the camera-facing sprite drew ${above.redPixels(facingHalf)} px")
+            assertTrue(edgeOn.redPixels(facingHalf) >= MIN_SPRITE_PIXELS, "$backend: edge-on the camera-facing sprite drew ${edgeOn.redPixels(facingHalf)} px")
+        }
+    }
+
+    /** Red-dominant pixels in [columns]. */
+    private fun ByteArray.redPixels(columns: IntRange): Int = (0 until SCENE_SIZE).sumOf { y ->
+        columns.count { x ->
+            val pixel = y * SCENE_SIZE + x
+            channel(pixel, RED) > TEXTURED_RED_THRESHOLD + 2 * maxOf(channel(pixel, GREEN), channel(pixel, BLUE))
+        }
+    }
+
     @Test
     fun theShadowLandsInTheSamePlaceOnBothBackends() {
         val centroids = BACKEND_ORDER.associateWith { backend ->
@@ -501,6 +530,8 @@ class SceneBackendParityTest {
             width = 2,
             height = 2,
         )
+        const val MIN_SPRITE_PIXELS = 200
+        const val MAX_EDGE_ON_PIXELS = 4
         const val COVERED_GREEN = 40
         const val MIN_QUAD_PIXELS = 50
         const val CHANNEL_TOLERANCE = 2

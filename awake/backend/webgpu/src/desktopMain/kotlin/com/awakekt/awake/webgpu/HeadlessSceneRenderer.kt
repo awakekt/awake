@@ -14,6 +14,7 @@ import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
+import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.PipelineTable
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.testing.HeadlessRenderSession
@@ -131,6 +132,21 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         bindingsByGroup = PackShaderSets.InstancedTextured.webGpu.bindingsByGroup,
         bindingsMetadataAvailable = PackShaderSets.InstancedTextured.webGpu.bindingsMetadataAvailable,
     )
+    // The sprite pipeline RenderPlan builds for PipelineKey.Particle.
+    val spritePipeline = RenderPipeline(
+        graphicsDevice,
+        swapchainManager,
+        DescriptorSetLayoutHandle(0),
+        wgsl(PackShaderSets.Particle),
+        ByteArray(0),
+        VertexFormat.PositionUv,
+        "vertexMain",
+        "fragmentMain",
+        variant = PipelineVariant.AlphaBlendedParticle,
+        materialBindings = GroupBindings.ParticleMaterial,
+        bindingsByGroup = PackShaderSets.Particle.webGpu.bindingsByGroup,
+        bindingsMetadataAvailable = PackShaderSets.Particle.webGpu.bindingsMetadataAvailable,
+    )
     val depthPrePass = DepthPrePassFeature(
         depthTarget = DepthTarget(graphicsDevice, layers = MAX_SHADOW_TARGET_LAYERS, arrayed = true, comparison = true),
         depthOnlyPipeline = DepthOnlyPipeline(
@@ -198,6 +214,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             transparentByFormat = mapOf(VertexFormat.PositionNormalColorUv to transparentTexturedPipeline),
             additiveByFormat = mapOf(VertexFormat.PositionNormalColorUv to additiveTexturedPipeline),
             backCulledByFormat = mapOf(VertexFormat.PositionNormalColor to backCulledScenePipeline),
+            particlePipelines = mapOf(VertexFormat.PositionUv to spritePipeline),
         ),
         lineRenderPipeline = linePipeline,
         uiShaderSources = UiShaderSources(
@@ -226,6 +243,7 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             instancedTexturedPipeline.destroy()
             transparentTexturedPipeline.destroy()
             additiveTexturedPipeline.destroy()
+            spritePipeline.destroy()
             graphicsDevice.destroy()
         }
     }

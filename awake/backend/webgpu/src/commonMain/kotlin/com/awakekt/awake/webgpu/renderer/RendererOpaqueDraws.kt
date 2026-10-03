@@ -227,8 +227,9 @@ private fun Renderer.prepareInstancedGpuDraw(
         ),
     )
     // Its own slot per instanced draw, as an ordinary draw has: one buffer shared by every
-    // instanced draw of a pipeline would hold only the last draw's uniforms by submission.
-    val plainSlot = if (kind == InstancedDrawKind.Plain) bufferPools.uniformSlotForDraw(pipeline, instanceIndex) else null
+    // instanced draw of a pipeline, or by every particle draw of a material, would hold only the
+    // last draw's uniforms by submission.
+    val drawSlot = if (kind != InstancedDrawKind.Skinned) bufferPools.uniformSlotForDraw(pipeline, instanceIndex) else null
     val skinnedUniformResources = if (kind == InstancedDrawKind.Skinned && pipeline.hasBindingGroup(0)) {
         bufferPools.skinnedInstancedUniformResources(pipeline)
     } else {
@@ -237,9 +238,11 @@ private fun Renderer.prepareInstancedGpuDraw(
 
     when (kind) {
         InstancedDrawKind.Particle -> {
-            if (!material.hasTexture) return null
-            material.updateUniformBuffer(uniformFloats)
-            materialBinding = material.bindingFor(pipeline)
+            val slot = drawSlot?.takeIf { material.hasTexture } ?: return null
+            graphicsDevice.wgpuContext.device.queue.writeBuffer(slot.buffer, 0uL, fastArrayBufferOf(uniformFloats))
+            materialBinding = WebGpuBindGroupHandle(
+                material.bindGroupFor(pipeline.pipeline, slot.buffer, pipeline.texturedMaterialBindings),
+            )
             jointPaletteBinding = null
             jointPaletteBuffer = null
         }
@@ -262,7 +265,7 @@ private fun Renderer.prepareInstancedGpuDraw(
         }
 
         InstancedDrawKind.Plain -> {
-            val slot = plainSlot ?: return null
+            val slot = drawSlot ?: return null
             graphicsDevice.wgpuContext.device.queue.writeBuffer(slot.buffer, 0uL, fastArrayBufferOf(uniformFloats))
             materialBinding = if (material.hasTexture) {
                 WebGpuBindGroupHandle(
@@ -307,7 +310,7 @@ private fun Renderer.prepareInstancedGpuDraw(
                 bufferPools.sceneDepthBindingFor(pipeline, it)
             },
         uniformBuffer = when (kind) {
-            InstancedDrawKind.Plain -> plainSlot?.buffer
+            InstancedDrawKind.Plain -> drawSlot?.buffer
             InstancedDrawKind.Skinned -> skinnedUniformResources?.buffer
             InstancedDrawKind.Particle -> null
         },
