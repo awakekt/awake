@@ -1,1 +1,0 @@
-- **Desktop `FileSystem.watch` honours `recursive` and reports the right kind of change.** It watched only the top directory and reported every event as a modified file. A recursive watch now covers every subdirectory, including ones created later, and creates, edits and deletes arrive as `Created`, `Modified` and `Deleted`, with directories marked as directories.
