@@ -26,11 +26,17 @@ internal class SceneParticleCompiler {
     private val planeBasis = FloatArray(PLANE_BASIS_FLOATS)
 
     /**
-     * Appends every particle emitter in [world] for [camera]. The coordinator delegates the
-     * complete particle policy here so it does not know about emitter traversal, billboard basis,
-     * or the particle-specific frustum pass.
+     * Appends every particle emitter in [world] for [camera], culled with the frustum of the view
+     * it is drawn in, [aspect] wide per unit of height. The coordinator delegates the complete
+     * particle policy here so it does not know about emitter traversal, billboard basis, or the
+     * particle-specific frustum pass.
      */
-    fun appendWorldDrawCalls(destination: MutableList<RenderDrawCommand>, world: World, camera: Camera) {
+    fun appendWorldDrawCalls(
+        destination: MutableList<RenderDrawCommand>,
+        world: World,
+        camera: Camera,
+        aspect: Float,
+    ) {
         val family = world.family<ParticleEmitter>()
         if (family.size == 0) return
         val forward = (camera.lens.center - camera.lens.eye).normalized()
@@ -46,7 +52,7 @@ internal class SceneParticleCompiler {
             cameraUp.z,
             0f,
         )
-        val frustumPlanes = Frustum.planes(camera.lens, DEFAULT_PARTICLE_ASPECT)
+        val frustumPlanes = Frustum.planes(camera.lens, aspect)
         family.forEach { entity, emitter ->
             writePlaneBasis(world.get<Transform>(entity)?.worldMatrix)
             appendDrawCalls(destination, emitter, cameraBasis, frustumPlanes, camera.lens.eye)
@@ -189,6 +195,5 @@ internal class SceneParticleCompiler {
     }
 }
 
-private const val DEFAULT_PARTICLE_ASPECT = 16f / 9f
 private const val PLANE_UP_OFFSET = 4
 private const val PLANE_BASIS_FLOATS = 8
