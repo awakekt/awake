@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.render.parity
 
+import com.awakekt.awake.render.passes.uniforms.skinnedMaterialFloats
 import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
@@ -75,6 +76,25 @@ class SceneBackendParityTest {
 
             assertTrue(shown >= MIN_TEXTURED_PIXELS, "$backend: the textured skinned plane drew $shown orange pixels")
             assertEquals(0, collapsed, "$backend: a zero joint must collapse the plane")
+        }
+    }
+
+    /** A skinned part's material tints its texture on both backends: white turns red, and stays white untinted. */
+    @Test
+    fun aSkinnedMeshTakesItsMaterialsTintOnBothBackends() {
+        val identity = floatArrayOf(1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f)
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            fun red(pixels: ByteArray) = pixels.indices.step(4).count { index ->
+                val r = pixels[index].toInt() and 0xFF
+                r > TEXTURED_RED_THRESHOLD && r > 2 * (pixels[index + 1].toInt() and 0xFF) && r > 2 * (pixels[index + 2].toInt() and 0xFF)
+            }
+
+            val tinted = red(renderer.renderTexturedSkinnedScene(skinnedMaterialFloats(identity, Color(1f, 0f, 0f, 1f), Color.Transparent), SolidWhite))
+            val untinted = red(renderer.renderTexturedSkinnedScene(identity, SolidWhite))
+
+            assertTrue(tinted >= MIN_TEXTURED_PIXELS, "$backend: the red-tinted skinned plane drew $tinted red pixels")
+            assertEquals(0, untinted, "$backend: an untinted white plane must not read as red")
         }
     }
 

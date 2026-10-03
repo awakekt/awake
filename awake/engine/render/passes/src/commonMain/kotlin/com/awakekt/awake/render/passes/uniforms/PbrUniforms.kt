@@ -13,6 +13,7 @@ import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
+import com.awakekt.awake.render.renderer.SkinnedMaterialLayout
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformWriter
 
@@ -68,6 +69,28 @@ data class TextureAnimation(
         /** A still texture. */
         val None: TextureAnimation = TextureAnimation()
     }
+}
+
+/**
+ * A skinned draw's `extraUniformFloats` tinted by its material: [palette], then [baseColorFactor] and
+ * [emissiveFactor], laid out as [SkinnedMaterialLayout]. Written into [into], so a caller that draws
+ * every frame reuses one array.
+ */
+fun skinnedMaterialFloats(
+    palette: FloatArray,
+    baseColorFactor: Color,
+    emissiveFactor: Color,
+    into: FloatArray = FloatArray(SkinnedMaterialLayout.total),
+): FloatArray {
+    val layout = SkinnedMaterialLayout
+    val paletteEnd = layout.offsetOf(UniformFields.BaseColorFactor)
+    require(into.size == layout.total) { "A skinned material payload holds ${layout.total} floats, not ${into.size}." }
+    require(palette.size <= paletteEnd) { "${palette.size} palette floats exceed the $paletteEnd a skinned draw holds." }
+    palette.copyInto(into)
+    into.fill(0f, palette.size, paletteEnd)
+    layout.writeVec4(into, UniformFields.BaseColorFactor, baseColorFactor.r, baseColorFactor.g, baseColorFactor.b, baseColorFactor.a)
+    layout.writeVec4(into, UniformFields.EmissiveFactor, emissiveFactor.r, emissiveFactor.g, emissiveFactor.b, 0f)
+    return into
 }
 
 /** Packs authored PBR factors without making scene extraction know the GPU lane order. */
