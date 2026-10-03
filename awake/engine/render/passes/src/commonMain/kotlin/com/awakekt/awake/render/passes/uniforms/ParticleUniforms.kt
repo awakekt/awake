@@ -52,6 +52,9 @@ fun Mat4.setParticleInstance(
     stretchZ: Float = 0f,
 ): Mat4 {
     setTranslationScale(x, y, z, size)
+    m01 = stretchX
+    m11 = stretchY
+    m21 = stretchZ
     return this
 }
 
