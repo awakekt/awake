@@ -20,6 +20,7 @@ application {
 
 dependencies {
     implementation(libs.kotlinpoet)
+    testImplementation(kotlin("test"))
 }
 
 // `application`'s own `run` task doesn't set a stable workingDir, and the generator writes to a
