@@ -23,31 +23,72 @@ import com.awakekt.awake.render.pipeline.CullMode
  * itself contains no ECS, camera, material-authoring, or backend type.
  */
 data class GpuDrawRequest(
-    val mesh: GpuMesh,
-    val material: GpuMaterial,
-    val model: Mat4 = Mat4(),
+    var mesh: GpuMesh,
+    var material: GpuMaterial,
+    var model: Mat4 = Mat4(),
     /** Format-specific extra lanes; the selected pipeline's declared layout owns them. */
-    val extraUniformFloats: FloatArray = EMPTY_UNIFORM_FLOATS,
-    val vertexAnimation: Vec3f = Vec3f.ZERO,
-    val timeSeconds: Float = 0f,
-    val instanceModels: List<Mat4>? = null,
-    val instanceJointPalettes: List<FloatArray>? = null,
-    val instanceColors: List<Vec4>? = null,
-    val instanceFrames: List<Float>? = null,
-    val cullMode: CullMode = CullMode.None,
-    val alphaMode: AlphaMode = AlphaMode.Opaque,
-    val alphaCutoff: Float = DEFAULT_ALPHA_CUTOFF,
-    val transparent: Boolean = false,
+    var extraUniformFloats: FloatArray = EMPTY_UNIFORM_FLOATS,
+    var vertexAnimation: Vec3f = Vec3f.ZERO,
+    var timeSeconds: Float = 0f,
+    var instanceModels: List<Mat4>? = null,
+    var instanceJointPalettes: List<FloatArray>? = null,
+    var instanceColors: List<Vec4>? = null,
+    var instanceFrames: List<Float>? = null,
+    var cullMode: CullMode = CullMode.None,
+    var alphaMode: AlphaMode = AlphaMode.Opaque,
+    var alphaCutoff: Float = DEFAULT_ALPHA_CUTOFF,
+    var transparent: Boolean = false,
     /** Drawn into shadow maps only, never into the scene: a stand-in caster for something the
      * scene draws another way, such as GPU-displaced terrain. */
-    val shadowsOnly: Boolean = false,
+    var shadowsOnly: Boolean = false,
     /** World-space bounds, when known, so a shadow pass can skip a caster it cannot see. Null
      * casts into every shadow pass. */
-    val worldBounds: Aabb? = null,
+    var worldBounds: Aabb? = null,
     /** With [transparent], adds its colour to what is behind it rather than covering it: glows,
      * fire, light shafts. */
-    val additive: Boolean = false,
-)
+    var additive: Boolean = false,
+) {
+    /** Mutates this request in place so a pool can reuse the instance without allocating. */
+    @Suppress("LongParameterList")
+    fun set(
+        mesh: GpuMesh,
+        material: GpuMaterial,
+        model: Mat4 = Mat4(),
+        extraUniformFloats: FloatArray = EMPTY_UNIFORM_FLOATS,
+        vertexAnimation: Vec3f = Vec3f.ZERO,
+        timeSeconds: Float = 0f,
+        instanceModels: List<Mat4>? = null,
+        instanceJointPalettes: List<FloatArray>? = null,
+        instanceColors: List<Vec4>? = null,
+        instanceFrames: List<Float>? = null,
+        cullMode: CullMode = CullMode.None,
+        alphaMode: AlphaMode = AlphaMode.Opaque,
+        alphaCutoff: Float = DEFAULT_ALPHA_CUTOFF,
+        transparent: Boolean = false,
+        shadowsOnly: Boolean = false,
+        worldBounds: Aabb? = null,
+        additive: Boolean = false,
+    ): GpuDrawRequest {
+        this.mesh = mesh
+        this.material = material
+        this.model = model
+        this.extraUniformFloats = extraUniformFloats
+        this.vertexAnimation = vertexAnimation
+        this.timeSeconds = timeSeconds
+        this.instanceModels = instanceModels
+        this.instanceJointPalettes = instanceJointPalettes
+        this.instanceColors = instanceColors
+        this.instanceFrames = instanceFrames
+        this.cullMode = cullMode
+        this.alphaMode = alphaMode
+        this.alphaCutoff = alphaCutoff
+        this.transparent = transparent
+        this.shadowsOnly = shadowsOnly
+        this.worldBounds = worldBounds
+        this.additive = additive
+        return this
+    }
+}
 
 private val EMPTY_UNIFORM_FLOATS = FloatArray(0)
 private const val DEFAULT_ALPHA_CUTOFF = 0.5f

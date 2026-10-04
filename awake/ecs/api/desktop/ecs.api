@@ -304,6 +304,7 @@ public final class com/awakekt/awake/ecs/World {
 	public final fun addInternal-Nxd7DYM (JILcom/awakekt/awake/ecs/ComponentStore;Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun clear ()V
 	public final fun componentCount (Lkotlin/reflect/KClass;)I
+	public final fun componentStore-1VG1NCY (I)Lcom/awakekt/awake/ecs/ComponentStore;
 	public final fun componentTypes-H_EwOg4 (J)Ljava/util/List;
 	public final fun create-LaMO_uA ()J
 	public final fun describeStorage ()Ljava/util/List;

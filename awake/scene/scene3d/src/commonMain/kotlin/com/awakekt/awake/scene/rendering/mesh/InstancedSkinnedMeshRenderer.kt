@@ -34,4 +34,28 @@ data class InstancedSkinnedMeshRenderer(
     val mesh: Mesh,
     val material: Material,
     val instances: List<SkinnedInstance>,
-)
+) {
+    private var cachedTransforms: List<Mat4>? = null
+    private var cachedPalettes: List<FloatArray>? = null
+    private var cachedFor: List<SkinnedInstance>? = null
+
+    internal fun transforms(): List<Mat4> {
+        val current = instances
+        val cached = cachedTransforms
+        if (cached != null && cachedFor === current) return cached
+        return current.map { it.transform }.also {
+            cachedTransforms = it
+            cachedFor = current
+        }
+    }
+
+    internal fun jointPalettes(): List<FloatArray> {
+        val current = instances
+        val cached = cachedPalettes
+        if (cached != null && cachedFor === current) return cached
+        return current.map { it.jointPalette }.also {
+            cachedPalettes = it
+            cachedFor = current
+        }
+    }
+}

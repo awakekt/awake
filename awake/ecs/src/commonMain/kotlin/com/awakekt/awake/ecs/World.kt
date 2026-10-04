@@ -476,4 +476,11 @@ class World {
      * Optimized [has] using a pre-resolved [typeId].
      */
     fun has(entity: Entity, typeId: ComponentTypeId): Boolean = hasInternal(entity, typeId)
+
+    /**
+     * The underlying component store for [typeId], or null when no entity has ever carried it.
+     * Hoisting store resolution out of a per-entity loop avoids looking up the store on every entity.
+     */
+    fun <T : Any> componentStore(typeId: ComponentTypeId): ComponentStore<T>? =
+        components.storeOrNull(typeId)
 }
