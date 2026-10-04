@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.scene.gltf
 
-import com.awakekt.awake.asset.gltf.GltfAlphaMode
 import com.awakekt.awake.asset.gltf.GltfMesh
 import com.awakekt.awake.asset.gltf.GltfParser
 import com.awakekt.awake.asset.gltf.LoadedPrimitive
@@ -312,34 +311,6 @@ private data class LoadedGltfMaterial(
     val parameters: GltfMaterialParameters,
 )
 
-private fun LoadedPrimitive.toMaterialParameters() =
-    materialParameters(metallicFactor, roughnessFactor, baseColorFactor, emissiveFactor, alphaMode)
-
-private fun GltfMesh.toMaterialParameters() =
-    materialParameters(metallicFactor, roughnessFactor, baseColorFactor, emissiveFactor, alphaMode)
-
-private fun materialParameters(
-    metallic: Float,
-    roughness: Float,
-    baseColor: FloatArray,
-    emissive: FloatArray,
-    alphaMode: GltfAlphaMode,
-) = GltfMaterialParameters(
-    metallic = metallic,
-    roughness = roughness,
-    baseColorFactor = baseColor.toColor(),
-    emissiveFactor = emissive.toColor(alpha = 0f),
-    alphaMode = alphaMode.toAlphaMode(),
-)
-
-private fun GltfMaterialParameters.toPbrMaterial() = PbrMaterial(
-    metallic = metallic,
-    roughness = roughness,
-    baseColorFactor = baseColorFactor,
-    emissiveFactor = emissiveFactor,
-    alphaMode = alphaMode,
-)
-
 private suspend fun LoadedPrimitive.toLoadedMaterial(): LoadedGltfMaterial? {
     val baseColorBytes = baseColorImageBytes ?: return null
     val pbrTextures = PbrTextureSet(
@@ -385,20 +356,6 @@ private suspend fun GltfAssetResolver.parseStaticScene(path: String, bytes: Byte
         val external = GltfParser.loadExternalResources(json, AssetPath(path), AssetSource { assetPath -> readAsset(assetPath) }).getOrThrow()
         GltfParser.parseScene(json.toEmbeddedGlb(), external)
     }
-
-private fun FloatArray.toColor(alpha: Float = getOrElse(3) { 1f }): Color = Color(
-    getOrElse(0) { 1f },
-    getOrElse(1) { 1f },
-    getOrElse(2) { 1f },
-    alpha,
-)
-
-private fun GltfAlphaMode.toAlphaMode(): AlphaMode = when (this) {
-    GltfAlphaMode.MASK -> AlphaMode.Masked
-    GltfAlphaMode.OPAQUE,
-    GltfAlphaMode.BLEND,
-    -> AlphaMode.Opaque
-}
 
 private fun ByteArray.isGlb(): Boolean =
     size >= 4 &&
