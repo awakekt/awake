@@ -231,6 +231,13 @@ handles. The verifier makes a regression a build failure.
 | `Renderer.draw(camera: Lens, drawCalls: List<RenderDrawCommand>, light: SceneLight)` | Removed; the hardware entrypoint accepts `GpuPassInput` only | `Renderer.draw(GpuPassInput)` |
 | `Renderer.showEnvironment`, `horizonColor`, `zenithColor`, `fogColor`, `fogDensity`, `shadowsEnabled` | Scene properties on the GPU device | Removed; use `GpuEnvironmentState` in `GpuPassInput` |
 
+> **Draw request lifetime.** A `GpuDrawRequest` (and the `RenderDrawCommand` alias the scene layer
+> produces) is pooled by its producer: `SceneDrawCollector` rewrites the same instances, and the
+> scratch `Mat4`/`Aabb` they reference, on every collection. A request is valid only until the next
+> `collectBeforeParticles` (or `collectAfterParticles` for the after-particles list). A consumer
+> reads it during plan compilation and copies anything that must outlive that, such as caster
+> bounds. Its properties are mutable, so never use one as a map key or set element.
+
 **Group B — shadow / depth pass data (tracked debt)**
 
 | Type | Problem | Target home |

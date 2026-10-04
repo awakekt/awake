@@ -22,8 +22,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Extraction ([SceneDrawCollector]) extracts visible entities without allocating per-frame garbage
- * in steady state (zero bytes allocated per frame).
+ * Extraction ([SceneDrawCollector]) draws plain [MeshRenderer] entities, with and without
+ * [MeshBounds], without allocating per-frame garbage in steady state (zero bytes per frame).
+ *
+ * That is all this proves. Billboards, modular characters, PBR materials, texture animation and
+ * [LodGroup] are not probed, and some of them still allocate per entity.
  *
  * Desktop-only: `currentThreadAllocatedBytes` has no wasm or Native equivalent.
  */

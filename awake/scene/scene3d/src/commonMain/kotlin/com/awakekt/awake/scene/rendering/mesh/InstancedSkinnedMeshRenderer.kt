@@ -35,27 +35,10 @@ data class InstancedSkinnedMeshRenderer(
     val material: Material,
     val instances: List<SkinnedInstance>,
 ) {
-    private var cachedTransforms: List<Mat4>? = null
-    private var cachedPalettes: List<FloatArray>? = null
-    private var cachedFor: List<SkinnedInstance>? = null
-
-    internal fun transforms(): List<Mat4> {
-        val current = instances
-        val cached = cachedTransforms
-        if (cached != null && cachedFor === current) return cached
-        return current.map { it.transform }.also {
-            cachedTransforms = it
-            cachedFor = current
-        }
-    }
-
-    internal fun jointPalettes(): List<FloatArray> {
-        val current = instances
-        val cached = cachedPalettes
-        if (cached != null && cachedFor === current) return cached
-        return current.map { it.jointPalette }.also {
-            cachedPalettes = it
-            cachedFor = current
-        }
-    }
+    // Split out once, here, rather than every frame the draw is extracted. They therefore describe
+    // [instances] as it was at construction: a list mutated in place afterwards is not re-read, so
+    // build a new component (or use copy) when the set of instances changes. An instance's own
+    // jointPalette array is shared, so rewriting its contents each frame is picked up.
+    internal val transforms: List<Mat4> = instances.map { it.transform }
+    internal val jointPalettes: List<FloatArray> = instances.map { it.jointPalette }
 }

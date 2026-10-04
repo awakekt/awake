@@ -466,7 +466,6 @@ public final class com/awakekt/awake/core/math/ScratchPool {
 	public final fun get (I)Ljava/lang/Object;
 	public final fun getCapacity ()I
 	public final fun getCount ()I
-	public final fun getItems ()Ljava/util/ArrayList;
 	public final fun obtain ()Ljava/lang/Object;
 	public final fun obtain (Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
 	public final fun reset ()V

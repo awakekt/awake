@@ -31,8 +31,7 @@ class ScratchPool<T>(
 
     constructor(initialCapacity: Int, factory: () -> T) : this(initialCapacity, null, factory)
 
-    @PublishedApi
-    internal val items = ArrayList<T>(initialCapacity)
+    private val items = ArrayList<T>(initialCapacity)
 
     /** Number of active instances obtained in the current frame/cycle. */
     var count: Int = 0
@@ -65,12 +64,11 @@ class ScratchPool<T>(
     }
 
     /**
-     * Accesses the pooled instance at [index], creating instances up to [index] if needed.
+     * The instance obtained at [index] this cycle, so [index] must be below [count]. Reading
+     * never grows the pool or moves [count]: only [obtain] does either.
      */
     operator fun get(index: Int): T {
-        while (items.size <= index) {
-            items.add(factory())
-        }
+        require(index in 0 until count) { "index $index is not active; count is $count" }
         return items[index]
     }
 
@@ -107,7 +105,7 @@ class ScratchPool<T>(
     inline fun forEachActive(action: (T) -> Unit) {
         var i = 0
         while (i < count) {
-            action(items[i])
+            action(get(i))
             i++
         }
     }

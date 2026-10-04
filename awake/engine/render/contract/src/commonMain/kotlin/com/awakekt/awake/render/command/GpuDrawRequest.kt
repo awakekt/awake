@@ -21,6 +21,12 @@ import com.awakekt.awake.render.pipeline.CullMode
  * and generic draw state, while [GpuResolvedDraw] is the only type accepted by the renderer's
  * submission path. Scene modules may alias this as their authored draw command, but the request
  * itself contains no ECS, camera, material-authoring, or backend type.
+ *
+ * **Lifetime.** A producer may pool and rewrite requests (see [set]): a request, and the [model]
+ * and [worldBounds] it references, are valid only until the producer's next collection. Read
+ * what you need within the pass that received the request, and copy anything that must outlive
+ * it. Because the properties are mutable, [equals] and [hashCode] can change after construction,
+ * so do not use a request as a map key or set element.
  */
 data class GpuDrawRequest(
     var mesh: GpuMesh,
@@ -48,12 +54,15 @@ data class GpuDrawRequest(
      * fire, light shafts. */
     var additive: Boolean = false,
 ) {
-    /** Mutates this request in place so a pool can reuse the instance without allocating. */
+    /**
+     * Mutates this request in place so a pool can reuse the instance without allocating.
+     * [model] has no default: a default would allocate a matrix per call.
+     */
     @Suppress("LongParameterList")
     fun set(
         mesh: GpuMesh,
         material: GpuMaterial,
-        model: Mat4 = Mat4(),
+        model: Mat4,
         extraUniformFloats: FloatArray = EMPTY_UNIFORM_FLOATS,
         vertexAnimation: Vec3f = Vec3f.ZERO,
         timeSeconds: Float = 0f,

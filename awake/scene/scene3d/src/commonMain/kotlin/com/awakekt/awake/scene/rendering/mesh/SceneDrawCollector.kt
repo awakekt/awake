@@ -11,9 +11,6 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.ScratchPool
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
-import com.awakekt.awake.ecs.ComponentTypeId
-import com.awakekt.awake.ecs.Family1
-import com.awakekt.awake.ecs.Family2
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -42,36 +39,30 @@ internal class SceneDrawCollector(
 ) {
     /**
      * Reused every frame, so they keep the capacity the scene grew them to: a fresh list grew
-     * by copying, sixteen times over for 50,000 entities. Valid until the next collect; the
-     * planner copies them out straight away.
+     * by copying, sixteen times over for 50,000 entities.
+     *
+     * The commands in them, and the scratch bounds and matrices those reference, are pooled too.
+     * Each of the two collect calls owns its own pools and rewinds them as it starts, so a list
+     * is valid until the next call to the method that produced it, whatever order the two are
+     * called in. The planner copies what it needs out straight away.
      */
     private val beforeParticles = ArrayList<RenderDrawCommand>()
     private val afterParticles = ArrayList<RenderDrawCommand>()
 
-    private val commandPool = ScratchPool(::createEmptyDrawCommand)
-    private val scratchAabbPool = ScratchPool { Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f)) }
-    private val scratchMatrixPool = ScratchPool(::Mat4)
+    private val beforeCommands = ScratchPool(::createEmptyDrawCommand)
+    private val beforeAabbs = ScratchPool(::createScratchAabb)
+    private val beforeMatrices = ScratchPool(::Mat4)
 
-    private var cachedMeshFamily: Family2<Transform, MeshRenderer>? = null
-    private var cachedMeshFamilyWorld: World? = null
+    private val afterCommands = ScratchPool(::createEmptyDrawCommand)
+    private val afterAabbs = ScratchPool(::createScratchAabb)
 
-    private var cachedInstancedFamily: Family1<InstancedMeshRenderer>? = null
-    private var cachedInstancedFamilyWorld: World? = null
+    /**
+     * Families and component type ids, resolved once for a world and generation: looking a type
+     * up by class is a hash lookup, paid per entity otherwise. [World.clear] keeps the instance
+     * but forgets every type id and family, so a world alone does not identify what is cached.
+     */
+    private var resolved: WorldResolution? = null
 
-    private var cachedInstancedSkinnedFamily: Family1<InstancedSkinnedMeshRenderer>? = null
-    private var cachedInstancedSkinnedFamilyWorld: World? = null
-
-    private var cachedModularFamily: Family2<Transform, ModularCharacterComponent>? = null
-    private var cachedModularFamilyWorld: World? = null
-
-    private var cachedLodFamily: Family2<Transform, LodGroup>? = null
-    private var cachedLodFamilyWorld: World? = null
-
-    private var cachedBoundsTypeId: Int = -1
-    private var cachedPoseTypeId: Int = -1
-    private var cachedPbrTypeId: Int = -1
-    private var cachedAnimationTypeId: Int = -1
-    private var cachedTypesWorld: World? = null
 
     /** An animated texture on an entity with no [PbrMaterial]: glTF's default factors, packed once per animation. */
     private val defaultFactorsByAnimation = HashMap<TextureAnimation, FloatArray>()
@@ -83,29 +74,17 @@ internal class SceneDrawCollector(
     ): List<RenderDrawCommand> {
         val drawCalls = beforeParticles
         drawCalls.clear()
-        commandPool.reset()
-        scratchAabbPool.reset()
-        scratchMatrixPool.reset()
+        beforeCommands.reset()
+        beforeAabbs.reset()
+        beforeMatrices.reset()
 
-        // Resolved once per world: looking a type up by class is a hash lookup, paid per entity otherwise.
-        if (cachedTypesWorld !== world) {
-            cachedBoundsTypeId = world.typeId(MeshBounds::class).value
-            cachedPoseTypeId = world.typeId(SkinnedPose::class).value
-            cachedPbrTypeId = world.typeId(PbrMaterial::class).value
-            cachedAnimationTypeId = world.typeId(TextureAnimation::class).value
-            cachedTypesWorld = world
-        }
-        val boundsType = ComponentTypeId(cachedBoundsTypeId)
-        val poseType = ComponentTypeId(cachedPoseTypeId)
-        val pbrType = ComponentTypeId(cachedPbrTypeId)
-        val animationType = ComponentTypeId(cachedAnimationTypeId)
+        val resolution = resolve(world)
+        val boundsStore = world.componentStore<MeshBounds>(resolution.boundsType)
+        val poseStore = world.componentStore<SkinnedPose>(resolution.poseType)
+        val pbrStore = world.componentStore<PbrMaterial>(resolution.pbrType)
+        val animationStore = world.componentStore<TextureAnimation>(resolution.animationType)
 
-        val boundsStore = world.componentStore<MeshBounds>(boundsType)
-        val poseStore = world.componentStore<SkinnedPose>(poseType)
-        val pbrStore = world.componentStore<PbrMaterial>(pbrType)
-        val animationStore = world.componentStore<TextureAnimation>(animationType)
-
-        meshFamily(world).forEach { entity, transform, meshRenderer ->
+        resolution.meshFamily.forEach { entity, transform, meshRenderer ->
             if (!meshRenderer.visible) return@forEach
             // Culling first, before this entity's uniforms are gathered: the PBR branch below
             // allocates, and paying that for something about to be discarded is the one ordering
@@ -148,11 +127,11 @@ internal class SceneDrawCollector(
                 else -> EMPTY_DRAW_EXTRAS
             }
             drawCalls.add(
-                obtainCommand(
+                beforeCommands.obtainCommand(
                     mesh = meshRenderer.mesh,
                     material = meshRenderer.material,
                     model = if (meshRenderer.billboard) {
-                        billboardMatrix(transform.worldMatrix, culling.camera.lens, obtainScratchMatrix())
+                        billboardMatrix(transform.worldMatrix, culling.camera.lens, beforeMatrices.obtain())
                     } else {
                         transform.worldMatrix
                     },
@@ -164,7 +143,7 @@ internal class SceneDrawCollector(
                     alphaCutoff = pbr?.alphaCutoff ?: 0.5f,
                     transparent = meshRenderer.transparent,
                     additive = meshRenderer.additive,
-                    worldBounds = bounds?.writeWorldBounds(transform, obtainScratchAabb()),
+                    worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
                 ),
             )
         }
@@ -173,9 +152,9 @@ internal class SceneDrawCollector(
         // draws all of them in one GPU call. See InstancedMeshRenderer's own doc comment for
         // why this is a separate opt-in component/query rather than folding into the
         // MeshRenderer loop above.
-        instancedFamily(world).forEach { _, instanced ->
+        resolution.instancedFamily.forEach { _, instanced ->
             drawCalls.add(
-                obtainCommand(
+                beforeCommands.obtainCommand(
                     mesh = instanced.mesh,
                     material = instanced.material,
                     model = IDENTITY_MATRIX,
@@ -187,20 +166,20 @@ internal class SceneDrawCollector(
         // instanceJointPalettes both carry one entry per instance, index-for-index. See
         // InstancedSkinnedMeshRenderer's own doc comment for why this is a separate component
         // rather than folding into InstancedMeshRenderer.
-        instancedSkinnedFamily(world).forEach { _, instanced ->
+        resolution.instancedSkinnedFamily.forEach { _, instanced ->
             drawCalls.add(
-                obtainCommand(
+                beforeCommands.obtainCommand(
                     mesh = instanced.mesh,
                     material = instanced.material,
                     model = IDENTITY_MATRIX,
-                    instanceModels = instanced.transforms(),
-                    instanceJointPalettes = instanced.jointPalettes(),
+                    instanceModels = instanced.transforms,
+                    instanceJointPalettes = instanced.jointPalettes,
                 ),
             )
         }
         // Modular character loop: all equipped visible slots on an entity are drawn using the
         // entity's transform and shared SkinnedPose joint palette without requiring dummy child entities.
-        modularFamily(world).forEach { entity, transform, modularCharacter ->
+        resolution.modularFamily.forEach { entity, transform, modularCharacter ->
             if (!modularCharacter.isVisible) return@forEach
             val bounds = boundsStore?.get(entity)
             if (bounds != null &&
@@ -220,13 +199,13 @@ internal class SceneDrawCollector(
             for (slot in modularCharacter.slots.values) {
                 if (!slot.isVisible) continue
                 drawCalls.add(
-                    obtainCommand(
+                    beforeCommands.obtainCommand(
                         mesh = slot.mesh,
                         material = slot.material,
                         model = transform.worldMatrix,
                         extraUniformFloats = extras,
                         timeSeconds = elapsedTimeSeconds,
-                        worldBounds = bounds?.writeWorldBounds(transform, obtainScratchAabb()),
+                        worldBounds = bounds?.writeWorldBounds(transform, beforeAabbs.obtain()),
                     ),
                 )
             }
@@ -237,22 +216,17 @@ internal class SceneDrawCollector(
     fun collectAfterParticles(world: World, culling: FrameCulling, camera: Camera): List<RenderDrawCommand> {
         val drawCalls = afterParticles
         drawCalls.clear()
+        afterCommands.reset()
+        afterAabbs.reset()
 
-        if (cachedTypesWorld !== world) {
-            cachedBoundsTypeId = world.typeId(MeshBounds::class).value
-            cachedPoseTypeId = world.typeId(SkinnedPose::class).value
-            cachedPbrTypeId = world.typeId(PbrMaterial::class).value
-            cachedAnimationTypeId = world.typeId(TextureAnimation::class).value
-            cachedTypesWorld = world
-        }
-        val boundsType = ComponentTypeId(cachedBoundsTypeId)
-        val boundsStore = world.componentStore<MeshBounds>(boundsType)
+        val resolution = resolve(world)
+        val boundsStore = world.componentStore<MeshBounds>(resolution.boundsType)
 
         // LodGroup picks ONE level's mesh/material by distance to the camera eye -- see that
         // component's own doc comment for why an entity carries this instead of MeshRenderer,
         // not both. LOD selects detail, it doesn't cull -- MeshBounds/frustum culling still
         // applies on top when present.
-        lodFamily(world).forEach { entity, transform, lodGroup ->
+        resolution.lodFamily.forEach { entity, transform, lodGroup ->
             val eye = camera.lens.eye
             val dx = transform.worldMatrix.m03 - eye.x
             val dy = transform.worldMatrix.m13 - eye.y
@@ -274,11 +248,11 @@ internal class SceneDrawCollector(
                 return@forEach
             }
             drawCalls.add(
-                obtainCommand(
+                afterCommands.obtainCommand(
                     mesh = level.mesh,
                     material = level.material,
                     model = transform.worldMatrix,
-                    worldBounds = bounds?.writeWorldBounds(transform, obtainScratchAabb()),
+                    worldBounds = bounds?.writeWorldBounds(transform, afterAabbs.obtain()),
                 ),
             )
         }
@@ -286,50 +260,30 @@ internal class SceneDrawCollector(
         return drawCalls
     }
 
-    private fun meshFamily(world: World): Family2<Transform, MeshRenderer> {
-        if (cachedMeshFamilyWorld === world && cachedMeshFamily != null) return cachedMeshFamily!!
-        return world.family<Transform, MeshRenderer>().also {
-            cachedMeshFamily = it
-            cachedMeshFamilyWorld = world
-        }
+    private fun resolve(world: World): WorldResolution {
+        val current = resolved
+        if (current != null && current.world === world && current.generation == world.generation) return current
+        return WorldResolution(world).also { resolved = it }
     }
 
-    private fun instancedFamily(world: World): Family1<InstancedMeshRenderer> {
-        if (cachedInstancedFamilyWorld === world && cachedInstancedFamily != null) return cachedInstancedFamily!!
-        return world.family<InstancedMeshRenderer>().also {
-            cachedInstancedFamily = it
-            cachedInstancedFamilyWorld = world
-        }
-    }
+    /** What the collector looks up by type for one [world], valid while its [generation] is unchanged. */
+    private class WorldResolution(val world: World) {
+        val generation = world.generation
 
-    private fun instancedSkinnedFamily(world: World): Family1<InstancedSkinnedMeshRenderer> {
-        if (cachedInstancedSkinnedFamilyWorld === world && cachedInstancedSkinnedFamily != null) {
-            return cachedInstancedSkinnedFamily!!
-        }
-        return world.family<InstancedSkinnedMeshRenderer>().also {
-            cachedInstancedSkinnedFamily = it
-            cachedInstancedSkinnedFamilyWorld = world
-        }
-    }
+        val boundsType = world.typeId(MeshBounds::class)
+        val poseType = world.typeId(SkinnedPose::class)
+        val pbrType = world.typeId(PbrMaterial::class)
+        val animationType = world.typeId(TextureAnimation::class)
 
-    private fun modularFamily(world: World): Family2<Transform, ModularCharacterComponent> {
-        if (cachedModularFamilyWorld === world && cachedModularFamily != null) return cachedModularFamily!!
-        return world.family<Transform, ModularCharacterComponent>().also {
-            cachedModularFamily = it
-            cachedModularFamilyWorld = world
-        }
-    }
-
-    private fun lodFamily(world: World): Family2<Transform, LodGroup> {
-        if (cachedLodFamilyWorld === world && cachedLodFamily != null) return cachedLodFamily!!
-        return world.family<Transform, LodGroup>().also {
-            cachedLodFamily = it
-            cachedLodFamilyWorld = world
-        }
+        val meshFamily = world.family<Transform, MeshRenderer>()
+        val instancedFamily = world.family<InstancedMeshRenderer>()
+        val instancedSkinnedFamily = world.family<InstancedSkinnedMeshRenderer>()
+        val modularFamily = world.family<Transform, ModularCharacterComponent>()
+        val lodFamily = world.family<Transform, LodGroup>()
     }
 
     @Suppress("LongParameterList")
-    private fun obtainCommand(
+    private fun ScratchPool<RenderDrawCommand>.obtainCommand(
         mesh: Mesh,
         material: Material,
         model: Mat4,
@@ -347,7 +301,7 @@ internal class SceneDrawCollector(
         shadowsOnly: Boolean = false,
         worldBounds: Aabb? = null,
         additive: Boolean = false,
-    ): RenderDrawCommand = commandPool.obtain().set(
+    ): RenderDrawCommand = obtain().set(
         mesh = mesh,
         material = material,
         model = model,
@@ -366,11 +320,9 @@ internal class SceneDrawCollector(
         worldBounds = worldBounds,
         additive = additive,
     )
-
-    private fun obtainScratchAabb(): Aabb = scratchAabbPool.obtain()
-
-    private fun obtainScratchMatrix(): Mat4 = scratchMatrixPool.obtain()
 }
+
+private fun createScratchAabb(): Aabb = Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f))
 
 private fun createEmptyDrawCommand(): RenderDrawCommand = RenderDrawCommand(
     mesh = EMPTY_MESH,
@@ -389,6 +341,7 @@ private val EMPTY_MATERIAL = object : Material {
     override fun destroy() = Unit
 }
 
+/** Shared by every instanced draw, whose placement lives in `instanceModels`: nothing may write to it. */
 private val IDENTITY_MATRIX = Mat4()
 
 private val EMPTY_DRAW_EXTRAS = FloatArray(0)

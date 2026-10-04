@@ -7,6 +7,7 @@ package com.awakekt.awake.core.math
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -69,11 +70,28 @@ class ScratchPoolTest {
     }
 
     @Test
-    fun getByIndexGrowsCapacity() {
+    fun getReadsAnActiveInstanceWithoutGrowingThePool() {
         val pool = ScratchPool { SampleItem(0) }
-        val item = pool[5]
-        assertEquals(6, pool.capacity)
-        assertSame(item, pool[5])
+        val first = pool.obtain()
+        val second = pool.obtain()
+
+        assertSame(first, pool[0])
+        assertSame(second, pool[1])
+        assertEquals(2, pool.capacity)
+        assertEquals(2, pool.count)
+    }
+
+    @Test
+    fun getRejectsAnIndexThatIsNotActive() {
+        val pool = ScratchPool { SampleItem(0) }
+        pool.obtain()
+        pool.obtain()
+        pool.reset()
+        pool.obtain()
+
+        assertFailsWith<IllegalArgumentException> { pool[1] }
+        assertFailsWith<IllegalArgumentException> { pool[-1] }
+        assertEquals(1, pool.count)
     }
 
     @Test
