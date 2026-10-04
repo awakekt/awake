@@ -5,47 +5,20 @@
  */
 package com.awakekt.awake.scene.runtime
 
+import com.awakekt.awake.ai.behavior.ChaseBehavior
+import com.awakekt.awake.ai.behavior.chase.SceneChase
+import com.awakekt.awake.ai.behavior.registerAiBehaviors
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
-import com.awakekt.awake.scene.binding.SceneResolutionContext
 import com.awakekt.awake.scene.binding.instantiate
 import com.awakekt.awake.scene.core.Name
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.ScenePrefabLink
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
-
-@Serializable
-@SerialName("test_follow")
-private data class SceneFollow(val target: String) : SceneComponent
-
-private class Follow {
-    var target: Entity? = null
-}
-
-/** Links a node to [SceneFollow.target] by name, as `camera_rig` links its target. */
-private object FollowBinding : SceneComponentBinding<Follow, SceneFollow> {
-    override val componentClass: KClass<Follow> = Follow::class
-    override val schemaClass: KClass<SceneFollow> = SceneFollow::class
-    override val serializer = SceneFollow.serializer()
-
-    override fun attachTyped(world: World, entity: Entity, component: SceneFollow, context: SceneResolutionContext) {
-        val follow = Follow()
-        world.add(entity, follow)
-        context.deferNodeLink(component.target) { follow.target = it }
-    }
-
-    override fun export(world: World, entity: Entity, component: Follow): SceneFollow =
-        SceneFollow(world.get<Name>(component.target!!)!!.value)
-}
 
 class PrefabNameScopeTest {
     init {
@@ -53,14 +26,14 @@ class PrefabNameScopeTest {
     }
 
     /**
-     * The same prefab placed twice, as `withPrefabs` expands it: each instance's link finds its own
+     * The same prefab placed twice, as `withPrefabs` expands it: each instance's `chase` finds its own
      * node, the document's its own.
      */
     @Test
     fun aLinkResolvesInsideItsOwnPrefabInstanceFirst() {
         val fire = SceneNode(
             name = "fire",
-            children = listOf(SceneNode(name = "flame"), SceneNode(name = "smoke", components = listOf(SceneFollow("flame")))),
+            children = listOf(SceneNode(name = "flame"), SceneNode(name = "smoke", components = listOf(SceneChase(target = "flame")))),
         )
         fun camp(name: String) =
             SceneNode(name = name, components = listOf(ScenePrefabLink("fx/fire.prefab.json")), children = listOf(fire))
@@ -69,15 +42,15 @@ class PrefabNameScopeTest {
                 camp("camp 0"),
                 camp("camp 1"),
                 SceneNode(name = "flame"),
-                SceneNode(name = "watcher", components = listOf(SceneFollow("flame"))),
+                SceneNode(name = "watcher", components = listOf(SceneChase(target = "flame"))),
             ),
         )
         val world = World()
 
-        document.instantiate(world, SceneComponentRegistry().register(FollowBinding))
+        document.instantiate(world, SceneComponentRegistry().registerAiBehaviors())
 
         val followers = buildMap {
-            world.queryEach(Follow::class) { entity, follow -> put(world.get<Name>(entity)!!.value + " of " + ancestorName(world, entity), follow.target!!) }
+            world.queryEach(ChaseBehavior::class) { entity, chase -> put(world.get<Name>(entity)!!.value + " of " + ancestorName(world, entity), chase.target!!) }
         }
         val smoke0 = followers.getValue("smoke of camp 0")
         val smoke1 = followers.getValue("smoke of camp 1")
