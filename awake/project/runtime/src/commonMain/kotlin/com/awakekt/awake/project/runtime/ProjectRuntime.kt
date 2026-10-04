@@ -19,41 +19,29 @@ import com.awakekt.awake.project.AwakeProjectManifest
 import com.awakekt.awake.project.AwakeProjectValidator
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.authoring.SceneAppDsl
-import com.awakekt.awake.scene.authoring.infrastructure.cameraSystem
-import com.awakekt.awake.scene.authoring.infrastructure.matrixRelativeMovementSystem
-import com.awakekt.awake.scene.authoring.infrastructure.playerInputSystem
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
-import com.awakekt.awake.scene.canvas.SceneCanvasElement
 import com.awakekt.awake.scene.character.CharacterControllerBinding
-import com.awakekt.awake.scene.character.CharacterControllerSystem
 import com.awakekt.awake.scene.character.SceneCharacterController
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraRigBinding
-import com.awakekt.awake.scene.controls.camera.SceneCameraRig
 import com.awakekt.awake.scene.controls.movement.MovementControlBinding
-import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.withPrefabs
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.physics.PhysicsBodyBinding
-import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.Camera
-import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.particles.loadParticleSprites
-import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlin.math.PI
-import kotlin.reflect.KClass
 
 /** Where a project keeps its manifest, relative to the project root. */
 const val PROJECT_MANIFEST = "awake.project.json"
@@ -140,46 +128,6 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
 }
 
 /**
- * Registers the systems [scene]'s components call for, and none it doesn't, so a host that plays a
- * scene in a world of its own, as an editor's Play does, runs the same set as [playProject] and
- * gains a system when Core does, with no list of its own to keep in step:
- * - `movement_control`: keyboard intent, moved by physics when the entity has a
- *   `character_controller` and straight through the world when it doesn't
- * - `physics_body`, `character_controller` and a `terrain` collider: the physics step, the
- *   character controller and the terrain collider, when [physics] is given
- * - `camera_rig`: the camera system
- * - `spinControl`: spinning
- * - `locomotion_animation` and `keyframe_animation`: their clips and looping tracks
- * - `particle_emitter`: its emitters, with the sprites [loadParticleSprites] read into [particleSprites]
- * - `canvas_element`s with an action: [CanvasActionSystem]
- * - skinned glTF animation, always
- *
- * It only registers systems. The scene itself, its assets, the primary camera and the skinned
- * models' animators stay with the host, as [playProject] does them. A scene that needs physics
- * with no [physics] world runs without those systems, so a host passes the world its scene needs
- * (see [loadPlayableProject] for how a project decides that).
- */
-fun SceneAppDsl.playSystems(
-    scene: SceneDocument,
-    physics: PhysicsWorld? = null,
-    particleSprites: Map<String, TextureAsset> = emptyMap(),
-) {
-    val moves = scene.has(SceneMovementControl::class)
-    val characters = scene.has(SceneCharacterController::class)
-    if (moves) playerInputSystem()
-    if (moves && scene.hasCanvasActions()) frameSystem("canvas-actions") { CanvasActionSystem() }
-    physics?.let { physicsWorld ->
-        if (scene.nodes.any { it.hasTerrainCollider() }) fixedSystem("terrain-collider") { TerrainColliderSystem() }
-        fixedSystem("physics") { PhysicsSystem(physicsWorld) }
-        if (characters) fixedSystem("character") { CharacterControllerSystem(physicsWorld) }
-    }
-    if (moves && !characters) matrixRelativeMovementSystem()
-    if (scene.has(SceneCameraRig::class)) cameraSystem()
-    motionSystems(scene, particleSprites)
-    frameSystem("animation") { AnimationSystem() }
-}
-
-/**
  * Makes one camera primary and active: the authored primary, else the first, else a new one looking
  * at the origin, so a scene saved while an editor held the primary flag still has a view.
  */
@@ -226,19 +174,6 @@ private val PROJECT_COMPONENTS = listOf(
 private suspend fun AssetSource.readText(path: String): String =
     read(AssetPath(path)).getOrElse { throw IllegalArgumentException("Can't read $path from the project", it) }
         .decodeToString()
-
-private fun SceneNode.hasTerrainCollider(): Boolean =
-    components.any { it is SceneTerrain && it.collider } || children.any { it.hasTerrainCollider() }
-
-private fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
-    components.any { type.isInstance(it) } || children.any { it.has(type) }
-
-internal fun SceneDocument.has(type: KClass<out SceneComponent>): Boolean = nodes.any { it.has(type) }
-
-internal fun SceneDocument.hasCanvasActions(): Boolean = nodes.any { it.hasCanvasAction() }
-
-private fun SceneNode.hasCanvasAction(): Boolean =
-    components.any { it is SceneCanvasElement && it.action.isNotEmpty() } || children.any { it.hasCanvasAction() }
 
 private fun SceneNode.meshNames(): List<String> =
     components.filterIsInstance<SceneMeshRenderer>().map { it.mesh } + children.flatMap { it.meshNames() }
