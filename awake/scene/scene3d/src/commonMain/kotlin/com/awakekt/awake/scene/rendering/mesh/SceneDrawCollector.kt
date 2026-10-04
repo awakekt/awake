@@ -86,9 +86,9 @@ internal class SceneDrawCollector(
 
         resolution.meshFamily.forEach { entity, transform, meshRenderer ->
             if (!meshRenderer.visible) return@forEach
-            // Culling first, before this entity's uniforms are gathered: the PBR branch below
-            // allocates, and paying that for something about to be discarded is the one ordering
-            // this loop can get wrong for free.
+            // Culling first, before this entity's uniforms are gathered: that work is wasted on
+            // something about to be discarded, and this is the one ordering the loop can get wrong
+            // for free.
             // A billboard turns with the camera, so its authored bounds do not describe it.
             val bounds = if (meshRenderer.billboard) null else boundsStore?.get(entity)
             if (bounds != null &&
@@ -110,7 +110,7 @@ internal class SceneDrawCollector(
             val pbr = pbrStore?.get(entity) ?: meshRenderer.defaultMaterial
             val animation = animationStore?.get(entity)
             val extras = when {
-                pose != null -> pbr?.let(pose::tintedBy) ?: pose.jointPalette
+                pose != null -> if (pbr != null) pose.tintedBy(pbr) else pose.jointPalette
                 // One shared layout serves both the primary and textured pipelines. Which
                 // pipeline reads it is a backend concern, not this system's.
                 pbr != null -> pbr.packedFloats(animation ?: TextureAnimation.None)
@@ -194,7 +194,12 @@ internal class SceneDrawCollector(
             }
 
             val pose = poseStore?.get(entity)
-            val extras = pose?.let { pbrStore?.get(entity)?.let(it::tintedBy) ?: it.jointPalette } ?: EMPTY_DRAW_EXTRAS
+            val extras = if (pose == null) {
+                EMPTY_DRAW_EXTRAS
+            } else {
+                val pbr = pbrStore?.get(entity)
+                if (pbr != null) pose.tintedBy(pbr) else pose.jointPalette
+            }
 
             for (slot in modularCharacter.slots.values) {
                 if (!slot.isVisible) continue
@@ -288,7 +293,7 @@ internal class SceneDrawCollector(
         material: Material,
         model: Mat4,
         extraUniformFloats: FloatArray = EMPTY_DRAW_EXTRAS,
-        vertexAnimation: Vec3f = Vec3f.ZERO,
+        vertexAnimation: Vec3f = NO_VERTEX_ANIMATION,
         timeSeconds: Float = 0f,
         instanceModels: List<Mat4>? = null,
         instanceJointPalettes: List<FloatArray>? = null,
@@ -340,6 +345,9 @@ private val EMPTY_MATERIAL = object : Material {
     override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
     override fun destroy() = Unit
 }
+
+/** Vec3f.ZERO builds a new vector on every read, so a draw with no vertex animation shares this one: nothing may write to it. */
+private val NO_VERTEX_ANIMATION = Vec3f(0f, 0f, 0f)
 
 /** Shared by every instanced draw, whose placement lives in `instanceModels`: nothing may write to it. */
 private val IDENTITY_MATRIX = Mat4()

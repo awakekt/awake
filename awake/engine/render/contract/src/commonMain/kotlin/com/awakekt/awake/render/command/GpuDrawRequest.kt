@@ -56,7 +56,8 @@ data class GpuDrawRequest(
 ) {
     /**
      * Mutates this request in place so a pool can reuse the instance without allocating.
-     * [model] has no default: a default would allocate a matrix per call.
+     * [model] and [vertexAnimation] have no default: `Mat4()` and `Vec3f.ZERO` each build a new
+     * object on every read, so a default would allocate per call.
      */
     @Suppress("LongParameterList")
     fun set(
@@ -64,7 +65,7 @@ data class GpuDrawRequest(
         material: GpuMaterial,
         model: Mat4,
         extraUniformFloats: FloatArray = EMPTY_UNIFORM_FLOATS,
-        vertexAnimation: Vec3f = Vec3f.ZERO,
+        vertexAnimation: Vec3f,
         timeSeconds: Float = 0f,
         instanceModels: List<Mat4>? = null,
         instanceJointPalettes: List<FloatArray>? = null,

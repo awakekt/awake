@@ -10,9 +10,11 @@ import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
@@ -22,11 +24,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Extraction ([SceneDrawCollector]) draws plain [MeshRenderer] entities, with and without
- * [MeshBounds], without allocating per-frame garbage in steady state (zero bytes per frame).
+ * Extraction ([SceneDrawCollector]) allocates no per-frame garbage in steady state (zero bytes per
+ * frame) for plain [MeshRenderer] entities with and without [MeshBounds], billboards, entities
+ * with a [PbrMaterial] and a [TextureAnimation], and [LodGroup] entities.
  *
- * That is all this proves. Billboards, modular characters, PBR materials, texture animation and
- * [LodGroup] are not probed, and some of them still allocate per entity.
+ * Skinned entities and modular characters are not probed: a modular character still creates an
+ * iterator over its slot map per entity.
  *
  * Desktop-only: `currentThreadAllocatedBytes` has no wasm or Native equivalent.
  */
@@ -34,6 +37,60 @@ class SceneExtractionAllocationProbeTest {
 
     @Test
     fun extractingVisibleEntitiesAllocatesZeroBytesInSteadyState() {
+        assertZeroAllocation("Extraction") { world, entity, mesh, material ->
+            world.add(entity, MeshRenderer(mesh, material))
+            world.add(entity, MeshBounds(UNIT_BOX))
+        }
+    }
+
+    @Test
+    fun extractingVisibleEntitiesWithoutMeshBoundsAllocatesZeroBytesInSteadyState() {
+        assertZeroAllocation("Extraction without MeshBounds") { world, entity, mesh, material ->
+            world.add(entity, MeshRenderer(mesh, material))
+        }
+    }
+
+    @Test
+    fun extractingBillboardsAllocatesZeroBytesInSteadyState() {
+        assertZeroAllocation("Billboard extraction") { world, entity, mesh, material ->
+            world.add(entity, MeshRenderer(mesh, material, billboard = true))
+        }
+    }
+
+    @Test
+    fun extractingPbrMaterialsWithTextureAnimationAllocatesZeroBytesInSteadyState() {
+        val animation = TextureAnimation(columns = 4, rows = 4, framesPerSecond = 12f)
+        assertZeroAllocation("PBR and texture animation extraction") { world, entity, mesh, material ->
+            world.add(entity, MeshRenderer(mesh, material))
+            world.add(entity, MeshBounds(UNIT_BOX))
+            world.add(entity, PbrMaterial(metallic = 0.25f, roughness = 0.75f))
+            world.add(entity, animation)
+        }
+    }
+
+    @Test
+    fun extractingTextureAnimationWithoutAMaterialAllocatesZeroBytesInSteadyState() {
+        val animation = TextureAnimation(columns = 4, rows = 4, framesPerSecond = 12f)
+        assertZeroAllocation("Texture animation without a material extraction") { world, entity, mesh, material ->
+            world.add(entity, MeshRenderer(mesh, material))
+            world.add(entity, animation)
+        }
+    }
+
+    @Test
+    fun extractingLodGroupsAllocatesZeroBytesInSteadyState() {
+        assertZeroAllocation("LodGroup extraction") { world, entity, mesh, material ->
+            val levels = listOf(
+                LodLevel(mesh, material, maxDistance = 50f),
+                LodLevel(mesh, material, maxDistance = 5_000f),
+            )
+            world.add(entity, LodGroup(levels))
+            world.add(entity, MeshBounds(UNIT_BOX))
+        }
+    }
+
+    /** Spawns [ENTITY_COUNT] entities through [spawn], warms up, then measures bytes per frame. */
+    private fun assertZeroAllocation(label: String, spawn: (World, Entity, Mesh, Material) -> Unit) {
         val world = World()
         val camera = Camera(
             Lens(
@@ -46,12 +103,10 @@ class SceneExtractionAllocationProbeTest {
         )
         val mesh = fakeMesh()
         val material = fakeMaterial()
-
         repeat(ENTITY_COUNT) { i ->
             val entity = world.create()
             world.add(entity, Transform(position = Vec3f(0f, 0f, (i % 100).toFloat())))
-            world.add(entity, MeshRenderer(mesh, material))
-            world.add(entity, MeshBounds(Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))))
+            spawn(world, entity, mesh, material)
         }
 
         val cullingCompiler = SceneCullingCompiler(ClipSpace.WebGpu)
@@ -60,71 +115,21 @@ class SceneExtractionAllocationProbeTest {
 
         // Warm up the pools and collections
         repeat(WARMUP_FRAMES) {
-            val draws = collector.collectBeforeParticles(world, culling, elapsedTimeSeconds = 0f)
-            collector.collectAfterParticles(world, culling, camera)
-            assertEquals(ENTITY_COUNT, draws.size, "All entities must be extracted")
+            val before = collector.collectBeforeParticles(world, culling, elapsedTimeSeconds = 0f)
+            val after = collector.collectAfterParticles(world, culling, camera)
+            assertEquals(ENTITY_COUNT, before.size + after.size, "$label: every entity must be extracted")
         }
 
-        // Measure steady state allocation
-        val before = allocated()
+        val start = allocated()
         repeat(MEASURED_FRAMES) {
             collector.collectBeforeParticles(world, culling, elapsedTimeSeconds = 0f)
             collector.collectAfterParticles(world, culling, camera)
         }
-        val after = allocated()
-
-        val allocatedBytesPerFrame = (after - before) / MEASURED_FRAMES
+        val allocatedBytesPerFrame = (allocated() - start) / MEASURED_FRAMES
         assertEquals(
             0L,
             allocatedBytesPerFrame,
-            "Extraction must allocate 0 bytes per frame in steady state, but allocated $allocatedBytesPerFrame bytes/frame",
-        )
-    }
-
-    @Test
-    fun extractingVisibleEntitiesWithoutMeshBoundsAllocatesZeroBytesInSteadyState() {
-        val world = World()
-        val camera = Camera(
-            Lens(
-                eye = Vec3f(0f, 0f, 500f),
-                center = Vec3f.ZERO,
-                fovYRadians = 1f,
-                near = 0.1f,
-                far = 1000f,
-            ),
-        )
-        val mesh = fakeMesh()
-        val material = fakeMaterial()
-
-        repeat(ENTITY_COUNT) { i ->
-            val entity = world.create()
-            world.add(entity, Transform(position = Vec3f(0f, 0f, (i % 100).toFloat())))
-            world.add(entity, MeshRenderer(mesh, material))
-        }
-
-        val cullingCompiler = SceneCullingCompiler(ClipSpace.WebGpu)
-        val culling = cullingCompiler.prepare(world, camera)
-        val collector = SceneDrawCollector(cullingCompiler)
-
-        // Warm up
-        repeat(WARMUP_FRAMES) {
-            val draws = collector.collectBeforeParticles(world, culling, elapsedTimeSeconds = 0f)
-            collector.collectAfterParticles(world, culling, camera)
-            assertEquals(ENTITY_COUNT, draws.size)
-        }
-
-        val before = allocated()
-        repeat(MEASURED_FRAMES) {
-            collector.collectBeforeParticles(world, culling, elapsedTimeSeconds = 0f)
-            collector.collectAfterParticles(world, culling, camera)
-        }
-        val after = allocated()
-
-        val allocatedBytesPerFrame = (after - before) / MEASURED_FRAMES
-        assertEquals(
-            0L,
-            allocatedBytesPerFrame,
-            "Extraction without MeshBounds must allocate 0 bytes per frame in steady state, but allocated $allocatedBytesPerFrame bytes/frame",
+            "$label must allocate 0 bytes per frame in steady state, but allocated $allocatedBytesPerFrame bytes/frame",
         )
     }
 
@@ -146,5 +151,6 @@ class SceneExtractionAllocationProbeTest {
         const val ENTITY_COUNT = 1000
         const val WARMUP_FRAMES = 100
         const val MEASURED_FRAMES = 200
+        val UNIT_BOX = Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))
     }
 }
