@@ -1,9 +1,11 @@
 public final class com/awakekt/awake/kit/terrainlayers/TerrainControlMap {
 	public static final field Companion Lcom/awakekt/awake/kit/terrainlayers/TerrainControlMap$Companion;
-	public fun <init> (II[B[B)V
+	public fun <init> (II[B[BI)V
+	public synthetic fun <init> (II[B[BIILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun copyIndices ()[B
 	public final fun copyWeights ()[B
 	public final fun getDepth ()I
+	public final fun getSlots ()I
 	public final fun getWidth ()I
 	public final fun highestLayer ()I
 	public final fun indicesTexture ()Lcom/awakekt/awake/render/texture/TextureAsset;
@@ -24,6 +26,7 @@ public final class com/awakekt/awake/kit/terrainlayers/TerrainControlMapCodec {
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainControlMapKt {
 	public static final field CONTROL_SLOTS I
+	public static final field MAX_CONTROL_SLOTS I
 }
 
 public final class com/awakekt/awake/kit/terrainlayers/TerrainControlReduction {

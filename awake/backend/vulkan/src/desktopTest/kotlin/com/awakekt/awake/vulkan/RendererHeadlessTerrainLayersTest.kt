@@ -25,6 +25,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -51,6 +52,32 @@ class RendererHeadlessTerrainLayersTest {
         assertTrue(row.first() < LOW_SHARE && row.last() > HIGH_SHARE, "The row never crosses from red to green: $row")
         row.zipWithNext().forEach { (left, right) ->
             assertTrue(right >= left - STEP_TOLERANCE, "Green's share falls from $left to $right across the split: $row")
+        }
+    }
+
+    /** Six equal layers at every texel, four red and two blue: blue keeps its third. */
+    @Test
+    fun aTexelKeepsSixLayers() {
+        val share = render(sixLayers { _, _ -> true }, layers = FOUR_RED_TWO_BLUE).middleRowShare(BLUE_CHANNEL)
+
+        assertTrue(share.all { it in 0.28f..0.39f }, "Blue's share should be about 1/3 everywhere: $share")
+    }
+
+    /**
+     * Four red layers on the left texels and two blue on the right put six layers in the pixels
+     * between them, though no texel holds more than four. Blended linearly, they cross exactly as
+     * one red and one blue layer split the same way.
+     */
+    @Test
+    fun sixLayersMeetingBetweenTexelsBlendLikeTwo() {
+        val six = render(sixLayers { layer, x -> (x < SAMPLES / 2) == (layer < 4) }, layers = FOUR_RED_TWO_BLUE, sharpness = 0f)
+            .middleRowShare(BLUE_CHANNEL)
+        val two = render(split(), layers = listOf(solid(255, 0, 0), solid(0, 0, 255)), sharpness = 0f).middleRowShare(BLUE_CHANNEL)
+
+        assertTrue(two.first() < LOW_SHARE && two.last() > HIGH_SHARE, "The two-layer row never crosses from red to blue: $two")
+        assertEquals(two.size, six.size)
+        six.zip(two).forEach { (mine, reference) ->
+            assertTrue(abs(mine - reference) <= STEP_TOLERANCE, "Six layers $six\ndiffer from two $two")
         }
     }
 
@@ -133,12 +160,20 @@ class RendererHeadlessTerrainLayersTest {
         if ((x < SAMPLES / 2) == (layer == RED)) 1f else 0f
     }.controlMap
 
+    private fun sixLayers(covers: (layer: Int, x: Int) -> Boolean) =
+        TerrainControlMap.reduce(SAMPLES, SAMPLES, layerCount = 6) { layer, x, _ -> if (covers(layer, x)) 1f else 0f }.controlMap
+
     private fun render(
         control: TerrainControlMap,
         lightmap: TerrainLightmap = TerrainLightmap.Neutral,
         view: RenderDebugView = RenderDebugView.Off,
+        layers: List<TextureAsset> = listOf(solid(255, 0, 0), solid(0, 255, 0)),
+        sharpness: Float = TerrainLayer(id = "", albedo = "").blendSharpness,
     ): Frame {
-        val surface = terrainLayersSurface(PALETTE, packLayerArray(listOf(solid(255, 0, 0), solid(0, 255, 0))), control, lightmap)
+        val palette = TerrainLayerPalette(
+            layers = layers.indices.map { TerrainLayer(id = "layer$it", albedo = "layer$it.png", blendSharpness = sharpness) },
+        )
+        val surface = terrainLayersSurface(palette, packLayerArray(layers), control, lightmap)
         val attached = runBlocking {
             shared().attacher.attachContentFeature(
                 terrainContentFeature(surface.shaders, FLAT, CONFIG, surfaceTextures = surface.textures),
@@ -178,10 +213,13 @@ class RendererHeadlessTerrainLayersTest {
 
         fun rightIsGreen() = mean(size * 3 / 5, size).let { (r, g) -> g > DOMINANCE * r && g > MIN_CHANNEL }
 
-        fun middleRowGreenShare(): List<Float> {
+        fun middleRowGreenShare(): List<Float> = middleRowShare(1)
+
+        /** [channel]'s share of red plus [channel] across the most-covered row. */
+        fun middleRowShare(channel: Int): List<Float> {
             val y = (0 until size).maxBy { row -> (0 until size).count { covered(it, row) } }
             return (0 until size).filter { covered(it, y) }.map { x ->
-                channel(x, y, 1).toFloat() / (channel(x, y, 0) + channel(x, y, 1)).coerceAtLeast(1)
+                channel(x, y, channel).toFloat() / (channel(x, y, 0) + channel(x, y, channel)).coerceAtLeast(1)
             }
         }
 
@@ -232,6 +270,7 @@ class RendererHeadlessTerrainLayersTest {
         const val LOW_SHARE = 0.2f
         const val HIGH_SHARE = 0.8f
         const val STEP_TOLERANCE = 0.02f
+        const val BLUE_CHANNEL = 2
         const val HALF_LIGHT: Byte = 64
         const val NEUTRAL_LIGHT: Byte = -128
 
@@ -239,18 +278,13 @@ class RendererHeadlessTerrainLayersTest {
         val FLAT = Heightmap(FloatArray(SAMPLES * SAMPLES), SAMPLES, SAMPLES, Vec3f(1f, 1f, 1f))
         val LENS = Lens(eye = Vec3f(0f, 10f, 9f), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 100f)
 
-        val PALETTE = TerrainLayerPalette(
-            layers = listOf(
-                TerrainLayer(id = "red", albedo = "red.png"),
-                TerrainLayer(id = "green", albedo = "green.png"),
-            ),
-        )
-
         fun solid(r: Int, g: Int, b: Int) = TextureAsset(
             ByteArray(2 * 2 * 4) { index -> byteArrayOf(r.toByte(), g.toByte(), b.toByte(), -1)[index % 4] },
             2,
             2,
         )
+
+        val FOUR_RED_TWO_BLUE = List(4) { solid(255, 0, 0) } + List(2) { solid(0, 0, 255) }
 
         private var fixture: HeadlessContentAttachFixture? = null
 

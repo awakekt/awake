@@ -88,7 +88,12 @@ private const val CONTROL_TAPS = 4
  * The engine's shadows darken both lighting paths: the sun's direct share, and the bake down to
  * the ambient floor, since a bake cannot know what stands on the terrain now.
  */
-fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain_layers") {
+fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = terrainLayersShader(clipSpace, CONTROL_SLOTS)
+
+/** [terrainLayersShader] merging into [slots] layers, about twice the per-pixel cost at [MAX_CONTROL_SLOTS]. */
+internal fun terrainLayersShader(clipSpace: ClipSpace, slots: Int): AslShaderDefinition = shader(
+    if (slots == CONTROL_SLOTS) "terrain_layers" else "terrain_layers_$slots",
+) {
     val terrain = terrainClipmapVertexStage()
     val shadows = terrainShadowSampling(terrain, clipSpace)
     val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
@@ -102,8 +107,8 @@ fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = shader("ter
 
     fragment {
         terrainClipmapDiscardUnderFinerRing(terrain)
-        val slots = mergeControlTaps(terrain.worldPosition, terrain.terrainSampling, controlIndices, controlWeights, layerSampler)
-        val albedo = blendLayers(slots, terrain.worldPosition, albedoLayers, layerParams, layerSampler)
+        val merged = mergeControlTaps(slots, terrain.worldPosition, terrain.terrainSampling, controlIndices, controlWeights, layerSampler)
+        val albedo = blendLayers(merged, terrain.worldPosition, albedoLayers, layerParams, layerSampler)
         val normal = let("normal", normalize(terrain.worldNormal))
         val toLight = let("toLight", normalize(terrain.sunDirection.xyz))
         val ambient = let("ambient", terrain.sunDirection.w)
@@ -124,8 +129,8 @@ fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = shader("ter
             albedo = albedo,
             shadow = shadow,
             shadowCascade = shadows.shadowCascade(position),
-            layerWeights = layerWeightColor(slots),
-            dominantLayer = dominantLayerColor(slots),
+            layerWeights = layerWeightColor(merged),
+            dominantLayer = dominantLayerColor(merged),
             lightmap = baked.xyz,
         )
         val lit = let("lit", albedo * baked.xyz * 2f.lit * light)
@@ -151,22 +156,32 @@ private fun dominantLayerColor(slots: List<Slot>): AslExpr {
     return debugLayerColor(max(layer, 0f.lit))
 }
 
-/** [terrainLayersShader] for both backends. */
-val TerrainLayersShaders = aslShaderSet(::terrainLayersShader)
+/** [terrainLayersShader] for both backends, for control maps of [CONTROL_SLOTS]. */
+val TerrainLayersShaders = aslShaderSet { terrainLayersShader(it, CONTROL_SLOTS) }
+
+/** [terrainLayersShader] for both backends, for control maps of [MAX_CONTROL_SLOTS]. */
+internal val WideTerrainLayersShaders = aslShaderSet { terrainLayersShader(it, MAX_CONTROL_SLOTS) }
 
 /** A merge slot: a palette index (or [NO_LAYER]) and its accumulated weight, both mutable. */
 private class Slot(val layer: AslExpr, val weight: AslExpr)
 
-/** The four control texels around this pixel, merged into [CONTROL_SLOTS] slots. */
+/**
+ * The four control texels around this pixel, merged into [slots] slots. A control texel is
+ * `slots / 4` RGBA texels side by side.
+ */
+@Suppress("LongParameterList")
 private fun AslBlockBuilder.mergeControlTaps(
+    slots: Int,
     position: AslExpr,
     sampling: AslExpr,
     indices: AslExpr,
     weights: AslExpr,
     sampler: AslExpr,
 ): List<Slot> {
+    val texelsPerControl = slots / CONTROL_SLOTS
     val size = let("controlSize", textureDimensions(indices))
-    val sizeX = let("controlWidth", toF32(size.x))
+    val textureWidth = let("controlTextureWidth", toF32(size.x))
+    val sizeX = let("controlWidth", textureWidth / texelsPerControl.toFloat().lit)
     val sizeZ = let("controlDepth", toF32(size.y))
     // Control texels align with heightmap samples, whose UV the vertex stage centres the same way.
     val texelX = let("texelX", (position.x / sampling.x + 0.5f.lit) * sizeX - 0.5f.lit)
@@ -175,7 +190,7 @@ private fun AslBlockBuilder.mergeControlTaps(
     val baseZ = let("baseZ", floor(texelZ))
     val fractionX = let("fractionX", texelX - baseX)
     val fractionZ = let("fractionZ", texelZ - baseZ)
-    val slots = List(CONTROL_SLOTS) { Slot(variable("slotLayer$it", NO_LAYER.lit), variable("slotWeight$it", 0f.lit)) }
+    val merged = List(slots) { Slot(variable("slotLayer$it", NO_LAYER.lit), variable("slotWeight$it", 0f.lit)) }
     for (tap in 0 until CONTROL_TAPS) {
         val offsetX = tap % 2
         val offsetZ = tap / 2
@@ -183,18 +198,22 @@ private fun AslBlockBuilder.mergeControlTaps(
             "tap${tap}Weight",
             (if (offsetX == 0) 1f.lit - fractionX else fractionX) * (if (offsetZ == 0) 1f.lit - fractionZ else fractionZ),
         )
-        val u = let("tap${tap}U", (clamp(baseX + offsetX.toFloat().lit, 0f.lit, sizeX - 1f.lit) + 0.5f.lit) / sizeX)
+        val column = let("tap${tap}Column", clamp(baseX + offsetX.toFloat().lit, 0f.lit, sizeX - 1f.lit) * texelsPerControl.toFloat().lit)
         val v = let("tap${tap}V", (clamp(baseZ + offsetZ.toFloat().lit, 0f.lit, sizeZ - 1f.lit) + 0.5f.lit) / sizeZ)
-        val layers = let("tap${tap}Layers", textureSampleLevel(indices, sampler, vec2(u, v), 0f.lit))
-        val shares = let("tap${tap}Shares", textureSampleLevel(weights, sampler, vec2(u, v), 0f.lit))
-        listOf(layers.x to shares.x, layers.y to shares.y, layers.z to shares.z, layers.w to shares.w)
-            .forEachIndexed { channel, (layerChannel, shareChannel) ->
-                val layer = let("tap${tap}Layer$channel", floor(layerChannel * 255f.lit + 0.5f.lit))
-                val share = let("tap${tap}Share$channel", shareChannel * tapWeight)
-                mergeIntoSlots("tap${tap}Merge$channel", layer, share, slots)
-            }
+        for (part in 0 until texelsPerControl) {
+            val u = let("tap${tap}U$part", (column + (part + 0.5f).lit) / textureWidth)
+            val layers = let("tap${tap}Layers$part", textureSampleLevel(indices, sampler, vec2(u, v), 0f.lit))
+            val shares = let("tap${tap}Shares$part", textureSampleLevel(weights, sampler, vec2(u, v), 0f.lit))
+            listOf(layers.x to shares.x, layers.y to shares.y, layers.z to shares.z, layers.w to shares.w)
+                .forEachIndexed { channel, (layerChannel, shareChannel) ->
+                    val slot = part * CONTROL_SLOTS + channel
+                    val layer = let("tap${tap}Layer$slot", floor(layerChannel * 255f.lit + 0.5f.lit))
+                    val share = let("tap${tap}Share$slot", shareChannel * tapWeight)
+                    mergeIntoSlots("tap${tap}Merge$slot", layer, share, merged)
+                }
+        }
     }
-    return slots
+    return merged
 }
 
 /** Adds [share] of [layer] to its slot, else an empty one, else replaces the weakest if stronger. */
