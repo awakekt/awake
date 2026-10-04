@@ -1,1 +1,0 @@
-- **Particles cast shadows on WebGPU where a render plan opts them in.** A particle draw reported no uniform buffer, so the WebGPU shadow pass skipped it; it now reports its per-draw slot, as plain instanced draws do. The headless scene renderers on both backends now build the particle shadow-depth pipeline, so the parity suite covers it.

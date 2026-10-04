@@ -1,1 +1,0 @@
-- **Editor plugins can add viewport tools, edit-time scene systems and component inspectors.** `:awake:editor:contract` adds `ViewportToolProvider`, `SceneSystemsProvider` and `ComponentInspectorProvider`, plus the host-implemented `EditHistory`, `EditCommand`, `SceneSelection` and `InspectorFieldScope`, so these hooks no longer need a host's own editor library. Decision D36.
