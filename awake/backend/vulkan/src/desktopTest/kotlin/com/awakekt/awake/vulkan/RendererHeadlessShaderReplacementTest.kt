@@ -86,6 +86,62 @@ class RendererHeadlessShaderReplacementTest {
         assertEquals(RED to BLUE, fixture.squares())
     }
 
+    @Test
+    fun preparingChangesNothingAndSwappingInRedrawsThePipelines() = withRedAndBlue { fixture ->
+        val replacement = replacement(fixture)
+
+        val prepared = runBlocking { replacement.prepare(GREEN_SHADER.program()) }
+        assertEquals(GREEN_SHADER.program(), prepared.program)
+        assertEquals(RED to BLUE, fixture.squares(), "a prepared program is not drawn until it is swapped in")
+
+        fixture.drawInFlight()
+        assertEquals(1, replacement.swapIn(RED_SHADER.program(), prepared))
+        assertEquals(GREEN to BLUE, fixture.squares(), "swapping in redraws only the pipeline running the old shaders")
+    }
+
+    @Test
+    fun framesKeepDrawingBetweenPrepareAndSwapIn() = withRedAndBlue { fixture ->
+        val replacement = replacement(fixture)
+        val prepared = runBlocking { replacement.prepare(GREEN_SHADER.program()) }
+
+        repeat(FRAMES * 3) { fixture.drawInFlight() }
+        assertEquals(RED to BLUE, fixture.squares(), "frames drawn while a program waits keep the old shaders")
+
+        assertEquals(1, replacement.swapIn(RED_SHADER.program(), prepared))
+        assertEquals(GREEN to BLUE, fixture.squares())
+    }
+
+    @Test
+    fun shadersThatDoNotCompileAreRefusedAtPrepareAndNothingChanges() = withRedAndBlue { fixture ->
+        val broken = ShaderProgram(
+            ShaderSource.InlineText("fn broken( {", "vertexMain"),
+            ShaderSource.InlineText("fn broken( {", "fragmentMain"),
+            RED_SHADER.program().bindingsByGroup,
+        )
+
+        assertFailsWith<ShaderReplacementException> { runBlocking { replacement(fixture).prepare(broken) } }
+        assertEquals(RED to BLUE, fixture.squares())
+    }
+
+    @Test
+    fun aProgramThatBindsDifferentlyIsRefusedAtSwapInNotAtPrepare() = withRedAndBlue { fixture ->
+        val replacement = replacement(fixture)
+        val prepared = runBlocking { replacement.prepare(EXTRA_BINDING_SHADER.program()) }
+
+        assertFailsWith<ShaderReplacementException> { replacement.swapIn(RED_SHADER.program(), prepared) }
+        assertEquals(RED to BLUE, fixture.squares(), "a refused swap-in changes nothing")
+    }
+
+    @Test
+    fun aProgramPreparedByAnotherReplacementIsRefused() = withRedAndBlue { fixture ->
+        val foreign = object : com.awakekt.awake.render.pipeline.PreparedShaderProgram {
+            override val program = GREEN_SHADER.program()
+        }
+
+        assertFailsWith<ShaderReplacementException> { replacement(fixture).swapIn(RED_SHADER.program(), foreign) }
+        assertEquals(RED to BLUE, fixture.squares())
+    }
+
     private fun replacement(fixture: HeadlessContentAttachFixture): ShaderReplacement =
         checkNotNull(fixture.renderer.capability(ShaderReplacement))
 
@@ -166,8 +222,7 @@ class RendererHeadlessShaderReplacementTest {
             ) { pipeline, uniforms, _ -> SquareFeature(pipeline, uniforms) }
         }
 
-        private class SquareFeature(private val pipeline: PipelineHandle, private val uniforms: UniformBlock) :
-            RenderFeature<RenderFrameContext> {
+        private class SquareFeature(private val pipeline: PipelineHandle, private val uniforms: UniformBlock) : RenderFeature<RenderFrameContext> {
             override val pass = RenderPassSlot.Scene
 
             override fun recordCommands(context: RenderFrameContext) {

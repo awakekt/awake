@@ -14,9 +14,9 @@ import com.awakekt.awake.asset.shaders.ShaderSet
 import com.awakekt.awake.asset.shaders.ShaderStage
 import com.awakekt.awake.asset.shaders.buildContentFeature
 import com.awakekt.awake.asset.shaders.castsWithPrimaryDepthShader
+import com.awakekt.awake.asset.shaders.entryPoint
 import com.awakekt.awake.asset.shaders.keyedCasterLayout
 import com.awakekt.awake.asset.shaders.skinnedDepthShaders
-import com.awakekt.awake.asset.shaders.entryPoint
 import com.awakekt.awake.asset.shaders.spec
 import com.awakekt.awake.asset.shaders.uiShaderSet
 import com.awakekt.awake.asset.shaders.withPipelineLoadContext
@@ -58,8 +58,8 @@ import com.awakekt.awake.vulkan.pipeline.UiShaderPairs
 import com.awakekt.awake.vulkan.pipeline.VulkanLinePass
 import com.awakekt.awake.vulkan.pipeline.VulkanPipelineFactory
 import com.awakekt.awake.vulkan.pipeline.VulkanRenderFrameContext
-import com.awakekt.awake.vulkan.pipeline.VulkanShaderResolver
 import com.awakekt.awake.vulkan.pipeline.VulkanShaderReplacement
+import com.awakekt.awake.vulkan.pipeline.VulkanShaderResolver
 import com.awakekt.awake.vulkan.pipeline.VulkanUiPass
 import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.pipeline.requireSpirV
@@ -144,6 +144,12 @@ open class VulkanEngine(
         DescriptorSetLayoutHandle(0)
 
     private val shaderResolver = VulkanShaderResolver()
+
+    /**
+     * What [VulkanShaderReplacement] compiles through. A replacement compiles off the render thread, and
+     * [shaderResolver]'s compiled-shader cache is not thread-safe, so the two must not share one.
+     */
+    private val replacementResolver = VulkanShaderResolver()
 
     /**
      * Every pipeline of one companion kind, keyed by vertex format.
@@ -452,7 +458,6 @@ open class VulkanEngine(
         }
     }
 
-
     /**
      * The descriptor set layouts each pipeline family gets past set 0, densely by slot.
      *
@@ -669,7 +674,7 @@ open class VulkanEngine(
             ).also { renderer ->
                 renderer.contentFeatureHost = contentAttacher
                 renderer.shaderReplacement = VulkanShaderReplacement(graphicsDevice, pipelineRegistry) { vertex, fragment ->
-                    loadShaderPair(shaderResolver, vertex, fragment)
+                    loadShaderPair(replacementResolver, vertex, fragment)
                 }
                 bindDepthPlaceholder(renderer)
             }
