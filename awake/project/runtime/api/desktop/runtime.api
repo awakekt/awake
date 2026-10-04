@@ -22,10 +22,13 @@ public final class com/awakekt/awake/project/runtime/PlayableProject {
 public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static final field PROJECT_MANIFEST Ljava/lang/String;
 	public static final fun activatePrimaryCamera (Lcom/awakekt/awake/ecs/World;)V
+	public static final fun installPlayableComponents ()V
 	public static final fun loadPlayableProject (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun loadPlayableProject$default (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun playProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/PlayableProject;Z)V
 	public static synthetic fun playProject$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/PlayableProject;ZILjava/lang/Object;)V
+	public static final fun playSystems (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;)V
+	public static synthetic fun playSystems$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;ILjava/lang/Object;)V
 }
 
 public final class com/awakekt/awake/project/runtime/TerrainColliderSystem : com/awakekt/awake/ecs/System {

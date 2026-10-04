@@ -68,12 +68,7 @@ class PlayableProject internal constructor(
     internal val models: GltfAssetResolver,
     internal val physics: PhysicsWorld?,
     internal val particleSprites: Map<String, TextureAsset> = emptyMap(),
-) {
-    internal fun has(type: KClass<out SceneComponent>): Boolean =
-        scene.nodes.any { it.has(type) }
-
-    internal fun hasCanvasActions(): Boolean = scene.nodes.any { it.hasCanvasAction() }
-}
+)
 
 /**
  * Reads [PROJECT_MANIFEST] and its entry scene from [files], a project root, loads the glTF models
@@ -93,8 +88,7 @@ suspend fun loadPlayableProject(
     val issues = AwakeProjectValidator.manifestIssues(manifest)
     require(issues.isEmpty()) { "$PROJECT_MANIFEST is invalid: ${issues.joinToString("; ")}" }
 
-    DefaultSceneComponentResolvers.install()
-    PROJECT_COMPONENTS.forEach(SceneComponentRegistry::registerGlobal)
+    installPlayableComponents()
     val scene = SceneLoader.decode(files.readText(manifest.entryScene)).withPrefabs { files.readText(it) }
 
     val models = GltfAssetResolver().apply { setAssetSource(files) }
@@ -115,19 +109,21 @@ suspend fun loadPlayableProject(
 }
 
 /**
- * Plays [project] in this scene, running only what its components call for:
- * - `movement_control`: keyboard intent, moved by physics when the entity has a
- *   `character_controller` and straight through the world when it doesn't
- * - `physics_body` and `character_controller`: the physics step and the character controller
- * - `camera_rig`: the camera system
- * - `spinControl` and skinned glTF models: spinning and animation
- * - `keyframe_animation`: its looping tracks
- * - `particle_emitter`: its emitters, with the sprites [loadPlayableProject] read
- *
- * - `canvas_element`s with an action: [CanvasActionSystem]
- *
- * With [touchControls], the scene's touch-only canvas controls are shown. Every speed, distance and
- * size comes from the scene; this adds no tuning of its own.
+ * Installs the scene components a played scene can use: Core's defaults, and the controls, physics
+ * and character ones, into the process-wide registry. [loadPlayableProject] does this before it
+ * decodes a scene; a host that decodes its own scene to hand to [playSystems] calls it first.
+ * Installing twice is harmless.
+ */
+fun installPlayableComponents() {
+    DefaultSceneComponentResolvers.install()
+    PROJECT_COMPONENTS.forEach(SceneComponentRegistry::registerGlobal)
+}
+
+/**
+ * Plays [project] in this scene: its [PlayableProject.scene], the built-in meshes and the models it
+ * loaded, the systems its components call for (see [playSystems], which this calls), and a primary
+ * camera. With [touchControls], the scene's touch-only canvas controls are shown. Every speed,
+ * distance and size comes from the scene; this adds no tuning of its own.
  */
 fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = false) {
     scene(project.scene)
@@ -135,24 +131,52 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
         builtInSceneAssets()
         resolver(project.models)
     }
-    val moves = project.has(SceneMovementControl::class)
-    val characters = project.has(SceneCharacterController::class)
-    if (moves) playerInputSystem()
-    if (moves && project.hasCanvasActions()) frameSystem("canvas-actions") { CanvasActionSystem() }
-    project.physics?.let { physicsWorld ->
-        if (project.scene.nodes.any { it.hasTerrainCollider() }) fixedSystem("terrain-collider") { TerrainColliderSystem() }
-        fixedSystem("physics") { PhysicsSystem(physicsWorld) }
-        if (characters) fixedSystem("character") { CharacterControllerSystem(physicsWorld) }
-    }
-    if (moves && !characters) matrixRelativeMovementSystem()
-    if (project.has(SceneCameraRig::class)) cameraSystem()
-    motionSystems(project)
-    frameSystem("animation") { AnimationSystem() }
+    playSystems(project.scene, project.physics, project.particleSprites)
     onReady {
         showTouchControls = touchControls
         activatePrimaryCamera(world)
         startSkinnedAnimations(project.models)
     }
+}
+
+/**
+ * Registers the systems [scene]'s components call for, and none it doesn't, so a host that plays a
+ * scene in a world of its own, as an editor's Play does, runs the same set as [playProject] and
+ * gains a system when Core does, with no list of its own to keep in step:
+ * - `movement_control`: keyboard intent, moved by physics when the entity has a
+ *   `character_controller` and straight through the world when it doesn't
+ * - `physics_body`, `character_controller` and a `terrain` collider: the physics step, the
+ *   character controller and the terrain collider, when [physics] is given
+ * - `camera_rig`: the camera system
+ * - `spinControl`: spinning
+ * - `locomotion_animation` and `keyframe_animation`: their clips and looping tracks
+ * - `particle_emitter`: its emitters, with the sprites [loadParticleSprites] read into [particleSprites]
+ * - `canvas_element`s with an action: [CanvasActionSystem]
+ * - skinned glTF animation, always
+ *
+ * It only registers systems. The scene itself, its assets, the primary camera and the skinned
+ * models' animators stay with the host, as [playProject] does them. A scene that needs physics
+ * with no [physics] world runs without those systems, so a host passes the world its scene needs
+ * (see [loadPlayableProject] for how a project decides that).
+ */
+fun SceneAppDsl.playSystems(
+    scene: SceneDocument,
+    physics: PhysicsWorld? = null,
+    particleSprites: Map<String, TextureAsset> = emptyMap(),
+) {
+    val moves = scene.has(SceneMovementControl::class)
+    val characters = scene.has(SceneCharacterController::class)
+    if (moves) playerInputSystem()
+    if (moves && scene.hasCanvasActions()) frameSystem("canvas-actions") { CanvasActionSystem() }
+    physics?.let { physicsWorld ->
+        if (scene.nodes.any { it.hasTerrainCollider() }) fixedSystem("terrain-collider") { TerrainColliderSystem() }
+        fixedSystem("physics") { PhysicsSystem(physicsWorld) }
+        if (characters) fixedSystem("character") { CharacterControllerSystem(physicsWorld) }
+    }
+    if (moves && !characters) matrixRelativeMovementSystem()
+    if (scene.has(SceneCameraRig::class)) cameraSystem()
+    motionSystems(scene, particleSprites)
+    frameSystem("animation") { AnimationSystem() }
 }
 
 /**
@@ -208,6 +232,10 @@ private fun SceneNode.hasTerrainCollider(): Boolean =
 
 private fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
     components.any { type.isInstance(it) } || children.any { it.has(type) }
+
+internal fun SceneDocument.has(type: KClass<out SceneComponent>): Boolean = nodes.any { it.has(type) }
+
+internal fun SceneDocument.hasCanvasActions(): Boolean = nodes.any { it.hasCanvasAction() }
 
 private fun SceneNode.hasCanvasAction(): Boolean =
     components.any { it is SceneCanvasElement && it.action.isNotEmpty() } || children.any { it.hasCanvasAction() }

@@ -30,3 +30,20 @@ the `lit-shadow` material; anything else a scene draws is a project asset.
 
 `playProject(project, touchControls = true)` shows the scene's `touchOnly` canvas elements; a host on a
 touch screen passes it. The scene decides where the controls sit and how big they are.
+
+## Playing a scene in a world of your own
+
+An editor that plays the scene it is editing, in an isolated world, wants the same systems without
+a project on disk. `playSystems(scene, physics, particleSprites)` registers exactly the systems in the
+table above for a `SceneDocument`, and `playProject` calls it, so the two never drift apart: a
+component that gains a system gains it in both.
+
+```kotlin
+installPlayableComponents()   // the controls, physics and character components, before decoding
+val scene = SceneLoader.decode(json)
+app { scene("play") { scene(scene); playSystems(scene, physicsWorld) } }
+```
+
+`playSystems` only registers systems. The host places the scene, resolves its assets and picks the
+camera; pass the physics world the scene needs (`physics_body`, `character_controller` or a terrain
+collider), or those systems are left out.
