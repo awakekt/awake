@@ -90,6 +90,17 @@ internal class Particle : Poolable {
  * and sampled at [turbulenceFrequency] -- see [com.awakekt.awake.scene.rendering
  * .systems.turbulenceOffset]. `0f` (default) is a no-op. Known limit: a cheap sine-based flow
  * field, not true Perlin/simplex/curl noise.
+ *
+ * [acceleration] is a constant world-space acceleration, in units per second squared, added to
+ * every live particle's velocity each step: `Vec3f(0f, -9.8f, 0f)` is gravity. The zero default
+ * is a no-op. A settled particle (see [ParticleGround]) no longer moves, so it ignores it.
+ *
+ * [inheritOrientation] `true` turns the spawn ring and [baseVelocity] (so also a cone's axis and
+ * [velocityJitter]'s axes) by the rotation of the emitter entity's `Transform`, so an emitter
+ * turned to face a direction fires that way. Scale is ignored. [acceleration], [radialSpeed] and
+ * [convergeToOrigin] stay world-space, because gravity and "away from or toward the origin"
+ * mean the same thing however the emitter is turned. `false` (default) keeps every vector in
+ * world axes, and an emitter entity without a `Transform` has no rotation to inherit.
  */
 data class ParticleMotion(
     val baseVelocity: Vec3f = Vec3f(0f, 1f, 0f),
@@ -100,6 +111,8 @@ data class ParticleMotion(
     val turbulence: Float = 0f,
     val turbulenceFrequency: Float = 1f,
     val radialSpeed: Float = 0f,
+    val acceleration: Vec3f = Vec3f(0f, 0f, 0f),
+    val inheritOrientation: Boolean = false,
 )
 
 /** How a particle looks over its life. [startColor]/[endColor] linearly interpolate per
@@ -123,7 +136,9 @@ data class ParticleMotion(
  * over its life; `null` (default) keeps `scale`. [additive] adds each particle's colour to what is
  * behind it instead of blending over it, for glows and sparks; it needs the plan's particle
  * pipeline built with `buildAdditive`, and draws blended without it. [facing] turns each quad to the
- * camera (the default) or lays it flat; see [ParticleFacing]. */
+ * camera (the default) or lays it flat; see [ParticleFacing]. [alphaCurve] shapes a particle's
+ * opacity over its life; `null` (default) is the plain linear fade from `startAlpha` to 0, see
+ * [ParticleAlphaCurve]. */
 data class ParticleVisual(
     val startColor: Vec3f = Vec3f(1f, 1f, 1f),
     val endColor: Vec3f = startColor,
@@ -134,7 +149,43 @@ data class ParticleVisual(
     val endScale: Float? = null,
     val additive: Boolean = false,
     val facing: ParticleFacing = ParticleFacing.Camera,
+    val alphaCurve: ParticleAlphaCurve? = null,
 )
+
+/**
+ * A particle's opacity over its life as fractions of its [ParticleEmitter.lifetime]: it fades in
+ * from 0 until [fadeInEnd], holds [ParticleEmitter.startAlpha] until [fadeOutStart], then fades
+ * out to 0 at the end of its life. `ParticleAlphaCurve(fadeInEnd = 0.2f, fadeOutStart = 0.7f)` fades
+ * in over the first fifth, holds, and fades out over the last 30%.
+ *
+ * `ParticleAlphaCurve(0f, 0f)` is the plain linear fade every emitter without a curve has.
+ * `fadeOutStart = 1f` holds full opacity to the last instant and then drops to 0. Both fractions
+ * must be in `0..1` with `fadeInEnd <= fadeOutStart`.
+ */
+data class ParticleAlphaCurve(
+    val fadeInEnd: Float = 0f,
+    val fadeOutStart: Float = 0f,
+) {
+    init {
+        require(fadeInEnd in 0f..1f && fadeOutStart in 0f..1f) {
+            "alpha curve fractions must be in 0..1, got fadeInEnd=$fadeInEnd fadeOutStart=$fadeOutStart"
+        }
+        require(fadeInEnd <= fadeOutStart) {
+            "fadeInEnd ($fadeInEnd) must not come after fadeOutStart ($fadeOutStart)"
+        }
+    }
+
+    /** The opacity multiplier, `0..1`, at [lifeFraction] (`0` at spawn, `1` at death). */
+    fun factorAt(lifeFraction: Float): Float {
+        val t = lifeFraction.coerceIn(0f, 1f)
+        return when {
+            t < fadeInEnd -> t / fadeInEnd
+            t < fadeOutStart -> 1f
+            t >= 1f -> 0f
+            else -> (1f - t) / (1f - fadeOutStart)
+        }
+    }
+}
 
 /** Which way a [ParticleEmitter]'s quads face. */
 enum class ParticleFacing {
@@ -189,11 +240,54 @@ const val BOUNCE_STOP_VELOCITY = 0.3f
  * every time a particle dies of old age (not one that's still settled/fading) -- the chained-
  * effect hook for a real sub-emitter tree without composing emitters directly: e.g. a
  * projectile's dying particles each spawn their own impact burst via [spawnParticleBurst].
- * `null` (default) does nothing extra on death. */
+ * `null` (default) does nothing extra on death. [burstCycle], when set, replaces the continuous
+ * [ParticleEmitter.spawnRate] (and [ParticleDynamics.dynamicSpawnRate]) with a pulsing schedule,
+ * see [ParticleBurstCycle]; [burstCount] still caps the total. */
 data class ParticleLifecycle(
     val burstCount: Int? = null,
     val onParticleDeath: ((world: World, position: Vec3f) -> Unit)? = null,
+    val burstCycle: ParticleBurstCycle? = null,
 )
+
+/**
+ * A looping emission schedule: every [cycleSeconds], for the first [activeSeconds], spawn
+ * [burstSize] particles every [burstInterval] seconds, then pause until the cycle repeats. A
+ * burst fires at the start of each interval, so `ParticleBurstCycle(cycleSeconds = 2f, activeSeconds = 1f,
+ * burstInterval = 0.25f, burstSize = 5)` fires 5 particles at 0.00, 0.25, 0.50 and 0.75 seconds of
+ * each 2-second cycle and nothing in the second half. A burst that finds the pool full spawns
+ * only what fits, like any other emission.
+ */
+data class ParticleBurstCycle(
+    val cycleSeconds: Float,
+    val activeSeconds: Float,
+    val burstInterval: Float,
+    val burstSize: Int,
+) {
+    init {
+        require(cycleSeconds > 0f) { "cycleSeconds must be positive, got $cycleSeconds" }
+        require(activeSeconds > 0f && activeSeconds <= cycleSeconds) {
+            "activeSeconds must be in (0, cycleSeconds], got $activeSeconds of $cycleSeconds"
+        }
+        require(burstInterval > 0f) { "burstInterval must be positive, got $burstInterval" }
+        require(burstSize > 0) { "burstSize must be positive, got $burstSize" }
+    }
+
+    private val burstsPerCycle: Int =
+        kotlin.math.ceil(activeSeconds / burstInterval - BURST_BOUNDARY_TOLERANCE).toInt().coerceAtLeast(1)
+
+    /** How many bursts have fired at or before [time] seconds into the emitter's life. */
+    internal fun burstsStartedBy(time: Float): Int {
+        if (time <= 0f) return 0
+        val completeCycles = kotlin.math.floor(time / cycleSeconds).toInt()
+        val phase = time - completeCycles * cycleSeconds
+        val inThisCycle = (kotlin.math.floor(phase / burstInterval).toInt() + 1).coerceAtMost(burstsPerCycle)
+        return completeCycles * burstsPerCycle + inThisCycle
+    }
+}
+
+/** Keeps `activeSeconds / burstInterval` landing exactly on a whole number (1.0 / 0.25) from
+ * rounding up to an extra burst when float division comes out a hair over. */
+private const val BURST_BOUNDARY_TOLERANCE = 1e-4f
 
 /** Live, per-frame-reactive knobs. [followEntity], when set, re-anchors
  * [ParticleEmitter.origin] to that entity's world position every frame: a root entity's own
@@ -286,6 +380,11 @@ class ParticleEmitter(
      * when `burstCount` is `null`. */
     internal var spawnedTotal: Int = 0
 
+    /** How many of [ParticleLifecycle.burstCycle]'s bursts have already been queued -- compared
+     * against `burstsStartedBy(elapsedTime)` each frame so a long frame fires every burst it
+     * spanned, and never one twice. Unused without a `burstCycle`. */
+    internal var burstsFired: Int = 0
+
     /** Seconds this emitter has been alive -- unused directly by [ParticleVisual.frameCount]'s
      * sprite-strip cycling anymore (that's per-particle now, driven by each [Particle]'s own
      * `age`/[Particle.frameOffset]), kept for anything else that wants an emitter-wide clock. */
@@ -363,6 +462,7 @@ class ParticleEmitter(
         dynamics = newDynamics
         spawnAccumulator = 0f
         spawnedTotal = 0
+        burstsFired = 0
         elapsedTime = 0f
         particles.forEach { it.reset() }
     }

@@ -5,7 +5,6 @@
  */
 package com.awakekt.awake.scene.rendering.particles
 
-import com.awakekt.awake.render.passes.uniforms.setParticleInstance
 import com.awakekt.awake.core.math.Frustum
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Plane
@@ -17,6 +16,7 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraFields
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
+import com.awakekt.awake.render.passes.uniforms.setParticleInstance
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.camera.Camera
 import kotlin.math.sqrt
@@ -125,7 +125,7 @@ internal class SceneParticleCompiler {
                 it.x = color.x
                 it.y = color.y
                 it.z = color.z
-                it.w = particle.currentAlpha()
+                it.w = particle.currentAlpha(emitter)
             }
             // Per-PARTICLE desynced sprite-strip frame -- see Particle.currentFrame's own doc
             // comment.

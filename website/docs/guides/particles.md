@@ -130,6 +130,8 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `turbulence` | `0` | Strength of a smooth flow-field wobble. |
 | `turbulenceFrequency` | `1` | How tight that wobble is. |
 | `radialSpeed` | `0` | Adds this speed horizontally away from `origin`, through the spawn point on the `spawnRadius` ring (any direction when the radius is 0). Ignored with `convergeToOrigin`. |
+| `acceleration` | `(0, 0, 0)` | A constant world-space acceleration in units per second squared, added to every live particle's velocity each step. `(0, -9.8, 0)` is gravity. A settled particle ignores it. |
+| `inheritOrientation` | `false` | Turns the spawn ring and `baseVelocity` (so also a cone's axis and the jitter axes) by the emitter entity's `Transform` rotation, so an emitter turned to face a direction fires that way. Scale is ignored. `acceleration`, `radialSpeed` and `convergeToOrigin` stay in world axes. |
 
 `ParticleVisual`:
 
@@ -144,13 +146,21 @@ The plan on [Render plans and shaders](shaders.md) has one.
 | `endScale` | none | Quad size at death, reached linearly from `scale`. None keeps `scale`. |
 | `additive` | `false` | Adds each particle's colour to what is behind it, for glows and sparks. Needs the particle pipeline built with `buildAdditive = true`; without it the particles blend. |
 | `facing` | `Camera` | `ParticleFacing.Flat` lays each quad in the emitter entity's horizontal plane instead of turning it to the camera. |
+| `alphaCurve` | none | A `ParticleAlphaCurve(fadeInEnd, fadeOutStart)`: opacity fades in until `fadeInEnd`, holds `startAlpha` until `fadeOutStart`, then fades out, both as fractions of the lifetime. None is the plain linear fade from `startAlpha` to 0. |
 
 `ParticleGround`: `groundY` (a flat floor), `groundHeightProvider` (a `(x, z) -> height` function,
 used first when set), `colliders` (world-space `Aabb` boxes), `restitution` (0 stops a particle on
 contact; above 0 bounces) and `friction` (1 keeps horizontal speed on a bounce).
 
 `ParticleLifecycle`: `burstCount` stops spawning after that many particles and destroys the entity
-once they have all died; `onParticleDeath(world, position)` runs for each particle that dies of age.
+once they have all died; `onParticleDeath(world, position)` runs for each particle that dies of age;
+`burstCycle` replaces the continuous `spawnRate` with a pulsing schedule.
+
+`ParticleBurstCycle(cycleSeconds, activeSeconds, burstInterval, burstSize)` loops: for the first
+`activeSeconds` of every `cycleSeconds`, `burstSize` particles spawn every `burstInterval` seconds,
+then nothing spawns until the cycle repeats. `ParticleBurstCycle(2f, 1f, 0.25f, 5)` fires 5 particles
+at 0.00, 0.25, 0.50 and 0.75 seconds of each 2-second cycle. A burst into a full pool spawns only what
+fits, and `burstCount` still caps the total.
 
 `ParticleDynamics`: `followEntity` moves `origin` to that entity's world position every frame (a
 child node's from its world matrix as of the last transform pass);

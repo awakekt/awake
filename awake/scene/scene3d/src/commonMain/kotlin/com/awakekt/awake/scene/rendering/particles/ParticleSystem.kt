@@ -23,6 +23,9 @@ import kotlin.random.Random
 private const val DEGREES_TO_RADIANS = kotlin.math.PI.toFloat() / 180f
 private const val FULL_TURN_RADIANS = 2f * kotlin.math.PI.toFloat()
 
+/** Three axes of three floats. See [ParticleSystem]'s `orientation`. */
+private const val ORIENTATION_FLOATS = 9
+
 /**
  * Spawns/advances every [ParticleEmitter]'s particle pool -- kept separate from
  * [RenderSystem3D] (which already does draw-call assembly, culling, and LOD selection) so this
@@ -36,6 +39,11 @@ private const val FULL_TURN_RADIANS = 2f * kotlin.math.PI.toFloat()
  */
 class ParticleSystem : System {
     private val spentEntities = ArrayList<Entity>()
+
+    /** The emitter entity's rotation as three unit columns (x, y, z axes), row-major by axis:
+     * `[x.x, x.y, x.z, y.x, y.y, y.z, z.x, z.y, z.z]`. Loaded once per top-level emitter by
+     * [loadOrientation] and shared with its children; reused so no frame allocates. */
+    private val orientation = FloatArray(ORIENTATION_FLOATS)
 
     override fun update(world: World, delta: Float) {
         spentEntities.clear()
@@ -67,6 +75,7 @@ class ParticleSystem : System {
         delta: Float,
         isTopLevel: Boolean = true,
     ) {
+        if (isTopLevel) loadOrientation(world, entity)
         emitter.elapsedTime += delta
         spawn(emitter, delta)
         advance(world, emitter, delta)
@@ -107,11 +116,20 @@ class ParticleSystem : System {
     private fun spawn(emitter: ParticleEmitter, delta: Float) {
         val burstCount = emitter.lifecycle.burstCount
         if (burstCount != null && emitter.spawnedTotal >= burstCount) return
-        // Context-driven emission: a caller-supplied rate read fresh every frame (player speed,
-        // distance to a target, ...) overrides the static spawnRate when set -- see
-        // ParticleDynamics.dynamicSpawnRate's own doc comment.
-        val spawnRate = emitter.dynamics.dynamicSpawnRate?.invoke() ?: emitter.spawnRate
-        emitter.spawnAccumulator += spawnRate * delta
+        val burstCycle = emitter.lifecycle.burstCycle
+        if (burstCycle != null) {
+            // A pulsing schedule replaces the continuous rate: queue every burst that started
+            // since the last frame, so a long frame still fires each one exactly once.
+            val started = burstCycle.burstsStartedBy(emitter.elapsedTime)
+            emitter.spawnAccumulator += (started - emitter.burstsFired) * burstCycle.burstSize
+            emitter.burstsFired = started
+        } else {
+            // Context-driven emission: a caller-supplied rate read fresh every frame (player
+            // speed, distance to a target, ...) overrides the static spawnRate when set -- see
+            // ParticleDynamics.dynamicSpawnRate's own doc comment.
+            val spawnRate = emitter.dynamics.dynamicSpawnRate?.invoke() ?: emitter.spawnRate
+            emitter.spawnAccumulator += spawnRate * delta
+        }
         // Known limit: clamps the worst case to "refill the whole pool in one frame" rather than
         // true unbounded growth -- a pool that stays completely full for a long stretch would
         // otherwise accumulate an ever-growing backlog that dumps as one mega-burst the moment
@@ -135,6 +153,46 @@ class ParticleSystem : System {
             slot.settled = false
             slot.frameOffset = Random.nextInt(emitter.visual.frameCount.coerceAtLeast(1))
         }
+        // A burst that finds the pool full spawns only what fits: it is not carried over to
+        // refire when a slot frees up, unlike a continuous rate's fractional remainder.
+        if (burstCycle != null) emitter.spawnAccumulator = 0f
+    }
+
+    /** Loads [entity]'s `Transform` rotation into [orientation], as unit axes with scale divided
+     * out; identity when it has no `Transform`. */
+    private fun loadOrientation(world: World, entity: Entity) {
+        val placed = world.get<Transform>(entity)?.worldMatrix
+        if (placed == null) {
+            orientation.fill(0f)
+            orientation[0] = 1f
+            orientation[4] = 1f
+            orientation[8] = 1f
+            return
+        }
+        writeAxis(0, placed.m00, placed.m10, placed.m20)
+        writeAxis(3, placed.m01, placed.m11, placed.m21)
+        writeAxis(6, placed.m02, placed.m12, placed.m22)
+    }
+
+    private fun writeAxis(offset: Int, x: Float, y: Float, z: Float) {
+        val length = sqrt(x * x + y * y + z * z)
+        val unit = if (length > 0f) 1f / length else 0f
+        orientation[offset] = x * unit
+        orientation[offset + 1] = y * unit
+        orientation[offset + 2] = z * unit
+        if (length == 0f) orientation[offset + offset / 3] = 1f
+    }
+
+    /** Turns [this], a vector in the emitter's own axes, into world axes with [orientation]. */
+    private fun Vec3f.turnedByOrientation(): Vec3f {
+        val localX = x
+        val localY = y
+        val localZ = z
+        return set(
+            orientation[0] * localX + orientation[3] * localY + orientation[6] * localZ,
+            orientation[1] * localX + orientation[4] * localY + orientation[7] * localZ,
+            orientation[2] * localX + orientation[5] * localY + orientation[8] * localZ,
+        )
     }
 
     /** [ParticleMotion.spawnRadius] > 0 spawns on a random point around a flat horizontal ring
@@ -145,10 +203,12 @@ class ParticleSystem : System {
         val radius = emitter.motion.spawnRadius
         if (radius <= 0f) return emitter.origin
         val angle = Random.nextFloat() * FULL_TURN_RADIANS
+        val offset = Vec3f(cos(angle) * radius, 0f, sin(angle) * radius)
+        if (emitter.motion.inheritOrientation) offset.turnedByOrientation()
         return Vec3f(
-            emitter.origin.x + cos(angle) * radius,
-            emitter.origin.y,
-            emitter.origin.z + sin(angle) * radius,
+            emitter.origin.x + offset.x,
+            emitter.origin.y + offset.y,
+            emitter.origin.z + offset.z,
         )
     }
 
@@ -174,6 +234,7 @@ class ParticleSystem : System {
                 motion.baseVelocity.z + jitter(motion.velocityJitter),
             )
         }
+        if (motion.inheritOrientation) velocity.turnedByOrientation()
         return if (motion.radialSpeed == 0f) velocity else velocity.pushedOutward(emitter.origin, spawnPosition, motion.radialSpeed)
     }
 
@@ -224,6 +285,10 @@ class ParticleSystem : System {
                 return@forEach
             }
             if (particle.settled) return@forEach
+            val acceleration = emitter.motion.acceleration
+            particle.velocity.x += acceleration.x * delta
+            particle.velocity.y += acceleration.y * delta
+            particle.velocity.z += acceleration.z * delta
             val turbulence = emitter.motion.turbulence
             if (turbulence != 0f) {
                 val flow = turbulenceOffset(
@@ -286,6 +351,14 @@ class ParticleSystem : System {
  * .instanceColors]; not stored on [Particle] itself since it's fully derived from [Particle
  * .age]/`lifetime`/`startAlpha`, not independent state. */
 internal fun Particle.currentAlpha(): Float = startAlpha * (1f - (age / lifetime).coerceIn(0f, 1f))
+
+/** This particle's current opacity under [emitter]'s [ParticleVisual.alphaCurve]: `startAlpha`
+ * times the curve's factor at this particle's age, or the plain linear fade of [currentAlpha]
+ * when the emitter has no curve. */
+internal fun Particle.currentAlpha(emitter: ParticleEmitter): Float {
+    val curve = emitter.visual.alphaCurve ?: return currentAlpha()
+    return startAlpha * curve.factorAt(age / lifetime)
+}
 
 /** This particle's current size: the emitter's `scale` at spawn, moving linearly to
  * [ParticleVisual.endScale] at death when that is set. */
