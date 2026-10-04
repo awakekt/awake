@@ -43,6 +43,15 @@ it stores configuration (`NoProviderConfiguration` is the default).
 | `FloatingCard` | `FloatingCardProvider` | A small card over the viewport, opened from a tool or another card | Where cards dock and their order (`FloatingCardDeck`) |
 | `Keybinding` | `KeybindingProvider` | Keyboard shortcuts for your plugin's actions | The keymap, user rebinding and conflicts |
 | `EntityTemplate` | `EntityTemplateProvider` | An insertable entity that arrives with your scene components | The insert menu and the insertion |
+| `ViewportTool` | `ViewportToolProvider` | A tool that works in the viewport: a brush, a placement tool | Which tool is active, and reserved gestures such as orbiting |
+| `SceneSystems` | `SceneSystemsProvider` | ECS systems that run while editing: snapping, live previews | The edit loop; these never run in play mode |
+| `Component` | `ComponentInspectorProvider` | Inspector fields for one of your component types | How the fields look, and the order of inspector sections |
+
+Scene edits go through the host's undo: run an `EditCommand` with `EditHistory.execute`, or, for a
+drag that writes live values, `record` one command when it ends (`ViewportToolProvider.onPointerUp`).
+`InspectorFieldScope` fields record their own undo steps. Gameplay is runtime code the game registers,
+not a scene system. The scene hooks are decision
+[D36](../../../docs/architecture/decisions/D36-scene-bound-editor-hooks.md).
 
 Asset import is not a provider kind: implement `AssetConverterPlugin` and register an
 `AssetConverter` per file extension.
@@ -54,8 +63,6 @@ plugin that uses one is tied to whichever host interprets it.
 
 | Kind | Waiting on |
 |---|---|
-| `Component` (`ComponentProvider`) | Inspector fields for a component type; needs neutral scene types (D35) |
-| `SceneSystems`, `ViewportTool` | Neutral scene and viewport types (D35) |
 | `Asset` (`AssetProvider`), `Environment`, `Animation`, `Build` (`BuildProvider`) | A defined use; until then use a panel, a workspace, or `AssetConverterPlugin` |
 
 ## Packaging

@@ -20,6 +20,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":awake:core:math"))
+            api(project(":awake:core:color"))
             api(project(":awake:core:input"))
             api(project(":awake:core:state"))
             api(project(":awake:core:di"))

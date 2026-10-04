@@ -20,6 +20,7 @@ value class ProviderId(val value: String) {
 }
 
 enum class EditorProviderKind {
+    /** Inspector fields for a component type. Implement [ComponentInspectorProvider]. */
     Component,
     Asset,
     Environment,
@@ -47,10 +48,10 @@ enum class EditorProviderKind {
     /** An insertable entity template. Implement [EntityTemplateProvider]. */
     EntityTemplate,
 
-    /** ECS simulation systems contributed to the active scene loop by an EditorPlugin. */
+    /** ECS systems that run on the edited world. Implement [SceneSystemsProvider]. */
     SceneSystems,
 
-    /** Interactive tools (e.g. terrain brush, foliage scatter, vertex painter) that receive viewport hover/drag. */
+    /** A tool that takes viewport hover and drag, such as a brush. Implement [ViewportToolProvider]. */
     ViewportTool,
 
     /** A floating card over the viewport. Implement [FloatingCardProvider] to draw it. */

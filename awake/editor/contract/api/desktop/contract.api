@@ -85,6 +85,18 @@ public final class com/awakekt/awake/editor/core/plugin/BuildProvider$DefaultImp
 	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/BuildProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 }
 
+public abstract interface class com/awakekt/awake/editor/core/plugin/ComponentInspectorProvider : com/awakekt/awake/editor/core/plugin/ComponentProvider {
+	public abstract fun fields-B7Vkg1U (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Lcom/awakekt/awake/ecs/World;J)V
+	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public abstract fun getComponentType ()Lkotlin/reflect/KClass;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/ComponentInspectorProvider$DefaultImpls {
+	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/ComponentInspectorProvider;)V
+	public static fun getCodec (Lcom/awakekt/awake/editor/core/plugin/ComponentInspectorProvider;)Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/ComponentInspectorProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
 public abstract interface class com/awakekt/awake/editor/core/plugin/ComponentProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
 	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 }
@@ -92,6 +104,24 @@ public abstract interface class com/awakekt/awake/editor/core/plugin/ComponentPr
 public final class com/awakekt/awake/editor/core/plugin/ComponentProvider$DefaultImpls {
 	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/ComponentProvider;)V
 	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/ComponentProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
+public abstract interface class com/awakekt/awake/editor/core/plugin/EditCommand {
+	public fun absorb (Lcom/awakekt/awake/editor/core/plugin/EditCommand;)Lcom/awakekt/awake/editor/core/plugin/EditCommand;
+	public abstract fun apply ()V
+	public abstract fun getLabel ()Ljava/lang/String;
+	public fun getMergeKey ()Ljava/lang/Object;
+	public abstract fun revert ()V
+}
+
+public final class com/awakekt/awake/editor/core/plugin/EditCommand$DefaultImpls {
+	public static fun absorb (Lcom/awakekt/awake/editor/core/plugin/EditCommand;Lcom/awakekt/awake/editor/core/plugin/EditCommand;)Lcom/awakekt/awake/editor/core/plugin/EditCommand;
+	public static fun getMergeKey (Lcom/awakekt/awake/editor/core/plugin/EditCommand;)Ljava/lang/Object;
+}
+
+public abstract interface class com/awakekt/awake/editor/core/plugin/EditHistory {
+	public abstract fun execute (Lcom/awakekt/awake/editor/core/plugin/EditCommand;)V
+	public abstract fun record (Lcom/awakekt/awake/editor/core/plugin/EditCommand;)V
 }
 
 public abstract interface class com/awakekt/awake/editor/core/plugin/EditorPlugin {
@@ -197,6 +227,26 @@ public final class com/awakekt/awake/editor/core/plugin/FloatingCardProvider$Def
 	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/FloatingCardProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
 }
 
+public abstract interface class com/awakekt/awake/editor/core/plugin/InspectorFieldScope {
+	public fun choices (Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+	public abstract fun options (Ljava/lang/String;Ljava/lang/Enum;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+	public abstract fun scalar (Ljava/lang/String;FLkotlin/jvm/functions/Function1;)V
+	public fun slider (Ljava/lang/String;FFFFLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun slider$default (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;FFFFLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public fun text (Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public abstract fun toggle (Ljava/lang/String;ZLkotlin/jvm/functions/Function1;)V
+	public abstract fun vector (Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;)V
+	public fun vector (Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class com/awakekt/awake/editor/core/plugin/InspectorFieldScope$DefaultImpls {
+	public static fun choices (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;Lkotlin/jvm/functions/Function1;)V
+	public static fun slider (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;FFFFLkotlin/jvm/functions/Function1;)V
+	public static synthetic fun slider$default (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;FFFFLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
+	public static fun text (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Ljava/lang/String;Lkotlin/jvm/functions/Function1;)V
+	public static fun vector (Lcom/awakekt/awake/editor/core/plugin/InspectorFieldScope;Ljava/lang/String;Lcom/awakekt/awake/core/math/Vec3f;Lkotlin/jvm/functions/Function1;)V
+}
+
 public final class com/awakekt/awake/editor/core/plugin/KeyChord {
 	public fun <init> (Lcom/awakekt/awake/core/input/Key;ZZZ)V
 	public synthetic fun <init> (Lcom/awakekt/awake/core/input/Key;ZZZILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -251,6 +301,21 @@ public final class com/awakekt/awake/editor/core/plugin/NoProviderConfiguration 
 	public static final field INSTANCE Lcom/awakekt/awake/editor/core/plugin/NoProviderConfiguration;
 	public fun getCurrentVersion ()I
 	public fun validate (Lcom/awakekt/awake/editor/core/plugin/ProviderConfiguration;)Ljava/util/List;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/OverlayLine {
+	public fun <init> (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;)V
+	public final fun component1 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component2 ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun component3 ()Lcom/awakekt/awake/core/color/Color;
+	public final fun copy (Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;)Lcom/awakekt/awake/editor/core/plugin/OverlayLine;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/editor/core/plugin/OverlayLine;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/math/Vec3f;Lcom/awakekt/awake/core/color/Color;ILjava/lang/Object;)Lcom/awakekt/awake/editor/core/plugin/OverlayLine;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getColor ()Lcom/awakekt/awake/core/color/Color;
+	public final fun getEnd ()Lcom/awakekt/awake/core/math/Vec3f;
+	public final fun getStart ()Lcom/awakekt/awake/core/math/Vec3f;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class com/awakekt/awake/editor/core/plugin/PanelProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
@@ -485,6 +550,24 @@ public final class com/awakekt/awake/editor/core/plugin/ProviderRegistry {
 	public final fun validate-b2uW8G4 (Ljava/lang/String;Lcom/awakekt/awake/editor/core/plugin/ProviderConfiguration;)Ljava/util/List;
 }
 
+public abstract interface class com/awakekt/awake/editor/core/plugin/SceneSelection {
+	public abstract fun getEntities ()Ljava/util/Set;
+	public abstract fun getPrimary-L99-wGo ()Lcom/awakekt/awake/ecs/Entity;
+	public abstract fun select-eOpPV3Q (Lcom/awakekt/awake/ecs/Entity;)V
+}
+
+public abstract interface class com/awakekt/awake/editor/core/plugin/SceneSystemsProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
+	public abstract fun createSystems ()Ljava/util/List;
+	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/SceneSystemsProvider$DefaultImpls {
+	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/SceneSystemsProvider;)V
+	public static fun getCodec (Lcom/awakekt/awake/editor/core/plugin/SceneSystemsProvider;)Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/SceneSystemsProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+}
+
 public abstract interface class com/awakekt/awake/editor/core/plugin/ToolbarProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
 	public abstract fun content (Lcom/awakekt/awake/compose/runtime/Composer;)V
 	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
@@ -516,6 +599,41 @@ public final class com/awakekt/awake/editor/core/plugin/ValidationSeverity : jav
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/editor/core/plugin/ValidationSeverity;
 	public static fun values ()[Lcom/awakekt/awake/editor/core/plugin/ValidationSeverity;
+}
+
+public final class com/awakekt/awake/editor/core/plugin/ViewportContext {
+	public fun <init> (Lcom/awakekt/awake/ecs/World;Lcom/awakekt/awake/editor/core/plugin/SceneSelection;Lcom/awakekt/awake/editor/core/plugin/EditHistory;Lcom/awakekt/awake/core/math/Lens;Lcom/awakekt/awake/core/math/Mat4;Lcom/awakekt/awake/core/math/ClipSpace;FFFFZLjava/util/Set;)V
+	public final fun getCamera ()Lcom/awakekt/awake/core/math/Lens;
+	public final fun getClipSpace ()Lcom/awakekt/awake/core/math/ClipSpace;
+	public final fun getHistory ()Lcom/awakekt/awake/editor/core/plugin/EditHistory;
+	public final fun getKeysDown ()Ljava/util/Set;
+	public final fun getPointerX ()F
+	public final fun getPointerY ()F
+	public final fun getSelection ()Lcom/awakekt/awake/editor/core/plugin/SceneSelection;
+	public final fun getViewProjection ()Lcom/awakekt/awake/core/math/Mat4;
+	public final fun getViewportHeight ()F
+	public final fun getViewportWidth ()F
+	public final fun getWorld ()Lcom/awakekt/awake/ecs/World;
+	public final fun isPointerDown ()Z
+	public final fun pointerRay ()Lcom/awakekt/awake/core/math/Ray;
+}
+
+public abstract interface class com/awakekt/awake/editor/core/plugin/ViewportToolProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
+	public fun getCodec ()Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public fun getKind ()Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+	public abstract fun isApplicable (Lcom/awakekt/awake/editor/core/plugin/ViewportContext;)Z
+	public fun onHover (Lcom/awakekt/awake/editor/core/plugin/ViewportContext;)Ljava/util/List;
+	public fun onPointerDrag (Lcom/awakekt/awake/editor/core/plugin/ViewportContext;)Z
+	public fun onPointerUp (Lcom/awakekt/awake/editor/core/plugin/ViewportContext;)V
+}
+
+public final class com/awakekt/awake/editor/core/plugin/ViewportToolProvider$DefaultImpls {
+	public static fun dispose (Lcom/awakekt/awake/editor/core/plugin/ViewportToolProvider;)V
+	public static fun getCodec (Lcom/awakekt/awake/editor/core/plugin/ViewportToolProvider;)Lcom/awakekt/awake/editor/core/plugin/ProviderCodec;
+	public static fun getKind (Lcom/awakekt/awake/editor/core/plugin/ViewportToolProvider;)Lcom/awakekt/awake/editor/core/plugin/EditorProviderKind;
+	public static fun onHover (Lcom/awakekt/awake/editor/core/plugin/ViewportToolProvider;Lcom/awakekt/awake/editor/core/plugin/ViewportContext;)Ljava/util/List;
+	public static fun onPointerDrag (Lcom/awakekt/awake/editor/core/plugin/ViewportToolProvider;Lcom/awakekt/awake/editor/core/plugin/ViewportContext;)Z
+	public static fun onPointerUp (Lcom/awakekt/awake/editor/core/plugin/ViewportToolProvider;Lcom/awakekt/awake/editor/core/plugin/ViewportContext;)V
 }
 
 public abstract interface class com/awakekt/awake/editor/core/plugin/WorkspaceProvider : com/awakekt/awake/editor/core/plugin/EditorProvider {
