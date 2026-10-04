@@ -51,6 +51,26 @@ class MathDocsSampleTest {
         assertEquals(360f, pixel.y, 0.01f)
     }
 
+    @Test
+    fun aCharacterBoxThatSinksIntoTheGroundIsPushedBackUp() {
+        // --8<-- [start:overlap-2d]
+        val ground = Box2(x = 0f, y = -1f, halfWidth = 10f, halfHeight = 1f) // its top is at y = 0
+        val player = Box2(x = 0f, y = 0.9f, halfWidth = 0.5f, halfHeight = 1f) // its feet are 0.1 below it
+        val coin = Circle2(x = 0.4f, y = 1.2f, radius = 0.3f)
+
+        val picksUpCoin = player.overlaps(coin)
+
+        val push = Overlap2() // kept and reused, so a frame of checks allocates nothing
+        if (player.penetration(ground, push)) {
+            player.x += push.normalX * push.depth
+            player.y += push.normalY * push.depth
+        }
+        // --8<-- [end:overlap-2d]
+
+        assertEquals(true, picksUpCoin)
+        assertEquals(1f, player.y, TOLERANCE)
+    }
+
     private companion object {
         const val TOLERANCE = 1e-5f
     }

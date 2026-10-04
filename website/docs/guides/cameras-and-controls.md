@@ -87,6 +87,8 @@ forward.
 | `near` | number | `0.1` | Near clip distance, greater than 0. |
 | `far` | number | `100` | Far clip distance, greater than `near`. |
 | `primary` | boolean | `true` | Whether this camera renders the scene. |
+| `projection` | `perspective` · `orthographic` | `perspective` | `orthographic` keeps things the same size at any distance and ignores `fovYDegrees`; use it for 2D. |
+| `orthoHalfHeight` | number | about `2.07` | Half the vertical world extent an orthographic view covers; the width follows from the aspect ratio. Used only when `projection` is `orthographic`. |
 
 ### `camera_rig`
 

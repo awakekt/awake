@@ -410,8 +410,8 @@ public final class com/awakekt/awake/scene/rendering/camera/CameraBinding : com/
 public final class com/awakekt/awake/scene/rendering/camera/SceneCamera : com/awakekt/awake/scene/document/SceneComponent {
 	public static final field Companion Lcom/awakekt/awake/scene/rendering/camera/SceneCamera$Companion;
 	public fun <init> ()V
-	public fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZ)V
-	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZLcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection;F)V
+	public synthetic fun <init> (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZLcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection;FILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun component1 ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun component2 ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public final fun component3 ()Lcom/awakekt/awake/scene/document/SceneVec3;
@@ -419,8 +419,10 @@ public final class com/awakekt/awake/scene/rendering/camera/SceneCamera : com/aw
 	public final fun component5 ()F
 	public final fun component6 ()F
 	public final fun component7 ()Z
-	public final fun copy (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZ)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;
-	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;
+	public final fun component8 ()Lcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection;
+	public final fun component9 ()F
+	public final fun copy (Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZLcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection;F)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;Lcom/awakekt/awake/scene/document/SceneVec3;FFFZLcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection;FILjava/lang/Object;)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera;
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getAllowsMultiplePerNode ()Z
 	public final fun getCenter ()Lcom/awakekt/awake/scene/document/SceneVec3;
@@ -428,7 +430,9 @@ public final class com/awakekt/awake/scene/rendering/camera/SceneCamera : com/aw
 	public final fun getFar ()F
 	public final fun getFovYDegrees ()F
 	public final fun getNear ()F
+	public final fun getOrthoHalfHeight ()F
 	public final fun getPrimary ()Z
+	public final fun getProjection ()Lcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection;
 	public final fun getUp ()Lcom/awakekt/awake/scene/document/SceneVec3;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -447,6 +451,19 @@ public final synthetic class com/awakekt/awake/scene/rendering/camera/SceneCamer
 }
 
 public final class com/awakekt/awake/scene/rendering/camera/SceneCamera$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/scene/rendering/camera/SceneCamera$Projection : java/lang/Enum {
+	public static final field Companion Lcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection$Companion;
+	public static final field Orthographic Lcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection;
+	public static final field Perspective Lcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection;
+	public static fun values ()[Lcom/awakekt/awake/scene/rendering/camera/SceneCamera$Projection;
+}
+
+public final class com/awakekt/awake/scene/rendering/camera/SceneCamera$Projection$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 

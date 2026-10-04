@@ -57,6 +57,27 @@ public final class com/awakekt/awake/core/math/AngleKt {
 	public static final fun getAngleRad (I)F
 }
 
+public final class com/awakekt/awake/core/math/Box2 {
+	public static final field DEFAULT_HALF_EXTENT F
+	public fun <init> ()V
+	public fun <init> (FFFF)V
+	public synthetic fun <init> (FFFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getHalfHeight ()F
+	public final fun getHalfWidth ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun overlaps (Lcom/awakekt/awake/core/math/Box2;)Z
+	public final fun overlaps (Lcom/awakekt/awake/core/math/Circle2;)Z
+	public final fun penetration (Lcom/awakekt/awake/core/math/Box2;Lcom/awakekt/awake/core/math/Overlap2;)Z
+	public final fun penetration (Lcom/awakekt/awake/core/math/Circle2;Lcom/awakekt/awake/core/math/Overlap2;)Z
+	public final fun set (FFFF)Lcom/awakekt/awake/core/math/Box2;
+	public final fun setHalfHeight (F)V
+	public final fun setHalfWidth (F)V
+	public final fun setX (F)V
+	public final fun setY (F)V
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class com/awakekt/awake/core/math/CameraClipPreset {
 	public static final field Companion Lcom/awakekt/awake/core/math/CameraClipPreset$Companion;
 	public fun <init> (FFF)V
@@ -140,6 +161,25 @@ public final class com/awakekt/awake/core/math/CameraPoseState {
 	public final fun setPitch (F)V
 	public final fun setYaw (F)V
 	public final fun syncFromLens (Lcom/awakekt/awake/core/math/Lens;)V
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class com/awakekt/awake/core/math/Circle2 {
+	public static final field DEFAULT_RADIUS F
+	public fun <init> ()V
+	public fun <init> (FFF)V
+	public synthetic fun <init> (FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getRadius ()F
+	public final fun getX ()F
+	public final fun getY ()F
+	public final fun overlaps (Lcom/awakekt/awake/core/math/Box2;)Z
+	public final fun overlaps (Lcom/awakekt/awake/core/math/Circle2;)Z
+	public final fun penetration (Lcom/awakekt/awake/core/math/Box2;Lcom/awakekt/awake/core/math/Overlap2;)Z
+	public final fun penetration (Lcom/awakekt/awake/core/math/Circle2;Lcom/awakekt/awake/core/math/Overlap2;)Z
+	public final fun set (FFF)Lcom/awakekt/awake/core/math/Circle2;
+	public final fun setRadius (F)V
+	public final fun setX (F)V
+	public final fun setY (F)V
 	public fun toString ()Ljava/lang/String;
 }
 
@@ -362,6 +402,15 @@ public final class com/awakekt/awake/core/math/Noise {
 public final class com/awakekt/awake/core/math/OcclusionKt {
 	public static final fun isOccludedBy (Lcom/awakekt/awake/core/math/ScreenBounds;Lcom/awakekt/awake/core/math/ScreenBounds;)Z
 	public static final fun screenBounds (Lcom/awakekt/awake/core/math/Lens;Lcom/awakekt/awake/core/math/Aabb;Lcom/awakekt/awake/core/math/Mat4;FFLcom/awakekt/awake/core/math/ClipSpace;)Lcom/awakekt/awake/core/math/ScreenBounds;
+}
+
+public final class com/awakekt/awake/core/math/Overlap2 {
+	public fun <init> ()V
+	public final fun getDepth ()F
+	public final fun getNormalX ()F
+	public final fun getNormalY ()F
+	public final fun set (FFF)Lcom/awakekt/awake/core/math/Overlap2;
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class com/awakekt/awake/core/math/Plane {
