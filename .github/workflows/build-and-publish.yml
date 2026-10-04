@@ -221,10 +221,11 @@ jobs:
       - name: Verify the public Awake Gradle plugin set
         run: ./gradlew -p build-logic verifyAwakePluginPublications build --no-configuration-cache
 
-  # Builds awake-template against these artifacts, the way someone who clicked "Use this template"
-  # would. Every bug this has caught -- a package namespace the template never followed, two
-  # libraries claiming one Android namespace -- is invisible from inside either repository, because
-  # the template substitutes a sibling engine checkout whenever a developer has one.
+  # Builds both starter templates against these artifacts, the way someone who clicked "Use this
+  # template" would: awake-template (a game written in Kotlin) and awake-project-template (an app
+  # that plays an Awake Studio project, which Studio's app export ships). Every bug this has caught --
+  # a package namespace the template never followed, two libraries claiming one Android namespace --
+  # is invisible from inside either repository.
   #
   # macOS because it is the only runner that can link the iOS framework, and iOS is otherwise
   # untested anywhere in this repository.
@@ -258,6 +259,13 @@ jobs:
           # substitutes engine projects for the published artifacts when one is next to it, and
           # then this job would prove nothing.
           path: consumer/awake-template
+
+      - name: Check out the project template beside nothing
+        uses: actions/checkout@v4
+        with:
+          # The app that plays an Awake Studio project; Studio's app export starts from it.
+          repository: awakekt/awake-project-template
+          path: consumer/awake-project-template
 
       - uses: actions/setup-java@v5
         with:
@@ -326,7 +334,7 @@ jobs:
             ./gradlew verifyPublishedArtifacts -Pawake.verifyPublishedVersion="$VULKAN_VERSION" -Pawake.verifyPublishedFamily=vulkan --no-configuration-cache
           fi
 
-      - name: Build the template against it
+      - name: Build both templates against it
         run: |
           # A Core-only build put no Vulkan in Maven Local, and the derived Vulkan version is a
           # snapshot once Vulkan has changed since its last tag. Test against the last Vulkan
@@ -336,6 +344,7 @@ jobs:
             export TEMPLATE_VULKAN_VERSION="${TEMPLATE_VULKAN_VERSION#vulkan-v}"
           fi
           tools/check_template_consumer.sh consumer/awake-template "$RUNNER_TEMP/consumer"
+          tools/check_template_consumer.sh consumer/awake-project-template "$RUNNER_TEMP/consumer-project"
 
   # `main` builds. Resolvable only by a consumer who adds the snapshot repository, and replaced by
   # the next push, so this path stays deliberately light.

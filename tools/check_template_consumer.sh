@@ -3,7 +3,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 #
-# Builds awake-template against Awake as a *published dependency*, the way someone who clicked
+# Builds a starter template (awake-template or awake-project-template) against Awake as a
+# *published dependency*, the way someone who clicked
 # "Use this template" would.
 #
 # The template substitutes a sibling `../awaken` checkout whenever one exists, which means a

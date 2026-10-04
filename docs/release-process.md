@@ -129,7 +129,7 @@ Active milestones on GitHub represent concrete version boundaries organized by s
 
 - **Subsystem: Maven Central Distribution (`com.awakekt`)**
     - `[x]` Publish `com.awakekt.awake:*` libraries to Maven Central via `build-and-publish.yml`.
-    - `[x]` Verify `awake-template` consumer build against published Maven Central artifacts.
+    - `[x]` Verify the `awake-template` and `awake-project-template` consumer builds against published Maven Central artifacts.
 - **Subsystem: Multi-OS Desktop Vulkan (`awake:backend:vulkan`)**
     - `[x]` Multi-OS Vulkan native binaries (macOS ARM64, macOS x86_64, Linux x86_64).
     - `[x]` Out-of-the-box Desktop JVM sample verification (`samples:engine-showcase`).
