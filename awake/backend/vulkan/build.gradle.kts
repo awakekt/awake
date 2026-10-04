@@ -93,6 +93,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(kotlin("test"))
+            implementation(libs.kotlinx.coroutines.test)
             implementation(project(":awake:engine:compose"))
             // Backend-neutral offscreen frame capture and PNG diagnostics.
             implementation(project(":awake:engine:render:testing"))
