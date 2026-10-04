@@ -75,6 +75,7 @@ data class SceneNavigation(
         return NavGrid(NavGridTile(width, rows.size, cellSize, bits, originX, originZ))
     }
 
+    /** The defaults, and the characters [rows] is written in. */
     companion object {
         /** A cell of a world unit: coarse enough to be cheap, fine enough for a character-sized agent. */
         const val DEFAULT_CELL_SIZE: Float = 1f

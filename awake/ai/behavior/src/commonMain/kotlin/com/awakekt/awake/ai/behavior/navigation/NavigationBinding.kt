@@ -16,7 +16,11 @@ import kotlin.reflect.KClass
  * A scene's [SceneNavigation] once it is in a world: the authored description, kept so the scene
  * exports unchanged, and the [grid] built from it that agents route over.
  */
-class NavigationGrid(val source: SceneNavigation) {
+class NavigationGrid(
+    /** The authored description, kept so the scene exports unchanged. */
+    val source: SceneNavigation,
+) {
+    /** The grid agents route over, built once from [source]. */
     val grid: NavGrid = source.toGrid()
 }
 
