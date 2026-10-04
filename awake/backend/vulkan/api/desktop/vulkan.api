@@ -314,6 +314,8 @@ public final class com/awakekt/awake/vulkan/pipeline/VulkanPipelineHandle$Defaul
 
 public final class com/awakekt/awake/vulkan/pipeline/VulkanShaderResolver : com/awakekt/awake/asset/shaders/RuntimeShaderResolver {
 	public fun <init> ()V
+	public fun <init> (Lcom/awakekt/awake/asset/shadercompiler/RuntimeShaderCompiler;)V
+	public synthetic fun <init> (Lcom/awakekt/awake/asset/shadercompiler/RuntimeShaderCompiler;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun resolve (Lcom/awakekt/awake/render/pipeline/ShaderSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
