@@ -40,7 +40,10 @@ object CameraBinding : SceneComponentBinding<Camera, SceneCamera> {
             fovYRadians = fovYDegrees * (PI.toFloat() / 180f),
             near = near,
             far = far,
-        ),
+        ).also {
+            it.projection = projection.toLensProjection()
+            it.orthoHalfHeight = orthoHalfHeight
+        },
         isPrimary = primary,
     )
 
@@ -52,5 +55,17 @@ object CameraBinding : SceneComponentBinding<Camera, SceneCamera> {
         near = lens.near,
         far = lens.far,
         primary = isPrimary,
+        projection = lens.projection.toSceneProjection(),
+        orthoHalfHeight = lens.orthoHalfHeight,
     )
+
+    private fun SceneCamera.Projection.toLensProjection(): Lens.Projection = when (this) {
+        SceneCamera.Projection.Perspective -> Lens.Projection.Perspective
+        SceneCamera.Projection.Orthographic -> Lens.Projection.Orthographic
+    }
+
+    private fun Lens.Projection.toSceneProjection(): SceneCamera.Projection = when (this) {
+        Lens.Projection.Perspective -> SceneCamera.Projection.Perspective
+        Lens.Projection.Orthographic -> SceneCamera.Projection.Orthographic
+    }
 }

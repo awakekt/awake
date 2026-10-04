@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.rendering.camera
 
+import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneValidationIssue
 import com.awakekt.awake.scene.document.SceneVec3
@@ -21,6 +22,12 @@ import kotlinx.serialization.Serializable
  * @property near Near clipping plane distance.
  * @property far Far clipping plane distance.
  * @property primary Whether this camera acts as the primary viewport camera.
+ * @property projection How the camera projects the scene. [Projection.Perspective] shrinks distant
+ * things; [Projection.Orthographic] does not, so a 2D game's pixels and tiles keep their size
+ * however far they sit along the view axis.
+ * @property orthoHalfHeight Half the vertical world extent an orthographic view covers; the width
+ * follows from it and the viewport's aspect ratio. Used only while [projection] is
+ * [Projection.Orthographic], when [fovYDegrees] is ignored.
  */
 @Serializable
 @SerialName("camera")
@@ -32,7 +39,21 @@ data class SceneCamera(
     val near: Float = 0.1f,
     val far: Float = 100f,
     val primary: Boolean = true,
+    val projection: Projection = Projection.Perspective,
+    val orthoHalfHeight: Float = Lens.DEFAULT_ORTHO_HALF_HEIGHT,
 ) : SceneComponent {
+    /** How a [SceneCamera] projects the scene. */
+    @Serializable
+    enum class Projection {
+        /** A cone of view: things shrink with distance. */
+        @SerialName("perspective")
+        Perspective,
+
+        /** A box of view: things keep their size at any distance. */
+        @SerialName("orthographic")
+        Orthographic,
+    }
+
     override val allowsMultiplePerNode: Boolean get() = false
 
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
@@ -44,6 +65,9 @@ data class SceneCamera(
         }
         if (fovYDegrees <= 0f || fovYDegrees >= 180f) {
             add(SceneValidationIssue(path, "camera.fovYDegrees must be between 0 and 180"))
+        }
+        if (!(orthoHalfHeight > 0f && orthoHalfHeight.isFinite())) {
+            add(SceneValidationIssue(path, "camera.orthoHalfHeight must be a positive number"))
         }
     }
 }

@@ -57,6 +57,8 @@ Designed around strict **zero per-frame allocation** rules for ECS simulation lo
 | `Ray` | Infinite 3D ray defined by `origin` and normalized `direction`. | `pointAt(t)`, `intersectSphere(...)`, `intersectAabb(...)`, `intersectPlane(...)`, `intersectGroundPlane(...)` |
 | `Plane` | Infinite 3D plane (`normal`, `d`). | `signedDistanceTo(point)`, `Plane.XZ` |
 | `Aabb` | Axis-Aligned Bounding Box (`min`, `max`). | `contains(point)`, `intersects(other)`, `transformed(mat4)`, `center`, `extents` |
+| `Box2`, `Circle2` | Axis-aligned 2D rectangle (centre, half extents) and circle (centre, radius). Mutable, so a frame of checks allocates nothing. | `overlaps(other)`, `penetration(other, into)`, `set(...)` |
+| `Overlap2` | The smallest move that separates two overlapping 2D shapes: a unit `normal` and a `depth`. Reused across queries. | `normalX`, `normalY`, `depth`, `set(...)` |
 | `Frustum` | 6-plane viewing frustum extracted from view-projection matrix. | `intersects(aabb)`, `contains(point)`, `isSphereVisible(center, radius)` |
 
 ---

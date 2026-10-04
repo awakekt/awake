@@ -72,6 +72,22 @@ camera; `rayThroughViewport` goes the other way, from a pixel to a world `Ray` f
 | `WebGpu` | up | 0 to 1 |
 | `OpenGl` | up | -1 to 1 |
 
+## Test two 2D shapes for overlap
+
+`Box2` (an axis-aligned rectangle) and `Circle2` are for 2D games. `overlaps` answers whether two shapes
+share area, and touching counts. `penetration` also says how to get out: it fills an `Overlap2` with a unit
+`normal` and a `depth`, and moving the shape by `normal * depth` takes it just clear. It works for any
+pair, box against box, circle against circle, or one of each.
+
+```kotlin title="Kotlin"
+--8<-- "awake/core/math/src/desktopTest/kotlin/com/awakekt/awake/core/math/MathDocsSampleTest.kt:overlap-2d"
+```
+
+The shapes are mutable and `set` rewrites one in place, like `Vec3f`, so a game updating hundreds of
+colliders a frame allocates nothing; keep one `Overlap2` and reuse it. This is overlap and separation only.
+Gravity, jumping and ground-snapping are the game's own, because how a character feels is not the
+engine's to decide.
+
 ## Choose a type
 
 | Need | Start with |
@@ -81,6 +97,7 @@ camera; `rayThroughViewport` goes the other way, from a pixel to a world `Ray` f
 | World, view or projection transforms | `Mat4` |
 | Camera setup and projection | `Lens`, `CameraMathUtils` |
 | Visibility and hit tests | `Ray`, `Plane`, `Aabb`, `Frustum` |
+| 2D overlap and separation | `Box2`, `Circle2`, `Overlap2` |
 | Angles in degrees | `Angle`, `angleRad`, `angleDeg` |
 
 ## How it works
