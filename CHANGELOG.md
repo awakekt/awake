@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Multi-touch on the web and iOS, and tooltips a finger can open.** The web canvas and the iOS view report every finger, as Android already did, and the browser no longer turns a tap into a second, emulated mouse click or a pinch into page zoom. A finger no longer hovers, so a tooltip doesn't stick after a tap; holding a finger on a trigger shows its tooltip until it lifts, and that lift is not a click.
+- **Editor plugins can add viewport tools, edit-time scene systems and component inspectors.** `:awake:editor:contract` adds `ViewportToolProvider`, `SceneSystemsProvider` and `ComponentInspectorProvider`, plus the host-implemented `EditHistory`, `EditCommand`, `SceneSelection` and `InspectorFieldScope`, so these hooks no longer need a host's own editor library. Decision D36.
 
 ### Changed
 
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Camera-facing particles keep their shape from every angle.** Each particle's size sat where the particle shader reads its velocity stretch, so whenever world up was on screen a plain particle drew twice as tall as wide and mirrored left to right. Instance matrices are now written by one helper, `setParticleInstance`, which leaves the stretch zero unless the emitter stretches with velocity.
 - **A newer push to `main` cancels the snapshot publish it supersedes**, so release tags no longer queue for hours behind snapshot runs.
 - **Android no longer raises the soft keyboard with nothing to type into.** `AwakeSurfaceView` told Android it was always a text editor, so the system could open the keyboard whenever the window gained focus, such as at launch, on resume or after rotation. It now says so only while a text field holds focus.
+- **Particles cast shadows on WebGPU where a render plan opts them in.** A particle draw reported no uniform buffer, so the WebGPU shadow pass skipped it; it now reports its per-draw slot, as plain instanced draws do. The headless scene renderers on both backends now build the particle shadow-depth pipeline, so the parity suite covers it.
 
 ## [0.1.0-rc.11] - 2026-10-04
 
