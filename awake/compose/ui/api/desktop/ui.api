@@ -691,6 +691,7 @@ public final class com/awakekt/awake/compose/ui/input/pointer/PointerEvent {
 	public final fun consumeScrollDelta (F)V
 	public final fun getDx ()I
 	public final fun getDy ()I
+	public final fun getLongPressConsumed ()Z
 	public final fun getLongPressTriggered ()Z
 	public final fun getModifiers ()Lcom/awakekt/awake/compose/ui/input/pointer/PointerModifiers;
 	public final fun getPointerId ()J

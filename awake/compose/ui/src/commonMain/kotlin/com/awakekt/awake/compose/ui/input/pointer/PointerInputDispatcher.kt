@@ -30,6 +30,7 @@ class PointerInputDispatcher(
     private val captures = mutableMapOf<Long, LayoutNode>()
     private val heldSeconds = mutableMapOf<Long, Float>()
     private val longPressTriggered = mutableSetOf<Long>()
+    private val longPressConsumed = mutableSetOf<Long>()
 
     // Where each captured press went down, in root pixels, so a press that moved off is a drag.
     private val pressOrigins = mutableMapOf<Long, Long>()
@@ -107,6 +108,7 @@ class PointerInputDispatcher(
     fun dispatch(root: LayoutNode, event: PointerEvent, x: Int, y: Int, dx: Int = 0, dy: Int = 0): Boolean {
         event.reset()
         event.longPressTriggered = event.pointerId in longPressTriggered
+        event.longPressConsumed = event.pointerId in longPressConsumed
         event.dx = dx
         event.dy = dy
         path.clear()
@@ -123,7 +125,7 @@ class PointerInputDispatcher(
             if (event.type == PointerEventType.Press) {
                 dismissable.onDismissRequest?.invoke()
                 event.consume()
-                updateHover(modal ?: root, x, y)
+                if (event.pointerId == MOUSE_POINTER) updateHover(modal ?: root, x, y)
                 return true
             } else if (event.type == PointerEventType.SecondaryPress) {
                 dismissable.onDismissRequest?.invoke()
@@ -139,11 +141,13 @@ class PointerInputDispatcher(
             captures.remove(event.pointerId)
             heldSeconds.remove(event.pointerId)
             longPressTriggered.remove(event.pointerId)
+            longPressConsumed.remove(event.pointerId)
             pressOrigins.remove(event.pointerId)
             hitTest(path, hitRoot, x, y)
         }
         // Before the empty-path return: a pointer leaving everything must still un-hover what it left.
-        updateHover(hitRoot, x, y)
+        // Only the mouse hovers: a finger has no hover, and one would stay "over" whatever it lifted from.
+        if (event.pointerId == MOUSE_POINTER) updateHover(hitRoot, x, y)
         if (path.isEmpty()) return false
 
         deliver(event, x, y, PointerEventPass.Initial, rootFirst = true)
@@ -172,11 +176,10 @@ class PointerInputDispatcher(
         heldSeconds[pointerId] = held
         if (held >= LONG_PRESS_SECONDS) {
             longPressTriggered += pointerId
-            // A long press something acted on, such as opening a context menu, ends the press: the
-            // node that captured it must not also take the release as a click.
+            // A long press something acted on, such as opening a context menu, makes its release no
+            // click. The capture stays, so the release still reaches whoever acted, to close a tooltip.
             if (dispatch(root, PointerEvent(PointerEventType.LongPress, pointerId = pointerId), x, y)) {
-                captures.remove(pointerId)
-                heldSeconds.remove(pointerId)
+                longPressConsumed += pointerId
             }
         }
     }
@@ -291,6 +294,7 @@ class PointerInputDispatcher(
                 captures.remove(event.pointerId)
                 heldSeconds.remove(event.pointerId)
                 longPressTriggered.remove(event.pointerId)
+                longPressConsumed.remove(event.pointerId)
                 pressOrigins.remove(event.pointerId)
             }
             else -> Unit
@@ -470,3 +474,6 @@ private fun packPosition(x: Int, y: Int): Long = (x.toLong() shl 32) or (y.toLon
 private fun unpackX(packed: Long): Int = (packed shr 32).toInt()
 
 private fun unpackY(packed: Long): Int = packed.toInt()
+
+/** Pointer id 0 is the mouse's; fingers have their own. */
+private const val MOUSE_POINTER = 0L

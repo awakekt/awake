@@ -58,16 +58,17 @@ private class CombinedClickableNode :
                 onLongClick?.invoke()
                 event.consume()
             }
-            PointerEventType.Release -> if (
-                event.isCaptureHolder && event.isInBounds &&
-                (!event.longPressTriggered || onLongClick == null)
-            ) {
+            PointerEventType.Release -> if (event.isCaptureHolder && event.isInBounds && endsInClick(event)) {
                 onClick.invoke()
                 event.consume()
             }
             else -> Unit
         }
     }
+
+    /** A held press ends in a click unless its long press did something, here or elsewhere. */
+    private fun endsInClick(event: PointerEvent): Boolean =
+        !event.longPressConsumed && (!event.longPressTriggered || onLongClick == null)
 }
 
 private class ClickableElement(
@@ -102,7 +103,10 @@ private class ClickableNode :
             //
             // `isInBounds` is the other half: the capture keeps delivering after the pointer leaves,
             // and releasing out there must not count as a click.
-            PointerEventType.Release -> if (event.isCaptureHolder && event.isInBounds) {
+            // A long press something else acted on, such as a context menu or tooltip, ends as no click.
+            PointerEventType.Release -> if (event.isCaptureHolder && event.longPressConsumed) {
+                source?.tryEmit(Interaction.Press.Cancel(Interaction.Press.Press))
+            } else if (event.isCaptureHolder && event.isInBounds) {
                 source?.tryEmit(Interaction.Press.Release(Interaction.Press.Press))
                 onClick.invoke()
                 event.consume()

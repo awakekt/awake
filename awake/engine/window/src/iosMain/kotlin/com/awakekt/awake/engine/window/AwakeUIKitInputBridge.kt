@@ -11,16 +11,25 @@ import kotlinx.cinterop.useContents
 import platform.UIKit.UITouch
 import platform.UIKit.UIView
 
+/**
+ * Passes the [touches] UIKit reports to [input] as fingers, each identified by its `UITouch`, which
+ * stays the same object while the finger is down. The first finger also drives the primary pointer
+ * (see [Input.setTouch]).
+ */
 @OptIn(ExperimentalForeignApi::class)
 fun UIView.syncAwakePointerInput(
     touches: Set<*>,
     down: Boolean,
     input: Input,
 ): Boolean {
-    val touch = touches.firstOrNull() as? UITouch ?: return false
     val scale = contentScaleFactor.toFloat()
-    touch.locationInView(this).useContents {
-        input.setPointer(down = down, x = x.toFloat() * scale, y = y.toFloat() * scale)
+    var synced = false
+    for (item in touches) {
+        val touch = item as? UITouch ?: continue
+        touch.locationInView(this).useContents {
+            input.setTouch(touch.hashCode().toLong(), x.toFloat() * scale, y.toFloat() * scale, down)
+        }
+        synced = true
     }
-    return true
+    return synced
 }

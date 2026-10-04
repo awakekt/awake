@@ -15,6 +15,10 @@ import com.awakekt.awake.compose.runtime.Composer
 import com.awakekt.awake.compose.runtime.current
 import com.awakekt.awake.compose.runtime.remember
 import com.awakekt.awake.compose.ui.Modifier
+import com.awakekt.awake.compose.ui.ModifierNodeElement
+import com.awakekt.awake.compose.ui.input.pointer.PointerEvent
+import com.awakekt.awake.compose.ui.input.pointer.PointerEventPass
+import com.awakekt.awake.compose.ui.input.pointer.PointerEventType
 import com.awakekt.awake.compose.ui.layout.Layer
 import com.awakekt.awake.compose.ui.layout.LayerKind
 import com.awakekt.awake.compose.ui.layout.Measurable
@@ -22,6 +26,7 @@ import com.awakekt.awake.compose.ui.layout.MeasurePolicy
 import com.awakekt.awake.compose.ui.layout.MeasureResult
 import com.awakekt.awake.compose.ui.layout.MeasureScope
 import com.awakekt.awake.compose.ui.layout.onPlaced
+import com.awakekt.awake.compose.ui.node.PointerInputNode
 import com.awakekt.awake.compose.ui.platform.LocalDensity
 import com.awakekt.awake.compose.ui.platform.LocalViewportSize
 import com.awakekt.awake.compose.ui.platform.ViewportSize
@@ -80,6 +85,9 @@ private fun ShadcnThemeValues.tooltipStyle(): Style = Style {
  *
  * No open delay. Radix defaults to 700ms and shadcn's own docs set it to 0; a delay needs a clock
  * the recipe does not have, and it is the kind of thing that is better absent than approximated.
+ *
+ * **A finger holds it open.** A touch screen has no hover, so holding a finger on the trigger shows
+ * the tooltip until the finger lifts, and that lift is not a click.
  */
 context(_: Composer)
 fun ShadcnTooltipped(
@@ -95,6 +103,7 @@ fun ShadcnTooltipped(
     Box(
         modifier
             .hoverable(interaction)
+            .then(FingerHoldElement(anchor))
             // The trigger's resolved bounds, in viewport space. Read a frame later than they are
             // written, which costs nothing here: the tooltip cannot open before the pointer has
             // been over the trigger for a frame anyway.
@@ -106,7 +115,7 @@ fun ShadcnTooltipped(
             },
     ) {
         content()
-        if (interaction.isHovered) {
+        if (interaction.isHovered || anchor.heldByFinger) {
             Layer(
                 kind = LayerKind.Tooltip,
                 // Two keys, because `remember` has no three-key overload; the anchor is the same
@@ -121,13 +130,46 @@ fun ShadcnTooltipped(
     }
 }
 
-/** The trigger's last resolved bounds, in viewport space. */
+/** The trigger's last resolved bounds, in viewport space, and whether a finger holds it open. */
 private class TooltipAnchor {
     var x: Int = 0
     var y: Int = 0
     var width: Int = 0
     var height: Int = 0
+    var heldByFinger: Boolean = false
 }
+
+/**
+ * Opens the tooltip while a finger is held on its trigger. Taking the long press is what tells the
+ * trigger underneath that the lift is not a click; the release still arrives, through the trigger's
+ * capture, to close it.
+ */
+private class FingerHoldElement(private val anchor: TooltipAnchor) : ModifierNodeElement<FingerHoldNode>() {
+    override fun create(): FingerHoldNode = FingerHoldNode(anchor)
+
+    override fun update(node: FingerHoldNode) {
+        node.anchor = anchor
+    }
+}
+
+private class FingerHoldNode(var anchor: TooltipAnchor) :
+    Modifier.Node(),
+    PointerInputNode {
+    override fun onPointerEvent(event: PointerEvent, pass: PointerEventPass) {
+        if (pass != PointerEventPass.Main || event.pointerId == MOUSE_POINTER) return
+        when (event.type) {
+            PointerEventType.LongPress -> if (!event.isConsumed) {
+                anchor.heldByFinger = true
+                event.consume()
+            }
+            PointerEventType.Release -> anchor.heldByFinger = false
+            else -> Unit
+        }
+    }
+}
+
+/** `FrameInput` reserves pointer id 0 for the mouse; fingers have their own ids. */
+private const val MOUSE_POINTER = 0L
 
 /**
  * Places the bubble above its trigger, centred, flipping below when there is no room.
