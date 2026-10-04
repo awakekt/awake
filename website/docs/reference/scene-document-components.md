@@ -28,6 +28,7 @@ registers it.
 | [`locomotion_animation`](#locomotion_animation) | `LocomotionAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Animation](../guides/animation.md) |
 | [`mesh_renderer`](#mesh_renderer) | `MeshRenderer` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`movement_control`](#movement_control) | `MovementControl` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Character controller](../guides/character-controller.md) |
+| [`navigation`](#navigation) | `NavigationGrid` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`particle_emitter`](#particle_emitter) | `ParticleEmitterSource` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Particles](../guides/particles.md) |
 | [`patrol`](#patrol) | `PatrolBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`pbr_material`](#pbr_material) | `PbrMaterial` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
@@ -49,9 +50,9 @@ registers it.
 | `SceneComponentRegistry.registerControls()` | `com.awakekt.awake.scene:controls` | `movement_control`, `camera_rig` |
 | `SceneComponentRegistry.registerPhysics()` | `com.awakekt.awake.scene:physics` | `physics_body` |
 | `SceneComponentRegistry.registerCharacter()` | `com.awakekt.awake.scene:character` | `character_controller` |
-| `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.ai:behavior` | `patrol`, `chase`, `flee` |
+| `SceneComponentRegistry.registerAiBehaviors()` | `com.awakekt.awake.ai:behavior` | `patrol`, `chase`, `flee`, `navigation` |
 | `SceneComponentRegistry.registerBlueprints()` | `com.awakekt.awake.scene:blueprint` | `blueprint` |
-| `loadPlayableProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `physics_body`, `character_controller` |
+| `loadPlayableProject(...)` | `com.awakekt.awake.project:runtime` | The defaults, plus `movement_control`, `camera_rig`, `physics_body`, `character_controller`, `patrol`, `chase`, `flee`, `navigation` |
 
 ## `ambient_light`
 
@@ -273,6 +274,19 @@ Moves the entity from player input. `SceneMovementControl`.
 | `speed` | number | none | Units per second. None uses the movement system's speed. Above 0 when set. |
 | `runSpeed` | number | none | Units per second while Shift is held. None keeps `speed`. Above 0 when set. |
 | `turnSpeed` | number | `0` | Radians per second it turns to face where it moves; 0 leaves its facing alone. Not negative. |
+
+## `navigation`
+
+The grid of cells agents can walk on, which `patrol`, `chase` and `flee` route over. `SceneNavigation`.
+A played scene with one of those behaviours and a `navigation` component runs them with nothing wired
+by the host; put it on any node, and only the first in a scene is used.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `rows` | array of text | `[]` | One string per row of cells along z, each character one cell along x: `.` walkable, `#` blocked. Every row is the same length, and there is at least one. |
+| `cellSize` | number | `1` | World size of one cell. Above 0. |
+| `originX` | number | `0` | World x of the centre of cell (0, 0). |
+| `originZ` | number | `0` | World z of the centre of cell (0, 0). |
 
 ## `particle_emitter`
 

@@ -68,6 +68,8 @@ class PlaySystems internal constructor(
  * - `locomotion_animation` and `keyframe_animation`: their clips and looping tracks
  * - `particle_emitter`: its emitters, with [PlayServices.particleSprites]
  * - `canvas_element`s with an action: [CanvasActionSystem]
+ * - `patrol`, `chase` and `flee`, with a `navigation` component to route them over: the behaviours and
+ *   the system that answers their route requests
  * - skinned glTF animation, always
  *
  * `playProject` is built on the same decision, so the two cannot drift apart. These are only the
@@ -115,6 +117,7 @@ internal fun playSpecsFor(scene: SceneDocument, hasPhysics: Boolean): List<PlayS
     }
     if (moves && !characters) add(PlaySpec("movement", SceneSystemPhase.Frame) { MatrixRelativeMovementSystem() })
     if (scene.has(SceneCameraRig::class)) add(PlaySpec("camera", SceneSystemPhase.Frame) { CameraSystem(inputProvider = it.input) })
+    addAiSpecs(scene)
     addMotionSpecs(scene)
     add(PlaySpec("animation", SceneSystemPhase.Frame) { AnimationSystem() })
 }

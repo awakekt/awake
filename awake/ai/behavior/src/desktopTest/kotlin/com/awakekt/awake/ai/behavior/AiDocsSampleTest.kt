@@ -5,13 +5,13 @@
  */
 package com.awakekt.awake.ai.behavior
 
+import com.awakekt.awake.ai.behavior.chase.ChaseBinding
+import com.awakekt.awake.ai.behavior.flee.FleeBinding
+import com.awakekt.awake.ai.behavior.patrol.PatrolBinding
 import com.awakekt.awake.ai.btree.BehaviorStatus
 import com.awakekt.awake.ai.btree.BehaviorTreeComponent
 import com.awakekt.awake.ai.btree.BehaviorTreeSystem
 import com.awakekt.awake.ai.btree.behaviorTree
-import com.awakekt.awake.ai.behavior.chase.ChaseBinding
-import com.awakekt.awake.ai.behavior.flee.FleeBinding
-import com.awakekt.awake.ai.behavior.patrol.PatrolBinding
 import com.awakekt.awake.ai.fsm.AiState
 import com.awakekt.awake.ai.fsm.AiStateMachine
 import com.awakekt.awake.ai.fsm.AiStateMachineComponent
@@ -160,10 +160,7 @@ class AiDocsSampleTest {
         val registry = SceneComponentRegistry().registerAiBehaviors()
         val document = SceneLoader.decode(File(DOCS_SNIPPETS, "world/guards.scene.json").readText())
         val world = SceneLoader.instantiate(document, componentRegistry = registry).world
-
-        // The behaviours ask for routes through a PathRequest, which scene documents do not carry.
-        val agents = world.query(PatrolBehavior::class) + world.query(ChaseBehavior::class) + world.query(FleeBehavior::class)
-        agents.forEach { world.add(it, PathRequest()) }
+        // Each behaviour arrives with the PathRequest it asks for routes through.
         // --8<-- [end:load]
         return world
     }

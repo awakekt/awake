@@ -12,4 +12,6 @@ Behavior Tree and Finite State Machine primitives for Awake games and systems.
 
 `awake:ai` contains core primitives only and depends solely on `awake:ecs`. It has no dependency on `scene-core`, `transform`, or `navigation`.
 
-Starter navigation-backed behaviors (`ChaseBehavior`, `FleeBehavior`, `PatrolBehavior`) live in `awake:ai:behavior`.
+Starter navigation-backed behaviors (`ChaseBehavior`, `FleeBehavior`, `PatrolBehavior`) live in `awake:ai:behavior`, with the
+`navigation` scene component (`SceneNavigation`) that carries the grid they route over as rows of cells, so a scene document
+brings everything a played scene needs to run them.

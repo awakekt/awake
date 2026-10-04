@@ -7,6 +7,7 @@ package com.awakekt.awake.ai.behavior.patrol
 
 import com.awakekt.awake.ai.behavior.PatrolBehavior
 import com.awakekt.awake.ai.behavior.PatrolStyle
+import com.awakekt.awake.ai.behavior.ensurePathRequest
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -30,6 +31,7 @@ object PatrolBinding : SceneComponentBinding<PatrolBehavior, ScenePatrol> {
         context: SceneResolutionContext,
     ) {
         world.add(entity, component.toComponent())
+        world.ensurePathRequest(entity)
     }
 
     override fun export(world: World, entity: Entity, component: PatrolBehavior): ScenePatrol =

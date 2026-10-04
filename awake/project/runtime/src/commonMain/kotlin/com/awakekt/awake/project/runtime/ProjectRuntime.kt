@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.ai.behavior.AiBehaviorBindings
 import com.awakekt.awake.asset.gltf.firstSkinnedAsset
 import com.awakekt.awake.asset.gltf.toAnimationLibrary
 import com.awakekt.awake.core.animation.AnimationPlayer
@@ -78,6 +79,9 @@ suspend fun loadPlayableProject(
 
     installPlayableComponents()
     val scene = SceneLoader.decode(files.readText(manifest.entryScene)).withPrefabs { files.readText(it) }
+    require(!scene.hasRouteBehaviours() || scene.navigation() != null) {
+        "${manifest.entryScene} has patrol, chase or flee behaviours but no navigation component to route them over"
+    }
 
     val models = GltfAssetResolver().apply { setAssetSource(files) }
     scene.nodes.flatMap { it.meshNames() }
@@ -164,7 +168,7 @@ private val PROJECT_COMPONENTS = listOf(
     CameraRigBinding,
     PhysicsBodyBinding,
     CharacterControllerBinding,
-)
+) + AiBehaviorBindings.bindings
 
 private suspend fun AssetSource.readText(path: String): String =
     read(AssetPath(path)).getOrElse { throw IllegalArgumentException("Can't read $path from the project", it) }
