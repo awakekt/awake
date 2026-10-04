@@ -16,32 +16,42 @@
  */
 (() => {
   const product = document.currentScript?.dataset.product ?? "";
-  const MARK = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"> <defs> <radialGradient id="awake-loader-bg" cx="36%" cy="20%" r="92%"> <stop offset="0" stop-color="#24202A"/> <stop offset="0.56" stop-color="#15151C"/> <stop offset="1" stop-color="#10131A"/> </radialGradient> <linearGradient id="awake-loader-left-beam" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse"> <stop stop-color="#FF4D2E"/> <stop offset="1" stop-color="#FF9F1C"/> </linearGradient> <linearGradient id="awake-loader-right-beam" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse"> <stop stop-color="#FFF0B3"/> <stop offset="1" stop-color="#FFD166"/> </linearGradient> <linearGradient id="awake-loader-cube-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse"> <stop stop-color="#FFB84A"/> <stop offset="1" stop-color="#FFE29A"/> </linearGradient> </defs> <rect width="1024" height="1024" fill="url(#awake-loader-bg)"/> <path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#awake-loader-left-beam)"/> <path d="M266 765 346 618 402 674Z" fill="#8A2E20"/> <path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#awake-loader-right-beam)"/> <path d="M609 674 664 618 747 765Z" fill="#D9482B"/> <path d="m505 522 89 53-89 55-87-55Z" fill="url(#awake-loader-cube-top)"/> <path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/> <path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/> </svg>`;
+  // The Ember Signal glyph without its field; its gold stops follow the scheme through --glyph-*.
+  const MARK = `<svg class="mark" viewBox="166 146 680 680" aria-hidden="true"><defs><linearGradient id="awake-glyph-left" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse"><stop stop-color="#FF4D2E"/><stop offset="1" stop-color="#FF9F1C"/></linearGradient><linearGradient id="awake-glyph-right" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-r0)"/><stop offset="1" style="stop-color: var(--glyph-r1)"/></linearGradient><linearGradient id="awake-glyph-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-t0)"/><stop offset="1" style="stop-color: var(--glyph-t1)"/></linearGradient></defs><path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#awake-glyph-left)"/><path d="M266 765 346 618 402 674Z" fill="#8A2E20"/><path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#awake-glyph-right)"/><path d="M609 674 664 618 747 765Z" fill="#D9482B"/><path d="m505 522 89 53-89 55-87-55Z" fill="url(#awake-glyph-top)"/><path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/><path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/></svg>`;
   // Share of the bar each stage owns, in order.
   const DOWNLOAD = 60, GPU = 10, SHADERS = 25;
 
   const style = document.createElement("style");
   style.textContent = `
-    #awake-loader { position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center;
-      background: radial-gradient(120% 90% at 36% 20%, #24202A 0%, #15151C 56%, #10131A 100%);
-      color: #ECEAE6; font: 400 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+    #awake-loader { --bg: radial-gradient(120% 90% at 36% 20%, #24202A 0%, #15151C 56%, #10131A 100%);
+      --text: #ECEAE6; --muted: #A7A3AD; --faint: #7E7A86; --track: rgba(236, 234, 230, 0.08); --error: #FF9F80;
+      --glyph-r0: #FFF0B3; --glyph-r1: #FFD166; --glyph-t0: #FFB84A; --glyph-t1: #FFE29A;
+      --glow: rgba(255, 107, 53, 0.18); --glow-peak: rgba(255, 107, 53, 0.36);
+      position: fixed; inset: 0; z-index: 2147483647; display: grid; place-items: center;
+      background: var(--bg); color: var(--text); font: 400 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
       -webkit-font-smoothing: antialiased; transition: opacity 320ms cubic-bezier(0.23, 1, 0.32, 1); }
+    @media (prefers-color-scheme: light) {
+      #awake-loader { --bg: #F6F6F7; --text: #16161C; --muted: #4E4A55; --faint: #66626D;
+        --track: rgba(22, 22, 28, 0.10); --error: #B3361D;
+        --glyph-r0: #F7BE3A; --glyph-r1: #E8920E; --glyph-t0: #F29A2E; --glyph-t1: #F7BF48;
+        --glow: rgba(232, 146, 14, 0.10); --glow-peak: rgba(232, 146, 14, 0.22); }
+    }
     #awake-loader.done { opacity: 0; pointer-events: none; }
     #awake-loader .box { width: min(320px, 80vw); display: flex; flex-direction: column; align-items: center; }
-    #awake-loader svg.mark { width: 88px; height: 88px; border-radius: 20px;
-      box-shadow: 0 12px 40px rgba(255, 107, 53, 0.18); animation: awake-loader-breathe 2.4s ease-in-out infinite; }
-    @keyframes awake-loader-breathe { 50% { box-shadow: 0 12px 48px rgba(255, 107, 53, 0.32); } }
+    #awake-loader svg.mark { width: 88px; height: 88px; filter: drop-shadow(0 8px 20px var(--glow));
+      animation: awake-loader-breathe 2.4s ease-in-out infinite; }
+    @keyframes awake-loader-breathe { 50% { filter: drop-shadow(0 8px 28px var(--glow-peak)); } }
     #awake-loader .name { margin: 20px 0 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
-    #awake-loader .name span { font-weight: 400; color: #A7A3AD; }
+    #awake-loader .name span { font-weight: 400; color: var(--muted); }
     #awake-loader .track { width: 100%; height: 4px; margin-top: 28px; border-radius: 999px;
-      background: rgba(236, 234, 230, 0.08); overflow: hidden; }
+      background: var(--track); overflow: hidden; }
     #awake-loader .bar { height: 100%; border-radius: inherit; transform-origin: left; transform: scaleX(0);
       background: linear-gradient(90deg, #FF4D2E, #FF9F1C 60%, #FFD166);
       transition: transform 280ms cubic-bezier(0.23, 1, 0.32, 1); }
     #awake-loader .status { display: flex; justify-content: space-between; width: 100%; margin-top: 10px;
-      font-size: 13px; color: #7E7A86; font-variant-numeric: tabular-nums; }
-    #awake-loader .step { color: #A7A3AD; }
-    #awake-loader .error { display: none; margin: 16px 0 0; font-size: 13px; color: #FF9F80; text-align: center; }
+      font-size: 13px; color: var(--faint); font-variant-numeric: tabular-nums; }
+    #awake-loader .step { color: var(--muted); }
+    #awake-loader .error { display: none; margin: 16px 0 0; font-size: 13px; color: var(--error); text-align: center; }
     #awake-loader.failed .error { display: block; }
     #awake-loader.failed .bar { background: #D9482B; }
     @media (prefers-reduced-motion: reduce) {
@@ -55,7 +65,7 @@
   root.setAttribute("aria-label", `Loading AwakeKt ${product}`.trim());
   root.setAttribute("aria-valuemin", "0");
   root.setAttribute("aria-valuemax", "100");
-  root.innerHTML = `<div class="box">${MARK.replace("<svg ", '<svg class="mark" aria-hidden="true" ')}
+  root.innerHTML = `<div class="box">${MARK}
       <p class="name">AwakeKt${product ? ` <span>${product}</span>` : ""}</p>
       <div class="track"><div class="bar"></div></div>
       <div class="status"><span class="step">Starting…</span><span class="pct">0%</span></div>

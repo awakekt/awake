@@ -8,9 +8,11 @@ allowed product uses. It is not a replacement for the [trademark notice](../../T
 
 ## Decision
 
-AwakeKt owns and controls one unmodified Ember Signal mark across AwakeKt Engine and AwakeKt Studio.
-The mark is always ember orange and warm gold on its dark field. Product names distinguish the
-products; product-specific recolors do not.
+AwakeKt owns and controls one Ember Signal mark across AwakeKt Engine and AwakeKt Studio, in two
+forms. The **icon** is the mark on its dark field: launchers, the Dock and taskbar, favicons and name
+lockups. The **glyph** is the same geometry without the field, for interface surfaces such as page
+headers, documentation and loading screens; on a light surface it uses the light-surface stops below.
+Product names distinguish the products; product-specific recolors do not.
 
 | Product or surface | Visible name | Mark treatment |
 | --- | --- | --- |
@@ -33,6 +35,7 @@ The Engine Showcase owns the runtime copies that platform hosts consume:
 | [`ic_launcher.xml`](../../samples/engine-showcase/androidApp/src/main/res/mipmap-anydpi-v26/ic_launcher.xml) | Android adaptive launcher entry point |
 | [`AppIcon.appiconset`](../../samples/engine-showcase/iosApp/iosApp/Assets.xcassets/AppIcon.appiconset/Contents.json) | iOS AppIcon size catalog |
 | [`index.html`](../../samples/engine-showcase/src/wasmJsMain/resources/index.html) | Web SVG favicon reference |
+| [`awake-glyph.svg`](../../website/landing/brand/awake-glyph.svg) | The glyph: field-free, light-surface stops by default and the original stops under a dark colour scheme |
 
 ### Name lockups
 
@@ -68,9 +71,23 @@ them when creating a new platform asset.
 | Cube right | `#D9482B` |
 | Supporting accent | `#FF6B35` |
 
-Do not recolor the mark for Studio, Engine, light mode, seasonal campaigns, or a product feature.
-On a light surface, retain the icon's dark field. Text-only accents may use the darker gold
-`#9A6500` to meet a 4.96:1 contrast ratio against white; this is not a different logo palette.
+The glyph keeps every color above on a dark surface. On a light surface the cream right beam and
+cube top disappear, so those two gradients darken; everything else is unchanged:
+
+| Glyph on a light surface | Approved color |
+| --- | --- |
+| Right A-beam | `#F7BE3A` → `#E8920E` |
+| Cube top | `#F29A2E` → `#F7BF48` |
+
+![The glyph on the loading screen, the docs header and awakekt.com, light and dark](../assets/brand/glyph-surfaces.png)
+
+A page that switches between light and dark inlines the glyph and sets these stops from its own
+theme (`--glyph-r0`, `--glyph-r1`, `--glyph-t0`, `--glyph-t1`), so the glyph follows the page's
+toggle rather than the operating system's setting.
+
+Do not recolor the mark for Studio, Engine, seasonal campaigns, or a product feature. The icon keeps
+its dark field on every surface. Text-only accents may use the darker gold `#9A6500` to meet a
+4.96:1 contrast ratio against white.
 
 ## Name and type rules
 
@@ -93,7 +110,7 @@ normal text separator is one space: `AwakeKt Studio` and `AwakeKt Engine`.
 | iOS | Full-bleed 1024px source; allow the system to apply corner masking. |
 | Desktop | Use the 1024px PNG for taskbar/Dock identity; do not add text to the OS icon. |
 | Web | Use the SVG mark as the favicon; do not create a wordmark favicon. |
-| In-app splash, About, headers, and documentation | A mark may appear alongside ordinary product text at a readable size. |
+| In-app splash, About, headers, loading screens, and documentation | Use the glyph, alongside ordinary product text at a readable size, with the stops for the surface it sits on. |
 
 ## Provenance record
 
@@ -113,7 +130,7 @@ project-authored brand asset, so it has no external provenance-registry entry.
 
 - [ ] The asset was derived from the approved SVG master, not redrawn.
 - [ ] The icon has no wordmark or small text.
-- [ ] The original ember-and-gold palette and dark field are intact.
+- [ ] The icon's ember-and-gold palette and dark field are intact.
 - [ ] Android adaptive safe-area and monochrome behavior are preserved.
-- [ ] Light-mode usage keeps the mark unchanged.
+- [ ] Interface surfaces use the glyph, with the light-surface stops on light backgrounds.
 - [ ] Any use of the name or mark follows [TRADEMARKS.md](../../TRADEMARKS.md).

@@ -19,7 +19,8 @@ extra:
     provider: mike
 theme:
   name: material
-  logo: assets/brand/awake-mark.svg
+  custom_dir: overrides
+  logo: assets/brand/awake-glyph.svg
   favicon: assets/brand/awake-mark.svg
   font:
     text: IBM Plex Sans

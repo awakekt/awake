@@ -53,6 +53,10 @@
       --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
     }
 
+    /* The header glyph's beam and cube-top stops: the original gold on dark, darker on light. */
+    :root { --glyph-r0: #FFF0B3; --glyph-r1: #FFD166; --glyph-t0: #FFB84A; --glyph-t1: #FFE29A; }
+    :root:not([data-theme="dark"]) { --glyph-r0: #F7BE3A; --glyph-r1: #E8920E; --glyph-t0: #F29A2E; --glyph-t1: #F7BF48; }
+    .brand .glyph { width: 28px; height: 28px; flex: none; }
     :root[data-theme="dark"] { color-scheme: dark; }
     :root:not([data-theme="dark"]) {
       --bg: #F6F6F7;
@@ -119,7 +123,6 @@
       font-weight: 600;
       font-size: 16px;
     }
-    .brand img { width: 28px; height: 28px; border-radius: 6px; }
     .brand .section { color: var(--text-faint); font-weight: 400; }
     .nav {
       display: flex;
@@ -313,7 +316,7 @@
   <header class="site-header">
     <div class="wrap">
       <a class="brand" href="https://awakekt.com/">
-        <img src="awake-mark.svg" alt="" width="28" height="28">
+        <svg class="glyph" viewBox="166 146 680 680" aria-hidden="true"><defs><linearGradient id="awake-glyph-left" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse"><stop stop-color="#FF4D2E"/><stop offset="1" stop-color="#FF9F1C"/></linearGradient><linearGradient id="awake-glyph-right" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-r0)"/><stop offset="1" style="stop-color: var(--glyph-r1)"/></linearGradient><linearGradient id="awake-glyph-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-t0)"/><stop offset="1" style="stop-color: var(--glyph-t1)"/></linearGradient></defs><path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#awake-glyph-left)"/><path d="M266 765 346 618 402 674Z" fill="#8A2E20"/><path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#awake-glyph-right)"/><path d="M609 674 664 618 747 765Z" fill="#D9482B"/><path d="m505 522 89 53-89 55-87-55Z" fill="url(#awake-glyph-top)"/><path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/><path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/></svg>
         <span>AwakeKt Engine <span class="section">/ Samples</span></span>
       </a>
       <nav class="nav" aria-label="Primary">
