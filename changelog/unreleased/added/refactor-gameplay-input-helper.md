@@ -1,0 +1,1 @@
+- **One helper for the input gameplay may act on.** `SceneAppLifecycleRuntime.gameplayInput()` (in `awake:scene:authoring`) returns the running input minus whatever the UI has claimed. The camera, camera-input and player-input systems, `playProject` and the showcase now ask for it instead of each spelling out the same expression.

@@ -9,7 +9,6 @@ import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.litShadowShader
 import com.awakekt.awake.asset.shaders.aslShaderSet
 import com.awakekt.awake.asset.shaders.program
-import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.logging.Logger
 import com.awakekt.awake.ecs.System
@@ -20,6 +19,7 @@ import com.awakekt.awake.render.pipeline.ShaderReplacementException
 import com.awakekt.awake.render.pipeline.ShaderSource
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.authoring.SceneAppDsl
+import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
 import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.runtime.SceneSystemHandle
 import kotlinx.coroutines.CoroutineScope
@@ -84,6 +84,6 @@ internal class ShowcaseShaderSwap(
 internal fun SceneAppDsl.shaderSwapSystem(): SceneSystemHandle<ShowcaseShaderSwap> = frameSystem("shader-swap") {
     ShowcaseShaderSwap(
         renderer = { renderer },
-        input = { GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership) },
+        input = { gameplayInput() },
     )
 }

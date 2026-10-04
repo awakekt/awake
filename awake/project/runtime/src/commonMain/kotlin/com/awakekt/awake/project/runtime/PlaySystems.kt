@@ -5,12 +5,12 @@
  */
 package com.awakekt.awake.project.runtime
 
-import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.authoring.SceneAppDsl
+import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
 import com.awakekt.awake.scene.canvas.SceneCanvasElement
 import com.awakekt.awake.scene.character.CharacterControllerSystem
 import com.awakekt.awake.scene.character.SceneCharacterController
@@ -128,7 +128,7 @@ internal fun SceneAppDsl.registerPlaySpecs(scene: SceneDocument, physics: Physic
     playSpecsFor(scene, hasPhysics = physics != null).forEach { spec ->
         system(spec.name, spec.phase) {
             val services = PlayServices(
-                input = { GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership) },
+                input = { gameplayInput() },
                 renderer = renderer,
                 physics = physics,
                 particleSprites = particleSprites,

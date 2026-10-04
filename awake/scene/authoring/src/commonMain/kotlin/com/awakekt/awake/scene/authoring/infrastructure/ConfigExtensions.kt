@@ -12,13 +12,22 @@ import com.awakekt.awake.scene.controls.camera.CameraInputSystem
 import com.awakekt.awake.scene.controls.camera.CameraSystem
 import com.awakekt.awake.scene.controls.movement.MatrixRelativeMovementSystem
 import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
+import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneSystemHandle
+
+/**
+ * What gameplay may read of the input right now: the keyboard, pointer and touch state, minus
+ * whatever the UI has claimed. The input every control system here reads, in one place, so a system
+ * a sample or a game writes asks for the same thing.
+ */
+fun SceneAppLifecycleRuntime.gameplayInput(): GameplayInput =
+    GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership)
 
 fun SceneAppDsl.cameraSystem(
     name: String = "camera",
 ): SceneSystemHandle<CameraSystem> = frameSystem(name) {
     CameraSystem(
-        inputProvider = { GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership) },
+        inputProvider = { gameplayInput() },
     )
 }
 
@@ -26,7 +35,7 @@ fun SceneAppDsl.cameraInputSystem(
     name: String = "cameraInput",
 ): SceneSystemHandle<CameraInputSystem> = frameSystem(name) {
     CameraInputSystem(
-        inputProvider = { GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership) },
+        inputProvider = { gameplayInput() },
     )
 }
 
@@ -34,7 +43,7 @@ fun SceneAppDsl.playerInputSystem(
     name: String = "playerInput",
 ): SceneSystemHandle<PlayerInputSystem> = frameSystem(name) {
     PlayerInputSystem(
-        inputProvider = { GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership) },
+        inputProvider = { gameplayInput() },
     )
 }
 
