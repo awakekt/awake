@@ -133,7 +133,9 @@ dock: spinControl.speed must not be negative
 ```
 
 Node names must be unique across the whole document, because components such as `camera_rig` refer
-to nodes by name.
+to nodes by name. A prefab instance is its own scope: the nodes a `prefab_link` brings in need
+unique names only within that instance, so one prefab can be placed many times. A link inside an
+instance resolves to the instance's own node first, then to the scopes around it.
 
 ## How it works
 

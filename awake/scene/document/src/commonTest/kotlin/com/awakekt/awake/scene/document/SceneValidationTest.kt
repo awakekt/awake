@@ -49,6 +49,24 @@ class SceneValidationTest {
         assertTrue(issues.any { "custom.type must not be blank" in it.message })
     }
 
+    /** One prefab placed twice: each instance repeats the prefab's names, and only its own clash. */
+    @Test
+    fun aPrefabInstanceIsItsOwnNameScope() {
+        fun fire(vararg sparks: String) = SceneNode(name = "fire", children = sparks.map { SceneNode(name = it) })
+        fun camp(name: String, prefab: SceneNode) =
+            SceneNode(name = name, components = listOf(ScenePrefabLink("fx/fire.prefab.json")), children = listOf(prefab))
+
+        val twice = SceneDocument(nodes = listOf(camp("camp 0", fire("spark")), camp("camp 1", fire("spark")), SceneNode(name = "spark")))
+        val clash = SceneDocument(nodes = listOf(camp("camp 0", fire("spark", "spark")), camp("camp 0", fire())))
+
+        assertEquals(emptyList(), SceneValidator.validate(twice), "each instance and the document each have one 'spark'")
+        assertEquals(
+            listOf("camp 0/fire/spark", "camp 0"),
+            SceneValidator.validate(clash).map { it.path },
+            "names still clash within one instance, and instance nodes within the document",
+        )
+    }
+
     @Test
     fun validatorEnforcesSingleInstanceForComponentsDisallowingMultiples() {
         val document = SceneDocument(

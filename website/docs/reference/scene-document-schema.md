@@ -21,7 +21,7 @@ For what each component holds, see [Scene document components](scene-document-co
 
 | Key | Type | Default | What it holds |
 | --- | --- | --- | --- |
-| `name` | string | none | Node name. Becomes the entity's `Name`. Must be unique across the whole document. Other components refer to nodes by this name. |
+| `name` | string | none | Node name. Becomes the entity's `Name`. Must be unique within its scope: the document, or the prefab instance it was linked in. Other components refer to nodes by this name. |
 | `transform` | [transform](#transform) | identity | Local transform, relative to the parent node. Becomes the entity's `Transform`. |
 | `components` | array of [component](#component) | `[]` | Components attached to the entity. |
 | `children` | array of node | `[]` | Child nodes. Their `Transform` is parented to this node. |
@@ -127,7 +127,7 @@ Some fields also accept a second spelling:
 
 | Rule | Message |
 | --- | --- |
-| Node names are unique across the document | `duplicate node name '<name>' already used at <path>` |
+| Node names are unique within their scope (the document, or one prefab instance) | `duplicate node name '<name>' already used at <path>` |
 | At most one `camera` and one `terrain` per node | `node declares <n> <type> instances, expected at most 1` |
 | Each component's own rules | See [Scene document components](scene-document-components.md) |
 | Extension errors (with an extension registry) | The extension's message |

@@ -14,6 +14,7 @@ import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneInstantiationAdapter
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.SceneNodeHandle
+import com.awakekt.awake.scene.document.ScenePrefabLink
 import com.awakekt.awake.scene.document.SceneTransform
 import com.awakekt.awake.scene.document.SceneVec3
 
@@ -28,14 +29,21 @@ class AwakeWorldSceneAdapter(
     private val componentRegistry: SceneComponentRegistry = SceneComponentRegistry(),
 ) : SceneInstantiationAdapter<Entity, Scene> {
     private val requests = ArrayList<Any>()
-    private val entitiesByName = HashMap<String, Entity>()
     private val entityLinks = ArrayList<EntityLink>()
 
-    override fun createNode(node: SceneNode, parent: Entity?): Entity = world.create()
+    // Names are scoped as `SceneValidator` scopes them: the document, and each prefab instance's
+    // node. A scope is keyed by its instance node; null is the document.
+    private val prefabInstances = HashSet<Entity>()
+    private val scopeOf = HashMap<Entity, Entity?>()
+    private val namesByScope = HashMap<Entity?, HashMap<String, Entity>>()
+
+    override fun createNode(node: SceneNode, parent: Entity?): Entity = world.create().also { entity ->
+        scopeOf[entity] = parent?.let { if (it in prefabInstances) it else scopeOf[it] }
+    }
 
     override fun attachName(node: Entity, name: String) {
         world.add(node, Name(name))
-        entitiesByName.getOrPut(name) { node }
+        namesByScope.getOrPut(scopeOf[node]) { HashMap() }.getOrPut(name) { node }
     }
 
     override fun attachTransform(node: Entity, transform: SceneTransform, parent: Entity?) {
@@ -43,11 +51,12 @@ class AwakeWorldSceneAdapter(
     }
 
     override fun attachComponent(node: Entity, component: SceneComponent) {
+        if (component is ScenePrefabLink) prefabInstances += node
         val context = object : SceneResolutionContext {
             override val world: World get() = this@AwakeWorldSceneAdapter.world
 
             override fun deferNodeLink(targetNodeName: String, onResolved: (target: Entity) -> Unit) {
-                entityLinks += EntityLink(targetNodeName, onResolved)
+                entityLinks += EntityLink(targetNodeName, scopeOf[node], onResolved)
             }
 
             override fun recordRequest(request: Any) {
@@ -59,7 +68,7 @@ class AwakeWorldSceneAdapter(
 
     override fun complete(roots: List<SceneNodeHandle<Entity>>): Scene {
         entityLinks.forEach { link ->
-            val target = requireNotNull(entitiesByName[link.name]) {
+            val target = requireNotNull(resolve(link.name, link.scope)) {
                 "Cannot load scene: a component references node \"${link.name}\", which does not exist."
             }
             link.assign(target)
@@ -71,7 +80,17 @@ class AwakeWorldSceneAdapter(
         )
     }
 
-    private class EntityLink(val name: String, val assign: (Entity) -> Unit)
+    /** [name] in [scope], else in the scopes around it: a prefab instance's own nodes come first. */
+    private fun resolve(name: String, scope: Entity?): Entity? {
+        var current = scope
+        while (true) {
+            namesByScope[current]?.get(name)?.let { return it }
+            if (current == null) return null
+            current = scopeOf[current]
+        }
+    }
+
+    private class EntityLink(val name: String, val scope: Entity?, val assign: (Entity) -> Unit)
 }
 
 /** Converts a [SceneTransform] into a live ECS [Transform] component. */
