@@ -217,6 +217,9 @@ class SceneAssetLibrary(
             transparent = request.meshRenderer.transparent,
             additive = request.meshRenderer.additive,
             billboard = request.meshRenderer.billboard,
+            defaultMaterial = dynamicResolvers.firstNotNullOfOrNull { resolver ->
+                resolver.takeIf { it.canResolveMaterial(key.material) }?.materialDefaults(key.material)
+            },
         )
     }
 

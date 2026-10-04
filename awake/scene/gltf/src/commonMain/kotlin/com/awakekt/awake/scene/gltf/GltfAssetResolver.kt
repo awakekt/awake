@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.gltf
 
+import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.asset.gltf.GltfAlphaMode
 import com.awakekt.awake.asset.gltf.GltfMesh
 import com.awakekt.awake.asset.gltf.GltfParser
@@ -135,6 +136,7 @@ class GltfAssetResolver(
         loadedMaterialSlots.remove(path)
         loadedStaticMeshes.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         loadedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
+        materialDefaults.keys.removeAll { it == path || it.startsWith("$path#") }
         skinnedPartTextures.keys.removeAll { it.startsWith("$path#") }
     }
 
@@ -256,6 +258,23 @@ class GltfAssetResolver(
             runtime.renderer.createMaterial(TexturedUniformLayout, texture = loaded.texture, pbrTextures = loaded.pbrTextures)
         }
         else -> null
+    }
+
+    private val materialDefaults = HashMap<String, PbrMaterial>()
+
+    /** A glTF material's own factors and alpha mode, one shared instance per material. */
+    override fun materialDefaults(name: String): PbrMaterial? {
+        val path = name.takeIf { it.startsWith("gltf-material:") }?.removePrefix("gltf-material:")
+        val parameters = path?.let { loadedMaterials[it]?.parameters } ?: return null
+        return materialDefaults.getOrPut(path) {
+            PbrMaterial(
+                metallic = parameters.metallic,
+                roughness = parameters.roughness,
+                baseColorFactor = parameters.baseColorFactor,
+                emissiveFactor = parameters.emissiveFactor,
+                alphaMode = parameters.alphaMode,
+            )
+        }
     }
 }
 

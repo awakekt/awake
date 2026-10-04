@@ -72,7 +72,8 @@ internal class SceneDrawCollector(
             // shader reads it (a skinned mesh's joint palette); every other format ignores
             // an empty array the same way it always has.
             val pose = world.get<SkinnedPose>(entity, poseType)
-            val pbr = world.get<PbrMaterial>(entity, pbrType)
+            // The entity's own material wins; otherwise the factors its material was authored with.
+            val pbr = world.get<PbrMaterial>(entity, pbrType) ?: meshRenderer.defaultMaterial
             val animation = world.get<TextureAnimation>(entity, animationType)
             val extras = when {
                 pose != null -> pbr?.let(pose::tintedBy) ?: pose.jointPalette

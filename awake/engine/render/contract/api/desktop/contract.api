@@ -1425,6 +1425,14 @@ public final class com/awakekt/awake/render/texture/MipChainKt {
 	public static final fun mipChain (Lcom/awakekt/awake/render/texture/TextureAsset;)Ljava/util/List;
 }
 
+public final class com/awakekt/awake/render/texture/NeutralPbrTextures {
+	public static final field INSTANCE Lcom/awakekt/awake/render/texture/NeutralPbrTextures;
+	public final fun getEmissive ()Lcom/awakekt/awake/render/texture/TextureAsset;
+	public final fun getMetallicRoughness ()Lcom/awakekt/awake/render/texture/TextureAsset;
+	public final fun getNormal ()Lcom/awakekt/awake/render/texture/TextureAsset;
+	public final fun getOcclusion ()Lcom/awakekt/awake/render/texture/TextureAsset;
+}
+
 public final class com/awakekt/awake/render/texture/PbrTextureSet {
 	public fun <init> ()V
 	public fun <init> (Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/TextureAsset;Lcom/awakekt/awake/render/texture/TextureAsset;)V

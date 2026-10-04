@@ -21,9 +21,12 @@ import com.awakekt.awake.render.renderer.UniformWriter
 const val DEFAULT_METALLIC = 0f
 const val DEFAULT_ROUGHNESS = 0.5f
 
-/** glTF's own defaults for `pbrMetallicRoughness`: both factors fully applied. */
-const val DEFAULT_METALLIC_FACTOR = 1f
-const val DEFAULT_ROUGHNESS_FACTOR = 1f
+/**
+ * A textured draw's factors when it carries none: a plain half-rough dielectric. An imported material
+ * brings its own factors (glTF's own defaults are 1 and 1, applied by its importer, not here).
+ */
+const val DEFAULT_METALLIC_FACTOR = 0f
+const val DEFAULT_ROUGHNESS_FACTOR = 0.5f
 
 /** glTF's `baseColorFactor` default -- opaque white, i.e. the texture passes through untinted. */
 val DEFAULT_BASE_COLOR_FACTOR: Color = Color.White

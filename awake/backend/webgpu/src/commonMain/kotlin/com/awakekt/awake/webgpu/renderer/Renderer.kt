@@ -303,9 +303,9 @@ class Renderer internal constructor(
         internal const val MAX_DEBUG_LINES = DebugLineLayout.INITIAL_LINES
         internal val WHITE_RGBA = AwakeColor.White
 
-        internal val NEUTRAL_METALLIC_ROUGHNESS = TextureAsset(byteArrayOf(0, -128, 0, -1), 1, 1)
-        internal val NEUTRAL_NORMAL = TextureAsset(byteArrayOf(-128, -128, -1, -1), 1, 1)
-        internal val NEUTRAL_OCCLUSION = TextureAsset(byteArrayOf(-1, -1, -1, -1), 1, 1)
-        internal val NEUTRAL_EMISSIVE = TextureAsset(byteArrayOf(0, 0, 0, -1), 1, 1)
+        internal val NEUTRAL_METALLIC_ROUGHNESS = com.awakekt.awake.render.texture.NeutralPbrTextures.MetallicRoughness
+        internal val NEUTRAL_NORMAL = com.awakekt.awake.render.texture.NeutralPbrTextures.Normal
+        internal val NEUTRAL_OCCLUSION = com.awakekt.awake.render.texture.NeutralPbrTextures.Occlusion
+        internal val NEUTRAL_EMISSIVE = com.awakekt.awake.render.texture.NeutralPbrTextures.Emissive
     }
 }

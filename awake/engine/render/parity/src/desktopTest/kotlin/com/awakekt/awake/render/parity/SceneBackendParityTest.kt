@@ -39,6 +39,24 @@ import kotlin.test.assertTrue
  */
 class SceneBackendParityTest {
 
+    /**
+     * A material without a metallic-roughness map takes its factors as they are: a metallic plane
+     * reads clearly differently from a dielectric one. The neutral map used to hold metallic at 0,
+     * which multiplied any factor away and drew the two the same.
+     */
+    @Test
+    fun aMetallicFactorTakesEffectWithoutAMapOnBothBackends() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val dielectric = renderer.renderTexturedPbrScene(metallic = 0f, roughness = 1f).also { write(backend, it, "pbr-dielectric") }
+            val metal = renderer.renderTexturedPbrScene(metallic = 1f, roughness = 1f).also { write(backend, it, "pbr-metal") }
+            fun brightness(pixels: ByteArray) = pixels.indices.step(4).sumOf { (pixels[it].toInt() and 0xFF) + (pixels[it + 1].toInt() and 0xFF) + (pixels[it + 2].toInt() and 0xFF) }
+
+            val change = abs(brightness(dielectric) - brightness(metal)).toDouble() / brightness(dielectric)
+            assertTrue(change > MIN_METALLIC_CHANGE, "$backend: metallic 1 changed the frame's brightness by ${"%.3f".format(change)}")
+        }
+    }
+
     @Test
     fun texturedPbrDrawUsesTheSameCoverageOnBothBackends() {
         val covered = BACKEND_ORDER.associateWith { backend ->
@@ -581,6 +599,8 @@ class SceneBackendParityTest {
         /** A card's black clear half: it reads up to 22 through WebGPU's sRGB target, the shadowed ground 59 and up. */
         const val BLACK_LEVEL = 30
         const val MIN_CLEAR_HALF_PIXELS = 20
+        /** A metal loses its diffuse light; anything under a tenth is the factor being ignored. */
+        const val MIN_METALLIC_CHANGE = 0.1
         const val RED = 0
         const val GREEN = 1
         const val BLUE = 2
