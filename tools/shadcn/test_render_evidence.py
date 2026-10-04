@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: 2023-2026 Ron June Valdoz
 #
 # SPDX-License-Identifier: Apache-2.0
-"""Checks render_evidence.py on synthetic captures: python3 scripts/render_evidence_test.py"""
+"""Checks render_evidence.py on synthetic captures: python3 tools/shadcn/test_render_evidence.py"""
 import json
 import os
 import subprocess

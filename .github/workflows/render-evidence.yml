@@ -160,7 +160,7 @@ jobs:
         if: steps.scope.outputs.render == 'true'
         run: |
           python -m pip install --quiet 'pillow==12.3.0'
-          python scripts/render_evidence.py prepare "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$RUNNER_TEMP/compare" "$BASE_SHA" "$HEAD_SHA"
+          python tools/shadcn/render_evidence.py prepare "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$RUNNER_TEMP/compare" "$BASE_SHA" "$HEAD_SHA"
 
       - name: Publish images
         if: steps.scope.outputs.render == 'true'
@@ -199,7 +199,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           prefix="https://raw.githubusercontent.com/${{ github.repository }}/render-evidence/pr-$PR/$HEAD_SHA"
-          python scripts/render_evidence.py comment "$RUNNER_TEMP/compare" "$prefix" "$HEAD_SHA" "${{ github.repository }}" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
+          python tools/shadcn/render_evidence.py comment "$RUNNER_TEMP/compare" "$prefix" "$HEAD_SHA" "${{ github.repository }}" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
           existing="$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
             --jq '[.[] | select(.body | startswith("<!-- render-evidence -->")) | .id] | first // empty')"
           if [[ ! -s "$RUNNER_TEMP/comment.md" && "$PR_TITLE" =~ ^fix(\(.*\))?!?: ]]; then
