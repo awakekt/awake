@@ -1,0 +1,20 @@
+public final class com/awakekt/awake/core/pool/ScratchPool {
+	public static final field Companion Lcom/awakekt/awake/core/pool/ScratchPool$Companion;
+	public static final field DEFAULT_CAPACITY I
+	public fun <init> (ILkotlin/jvm/functions/Function0;)V
+	public fun <init> (ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Lkotlin/jvm/functions/Function0;)V
+	public final fun clear ()V
+	public final fun forEachActive (Lkotlin/jvm/functions/Function1;)V
+	public final fun get (I)Ljava/lang/Object;
+	public final fun getCapacity ()I
+	public final fun getCount ()I
+	public final fun obtain ()Ljava/lang/Object;
+	public final fun obtain (Lkotlin/jvm/functions/Function1;)Ljava/lang/Object;
+	public final fun reset ()V
+}
+
+public final class com/awakekt/awake/core/pool/ScratchPool$Companion {
+}
+

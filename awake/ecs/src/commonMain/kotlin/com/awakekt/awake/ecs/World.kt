@@ -345,9 +345,19 @@ class World {
     }
 
     /**
-     * Destroys all entities and clears all component storage.
+     * Bumped by every [clear]. [clear] keeps this instance but forgets every component type id and
+     * discards every [Family], so anything that cached either (a [ComponentTypeId], a family, a
+     * [componentStore]) must compare this against the value it cached them under and resolve again
+     * on a change.
+     */
+    var generation: Int = 0
+        private set
+
+    /**
+     * Destroys all entities and clears all component storage. Increments [generation].
      */
     fun clear() {
+        generation++
         entities.clear()
         components.clear()
         familyRegistry.clear()
@@ -418,14 +428,6 @@ class World {
     internal fun <T : Any> store(typeId: ComponentTypeId, type: KClass<T>): ComponentStore<T> = components.store(typeId, type)
 
     /**
-     * Returns the raw [ComponentStore] for the specified [typeId], or null if uninitialized.
-     */
-    @PublishedApi
-    // Safe: ComponentStore<T> is stored under the unique ComponentTypeId registered for T.
-    @Suppress("UNCHECKED_CAST")
-    internal fun <T : Any> storeOrNull(typeId: ComponentTypeId): ComponentStore<T>? = components.storeOrNull(typeId)
-
-    /**
      * Returns the internal bitmask signature for the entity at [id].
      */
     internal fun getSignature(id: Int): Long = entities.signature(id)
@@ -476,4 +478,14 @@ class World {
      * Optimized [has] using a pre-resolved [typeId].
      */
     fun has(entity: Entity, typeId: ComponentTypeId): Boolean = hasInternal(entity, typeId)
+
+    /**
+     * The underlying component store for [typeId], or null when no entity has ever carried it.
+     * Hoisting store resolution out of a per-entity loop avoids looking up the store on every entity.
+     *
+     * [T] is not checked: it must be the type [typeId] was resolved from, via [typeId]. Resolve
+     * [typeId] again after [clear], which forgets every type id.
+     */
+    fun <T : Any> componentStore(typeId: ComponentTypeId): ComponentStore<T>? =
+        components.storeOrNull(typeId)
 }

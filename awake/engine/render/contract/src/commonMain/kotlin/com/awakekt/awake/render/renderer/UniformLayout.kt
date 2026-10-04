@@ -209,8 +209,22 @@ object UniformFields {
  * not required to build the array (concatenation order already encodes it). */
 class UniformLayout(vararg val fields: UniformField) {
     val total: Int = fields.sumOf { it.floats }
-    fun offsetOf(field: UniformField): Int =
-        fields.takeWhile { it !== field }.sumOf { it.floats }
+
+    /** Each field's start, by position in [fields], so [offsetOf] is a scan rather than a list per call. */
+    private val offsets = IntArray(fields.size).also { starts ->
+        var next = 0
+        for (i in fields.indices) {
+            starts[i] = next
+            next += fields[i].floats
+        }
+    }
+
+    fun offsetOf(field: UniformField): Int {
+        for (i in fields.indices) {
+            if (fields[i] === field) return offsets[i]
+        }
+        return total
+    }
 
     /** Writes one declared vec4 field into an existing reusable buffer. The field determines the
      * destination offset; callers never repeat the shader ABI as `offset + 1`, `offset + 2`, ... . */

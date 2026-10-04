@@ -304,6 +304,7 @@ public final class com/awakekt/awake/ecs/World {
 	public final fun addInternal-Nxd7DYM (JILcom/awakekt/awake/ecs/ComponentStore;Ljava/lang/Object;)Ljava/lang/Object;
 	public final fun clear ()V
 	public final fun componentCount (Lkotlin/reflect/KClass;)I
+	public final fun componentStore-1VG1NCY (I)Lcom/awakekt/awake/ecs/ComponentStore;
 	public final fun componentTypes-H_EwOg4 (J)Ljava/util/List;
 	public final fun create-LaMO_uA ()J
 	public final fun describeStorage ()Ljava/util/List;
@@ -315,6 +316,7 @@ public final class com/awakekt/awake/ecs/World {
 	public final fun get-smMvhPQ (JLkotlin/reflect/KClass;)Ljava/lang/Object;
 	public final fun getComponents ()Lcom/awakekt/awake/ecs/ComponentRegistry;
 	public final fun getEntities ()Lcom/awakekt/awake/ecs/EntityArena;
+	public final fun getGeneration ()I
 	public final fun getInternal-5b6kAPM (JI)Ljava/lang/Object;
 	public final fun has-5b6kAPM (JI)Z
 	public final fun has-smMvhPQ (JLkotlin/reflect/KClass;)Z
@@ -330,7 +332,6 @@ public final class com/awakekt/awake/ecs/World {
 	public final fun storageKind (Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentStorageKind;
 	public final fun store (Lkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentStore;
 	public final fun store-2JZkb7c (ILkotlin/reflect/KClass;)Lcom/awakekt/awake/ecs/ComponentStore;
-	public final fun storeOrNull-1VG1NCY (I)Lcom/awakekt/awake/ecs/ComponentStore;
 	public final fun typeId-RRRE7NQ (Lkotlin/reflect/KClass;)I
 }
 

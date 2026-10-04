@@ -43,6 +43,25 @@ data class ModularCharacterComponent(
     var isVisible: Boolean = true,
     val skeleton: Skeleton? = null,
 ) {
+    /**
+     * [slots] in map order as a list, so the per-frame draw loop can walk it by index: iterating a
+     * map allocates an iterator per call. Every method below that changes [slots] rebuilds it, so
+     * change slots through them. A [copy] shares the map but keeps its own list, so equip through
+     * one of the two components, not both.
+     */
+    private val ordered = ArrayList<CharacterSlot>(slots.values)
+
+    /** How many slots are equipped, for an allocation-free loop with [slotAt]. */
+    internal val slotCount: Int get() = ordered.size
+
+    /** The slot at [index] in equip order, for an allocation-free loop up to [slotCount]. */
+    internal fun slotAt(index: Int): CharacterSlot = ordered[index]
+
+    private fun refreshOrdered() {
+        ordered.clear()
+        ordered.addAll(slots.values)
+    }
+
     // Safe: default constructor assigns LinkedHashMap, and copy preserves it.
     @Suppress("UNCHECKED_CAST")
     private val mutableSlots: MutableMap<String, CharacterSlot>
@@ -52,6 +71,7 @@ data class ModularCharacterComponent(
     /** Attaches or replaces the submesh bound to [slot]'s own name. */
     fun setSlot(slot: CharacterSlot) {
         mutableSlots[slot.slotName] = slot
+        refreshOrdered()
     }
 
     /**
@@ -66,6 +86,7 @@ data class ModularCharacterComponent(
     fun equip(slotName: String, mesh: Mesh, material: Material, isVisible: Boolean = true): CharacterSlot {
         val slot = CharacterSlot(slotName, mesh, material, isVisible)
         mutableSlots[slotName] = slot
+        refreshOrdered()
         return slot
     }
 
@@ -75,12 +96,12 @@ data class ModularCharacterComponent(
      * @param slotName Name of the slot to unequip.
      * @return The removed [CharacterSlot], or null if absent.
      */
-    fun unequip(slotName: String): CharacterSlot? = mutableSlots.remove(slotName)
+    fun unequip(slotName: String): CharacterSlot? = mutableSlots.remove(slotName).also { refreshOrdered() }
 
     /**
      * Detaches the submesh bound to [slotName].
      */
-    fun removeSlot(slotName: String): CharacterSlot? = mutableSlots.remove(slotName)
+    fun removeSlot(slotName: String): CharacterSlot? = mutableSlots.remove(slotName).also { refreshOrdered() }
 
     /**
      * Retrieves the slot bound to [slotName], or null if absent.
@@ -97,6 +118,7 @@ data class ModularCharacterComponent(
      */
     fun clearSlots() {
         mutableSlots.clear()
+        refreshOrdered()
     }
 
     /** Returns the number of currently visible slot pieces. */

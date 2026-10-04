@@ -63,6 +63,17 @@ data class MeshBounds(
     }
 
     /**
+     * Writes this entity's world box under [transform] into [into], reusing its existing min/max
+     * vectors without allocating.
+     */
+    fun writeWorldBounds(transform: Transform, into: Aabb): Aabb {
+        refresh(transform)
+        into.min.set(minX, minY, minZ)
+        into.max.set(maxX, maxY, maxZ)
+        return into
+    }
+
+    /**
      * Whether [transform]'s world box is at least partly inside [planes], without building a box
      * object: the culling test every renderable entity takes every frame.
      */

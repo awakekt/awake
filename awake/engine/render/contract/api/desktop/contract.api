@@ -251,6 +251,25 @@ public final class com/awakekt/awake/render/command/GpuDrawRequest {
 	public final fun getVertexAnimation ()Lcom/awakekt/awake/core/math/Vec3f;
 	public final fun getWorldBounds ()Lcom/awakekt/awake/core/math/Aabb;
 	public fun hashCode ()I
+	public final fun set (Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;Z)Lcom/awakekt/awake/render/command/GpuDrawRequest;
+	public static synthetic fun set$default (Lcom/awakekt/awake/render/command/GpuDrawRequest;Lcom/awakekt/awake/render/mesh/GpuMesh;Lcom/awakekt/awake/render/material/GpuMaterial;Lcom/awakekt/awake/core/math/Mat4;[FLcom/awakekt/awake/core/math/Vec3f;FLjava/util/List;Ljava/util/List;Ljava/util/List;Ljava/util/List;Lcom/awakekt/awake/render/pipeline/CullMode;Lcom/awakekt/awake/render/pipeline/AlphaMode;FZZLcom/awakekt/awake/core/math/Aabb;ZILjava/lang/Object;)Lcom/awakekt/awake/render/command/GpuDrawRequest;
+	public final fun setAdditive (Z)V
+	public final fun setAlphaCutoff (F)V
+	public final fun setAlphaMode (Lcom/awakekt/awake/render/pipeline/AlphaMode;)V
+	public final fun setCullMode (Lcom/awakekt/awake/render/pipeline/CullMode;)V
+	public final fun setExtraUniformFloats ([F)V
+	public final fun setInstanceColors (Ljava/util/List;)V
+	public final fun setInstanceFrames (Ljava/util/List;)V
+	public final fun setInstanceJointPalettes (Ljava/util/List;)V
+	public final fun setInstanceModels (Ljava/util/List;)V
+	public final fun setMaterial (Lcom/awakekt/awake/render/material/GpuMaterial;)V
+	public final fun setMesh (Lcom/awakekt/awake/render/mesh/GpuMesh;)V
+	public final fun setModel (Lcom/awakekt/awake/core/math/Mat4;)V
+	public final fun setShadowsOnly (Z)V
+	public final fun setTimeSeconds (F)V
+	public final fun setTransparent (Z)V
+	public final fun setVertexAnimation (Lcom/awakekt/awake/core/math/Vec3f;)V
+	public final fun setWorldBounds (Lcom/awakekt/awake/core/math/Aabb;)V
 	public fun toString ()Ljava/lang/String;
 }
 

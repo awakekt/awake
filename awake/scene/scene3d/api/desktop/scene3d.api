@@ -922,6 +922,7 @@ public final class com/awakekt/awake/scene/rendering/mesh/MeshBounds {
 	public fun toString ()Ljava/lang/String;
 	public final fun worldBounds (Lcom/awakekt/awake/core/math/Mat4;)Lcom/awakekt/awake/core/math/Aabb;
 	public final fun worldBounds (Lcom/awakekt/awake/scene/core/transform/Transform;)Lcom/awakekt/awake/core/math/Aabb;
+	public final fun writeWorldBounds (Lcom/awakekt/awake/scene/core/transform/Transform;Lcom/awakekt/awake/core/math/Aabb;)Lcom/awakekt/awake/core/math/Aabb;
 }
 
 public final class com/awakekt/awake/scene/rendering/mesh/MeshRenderer {
