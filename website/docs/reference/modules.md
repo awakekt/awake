@@ -31,6 +31,7 @@ awake-backend-vulkan = { module = "com.awakekt.awake.backend:vulkan", version.re
 | Maven coordinate | Catalog alias | What it is |
 | --- | --- | --- |
 | `com.awakekt.awake.core:math` | `awake-core-math` | Vectors, matrices, quaternions, rays, frustums and camera lenses. |
+| `com.awakekt.awake.core:pool` | `awake-core-pool` | Frame-scoped object pools that reuse instances without allocating. |
 | `com.awakekt.awake.core:math2d` | `awake-core-math2d` | Screen-space 2D primitives: `Vec2`, `Rectangle`, `Size2D`, `Dp`. |
 | `com.awakekt.awake.core:geometry` | `awake-core-geometry` | Mesh geometry data and math: vertex formats, decoding, simplification. |
 | `com.awakekt.awake.core:color` | `awake-core-color` | The `Color` value type. |

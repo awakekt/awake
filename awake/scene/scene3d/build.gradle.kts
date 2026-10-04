@@ -22,6 +22,7 @@ kotlin {
             implementation(project(":awake:core:graphics2d"))
             implementation(project(":awake:core:image"))
             implementation(project(":awake:core:math"))
+            implementation(project(":awake:core:pool"))
             api(project(":awake:core:color"))
             implementation(project(":awake:core:animation"))
             api(project(":awake:scene:scene-core"))

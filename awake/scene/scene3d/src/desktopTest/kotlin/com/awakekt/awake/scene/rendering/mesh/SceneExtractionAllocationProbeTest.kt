@@ -5,10 +5,12 @@
  */
 package com.awakekt.awake.scene.rendering.mesh
 
+import com.awakekt.awake.core.animation.Skin
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.core.math.Lens
+import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -16,6 +18,7 @@ import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.scene.core.transform.Transform
+import com.awakekt.awake.scene.rendering.animation.ModularCharacterComponent
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 import com.sun.management.ThreadMXBean
@@ -26,10 +29,9 @@ import kotlin.test.assertEquals
 /**
  * Extraction ([SceneDrawCollector]) allocates no per-frame garbage in steady state (zero bytes per
  * frame) for plain [MeshRenderer] entities with and without [MeshBounds], billboards, entities
- * with a [PbrMaterial] and a [TextureAnimation], and [LodGroup] entities.
+ * with a [PbrMaterial] and a [TextureAnimation], [LodGroup] entities, and modular characters.
  *
- * Skinned entities and modular characters are not probed: a modular character still creates an
- * iterator over its slot map per entity.
+ * Skinned entities are not probed.
  *
  * Desktop-only: `currentThreadAllocatedBytes` has no wasm or Native equivalent.
  */
@@ -89,8 +91,24 @@ class SceneExtractionAllocationProbeTest {
         }
     }
 
+
+    @Test
+    fun extractingModularCharactersAllocatesZeroBytesInSteadyState() {
+        val skin = Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4()))
+        assertZeroAllocation("Modular character extraction", drawsPerEntity = 2) { world, entity, mesh, material ->
+            val character = ModularCharacterComponent(skin)
+            character.equip("hair", mesh, material)
+            character.equip("chest", mesh, material)
+            world.add(entity, character)
+            world.add(entity, MeshBounds(UNIT_BOX))
+        }
+    }
     /** Spawns [ENTITY_COUNT] entities through [spawn], warms up, then measures bytes per frame. */
-    private fun assertZeroAllocation(label: String, spawn: (World, Entity, Mesh, Material) -> Unit) {
+    private fun assertZeroAllocation(
+        label: String,
+        drawsPerEntity: Int = 1,
+        spawn: (World, Entity, Mesh, Material) -> Unit,
+    ) {
         val world = World()
         val camera = Camera(
             Lens(
@@ -117,7 +135,7 @@ class SceneExtractionAllocationProbeTest {
         repeat(WARMUP_FRAMES) {
             val before = collector.collectBeforeParticles(world, culling, elapsedTimeSeconds = 0f)
             val after = collector.collectAfterParticles(world, culling, camera)
-            assertEquals(ENTITY_COUNT, before.size + after.size, "$label: every entity must be extracted")
+            assertEquals(ENTITY_COUNT * drawsPerEntity, before.size + after.size, "$label: every entity must be extracted")
         }
 
         val start = allocated()

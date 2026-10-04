@@ -14,12 +14,14 @@ import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.scene.rendering.animation.Animator
+import com.awakekt.awake.scene.rendering.animation.CharacterSlot
 import com.awakekt.awake.scene.rendering.animation.ModularCharacterComponent
 import com.awakekt.awake.scene.rendering.animation.ModularSkeletalSystem
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class ModularCharacterComponentTest {
@@ -105,5 +107,39 @@ class ModularCharacterComponentTest {
         val pose = world.get<SkinnedPose>(entity)
         assertNotNull(pose, "ModularSkeletalSystem must attach SkinnedPose to the entity.")
         assertEquals(16, pose.jointPalette.size)
+    }
+
+    @Test
+    fun theIndexedSlotViewFollowsEveryChangeToTheSlots() {
+        val character = ModularCharacterComponent(skin = testSkin)
+        fun names() = (0 until character.slotCount).map { character.slotAt(it).slotName }
+
+        character.equip("hair", fakeMesh(), fakeMaterial())
+        character.equip("chest", fakeMesh(), fakeMaterial())
+        character.setSlot(CharacterSlot("hands", fakeMesh(), fakeMaterial()))
+        assertEquals(listOf("hair", "chest", "hands"), names())
+
+        // Replacing a slot keeps its place, as it does in the map.
+        val replacement = character.equip("chest", fakeMesh(), fakeMaterial())
+        assertEquals(listOf("hair", "chest", "hands"), names())
+        assertSame(replacement, character.slotAt(1))
+
+        character.unequip("hair")
+        character.removeSlot("hands")
+        assertEquals(listOf("chest"), names())
+
+        character.clearSlots()
+        assertEquals(0, character.slotCount)
+    }
+
+    @Test
+    fun slotsGivenAtConstructionAreInTheIndexedView() {
+        val first = CharacterSlot("a", fakeMesh(), fakeMaterial())
+        val second = CharacterSlot("b", fakeMesh(), fakeMaterial())
+        val character = ModularCharacterComponent(skin = testSkin, slots = linkedMapOf("a" to first, "b" to second))
+
+        assertEquals(2, character.slotCount)
+        assertSame(first, character.slotAt(0))
+        assertSame(second, character.slotAt(1))
     }
 }

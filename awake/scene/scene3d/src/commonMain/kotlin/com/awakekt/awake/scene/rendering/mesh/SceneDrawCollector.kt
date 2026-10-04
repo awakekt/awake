@@ -8,9 +8,9 @@ package com.awakekt.awake.scene.rendering.mesh
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Mat4
-import com.awakekt.awake.core.math.ScratchPool
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
+import com.awakekt.awake.core.pool.ScratchPool
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
@@ -201,7 +201,9 @@ internal class SceneDrawCollector(
                 if (pbr != null) pose.tintedBy(pbr) else pose.jointPalette
             }
 
-            for (slot in modularCharacter.slots.values) {
+            // By index: iterating the slot map would allocate an iterator for every character.
+            for (slotIndex in 0 until modularCharacter.slotCount) {
+                val slot = modularCharacter.slotAt(slotIndex)
                 if (!slot.isVisible) continue
                 drawCalls.add(
                     beforeCommands.obtainCommand(
