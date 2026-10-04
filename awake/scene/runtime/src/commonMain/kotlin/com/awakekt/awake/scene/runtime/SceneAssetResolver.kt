@@ -5,9 +5,9 @@
  */
 package com.awakekt.awake.scene.runtime
 
-import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
+import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 
 /**
  * Pluggable resolver for dynamic GPU assets. Allows plugins (e.g. glTF, O3D, terrain)
@@ -25,4 +25,11 @@ interface SceneAssetResolver {
      * alpha mode), drawn for an entity that has no [PbrMaterial] of its own; null when it has none.
      */
     fun materialDefaults(name: String): PbrMaterial? = null
+
+    /**
+     * The factors a mesh drawn with material [material] was authored with. Several meshes can share
+     * one material name, such as the parts of a skinned model that draw untextured, so a resolver that
+     * keeps factors per mesh overrides this. By default it is [materialDefaults] for [material].
+     */
+    fun materialDefaults(mesh: String, material: String): PbrMaterial? = materialDefaults(material)
 }

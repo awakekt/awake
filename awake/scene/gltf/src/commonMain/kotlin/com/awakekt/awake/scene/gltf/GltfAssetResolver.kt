@@ -5,8 +5,6 @@
  */
 package com.awakekt.awake.scene.gltf
 
-import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
-import com.awakekt.awake.asset.gltf.GltfAlphaMode
 import com.awakekt.awake.asset.gltf.GltfMesh
 import com.awakekt.awake.asset.gltf.GltfParser
 import com.awakekt.awake.asset.gltf.LoadedPrimitive
@@ -30,6 +28,7 @@ import com.awakekt.awake.render.renderer.SkinnedUniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.TextureAsset
+import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import com.awakekt.awake.scene.runtime.SceneAssetResolver
 
@@ -137,6 +136,7 @@ class GltfAssetResolver(
         loadedStaticMeshes.keys.removeAll { it == path || it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         loadedMaterials.keys.removeAll { it == path || it.startsWith("$path#") }
         materialDefaults.keys.removeAll { it == path || it.startsWith("$path#") }
+        skinnedPartDefaults.keys.removeAll { it.startsWith("$PRIMITIVE_MESH_PREFIX$path#") }
         skinnedPartTextures.keys.removeAll { it.startsWith("$path#") }
     }
 
@@ -192,7 +192,7 @@ class GltfAssetResolver(
             GltfMaterialSlot(
                 mesh = "$PRIMITIVE_MESH_PREFIX$key",
                 material = if (part.isTextured) "gltf-material:$key" else "skinned-material",
-                parameters = null,
+                parameters = part.toMaterialParameters(),
             )
         }
     }
@@ -261,20 +261,29 @@ class GltfAssetResolver(
     }
 
     private val materialDefaults = HashMap<String, PbrMaterial>()
+    private val skinnedPartDefaults = HashMap<String, PbrMaterial>()
 
     /** A glTF material's own factors and alpha mode, one shared instance per material. */
     override fun materialDefaults(name: String): PbrMaterial? {
         val path = name.takeIf { it.startsWith("gltf-material:") }?.removePrefix("gltf-material:")
         val parameters = path?.let { loadedMaterials[it]?.parameters } ?: return null
-        return materialDefaults.getOrPut(path) {
-            PbrMaterial(
-                metallic = parameters.metallic,
-                roughness = parameters.roughness,
-                baseColorFactor = parameters.baseColorFactor,
-                emissiveFactor = parameters.emissiveFactor,
-                alphaMode = parameters.alphaMode,
-            )
-        }
+        return materialDefaults.getOrPut(path) { parameters.toPbrMaterial() }
+    }
+
+    /**
+     * A skinned part's own factors, one shared instance per part. A part is told apart by its mesh:
+     * the untextured ones all draw with the one `skinned-material`, so the material name alone
+     * cannot say whose factors to use. Anything that is not a skinned part falls back to its
+     * material's.
+     */
+    override fun materialDefaults(mesh: String, material: String): PbrMaterial? {
+        val parameters = skinnedPartParameters(mesh) ?: return materialDefaults(material)
+        return skinnedPartDefaults.getOrPut(mesh) { parameters.toPbrMaterial() }
+    }
+
+    private fun skinnedPartParameters(mesh: String): GltfMaterialParameters? {
+        if (!mesh.startsWith(PRIMITIVE_MESH_PREFIX) || skinnedPartGeometry(mesh) == null) return null
+        return loadedMaterialSlots[modelPath(mesh)]?.firstOrNull { it.mesh == mesh }?.parameters
     }
 }
 
@@ -310,18 +319,14 @@ private suspend fun LoadedPrimitive.toLoadedMaterial(): LoadedGltfMaterial? {
         occlusion = occlusionImageBytes?.let { decodeTexture(it) },
         emissive = emissiveImageBytes?.let { decodeTexture(it) },
     )
-    val hasPbrTextures = pbrTextures.metallicRoughness != null || pbrTextures.normal != null ||
-        pbrTextures.occlusion != null || pbrTextures.emissive != null
+    val hasPbrTextures = pbrTextures.metallicRoughness != null ||
+        pbrTextures.normal != null ||
+        pbrTextures.occlusion != null ||
+        pbrTextures.emissive != null
     return LoadedGltfMaterial(
         texture = decodeTexture(baseColorBytes),
         pbrTextures = pbrTextures.takeIf { hasPbrTextures },
-        parameters = GltfMaterialParameters(
-            metallic = metallicFactor,
-            roughness = roughnessFactor,
-            baseColorFactor = baseColorFactor.toColor(),
-            emissiveFactor = emissiveFactor.toColor(alpha = 0f),
-            alphaMode = alphaMode.toAlphaMode(),
-        ),
+        parameters = toMaterialParameters(),
     )
 }
 
@@ -352,20 +357,9 @@ private suspend fun GltfAssetResolver.parseStaticScene(path: String, bytes: Byte
         GltfParser.parseScene(json.toEmbeddedGlb(), external)
     }
 
-private fun FloatArray.toColor(alpha: Float = getOrElse(3) { 1f }): Color = Color(
-    getOrElse(0) { 1f },
-    getOrElse(1) { 1f },
-    getOrElse(2) { 1f },
-    alpha,
-)
-
-private fun GltfAlphaMode.toAlphaMode(): AlphaMode = when (this) {
-    GltfAlphaMode.MASK -> AlphaMode.Masked
-    GltfAlphaMode.OPAQUE,
-    GltfAlphaMode.BLEND,
-    -> AlphaMode.Opaque
-}
-
 private fun ByteArray.isGlb(): Boolean =
-    size >= 4 && this[0] == 'g'.code.toByte() && this[1] == 'l'.code.toByte() &&
-        this[2] == 'T'.code.toByte() && this[3] == 'F'.code.toByte()
+    size >= 4 &&
+        this[0] == 'g'.code.toByte() &&
+        this[1] == 'l'.code.toByte() &&
+        this[2] == 'T'.code.toByte() &&
+        this[3] == 'F'.code.toByte()

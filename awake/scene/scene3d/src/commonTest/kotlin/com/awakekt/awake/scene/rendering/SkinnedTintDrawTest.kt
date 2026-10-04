@@ -52,6 +52,38 @@ class SkinnedTintDrawTest {
         assertSame(hairExtras, collect(world).single { it.mesh === hairMesh }.extraUniformFloats, "rewritten in place each frame")
     }
 
+    /** The factors a skinned part was authored with (its glTF material's) tint it, with no material component of its own. */
+    @Test
+    fun aSkinnedPartWithAuthoredFactorsIsTintedByThemWithoutAMaterialOfItsOwn() {
+        val authored = PbrMaterial(baseColorFactor = Color(0.9f, 0.1f, 0.1f), emissiveFactor = Color(0.1f, 0.2f, 0.3f, 0f))
+        val world = World()
+        val partMesh = fakeMesh()
+        val part = world.create()
+        world.add(part, Transform())
+        world.add(part, MeshRenderer(partMesh, fakeMaterial(), defaultMaterial = authored))
+        world.add(part, SkinnedPose(identity))
+
+        val extras = collect(world).single { it.mesh === partMesh }.extraUniformFloats
+
+        assertContentEquals(skinnedMaterialFloats(identity, Color(0.9f, 0.1f, 0.1f), Color(0.1f, 0.2f, 0.3f, 0f)), extras)
+    }
+
+    @Test
+    fun anEntitysOwnMaterialWinsOverItsSkinnedPartsAuthoredFactors() {
+        val authored = PbrMaterial(baseColorFactor = Color(0.9f, 0.1f, 0.1f))
+        val world = World()
+        val partMesh = fakeMesh()
+        val part = world.create()
+        world.add(part, Transform())
+        world.add(part, MeshRenderer(partMesh, fakeMaterial(), defaultMaterial = authored))
+        world.add(part, SkinnedPose(identity))
+        world.add(part, PbrMaterial(baseColorFactor = Color(0.2f, 0.3f, 0.9f)))
+
+        val extras = collect(world).single { it.mesh === partMesh }.extraUniformFloats
+
+        assertContentEquals(skinnedMaterialFloats(identity, Color(0.2f, 0.3f, 0.9f), Color.Transparent), extras)
+    }
+
     private fun collect(world: World) = SceneCullingCompiler(ClipSpace.WebGpu).let { culling ->
         val camera = Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 100f))
         SceneDrawCollector(culling).collectBeforeParticles(world, culling.prepare(world, camera), elapsedTimeSeconds = 0f).toList()
