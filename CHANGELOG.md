@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-rc.12] - 2026-10-04
+
+### Added
+
+- **Multi-touch on the web and iOS, and tooltips a finger can open.** The web canvas and the iOS view report every finger, as Android already did, and the browser no longer turns a tap into a second, emulated mouse click or a pinch into page zoom. A finger no longer hovers, so a tooltip doesn't stick after a tap; holding a finger on a trigger shows its tooltip until it lifts, and that lift is not a click.
+
+### Changed
+
+- **Skinned meshes, instanced meshes without shadows, and terrain now go through the same exposure and tone curve as lit meshes.** The `skinned`, `skinned_textured`, `instanced`, `terrain` and `terrain_layers` shaders used to write their colour straight out, so a `tone_mapping` exposure left them untouched and their highlights and darks didn't match the lit meshes around them. Their colour is display-referred, so it is decoded first: at the default exposure, colours below the curve's shoulder come back nearly as authored, highlights roll off the same way, and the darkest tones deepen as they do on lit meshes. The skinned, instanced and terrain uniform blocks gain an `exposure` field. `SceneDisplayTransform.displayReferred` is the helper a custom surface uses.
+
+### Removed
+
+- **`packedImageVector` is gone.** Icon codegen emits builder calls, so nothing produced its packed-string input, and only its own parity test called it. The unused LWJGL entries in the version catalog are gone too.
+
+### Fixed
+
+- **Metallic and roughness factors apply without a metallic-roughness map, and imported models draw with their own factors.** The 1x1 stand-in map a material binds when it has none held metallic at 0 and roughness at a half, so a `PbrMaterial`'s metallic did nothing and its roughness was halved. It is now neutral (one shared set in the render contract, used by both backends). Meanwhile imported glTF materials' own metallic, roughness, colours and alpha mode were never applied: `SceneAssetResolver.materialDefaults` now reports them and an entity without a `PbrMaterial` draws them (`MeshRenderer.defaultMaterial`, not saved). A textured draw with no factors at all keeps its old look (metallic 0, roughness 0.5). Models and materials that set roughness now look as rough as they say.
+- **Camera-facing particles keep their shape from every angle.** Each particle's size sat where the particle shader reads its velocity stretch, so whenever world up was on screen a plain particle drew twice as tall as wide and mirrored left to right. Instance matrices are now written by one helper, `setParticleInstance`, which leaves the stretch zero unless the emitter stretches with velocity.
+- **A newer push to `main` cancels the snapshot publish it supersedes**, so release tags no longer queue for hours behind snapshot runs.
+- **Android no longer raises the soft keyboard with nothing to type into.** `AwakeSurfaceView` told Android it was always a text editor, so the system could open the keyboard whenever the window gained focus, such as at launch, on resume or after rotation. It now says so only while a text field holds focus.
+
 ## [0.1.0-rc.11] - 2026-10-04
 
 ### Fixed

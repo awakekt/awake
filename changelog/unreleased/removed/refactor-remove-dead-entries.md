@@ -1,1 +1,0 @@
-- **`packedImageVector` is gone.** Icon codegen emits builder calls, so nothing produced its packed-string input, and only its own parity test called it. The unused LWJGL entries in the version catalog are gone too.
