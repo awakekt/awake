@@ -6,8 +6,10 @@
 package com.awakekt.awake.vulkan.pipeline
 
 import com.awakekt.awake.asset.shadercompiler.NagaException
+import com.awakekt.awake.asset.shaders.BackgroundShaderCompile
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineSpec
+import com.awakekt.awake.render.pipeline.PreparedShaderProgram
 import com.awakekt.awake.render.pipeline.ShaderProgram
 import com.awakekt.awake.render.pipeline.ShaderReplacement
 import com.awakekt.awake.render.pipeline.ShaderReplacementException
@@ -16,6 +18,8 @@ import com.awakekt.awake.render.pipeline.entryPoint
 import com.awakekt.awake.vulkan.device.GraphicsDevice
 import com.awakekt.awake.vulkan.gen.VulkanBuffers
 import com.awakekt.awake.vulkan.utils.VkResultException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 
 /**
  * [ShaderReplacement] over the pipelines in [registry]. Each one is rebuilt inside its own
@@ -25,21 +29,44 @@ import com.awakekt.awake.vulkan.utils.VkResultException
  * The registry keeps each pipeline under the spec it was built from, so a content feature still
  * detaches by that spec; what a pipeline runs after a replacement is tracked here instead.
  * Depth-only and debug-line pipelines are not in the registry and are never replaced.
+ *
+ * [prepare] compiles on [compileDispatcher], off whichever thread asks, one program at a time.
+ * [compile] is therefore called from that dispatcher and from [replace]'s caller, never at once, so
+ * it may keep a cache that is not thread-safe, but that cache must not be shared with code that
+ * compiles on the render thread: give it a resolver of its own.
  */
 internal class VulkanShaderReplacement(
     private val graphicsDevice: GraphicsDevice,
     private val registry: PipelineRegistry<RenderPipeline>,
+    compileDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val compile: suspend (vertex: ShaderSource, fragment: ShaderSource) -> ShaderPair,
 ) : ShaderReplacement {
     /** What a pipeline runs since its last replacement; absent means its spec's own shaders. */
     private val running = HashMap<RenderPipeline, ShaderProgram>()
 
-    override suspend fun replace(old: ShaderProgram, new: ShaderProgram): Int {
-        val shaders = try {
-            compile(new.vertex, new.fragment)
-        } catch (e: NagaException) {
-            throw ShaderReplacementException("The replacement shaders do not compile: ${e.message}", e)
-        }
+    private val background = BackgroundShaderCompile(compileDispatcher, ::compileProgram)
+
+    /** A program compiled by this replacement, which is what [swapIn] accepts. */
+    private class Prepared(override val program: ShaderProgram, val shaders: ShaderPair) : PreparedShaderProgram
+
+    override suspend fun prepare(new: ShaderProgram): PreparedShaderProgram =
+        Prepared(new, background.compile(new))
+
+    /** Compiles here and now, on the caller's thread, as before [prepare] existed. */
+    override suspend fun replace(old: ShaderProgram, new: ShaderProgram): Int =
+        swapIn(old, Prepared(new, background.compileInPlace(new)))
+
+    private suspend fun compileProgram(vertex: ShaderSource, fragment: ShaderSource): ShaderPair = try {
+        compile(vertex, fragment)
+    } catch (e: NagaException) {
+        throw ShaderReplacementException("The replacement shaders do not compile: ${e.message}", e)
+    }
+
+    override fun swapIn(old: ShaderProgram, prepared: PreparedShaderProgram): Int {
+        val ready = prepared as? Prepared
+            ?: throw ShaderReplacementException("That program was not prepared by this ShaderReplacement.")
+        val new = ready.program
+        val shaders = ready.shaders
         val targets = registry.specs.mapNotNull { spec -> registry[spec]?.takeIf { runs(it, spec, old) }?.let { spec to it } }
         targets.forEach { (spec, _) -> requireSameBindings(spec, new) }
 

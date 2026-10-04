@@ -42,6 +42,8 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":awake:core:host"))
+            // BackgroundShaderCompile runs a compile on a caller-chosen dispatcher.
+            implementation(libs.kotlinx.coroutines.core)
             // UniformField/UniformLayout/GpuDataShape. api, not implementation: a consumer
             // building its own ShaderSet needs those types visible through this module
             // (matches awake:backend:vulkan's own api(render:contract) for the same reason).

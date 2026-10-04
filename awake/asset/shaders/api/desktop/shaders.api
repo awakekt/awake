@@ -21,6 +21,12 @@ public final class com/awakekt/awake/asset/shaders/AttachedContentSlot : com/awa
 	public fun recordCommands (Lcom/awakekt/awake/render/passes/RenderFrameContext;)V
 }
 
+public final class com/awakekt/awake/asset/shaders/BackgroundShaderCompile {
+	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Lkotlin/jvm/functions/Function3;)V
+	public final fun compile (Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun compileInPlace (Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
 public final class com/awakekt/awake/asset/shaders/ContentFeatureAttacher : com/awakekt/awake/asset/shaders/ContentFeatureHost {
 	public fun <init> (Lcom/awakekt/awake/asset/shaders/ContentFeatureGpu;)V
 	public fun attachContentFeature (Lcom/awakekt/awake/asset/shaders/ContentFeatureSource;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;

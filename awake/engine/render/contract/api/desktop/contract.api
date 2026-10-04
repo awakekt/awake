@@ -1048,6 +1048,10 @@ public final class com/awakekt/awake/render/pipeline/PipelineVariant$Overlay : c
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class com/awakekt/awake/render/pipeline/PreparedShaderProgram {
+	public abstract fun getProgram ()Lcom/awakekt/awake/render/pipeline/ShaderProgram;
+}
+
 public final class com/awakekt/awake/render/pipeline/ResourceBinding {
 	public fun <init> (ILcom/awakekt/awake/render/pipeline/ResourceKind;Ljava/util/Set;ZZLcom/awakekt/awake/render/pipeline/TextureSampleType;Lcom/awakekt/awake/render/pipeline/SamplerType;J)V
 	public synthetic fun <init> (ILcom/awakekt/awake/render/pipeline/ResourceKind;Ljava/util/Set;ZZLcom/awakekt/awake/render/pipeline/TextureSampleType;Lcom/awakekt/awake/render/pipeline/SamplerType;JILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -1110,10 +1114,16 @@ public final class com/awakekt/awake/render/pipeline/ShaderProgram {
 
 public abstract interface class com/awakekt/awake/render/pipeline/ShaderReplacement : com/awakekt/awake/render/pipeline/GpuCapability {
 	public static final field Companion Lcom/awakekt/awake/render/pipeline/ShaderReplacement$Companion;
-	public abstract fun replace (Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun prepare (Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun replace (Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public abstract fun swapIn (Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lcom/awakekt/awake/render/pipeline/PreparedShaderProgram;)I
 }
 
 public final class com/awakekt/awake/render/pipeline/ShaderReplacement$Companion : com/awakekt/awake/render/pipeline/GpuCapabilityKind {
+}
+
+public final class com/awakekt/awake/render/pipeline/ShaderReplacement$DefaultImpls {
+	public static fun replace (Lcom/awakekt/awake/render/pipeline/ShaderReplacement;Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lcom/awakekt/awake/render/pipeline/ShaderProgram;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class com/awakekt/awake/render/pipeline/ShaderReplacementException : java/lang/IllegalArgumentException {
