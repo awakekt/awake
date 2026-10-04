@@ -96,20 +96,15 @@ suspend fun loadPlayableProject(
     return PlayableProject(manifest, scene, models, physics, loadParticleSprites(scene, files))
 }
 
-/**
- * Installs the scene components a played scene can use: Core's defaults, and the controls, physics
- * and character ones, into the process-wide registry. [loadPlayableProject] does this before it
- * decodes a scene; a host that decodes its own scene to hand to [playSystems] calls it first.
- * Installing twice is harmless.
- */
-fun installPlayableComponents() {
+/** Installs Core's default scene components and the controls, physics and character ones. Harmless twice. */
+internal fun installPlayableComponents() {
     DefaultSceneComponentResolvers.install()
     PROJECT_COMPONENTS.forEach(SceneComponentRegistry::registerGlobal)
 }
 
 /**
  * Plays [project] in this scene: its [PlayableProject.scene], the built-in meshes and the models it
- * loaded, the systems its components call for (see [playSystems], which this calls), and a primary
+ * loaded, the systems its components call for (the ones [playSystemsFor] builds), and a primary
  * camera. With [touchControls], the scene's touch-only canvas controls are shown. Every speed,
  * distance and size comes from the scene; this adds no tuning of its own.
  */
@@ -119,7 +114,7 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
         builtInSceneAssets()
         resolver(project.models)
     }
-    playSystems(project.scene, project.physics, project.particleSprites)
+    registerPlaySpecs(project.scene, project.physics, project.particleSprites)
     onReady {
         showTouchControls = touchControls
         activatePrimaryCamera(world)

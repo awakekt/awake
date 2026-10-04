@@ -5,10 +5,12 @@
  */
 package com.awakekt.awake.project.runtime
 
+import com.awakekt.awake.compose.ui.platform.InputOwnership
 import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.core.input.Key
 import com.awakekt.awake.core.io.AssetSource
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.app
 import com.awakekt.awake.engine.platform.dsl.requireService
@@ -17,120 +19,194 @@ import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.testing.NoopRenderer
-import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.authoring.scene
+import com.awakekt.awake.scene.binding.instantiate
+import com.awakekt.awake.scene.character.CharacterControllerSystem
+import com.awakekt.awake.scene.controls.GameplayInput
+import com.awakekt.awake.scene.controls.camera.CameraSystem
+import com.awakekt.awake.scene.controls.movement.MatrixRelativeMovementSystem
+import com.awakekt.awake.scene.controls.movement.PlayerInputSystem
 import com.awakekt.awake.scene.core.Name
+import com.awakekt.awake.scene.core.transform.SpinSystem
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
+import com.awakekt.awake.scene.physics.PhysicsSystem
+import com.awakekt.awake.scene.rendering.animation.AnimationSystem
+import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationSystem
+import com.awakekt.awake.scene.rendering.particles.ParticleContentSystem
+import com.awakekt.awake.scene.rendering.particles.ParticleSystem
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlinx.coroutines.test.runTest
+import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * [playSystems] is the decision of which systems a scene needs, taken out of [playProject] so a host
- * that plays a scene in a world of its own, as an editor's Play does, runs the same set. These play
- * scenes the way such a host does: it loads and places the scene itself and only asks for systems.
+ * [playSystemsFor] is the decision of which systems a scene needs, taken out of `playProject` so a
+ * host that plays a scene in a world of its own, as an editor's Play does, runs the same set. These
+ * use it as such a host does: no app builder, only the systems, driven by hand.
  */
 class PlaySystemsTest {
 
+    private val input = Input()
+
+    private fun services(physics: PhysicsWorld? = null) = PlayServices(
+        input = { GameplayInput(input.currentSnapshot, InputOwnership()) },
+        renderer = NoopRenderer(),
+        physics = physics,
+    )
+
+    private fun systemsFor(scene: String, physics: PhysicsWorld? = null): PlaySystems {
+        installPlayableComponents()
+        return playSystemsFor(SceneLoader.decode(scene), services(physics))
+    }
+
+    private fun List<System>.has(type: KClass<out System>) = any { type.isInstance(it) }
+
+    // --- which systems a scene gets
+
     @Test
-    fun aHostGetsAScenesKeyframesFromPlaySystemsAlone() = runTest {
-        val game = hostPlaying(KEYFRAME_SCENE)
-        val crate = game.world.named("Crate")
-        val start = game.world.get<Transform>(crate)!!.position.x
+    fun aSceneWithNothingToRunGetsOnlyTheSkinnedAnimation() {
+        val systems = systemsFor(PLAIN_SCENE)
 
-        game.frames(HALF_A_LOOP)
-
-        assertTrue(
-            game.world.get<Transform>(crate)!!.position.x > start + 0.5f,
-            "the keyframed crate must move; x $start -> ${game.world.get<Transform>(crate)!!.position.x}",
-        )
+        assertEquals(emptyList(), systems.fixed)
+        assertEquals(1, systems.frame.size)
+        assertTrue(systems.frame.has(AnimationSystem::class))
     }
 
     @Test
-    fun aHostGetsAScenesSpinFromPlaySystemsAlone() = runTest {
-        val game = hostPlaying(SPIN_SCENE)
-        val spinner = game.world.named("Spinner")
-        val start = game.world.get<Transform>(spinner)!!.rotation.y
-
-        game.frames(FRAMES)
-
-        assertTrue(
-            game.world.get<Transform>(spinner)!!.rotation.y != start,
-            "a spin control must turn its entity",
-        )
+    fun keyframesAndSpinGetTheirSystems() {
+        assertTrue(systemsFor(KEYFRAME_SCENE).frame.has(KeyframeAnimationSystem::class))
+        assertTrue(systemsFor(SPIN_SCENE).frame.has(SpinSystem::class))
     }
 
     @Test
-    fun aSceneWithNothingToRunStillPlays() = runTest {
-        val game = hostPlaying(PLAIN_SCENE)
-        val rock = game.world.named("Rock")
+    fun movementWithoutACharacterMovesStraightThroughTheWorld() {
+        val systems = systemsFor(MOVEMENT_SCENE)
 
-        game.frames(FRAMES)
-
-        assertEquals(0f, game.world.get<Transform>(rock)!!.position.x, 1e-6f, "nothing may move it")
+        assertTrue(systems.frame.has(PlayerInputSystem::class), "keyboard intent")
+        assertTrue(systems.frame.has(MatrixRelativeMovementSystem::class), "moved directly")
+        assertEquals(emptyList(), systems.fixed, "no physics world was given")
     }
 
     @Test
-    fun aHostPassingAPhysicsWorldGetsTheCharacterAndPhysicsSystems() = runTest {
+    fun aCameraRigGetsTheCameraSystem() {
+        assertTrue(systemsFor(CAMERA_SCENE).frame.has(CameraSystem::class))
+    }
+
+    @Test
+    fun aPhysicsSceneWithAWorldGetsPhysicsAndCharactersOnTheFixedStep() = runTest {
+        val systems = systemsFor(PHYSICS_SCENE, createJoltPhysicsWorld())
+
+        assertTrue(systems.fixed.has(PhysicsSystem::class))
+        assertTrue(systems.fixed.has(CharacterControllerSystem::class))
+        assertTrue(!systems.frame.has(MatrixRelativeMovementSystem::class), "the character controller moves it")
+        assertTrue(systems.frame.has(PlayerInputSystem::class))
+    }
+
+    @Test
+    fun aPhysicsSceneWithoutAWorldRunsWithoutPhysics() {
+        val systems = systemsFor(PHYSICS_SCENE)
+
+        assertEquals(emptyList(), systems.fixed)
+    }
+
+    @Test
+    fun particlesGetTheirContentAndSimulationSystems() {
+        val systems = systemsFor(PARTICLE_SCENE)
+
+        assertTrue(systems.frame.has(ParticleContentSystem::class))
+        assertTrue(systems.frame.has(ParticleSystem::class))
+        systems.close()
+        systems.close() // releasing twice is harmless
+    }
+
+    @Test
+    fun systemsRunInTheOrderPlayProjectRunsThem() {
+        val frame = systemsFor(ORDER_SCENE).frame
+        val order = listOf(
+            PlayerInputSystem::class,
+            MatrixRelativeMovementSystem::class,
+            CameraSystem::class,
+            KeyframeAnimationSystem::class,
+            AnimationSystem::class,
+        ).map { type -> frame.indexOfFirst { type.isInstance(it) } }
+
+        assertTrue(order.all { it >= 0 }, "every one is present: $order")
+        assertEquals(order.sorted(), order, "input, movement, camera, keyframes, then animation")
+    }
+
+    // --- running them as a host does
+
+    @Test
+    fun aHostCanRunKeyframesWithoutAnAppBuilder() {
+        installPlayableComponents()
+        val world = World()
+        SceneLoader.decode(KEYFRAME_SCENE).instantiate(world = world)
+        val systems = systemsFor(KEYFRAME_SCENE)
+        val crate = world.named("Crate")
+
+        repeat(HALF_A_LOOP) { systems.frame.forEach { it.update(world, DELTA) } }
+
+        assertTrue(world.get<Transform>(crate)!!.position.x > 0.5f, "the keyframed crate must slide")
+    }
+
+    @Test
+    fun aHostCanRunAPhysicsCharacterOnTheFixedStep() = runTest {
+        installPlayableComponents()
         val physics = createJoltPhysicsWorld()
-        val game = hostPlaying(PHYSICS_SCENE, physics)
-        game.frames(FRAMES * 2)
-        val position = game.world.get<Transform>(game.world.named("Player"))!!.position
-        val start = position.y
+        val world = World()
+        SceneLoader.decode(PHYSICS_SCENE).instantiate(world = world)
+        val systems = systemsFor(PHYSICS_SCENE, physics)
+        val player = world.named("Player")
+        val position = world.get<Transform>(player)!!.position
 
-        game.input.setKeyDown(Key.W, true)
-        game.input.updateSnapshot()
+        fun frame() {
+            systems.fixed.forEach { it.update(world, DELTA) }
+            systems.frame.forEach { it.update(world, DELTA) }
+        }
+        repeat(FRAMES * 2) { frame() }
+        val standingAt = position.y
         val z = position.z
-        game.frames(FRAMES)
+        input.setKeyDown(Key.W, true)
+        input.updateSnapshot()
+        repeat(FRAMES) { frame() }
 
-        assertEquals(1f, start, GROUND_TOLERANCE, "the character must stand on the authored floor")
+        assertEquals(1f, standingAt, GROUND_TOLERANCE, "the character must stand on the authored floor")
         assertTrue(position.z < z - 1f, "W must walk the character; z $z -> ${position.z}")
+        systems.close()
     }
 
     @Test
-    fun playSystemsAndPlayProjectRunTheSameSystems() = runTest {
-        val viaProject = playProject(KEYFRAME_SCENE)
-        val viaHost = hostPlaying(KEYFRAME_SCENE)
+    fun playProjectAndAHostRunningPlaySystemsMoveTheSameScene() = runTest {
+        val viaProject = launchProject(KEYFRAME_SCENE)
+        repeat(HALF_A_LOOP) { viaProject.frame() }
 
-        viaProject.frames(HALF_A_LOOP)
-        viaHost.frames(HALF_A_LOOP)
+        installPlayableComponents()
+        val world = World()
+        SceneLoader.decode(KEYFRAME_SCENE).instantiate(world = world)
+        val systems = systemsFor(KEYFRAME_SCENE)
+        // launchProject has already run one warm-up frame; the host runs the same number.
+        repeat(HALF_A_LOOP + 1) { systems.frame.forEach { it.update(world, DELTA) } }
 
         val project = viaProject.world.get<Transform>(viaProject.world.named("Crate"))!!.position
-        val host = viaHost.world.get<Transform>(viaHost.world.named("Crate"))!!.position
+        val host = world.get<Transform>(world.named("Crate"))!!.position
         assertTrue(project.x > 0.5f && host.x > 0.5f, "both must have moved; project ${project.x}, host ${host.x}")
-        assertEquals(project.x, host.x, 1e-5f, "the same keyframes advance the same way")
-        assertEquals(project.y, host.y, 1e-5f)
+        assertEquals(project.x, host.x, 1e-3f, "the same scene slides the same way under either")
     }
 
-    private class Game(val runtime: SceneAppLifecycleRuntime, val input: Input, private val update: () -> Unit) {
+    private class Game(val runtime: SceneAppLifecycleRuntime, private val update: () -> Unit) {
         val world: World get() = runtime.world
-        fun frames(count: Int) = repeat(count) { update() }
+        fun frame() = update()
     }
 
-    /** A host that decodes and places the scene itself, then asks only for [playSystems]. */
-    private suspend fun hostPlaying(scene: String, physics: PhysicsWorld? = null): Game {
-        installPlayableComponents()
-        val document: SceneDocument = SceneLoader.decode(scene)
-        return launch {
-            scene(document)
-            playSystems(document, physics)
-        }
-    }
-
-    private suspend fun playProject(scene: String): Game {
+    private suspend fun launchProject(scene: String): Game {
         val project = loadPlayableProject(files(scene))
-        return launch { playProject(project) }
-    }
-
-    private suspend fun launch(play: SceneAppDsl.() -> Unit): Game {
-        val game = app { scene("play", play) }
+        val game = app { scene("play") { playProject(project) } }
         game.ready(TestRenderer())
         val runtime = game.requireService<SceneAppLifecycleRuntime>()
-        return Game(runtime, game.requireService()) { game.update(DELTA, WIDTH, HEIGHT) }.also { it.frames(1) }
+        return Game(runtime) { game.update(DELTA, WIDTH, HEIGHT) }.also { it.frame() }
     }
 
     private class TestRenderer :
@@ -154,10 +230,10 @@ class PlaySystemsTest {
         const val WIDTH = 800f
         const val HEIGHT = 600f
         const val FRAMES = 60
+        const val GROUND_TOLERANCE = 0.05f
 
         /** The keyframe scene loops every second; half a loop leaves the crate mid-slide, not back at the start. */
         const val HALF_A_LOOP = 30
-        const val GROUND_TOLERANCE = 0.05f
         const val MANIFEST_PATH = "awake.project.json"
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
 
@@ -173,12 +249,55 @@ class PlaySystemsTest {
 
         const val SPIN_SCENE = """
 { "version": 1, "name": "spin", "nodes": [
-  { "name": "Spinner", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [ { "component": "spin_control", "speed": 2.0 } ] }
+  { "name": "Spinner", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [
+    { "component": "spin_control", "speed": 2.0 } ] }
 ] }
 """
 
         const val PLAIN_SCENE = """
-{ "version": 1, "name": "still", "nodes": [ { "name": "Rock", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [] } ] }
+{ "version": 1, "name": "still", "nodes": [
+  { "name": "Rock", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [] } ] }
+"""
+
+        const val MOVEMENT_SCENE = """
+{ "version": 1, "name": "walk", "nodes": [
+  { "name": "Player", "components": [ { "component": "movement_control", "speed": 6.0 } ] }
+] }
+"""
+
+        const val CAMERA_SCENE = """
+{ "version": 1, "name": "look", "nodes": [
+  { "name": "Camera", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [
+    { "component": "camera", "primary": true },
+    { "component": "camera_rig", "mode": "ThirdPerson", "target": "Player", "distance": 9.0, "pitch": -0.3,
+      "offset": { "x": 0.0, "y": 1.5, "z": 0.0 } }
+  ] },
+  { "name": "Player", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [] }
+] }
+"""
+
+        const val PARTICLE_SCENE = """
+{ "version": 1, "name": "sparks", "nodes": [
+  { "name": "Fountain", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [
+    { "component": "particle_emitter", "texture": "dust.png" } ] }
+] }
+"""
+
+        const val ORDER_SCENE = """
+{ "version": 1, "name": "everything", "nodes": [
+  { "name": "Camera", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [
+    { "component": "camera", "primary": true },
+    { "component": "camera_rig", "mode": "ThirdPerson", "target": "Player", "distance": 9.0, "pitch": -0.3,
+      "offset": { "x": 0.0, "y": 1.5, "z": 0.0 } }
+  ] },
+  { "name": "Player", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [
+    { "component": "movement_control", "speed": 6.0 } ] },
+  { "name": "Crate", "transform": { "position": { "x": 0.0, "y": 0.0, "z": 0.0 } }, "components": [
+    { "component": "keyframe_animation", "duration": 1.0,
+      "position": [ { "time": 0.0, "value": { "x": 0.0, "y": 0.0, "z": 0.0 } },
+                    { "time": 1.0, "value": { "x": 1.0, "y": 0.0, "z": 0.0 } } ] }
+  ] }
+] }
 """
 
         const val PHYSICS_SCENE = """

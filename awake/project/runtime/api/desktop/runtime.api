@@ -14,9 +14,23 @@ public final class com/awakekt/awake/project/runtime/CanvasActionSystemKt {
 	public static final field MOVE_ACTION Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/project/runtime/PlayServices {
+	public fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getInput ()Lkotlin/jvm/functions/Function0;
+	public final fun getParticleSprites ()Ljava/util/Map;
+	public final fun getPhysics ()Lcom/awakekt/awake/physics/PhysicsWorld;
+	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
+}
+
+public final class com/awakekt/awake/project/runtime/PlaySystems : java/lang/AutoCloseable {
+	public fun close ()V
+	public final fun getFixed ()Ljava/util/List;
+	public final fun getFrame ()Ljava/util/List;
+}
+
 public final class com/awakekt/awake/project/runtime/PlaySystemsKt {
-	public static final fun playSystems (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;)V
-	public static synthetic fun playSystems$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;ILjava/lang/Object;)V
+	public static final fun playSystemsFor (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/project/runtime/PlayServices;)Lcom/awakekt/awake/project/runtime/PlaySystems;
 }
 
 public final class com/awakekt/awake/project/runtime/PlayableProject {
@@ -27,7 +41,6 @@ public final class com/awakekt/awake/project/runtime/PlayableProject {
 public final class com/awakekt/awake/project/runtime/ProjectRuntimeKt {
 	public static final field PROJECT_MANIFEST Ljava/lang/String;
 	public static final fun activatePrimaryCamera (Lcom/awakekt/awake/ecs/World;)V
-	public static final fun installPlayableComponents ()V
 	public static final fun loadPlayableProject (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun loadPlayableProject$default (Lcom/awakekt/awake/core/io/AssetSource;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun playProject (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Lcom/awakekt/awake/project/runtime/PlayableProject;Z)V

@@ -7,8 +7,6 @@ package com.awakekt.awake.project.runtime
 
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
-import com.awakekt.awake.render.texture.TextureAsset
-import com.awakekt.awake.scene.authoring.SceneAppDsl
 import com.awakekt.awake.scene.core.transform.SceneSpinControl
 import com.awakekt.awake.scene.core.transform.SpinControl
 import com.awakekt.awake.scene.core.transform.SpinSystem
@@ -20,20 +18,23 @@ import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
 import com.awakekt.awake.scene.rendering.particles.ParticleContentSystem
 import com.awakekt.awake.scene.rendering.particles.ParticleSystem
 import com.awakekt.awake.scene.rendering.particles.SceneParticleEmitter
+import com.awakekt.awake.scene.runtime.SceneSystemPhase
 
 /** Spin, locomotion, keyframes and particles, for the scenes that have them. */
-internal fun SceneAppDsl.motionSystems(scene: SceneDocument, particleSprites: Map<String, TextureAsset>) {
+internal fun MutableList<PlaySpec>.addMotionSpecs(scene: SceneDocument) {
     if (scene.has(SceneSpinControl::class)) {
-        frameSystem("spin-clock") { SpinClockSystem() }
-        frameSystem("spin") { SpinSystem() }
+        add(PlaySpec("spin-clock", SceneSystemPhase.Frame) { SpinClockSystem() })
+        add(PlaySpec("spin", SceneSystemPhase.Frame) { SpinSystem() })
     }
-    if (scene.has(SceneLocomotionAnimation::class)) frameSystem("locomotion") { LocomotionAnimationSystem() }
-    if (scene.has(SceneKeyframeAnimation::class)) frameSystem("keyframes") { KeyframeAnimationSystem() }
+    if (scene.has(SceneLocomotionAnimation::class)) {
+        add(PlaySpec("locomotion", SceneSystemPhase.Frame) { LocomotionAnimationSystem() })
+    }
+    if (scene.has(SceneKeyframeAnimation::class)) {
+        add(PlaySpec("keyframes", SceneSystemPhase.Frame) { KeyframeAnimationSystem() })
+    }
     if (scene.has(SceneParticleEmitter::class)) {
-        var content: ParticleContentSystem? = null
-        frameSystem("particle-content") { ParticleContentSystem(renderer, particleSprites).also { content = it } }
-        frameSystem("particles") { ParticleSystem() }
-        onDispose { content?.release() }
+        add(PlaySpec("particle-content", SceneSystemPhase.Frame) { ParticleContentSystem(it.renderer, it.particleSprites) })
+        add(PlaySpec("particles", SceneSystemPhase.Frame) { ParticleSystem() })
     }
 }
 

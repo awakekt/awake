@@ -34,16 +34,21 @@ touch screen passes it. The scene decides where the controls sit and how big the
 ## Playing a scene in a world of your own
 
 An editor that plays the scene it is editing, in an isolated world, wants the same systems without
-a project on disk. `playSystems(scene, physics, particleSprites)` registers exactly the systems in the
-table above for a `SceneDocument`, and `playProject` calls it, so the two never drift apart: a
-component that gains a system gains it in both.
+a project on disk and without an app builder. `playSystemsFor(scene, services)` returns them as
+plain `System`s: `fixed` ones to run on each fixed step, then `frame` ones once per rendered frame,
+in the order `playProject` runs them. `playProject` is built on the same decision, so a component
+that gains a system gains it in both.
 
 ```kotlin
-installPlayableComponents()   // the controls, physics and character components, before decoding
-val scene = SceneLoader.decode(json)
-app { scene("play") { scene(scene); playSystems(scene, physicsWorld) } }
+val play = playSystemsFor(
+    scene,
+    PlayServices(input = { gameplayInput }, renderer = renderer, physics = physicsWorld, particleSprites = sprites),
+)
+// each fixed step:        play.fixed.forEach { it.update(world, step) }
+// each rendered frame:    play.frame.forEach { it.update(world, delta) }
+// when the scene stops:   play.close()
 ```
 
-`playSystems` only registers systems. The host places the scene, resolves its assets and picks the
-camera; pass the physics world the scene needs (`physics_body`, `character_controller` or a terrain
-collider), or those systems are left out.
+It builds only the scene's own systems. The host still places the scene, resolves its assets, picks
+the camera, resolves transforms and draws. Pass the physics world the scene needs (`physics_body`,
+`character_controller` or a terrain collider), or those systems are left out.
