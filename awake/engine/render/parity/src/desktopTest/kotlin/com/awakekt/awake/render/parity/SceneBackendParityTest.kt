@@ -461,6 +461,19 @@ class SceneBackendParityTest {
         }
     }
 
+    /** A particle sprite between the sun and the ground darkens the ground on both backends. */
+    @Test
+    fun aParticleCastsAShadowOnBothBackends() {
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val bare = renderer.renderParticleShadowScene(withSprite = false).also { write(backend, it, "particle-shadow-off") }
+            val cast = renderer.renderParticleShadowScene(withSprite = true).also { write(backend, it, "particle-shadow-on") }
+
+            assertNull(bare.shadowCentroid(), "$backend: the bare ground must hold no shadow")
+            assertNotNull(cast.shadowCentroid(), "$backend: the particle cast no shadow -- see $REPORT_DIR")
+        }
+    }
+
     /** Red-dominant pixels in [columns]. */
     private fun ByteArray.redPixels(columns: IntRange): Int = (0 until SCENE_SIZE).sumOf { y ->
         columns.count { x ->

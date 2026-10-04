@@ -157,6 +157,18 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             bindingsByGroup = PackShaderSets.ShadowDepth.webGpu.bindingsByGroup,
             bindingsMetadataAvailable = PackShaderSets.ShadowDepth.webGpu.bindingsMetadataAvailable,
         ),
+        // As WebGpuEngine builds it when a render plan opts particles into shadows.
+        variantPipelines = mapOf(
+            DepthCasterKind.Particle to DepthOnlyPipeline(
+                graphicsDevice = graphicsDevice,
+                shaderCode = wgsl(PackShaderSets.ParticleShadowDepth),
+                vertexFormat = VertexFormat.PositionUv,
+                cascadeCount = MAX_SHADOW_TARGET_LAYERS,
+                variant = PipelineVariant.AlphaBlendedParticle,
+                bindingsByGroup = PackShaderSets.ParticleShadowDepth.webGpu.bindingsByGroup,
+                bindingsMetadataAvailable = PackShaderSets.ParticleShadowDepth.webGpu.bindingsMetadataAvailable,
+            ),
+        ),
         // As WebGpuEngine builds it: every other opaque scene format casts through the same shader.
         formatPipelines = mapOf(
             VertexFormat.PositionNormalColorUv to DepthOnlyPipeline(
