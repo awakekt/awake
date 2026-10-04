@@ -21,6 +21,7 @@ physics backend.
 | `spinControl` | Spinning |
 | `keyframe_animation` | `KeyframeAnimationSystem`: its looping tracks |
 | `particle_emitter` | `ParticleContentSystem` and `ParticleSystem`, with the sprites `loadPlayableProject` read |
+| `patrol`, `chase`, `flee` with a `navigation` component | The behaviours and `PathRequestSystem`, which answers their routes over the scene's grid. Each behaviour arrives with its `PathRequest`; a project with a behaviour and no `navigation` is refused at load |
 | Skinned glTF model | Its first animation clip, on a loop |
 | `canvas_element` with an `action` | `CanvasActionSystem`: a `move` Joystick steers, a held `jump` Button jumps |
 

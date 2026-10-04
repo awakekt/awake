@@ -6,6 +6,7 @@
 package com.awakekt.awake.ai.behavior.chase
 
 import com.awakekt.awake.ai.behavior.ChaseBehavior
+import com.awakekt.awake.ai.behavior.ensurePathRequest
 import com.awakekt.awake.ai.behavior.referenceName
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -29,6 +30,7 @@ object ChaseBinding : SceneComponentBinding<ChaseBehavior, SceneChase> {
     ) {
         val comp = component.toComponent()
         world.add(entity, comp)
+        world.ensurePathRequest(entity)
         component.target?.let { targetName ->
             context.deferNodeLink(targetName) { targetEntity ->
                 comp.target = targetEntity

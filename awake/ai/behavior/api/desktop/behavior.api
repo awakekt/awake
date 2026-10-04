@@ -4,6 +4,7 @@ public final class com/awakekt/awake/ai/behavior/AiBehaviorBindings {
 	public final fun getBindings ()Ljava/util/List;
 	public final fun getChaseResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getFleeResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
+	public final fun getNavigationResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 	public final fun getPatrolResolver ()Lcom/awakekt/awake/scene/binding/SceneComponentBinding;
 }
 
@@ -273,6 +274,68 @@ public final synthetic class com/awakekt/awake/ai/behavior/flee/SceneFlee$$seria
 }
 
 public final class com/awakekt/awake/ai/behavior/flee/SceneFlee$Companion {
+	public final fun serializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/navigation/NavigationBinding : com/awakekt/awake/scene/binding/SceneComponentBinding {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/navigation/NavigationBinding;
+	public fun attach-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/navigation/SceneNavigation;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public synthetic fun attachTyped-8mtA4i0 (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/scene/document/SceneComponent;Lcom/awakekt/awake/scene/binding/SceneResolutionContext;)V
+	public fun canResolve (Lcom/awakekt/awake/scene/document/SceneComponent;)Z
+	public fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLcom/awakekt/awake/ai/behavior/navigation/NavigationGrid;)Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation;
+	public synthetic fun export-_l4HXwU (Lcom/awakekt/awake/ecs/World;JLjava/lang/Object;)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation;
+	public synthetic fun exportFrom-Fr3QF18 (Lcom/awakekt/awake/ecs/World;J)Lcom/awakekt/awake/scene/document/SceneComponent;
+	public fun getComponentClass ()Lkotlin/reflect/KClass;
+	public fun getSchemaClass ()Lkotlin/reflect/KClass;
+	public fun getSerializer ()Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/navigation/NavigationGrid {
+	public fun <init> (Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation;)V
+	public final fun getGrid ()Lcom/awakekt/awake/navigation/grid/NavGrid;
+	public final fun getSource ()Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation;
+}
+
+public final class com/awakekt/awake/ai/behavior/navigation/SceneNavigation : com/awakekt/awake/scene/document/SceneComponent {
+	public static final field BLOCKED C
+	public static final field Companion Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation$Companion;
+	public static final field DEFAULT_CELL_SIZE F
+	public static final field WALKABLE C
+	public fun <init> ()V
+	public fun <init> (Ljava/util/List;FFF)V
+	public synthetic fun <init> (Ljava/util/List;FFFILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/util/List;
+	public final fun component2 ()F
+	public final fun component3 ()F
+	public final fun component4 ()F
+	public final fun copy (Ljava/util/List;FFF)Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation;
+	public static synthetic fun copy$default (Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation;Ljava/util/List;FFFILjava/lang/Object;)Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getAllowsMultiplePerNode ()Z
+	public final fun getCellSize ()F
+	public final fun getOriginX ()F
+	public final fun getOriginZ ()F
+	public final fun getRows ()Ljava/util/List;
+	public fun hashCode ()I
+	public final fun toGrid ()Lcom/awakekt/awake/navigation/grid/NavGrid;
+	public fun toString ()Ljava/lang/String;
+	public fun validate (Ljava/lang/String;)Ljava/util/List;
+}
+
+public final synthetic class com/awakekt/awake/ai/behavior/navigation/SceneNavigation$$serializer : kotlinx/serialization/internal/GeneratedSerializer {
+	public static final field INSTANCE Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation$$serializer;
+	public final fun childSerializers ()[Lkotlinx/serialization/KSerializer;
+	public final fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation;
+	public synthetic fun deserialize (Lkotlinx/serialization/encoding/Decoder;)Ljava/lang/Object;
+	public final fun getDescriptor ()Lkotlinx/serialization/descriptors/SerialDescriptor;
+	public final fun serialize (Lkotlinx/serialization/encoding/Encoder;Lcom/awakekt/awake/ai/behavior/navigation/SceneNavigation;)V
+	public synthetic fun serialize (Lkotlinx/serialization/encoding/Encoder;Ljava/lang/Object;)V
+	public fun typeParametersSerializers ()[Lkotlinx/serialization/KSerializer;
+}
+
+public final class com/awakekt/awake/ai/behavior/navigation/SceneNavigation$Companion {
 	public final fun serializer ()Lkotlinx/serialization/KSerializer;
 }
 

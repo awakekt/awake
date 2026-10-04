@@ -24,8 +24,18 @@ the same components.
     --8<-- "website/docs/snippets/world/guards.scene.json"
     ```
 
-    Register the bindings, then give every behaviour a `PathRequest`, which a scene document does
-    not carry:
+    Register the bindings. Each behaviour arrives with the `PathRequest` it asks for routes through.
+    The behaviours route over a grid, which the scene carries as a `navigation` component:
+
+    ```json title="navigation component"
+    { "component": "navigation", "cellSize": 1.0,
+      "rows": [ "......", ".####.", "......" ] }
+    ```
+
+    `.` is a cell an agent can stand on and `#` one it cannot. Played through `loadPlayableProject`
+    and `playProject`, a scene with a behaviour and a `navigation` component runs the behaviours and
+    answers their routes, with no AI code in the host; a project with a behaviour and no grid is
+    refused at load.
 
     ```kotlin title="Kotlin"
     --8<-- "awake/ai/behavior/src/desktopTest/kotlin/com/awakekt/awake/ai/behavior/AiDocsSampleTest.kt:load"
@@ -93,6 +103,18 @@ system:
 In Kotlin, `PatrolBehavior`, `ChaseBehavior` and `FleeBehavior` take the same values, with `target`
 and `threat` as entities rather than names.
 
+`navigation`:
+
+| Property | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `rows` | list of text | empty | One string per row of cells along z; each character is a cell along x, `.` walkable and `#` blocked. Every row is the same length. |
+| `cellSize` | number | `1` | World size of one cell. |
+| `originX` | number | `0` | World x of the centre of cell (0, 0). |
+| `originZ` | number | `0` | World z of the centre of cell (0, 0). |
+
+A grid baked from terrain with `Heightmap.bakeNavGrid` is the same data; a tool that writes one out
+as a `navigation` component gives the runtime its single way in.
+
 ## Behaviour trees
 
 Build a tree with `behaviorTree { }`, attach it with `BehaviorTreeComponent`, and tick it with
@@ -140,8 +162,9 @@ wall; a patrol skips an unreachable stop, and a fleeing entity tries directions 
 straight line.
 
 !!! warning "No PathRequest, no movement"
-    Every behaviour reads a `PathRequest` on the same entity and does nothing without one. The
-    scene bindings do not add it. Add one per behaviour entity after loading, as shown above.
+    Every behaviour reads a `PathRequest` on the same entity and does nothing without one. The scene
+    bindings add it, so a behaviour that comes from a scene document has one. A behaviour you attach
+    yourself, in the scene DSL or in Kotlin, needs its own `PathRequest`.
 
 !!! warning "Behaviours move on X and Z only"
     Navigation waypoints carry no height, so the behaviours leave `Transform.position.y` alone. Put

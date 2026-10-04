@@ -9,10 +9,14 @@ import com.awakekt.awake.ai.behavior.chase.ChaseBinding
 import com.awakekt.awake.ai.behavior.chase.SceneChase
 import com.awakekt.awake.ai.behavior.flee.FleeBinding
 import com.awakekt.awake.ai.behavior.flee.SceneFlee
+import com.awakekt.awake.ai.behavior.navigation.NavigationBinding
+import com.awakekt.awake.ai.behavior.navigation.NavigationGrid
+import com.awakekt.awake.ai.behavior.navigation.SceneNavigation
 import com.awakekt.awake.ai.behavior.patrol.PatrolBinding
 import com.awakekt.awake.ai.behavior.patrol.ScenePatrol
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.navigation.PathRequest
 import com.awakekt.awake.scene.binding.SceneComponentBinding
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
 import com.awakekt.awake.scene.binding.SceneComponentResolver
@@ -31,11 +35,15 @@ object AiBehaviorBindings {
     /** Resolver binding [FleeBehavior] to [SceneFlee]. */
     val FleeResolver: SceneComponentBinding<FleeBehavior, SceneFlee> = FleeBinding
 
+    /** Resolver binding [NavigationGrid] to [SceneNavigation]: where the behaviours may walk. */
+    val NavigationResolver: SceneComponentBinding<NavigationGrid, SceneNavigation> = NavigationBinding
+
     /** All scene component bindings provided by the AI behavior module. */
     val bindings: List<SceneComponentBinding<*, *>> = listOf(
         PatrolBinding,
         ChaseBinding,
         FleeBinding,
+        NavigationBinding,
     )
 
     /** All resolvers provided by the AI behavior module for registration. */
@@ -43,6 +51,7 @@ object AiBehaviorBindings {
         PatrolBinding,
         ChaseBinding,
         FleeBinding,
+        NavigationBinding,
     )
 }
 
@@ -54,6 +63,16 @@ object AiBehaviorBindings {
 fun SceneComponentRegistry.registerAiBehaviors(): SceneComponentRegistry {
     AiBehaviorBindings.all.forEach { register(it) }
     return this
+}
+
+/**
+ * Gives [entity] the [PathRequest] its behaviour asks for routes through, unless it has one.
+ *
+ * A behaviour with no request does nothing, so a scene document that attaches one must attach the
+ * other, or every host would have to remember to.
+ */
+internal fun World.ensurePathRequest(entity: Entity) {
+    if (!has(entity, PathRequest::class)) add(entity, PathRequest())
 }
 
 internal fun World.referenceName(owner: Entity, reference: Entity?, field: String): String? {

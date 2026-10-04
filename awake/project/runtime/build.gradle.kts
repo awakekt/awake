@@ -22,6 +22,8 @@ kotlin {
             api(project(":awake:scene:authoring"))
             api(project(":awake:scene:gltf"))
             api(project(":awake:scene:character"))
+            // Patrol, chase and flee, and the grid they route over, which a played scene carries as data.
+            implementation(project(":awake:ai:behavior"))
             api(project(":awake:core:geometry"))
             api(project(":awake:core:io"))
             implementation(project(":awake:asset:shader-pack"))

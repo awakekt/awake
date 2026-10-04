@@ -6,6 +6,7 @@
 package com.awakekt.awake.ai.behavior.flee
 
 import com.awakekt.awake.ai.behavior.FleeBehavior
+import com.awakekt.awake.ai.behavior.ensurePathRequest
 import com.awakekt.awake.ai.behavior.referenceName
 import com.awakekt.awake.ecs.Entity
 import com.awakekt.awake.ecs.World
@@ -29,6 +30,7 @@ object FleeBinding : SceneComponentBinding<FleeBehavior, SceneFlee> {
     ) {
         val comp = component.toComponent()
         world.add(entity, comp)
+        world.ensurePathRequest(entity)
         component.threat?.let { threatName ->
             context.deferNodeLink(threatName) { threatEntity ->
                 comp.threat = threatEntity
