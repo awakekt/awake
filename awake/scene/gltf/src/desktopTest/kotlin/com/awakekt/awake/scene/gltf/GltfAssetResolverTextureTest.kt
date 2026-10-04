@@ -5,6 +5,7 @@
  */
 package com.awakekt.awake.scene.gltf
 
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.io.AssetSource
 import kotlinx.coroutines.test.runTest
@@ -15,6 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalEncodingApi::class)
@@ -132,15 +134,117 @@ class GltfAssetResolverTextureTest {
         resolver.preload(path, skinnedPartsJson().encodeToByteArray())
 
         assertEquals(
-            listOf(
-                GltfMaterialSlot("gltf-primitive:$path#0", "gltf-material:$path#0", null),
-                GltfMaterialSlot("gltf-primitive:$path#1", "skinned-material", null),
-            ),
-            resolver.materialSlots(path),
+            listOf("gltf-primitive:$path#0" to "gltf-material:$path#0", "gltf-primitive:$path#1" to "skinned-material"),
+            resolver.materialSlots(path).map { it.mesh to it.material },
         )
+        assertTrue(resolver.materialSlots(path).all { it.parameters != null }, "every part says what it was authored with")
         assertEquals(VertexFormat.PositionNormalColorUvSkin, resolver.skinnedPartGeometry("gltf-primitive:$path#0")?.format)
         assertEquals(VertexFormat.PositionNormalColorSkin, resolver.skinnedPartGeometry("gltf-primitive:$path#1")?.format)
         assertNull(resolver.skinnedPartGeometry("gltf-primitive:$path#2"))
+    }
+
+    /** A skinned part draws with the factors its own glTF material was authored with, textured or not. */
+    @Test
+    fun aSkinnedPartKeepsItsMaterialFactors() = runTest {
+        val path = "assets/characters/walker.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.preload(path, skinnedPartsWithFactorsJson().encodeToByteArray())
+
+        val textured = assertNotNull(resolver.materialDefaults("gltf-primitive:$path#0", "gltf-material:$path#0"))
+        assertEquals(0.3f, textured.metallic)
+        assertEquals(0.7f, textured.roughness)
+        assertEquals(Color(0.2f, 0.4f, 0.6f, 1f), textured.baseColorFactor)
+
+        val plain = assertNotNull(resolver.materialDefaults("gltf-primitive:$path#1", "skinned-material"))
+        assertEquals(0f, plain.metallic)
+        assertEquals(0.2f, plain.roughness)
+        assertEquals(Color(0.9f, 0.1f, 0.1f, 1f), plain.baseColorFactor)
+        assertEquals(Color(0.1f, 0.2f, 0.3f, 0f), plain.emissiveFactor)
+    }
+
+    /** The point of looking a part up by its mesh: both untextured parts here share one material name. */
+    @Test
+    fun partsThatShareAMaterialNameStillKeepTheirOwnFactors() = runTest {
+        val path = "assets/characters/walker.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.preload(path, skinnedPartsWithFactorsJson(firstPartTextured = false).encodeToByteArray())
+
+        val first = assertNotNull(resolver.materialDefaults("gltf-primitive:$path#0", "skinned-material"))
+        val second = assertNotNull(resolver.materialDefaults("gltf-primitive:$path#1", "skinned-material"))
+
+        assertEquals(0.3f, first.metallic)
+        assertEquals(0f, second.metallic)
+        assertEquals(0.2f, second.roughness)
+    }
+
+    @Test
+    fun theSlotsCarryEachPartsAuthoredFactors() = runTest {
+        val path = "assets/characters/walker.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.preload(path, skinnedPartsWithFactorsJson().encodeToByteArray())
+
+        val slots = resolver.materialSlots(path)
+
+        assertEquals(0.3f, slots[0].parameters?.metallic)
+        assertEquals(Color(0.2f, 0.4f, 0.6f, 1f), slots[0].parameters?.baseColorFactor)
+        assertEquals(0.2f, slots[1].parameters?.roughness)
+    }
+
+    @Test
+    fun aPartsFactorsAreOneSharedInstanceNotACopyPerEntity() = runTest {
+        val path = "assets/characters/walker.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.preload(path, skinnedPartsWithFactorsJson().encodeToByteArray())
+
+        assertSame(
+            resolver.materialDefaults("gltf-primitive:$path#1", "skinned-material"),
+            resolver.materialDefaults("gltf-primitive:$path#1", "skinned-material"),
+        )
+    }
+
+    @Test
+    fun aMeshThatIsNotASkinnedPartKeepsItsMaterialsFactors() = runTest {
+        val path = "assets/models/painted.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.preload(path, texturedTriangleJson().encodeToByteArray())
+
+        val byMaterial = assertNotNull(resolver.materialDefaults("gltf-material:$path"))
+        assertSame(byMaterial, resolver.materialDefaults(path, "gltf-material:$path"), "a static model is looked up by its material, as before")
+        assertEquals(0.7f, byMaterial.metallic)
+    }
+
+    @Test
+    fun forgettingAModelDropsItsPartsFactors() = runTest {
+        val path = "assets/characters/walker.gltf"
+        val resolver = GltfAssetResolver()
+        resolver.preload(path, skinnedPartsWithFactorsJson().encodeToByteArray())
+        assertNotNull(resolver.materialDefaults("gltf-primitive:$path#1", "skinned-material"))
+
+        resolver.forget(path)
+
+        assertNull(resolver.materialDefaults("gltf-primitive:$path#1", "skinned-material"), "nothing stale is served for a model that was dropped")
+    }
+
+    /**
+     * [skinnedPartsJson] with factors on its materials: the first part's textured material is metallic 0.3,
+     * roughness 0.7, tinted blue-grey; the second part gets a material of its own, metallic 0, roughness 0.2,
+     * red, with a faint emissive. With [firstPartTextured] false the first part is untextured too, so both
+     * parts draw with the one shared `skinned-material`.
+     */
+    private fun skinnedPartsWithFactorsJson(firstPartTextured: Boolean = true): String {
+        val textured = """{"pbrMetallicRoughness":{"baseColorTexture":{"index":0},"baseColorFactor":[0.2,0.4,0.6,1.0],"metallicFactor":0.3,"roughnessFactor":0.7}}"""
+        val untexturedFirst = """{"pbrMetallicRoughness":{"baseColorFactor":[0.2,0.4,0.6,1.0],"metallicFactor":0.3,"roughnessFactor":0.7}}"""
+        val plain = """{"pbrMetallicRoughness":{"baseColorFactor":[0.9,0.1,0.1,1.0],"metallicFactor":0.0,"roughnessFactor":0.2},"emissiveFactor":[0.1,0.2,0.3]}"""
+        val json = skinnedPartsJson()
+            .replace(
+                """"materials": [{"pbrMetallicRoughness":{"baseColorTexture":{"index":0}}}]""",
+                """"materials": [${if (firstPartTextured) textured else untexturedFirst},$plain]""",
+            )
+            .replace(
+                """{"attributes":{"POSITION":0,"JOINTS_0":2,"WEIGHTS_0":3},"indices":1}""",
+                """{"attributes":{"POSITION":0,"JOINTS_0":2,"WEIGHTS_0":3},"indices":1,"material":1}""",
+            )
+        return if (firstPartTextured) json else json.replace(""","TEXCOORD_0":4},"indices":1,"material":0}""", """},"indices":1,"material":0}""")
     }
 
     /** One triangle skinned to one joint, drawn by two part nodes: the first textured, the second not. */
