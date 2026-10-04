@@ -1,0 +1,1 @@
+- **Android no longer raises the soft keyboard with nothing to type into.** `AwakeSurfaceView` told Android it was always a text editor, so the system could open the keyboard whenever the window gained focus, such as at launch, on resume or after rotation. It now says so only while a text field holds focus.

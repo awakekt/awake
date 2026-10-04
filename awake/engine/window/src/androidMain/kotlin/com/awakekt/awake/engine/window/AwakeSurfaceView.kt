@@ -53,7 +53,9 @@ class AwakeSurfaceView(
         requestFocus()
     }
 
-    override fun onCheckIsTextEditor(): Boolean = true
+    // Only while a field holds focus. Always answering yes let Android raise the soft keyboard on
+    // its own whenever the window gained focus (launch, resume, rotation) with nothing to type into.
+    override fun onCheckIsTextEditor(): Boolean = input.textInputFocused
 
     override fun onCreateInputConnection(outAttrs: EditorInfo): InputConnection =
         createAwakeInputConnection(outAttrs, input)
