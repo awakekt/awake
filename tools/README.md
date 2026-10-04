@@ -113,6 +113,7 @@ Ordered as the pipeline runs: `fetch → extract → vendor → verify → captu
 | `compare_component_crops.py` | INVESTIGATION | Comparing one component against its reference | Don't pass `--fail-on-mismatch` before reviewing the crop and heatmap and choosing an explicit `maxMismatchPct`. Without one, a case reports `REVIEW`, which is the honest answer, not a failure |
 | `generate_ui_parity_report.py` | INVESTIGATION | Summarising registered slices | Don't read it as a gate. It reports what the manifest covers; a component absent from the manifest is invisible, not passing |
 | `generate_ui_status.py` | INVESTIGATION | After landing UI work, to refresh the matrix | Don't hand-edit `ui-fidelity-status.md`. Every row is a probe against source, which is what stops it claiming done for unwired work |
+| `render_evidence.py` | INVESTIGATION | CI's render-evidence job runs it to build the PR comment: before, after and an amplified diff for each changed scene or re-recorded baseline | Don't read a rounding-level change (2/255 or less) as a regression. Test it with `test_render_evidence.py` |
 | `ui_preview_server.py`, `ui_preview_watch.sh` | INVESTIGATION | Eyeballing during iteration | Don't cite it as proof of anything. It is a viewer |
 
 ### Assets (`tools/fonts-tooling/`, `tools/icons/`)

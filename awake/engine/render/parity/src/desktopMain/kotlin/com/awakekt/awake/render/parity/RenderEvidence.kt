@@ -13,7 +13,7 @@ import javax.imageio.ImageIO
 
 /**
  * Renders the parity scenes, every debug view and the UI scenarios on headless Vulkan, one PNG
- * each, into the directory given as the first argument.
+ * each, into the directory given as the first argument, plus `captions.tsv` saying what each shows.
  *
  * The PR evidence workflow runs this on a pull request's base and head and posts the two sets side
  * by side, so a rendering change arrives with pictures. File names are the comparison key: keep
@@ -21,31 +21,70 @@ import javax.imageio.ImageIO
  */
 fun main(args: Array<String>) {
     val out = File(args.firstOrNull() ?: "build/reports/render-evidence").apply { mkdirs() }
+    val captions = StringBuilder()
+    fun write(name: String, caption: String, size: Int, pixels: ByteArray) {
+        writePng(out, name, size, pixels)
+        captions.append(name).append('\t').append(caption).append('\n')
+    }
     openHeadlessScene(HeadlessUiBackend.Vulkan).use { session ->
         val renderer = session.renderer
-        writePng(out, "scene-shadow", SCENE_SIZE, renderer.renderShadowScene())
-        writePng(out, "scene-shadow-textured-ground", SCENE_SIZE, renderer.renderShadowScene(texturedGround = true))
-        writePng(out, "scene-textured-pbr", SCENE_SIZE, renderer.renderTexturedPbrScene())
-        writePng(out, "scene-back-culled", SCENE_SIZE, renderer.renderBackCulledScene())
-        writePng(out, "scene-facing-sprite-side", SCENE_SIZE, renderer.renderFacingSpriteFromTheSide())
-        writePng(out, "scene-skinned-textured", SCENE_SIZE, renderer.renderTexturedSkinnedScene(Mat4().data))
-        writePng(out, "scene-skinned-textured-exposure-2", SCENE_SIZE, renderer.renderTexturedSkinnedScene(Mat4().data, exposure = 2f))
+        write("scene-shadow", "Lit ground and a hovering quad: where the shadow lands", EVIDENCE_SIZE, renderer.renderShadowScene(size = EVIDENCE_SIZE))
+        write(
+            "scene-shadow-textured-ground",
+            "The same, on a textured ground: shadows on textured materials",
+            EVIDENCE_SIZE,
+            renderer.renderShadowScene(texturedGround = true, size = EVIDENCE_SIZE),
+        )
+        write("scene-textured-pbr", "Textured PBR plane: material sampling and lighting", EVIDENCE_SIZE, renderer.renderTexturedPbrScene(size = EVIDENCE_SIZE))
+        write("scene-back-culled", "Plane seen from above with back-face culling", EVIDENCE_SIZE, renderer.renderBackCulledScene(size = EVIDENCE_SIZE))
+        write(
+            "scene-facing-sprite-side",
+            "Camera-facing sprite seen from the side: its proportions and which way round it is",
+            EVIDENCE_SIZE,
+            renderer.renderFacingSpriteFromTheSide(size = EVIDENCE_SIZE),
+        )
+        write(
+            "scene-skinned-textured",
+            "Textured plane skinned to one joint at the identity pose",
+            EVIDENCE_SIZE,
+            renderer.renderTexturedSkinnedScene(Mat4().data, size = EVIDENCE_SIZE),
+        )
+        write(
+            "scene-skinned-textured-exposure-2",
+            "The same skinned plane at exposure 2: exposure before the tone curve",
+            EVIDENCE_SIZE,
+            renderer.renderTexturedSkinnedScene(Mat4().data, exposure = 2f, size = EVIDENCE_SIZE),
+        )
         STUDIO_YAWS.withIndex().filter { it.index % EVIDENCE_YAW_STEP == 0 }.forEach { (index, yaw) ->
-            writePng(out, "scene-studio-cube-yaw$index", SCENE_SIZE, renderer.renderStudioCubeScene(yaw))
+            write(
+                "scene-studio-cube-yaw$index",
+                "Studio's default cube under cascaded shadows, sun yaw $index of 12",
+                EVIDENCE_SIZE,
+                renderer.renderStudioCubeScene(yaw, size = EVIDENCE_SIZE),
+            )
         }
         RenderDebugView.entries.forEach { view ->
-            writePng(out, "debug-${view.name.lowercase()}", SCENE_SIZE, renderer.renderDebugViewScene(view))
+            write(
+                "debug-${view.name.lowercase()}",
+                "Debug view ${view.name}: red cube on a ground past the shadow distance",
+                EVIDENCE_SIZE,
+                renderer.renderDebugViewScene(view, size = EVIDENCE_SIZE),
+            )
         }
     }
     withHeadlessUi(HeadlessUiBackend.Vulkan) { renderer ->
         UI_PARITY_SCENARIOS.forEach { scenario ->
-            writePng(out, "ui-${scenario.name}", SCENARIO_SIZE, renderer.render(scenario))
+            write("ui-${scenario.name}", "UI pipeline: ${scenario.name}", SCENARIO_SIZE, renderer.render(scenario))
         }
     }
+    File(out, "captions.tsv").writeText(captions.toString())
 }
 
 /** Every third of the twelve studio yaws: enough angles to show a lighting change, few enough to scan. */
 private const val EVIDENCE_YAW_STEP = 3
+
+/** Large enough to read in a PR comment at its own size; the probes keep [SCENE_SIZE]. */
+private const val EVIDENCE_SIZE = 256
 
 /** Mid grey behind translucent pixels, so a light or a dark UI glyph both stay visible. */
 private const val BACKDROP = 128

@@ -88,8 +88,8 @@ fun Renderer.renderSpriteScene(view: SpriteView): ByteArray {
  * up lies on screen. Its texture is red on the left half and blue on the right, so the picture shows
  * both the quad's proportions and which way round it is.
  */
-fun Renderer.renderFacingSpriteFromTheSide(): ByteArray {
-    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+fun Renderer.renderFacingSpriteFromTheSide(size: Int = SCENE_SIZE): ByteArray {
+    val target = createRenderTarget(size, size)
     val quad = createMesh(SpriteQuad)
     val material = createMaterial(ParticleUniformLayout, texture = RedLeftBlueRight)
     return try {

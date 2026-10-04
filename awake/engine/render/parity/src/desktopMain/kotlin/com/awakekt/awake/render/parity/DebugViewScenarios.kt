@@ -40,8 +40,12 @@ fun debugViewLens(): Lens = Lens(
  * above them, the band beyond the shadow distance where shadowing ends; the cube's shadow falls
  * on the ground in front of the camera; and the cube shows two faces with different normals.
  */
-fun Renderer.renderDebugViewScene(view: RenderDebugView, shadowsEnabled: Boolean = true): ByteArray {
-    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+fun Renderer.renderDebugViewScene(
+    view: RenderDebugView,
+    shadowsEnabled: Boolean = true,
+    size: Int = SCENE_SIZE,
+): ByteArray {
+    val target = createRenderTarget(size, size)
     val ground = createMesh(generate { plane(size = DEBUG_GROUND_SIZE, colored = false) })
     val cube = createMesh(redCube())
     val material = createMaterial(LitShadowUniformLayout)

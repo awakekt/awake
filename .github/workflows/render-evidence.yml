@@ -108,8 +108,9 @@ jobs:
           cp awake/ui/shadcn/build/reports/compose-preview/lucide-icons.png "$RUNNER_TEMP/after/ui-lucide-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/shadcn-icons.png "$RUNNER_TEMP/after/ui-shadcn-icons-cpu.png"
 
-      - name: Setup Python for original SVG capture
-        if: steps.scope.outputs.icons == 'true'
+      # The comparison needs it on every render run; the original SVG capture also uses it.
+      - name: Setup Python
+        if: steps.scope.outputs.render == 'true'
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -155,6 +156,12 @@ jobs:
           cp awake/ui/shadcn/build/reports/compose-preview/lucide-icons.png "$RUNNER_TEMP/before/ui-lucide-icons-cpu.png"
           cp awake/ui/shadcn/build/reports/compose-preview/shadcn-icons.png "$RUNNER_TEMP/before/ui-shadcn-icons-cpu.png"
 
+      - name: Compare captures
+        if: steps.scope.outputs.render == 'true'
+        run: |
+          python -m pip install --quiet 'pillow==12.3.0'
+          python tools/shadcn/render_evidence.py prepare "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$RUNNER_TEMP/compare" "$BASE_SHA" "$HEAD_SHA"
+
       - name: Publish images
         if: steps.scope.outputs.render == 'true'
         run: |
@@ -171,6 +178,7 @@ jobs:
           mkdir -p "$publish/$dest"
           cp -R "$RUNNER_TEMP/before" "$publish/$dest/before"
           cp -R "$RUNNER_TEMP/after" "$publish/$dest/after"
+          [[ -d "$RUNNER_TEMP/compare/diff" ]] && cp -R "$RUNNER_TEMP/compare/diff" "$publish/$dest/diff"
           cd "$publish"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -191,14 +199,7 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
           prefix="https://raw.githubusercontent.com/${{ github.repository }}/render-evidence/pr-$PR/$HEAD_SHA"
-          scripts/render-evidence-comment.sh "$RUNNER_TEMP/before" "$RUNNER_TEMP/after" "$prefix" "$HEAD_SHA" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
-          scripts/baseline-diff-comment.sh "$BASE_SHA" "$HEAD_SHA" "${{ github.repository }}" > "$RUNNER_TEMP/baselines.md"
-          if [[ -s "$RUNNER_TEMP/baselines.md" ]]; then
-            if [[ ! -s "$RUNNER_TEMP/comment.md" ]]; then
-              printf '<!-- render-evidence -->\n## Render evidence\n' > "$RUNNER_TEMP/comment.md"
-            fi
-            { echo; cat "$RUNNER_TEMP/baselines.md"; } >> "$RUNNER_TEMP/comment.md"
-          fi
+          python tools/shadcn/render_evidence.py comment "$RUNNER_TEMP/compare" "$prefix" "$HEAD_SHA" "${{ github.repository }}" "$EVIDENCE_FOCUS" > "$RUNNER_TEMP/comment.md"
           existing="$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
             --jq '[.[] | select(.body | startswith("<!-- render-evidence -->")) | .id] | first // empty')"
           if [[ ! -s "$RUNNER_TEMP/comment.md" && "$PR_TITLE" =~ ^fix(\(.*\))?!?: ]]; then

@@ -26,8 +26,13 @@ import kotlinx.coroutines.runBlocking
  * shows the texture where the plane lies, a zero matrix collapses it to nothing. [palette] may also be
  * one tinted by `skinnedMaterialFloats`. [exposure] is the scene's, applied before the tone curve.
  */
-fun Renderer.renderTexturedSkinnedScene(palette: FloatArray, texture: TextureAsset = SolidOrange, exposure: Float = 1f): ByteArray {
-    val target = createRenderTarget(SCENE_SIZE, SCENE_SIZE)
+fun Renderer.renderTexturedSkinnedScene(
+    palette: FloatArray,
+    texture: TextureAsset = SolidOrange,
+    exposure: Float = 1f,
+    size: Int = SCENE_SIZE,
+): ByteArray {
+    val target = createRenderTarget(size, size)
     val mesh = createMesh(skinnedTexturedPlane())
     val material = createMaterial(SkinnedUniformLayout, texture = texture)
     return try {
