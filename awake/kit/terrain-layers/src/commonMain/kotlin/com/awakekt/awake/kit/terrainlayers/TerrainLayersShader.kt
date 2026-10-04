@@ -45,6 +45,7 @@ import com.awakekt.awake.asset.shaderpack.DebugSurface
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
 import com.awakekt.awake.asset.shaderpack.debugLayerColor
 import com.awakekt.awake.asset.shaderpack.debugViewColor
+import com.awakekt.awake.asset.shaderpack.sceneDisplayTransform
 import com.awakekt.awake.asset.shaderpack.terrainClipmapDiscardUnderFinerRing
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainShadowSampling
@@ -90,6 +91,7 @@ private const val CONTROL_TAPS = 4
 fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain_layers") {
     val terrain = terrainClipmapVertexStage()
     val shadows = terrainShadowSampling(terrain, clipSpace)
+    val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
     val group = BindingLayout.Standard.slot(BindingSemantic.Material)
     val albedoLayers by texture2dArray(group = group, binding = LAYER_ALBEDO_BINDING)
     val layerParams by texture2d(group = group, binding = LAYER_TABLE_BINDING)
@@ -126,7 +128,8 @@ fun terrainLayersShader(clipSpace: ClipSpace): AslShaderDefinition = shader("ter
             dominantLayer = dominantLayerColor(slots),
             lightmap = baked.xyz,
         )
-        val shaded = vec4(albedo * baked.xyz * 2f.lit * light, 1f.lit)
+        val lit = let("lit", albedo * baked.xyz * 2f.lit * light)
+        val shaded = vec4(displayTransform.displayReferred(lit, terrain.exposure.x), 1f.lit)
         colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
     }
 }

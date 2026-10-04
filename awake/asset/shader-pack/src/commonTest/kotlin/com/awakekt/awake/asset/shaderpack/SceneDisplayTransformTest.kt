@@ -37,6 +37,21 @@ class SceneDisplayTransformTest {
         fragment { colorOutput(vec4(displayTransform.display(radiance, exposure.x), 1f.lit)) }
     }
 
+    private val displayReferredProbe = shader("display_referred_probe") {
+        val uniforms = uniformBlock("Uniforms", group = 0, binding = 0)
+        val exposure by uniforms.field(GpuDataShape.Vec4)
+        val out = varyings("VertexOutput")
+        val shaded by out.varying(GpuDataShape.Vec3, location = 0)
+        vertex {
+            val inPosition by input(GpuDataShape.Vec3, location = 0)
+            val inShaded by input(GpuDataShape.Vec3, location = 1)
+            out.position set vec4(inPosition, 1f.lit)
+            shaded set inShaded
+        }
+        val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
+        fragment { colorOutput(vec4(displayTransform.displayReferred(shaded, exposure.x), 1f.lit)) }
+    }
+
     @Test
     fun theShaderMatchesTheKhronosReference() {
         listOf(
@@ -57,6 +72,19 @@ class SceneDisplayTransformTest {
         assertNear(display(FloatArray(3) { radiance[it] * 2f }, exposure = 1f).toList(), display(radiance, exposure = 2f), "exposure 2")
     }
 
+    /** A display-referred colour is the radiance its decode gives, so it meets lit meshes on one curve. */
+    @Test
+    fun aDisplayReferredColourIsDecodedOntoTheSameCurve() {
+        listOf(
+            floatArrayOf(0.2f, 0.2f, 0.2f),
+            floatArrayOf(0.5f, 0.35f, 0.2f),
+            floatArrayOf(0.95f, 0.9f, 0.8f),
+        ).forEach { shaded ->
+            val radiance = FloatArray(3) { shaded[it].pow(2.2f) }
+            assertNear(display(radiance, exposure = 1.5f).toList(), displayReferred(shaded, exposure = 1.5f), "shaded ${shaded.toList()}")
+        }
+    }
+
     /** Amber lit to 85%: per-channel Reinhard compressed red most and showed khaki; the curve keeps the hue. */
     @Test
     fun aLitColourKeepsItsHue() {
@@ -71,6 +99,11 @@ class SceneDisplayTransformTest {
     private fun display(radiance: FloatArray, exposure: Float): FloatArray = AslEvaluator.evalFragment(
         probe,
         mapOf("radiance" to radiance, "uniforms.exposure" to floatArrayOf(exposure, 0f, 0f, 0f)),
+    ).copyOf(3)
+
+    private fun displayReferred(shaded: FloatArray, exposure: Float): FloatArray = AslEvaluator.evalFragment(
+        displayReferredProbe,
+        mapOf("shaded" to shaded, "uniforms.exposure" to floatArrayOf(exposure, 0f, 0f, 0f)),
     ).copyOf(3)
 
     /** Khronos PBR Neutral, from the reference GLSL. */

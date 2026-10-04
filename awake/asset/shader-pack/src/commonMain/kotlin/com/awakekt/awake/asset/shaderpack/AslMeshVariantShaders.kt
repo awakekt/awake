@@ -58,6 +58,8 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
         val uniformPalette = if (skinned && !instanced) handles.array("jointPalette") else null
         val tint = if (skinned && !instanced) handles.value("baseColorFactor") else null
         val glow = if (skinned && !instanced) handles.value("emissiveFactor") else null
+        val exposure = handles.value("exposure")
+        val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
         val storagePalettes = if (skinned && instanced) {
             storageArrayOfArrays(
                 structName = "JointPalette",
@@ -122,10 +124,11 @@ private fun meshVariant(name: String, instanced: Boolean, skinned: Boolean): Asl
             val diffuse = let("diffuse", max(dot(n, l), 0f.lit))
             val shade = let("shade", ambient + (1f.lit - ambient) * diffuse)
             val lit = if (lightColor != null) color * shade * lightColor.xyz else color * shade
+            // Colours here are display-referred, lit as stored; the transform decodes them first.
             if (tint != null && glow != null) {
-                colorOutput(vec4(lit * tint.xyz + glow.xyz, tint.w))
+                colorOutput(vec4(displayTransform.displayReferred(lit * tint.xyz + glow.xyz, exposure.x), tint.w))
             } else {
-                colorOutput(vec4(lit, 1f.lit))
+                colorOutput(vec4(displayTransform.displayReferred(lit, exposure.x), 1f.lit))
             }
         }
     }
@@ -142,6 +145,8 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
     val tint = handles.value("baseColorFactor")
     val glow = handles.value("emissiveFactor")
     val pbrFactors = handles.value("pbrFactors")
+    val exposure = handles.value("exposure")
+    val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
 
     val baseColorTexture by texture2d(
         group = BindingLayout.Standard.slot(BindingSemantic.Material),
@@ -194,7 +199,7 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
         val alpha = let("alpha", texColor.a * tint.w)
         // A masked material's cut-out, as the textured shader's; an opaque one's cutoff is 0.
         discardIf(alpha lt pbrFactors.z)
-        colorOutput(vec4(lit, alpha))
+        colorOutput(vec4(displayTransform.displayReferred(lit, exposure.x), alpha))
     }
 }
 

@@ -34,9 +34,23 @@ import com.awakekt.awake.core.geometry.GpuDataShape
 class SceneDisplayTransform internal constructor(
     private val toneMap: AslFunctionHandle,
     private val encode: AslFunctionHandle,
+    private val decode: AslFunctionHandle?,
 ) {
     /** [radiance] times [exposure], tone mapped, then encoded for the UNORM target. */
     fun display(radiance: AslExpr, exposure: AslExpr): AslExpr = encode(toneMap(radiance * exposure))
+
+    /**
+     * [display] for a shader that lights display-referred colour, such as vertex colours, textures
+     * or a lightmap multiplied as stored: [shaded] is decoded to linear first. At exposure 1 a
+     * colour below the tone curve's shoulder comes back nearly as it went in. Needs the transform
+     * declared with `decodesDisplayReferred = true`.
+     */
+    fun displayReferred(shaded: AslExpr, exposure: AslExpr): AslExpr {
+        val decode = checkNotNull(decode) {
+            "Declare sceneDisplayTransform(decodesDisplayReferred = true) to light display-referred colour."
+        }
+        return display(decode(shaded), exposure)
+    }
 
     /** [linear] encoded with no exposure or tone mapping, for data views such as albedo. */
     fun encoded(linear: AslExpr): AslExpr = encode(linear)
@@ -51,7 +65,7 @@ class SceneDisplayTransform internal constructor(
  * ambient and no image-based light, ambient-only surfaces come out darker than that design
  * assumes. Reference: https://github.com/KhronosGroup/ToneMapping/tree/main/PBR_Neutral
  */
-fun AslShaderBuilder.sceneDisplayTransform(): SceneDisplayTransform {
+fun AslShaderBuilder.sceneDisplayTransform(decodesDisplayReferred: Boolean = false): SceneDisplayTransform {
     // The reference's `0.8 - 0.04`: where compression starts, after the toe's offset.
     val startCompression = const("TONE_MAP_START_COMPRESSION", 0.76f)
     val desaturation = const("TONE_MAP_DESATURATION", 0.15f)
@@ -73,5 +87,15 @@ fun AslShaderBuilder.sceneDisplayTransform(): SceneDisplayTransform {
         val linear by param(GpuDataShape.Vec3)
         returnValue(pow(max(linear, vec3(0f.lit)), vec3(invGamma)))
     }
-    return SceneDisplayTransform(toneMap, encode)
+    // Declared only on request: ASL rejects a function a shader never calls.
+    val decode = if (decodesDisplayReferred) {
+        val gamma = const("GAMMA", 2.2f)
+        fn("displayToLinear", returns = AslType.Data(GpuDataShape.Vec3)) {
+            val encoded by param(GpuDataShape.Vec3)
+            returnValue(pow(max(encoded, vec3(0f.lit)), vec3(gamma)))
+        }
+    } else {
+        null
+    }
+    return SceneDisplayTransform(toneMap, encode, decode)
 }

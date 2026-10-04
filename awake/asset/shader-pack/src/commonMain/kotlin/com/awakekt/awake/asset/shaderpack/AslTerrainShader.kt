@@ -101,7 +101,7 @@ object TerrainUniformLayout {
     /**
      * Ends with the cascade fields `lit_shadow` reads, under the same names and packing, so one
      * writer fills both. The camera forward's `w` is the active cascade count; 0 means no shadow
-     * pass, and a surface samples nothing. Then the debug view, as every scene shader has it.
+     * pass, and a surface samples nothing. Then the debug view and exposure, as every scene shader has them.
      */
     val Layout = UniformLayout(
         ViewProjection,
@@ -114,6 +114,7 @@ object TerrainUniformLayout {
         UniformFields.CameraPosition,
         UniformFields.CameraForward,
         UniformFields.DebugView,
+        UniformFields.Exposure,
     )
 }
 
@@ -130,6 +131,7 @@ const val TERRAIN_SURFACE_FIRST_BINDING: Int = 3
  * footprint.
  * @property cascades The block's cascade fields, for [terrainShadowSampling].
  * @property debugView The block's `UniformFields.DebugView`, for [debugViewColor].
+ * @property exposure The block's `UniformFields.Exposure`, for [SceneDisplayTransform].
  * @property ringCell World `x`, `z` and ring level, for [terrainClipmapDiscardUnderFinerRing].
  * @property ringParams The block's [TerrainUniformLayout.RingParams].
  */
@@ -142,6 +144,7 @@ class TerrainClipmapOutputs internal constructor(
     val terrainSampling: AslExpr,
     val cascades: CascadeShadowInputs,
     val debugView: AslExpr,
+    val exposure: AslExpr,
     internal val ringCell: AslExpr,
     internal val ringParams: AslArrayHandle,
 ) {
@@ -231,6 +234,7 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
     }
 
     val debugView = handles.value("debugView")
+    val exposure = handles.value("exposure")
     return TerrainClipmapOutputs(
         worldNormal,
         worldPosition,
@@ -239,6 +243,7 @@ fun AslShaderBuilder.terrainClipmapVertexStage(exportWorldPosition: Boolean = tr
         terrainSampling,
         handles.cascadeInputs(),
         debugView,
+        exposure,
         ringCell,
         ringParams,
     )
@@ -400,6 +405,7 @@ internal fun decodeHeight(sample: AslExpr): AslExpr = (sample.x * 256f.lit + sam
 fun terrainShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain") {
     val terrain = terrainClipmapVertexStage()
     val shadows = terrainShadowSampling(terrain, clipSpace)
+    val displayTransform = sceneDisplayTransform(decodesDisplayReferred = true)
 
     fragment {
         terrainClipmapDiscardUnderFinerRing(terrain)
@@ -419,7 +425,7 @@ fun terrainShader(clipSpace: ClipSpace): AslShaderDefinition = shader("terrain")
             shadow = shadow,
             shadowCascade = shadows.shadowCascade(terrain.worldPosition),
         )
-        val shaded = vec4(vec3(base, base, base) * lighting, 1f.lit)
+        val shaded = vec4(displayTransform.displayReferred(vec3(base, base, base) * lighting, terrain.exposure.x), 1f.lit)
         colorOutput(debugViewColor(terrain.debugView, terrain.cascades.cameraPosition, surface, shaded))
     }
 }
