@@ -14,6 +14,25 @@ public final class com/awakekt/awake/project/runtime/CanvasActionSystemKt {
 	public static final field MOVE_ACTION Ljava/lang/String;
 }
 
+public final class com/awakekt/awake/project/runtime/PlayServices {
+	public fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function0;Lcom/awakekt/awake/render/renderer/Renderer;Lcom/awakekt/awake/physics/PhysicsWorld;Ljava/util/Map;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getInput ()Lkotlin/jvm/functions/Function0;
+	public final fun getParticleSprites ()Ljava/util/Map;
+	public final fun getPhysics ()Lcom/awakekt/awake/physics/PhysicsWorld;
+	public final fun getRenderer ()Lcom/awakekt/awake/render/renderer/Renderer;
+}
+
+public final class com/awakekt/awake/project/runtime/PlaySystems : java/lang/AutoCloseable {
+	public fun close ()V
+	public final fun getFixed ()Ljava/util/List;
+	public final fun getFrame ()Ljava/util/List;
+}
+
+public final class com/awakekt/awake/project/runtime/PlaySystemsKt {
+	public static final fun playSystemsFor (Lcom/awakekt/awake/scene/document/SceneDocument;Lcom/awakekt/awake/project/runtime/PlayServices;)Lcom/awakekt/awake/project/runtime/PlaySystems;
+}
+
 public final class com/awakekt/awake/project/runtime/PlayableProject {
 	public final fun getManifest ()Lcom/awakekt/awake/project/AwakeProjectManifest;
 	public final fun getScene ()Lcom/awakekt/awake/scene/document/SceneDocument;

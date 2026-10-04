@@ -19,41 +19,29 @@ import com.awakekt.awake.project.AwakeProjectManifest
 import com.awakekt.awake.project.AwakeProjectValidator
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.authoring.SceneAppDsl
-import com.awakekt.awake.scene.authoring.infrastructure.cameraSystem
-import com.awakekt.awake.scene.authoring.infrastructure.matrixRelativeMovementSystem
-import com.awakekt.awake.scene.authoring.infrastructure.playerInputSystem
 import com.awakekt.awake.scene.binding.SceneComponentRegistry
-import com.awakekt.awake.scene.canvas.SceneCanvasElement
 import com.awakekt.awake.scene.character.CharacterControllerBinding
-import com.awakekt.awake.scene.character.CharacterControllerSystem
 import com.awakekt.awake.scene.character.SceneCharacterController
 import com.awakekt.awake.scene.controls.camera.ActiveCamera
 import com.awakekt.awake.scene.controls.camera.CameraRigBinding
-import com.awakekt.awake.scene.controls.camera.SceneCameraRig
 import com.awakekt.awake.scene.controls.movement.MovementControlBinding
-import com.awakekt.awake.scene.controls.movement.SceneMovementControl
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.document.SceneComponent
 import com.awakekt.awake.scene.document.SceneDocument
 import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.withPrefabs
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
 import com.awakekt.awake.scene.physics.PhysicsBodyBinding
-import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.Camera
-import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.particles.loadParticleSprites
-import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlin.math.PI
-import kotlin.reflect.KClass
 
 /** Where a project keeps its manifest, relative to the project root. */
 const val PROJECT_MANIFEST = "awake.project.json"
@@ -68,12 +56,7 @@ class PlayableProject internal constructor(
     internal val models: GltfAssetResolver,
     internal val physics: PhysicsWorld?,
     internal val particleSprites: Map<String, TextureAsset> = emptyMap(),
-) {
-    internal fun has(type: KClass<out SceneComponent>): Boolean =
-        scene.nodes.any { it.has(type) }
-
-    internal fun hasCanvasActions(): Boolean = scene.nodes.any { it.hasCanvasAction() }
-}
+)
 
 /**
  * Reads [PROJECT_MANIFEST] and its entry scene from [files], a project root, loads the glTF models
@@ -93,8 +76,7 @@ suspend fun loadPlayableProject(
     val issues = AwakeProjectValidator.manifestIssues(manifest)
     require(issues.isEmpty()) { "$PROJECT_MANIFEST is invalid: ${issues.joinToString("; ")}" }
 
-    DefaultSceneComponentResolvers.install()
-    PROJECT_COMPONENTS.forEach(SceneComponentRegistry::registerGlobal)
+    installPlayableComponents()
     val scene = SceneLoader.decode(files.readText(manifest.entryScene)).withPrefabs { files.readText(it) }
 
     val models = GltfAssetResolver().apply { setAssetSource(files) }
@@ -114,20 +96,17 @@ suspend fun loadPlayableProject(
     return PlayableProject(manifest, scene, models, physics, loadParticleSprites(scene, files))
 }
 
+/** Installs Core's default scene components and the controls, physics and character ones. Harmless twice. */
+internal fun installPlayableComponents() {
+    DefaultSceneComponentResolvers.install()
+    PROJECT_COMPONENTS.forEach(SceneComponentRegistry::registerGlobal)
+}
+
 /**
- * Plays [project] in this scene, running only what its components call for:
- * - `movement_control`: keyboard intent, moved by physics when the entity has a
- *   `character_controller` and straight through the world when it doesn't
- * - `physics_body` and `character_controller`: the physics step and the character controller
- * - `camera_rig`: the camera system
- * - `spinControl` and skinned glTF models: spinning and animation
- * - `keyframe_animation`: its looping tracks
- * - `particle_emitter`: its emitters, with the sprites [loadPlayableProject] read
- *
- * - `canvas_element`s with an action: [CanvasActionSystem]
- *
- * With [touchControls], the scene's touch-only canvas controls are shown. Every speed, distance and
- * size comes from the scene; this adds no tuning of its own.
+ * Plays [project] in this scene: its [PlayableProject.scene], the built-in meshes and the models it
+ * loaded, the systems its components call for (the ones [playSystemsFor] builds), and a primary
+ * camera. With [touchControls], the scene's touch-only canvas controls are shown. Every speed,
+ * distance and size comes from the scene; this adds no tuning of its own.
  */
 fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = false) {
     scene(project.scene)
@@ -135,19 +114,7 @@ fun SceneAppDsl.playProject(project: PlayableProject, touchControls: Boolean = f
         builtInSceneAssets()
         resolver(project.models)
     }
-    val moves = project.has(SceneMovementControl::class)
-    val characters = project.has(SceneCharacterController::class)
-    if (moves) playerInputSystem()
-    if (moves && project.hasCanvasActions()) frameSystem("canvas-actions") { CanvasActionSystem() }
-    project.physics?.let { physicsWorld ->
-        if (project.scene.nodes.any { it.hasTerrainCollider() }) fixedSystem("terrain-collider") { TerrainColliderSystem() }
-        fixedSystem("physics") { PhysicsSystem(physicsWorld) }
-        if (characters) fixedSystem("character") { CharacterControllerSystem(physicsWorld) }
-    }
-    if (moves && !characters) matrixRelativeMovementSystem()
-    if (project.has(SceneCameraRig::class)) cameraSystem()
-    motionSystems(project)
-    frameSystem("animation") { AnimationSystem() }
+    registerPlaySpecs(project.scene, project.physics, project.particleSprites)
     onReady {
         showTouchControls = touchControls
         activatePrimaryCamera(world)
@@ -202,15 +169,6 @@ private val PROJECT_COMPONENTS = listOf(
 private suspend fun AssetSource.readText(path: String): String =
     read(AssetPath(path)).getOrElse { throw IllegalArgumentException("Can't read $path from the project", it) }
         .decodeToString()
-
-private fun SceneNode.hasTerrainCollider(): Boolean =
-    components.any { it is SceneTerrain && it.collider } || children.any { it.hasTerrainCollider() }
-
-private fun SceneNode.has(type: KClass<out SceneComponent>): Boolean =
-    components.any { type.isInstance(it) } || children.any { it.has(type) }
-
-private fun SceneNode.hasCanvasAction(): Boolean =
-    components.any { it is SceneCanvasElement && it.action.isNotEmpty() } || children.any { it.hasCanvasAction() }
 
 private fun SceneNode.meshNames(): List<String> =
     components.filterIsInstance<SceneMeshRenderer>().map { it.mesh } + children.flatMap { it.meshNames() }

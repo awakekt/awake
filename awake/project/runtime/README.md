@@ -30,3 +30,25 @@ the `lit-shadow` material; anything else a scene draws is a project asset.
 
 `playProject(project, touchControls = true)` shows the scene's `touchOnly` canvas elements; a host on a
 touch screen passes it. The scene decides where the controls sit and how big they are.
+
+## Playing a scene in a world of your own
+
+An editor that plays the scene it is editing, in an isolated world, wants the same systems without
+a project on disk and without an app builder. `playSystemsFor(scene, services)` returns them as
+plain `System`s: `fixed` ones to run on each fixed step, then `frame` ones once per rendered frame,
+in the order `playProject` runs them. `playProject` is built on the same decision, so a component
+that gains a system gains it in both.
+
+```kotlin
+val play = playSystemsFor(
+    scene,
+    PlayServices(input = { gameplayInput }, renderer = renderer, physics = physicsWorld, particleSprites = sprites),
+)
+// each fixed step:        play.fixed.forEach { it.update(world, step) }
+// each rendered frame:    play.frame.forEach { it.update(world, delta) }
+// when the scene stops:   play.close()
+```
+
+It builds only the scene's own systems. The host still places the scene, resolves its assets, picks
+the camera, resolves transforms and draws. Pass the physics world the scene needs (`physics_body`,
+`character_controller` or a terrain collider), or those systems are left out.
