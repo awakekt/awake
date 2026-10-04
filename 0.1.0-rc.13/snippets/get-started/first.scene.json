@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "name": "first-scene",
+  "nodes": [
+    {
+      "name": "camera",
+      "components": [
+        {
+          "component": "camera",
+          "eye": { "x": 0.0, "y": 1.5, "z": 4.0 },
+          "center": { "x": 0.0, "y": 0.5, "z": 0.0 },
+          "fovYDegrees": 45.0
+        }
+      ]
+    },
+    {
+      "name": "sun",
+      "components": [
+        {
+          "component": "light",
+          "type": "Directional",
+          "direction": { "x": 0.4, "y": 0.8, "z": 0.4 }
+        }
+      ]
+    },
+    {
+      "name": "cube",
+      "transform": { "position": { "x": 0.0, "y": 0.5, "z": 0.0 } },
+      "components": [
+        { "component": "mesh_renderer", "mesh": "cube", "material": "lit" },
+        { "component": "spin_control", "speed": 1.0 }
+      ]
+    }
+  ]
+}
