@@ -5,8 +5,10 @@
  */
 package com.awakekt.awake.scene.rendering.mesh
 
+import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.core.math.ScratchPool
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.Vec4
 import com.awakekt.awake.ecs.ComponentTypeId
@@ -46,14 +48,9 @@ internal class SceneDrawCollector(
     private val beforeParticles = ArrayList<RenderDrawCommand>()
     private val afterParticles = ArrayList<RenderDrawCommand>()
 
-    private val commandPool = ArrayList<RenderDrawCommand>()
-    private var commandPoolCount = 0
-
-    private val scratchAabbPool = ArrayList<Aabb>()
-    private var scratchAabbCount = 0
-
-    private val scratchMatrixPool = ArrayList<Mat4>()
-    private var scratchMatrixCount = 0
+    private val commandPool = ScratchPool(::createEmptyDrawCommand)
+    private val scratchAabbPool = ScratchPool { Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f)) }
+    private val scratchMatrixPool = ScratchPool(::Mat4)
 
     private var cachedMeshFamily: Family2<Transform, MeshRenderer>? = null
     private var cachedMeshFamilyWorld: World? = null
@@ -86,9 +83,9 @@ internal class SceneDrawCollector(
     ): List<RenderDrawCommand> {
         val drawCalls = beforeParticles
         drawCalls.clear()
-        commandPoolCount = 0
-        scratchAabbCount = 0
-        scratchMatrixCount = 0
+        commandPool.reset()
+        scratchAabbPool.reset()
+        scratchMatrixPool.reset()
 
         // Resolved once per world: looking a type up by class is a hash lookup, paid per entity otherwise.
         if (cachedTypesWorld !== world) {
@@ -350,71 +347,46 @@ internal class SceneDrawCollector(
         shadowsOnly: Boolean = false,
         worldBounds: Aabb? = null,
         additive: Boolean = false,
-    ): RenderDrawCommand {
-        if (commandPoolCount < commandPool.size) {
-            return commandPool[commandPoolCount++].set(
-                mesh = mesh,
-                material = material,
-                model = model,
-                extraUniformFloats = extraUniformFloats,
-                vertexAnimation = vertexAnimation,
-                timeSeconds = timeSeconds,
-                instanceModels = instanceModels,
-                instanceJointPalettes = instanceJointPalettes,
-                instanceColors = instanceColors,
-                instanceFrames = instanceFrames,
-                cullMode = cullMode,
-                alphaMode = alphaMode,
-                alphaCutoff = alphaCutoff,
-                transparent = transparent,
-                shadowsOnly = shadowsOnly,
-                worldBounds = worldBounds,
-                additive = additive,
-            )
-        }
-        val command = RenderDrawCommand(
-            mesh = mesh,
-            material = material,
-            model = model,
-            extraUniformFloats = extraUniformFloats,
-            vertexAnimation = vertexAnimation,
-            timeSeconds = timeSeconds,
-            instanceModels = instanceModels,
-            instanceJointPalettes = instanceJointPalettes,
-            instanceColors = instanceColors,
-            instanceFrames = instanceFrames,
-            cullMode = cullMode,
-            alphaMode = alphaMode,
-            alphaCutoff = alphaCutoff,
-            transparent = transparent,
-            shadowsOnly = shadowsOnly,
-            worldBounds = worldBounds,
-            additive = additive,
-        )
-        commandPool.add(command)
-        commandPoolCount++
-        return command
-    }
+    ): RenderDrawCommand = commandPool.obtain().set(
+        mesh = mesh,
+        material = material,
+        model = model,
+        extraUniformFloats = extraUniformFloats,
+        vertexAnimation = vertexAnimation,
+        timeSeconds = timeSeconds,
+        instanceModels = instanceModels,
+        instanceJointPalettes = instanceJointPalettes,
+        instanceColors = instanceColors,
+        instanceFrames = instanceFrames,
+        cullMode = cullMode,
+        alphaMode = alphaMode,
+        alphaCutoff = alphaCutoff,
+        transparent = transparent,
+        shadowsOnly = shadowsOnly,
+        worldBounds = worldBounds,
+        additive = additive,
+    )
 
-    private fun obtainScratchAabb(): Aabb {
-        if (scratchAabbCount < scratchAabbPool.size) {
-            return scratchAabbPool[scratchAabbCount++]
-        }
-        val aabb = Aabb(Vec3f(0f, 0f, 0f), Vec3f(0f, 0f, 0f))
-        scratchAabbPool.add(aabb)
-        scratchAabbCount++
-        return aabb
-    }
+    private fun obtainScratchAabb(): Aabb = scratchAabbPool.obtain()
 
-    private fun obtainScratchMatrix(): Mat4 {
-        if (scratchMatrixCount < scratchMatrixPool.size) {
-            return scratchMatrixPool[scratchMatrixCount++]
-        }
-        val matrix = Mat4()
-        scratchMatrixPool.add(matrix)
-        scratchMatrixCount++
-        return matrix
-    }
+    private fun obtainScratchMatrix(): Mat4 = scratchMatrixPool.obtain()
+}
+
+private fun createEmptyDrawCommand(): RenderDrawCommand = RenderDrawCommand(
+    mesh = EMPTY_MESH,
+    material = EMPTY_MATERIAL,
+    model = IDENTITY_MATRIX,
+)
+
+private val EMPTY_MESH = object : Mesh {
+    override val format = VertexFormat.PositionNormalColor
+    override val sizeBytes = 0L
+    override fun destroy() = Unit
+}
+
+private val EMPTY_MATERIAL = object : Material {
+    override fun updateUniformBuffer(uniformFloats: FloatArray) = Unit
+    override fun destroy() = Unit
 }
 
 private val IDENTITY_MATRIX = Mat4()
