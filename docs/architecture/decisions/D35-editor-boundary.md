@@ -35,5 +35,5 @@ never how Studio lays out, orders or resolves what plugins contribute.
 - Studio's own contribution types extend the Core interfaces instead of redefining them.
 - A new extension point is added to `:awake:editor:contract` first, with a test, then hosted in
   Studio.
-- Scene-bound hooks (viewport tools, scene systems, component inspectors) need neutral scene types
-  first; they follow the same rule when they come.
+- Scene-bound hooks (viewport tools, scene systems, component inspectors) follow the same rule; their
+  neutral scene types are decision [D36](D36-scene-bound-editor-hooks.md).
