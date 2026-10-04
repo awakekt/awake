@@ -32,6 +32,11 @@ class SceneValidationException(
 
 /**
  * Validator checking scene documents for structural integrity, unique node names, and component constraints.
+ *
+ * Node names are unique per scope: the document is one, and each prefab instance (a node with a
+ * [ScenePrefabLink], whose expanded prefab hangs under it) is its own. The same prefab placed twice
+ * repeats its names, once in each instance, without clashing; the instance node's own name belongs
+ * to the scope around it.
  */
 object SceneValidator {
     /** Validates [document] and returns a list of detected validation issues. */
@@ -89,8 +94,9 @@ object SceneValidator {
             issues += component.validate(path)
         }
 
+        val childNames = if (node.components.any { it is ScenePrefabLink }) LinkedHashMap<String, String>() else namedPaths
         node.children.forEachIndexed { index, child ->
-            validateNode(child, nodePath(child.name, index, path), issues, namedPaths)
+            validateNode(child, nodePath(child.name, index, path), issues, childNames)
         }
     }
 }
