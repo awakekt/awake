@@ -1,0 +1,1 @@
+- **A newer push to `main` cancels the snapshot publish it supersedes**, so release tags no longer queue for hours behind snapshot runs.

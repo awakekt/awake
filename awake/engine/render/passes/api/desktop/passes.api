@@ -402,6 +402,8 @@ public final class com/awakekt/awake/render/passes/uniforms/ParticleUniformsKt {
 	public static final fun getInstancedUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getParticleExtraUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
 	public static final fun getParticleUniformLayout ()Lcom/awakekt/awake/render/renderer/UniformLayout;
+	public static final fun setParticleInstance (Lcom/awakekt/awake/core/math/Mat4;FFFFFFF)Lcom/awakekt/awake/core/math/Mat4;
+	public static synthetic fun setParticleInstance$default (Lcom/awakekt/awake/core/math/Mat4;FFFFFFFILjava/lang/Object;)Lcom/awakekt/awake/core/math/Mat4;
 }
 
 public final class com/awakekt/awake/render/passes/uniforms/PbrUniformsKt {

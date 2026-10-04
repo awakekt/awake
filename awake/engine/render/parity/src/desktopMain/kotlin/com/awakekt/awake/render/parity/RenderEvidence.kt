@@ -27,6 +27,7 @@ fun main(args: Array<String>) {
         writePng(out, "scene-shadow-textured-ground", SCENE_SIZE, renderer.renderShadowScene(texturedGround = true))
         writePng(out, "scene-textured-pbr", SCENE_SIZE, renderer.renderTexturedPbrScene())
         writePng(out, "scene-back-culled", SCENE_SIZE, renderer.renderBackCulledScene())
+        writePng(out, "scene-facing-sprite-side", SCENE_SIZE, renderer.renderFacingSpriteFromTheSide())
         writePng(out, "scene-skinned-textured", SCENE_SIZE, renderer.renderTexturedSkinnedScene(Mat4().data))
         writePng(out, "scene-skinned-textured-exposure-2", SCENE_SIZE, renderer.renderTexturedSkinnedScene(Mat4().data, exposure = 2f))
         STUDIO_YAWS.withIndex().filter { it.index % EVIDENCE_YAW_STEP == 0 }.forEach { (index, yaw) ->
