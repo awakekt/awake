@@ -73,7 +73,7 @@ private fun Renderer.recordToTexture(target: RenderTarget, input: GpuPassInput):
                 renderPass = renderPipeline.renderPass,
                 framebuffer = offscreen.framebuffer,
                 renderArea = VkRect2D(extent = VkExtent2D(offscreen.width, offscreen.height)),
-                pClearValues = arrayOf(clearColorValue, Renderer.clearDepthValue),
+                pClearValues = arrayOf(clearColorValue(input.environment), Renderer.clearDepthValue),
             ),
             VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
         )

@@ -53,7 +53,7 @@ internal fun Renderer.recordCommandBuffer(
             renderPass = renderPipeline.renderPass,
             framebuffer = framebuffers[acquiredImageIndex],
             renderArea = VkRect2D(extent = swapchainManager.extent),
-            pClearValues = arrayOf(clearColorValue, Renderer.clearDepthValue),
+            pClearValues = arrayOf(clearColorValue(environment), Renderer.clearDepthValue),
         ),
         VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
     )
@@ -147,7 +147,7 @@ internal fun Renderer.recordResolvedCommandBuffer(
             renderPass = renderPipeline.renderPass,
             framebuffer = framebuffers[acquiredImageIndex],
             renderArea = VkRect2D(extent = swapchainManager.extent),
-            pClearValues = arrayOf(clearColorValue, Renderer.clearDepthValue),
+            pClearValues = arrayOf(clearColorValue(environment), Renderer.clearDepthValue),
         ),
         VkSubpassContents.VK_SUBPASS_CONTENTS_INLINE,
     )

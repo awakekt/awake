@@ -20,6 +20,7 @@ import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material as RenderMaterial
@@ -175,12 +176,11 @@ class Renderer internal constructor(
     /** [clearColor] converted to this backend's clear-value type -- see the Vulkan `Renderer`'s
      * own `clearColorValue` for why this is a fresh-read `get()`, not a cached field. */
     internal val clearColorValue: GpuColor
-        get() = GpuColor(
-            clearColor.r.toDouble(),
-            clearColor.g.toDouble(),
-            clearColor.b.toDouble(),
-            clearColor.a.toDouble(),
-        )
+        get() = clearColorValue(GpuEnvironmentState.Default)
+
+    /** The clear value for a pass carrying [environment]: its own clear colour, else [clearColor]. */
+    internal fun clearColorValue(environment: GpuEnvironmentState): GpuColor =
+        environment.clearColorOr(clearColor).let { GpuColor(it.r.toDouble(), it.g.toDouble(), it.b.toDouble(), it.a.toDouble()) }
 
     internal val graphicsDevice = graphicsDevice
     internal val swapchainManager = swapchainManager
