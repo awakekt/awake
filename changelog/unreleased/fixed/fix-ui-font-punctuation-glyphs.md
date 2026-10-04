@@ -1,0 +1,1 @@
+- **The bundled UI font draws the middle dot, ellipsis, en and em dashes, multiplication sign and minus sign.** They had no glyph and drew `?`; they are now packed after the bullet in every weight, so ` · `, `…`, `–`, `—`, `×` and `−` render as written.

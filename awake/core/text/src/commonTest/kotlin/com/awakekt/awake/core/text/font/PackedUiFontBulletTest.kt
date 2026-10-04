@@ -11,6 +11,25 @@ import kotlin.test.assertTrue
 
 private const val BULLET = '\u2022'
 
+private val ALL_WEIGHTS = listOf(
+    FontWeight.Thin,
+    FontWeight.Light,
+    FontWeight.Normal,
+    FontWeight.Medium,
+    FontWeight.SemiBold,
+    FontWeight.Bold,
+    FontWeight.Black,
+)
+
+private val UI_PUNCTUATION = mapOf(
+    '\u00B7' to "middle dot",
+    '\u2026' to "ellipsis",
+    '\u2013' to "en dash",
+    '\u2014' to "em dash",
+    '\u00D7' to "multiplication sign",
+    '\u2212' to "minus sign",
+)
+
 /**
  * U+2022 BULLET, the one glyph the atlas packs beyond ASCII: what a password field masks with.
  *
@@ -73,6 +92,32 @@ class PackedUiFontBulletTest {
                 family.glyphFor(BULLET, weight),
                 "the bullet fell back to '?' at $weight",
             )
+        }
+    }
+
+    @Test
+    fun everyFaceDrawsTheUiPunctuationRatherThanItsFallback() {
+        faces.forEach { data ->
+            val font = PackedUiFont(data)
+            UI_PUNCTUATION.forEach { (char, label) ->
+                assertNotEquals(font.uvFor('￿'), font.uvFor(char), "${data.name} has no $label glyph")
+                val ink = requireNotNull(font.inkFor(char)) { "${data.name} has no ink for the $label" }
+                assertTrue(ink.widthEm > 0f && ink.heightEm > 0f, "${data.name} $label has no ink")
+            }
+        }
+    }
+
+    @Test
+    fun theDefaultWeightedFamilyResolvesTheUiPunctuationInEveryWeight() {
+        val family = UiFonts.default()
+        ALL_WEIGHTS.forEach { weight ->
+            UI_PUNCTUATION.forEach { (char, label) ->
+                assertNotEquals(
+                    family.glyphFor('￿', weight),
+                    family.glyphFor(char, weight),
+                    "the $label fell back to '?' at $weight",
+                )
+            }
         }
     }
 }

@@ -38,10 +38,14 @@ private val ASCII_GLYPHS: List<Char> = (ASCII_FIRST..ASCII_LAST).map { it.toChar
 /**
  * Glyphs packed after ASCII, appended so every ASCII glyph keeps its cell and atlas offset.
  *
- * U+2022 BULLET is what a password field masks with (`PasswordMask`). It fills the last free
- * cell of the 16-column grid, so the atlas did not grow. The next glyph added starts a new row.
+ * U+2022 BULLET is what a password field masks with (`PasswordMask`). It filled the last free
+ * cell of the 16-column grid, so the atlas did not grow. The rest are the punctuation UI text
+ * uses as separators and signs, which drew the fallback `'?'` without them: U+00B7 MIDDLE DOT,
+ * U+2026 ELLIPSIS, U+2013 EN DASH, U+2014 EM DASH, U+00D7 MULTIPLICATION SIGN and
+ * U+2212 MINUS SIGN. They start a new row. Append new glyphs; never reorder these.
  */
-private val EXTRA_GLYPHS: List<Char> = listOf('\u2022')
+private val EXTRA_GLYPHS: List<Char> =
+    listOf('•', '·', '…', '–', '—', '×', '−')
 
 /** Every glyph this atlas packs, in cell order. */
 private val ATLAS_GLYPHS: List<Char> = ASCII_GLYPHS + EXTRA_GLYPHS
