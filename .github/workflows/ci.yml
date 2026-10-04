@@ -148,6 +148,10 @@ jobs:
           --tests com.awakekt.awake.ui.shadcn.UiFrameCostRatchetTest
           --no-daemon --stacktrace
 
+      # Pixel-exact baselines on the CPU rasterizer, so they cannot flake; nothing else runs them.
+      - name: Node graph canvas visual baselines
+        run: ./gradlew :awake:ui:node-graph-canvas:desktopTest --no-daemon --stacktrace
+
       - name: Upload Core UI frame-cost report
         if: always()
         uses: actions/upload-artifact@v7
