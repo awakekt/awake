@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  *
  * AwakeKt brand for MkDocs Material: the Ember Signal palette (docs/reference/brand-system.md).
- * The header keeps the mark's dark field in both schemes; text accents use gold on dark and the
- * darker #9A6500 on light, which the brand record sets for contrast on white.
+ * Text accents use gold on dark and the darker #9A6500 on light, which the brand record sets for
+ * contrast on white. The header glyph (overrides/partials/logo.html) darkens its gold the same way.
  */
 
 :root {
@@ -17,6 +17,26 @@
 }
 
 /* Header and tabs match the page: light on light, the brand field on dark. */
+[data-md-color-scheme="default"] {
+  --glyph-r0: #f7be3a;
+  --glyph-r1: #e8920e;
+  --glyph-t0: #f29a2e;
+  --glyph-t1: #f7bf48;
+}
+
+[data-md-color-scheme="slate"] {
+  --glyph-r0: #fff0b3;
+  --glyph-r1: #ffd166;
+  --glyph-t0: #ffb84a;
+  --glyph-t1: #ffe29a;
+}
+
+.md-logo .glyph {
+  display: block;
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
 [data-md-color-scheme="default"][data-md-color-primary="custom"] {
   --md-primary-fg-color: #f6f6f7;
   --md-primary-fg-color--light: #ffffff;

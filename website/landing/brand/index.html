@@ -35,6 +35,10 @@
       --sans: "IBM Plex Sans", system-ui, sans-serif;
       --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
     }
+    /* The header glyph's beam and cube-top stops: the original gold on dark, darker on light. */
+    :root { --glyph-r0: #FFF0B3; --glyph-r1: #FFD166; --glyph-t0: #FFB84A; --glyph-t1: #FFE29A; }
+    :root:not([data-theme="dark"]) { --glyph-r0: #F7BE3A; --glyph-r1: #E8920E; --glyph-t0: #F29A2E; --glyph-t1: #F7BF48; }
+    .brand .glyph { width: 28px; height: 28px; flex: none; }
     :root[data-theme="dark"] { color-scheme: dark; }
     :root:not([data-theme="dark"]) {
       --bg: #F6F6F7;
@@ -61,7 +65,6 @@
     .site-header { border-bottom: 1px solid var(--line); }
     .site-header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 64px; }
     .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 600; font-size: 16px; }
-    .brand img { width: 28px; height: 28px; border-radius: 6px; }
     .brand .section { color: var(--text-faint); font-weight: 400; }
     .nav { display: flex; align-items: center; gap: 24px; font-size: 15px; }
     .nav a { color: var(--text-muted); text-decoration: none; transition: color 150ms ease; }
@@ -144,7 +147,7 @@
   <header class="site-header">
     <div class="wrap">
       <a class="brand" href="../">
-        <img src="awake-mark.svg" alt="" width="28" height="28">
+        <svg class="glyph" viewBox="166 146 680 680" aria-hidden="true"><defs><linearGradient id="awake-glyph-left" x1="145" y1="810" x2="512" y2="150" gradientUnits="userSpaceOnUse"><stop stop-color="#FF4D2E"/><stop offset="1" stop-color="#FF9F1C"/></linearGradient><linearGradient id="awake-glyph-right" x1="512" y1="150" x2="890" y2="810" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-r0)"/><stop offset="1" style="stop-color: var(--glyph-r1)"/></linearGradient><linearGradient id="awake-glyph-top" x1="418" y1="570" x2="606" y2="570" gradientUnits="userSpaceOnUse"><stop offset="0" style="stop-color: var(--glyph-t0)"/><stop offset="1" style="stop-color: var(--glyph-t1)"/></linearGradient></defs><path d="M505 208 505 339 346 618 266 765 194 690 415 275Z" fill="url(#awake-glyph-left)"/><path d="M266 765 346 618 402 674Z" fill="#8A2E20"/><path d="M505 208 598 275 818 690 747 765 664 618 505 339Z" fill="url(#awake-glyph-right)"/><path d="M609 674 664 618 747 765Z" fill="#D9482B"/><path d="m505 522 89 53-89 55-87-55Z" fill="url(#awake-glyph-top)"/><path d="m418 575 87 55v96l-87-55Z" fill="#8A2E20"/><path d="m594 575-89 55v96l89-55Z" fill="#D9482B"/></svg>
         <span>AwakeKt <span class="section">/ Brand</span></span>
       </a>
       <nav class="nav" aria-label="Primary">
@@ -170,10 +173,11 @@
       <div class="mark-row">
         <img src="awake-mark.svg" alt="The Ember Signal mark: an ember-to-gold geometric A around a small cube, on a dark field" width="200" height="200">
         <div>
-          <p class="section-lede">A geometric A and cube in ember orange and warm gold, always on its dark field. Use it alone at icon sizes: favicons, launchers, the Dock and taskbar.</p>
+          <p class="section-lede">A geometric A and cube in ember orange and warm gold. As an icon it sits on its dark field: favicons, launchers, the Dock and taskbar. In a page header, docs or a loading screen, use the glyph: the same mark without the field, whose gold darkens on light backgrounds.</p>
           <div class="downloads">
-            <a class="download" href="awake-mark.svg" download>SVG master</a>
-            <a class="download" href="awake-mark.png" download>PNG, 1024 px</a>
+            <a class="download" href="awake-mark.svg" download>Icon SVG master</a>
+            <a class="download" href="awake-mark.png" download>Icon PNG, 1024 px</a>
+            <a class="download" href="awake-glyph.svg" download>Glyph SVG</a>
           </div>
         </div>
       </div>
@@ -181,7 +185,7 @@
 
     <section aria-labelledby="lockups">
       <h2 id="lockups">Name lockups</h2>
-      <p class="section-lede">The mark beside its name, for headers, slides and store listings. The mark keeps its dark field on every surface; only the name changes colour. Text is outlined, so the files look the same in any tool.</p>
+      <p class="section-lede">The mark beside its name, for headers, slides and store listings. The icon keeps its dark field on every surface; only the name changes colour. Text is outlined, so the files look the same in any tool.</p>
       <div class="lockups">
         <div class="lockup"><div class="lockup-art on-dark"><img src="lockups/awakekt-on-dark.svg" alt="AwakeKt, for dark surfaces"></div><div class="lockup-meta">AwakeKt · dark surfaces <a href="lockups/awakekt-on-dark.svg" download>SVG</a></div></div>
         <div class="lockup"><div class="lockup-art on-light"><img src="lockups/awakekt-on-light.svg" alt="AwakeKt, for light surfaces"></div><div class="lockup-meta">AwakeKt · light surfaces <a href="lockups/awakekt-on-light.svg" download>SVG</a></div></div>
@@ -194,7 +198,7 @@
 
     <section aria-labelledby="colours">
       <h2 id="colours">Colours</h2>
-      <p class="section-lede">The mark's own colours. On light pages, gold text uses the darker <code>#9A6500</code> for contrast; the mark itself never changes.</p>
+      <p class="section-lede">The mark's own colours. On light pages, gold text uses the darker <code>#9A6500</code>, and the glyph's right beam and cube top darken to <code>#F7BE3A → #E8920E</code> and <code>#F29A2E → #F7BF48</code>.</p>
       <div class="swatches">
         <div class="swatch"><div class="swatch-chip" style="background: linear-gradient(135deg, #24202A, #15151C 56%, #10131A)"></div><div class="swatch-meta"><strong>Dark field</strong><code>#24202A → #10131A</code></div></div>
         <div class="swatch"><div class="swatch-chip" style="background: linear-gradient(135deg, #FF4D2E, #FF9F1C)"></div><div class="swatch-meta"><strong>Ember beam</strong><code>#FF4D2E → #FF9F1C</code></div></div>
