@@ -43,4 +43,15 @@ class UniformLayoutTest {
 
         assertEquals(16, layout.offsetOf(second))
     }
+
+    @Test
+    fun offsetOfFindsEveryFieldAndTreatsAnUnknownOneAsTheEnd() {
+        val first = UniformField("a", GpuDataShape.Mat4)
+        val second = UniformField("b", GpuDataShape.Vec3)
+        val layout = UniformLayout(first, second)
+
+        assertEquals(0, layout.offsetOf(first))
+        assertEquals(16, layout.offsetOf(second))
+        assertEquals(layout.total, layout.offsetOf(UniformField("a", GpuDataShape.Mat4)))
+    }
 }

@@ -6,6 +6,7 @@
 package com.awakekt.awake.scene.rendering.mesh
 
 import com.awakekt.awake.core.animation.Skin
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Aabb
 import com.awakekt.awake.core.math.ClipSpace
@@ -19,6 +20,7 @@ import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.scene.core.transform.Transform
 import com.awakekt.awake.scene.rendering.animation.ModularCharacterComponent
+import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 import com.sun.management.ThreadMXBean
@@ -29,9 +31,8 @@ import kotlin.test.assertEquals
 /**
  * Extraction ([SceneDrawCollector]) allocates no per-frame garbage in steady state (zero bytes per
  * frame) for plain [MeshRenderer] entities with and without [MeshBounds], billboards, entities
- * with a [PbrMaterial] and a [TextureAnimation], [LodGroup] entities, and modular characters.
- *
- * Skinned entities are not probed.
+ * with a [PbrMaterial] and a [TextureAnimation], [LodGroup] entities, modular characters and skinned
+ * entities.
  *
  * Desktop-only: `currentThreadAllocatedBytes` has no wasm or Native equivalent.
  */
@@ -92,6 +93,23 @@ class SceneExtractionAllocationProbeTest {
     }
 
 
+
+    @Test
+    fun extractingSkinnedEntitiesAllocatesZeroBytesInSteadyState() {
+        assertZeroAllocation("Skinned extraction") { world, entity, mesh, material ->
+            world.add(entity, MeshRenderer(mesh, material))
+            world.add(entity, SkinnedPose(FloatArray(PALETTE_FLOATS)))
+        }
+    }
+
+    @Test
+    fun extractingSkinnedEntitiesWithAMaterialAllocatesZeroBytesInSteadyState() {
+        assertZeroAllocation("Skinned extraction with a material") { world, entity, mesh, material ->
+            world.add(entity, MeshRenderer(mesh, material))
+            world.add(entity, SkinnedPose(FloatArray(PALETTE_FLOATS)))
+            world.add(entity, PbrMaterial(baseColorFactor = Color(0.9f, 0.1f, 0.1f)))
+        }
+    }
     @Test
     fun extractingModularCharactersAllocatesZeroBytesInSteadyState() {
         val skin = Skin(joints = listOf(0), inverseBindMatrices = listOf(Mat4()))
@@ -167,6 +185,7 @@ class SceneExtractionAllocationProbeTest {
 
     private companion object {
         const val ENTITY_COUNT = 1000
+        const val PALETTE_FLOATS = 64
         const val WARMUP_FRAMES = 100
         const val MEASURED_FRAMES = 200
         val UNIT_BOX = Aabb(Vec3f(-1f, -1f, -1f), Vec3f(1f, 1f, 1f))
