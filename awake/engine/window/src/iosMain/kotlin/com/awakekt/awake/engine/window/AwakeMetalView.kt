@@ -67,6 +67,8 @@ class AwakeMetalView(
     init {
         contentScaleFactor = UIScreen.mainScreen.scale
         layer.addSublayer(metalLayer)
+        // UIKit sends a view only its first finger unless it asks for more.
+        multipleTouchEnabled = true
     }
 
     @Suppress("TooGenericExceptionCaught")

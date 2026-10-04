@@ -239,6 +239,7 @@ fun bindWindowPointerInput(input: Input) {
     }
     // Without this the browser's own context menu covers the app's.
     window.addEventListener("contextmenu") { event -> event.preventDefault() }
+    bindWindowTouchInput(input)
     window.addEventListener("wheel") { event ->
         val wheel = event as WheelEvent
         // Accumulate the hardware delta until the runtime snapshots it, mirroring
@@ -307,7 +308,7 @@ private fun currentCanvasSize(): Pair<Int, Int> {
     return width to height
 }
 
-private fun currentWindowDensity(): Double {
+internal fun currentWindowDensity(): Double {
     val scale = window.devicePixelRatio
     return if (scale.isFinite() && scale > 0.0) scale else 1.0
 }

@@ -110,6 +110,13 @@ class PointerEvent(
         internal set
 
     /**
+     * Whether something acted on this press's long press, such as opening a context menu or a
+     * tooltip. Its release then ends the gesture without being a click.
+     */
+    var longPressConsumed: Boolean = false
+        internal set
+
+    /**
      * How far the pointer moved since the last frame, for [PointerEventType.Move].
      *
      * Carried on the event rather than differenced by the handler, because a handler cannot hold a
