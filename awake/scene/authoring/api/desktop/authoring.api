@@ -161,6 +161,7 @@ public final class com/awakekt/awake/scene/authoring/infrastructure/ConfigExtens
 	public static synthetic fun cameraInputSystem$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public static final fun cameraSystem (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public static synthetic fun cameraSystem$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;ILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
+	public static final fun gameplayInput (Lcom/awakekt/awake/scene/runtime/SceneAppLifecycleRuntime;)Lcom/awakekt/awake/scene/controls/GameplayInput;
 	public static final fun matrixRelativeMovementSystem (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;F)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public static synthetic fun matrixRelativeMovementSystem$default (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;FILjava/lang/Object;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;
 	public static final fun playerInputSystem (Lcom/awakekt/awake/scene/authoring/SceneAppDsl;Ljava/lang/String;)Lcom/awakekt/awake/scene/runtime/SceneSystemHandle;

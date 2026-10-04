@@ -7,7 +7,6 @@ package com.awakekt.awake.showcase
 
 import com.awakekt.awake.asset.shaderpack.LitShadowUniformLayout
 import com.awakekt.awake.core.geometry.generate.generate
-import com.awakekt.awake.core.input.Input
 import com.awakekt.awake.ecs.System
 import com.awakekt.awake.ecs.World
 import com.awakekt.awake.engine.bootstrap.dsl.appModule
@@ -15,9 +14,9 @@ import com.awakekt.awake.engine.platform.core.AppModule
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.scene.authoring.infrastructure.cameraInputSystem
 import com.awakekt.awake.scene.authoring.infrastructure.cameraSystem
+import com.awakekt.awake.scene.authoring.infrastructure.gameplayInput
 import com.awakekt.awake.scene.authoring.infrastructure.playerInputSystem
 import com.awakekt.awake.scene.authoring.scene
-import com.awakekt.awake.scene.controls.GameplayInput
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.particles.ParticleSystem
 import com.awakekt.awake.scene.runtime.defaultInfrastructureSystems
@@ -92,7 +91,7 @@ internal fun engineShowcaseModule(
             // delta falls at a different speed on every machine.
             fixedSystem("character") {
                 CharacterExampleDriver.system(
-                    input = { GameplayInput(requireService(Input::class).currentSnapshot, uiOwnership) },
+                    input = { gameplayInput() },
                 )
             }
             // Fills MovementControl from the keyboard; the character driver reads it.
