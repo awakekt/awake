@@ -167,12 +167,18 @@ private fun generateAtlas(fontFile: File): AtlasResult {
     val baseFont = Font.createFont(Font.TRUETYPE_FONT, fontFile)
     val frc = FontRenderContext(null, true, true)
 
+    // Vertical metrics come from the font file's own `hhea` table, not from AWT's line metrics:
+    // those answer from the platform's font scaler (`OS/2` win metrics on Windows, `hhea` on Linux),
+    // so the same file gave a different ascent, cell height and glyph offsets on each. See
+    // [FontVerticalMetrics].
+    val vertical = FontVerticalMetrics.read(fontFile)
+
     // Metrics come from a font derived at LOGICAL_CELL size purely so offsetXEm/widthEm/etc.
     // read as a direct fraction of that size once divided by LOGICAL_CELL -- the outline shape
     // itself is exact `Rectangle2D` geometry and scales linearly with size, so this choice of
     // measurement size has zero effect on precision.
     val measureFont = baseFont.deriveFont(LOGICAL_CELL.toFloat())
-    val ascentEm = measureFont.getLineMetrics("Hg", frc).ascent
+    val ascentEm = vertical.ascent(LOGICAL_CELL.toFloat())
 
     val glyphMetrics = ATLAS_GLYPHS.associateWith { char -> measureGlyph(measureFont, frc, ascentEm, char) }
 
@@ -181,9 +187,9 @@ private fun generateAtlas(fontFile: File): AtlasResult {
     // glyph's measured size/position because [glyphMetrics] above never looks at this raster.
     val renderSize = LOGICAL_CELL * OVERSAMPLE
     val renderFont = baseFont.deriveFont(renderSize.toFloat())
-    val renderLineMetrics = renderFont.getLineMetrics("Hg", frc)
-    val ascentPxRender = renderLineMetrics.ascent
-    val cellHeightPx = ceil((ascentPxRender + renderLineMetrics.descent).toDouble()).toInt() + PADDING * 2
+    val ascentPxRender = vertical.ascent(renderSize.toFloat())
+    val descentPxRender = vertical.descent(renderSize.toFloat())
+    val cellHeightPx = ceil((ascentPxRender + descentPxRender).toDouble()).toInt() + PADDING * 2
     val maxAdvancePxRender = ATLAS_GLYPHS.filter { it != ' ' }.maxOf { char ->
         renderFont.createGlyphVector(frc, char.toString()).getGlyphMetrics(0).advanceX
     }
@@ -247,7 +253,7 @@ private fun generateAtlas(fontFile: File): AtlasResult {
     }
 
     return AtlasResult(
-        lineHeightEm = (ascentPxRender + renderLineMetrics.descent) / OVERSAMPLE / LOGICAL_CELL,
+        lineHeightEm = (ascentPxRender + descentPxRender) / OVERSAMPLE / LOGICAL_CELL,
         atlasWidth = atlasWidth,
         atlasHeight = atlasHeight,
         glyphOrder = ATLAS_GLYPHS.joinToString(""),
