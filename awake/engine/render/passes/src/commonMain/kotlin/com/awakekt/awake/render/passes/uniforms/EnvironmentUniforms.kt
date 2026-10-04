@@ -31,6 +31,13 @@ data class EnvironmentUniforms(
      * facing a light of intensity 1 shows near white; 2 is one stop brighter.
      */
     val exposure: Float = 1f,
+    /**
+     * Whether the plan's content features (sky, terrain, fog and the like) draw. False draws only
+     * the pass's own draws: an asset preview, which must not show the scene around it.
+     */
+    val contentFeatures: Boolean = true,
+    /** The colour the pass clears to; null keeps the renderer's own. */
+    val clearColor: Color? = null,
 ) {
     init {
         require(exposure > 0f && exposure.isFinite()) { "exposure must be finite and above 0; was $exposure." }
@@ -60,5 +67,7 @@ data class EnvironmentUniforms(
             GpuDebugView(debugView.code, viewDepthRange, debugLayer)
         },
         exposure = exposure,
+        contentFeatures = contentFeatures,
+        clearColor = clearColor,
     )
 }

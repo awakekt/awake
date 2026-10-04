@@ -25,13 +25,16 @@ import com.awakekt.awake.asset.shaders.ContentFeatureSource
 import com.awakekt.awake.asset.shaders.aslShaderSet
 import com.awakekt.awake.asset.terrain.Heightmap
 import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapConfig
+import com.awakekt.awake.core.color.Color
 import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Vec3f
+import com.awakekt.awake.render.passes.uniforms.EnvironmentUniforms
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
 import com.awakekt.awake.vulkan.material.Material
+import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -62,6 +65,25 @@ class RendererHeadlessContentAttachTest {
         assertTrue(attached > MIN_COVERED, "The attached terrain covered only $attached pixels.")
         assertEquals(0, detached, "The detached terrain still drew $detached pixels.")
         assertEquals(attached, reattached, "A re-attached terrain should draw exactly as before.")
+    }
+
+    /** An isolated pass, as an asset preview renders, draws none of the attached content and clears to its own colour. */
+    @Test
+    fun anIsolatedPassSkipsAttachedContentAndClearsToItsOwnColour() {
+        val terrain = runBlocking { shared().attacher.attachContentFeature(terrainSource()) }
+        try {
+            val withContent = render().covered
+            val isolated = shared().render(LENS, EnvironmentUniforms(contentFeatures = false))
+            val backdrop = shared().render(LENS, EnvironmentUniforms(contentFeatures = false, clearColor = Color(0.2f, 0.4f, 0.6f, 1f)))
+
+            assertTrue(withContent > MIN_COVERED, "the control: the attached terrain covered only $withContent pixels")
+            assertEquals(0, count(isolated).covered, "an isolated pass still drew attached content")
+            val centre = (FIXTURE_SIZE / 2 * FIXTURE_SIZE + FIXTURE_SIZE / 2) * BYTES_PER_PIXEL
+            val rgb = (0..2).map { backdrop[centre + it].toInt() and 0xFF }
+            assertTrue(abs(rgb[0] - 51) <= 2 && abs(rgb[1] - 102) <= 2 && abs(rgb[2] - 153) <= 2, "the backdrop cleared to $rgb, not (51, 102, 153)")
+        } finally {
+            terrain.detach()
+        }
     }
 
     @Test
@@ -106,17 +128,7 @@ class RendererHeadlessContentAttachTest {
 
     private class Frame(val covered: Int, val green: Int)
 
-    private fun render(): Frame = count(
-        shared().render(
-            Lens(
-                eye = Vec3f(0f, EYE_HEIGHT, EYE_DISTANCE),
-                center = Vec3f(0f, 0f, 0f),
-                fovYRadians = 1f,
-                near = 0.1f,
-                far = 500f,
-            ),
-        ),
-    )
+    private fun render(): Frame = count(shared().render(LENS))
 
     /** Non-clear pixels, and how many of them are layer 1's green. */
     private fun count(pixels: ByteArray): Frame {
@@ -135,6 +147,8 @@ class RendererHeadlessContentAttachTest {
 
     private companion object {
         val CONFIG = TerrainClipmapConfig(ringCount = 2, ringResolution = 16, baseSpacing = 1f)
+        val LENS = Lens(eye = Vec3f(0f, EYE_HEIGHT, EYE_DISTANCE), center = Vec3f(0f, 0f, 0f), fovYRadians = 1f, near = 0.1f, far = 500f)
+        const val FIXTURE_SIZE = HeadlessContentAttachFixture.TARGET_SIZE
 
         const val SAMPLES = 16
         const val BYTES_PER_PIXEL = 4

@@ -25,7 +25,17 @@ data class GpuEnvironmentState(
     val debugView: GpuDebugView = GpuDebugView.Off,
     /** What the lit shaders multiply their radiance by before tone mapping. */
     val exposure: Float = 1f,
+    /**
+     * Whether the plan's content features (sky, terrain, fog and the like) draw in this pass.
+     * False draws only the pass's own draws, as an asset preview needs.
+     */
+    val contentFeatures: Boolean = true,
+    /** The colour this pass clears to; null keeps the renderer's own `clearColor`. */
+    val clearColor: Color? = null,
 ) {
+    /** The colour this pass clears to: [clearColor] when it sets one, else [default]. */
+    fun clearColorOr(default: Color): Color = clearColor ?: default
+
     companion object {
         val Default = GpuEnvironmentState()
     }

@@ -58,7 +58,7 @@ internal class RendererGpuPassExecutor(
                         RenderPassColorAttachment(
                             view = colorView,
                             loadOp = GPULoadOp.Clear,
-                            clearValue = clearColorValue,
+                            clearValue = clearColorValue(input.environment),
                             storeOp = GPUStoreOp.Store,
                         ),
                     ),
@@ -131,7 +131,7 @@ internal class RendererGpuPassExecutor(
                     RenderPassColorAttachment(
                         view = offscreen.colorView,
                         loadOp = GPULoadOp.Clear,
-                        clearValue = renderer.clearColorValue,
+                        clearValue = renderer.clearColorValue(input.environment),
                         storeOp = GPUStoreOp.Store,
                     ),
                 ),

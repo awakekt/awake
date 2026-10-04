@@ -19,6 +19,7 @@ import com.awakekt.awake.render.capture.FramebufferAttachment
 import com.awakekt.awake.render.capture.FramebufferAttachmentData
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuPassExecutor
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.command.GpuShadowCascadeData
@@ -204,7 +205,11 @@ class Renderer internal constructor(
     /** [clearColor] converted to this backend's clear-value type -- read fresh every render
      * pass (not cached), so a [clearColor] mutation takes effect on the very next frame. */
     internal val clearColorValue: VkClearColorValue
-        get() = VkClearColorValue.rgba(clearColor.r, clearColor.g, clearColor.b, clearColor.a)
+        get() = clearColorValue(GpuEnvironmentState.Default)
+
+    /** The clear value for a pass carrying [environment]: its own clear colour, else [clearColor]. */
+    internal fun clearColorValue(environment: GpuEnvironmentState): VkClearColorValue =
+        environment.clearColorOr(clearColor).let { VkClearColorValue.rgba(it.r, it.g, it.b, it.a) }
 
     internal val graphicsDevice = graphicsDevice
     internal val swapchainManager = swapchainManager

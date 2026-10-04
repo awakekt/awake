@@ -75,7 +75,20 @@ fun <P : UniformBlockOwner> ContentFeatureGpu<P>.buildContentFeature(
             "allocated a block for its pipeline."
     }
     val upload = upload(pipeline, feature).also { uploads += it }
-    return feature.build(handle(pipeline), block, upload.geometry)
+    return ContentFeaturePassGate(feature.build(handle(pipeline), block, upload.geometry))
+}
+
+/** Records [feature] only in passes whose environment lets content features draw. */
+private class ContentFeaturePassGate(
+    private val feature: RenderFeature<RenderFrameContext>,
+) : RenderFeature<RenderFrameContext> {
+    override val pass: RenderPassSlot get() = feature.pass
+
+    override fun recordCommands(context: RenderFrameContext) {
+        if (context.environment.contentFeatures) feature.recordCommands(context)
+    }
+
+    override fun destroy() = feature.destroy()
 }
 
 /**
