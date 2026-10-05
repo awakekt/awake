@@ -25,18 +25,43 @@ class TerrainControlMapTest {
         assertEquals(192, map.weightAt(0, 0, 0))
         assertEquals(0f, reduction.maxDroppedWeight)
         assertEquals(0, reduction.texelsOverSlots)
+        assertEquals(CONTROL_SLOTS, map.slots)
     }
 
-    /** Six layers at one texel: the two weakest go, and the report says how much that cost. */
+    /** Six layers at one texel widen the map, and all six stay. */
     @Test
-    fun moreThanFourLayersKeepTheStrongestAndReportWhatWasDropped() {
+    fun moreThanFourLayersAtATexelWidenTheMap() {
         val reduction = TerrainControlMap.reduce(1, 1, layerCount = 6) { layer, _, _ -> (layer + 1).toFloat() }
         val map = reduction.controlMap
 
-        assertEquals(listOf(5, 4, 3, 2), (0 until CONTROL_SLOTS).map { map.layerAt(0, 0, it) })
-        assertEquals(255, (0 until CONTROL_SLOTS).sumOf { map.weightAt(0, 0, it) })
-        assertEquals(3f / 21f, reduction.maxDroppedWeight, 1e-6f)
+        assertEquals(MAX_CONTROL_SLOTS, map.slots)
+        assertEquals(listOf(5, 4, 3, 2, 1, 0), (0 until 6).map { map.layerAt(0, 0, it) })
+        assertEquals(255, (0 until MAX_CONTROL_SLOTS).sumOf { map.weightAt(0, 0, it) })
+        assertEquals(0f, reduction.maxDroppedWeight)
+        assertEquals(2, map.indicesTexture().width)
+    }
+
+    /** Ten layers at one texel: the two weakest go, and the report says how much that cost. */
+    @Test
+    fun moreThanEightLayersKeepTheStrongestAndReportWhatWasDropped() {
+        val reduction = TerrainControlMap.reduce(1, 1, layerCount = 10) { layer, _, _ -> (layer + 1).toFloat() }
+        val map = reduction.controlMap
+
+        assertEquals((9 downTo 2).toList(), (0 until MAX_CONTROL_SLOTS).map { map.layerAt(0, 0, it) })
+        assertEquals(255, (0 until MAX_CONTROL_SLOTS).sumOf { map.weightAt(0, 0, it) })
+        assertEquals(3f / 55f, reduction.maxDroppedWeight, 1e-6f)
         assertEquals(1, reduction.texelsOverSlots)
+    }
+
+    /** Neighbouring texels of three and two layers put five in the pixels between them; four do not. */
+    @Test
+    fun moreThanFourLayersBetweenTexelsWidenTheMap() {
+        fun slotsFor(leftLayers: Int) = TerrainControlMap.reduce(2, 1, layerCount = 5) { layer, x, _ ->
+            if ((layer < leftLayers) == (x == 0) && layer < leftLayers + 2) 1f else 0f
+        }.controlMap.slots
+
+        assertEquals(MAX_CONTROL_SLOTS, slotsFor(leftLayers = 3))
+        assertEquals(CONTROL_SLOTS, slotsFor(leftLayers = 2))
     }
 
     @Test
@@ -71,6 +96,32 @@ class TerrainControlMapTest {
         assertEquals(2, decoded.depth)
         assertContentEquals(map.copyIndices(), decoded.copyIndices())
         assertContentEquals(map.copyWeights(), decoded.copyWeights())
+    }
+
+    @Test
+    fun aWideMapRoundTrips() {
+        val map = TerrainControlMap.reduce(3, 2, layerCount = 7) { layer, x, z -> ((layer + x + z) % 4).toFloat() }.controlMap
+
+        val decoded = TerrainControlMapCodec.decode(TerrainControlMapCodec.encode(map))
+
+        assertEquals(MAX_CONTROL_SLOTS, decoded.slots)
+        assertContentEquals(map.copyIndices(), decoded.copyIndices())
+        assertContentEquals(map.copyWeights(), decoded.copyWeights())
+    }
+
+    /** Version 1 had no slots byte and always four slots. */
+    @Test
+    fun aVersionOneFileStillDecodes() {
+        val map = TerrainControlMap.reduce(2, 2, layerCount = 2) { layer, x, _ -> if (layer == x) 1f else 0f }.controlMap
+        val versionOne = TerrainControlMapCodec.encode(map).also {
+            it[4] = 1
+            it[5] = 0
+        }
+
+        val decoded = TerrainControlMapCodec.decode(versionOne)
+
+        assertEquals(CONTROL_SLOTS, decoded.slots)
+        assertContentEquals(map.copyIndices(), decoded.copyIndices())
     }
 
     @Test

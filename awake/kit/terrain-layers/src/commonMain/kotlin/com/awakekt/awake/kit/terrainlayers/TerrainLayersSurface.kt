@@ -33,7 +33,7 @@ fun terrainLayersSurface(
         "The control map uses layer $highest; the palette has ${palette.layers.size} layers."
     }
     return TerrainSurface(
-        shaders = TerrainLayersShaders,
+        shaders = if (control.slots == CONTROL_SLOTS) TerrainLayersShaders else WideTerrainLayersShaders,
         textures = mapOf(
             LAYER_ALBEDO_BINDING to albedo,
             LAYER_TABLE_BINDING to layerTable(palette),
