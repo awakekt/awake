@@ -23,7 +23,7 @@ not call `Renderer.draw`, own a render pass, or expose Vulkan/WebGPU types. `Ren
 their contributions, invokes `ScenePassCompiler`, and submits one `GpuPassInput` to the renderer.
 
 The current `SceneLightingCompiler`, `SceneCullingCompiler`, `SceneDrawCollector`, and
-`SceneParticleCompiler` remain the built-in extraction seams. `RenderFeature3D` is now the public
+`ParticleDrawAdapter` remain the built-in extraction seams. `RenderFeature3D` is now the public
 extension seam for additional authored features; those collaborators stay coordinator-owned until
 their contribution shapes stabilize. A lifecycle with mutable `extract`/`prepare`/`cleanup` state
 remains intentionally avoided because it obscures dependencies and complicates parallel recording.
