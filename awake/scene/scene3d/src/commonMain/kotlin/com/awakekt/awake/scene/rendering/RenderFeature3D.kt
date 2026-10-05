@@ -70,7 +70,7 @@ internal class SceneLightingFeature3D(
 
 /** Built-in particle feature; its contribution is inserted between opaque and LOD families. */
 internal class SceneParticleFeature3D(
-    private val compiler: SceneParticleCompiler,
+    private val compiler: ParticleDrawAdapter,
 ) : RenderFeature3D {
     override fun collect(world: World, context: RenderFeatureContext3D): RenderContribution {
         val draws = ArrayList<RenderDrawCommand>()

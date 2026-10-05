@@ -24,7 +24,7 @@ consumer gets `Transform`/`Mesh`/`Material`/`DrawCall` visible transitively.
   for the skinned variant) instead of relying on per-entity `Transform`s.
 - Particles are not defined here. `awake:particles` owns `ParticleEmitter` and `ParticleSystem`,
   and `awake:scene:particles` owns the `particle_emitter` scene component. This module only draws
-  them: `SceneParticleCompiler` hands the scene's `Camera` and each entity's `Transform` to that
+  them: `ParticleDrawAdapter` hands the scene's `Camera` and each entity's `Transform` to that
   library's `ParticleDrawBuilder`.
 - `Camera` -- wraps `awake:core`'s `CoreCamera` math; `isPrimary` marks the one `RenderSystem3D`
   actually renders through.

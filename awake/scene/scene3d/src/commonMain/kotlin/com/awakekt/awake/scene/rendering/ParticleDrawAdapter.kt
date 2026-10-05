@@ -20,7 +20,7 @@ import com.awakekt.awake.scene.rendering.camera.Camera
  * `awake:particles`' [ParticleDrawBuilder], which owns the culling, sorting and packing. A flat
  * emitter lies in the plane of its entity's `Transform`.
  */
-internal class SceneParticleCompiler {
+internal class ParticleDrawAdapter {
     private val builder = ParticleDrawBuilder()
 
     /**

@@ -17,7 +17,7 @@ internal class SceneFeatureCollector3D(
     private val features: List<RenderFeature3D>,
 ) {
     private val lightingFeature = SceneLightingFeature3D(SceneLightingCompiler(clipSpace))
-    private val particleFeature = SceneParticleFeature3D(SceneParticleCompiler())
+    private val particleFeature = SceneParticleFeature3D(ParticleDrawAdapter())
 
     fun collect(world: World, camera: Camera, elapsedTimeSeconds: Float, viewportAspect: Float): Contributions {
         val context = RenderFeatureContext3D(camera, elapsedTimeSeconds, viewportAspect)

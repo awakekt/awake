@@ -26,7 +26,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-class SceneParticleCompilerTest {
+class ParticleDrawAdapterTest {
     /**
      * The scene hands the particle library its camera and each entity's `Transform`: a flat emitter's
      * draw carries its entity's plane as the quad axes the particle shader reads, the entity's +X and
@@ -55,7 +55,7 @@ class SceneParticleCompilerTest {
         }
 
         val draws = ArrayList<RenderDrawCommand>()
-        SceneParticleCompiler().appendWorldDrawCalls(draws, world, Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 100f)), 1f)
+        ParticleDrawAdapter().appendWorldDrawCalls(draws, world, Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 100f)), 1f)
 
         fun axes(emitter: ParticleEmitter): List<Float> {
             val floats = draws.single { it.material === emitter.material }.extraUniformFloats
