@@ -23,6 +23,7 @@ import com.awakekt.awake.render.pipeline.DepthRenderKey
  * object per draw per frame. Member names deliberately avoid the ones those types already use.
  */
 interface PreparedDraw {
+    /** Backend pipeline handle configured for executing the primary draw call. */
     val pipeline: PipelineHandle
 
     /** Vertex layout required by depth and feature variants. Null is allowed for custom
@@ -31,7 +32,11 @@ interface PreparedDraw {
 
     /** Optional depth-only variant and bindings prepared alongside the primary draw. */
     val depthPipeline: PipelineHandle? get() = null
+
+    /** Optional material uniform binding descriptor used during depth passes. */
     val depthMaterialBinding: MaterialBinding? get() = null
+
+    /** Optional skeletal joint palette buffer binding used during depth passes. */
     val depthJointPaletteBinding: MaterialBinding? get() = null
 
     /** Explicit caster family and fragment coverage selected during resolution. */

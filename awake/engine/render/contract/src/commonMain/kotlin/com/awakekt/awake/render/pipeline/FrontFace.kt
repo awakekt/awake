@@ -11,6 +11,9 @@ package com.awakekt.awake.render.pipeline
  * CounterClockwise is the engine default across mesh generators, terrain, and glTF standards.
  */
 enum class FrontFace {
+    /** Counter-clockwise vertex winding defines the front face. */
     CounterClockwise,
+
+    /** Clockwise vertex winding defines the front face. */
     Clockwise,
 }

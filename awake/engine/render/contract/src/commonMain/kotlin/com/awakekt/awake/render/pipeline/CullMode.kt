@@ -14,7 +14,12 @@ package com.awakekt.awake.render.pipeline
  *
  * Requires consistent triangle winding -- an incorrectly wound mesh will render inside-out. */
 enum class CullMode {
+    /** Do not discard triangles; render both front and back faces. */
     None,
+
+    /** Discard back-facing triangles to avoid unnecessary shading for solid geometry. */
     Back,
+
+    /** Discard front-facing triangles, rendering only back faces. */
     Front,
 }

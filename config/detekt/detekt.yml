@@ -154,6 +154,7 @@ comments:
       - '**/awake/asset/shaders/**'
       - '**/awake/asset/shader-dsl/**'
       - '**/awake/asset/shader-pack/**'
+      - '**/awake/engine/render/contract/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

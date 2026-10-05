@@ -13,11 +13,19 @@ package com.awakekt.awake.render.renderer
  * [aspect] is the rect's own, not the surface's: a scene confined to a narrow panel must be
  * projected for that panel, otherwise its content is stretched by however much the surrounding
  * chrome takes up.
+ * @property x Horizontal pixel offset of the top-left corner from the framebuffer origin.
+ * @property y Vertical pixel offset of the top-left corner from the framebuffer origin.
+ * @property width Width of the viewport rectangle in pixels.
+ * @property height Height of the viewport rectangle in pixels.
  */
 data class RenderViewport(
+    /** Horizontal pixel offset of the top-left corner from the framebuffer origin. */
     val x: Float,
+    /** Vertical pixel offset of the top-left corner from the framebuffer origin. */
     val y: Float,
+    /** Width of the viewport rectangle in pixels. */
     val width: Float,
+    /** Height of the viewport rectangle in pixels. */
     val height: Float,
 ) {
     val aspect: Float get() = width / height

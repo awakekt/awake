@@ -12,8 +12,12 @@ package com.awakekt.awake.render.pipeline
  * both dimensions explicit prevents backends from guessing a depth shader from a scene object or
  * accidentally treating a masked material as opaque. Blended draws intentionally have no key:
  * they do not write depth and remain in the transparent scene path.
+ * @property kind Categorization of vertex attribute inputs for shadow depth generation.
+ * @property alphaMode Alpha testing coverage mode for fragment discards.
  */
 data class DepthRenderKey(
+    /** Categorization of vertex attribute inputs for shadow depth generation. */
     val kind: DepthCasterKind,
+    /** Alpha testing coverage mode for fragment discards. */
     val alphaMode: AlphaMode = AlphaMode.Opaque,
 )

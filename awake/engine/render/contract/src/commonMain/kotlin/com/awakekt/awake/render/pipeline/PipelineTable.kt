@@ -14,13 +14,17 @@ import com.awakekt.awake.render.pipeline.CullMode
  * Parametrized by backend pipeline type [P] (e.g. Vulkan or WebGPU pipeline handle wrapper).
  */
 class PipelineTable<P>(
+    /** The primary default 3D pipeline handle. */
     val primary: P,
     /** Which [VertexFormat] [primary] draws. Stated rather than derived because [P] is a
      * backend's own pipeline type and this layer cannot ask it. [resolve] needs it to treat the
      * primary pipeline as the fill entry for its own format. */
     val primaryFormat: VertexFormat,
+    /** Pipelines indexed by vertex format for standard opaque rendering. */
     val byFormat: Map<VertexFormat, P> = emptyMap(),
+    /** Wireframe pipeline variants indexed by vertex format. */
     val wireframeByFormat: Map<VertexFormat, P> = emptyMap(),
+    /** Back-face culled pipeline variants indexed by vertex format. */
     val backCulledByFormat: Map<VertexFormat, P> = emptyMap(),
     /** Alpha-blended, depth-tested, non-depth-writing companions -- the pipeline a
      * `RenderDrawCommand.transparent` draw resolves to. Empty means the app built none, and a transparent
@@ -30,8 +34,11 @@ class PipelineTable<P>(
     /** Additive companions -- the pipeline a transparent `RenderDrawCommand.additive` draw resolves
      * to. Without one it falls back to [transparentByFormat]: blended, not added, but visible. */
     val additiveByFormat: Map<VertexFormat, P> = emptyMap(),
+    /** Instanced pipeline variants indexed by vertex format. */
     val instancedByFormat: Map<VertexFormat, P> = emptyMap(),
+    /** Skinned instanced pipeline variants indexed by vertex format. */
     val skinnedInstancedByFormat: Map<VertexFormat, P> = emptyMap(),
+    /** Particle billboard pipeline variants indexed by vertex format. */
     val particlePipelines: Map<VertexFormat, P> = emptyMap(),
     /** The particle pipelines' additive twins, for `RenderDrawCommand.additive` particle draws.
      * Without one an additive particle draw falls back to [particlePipelines]: blended, not added. */
@@ -47,9 +54,13 @@ class PipelineTable<P>(
  * Parametrized by shader payload type [T] (e.g. `ShaderPair` for Vulkan SPIR-V pairs or `ByteArray` for WebGPU WGSL).
  */
 data class UiShaderSet<T>(
+    /** Shader payload for 2D solid color quad rendering. */
     val quad: T,
+    /** Shader payload for font glyph text rendering. */
     val glyph: T,
+    /** Shader payload for 2D textured quad rendering. */
     val texture: T,
+    /** Shader payload for rounded rectangle rendering. */
     val roundedQuad: T,
     /** The two-sampler full-target pass used by destination-colour layer composites. */
     val targetComposite: T? = null,

@@ -15,8 +15,13 @@ package com.awakekt.awake.render.pipeline
  * [BindingLayout.slot] lookup, so [Custom] costs no branch anywhere.
  */
 sealed interface BindingSemantic {
+    /** Material descriptor set or bind group binding semantic. */
     data object Material : BindingSemantic
+
+    /** Shadow map depth texture binding semantic. */
     data object ShadowDepth : BindingSemantic
+
+    /** Skeletal animation joint matrix palette binding semantic. */
     data object JointPalette : BindingSemantic
 
     /**
@@ -35,7 +40,10 @@ sealed interface BindingSemantic {
      * choosing the same [name] collide, which is correct -- they would also collide in the
      * pipeline registry, which keys content features the same way.
      */
-    data class Custom(val name: String) : BindingSemantic {
+    data class Custom(
+        /** Name identifying this custom binding semantic. */
+        val name: String,
+    ) : BindingSemantic {
         init {
             require(name.isNotBlank()) { "A custom binding semantic needs a name." }
         }
@@ -64,12 +72,19 @@ data class BindingLayout private constructor(
         require(slots.values.all { it >= 0 }) { "Binding slots must be non-negative." }
     }
 
+    /**
+     * Returns the assigned slot index for the given [semantic].
+     *
+     * @throws IllegalArgumentException if the semantic is not part of this layout.
+     */
     fun slot(semantic: BindingSemantic): Int = requireNotNull(slots[semantic]) {
         "Binding semantic $semantic is not declared by this pipeline."
     }
 
+    /** Returns whether this layout defines a slot for the given [semantic]. */
     fun contains(semantic: BindingSemantic): Boolean = semantic in slots
 
+    /** Standard binding layouts and factory helpers. */
     companion object {
         /** Creates a pipeline-specific semantic layout from its authored ABI. */
         fun of(vararg entries: Pair<BindingSemantic, Int>): BindingLayout {

@@ -13,9 +13,13 @@ package com.awakekt.awake.render.capture
  * format rather than a depth-only format.
  */
 enum class FramebufferAttachment {
+    /** Primary color attachment. */
     Color0,
+    /** Depth buffer attachment. */
     Depth,
+    /** Stencil buffer attachment. */
     Stencil,
+    /** Normal buffer attachment (diagnostic or G-buffer). */
     Normal,
 }
 
@@ -27,12 +31,19 @@ enum class FramebufferAttachment {
  * represented explicitly instead of being confused with a cleared attachment.
  */
 data class FramebufferAttachmentData(
+    /** The attachment identifier this data represents. */
     val attachment: FramebufferAttachment,
+    /** Width of the attachment image in pixels. */
     val width: Int,
+    /** Height of the attachment image in pixels. */
     val height: Int,
+    /** Number of float channels per pixel (e.g. 1 for depth, 4 for RGBA). */
     val channels: Int,
+    /** Packed float channel values for all pixels. */
     val values: FloatArray = FloatArray(0),
+    /** Whether this attachment is available for inspection in the current pass. */
     val available: Boolean = true,
+    /** Human-readable explanation when [available] is `false`, or `null` when available. */
     val reason: String? = null,
 ) {
     init {
@@ -48,7 +59,9 @@ data class FramebufferAttachmentData(
         }
     }
 
+    /** Factory functions for creating attachment debug data instances. */
     companion object {
+        /** Creates color attachment data by normalizing bytes from an RGBA8 [asset]. */
         fun fromRgba8(asset: com.awakekt.awake.render.texture.TextureAsset): FramebufferAttachmentData {
             val values = FloatArray(asset.data.size)
             asset.data.forEachIndexed { index, byte ->
@@ -63,6 +76,7 @@ data class FramebufferAttachmentData(
             )
         }
 
+        /** Creates a placeholder record indicating [attachment] is unavailable due to [reason]. */
         fun unavailable(attachment: FramebufferAttachment, reason: String): FramebufferAttachmentData =
             FramebufferAttachmentData(
                 attachment = attachment,

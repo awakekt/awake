@@ -26,6 +26,8 @@ interface Mesh : GpuMesh {
 
     /** The local-space bounding box of this mesh's vertices, or null if uncomputed. */
     override val bounds: Aabb? get() = null
+
+    /** Optional local-space bounding box enclosing this mesh's vertices. */
     val localBounds: Aabb? get() = null
 
     /**
@@ -45,5 +47,6 @@ interface Mesh : GpuMesh {
     // `CommandRecorder`'s job, and Vulkan keeps its own bind/draw on its concrete Mesh, where
     // the handle type is honest. See docs/reference/render-hardware-interface.md.
 
+    /** Frees all GPU buffer allocations and hardware resources held by this mesh. */
     fun destroy()
 }

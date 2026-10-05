@@ -15,11 +15,17 @@ import com.awakekt.awake.core.color.Color
  * Backends consume this packet; they do not discover or mutate scene environment components.
  */
 data class GpuEnvironmentState(
+    /** Whether procedural background sky rendering is enabled. */
     val showSky: Boolean = false,
+    /** Horizon color used for procedural sky gradient. */
     val horizonColor: Color = Color.Black,
+    /** Zenith color used for procedural sky gradient. */
     val zenithColor: Color = Color.Black,
+    /** Fog density coefficient controlling distance fog falloff. */
     val fogDensity: Float = 0f,
+    /** Color of the atmospheric distance fog. */
     val fogColor: Color = Color.Black,
+    /** Whether directional shadow mapping is evaluated in lit shaders. */
     val shadowsEnabled: Boolean = true,
     /** A diagnostic that replaces the scene shaders' lit output; [GpuDebugView.Off] renders normally. */
     val debugView: GpuDebugView = GpuDebugView.Off,
@@ -36,7 +42,9 @@ data class GpuEnvironmentState(
     /** The colour this pass clears to: [clearColor] when it sets one, else [default]. */
     fun clearColorOr(default: Color): Color = clearColor ?: default
 
+    /** Predefined environment state constants. */
     companion object {
+        /** Default environment state with sky disabled, no fog, and shadows enabled. */
         val Default = GpuEnvironmentState()
     }
 }

@@ -21,6 +21,7 @@ data class GpuDebugView(
     val depthRange: Float = 0f,
     val layer: Int = 0,
 ) {
+    /** Default preset instances for [GpuDebugView]. */
     companion object {
         /** The lit image. */
         val Off = GpuDebugView()

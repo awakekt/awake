@@ -9,8 +9,11 @@ import com.awakekt.awake.core.color.Color
 
 /** A CPU-side, tightly-packed, straight-alpha RGBA8 buffer used by render diagnostics. */
 class PixelMap(
+    /** Image width in pixels. */
     val width: Int,
+    /** Image height in pixels. */
     val height: Int,
+    /** Raw byte array containing packed RGBA8 pixel bytes. */
     val pixels: ByteArray = ByteArray(width * height * 4),
 ) {
     init {
@@ -20,10 +23,13 @@ class PixelMap(
         }
     }
 
+    /** Returns the byte offset into [pixels] for coordinate ([x], [y]). */
     fun offsetOf(x: Int, y: Int): Int = (y * width + x) * 4
 
+    /** Returns whether the coordinate ([x], [y]) lies within image boundaries. */
     fun contains(x: Int, y: Int): Boolean = x in 0 until width && y in 0 until height
 
+    /** Samples the pixel at ([x], [y]), clamping coordinates to the image bounds. */
     fun sample(x: Int, y: Int): RgbaSample {
         val offset = offsetOf(x.coerceIn(0, width - 1), y.coerceIn(0, height - 1))
         return RgbaSample(
@@ -34,6 +40,7 @@ class PixelMap(
         )
     }
 
+    /** Overwrites the pixel at ([x], [y]) with [color]. */
     fun set(x: Int, y: Int, color: Color) {
         val offset = offsetOf(x, y)
         pixels[offset] = channel(color.r)
@@ -42,9 +49,11 @@ class PixelMap(
         pixels[offset + 3] = channel(color.a)
     }
 
+    /** Blends [color] with [coverage] over the existing pixel at ([x], [y]). */
     fun blend(x: Int, y: Int, color: Color, coverage: Float = 1f) =
         blend(x, y, color.r * 255f, color.g * 255f, color.b * 255f, color.a * coverage)
 
+    /** Blends raw RGB (0..255) and [srcA] (0..1) over the existing pixel at ([x], [y]). */
     fun blend(x: Int, y: Int, r: Float, g: Float, b: Float, srcA: Float) {
         if (srcA <= 0f) return
         val offset = offsetOf(x, y)
@@ -68,6 +77,7 @@ class PixelMap(
         pixels[offset + 3] = channel255(outA * 255f)
     }
 
+    /** Fills the entire pixel map with [color]. */
     fun fill(color: Color) {
         val red = channel(color.r)
         val green = channel(color.g)
@@ -116,4 +126,14 @@ class PixelMap(
     private fun channel255(value: Float): Byte = value.toInt().coerceIn(0, 255).toByte()
 }
 
-data class RgbaSample(val r: Int, val g: Int, val b: Int, val a: Int)
+/** An 8-bit per channel sampled RGBA pixel value. */
+data class RgbaSample(
+    /** Red channel value (0..255). */
+    val r: Int,
+    /** Green channel value (0..255). */
+    val g: Int,
+    /** Blue channel value (0..255). */
+    val b: Int,
+    /** Alpha channel value (0..255). */
+    val a: Int,
+)
