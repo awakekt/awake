@@ -203,7 +203,12 @@ interface Renderer : GpuDevice {
  * evaluated in a shader against a sampled destination target.
  */
 enum class UiTargetCompositeMode {
+    /** Standard alpha compositing placing source over destination. */
     SourceOver,
+
+    /** Multiplies the inverses of source and destination colors for an additive brightening effect. */
     Screen,
+
+    /** Combines multiply and screen blend modes depending on the destination color value. */
     Overlay,
 }

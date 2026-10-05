@@ -19,13 +19,24 @@ import com.awakekt.awake.render.renderer.UniformLayout
  * can never collide as map keys.
  */
 sealed interface PipelineKey {
+    /** Primary default 3D pipeline key. */
     data object Primary : PipelineKey
-    data class Format(val vertexFormat: VertexFormat) : PipelineKey
+    /** Pipeline key for an additional [vertexFormat]. */
+    data class Format(
+        /** Target vertex format layout. */
+        val vertexFormat: VertexFormat,
+    ) : PipelineKey
+    /** Primary format instanced pipeline key. */
     data object Instanced : PipelineKey
 
     /** An instanced pipeline for [vertexFormat]; [Instanced] is the primary format's. */
-    data class InstancedFormat(val vertexFormat: VertexFormat) : PipelineKey
+    data class InstancedFormat(
+        /** Target vertex format layout for instancing. */
+        val vertexFormat: VertexFormat,
+    ) : PipelineKey
+    /** Skinned instanced pipeline key. */
     data object SkinnedInstanced : PipelineKey
+    /** Particle billboard pipeline key. */
     data object Particle : PipelineKey
 
     /**
@@ -35,7 +46,10 @@ sealed interface PipelineKey {
      * exists -- that is the whole point of a content feature. Two features with the same name
      * collide, which is the correct failure: they would also collide in every log line.
      */
-    data class Content(val name: String) : PipelineKey
+    data class Content(
+        /** Name identifying this content feature pipeline. */
+        val name: String,
+    ) : PipelineKey
 }
 
 /**
@@ -53,12 +67,19 @@ sealed interface PipelineKey {
  * anything built from an ASL definition -- can be described here at all.
  */
 data class PipelineSpec(
+    /** Vertex buffer format and attribute layout expected by this pipeline. */
     val vertexFormat: VertexFormat,
+    /** Shader source for the vertex shader stage. */
     val vertexShader: ShaderSource,
+    /** Shader source for the fragment shader stage. */
     val fragmentShader: ShaderSource,
+    /** Rasterization blend and depth test variant. */
     val variant: PipelineVariant = PipelineVariant.Opaque,
+    /** Face culling mode (None, Front, Back). */
     val cullMode: CullMode = CullMode.None,
+    /** Polygon front-face winding order. */
     val frontFace: FrontFace = FrontFace.CounterClockwise,
+    /** Whether primitives are rendered as wireframe lines rather than solid triangles. */
     val wireframe: Boolean = false,
     /** Semantic descriptor-set/bind-group layout consumed by this pipeline. */
     val bindingLayout: BindingLayout = BindingLayout.Standard,
@@ -107,7 +128,9 @@ data class PipelineSpec(
  * three-site copy-paste on the other.
  */
 data class PipelineRequest(
+    /** The target pipeline family key. */
     val key: PipelineKey,
+    /** The base pipeline specification. */
     val spec: PipelineSpec,
     /** A `LineList`/`POLYGON_MODE_LINE` companion. Only ever set for the primary/[PipelineKey
      * .Format] requests -- instanced/skinned/particle pipelines have never had one. */
@@ -127,10 +150,15 @@ data class PipelineRequest(
  * `build*` flag was false.
  */
 data class PipelineSet<P>(
+    /** The primary filled polygon pipeline. */
     val fill: P,
+    /** The wireframe polygon outline companion pipeline, or `null`. */
     val wireframe: P? = null,
+    /** The back-face culled companion pipeline, or `null`. */
     val backCulled: P? = null,
+    /** The alpha-blended transparent companion pipeline, or `null`. */
     val transparent: P? = null,
+    /** The additive blended companion pipeline, or `null`. */
     val additive: P? = null,
 ) {
     /**

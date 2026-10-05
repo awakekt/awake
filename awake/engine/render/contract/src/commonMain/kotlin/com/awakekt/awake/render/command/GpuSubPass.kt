@@ -17,14 +17,21 @@ import com.awakekt.awake.render.texture.RenderTarget
  * without inspecting scene or light semantics.
  */
 data class GpuSubPass(
+    /** Offscreen render target to render into, or `null` for the default framebuffer. */
     val target: RenderTarget?,
+    /** Target array layer or cubemap face index. */
     val targetLayer: Int = 0,
+    /** View-projection matrix used for camera or light transform in this pass. */
     val viewProjection: Mat4,
+    /** Viewport rectangle override, or `null` to use the target dimensions. */
     val viewport: RenderViewport? = null,
     /** Fully resolved draw list for the generic command path. */
     val resolvedDraws: List<GpuResolvedDraw> = emptyList(),
+    /** Pass-specific raw uniform float data uploaded for this pass. */
     val passUniforms: FloatArray = FloatArray(0),
+    /** Constant depth bias added to fragments in this pass. */
     val depthBiasConstant: Float = 0f,
+    /** Slope-scaled depth bias added to fragments in this pass. */
     val depthBiasSlope: Float = 0f,
 ) {
     override fun equals(other: Any?): Boolean {

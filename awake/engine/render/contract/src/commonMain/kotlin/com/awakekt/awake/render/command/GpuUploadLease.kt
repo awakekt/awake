@@ -9,10 +9,15 @@ import kotlinx.atomicfu.atomic
 
 /** Terminal state for an upload payload owned by a render session. */
 enum class GpuUploadLeaseState {
+    /** The upload payload has been prepared and staged, awaiting submission. */
     Prepared,
+    /** The upload operation has been submitted to the GPU command queue. */
     Submitted,
+    /** The upload operation has completed on the GPU and resources are released. */
     Completed,
+    /** The upload operation was cancelled prior to submission. */
     Cancelled,
+    /** The upload operation or device context failed. */
     Failed,
 }
 
@@ -24,7 +29,9 @@ enum class GpuUploadLeaseState {
  * transition, so cancellation and device loss can release it exactly once.
  */
 class GpuUploadLease<T>(
+    /** The upload payload object being leased. */
     val payload: T,
+    /** Total size in bytes of the leased upload payload. */
     val byteCount: Long,
     private val release: (T) -> Unit = {},
 ) {
@@ -38,15 +45,18 @@ class GpuUploadLease<T>(
         require(byteCount >= 0L) { "An upload lease byte count must be non-negative." }
     }
 
+    /** Transitions this lease from [GpuUploadLeaseState.Prepared] to [GpuUploadLeaseState.Submitted]. */
     fun submit() {
         transition(GpuUploadLeaseState.Prepared, GpuUploadLeaseState.Submitted)
     }
 
+    /** Transitions this lease to [GpuUploadLeaseState.Completed] and invokes the release callback once. */
     fun complete() {
         transition(GpuUploadLeaseState.Submitted, GpuUploadLeaseState.Completed)
         releaseOnce()
     }
 
+    /** Cancels an unsubmitted lease and invokes the release callback once. */
     fun cancel() {
         check(stateRef.compareAndSet(GpuUploadLeaseState.Prepared, GpuUploadLeaseState.Cancelled)) {
             "Only an unsubmitted upload lease can be cancelled; state=${stateRef.value}."
@@ -54,6 +64,7 @@ class GpuUploadLease<T>(
         releaseOnce()
     }
 
+    /** Marks this lease as failed and invokes the release callback once. */
     fun fail() {
         while (true) {
             val current = stateRef.value

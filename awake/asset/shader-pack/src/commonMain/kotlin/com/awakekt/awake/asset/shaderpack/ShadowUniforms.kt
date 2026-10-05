@@ -26,11 +26,15 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  */
 @Suppress("LongParameterList") // Pure aggregation of the derived field handles.
 class ShadowUniforms internal constructor(
+    /** Model-view-projection matrix handle. */
     val mvp: AslExpr,
+    /** Primary directional light vector handle. */
     val lightDirection: AslExpr,
+    /** Primary directional light color and intensity handle. */
     val lightColor: AslExpr,
     /** xyz = world position, w = range; w <= 0 means the slot is off. */
     val pointLightPositions: AslArrayHandle,
+    /** Point light color and intensity array handle. */
     val pointLightColors: AslArrayHandle,
     /**
      * World space to each cascade's light clip space, near cascade first.
@@ -62,6 +66,12 @@ class ShadowUniforms internal constructor(
     val exposure: AslExpr?,
 )
 
+/**
+ * Declares and binds standard shadow and lighting uniform fields for the current shader.
+ *
+ * @param includeLitTail When true, includes additional lighting, fog, and tone mapping uniform fields.
+ * @return Aggregated [ShadowUniforms] handle object.
+ */
 fun AslShaderBuilder.shadowUniforms(includeLitTail: Boolean): ShadowUniforms {
     val block = uniformBlock(
         "Uniforms",

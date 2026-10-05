@@ -7,24 +7,35 @@ package com.awakekt.awake.render.pipeline
 
 /** What kind of GPU resource occupies one binding slot. */
 enum class ResourceKind {
+    /** Uniform buffer object holding shader constants. */
     UniformBuffer,
+    /** Storage buffer object holding structured or dynamic buffer data. */
     StorageBuffer,
+    /** Texture sampler state object. */
     Sampler,
+    /** Sampled texture image view. */
     SampledTexture,
 }
 
 /** Texture sample interpretation required by a sampled-image binding. */
 enum class TextureSampleType {
+    /** Floating-point texture sample type (filterable). */
     Float,
+    /** Depth comparison texture sample type. */
     Depth,
+    /** Signed integer texture sample type (unfilterable). */
     Sint,
+    /** Unsigned integer texture sample type (unfilterable). */
     Uint,
 }
 
 /** Sampler operation required by a sampler binding. */
 enum class SamplerType {
+    /** Linear or bilinear filtering sampler. */
     Filtering,
+    /** Nearest-neighbor non-filtering sampler. */
     NonFiltering,
+    /** Shadow comparison sampler with reference value. */
     Comparison,
 }
 
@@ -37,7 +48,9 @@ enum class SamplerType {
  * vertex stage to displace it. WebGPU derives stages from the shader itself and ignores this.
  */
 enum class ShaderStage {
+    /** Vertex shader stage. */
     Vertex,
+    /** Fragment / pixel shader stage. */
     Fragment,
 }
 
@@ -60,8 +73,11 @@ data class ResourceBinding(
     val stages: Set<ShaderStage>,
     val arrayed: Boolean = false,
     val cubemap: Boolean = false,
+    /** Texture sampling interpretation when [kind] is [ResourceKind.SampledTexture]. */
     val textureSampleType: TextureSampleType = TextureSampleType.Float,
+    /** Sampler filtering behavior when [kind] is [ResourceKind.Sampler]. */
     val samplerType: SamplerType = SamplerType.Filtering,
+    /** Minimum required buffer size in bytes for uniform or storage buffer bindings. */
     val minBindingSize: Long = 0L,
 ) {
     init {
@@ -105,7 +121,10 @@ data class ResourceBinding(
  * index already makes each entry unique, and duplicates are rejected here rather than left for
  * a backend to fail on later with a less specific message.
  */
-data class GroupBindings(val entries: List<ResourceBinding>) {
+data class GroupBindings(
+    /** The list of declared resource bindings in this group. */
+    val entries: List<ResourceBinding>,
+) {
     init {
         require(entries.isNotEmpty()) { "A bind group with no bindings should be absent, not empty." }
         require(entries.size == entries.map { it.binding }.toSet().size) {
@@ -120,6 +139,7 @@ data class GroupBindings(val entries: List<ResourceBinding>) {
     fun uniformBufferSize(binding: Int = 0): Long =
         entries.firstOrNull { it.binding == binding && it.kind == ResourceKind.UniformBuffer }?.minBindingSize ?: 0L
 
+    /** Standard bind group configurations for built-in shaders. */
     companion object {
         /** A scene shader whose material group contains only its per-draw uniform block. */
         val UniformOnlyMaterial = GroupBindings(

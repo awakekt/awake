@@ -19,7 +19,9 @@ package com.awakekt.awake.render.pipeline
 sealed interface ShaderSource {
     /** Read from disk/assets at load time. */
     data class ResourcePath(
+        /** Path to the shader asset resource. */
         val path: String,
+        /** Entry point function name for the shader stage. */
         val entryPoint: String = "main",
     ) : ShaderSource
 
@@ -31,7 +33,9 @@ sealed interface ShaderSource {
      * acceptable only because nothing constructs a spec this way today.
      */
     class PrecompiledBinary(
+        /** Precompiled binary shader bytes (e.g. SPIR-V). */
         val bytes: ByteArray,
+        /** Entry point function name for the shader stage. */
         val entryPoint: String = "main",
     ) : ShaderSource
 
@@ -42,7 +46,9 @@ sealed interface ShaderSource {
      * would otherwise require.
      */
     data class InlineText(
+        /** Raw source code string of the shader (e.g. WGSL). */
         val sourceCode: String,
+        /** Entry point function name for the shader stage. */
         val entryPoint: String = "main",
     ) : ShaderSource
 }

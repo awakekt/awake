@@ -29,13 +29,16 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  * backend branch inside the shared class.
  */
 interface CommandRecorder {
+    /** Binds a graphics [pipeline] for subsequent draw calls. */
     fun bindPipeline(pipeline: PipelineHandle)
 
     /** Resolves [semantic] to this pipeline's Vulkan descriptor set or WebGPU bind group. */
     fun bindMaterial(semantic: BindingSemantic, binding: MaterialBinding)
 
+    /** Binds a vertex [buffer] to the specified vertex input [binding] slot. */
     fun bindVertexBuffer(binding: Int, buffer: BufferHandle)
 
+    /** Binds an index [buffer] for subsequent indexed draw calls. */
     fun bindIndexBuffer(buffer: BufferHandle)
 
     /** Sets the hardware dynamic scissor rectangle for subsequent draws in the current pass. */
@@ -43,8 +46,10 @@ interface CommandRecorder {
         // Default no-op for mock/recording test recorders that don't need scissor tracking
     }
 
+    /** Records a non-indexed draw command for [vertexCount] vertices and [instanceCount] instances. */
     fun draw(vertexCount: Int, instanceCount: Int = 1)
 
+    /** Records an indexed draw command for [indexCount] indices and [instanceCount] instances. */
     fun drawIndexed(indexCount: Int, instanceCount: Int = 1)
 }
 
@@ -59,6 +64,7 @@ interface MaterialBinding
 
 /** Opaque, backend-defined pipeline reference -- see [MaterialBinding] for the same reasoning. */
 interface PipelineHandle {
+    /** The binding layout describing semantic resource group slots for this pipeline. */
     val bindingLayout: BindingLayout get() = BindingLayout.Standard
 
     /** False for a line or point pipeline, whose draws add no triangles to a frame's count. */

@@ -17,7 +17,13 @@ import com.awakekt.awake.render.texture.TextureAsset
  * [type] is the field's ACTUAL WGSL type (e.g. `material : vec4f`), not a hand-picked float
  * count: [floats] is derived from it, so a field can't be sized wrong for what the shader
  * struct actually declares. */
-data class UniformField(val name: String, val type: GpuDataShape, val count: Int = 1) {
+data class UniformField(
+    /** The declared name of the uniform field in the shader struct. */
+    val name: String,
+    val type: GpuDataShape,
+    /** Number of array elements in this uniform field (at least 1). */
+    val count: Int = 1,
+) {
     init {
         require(count >= 1) { "$name declares count=$count; a field holds at least one value." }
     }
@@ -26,6 +32,7 @@ data class UniformField(val name: String, val type: GpuDataShape, val count: Int
      * declares `array<vec4f, N>` and the writer expects one contiguous block of that size. */
     val floats: Int get() = type.uniformFloats * count
 
+    /** Writes a 4-component vector into the first element of this field within [destination]. */
     fun writeVec4(
         destination: FloatArray,
         x: Float,
@@ -106,9 +113,15 @@ const val MAX_SHADOW_CASCADES = 4
 /** Fixed GPU buffer capacity for point-light slots; scene code decides how many are populated. */
 const val MAX_POINT_LIGHT_SLOTS = 4
 
+/**
+ * Predefined uniform field descriptors shared across lit and unlit shader blocks.
+ */
 object UniformFields {
+    /** Combined Model-View-Projection matrix uniform field. */
     val Mvp = UniformField("mvp", GpuDataShape.Mat4)
+    /** Primary directional light direction vector uniform field. */
     val LightDirection = UniformField("lightDirection", GpuDataShape.Vec4)
+    /** Primary directional light color and intensity uniform field. */
     val LightColor = UniformField("lightColor", GpuDataShape.Vec4)
 
     /** `xyz` = world position, `w` = range. A slot with `w <= 0` is off, which is how a scene
@@ -161,10 +174,15 @@ object UniformFields {
 
     /** xyz = backend-neutral vertex-effect parameters; w is the current frame time in seconds. */
     val VertexAnimation = UniformField("vertexAnimation", GpuDataShape.Vec4)
+    /** World-space model transformation matrix uniform field. */
     val Model = UniformField("model", GpuDataShape.Mat4)
+    /** World-space camera eye position uniform field. */
     val CameraPosition = UniformField("cameraPosition", GpuDataShape.Vec4)
+    /** World-space camera forward viewing direction vector uniform field. */
     val CameraForward = UniformField("cameraForward", GpuDataShape.Vec4)
+    /** Atmospheric distance fog color uniform field. */
     val FogColor = UniformField("fogColor", GpuDataShape.Vec4)
+    /** PBR surface roughness and metallic parameters uniform field. */
     val PbrFactors = UniformField("pbrFactors", GpuDataShape.Vec4)
 
     /** `x` = metallic, `y` = roughness, packed as a `vec4f` for std140 alignment. Distinct from
@@ -173,7 +191,9 @@ object UniformFields {
      * because [UniformWriter] matches a layout's fields by identity, so a shared instance would
      * make one of the two shaders' declared names a lie. */
     val Material = UniformField("material", GpuDataShape.Vec4)
+    /** Base color RGBA multiplier factor uniform field. */
     val BaseColorFactor = UniformField("baseColorFactor", GpuDataShape.Vec4)
+    /** Emissive color RGB multiplier factor uniform field. */
     val EmissiveFactor = UniformField("emissiveFactor", GpuDataShape.Vec4)
 
     /**
@@ -222,6 +242,9 @@ class UniformLayout(vararg val fields: UniformField) {
         }
     }
 
+    /**
+     * Returns the starting float offset of [field] within this layout, or [total] if not found.
+     */
     fun offsetOf(field: UniformField): Int {
         for (i in fields.indices) {
             if (fields[i] === field) return offsets[i]
