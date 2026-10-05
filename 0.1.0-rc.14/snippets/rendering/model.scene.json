@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "nodes": [
+    {
+      "name": "statue",
+      "components": [
+        {
+          "component": "mesh_renderer",
+          "mesh": "assets/models/statue.gltf",
+          "material": "lit-shadow"
+        }
+      ]
+    }
+  ]
+}
