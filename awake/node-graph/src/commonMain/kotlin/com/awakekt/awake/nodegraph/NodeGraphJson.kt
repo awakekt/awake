@@ -20,6 +20,12 @@ object NodeGraphJson {
         encodeDefaults = true
     }
 
+    /**
+     * Serializes [graph] into a formatted JSON string.
+     *
+     * @param graph Node graph document to serialize.
+     * @return Formatted JSON string representation.
+     */
     fun encode(graph: NodeGraph): String = json.encodeToString(NodeGraph.serializer(), graph)
 
     /** Parses [text] without validating it; see [load]. */
@@ -38,14 +44,30 @@ object NodeGraphJson {
         return graph
     }
 
+    /**
+     * Serializes [catalogue] into a formatted JSON string.
+     *
+     * @param catalogue Node catalogue specification to serialize.
+     * @return Formatted JSON string representation.
+     */
     fun encodeCatalogue(catalogue: NodeCatalogue): String =
         json.encodeToString(NodeCatalogue.serializer(), catalogue)
 
+    /**
+     * Deserializes [text] into a [NodeCatalogue] model.
+     *
+     * @param text JSON string to parse.
+     * @return Deserialized [NodeCatalogue] instance.
+     */
     fun decodeCatalogue(text: String): NodeCatalogue =
         json.decodeFromString(NodeCatalogue.serializer(), text)
 }
 
-/** A graph that parsed but did not validate. */
+/**
+ * Exception thrown when a node graph fails structural or semantic validation against a registry.
+ *
+ * @property issues List of validation findings describing the failure causes.
+ */
 class InvalidNodeGraphException(val issues: List<GraphIssue>) :
     IllegalArgumentException(
         issues.joinToString(separator = "\n", prefix = "Invalid node graph:\n") { "- ${it.message}" },

@@ -31,6 +31,12 @@ class BlueprintNodes {
     val registry: NodeRegistry = NodeRegistry(BlueprintGraphKind)
     private val nodesByType = HashMap<String, BlueprintNode>()
 
+    /**
+     * Registers a blueprint node type into this collection and the backing registry.
+     *
+     * @param node Blueprint node definition to register.
+     * @return This registry instance for chained configuration.
+     */
     fun register(node: BlueprintNode): BlueprintNodes {
         val spec = node.spec
         (spec.inputs + spec.outputs).forEach { port ->
@@ -43,8 +49,15 @@ class BlueprintNodes {
         return this
     }
 
+    /**
+     * Retrieves the registered blueprint node matching the specified [type] identifier.
+     *
+     * @param type Unique node type identifier.
+     * @return Registered blueprint node instance, or `null` if not registered.
+     */
     operator fun get(type: String): BlueprintNode? = nodesByType[type]
 
+    /** Companion factory providing default blueprint node registries. */
     companion object {
         /** A registry holding [CoreNodes]: events, flow, variables and math. */
         fun core(): BlueprintNodes = BlueprintNodes().apply { CoreNodes.all.forEach(::register) }

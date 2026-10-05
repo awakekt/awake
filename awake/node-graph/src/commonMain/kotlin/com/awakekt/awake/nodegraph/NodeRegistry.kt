@@ -13,6 +13,8 @@ import kotlinx.serialization.Serializable
  * Registration is explicit rather than discovered by reflection: Kotlin/Native and wasm have too
  * little of it, and a palette built by scanning code shows everything a module happens to
  * contain. A type that was never registered cannot appear in a valid graph.
+ *
+ * @property kind The graph category and connection policy this registry governs.
  */
 class NodeRegistry(val kind: GraphKind) {
     private val specsByType = LinkedHashMap<String, NodeSpec>()
@@ -39,7 +41,12 @@ class NodeRegistry(val kind: GraphKind) {
     fun catalogue(): NodeCatalogue = NodeCatalogue(kind.id, specs.toList())
 }
 
-/** A [NodeRegistry]'s contents, as data. Encode it with [NodeGraphJson.encodeCatalogue]. */
+/**
+ * A [NodeRegistry]'s contents, as data. Encode it with [NodeGraphJson.encodeCatalogue].
+ *
+ * @property kind Graph kind identifier for which this catalogue applies.
+ * @property nodes List of node specifications available in this catalogue.
+ */
 @Serializable
 data class NodeCatalogue(
     val kind: String,

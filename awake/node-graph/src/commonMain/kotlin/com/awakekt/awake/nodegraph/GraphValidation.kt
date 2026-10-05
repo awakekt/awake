@@ -5,25 +5,51 @@
  */
 package com.awakekt.awake.nodegraph
 
-/** Why a graph is invalid. */
+/**
+ * Error code categorizing why a node graph is invalid.
+ */
 enum class GraphIssueCode {
+    /** The graph kind does not match the expected graph schema kind. */
     KIND_MISMATCH,
+
+    /** The format version of the graph is not supported by this engine build. */
     UNSUPPORTED_FORMAT_VERSION,
+
+    /** More than one node shares the same unique identifier. */
     DUPLICATE_NODE_ID,
+
+    /** A node specifies a type not found in the active node registry. */
     UNKNOWN_NODE_TYPE,
+
+    /** A node contains configuration fields not defined in its specification. */
     UNKNOWN_CONFIG_FIELD,
+
+    /** An edge connects to a node ID that does not exist in the graph. */
     DANGLING_EDGE,
+
+    /** An edge references a port name that does not exist on the node. */
     UNKNOWN_PORT,
+
+    /** An edge connects incompatible source and destination port data types. */
     INCOMPATIBLE_PORTS,
+
+    /** An input port that only accepts a single connection has multiple inbound edges. */
     INPUT_ALREADY_CONNECTED,
+
+    /** The graph contains a directed cycle, but the graph kind requires an acyclic DAG. */
     CYCLE,
 }
 
-/** One problem in a graph. */
+/**
+ * Diagnostic finding describing a structural or semantic validation problem in a graph.
+ *
+ * @property code Error code identifying the issue type.
+ * @property message Human-readable explanation of the validation failure.
+ * @property nodeId The node an editor should highlight, or `null` for a whole-document issue.
+ */
 data class GraphIssue(
     val code: GraphIssueCode,
     val message: String,
-    /** The node an editor should highlight, or `null` for a problem with the whole document. */
     val nodeId: String? = null,
 )
 

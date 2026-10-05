@@ -13,10 +13,17 @@ import kotlinx.serialization.json.JsonElement
  *
  * The same spec is the editor's palette entry, the validator's rule and the catalogue entry a
  * tool reads, so the descriptions are part of the contract rather than decoration.
+ *
+ * @property type Stable id, referenced by [GraphNode.type]. Renaming it breaks saved graphs.
+ * @property displayName Human-readable label shown in editors and node palettes.
+ * @property category Palette category or submenu under which this node is listed.
+ * @property description Detailed explanation of what the node computes or does.
+ * @property inputs List of input ports declared on this node type.
+ * @property outputs List of output ports declared on this node type.
+ * @property config List of configuration fields that can be statically authored on this node.
  */
 @Serializable
 data class NodeSpec(
-    /** Stable id, referenced by [GraphNode.type]. Renaming it breaks saved graphs. */
     val type: String,
     val displayName: String,
     val category: String = "",
@@ -38,24 +45,34 @@ data class NodeSpec(
     }
 }
 
-/** One port. */
+/**
+ * Specification for a single input or output port on a node.
+ *
+ * @property name Unique identifier of the port within its node.
+ * @property type Opaque data type name evaluated by the owning [GraphKind].
+ * @property description Explanatory text describing the port's role and expected values.
+ * @property multiple For an input, whether it accepts multiple inbound connections; outputs always fan out.
+ */
 @Serializable
 data class PortSpec(
     val name: String,
-    /** Opaque to this module; the [GraphKind] decides which types connect. */
     val type: String,
     val description: String = "",
-    /** For an input, whether it accepts more than one edge. Outputs always fan out. */
     val multiple: Boolean = false,
 )
 
-/** One value set on a node rather than wired in. */
+/**
+ * Specification for a statically authored configuration field on a node.
+ *
+ * @property name Unique name of the configuration field.
+ * @property type Opaque data type name of the configuration value.
+ * @property description Explanatory text describing the configuration setting.
+ * @property default Fallback value when the field is omitted in graph JSON, or `null` if required.
+ */
 @Serializable
 data class ConfigFieldSpec(
     val name: String,
-    /** Opaque to this module, like [PortSpec.type]; the owning runtime reads the value. */
     val type: String,
     val description: String = "",
-    /** Used when the node's config omits the field, or `null` when it is required. */
     val default: JsonElement? = null,
 )

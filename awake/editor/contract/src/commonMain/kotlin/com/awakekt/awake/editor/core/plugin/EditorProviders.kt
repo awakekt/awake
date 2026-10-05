@@ -12,6 +12,11 @@ import com.awakekt.awake.core.di.container
 import com.awakekt.awake.core.di.module
 import kotlin.jvm.JvmInline
 
+/**
+ * Unique identifier for an editor provider.
+ *
+ * @property value Underlying string representation of the provider ID.
+ */
 @JvmInline
 value class ProviderId(val value: String) {
     init {
@@ -19,12 +24,23 @@ value class ProviderId(val value: String) {
     }
 }
 
+/**
+ * Categories of extension points supported by the editor.
+ */
 enum class EditorProviderKind {
     /** Inspector fields for a component type. Implement [ComponentInspectorProvider]. */
     Component,
+
+    /** Asset pipeline extension or custom asset browser integration. */
     Asset,
+
+    /** Environment lighting, skybox, or atmosphere configuration. */
     Environment,
+
+    /** Skeletal or clip animation tool integration. */
     Animation,
+
+    /** Build target or cooking pipeline contributor. */
     Build,
 
     /** A panel in the bottom tray. Implement [PanelProvider] to draw it. */
@@ -58,6 +74,12 @@ enum class EditorProviderKind {
     FloatingCard,
 }
 
+/**
+ * Identification and display metadata for an editor provider.
+ *
+ * @property id Globally unique provider identifier.
+ * @property displayName Human-readable label displayed in editor UI surfaces.
+ */
 data class ProviderMetadata(
     val id: ProviderId,
     val displayName: String,
@@ -67,6 +89,12 @@ data class ProviderMetadata(
     }
 }
 
+/**
+ * Serialized configuration state associated with an editor provider.
+ *
+ * @property version Schema version number of the configuration payload.
+ * @property payload Serialized string payload (e.g. JSON or binary text).
+ */
 data class ProviderConfiguration(
     val version: Int,
     val payload: String,
@@ -76,8 +104,23 @@ data class ProviderConfiguration(
     }
 }
 
-enum class ValidationSeverity { Warning, Error }
+/**
+ * Severity level of an editor configuration validation finding.
+ */
+enum class ValidationSeverity {
+    /** Non-fatal warning that does not prevent editor operations. */
+    Warning,
 
+    /** Critical error preventing valid execution or configuration save. */
+    Error,
+}
+
+/**
+ * Diagnostic message produced during provider configuration validation.
+ *
+ * @property severity Severity classification of the finding.
+ * @property message Human-readable description of the validation issue.
+ */
 data class ValidationMessage(
     val severity: ValidationSeverity,
     val message: String,
@@ -89,8 +132,15 @@ data class ValidationMessage(
 
 /** Versioned codec contract. Persisted payloads remain opaque to the generic editor. */
 interface ProviderCodec {
+    /** The active configuration schema version handled by this codec. */
     val currentVersion: Int
 
+    /**
+     * Validates [configuration] against the provider's schema rules.
+     *
+     * @param configuration The configuration payload to validate.
+     * @return List of validation findings, empty if configuration is valid.
+     */
     fun validate(configuration: ProviderConfiguration): List<ValidationMessage>
 }
 
@@ -99,29 +149,40 @@ interface ProviderCodec {
  * orders, resolves, validates, and disposes them.
  */
 interface EditorProvider {
+    /** Identification and display metadata for this provider. */
     val metadata: ProviderMetadata
+
+    /** The category of editor slot or capability this provider contributes to. */
     val kind: EditorProviderKind
+
+    /** Configuration serialization and validation codec. */
     val codec: ProviderCodec
 
+    /** Releases any resources held by this provider upon deregistration or shutdown. */
     fun dispose() {}
 }
 
+/** Editor provider specializing in ECS component editing and inspection. */
 interface ComponentProvider : EditorProvider {
     override val kind: EditorProviderKind get() = EditorProviderKind.Component
 }
 
+/** Editor provider specializing in asset authoring, import, and management. */
 interface AssetProvider : EditorProvider {
     override val kind: EditorProviderKind get() = EditorProviderKind.Asset
 }
 
+/** Editor provider specializing in environment settings and atmosphere configuration. */
 interface EnvironmentProvider : EditorProvider {
     override val kind: EditorProviderKind get() = EditorProviderKind.Environment
 }
 
+/** Editor provider specializing in skeletal and clip animation editing. */
 interface AnimationProvider : EditorProvider {
     override val kind: EditorProviderKind get() = EditorProviderKind.Animation
 }
 
+/** Editor provider specializing in asset cooking or packaging pipelines. */
 interface BuildProvider : EditorProvider {
     override val kind: EditorProviderKind get() = EditorProviderKind.Build
 
@@ -138,10 +199,11 @@ interface BuildProvider : EditorProvider {
 interface PanelProvider : EditorProvider {
     override val codec: ProviderCodec get() = NoProviderConfiguration
 
-    /** Draws the panel body. */
     context(_: Composer)
+    /** Draws the panel body inside the active composer. */
     fun content()
 
+    /** Constants defining panel provider placement rules. */
     companion object {
         /** The slots a [PanelProvider] may fill. */
         val PANEL_KINDS: Set<EditorProviderKind> = setOf(
@@ -164,8 +226,14 @@ class ProviderRegistry {
     private val byId = mutableMapOf<ProviderId, EditorProvider>()
     private var disposed = false
 
+    /** List of all currently registered editor providers in deterministic registration order. */
     val all: List<EditorProvider> get() = ordered
 
+    /**
+     * Registers a single provider in the registry.
+     *
+     * @param provider The editor provider to register.
+     */
     fun register(provider: EditorProvider) {
         registerAll(listOf(provider))
     }
@@ -222,10 +290,30 @@ class ProviderRegistry {
         providers.asReversed().forEach(::unregister)
     }
 
+    /**
+     * Looks up a registered provider by its unique [id].
+     *
+     * @param id Provider identifier to search for.
+     * @return The matching [EditorProvider], or `null` if not registered.
+     */
     fun find(id: ProviderId): EditorProvider? = byId[id]
 
+    /**
+     * Filters registered providers matching the specified [kind].
+     *
+     * @param kind Category of providers to retrieve.
+     * @return List of matching registered providers.
+     */
     fun ofKind(kind: EditorProviderKind): List<EditorProvider> = ordered.filter { it.kind == kind }
 
+    /**
+     * Validates a configuration payload using the codec registered for [id].
+     *
+     * @param id Identifier of the target provider.
+     * @param configuration Configuration payload to validate.
+     * @return List of validation diagnostic messages.
+     * @throws IllegalArgumentException If no provider is registered for [id].
+     */
     fun validate(
         id: ProviderId,
         configuration: ProviderConfiguration,
@@ -233,10 +321,16 @@ class ProviderRegistry {
         "No provider is registered for '${id.value}'."
     }.codec.validate(configuration)
 
+    /**
+     * Cancels all in-flight build or cooking operations across registered [BuildProvider] instances.
+     */
     fun cancelBuilds() {
         ordered.filterIsInstance<BuildProvider>().forEach(BuildProvider::cancel)
     }
 
+    /**
+     * Disposes all registered providers in reverse registration order and clears the registry.
+     */
     fun dispose() {
         if (disposed) return
         disposed = true

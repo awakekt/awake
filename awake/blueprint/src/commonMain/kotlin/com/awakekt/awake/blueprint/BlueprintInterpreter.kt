@@ -93,6 +93,11 @@ class BlueprintInterpreter(
 
 /** Sets an event node's outputs before its chain runs, for example the body that entered a sensor. */
 fun interface EventPayload {
+    /**
+     * Writes event payload values onto the output ports of [outputs].
+     *
+     * @param outputs Blueprint context bound to the triggered event node.
+     */
     fun write(outputs: BlueprintContext)
 }
 

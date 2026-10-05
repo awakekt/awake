@@ -126,6 +126,9 @@ comments:
       - '**/awake/core/audio/**'
       - '**/awake/ai/**'
       - '**/awake/navigation/**'
+      - '**/awake/editor/contract/**'
+      - '**/awake/node-graph/**'
+      - '**/awake/blueprint/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true
