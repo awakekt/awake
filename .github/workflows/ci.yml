@@ -178,16 +178,17 @@ jobs:
       - name: Scene runtime tests
         run: ./gradlew :awake:scene:runtime:desktopTest
 
-      # The particle library and its scene wrapper, the render pass logic, and the shaders they draw
-      # with: pure JVM suites with no GPU. `ParticleExposureTest` keeps the scene file in step with the
-      # library, and until this step it ran only on a contributor's machine (#387). `scene3d` is left
-      # out for now: it holds an allocation probe, and allocation counts differ between JDKs, so it
-      # wants a baseline measured on this job's JDK first.
-      - name: Particle, render pass and shader tests
+      # The particle library and its scene wrapper, the scene's rendering, the render pass logic, and
+      # the shaders they draw with: pure JVM suites with no GPU. `ParticleExposureTest` keeps the scene
+      # file in step with the library, and until this step it ran only on a contributor's machine
+      # (#387). The WebGPU backend and render parity suites need a GPU or the Vulkan natives and are
+      # the rest of #387.
+      - name: Particle, scene rendering, render pass and shader tests
         run: >-
           ./gradlew
           :awake:particles:desktopTest
           :awake:scene:particles:desktopTest
+          :awake:scene:scene3d:desktopTest
           :awake:engine:render:passes:desktopTest
           :awake:asset:shader-pack:desktopTest
           :awake:asset:shader-compiler:desktopTest
