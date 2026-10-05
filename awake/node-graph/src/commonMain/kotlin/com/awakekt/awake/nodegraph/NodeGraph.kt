@@ -13,20 +13,22 @@ import kotlinx.serialization.json.JsonObject
  *
  * The document only records structure. What a node does is up to the runtime or compiler that
  * owns the kind, and whether the structure is legal is [NodeRegistry.validate]'s job.
+ *
+ * @property kind The [GraphKind.id] this graph was authored for.
+ * @property formatVersion Version of this document format, not of the kind's node vocabulary.
+ * @property nodes List of nodes contained within this graph.
+ * @property edges Ordered list of directed connections between ports in the graph.
  */
 @Serializable
 data class NodeGraph(
-    /** The [GraphKind.id] this graph was authored for. */
     val kind: String,
-    /** Version of this document format, not of the kind's node vocabulary. */
     val formatVersion: Int = FORMAT_VERSION,
     val nodes: List<GraphNode> = emptyList(),
-    /**
-     * Order is significant: a port with several edges keeps them in list order, which is how
-     * ordered children are stored.
-     */
     val edges: List<GraphEdge> = emptyList(),
 ) {
+    /**
+     * Constants and format specifications for [NodeGraph].
+     */
     companion object {
         /** The only [formatVersion] this build reads and writes. */
         const val FORMAT_VERSION: Int = 1
@@ -46,7 +48,14 @@ data class GraphNode(
     val config: JsonObject = JsonObject(emptyMap()),
 )
 
-/** A wire from an output port of [fromNode] to an input port of [toNode]. */
+/**
+ * A wire from an output port of [fromNode] to an input port of [toNode].
+ *
+ * @property fromNode Source node identifier.
+ * @property fromPort Output port name on the source node.
+ * @property toNode Destination node identifier.
+ * @property toPort Input port name on the destination node.
+ */
 @Serializable
 data class GraphEdge(
     val fromNode: String,

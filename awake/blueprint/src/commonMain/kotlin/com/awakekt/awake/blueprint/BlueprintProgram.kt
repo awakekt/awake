@@ -10,6 +10,13 @@ import com.awakekt.awake.nodegraph.NodeGraph
 /**
  * A graph compiled once per asset: nodes by index, where each port's value lives, and where each
  * execution output leads. Every [BlueprintInstance] of the graph shares it.
+ *
+ * @property graph Source node graph containing layout, metadata, and topological connectivity.
+ * @property nodes Node instances indexed by topological evaluation position.
+ * @property table Slot and connection routing table.
+ * @property initial Initial slot value allocations for new instances.
+ * @property variables Declared variables available within the blueprint program.
+ * @property events Map from event type identifier to event handler node indices.
  */
 class BlueprintProgram internal constructor(
     val graph: NodeGraph,
@@ -20,7 +27,13 @@ class BlueprintProgram internal constructor(
     internal val events: Map<String, IntArray>,
 )
 
-/** A named variable of a program, and the slot that holds it. */
+/**
+ * A named variable of a program, and the slot that holds it.
+ *
+ * @property name Variable identifier declared in the blueprint graph.
+ * @property type Port data type name conforming to [PortTypes].
+ * @property slot Storage slot index allocated for this variable.
+ */
 data class BlueprintVariable(val name: String, val type: String, internal val slot: Int)
 
 /** Per node, by port index. Slots are encoded with [Slots]; `-1` marks an execution port. */

@@ -7,7 +7,11 @@ package com.awakekt.awake.editor.core.plugin
 
 import kotlin.jvm.JvmInline
 
-/** Stable identity for an installed editor extension artifact. */
+/**
+ * Stable identity for an installed editor extension artifact.
+ *
+ * @property value Underlying string identifier.
+ */
 @JvmInline
 value class PluginId(val value: String) {
     init {
@@ -15,7 +19,11 @@ value class PluginId(val value: String) {
     }
 }
 
-/** Source-compatible plugin contract version. */
+/**
+ * Source-compatible plugin contract version.
+ *
+ * @property value Integer API version number.
+ */
 @JvmInline
 value class PluginApiVersion(val value: Int) {
     init {
@@ -23,10 +31,23 @@ value class PluginApiVersion(val value: Int) {
     }
 }
 
+/**
+ * Global constants representing the current plugin API specification.
+ */
 object PluginApi {
+    /** The active plugin API contract version supported by this build. */
     val currentVersion = PluginApiVersion(1)
 }
 
+/**
+ * Metadata describing an editor plugin and its compatibility requirements.
+ *
+ * @property id Unique identifier of the plugin.
+ * @property displayName Human-readable plugin name.
+ * @property version Semantic version string of the plugin.
+ * @property requiredApiVersion Plugin API version required by this plugin.
+ * @property description Optional human-readable description of plugin functionality.
+ */
 data class PluginMetadata(
     val id: PluginId,
     val displayName: String,
@@ -48,8 +69,14 @@ data class PluginMetadata(
  * Kotlin/Native and wasmJs require ordinary, pinned application dependencies.
  */
 interface EditorPlugin {
+    /** Metadata detailing plugin identity, version, and requirements. */
     val metadata: PluginMetadata
 
+    /**
+     * Instantiates editor providers contributed by this plugin.
+     *
+     * @return List of newly constructed [EditorProvider] instances.
+     */
     fun createProviders(): List<EditorProvider>
 }
 
@@ -61,6 +88,9 @@ interface EditorPlugin {
  * been unregistered.
  */
 interface PluginLifecycle {
+    /**
+     * Releases plugin-owned resources after all contributed providers have been unregistered.
+     */
     fun dispose()
 }
 
@@ -69,6 +99,9 @@ interface PluginLifecycle {
  *
  * This is not a marketplace or runtime loader. Manifest verification, permissions, locks, and
  * Gradle resolution live above this API in the application installer.
+ *
+ * @param providers Underlying provider registry where plugin providers are registered.
+ * @param supportedApiVersion Maximum plugin API version supported by the hosting editor.
  */
 class PluginRegistry(
     private val providers: ProviderRegistry,
@@ -81,8 +114,15 @@ class PluginRegistry(
 
     private val installedById = linkedMapOf<PluginId, InstalledPlugin>()
 
+    /** List of metadata for all currently installed plugins. */
     val installed: List<PluginMetadata> get() = installedById.values.map { it.plugin.metadata }
 
+    /**
+     * Installs [plugin] into the registry and registers all of its contributed providers.
+     *
+     * @param plugin Plugin instance to install.
+     * @throws IllegalArgumentException If required API version does not match or plugin is already installed.
+     */
     fun install(plugin: EditorPlugin) {
         val metadata = plugin.metadata
         require(metadata.requiredApiVersion == supportedApiVersion) {
@@ -110,6 +150,11 @@ class PluginRegistry(
         return false
     }
 
+    /**
+     * Installs all given [plugins] sequentially into the registry.
+     *
+     * @param plugins Collection of plugins to install.
+     */
     fun installAll(plugins: Iterable<EditorPlugin>) {
         plugins.forEach(::install)
     }

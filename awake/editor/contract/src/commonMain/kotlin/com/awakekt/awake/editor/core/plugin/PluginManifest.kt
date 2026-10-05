@@ -75,6 +75,9 @@ data class PluginManifest(
     /** Converts this manifest to JSON string representation. */
     fun toJson(): String = Json.encodeToString(serializer(), this)
 
+    /**
+     * Serializer and parser utilities for [PluginManifest].
+     */
     companion object {
         private val json = Json {
             ignoreUnknownKeys = true

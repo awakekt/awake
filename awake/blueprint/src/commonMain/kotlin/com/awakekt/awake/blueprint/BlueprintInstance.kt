@@ -16,8 +16,12 @@ import kotlinx.serialization.json.intOrNull
  * debugger asks, its trace.
  *
  * Plain data an ECS component can hold. [BlueprintInterpreter] runs it.
+ *
+ * @param program Initial compiled blueprint program to run.
+ * @property owner The entity that owns and runs this instance, or [NoEntity].
  */
 class BlueprintInstance(program: BlueprintProgram, val owner: Entity = NoEntity) {
+    /** The active compiled blueprint program executed by this instance. */
     var program: BlueprintProgram = program
         internal set
 
@@ -105,6 +109,9 @@ class BlueprintTrace(val capacity: Int = DEFAULT_CAPACITY) {
     fun nodeIds(program: BlueprintProgram): List<String> =
         List(size) { i -> program.graph.nodes[ring[(next - size + i + capacity) % capacity]].id }
 
+    /**
+     * Clears all recorded execution trace history.
+     */
     fun clear() {
         next = 0
         size = 0

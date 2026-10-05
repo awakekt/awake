@@ -1,0 +1,1 @@
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for editor and tooling contracts (`:awake:editor:contract`, `:awake:node-graph`, `:awake:blueprint`).

@@ -26,8 +26,10 @@ interface EditCommand {
     /** Shown after "Undo" and "Redo". */
     val label: String
 
+    /** Applies the edit to the scene. */
     fun apply()
 
+    /** Reverts the edit, restoring the previous scene state. */
     fun revert()
 
     /** Equal non-null keys on consecutive commands make one undo step, such as a drag or typed number. */
@@ -48,6 +50,7 @@ interface EditHistory {
 
 /** The entities selected in the editor. [primary] is the one the inspector and gizmo act on. */
 interface SceneSelection {
+    /** Set of all entities currently included in the selection. */
     val entities: Set<Entity>
     val primary: Entity?
 
@@ -55,12 +58,31 @@ interface SceneSelection {
     fun select(entity: Entity?)
 }
 
-/** A line a viewport tool draws over the scene, in world space. */
+/**
+ * A line a viewport tool draws over the scene, in world space.
+ *
+ * @property start Starting coordinate of the line segment in world space.
+ * @property end Ending coordinate of the line segment in world space.
+ * @property color Color used to render the overlay line.
+ */
 data class OverlayLine(val start: Vec3f, val end: Vec3f, val color: Color)
 
 /**
  * What a viewport tool sees on a frame: the edited world, the edit camera, and the pointer in
  * viewport pixels with input the editor UI has already claimed taken out.
+ *
+ * @property world Active ECS world being inspected or edited.
+ * @property selection Current scene entity selection.
+ * @property history Editor undo/redo history manager.
+ * @property camera Active editor camera lens.
+ * @property viewProjection Combined view-projection transformation matrix.
+ * @property clipSpace Target platform clip space convention.
+ * @property viewportWidth Width of the 3D viewport canvas in pixels.
+ * @property viewportHeight Height of the 3D viewport canvas in pixels.
+ * @property pointerX Horizontal coordinate of the pointer in viewport pixels.
+ * @property pointerY Vertical coordinate of the pointer in viewport pixels.
+ * @property isPointerDown Whether the primary pointer button is pressed.
+ * @property keysDown Set of currently depressed keyboard keys not consumed by UI.
  */
 @Suppress("LongParameterList") // The camera, viewport, and pointer are all needed to aim a tool.
 class ViewportContext(

@@ -24,33 +24,93 @@ class BlueprintContext internal constructor() {
     /** The entity whose blueprint is running, or [NoEntity]. */
     val owner: Entity get() = instance.owner
 
+    /**
+     * Reads a float value from the specified input port.
+     *
+     * @param input Name of the float input port.
+     * @return Float value on the port.
+     */
     fun float(input: String): Float = instance.values.floats[index(inputSlot(input), Slots.FLOAT)]
 
+    /**
+     * Reads an integer value from the specified input port.
+     *
+     * @param input Name of the integer input port.
+     * @return Integer value on the port.
+     */
     fun int(input: String): Int = instance.values.ints[index(inputSlot(input), Slots.INT)]
 
+    /**
+     * Reads a boolean value from the specified input port.
+     *
+     * @param input Name of the boolean input port.
+     * @return Boolean value on the port.
+     */
     fun bool(input: String): Boolean = int(input) != 0
 
+    /**
+     * Reads a string reference from the specified input port.
+     *
+     * @param input Name of the string input port.
+     * @return String value on the port, or `null`.
+     */
     fun string(input: String): String? = instance.values.refs[index(inputSlot(input), Slots.REF)] as String?
 
+    /**
+     * Reads an asset path or reference from the specified input port.
+     *
+     * @param input Name of the asset input port.
+     * @return Asset path on the port, or `null`.
+     */
     fun asset(input: String): String? = string(input)
 
     /** The entity on [input], or [NoEntity]. */
     fun entity(input: String): Entity = Entity(instance.values.longs[index(inputSlot(input), Slots.LONG)])
 
+    /**
+     * Writes a float value to the specified output port.
+     *
+     * @param output Name of the float output port.
+     * @param value Float value to assign.
+     */
     fun setFloat(output: String, value: Float) {
         instance.values.floats[index(outputSlot(output), Slots.FLOAT)] = value
     }
 
+    /**
+     * Writes an integer value to the specified output port.
+     *
+     * @param output Name of the integer output port.
+     * @param value Integer value to assign.
+     */
     fun setInt(output: String, value: Int) {
         instance.values.ints[index(outputSlot(output), Slots.INT)] = value
     }
 
+    /**
+     * Writes a boolean value to the specified output port.
+     *
+     * @param output Name of the boolean output port.
+     * @param value Boolean value to assign.
+     */
     fun setBool(output: String, value: Boolean) = setInt(output, if (value) 1 else 0)
 
+    /**
+     * Writes a string reference to the specified output port.
+     *
+     * @param output Name of the string output port.
+     * @param value String value to assign.
+     */
     fun setString(output: String, value: String?) {
         instance.values.refs[index(outputSlot(output), Slots.REF)] = value
     }
 
+    /**
+     * Writes an entity reference to the specified output port.
+     *
+     * @param output Name of the entity output port.
+     * @param value Entity to assign.
+     */
     fun setEntity(output: String, value: Entity) {
         instance.values.longs[index(outputSlot(output), Slots.LONG)] = value.packed
     }
@@ -58,6 +118,12 @@ class BlueprintContext internal constructor() {
     /** A latent node's own float state, `0 until floatState`. */
     fun stateFloat(i: Int): Float = instance.values.floats[stateIndex(i)]
 
+    /**
+     * Sets a latent node's internal float state slot at [i].
+     *
+     * @param i State slot index, `0 until floatState`.
+     * @param value Float value to store.
+     */
     fun setStateFloat(i: Int, value: Float) {
         instance.values.floats[stateIndex(i)] = value
     }

@@ -7,6 +7,12 @@ package com.awakekt.awake.editor.core.asset
 
 /**
  * Result of an asset conversion process into standard GLTF/GLB bytes.
+ *
+ * @property glbBytes Binary glTF (GLB) payload resulting from conversion.
+ * @property name Canonical asset identifier or base name.
+ * @property vertexCount Total vertex count in the converted geometry.
+ * @property triangleCount Total triangle count in the converted geometry.
+ * @property warnings Non-fatal diagnostic warnings emitted during conversion.
  */
 data class GltfConversionResult(
     val glbBytes: ByteArray,
@@ -46,6 +52,10 @@ interface AssetConverter {
 
     /**
      * Converts [sourceBytes] into standard GLTF/GLB bytes.
+     *
+     * @param fileName Source asset file name with extension.
+     * @param sourceBytes Raw source asset binary content.
+     * @return The resulting [GltfConversionResult] containing GLB payload and conversion metadata.
      */
     fun convertToGltf(
         fileName: String,

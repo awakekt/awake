@@ -22,6 +22,7 @@ import com.awakekt.awake.nodegraph.PortSpec
  * There is no sequence node: wire one execution output to several nodes and they run in wire order.
  */
 object CoreNodes {
+    /** List of all built-in core blueprint nodes. */
     val all: List<BlueprintNode> by lazy {
         listOf(OnStart, Branch, Delay, Add, Greater) +
             VARIABLE_TYPES.flatMap { listOf(VariableGet(it), VariableSet(it)) }
@@ -29,10 +30,12 @@ object CoreNodes {
 
     /** Fired once when an instance starts, never again on reload. */
     object OnStart : EventNode {
+        /** Event type identifier for the start event. */
         const val TYPE = "event.start"
         override val spec = NodeSpec(TYPE, "On Start", "Events", outputs = listOf(PortSpec(THEN, EXEC)))
     }
 
+    /** Conditional branch node routing execution to one of two outputs based on a boolean condition. */
     object Branch : ActionNode {
         private val onTrue = Step.Continue("true")
         private val onFalse = Step.Continue("false")
@@ -76,6 +79,7 @@ object CoreNodes {
         }
     }
 
+    /** Pure node computing the sum of two floating-point inputs. */
     object Add : PureNode {
         override val spec = NodeSpec(
             type = "math.add",
@@ -88,6 +92,7 @@ object CoreNodes {
         override fun evaluate(ctx: BlueprintContext) = ctx.setFloat("sum", ctx.float("a") + ctx.float("b"))
     }
 
+    /** Pure node comparing whether input `a` is strictly greater than `b`. */
     object Greater : PureNode {
         override val spec = NodeSpec(
             type = "math.greater",
@@ -141,5 +146,6 @@ object CoreNodes {
 
 /** A node bound to one named variable, whose `value` output is that variable's slot. */
 sealed interface VariableNode : BlueprintNode {
+    /** Data type name of the variable referenced by this node. */
     val variableType: String
 }

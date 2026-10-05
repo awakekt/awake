@@ -12,6 +12,7 @@ import com.awakekt.awake.editor.core.plugin.EditorProvider
  * An [EditorPlugin] that contributes one or more [AssetConverter] implementations to an editor host.
  */
 interface AssetConverterPlugin : EditorPlugin {
+    /** Asset converters contributed by this plugin. */
     val converters: List<AssetConverter>
 
     override fun createProviders(): List<EditorProvider> = emptyList()
