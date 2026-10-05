@@ -135,6 +135,9 @@ comments:
       - '**/awake/net/api/**'
       - '**/awake/engine/platform/**'
       - '**/awake/project/runtime/**'
+      - '**/awake/core/geometry/**'
+      - '**/awake/core/io/**'
+      - '**/awake/core/text/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

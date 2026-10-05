@@ -11,10 +11,21 @@ package com.awakekt.awake.core.geometry
  * (no manual offset bookkeeping, unlike the hand-written offset tables this replaces in a
  * backend's own vertex-input-state setup). [strideBytes] is the total per-vertex byte size --
  * the same value backends used to thread through as a bare `vertexStride: Int` parameter.
+ *
+ * @property attributes The ordered list of vertex attributes defining the layout.
  */
 data class VertexFormat(val attributes: List<VertexAttribute>) {
+    /**
+     * An attribute entry paired with its byte offset within the interleaved vertex stride.
+     *
+     * @property attribute The vertex attribute definition.
+     * @property offsetBytes The byte offset of this attribute from the start of the vertex.
+     */
     data class Entry(val attribute: VertexAttribute, val offsetBytes: Int)
 
+    /**
+     * The list of attribute entries paired with their computed byte offsets.
+     */
     val entries: List<Entry> = attributes
         .runningFold(0) { offset, attribute -> offset + attribute.format.vertexByteSize }
         .zip(attributes) { offset, attribute -> Entry(attribute, offset) }
@@ -42,6 +53,9 @@ data class VertexFormat(val attributes: List<VertexAttribute>) {
     /** Whether a vertex carries joint indices: a mesh in this format is posed by a joint palette. */
     val isSkinned: Boolean get() = floatOffsetOf(VertexSemantic.JointIndices) >= 0
 
+    /**
+     * Standard predefined vertex formats commonly used across 2D and 3D rendering pipelines.
+     */
     companion object {
         /**
          * No vertex buffer at all -- the vertex shader generates its own positions from

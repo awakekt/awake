@@ -21,6 +21,9 @@ import kotlin.js.Promise
  * Metadata and content are stored separately. The metadata index is loaded when the filesystem is
  * first used; file bytes are fetched from IndexedDB only for [openRead]. URL projects should
  * compose this writable layer with [OverlayFileSystem] instead of writing into their remote source.
+ *
+ * @param root The optional root database key for the filesystem, or null to default to `"default"`.
+ * @return The IndexedDB-backed [FileSystem] instance.
  */
 actual fun createPlatformFileSystem(root: String?): FileSystem =
     IndexedDbFileSystem(root ?: "default")

@@ -38,6 +38,14 @@ import com.awakekt.awake.core.text.scope.pixelPerfectTextScale
 //    )
 // }
 
+/**
+ * Calculates the total pixel height required to render a multiline block of text.
+ *
+ * @param lineCount The number of lines of text to be rendered.
+ * @param textScale The relative scale multiplier applied to the font's base cell size.
+ * @param gap The vertical gap in pixels between adjacent lines of text.
+ * @return The total computed height in pixels, or `0f` if [lineCount] is zero or negative.
+ */
 fun UiFont.textBlockHeight(
     lineCount: Int,
     textScale: Float = 1f,

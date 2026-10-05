@@ -12,20 +12,36 @@ import com.awakekt.awake.core.text.font.FontWeight
 
 /**
  * Groups text-related styling properties.
+ *
+ * @property color The foreground text color, or null to inherit.
+ * @property size The font size in sp, or null to inherit.
+ * @property lineHeight Optional authored line advance. Null keeps the font's intrinsic metrics.
+ * @property scale Relative scale multiplier applied to the text.
+ * @property weight Font weight indicating stroke thickness.
+ * @property letterSpacing Additional spacing between adjacent characters.
  */
 data class TextStyle(
     val color: Color? = null,
     val size: Sp? = null,
-    /** Optional authored line advance. Null keeps the font's intrinsic metrics. */
     val lineHeight: Sp? = null,
     val scale: Float = 1f,
     val weight: FontWeight = FontWeight.Normal,
     val letterSpacing: Sp = 0f.sp,
 ) {
+    /**
+     * Default text style constants.
+     */
     companion object {
+        /** Default empty text style with no overrides. */
         val Default = TextStyle()
     }
 
+    /**
+     * Merges this text style with [other], with properties in [other] taking precedence.
+     *
+     * @param other The style whose defined properties should override this style's properties.
+     * @return The merged [TextStyle] instance.
+     */
     infix fun then(other: TextStyle): TextStyle {
         val mergedColor = other.color ?: color
         val mergedSize = other.size ?: size

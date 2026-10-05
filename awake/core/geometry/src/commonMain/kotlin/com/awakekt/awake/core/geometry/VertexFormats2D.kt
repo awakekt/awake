@@ -51,8 +51,10 @@ object VertexFormats2D {
     /** Rounded quad layout float count. */
     const val ROUNDED_QUAD_FLOATS_PER_VERTEX = 16
 
-    /** Standard quad geometry. */
+    /** Standard quad geometry vertex count. */
     const val VERTICES_PER_QUAD = 4
+
+    /** Number of triangle indices required to index a standard two-triangle quad. */
     const val INDICES_PER_QUAD = 6
 }
 

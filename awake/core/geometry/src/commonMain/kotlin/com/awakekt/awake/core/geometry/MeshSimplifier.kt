@@ -52,7 +52,11 @@ object MeshSimplifier {
     private const val COMPACT_RATIO = 4
 
     /**
-     * [positions] reduced to their surviving vertices only, [indices] rewritten against them.
+     * The simplified mesh result containing surviving vertices and rewritten indices.
+     *
+     * @property positions Compacted vertex positions containing surviving vertices only.
+     * @property indices Triangle indices rewritten against the surviving vertices.
+     * @property vertexRemap Mapping from original vertex indices to surviving vertex indices.
      */
     data class Result(
         val positions: FloatArray,

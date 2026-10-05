@@ -8,12 +8,19 @@ package com.awakekt.awake.core.geometry
 import kotlin.math.abs
 import kotlin.math.sqrt
 
-/** Something wrong with a mesh, and where. */
+/**
+ * Describes a geometric or topological problem found in a mesh.
+ *
+ * @property kind The category of mesh problem detected.
+ * @property detail What was wrong, with the numbers that showed it.
+ */
 data class MeshProblem(
     val kind: Kind,
-    /** What was wrong, with the numbers that showed it. */
     val detail: String,
 ) {
+    /**
+     * Categories of problems that can be detected when validating mesh data.
+     */
     enum class Kind {
         /** The vertex array is not a whole number of vertices for its declared format. */
         Stride,

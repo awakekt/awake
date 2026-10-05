@@ -26,9 +26,21 @@ object Sha256 {
         0x90befffa.toInt(), 0xa4506ceb.toInt(), 0xbef9a3f7.toInt(), 0xc67178f2.toInt(),
     )
 
+    /**
+     * Computes the SHA-256 digest of [data].
+     *
+     * @param data The raw input byte array.
+     * @return The 32-byte SHA-256 hash digest.
+     */
     fun digest(data: ByteArray): ByteArray = Stream().apply { update(data) }.finish()
 
-    /** Hashes a stream without collecting the complete file in memory. */
+    /**
+     * Hashes a stream without collecting the complete file in memory.
+     *
+     * @param session The chunked byte read session to hash.
+     * @param chunkSize The maximum size in bytes of each read chunk.
+     * @return The 32-byte SHA-256 hash digest.
+     */
     suspend fun digest(session: ByteReadSession, chunkSize: Int = DEFAULT_CHUNK_SIZE): ByteArray {
         require(chunkSize > 0) { "chunkSize must be positive" }
         val stream = Stream()
@@ -43,32 +55,68 @@ object Sha256 {
         }
     }
 
+    /**
+     * Computes the hexadecimal SHA-256 digest of [text] encoded as UTF-8.
+     *
+     * @param text The input string to hash.
+     * @return The 64-character lowercase hexadecimal hash string.
+     */
     fun digestHex(text: String): String = digestHex(text.encodeToByteArray())
 
+    /**
+     * Computes the hexadecimal SHA-256 digest of [data].
+     *
+     * @param data The raw input byte array.
+     * @return The 64-character lowercase hexadecimal hash string.
+     */
     fun digestHex(data: ByteArray): String = digest(data).joinToString("") {
         val hex = (it.toInt() and 0xFF).toString(16)
         if (hex.length == 1) "0$hex" else hex
     }
 
+    /**
+     * Computes the hexadecimal SHA-256 digest of a chunked [session] without buffering all bytes in memory.
+     *
+     * @param session The chunked byte read session to hash.
+     * @param chunkSize The maximum size in bytes of each read chunk.
+     * @return The 64-character lowercase hexadecimal hash string.
+     */
     suspend fun digestHex(session: ByteReadSession, chunkSize: Int = DEFAULT_CHUNK_SIZE): String =
         digest(session, chunkSize).toHex()
 
-    /** Incremental SHA-256 state for adapters that both consume and verify a byte stream. */
+    /**
+     * Incremental SHA-256 state for adapters that both consume and verify a byte stream.
+     */
     class Stream {
         private val accumulator = Accumulator()
         private var finished = false
 
+        /**
+         * Feeds additional input [data] into the running SHA-256 hash computation.
+         *
+         * @param data The byte array slice to hash.
+         */
         fun update(data: ByteArray) {
             check(!finished) { "SHA-256 stream is already finished." }
             accumulator.update(data)
         }
 
+        /**
+         * Finalizes the SHA-256 computation and returns the resulting 32-byte digest.
+         *
+         * @return The 32-byte hash digest.
+         */
         fun finish(): ByteArray {
             check(!finished) { "SHA-256 stream is already finished." }
             finished = true
             return accumulator.finish()
         }
 
+        /**
+         * Finalizes the SHA-256 computation and returns the resulting 64-character hex string.
+         *
+         * @return The 64-character lowercase hexadecimal hash string.
+         */
         fun finishHex(): String = finish().toHex()
     }
 
