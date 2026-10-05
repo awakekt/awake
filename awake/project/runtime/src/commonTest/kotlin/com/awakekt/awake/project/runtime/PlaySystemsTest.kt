@@ -18,6 +18,7 @@ import com.awakekt.awake.physics.PhysicsWorld
 import com.awakekt.awake.physics.jolt.createJoltPhysicsWorld
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
+import com.awakekt.awake.render.passes.uniforms.TextureAnimation
 import com.awakekt.awake.render.testing.NoopRenderer
 import com.awakekt.awake.scene.authoring.scene
 import com.awakekt.awake.scene.binding.instantiate
@@ -33,6 +34,8 @@ import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.physics.PhysicsSystem
 import com.awakekt.awake.scene.rendering.animation.AnimationSystem
 import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationSystem
+import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
+import com.awakekt.awake.scene.rendering.mesh.TextureClips
 import com.awakekt.awake.scene.rendering.particles.ParticleContentSystem
 import com.awakekt.awake.scene.rendering.particles.ParticleSystem
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
@@ -79,6 +82,12 @@ class PlaySystemsTest {
     fun keyframesAndSpinGetTheirSystems() {
         assertTrue(systemsFor(KEYFRAME_SCENE).frame.has(KeyframeAnimationSystem::class))
         assertTrue(systemsFor(SPIN_SCENE).frame.has(SpinSystem::class))
+    }
+
+    @Test
+    fun aSpriteSheetWithClipsGetsTheClipSystemAndAPlainSceneDoesNot() {
+        assertTrue(systemsFor(CLIPS_SCENE).frame.has(TextureClipSystem::class))
+        assertTrue(!systemsFor(PLAIN_SCENE).frame.has(TextureClipSystem::class))
     }
 
     @Test
@@ -150,6 +159,40 @@ class PlaySystemsTest {
         repeat(HALF_A_LOOP) { systems.frame.forEach { it.update(world, DELTA) } }
 
         assertTrue(world.get<Transform>(crate)!!.position.x > 0.5f, "the keyframed crate must slide")
+    }
+
+    @Test
+    fun aHostCanPlayASpritesClipsWithoutAnAppBuilder() {
+        installPlayableComponents()
+        val world = World()
+        SceneLoader.decode(CLIPS_SCENE).instantiate(world = world)
+        val systems = systemsFor(CLIPS_SCENE)
+        val hero = world.named("Hero")
+
+        fun frames(count: Int) = repeat(count) { systems.frame.forEach { it.update(world, DELTA) } }
+        fun cell() = world.get<TextureAnimation>(hero)!!.firstFrame
+
+        assertEquals(8, cell(), "the loaded scene shows the first cell of its first clip before any step")
+        frames(TENTH_OF_A_SECOND)
+        assertEquals(9, cell(), "walk is ten cells a second")
+        world.get<TextureClips>(hero)!!.play("attack")
+        frames(2 * TENTH_OF_A_SECOND)
+        assertEquals(14, cell(), "attack's third cell, two tenths in")
+        assertTrue(!world.get<TextureClips>(hero)!!.isFinished)
+        frames(FRAMES)
+        assertEquals(14, cell(), "a clip that does not loop holds its last cell")
+        assertTrue(world.get<TextureClips>(hero)!!.isFinished)
+    }
+
+    @Test
+    fun playProjectStepsSpriteClipsToo() = runTest {
+        val game = launchProject(CLIPS_SCENE)
+        val hero = game.world.named("Hero")
+
+        repeat(TENTH_OF_A_SECOND) { game.frame() }
+
+        // launchProject has already run one warm-up frame, so the clock is a frame past a tenth.
+        assertEquals(9, game.world.get<TextureAnimation>(hero)!!.firstFrame)
     }
 
     @Test
@@ -234,6 +277,9 @@ class PlaySystemsTest {
 
         /** The keyframe scene loops every second; half a loop leaves the crate mid-slide, not back at the start. */
         const val HALF_A_LOOP = 30
+
+        /** Six frames at 60 a second. */
+        const val TENTH_OF_A_SECOND = 6
         const val MANIFEST_PATH = "awake.project.json"
         const val MANIFEST = """{"formatVersion":1,"id":"com.example.harbor-town","name":"Harbor Town","version":"1.0.0","entryScene":"scenes/main.scene.json"}"""
 
@@ -243,6 +289,19 @@ class PlaySystemsTest {
     { "component": "keyframe_animation", "duration": 1.0,
       "position": [ { "time": 0.0, "value": { "x": 0.0, "y": 0.0, "z": 0.0 } },
                     { "time": 1.0, "value": { "x": 4.0, "y": 0.0, "z": 0.0 } } ] }
+  ] }
+] }
+"""
+
+        /** A 4 x 4 sheet: walk is cells 8 to 11 at ten a second, attack is cells 12 to 14 once at ten a second. */
+        const val CLIPS_SCENE = """
+{ "version": 1, "name": "sprite", "nodes": [
+  { "name": "Hero", "components": [
+    { "component": "texture_clips", "columns": 4, "rows": 4, "clip": "walk",
+      "clips": {
+        "walk": { "firstFrame": 8, "frameCount": 4, "framesPerSecond": 10.0 },
+        "attack": { "firstFrame": 12, "frameCount": 3, "framesPerSecond": 10.0, "loop": false }
+      } }
   ] }
 ] }
 """

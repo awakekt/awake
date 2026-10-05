@@ -36,6 +36,7 @@ import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.ScenePbrMaterial
 import com.awakekt.awake.scene.rendering.mesh.TextureAnimationBinding
+import com.awakekt.awake.scene.rendering.mesh.TextureClipsBinding
 import com.awakekt.awake.scene.rendering.sky.SceneSkybox
 import com.awakekt.awake.scene.rendering.sky.SkyboxBinding
 import com.awakekt.awake.scene.rendering.terrain.SceneTerrain
@@ -83,6 +84,7 @@ object DefaultSceneComponentResolvers {
         KeyframeAnimationBinding,
         ParticleEmitterBinding,
         TextureAnimationBinding,
+        TextureClipsBinding,
     )
 
     val all: List<SceneComponentResolver> = listOf(
@@ -102,6 +104,7 @@ object DefaultSceneComponentResolvers {
         KeyframeAnimationBinding,
         ParticleEmitterBinding,
         TextureAnimationBinding,
+        TextureClipsBinding,
         PrefabLinkBinding,
     )
 

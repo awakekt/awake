@@ -66,6 +66,7 @@ class PlaySystems internal constructor(
  * - `camera_rig`: the camera system
  * - `spinControl`: spinning
  * - `locomotion_animation` and `keyframe_animation`: their clips and looping tracks
+ * - `texture_clips`: the sprite sheet's clips, stepped on the scene's clock
  * - `particle_emitter`: its emitters, with [PlayServices.particleSprites]
  * - `canvas_element`s with an action: [CanvasActionSystem]
  * - `patrol`, `chase` and `flee`, with a `navigation` component to route them over: the behaviours and
