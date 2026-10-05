@@ -23,9 +23,17 @@ object GlfwWindow {
 
     /** Must be called once before any other function here. Returns `false` on failure. */
     external fun glfwInit(): Boolean
+
+    /** Terminates the GLFW library and releases all allocated platform resources. */
     external fun glfwTerminate()
+
+    /** Sets the specified window creation [hint] to the target [value]. */
     external fun glfwWindowHint(hint: Int, value: Int)
+
+    /** Creates a window with the given logical [width], [height], and [title], returning its native handle. */
     external fun glfwCreateWindow(width: Int, height: Int, title: String): Long
+
+    /** Destroys the specified [window] and releases its native resources. */
     external fun glfwDestroyWindow(window: Long)
 
     /**
@@ -33,21 +41,35 @@ object GlfwWindow {
      * can otherwise leave the window frontmost but unfocused, so keys and scroll never reach it.
      */
     external fun glfwFocusWindow(window: Long)
+
+    /** Checks whether the window close flag has been set for [window]. */
     external fun glfwWindowShouldClose(window: Long): Boolean
+
+    /** Processes all pending events in the platform event queue. */
     external fun glfwPollEvents()
+
+    /** Returns the framebuffer width of [window] in device pixels. */
     external fun glfwGetFramebufferWidth(window: Long): Int
+
+    /** Returns the framebuffer height of [window] in device pixels. */
     external fun glfwGetFramebufferHeight(window: Long): Int
 
     /** Size in logical points; the framebuffer is a device-pixel multiple of it on HiDPI. */
     external fun glfwGetWindowWidth(window: Long): Int
+
+    /** Returns the logical height of [window] in points. */
     external fun glfwGetWindowHeight(window: Long): Int
 
     /** `GLFW_PRESS` (1) while [key] is held on [window], else `GLFW_RELEASE` (0). Polled per frame. */
     external fun glfwGetKey(window: Long, key: Int): Int
+
+    /** Returns `GLFW_PRESS` (1) while mouse [button] is held on [window], else `GLFW_RELEASE` (0). */
     external fun glfwGetMouseButton(window: Long, button: Int): Int
 
     /** The system clipboard's text, or `null` when it holds no text. */
     external fun glfwGetClipboardString(window: Long): String?
+
+    /** Sets the system clipboard text content for [window] to [text]. */
     external fun glfwSetClipboardString(window: Long, text: String)
 
     /** Cursor position in logical points, as `[x, y]`. */
@@ -70,6 +92,10 @@ object GlfwWindow {
      * `com.awakekt.awake.core.input.ScrollSource`. Only macOS can tell a trackpad from a wheel.
      */
     external fun glfwConsumeScrollSource(window: Long): Int
+
+    /** Sets the system cursor icon on [window] to standard cursor [shape]. */
     external fun glfwSetCursorShape(window: Long, shape: Int)
+
+    /** Returns the value of window attribute [attrib] for [window]. */
     external fun glfwGetWindowAttrib(window: Long, attrib: Int): Int
 }

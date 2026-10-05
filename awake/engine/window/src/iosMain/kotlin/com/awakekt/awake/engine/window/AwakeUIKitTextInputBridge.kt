@@ -22,6 +22,10 @@ fun UIView.syncAwakeTextInsert(text: String, input: Input) {
     }
 }
 
+/**
+ * Handles a backward deletion event from UIKit's `UIKeyInput.deleteBackward` by pushing a
+ * [TextEditAction.Backspace] edit action to [input].
+ */
 fun UIView.syncAwakeTextDeleteBackward(input: Input) {
     input.pushEditAction(TextEditAction.Backspace)
 }

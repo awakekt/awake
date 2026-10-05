@@ -22,6 +22,10 @@ const val SCENARIO_SIZE: Int = 64
  * [primitives] rather than a draw lambda, so a scenario is data a caller can also hand to the
  * software rasterizer -- the third renderer, and the one that says what the other two *should*
  * have drawn.
+ *
+ * @property name Diagnostic name identifying this UI scenario.
+ * @property font Font used for text rendering in this scenario, or `null` if unneeded.
+ * @property primitives Ordered list of 2D draw primitives composing the scenario.
  */
 data class UiScenario(
     val name: String,

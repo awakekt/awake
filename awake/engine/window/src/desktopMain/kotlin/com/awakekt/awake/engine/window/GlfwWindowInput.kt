@@ -20,18 +20,34 @@ internal const val GLFW_FOCUSED = 0x00020001
  * whether the OS actually delivers key events to the window in the first place.
  */
 interface GlfwWindowInput {
+    /** Returns `true` if the given [glfwKey] is currently held down. */
     fun isKeyDown(glfwKey: Int): Boolean
+
+    /** Returns `true` if the given mouse [glfwButton] is currently held down. */
     fun isMouseButtonDown(glfwButton: Int): Boolean
+
+    /** Current cursor X position in logical window coordinates. */
     fun cursorX(): Double
+
+    /** Current cursor Y position in logical window coordinates. */
     fun cursorY(): Double
+
+    /** Horizontal scale factor from logical window coordinates to physical framebuffer pixels. */
     fun framebufferScaleX(): Float
+
+    /** Vertical scale factor from logical window coordinates to physical framebuffer pixels. */
     fun framebufferScaleY(): Float
+
+    /** Vertical scroll delta accumulated since the previous query, resetting the accumulator. */
     fun consumeScrollDeltaY(): Double
+
     /** Sideways scroll since the last poll; 0 for a reader with no horizontal axis. */
     fun consumeScrollDeltaX(): Double = 0.0
 
     /** What sent the scroll since the last poll; [ScrollSource.Unknown] where the platform cannot tell. */
     fun consumeScrollSource(): ScrollSource = ScrollSource.Unknown
+
+    /** Returns `true` if the window currently has OS input focus. */
     fun isFocused(): Boolean = true
 
     /**
@@ -74,4 +90,5 @@ private fun framebufferScale(window: Long): Pair<Float, Float> {
     return scaleX to scaleY
 }
 
+/** Creates a [GlfwWindowInput] backed by the live native GLFW [window] handle. */
 fun glfwWindowInput(window: Long): GlfwWindowInput = RealGlfwWindowInput(window)

@@ -48,6 +48,7 @@ class AwakeMetalView(
 
     private val logger = Logger("AwakeMetalView")
 
+    /** The underlying CAMetalLayer hosted by this UIView for Metal rendering surfaces. */
     val metalLayer = CAMetalLayer().apply {
         val dev = MTLCreateSystemDefaultDevice()
         if (dev != null) {

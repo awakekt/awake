@@ -14,7 +14,10 @@ import com.awakekt.awake.webgpu.webGpuHeadlessUi
 
 /** A backend this module can stand up windowless and draw the same scenario through. */
 enum class HeadlessUiBackend {
+    /** Headless Vulkan rendering backend. */
     Vulkan,
+
+    /** Headless WebGPU rendering backend. */
     WebGpu,
 }
 
