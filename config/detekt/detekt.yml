@@ -141,7 +141,7 @@ comments:
       - '**/awake/core/pool/**'
       - '**/awake/core/math/**'
       - '**/awake/core/graphics2d/**'
-      - '**/awake/ecs/**'
+      - '**/awake/ecs/src/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true
