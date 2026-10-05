@@ -15,6 +15,12 @@ import kotlinx.serialization.json.Json
 
 /**
  * Lightweight project manifest representation for standalone game execution.
+ *
+ * @property name The human-readable name of the project.
+ * @property defaultScene Path or asset key of the initial scene to load upon startup.
+ * @property targetFrameRate Target render frame rate in frames per second.
+ * @property physicsTickRate Fixed physics simulation frequency in hertz.
+ * @property plugins List of plugin identifiers or package coordinates required by the project.
  */
 @Serializable
 data class StandaloneProjectConfig(
@@ -33,12 +39,17 @@ object AwakeProjectLauncher {
 
     /**
      * Parses the project configuration JSON string.
+     *
+     * @param projectJson The raw JSON string representing project configuration.
+     * @return The parsed [StandaloneProjectConfig] descriptor.
      */
     fun parseConfig(projectJson: String): StandaloneProjectConfig = json.decodeFromString(StandaloneProjectConfig.serializer(), projectJson)
 
     /**
      * Instantiates a scene document into an active [World].
      *
+     * @param world The target ECS [World] where entities are created.
+     * @param sceneJson The raw JSON string representing the scene document.
      * @return The instantiated [Scene] containing the root nodes.
      */
     fun loadScene(
@@ -51,6 +62,10 @@ object AwakeProjectLauncher {
 
     /**
      * Instantiates an already parsed [SceneDocument] into an active [World].
+     *
+     * @param world The target ECS [World] where entities are created.
+     * @param document The parsed scene document to instantiate.
+     * @return The instantiated [Scene] containing the root nodes.
      */
     fun loadScene(
         world: World,
