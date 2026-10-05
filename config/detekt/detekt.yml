@@ -157,6 +157,7 @@ comments:
       - '**/awake/engine/render/contract/**'
       - '**/awake/engine/render/passes2d/**'
       - '**/awake/engine/render/passes/**'
+      - '**/awake/engine/window/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

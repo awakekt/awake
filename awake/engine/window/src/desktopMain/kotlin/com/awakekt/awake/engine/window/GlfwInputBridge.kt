@@ -31,6 +31,7 @@ private const val GLFW_MOUSE_BUTTON_MIDDLE = 2
 private const val GLFW_MOUSE_BUTTON_4 = 3
 private const val GLFW_MOUSE_BUTTON_5 = 4
 
+/** Default mapping of GLFW key codes to Awake [Key] values for desktop gameplay and navigation. */
 val DefaultGlfwGameplayKeys: Map<Int, Key> = linkedMapOf(
     GLFW_KEY_W to Key.W,
     GLFW_KEY_A to Key.A,
