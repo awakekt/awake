@@ -62,7 +62,8 @@ fi
 
 echo "==> Pointing the template at Core $CORE_VERSION and Vulkan $VULKAN_VERSION"
 # The catalog pins whatever releases the template last used; this run is about the artifacts built
-# here. The transformation also lets Core CI exercise the new split before the template PR merges.
+# here. WebGPU publishes with Core, so a separately pinned WebGPU snapshot moves to Core's version
+# too. The transformation also lets Core CI exercise the new split before the template PR merges.
 CATALOG="$CHECKOUT/gradle/libs.versions.toml"
 CORE_VERSION="$CORE_VERSION" VULKAN_VERSION="$VULKAN_VERSION" perl -0pi -e \
   's/^awake = ".*"$/awake = "$ENV{CORE_VERSION}"/m;
@@ -71,7 +72,8 @@ CORE_VERSION="$CORE_VERSION" VULKAN_VERSION="$VULKAN_VERSION" perl -0pi -e \
    } else {
      s/^awake-vulkan = ".*"$/awake-vulkan = "$ENV{VULKAN_VERSION}"/m;
    }
-   s/(^awake-backend-vulkan = \{[^\n]*version\.ref = )"awake"/${1}"awake-vulkan"/m' \
+   s/(^awake-backend-vulkan = \{[^\n]*version\.ref = )"awake"/${1}"awake-vulkan"/m;
+   s/^awake-webgpu = ".*"$/awake-webgpu = "$ENV{CORE_VERSION}"/m' \
   "$CATALOG"
 
 # Snapshot family artifacts are served from Central's dedicated snapshot repository.
