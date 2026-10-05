@@ -158,6 +158,7 @@ comments:
       - '**/awake/engine/render/passes2d/**'
       - '**/awake/engine/render/passes/**'
       - '**/awake/engine/window/**'
+      - '**/awake/kit/terrain-layers/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

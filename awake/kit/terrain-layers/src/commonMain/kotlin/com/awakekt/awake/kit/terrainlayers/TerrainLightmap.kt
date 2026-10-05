@@ -17,7 +17,13 @@ private const val NEUTRAL_LIGHT: Byte = 128.toByte()
  * much of this replaces the scene's directional light: 255 uses only the baked light, 0 only the
  * scene's. Texels are row-major, `z * width + x`, like the control map.
  */
-class TerrainLightmap(val width: Int, val depth: Int, rgba: ByteArray) {
+class TerrainLightmap(
+    /** Width of the lightmap in texels along X. */
+    val width: Int,
+    /** Depth of the lightmap in texels along Z. */
+    val depth: Int,
+    rgba: ByteArray,
+) {
     private val texels = rgba.copyOf()
 
     init {
@@ -25,10 +31,13 @@ class TerrainLightmap(val width: Int, val depth: Int, rgba: ByteArray) {
         require(rgba.size == width * depth * RGBA) { "A $width x $depth lightmap needs ${width * depth * RGBA} bytes; got ${rgba.size}." }
     }
 
+    /** Returns a defensive copy of the raw RGBA texel bytes. */
     fun copyRgba(): ByteArray = texels.copyOf()
 
+    /** Creates a [TextureAsset] wrapping this lightmap's RGBA data. */
     fun texture(): TextureAsset = TextureAsset(texels.copyOf(), width, depth)
 
+    /** Companion object containing common lightmap presets. */
     companion object {
         /** Leaves colour unchanged and the scene's light in charge: what a surface without one binds. */
         val Neutral = TerrainLightmap(1, 1, byteArrayOf(NEUTRAL_LIGHT, NEUTRAL_LIGHT, NEUTRAL_LIGHT, 0))
@@ -45,6 +54,7 @@ object TerrainLightmapCodec {
     private const val VERSION: Byte = 1
     private const val HEADER = 16
 
+    /** Encodes [lightmap] into a binary `*.terrainlight` byte array. */
     fun encode(lightmap: TerrainLightmap): ByteArray {
         val rgba = lightmap.copyRgba()
         val out = ByteArray(HEADER + rgba.size)
@@ -56,6 +66,7 @@ object TerrainLightmapCodec {
         return out
     }
 
+    /** Decodes binary `*.terrainlight` [bytes] into a [TerrainLightmap]. */
     fun decode(bytes: ByteArray): TerrainLightmap {
         require(bytes.size >= HEADER && bytes.copyOfRange(0, 4).contentEquals(MAGIC)) { "Not a terrain lightmap: missing ATLM header." }
         require(bytes[4] == VERSION) { "Terrain lightmap version ${bytes[4]} is not supported; expected $VERSION." }
