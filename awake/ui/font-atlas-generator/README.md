@@ -43,12 +43,14 @@ platform's font scaler: for the Roboto files that is `hhea` on Linux (ascender 1
 the `OS/2` table's `winAscent`/`winDescent` (1946 and 512) on Windows, which made the line, the cell
 and every glyph offset different on each. See `FontVerticalMetrics`. The numbers in the generated
 source are written with `Locale.ROOT`, so a machine whose locale uses a decimal comma writes the same
-source too. See `emLiteral`.
+source too. See `emLiteral`. Nor does the JDK matter: a glyph's box is measured by `tightBounds`, because
+`Shape.getBounds2D` boxes a curve's control points on JDK 17 and the curve itself from JDK 19, which
+measured `@` and a few other glyphs differently from one JDK to the next.
 
 **The atlas pixels depend on the `msdfgen` build.** `install-msdfgen.sh` builds `msdfgen` 1.13 from its
-pinned commit without Skia. On Ubuntu 24.04 (gcc 13.3, FreeType 2.13.2, JDK 21) that reproduces every
-byte of the committed atlas, for all seven weights, and after `spotlessApply` the committed files
-exactly. The official Windows release of 1.13, which is built with Skia, differs on about 13% of the
+pinned commit without Skia. On Ubuntu 24.04 (gcc 13.3, FreeType 2.13.2) that reproduces every byte of
+the committed atlas, for all seven weights, and after `spotlessApply` the committed files exactly, on
+JDK 21 and on the JDK 17 that CI uses. The official Windows release of 1.13, which is built with Skia, differs on about 13% of the
 bytes (and 1.12.1 on more), mostly by a wide margin. The UI visual baselines are compared exactly, so
 regenerating with a different build moves them. A different compiler or a different CPU architecture
 could change the pixels too; that has not been measured, which is why CI is the arbiter.
