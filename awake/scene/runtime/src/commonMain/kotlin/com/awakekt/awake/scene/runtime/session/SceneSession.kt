@@ -22,13 +22,21 @@ import com.awakekt.awake.scene.runtime.schedule.SceneSchedule
  *
  * Application lifecycle, input routing, and Compose presentation remain outside this type during
  * the compatibility migration.
+ *
+ * @param spec The specification driving this scene session.
  */
 class SceneSession internal constructor(
     private val spec: SceneAppSpec,
 ) {
+    /**
+     * The active ECS [World] instance for this session.
+     */
     lateinit var world: World
         private set
 
+    /**
+     * The [SceneManager] coordinating scene lifecycle and hierarchy loading in this session.
+     */
     val sceneManager: SceneManager by lazy {
         SceneManager(world, onUnload = { scene -> assetLibrary?.let { library -> scene.renderableRequests.forEach(library::releaseRenderable) } })
     }
@@ -60,13 +68,32 @@ class SceneSession internal constructor(
         schedule.dispose()
     }
 
+    /**
+     * Returns the active [SceneAssetLibrary], throwing [IllegalStateException] if unconfigured.
+     *
+     * @return The configured [SceneAssetLibrary] instance.
+     */
     fun requireAssetLibrary(): SceneAssetLibrary = checkNotNull(assetLibrary) {
         "No scene asset library is registered for '${spec.sceneName ?: "scene"}'."
     }
 
+    /**
+     * Resolves a named [Mesh] from the registered asset library.
+     *
+     * @param runtime The active [SceneAppLifecycleRuntime] managing the scene.
+     * @param name The asset name or identifier of the mesh.
+     * @return The loaded [Mesh] instance.
+     */
     fun requireMesh(runtime: SceneAppLifecycleRuntime, name: String): Mesh =
         requireAssetLibrary().requireMesh(runtime, name)
 
+    /**
+     * Resolves a named [Material] from the registered asset library.
+     *
+     * @param runtime The active [SceneAppLifecycleRuntime] managing the scene.
+     * @param name The asset name or identifier of the material.
+     * @return The loaded [Material] instance.
+     */
     fun requireMaterial(runtime: SceneAppLifecycleRuntime, name: String): Material =
         requireAssetLibrary().requireMaterial(runtime, name)
 
