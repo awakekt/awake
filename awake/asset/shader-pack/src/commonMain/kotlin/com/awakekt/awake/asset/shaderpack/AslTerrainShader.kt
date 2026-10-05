@@ -70,6 +70,7 @@ const val MAX_CLIPMAP_RINGS: Int = 8
  * instead, by the ring level each vertex carries.
  */
 object TerrainUniformLayout {
+    /** View-projection matrix transforming terrain world vertices into clip coordinates. */
     val ViewProjection = UniformField("viewProjection", GpuDataShape.Mat4)
 
     /** `xyz` = direction toward the sun, `w` = ambient term. Matches both the packing and the

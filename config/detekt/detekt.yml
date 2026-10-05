@@ -153,6 +153,7 @@ comments:
       - '**/awake/asset/terrain/**'
       - '**/awake/asset/shaders/**'
       - '**/awake/asset/shader-dsl/**'
+      - '**/awake/asset/shader-pack/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

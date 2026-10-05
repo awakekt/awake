@@ -51,6 +51,7 @@ import com.awakekt.awake.render.renderer.UniformLayout
 /** `x` = the shadow-map array layer to show; negative shows an empty map. */
 val ShadowMapViewLayer = UniformField("layer", GpuDataShape.Vec4)
 
+/** Uniform layout specification for the debug shadow map visualization pass. */
 val ShadowMapViewUniformLayout = UniformLayout(ShadowMapViewLayer)
 
 /** Halvings of 0..1 per pixel: 2^-16 of depth, finer than any shadow map stores. */
