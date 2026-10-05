@@ -408,7 +408,7 @@ private fun buildFileSpec(atlas: AtlasResult, face: Face): FileSpec {
         .addSuperinterface(dataInterface)
         .addProperty(overrideProperty("name", STRING, "%S", face.displayName))
         .addProperty(overrideProperty("baseCellSize", INT, "%L", LOGICAL_CELL))
-        .addProperty(overrideProperty("lineHeightEm", FLOAT, "%Lf", "%.6f".format(atlas.lineHeightEm)))
+        .addProperty(overrideProperty("lineHeightEm", FLOAT, "%Lf", emLiteral(atlas.lineHeightEm)))
         .addProperty(overrideProperty("textScaleStep", FLOAT, "0.25f"))
         .addProperty(overrideProperty("atlasWidth", INT, "%L", atlas.atlasWidth))
         .addProperty(overrideProperty("atlasHeight", INT, "%L", atlas.atlasHeight))
@@ -461,7 +461,7 @@ private fun intArrayProperty(name: String, values: IntArray): PropertySpec =
 private fun floatArrayProperty(name: String, values: FloatArray): PropertySpec =
     PropertySpec.builder(name, ClassName("kotlin", "FloatArray"))
         .addModifiers(KModifier.OVERRIDE)
-        .initializer("floatArrayOf(%L)", values.joinToString(", ") { "%.6ff".format(it) })
+        .initializer("floatArrayOf(%L)", values.joinToString(", ") { emLiteral(it) + "f" })
         .build()
 
 private fun base64Property(base64: String): PropertySpec {

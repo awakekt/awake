@@ -1,0 +1,93 @@
+name: Font atlas
+
+# The Roboto*UiFontData.kt files are generated output that nothing builds, so nothing noticed when
+# they stopped matching the generator: a hand edit, a font change, or an atlas made with a different
+# msdfgen build would all have merged. This regenerates them with the pinned msdfgen and fails on any
+# difference. It is also how a contributor without Linux adds a glyph: push the change, and when this
+# fails take the regenerated files from the artifact.
+
+on:
+  pull_request:
+    paths:
+      - 'awake/ui/font-atlas-generator/**'
+      - 'awake/core/text/src/commonMain/resources/fonts/**'
+      - 'awake/core/text/src/commonMain/kotlin/com/awakekt/awake/core/text/font/Roboto*UiFontData.kt'
+      - '.github/workflows/font-atlas.yml'
+  push:
+    branches: [ main ]
+    paths:
+      - 'awake/ui/font-atlas-generator/**'
+      - 'awake/core/text/src/commonMain/resources/fonts/**'
+      - 'awake/core/text/src/commonMain/kotlin/com/awakekt/awake/core/text/font/Roboto*UiFontData.kt'
+      - '.github/workflows/font-atlas.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: font-atlas-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: '17'
+  GENERATED_DIR: awake/core/text/src/commonMain/kotlin/com/awakekt/awake/core/text/font
+
+jobs:
+  drift:
+    name: Atlas matches the generator
+    # Pinned, not `ubuntu-latest`: the atlas depends on the compiler and FreeType msdfgen is built
+    # with, so moving the image is a decision to make together with a regenerated atlas.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - name: Install msdfgen's build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake ninja-build libfreetype-dev libpng-dev libtinyxml2-dev
+
+      - name: Build the pinned msdfgen
+        run: |
+          awake/ui/font-atlas-generator/install-msdfgen.sh "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Regenerate the atlas
+        run: ./gradlew :awake:ui:font-atlas-generator:generateFontAtlas
+
+      # The generator writes KotlinPoet's two-space layout; the committed files are that output
+      # after the repository's formatter, so this is part of regenerating.
+      - name: Format it as it is committed
+        run: ./gradlew :awake:core:text:spotlessApply
+
+      - name: Fail when the committed atlas is not what the generator makes
+        run: |
+          if git diff --quiet -- "$GENERATED_DIR"; then
+            echo "The committed atlas is exactly what the generator makes."
+            exit 0
+          fi
+          git diff --stat -- "$GENERATED_DIR"
+          echo "::error::The committed Roboto*UiFontData.kt files differ from what the generator makes with the pinned msdfgen. Commit the regenerated files from this run's 'regenerated-font-atlas' artifact, or regenerate on Linux as awake/ui/font-atlas-generator/README.md describes."
+          exit 1
+
+      - name: Keep the regenerated files
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: regenerated-font-atlas
+          path: ${{ env.GENERATED_DIR }}/Roboto*UiFontData.kt
+          if-no-files-found: ignore
