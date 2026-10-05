@@ -24,8 +24,8 @@ do not split all components from all systems merely because one is data and the 
 `Transform` is in scene-core because it is shared, while `MeshRenderer` stays with the scene's
 rendering because it binds meshes into the scene graph.
 
-Some capabilities (particle simulation, terrain, sky, culling) still live in `scene:scene3d` from
-before the rule below. They are not a precedent: do not extend them in place; separate them first.
+Some capabilities (terrain, sky, culling) still live in `scene:scene3d` from before the rule below.
+They are not a precedent: do not extend them in place; separate them first.
 
 ## What belongs in a scene module, and what does not
 
@@ -52,9 +52,12 @@ The rules:
    test above.
 
 The pattern already exists for audio: `awake:core:audio` is the capability, with no scene and no ECS
-dependency, and `awake:scene:audio` is the wrapper with the components and the system. A scene
-document is the authoring surface for Studio, projects and agents, so the wrapper deserves the same
-API care as the library; it just should not contain it.
+dependency, and `awake:scene:audio` is the wrapper with the components and the system. Particles
+follow it too: `awake:particles` has the emitters, the simulation and the draw packets and depends on
+no scene module, and `awake:scene:particles` has the `particle_emitter` schema, its binding and the
+system that gives each placed emitter its `ParticleEmitter`. A scene document is the authoring
+surface for Studio, projects and agents, so the wrapper deserves the same API care as the library; it
+just should not contain it.
 
 ## Current use
 
