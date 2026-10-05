@@ -164,6 +164,7 @@ comments:
       - '**/awake/backend/jolt/**'
       - '**/awake/engine/render/parity/**'
       - '**/awake/engine/render/testing/**'
+      - '**/awake/ui/node-graph-canvas/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

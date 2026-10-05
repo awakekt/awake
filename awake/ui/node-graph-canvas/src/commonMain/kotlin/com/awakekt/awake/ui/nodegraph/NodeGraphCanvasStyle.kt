@@ -16,6 +16,31 @@ import com.awakekt.awake.core.color.Color
  *
  * Neutral on purpose: a design system restyles the canvas by passing its own values, and nothing
  * here depends on one.
+ *
+ * @property nodeWidth Default width of each node card.
+ * @property headerHeight Height of the node header bar.
+ * @property portRowHeight Height of each port row in the node.
+ * @property portRadius Radius of the visible port connection circle.
+ * @property portHitRadius Radius of the interactive touch/click hit target for ports.
+ * @property cornerRadius Corner radius of node cards.
+ * @property borderWidth Width of the border around node cards.
+ * @property wireWidth Stroke width of connection wires.
+ * @property titleSize Text size for node header titles.
+ * @property labelSize Text size for port labels.
+ * @property titleMinZoom Below this zoom, node titles are not drawn: they would be a few pixels tall.
+ * @property labelMinZoom Below this zoom, port labels are not drawn.
+ * @property background Background color of the canvas area.
+ * @property nodeColor Base background color of node cards.
+ * @property headerColor Background color of node header bars.
+ * @property borderColor Border color of unselected node cards.
+ * @property selectedBorderColor Border color of selected node cards.
+ * @property highlightColor Color used to highlight active or executing nodes.
+ * @property titleColor Text color for node titles.
+ * @property labelColor Text color for port labels.
+ * @property rejectedWireColor Color of connection wires when a connection is rejected.
+ * @property selectionBoxColor Fill color of the rectangular selection box.
+ * @property selectionBoxBorderColor Border color of the rectangular selection box.
+ * @property portColor Function mapping a port type to its distinct color.
  */
 class NodeGraphCanvasStyle(
     val nodeWidth: Dp = 180.dp,
@@ -28,12 +53,7 @@ class NodeGraphCanvasStyle(
     val wireWidth: Dp = 2.dp,
     val titleSize: Sp = 12.sp,
     val labelSize: Sp = 11.sp,
-    /**
-     * Below this zoom, node titles are not drawn: they would be a few pixels tall. Layout does not
-     * change, so nothing moves when they appear.
-     */
     val titleMinZoom: Float = 0.5f,
-    /** The same, for port labels. */
     val labelMinZoom: Float = 0.6f,
     val background: Color = Color(0.11f, 0.11f, 0.13f),
     val nodeColor: Color = Color(0.17f, 0.17f, 0.2f),
@@ -46,14 +66,16 @@ class NodeGraphCanvasStyle(
     val rejectedWireColor: Color = Color(0.95f, 0.36f, 0.36f),
     val selectionBoxColor: Color = Color(0.36f, 0.6f, 1f, 0.14f),
     val selectionBoxBorderColor: Color = Color(0.36f, 0.6f, 1f, 0.8f),
-    /**
-     * Colour of a port, and of wires leaving it, by port type. This is how a graph kind tells, say,
-     * execution wires from data wires apart.
-     */
     val portColor: (type: String) -> Color = { DefaultPortColor },
 ) {
+    /**
+     * Default visual styling constants and factory instances for node graph canvases.
+     */
     companion object {
+        /** Default color assigned to untyped or unrecognized ports. */
         val DefaultPortColor: Color = Color(0.62f, 0.64f, 0.72f)
+
+        /** Default style configuration for node graph canvases. */
         val Default: NodeGraphCanvasStyle = NodeGraphCanvasStyle()
     }
 }
