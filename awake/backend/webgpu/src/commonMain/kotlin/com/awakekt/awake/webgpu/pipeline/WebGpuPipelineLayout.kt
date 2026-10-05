@@ -14,6 +14,7 @@ import com.awakekt.awake.render.pipeline.TextureSampleType
 import io.ygdrasil.webgpu.BindGroupLayoutDescriptor
 import io.ygdrasil.webgpu.BindGroupLayoutEntry
 import io.ygdrasil.webgpu.BufferBindingLayout
+import io.ygdrasil.webgpu.GPUBindGroupLayout
 import io.ygdrasil.webgpu.GPUBufferBindingType
 import io.ygdrasil.webgpu.GPUDevice
 import io.ygdrasil.webgpu.GPUPipelineLayout
@@ -25,11 +26,17 @@ import io.ygdrasil.webgpu.PipelineLayoutDescriptor
 import io.ygdrasil.webgpu.SamplerBindingLayout
 import io.ygdrasil.webgpu.TextureBindingLayout
 
-/** Creates a contiguous explicit layout from the shared shader binding ABI. */
-internal fun GPUDevice.createAwakePipelineLayout(groups: Map<Int, GroupBindings>): GPUPipelineLayout {
+/**
+ * Creates a contiguous explicit layout from the shared shader binding ABI, taking [groupZero] as
+ * group 0 when given so a bind group built against that layout binds here too.
+ */
+internal fun GPUDevice.createAwakePipelineLayout(
+    groups: Map<Int, GroupBindings>,
+    groupZero: GPUBindGroupLayout? = null,
+): GPUPipelineLayout {
     val maxGroup = groups.keys.maxOrNull() ?: return createPipelineLayout(PipelineLayoutDescriptor(emptyList()))
     val layouts = (0..maxGroup).map { group ->
-        createBindGroupLayout(
+        groupZero?.takeIf { group == 0 } ?: createBindGroupLayout(
             BindGroupLayoutDescriptor(
                 entries = groups[group]?.entries.orEmpty().map(ResourceBinding::toWebGpuLayoutEntry),
             ),

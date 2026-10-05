@@ -7,9 +7,11 @@ package com.awakekt.awake.webgpu.pipeline
 
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.GpuShadowCascadeData
 import com.awakekt.awake.render.command.GpuSubPass
 import com.awakekt.awake.render.command.PreparedDraw
+import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.DepthCasterKind
@@ -28,6 +30,8 @@ import io.ygdrasil.webgpu.beginRenderPass
  * Renders the frame's draws a second time, depth only, into [depthTarget], before the scene
  * pass. Knows nothing about why a caller wants that depth: the transform is whatever the
  * caller's own vertex shader reads out of the per-draw uniform buffer.
+ *
+ * Content features add draws of their own through `contentCasters`, as on Vulkan.
  */
 class DepthPrePassFeature(
     val depthTarget: DepthTarget,
@@ -39,6 +43,24 @@ class DepthPrePassFeature(
 ) {
     /** The owning `Renderer`'s counter, set when it takes this feature: a pass is built first. */
     internal var stats: RenderStatsCounter? = null
+
+    /** A content feature's depth pipeline, over that feature's own group 0, and what hands it a
+     * draw each frame. Its pipeline is the caller's to destroy, once removed from `contentCasters`. */
+    internal class ContentCaster(val pipeline: DepthOnlyPipeline, val source: ContentDepthSource)
+
+    /** Drawn in every rendered sub-pass, after the frame's draws. */
+    internal val contentCasters = ArrayList<ContentCaster>()
+
+    /** Every pipeline the cascade matrices are written to, content casters' included. */
+    private val cascadePipelines: List<DepthOnlyPipeline>
+        get() = buildList {
+            add(depthOnlyPipeline)
+            addAll(variantPipelines.values)
+            addAll(keyedVariantPipelines.values)
+            addAll(formatPipelines.values)
+            addAll(instancedFormatPipelines.values)
+            contentCasters.forEach { add(it.pipeline) }
+        }.distinct()
 
     /** This pass own pipeline, for a caller that has to build the prepared draws it takes. */
     val depthOnlyHandle get() = depthOnlyPipeline.handle
@@ -97,13 +119,7 @@ class DepthPrePassFeature(
         viewProjections: List<Mat4>,
     ) {
         require(viewProjections.isNotEmpty()) { "A layered depth pass needs at least one matrix." }
-        val allPipelines = buildList {
-            add(depthOnlyPipeline)
-            addAll(variantPipelines.values)
-            addAll(keyedVariantPipelines.values)
-            addAll(formatPipelines.values)
-            addAll(instancedFormatPipelines.values)
-        }.distinct()
+        val allPipelines = cascadePipelines
         val activeCount = minOf(viewProjections.size, depthTarget.layers)
         for (cascade in 0 until activeCount) {
             val source = viewProjections[cascade]
@@ -116,24 +132,22 @@ class DepthPrePassFeature(
         }
     }
 
-    /** Records only the requested subpasses, avoiding redundant passes over unused layers. */
+    /**
+     * Records only the requested subpasses, avoiding redundant passes over unused layers. Each one
+     * also draws the content casters that [environment] lets draw.
+     */
     fun recordCommands(
         encoder: GPUCommandEncoder,
         subPasses: List<GpuSubPass>,
+        environment: GpuEnvironmentState,
     ) {
         if (subPasses.isEmpty()) return
-        val allPipelines = buildList {
-            add(depthOnlyPipeline)
-            addAll(variantPipelines.values)
-            addAll(keyedVariantPipelines.values)
-            addAll(formatPipelines.values)
-            addAll(instancedFormatPipelines.values)
-        }.distinct()
+        val allPipelines = cascadePipelines
         for (subPass in subPasses) {
             val layer = subPass.targetLayer
             if (layer in 0 until depthTarget.layers) {
                 allPipelines.forEach { it.writeCascade(layer, subPass.viewProjection) }
-                recordCascade(encoder, subPass.resolvedDraws, layer)
+                recordCascade(encoder, subPass.resolvedDraws, layer, environment)
             }
         }
         val activeLayers = subPasses.map { it.targetLayer }.toSet()
@@ -149,6 +163,7 @@ class DepthPrePassFeature(
         encoder: GPUCommandEncoder,
         draws: List<PreparedDraw>,
         cascade: Int,
+        content: GpuEnvironmentState? = null,
     ) {
         encoder.beginRenderPass(
             RenderPassDescriptor(
@@ -228,6 +243,7 @@ class DepthPrePassFeature(
                 }
                 drawIndex += 1
             }
+            if (content != null) recorder.recordContentCasters(contentCasters, cascade, content)
             end()
         }
     }
@@ -241,5 +257,31 @@ class DepthPrePassFeature(
             addAll(keyedVariantPipelines.values)
         }.distinct().forEach { it.destroy() }
         depthTarget.destroy()
+    }
+}
+
+/** Each of [casters]' draw for this frame, through its own pipeline and its own group 0. */
+private fun WebGpuCommandRecorder.recordContentCasters(
+    casters: List<DepthPrePassFeature.ContentCaster>,
+    cascade: Int,
+    environment: GpuEnvironmentState,
+) {
+    for (index in casters.indices) {
+        val caster = casters[index]
+        // One frame in flight, so one uniform slot: frame 0, as the scene pass records it.
+        val prepared = caster.source.depthDraw(0, environment)
+        val vertexBuffer = prepared?.vertexBuffer
+        if (prepared == null || vertexBuffer == null) continue
+        bindPipeline(caster.pipeline.handle)
+        bindMaterial(ShadowCascadePassBinding, caster.pipeline.cascadeBinding(cascade))
+        bindMaterial(BindingSemantic.Material, prepared.materialBinding)
+        bindVertexBuffer(0, vertexBuffer)
+        val indexBuffer = prepared.indexBuffer
+        if (indexBuffer != null) {
+            bindIndexBuffer(indexBuffer)
+            drawIndexed(prepared.elementCount, prepared.instances)
+        } else {
+            draw(prepared.elementCount, prepared.instances)
+        }
     }
 }

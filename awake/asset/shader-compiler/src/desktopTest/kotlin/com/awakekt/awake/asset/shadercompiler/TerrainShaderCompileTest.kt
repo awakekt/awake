@@ -22,14 +22,20 @@ import com.awakekt.awake.asset.shaderdsl.x
 import com.awakekt.awake.asset.shaderdsl.xyz
 import com.awakekt.awake.asset.shaderdsl.y
 import com.awakekt.awake.asset.shaderdsl.z
+import com.awakekt.awake.asset.shaderpack.PackShaderSets
 import com.awakekt.awake.asset.shaderpack.TERRAIN_SURFACE_FIRST_BINDING
 import com.awakekt.awake.asset.shaderpack.terrainClipmapDiscardUnderFinerRing
 import com.awakekt.awake.asset.shaderpack.terrainClipmapVertexStage
 import com.awakekt.awake.asset.shaderpack.terrainShader
+import com.awakekt.awake.asset.shaders.RenderBackend
+import com.awakekt.awake.asset.shaders.stagesFor
+import com.awakekt.awake.asset.shaders.ShaderStage as ProgramStage
 import com.awakekt.awake.core.math.ClipSpace
+import com.awakekt.awake.render.passes.uniforms.SHADOW_CASCADE_PASS_GROUP
 import com.awakekt.awake.render.pipeline.BindingLayout
 import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.ResourceKind
+import com.awakekt.awake.render.pipeline.ShaderSource
 import com.awakekt.awake.render.pipeline.ShaderStage
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -93,6 +99,25 @@ class TerrainShaderCompileTest {
 
         assertEquals(listOf(0, 1, 2), bindings.entries.map { it.binding })
         assertEquals(ResourceKind.UniformBuffer, bindings.at(0)?.kind)
+    }
+
+    /**
+     * The rings' cascade depth, from either backend's set: it validates, discards coarse rings
+     * under finer ones as the drawn surface does, and declares only the clipmap stage's own
+     * group-0 bindings, so the depth pass can bind any surface's group through it.
+     */
+    @Test
+    fun theTerrainShadowDepthShaderCompilesOverTheStagesOwnBindingsForEitherBackend() {
+        for (backend in RenderBackend.entries) {
+            val stages = PackShaderSets.TerrainShadowDepth.stagesFor(backend)
+            val source = (stages[ProgramStage.VERTEX] as ShaderSource.InlineText).sourceCode
+            assertNull(NagaShaderCompiler.validate(source), "WGSL validation failed for the $backend terrain depth shader.")
+            assertTrue(NagaShaderCompiler.wgslToSpirv(source).isNotEmpty())
+            assertTrue(source.contains("discard"), "The $backend terrain depth shader keeps coarse rings under finer ones.")
+
+            assertEquals(listOf(0, 1, 2), stages.bindingsByGroup.getValue(0).entries.map { it.binding })
+            assertEquals(ResourceKind.UniformBuffer, stages.bindingsByGroup.getValue(SHADOW_CASCADE_PASS_GROUP).at(0)?.kind)
+        }
     }
 
     /** A surface writes only a fragment stage; the clipmap stage it shares must still compile. */

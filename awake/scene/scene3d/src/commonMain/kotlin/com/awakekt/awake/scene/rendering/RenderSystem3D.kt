@@ -15,7 +15,6 @@ import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
 import com.awakekt.awake.scene.rendering.camera.Camera
 import com.awakekt.awake.scene.rendering.debug.RenderDiagnostics
-import com.awakekt.awake.scene.rendering.terrain.TerrainShadowCasters
 
 /**
  * Core ECS system responsible for extracting, planning, and submitting 3D scene rendering passes.
@@ -64,7 +63,6 @@ class RenderSystem3D(
         rendererViewport = viewportProvider,
         drawPreparer = drawPreparer,
         features = features,
-        terrainCasters = TerrainShadowCasters(renderer),
     )
     private var elapsedTimeSeconds = 0f
     private var lastPlannedFrame: SceneRenderPlanner3D.PlannedFrame? = null

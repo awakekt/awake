@@ -5,9 +5,7 @@
  */
 package com.awakekt.awake.vulkan
 
-import com.awakekt.awake.asset.shadercompiler.NagaShaderCompiler
 import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
-import com.awakekt.awake.asset.shaders.resolveBytes
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes.uniforms.MAX_SHADOW_TARGET_LAYERS
@@ -24,7 +22,6 @@ import com.awakekt.awake.vulkan.pipeline.DepthOnlyPipeline
 import com.awakekt.awake.vulkan.pipeline.DepthPrePassFeature
 import com.awakekt.awake.vulkan.pipeline.PipelineTable
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
-import com.awakekt.awake.vulkan.pipeline.ShaderPair
 import com.awakekt.awake.vulkan.pipeline.VulkanLinePass
 import com.awakekt.awake.vulkan.pipeline.VulkanPipelineFactory
 import com.awakekt.awake.vulkan.pipeline.VulkanUiPass
@@ -42,7 +39,8 @@ import kotlinx.coroutines.runBlocking
  * images and sync objects, so `draw` and `readPresentedPixels` work.
  *
  * Content features attach through the renderer's `ContentFeatureHost`, wired as `VulkanEngine`
- * wires it: a runtime pipeline gets the shadow map when its shader declares it.
+ * wires it: a runtime pipeline gets the shadow map when its shader declares it, and a feature's
+ * depth pipeline casts into the cascades.
  */
 internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false): Pair<Renderer, () -> Unit> {
     val graphicsDevice = GraphicsDevice()
@@ -65,7 +63,10 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false):
     )
     val transferContext = TransferContext(graphicsDevice)
     val registry = contentPipelines(graphicsDevice, swapchainManager, sceneRenderPass, descriptorSetLayout, depthTarget)
-    val attacher = ContentFeatureAttacher(VulkanContentFeatureGpu(graphicsDevice, transferContext, registry))
+    val depthPass = depthPrePass(graphicsDevice, depthTarget, descriptorSetLayout)
+    val attacher = ContentFeatureAttacher(
+        VulkanContentFeatureGpu(graphicsDevice, transferContext, registry, depthPass, MAX_FRAMES_IN_FLIGHT, ::spirvPair),
+    )
     val cleanup = headlessCleanup(
         graphicsDevice,
         transferContext,
@@ -83,7 +84,7 @@ internal fun newHeadlessShadowRenderer(size: Int, presentable: Boolean = false):
             attacher.afterGeometry,
             UiRenderFeature(VulkanUiPass()),
         ),
-        depthPrePass = depthPrePass(graphicsDevice, depthTarget, descriptorSetLayout),
+        depthPrePass = depthPass,
         transferContext = transferContext,
         uiShaderPairs = runBlocking { defaultUiShaderPairs() },
         maxFramesInFlight = MAX_FRAMES_IN_FLIGHT,
@@ -130,9 +131,7 @@ private fun contentPipelines(
         descriptorSetLayout = descriptorSetLayout,
         framesInFlight = MAX_FRAMES_IN_FLIGHT,
         declaredEngineSetLayouts = mapOf(BindingSemantic.ShadowDepth to DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
-        loadShaders = { spec ->
-            NagaShaderCompiler.wgslToSpirv(spec.vertexShader.resolveBytes().decodeToString()).let { ShaderPair(it, it) }
-        },
+        loadShaders = ::spirvPair,
     ),
 )
 

@@ -6,6 +6,7 @@
 package com.awakekt.awake.webgpu
 
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
+import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
 import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
@@ -15,9 +16,11 @@ import com.awakekt.awake.render.pipeline.AlphaMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
 import com.awakekt.awake.render.pipeline.GroupBindings
+import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineTable
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.testing.HeadlessRenderSession
+import com.awakekt.awake.webgpu.application.WebGpuContentFeatureGpu
 import com.awakekt.awake.webgpu.debug.LineRenderPipeline
 import com.awakekt.awake.webgpu.device.GraphicsDevice
 import com.awakekt.awake.webgpu.handles.DescriptorSetLayoutHandle
@@ -26,6 +29,8 @@ import com.awakekt.awake.webgpu.pipeline.DepthPrePassFeature
 import com.awakekt.awake.webgpu.pipeline.RenderPipeline
 import com.awakekt.awake.webgpu.pipeline.UiShaderSources
 import com.awakekt.awake.webgpu.pipeline.WebGpuLinePass
+import com.awakekt.awake.webgpu.pipeline.WebGpuPipelineFactory
+import com.awakekt.awake.webgpu.pipeline.WebGpuShaderResolver
 import com.awakekt.awake.webgpu.pipeline.WebGpuUiPass
 import com.awakekt.awake.webgpu.swapchain.SwapchainManager
 import com.awakekt.awake.webgpu.texture.DepthTarget
@@ -38,7 +43,8 @@ import com.awakekt.awake.webgpu.renderer.Renderer as WebGpuRenderer
  *
  * [webGpuHeadlessUi]'s sibling. Built the same way `WebGpuEngine` builds its own: `lit_shadow` as
  * the scene pipeline, and a depth pre-pass whose target is layered and arrayed at
- * [MAX_SHADOW_TARGET_LAYERS], because the shader declares `texture_depth_2d_array`.
+ * [MAX_SHADOW_TARGET_LAYERS], because the shader declares `texture_depth_2d_array`. Content
+ * features attach through the renderer's `ContentFeatureHost`.
  *
  * **This is wgpu-native, not a browser** -- see [webGpuHeadlessUi] for what that leaves uncovered.
  */
@@ -220,6 +226,9 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         ),
     )
     val linePipeline = LineRenderPipeline(graphicsDevice, swapchainManager, wgsl(EngineShaderSets.DebugLine))
+    // Content features attach as WebGpuEngine attaches them, casting into the cascades.
+    val contentPipelines = PipelineRegistry(WebGpuPipelineFactory(graphicsDevice, swapchainManager, WebGpuShaderResolver()))
+    val attacher = ContentFeatureAttacher(WebGpuContentFeatureGpu(graphicsDevice, contentPipelines, depthPrePass))
     val renderer = WebGpuRenderer(
         graphicsDevice = graphicsDevice,
         swapchainManager = swapchainManager,
@@ -246,11 +255,14 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
         ),
         maxFramesInFlight = FRAMES_IN_FLIGHT,
         renderFeatures = listOf(
+            attacher.beforeGeometry,
             OpaqueRenderFeature(WebGpuLinePass(linePipeline)),
+            attacher.afterGeometry,
             UiRenderFeature(WebGpuUiPass()),
         ),
         depthPrePass = depthPrePass,
     )
+    renderer.contentFeatureHost = attacher
     object : HeadlessRenderSession {
         override val renderer = renderer
 
@@ -264,6 +276,8 @@ fun webGpuHeadlessScene(): HeadlessRenderSession = runBlocking {
             transparentTexturedPipeline.destroy()
             additiveTexturedPipeline.destroy()
             spritePipeline.destroy()
+            contentPipelines.destroyAll { it.destroy() }
+            attacher.releaseAll()
             graphicsDevice.destroy()
         }
     }

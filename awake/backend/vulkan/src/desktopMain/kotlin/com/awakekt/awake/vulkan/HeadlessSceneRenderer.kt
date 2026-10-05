@@ -6,16 +6,20 @@
 package com.awakekt.awake.vulkan
 
 import com.awakekt.awake.asset.shaderpack.PackShaderSets
+import com.awakekt.awake.asset.shaders.ContentFeatureAttacher
 import com.awakekt.awake.asset.shaders.EngineShaderSets
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.render.passes.DEFAULT_SHADOW_CASCADES
 import com.awakekt.awake.render.passes.OpaqueRenderFeature
 import com.awakekt.awake.render.passes2d.UiRenderFeature
 import com.awakekt.awake.render.pipeline.AlphaMode
+import com.awakekt.awake.render.pipeline.BindingSemantic
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
+import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineVariant
 import com.awakekt.awake.render.testing.HeadlessRenderSession
+import com.awakekt.awake.vulkan.application.VulkanContentFeatureGpu
 import com.awakekt.awake.vulkan.commands.TransferContext
 import com.awakekt.awake.vulkan.debug.LineRenderPipeline
 import com.awakekt.awake.vulkan.device.GraphicsDevice
@@ -27,6 +31,7 @@ import com.awakekt.awake.vulkan.pipeline.DepthPrePassFeature
 import com.awakekt.awake.vulkan.pipeline.PipelineTable
 import com.awakekt.awake.vulkan.pipeline.RenderPipeline
 import com.awakekt.awake.vulkan.pipeline.VulkanLinePass
+import com.awakekt.awake.vulkan.pipeline.VulkanPipelineFactory
 import com.awakekt.awake.vulkan.pipeline.VulkanUiPass
 import com.awakekt.awake.vulkan.pipeline.createSceneRenderPass
 import com.awakekt.awake.vulkan.swapchain.SwapchainManager
@@ -44,7 +49,7 @@ import com.awakekt.awake.vulkan.renderer.Renderer as VulkanRenderer
  *
  * `lit_shadow` with a real depth pre-pass, layered and arrayed at [DEFAULT_SHADOW_CASCADES]: the
  * shader declares `texture_depth_2d_array`, so a single-layer view is a validation error rather
- * than a dimmer picture.
+ * than a dimmer picture. Content features attach through the renderer's `ContentFeatureHost`.
  */
 fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
     val graphicsDevice = GraphicsDevice()
@@ -247,6 +252,22 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         FRAMES_IN_FLIGHT,
     )
     val transferContext = TransferContext(graphicsDevice)
+    // Content features attach as VulkanEngine attaches them: a pipeline gets the shadow map when its
+    // shader declares it, and a feature's depth pipeline casts into the cascades.
+    val contentPipelines = PipelineRegistry(
+        VulkanPipelineFactory(
+            graphicsDevice = graphicsDevice,
+            swapchainManager = swapchainManager,
+            renderPass = sceneRenderPass,
+            descriptorSetLayout = descriptorSetLayout,
+            framesInFlight = FRAMES_IN_FLIGHT,
+            declaredEngineSetLayouts = mapOf(BindingSemantic.ShadowDepth to DescriptorSetLayoutHandle(depthTarget.descriptorSetLayout)),
+            loadShaders = ::spirvPair,
+        ),
+    )
+    val attacher = ContentFeatureAttacher(
+        VulkanContentFeatureGpu(graphicsDevice, transferContext, contentPipelines, depthPrePass, FRAMES_IN_FLIGHT, ::spirvPair),
+    )
     val renderer = VulkanRenderer(
         graphicsDevice = graphicsDevice,
         swapchainManager = swapchainManager,
@@ -264,7 +285,9 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             particlePipelines = mapOf(VertexFormat.PositionUv to spritePipeline),
         ),
         renderFeatures = listOf(
+            attacher.beforeGeometry,
             OpaqueRenderFeature(VulkanLinePass(linePipeline)),
+            attacher.afterGeometry,
             UiRenderFeature(VulkanUiPass()),
         ),
         depthPrePass = depthPrePass,
@@ -272,6 +295,7 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
         uiShaderPairs = runBlocking { headlessUiShaderPairs() },
         maxFramesInFlight = FRAMES_IN_FLIGHT,
     )
+    renderer.contentFeatureHost = attacher
     return object : HeadlessRenderSession {
         override val renderer = renderer
 
@@ -285,6 +309,8 @@ fun vulkanHeadlessScene(width: Int, height: Int): HeadlessRenderSession {
             transparentTexturedPipeline.destroy()
             additiveTexturedPipeline.destroy()
             spritePipeline.destroy()
+            contentPipelines.destroyAll { it.destroy() }
+            attacher.releaseAll()
             VulkanDescriptors.vkDestroyDescriptorSetLayout(graphicsDevice.device, descriptorSetLayout.handle)
             transferContext.destroy()
             Vulkan.vkDestroyRenderPass(graphicsDevice.device, sceneRenderPass)

@@ -16,8 +16,11 @@ import com.awakekt.awake.asset.terrain.clipmap.TerrainClipmapTracker
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.PipelineHandle
+import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.UniformBlock
+import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.RenderFeature
@@ -83,6 +86,12 @@ fun terrainContentFeature(
         ContentFeature(
             name = "terrain",
             spec = shaders.stagesFor(backend).spec(
+                vertexFormat = VertexFormat.PositionNormalColorUv,
+                uniforms = TerrainUniformLayout.Layout,
+            ),
+            // The rings themselves cast, whatever surface shades them: the depth stage reads only
+            // the clipmap stage's own bindings, which every terrain surface shares.
+            depth = PackShaderSets.TerrainShadowDepth.stagesFor(backend).spec(
                 vertexFormat = VertexFormat.PositionNormalColorUv,
                 uniforms = TerrainUniformLayout.Layout,
             ),
@@ -168,6 +177,10 @@ private const val SIXTEEN_BIT_MAX = 0xFFFF
  * One draw for every ring: the merged mesh tags each vertex with its ring level, which indexes
  * the origins written below. See `TerrainClipmapGeometry.buildMergedClipmapMesh`.
  *
+ * The same draw casts into the depth pass through [depthDraw], reading the uniform slot this
+ * feature writes for the frame: the depth pass records first, and the frame is submitted after
+ * [recordCommands] has written it, so both passes place the same rings.
+ *
  * Public so a caller that builds the pipeline itself -- a headless test compiling `TerrainShader`
  * at runtime, for instance -- can drive the real recording path rather than restating it. Prefer
  * [terrainContentFeature], which assembles all five arguments correctly.
@@ -183,8 +196,26 @@ class TerrainRenderFeature(
     private val sampling: FloatArray,
     /** Consulted per frame; see [terrainContentFeature]. */
     private val isVisible: () -> Boolean = { true },
-) : RenderFeature<RenderFrameContext> {
+) : RenderFeature<RenderFrameContext>,
+    ContentDepthSource {
     override val pass = RenderPassSlot.Scene
+
+    /** The ring mesh in one frame's uniform slot; reused, so the depth pass allocates nothing. */
+    private val ringDraw = object : PreparedDraw {
+        var frameIndex = 0
+        override val pipeline get() = this@TerrainRenderFeature.pipeline
+        override val vertexFormat get() = VertexFormat.PositionNormalColorUv
+        override val materialBinding get() = uniforms.binding(frameIndex)
+        override val vertexBuffer get() = geometry.vertexBuffer
+        override val indexBuffer get() = geometry.indexBuffer
+        override val elementCount get() = geometry.elementCount
+    }
+
+    override fun depthDraw(frameIndex: Int, environment: GpuEnvironmentState): PreparedDraw? {
+        if (!isVisible()) return null
+        ringDraw.frameIndex = frameIndex
+        return ringDraw
+    }
 
     /** Reused across frames -- `ringParams` is written every frame and this runs inside the
      * record path, where `skills/awake-ui-performance` rules out per-frame allocation. */

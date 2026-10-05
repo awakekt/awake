@@ -57,6 +57,7 @@ fun main(args: Array<String>) {
             EVIDENCE_SIZE,
             renderer.renderTexturedSkinnedScene(Mat4().data, exposure = 2f, size = EVIDENCE_SIZE),
         )
+        write("scene-terrain-cliff-self-shadow", "Clipmap plateau coarser than its heightmap, sun on its cliff: top, rim and face stay lit", EVIDENCE_SIZE, renderer.renderTerrainCliffScene(size = EVIDENCE_SIZE))
         STUDIO_YAWS.withIndex().filter { it.index % EVIDENCE_YAW_STEP == 0 }.forEach { (index, yaw) ->
             write(
                 "scene-studio-cube-yaw$index",

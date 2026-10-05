@@ -5,8 +5,11 @@
  */
 package com.awakekt.awake.asset.shaders
 
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.PipelineHandle
+import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.UniformBlockOwner
+import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.passes.ContentGeometry
 import com.awakekt.awake.render.passes.ContentPaint
@@ -16,6 +19,7 @@ import com.awakekt.awake.render.passes.RenderPassSlot
 import com.awakekt.awake.render.pipeline.PipelineKey
 import com.awakekt.awake.render.pipeline.PipelineRegistry
 import com.awakekt.awake.render.pipeline.PipelineRequest
+import com.awakekt.awake.render.pipeline.PipelineSpec
 
 /**
  * A running engine that takes content features after start, for content that arrives with a
@@ -76,6 +80,15 @@ interface ContentFeatureGpu<P : UniformBlockOwner> {
     fun upload(pipeline: P, feature: ContentFeature): ContentUpload
 
     /**
+     * Draws [source]'s draw into this backend's depth pass through a pipeline built from [depth]
+     * over [pipeline]'s own group 0, so the feature's uniform block and textures bind unchanged.
+     *
+     * @return What frees that pipeline and stops the draw, released with the feature's uploads
+     * once no frame can read it; null when this engine renders no depth pass.
+     */
+    suspend fun addDepthCaster(pipeline: P, depth: PipelineSpec, source: ContentDepthSource): ContentUpload?
+
+    /**
      * Frees all GPU state and resources associated with the specified pipeline.
      *
      * @param pipeline The pipeline owner to destroy.
@@ -86,8 +99,11 @@ interface ContentFeatureGpu<P : UniformBlockOwner> {
     fun awaitIdle()
 }
 
-/** [feature] built against the pipeline the registry already compiled for it. */
-fun <P : UniformBlockOwner> ContentFeatureGpu<P>.buildContentFeature(
+/**
+ * [feature] built against the pipeline the registry already compiled for it, casting into the
+ * depth pass when it declares a [ContentFeature.depth] pipeline. What it allocates joins [uploads].
+ */
+suspend fun <P : UniformBlockOwner> ContentFeatureGpu<P>.buildContentFeature(
     feature: ContentFeature,
     uploads: MutableList<ContentUpload>,
 ): RenderFeature<RenderFrameContext> {
@@ -99,18 +115,33 @@ fun <P : UniformBlockOwner> ContentFeatureGpu<P>.buildContentFeature(
             "allocated a block for its pipeline."
     }
     val upload = upload(pipeline, feature).also { uploads += it }
-    return ContentFeaturePassGate(feature.build(handle(pipeline), block, upload.geometry))
+    val gate = ContentFeaturePassGate(feature.build(handle(pipeline), block, upload.geometry))
+    feature.depth?.let { depth ->
+        require(gate.feature is ContentDepthSource) {
+            "Content feature '${feature.name}' declares a depth pipeline, but the feature it builds " +
+                "is not a ContentDepthSource, so the depth pass would have nothing to draw."
+        }
+        addDepthCaster(pipeline, depth, gate)?.let { uploads += it }
+    }
+    return gate
 }
 
-/** Records [feature] only in passes whose environment lets content features draw. */
+/**
+ * Records [feature], and hands the depth pass its draw, only in passes whose environment lets
+ * content features draw: one gate, so a pass that leaves them out leaves out their depth too.
+ */
 private class ContentFeaturePassGate(
-    private val feature: RenderFeature<RenderFrameContext>,
-) : RenderFeature<RenderFrameContext> {
+    val feature: RenderFeature<RenderFrameContext>,
+) : RenderFeature<RenderFrameContext>,
+    ContentDepthSource {
     override val pass: RenderPassSlot get() = feature.pass
 
     override fun recordCommands(context: RenderFrameContext) {
         if (context.environment.contentFeatures) feature.recordCommands(context)
     }
+
+    override fun depthDraw(frameIndex: Int, environment: GpuEnvironmentState): PreparedDraw? =
+        if (environment.contentFeatures) (feature as? ContentDepthSource)?.depthDraw(frameIndex, environment) else null
 
     override fun destroy() = feature.destroy()
 }

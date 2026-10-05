@@ -10,11 +10,13 @@ import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.render.command.CommandRecorder
+import com.awakekt.awake.render.command.GpuEnvironmentState
 import com.awakekt.awake.render.command.MaterialBinding
 import com.awakekt.awake.render.command.PipelineHandle
 import com.awakekt.awake.render.command.PreparedDraw
 import com.awakekt.awake.render.command.UniformBlock
 import com.awakekt.awake.render.command.UniformBlockOwner
+import com.awakekt.awake.render.passes.ContentDepthSource
 import com.awakekt.awake.render.passes.ContentFeature
 import com.awakekt.awake.render.passes.ContentPaint
 import com.awakekt.awake.render.passes.RenderFeature
@@ -125,10 +127,34 @@ class ContentFeatureAttacherTest {
         assertEquals(listOf("release sky", "release fog"), events)
     }
 
+    /** Its depth draw goes to the depth pass only while content features draw, and leaves with it. */
+    @Test
+    fun aFeatureWithADepthPipelineCastsUntilDetached() = runTest {
+        val terrain = attacher.attachContentFeature(source("terrain", depth = true, build = { CastingFeature("terrain", events) }))
+        val caster = gpu.depthSources.single()
+
+        assertEquals(DRAW, caster.depthDraw(0, GpuEnvironmentState.Default))
+        assertNull(caster.depthDraw(0, GpuEnvironmentState(contentFeatures = false)))
+        events.clear()
+        terrain.detach()
+
+        assertEquals(listOf("awaitIdle", "destroy terrain", "destroyPipeline", "release terrain", "release depth"), events)
+        assertTrue(gpu.depthSources.isEmpty())
+    }
+
+    @Test
+    fun aDepthPipelineNeedsAFeatureThatHandsOverADraw() = runTest {
+        assertFailsWith<IllegalArgumentException> { attacher.attachContentFeature(source("terrain", depth = true)) }
+
+        assertEquals(listOf("upload terrain", "destroyPipeline", "release terrain"), events)
+        assertTrue(gpu.depthSources.isEmpty())
+    }
+
     private fun source(
         name: String,
         paint: ContentPaint = ContentPaint.BeforeGeometry,
         samplesSceneDepth: Boolean = false,
+        depth: Boolean = false,
         build: () -> RenderFeature<RenderFrameContext> = { RecordingFeature(name, events) },
     ) = ContentFeatureSource {
         ContentFeature(
@@ -136,7 +162,14 @@ class ContentFeatureAttacherTest {
             spec = spec(name),
             paint = paint,
             samplesSceneDepth = samplesSceneDepth,
+            depth = if (depth) spec("$name-depth") else null,
         ) { _, _, _ -> build() }
+    }
+
+    private class CastingFeature(name: String, events: MutableList<String>) :
+        RenderFeature<RenderFrameContext> by RecordingFeature(name, events),
+        ContentDepthSource {
+        override fun depthDraw(frameIndex: Int, environment: GpuEnvironmentState): PreparedDraw = DRAW
     }
 
     private class RecordingFeature(val name: String, val events: MutableList<String>) : RenderFeature<RenderFrameContext> {
@@ -162,6 +195,15 @@ class ContentFeatureAttacherTest {
     private class RecordingGpu(val events: MutableList<String>) : ContentFeatureGpu<FakePipeline> {
         override val backend = RenderBackend.Vulkan
         override val registry = PipelineRegistry(PipelineFactory { _, _ -> FakePipeline() })
+        val depthSources = mutableListOf<ContentDepthSource>()
+
+        override suspend fun addDepthCaster(pipeline: FakePipeline, depth: PipelineSpec, source: ContentDepthSource): ContentUpload {
+            depthSources += source
+            return ContentUpload(null) {
+                depthSources -= source
+                events += "release depth"
+            }
+        }
 
         override fun handle(pipeline: FakePipeline) = object : PipelineHandle {}
 
@@ -180,6 +222,14 @@ class ContentFeatureAttacherTest {
     }
 
     private companion object {
+        val DRAW = object : PreparedDraw {
+            override val pipeline = object : PipelineHandle {}
+            override val materialBinding = object : MaterialBinding {}
+            override val vertexBuffer = null
+            override val indexBuffer = null
+            override val elementCount = 3
+        }
+
         /** The fakes record without reading the frame. */
         val FRAME = object : RenderFrameContext {
             override val frameIndex = 0
