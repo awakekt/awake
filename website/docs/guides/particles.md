@@ -3,6 +3,8 @@
 <p class="awake-lede">Sparks, smoke and dust: an emitter spawns sprites that face the camera or lie flat, and move, fade and change colour over their life, all drawn in one instanced draw call.</p>
 
 <div class="awake-badges" markdown>
+<span class="awake-badge">module: <code>awake:particles</code></span>
+<span class="awake-badge">module: <code>awake:scene:particles</code></span>
 <span class="awake-badge">ECS: <code>ParticleEmitter</code></span>
 <span class="awake-badge awake-badge--ok">Vulkan</span>
 <span class="awake-badge awake-badge--ok">WebGPU</span>
@@ -135,7 +137,11 @@ fading to dark red.
 
 ## Run the particle system
 
-`ParticleSystem` spawns and moves particles. It is not one of the default scene systems, so add it:
+`ParticleSystem` spawns and moves particles. It is not one of the default scene systems, so add it.
+It asks an `EmitterPlacement` where an entity is, to make an emitter follow it or turn spawns by its
+rotation: in a scene pass `TransformPlacement` from `awake:scene:particles`, which reads the
+entity's `Transform`. An app with no scene passes a placement of its own, or none, and then no
+emitter follows anything.
 
 ```kotlin title="Kotlin"
 --8<-- "awake/project/runtime/src/desktopTest/kotlin/com/awakekt/awake/project/runtime/ParticlesDocsSampleTest.kt:system"

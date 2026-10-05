@@ -29,6 +29,8 @@ kotlin {
             implementation(project(":awake:asset:shader-pack"))
             implementation(project(":awake:core:animation"))
             implementation(project(":awake:core:math"))
+            implementation(project(":awake:particles"))
+            implementation(project(":awake:scene:particles"))
         }
         commonTest.dependencies {
             implementation(kotlin("test"))

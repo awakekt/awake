@@ -22,10 +22,10 @@ consumer gets `Transform`/`Mesh`/`Material`/`DrawCall` visible transitively.
 - `InstancedMeshRenderer` / `InstancedSkinnedMeshRenderer` -- many copies of one mesh/material
   drawn in a single GPU-instanced call; carries its own list of transforms (and joint palettes
   for the skinned variant) instead of relying on per-entity `Transform`s.
-- `ParticleEmitter` -- a fixed-capacity pool of camera-facing billboard particles, spawned/aged
-  by `ParticleSystem` and drawn instanced by `RenderSystem3D`. See its own doc comment for the
-  full knob list (burst spawning, cone spread, gradient color, ground-stop, sprite-strip
-  frames) and `spawnParticleBurst` for a one-shot "play this effect here" helper.
+- Particles are not defined here. `awake:particles` owns `ParticleEmitter` and `ParticleSystem`,
+  and `awake:scene:particles` owns the `particle_emitter` scene component. This module only draws
+  them: `SceneParticleCompiler` hands the scene's `Camera` and each entity's `Transform` to that
+  library's `ParticleDrawBuilder`.
 - `Camera` -- wraps `awake:core`'s `CoreCamera` math; `isPrimary` marks the one `RenderSystem3D`
   actually renders through.
 - `Light` -- a single scene-wide directional light (`RenderSystem3D.sceneLight` falls back to
@@ -42,11 +42,9 @@ consumer gets `Transform`/`Mesh`/`Material`/`DrawCall` visible transitively.
 
 - `RenderSystem3D` -- the one system that assembles a frame's `DrawCall` list: frustum/occlusion
   culls `MeshRenderer`/`LodGroup` entities, builds instanced draw calls for
-  `InstancedMeshRenderer`/`InstancedSkinnedMeshRenderer`/`ParticleEmitter`, resolves the scene
+  `InstancedMeshRenderer`/`InstancedSkinnedMeshRenderer` and, through `ParticleDrawBuilder`,
+  `ParticleEmitter`, resolves the scene
   light, and calls `Renderer.draw`.
-- `ParticleSystem` -- spawns/advances every `ParticleEmitter`'s particle pool (position/age/
-  fade, cone-spread velocity, ground-stop, burst cleanup). Kept separate from `RenderSystem3D`
-  (draw-call assembly) so simulation stays a single-responsibility step.
 - `DebugVisualizationSystem` -- turns `WorldDebugSettings`'s toggles into `Renderer`
   debug-line draws (frustum/bounds/occlusion wireframes).
 - `RenderSystemSupport.kt` -- shared helpers (`primaryCamera`, `CONSERVATIVE_ASPECT`) used by

@@ -11,15 +11,15 @@ import com.awakekt.awake.core.math.Lens
 import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.particles.ParticleEmitter
+import com.awakekt.awake.particles.ParticleFacing
+import com.awakekt.awake.particles.ParticleVisual
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.RenderDrawCommand
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraFields
 import com.awakekt.awake.render.passes.uniforms.ParticleExtraUniformLayout
 import com.awakekt.awake.scene.core.transform.Transform
-import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
-import com.awakekt.awake.scene.rendering.particles.ParticleFacing
-import com.awakekt.awake.scene.rendering.particles.ParticleVisual
 import kotlin.math.tan
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -27,57 +27,11 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class SceneParticleCompilerTest {
-    @Test
-    fun worldTraversalProducesOneDrawPerEmitterWithLiveParticles() {
-        val world = World()
-        val emitter = ParticleEmitter(
-            mesh = fakeMesh(),
-            material = fakeMaterial(),
-            origin = Vec3f.ZERO,
-            maxParticles = 1,
-            spawnRate = 0f,
-            lifetime = 1f,
-            startAlpha = 1f,
-            scale = 1f,
-        )
-        emitter.particles[0].apply {
-            alive = true
-            lifetime = 1f
-            startAlpha = 1f
-            scale = 1f
-        }
-        world.add(world.create(), emitter)
-
-        val draws = ArrayList<RenderDrawCommand>()
-        SceneParticleCompiler().appendWorldDrawCalls(
-            destination = draws,
-            world = world,
-            camera = Camera(
-                Lens(
-                    eye = Vec3f(0f, 0f, 5f),
-                    center = Vec3f.ZERO,
-                    fovYRadians = 1f,
-                    near = 0.1f,
-                    far = 100f,
-                ),
-            ),
-            aspect = 1f,
-        )
-
-        assertEquals(1, draws.size)
-        assertEquals(1, draws.single().instanceModels?.size)
-        assertEquals(false, draws.single().additive)
-
-        emitter.visual = ParticleVisual(additive = true)
-        draws.clear()
-        SceneParticleCompiler().appendWorldDrawCalls(draws, world, Camera(Lens(eye = Vec3f(0f, 0f, 5f), center = Vec3f.ZERO, fovYRadians = 1f, near = 0.1f, far = 100f)), 1f)
-        assertEquals(true, draws.single().additive, "an additive emitter's draw adds")
-    }
-
     /**
-     * A flat emitter's draw carries its entity's plane as the quad axes the particle shader reads:
-     * the entity's +X and -Z, unscaled, or the world's without a transform. A camera-facing emitter
-     * keeps the camera's right and up.
+     * The scene hands the particle library its camera and each entity's `Transform`: a flat emitter's
+     * draw carries its entity's plane as the quad axes the particle shader reads, the entity's +X and
+     * -Z, unscaled, or the world's without a transform. A camera-facing emitter keeps the camera's
+     * right and up.
      */
     @Test
     fun aFlatEmitterDrawsAlongItsEntitysPlaneAndACameraFacingOneAlongTheCamera() {
@@ -122,10 +76,7 @@ class SceneParticleCompilerTest {
         fun drawnAt(x: Float, aspect: Float): Boolean {
             val world = World()
             // A small particle, so its culling radius does not reach across either edge.
-            val emitter = liveEmitter(ParticleFacing.Camera).apply {
-                particles[0].position.set(x, 0f, 0f)
-                particles[0].scale = 0.1f
-            }
+            val emitter = liveEmitter(ParticleFacing.Camera, at = Vec3f(x, 0f, 0f), scale = 0.1f)
             world.add(world.create(), emitter)
             return SceneFeatureCollector3D(ClipSpace.WebGpu, emptyList())
                 .collect(world, camera, elapsedTimeSeconds = 0f, viewportAspect = aspect)
@@ -144,7 +95,7 @@ class SceneParticleCompilerTest {
         )
     }
 
-    private fun liveEmitter(facing: ParticleFacing) = ParticleEmitter(
+    private fun liveEmitter(facing: ParticleFacing, at: Vec3f = Vec3f.ZERO, scale: Float = 1f) = ParticleEmitter(
         mesh = fakeMesh(),
         material = fakeMaterial(),
         origin = Vec3f.ZERO,
@@ -152,16 +103,9 @@ class SceneParticleCompilerTest {
         spawnRate = 0f,
         lifetime = 1f,
         startAlpha = 1f,
-        scale = 1f,
+        scale = scale,
         visual = ParticleVisual(facing = facing),
-    ).apply {
-        particles[0].apply {
-            alive = true
-            lifetime = 1f
-            startAlpha = 1f
-            scale = 1f
-        }
-    }
+    ).apply { spawn(at) }
 
     private fun fakeMesh(): Mesh = object : Mesh {
         override val format = VertexFormat.PositionUv

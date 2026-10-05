@@ -9,6 +9,10 @@ import com.awakekt.awake.core.geometry.MeshGeometry
 import com.awakekt.awake.core.geometry.VertexFormat
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.engine.bootstrap.dsl.app
+import com.awakekt.awake.particles.ParticleEmitter
+import com.awakekt.awake.particles.ParticleMotion
+import com.awakekt.awake.particles.ParticleSystem
+import com.awakekt.awake.particles.ParticleVisual
 import com.awakekt.awake.render.passes.uniforms.ParticleUniformLayout
 import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.TextureAsset
@@ -16,10 +20,7 @@ import com.awakekt.awake.scene.authoring.dsl.cameraEntity
 import com.awakekt.awake.scene.authoring.dsl.scene
 import com.awakekt.awake.scene.authoring.dsl.transform
 import com.awakekt.awake.scene.authoring.scene
-import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
-import com.awakekt.awake.scene.rendering.particles.ParticleMotion
-import com.awakekt.awake.scene.rendering.particles.ParticleSystem
-import com.awakekt.awake.scene.rendering.particles.ParticleVisual
+import com.awakekt.awake.scene.particles.TransformPlacement
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,7 +45,7 @@ class ParticlesDocsSampleTest {
                 }
                 // --8<-- [end:assets]
                 // --8<-- [start:system]
-                frameSystem("particles") { ParticleSystem() }
+                frameSystem("particles") { ParticleSystem(TransformPlacement) }
                 // --8<-- [end:system]
                 // --8<-- [start:emitter]
                 onReady {

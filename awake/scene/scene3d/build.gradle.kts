@@ -23,6 +23,7 @@ kotlin {
             implementation(project(":awake:core:image"))
             implementation(project(":awake:core:math"))
             implementation(project(":awake:core:pool"))
+            implementation(project(":awake:particles"))
             api(project(":awake:core:color"))
             implementation(project(":awake:core:animation"))
             api(project(":awake:scene:scene-core"))
@@ -53,6 +54,6 @@ kotlin {
 mavenPublishing {
     pom {
         name.set("Awake Scene Rendering")
-        description.set("Camera, lights, mesh renderers, particles and the systems that turn a scene into draw calls")
+        description.set("Camera, lights, mesh renderers and the systems that turn a scene into draw calls")
     }
 }

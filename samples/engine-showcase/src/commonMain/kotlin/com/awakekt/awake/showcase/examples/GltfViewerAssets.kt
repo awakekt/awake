@@ -17,6 +17,10 @@ import com.awakekt.awake.core.image.toRgba8Bytes
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.math.boundingRadius
 import com.awakekt.awake.ecs.Entity
+import com.awakekt.awake.particles.ParticleDynamics
+import com.awakekt.awake.particles.ParticleEmitter
+import com.awakekt.awake.particles.ParticleMotion
+import com.awakekt.awake.particles.ParticleVisual
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.pipeline.AlphaMode
@@ -26,10 +30,6 @@ import com.awakekt.awake.render.texture.TextureAsset
 import com.awakekt.awake.scene.binding.Scene
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
-import com.awakekt.awake.scene.rendering.particles.ParticleDynamics
-import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
-import com.awakekt.awake.scene.rendering.particles.ParticleMotion
-import com.awakekt.awake.scene.rendering.particles.ParticleVisual
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 
 private const val TEXTURED_VERTEX_STRIDE_COMPONENTS = 11

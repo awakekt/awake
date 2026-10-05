@@ -140,6 +140,8 @@ comments:
       - '**/awake/core/text/**'
       - '**/awake/core/pool/**'
       - '**/awake/core/math/**'
+      - '**/awake/particles/**'
+      - '**/awake/scene/particles/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

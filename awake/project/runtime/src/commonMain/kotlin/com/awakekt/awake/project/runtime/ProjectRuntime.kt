@@ -32,6 +32,7 @@ import com.awakekt.awake.scene.document.SceneLoader
 import com.awakekt.awake.scene.document.SceneNode
 import com.awakekt.awake.scene.document.withPrefabs
 import com.awakekt.awake.scene.gltf.GltfAssetResolver
+import com.awakekt.awake.scene.particles.loadParticleSprites
 import com.awakekt.awake.scene.physics.PhysicsBodyBinding
 import com.awakekt.awake.scene.physics.ScenePhysicsBody
 import com.awakekt.awake.scene.rendering.Camera
@@ -39,7 +40,6 @@ import com.awakekt.awake.scene.rendering.animation.Animator
 import com.awakekt.awake.scene.rendering.animation.SkinnedPose
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
-import com.awakekt.awake.scene.rendering.particles.loadParticleSprites
 import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers
 import com.awakekt.awake.scene.runtime.SceneAppLifecycleRuntime
 import kotlin.math.PI

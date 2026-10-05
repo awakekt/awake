@@ -660,6 +660,30 @@ argument against splitting; it ships one jar and has no module boundary to pay f
 `Size2D` is new: a width/height with no origin, kept separate from `Rectangle` because a measured
 extent and a placed rect are different facts.
 
+## 9. `particles` is a capability and `scene:particles` is its wrapper — **Done**
+
+Particles lived in `scene:scene3d`, and the scene document's `particle_emitter` was the only way to
+reach them. Every option an author could not yet write in a scene file looked like a gap in the
+particle library, and an app with its own world and camera could not use the library at all.
+
+`awake:particles` now holds the emitter and its options, the simulation, the burst pool and the draw
+builder. It depends on `core:math`, `ecs`, `render:contract` and `render:passes`, and on no `scene:*`
+module. `awake:scene:particles` holds what is about a scene: the `particle_emitter` schema, its
+binding and mapping, sprite loading, the system that gives a placed emitter its `ParticleEmitter`,
+and `TransformPlacement`. `scene:scene3d` keeps a thin adapter that hands the scene's camera to the
+draw builder.
+
+The one place the library needed the scene was `Transform`: to follow an entity and to turn spawns by
+its rotation. That is now `EmitterPlacement`, which the library asks and the scene answers.
+
+It is about 1,300 lines, not the 100-line module that forces edits across dozens of consumers that
+"Adding a new module" warns about, and the boundary is the one that keeps `scene:*` out of a
+capability: the scene wraps particles, an app with no scene can still use them.
+
+The render planner still orders particle draws by name (`SceneParticleFeature3D`,
+`collectBeforeParticles`); generalising `RenderFeature3D`'s ordering slots belongs to
+[D33](../architecture/decisions/D33-render-feature-plugin-boundary.md).
+
 ## Adding a new module
 
 1. **Name it for the subsystem**, never the layer. If the name is `engine`, `backend`, `common`,

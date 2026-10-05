@@ -29,7 +29,7 @@ registers it.
 | [`mesh_renderer`](#mesh_renderer) | `MeshRenderer` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`movement_control`](#movement_control) | `MovementControl` | `com.awakekt.awake.scene:controls` | `registerControls()` | [Character controller](../guides/character-controller.md) |
 | [`navigation`](#navigation) | `NavigationGrid` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
-| [`particle_emitter`](#particle_emitter) | `ParticleEmitterSource` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Particles](../guides/particles.md) |
+| [`particle_emitter`](#particle_emitter) | `ParticleEmitterSource` | `com.awakekt.awake.scene:particles` | `DefaultSceneComponentResolvers.install()` | [Particles](../guides/particles.md) |
 | [`patrol`](#patrol) | `PatrolBehavior` | `com.awakekt.awake.ai:behavior` | `registerAiBehaviors()` | [AI](../guides/ai.md) |
 | [`pbr_material`](#pbr_material) | `PbrMaterial` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`physics_body`](#physics_body) | `PhysicsBody` | `com.awakekt.awake.scene:physics` | `registerPhysics()` | [Physics](../guides/physics.md) |

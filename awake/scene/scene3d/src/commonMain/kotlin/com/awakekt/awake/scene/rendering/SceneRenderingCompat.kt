@@ -22,5 +22,4 @@ internal typealias SceneLightingCompiler = com.awakekt.awake.scene.rendering.lig
 internal typealias SceneCullingCompiler = com.awakekt.awake.scene.rendering.spatial.SceneCullingCompiler
 internal typealias FrameCulling = com.awakekt.awake.scene.rendering.spatial.FrameCulling
 internal typealias SceneDrawCollector = com.awakekt.awake.scene.rendering.mesh.SceneDrawCollector
-internal typealias SceneParticleCompiler = com.awakekt.awake.scene.rendering.particles.SceneParticleCompiler
 internal typealias SceneGeometryFeature3D = com.awakekt.awake.scene.rendering.mesh.SceneGeometryFeature3D

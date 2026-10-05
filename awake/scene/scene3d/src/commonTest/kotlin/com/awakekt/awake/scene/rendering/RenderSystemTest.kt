@@ -17,19 +17,21 @@ import com.awakekt.awake.core.math.Mat4
 import com.awakekt.awake.core.math.Vec3f
 import com.awakekt.awake.core.text.font.UiFont
 import com.awakekt.awake.ecs.World
+import com.awakekt.awake.particles.ParticleEmitter
+import com.awakekt.awake.particles.ParticleVisual
 import com.awakekt.awake.render.command.GpuDrawPreparationSource
 import com.awakekt.awake.render.command.GpuDrawPreparer
 import com.awakekt.awake.render.command.GpuPassInput
 import com.awakekt.awake.render.material.Material
 import com.awakekt.awake.render.mesh.Mesh
 import com.awakekt.awake.render.passes.RenderDrawCommand
+import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.passes.uniforms.DEFAULT_SCENE_LIGHT
 import com.awakekt.awake.render.passes.uniforms.SceneLight
 import com.awakekt.awake.render.passes.uniforms.ShadowCascadeUniforms
 import com.awakekt.awake.render.renderer.LineSegment
 import com.awakekt.awake.render.renderer.RenderViewport
 import com.awakekt.awake.render.renderer.Renderer
-import com.awakekt.awake.render.passes.shadowCascadeUniforms
 import com.awakekt.awake.render.texture.PbrTextureSet
 import com.awakekt.awake.render.texture.RenderTarget
 import com.awakekt.awake.render.texture.TextureAsset
@@ -44,8 +46,6 @@ import com.awakekt.awake.scene.rendering.mesh.LodGroup
 import com.awakekt.awake.scene.rendering.mesh.LodLevel
 import com.awakekt.awake.scene.rendering.mesh.MeshBounds
 import com.awakekt.awake.scene.rendering.mesh.MeshRenderer
-import com.awakekt.awake.scene.rendering.particles.ParticleEmitter
-import com.awakekt.awake.scene.rendering.particles.ParticleVisual
 import com.awakekt.awake.scene.rendering.spatial.Occluder
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -697,13 +697,9 @@ class RenderSystemTest {
             startAlpha = 1f,
             scale = 0.1f,
         )
-        // Manually place 3 already-alive particles at increasing distance from the eye (z=5) --
+        // Hand-emit 3 particles at increasing distance from the eye (z=5) --
         // near (-1), mid (-3), far (-5) along the camera's forward axis.
-        listOf(-1f, -3f, -5f).forEachIndexed { index, z ->
-            emitter.particles[index].alive = true
-            emitter.particles[index].position.set(0f, 0f, z)
-            emitter.particles[index].lifetime = 10f
-        }
+        listOf(-1f, -3f, -5f).forEach { z -> emitter.spawn(Vec3f(0f, 0f, z)) }
         world.add(world.create(), emitter)
         val renderer = RecordingRenderer()
 
@@ -718,10 +714,6 @@ class RenderSystemTest {
         assertEquals(-1f, instanceModels[2].m23)
     }
 
-    /** One already-spawned, already-alive particle at [position] -- `spawnRate = 0f` so nothing
-     * else spawns; a plain [ParticleEmitter] constructor call doesn't accept pre-alive
-     * particles, so this reaches into the pool directly the same way the visible-ordering test
-     * above does. */
     @Test
     fun stretchWithVelocityPacksAWorldSpaceStretchVectorIntoInstanceModelColumn1() {
         val world = worldWithPrimaryCamera()
@@ -730,10 +722,7 @@ class RenderSystemTest {
             maxParticles = 1, spawnRate = 0f, lifetime = 10f, startAlpha = 1f, scale = 0.1f,
             visual = ParticleVisual(stretchWithVelocity = true, stretchFactor = 0.5f),
         )
-        emitter.particles[0].alive = true
-        emitter.particles[0].position.set(0f, 0f, 0f)
-        emitter.particles[0].velocity.set(2f, 0f, 0f)
-        emitter.particles[0].lifetime = 10f
+        emitter.spawn(Vec3f(0f, 0f, 0f), Vec3f(2f, 0f, 0f))
         world.add(world.create(), emitter)
         val renderer = RecordingRenderer()
 
@@ -760,10 +749,7 @@ class RenderSystemTest {
             scale = 0.1f,
             // stretchWithVelocity defaults to false.
         )
-        emitter.particles[0].alive = true
-        emitter.particles[0].position.set(0f, 0f, 0f)
-        emitter.particles[0].velocity.set(2f, 0f, 0f)
-        emitter.particles[0].lifetime = 10f
+        emitter.spawn(Vec3f(0f, 0f, 0f), Vec3f(2f, 0f, 0f))
         world.add(world.create(), emitter)
         val renderer = RecordingRenderer()
 
@@ -775,6 +761,7 @@ class RenderSystemTest {
         assertEquals(listOf(0f, 0f, 0f), listOf(model.m01, model.m11, model.m21), "no stretch leaves column 1 zero")
     }
 
+    /** One live particle at [position] -- `spawnRate = 0f` so nothing else spawns. */
     private fun burstEmitterAt(position: Vec3f): ParticleEmitter {
         val emitter = ParticleEmitter(
             mesh = fakeMesh(),
@@ -786,9 +773,7 @@ class RenderSystemTest {
             startAlpha = 1f,
             scale = 0.1f,
         )
-        emitter.particles[0].alive = true
-        emitter.particles[0].position.set(position.x, position.y, position.z)
-        emitter.particles[0].lifetime = 10f
+        emitter.spawn(position)
         return emitter
     }
 
