@@ -36,6 +36,9 @@ import com.awakekt.awake.scene.rendering.mesh.PbrMaterial
 import com.awakekt.awake.scene.rendering.mesh.SceneMeshRenderer
 import com.awakekt.awake.scene.rendering.mesh.ScenePbrMaterial
 import com.awakekt.awake.scene.rendering.mesh.SceneTextureAnimation
+import com.awakekt.awake.scene.rendering.mesh.SceneTextureClip
+import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
+import com.awakekt.awake.scene.rendering.mesh.TextureClips
 import kotlin.math.PI
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -299,6 +302,34 @@ class SceneLoaderTest {
         val exported = SceneLoader.fromWorld(world, name = "x").nodes.associate { it.name to it.components }
         assertEquals(animation, exported.getValue("water").filterIsInstance<SceneTextureAnimation>().single())
         assertTrue(exported.getValue("still").none { it is SceneTextureAnimation }, "a still material exports no animation")
+    }
+
+    /** A sheet's clips survive the file, load showing the first cell of the clip that plays, and export with the clip playing now. */
+    @Test
+    fun spriteClipsRoundTripThroughTheFileAndTheWorld() {
+        val sheet = SceneTextureClips(
+            columns = 4,
+            rows = 4,
+            clips = linkedMapOf(
+                "walk" to SceneTextureClip(firstFrame = 8, frameCount = 4, framesPerSecond = 10f),
+                "attack" to SceneTextureClip(firstFrame = 12, frameCount = 3, framesPerSecond = 10f, loop = false),
+            ),
+            clip = "walk",
+        )
+        val world = World()
+
+        SceneLoader.decode(SceneLoader.encode(SceneDocument(nodes = listOf(SceneNode(name = "hero", components = listOf(sheet))))))
+            .instantiate(world = world)
+
+        var found: Entity? = null
+        world.family<Name>().forEach { entity, name -> if (name.value == "hero") found = entity }
+        val hero = assertNotNull(found)
+        val clips = assertNotNull(world.get<TextureClips>(hero))
+        assertEquals(sheet, clips.sheet)
+        assertEquals(TextureAnimation(4, 4, 1, 0f, 0f, 0f, 8), world.get<TextureAnimation>(hero), "the first cell shows before any step")
+        clips.play("attack")
+        val exported = SceneLoader.fromWorld(world, name = "x").nodes.single().components
+        assertEquals(sheet.copy(clip = "attack"), exported.filterIsInstance<SceneTextureClips>().single())
     }
 
     /** A run that starts partway into the sheet survives the file; a length of 0 plays to the sheet's last cell. */
