@@ -9,8 +9,9 @@
 <span class="awake-badge">Desktop · Android · iOS · Web</span>
 </div>
 
-A scene document places an emitter with `particle_emitter`; the Kotlin API below has every option.
-AwakeKt Studio has no particle editor yet.
+A scene document places an emitter with `particle_emitter` and can set every option the tables below
+list, except the ones that are code: the `onParticleDeath` callback, `groundHeightProvider`,
+`dynamicSpawnRate`, and sub-emitters (`children`). AwakeKt Studio has no particle editor yet.
 
 ## Place an emitter from a scene document
 
@@ -65,6 +66,54 @@ motion, `spawnRadius` and `radialSpeed` stay in world space. Lift the node a lit
 not fight it for depth. In Kotlin, set `ParticleVisual(facing = ParticleFacing.Flat)`; the plane
 comes from the `Transform` of the entity carrying the `ParticleEmitter`, or is the world's ground
 plane when that entity has none.
+
+## Gravity, fading, bouncing and streaks from a scene document
+
+These options are fields of `particle_emitter` too, with the same names and defaults as the Kotlin
+types in the tables below. Sparks that arc under gravity, fade in and out, streak with their speed and
+bounce on the floor:
+
+```json title="Scene document"
+{
+  "component": "particle_emitter",
+  "texture": "assets/fx/spark.png",
+  "maxParticles": 80,
+  "spawnRate": 60,
+  "lifetime": 1.2,
+  "velocity": {"x": 0, "y": 4, "z": 0},
+  "coneHalfAngleDegrees": 25,
+  "acceleration": {"x": 0, "y": -9.8, "z": 0},
+  "alphaCurve": {"fadeInEnd": 0.1, "fadeOutStart": 0.6},
+  "stretchWithVelocity": true,
+  "stretchFactor": 0.08,
+  "ground": {"groundY": 0, "restitution": 0.4, "friction": 0.7},
+  "additive": true
+}
+```
+
+`acceleration` is in world space, so gravity stays down however the node is turned; set
+`inheritOrientation` to turn the spawn ring and `velocity` with the node instead, so an emitter aimed
+along a direction fires that way. `ground` takes a flat floor at `groundY` and any number of
+`colliders`, boxes with a `min` and `max` corner whose top faces particles land on. `turbulence` and
+`turbulenceFrequency` add a flow-field wobble, and `convergeToOrigin` sends particles toward the node
+for a charge-up.
+
+A pulsing emitter spawns on a schedule, in place of `spawnRate`:
+
+```json title="Scene document"
+{
+  "component": "particle_emitter",
+  "texture": "assets/fx/puff.png",
+  "lifetime": 1.5,
+  "burstCycle": {"cycleSeconds": 2, "activeSeconds": 1, "burstInterval": 0.25, "burstSize": 5}
+}
+```
+
+That fires 5 particles at 0, 0.25, 0.5 and 0.75 seconds of every 2-second cycle.
+
+`burstCount` makes a one-shot effect: the emitter stops after that many particles, and once they have
+all died **the node carrying it is removed from the world**, whatever else the node holds. Put a
+one-shot emitter on a node of its own.
 
 ## Register the quad and the material
 

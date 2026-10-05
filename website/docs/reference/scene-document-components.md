@@ -296,10 +296,10 @@ Spawns sprites at its node's world position, turned to the camera or lying flat,
 node. `SceneParticleEmitter`.
 
 Sizes, speeds and `spawnRadius` are world units; the node's scale does not apply, and its rotation
-only tilts a `Flat` emitter's plane. Each
-particle fades from `startAlpha` to 0 over its `lifetime`, while its tint moves from `color` to
-`endColor` and its size from `scale` to `endScale`. `playProject` runs it; see
-[Particles](../guides/particles.md).
+only tilts a `Flat` emitter's plane and, with `inheritOrientation`, turns the spawn ring and
+`velocity`. Each particle fades from `startAlpha` to 0 over its `lifetime` (or by `alphaCurve`), while
+its tint moves from `color` to `endColor` and its size from `scale` to `endScale`. `playProject` runs
+it; see [Particles](../guides/particles.md).
 
 | Field | Type | Default | What it does |
 | --- | --- | --- | --- |
@@ -321,6 +321,45 @@ particle fades from `startAlpha` to 0 over its `lifetime`, while its tint moves 
 | `frameRate` | number | `8` | Frames per second of that strip. |
 | `additive` | boolean | `false` | Adds to what is behind, for glows. Needs the particle pipeline built with `buildAdditive`. |
 | `facing` | `Camera` · `Flat` | `Camera` | `Camera` turns each sprite to the camera. `Flat` lays it in the plane perpendicular to the node's up axis, on the ground for an upright node, its texture's top toward the node's -Z: ground glows, ripples, magic circles. |
+| `acceleration` | vector | `{x: 0, y: 0, z: 0}` | A constant world-space acceleration in units per second squared, added to every live particle's velocity: `{y: -9.8}` is gravity. Finite. |
+| `inheritOrientation` | boolean | `false` | The node's rotation turns the spawn ring and `velocity` (so also the cone's axis and the jitter axes). `acceleration` and `radialSpeed` stay in world space. |
+| `alphaCurve` | alpha curve | none | Fades a particle in and out over its life. None is the linear fade from `startAlpha` to 0. Described below. |
+| `burstCycle` | burst cycle | none | A pulsing emission that replaces `spawnRate`. None spawns continuously. Described below. |
+| `turbulence` | number | `0` | Strength of a smooth flow-field wobble added to every particle's velocity. Finite. |
+| `turbulenceFrequency` | number | `1` | How tight that wobble is. Finite, not negative. |
+| `convergeToOrigin` | boolean | `false` | Aims each particle at the node, at the speed of `velocity`, instead of along it; with a `spawnRadius` they appear on a ring and close in. Ignores `radialSpeed`. |
+| `stretchWithVelocity` | boolean | `false` | Stretches each sprite along its screen motion, for streaks. |
+| `stretchFactor` | number | `0.05` | World units of stretch per unit of speed. Finite, not negative. |
+| `burstCount` | number | none | Particles to spawn in the emitter's whole life. When they have all died **the node carrying the emitter is removed from the world**, so put a one-shot emitter on a node of its own. Above 0. |
+| `ground` | ground | none | Where falling particles land. None lets them fall and fade. Described below. |
+
+`alphaCurve` is an object with the fractions of a particle's life at which it reaches full opacity and
+starts to fade out, both within 0 to 1 with `fadeInEnd` not after `fadeOutStart`:
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `fadeInEnd` | number | `0` | Fraction of life at which opacity reaches `startAlpha`. |
+| `fadeOutStart` | number | `0` | Fraction of life at which opacity starts to fall to 0. |
+
+`burstCycle` loops: for the first `activeSeconds` of every `cycleSeconds`, `burstSize` particles spawn
+every `burstInterval` seconds, then nothing spawns until the cycle repeats:
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `cycleSeconds` | number | required | Length of one cycle. Above 0. |
+| `activeSeconds` | number | required | How much of the cycle bursts fire in. Above 0, at most `cycleSeconds`. |
+| `burstInterval` | number | required | Seconds between bursts while active. Above 0. |
+| `burstSize` | number | required | Particles per burst. Above 0. |
+
+`ground` makes falling particles land. A particle over a collider lands on its top face, otherwise on
+the plane at `groundY`, otherwise it never lands:
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `groundY` | number | none | Height of a flat ground plane. None has no plane. |
+| `restitution` | number | `0` | Fraction of fall speed kept as a bounce: 0 stops the particle, 1 is lossless, above 1 gains energy. Not negative. |
+| `friction` | number | `1` | Fraction of sideways speed kept on each bounce. Not negative. |
+| `colliders` | array of box | `[]` | World-space boxes, each `{min: vector, max: vector}`, with `min` at or below `max` on every axis. |
 
 ## `patrol`
 

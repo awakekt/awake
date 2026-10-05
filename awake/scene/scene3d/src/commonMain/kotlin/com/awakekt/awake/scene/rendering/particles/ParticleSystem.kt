@@ -34,8 +34,9 @@ private const val ORIENTATION_FLOATS = 9
  * current live particles fresh each frame; this system owns writing to it.
  *
  * Also owns [ParticleEmitter.lifecycle]'s `burstCount` cleanup: a one-shot emitter's entity is
- * destroyed once every particle it will ever spawn has died, so [com.awakekt.awake
- * .scene.rendering.components.spawnParticleBurst] callers never need their own bookkeeping.
+ * destroyed once every particle it will ever spawn has died, so [spawnParticleBurst] callers never
+ * need their own bookkeeping. That removes the whole entity, which is why a scene's `particle_emitter`
+ * with a `burstCount` belongs on a node of its own.
  */
 class ParticleSystem : System {
     private val spentEntities = ArrayList<Entity>()
@@ -212,9 +213,8 @@ class ParticleSystem : System {
         )
     }
 
-    /** Velocity resolution, in priority order -- see [com.awakekt.awake.scene
-     * .rendering.components.ParticleMotion]'s own doc comment for the full 3-case breakdown
-     * (converge-to-origin, cone burst, per-axis jitter). */
+    /** Velocity resolution, in priority order -- see [ParticleMotion]'s own doc comment for the full
+     * 3-case breakdown (converge-to-origin, cone burst, per-axis jitter). */
     private fun spawnVelocity(emitter: ParticleEmitter, spawnPosition: Vec3f): Vec3f {
         val motion = emitter.motion
         if (motion.convergeToOrigin) {
