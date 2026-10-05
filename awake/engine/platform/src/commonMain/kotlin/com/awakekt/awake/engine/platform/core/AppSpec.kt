@@ -14,6 +14,15 @@ import kotlin.reflect.KClass
 
 /**
  * Immutable specification for an [AwakeAppLifecycle].
+ *
+ * @property windowConfig Window and presentation configuration settings.
+ * @param onReady Initializer callbacks invoked when the renderer becomes ready.
+ * @param onTick Per-frame update callbacks invoked during application tick.
+ * @param onResize Viewport resize callbacks invoked when display bounds change.
+ * @param onPause Callbacks invoked when the application pauses or loses focus.
+ * @param onResume Callbacks invoked when the application resumes from a paused state.
+ * @param onDispose Teardown callbacks invoked in reverse order during disposal.
+ * @param services Registered dependency injection services keyed by class.
  */
 class AppSpec internal constructor(
     val windowConfig: WindowConfig,
@@ -25,6 +34,11 @@ class AppSpec internal constructor(
     private val onDispose: List<() -> Unit>,
     private val services: Map<KClass<*>, Any>,
 ) {
+    /**
+     * Creates a new [AwakeAppLifecycle] instance wired with the configured callbacks and services.
+     *
+     * @return Fully configured [AwakeAppLifecycle] instance ready for platform initialization.
+     */
     fun createLifecycle(): AwakeAppLifecycle = AwakeAppLifecycle(
         delegate = object : AppLifecycle {
             override suspend fun ready(renderer: Renderer) {

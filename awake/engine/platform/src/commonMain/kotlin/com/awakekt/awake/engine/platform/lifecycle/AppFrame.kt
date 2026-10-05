@@ -16,14 +16,17 @@ import com.awakekt.awake.core.input.InputSnapshot
  * bridges write into it outside the frame.
  *
  * New per-frame values belong here rather than as extra `update` parameters.
+ *
+ * @property delta Elapsed time in seconds since the previous frame.
+ * @property viewportWidth Framebuffer width in physical pixels.
+ * @property viewportHeight Framebuffer height in physical pixels.
+ * @property input Input state snapshot captured for this frame.
+ * @property density Physical pixels per dp-equivalent display unit.
  */
 data class AppFrame(
     val delta: Float,
     val viewportWidth: Float,
     val viewportHeight: Float,
     val input: InputSnapshot,
-    /** Physical pixels per dp-equivalent unit -- 1f (unscaled) unless the backend knows the
-     * real display scale. [viewportWidth]/[viewportHeight] are always physical framebuffer
-     * pixels; a UI layer that sizes itself in device-independent units needs this to convert. */
     val density: Float = 1f,
 )

@@ -15,25 +15,59 @@ package com.awakekt.awake.net
  * indirection plus a per-packet allocation on the hot path for a single producer.
  */
 sealed interface NetViolation {
+    /** Simulation tick index on which the violation occurred. */
     val tick: Long
 
-    /** Input addressed an entity the connection does not own. */
+    /**
+     * Input addressed an entity the connection does not own.
+     *
+     * @property tick Simulation tick index on which the violation occurred.
+     * @property target Network entity identifier that the session attempted to manipulate without ownership.
+     */
     data class NotOwner(override val tick: Long, val target: NetId) : NetViolation
 
-    /** More inputs in one tick than the server accepts. */
+    /**
+     * More inputs in one tick than the server accepts.
+     *
+     * @property tick Simulation tick index on which the violation occurred.
+     * @property count Number of input payloads received within a single simulation tick.
+     */
     data class InputFlood(override val tick: Long, val count: Int) : NetViolation
 
-    /** A move the server's own simulation would not produce. */
+    /**
+     * A move the server's own simulation would not produce.
+     *
+     * @property tick Simulation tick index on which the violation occurred.
+     * @property meters Distance in meters that the client requested to move beyond allowed threshold.
+     */
     data class MoveTooFar(override val tick: Long, val meters: Float) : NetViolation
 
-    /** Failed decode: wrong opcode, bad length, truncated, or over-sized. */
+    /**
+     * Failed decode: wrong opcode, bad length, truncated, or over-sized.
+     *
+     * @property tick Simulation tick index on which the violation occurred.
+     * @property bytes Number of bytes in the malformed packet payload.
+     * @property reason Diagnostic message describing why the packet payload failed decoding.
+     */
     data class MalformedPacket(override val tick: Long, val bytes: Int, val reason: String) : NetViolation
 
-    /** A tick number outside the window the server will accept. */
+    /**
+     * A tick number outside the window the server will accept.
+     *
+     * @property tick Simulation tick index claimed by the client packet.
+     * @property serverTick Current authoritative server simulation tick index.
+     */
     data class TickOutOfWindow(override val tick: Long, val serverTick: Long) : NetViolation
 }
 
+/** Sink that receives reported network policy violations. */
 fun interface ViolationSink {
+    /**
+     * Reports a network violation committed by a session.
+     *
+     * @param session Identifier of the network session that committed the violation.
+     * @param violation Violation details recorded by the network layer.
+     */
     fun report(session: SessionId, violation: NetViolation)
 }
 
@@ -45,6 +79,8 @@ fun interface ViolationSink {
  * packets as fast as the socket allows and the log pipeline becomes the target. Aggregation is
  * therefore the security control, not a tidiness preference. [sample] is bounded by
  * [maxSamplesPerKind]; everything past that increments a counter and allocates nothing new.
+ *
+ * @param maxSamplesPerKind Maximum number of concrete violation instances retained per kind.
  */
 class CountingViolationSink(
     private val maxSamplesPerKind: Int = DEFAULT_MAX_SAMPLES,
@@ -61,15 +97,38 @@ class CountingViolationSink(
         if (kept.size < maxSamplesPerKind) kept += violation
     }
 
+    /**
+     * Returns the number of recorded violations of the specified [kind] for [session].
+     *
+     * @param session Identifier of the network session.
+     * @param kind Name of the violation kind.
+     * @return Total count of recorded violations of the specified kind for the session.
+     */
     fun count(session: SessionId, kind: String): Int = counts[session]?.get(kind) ?: 0
 
+    /**
+     * Returns the grand total of all recorded violations across all sessions and kinds.
+     *
+     * @return Grand total of recorded violations.
+     */
     fun total(): Int = counts.values.sumOf { perSession -> perSession.values.sum() }
 
+    /**
+     * Returns the list of retained violation samples for the specified [kind].
+     *
+     * @param kind Name of the violation kind.
+     * @return List of retained sample violations matching the specified kind.
+     */
     fun sample(kind: String): List<NetViolation> = samples[kind].orEmpty()
 
     /** Total retained objects, which must stay bounded no matter how long a flood runs. */
     fun retainedSamples(): Int = samples.values.sumOf { it.size }
 
+    /**
+     * Clears and forgets all violation tracking data recorded for [session].
+     *
+     * @param session Identifier of the session whose violation counters should be discarded.
+     */
     fun forget(session: SessionId) {
         counts.remove(session)
     }

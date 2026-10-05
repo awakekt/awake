@@ -13,6 +13,10 @@ import kotlin.reflect.KClass
 /**
  * A single game session. Pure delegation to a [AppLifecycle] implementation with
  * attached window configuration and services.
+ *
+ * @param delegate Backing application life-cycle delegate implementation.
+ * @property windowConfig Application window and presentation configuration.
+ * @param services Registered dependency injection services map.
  */
 class AwakeAppLifecycle internal constructor(
     private val delegate: AppLifecycle,
@@ -31,6 +35,10 @@ class AwakeAppLifecycle internal constructor(
      *
      * For headless and test callers. A real host builds the [AppFrame] itself, so the snapshot
      * is taken at the point in the frame it actually belongs (see `GraphicsEngine.update`).
+     *
+     * @param delta Elapsed time in seconds since the previous frame.
+     * @param viewportWidth Framebuffer width in physical pixels.
+     * @param viewportHeight Framebuffer height in physical pixels.
      */
     fun update(delta: Float, viewportWidth: Float, viewportHeight: Float) {
         update(AppFrame(delta, viewportWidth, viewportHeight, input.currentSnapshot))
@@ -57,5 +65,12 @@ class AwakeAppLifecycle internal constructor(
     // MutableGameServices.register), so `as? T` matches the entry's real type or the lookup
     // legitimately returns null for an unregistered type.
     @Suppress("UNCHECKED_CAST")
+    /**
+     * Resolves an optional service of type [type] from registered services.
+     *
+     * @param T Service class or interface type.
+     * @param type Service class token to lookup.
+     * @return The registered service instance, or `null` if not registered.
+     */
     override fun <T : Any> service(type: KClass<T>): T? = services[type] as? T
 }

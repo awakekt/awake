@@ -50,6 +50,12 @@ const val PROJECT_MANIFEST = "awake.project.json"
 /**
  * A project read from its files, ready to [playProject]: its manifest, entry scene, loaded models,
  * and a physics world when the scene has bodies or characters.
+ *
+ * @property manifest Validated project manifest describing entry points and asset directories.
+ * @property scene Loaded initial scene document ready for simulation instantiation.
+ * @property models Asset resolver providing access to loaded glTF meshes and models.
+ * @property physics Physics simulation world instance if required by the scene, or `null`.
+ * @property particleSprites Particle texture assets keyed by asset identifier.
  */
 class PlayableProject internal constructor(
     val manifest: AwakeProjectManifest,
