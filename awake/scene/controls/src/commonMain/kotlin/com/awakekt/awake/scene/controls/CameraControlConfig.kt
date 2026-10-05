@@ -10,6 +10,24 @@ import com.awakekt.awake.scene.controls.camera.CameraMode
 
 /**
  * Data-driven configuration for camera mouse, keyboard, and gesture controls.
+ *
+ * @property mode Active camera projection and tracking mode.
+ * @property orbitSensitivity Sensitivity factor applied to mouse orbit gestures in radians per pixel.
+ * @property zoomRate Zoom step scaling factor applied to mouse scroll delta.
+ * @property baseMoveSpeed Base keyboard translation speed in units per second.
+ * @property boostMultiplier Speed multiplier applied when holding the boost modifier key.
+ * @property panScale Pan scaling factor converting screen space pixel delta to world units.
+ * @property minDistance Minimum zoom or orbit distance from the target in world units.
+ * @property maxDistance Maximum zoom or orbit distance from the target in world units.
+ * @property minPitchRad Minimum allowable pitch angle in radians.
+ * @property maxPitchRad Maximum allowable pitch angle in radians.
+ * @property invertYaw Whether to invert horizontal yaw rotation input.
+ * @property invertPitch Whether to invert vertical pitch rotation input.
+ * @property invertScroll Whether to invert mouse scroll wheel zoom direction.
+ * @property allowOrbit Whether orbiting around the target is permitted.
+ * @property allowZoom Whether zooming towards or away from the target is permitted.
+ * @property allowPan Whether panning across the camera plane is permitted.
+ * @property allowKeyboardFlight Whether keyboard translation and flight controls are active.
  */
 data class CameraControlConfig(
     // Active Camera Mode

@@ -1,0 +1,1 @@
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for the scene management cluster (`:awake:scene:controls`, `:awake:scene:world`, `:awake:scene:worldstream`).

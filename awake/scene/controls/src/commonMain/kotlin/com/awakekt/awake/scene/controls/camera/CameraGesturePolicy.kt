@@ -15,6 +15,12 @@ import com.awakekt.awake.scene.controls.input.keybindingProfile
  * Predicate resolving whether an input frame constitutes an active camera drag.
  */
 fun interface CameraDragPredicate {
+    /**
+     * Evaluates whether the given gameplay input satisfies the drag condition.
+     *
+     * @param input Current frame gameplay input state.
+     * @return `true` if dragging is active, `false` otherwise.
+     */
     fun isDragging(input: GameplayInput): Boolean
 }
 
@@ -22,6 +28,17 @@ fun interface CameraDragPredicate {
  * Configurable policy controlling which buttons and gestures activate camera navigation.
  *
  * A pan drag wins over an orbit drag when both hold.
+ *
+ * @property isOrbitDragging Predicate resolving whether an orbit drag is currently active.
+ * @property isPanDragging Predicate resolving whether a pan drag is currently active.
+ * @property canFly Predicate resolving whether keyboard free-fly navigation is permitted this frame.
+ * @property flyKeys Keybinding mapping for directional free-fly navigation actions.
+ * @property lookSensitivity Sensitivity scale applied to pointer movement during look and orbit.
+ * @property zoomSensitivity Base distance units traversed per scroll wheel step.
+ * @property zoomProportion Proportional distance scaling factor added per scroll notch to maintain zoom feel at distance.
+ * @property panSensitivity Pan distance factor in world units per pixel per unit of orbit distance.
+ * @property invertYaw Whether to invert horizontal yaw rotation input.
+ * @property invertPitch Whether to invert vertical pitch rotation input.
  */
 data class CameraGesturePolicy(
     val isOrbitDragging: CameraDragPredicate = CameraDragPredicate { input ->
@@ -42,6 +59,9 @@ data class CameraGesturePolicy(
     val invertYaw: Boolean = false,
     val invertPitch: Boolean = false,
 ) {
+    /**
+     * Preset camera gesture policies and default configurations.
+     */
     companion object {
         /** Default game navigation: Left drag or Right drag orbit. */
         val Default = CameraGesturePolicy()
@@ -72,5 +92,28 @@ data class CameraGesturePolicy(
     }
 }
 
-/** A free-fly movement bound in [CameraGesturePolicy.flyKeys]. */
-enum class CameraFlyAction { Forward, Back, Left, Right, Down, Up, Fast }
+/**
+ * Directional movement actions for free-fly camera navigation.
+ */
+enum class CameraFlyAction {
+    /** Translate forward along the view direction. */
+    Forward,
+
+    /** Translate backward along the view direction. */
+    Back,
+
+    /** Translate left along the camera right vector. */
+    Left,
+
+    /** Translate right along the camera right vector. */
+    Right,
+
+    /** Translate vertically downward in world space. */
+    Down,
+
+    /** Translate vertically upward in world space. */
+    Up,
+
+    /** Accelerate translation speed while held. */
+    Fast,
+}

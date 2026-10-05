@@ -21,6 +21,11 @@ class CameraRelativeBasis {
     private val forward = Vec3f(0f, 0f, -1f)
     private val right = Vec3f(1f, 0f, 0f)
 
+    /**
+     * Updates horizontal forward and right basis vectors from the active camera in [world].
+     *
+     * @param world Active ECS world containing the active camera entity.
+     */
     fun update(world: World) {
         forward.set(0f, 0f, -1f)
         right.set(1f, 0f, 0f)
@@ -38,10 +43,22 @@ class CameraRelativeBasis {
         }
     }
 
-    /** World X for [moveX] to the right and [moveZ] forward. */
+    /**
+     * Computes the world-space X translation for [moveX] to the right and [moveZ] forward.
+     *
+     * @param moveX Lateral rightward movement intent.
+     * @param moveZ Longitudinal forward movement intent.
+     * @return World-space X axis delta.
+     */
     fun worldX(moveX: Float, moveZ: Float): Float = right.x * moveX + forward.x * moveZ
 
-    /** World Z for [moveX] to the right and [moveZ] forward. */
+    /**
+     * Computes the world-space Z translation for [moveX] to the right and [moveZ] forward.
+     *
+     * @param moveX Lateral rightward movement intent.
+     * @param moveZ Longitudinal forward movement intent.
+     * @return World-space Z axis delta.
+     */
     fun worldZ(moveX: Float, moveZ: Float): Float = right.z * moveX + forward.z * moveZ
 
     private companion object {

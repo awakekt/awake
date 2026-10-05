@@ -16,7 +16,11 @@ import com.awakekt.awake.ecs.World
  * because [AsyncWorldCellStreamListener.loadCell] is handed no `World` to race with.
  */
 fun interface CellContent {
-    /** Runs on the frame thread, only while the cell is still active. */
+    /**
+     * Runs on the frame thread, only while the cell is still active.
+     *
+     * @param world The active ECS world instance.
+     */
     fun applyTo(world: World)
 }
 
@@ -36,8 +40,17 @@ interface AsyncWorldCellStreamListener {
      *
      * Cancelled if the cell leaves the unload radius before this returns, so a long load should
      * be cooperative. A result that lands anyway is discarded rather than applied.
+     *
+     * @param coord The world cell coordinate to load.
+     * @return A [CellContent] applicator that applies the loaded content onto the frame thread.
      */
     suspend fun loadCell(coord: WorldCellCoord): CellContent
 
+    /**
+     * Unloads content for [coord] synchronously on the frame thread.
+     *
+     * @param world The active ECS world instance.
+     * @param coord The world cell coordinate being unloaded.
+     */
     fun onCellUnload(world: World, coord: WorldCellCoord)
 }

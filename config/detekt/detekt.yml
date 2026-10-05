@@ -129,6 +129,9 @@ comments:
       - '**/awake/editor/contract/**'
       - '**/awake/node-graph/**'
       - '**/awake/blueprint/**'
+      - '**/awake/scene/controls/**'
+      - '**/awake/scene/world/**'
+      - '**/awake/scene/worldstream/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

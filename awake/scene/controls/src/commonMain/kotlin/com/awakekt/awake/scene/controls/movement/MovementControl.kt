@@ -18,8 +18,13 @@ private const val TWO_PI = (2 * PI).toFloat()
  * Stores intended translation deltas for a character or player.
  */
 class MovementControl : Poolable {
+    /** Lateral movement intent along the X axis. */
     var moveX: Float = 0f
+
+    /** Vertical movement intent along the Y axis. */
     var moveY: Float = 0f
+
+    /** Longitudinal movement intent along the Z axis. */
     var moveZ: Float = 0f
 
     /** Units per second for this entity. Null uses the movement system's speed. */
@@ -48,12 +53,22 @@ class MovementControl : Poolable {
         turnSpeed = 0f
     }
 
-    /** Units per second to move at this frame: [runSpeed] while running, else [speed], else [default]. */
+    /**
+     * Resolves the effective movement speed in units per second for the current frame.
+     *
+     * @param default Fallback speed in units per second if neither [runSpeed] nor [speed] is set.
+     * @return Effective movement speed in units per second.
+     */
     fun currentSpeed(default: Float): Float = (if (run) runSpeed else null) ?: speed ?: default
 
     /**
      * Turns [transform] toward world direction ([worldX], [worldZ]) by at most [turnSpeed] times
      * [delta] radians, the short way round. A model faces +Z at yaw 0, glTF's forward.
+     *
+     * @param transform Transform component whose yaw orientation is updated.
+     * @param worldX Target direction X component in world space.
+     * @param worldZ Target direction Z component in world space.
+     * @param delta Frame time delta in seconds.
      */
     fun turnToward(transform: Transform, worldX: Float, worldZ: Float, delta: Float) {
         if (turnSpeed <= 0f || (worldX == 0f && worldZ == 0f)) return

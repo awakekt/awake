@@ -21,6 +21,16 @@ import kotlin.reflect.KClass
  * How a camera follows or orbits, as authored in a scene. [target] names the node it follows;
  * [offset] is where it aims relative to the target, or the pivot when there is none. Angles are in
  * radians; a negative [pitch] looks down.
+ *
+ * @property mode Camera tracking and orientation mode.
+ * @property target Optional name of the scene node to follow.
+ * @property distance Initial distance from target or pivot in world units.
+ * @property minDistance Minimum zoom distance in world units.
+ * @property maxDistance Maximum zoom distance in world units.
+ * @property pitch Initial pitch rotation angle in radians.
+ * @property yaw Initial yaw rotation angle in radians.
+ * @property offset Aim or pivot offset in world units.
+ * @property flySpeed Translation speed in units per second when in free-fly mode.
  */
 @Serializable
 @SerialName("camera_rig")
@@ -46,6 +56,9 @@ data class SceneCameraRig(
     }
 }
 
+/**
+ * Scene component binding for serializing and deserializing [CameraRig] components as [SceneCameraRig].
+ */
 object CameraRigBinding : SceneComponentBinding<CameraRig, SceneCameraRig> {
     override val componentClass: KClass<CameraRig> = CameraRig::class
     override val schemaClass: KClass<SceneCameraRig> = SceneCameraRig::class
