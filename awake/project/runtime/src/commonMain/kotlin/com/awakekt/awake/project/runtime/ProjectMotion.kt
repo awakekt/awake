@@ -19,9 +19,11 @@ import com.awakekt.awake.scene.rendering.animation.KeyframeAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.LocomotionAnimationSystem
 import com.awakekt.awake.scene.rendering.animation.SceneKeyframeAnimation
 import com.awakekt.awake.scene.rendering.animation.SceneLocomotionAnimation
+import com.awakekt.awake.scene.rendering.mesh.SceneTextureClips
+import com.awakekt.awake.scene.rendering.mesh.TextureClipSystem
 import com.awakekt.awake.scene.runtime.SceneSystemPhase
 
-/** Spin, locomotion, keyframes and particles, for the scenes that have them. */
+/** Spin, locomotion, keyframes, sprite-sheet clips and particles, for the scenes that have them. */
 internal fun MutableList<PlaySpec>.addMotionSpecs(scene: SceneDocument) {
     if (scene.has(SceneSpinControl::class)) {
         add(PlaySpec("spin-clock", SceneSystemPhase.Frame) { SpinClockSystem() })
@@ -32,6 +34,9 @@ internal fun MutableList<PlaySpec>.addMotionSpecs(scene: SceneDocument) {
     }
     if (scene.has(SceneKeyframeAnimation::class)) {
         add(PlaySpec("keyframes", SceneSystemPhase.Frame) { KeyframeAnimationSystem() })
+    }
+    if (scene.has(SceneTextureClips::class)) {
+        add(PlaySpec("texture-clips", SceneSystemPhase.Frame) { TextureClipSystem() })
     }
     if (scene.has(SceneParticleEmitter::class)) {
         add(PlaySpec("particle-content", SceneSystemPhase.Frame) { ParticleContentSystem(it.renderer, it.particleSprites) })

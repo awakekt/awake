@@ -39,6 +39,7 @@ registers it.
 | [`static_transform`](#static_transform) | `StaticTransform` | `com.awakekt.awake.scene:scene-core` | `DefaultSceneComponentResolvers.install()` | [Scene documents](../guides/scene-documents.md) |
 | [`terrain`](#terrain) | `TerrainComponent` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Terrain](../guides/terrain.md) |
 | [`texture_animation`](#texture_animation) | `TextureAnimation` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
+| [`texture_clips`](#texture_clips) | `TextureClips` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Meshes and materials](../guides/meshes-and-materials.md) |
 | [`tone_mapping`](#tone_mapping) | `ToneMapping` | `com.awakekt.awake.scene:scene3d` | `DefaultSceneComponentResolvers.install()` | [Lights and shadows](../guides/lights-and-shadows.md) |
 
 ## Registration
@@ -501,6 +502,30 @@ texture of the entity's material; with no `pbr_material` it plays with glTF's de
 | `scrollU` | number | `0` | UV units per second along U. |
 | `scrollV` | number | `0` | UV units per second along V, toward the bottom of the image. |
 | `firstFrame` | integer | `0` | The cell the run starts at, counted from 0 in reading order. Within the sheet, and `firstFrame + frameCount` at most `columns * rows`. |
+
+## `texture_clips`
+
+A frame sheet with named clips cut out of it, one of which plays on the entity. `texture_animation`
+loops one run on the GPU's clock; these are stepped on the CPU by `TextureClipSystem` from the scene's
+clock, so a game can switch clip by name (`TextureClips.play`), see when a one-shot clip has finished,
+and a paused game holds still. The system gives the entity a `TextureAnimation` that holds the cell
+now showing, so an entity should not also carry a `texture_animation`. `SceneTextureClips`.
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `columns` | integer | `1` | Frame-sheet columns. At least 1. |
+| `rows` | integer | `1` | Frame-sheet rows. At least 1. |
+| `clips` | object of clips | `{}` | The sheet's runs by name; each is described below. |
+| `clip` | string | the first listed | The clip that plays when the scene loads. One of `clips`. |
+
+Each clip in `clips` is a `SceneTextureClip`:
+
+| Field | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `firstFrame` | integer | `0` | The clip's first cell, counted from 0 in reading order from the top left. |
+| `frameCount` | integer | `1` | Cells in the clip. At least 1, and `firstFrame + frameCount` at most `columns * rows`. |
+| `framesPerSecond` | number | `12` | Playback rate. `0` holds the first cell. |
+| `loop` | boolean | `true` | Whether the clip starts over when it ends. `false` holds its last cell. |
 
 ## `tone_mapping`
 

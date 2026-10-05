@@ -136,6 +136,28 @@ several animations, an idle and a walk, and each entity plays its own:
 That plays the second row of an eight-column sheet, cells 8 to 15, twelve frames a second. With
 `framesPerSecond` 0 it shows `firstFrame` and nothing else, which is how an entity shows one chosen cell.
 
+`texture_clips` cuts a sheet into named clips and plays one of them, for a sprite that changes what it
+is doing. A clip is a run of cells (`firstFrame`, `frameCount`), a rate (`framesPerSecond`) and
+whether it repeats (`loop`):
+
+```json
+{
+  "component": "texture_clips", "columns": 8, "rows": 4, "clip": "idle",
+  "clips": {
+    "idle":   { "firstFrame": 0,  "frameCount": 4, "framesPerSecond": 6 },
+    "walk":   { "firstFrame": 8,  "frameCount": 8, "framesPerSecond": 12 },
+    "attack": { "firstFrame": 16, "frameCount": 6, "framesPerSecond": 16, "loop": false }
+  }
+}
+```
+
+`texture_animation` is played by the GPU on the renderer's clock. These clips are stepped on the CPU by
+the scene's own clock, so a game can choose among them and a paused game holds still. From a system,
+`world.get<TextureClips>(entity)?.play("walk")` switches clip. Asking for the clip that is already
+playing does nothing, so the line can run every frame. A clip with `loop` false holds its last cell
+and `TextureClips.isFinished` is true from then. `clip` is the one that plays when the scene loads;
+left out, the first listed plays. Give an entity `texture_clips` or `texture_animation`, not both.
+
 Kotlin-only components:
 
 | Component | Fields | What it does |
