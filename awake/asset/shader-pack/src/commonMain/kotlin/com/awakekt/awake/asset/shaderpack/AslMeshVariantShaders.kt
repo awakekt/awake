@@ -203,11 +203,15 @@ private fun skinnedTextured(): AslShaderDefinition = shader("skinned_textured") 
     }
 }
 
+/** Shader definition for instanced static mesh rendering with lighting and shadows. */
 val InstancedShader: AslShaderDefinition = meshVariant("instanced", instanced = true, skinned = false)
 
+/** Shader definition for skinned skeletal mesh rendering with lighting and shadows. */
 val SkinnedShader: AslShaderDefinition = meshVariant("skinned", instanced = false, skinned = true)
 
+/** Shader definition for skinned skeletal mesh rendering with diffuse texturing and shadows. */
 val SkinnedTexturedShader: AslShaderDefinition = skinnedTextured()
 
+/** Shader definition for instanced and skinned skeletal mesh rendering with shadows. */
 val SkinnedInstancedShader: AslShaderDefinition =
     meshVariant("skinned_instanced", instanced = true, skinned = true)
