@@ -151,12 +151,21 @@ inline fun <reified A : Any, reified B : Any> World.hasAny(entity: Entity): Bool
 
 /**
  * Scope for constructing and configuring an [Entity] with initial components.
+ *
+ * @property world The [World] in which the entity is being configured.
+ * @property entity The newly created [Entity] being populated with components.
  */
 class EntityBuilder(
     val world: World,
     val entity: Entity,
 ) {
-    /** Adds [component] to the entity being created. */
+    /**
+     * Adds [component] to the entity being created.
+     *
+     * @param T The component type.
+     * @param component The component instance to attach to the entity.
+     * @return This builder instance for method chaining.
+     */
     inline fun <reified T : Any> add(component: T): EntityBuilder {
         world.add(entity, component)
         return this
