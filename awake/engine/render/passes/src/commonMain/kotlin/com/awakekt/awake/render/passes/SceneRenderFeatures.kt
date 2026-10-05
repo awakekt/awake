@@ -38,12 +38,14 @@ import com.awakekt.awake.render.renderer.SkyboxFields
  * since it is per-frame state a `Renderer` owns rather than something this pass can hold.
  */
 interface LinePass<in C : RenderFrameContext> {
+    /** Writes the model-view-projection matrix for debug lines into uniform storage for [frameIndex]. */
     fun writeMvp(frameIndex: Int, mvp: FloatArray)
 
     /** This frame's staged lines, or `null` when none were staged. A zero-vertex draw is skipped
      * by [SharedOpaqueRenderFeature] anyway, so returning one is equally valid. */
     fun lineDraw(context: C): PreparedDraw?
 
+    /** Releases any resources allocated for debug line rendering. */
     fun destroy()
 }
 

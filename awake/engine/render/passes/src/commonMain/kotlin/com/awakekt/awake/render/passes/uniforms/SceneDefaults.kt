@@ -23,8 +23,13 @@ val DEFAULT_SCENE_LIGHT = SceneLight(
     color = Vec3f(1f, 1f, 1f),
 )
 
+/** Default clear sky color at the horizon. */
 val DEFAULT_HORIZON_COLOR = Color(r = 0.72f, g = 0.80f, b = 0.88f, a = 1f)
+
+/** Default clear sky color at the zenith. */
 val DEFAULT_ZENITH_COLOR = Color(r = 0.20f, g = 0.38f, b = 0.68f, a = 1f)
+
+/** Default atmospheric fog color. */
 val DEFAULT_FOG_COLOR = Color(r = 0.55f, g = 0.62f, b = 0.70f, a = 1f)
 
 /** Sized from the shared default material ABI rather than a duplicated count. */

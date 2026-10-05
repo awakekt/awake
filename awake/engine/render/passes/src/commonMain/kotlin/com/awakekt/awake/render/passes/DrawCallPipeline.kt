@@ -14,9 +14,17 @@ import com.awakekt.awake.render.pipeline.CullMode
 import com.awakekt.awake.render.pipeline.DepthCasterKind
 import com.awakekt.awake.render.pipeline.DepthRenderKey
 
+/**
+ * The classification of instanced draw call variants supported across pipelines.
+ */
 enum class InstancedDrawKind {
+    /** Plain rigid instanced rendering with transform matrices. */
     Plain,
+
+    /** Skeletally animated instanced rendering with transform matrices and joint palettes. */
     Skinned,
+
+    /** Billboarded or planar particle instancing. */
     Particle,
 }
 
@@ -38,6 +46,12 @@ fun RenderDrawCommand.depthRenderKey(): DepthRenderKey = DepthRenderKey(
     alphaMode = alphaMode,
 )
 
+/**
+ * Resolves the [InstancedDrawKind] given a vertex [format], optional list of [instanceModels],
+ * and optional list of [instanceJointPalettes].
+ *
+ * Returns `null` if [instanceModels] is null or empty (indicating a non-instanced draw call).
+ */
 fun resolveInstancedDrawKind(
     format: VertexFormat,
     instanceModels: List<Mat4>?,

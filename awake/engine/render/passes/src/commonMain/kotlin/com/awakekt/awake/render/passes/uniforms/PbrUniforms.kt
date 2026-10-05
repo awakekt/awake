@@ -19,6 +19,8 @@ import com.awakekt.awake.render.renderer.UniformWriter
 
 /** No metal, half-rough -- a plain lit surface when a `RenderDrawCommand` supplies no PBR factors. */
 const val DEFAULT_METALLIC = 0f
+
+/** Default roughness value when none is supplied. */
 const val DEFAULT_ROUGHNESS = 0.5f
 
 /**
@@ -26,6 +28,8 @@ const val DEFAULT_ROUGHNESS = 0.5f
  * brings its own factors (glTF's own defaults are 1 and 1, applied by its importer, not here).
  */
 const val DEFAULT_METALLIC_FACTOR = 0f
+
+/** Default roughness factor for textured materials when none is supplied. */
 const val DEFAULT_ROUGHNESS_FACTOR = 0.5f
 
 /** glTF's `baseColorFactor` default -- opaque white, i.e. the texture passes through untinted. */
@@ -76,6 +80,7 @@ data class TextureAnimation(
         require(scrollU.isFinite() && scrollV.isFinite()) { "The UV scroll must be finite." }
     }
 
+    /** Companion object providing common texture animation configurations. */
     companion object {
         /** A still texture. */
         val None: TextureAnimation = TextureAnimation()
@@ -205,6 +210,12 @@ private fun pbrMaterialPayload(values: FloatArray): FloatArray {
  * below took them as three flat parameters, and each new shared field made every writer's
  * signature one longer. [fog] is a `FloatArray` rather than a colour because it is renderer-wide
  * state living on each backend's own `Renderer`, already packed by the time it reaches here.
+ *
+ * @property light Primary scene light uniform parameters.
+ * @property cameraEye World-space position of the camera eye.
+ * @property fog Pre-packed renderer fog parameters.
+ * @property cameraForward World-space normalized camera forward direction vector.
+ * @property exposure Radiance multiplier applied before tone mapping.
  */
 class SceneFrameUniforms(
     val light: SceneLightUniforms,

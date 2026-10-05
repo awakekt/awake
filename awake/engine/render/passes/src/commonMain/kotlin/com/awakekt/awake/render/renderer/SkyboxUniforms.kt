@@ -27,6 +27,7 @@ val SkyboxUniformLayout = UniformLayout(
 @Suppress("MagicNumber") // Colour components.
 val SUN_DISC_COLOR = Color(r = 1f, g = 0.92f, b = 0.72f, a = 1f)
 
+/** Default moon disc color for nighttime atmospheric rendering. */
 @Suppress("MagicNumber") // Colour components.
 val MOON_DISC_COLOR = Color(r = 0.72f, g = 0.78f, b = 0.88f, a = 1f)
 

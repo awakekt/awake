@@ -11,12 +11,21 @@ import com.awakekt.awake.render.renderer.UniformField
 import com.awakekt.awake.render.renderer.UniformFields
 import com.awakekt.awake.render.renderer.UniformLayout
 
+/**
+ * Uniform field definitions specific to particle rendering pipelines.
+ */
 object ParticleExtraFields {
+    /** World-space camera right vector used to orient billboarding quads. */
     val CameraRight = UniformField("cameraRight", GpuDataShape.Vec4)
+
+    /** World-space camera up vector used to orient billboarding quads. */
     val CameraUp = UniformField("cameraUp", GpuDataShape.Vec4)
+
+    /** Frame timing and flipbook animation parameters. */
     val FrameInfo = UniformField("frameInfo", GpuDataShape.Vec4)
 }
 
+/** Uniform layout combining model-view-projection with particle billboard camera orientation fields. */
 val ParticleUniformLayout = UniformLayout(
     UniformFields.Mvp,
     ParticleExtraFields.CameraRight,
@@ -24,12 +33,14 @@ val ParticleUniformLayout = UniformLayout(
     ParticleExtraFields.FrameInfo,
 )
 
+/** Uniform layout containing only particle billboard camera vectors and frame info. */
 val ParticleExtraUniformLayout = UniformLayout(
     ParticleExtraFields.CameraRight,
     ParticleExtraFields.CameraUp,
     ParticleExtraFields.FrameInfo,
 )
 
+/** Uniform layout for instanced rigid mesh draws including MVP, lighting, and exposure. */
 val InstancedUniformLayout = UniformLayout(
     UniformFields.Mvp,
     UniformFields.LightDirection,

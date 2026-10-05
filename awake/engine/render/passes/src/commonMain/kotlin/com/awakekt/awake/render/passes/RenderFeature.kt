@@ -28,7 +28,10 @@ import com.awakekt.awake.render.pipeline.BindingSemantic
  * exists, not on spec.
  */
 enum class RenderPassSlot {
+    /** The 3D scene rendering pass. */
     Scene,
+
+    /** The 2D user interface rendering pass. */
     Ui,
 }
 
@@ -42,6 +45,7 @@ enum class RenderPassSlot {
  * sub-interface and parameterizes [RenderFeature] on it -- see that type's [C].
  */
 interface RenderFrameContext {
+    /** Monotonically increasing index of the current frame being rendered. */
     val frameIndex: Int
 
     /** Computed once per frame by whoever builds this context -- every scene feature needs the
@@ -57,21 +61,31 @@ interface RenderFrameContext {
      */
     val transparentDrawCalls: List<PreparedDraw>
         get() = emptyList()
+
+    /** Primary pipeline handle associated with this frame's pass. */
     val primaryPipeline: PipelineHandle
 
     /** This frame's camera matrices and light direction for features that write their own pipeline's
      * uniform block (debug lines, sky) before drawing with it. */
     val viewProjection: Mat4
+
+    /** Position of the camera eye in world space. */
     val cameraEye: Vec3f
+
+    /** The dominant scene light parameters for this frame. */
     val light: SceneLight get() = DEFAULT_SCENE_LIGHT
+
+    /** Normalized direction pointing towards the sun / directional light source. */
     val sunDirection: Vec3f get() = light.direction
 
     /** The canonical lowered environment policy for this pass. It contains no ECS or authoring
      * types; scene code creates it before the packet reaches a backend. */
     val environment: GpuEnvironmentState get() = GpuEnvironmentState.Default
 
-    /** The surface this pass draws into, for scissor clamping. */
+    /** The surface width this pass draws into, for scissor clamping. */
     val surfaceWidth: Int
+
+    /** The surface height this pass draws into, for scissor clamping. */
     val surfaceHeight: Int
 
     /** Already aimed at this frame's pass -- a feature records through this rather than issuing
@@ -118,10 +132,13 @@ interface RenderFrameContext {
  * backend's own context type and only fits there.
  */
 interface RenderFeature<in C : RenderFrameContext> {
+    /** Which render pass slot this feature belongs to. */
     val pass: RenderPassSlot
 
+    /** Records drawing commands for this feature into the command buffer using [context]. */
     fun recordCommands(context: C)
 
+    /** Destroys any backend resources owned by this feature. */
     fun destroy()
 }
 

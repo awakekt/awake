@@ -16,12 +16,23 @@ import com.awakekt.awake.core.geometry.VertexFormat
  * then the ordinary lit fallback.
  */
 enum class DrawUniformPlan {
+    /** Lit shading receiving directional shadow cascades. */
     LitShadow,
+
+    /** Skeletally animated / vertex-blended joint uniform plan. */
     Skinned,
+
+    /** Full physically-based rendering with material texture maps. */
     TexturedPbr,
+
+    /** Baseline unshadowed lit shading. */
     Lit,
 }
 
+/**
+ * Resolves the [DrawUniformPlan] given the mesh vertex [format], the size of the material uniform buffer
+ * in floats ([materialUniformFloatCount]), and whether shadow cascades are available ([hasShadowCascades]).
+ */
 fun drawUniformPlan(
     format: VertexFormat,
     materialUniformFloatCount: Int,
