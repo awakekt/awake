@@ -23,7 +23,16 @@ import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.runBlocking
 
 /** How [renderGlowScene] draws its red quad. */
-enum class GlowBlend { None, Alpha, Additive }
+enum class GlowBlend {
+    /** Quad is omitted entirely. */
+    None,
+
+    /** Quad is blended with standard alpha blending. */
+    Alpha,
+
+    /** Quad is blended using additive blend mode. */
+    Additive,
+}
 
 /**
  * A red quad lying just above the lit ground, drawn transparent by [blend] ([GlowBlend.None] leaves

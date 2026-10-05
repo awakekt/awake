@@ -16,5 +16,6 @@ import com.awakekt.awake.render.renderer.Renderer
  * whole of that difference, so a drawing can be handed to either backend unchanged.
  */
 interface HeadlessRenderSession : AutoCloseable {
+    /** The active headless [Renderer] instance. */
     val renderer: Renderer
 }

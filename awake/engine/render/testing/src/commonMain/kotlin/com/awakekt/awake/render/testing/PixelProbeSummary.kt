@@ -8,6 +8,17 @@ package com.awakekt.awake.render.testing
 import com.awakekt.awake.render.capture.PixelMap
 import com.awakekt.awake.render.capture.RgbaSample
 
+/**
+ * Summary of pixel color samples at key landmark positions across a render buffer.
+ *
+ * @property width Width of the sampled pixel surface in pixels.
+ * @property height Height of the sampled pixel surface in pixels.
+ * @property center RGBA color sample at the centre of the surface.
+ * @property topLeft RGBA color sample at the top-left corner.
+ * @property topRight RGBA color sample at the top-right corner.
+ * @property bottomLeft RGBA color sample at the bottom-left corner.
+ * @property bottomRight RGBA color sample at the bottom-right corner.
+ */
 data class PixelProbeSummary(
     val width: Int,
     val height: Int,

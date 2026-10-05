@@ -24,7 +24,12 @@ import com.awakekt.awake.render.renderer.createMaterial
 import com.awakekt.awake.render.texture.TextureAsset
 import kotlinx.coroutines.runBlocking
 
-/** Where [renderSpriteScene] looks from, at the origin. */
+/**
+ * Where [renderSpriteScene] looks from, at the origin.
+ *
+ * @property eye Position of the camera eye in 3D world space.
+ * @property up Camera up vector determining view orientation.
+ */
 enum class SpriteView(val eye: Vec3f, val up: Vec3f) {
     /** Straight down onto the ground plane. */
     Above(Vec3f(0f, SPRITE_EYE_DISTANCE, 0f), Vec3f(0f, 0f, -1f)),

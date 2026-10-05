@@ -7,7 +7,13 @@ package com.awakekt.awake.render.testing
 
 import kotlin.math.round
 
-/** One label that got slower than its checked-in baseline by more than the allowed tolerance. */
+/**
+ * One label that got slower than its checked-in baseline by more than the allowed tolerance.
+ *
+ * @property label Identifier of the timing span that regressed.
+ * @property baselineMs Expected elapsed duration in milliseconds from the checked-in baseline.
+ * @property actualMs Measured elapsed duration in milliseconds during the test run.
+ */
 data class TimingRegression(
     val label: String,
     val baselineMs: Double,
@@ -21,12 +27,17 @@ data class TimingRegression(
  * Result of comparing a run's per-label mean frame/pass times against a golden baseline -- the
  * timing counterpart of [PixelDiffResult]. [matches] is what a test asserts on; [summary] is the
  * failure message.
+ *
+ * @property matches Whether all measured timings were within acceptable tolerances.
+ * @property regressions List of timing regressions where measured time exceeded baseline threshold.
+ * @property missingLabels Labels expected by baseline but never encountered in test run.
  */
 data class TimingDiffResult(
     val matches: Boolean,
     val regressions: List<TimingRegression>,
     val missingLabels: List<String>,
 ) {
+    /** Formatted diagnostic message detailing timing match status or regressions. */
     val summary: String
         get() = buildString {
             if (matches) {

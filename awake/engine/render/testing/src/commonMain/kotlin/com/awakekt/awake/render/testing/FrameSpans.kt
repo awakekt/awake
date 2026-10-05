@@ -40,6 +40,12 @@ class FrameSpans {
     /** Labels recorded so far, in first-seen order. */
     val labels: Set<String> get() = totalNanos.keys
 
+    /**
+     * Starts measuring elapsed time for the given [label].
+     *
+     * @param label Identifier for the timing span.
+     * @throws IllegalStateException If a span with the same label is already started and not yet stopped.
+     */
     fun start(label: String) {
         val previous = openMarks.put(label, TimeSource.Monotonic.markNow())
         check(previous == null) {
@@ -47,6 +53,12 @@ class FrameSpans {
         }
     }
 
+    /**
+     * Stops measuring elapsed time for the given [label] and records the sample.
+     *
+     * @param label Identifier for the timing span being stopped.
+     * @throws IllegalStateException If no open span exists for [label].
+     */
     fun stop(label: String) {
         val mark = openMarks.remove(label)
         checkNotNull(mark) { "span '$label' was stopped without being started" }
@@ -86,6 +98,9 @@ class FrameSpans {
      */
     fun meansMs(): Map<String, Double> = labels.associateWith { meanMs(it) }
 
+    /**
+     * Resets all recorded timing data, sample counts, and open spans.
+     */
     fun reset() {
         totalNanos.clear()
         sampleCounts.clear()
