@@ -149,6 +149,7 @@ comments:
       - '**/awake/scene/scene3d/src/**'
       - '**/awake/particles/**'
       - '**/awake/scene/particles/**'
+      - '**/awake/asset/gltf/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true
