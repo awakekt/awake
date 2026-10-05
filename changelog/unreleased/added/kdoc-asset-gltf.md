@@ -1,1 +1,0 @@
-- 100% KDoc coverage and Detekt enforcement for `:awake:asset:gltf`.

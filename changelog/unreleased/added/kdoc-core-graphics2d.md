@@ -1,1 +1,0 @@
-- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for 2D graphics primitive and vector tessellation engine (`:awake:core:graphics2d`).

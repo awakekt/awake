@@ -1,1 +1,0 @@
-- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for core ECS architecture library (`:awake:ecs`).
