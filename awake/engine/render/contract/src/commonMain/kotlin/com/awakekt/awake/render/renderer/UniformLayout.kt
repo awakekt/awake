@@ -182,7 +182,10 @@ object UniformFields {
      */
     val TextureFrames = UniformField("textureFrames", GpuDataShape.Vec4)
 
-    /** `xy` = UV scroll per second, `z` = the draw's time in seconds, which both animations read. */
+    /**
+     * `xy` = UV scroll per second, `z` = the draw's time in seconds, which both animations read,
+     * `w` = the frame sheet's first frame: the cell the run of [TextureFrames]`.w` frames starts at.
+     */
     val TextureScroll = UniformField("textureScroll", GpuDataShape.Vec4)
 
     /**

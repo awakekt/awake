@@ -188,6 +188,24 @@ class SceneBackendParityTest {
         }
     }
 
+    /** A run that starts at the sheet's third cell plays cells 2 and 3 and loops inside them, as on every backend. */
+    @Test
+    fun aFrameSheetRunCanStartAtAnyFrameOnBothBackends() {
+        val run = TextureAnimation(columns = 2, rows = 2, frameCount = 2, framesPerSecond = 1f, firstFrame = 2)
+        BACKEND_ORDER.forEach { backend ->
+            val renderer = session(backend).renderer
+            val played = FRAME_TIMES.take(3).map { time ->
+                renderer.renderTexturedPbrScene(texture = FRAME_SHEET, textureAnimation = run, timeSeconds = time)
+                    .brightChannelsAt(SCENE_SIZE / 2, SCENE_SIZE / 2)
+            }
+            assertEquals(
+                listOf(FRAME_COLOURS[2], FRAME_COLOURS[3], FRAME_COLOURS[2]).map { it.brightChannels() },
+                played,
+                "$backend run",
+            )
+        }
+    }
+
     @Test
     fun genericEnvironmentFogAffectsTexturedDrawOnBothBackends() {
         val changes = BACKEND_ORDER.associateWith { backend ->

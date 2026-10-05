@@ -23,10 +23,12 @@ import kotlin.reflect.KClass
  *
  * @property columns Frame-sheet columns.
  * @property rows Frame-sheet rows.
- * @property frameCount Frames played, from the first; 0 means every cell.
- * @property framesPerSecond Playback rate; 0 holds the first frame.
+ * @property frameCount Frames played, from [firstFrame]; 0 means every cell from [firstFrame] on.
+ * @property framesPerSecond Playback rate; 0 holds the first frame of the run.
  * @property scrollU UV units per second along U.
  * @property scrollV UV units per second along V, toward the bottom of the image.
+ * @property firstFrame The cell the run starts at, counted in reading order from 0 at the top left,
+ * so one sheet can hold several runs (an idle, a walk) and each entity plays its own.
  */
 @Serializable
 @SerialName("texture_animation")
@@ -37,14 +39,22 @@ data class SceneTextureAnimation(
     val framesPerSecond: Float = 0f,
     val scrollU: Float = 0f,
     val scrollV: Float = 0f,
+    val firstFrame: Int = 0,
 ) : SceneComponent {
-    /** Every cell when [frameCount] is 0. */
-    val frames: Int get() = if (frameCount == 0) columns * rows else frameCount
+    /** Every cell from [firstFrame] on when [frameCount] is 0. */
+    val frames: Int get() = if (frameCount == 0) columns * rows - firstFrame else frameCount
 
     override fun validate(path: String): List<SceneValidationIssue> = buildList {
         if (columns < 1 || rows < 1) add(SceneValidationIssue(path, "columns and rows must be at least 1"))
         if (frameCount < 0 || frameCount > columns * rows) {
             add(SceneValidationIssue(path, "frameCount must be within 0..columns * rows"))
+        }
+        if (columns >= 1 && rows >= 1) {
+            if (firstFrame !in 0 until columns * rows) {
+                add(SceneValidationIssue(path, "firstFrame must be within 0 until columns * rows"))
+            } else if (frameCount in 1..columns * rows && firstFrame + frameCount > columns * rows) {
+                add(SceneValidationIssue(path, "firstFrame + frameCount must not exceed columns * rows"))
+            }
         }
         if (framesPerSecond < 0f || !framesPerSecond.isFinite()) {
             add(SceneValidationIssue(path, "framesPerSecond must be finite and >= 0"))
@@ -74,6 +84,7 @@ object TextureAnimationBinding : SceneComponentBinding<TextureAnimation, SceneTe
                 component.framesPerSecond,
                 component.scrollU,
                 component.scrollV,
+                component.firstFrame,
             ),
         )
     }
@@ -86,5 +97,6 @@ object TextureAnimationBinding : SceneComponentBinding<TextureAnimation, SceneTe
             component.framesPerSecond,
             component.scrollU,
             component.scrollV,
+            component.firstFrame,
         )
 }

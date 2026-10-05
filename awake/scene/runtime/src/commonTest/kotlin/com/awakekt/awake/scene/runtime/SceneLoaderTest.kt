@@ -301,11 +301,53 @@ class SceneLoaderTest {
         assertTrue(exported.getValue("still").none { it is SceneTextureAnimation }, "a still material exports no animation")
     }
 
+    /** A run that starts partway into the sheet survives the file; a length of 0 plays to the sheet's last cell. */
+    @Test
+    fun aRunThatStartsPartwayThroughTheSheetRoundTrips() {
+        val walk = SceneTextureAnimation(columns = 8, rows = 4, frameCount = 8, framesPerSecond = 12f, firstFrame = 16)
+        val tail = SceneTextureAnimation(columns = 8, rows = 4, framesPerSecond = 6f, firstFrame = 28)
+        val document = SceneDocument(
+            nodes = listOf(
+                SceneNode(name = "walk", components = listOf(walk)),
+                SceneNode(name = "tail", components = listOf(tail)),
+            ),
+        )
+        val world = World()
+
+        SceneLoader.decode(SceneLoader.encode(document)).instantiate(world = world)
+
+        val entities = HashMap<String, Entity>()
+        world.family<Name>().forEach { entity, name -> entities[name.value] = entity }
+        assertEquals(TextureAnimation(8, 4, 8, 12f, 0f, 0f, 16), world.get<TextureAnimation>(entities.getValue("walk")))
+        assertEquals(TextureAnimation(8, 4, 4, 6f, 0f, 0f, 28), world.get<TextureAnimation>(entities.getValue("tail")))
+        val exported = SceneLoader.fromWorld(world, name = "x").nodes.associate { it.name to it.components }
+        assertEquals(walk, exported.getValue("walk").filterIsInstance<SceneTextureAnimation>().single())
+        // Exported with its length spelled out, which plays the same cells.
+        assertEquals(tail.copy(frameCount = 4), exported.getValue("tail").filterIsInstance<SceneTextureAnimation>().single())
+    }
+
     @Test
     fun aFrameSheetThatCannotHoldItsFramesIsInvalid() {
         val issues = SceneTextureAnimation(columns = 2, rows = 2, frameCount = 5).validate("node")
 
         assertEquals(listOf("node"), issues.map { it.path })
+    }
+
+    @Test
+    fun aRunThatLeavesTheSheetIsInvalid() {
+        val leaving = listOf(
+            SceneTextureAnimation(columns = 4, rows = 2, frameCount = 3, firstFrame = 6),
+            SceneTextureAnimation(columns = 4, rows = 2, frameCount = 2, firstFrame = -1),
+            SceneTextureAnimation(columns = 4, rows = 2, firstFrame = 8),
+        )
+
+        for (animation in leaving) {
+            assertEquals(listOf("node"), animation.validate("node").map { it.path }, "$animation")
+        }
+        // Frames 6 and 7 are the last two cells of an 8-cell sheet; 0 plays from 6 to the end.
+        assertEquals(emptyList(), SceneTextureAnimation(columns = 4, rows = 2, frameCount = 2, firstFrame = 6).validate("node"))
+        assertEquals(emptyList(), SceneTextureAnimation(columns = 4, rows = 2, firstFrame = 6).validate("node"))
+        assertEquals(2, SceneTextureAnimation(columns = 4, rows = 2, firstFrame = 6).frames)
     }
 
     @Test

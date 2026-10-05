@@ -318,16 +318,17 @@ fun instancedTexturedShader(clipSpace: ClipSpace): AslShaderDefinition = texture
  *
  * The scroll and the frame sheet work in the image's own UV space, where V runs down the image:
  * the vertex stage flipped V for the bitmap decoder, so it is flipped back here and again at the
- * end. Frames run in reading order. A frame wraps the UV into its cell with `fract`, which jumps
- * inside a primitive, so the derivatives come from the unwrapped UV scaled to the cell; a 1 x 1
- * sheet skips the wrap entirely and samples exactly as a still texture.
+ * end. Frames run in reading order, a run of `frames.w` of them starting at the cell `scroll.w`
+ * and looping inside it. A frame wraps the UV into its cell with `fract`, which jumps inside a
+ * primitive, so the derivatives come from the unwrapped UV scaled to the cell; a 1 x 1 sheet skips
+ * the wrap entirely and samples exactly as a still texture.
  */
 private fun AslBlockBuilder.animatedTextureUv(uv: AslExpr, frames: AslExpr, scroll: AslExpr): Triple<AslExpr, AslExpr, AslExpr> {
     val time = scroll.z
     val imageUv = let("imageUv", vec2(uv.x, 1f.lit - uv.y) + scroll.xy * time)
     val sheet = let("sheet", frames.xy)
     val played = let("played", floor(time * frames.z))
-    val frame = let("frame", played - frames.w * floor(played / frames.w))
+    val frame = let("frame", scroll.w + (played - frames.w * floor(played / frames.w)))
     val cell = let("cell", vec2(frame - sheet.x * floor(frame / sheet.x), floor(frame / sheet.x)))
     val inCell = let("inCell", (fract(imageUv) + cell) / sheet)
     val animated = let("animated", select(imageUv, inCell, (sheet.x * sheet.y) gt 1.5f.lit))
