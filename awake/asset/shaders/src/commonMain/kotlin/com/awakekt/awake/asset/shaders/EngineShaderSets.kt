@@ -21,11 +21,22 @@ import com.awakekt.awake.render.pipeline.UiShaderSet
  * A backend reads only its own half; see [ShaderSet].
  */
 object EngineShaderSets {
+    /** Shader set for solid and gradient UI quad rendering. */
     val UiQuad = aslShaderSet(UiQuadShader)
+
+    /** Shader set for SDF text glyph rendering. */
     val UiGlyph = aslShaderSet(UiGlyphShader)
+
+    /** Shader set for sampled UI texture rendering. */
     val UiTexture = aslShaderSet(UiTextureShader)
+
+    /** Shader set for rounded UI quad rendering with corner antialiasing. */
     val UiRoundedQuad = aslShaderSet(UiRoundedQuadShader)
+
+    /** Shader set for compositing offscreen UI targets onto the frame backbuffer. */
     val UiTargetComposite = aslShaderSet(UiTargetCompositeShader)
+
+    /** Shader set for 3D debug wireframe line rendering. */
     val DebugLine = aslShaderSet(DebugLineShader)
 }
 

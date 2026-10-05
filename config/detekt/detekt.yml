@@ -151,6 +151,7 @@ comments:
       - '**/awake/scene/particles/**'
       - '**/awake/asset/gltf/**'
       - '**/awake/asset/terrain/**'
+      - '**/awake/asset/shaders/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true

@@ -12,9 +12,15 @@ import com.awakekt.awake.core.math.ClipSpace
 import com.awakekt.awake.render.pipeline.GroupBindings
 import com.awakekt.awake.render.pipeline.ShaderSource
 
+/** Programmable GPU pipeline stage. */
 enum class ShaderStage {
+    /** Vertex shader stage processing mesh geometry attributes. */
     VERTEX,
+
+    /** Fragment (pixel) shader stage computing surface shading and colors. */
     FRAGMENT,
+
+    /** General-purpose compute shader stage. */
     COMPUTE,
 }
 
@@ -26,19 +32,41 @@ suspend fun ShaderSource.resolveBytes(): ByteArray = when (this) {
     is ShaderSource.InlineText -> sourceCode.encodeToByteArray()
 }
 
-/** One backend's shader stages, keyed by [ShaderStage] -- [graphics] is the shape every real
+/**
+ * One backend's shader stages, keyed by [ShaderStage] -- [graphics] is the shape every real
  * pipeline in this engine uses today (vertex + fragment); [compute] exists for a future compute
- * pipeline (none exist yet, see this module's own doc comment) but costs nothing to keep. */
+ * pipeline (none exist yet, see this module's own doc comment) but costs nothing to keep.
+ *
+ * @property stages Map of pipeline stages to their corresponding shader sources.
+ * @property bindingsByGroup Statically used resource ABI, carried from ASL into pipeline creation.
+ * @property bindingsMetadataAvailable Whether [bindingsByGroup] is authoritative, including an explicitly empty layout.
+ */
 class ShaderStages private constructor(
+    /** Map of pipeline stages to their corresponding shader sources. */
     val stages: Map<ShaderStage, ShaderSource>,
     /** Statically used resource ABI, carried from ASL into pipeline creation. */
     val bindingsByGroup: Map<Int, GroupBindings> = emptyMap(),
     /** Whether [bindingsByGroup] is authoritative, including an explicitly empty layout. */
     val bindingsMetadataAvailable: Boolean = false,
 ) {
+    /**
+     * Looks up the shader source for the specified pipeline [stage], or `null` if absent.
+     *
+     * @param stage Pipeline stage to look up.
+     * @return Corresponding [ShaderSource], or `null` if not configured.
+     */
     operator fun get(stage: ShaderStage): ShaderSource? = stages[stage]
 
+    /** Factory functions for building [ShaderStages] collections. */
     companion object {
+        /**
+         * Creates a graphics pipeline stage pair (vertex and fragment) with metadata.
+         *
+         * @param vertex Vertex stage shader source.
+         * @param fragment Fragment stage shader source.
+         * @param bindingsByGroup Statically analyzed group binding layouts.
+         * @return Configured [ShaderStages] for a graphics pipeline.
+         */
         fun graphics(
             vertex: ShaderSource,
             fragment: ShaderSource,
@@ -49,6 +77,12 @@ class ShaderStages private constructor(
             bindingsMetadataAvailable = true,
         )
 
+        /**
+         * Creates a compute pipeline stage set.
+         *
+         * @param compute Compute stage shader source.
+         * @return Configured [ShaderStages] for a compute pipeline.
+         */
         fun compute(compute: ShaderSource) = ShaderStages(
             mapOf(ShaderStage.COMPUTE to compute),
         )
