@@ -11,10 +11,17 @@ package com.awakekt.awake.asset.terrain.splat
  * The weights at each pixel $(x, z)$ satisfy:
  * $$w_R + w_G + w_B + w_A = 255$$
  * ensuring energy-conserving diffuse blending in GPU fragment shaders.
+ *
+ * @property width Width of the weight map in texels.
+ * @property height Height of the weight map in texels.
+ * @property rgbaBytes Raw byte buffer containing RGBA blend weights.
  */
 data class TerrainSplatWeightMap(
+    /** Width of the weight map in texels. */
     val width: Int,
+    /** Height of the weight map in texels. */
     val height: Int,
+    /** Raw byte buffer containing RGBA blend weights. */
     val rgbaBytes: ByteArray,
 ) {
     init {

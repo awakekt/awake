@@ -7,18 +7,38 @@ package com.awakekt.awake.asset.terrain
 
 import com.awakekt.awake.core.math.Vec3f
 
-/** One requested sample replacement in a [MutableHeightmap] edit batch. */
+/**
+ * One requested sample replacement in a [MutableHeightmap] edit batch.
+ *
+ * @property x Grid column index of the sample to replace.
+ * @property z Grid row index of the sample to replace.
+ * @property height New elevation value in heightmap scale units.
+ */
 data class HeightmapSampleEdit(
+    /** Grid column index of the sample to replace. */
     val x: Int,
+    /** Grid row index of the sample to replace. */
     val z: Int,
+    /** New elevation value in heightmap scale units. */
     val height: Float,
 )
 
-/** Inclusive grid rectangle affected by one committed heightmap edit. */
+/**
+ * Inclusive grid rectangle affected by one committed heightmap edit.
+ *
+ * @property minX Minimum X grid coordinate affected by the edit.
+ * @property minZ Minimum Z grid coordinate affected by the edit.
+ * @property maxX Maximum X grid coordinate affected by the edit.
+ * @property maxZ Maximum Z grid coordinate affected by the edit.
+ */
 data class HeightmapDirtyRegion(
+    /** Minimum X grid coordinate affected by the edit. */
     val minX: Int,
+    /** Minimum Z grid coordinate affected by the edit. */
     val minZ: Int,
+    /** Maximum X grid coordinate affected by the edit. */
     val maxX: Int,
+    /** Maximum Z grid coordinate affected by the edit. */
     val maxZ: Int,
 ) {
     init {
@@ -27,9 +47,16 @@ data class HeightmapDirtyRegion(
     }
 }
 
-/** The monotonic revision and smallest affected region from one successful edit batch. */
+/**
+ * The monotonic revision and smallest affected region from one successful edit batch.
+ *
+ * @property revision Monotonically increasing edit counter after this change.
+ * @property dirtyRegion Smallest bounding rectangle of modified sample coordinates.
+ */
 data class HeightmapChange(
+    /** Monotonically increasing edit counter after this change. */
     val revision: Long,
+    /** Smallest bounding rectangle of modified sample coordinates. */
     val dirtyRegion: HeightmapDirtyRegion,
 )
 
@@ -40,10 +67,17 @@ data class HeightmapChange(
  * smallest changed grid region, allowing independent mesh, collision, water, or placement
  * consumers to decide whether and how to refresh. This class owns no listener registry and does
  * not perform those refreshes itself.
+ *
+ * @param samples Initial heightmap elevation samples.
+ * @property width Number of sample columns along the X axis.
+ * @property depth Number of sample rows along the Z axis.
+ * @param scale Spacing between adjacent samples in world units.
  */
 class MutableHeightmap(
     samples: FloatArray,
+    /** Number of sample columns along the X axis. */
     val width: Int,
+    /** Number of sample rows along the Z axis. */
     val depth: Int,
     scale: Vec3f,
 ) {
@@ -63,6 +97,13 @@ class MutableHeightmap(
     /** A defensive scale copy; [Vec3f] is mutable. */
     val scale: Vec3f get() = ownedScale.copy()
 
+    /**
+     * Reads the current elevation value at grid coordinate ([x], [z]).
+     *
+     * @param x Grid column index within `0 until width`.
+     * @param z Grid row index within `0 until depth`.
+     * @return Elevation sample at the given grid coordinate.
+     */
     fun heightAt(x: Int, z: Int): Float {
         requireCoordinates(x, z)
         return ownedSamples[z * width + x]

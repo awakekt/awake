@@ -11,9 +11,14 @@ import com.awakekt.awake.core.math.Vec3f
 
 /**
  * Format options for raw binary heightmap decoding and encoding.
+ *
+ * @property bytesPerSample Number of bytes allocated per elevation sample.
  */
-enum class RawHeightmapFormat(val bytesPerSample: Int) {
-    /** 16-bit unsigned little-endian integer (standard for Unity, Unreal, World Machine). */
+enum class RawHeightmapFormat(
+    /** Number of bytes allocated per elevation sample. */
+    val bytesPerSample: Int,
+) {
+    /** 16-bit unsigned little-endian integer. */
     Unsigned16LittleEndian(bytesPerSample = 2),
 
     /** 16-bit unsigned big-endian integer. */

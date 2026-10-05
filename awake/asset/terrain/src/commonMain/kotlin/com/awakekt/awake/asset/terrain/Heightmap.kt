@@ -26,12 +26,21 @@ import kotlin.math.floor
  *
  * The constructor takes ownership of both mutable inputs, so later caller mutations cannot
  * desynchronise a rendered mesh and a collider.
+ *
+ * @param samples Raw elevation samples array.
+ * @property width Number of elevation sample columns along the X axis.
+ * @property depth Number of elevation sample rows along the Z axis.
+ * @param scale Spacing between adjacent samples in world units.
+ * @property origin Anchor reference defining coordinate origin placement.
  */
 class Heightmap(
     samples: FloatArray,
+    /** Number of elevation sample columns along the X axis. */
     val width: Int,
+    /** Number of elevation sample rows along the Z axis. */
     val depth: Int,
     scale: Vec3f,
+    /** Anchor reference defining coordinate origin placement. */
     val origin: GridOrigin = GridOrigin.Centered,
 ) {
     private val ownedSamples: FloatArray

@@ -24,12 +24,16 @@ data class ClipmapRingState(
     val snappedCenter: Vec3f,
     val halfExtent: Float,
 ) {
-    /** World-space minimum $(X, Z)$ bound of this ring. */
+    /** World-space minimum X bound of this ring. */
     val minX: Float get() = snappedCenter.x - halfExtent
+
+    /** World-space minimum Z bound of this ring. */
     val minZ: Float get() = snappedCenter.z - halfExtent
 
-    /** World-space maximum $(X, Z)$ bound of this ring. */
+    /** World-space maximum X bound of this ring. */
     val maxX: Float get() = snappedCenter.x + halfExtent
+
+    /** World-space maximum Z bound of this ring. */
     val maxZ: Float get() = snappedCenter.z + halfExtent
 
     /** Returns true if the world $(X, Z)$ position lies within this ring's bounding area. */
@@ -55,11 +59,16 @@ data class ClipmapRingState(
 
 /**
  * Tracks viewer / camera movement and computes discrete grid-snapped origins for all clipmap rings.
+ *
+ * @property config Configuration parameters for clipmap rings and extents.
  */
 class TerrainClipmapTracker(
+    /** Configuration parameters for clipmap rings and extents. */
     val config: TerrainClipmapConfig = TerrainClipmapConfig(),
 ) {
     private val _ringStates = ArrayList<ClipmapRingState>(config.ringCount)
+
+    /** Current world-space states for all concentric clipmap rings in inner-to-outer order. */
     val ringStates: List<ClipmapRingState> get() = _ringStates
 
     private var lastCameraPos: Vec3f = Vec3f(Float.NaN, Float.NaN, Float.NaN)
