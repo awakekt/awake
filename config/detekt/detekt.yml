@@ -150,6 +150,7 @@ comments:
       - '**/awake/particles/**'
       - '**/awake/scene/particles/**'
       - '**/awake/asset/gltf/**'
+      - '**/awake/asset/terrain/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true
