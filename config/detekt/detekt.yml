@@ -143,6 +143,7 @@ comments:
       - '**/awake/core/graphics2d/**'
       - '**/awake/ecs/src/**'
       - '**/awake/scene/document/**'
+      - '**/awake/scene/gltf/**'
     excludes: *testSourceSetExcludes
     searchInNestedClass: true
     searchInInnerClass: true
