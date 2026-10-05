@@ -59,6 +59,7 @@ open class SpatialCullingBenchmarks {
         far = 300f,
     )
 
+    /** Initializes benchmark bounding boxes and test data. */
     @Setup
     fun setup() {
         // Deterministic scatter over 2km, one prop per ~20m, at ground level.

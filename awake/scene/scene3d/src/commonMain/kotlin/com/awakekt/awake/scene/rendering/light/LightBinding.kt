@@ -15,6 +15,9 @@ import com.awakekt.awake.scene.rendering.toSceneVec3
 import com.awakekt.awake.scene.rendering.toVec3
 import kotlin.reflect.KClass
 
+/**
+ * Binding definition connecting [SceneLight] descriptors to ECS [Light] components.
+ */
 object LightBinding : SceneComponentBinding<Light, SceneLight> {
     override val componentClass: KClass<Light> = Light::class
     override val schemaClass: KClass<SceneLight> = SceneLight::class
@@ -32,6 +35,11 @@ object LightBinding : SceneComponentBinding<Light, SceneLight> {
     override fun export(world: World, entity: Entity, component: Light): SceneLight =
         component.toSceneComponent()
 
+    /**
+     * Converts this [SceneLight] descriptor into a runtime [Light] component.
+     *
+     * @return The instantiated [Light] component.
+     */
     fun SceneLight.toComponent(): Light = Light(
         color = Vec3f(color.r, color.g, color.b),
         intensity = intensity,
@@ -46,6 +54,11 @@ object LightBinding : SceneComponentBinding<Light, SceneLight> {
         ambient = ambient,
     )
 
+    /**
+     * Serializes this runtime [Light] component into a [SceneLight] descriptor.
+     *
+     * @return The serialized [SceneLight] descriptor.
+     */
     fun Light.toSceneComponent(): SceneLight = SceneLight(
         color = SceneColor(color.x, color.y, color.z, 1f),
         intensity = intensity,

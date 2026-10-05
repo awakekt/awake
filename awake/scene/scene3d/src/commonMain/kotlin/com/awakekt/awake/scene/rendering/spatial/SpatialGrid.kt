@@ -61,6 +61,7 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
     private var stamps = IntArray(INITIAL_STAMP_CAPACITY)
     private var stamp = 0
 
+    /** The number of entities currently indexed in this spatial grid. */
     val size: Int get() = entries.size
 
     /**
@@ -100,6 +101,7 @@ class SpatialGrid(val cellSize: Float = DEFAULT_SPATIAL_CELL_SIZE) {
         detach(entityId, entry)
     }
 
+    /** Removes all entities, columns, and height extents from this spatial grid. */
     fun clear() {
         columns.clear()
         columnHeights.clear()

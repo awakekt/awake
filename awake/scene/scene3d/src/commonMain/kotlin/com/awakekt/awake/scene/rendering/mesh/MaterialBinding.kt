@@ -13,6 +13,9 @@ import com.awakekt.awake.scene.document.toColor
 import com.awakekt.awake.scene.document.toSceneColor
 import kotlin.reflect.KClass
 
+/**
+ * Binding definition connecting [ScenePbrMaterial] descriptors to ECS [PbrMaterial] components.
+ */
 object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
     override val componentClass: KClass<PbrMaterial> = PbrMaterial::class
     override val schemaClass: KClass<ScenePbrMaterial> = ScenePbrMaterial::class
@@ -30,6 +33,11 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
     override fun export(world: World, entity: Entity, component: PbrMaterial): ScenePbrMaterial =
         component.toSceneComponent()
 
+    /**
+     * Converts this [ScenePbrMaterial] descriptor into a runtime [PbrMaterial] component.
+     *
+     * @return The instantiated [PbrMaterial] component.
+     */
     fun ScenePbrMaterial.toComponent(): PbrMaterial = PbrMaterial(
         metallic = metallic,
         roughness = roughness,
@@ -39,6 +47,11 @@ object MaterialBinding : SceneComponentBinding<PbrMaterial, ScenePbrMaterial> {
         alphaCutoff = alphaCutoff,
     )
 
+    /**
+     * Serializes this runtime [PbrMaterial] component into a [ScenePbrMaterial] descriptor.
+     *
+     * @return The serialized [ScenePbrMaterial] descriptor.
+     */
     fun PbrMaterial.toSceneComponent(): ScenePbrMaterial = ScenePbrMaterial(
         metallic = metallic,
         roughness = roughness,

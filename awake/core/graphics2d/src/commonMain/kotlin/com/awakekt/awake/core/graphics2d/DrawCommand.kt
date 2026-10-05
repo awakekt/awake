@@ -19,6 +19,11 @@ import kotlin.math.sin
  * `x`/`y`. Applied in the vertex shader as `pivot + (position - pivot) * scale`, BEFORE the
  * screen-to-NDC transform (see `ui_quad.vert`/`.wgsl` and its 3 siblings) -- rotation is
  * explicitly out of scope for this first pass.
+ *
+ * @property scaleX Horizontal scale factor.
+ * @property scaleY Vertical scale factor.
+ * @property pivotX Pivot X coordinate in local pixel space.
+ * @property pivotY Pivot Y coordinate in local pixel space.
  */
 data class DrawTransform(
     val scaleX: Float,
@@ -53,7 +58,12 @@ enum class BlendMode {
 val BlendMode.requiresDestinationSampling: Boolean
     get() = this == BlendMode.Screen || this == BlendMode.Overlay
 
-/** Blend state required to composite a textured primitive without mixing alpha conventions. */
+/**
+ * Blend state required to composite a textured primitive without mixing alpha conventions.
+ *
+ * @property blendMode The compositing operation to perform.
+ * @property premultiplied True if the source texture has pre-multiplied alpha values.
+ */
 data class TextureCompositeMode(val blendMode: BlendMode, val premultiplied: Boolean)
 
 /**
@@ -63,6 +73,17 @@ data class TextureCompositeMode(val blendMode: BlendMode, val premultiplied: Boo
  */
 sealed class DrawCommand {
 
+    /**
+     * An axis-aligned solid colored rectangular quad.
+     *
+     * @property x Left position in screen-space pixels.
+     * @property y Top position in screen-space pixels.
+     * @property w Width in pixels.
+     * @property h Height in pixels.
+     * @property color The fill color of the quad.
+     * @property tokenId Optional design system token identifier associated with this primitive.
+     * @property transform Optional per-primitive GPU scale transform.
+     */
     data class Quad(
         val x: Float,
         val y: Float,
@@ -73,6 +94,16 @@ sealed class DrawCommand {
         val transform: DrawTransform? = null,
     ) : UiDrawPrimitive()
 
+    /**
+     * An axis-aligned rectangular quad painted with a four-corner linear gradient.
+     *
+     * @property x Left position in screen-space pixels.
+     * @property y Top position in screen-space pixels.
+     * @property w Width in pixels.
+     * @property h Height in pixels.
+     * @property gradient The four-corner linear gradient specification.
+     * @property tokenId Optional design system token identifier.
+     */
     data class GradientQuad(
         val x: Float,
         val y: Float,
@@ -82,10 +113,22 @@ sealed class DrawCommand {
         val tokenId: String? = null,
     ) : UiDrawPrimitive()
 
-    /** Rounded-corner sibling of [Quad] -- kept as a separate type rather than a `radius`
+    /**
+     * Rounded-corner sibling of [Quad] -- kept as a separate type rather than a `radius`
      * field on [Quad] so the hot-path flat rect every existing widget already emits every
      * frame never pays a corner-test cost (kool-engine's own `RectBackground` vs
-     * `RoundRectBackground` split backs this). */
+     * `RoundRectBackground` split backs this).
+     *
+     * @property x Left position in screen-space pixels.
+     * @property y Top position in screen-space pixels.
+     * @property w Width in pixels.
+     * @property h Height in pixels.
+     * @property color The fill color.
+     * @property radius Uniform corner radius in pixels.
+     * @property smoothing Corner curvature smoothing factor between 0.0 (circular) and 1.0 (squircle).
+     * @property tokenId Optional design system token identifier.
+     * @property transform Optional per-primitive GPU scale transform.
+     */
     data class RoundedQuad(
         val x: Float,
         val y: Float,
@@ -98,7 +141,21 @@ sealed class DrawCommand {
         val transform: DrawTransform? = null,
     ) : UiDrawPrimitive()
 
-    /** One glyph quad sampling a font atlas, drawn via textured pipeline. */
+    /**
+     * One glyph quad sampling a font atlas, drawn via textured pipeline.
+     *
+     * @property x Left position in screen-space pixels.
+     * @property y Top position in screen-space pixels.
+     * @property w Width in pixels.
+     * @property h Height in pixels.
+     * @property u0 Left UV coordinate in font atlas texture.
+     * @property v0 Top UV coordinate in font atlas texture.
+     * @property u1 Right UV coordinate in font atlas texture.
+     * @property v1 Bottom UV coordinate in font atlas texture.
+     * @property color Tint color applied to the glyph.
+     * @property tokenId Optional design system token identifier.
+     * @property transform Optional per-primitive GPU scale transform.
+     */
     data class Glyph(
         val x: Float,
         val y: Float,
@@ -113,14 +170,27 @@ sealed class DrawCommand {
         val transform: DrawTransform? = null,
     ) : UiDrawPrimitive()
 
-    /** Renderer-neutral filled shape primitive. */
+    /**
+     * Renderer-neutral filled shape primitive.
+     *
+     * @property path The vector path describing the geometry to fill.
+     * @property color The fill color.
+     * @property tokenId Optional design system token identifier.
+     */
     data class FilledPath(
         val path: DrawPath,
         val color: Color,
         val tokenId: String? = null,
     ) : UiDrawPrimitive()
 
-    /** Stroke sibling of [FilledPath]. */
+    /**
+     * Stroke sibling of [FilledPath].
+     *
+     * @property path The vector path describing the geometry to stroke.
+     * @property stroke The stroke parameters (width, cap, join).
+     * @property color The stroke color.
+     * @property tokenId Optional design system token identifier.
+     */
     data class StrokedPath(
         val path: DrawPath,
         val stroke: DrawStroke,
@@ -142,6 +212,17 @@ sealed class DrawCommand {
      * before scale and translation, which lets animated geometry keep its tessellated vertices
      * stable. Vertex colours are baked in, so [alpha] dims them at staging time the way
      * `color.dimmedBy(alpha)` does for the other primitives.
+     *
+     * @property mesh Pre-tessellated colored triangle mesh geometry.
+     * @property offsetX Horizontal translation in pixels.
+     * @property offsetY Vertical translation in pixels.
+     * @property scaleX Horizontal scale factor.
+     * @property scaleY Vertical scale factor.
+     * @property alpha Opacity multiplier applied to vertex colors.
+     * @property tokenId Optional design system token identifier.
+     * @property rotationDegrees Clockwise screen-space rotation applied before scale and translation.
+     * @property pivotX X coordinate of the rotation pivot in the mesh's local pixel space.
+     * @property pivotY Y coordinate of the rotation pivot in the mesh's local pixel space.
      */
     data class Mesh(
         val mesh: ColoredTriangleMesh,
@@ -172,6 +253,8 @@ sealed class DrawCommand {
          * The one definition of where a mesh lands, so a backend staging it and a rasterizer
          * checking it cannot drift apart. A staging pass already copying vertex by vertex applies
          * the same arithmetic inline rather than calling this, to avoid materialising the list.
+         *
+         * @return The transformed and alpha-scaled [ColoredTriangleMesh].
          */
         fun placedMesh(): ColoredTriangleMesh {
             val radians = rotationDegrees * PI.toFloat() / 180f
@@ -193,7 +276,21 @@ sealed class DrawCommand {
         }
     }
 
-    /** One screen-space quad sampling an arbitrary render-target-backed material. */
+    /**
+     * One screen-space quad sampling an arbitrary render-target-backed material.
+     *
+     * @property x Left position in screen-space pixels.
+     * @property y Top position in screen-space pixels.
+     * @property w Width in pixels.
+     * @property h Height in pixels.
+     * @property material The underlying material or texture asset handle.
+     * @property alpha Multiplies the sampled texture once at composite time.
+     * @property rotationDegrees Clockwise screen-space rotation about this texture's centre.
+     * @property blendMode Composite operation used when this texture is painted into its parent target.
+     * @property premultiplied Render targets are premultiplied; uploaded image assets remain straight-alpha.
+     * @property tokenId Optional design system token identifier.
+     * @property transform Optional per-primitive GPU scale transform.
+     */
     data class Texture(
         val x: Float,
         val y: Float,
@@ -212,7 +309,22 @@ sealed class DrawCommand {
         val transform: DrawTransform? = null,
     ) : UiDrawPrimitive()
 
-    /** Drop-shadow primitive for elevation support. */
+    /**
+     * Drop-shadow primitive for elevation support.
+     *
+     * @property x Left position in screen-space pixels.
+     * @property y Top position in screen-space pixels.
+     * @property w Width in pixels.
+     * @property h Height in pixels.
+     * @property radius Corner radius in pixels matching the casting shape.
+     * @property offsetX Horizontal shadow offset in pixels.
+     * @property offsetY Vertical shadow offset in pixels.
+     * @property blurRadius Gaussian blur radius in pixels.
+     * @property spread Spread distance expanding or contracting the shadow footprint.
+     * @property color Base shadow tint color.
+     * @property tokenId Optional design system token identifier.
+     * @property gradient Four-corner gradient over the emitted shadow footprint, or null for [color].
+     */
     data class ShadowQuad(
         val x: Float,
         val y: Float,
@@ -229,20 +341,37 @@ sealed class DrawCommand {
         val gradient: LinearGradient? = null,
     ) : UiDrawPrimitive()
 
-    /** Path-based clip sibling of [ClipPush]. */
+    /**
+     * Path-based clip sibling of [ClipPush].
+     *
+     * @property path Vector path defining the clipping region.
+     * @property boundsRect Bounding rectangle enclosing the clip path.
+     * @property safeInteriorRect Optional axis-aligned interior rect guaranteed to be completely inside the clip path.
+     */
     data class ClipPathPush(
         val path: DrawPath,
         val boundsRect: Rectangle,
         val safeInteriorRect: Rectangle? = null,
     ) : UiDrawPrimitive()
 
-    /** Marks the start of a clipped region. */
+    /**
+     * Marks the start of a rectangular clipped region.
+     *
+     * @property rect The rectangular scissor clipping bounds in screen pixels.
+     */
     data class ClipPush(val rect: Rectangle) : UiDrawPrimitive()
 
-    /** Restores the scissor rect that was active before the matching [ClipPush]. */
+    /**
+     * Restores the scissor rect that was active before the matching [ClipPush].
+     *
+     * @property restoreRect The previously active scissor rectangle to restore.
+     */
     data class ClipPop(val restoreRect: Rectangle) : UiDrawPrimitive()
 }
 
+/**
+ * Base sealed class for all high-level 2D UI drawing primitives emitted to the backend renderer.
+ */
 sealed class UiDrawPrimitive : DrawCommand() {
     typealias Quad = DrawCommand.Quad
     typealias GradientQuad = DrawCommand.GradientQuad
@@ -258,6 +387,13 @@ sealed class UiDrawPrimitive : DrawCommand() {
     typealias ClipPop = DrawCommand.ClipPop
 }
 
+/**
+ * Returns a copy of this [DrawCommand] with its opacity scaled by [factor].
+ *
+ * @param T The concrete draw command type.
+ * @param factor Multiplier applied to colors and alpha channels (between 0.0 and 1.0).
+ * @return A modified copy of this command, or the original instance if [factor] is 1.0 or greater.
+ */
 @Suppress("UNCHECKED_CAST")
 fun <T : DrawCommand> T.scaledByAlpha(factor: Float): T {
     if (factor >= 1f) return this
@@ -296,6 +432,13 @@ fun <T : DrawCommand> T.scaledByAlpha(factor: Float): T {
     return res as T
 }
 
+/**
+ * Returns a copy of this [DrawCommand] with the given GPU [transform] attached.
+ *
+ * @param T The concrete draw command type.
+ * @param transform The per-primitive scale and pivot transform to apply.
+ * @return A copy of the command with the specified transform.
+ */
 @Suppress("UNCHECKED_CAST")
 fun <T : DrawCommand> T.withTransform(transform: DrawTransform?): T {
     if (transform == null) return this
@@ -309,7 +452,13 @@ fun <T : DrawCommand> T.withTransform(transform: DrawTransform?): T {
     return res as T
 }
 
-/** Returns this primitive translated in its pixel-space coordinate system. */
+/**
+ * Returns this primitive translated by ([dx], [dy]) in its pixel-space coordinate system.
+ *
+ * @param dx Horizontal displacement in pixels.
+ * @param dy Vertical displacement in pixels.
+ * @return A translated copy of the primitive.
+ */
 fun UiDrawPrimitive.translatedBy(dx: Float, dy: Float): UiDrawPrimitive = when (this) {
     is UiDrawPrimitive.Quad -> copy(x = x + dx, y = y + dy, transform = transform?.translatedBy(dx, dy))
     is UiDrawPrimitive.GradientQuad -> copy(x = x + dx, y = y + dy)

@@ -7,13 +7,14 @@ package com.awakekt.awake.scene.rendering.sky
 
 import com.awakekt.awake.core.color.Color
 
+/** Default atmospheric horizon color for procedural sky gradients. */
 val DefaultHorizonColor = Color(r = 0.72f, g = 0.80f, b = 0.88f, a = 1f)
+
+/** Default atmospheric zenith color for procedural sky gradients. */
 val DefaultZenithColor = Color(r = 0.20f, g = 0.38f, b = 0.68f, a = 1f)
 
 /**
  * Skybox component — defines the atmospheric sky gradient or sky appearance behind the scene.
- *
- * Matches Godot's `Sky` resource / Unreal's `SkyAtmosphere`.
  *
  * @property enabled Whether procedural skybox and atmospheric horizon are rendered.
  * @property mode The active skybox rendering mode (procedural gradient, cubemap texture, or solid color).
@@ -62,8 +63,13 @@ data class Skybox(
      * Backward-compatible enumeration of skybox modes.
      */
     enum class Type {
+        /** Procedural two-color atmospheric gradient. */
         Procedural,
+
+        /** Sampled 6-face environment cubemap. */
         Cubemap,
+
+        /** Single uniform solid background clear color. */
         SolidColor,
     }
 

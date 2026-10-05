@@ -16,6 +16,12 @@ typealias SceneMeshFactory = SceneAppLifecycleRuntime.() -> Mesh
 typealias SceneMaterialFactory = SceneAppLifecycleRuntime.() -> Material
 typealias SceneMeshRendererFactory = SceneAppLifecycleRuntime.() -> MeshRenderer
 
+/**
+ * Composite key pairing a mesh asset name with a material asset name.
+ *
+ * @property mesh The identifier of the mesh asset.
+ * @property material The identifier of the material asset.
+ */
 data class SceneRenderableKey(
     val mesh: String,
     val material: String,
@@ -189,6 +195,13 @@ class SceneAssetLibrary(
         return true
     }
 
+    /**
+     * Resolves a [SceneRenderableRequest] by constructing or acquiring its [MeshRenderer].
+     *
+     * @param runtime The active [SceneAppLifecycleRuntime] providing context and factory invocation.
+     * @param request The renderable request specifying mesh and material identifiers.
+     * @return The instantiated [MeshRenderer] bound with GPU mesh and material resources.
+     */
     fun resolve(
         runtime: SceneAppLifecycleRuntime,
         request: SceneRenderableRequest,

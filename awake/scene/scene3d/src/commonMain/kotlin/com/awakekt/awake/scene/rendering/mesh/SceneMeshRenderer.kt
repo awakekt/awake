@@ -39,8 +39,13 @@ data class SceneMeshRenderer(
 ) : SceneComponent {
     /** GPU face culling mode enumeration. */
     enum class CullMode {
+        /** No polygon faces are culled (double-sided rendering). */
         None,
+
+        /** Back-facing polygons are culled. */
         Back,
+
+        /** Front-facing polygons are culled. */
         Front,
     }
 

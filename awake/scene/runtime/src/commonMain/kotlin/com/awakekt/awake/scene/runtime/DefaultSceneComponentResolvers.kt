@@ -53,19 +53,41 @@ import com.awakekt.awake.scene.runtime.DefaultSceneComponentResolvers.install
  * typically inside [SceneAppLifecycleRuntime.initialize] or a custom bootstrap.
  */
 object DefaultSceneComponentResolvers {
+    /** Binding resolver for [SceneCamera] documents and [SceneCameraComponent] ECS components. */
     val CameraResolver: SceneComponentBinding<SceneCameraComponent, SceneCamera> = CameraBinding
+
+    /** Binding resolver for [SceneLight] documents and [Light] ECS components. */
     val LightResolver: SceneComponentBinding<Light, SceneLight> = LightBinding
+
+    /** Binding resolver for [ScenePbrMaterial] documents and [PbrMaterial] ECS components. */
     val PbrMaterialResolver: SceneComponentBinding<PbrMaterial, ScenePbrMaterial> = MaterialBinding
+
+    /** Binding resolver for [SceneSpinControl] documents and [SpinControl] ECS components. */
     val SpinControlResolver: SceneComponentBinding<SpinControl, SceneSpinControl> =
         SpinControlBinding
+
+    /** Binding resolver for [SceneMeshRenderer] documents and renderable mesh components. */
     val MeshRendererResolver: SceneComponentBinding<*, SceneMeshRenderer> = MeshRendererBinding
+
+    /** Binding resolver for [SceneSkybox] documents and [Skybox] ECS components. */
     val SkyboxResolver: SceneComponentBinding<Skybox, SceneSkybox> = SkyboxBinding
+
+    /** Binding resolver for [SceneFog] documents and [Fog] ECS components. */
     val FogResolver: SceneComponentBinding<Fog, SceneFog> = FogBinding
+
+    /** Binding resolver for [SceneToneMapping] documents and [ToneMapping] ECS components. */
     val ToneMappingResolver: SceneComponentBinding<ToneMapping, SceneToneMapping> = ToneMappingBinding
+
+    /** Binding resolver for [SceneAmbientLight] documents and [AmbientLight] ECS components. */
     val AmbientLightResolver: SceneComponentBinding<AmbientLight, SceneAmbientLight> = AmbientLightBinding
+
+    /** Binding resolver for [SceneTerrain] documents and [TerrainComponent] ECS components. */
     val TerrainResolver: SceneComponentBinding<TerrainComponent, SceneTerrain> = TerrainBinding
+
+    /** Binding resolver for nested prefab link documents. */
     val PrefabLinkResolver: SceneComponentResolver = PrefabLinkBinding
 
+    /** Complete list of standard two-way [SceneComponentBinding] instances. */
     val bindings: List<SceneComponentBinding<*, *>> = listOf(
         CameraBinding,
         LightBinding,
@@ -85,6 +107,7 @@ object DefaultSceneComponentResolvers {
         TextureAnimationBinding,
     )
 
+    /** Complete list of all registered built-in [SceneComponentResolver] instances. */
     val all: List<SceneComponentResolver> = listOf(
         CameraBinding,
         LightBinding,

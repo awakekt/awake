@@ -25,11 +25,18 @@ import com.awakekt.awake.scene.rendering.animation.SkinnedPose
  * A [TextureAnimation] on the same entity moves the textured pipeline's textures.
  *
  * On a skinned mesh (an entity with a [SkinnedPose]) [baseColorFactor] and [emissiveFactor] tint it
- * the same way; metallic, roughness and texture animation are not read there. */
+ * the same way; metallic, roughness and texture animation are not read there.
+ *
+ * @property metallic Surface metallic factor (0.0 for dielectric, 1.0 for metal).
+ * @property roughness Surface roughness factor (0.0 for mirror-smooth, 1.0 for completely diffuse).
+ * @property baseColorFactor Surface base color tint factor.
+ * @property emissiveFactor Surface emissive color tint factor.
+ * @property alphaMode Alpha blending or masking mode for surface transparency.
+ * @property alphaCutoff Alpha cutoff threshold when [alphaMode] is [AlphaMode.Mask].
+ */
 data class PbrMaterial(
     var metallic: Float = 0f,
     var roughness: Float = 0.5f,
-    /** Authored values stay typed; render packet packing converts them to GPU float lanes. */
     var baseColorFactor: Color = Color.White,
     var emissiveFactor: Color = Color.Transparent,
     var alphaMode: AlphaMode = AlphaMode.Opaque,

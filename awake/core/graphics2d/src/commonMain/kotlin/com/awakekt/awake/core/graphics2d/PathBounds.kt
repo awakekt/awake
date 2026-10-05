@@ -7,6 +7,13 @@ package com.awakekt.awake.core.graphics2d
 
 import com.awakekt.awake.core.math2d.Rectangle
 
+/**
+ * Computes the axis-aligned bounding box enclosing all control points and endpoints of this path.
+ *
+ * If the path contains no commands or non-finite coordinates, returns an empty rectangle at the origin.
+ *
+ * @return A [Rectangle] enclosing the path geometry in screen-space coordinates.
+ */
 fun DrawPath.bounds(): Rectangle {
     if (commands.isEmpty()) return Rectangle(0f, 0f, 0f, 0f)
 
@@ -49,6 +56,15 @@ fun DrawPath.bounds(): Rectangle {
     return Rectangle(minX, minY, (maxX - minX).coerceAtLeast(0f), (maxY - minY).coerceAtLeast(0f))
 }
 
+/**
+ * Transforms all control points and coordinates of this path by scaling and translation factors.
+ *
+ * @param scaleX Horizontal scale factor.
+ * @param scaleY Vertical scale factor.
+ * @param translateX Horizontal translation offset.
+ * @param translateY Vertical translation offset.
+ * @return A new [DrawPath] with transformed path commands.
+ */
 fun DrawPath.transform(
     scaleX: Float = 1f,
     scaleY: Float = 1f,

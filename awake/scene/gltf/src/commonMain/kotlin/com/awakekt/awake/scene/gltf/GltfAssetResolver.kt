@@ -59,15 +59,30 @@ class GltfAssetResolver(
         runCatching { bundledResourceReader(path.value) }
     }
 
+    /**
+     * Retrieves a previously loaded skinned scene by its path.
+     *
+     * @param path The glTF or GLB asset path.
+     * @return The cached [LoadedSkinnedScene], or null if the path has not been preloaded.
+     */
     fun getLoadedScene(path: String): LoadedSkinnedScene? = loadedScenes[path]
 
-    /** Supplies project-file access for JSON glTF sidecars. */
+    /**
+     * Supplies project-file access for JSON glTF sidecars.
+     *
+     * @param source The asset source to read project assets and sidecars from.
+     */
     fun setAssetSource(source: AssetSource) {
         assetSource = source
     }
 
     internal suspend fun readAsset(path: AssetPath): Result<ByteArray> = assetSource.read(path)
 
+    /**
+     * Preloads a glTF or GLB asset and its external dependencies using the configured asset source.
+     *
+     * @param path The glTF or GLB asset path to load.
+     */
     suspend fun preload(path: String) {
         val bytes = assetSource.read(AssetPath(path)).getOrThrow()
         preload(path, bytes)
@@ -77,6 +92,9 @@ class GltfAssetResolver(
      * Preloads caller-provided model bytes and resolves JSON glTF sidecars through [assetSource].
      * Keeping this suspendable prevents an imported `.gltf` from silently losing its external
      * `.bin` or image files just because the model bytes came from a picker.
+     *
+     * @param path The asset path key for caching the model.
+     * @param bytes Raw model file content bytes.
      */
     suspend fun preload(path: String, bytes: ByteArray) {
         val externalResources = if (bytes.isGlb()) {
@@ -208,19 +226,40 @@ class GltfAssetResolver(
             }
         }
 
-    /** Returns the material key to persist in a placed scene descriptor. */
+    /**
+     * Returns the material key to persist in a placed scene descriptor.
+     *
+     * @param path The glTF or GLB asset path.
+     * @return Material identifier string to use in scene definitions.
+     */
     fun materialName(path: String): String = if (path in loadedMaterials) {
         "gltf-material:$path"
     } else {
         "lit-shadow"
     }
 
+    /**
+     * Retrieves the parsed material parameters associated with the specified model asset path.
+     *
+     * @param path The glTF or GLB asset path.
+     * @return The material parameters, or null if no material was loaded for the path.
+     */
     fun materialParameters(path: String): GltfMaterialParameters? = loadedMaterials[path]?.parameters
 
-    /** Per-primitive render inputs for imported models with more than one glTF material. */
+    /**
+     * Per-primitive render inputs for imported models with more than one glTF material.
+     *
+     * @param path The glTF or GLB asset path.
+     * @return List of material slots for the model, or an empty list if none exist.
+     */
     fun materialSlots(path: String): List<GltfMaterialSlot> = loadedMaterialSlots[path].orEmpty()
 
-    /** The model file behind [meshName]: a `gltf-primitive:<path>#<index>` mesh is one primitive of `<path>`. */
+    /**
+     * The model file behind [meshName]: a `gltf-primitive:<path>#<index>` mesh is one primitive of `<path>`.
+     *
+     * @param meshName Name or compound identifier of the mesh.
+     * @return Base model file path.
+     */
     fun modelPath(meshName: String): String = if (meshName.startsWith(PRIMITIVE_MESH_PREFIX)) {
         meshName.removePrefix(PRIMITIVE_MESH_PREFIX).substringBeforeLast('#')
     } else {
@@ -291,12 +330,28 @@ private val log = Logger("scene.gltf")
 
 private const val PRIMITIVE_MESH_PREFIX = "gltf-primitive:"
 
+/**
+ * Associates a primitive mesh with its bound glTF material and parameters.
+ *
+ * @property mesh Mesh identifier for the primitive part.
+ * @property material Material key bound to the primitive mesh.
+ * @property parameters PBR material parameters applied to this primitive slot, or null if default.
+ */
 data class GltfMaterialSlot(
     val mesh: String,
     val material: String,
     val parameters: GltfMaterialParameters?,
 )
 
+/**
+ * PBR material rendering parameters extracted from a glTF material definition.
+ *
+ * @property metallic Metallic factor normalized in `[0f, 1f]`.
+ * @property roughness Roughness factor normalized in `[0f, 1f]`.
+ * @property baseColorFactor Multiplier applied to the base color texture or vertex colors.
+ * @property emissiveFactor Color emitted by the surface independently of light sources.
+ * @property alphaMode Alpha blending mode specifying how transparency is calculated.
+ */
 data class GltfMaterialParameters(
     val metallic: Float,
     val roughness: Float,

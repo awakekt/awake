@@ -18,6 +18,8 @@ import com.awakekt.awake.ecs.World
  *
  * A scene with no maintainer has no index, and every consumer falls back to whatever it did
  * before one existed. That is what keeps this an optimisation rather than a requirement.
+ *
+ * @property grid The underlying uniform spatial partitioning grid.
  */
 data class SpatialIndex(
     val grid: SpatialGrid = SpatialGrid(),

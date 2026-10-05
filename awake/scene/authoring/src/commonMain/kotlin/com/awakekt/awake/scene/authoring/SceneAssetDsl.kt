@@ -16,6 +16,9 @@ import com.awakekt.awake.scene.runtime.SceneMeshFactory
 import com.awakekt.awake.scene.runtime.SceneMeshRendererFactory
 import com.awakekt.awake.scene.runtime.SceneRenderableKey
 
+/**
+ * DSL scope for configuring scene assets, mesh generators, materials, and asset resolvers.
+ */
 @AwakeSceneDsl
 class SceneAssetsDsl internal constructor() {
     private val meshFactories = linkedMapOf<String, SceneMeshFactory>()
@@ -23,28 +26,64 @@ class SceneAssetsDsl internal constructor() {
     private val rendererFactories = linkedMapOf<SceneRenderableKey, SceneMeshRendererFactory>()
     private val resolvers = mutableListOf<SceneAssetResolver>()
 
+    /**
+     * Registers a dynamic asset resolver for loading runtime assets.
+     *
+     * @param resolver The [SceneAssetResolver] implementation to register.
+     */
     fun resolver(resolver: SceneAssetResolver) {
         resolvers += resolver
     }
 
+    /**
+     * Registers a factory creating a named mesh.
+     *
+     * @param name Unique name of the mesh asset.
+     * @param factory Factory lambda producing the mesh on demand.
+     */
     fun mesh(name: String, factory: SceneMeshFactory) {
         require(name.isNotBlank()) { "Scene mesh names must not be blank." }
         meshFactories[name] = factory
     }
 
+    /**
+     * Registers a static mesh from pre-computed [MeshGeometry].
+     *
+     * @param name Unique name of the mesh asset.
+     * @param geometry Precomputed geometry containing vertices, indices, and format.
+     */
     fun mesh(name: String, geometry: MeshGeometry) {
         mesh(name) { renderer.createMesh(geometry) }
     }
 
+    /**
+     * Generates and registers a procedural mesh using [MeshGenerateScope].
+     *
+     * @param name Unique name of the mesh asset.
+     * @param block Builder lambda specifying procedural vertex and index generation.
+     */
     fun proceduralMesh(name: String, block: MeshGenerateScope.() -> Unit) {
         mesh(name, generate(block))
     }
 
+    /**
+     * Registers a factory creating a named material.
+     *
+     * @param name Unique name of the material asset.
+     * @param factory Factory lambda producing the material on demand.
+     */
     fun material(name: String, factory: SceneMaterialFactory) {
         require(name.isNotBlank()) { "Scene material names must not be blank." }
         materialFactories[name] = factory
     }
 
+    /**
+     * Registers a custom renderer factory for a mesh-material combination.
+     *
+     * @param mesh Unique name of the associated mesh.
+     * @param material Unique name of the associated material.
+     * @param factory Factory lambda creating the mesh renderer.
+     */
     fun renderer(
         mesh: String,
         material: String,

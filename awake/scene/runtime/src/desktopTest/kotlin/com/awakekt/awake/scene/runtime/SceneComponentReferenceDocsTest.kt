@@ -32,7 +32,7 @@ import kotlin.test.assertTrue
  */
 class SceneComponentReferenceDocsTest {
 
-    private val page = File("../../../website/docs/reference/scene-document-components.md").readText()
+    private val page = File("../../../website/docs/reference/scene-document-components.md").readText().replace("\r\n", "\n")
 
     @Test
     fun everyRegisteredComponentHasARowAndEveryFieldIsListed() {
