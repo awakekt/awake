@@ -95,6 +95,7 @@ class RetainedDrawRunCache(
         if (entries.size > capacity) entries.removeAt(0)
     }
 
+    /** Clears all retained entries from the cache. */
     fun clear() = entries.clear()
 
     private fun retainedHash(
@@ -103,6 +104,7 @@ class RetainedDrawRunCache(
         safeInteriorRect: Rectangle?,
     ): Int = 31 * (31 * primitives.retainedHashCode() + pathClips.hashCode()) + (safeInteriorRect?.hashCode() ?: 0)
 
+    /** Cache size and configuration constants. */
     companion object {
         /** Keeps the common case bounded without making large Studio screens churn the cache. */
         const val DEFAULT_CAPACITY = 256

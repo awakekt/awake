@@ -7,8 +7,15 @@ package com.awakekt.awake.render.passes2d
 
 import com.awakekt.awake.core.math2d.Rectangle
 
+/**
+ * Backend-neutral command recording engine for 2D draw runs.
+ * Translates coalesced [DrawRun]s into backend driver calls via [DrawRunRecorder].
+ */
 class SharedRenderFeature2D {
 
+    /**
+     * Records draw and scissor commands for all [runs] onto [recorder] targeting the given surface dimensions.
+     */
     fun <M> recordCommands(
         runs: List<DrawRun<M>>,
         surfaceWidth: Int,

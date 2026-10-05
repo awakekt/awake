@@ -11,8 +11,13 @@ package com.awakekt.awake.render.passes2d
  * @param M The backend's 2D mesh type.
  */
 interface DrawMeshUploader<M> {
+    /** Builds or updates a backend mesh for solid quad primitives in [runIndex]. */
     fun quadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): M
+
+    /** Builds or updates a backend mesh for rounded quad primitives in [runIndex]. */
     fun roundedQuadMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): M
+
+    /** Builds or updates a backend mesh for text glyph primitives in [runIndex]. */
     fun glyphMesh(runIndex: Int, vertices: FloatArray, indices: IntArray): M
 }
 
@@ -69,5 +74,6 @@ fun <M> uploadDrawRuns(
     return runs
 }
 
+/** Legacy alias for [uploadDrawRuns]. */
 fun <M> uploadUiRuns(staged: List<StagedDrawRun>, uploader: DrawMeshUploader<M>): List<DrawRun<M>> =
     uploadDrawRuns(staged, uploader)
