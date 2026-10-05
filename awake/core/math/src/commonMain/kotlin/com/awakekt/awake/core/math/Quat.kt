@@ -14,10 +14,17 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/** `[x, y, z, w]` rotation quaternion -- glTF's own component order. Same
+/**
+ * `[x, y, z, w]` rotation quaternion -- glTF's own component order. Same
  * quaternion-to-rotation-matrix formula [GltfParser][com.awakekt.awake.asset.gltf.GltfParser]'s
  * `trsMatrix` already used inline; factored out here so animation playback (which only has a
- * rotation, no translation/scale to compose alongside it) doesn't need to fake a full TRS call. */
+ * rotation, no translation/scale to compose alongside it) doesn't need to fake a full TRS call.
+ *
+ * @property x The X vector component of the imaginary part.
+ * @property y The Y vector component of the imaginary part.
+ * @property z The Z vector component of the imaginary part.
+ * @property w The real scalar component.
+ */
 data class Quat(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f, var w: Float = 1f) {
     /**
      * Copies [other]'s components into this quaternion.
@@ -35,6 +42,11 @@ data class Quat(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f, var w: 
         return this
     }
 
+    /**
+     * Converts this quaternion into an equivalent 4x4 rotation matrix.
+     *
+     * @return A new [Mat4] containing the rotation transform.
+     */
     fun toMat4(): Mat4 {
         val xx = x * x
         val yy = y * y
@@ -160,7 +172,9 @@ data class Quat(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f, var w: 
         }
     }
 
+    /** Factory methods, constants, and utilities for [Quat]. */
     companion object {
+        /** The identity quaternion representing zero rotation `(0, 0, 0, 1)`. */
         val IDENTITY = Quat(0f, 0f, 0f, 1f)
 
         /** A quaternion encodes half the rotation angle. */

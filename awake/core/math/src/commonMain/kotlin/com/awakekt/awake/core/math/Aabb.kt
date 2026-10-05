@@ -18,12 +18,15 @@ import kotlin.math.min
  *
  * Immutable, unlike [Vec3f]: a box is derived data (from a mesh, or from another box), so the
  * in-place mutation that keeps per-frame vector math allocation-free buys nothing here.
+ *
+ * @property min The minimum corner point (lower-left-front) of the bounding box.
+ * @property max The maximum corner point (upper-right-back) of the bounding box.
  */
 data class Aabb(
     val min: com.awakekt.awake.core.math.Vec3f,
     val max: com.awakekt.awake.core.math.Vec3f,
 ) {
-
+    /** The center point of this bounding box. */
     val center: com.awakekt.awake.core.math.Vec3f
         get() = Vec3f(
             (min.x + max.x) * HALF,
@@ -40,23 +43,26 @@ data class Aabb(
             (max.z - min.z) * HALF,
         )
 
+    /**
+     * Checks whether [point] is contained inside or on the surface of this bounding box.
+     *
+     * @param point The 3D point to test.
+     * @return `true` if the point is inside or touching the box bounds; otherwise `false`.
+     */
     operator fun contains(point: com.awakekt.awake.core.math.Vec3f): Boolean =
         point.x in min.x..max.x && point.y in min.y..max.y && point.z in min.z..max.z
 
+    /**
+     * Computes the bounding box that encloses both this box and [other].
+     *
+     * @param other The bounding box to union with this one.
+     * @return A new [Aabb] encompassing both bounding boxes.
+     */
     fun union(other: Aabb): Aabb = Aabb(
         min = Vec3f(min(min.x, other.min.x), min(min.y, other.min.y), min(min.z, other.min.z)),
         max = Vec3f(max(max.x, other.max.x), max(max.y, other.max.y), max(max.z, other.max.z)),
     )
 
-    /**
-     * This box transformed by [matrix], re-fitted to the axes.
-     *
-     * All eight corners are transformed, not just min and max: under rotation those two corners
-     * do not stay the box's extremes, and transforming only them produces a box that is too
-     * small in exactly the diagonal directions where geometry sticks out. The result is a bound
-     * on the transformed box, so it grows under repeated rotation -- rebuild from the source
-     * geometry rather than chaining this.
-     */
     /**
      * The box enclosing this one's eight corners under [matrix]'s affine part.
      *
@@ -64,6 +70,9 @@ data class Aabb(
      * and each new half-extent is the absolute matrix row against the old ones, which bounds every
      * corner at once. It runs once per moving entity per frame for culling, so it allocates
      * nothing but the result and does a third of the corner walk's arithmetic.
+     *
+     * @param matrix The transformation matrix to apply.
+     * @return The axis-aligned bounding box enclosing the transformed corners.
      */
     fun transformed(matrix: Mat4): Aabb {
         val cx = (min.x + max.x) * HALF
@@ -84,6 +93,11 @@ data class Aabb(
         )
     }
 
+    /**
+     * Computes the 8 corner vertices of this bounding box.
+     *
+     * @return An 8-element list of [Vec3f] points representing the corners.
+     */
     fun corners(): List<com.awakekt.awake.core.math.Vec3f> =
         List(CORNER_COUNT) { corner ->
             Vec3f(
@@ -93,6 +107,9 @@ data class Aabb(
             )
         }
 
+    /**
+     * Constants and factory constructors for [Aabb].
+     */
     companion object {
         private const val HALF = 0.5f
         private const val CORNER_COUNT = 8
@@ -119,6 +136,10 @@ data class Aabb(
          * `null` rather than a zero-size box at the origin: "this mesh has no vertices" and "this
          * mesh is a point at the origin" are different facts, and a caller that picks against the
          * second one silently hit-tests a thing that isn't there.
+         *
+         * @param positions Packed floating-point vertex position array.
+         * @param stride The number of float elements between consecutive vertex positions.
+         * @return The bounding box enclosing all positions, or null if [positions] is empty.
          */
         fun fromPositions(positions: FloatArray, stride: Int = COMPONENTS_PER_POSITION): Aabb? {
             if (stride < COMPONENTS_PER_POSITION || positions.size < stride) return null
@@ -148,6 +169,9 @@ data class Aabb(
  *
  * Touching counts as overlapping, matching [Aabb.contains]'s closed ranges: a box is a bound, so
  * two of them sharing a face describe geometry that may well share a pixel.
+ *
+ * @param other The bounding box to test for overlap.
+ * @return `true` if the boxes intersect or touch on all axes; otherwise `false`.
  */
 fun Aabb.intersects(other: Aabb): Boolean =
     min.x <= other.max.x &&
@@ -162,6 +186,9 @@ fun Aabb.intersects(other: Aabb): Boolean =
  *
  * Squared because callers compare against a radius, and squaring the radius once beats a square
  * root per box -- the same trade [Vec3f.length3] callers make by hand today.
+ *
+ * @param point The point to measure distance from.
+ * @return The minimum squared Euclidean distance from [point] to this bounding box.
  */
 fun Aabb.squaredDistanceTo(point: Vec3f): Float {
     val dx = max(0f, max(min.x - point.x, point.x - max.x))

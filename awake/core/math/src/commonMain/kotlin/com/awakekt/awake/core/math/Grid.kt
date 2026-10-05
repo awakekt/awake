@@ -8,7 +8,14 @@ package com.awakekt.awake.core.math
 import kotlin.math.abs
 import kotlin.math.round
 
-/** Specification for an infinite or extended editor reference grid. */
+/**
+ * Specification for an infinite or extended editor reference grid.
+ *
+ * @property size The total extent or diameter of the grid plane.
+ * @property primaryStep Distance between major grid line intervals.
+ * @property subStep Distance between subdivided minor grid line intervals.
+ * @property showAxisLines Whether primary coordinate axes (X and Z) are highlighted.
+ */
 data class GridSpec(
     val size: Float = 100f,
     val primaryStep: Float = 1.0f,

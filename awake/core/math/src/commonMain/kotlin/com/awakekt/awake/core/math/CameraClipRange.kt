@@ -5,7 +5,13 @@
  */
 package com.awakekt.awake.core.math
 
-/** A reusable policy for deriving depth planes from a caller-provided visible distance. */
+/**
+ * A reusable policy for deriving depth planes from a caller-provided visible distance.
+ *
+ * @property preferredNear The preferred distance to the near clipping plane.
+ * @property farPaddingMultiplier Multiplier applied to required far distance to ensure padding beyond scene elements.
+ * @property maxDepthRangeRatio Maximum allowed ratio between far and near plane distances to avoid precision loss.
+ */
 data class CameraClipPreset(
     val preferredNear: Float,
     val farPaddingMultiplier: Float,
@@ -17,6 +23,9 @@ data class CameraClipPreset(
         require(maxDepthRangeRatio > 1f) { "maxDepthRangeRatio must exceed one." }
     }
 
+    /**
+     * Standard predefined camera clip presets.
+     */
     companion object {
         /** General scene-view policy: room beyond the target without excessive depth precision loss. */
         val Standard = CameraClipPreset(
@@ -27,15 +36,27 @@ data class CameraClipPreset(
     }
 }
 
-/** A lens's depth interval, derived without choosing a graphics backend's clip convention. */
+/**
+ * A lens's depth interval, derived without choosing a graphics backend's clip convention.
+ *
+ * @property near Distance to the near clipping plane.
+ * @property far Distance to the far clipping plane.
+ */
 data class CameraClipRange(
     val near: Float,
     val far: Float,
 ) {
+    /**
+     * Factory methods for calculating camera clip ranges.
+     */
     companion object {
         /**
          * Derives valid clip planes for a scene whose farthest visible point is [requiredFar]
          * away from the camera. The caller decides how that distance is measured.
+         *
+         * @param requiredFar The maximum distance to visible geometry that must be contained.
+         * @param preset The clipping preset configuration to use.
+         * @return The computed [CameraClipRange].
          */
         fun forRequiredFar(
             requiredFar: Float,

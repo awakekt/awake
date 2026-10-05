@@ -16,6 +16,12 @@ import kotlin.math.sqrt
 
 /**
  * Mutable state representing an orbit/gameplay/editor camera pose.
+ *
+ * @property yaw Horizontal rotation angle in radians around the vertical axis.
+ * @property pitch Vertical elevation angle in radians relative to the horizontal plane.
+ * @property distance Orbit radius or distance from [eye] to [center].
+ * @property center Focal target position the camera looks toward.
+ * @property eye 3D position of the camera eye/viewpoint in world space.
  */
 data class CameraPoseState(
     var yaw: Float = 0f,

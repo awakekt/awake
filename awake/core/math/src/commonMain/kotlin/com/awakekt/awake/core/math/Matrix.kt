@@ -9,99 +9,124 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.tan
 
+/**
+ * A 4x4 single-precision floating-point transformation matrix stored in column-major order.
+ *
+ * Matrix operations follow standard linear algebra conventions. Member transformation functions
+ * such as [scale], [translate], and rotation functions return new [Mat4] instances without mutating
+ * the receiver (following Awake Core Math Rule 3). For mutating operations on pre-allocated instances,
+ * see [setUniformScaleAndTranslation], [identity], or [set].
+ */
 class Mat4 {
+    /** The underlying 16-element float array in column-major order. */
     val data: FloatArray = FloatArray(16)
 
+    /** Element at row 0, column 0. */
     var m00: Float
         get() = data[0]
         set(value) {
             data[0] = value
         }
 
+    /** Element at row 1, column 0. */
     var m10: Float
         get() = data[1]
         set(value) {
             data[1] = value
         }
 
+    /** Element at row 2, column 0. */
     var m20: Float
         get() = data[2]
         set(value) {
             data[2] = value
         }
 
+    /** Element at row 3, column 0. */
     var m30: Float
         get() = data[3]
         set(value) {
             data[3] = value
         }
 
+    /** Element at row 0, column 1. */
     var m01: Float
         get() = data[4]
         set(value) {
             data[4] = value
         }
 
+    /** Element at row 1, column 1. */
     var m11: Float
         get() = data[5]
         set(value) {
             data[5] = value
         }
 
+    /** Element at row 2, column 1. */
     var m21: Float
         get() = data[6]
         set(value) {
             data[6] = value
         }
 
+    /** Element at row 3, column 1. */
     var m31: Float
         get() = data[7]
         set(value) {
             data[7] = value
         }
 
+    /** Element at row 0, column 2. */
     var m02: Float
         get() = data[8]
         set(value) {
             data[8] = value
         }
 
+    /** Element at row 1, column 2. */
     var m12: Float
         get() = data[9]
         set(value) {
             data[9] = value
         }
 
+    /** Element at row 2, column 2. */
     var m22: Float
         get() = data[10]
         set(value) {
             data[10] = value
         }
 
+    /** Element at row 3, column 2. */
     var m32: Float
         get() = data[11]
         set(value) {
             data[11] = value
         }
 
+    /** Element at row 0, column 3. */
     var m03: Float
         get() = data[12]
         set(value) {
             data[12] = value
         }
 
+    /** Element at row 1, column 3. */
     var m13: Float
         get() = data[13]
         set(value) {
             data[13] = value
         }
 
+    /** Element at row 2, column 3. */
     var m23: Float
         get() = data[14]
         set(value) {
             data[14] = value
         }
 
+    /** Element at row 3, column 3. */
     var m33: Float
         get() = data[15]
         set(value) {
@@ -155,6 +180,7 @@ class Mat4 {
         return this
     }
 
+    /** Resets this matrix to the 4x4 identity matrix in place. */
     fun identity() {
         m00 = 1f
         m11 = 1f
@@ -174,6 +200,12 @@ class Mat4 {
         m32 = 0f
     }
 
+    /**
+     * Copies all 16 elements from [other] into this matrix in place.
+     *
+     * @param other The source matrix to copy from.
+     * @return This matrix for chaining.
+     */
     fun set(other: Mat4): Mat4 {
         m00 = other.m00
         m01 = other.m01
@@ -194,8 +226,22 @@ class Mat4 {
         return this
     }
 
+    /**
+     * Returns a new matrix representing this matrix scaled uniformly along X, Y, and Z by [value].
+     *
+     * @param value The uniform scale factor applied to X, Y, and Z axes.
+     * @return A new [Mat4] scaled uniformly.
+     */
     fun scale(value: Float): Mat4 = scale(value, value, value)
 
+    /**
+     * Returns a new matrix representing this matrix scaled along each axis by [x], [y], and [z].
+     *
+     * @param x Scale factor along the X axis.
+     * @param y Scale factor along the Y axis.
+     * @param z Scale factor along the Z axis.
+     * @return A new [Mat4] scaled by the specified factors.
+     */
     fun scale(x: Float, y: Float, z: Float): Mat4 {
         val scale = Mat4()
         scale.m00 = x
@@ -204,6 +250,14 @@ class Mat4 {
         return scale * this
     }
 
+    /**
+     * Returns a new matrix representing this matrix translated by ([x], [y], [z]).
+     *
+     * @param x Translation along the X axis.
+     * @param y Translation along the Y axis.
+     * @param z Translation along the Z axis.
+     * @return A new [Mat4] translated by the specified offsets.
+     */
     fun translate(x: Float, y: Float, z: Float): Mat4 {
         val translation = Mat4()
         translation.m03 = x
@@ -268,7 +322,12 @@ class Mat4 {
         return rotationMatrix * this
     }
 
-    // Rotate around the x-axis
+    /**
+     * Returns a new matrix representing this matrix rotated around the X axis by [angleRad] radians.
+     *
+     * @param angleRad The rotation angle in radians.
+     * @return A new [Mat4] rotated around the X axis.
+     */
     fun rotateX(angleRad: Float): Mat4 {
         val rotationMatrix = Mat4()
         val sin = sin(angleRad)
@@ -282,7 +341,12 @@ class Mat4 {
         return rotationMatrix * this
     }
 
-    // Rotate around the y-axis
+    /**
+     * Returns a new matrix representing this matrix rotated around the Y axis by [angleRad] radians.
+     *
+     * @param angleRad The rotation angle in radians.
+     * @return A new [Mat4] rotated around the Y axis.
+     */
     fun rotateY(angleRad: Float): Mat4 {
         val rotationMatrix = Mat4()
         val sin = sin(angleRad)
@@ -296,7 +360,12 @@ class Mat4 {
         return rotationMatrix * this
     }
 
-    // Rotate around the z-axis
+    /**
+     * Returns a new matrix representing this matrix rotated around the Z axis by [angleRad] radians.
+     *
+     * @param angleRad The rotation angle in radians.
+     * @return A new [Mat4] rotated around the Z axis.
+     */
     fun rotateZ(angleRad: Float): Mat4 {
         val rotationMatrix = Mat4()
         val sin = sin(angleRad)
@@ -369,6 +438,7 @@ class Mat4 {
         return this
     }
 
+    /** Factory methods and static utilities for [Mat4] construction and transforms. */
     companion object {
 
         /**
@@ -560,6 +630,20 @@ class Mat4 {
 
         // Mirrors the canonical GL entry point of the same name; collapsing the
         // parameters into an object would break that correspondence.
+        /**
+         * Creates a look-at view matrix from separate coordinate components.
+         *
+         * @param eyeX Camera eye X position.
+         * @param eyeY Camera eye Y position.
+         * @param eyeZ Camera eye Z position.
+         * @param centerX Target look-at X position.
+         * @param centerY Target look-at Y position.
+         * @param centerZ Target look-at Z position.
+         * @param upX Up vector X component.
+         * @param upY Up vector Y component.
+         * @param upZ Up vector Z component.
+         * @return A view matrix transforming world space into camera view space.
+         */
         @Suppress("LongParameterList")
         fun setLookAt(
             eyeX: Float,
@@ -577,6 +661,14 @@ class Mat4 {
             Vec3f(upX, upY, upZ),
         )
 
+        /**
+         * Creates a look-at view matrix from eye, center, and up vectors.
+         *
+         * @param eye Camera eye position in world space.
+         * @param center Target look-at position in world space.
+         * @param up Camera up direction vector.
+         * @return A view matrix transforming world space into camera view space.
+         */
         fun setLookAt(
             eye: com.awakekt.awake.core.math.Vec3f,
             center: com.awakekt.awake.core.math.Vec3f,
@@ -663,6 +755,12 @@ operator fun Mat4.plus(other: Mat4): Mat4 {
     return result
 }
 
+/**
+ * Multiplies two matrices and returns the product as a new matrix.
+ *
+ * @param other The right matrix operand.
+ * @return A new [Mat4] containing the matrix product.
+ */
 operator fun Mat4.times(other: Mat4): Mat4 {
     val result = Mat4()
     for (i in 0 until 4) {

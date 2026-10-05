@@ -110,7 +110,11 @@ class ScratchPool<T>(
         }
     }
 
+    /**
+     * Constants for default pool configurations.
+     */
     companion object {
+        /** Default initial number of object instances pre-allocated in a [ScratchPool]. */
         const val DEFAULT_CAPACITY: Int = 16
     }
 }
