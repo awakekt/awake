@@ -1,1 +1,0 @@
-- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for core foundations modules (`:awake:core:geometry`, `:awake:core:io`, `:awake:core:text`).

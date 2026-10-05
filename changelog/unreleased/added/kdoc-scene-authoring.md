@@ -1,1 +1,0 @@
-- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for scene authoring DSL (`:awake:scene:authoring`).

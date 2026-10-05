@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-05
+
+### Added
+
+- **Every particle option a scene file can write is in `particle_emitter`.** It gains `acceleration`, `inheritOrientation`, `alphaCurve`, `burstCycle`, `turbulence`, `turbulenceFrequency`, `convergeToOrigin`, `stretchWithVelocity`, `stretchFactor`, `burstCount` and `ground` (`groundY`, `restitution`, `friction` and box `colliders`), each with the name and default of the runtime option it sets, so sparks that arc, bounce, streak and pulse no longer need Kotlin. Only what is code stays code: `onParticleDeath`, `groundHeightProvider`, `dynamicSpawnRate` and sub-emitters. A `burstCount` emitter removes its node once every particle has died, so a one-shot emitter belongs on a node of its own. `ParticleExposureTest` fails when a runtime particle option is neither mapped from a scene field nor listed as code only, so the two cannot drift apart unnoticed again.
+- **Particles can spin.** `ParticleVisual.spin` takes a `ParticleSpin(minDegreesPerSecond, maxDegreesPerSecond, randomStartAngle)`: each particle draws its own turn rate between the two when it spawns and turns its quad in its own plane at it, for camera-facing and flat emitters alike, and a particle that has landed stops turning. `particle_emitter` gains the matching `spin` object. A stretched particle points along its motion, so spin does not apply to it. `setParticleInstance` takes a `rotation`, carried in column 2 of the instance matrix, which the particle shader and the particle shadow caster read: no new vertex attribute, so no backend code changed. Seen on WebGPU in `WebGpuParticleSpinTest`; the same scene is a render parity test and a render-evidence picture for Vulkan.
+- **A frame sheet can start at any cell.** `TextureAnimation` and `texture_animation` gain `firstFrame`, so one sheet can hold several runs, an idle and a walk, and each entity plays its own; `frameCount` counts from it, and `0` plays to the sheet's last cell. With `framesPerSecond` 0 an entity shows that one cell. The cell travels in `textureScroll.w`, which nothing used, so the uniform block keeps its size, and a sheet that does not set it plays exactly as before.
+- **Sprite sheets with named clips.** A new `texture_clips` component cuts a frame sheet into named clips (`firstFrame`, `frameCount`, `framesPerSecond`, `loop`) and plays one on the entity. `TextureClipSystem` steps it on the scene's clock and shows the cell through the entity's `TextureAnimation`, so a game switches clip with `TextureClips.play("walk")`, reads `isFinished` for a one-shot clip, and a paused game holds still. Asking for the clip that is already playing does nothing, so it can run every frame. `playProject` and `playSystemsFor` add the system for scenes that have the component. It builds on the new `firstFrame` of `texture_animation`; sprites, tilemaps and a 2D scene module are still to come under #158.
+- 100% KDoc coverage and Detekt enforcement for `:awake:asset:gltf`.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:asset:shader-dsl`.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:asset:shader-pack`.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:asset:shaders`.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:asset:terrain`.
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for core foundations modules (`:awake:core:geometry`, `:awake:core:io`, `:awake:core:text`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for 2D graphics primitive and vector tessellation engine (`:awake:core:graphics2d`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for core memory pooling and mathematics modules (`:awake:core:pool`, `:awake:core:math`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for core ECS architecture library (`:awake:ecs`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for editor and tooling contracts (`:awake:editor:contract`, `:awake:node-graph`, `:awake:blueprint`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for the navigation subsystem (`:awake:navigation`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for network and platform cluster (`:awake:net:api`, `:awake:engine:platform`, `:awake:project:runtime`).
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:engine:render:contract`.
+- Document all public declarations and enforce strict Detekt KDoc rules for `:awake:engine:render:passes2d`.
+- 100% KDoc coverage and Detekt enforcement for `:awake:scene:scene3d`.
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for scene authoring DSL (`:awake:scene:authoring`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for scene document library (`:awake:scene:document`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for glTF scene bridge library (`:awake:scene:gltf`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for the scene management cluster (`:awake:scene:controls`, `:awake:scene:world`, `:awake:scene:worldstream`).
+- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for scene runtime (`:awake:scene:runtime`).
+
+### Changed
+
+- **`ParticleEmitterSource.authored` is now `settings`.** It names what the property holds, as `KeyframeAnimation.tracks` and `LocomotionAnimation.clips` do, not where it came from. Source-breaking for code that read it. `loadParticleSprites` and `ParticleContentSystem` moved to their own files, so a Java caller sees `loadParticleSprites` on `ParticleSpritesKt` rather than `SceneParticleEmitterKt`; Kotlin callers are unaffected.
+- **Particles are their own module, `awake:particles`, with no scene dependency.** The emitters, the simulation (`ParticleSystem`), the burst pool and the draw builder (`ParticleDrawBuilder`) moved out of `awake:scene:scene3d`, so an app with its own world and camera can use them. `awake:scene:particles` is the scene wrapper: the `particle_emitter` component, its binding, `loadParticleSprites`, `ParticleContentSystem` and the new `TransformPlacement`. `ParticleSystem` no longer reads `Transform`; it asks an `EmitterPlacement` where an entity is, so a scene passes `ParticleSystem(TransformPlacement)` and an app with no scene passes its own or nothing. `ParticleEmitter` gains `spawn`, `liveParticleCount` and `forEachLiveParticle`. Source-breaking: the packages are now `com.awakekt.awake.particles` (library) and `com.awakekt.awake.scene.particles` (scene wrapper), where they were `com.awakekt.awake.scene.rendering.particles`, and a project that used particles through `scene:scene3d` alone must now add `awake:scene:particles` (`scene:runtime` already includes it). Scene files are unchanged.
+
 ## [0.1.0-rc.14] - 2026-10-05
 
 ### Added

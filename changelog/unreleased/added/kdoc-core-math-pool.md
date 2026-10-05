@@ -1,1 +1,0 @@
-- Completed 100% public declaration KDoc coverage and enabled strict Detekt enforcement for core memory pooling and mathematics modules (`:awake:core:pool`, `:awake:core:math`).
