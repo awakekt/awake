@@ -123,8 +123,18 @@ document.
 
 `texture_animation`, a component of its own beside the material, plays the texture as a frame sheet
 and scrolls it. `columns` and `rows` (default 1) describe the sheet, read left to right, then top to
-bottom. `frameCount` (0 means every cell) and `framesPerSecond` (0 holds the first frame) play it.
-`scrollU` and `scrollV` scroll the UVs, in UV units per second.
+bottom. `frameCount` (0 means every cell from `firstFrame` on) and `framesPerSecond` (0 holds the
+first frame of the run) play it. `scrollU` and `scrollV` scroll the UVs, in UV units per second.
+
+`firstFrame` is the cell a run starts at, counted from 0 in that reading order. One sheet can hold
+several animations, an idle and a walk, and each entity plays its own:
+
+```json
+{ "component": "texture_animation", "columns": 8, "rows": 4, "firstFrame": 8, "frameCount": 8, "framesPerSecond": 12 }
+```
+
+That plays the second row of an eight-column sheet, cells 8 to 15, twelve frames a second. With
+`framesPerSecond` 0 it shows `firstFrame` and nothing else, which is how an entity shows one chosen cell.
 
 Kotlin-only components:
 

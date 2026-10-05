@@ -105,6 +105,45 @@ class MaterialUniformsTest {
         kotlin.test.assertFailsWith<IllegalArgumentException> { TextureAnimation(framesPerSecond = -1f) }
     }
 
+    /** The run's first cell rides the scroll's last lane, which nothing else used, beside the draw's time. */
+    @Test
+    fun aRunsFirstFrameTravelsInTheScrollsLastLane() {
+        val run = TextureAnimation(columns = 4, rows = 2, frameCount = 3, framesPerSecond = 8f, firstFrame = 5)
+        val drawCall = RenderDrawCommand(
+            mesh = FakeMesh(),
+            material = FakeMaterial(),
+            extraUniformFloats = pbrMaterialFloats(0f, 1f, Color.White, Color.Transparent, run),
+            timeSeconds = 2f,
+        )
+
+        val material = pbrTexturedMaterialFloats(drawCall)
+
+        val layout = MaterialUniformLayouts.PbrTexturedMaterial
+        assertVec4(4f, 2f, 8f, 3f, layout.readVec4(material, UniformFields.TextureFrames))
+        assertVec4(0f, 0f, 2f, 5f, layout.readVec4(material, UniformFields.TextureScroll))
+    }
+
+    @Test
+    fun aRunStartsAtTheFirstCellUnlessToldOtherwise() {
+        val payload = pbrMaterialFloats(0f, 1f, Color.White, Color.Transparent, TextureAnimation(columns = 2, rows = 2, framesPerSecond = 1f))
+
+        val scroll = MaterialUniformLayouts.PbrTexturedMaterial.readVec4(payload, UniformFields.TextureScroll)
+
+        assertEquals(0f, scroll.w)
+    }
+
+    @Test
+    fun aRunMustFitTheSheetFromItsFirstFrame() {
+        val fits = TextureAnimation(columns = 4, rows = 2, frameCount = 2, firstFrame = 6)
+        assertEquals(6, fits.firstFrame)
+
+        // Frames 6, 7 and 8 of an 8-cell sheet overrun it, and there is no cell before the first.
+        kotlin.test.assertFailsWith<IllegalArgumentException> { TextureAnimation(columns = 4, rows = 2, frameCount = 3, firstFrame = 6) }
+        kotlin.test.assertFailsWith<IllegalArgumentException> { TextureAnimation(columns = 4, rows = 2, frameCount = 2, firstFrame = -1) }
+        // The default run is the whole sheet, so a later start has to say how long its run is.
+        kotlin.test.assertFailsWith<IllegalArgumentException> { TextureAnimation(columns = 4, rows = 2, firstFrame = 2) }
+    }
+
     private fun assertVec4(x: Float, y: Float, z: Float, w: Float, actual: com.awakekt.awake.core.math.Vec4) {
         assertEquals(listOf(x, y, z, w), listOf(actual.x, actual.y, actual.z, actual.w))
     }

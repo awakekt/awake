@@ -48,10 +48,14 @@ fun pbrMaterialFloats(drawCall: RenderDrawCommand): FloatArray = pbrMaterialPayl
  *
  * @property columns Frame-sheet columns.
  * @property rows Frame-sheet rows.
- * @property frameCount Frames played, from the first; at most [columns] x [rows].
- * @property framesPerSecond Playback rate; 0 holds the first frame.
+ * @property frameCount Frames played, from [firstFrame]; at most [columns] x [rows]. A run that
+ * starts after the first cell must say how long it is: the default is the whole sheet.
+ * @property framesPerSecond Playback rate; 0 holds the run's first frame.
  * @property scrollU UV units per second along U.
  * @property scrollV UV units per second along V, toward the bottom of the image.
+ * @property firstFrame The cell the run starts at, counted in reading order from 0 at the top left.
+ * One sheet can hold several runs (an idle, a walk) and each draw plays its own. With
+ * [framesPerSecond] 0 this is how a draw shows one chosen cell.
  */
 data class TextureAnimation(
     val columns: Int = 1,
@@ -60,10 +64,14 @@ data class TextureAnimation(
     val framesPerSecond: Float = 0f,
     val scrollU: Float = 0f,
     val scrollV: Float = 0f,
+    val firstFrame: Int = 0,
 ) {
     init {
         require(columns >= 1 && rows >= 1) { "A frame sheet needs at least one column and row: ${columns}x$rows." }
         require(frameCount in 1..columns * rows) { "$frameCount frames do not fit a ${columns}x$rows sheet." }
+        require(firstFrame >= 0 && firstFrame + frameCount <= columns * rows) {
+            "$frameCount frames from frame $firstFrame do not fit a ${columns}x$rows sheet."
+        }
         require(framesPerSecond >= 0f && framesPerSecond.isFinite()) { "framesPerSecond must be finite and >= 0." }
         require(scrollU.isFinite() && scrollV.isFinite()) { "The UV scroll must be finite." }
     }
@@ -118,7 +126,7 @@ private fun UniformWriter.putTextureAnimation(animation: TextureAnimation): Unif
         animation.framesPerSecond,
         animation.frameCount.toFloat(),
     )
-    .put(UniformFields.TextureScroll, animation.scrollU, animation.scrollV, 0f, 0f)
+    .put(UniformFields.TextureScroll, animation.scrollU, animation.scrollV, 0f, animation.firstFrame.toFloat())
 
 /** Same typed defaulting for backend source adapters that carry only the raw extra payload. */
 internal fun pbrMaterialFloats(values: FloatArray): FloatArray = pbrMaterialPayload(values)

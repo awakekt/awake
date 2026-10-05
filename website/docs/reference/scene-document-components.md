@@ -457,10 +457,11 @@ texture of the entity's material; with no `pbr_material` it plays with glTF's de
 | --- | --- | --- | --- |
 | `columns` | integer | `1` | Frame-sheet columns. At least 1. |
 | `rows` | integer | `1` | Frame-sheet rows. At least 1. |
-| `frameCount` | integer | `0` | Frames played from the first. `0` plays every cell. |
-| `framesPerSecond` | number | `0` | Playback rate. `0` holds the first frame. |
+| `frameCount` | integer | `0` | Frames played from `firstFrame`. `0` plays every cell from `firstFrame` on. |
+| `framesPerSecond` | number | `0` | Playback rate. `0` holds the first frame of the run. |
 | `scrollU` | number | `0` | UV units per second along U. |
 | `scrollV` | number | `0` | UV units per second along V, toward the bottom of the image. |
+| `firstFrame` | integer | `0` | The cell the run starts at, counted from 0 in reading order. Within the sheet, and `firstFrame + frameCount` at most `columns * rows`. |
 
 ## `tone_mapping`
 
