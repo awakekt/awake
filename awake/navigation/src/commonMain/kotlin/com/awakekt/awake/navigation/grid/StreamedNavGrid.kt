@@ -32,11 +32,12 @@ import kotlin.concurrent.Volatile
  * in and out. Unloading during a search is therefore safe and needs no cancellation: the searcher
  * keeps reading tiles the world has moved on from, and the worst outcome is a route through
  * terrain that has just left the radius — which its owner is about to leave too.
+ *
+ * @property samplesPerCell Navigation samples along each axis of one world cell.
+ * @property sampleSize Metres between adjacent samples.
  */
 class StreamedNavGrid(
-    /** Navigation samples along each axis of one world cell. */
     val samplesPerCell: Int,
-    /** Metres between adjacent samples. */
     val sampleSize: Float,
 ) : NavMesh {
 
@@ -56,10 +57,20 @@ class StreamedNavGrid(
     /** The cells with a baked tile right now. */
     val residentCells: Set<WorldCellCoord> get() = tiles.keys
 
-    /** [coord]'s baked tile, or null when that cell is not resident. For debug drawing and tests. */
+    /**
+     * Returns the baked [NavGridTile] for [coord], or `null` when that cell is not resident.
+     *
+     * @param coord The world cell coordinate to query.
+     * @return The resident [NavGridTile], or `null` if the cell is not loaded.
+     */
     fun tileAt(coord: WorldCellCoord): NavGridTile? = tiles[coord]
 
-    /** Publishes [tile] as [coord]'s navigation, replacing any tile already there. */
+    /**
+     * Publishes [tile] as [coord]'s navigation, replacing any tile already there.
+     *
+     * @param coord The world cell coordinate to populate.
+     * @param tile The baked navigation tile for [coord].
+     */
     fun load(coord: WorldCellCoord, tile: NavGridTile) {
         require(tile.width == samplesPerCell && tile.depth == samplesPerCell) {
             "A tile for $coord must be ${samplesPerCell}x$samplesPerCell samples; " +
@@ -71,16 +82,31 @@ class StreamedNavGrid(
         tiles = tiles + (coord to tile)
     }
 
-    /** Drops [coord]'s navigation. Searches already in flight keep reading the tile they hold. */
+    /**
+     * Drops [coord]'s navigation.
+     *
+     * Searches already in flight keep reading the tile they hold.
+     *
+     * @param coord The world cell coordinate to unload.
+     */
     fun unload(coord: WorldCellCoord) {
         if (coord in tiles) tiles = tiles - coord
     }
 
-    /** Drops every tile. */
+    /**
+     * Drops every tile from this grid.
+     */
     fun clear() {
         tiles = emptyMap()
     }
 
+    /**
+     * Returns a smoothed walkable path between [start] and [end] world positions across resident cells.
+     *
+     * @param start The starting world position.
+     * @param end The destination world position.
+     * @return An ordered list of waypoint positions from start to end, or an empty list if no path exists.
+     */
     override fun findPath(start: Vec3f, end: Vec3f): List<Vec3f> {
         val field = ResidentField(tiles, samplesPerCell, sampleSize)
         return field.smoothPath(field.findPath(start, end))

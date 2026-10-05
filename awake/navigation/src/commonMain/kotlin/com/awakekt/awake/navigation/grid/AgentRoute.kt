@@ -16,5 +16,8 @@ import com.awakekt.awake.ecs.Entity
  * `scene:ai` cannot help depending on navigation to request a path, so the two could never be
  * separate modules. It was also wrong on its own terms: `path` belongs to `RouteFollower`, so
  * patrol and flee have one too, and drawing only chasers silently omitted them.
+ *
+ * @property entity The agent [Entity] whose route is being visualised.
+ * @property path The ordered list of waypoint positions defining the agent's current path.
  */
 data class AgentRoute(val entity: Entity, val path: List<Vec3f>)

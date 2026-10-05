@@ -33,6 +33,9 @@ import kotlinx.coroutines.launch
  *
  * [navMesh] is read from whichever thread the scope dispatches to, so an implementation used this
  * way must tolerate that — `StreamedNavGrid` does, by snapshotting its resident tiles per search.
+ *
+ * @param navMesh The navigation mesh backing pathfinding queries.
+ * @param searchScope Optional coroutine scope for background queries, or `null` to run synchronously.
  */
 class PathRequestSystem(
     private val navMesh: NavMesh,
@@ -50,6 +53,12 @@ class PathRequestSystem(
 
     private var nextSearchId = 0L
 
+    /**
+     * Polls completed path search answers and processes pending path requests.
+     *
+     * @param world The ECS world containing active entities and components.
+     * @param delta Frame delta time in seconds.
+     */
     override fun update(world: World, delta: Float) {
         applyAnswers(world)
         world.family<PathRequest>().forEach { entity, request ->

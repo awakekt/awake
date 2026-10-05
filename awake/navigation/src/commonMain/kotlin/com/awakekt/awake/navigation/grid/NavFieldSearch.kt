@@ -23,6 +23,8 @@ import kotlin.math.sqrt
  * walked — and the heap breaks ties on the packed key, which orders by Z then X exactly as the old
  * row-major node index did. Identical inputs still produce an identical path, which an
  * authoritative server needs.
+ *
+ * @param field The navigation field to search.
  */
 class NavFieldSearch(private val field: NavField) {
     private val nodes = NavNodeTable()
@@ -32,6 +34,15 @@ class NavFieldSearch(private val field: NavField) {
     private var goalX = 0
     private var goalZ = 0
 
+    /**
+     * Executes an A* search between sample coordinates on the navigation field.
+     *
+     * @param startX Starting sample X coordinate on the grid.
+     * @param startZ Starting sample Z coordinate on the grid.
+     * @param goalX Target sample X coordinate on the grid.
+     * @param goalZ Target sample Z coordinate on the grid.
+     * @return An ordered list of [Vec3f] waypoints from start to goal, or an empty list if no path exists.
+     */
     fun run(startX: Int, startZ: Int, goalX: Int, goalZ: Int): List<Vec3f> {
         this.goalX = goalX
         this.goalZ = goalZ

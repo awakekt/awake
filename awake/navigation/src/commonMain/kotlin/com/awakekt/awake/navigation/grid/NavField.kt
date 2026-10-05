@@ -30,11 +30,21 @@ interface NavField {
     /** World Z of sample row 0. */
     val originZ: Float get() = 0f
 
-    /** Whether an agent can stand at sample ([x], [z]); false anywhere the field does not cover. */
+    /**
+     * Returns whether an agent can stand at sample ([x], [z]); false anywhere the field does not cover.
+     *
+     * @param x Sample X coordinate in field space.
+     * @param z Sample Z coordinate in field space.
+     * @return `true` if the sample at ([x], [z]) is walkable, `false` otherwise.
+     */
     fun isWalkable(x: Int, z: Int): Boolean
 }
 
-/** One tile, placed where it was baked — the field a non-streamed [NavGrid] searches. */
+/**
+ * One tile, placed where it was baked — the field a non-streamed [NavGrid] searches.
+ *
+ * @param tile The underlying [NavGridTile] providing walkability and grid geometry.
+ */
 class TileField(private val tile: NavGridTile) : NavField {
     override val sampleSize: Float get() = tile.cellSize
     override val originX: Float get() = tile.originX
