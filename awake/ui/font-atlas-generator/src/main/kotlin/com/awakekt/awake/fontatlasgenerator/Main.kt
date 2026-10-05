@@ -324,7 +324,9 @@ private fun java.io.InputStream.bufferedText(): String = reader().use { it.readT
 private fun measureGlyph(measureFont: Font, frc: FontRenderContext, ascentEm: Float, char: Char): GlyphMetrics {
     val gv = measureFont.createGlyphVector(frc, char.toString())
     val advanceEm = gv.getGlyphMetrics(0).advanceX / LOGICAL_CELL
-    val bounds = gv.getGlyphOutline(0).bounds2D
+    // Not `getBounds2D`: on JDK 17 that is the box of the curves' control points, on JDK 21 their true
+    // extent, so the same font measured differently. See [tightBounds].
+    val bounds = tightBounds(gv.getGlyphOutline(0))
     if (bounds.isEmpty) {
         return GlyphMetrics(0f, 0f, 0f, 0f, advanceEm)
     }
@@ -408,7 +410,7 @@ private fun buildFileSpec(atlas: AtlasResult, face: Face): FileSpec {
         .addSuperinterface(dataInterface)
         .addProperty(overrideProperty("name", STRING, "%S", face.displayName))
         .addProperty(overrideProperty("baseCellSize", INT, "%L", LOGICAL_CELL))
-        .addProperty(overrideProperty("lineHeightEm", FLOAT, "%Lf", "%.6f".format(atlas.lineHeightEm)))
+        .addProperty(overrideProperty("lineHeightEm", FLOAT, "%Lf", emLiteral(atlas.lineHeightEm)))
         .addProperty(overrideProperty("textScaleStep", FLOAT, "0.25f"))
         .addProperty(overrideProperty("atlasWidth", INT, "%L", atlas.atlasWidth))
         .addProperty(overrideProperty("atlasHeight", INT, "%L", atlas.atlasHeight))
@@ -461,7 +463,7 @@ private fun intArrayProperty(name: String, values: IntArray): PropertySpec =
 private fun floatArrayProperty(name: String, values: FloatArray): PropertySpec =
     PropertySpec.builder(name, ClassName("kotlin", "FloatArray"))
         .addModifiers(KModifier.OVERRIDE)
-        .initializer("floatArrayOf(%L)", values.joinToString(", ") { "%.6ff".format(it) })
+        .initializer("floatArrayOf(%L)", values.joinToString(", ") { emLiteral(it) + "f" })
         .build()
 
 private fun base64Property(base64: String): PropertySpec {
