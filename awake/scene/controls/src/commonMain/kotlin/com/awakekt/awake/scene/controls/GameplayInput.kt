@@ -28,6 +28,9 @@ import com.awakekt.awake.core.input.ScrollSource
  * A focused text field owns the keyboard and *not* the mouse, so dragging the world while a field
  * has focus stays legitimate. That asymmetry is deliberate -- `CameraSystem` carried the comment
  * saying so -- and it survives here rather than being tidied into one flag.
+ *
+ * @param snapshot Raw input state snapshot captured this frame.
+ * @param claimed UI input ownership state for the current frame.
  */
 class GameplayInput(
     private val snapshot: InputSnapshot,
@@ -36,8 +39,10 @@ class GameplayInput(
     /** False while the UI holds the pointer or a modal is open, so a click on a dialog or backdrop is not a world drag. */
     val pointerDown: Boolean get() = snapshot.pointerDown && !claimed.isCaptured && !claimed.isModalOpen
 
+    /** Current horizontal pointer coordinate in window pixels. */
     val pointerX: Float get() = snapshot.pointerX
 
+    /** Current vertical pointer coordinate in window pixels. */
     val pointerY: Float get() = snapshot.pointerY
 
     /** Zero while a scrollable under the pointer took the wheel or a modal layer is open. */
@@ -61,6 +66,12 @@ class GameplayInput(
     /** False while the UI owns the keyboard, whatever the key. */
     fun isDown(key: Key): Boolean = !claimed.blocksGameplayKeys && snapshot.keysDown.contains(key)
 
+    /**
+     * Returns whether [key] was newly pressed this frame, false while the UI owns the keyboard.
+     *
+     * @param key The key code to check.
+     * @return `true` if the key transitioned from released to pressed this frame and UI does not own the keyboard.
+     */
     fun wasPressed(key: Key): Boolean = !claimed.blocksGameplayKeys && snapshot.wasPressed(key)
 
     /**

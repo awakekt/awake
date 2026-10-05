@@ -30,8 +30,14 @@ data class VirtualTerrainTextureConfig(
         require(prefetchRadius >= 0) { "prefetchRadius cannot be negative: $prefetchRadius" }
     }
 
+    /**
+     * Default configuration values for virtual terrain texturing.
+     */
     companion object {
+        /** Default tile resolution in texels. */
         const val DEFAULT_TILE_SIZE = 512
+
+        /** Default capacity for the in-memory tile cache. */
         const val DEFAULT_CACHE_CAPACITY = 64
     }
 }
@@ -81,6 +87,12 @@ data class VirtualTerrainTile(
  * Provider interface for loading or synthesizing [VirtualTerrainTile] instances for a given [WorldCellCoord].
  */
 fun interface VirtualTerrainTileProvider {
+    /**
+     * Loads or synthesizes the virtual terrain tile for the given cell coordinate.
+     *
+     * @param coord Spatial cell coordinate to provide a tile for.
+     * @return The loaded [VirtualTerrainTile], or `null` if no tile is available.
+     */
     suspend fun provideTile(coord: WorldCellCoord): VirtualTerrainTile?
 }
 
@@ -103,15 +115,22 @@ class VirtualTerrainTileCache(
 
     private val entries = LinkedHashMap<WorldCellCoord, VirtualTerrainTile>()
 
+    /** Number of successful tile lookups from the cache. */
     var hitCount: Long = 0L
         private set
+
+    /** Number of failed tile lookups from the cache. */
     var missCount: Long = 0L
         private set
+
+    /** Number of tiles evicted from the cache due to capacity constraints. */
     var evictionCount: Long = 0L
         private set
 
+    /** Current number of resident tiles in the cache. */
     val size: Int get() = entries.size
 
+    /** Set of cell coordinates currently resident in the cache. */
     val residentCoords: Set<WorldCellCoord> get() = entries.keys.toSet()
 
     /**
@@ -149,10 +168,25 @@ class VirtualTerrainTileCache(
         }
     }
 
+    /**
+     * Removes and returns the tile cached at [coord], if present.
+     *
+     * @param coord Spatial cell coordinate to remove.
+     * @return The removed [VirtualTerrainTile], or `null` if not present.
+     */
     fun remove(coord: WorldCellCoord): VirtualTerrainTile? = entries.remove(coord)
 
+    /**
+     * Returns whether a tile is currently cached for [coord].
+     *
+     * @param coord Spatial cell coordinate to check.
+     * @return `true` if resident in the cache, `false` otherwise.
+     */
     fun contains(coord: WorldCellCoord): Boolean = entries.containsKey(coord)
 
+    /**
+     * Evicts all resident tiles and resets hit, miss, and eviction counters.
+     */
     fun clear() {
         entries.clear()
         hitCount = 0L

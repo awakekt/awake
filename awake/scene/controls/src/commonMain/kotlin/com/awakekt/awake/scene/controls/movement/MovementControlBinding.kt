@@ -21,6 +21,10 @@ import kotlin.reflect.KClass
  * Marks the entity the player moves. [speed] and [runSpeed] (while Shift is held) are in units per
  * second; a null [speed] uses the system's, a null [runSpeed] keeps [speed]. [turnSpeed] is how many
  * radians per second it turns to face where it moves; 0 leaves its facing alone.
+ *
+ * @property speed Standard movement speed in units per second, or `null` to use the system default.
+ * @property runSpeed Accelerated run speed in units per second, or `null` to keep [speed].
+ * @property turnSpeed Angular rotation rate in radians per second when turning toward movement direction.
  */
 @Serializable
 @SerialName("movement_control")
@@ -40,6 +44,9 @@ data class SceneMovementControl(
     }
 }
 
+/**
+ * Scene component binding for serializing and deserializing [MovementControl] components as [SceneMovementControl].
+ */
 object MovementControlBinding : SceneComponentBinding<MovementControl, SceneMovementControl> {
     override val componentClass: KClass<MovementControl> = MovementControl::class
     override val schemaClass: KClass<SceneMovementControl> = SceneMovementControl::class
@@ -65,6 +72,10 @@ object MovementControlBinding : SceneComponentBinding<MovementControl, SceneMove
         SceneMovementControl(speed = component.speed, runSpeed = component.runSpeed, turnSpeed = component.turnSpeed)
 }
 
-/** Registers the controls' scene components, `movement_control` and `camera_rig`, for loading and saving. */
+/**
+ * Registers the controls scene components (`movement_control` and `camera_rig`) with this registry.
+ *
+ * @return This [SceneComponentRegistry] instance for chaining.
+ */
 fun SceneComponentRegistry.registerControls(): SceneComponentRegistry =
     register(MovementControlBinding).register(CameraRigBinding)

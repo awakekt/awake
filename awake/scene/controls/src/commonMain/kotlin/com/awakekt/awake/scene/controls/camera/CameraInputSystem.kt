@@ -21,9 +21,11 @@ import com.awakekt.awake.scene.controls.camera.CameraRig
  * [modeKeys] is injectable because a hotkey is a whole-application decision, not something a
  * reusable system should claim unilaterally -- [DEFAULT_MODE_KEYS] deliberately skips
  * [Key.F3], which `AppUiRuntime` already owns for the debug overlay.
+ *
+ * @param inputProvider Provider returning this frame's gameplay input with UI consumption subtracted.
+ * @param modeKeys Key-to-mode mapping triggering camera mode switches when pressed.
  */
 class CameraInputSystem(
-    /** This frame's input, with whatever the UI claimed already taken out. */
     private val inputProvider: () -> GameplayInput,
     private val modeKeys: Map<Key, CameraMode> = DEFAULT_MODE_KEYS,
 ) : System {
@@ -42,6 +44,9 @@ class CameraInputSystem(
         }
     }
 
+    /**
+     * Default keybindings for camera mode switching.
+     */
     companion object {
         /** F3 is intentionally absent -- it is the engine's debug-overlay toggle. */
         val DEFAULT_MODE_KEYS: Map<Key, CameraMode> = mapOf(

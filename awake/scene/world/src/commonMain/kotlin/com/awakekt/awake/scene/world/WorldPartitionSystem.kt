@@ -20,7 +20,20 @@ import kotlin.math.floor
  * Callbacks invoked when a spatial world cell enters or leaves the active streaming radius.
  */
 interface WorldCellStreamListener {
+    /**
+     * Invoked when a world cell enters the active streaming radius and requires loading.
+     *
+     * @param world Active ECS world instance.
+     * @param coord Spatial cell coordinate that entered the active radius.
+     */
     fun onCellLoad(world: World, coord: WorldCellCoord)
+
+    /**
+     * Invoked when a world cell leaves the active streaming radius and requires unloading.
+     *
+     * @param world Active ECS world instance.
+     * @param coord Spatial cell coordinate that left the active radius.
+     */
     fun onCellUnload(world: World, coord: WorldCellCoord)
 }
 
@@ -32,20 +45,16 @@ interface WorldCellStreamListener {
  * - Hysteresis band ([WorldPartitionConfig.unloadRadius] > [WorldPartitionConfig.loadingRadius])
  *   to prevent thrashing (rapid loading/unloading) at cell boundaries.
  * - Zero-allocation query checks during stationary camera frames.
+ *
+ * @property config Configuration settings controlling cell size and load/unload radii.
+ * @property streamListener Synchronous cell load and unload lifecycle listener.
+ * @property asyncStreamListener Asynchronous cell streaming listener, taking precedence over [streamListener] if provided.
+ * @param loadScope Coroutine scope for running asynchronous cell load operations.
  */
 class WorldPartitionSystem(
     val config: WorldPartitionConfig = WorldPartitionConfig(),
     var streamListener: WorldCellStreamListener? = null,
-    /**
-     * Loads cells off the frame thread. Mutually exclusive with [streamListener] per cell: when
-     * both are set the async one wins, since a consumer that supplied it clearly means it.
-     */
     var asyncStreamListener: AsyncWorldCellStreamListener? = null,
-    /**
-     * Where [asyncStreamListener]'s loads run. Required to use it, and deliberately not created
-     * here -- a system that owns a scope owns a lifetime, and the runtime already has one. A test
-     * passes `TestScope`, which is what makes cancellation assertable without a frame loop.
-     */
     private val loadScope: CoroutineScope? = null,
 ) : System {
 
@@ -63,6 +72,8 @@ class WorldPartitionSystem(
      * plan's note on why a cap needs a stated policy rather than a guess.
      */
     private val loaded = Channel<Pair<WorldCellCoord, CellContent>>(Channel.UNLIMITED)
+
+    /** Active cell coordinates currently resident within the loading radius. */
     val activeCells: Set<WorldCellCoord> get() = _activeCells
 
     private var lastObserverPos: Vec3f = Vec3f(Float.NaN, Float.NaN, Float.NaN)
